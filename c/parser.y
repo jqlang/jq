@@ -71,6 +71,13 @@ Exp ',' Exp {
   $$ = gen_both($1, $3); 
 } |
 
+Exp '+' Exp {
+  $$ = gen_noop();
+  block_append(&$$, gen_subexp($1));
+  block_append(&$$, gen_subexp($3));
+  block_append(&$$, gen_op_symbol(CALL_BUILTIN_3_1, "_plus"));
+} |
+
 Term { 
   $$ = $1; 
 }

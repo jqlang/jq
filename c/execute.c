@@ -340,6 +340,20 @@ json_t* jq_next() {
       stack_push(stackval_replace(top, cfunc_output[0]));
       break;
     }
+
+    case CALL_BUILTIN_3_1: {
+      stackval top = stack_pop();
+      json_t* a = stack_pop().value;
+      json_t* b = stack_pop().value;
+      cfunc_input[0] = top.value;
+      cfunc_input[1] = a;
+      cfunc_input[2] = b;
+      struct cfunction* func = &bc->globals->cfunctions[*pc++];
+      printf(" call %s\n", func->name);
+      func->fptr(cfunc_input, cfunc_output);
+      stack_push(stackval_replace(top, cfunc_output[0]));
+      break;
+    }
       
       
     }
