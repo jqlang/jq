@@ -19,6 +19,12 @@ struct symbol_table {
   int ncfunctions;
 };
 
+// The bytecode format matters in:
+//   execute.c  - interpreter
+//   compile.c  - compiler
+//   bytecode.c - disassembler
+
+#define ARG_NEWCLOSURE 0x1000
 
 struct bytecode {
   uint16_t* code;
@@ -30,11 +36,14 @@ struct bytecode {
   json_t* constants;
   struct symbol_table* globals;
 
-  struct bytecode* subfunctions;
+  struct bytecode** subfunctions;
   int nsubfunctions;
+
+  struct bytecode* parent;
 };
 
-void dump_disassembly(struct bytecode* code);
+void dump_disassembly(int, struct bytecode* code);
+void dump_code(int, struct bytecode* code);
 void dump_operation(struct bytecode* bc, uint16_t* op);
 
 #endif

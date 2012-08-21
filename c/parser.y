@@ -20,10 +20,14 @@
 %token <str> IDENT
 %token <num> NUMBER
 
+ /* revolting hack */
+%left ';'
+
 %left '|'
 %left ','
 %token EQ "=="
 %token AS "as"
+%token DEF "def"
 %nonassoc EQ
 %left '+'
 
@@ -55,12 +59,16 @@ static block gen_index(block obj, block key) {
 %%
 program: Exp { *answer = $1; }
 
-
 Exp:
+"def" IDENT ':' Exp ';' Exp {
+  block body = block_join($4, gen_op_simple(RET));
+  $$ = block_bind(gen_op_block_defn(CLOSURE_CREATE, $2, body), $6, OP_IS_CALL_PSEUDO);
+} |
+
 Term "as" '$' IDENT '|' Exp {
   $$ = gen_op_simple(DUP);
   block_append(&$$, $1);
-  block_append(&$$, block_bind(gen_op_var_unbound(STOREV, $4), $6));
+  block_append(&$$, block_bind(gen_op_var_unbound(STOREV, $4), $6, OP_HAS_VARIABLE));
 } |
 
 Exp '|' Exp { 
@@ -132,6 +140,9 @@ IDENT {
 } |
 '$' IDENT {
   $$ = gen_op_var_unbound(LOADV, $2); 
+} | 
+'$' '$' IDENT {
+  $$ = gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, $3));
 }
 
 MkDict:

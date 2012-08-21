@@ -11,6 +11,7 @@
 
 "==" { return EQ; }
 "as" { return AS; }
+"def" { return DEF; }
 "."|"="|";"|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"+"|"\$" { return yytext[0];}
 
 [[:digit:]]+  { yylval->num = atoi(yytext);   return NUMBER;}

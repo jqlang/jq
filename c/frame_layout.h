@@ -6,6 +6,7 @@
 struct closure {
   struct bytecode* bc;
   uint16_t* pc;
+  stack_idx env;
 };
 
 typedef union frame_elem {
@@ -57,22 +58,40 @@ static uint16_t** frame_current_pc(struct forkable_stack* stk) {
   return &frame_self(frame_current(stk))->pc;
 }
 
-
-
-
-static void frame_push(struct forkable_stack* stk, struct bytecode* bc) {
-  frame_ptr fp = forkable_stack_push(stk, frame_size(bc));
-  frame_self(fp)->bc = bc;
-  frame_self(fp)->pc = bc->code;
+static frame_ptr frame_get_parent(struct forkable_stack* stk, frame_ptr fr) {
+  return forkable_stack_from_idx(stk, frame_self(fr)->env);
 }
 
-static void frame_push_backtrack(struct forkable_stack* stk, 
-                                      struct bytecode* bc, uint16_t* pc) {
+static frame_ptr frame_get_level(struct forkable_stack* stk, frame_ptr fr, int level) {
+  for (int i=0; i<level; i++) {
+    fr = frame_get_parent(stk, fr);
+  }
+  return fr;
+}
+
+static struct closure closure_new_toplevel(struct bytecode* bc) {
+  struct closure cl = {bc, bc->code, -1};
+  return cl;
+}
+static struct closure closure_new(struct forkable_stack* stk, struct bytecode* bc) {
+  struct closure cl = {bc, bc->code, 
+                       forkable_stack_to_idx(stk, frame_current(stk))};
+  return cl;
+}
+
+static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl) {
+  frame_ptr fp = forkable_stack_push(stk, frame_size(cl.bc));
+  *frame_self(fp) = cl;
+  return fp;
+}
+
+static frame_ptr frame_push_backtrack(struct forkable_stack* stk, uint16_t* pc) {
+  struct closure curr = *frame_self(frame_current(stk));
   frame_ptr fp = forkable_stack_push(stk, sizeof(union frame_elem) * 2);
-  frame_self(fp)->bc = bc;
-  frame_self(fp)->pc = pc;
+  curr.pc = pc;
+  *frame_self(fp) = curr;
+  return fp;
 }
-
 
 static void frame_pop(struct forkable_stack* stk) {
   forkable_stack_pop(stk);

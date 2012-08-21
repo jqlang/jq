@@ -116,4 +116,19 @@ static void forkable_stack_restore(struct forkable_stack* s, struct forkable_sta
   s->savedlimit = state->prevlimit;
   forkable_stack_check(s);
 }
+
+typedef int stack_idx;
+
+static stack_idx forkable_stack_to_idx(struct forkable_stack* s, void* ptr) {
+  char* item = ptr;
+  int pos = item - s->stk;
+  assert(pos >= 0 && pos < s->length);
+  return s->length - pos;
+}
+
+static void* forkable_stack_from_idx(struct forkable_stack* s, stack_idx idx) {
+  assert(idx >= 1 && idx <= s->length);
+  return &s->stk[s->length - idx];
+}
+
 #endif

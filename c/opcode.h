@@ -21,6 +21,10 @@ enum {
   OP_HAS_SYMBOL = 16,
   OP_HAS_CFUNC = 32,
   OP_HAS_UFUNC = 64,
+  OP_IS_CALL_PSEUDO = 128,
+  OP_HAS_VARIABLE_LENGTH_ARGLIST = 256,
+  OP_HAS_BLOCK = 512,
+  OP_HAS_BINDING = 1024,
 };
 struct opcode_description {
   opcode op;

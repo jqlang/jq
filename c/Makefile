@@ -14,7 +14,7 @@ lexer.yy.c: lexer.l
 lexer.yy.h: lexer.yy.c
 
 parser.tab.c: parser.y lexer.yy.h
-	bison -W -d parser.y
+	bison -W -d parser.y -v --report-file=parser.info
 parser.tab.h: parser.tab.c
 
 parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c

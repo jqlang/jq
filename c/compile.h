@@ -17,6 +17,9 @@ block gen_op_const(opcode op, json_t* constant);
 block gen_op_target(opcode op, block target);
 block gen_op_var_unbound(opcode op, const char* name);
 block gen_op_var_bound(opcode op, block binder);
+block gen_op_block_defn(opcode op, const char* name, block block);
+block gen_op_block_unbound(opcode op, const char* name);
+block gen_op_call(opcode op, block arglist);
 block gen_op_symbol(opcode op, const char* name);
 
 block gen_subexp(block a);
@@ -27,7 +30,7 @@ block gen_else(block a, block b);
 
 void block_append(block* b, block b2);
 block block_join(block a, block b);
-block block_bind(block binder, block body);
+block block_bind(block binder, block body, int bindflags);
 
 struct bytecode* block_compile(struct symbol_table*, block);
 

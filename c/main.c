@@ -32,6 +32,9 @@ void run_tests() {
     block_append(&program, gen_op_simple(BACKTRACK));
     struct bytecode* bc = block_compile(&builtins, program);
     block_free(program);
+    printf("Disassembly:\n");
+    dump_disassembly(2, bc);
+    printf("\n");
     fgets(buf, sizeof(buf), testdata);
     json_t* input = json_loads(buf, JSON_DECODE_ANY, 0);
     jq_init(bc, input);
@@ -76,7 +79,7 @@ int main(int argc, char* argv[]) {
   block_append(&blk, block_join(gen_op_simple(YIELD), gen_op_simple(BACKTRACK)));
   struct bytecode* bc = block_compile(&builtins, blk);
   block_free(blk);
-  dump_disassembly(bc);
+  dump_disassembly(0, bc);
   printf("\n");
   run_program(bc);
 }

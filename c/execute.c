@@ -95,6 +95,18 @@ void stack_restore(){
   forkable_stack_pop(&fork_stk);
 }
 
+static struct closure make_closure(struct forkable_stack* stk, frame_ptr fr, uint16_t* pc) {
+  uint16_t level = *pc++;
+  uint16_t idx = *pc++;
+  fr = frame_get_level(stk, fr, level);
+  if (idx & ARG_NEWCLOSURE) {
+    int subfn_idx = idx & ~ARG_NEWCLOSURE;
+    assert(subfn_idx < frame_self(fr)->bc->nsubfunctions);
+    return closure_new(stk, frame_self(fr)->bc->subfunctions[subfn_idx]);
+  } else {
+    return *frame_closure_arg(fr, idx);
+  }
+}
 #define stack_push stk_push
 #define stack_pop stk_pop
 
@@ -267,7 +279,7 @@ json_t* jq_next() {
         stack_save();
         stack_push(array);
         stack_push(stackval_root(json_integer(idx+1)));
-        frame_push_backtrack(&frame_stk, frame_current_bytecode(&frame_stk), pc - 1);
+        frame_push_backtrack(&frame_stk, pc - 1);
         stack_switch();
         
         stackval sv = {json_array_get(array.value, idx), 
@@ -291,7 +303,7 @@ json_t* jq_next() {
 
     case FORK: {
       stack_save();
-      frame_push_backtrack(&frame_stk, frame_current_bytecode(&frame_stk), pc - 1);
+      frame_push_backtrack(&frame_stk, pc - 1);
       stack_switch();
       pc++; // skip offset this time
       break;
@@ -332,13 +344,27 @@ json_t* jq_next() {
       break;
     }
 
-      /*
     case CALL_1_1: {
-      uint16_t nargs = *pc++;
-      
+      uint16_t nclosures = *pc++;
+      *frame_current_pc(&frame_stk) = pc + nclosures * 2;
+      frame_ptr new_frame = frame_push(&frame_stk, 
+                                       make_closure(&frame_stk, frame_current(&frame_stk), pc));
+      pc += 2;
+      frame_ptr old_frame = forkable_stack_peek_next(&frame_stk, new_frame);
+      for (int i=0; i<nclosures-1; i++) {
+        *frame_closure_arg(new_frame, i) = make_closure(&frame_stk, old_frame, pc);
+        pc += 2;
+      }
+
+      pc = *frame_current_pc(&frame_stk);
+      break;
     }
-      */
-      
+
+    case RET: {
+      frame_pop(&frame_stk);
+      pc = *frame_current_pc(&frame_stk);
+      break;
+    }
     }
   }
 }
@@ -350,7 +376,7 @@ void jq_init(struct bytecode* bc, json_t* input) {
   forkable_stack_init(&fork_stk, 1024); // FIXME: lower this number, see if it breaks
   
   stack_push(stackval_root(input));
-  frame_push(&frame_stk, bc);
+  frame_push(&frame_stk, closure_new_toplevel(bc));
 }
 
 void run_program(struct bytecode* bc) {

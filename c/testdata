@@ -1,0 +1,143 @@
+# Tests are groups of three lines: program, input, expected output
+# Blank lines and lines starting with # are ignored
+
+#
+# Simple value tests to check parser. Input is irrelevant
+#
+
+true
+null
+true
+
+false
+null
+false
+
+# null
+# 42
+# null
+
+1
+null
+1
+
+# FIXME: much more number testing needed
+
+{}
+null
+{}
+
+[]
+null
+[]
+
+# FIXME: string literals
+
+#
+# Dictionary construction syntax
+#
+
+{a: 1}
+null
+{"a":1}
+
+# FIXME: string literals
+
+#
+# Field access, piping
+#
+
+.foo
+{"foo": 42, "bar": 43}
+42
+
+.foo | .bar
+{"foo": {"bar": 42}, "bar": "badvalue"}
+42
+
+.foo.bar
+{"foo": {"bar": 42}, "bar": "badvalue"}
+42
+
+
+# FIXME strings
+# .["foo"].bar
+# {"foo": {"bar": 42}, "bar": "badvalue"}
+# 42
+
+
+#
+# Multiple outputs, iteration
+#
+
+.[]
+[1,2,3]
+1
+2
+3
+
+[(.,1),((.,.[]),(2,3))]
+["a","b"]
+[["a","b"],1,["a","b"],"a","b",2,3]
+
+[([5,5][]),.,.[]]
+[1,2,3]
+[5,5,[1,2,3],1,2,3]
+
+{x: (1,2)},{x:3} | .x
+null
+1
+2
+3
+
+#
+# Variables
+#
+
+1 as $x | 2 as $y | [$x,$y,$x]
+null
+[1,2,1]
+
+[1,2,3][] as $x | [[4,5,6,7][$x]]
+null
+[5]
+[6]
+[7]
+
+1 as $x | [$x,$x,$x as $x | $x]
+null
+[1,1,1]
+
+# [.,(.[] | {x:.},.),.,.[]]
+
+#
+# Builtin functions
+#
+
+# FIXME: floats vs. integer
+
+1+1
+null
+2.0
+
+.+4
+15
+19.0
+
+[1,2,3] + [.]
+null
+[1,2,3,null]
+
+#
+# User-defined functions
+# Oh god.
+#
+
+def f: . + 1; def g: def g: . + 100; $$f | $$g | $$f; ($$f | $$g), $$g
+3.0
+106.0
+105.0
+
+[[100,200][] as $x | def f: . + $x; $$f | $$f | $$f]
+1
+[300.0, 600.0]
