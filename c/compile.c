@@ -274,7 +274,8 @@ struct bytecode* block_compile(struct symbol_table* syms, block b) {
   }
   free(stack_height);
   bc->constants = constant_pool;
-  bc->framesize = maxvar + 2; // FIXME: frames of size zero?
+  bc->nlocals = maxvar + 2; // FIXME: frames of size zero?
+  bc->nclosures = 0;
   bc->globals = syms;
   return bc;
 }

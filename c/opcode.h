@@ -19,7 +19,8 @@ enum {
   OP_HAS_VARIABLE = 4,
   OP_HAS_BRANCH = 8,
   OP_HAS_SYMBOL = 16,
-  OP_HAS_CFUNC = 32
+  OP_HAS_CFUNC = 32,
+  OP_HAS_UFUNC = 64,
 };
 struct opcode_description {
   opcode op;

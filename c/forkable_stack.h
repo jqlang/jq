@@ -1,3 +1,5 @@
+#ifndef FORKABLE_STACK_H
+#define FORKABLE_STACK_H
 #include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
@@ -65,21 +67,21 @@ static void* forkable_stack_push(struct forkable_stack* s, size_t size) {
   return ret;
 }
 
-static void* forkable_stack_peek(struct forkable_stack* s, size_t size) {
+static void* forkable_stack_peek(struct forkable_stack* s) {
   assert(!forkable_stack_empty(s));
   forkable_stack_check(s);
   return (void*)(s->stk + s->pos);
 }
 
-static void* forkable_stack_peek_next(struct forkable_stack* s, void* top, size_t size) {
+static void* forkable_stack_peek_next(struct forkable_stack* s, void* top) {
   forkable_stack_check(s);
   struct forkable_stack_header* elem = top;
   return (void*)(s->stk + elem->next);
 }
 
-static void forkable_stack_pop(struct forkable_stack* s, size_t size) {
+static void forkable_stack_pop(struct forkable_stack* s) {
   forkable_stack_check(s);
-  struct forkable_stack_header* elem = forkable_stack_peek(s, size);
+  struct forkable_stack_header* elem = forkable_stack_peek(s);
   s->pos = elem->next;
 }
 
@@ -114,3 +116,4 @@ static void forkable_stack_restore(struct forkable_stack* s, struct forkable_sta
   s->savedlimit = state->prevlimit;
   forkable_stack_check(s);
 }
+#endif

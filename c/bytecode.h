@@ -23,11 +23,18 @@ struct symbol_table {
 struct bytecode {
   uint16_t* code;
   int codelen;
-  int framesize;
+
+  int nlocals;
+  int nclosures;
+
   json_t* constants;
   struct symbol_table* globals;
+
+  struct bytecode* subfunctions;
+  int nsubfunctions;
 };
 
 void dump_disassembly(struct bytecode* code);
 void dump_operation(struct bytecode* bc, uint16_t* op);
+
 #endif

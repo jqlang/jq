@@ -10,6 +10,7 @@
 #include "compile.h"
 
 #include "forkable_stack.h"
+#include "frame_layout.h"
 
 
 typedef struct {
@@ -52,34 +53,19 @@ typedef struct {
   stackval sv;
 } data_stk_elem;
 
-data_stk_elem* stk_push_frame(int n) {
-  return forkable_stack_push(&data_stk, sizeof(data_stk_elem) * n);
-}
-
-void stk_pop_frame(int n) {
-  forkable_stack_pop(&data_stk, sizeof(data_stk_elem) * n);
-}
-
 void stk_push(stackval val) {
-  data_stk_elem* s = stk_push_frame(1);
+  data_stk_elem* s = forkable_stack_push(&data_stk, sizeof(data_stk_elem));
   s->sv = val;
 }
 
 stackval stk_pop() {
-  data_stk_elem* s = forkable_stack_peek(&data_stk, sizeof(data_stk_elem));
+  data_stk_elem* s = forkable_stack_peek(&data_stk);
   stackval sv = s->sv;
-  forkable_stack_pop(&data_stk, sizeof(data_stk_elem));
+  forkable_stack_pop(&data_stk);
   return sv;
 }
 
-
-typedef struct {
-  FORKABLE_STACK_HEADER;
-  struct bytecode* bc;
-  data_stk_elem* fp;
-  uint16_t* pc;
-} call_stk_elem;
-struct forkable_stack call_stk;
+struct forkable_stack frame_stk;
 
 
 struct forkpoint {
@@ -93,20 +79,20 @@ struct forkable_stack fork_stk;
 void stack_save(){
   struct forkpoint* fork = forkable_stack_push(&fork_stk, sizeof(struct forkpoint));
   forkable_stack_save(&data_stk, &fork->saved_data_stack);
-  forkable_stack_save(&call_stk, &fork->saved_call_stack);
+  forkable_stack_save(&frame_stk, &fork->saved_call_stack);
 }
 
 void stack_switch() {
-  struct forkpoint* fork = forkable_stack_peek(&fork_stk, sizeof(struct forkpoint));
+  struct forkpoint* fork = forkable_stack_peek(&fork_stk);
   forkable_stack_switch(&data_stk, &fork->saved_data_stack);
-  forkable_stack_switch(&call_stk, &fork->saved_call_stack);
+  forkable_stack_switch(&frame_stk, &fork->saved_call_stack);
 }
 
 void stack_restore(){
-  struct forkpoint* fork = forkable_stack_peek(&fork_stk, sizeof(struct forkpoint));
+  struct forkpoint* fork = forkable_stack_peek(&fork_stk);
   forkable_stack_restore(&data_stk, &fork->saved_data_stack);
-  forkable_stack_restore(&call_stk, &fork->saved_call_stack);
-  forkable_stack_pop(&fork_stk, sizeof(struct forkpoint));
+  forkable_stack_restore(&frame_stk, &fork->saved_call_stack);
+  forkable_stack_pop(&fork_stk);
 }
 
 #define stack_push stk_push
@@ -115,29 +101,31 @@ void stack_restore(){
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
 json_t* jq_next() {
-  assert(!forkable_stack_empty(&call_stk));
-  call_stk_elem* ctx = forkable_stack_peek(&call_stk, sizeof(call_stk_elem));
-  struct bytecode* bc = ctx->bc;
-  uint16_t* pc = ctx->pc;
-  data_stk_elem* fp = ctx->fp;
-  json_t* cpool = bc->constants;
-
   json_t* cfunc_input[MAX_CFUNCTION_ARGS] = {0};
   json_t* cfunc_output[MAX_CFUNCTION_ARGS] = {0};
+
+
+  assert(!forkable_stack_empty(&frame_stk));
+  uint16_t* pc = *frame_current_pc(&frame_stk);
+
   int backtracking = 0;
   while (1) {
-
-    dump_operation(bc, pc);
+    *frame_current_pc(&frame_stk) = pc;
+    dump_operation(frame_current_bytecode(&frame_stk), pc);
 
     uint16_t opcode = *pc++;
 
     printf("\t");
     const struct opcode_description* opdesc = opcode_describe(opcode);
-    data_stk_elem* param = forkable_stack_peek(&data_stk, sizeof(data_stk_elem));
+    data_stk_elem* param;
     for (int i=0; i<opdesc->stack_in; i++) {
+      if (i == 0) {
+        param = forkable_stack_peek(&data_stk);
+      } else {
+        param = forkable_stack_peek_next(&data_stk, param);
+      }
       json_dumpf(param->sv.value, stdout, JSON_ENCODE_ANY);
       if (i < opdesc->stack_in-1) printf(" | ");
-      param = forkable_stack_peek_next(&data_stk, param, sizeof(data_stk_elem));
     }
 
     if (backtracking) {
@@ -152,7 +140,7 @@ json_t* jq_next() {
     default: assert(0 && "invalid instruction");
 
     case LOADK: {
-      json_t* v = json_array_get(cpool, *pc++);
+      json_t* v = json_array_get(frame_current_bytecode(&frame_stk)->constants, *pc++);
       assert(v);
       stack_push(stackval_replace(stack_pop(), v));
       break;
@@ -205,17 +193,19 @@ json_t* jq_next() {
 
     case LOADV: {
       uint16_t v = *pc++;
-      stack_push(stackval_replace(stack_pop(), fp[v].sv.value));
+      json_t** var = frame_local_var(frame_current(&frame_stk), v);
+      stack_push(stackval_replace(stack_pop(), *var));
       break;
     }
 
     case STOREV: {
       uint16_t v = *pc++;
+      json_t** var = frame_local_var(frame_current(&frame_stk), v);
       stackval val = stack_pop();
       printf("V%d = ", v);
       json_dumpf(val.value, stdout, JSON_ENCODE_ANY);
       printf("\n");
-      fp[v].sv.value = val.value;
+      *var = val.value;
       break;
     }
 
@@ -277,10 +267,7 @@ json_t* jq_next() {
         stack_save();
         stack_push(array);
         stack_push(stackval_root(json_integer(idx+1)));
-        call_stk_elem* ctx = forkable_stack_push(&call_stk, sizeof(call_stk_elem));
-        ctx->bc = bc;
-        ctx->fp = fp;
-        ctx->pc = pc - 1;
+        frame_push_backtrack(&frame_stk, frame_current_bytecode(&frame_stk), pc - 1);
         stack_switch();
         
         stackval sv = {json_array_get(array.value, idx), 
@@ -296,22 +283,15 @@ json_t* jq_next() {
         return 0;
       }
       stack_restore();
-      call_stk_elem* ctx = forkable_stack_peek(&call_stk, sizeof(call_stk_elem));
-      bc = ctx->bc;
-      pc = ctx->pc;
-      fp = ctx->fp;
-      cpool = bc->constants;
-      forkable_stack_pop(&call_stk, sizeof(call_stk_elem));
+      pc = *frame_current_pc(&frame_stk);
+      frame_pop(&frame_stk);
       backtracking = 1;
       break;
     }
 
     case FORK: {
       stack_save();
-      call_stk_elem* ctx = forkable_stack_push(&call_stk, sizeof(call_stk_elem));
-      ctx->bc = bc;
-      ctx->fp = fp;
-      ctx->pc = pc - 1;
+      frame_push_backtrack(&frame_stk, frame_current_bytecode(&frame_stk), pc - 1);
       stack_switch();
       pc++; // skip offset this time
       break;
@@ -324,17 +304,14 @@ json_t* jq_next() {
 
     case YIELD: {
       json_t* value = stack_pop().value;
-      call_stk_elem* ctx = forkable_stack_push(&call_stk, sizeof(call_stk_elem));
-      ctx->bc = bc;
-      ctx->fp = fp;
-      ctx->pc = pc;
+      *frame_current_pc(&frame_stk) = pc;
       return value;
     }
       
     case CALL_BUILTIN_1_1: {
       stackval top = stack_pop();
       cfunc_input[0] = top.value;
-      struct cfunction* func = &bc->globals->cfunctions[*pc++];
+      struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
       printf(" call %s\n", func->name);
       func->fptr(cfunc_input, cfunc_output);
       stack_push(stackval_replace(top, cfunc_output[0]));
@@ -348,13 +325,19 @@ json_t* jq_next() {
       cfunc_input[0] = top.value;
       cfunc_input[1] = a;
       cfunc_input[2] = b;
-      struct cfunction* func = &bc->globals->cfunctions[*pc++];
+      struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
       printf(" call %s\n", func->name);
       func->fptr(cfunc_input, cfunc_output);
       stack_push(stackval_replace(top, cfunc_output[0]));
       break;
     }
+
+      /*
+    case CALL_1_1: {
+      uint16_t nargs = *pc++;
       
+    }
+      */
       
     }
   }
@@ -363,16 +346,11 @@ json_t* jq_next() {
 
 void jq_init(struct bytecode* bc, json_t* input) {
   forkable_stack_init(&data_stk, sizeof(stackval) * 100); // FIXME: lower this number, see if it breaks
-  forkable_stack_init(&call_stk, 1024); // FIXME: lower this number, see if it breaks
+  forkable_stack_init(&frame_stk, 1024); // FIXME: lower this number, see if it breaks
   forkable_stack_init(&fork_stk, 1024); // FIXME: lower this number, see if it breaks
   
-  data_stk_elem* frame = stk_push_frame(bc->framesize);
-  
   stack_push(stackval_root(input));
-  call_stk_elem* ctx = forkable_stack_push(&call_stk, sizeof(call_stk_elem));
-  ctx->pc = bc->code;
-  ctx->bc = bc;
-  ctx->fp = frame;
+  frame_push(&frame_stk, bc);
 }
 
 void run_program(struct bytecode* bc) {

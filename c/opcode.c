@@ -5,6 +5,7 @@
 #define VARIABLE (OP_HAS_IMMEDIATE | OP_HAS_VARIABLE)
 #define BRANCH (OP_HAS_IMMEDIATE | OP_HAS_BRANCH)
 #define CFUNC (OP_HAS_IMMEDIATE | OP_HAS_SYMBOL | OP_HAS_CFUNC)
+#define UFUNC (OP_HAS_IMMEDIATE | OP_HAS_UFUNC)
 
 #define OP(name, imm, in, out) \
   {name, #name, imm, in, out},
