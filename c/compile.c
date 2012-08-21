@@ -344,8 +344,7 @@ static void compile(struct bytecode* bc, block b) {
       code[pos++] = json_array_size(constant_pool);
       json_array_append(constant_pool, curr->imm.constant);
     } else if (opflags & OP_HAS_VARIABLE) {
-      // no closing over variables yet
-      assert(curr->bound_by->compiled == bc);
+      code[pos++] = nesting_level(bc, curr->bound_by);
       uint16_t var = (uint16_t)curr->bound_by->imm.intval;
       code[pos++] = var;
       if (var > maxvar) maxvar = var;

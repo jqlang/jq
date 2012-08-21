@@ -25,6 +25,7 @@ enum {
   OP_HAS_VARIABLE_LENGTH_ARGLIST = 256,
   OP_HAS_BLOCK = 512,
   OP_HAS_BINDING = 1024,
+  OP_HAS_DOUBLE_IMMEDIATE = 2048,
 };
 struct opcode_description {
   opcode op;
@@ -36,6 +37,8 @@ struct opcode_description {
 const struct opcode_description* opcode_describe(opcode op);
 
 static inline int opcode_length(opcode op) {
-  return 1 + (opcode_describe(op)->flags & OP_HAS_IMMEDIATE ? 1 : 0);
+  return 1 + 
+    (opcode_describe(op)->flags & OP_HAS_IMMEDIATE ? 1 : 0) +
+    (opcode_describe(op)->flags & OP_HAS_DOUBLE_IMMEDIATE ? 2 : 0);
 }
 #endif

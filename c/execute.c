@@ -204,15 +204,19 @@ json_t* jq_next() {
     }
 
     case LOADV: {
+      uint16_t level = *pc++;
       uint16_t v = *pc++;
-      json_t** var = frame_local_var(frame_current(&frame_stk), v);
+      frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
+      json_t** var = frame_local_var(fp, v);
       stack_push(stackval_replace(stack_pop(), *var));
       break;
     }
 
     case STOREV: {
+      uint16_t level = *pc++;
       uint16_t v = *pc++;
-      json_t** var = frame_local_var(frame_current(&frame_stk), v);
+      frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
+      json_t** var = frame_local_var(fp, v);
       stackval val = stack_pop();
       printf("V%d = ", v);
       json_dumpf(val.value, stdout, JSON_ENCODE_ANY);

@@ -35,7 +35,7 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
   printf("%04d ", pc);
   const struct opcode_description* op = opcode_describe(bc->code[pc++]);
   printf("%s", op->name);
-  if (op->flags & OP_HAS_IMMEDIATE) {
+  if (op->flags & OP_HAS_IMMEDIATE || op->flags & OP_HAS_DOUBLE_IMMEDIATE) {
     uint16_t imm = bc->code[pc++];
     if (op->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
       for (int i=0; i<imm; i++) {
@@ -53,10 +53,15 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
     } else if (op->flags & OP_HAS_BRANCH) {
       printf(" %04d", pc + imm);
     } else if (op->flags & OP_HAS_CONSTANT) {
+      printf(" ");
       json_dumpf(json_array_get(bc->constants, imm),
                  stdout, JSON_ENCODE_ANY);
     } else if (op->flags & OP_HAS_VARIABLE) {
-      printf(" v%d", imm);
+      uint16_t v = bc->code[pc++];
+      printf(" v%d", v);
+      if (imm) {
+        printf("^%d", imm);
+      }
     } else {
       printf(" %d", imm);
     }
