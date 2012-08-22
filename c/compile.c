@@ -312,16 +312,9 @@ static void compile(struct bytecode* bc, block b) {
   json_t* constant_pool = json_array();
   int maxvar = -1;
   for (inst* curr = b.first; curr; curr = curr->next) {
-    if (curr->op == CLOSURE_CREATE) {
-      // CLOSURE_CREATE opcodes define closures for use later in the
-      // codestream. They generate no code.
-
-      // FIXME: make the above true :)
-      code[pos++] = DUP;
-      code[pos++] = POP;
-      continue;
-    }
     const struct opcode_description* op = opcode_describe(curr->op);
+    if (op->length == 0)
+      continue;
     code[pos++] = curr->op;
     int opflags = op->flags;
     assert(!(op->flags & OP_IS_CALL_PSEUDO));
