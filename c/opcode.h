@@ -1,5 +1,7 @@
 #ifndef OPCODE_H
 #define OPCODE_H
+#include <assert.h>
+
 typedef enum {
 #define OP(name, imm, in, out) name,
 #include "opcode_list.h"
@@ -14,7 +16,6 @@ enum {
 };
 
 enum {
-  OP_HAS_IMMEDIATE = 1,
   OP_HAS_CONSTANT = 2,
   OP_HAS_VARIABLE = 4,
   OP_HAS_BRANCH = 8,
@@ -25,20 +26,23 @@ enum {
   OP_HAS_VARIABLE_LENGTH_ARGLIST = 256,
   OP_HAS_BLOCK = 512,
   OP_HAS_BINDING = 1024,
-  OP_HAS_DOUBLE_IMMEDIATE = 2048,
 };
 struct opcode_description {
   opcode op;
   const char* name;
+
   int flags;
+
+  // length in 16-bit units
+  int length;
+
   int stack_in, stack_out;
 };
 
 const struct opcode_description* opcode_describe(opcode op);
 
 static inline int opcode_length(opcode op) {
-  return 1 + 
-    (opcode_describe(op)->flags & OP_HAS_IMMEDIATE ? 1 : 0) +
-    (opcode_describe(op)->flags & OP_HAS_DOUBLE_IMMEDIATE ? 2 : 0);
+  return opcode_describe(op)->length;
 }
+
 #endif

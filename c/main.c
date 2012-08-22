@@ -54,7 +54,6 @@ void run_tests() {
         json_dumpf(actual, stdout, JSON_ENCODE_ANY);
         printf("\n");
         pass = 0;
-        break;
       }
     }
     if (pass) {

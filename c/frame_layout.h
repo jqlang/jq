@@ -5,12 +5,18 @@
 
 struct closure {
   struct bytecode* bc;
-  uint16_t* pc;
   stack_idx env;
+};
+
+struct continuation {
+  struct bytecode* bc;
+  stack_idx env;
+  uint16_t* retaddr;
 };
 
 typedef union frame_elem {
   FORKABLE_STACK_HEADER;
+  struct continuation cont;
   struct closure closure;
   json_t* jsonval;
 } *frame_ptr;
@@ -27,8 +33,8 @@ static int frame_size(struct bytecode* bc) {
   return sizeof(union frame_elem) * (bc->nclosures + bc->nlocals + 2);
 }
 
-static struct closure* frame_self(frame_ptr fr) {
-  return &fr[1].closure;
+static struct continuation* frame_self(frame_ptr fr) {
+  return &fr[1].cont;
 }
 
 static struct closure* frame_closure_arg(frame_ptr fr, int closure) {
@@ -46,16 +52,20 @@ static json_t** frame_local_var(frame_ptr fr, int var) {
 
 static frame_ptr frame_current(struct forkable_stack* stk) {
   frame_ptr fp = forkable_stack_peek(stk);
-  struct bytecode* bc = frame_self(fp)->bc;
-  assert(frame_self(fp)->pc >= bc->code && frame_self(fp)->pc < bc->code + bc->codelen);
+  if (forkable_stack_peek_next(stk, fp)) {
+    struct bytecode* bc = frame_self(forkable_stack_peek_next(stk, fp))->bc;
+    assert(frame_self(fp)->retaddr >= bc->code && frame_self(fp)->retaddr < bc->code + bc->codelen);
+  } else {
+    assert(frame_self(fp)->retaddr == 0);
+  }
   return fp;
 }
 
 static struct bytecode* frame_current_bytecode(struct forkable_stack* stk) {
   return frame_self(frame_current(stk))->bc;
 }
-static uint16_t** frame_current_pc(struct forkable_stack* stk) {
-  return &frame_self(frame_current(stk))->pc;
+static uint16_t** frame_current_retaddr(struct forkable_stack* stk) {
+  return &frame_self(frame_current(stk))->retaddr;
 }
 
 static frame_ptr frame_get_parent(struct forkable_stack* stk, frame_ptr fr) {
@@ -70,26 +80,30 @@ static frame_ptr frame_get_level(struct forkable_stack* stk, frame_ptr fr, int l
 }
 
 static struct closure closure_new_toplevel(struct bytecode* bc) {
-  struct closure cl = {bc, bc->code, -1};
+  struct closure cl = {bc, -1};
   return cl;
 }
+
 static struct closure closure_new(struct forkable_stack* stk, struct bytecode* bc) {
-  struct closure cl = {bc, bc->code, 
+  struct closure cl = {bc, 
                        forkable_stack_to_idx(stk, frame_current(stk))};
   return cl;
 }
 
-static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl) {
+static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl, uint16_t* retaddr) {
   frame_ptr fp = forkable_stack_push(stk, frame_size(cl.bc));
-  *frame_self(fp) = cl;
+  struct continuation* cc = frame_self(fp);
+  cc->bc = cl.bc;
+  cc->env = cl.env;
+  cc->retaddr = retaddr;
   return fp;
 }
 
-static frame_ptr frame_push_backtrack(struct forkable_stack* stk, uint16_t* pc) {
-  struct closure curr = *frame_self(frame_current(stk));
+static frame_ptr frame_push_backtrack(struct forkable_stack* stk, uint16_t* retaddr) {
+  struct continuation cc = *frame_self(frame_current(stk));
   frame_ptr fp = forkable_stack_push(stk, sizeof(union frame_elem) * 2);
-  curr.pc = pc;
-  *frame_self(fp) = curr;
+  cc.retaddr = retaddr;
+  *frame_self(fp) = cc;
   return fp;
 }
 

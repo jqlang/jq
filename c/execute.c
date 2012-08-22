@@ -104,6 +104,7 @@ static struct closure make_closure(struct forkable_stack* stk, frame_ptr fr, uin
     assert(subfn_idx < frame_self(fr)->bc->nsubfunctions);
     return closure_new(stk, frame_self(fr)->bc->subfunctions[subfn_idx]);
   } else {
+    // FIXME: set pc
     return *frame_closure_arg(fr, idx);
   }
 }
@@ -116,13 +117,14 @@ json_t* jq_next() {
   json_t* cfunc_input[MAX_CFUNCTION_ARGS] = {0};
   json_t* cfunc_output[MAX_CFUNCTION_ARGS] = {0};
 
-
   assert(!forkable_stack_empty(&frame_stk));
-  uint16_t* pc = *frame_current_pc(&frame_stk);
+  uint16_t* pc = *frame_current_retaddr(&frame_stk);
+  frame_pop(&frame_stk);
+  
+  assert(!forkable_stack_empty(&frame_stk));
 
   int backtracking = 0;
   while (1) {
-    *frame_current_pc(&frame_stk) = pc;
     dump_operation(frame_current_bytecode(&frame_stk), pc);
 
     uint16_t opcode = *pc++;
@@ -299,7 +301,7 @@ json_t* jq_next() {
         return 0;
       }
       stack_restore();
-      pc = *frame_current_pc(&frame_stk);
+      pc = *frame_current_retaddr(&frame_stk);
       frame_pop(&frame_stk);
       backtracking = 1;
       break;
@@ -320,7 +322,7 @@ json_t* jq_next() {
 
     case YIELD: {
       json_t* value = stack_pop().value;
-      *frame_current_pc(&frame_stk) = pc;
+      frame_push_backtrack(&frame_stk, pc);
       return value;
     }
       
@@ -350,9 +352,9 @@ json_t* jq_next() {
 
     case CALL_1_1: {
       uint16_t nclosures = *pc++;
-      *frame_current_pc(&frame_stk) = pc + nclosures * 2;
       frame_ptr new_frame = frame_push(&frame_stk, 
-                                       make_closure(&frame_stk, frame_current(&frame_stk), pc));
+                                       make_closure(&frame_stk, frame_current(&frame_stk), pc),
+                                       pc + nclosures * 2);
       pc += 2;
       frame_ptr old_frame = forkable_stack_peek_next(&frame_stk, new_frame);
       for (int i=0; i<nclosures-1; i++) {
@@ -360,13 +362,13 @@ json_t* jq_next() {
         pc += 2;
       }
 
-      pc = *frame_current_pc(&frame_stk);
+      pc = frame_current_bytecode(&frame_stk)->code;
       break;
     }
 
     case RET: {
+      pc = *frame_current_retaddr(&frame_stk);
       frame_pop(&frame_stk);
-      pc = *frame_current_pc(&frame_stk);
       break;
     }
     }
@@ -375,12 +377,13 @@ json_t* jq_next() {
 
 
 void jq_init(struct bytecode* bc, json_t* input) {
-  forkable_stack_init(&data_stk, sizeof(stackval) * 100); // FIXME: lower this number, see if it breaks
-  forkable_stack_init(&frame_stk, 1024); // FIXME: lower this number, see if it breaks
-  forkable_stack_init(&fork_stk, 1024); // FIXME: lower this number, see if it breaks
+  forkable_stack_init(&data_stk, sizeof(stackval) * 1000); // FIXME: lower this number, see if it breaks
+  forkable_stack_init(&frame_stk, 10240); // FIXME: lower this number, see if it breaks
+  forkable_stack_init(&fork_stk, 10240); // FIXME: lower this number, see if it breaks
   
   stack_push(stackval_root(input));
-  frame_push(&frame_stk, closure_new_toplevel(bc));
+  frame_push(&frame_stk, closure_new_toplevel(bc), 0);
+  frame_push_backtrack(&frame_stk, bc->code);
 }
 
 void run_program(struct bytecode* bc) {

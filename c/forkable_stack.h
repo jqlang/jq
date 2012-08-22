@@ -76,7 +76,11 @@ static void* forkable_stack_peek(struct forkable_stack* s) {
 static void* forkable_stack_peek_next(struct forkable_stack* s, void* top) {
   forkable_stack_check(s);
   struct forkable_stack_header* elem = top;
-  return (void*)(s->stk + elem->next);
+  if (elem->next < s->length) {
+    return (void*)(s->stk + elem->next);
+  } else {
+    return 0;
+  }
 }
 
 static void forkable_stack_pop(struct forkable_stack* s) {

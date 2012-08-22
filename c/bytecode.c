@@ -35,7 +35,7 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
   printf("%04d ", pc);
   const struct opcode_description* op = opcode_describe(bc->code[pc++]);
   printf("%s", op->name);
-  if (op->flags & OP_HAS_IMMEDIATE || op->flags & OP_HAS_DOUBLE_IMMEDIATE) {
+  if (op->length > 1) {
     uint16_t imm = bc->code[pc++];
     if (op->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
       for (int i=0; i<imm; i++) {

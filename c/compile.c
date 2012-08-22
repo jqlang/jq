@@ -65,7 +65,7 @@ block gen_noop() {
 }
 
 block gen_op_simple(opcode op) {
-  assert(!(opcode_describe(op)->flags & OP_HAS_IMMEDIATE));
+  assert(opcode_describe(op)->length == 1);
   return inst_block(inst_new(op));
 }
 
@@ -364,8 +364,8 @@ static void compile(struct bytecode* bc, block b) {
         }
       }
       assert(found);
-    } else if (opflags & OP_HAS_IMMEDIATE) {
-      code[pos++] = curr->imm.intval;
+    } else if (op->length > 1) {
+      assert(0 && "codegen not implemented for this operation");
     }
   }
   bc->constants = constant_pool;
