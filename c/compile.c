@@ -59,6 +59,24 @@ static block inst_block(inst* i) {
   return b;
 }
 
+static int block_is_single(block b) {
+  return b.first && b.first == b.last;
+}
+
+static inst* block_take(block* b) {
+  if (b->first == 0) return 0;
+  inst* i = b->first;
+  if (i->next) {
+    i->next->prev = 0;
+    b->first = i->next;
+    i->next = 0;
+  } else {
+    b->first = 0;
+    b->last = 0;
+  }
+  return i;
+}
+
 block gen_noop() {
   block b = {0,0};
   return b;
@@ -92,8 +110,7 @@ block gen_op_targetlater(opcode op) {
   return inst_block(i);
 }
 void inst_set_target(block b, block target) {
-  assert(b.first);
-  assert(b.first == b.last);
+  assert(block_is_single(b));
   assert(opcode_describe(b.first->op)->flags & OP_HAS_BRANCH);
   assert(target.last);
   b.first->imm.target = target.last;
@@ -107,9 +124,7 @@ block gen_op_var_unbound(opcode op, const char* name) {
 }
 
 block gen_op_var_bound(opcode op, block binder) {
-  assert(opcode_describe(op)->flags & OP_HAS_VARIABLE);
-  assert(binder.first);
-  assert(binder.first == binder.last);
+  assert(block_is_single(binder));
   block b = gen_op_var_unbound(op, binder.first->symbol);
   b.first->bound_by = binder.first;
   return b;
@@ -138,18 +153,38 @@ block gen_op_block_unbound(opcode op, const char* name) {
   return inst_block(i);
 }
 
+block gen_op_block_bound(opcode op, block binder) {
+  assert(block_is_single(binder));
+  block b = gen_op_block_unbound(op, binder.first->symbol);
+  b.first->bound_by = binder.first;
+  return b;
+}
 
 block gen_op_call(opcode op, block arglist) {
   assert(opcode_describe(op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST);
   inst* i = inst_new(op);
+  block prelude = gen_noop();
+  block call = inst_block(i);
   int nargs = 0;
-  for (inst* curr = arglist.first; curr; curr = curr->next) {
+  inst* curr = 0;
+  while ((curr = block_take(&arglist))) {
     assert(opcode_describe(curr->op)->flags & OP_IS_CALL_PSEUDO);
+    block bcurr = inst_block(curr);
+    switch (curr->op) {
+    default: assert(0 && "Unknown type of parameter"); break;
+    case CLOSURE_REF:
+      block_append(&call, bcurr);
+      break;
+    case CLOSURE_CREATE:
+      block_append(&prelude, bcurr);
+      block_append(&call, gen_op_block_bound(CLOSURE_REF, bcurr));
+      break;
+    }
     nargs++;
   }
   assert(nargs < 100); //FIXME
   i->imm.intval = nargs;
-  return block_join(inst_block(i), arglist);
+  return block_join(prelude, call);
 }
 
 static void inst_join(inst* a, inst* b) {
@@ -178,8 +213,7 @@ block block_join(block a, block b) {
 }
 
 static void block_bind_subblock(block binder, block body, int bindflags) {
-  assert(binder.first);
-  assert(binder.first == binder.last);
+  assert(block_is_single(binder));
   assert((opcode_describe(binder.first->op)->flags & bindflags) == bindflags);
   assert(binder.first->symbol);
   assert(binder.first->bound_by == 0 || binder.first->bound_by == binder.first);
@@ -194,6 +228,7 @@ static void block_bind_subblock(block binder, block body, int bindflags) {
       i->bound_by = binder.first;
     }
     if (flags & OP_HAS_BLOCK) {
+      // binding recurses into closures
       block_bind_subblock(binder, i->subfn, bindflags);
     }
   }
@@ -272,6 +307,7 @@ static void compile(struct bytecode* bc, block b) {
   int pos = 0;
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
+  bc->nclosures = 0;
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
     pos += opcode_length(curr->op);
@@ -289,6 +325,10 @@ static void compile(struct bytecode* bc, block b) {
     if (opflags & OP_HAS_BLOCK) {
       assert(curr->bound_by == curr);
       curr->imm.intval = bc->nsubfunctions++;
+    }
+    if (curr->op == CLOSURE_PARAM) {
+      assert(curr->bound_by == curr);
+      curr->imm.intval = bc->nclosures++;
     }
   }
   if (bc->nsubfunctions) {
@@ -331,6 +371,9 @@ static void compile(struct bytecode* bc, block b) {
         case CLOSURE_CREATE:
           code[pos++] = curr->bound_by->imm.intval | ARG_NEWCLOSURE;
           break;
+        case CLOSURE_PARAM:
+          code[pos++] = curr->bound_by->imm.intval;
+          break;
         }
       }
     } else if (opflags & OP_HAS_CONSTANT) {
@@ -363,7 +406,6 @@ static void compile(struct bytecode* bc, block b) {
   }
   bc->constants = constant_pool;
   bc->nlocals = maxvar + 2; // FIXME: frames of size zero?
-  bc->nclosures = 0;
 }
 
 struct bytecode* block_compile(struct symbol_table* syms, block b) {

@@ -13,6 +13,9 @@ static int bytecode_operation_length(uint16_t* codeptr) {
 }
 
 void dump_disassembly(int indent, struct bytecode* bc) {
+  if (bc->nclosures > 0) {
+    printf("%*s[params: %d]\n", indent, "", bc->nclosures);
+  }
   dump_code(indent, bc);
   for (int i=0; i<bc->nsubfunctions; i++) {
     printf("%*ssubfn[%d]:\n", indent, "", i);

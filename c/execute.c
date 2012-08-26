@@ -357,6 +357,7 @@ json_t* jq_next() {
                                        pc + nclosures * 2);
       pc += 2;
       frame_ptr old_frame = forkable_stack_peek_next(&frame_stk, new_frame);
+      assert(nclosures - 1 == frame_self(new_frame)->bc->nclosures);
       for (int i=0; i<nclosures-1; i++) {
         *frame_closure_arg(new_frame, i) = make_closure(&frame_stk, old_frame, pc);
         pc += 2;

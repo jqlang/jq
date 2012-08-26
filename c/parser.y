@@ -65,6 +65,11 @@ Exp:
   $$ = block_bind(gen_op_block_defn(CLOSURE_CREATE, $2, body), $6, OP_IS_CALL_PSEUDO);
 } |
 
+"def" IDENT '(' IDENT ')' ':' Exp ';' Exp {
+  block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, $4), block_join($7, gen_op_simple(RET)), OP_IS_CALL_PSEUDO);
+  $$ = block_bind(gen_op_block_defn(CLOSURE_CREATE, $2, body), $9, OP_IS_CALL_PSEUDO);
+} |
+
 Term "as" '$' IDENT '|' Exp {
   $$ = gen_op_simple(DUP);
   block_append(&$$, $1);
@@ -143,6 +148,14 @@ IDENT {
 } | 
 '$' '$' IDENT {
   $$ = gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, $3));
+} |
+'$' '$' IDENT '(' Exp ')' {
+  $$ = gen_op_call(CALL_1_1, 
+                   block_join(gen_op_block_unbound(CLOSURE_REF, $3),
+                              block_bind(gen_op_block_defn(CLOSURE_CREATE,
+                                                "lambda",
+                                                           block_join($5, gen_op_simple(RET))),
+                                         gen_noop(), OP_IS_CALL_PSEUDO)));
 }
 
 MkDict:
