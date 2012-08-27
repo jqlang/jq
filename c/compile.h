@@ -28,11 +28,14 @@ block gen_collect(block expr);
 block gen_assign(block expr);
 block gen_else(block a, block b);
 
+block gen_cbinding(struct symbol_table* functions, block b);
 
 void block_append(block* b, block b2);
 block block_join(block a, block b);
 block block_bind(block binder, block body, int bindflags);
 
-struct bytecode* block_compile(struct symbol_table*, block);
+struct bytecode* block_compile(block);
 
 void block_free(block);
+
+

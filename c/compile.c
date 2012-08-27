@@ -14,6 +14,7 @@ struct inst {
     uint16_t intval;
     struct inst* target;
     json_t* constant;
+    struct cfunction* cfunc;
   } imm;
 
   // Binding
@@ -311,6 +312,16 @@ block gen_else(block a, block b) {
   assert(0);
 }
 
+block gen_cbinding(struct symbol_table* t, block code) {
+  for (int cfunc=0; cfunc<t->ncfunctions; cfunc++) {
+    inst* i = inst_new(CLOSURE_CREATE_C);
+    i->imm.cfunc = &t->cfunctions[cfunc];
+    i->symbol = strdup(i->imm.cfunc->name);
+    code = block_bind(inst_block(i), code, OP_IS_CALL_PSEUDO);
+  }
+  return code;
+}
+
 static uint16_t nesting_level(struct bytecode* bc, inst* target) {
   uint16_t level = 0;
   assert(bc && target->compiled);
@@ -320,6 +331,16 @@ static uint16_t nesting_level(struct bytecode* bc, inst* target) {
   }
   assert(bc && bc == target->compiled);
   return level;
+}
+
+static int count_cfunctions(block b) {
+  int n = 0;
+  for (inst* i = b.first; i; i = i->next) {
+    if (i->op == CLOSURE_CREATE_C) n++;
+    if (opcode_describe(i->op)->flags & OP_HAS_BLOCK)
+      n += count_cfunctions(i->subfn);
+  }
+  return n;
 }
 
 static void compile(struct bytecode* bc, block b) {
@@ -349,6 +370,12 @@ static void compile(struct bytecode* bc, block b) {
       assert(curr->bound_by == curr);
       curr->imm.intval = bc->nclosures++;
     }
+    if (curr->op == CLOSURE_CREATE_C) {
+      assert(curr->bound_by == curr);
+      int idx = bc->globals->ncfunctions++;
+      bc->globals->cfunctions[idx] = *curr->imm.cfunc;
+      curr->imm.intval = idx;
+    }
   }
   if (bc->nsubfunctions) {
     bc->subfunctions = malloc(sizeof(struct bytecode*) * bc->nsubfunctions);
@@ -374,6 +401,7 @@ static void compile(struct bytecode* bc, block b) {
     const struct opcode_description* op = opcode_describe(curr->op);
     if (op->length == 0)
       continue;
+    uint16_t* opcode_rewrite = &code[pos];
     code[pos++] = curr->op;
     int opflags = op->flags;
     assert(!(op->flags & OP_IS_CALL_PSEUDO));
@@ -381,6 +409,7 @@ static void compile(struct bytecode* bc, block b) {
       int nargs = curr->imm.intval;
       assert(nargs > 0);
       code[pos++] = (uint16_t)nargs;
+      int desired_params;
       for (int i=0; i<nargs; i++) {
         curr = curr->next;
         assert(curr && opcode_describe(curr->op)->flags & OP_IS_CALL_PSEUDO);
@@ -389,12 +418,20 @@ static void compile(struct bytecode* bc, block b) {
         default: assert(0 && "Unknown type of argument");
         case CLOSURE_CREATE:
           code[pos++] = curr->bound_by->imm.intval | ARG_NEWCLOSURE;
+          if (i == 0) desired_params = bc->subfunctions[curr->bound_by->imm.intval]->nclosures;
           break;
         case CLOSURE_PARAM:
           code[pos++] = curr->bound_by->imm.intval;
+          if (i == 0) desired_params = 0;
+          break;
+        case CLOSURE_CREATE_C:
+          code[pos++] = curr->bound_by->imm.intval;
+          *opcode_rewrite = bc->globals->cfunctions[curr->bound_by->imm.intval].callop;
+          if (i == 0) desired_params = 0;
           break;
         }
       }
+      assert(nargs - 1 == desired_params);
     } else if (opflags & OP_HAS_CONSTANT) {
       code[pos++] = json_array_size(constant_pool);
       json_array_append(constant_pool, curr->imm.constant);
@@ -427,11 +464,15 @@ static void compile(struct bytecode* bc, block b) {
   bc->nlocals = maxvar + 2; // FIXME: frames of size zero?
 }
 
-struct bytecode* block_compile(struct symbol_table* syms, block b) {
+struct bytecode* block_compile(block b) {
   struct bytecode* bc = malloc(sizeof(struct bytecode));
   bc->parent = 0;
-  bc->globals = syms;
+  bc->globals = malloc(sizeof(struct symbol_table));
+  int ncfunc = count_cfunctions(b);
+  bc->globals->ncfunctions = 0;
+  bc->globals->cfunctions = malloc(sizeof(struct cfunction) * ncfunc);
   compile(bc, b);
+  assert(bc->globals->ncfunctions == ncfunc);
   return bc;
 }
 

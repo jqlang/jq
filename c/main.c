@@ -30,7 +30,7 @@ void run_tests() {
     block program = compile(buf);
     block_append(&program, gen_op_simple(YIELD));
     block_append(&program, gen_op_simple(BACKTRACK));
-    struct bytecode* bc = block_compile(&builtins, program);
+    struct bytecode* bc = block_compile(gen_cbinding(&builtins, program));
     block_free(program);
     printf("Disassembly:\n");
     dump_disassembly(2, bc);
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
   if (argc == 1) { run_tests(); return 0; }
   block blk = compile(argv[1]);
   block_append(&blk, block_join(gen_op_simple(YIELD), gen_op_simple(BACKTRACK)));
-  struct bytecode* bc = block_compile(&builtins, blk);
+  struct bytecode* bc = block_compile(gen_cbinding(&builtins, blk));
   block_free(blk);
   dump_disassembly(0, bc);
   printf("\n");

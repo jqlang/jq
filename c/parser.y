@@ -106,7 +106,7 @@ Exp '+' Exp {
   $$ = gen_noop();
   block_append(&$$, gen_subexp($1));
   block_append(&$$, gen_subexp($3));
-  block_append(&$$, gen_op_symbol(CALL_BUILTIN_3_1, "_plus"));
+  block_append(&$$, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, "_plus")));
 } |
 
 Term { 
@@ -158,21 +158,18 @@ NUMBER {
   block_append(&$$, $2);
   block_append(&$$, gen_op_simple(POP));
 } |
-IDENT {
-  $$ = gen_op_symbol(CALL_BUILTIN_1_1, $1);
-} |
 '$' IDENT {
   $$ = gen_op_var_unbound(LOADV, $2); 
 } | 
-'$' '$' IDENT {
-  $$ = gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, $3));
+IDENT {
+  $$ = gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, $1));
 } |
-'$' '$' IDENT '(' Exp ')' {
+IDENT '(' Exp ')' {
   $$ = gen_op_call(CALL_1_1, 
-                   block_join(gen_op_block_unbound(CLOSURE_REF, $3),
+                   block_join(gen_op_block_unbound(CLOSURE_REF, $1),
                               block_bind(gen_op_block_defn(CLOSURE_CREATE,
                                                 "lambda",
-                                                           block_join($5, gen_op_simple(RET))),
+                                                           block_join($3, gen_op_simple(RET))),
                                          gen_noop(), OP_IS_CALL_PSEUDO)));
 }
 

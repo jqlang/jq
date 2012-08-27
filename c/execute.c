@@ -349,6 +349,9 @@ json_t* jq_next() {
     }
       
     case CALL_BUILTIN_1_1: {
+      assert(*pc == 1); // no closure args allowed
+      pc++; // skip nclosures
+      pc++; // skip level
       stackval top = stack_pop();
       cfunc_input[0] = top.value;
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
@@ -359,6 +362,9 @@ json_t* jq_next() {
     }
 
     case CALL_BUILTIN_3_1: {
+      assert(*pc == 1); // no closure args allowed
+      pc++; // skip nclosures
+      pc++; // skip level
       stackval top = stack_pop();
       json_t* a = stack_pop().value;
       json_t* b = stack_pop().value;
