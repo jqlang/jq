@@ -28,6 +28,8 @@
 %token EQ "=="
 %token AS "as"
 %token DEF "def"
+%token SETPIPE "|="
+%nonassoc '=' SETPIPE
 %nonassoc EQ
 %left '+'
 
@@ -74,6 +76,22 @@ Term "as" '$' IDENT '|' Exp {
   $$ = gen_op_simple(DUP);
   block_append(&$$, $1);
   block_append(&$$, block_bind(gen_op_var_unbound(STOREV, $4), $6, OP_HAS_VARIABLE));
+} |
+
+Exp '=' Exp {
+  block assign = gen_op_simple(DUP);
+  block_append(&assign, $3);
+  block_append(&assign, gen_op_simple(SWAP));
+  block_append(&assign, $1);
+  block_append(&assign, gen_op_simple(SWAP));
+  $$ = gen_assign(assign);
+} |
+
+Exp "|=" Exp {
+  block assign = $1;
+  block_append(&assign, gen_op_simple(DUP));
+  block_append(&assign, $3);
+  $$ = gen_assign(assign);
 } |
 
 Exp '|' Exp { 

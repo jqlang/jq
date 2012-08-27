@@ -288,6 +288,25 @@ block gen_collect(block expr) {
   return c;
 }
 
+block gen_assign(block expr) {
+  block c = gen_noop();
+  block_append(&c, gen_op_simple(DUP));
+  block result_var = block_bind(gen_op_var_unbound(STOREV, "result"),
+                                gen_noop(), OP_HAS_VARIABLE);
+  block_append(&c, result_var);
+
+  block loop = gen_noop();
+  block_append(&loop, gen_op_simple(DUP));
+  block_append(&loop, expr);
+  block_append(&loop, gen_op_var_bound(ASSIGN, result_var));
+  block_append(&loop, gen_op_simple(BACKTRACK));
+
+  block_append(&c, gen_op_target(FORK, loop));
+  block_append(&c, loop);
+  block_append(&c, gen_op_var_bound(LOADV, result_var));
+  return c;
+}
+
 block gen_else(block a, block b) {
   assert(0);
 }

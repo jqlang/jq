@@ -25,6 +25,7 @@ block gen_op_symbol(opcode op, const char* name);
 block gen_subexp(block a);
 block gen_both(block a, block b);
 block gen_collect(block expr);
+block gen_assign(block expr);
 block gen_else(block a, block b);
 
 

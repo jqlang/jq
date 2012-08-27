@@ -12,6 +12,8 @@
 #include "forkable_stack.h"
 #include "frame_layout.h"
 
+#include "jv.h"
+
 
 typedef struct {
   json_t* value;
@@ -108,6 +110,8 @@ static struct closure make_closure(struct forkable_stack* stk, frame_ptr fr, uin
     return *frame_closure_arg(fr, idx);
   }
 }
+
+
 #define stack_push stk_push
 #define stack_pop stk_pop
 
@@ -245,20 +249,37 @@ json_t* jq_next() {
     }
 #endif
 
+    case ASSIGN_DBG: {
+      stackval replacement = stack_pop();
+      stackval path_end = stack_pop();
+      stackval path_start = stack_pop();
+      json_t* obj = jv_insert(path_start.value, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
+      stack_push(stackval_replace(path_start, obj));
+      break;
+    }
+
+    case ASSIGN: {
+      stackval replacement = stack_pop();
+      stackval path_end = stack_pop();
+      stackval path_start = stack_pop();
+
+      uint16_t level = *pc++;
+      uint16_t v = *pc++;
+      frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
+      json_t** var = frame_local_var(fp, v);
+      *var = jv_insert(*var, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
+      break;
+    }
+
     case INDEX: {
       stackval t = stack_pop();
       json_t* k = stack_pop().value;
-      stackval v;
-      if (json_is_string(k)) {
-        v.value = json_object_get(t.value, json_string_value(k));
-      } else if (json_is_integer(k)) {
-        v.value = json_array_get(t.value, json_integer_value(k));
-      } else {
-        assert(0 && "key neither string nor int");
-      }
-      if (v.value) {
-        v.pathidx = path_push(t, k);
-        stack_push(v);
+      json_t* v = jv_lookup(t.value, k);
+      if (v) {
+        stackval sv;
+        sv.value = v;
+        sv.pathidx = path_push(t, k);
+        stack_push(sv);
       } else {
         assert(0 && "bad lookup");
       }
@@ -314,6 +335,7 @@ json_t* jq_next() {
       pc++; // skip offset this time
       break;
     }
+
     case ON_BACKTRACK(FORK): {
       uint16_t offset = *pc++;
       pc += offset;
