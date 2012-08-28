@@ -1,4 +1,4 @@
-CC=gcc -Wall -std=gnu99 -ggdb
+CC=gcc -Wall -std=gnu99 -ggdb -Wno-unused-function
 
 .PHONY: all clean
 all: parsertest
@@ -19,3 +19,13 @@ parser.tab.h: parser.tab.c
 
 parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c
 	$(CC) -o $@ $^ -ljansson
+
+jvtest: jvtest.c jv.c jv_print.c
+	$(CC) -o $@ $^ -ljansson
+
+test: jvtest
+	valgrind --error-exitcode=1 -q --leak-check=full ./jvtest
+
+jsparse: jsparse.l jv.c
+	flex -o jsparse.c jsparse.l
+	gcc -o jsparse jsparse.c -ljansson
