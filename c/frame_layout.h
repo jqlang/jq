@@ -79,17 +79,6 @@ static frame_ptr frame_get_level(struct forkable_stack* stk, frame_ptr fr, int l
   return fr;
 }
 
-static struct closure closure_new_toplevel(struct bytecode* bc) {
-  struct closure cl = {bc, -1};
-  return cl;
-}
-
-static struct closure closure_new(struct forkable_stack* stk, struct bytecode* bc) {
-  struct closure cl = {bc, 
-                       forkable_stack_to_idx(stk, frame_current(stk))};
-  return cl;
-}
-
 static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl, uint16_t* retaddr) {
   frame_ptr fp = forkable_stack_push(stk, frame_size(cl.bc));
   struct continuation* cc = frame_self(fp);

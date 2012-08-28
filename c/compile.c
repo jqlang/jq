@@ -418,7 +418,10 @@ static void compile(struct bytecode* bc, block b) {
         default: assert(0 && "Unknown type of argument");
         case CLOSURE_CREATE:
           code[pos++] = curr->bound_by->imm.intval | ARG_NEWCLOSURE;
-          if (i == 0) desired_params = bc->subfunctions[curr->bound_by->imm.intval]->nclosures;
+          if (i == 0) {
+            inst* i = curr->bound_by;
+            desired_params = i->compiled->subfunctions[i->imm.intval]->nclosures;
+          }
           break;
         case CLOSURE_PARAM:
           code[pos++] = curr->bound_by->imm.intval;

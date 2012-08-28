@@ -104,9 +104,10 @@ static struct closure make_closure(struct forkable_stack* stk, frame_ptr fr, uin
   if (idx & ARG_NEWCLOSURE) {
     int subfn_idx = idx & ~ARG_NEWCLOSURE;
     assert(subfn_idx < frame_self(fr)->bc->nsubfunctions);
-    return closure_new(stk, frame_self(fr)->bc->subfunctions[subfn_idx]);
+    struct closure cl = {frame_self(fr)->bc->subfunctions[subfn_idx],
+                         forkable_stack_to_idx(stk, fr)};
+    return cl;
   } else {
-    // FIXME: set pc
     return *frame_closure_arg(fr, idx);
   }
 }
@@ -214,6 +215,9 @@ json_t* jq_next() {
       uint16_t v = *pc++;
       frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
       json_t** var = frame_local_var(fp, v);
+      printf("V%d = ", v);
+      json_dumpf(*var, stdout, JSON_ENCODE_ANY);
+      printf("\n");
       stack_push(stackval_replace(stack_pop(), *var));
       break;
     }
@@ -411,7 +415,8 @@ void jq_init(struct bytecode* bc, json_t* input) {
   forkable_stack_init(&fork_stk, 10240); // FIXME: lower this number, see if it breaks
   
   stack_push(stackval_root(input));
-  frame_push(&frame_stk, closure_new_toplevel(bc), 0);
+  struct closure top = {bc, -1};
+  frame_push(&frame_stk, top, 0);
   frame_push_backtrack(&frame_stk, bc->code);
 }
 

@@ -143,6 +143,8 @@ def f: (1000,2000); f
 1000
 2000
 
+# test backtracking through function calls and returns
+# this test is *evil*
 [[20,10][1,0] as $x | def f: (100,200) as $y | def g: [$x + $y, .]; . + $x | g; f[0] | [f][0][1] | f]
 "woo, testing!"
 [[110.0, 130.0], [210.0, 130.0], [110.0, 230.0], [210.0, 230.0], [120.0, 160.0], [220.0, 160.0], [120.0, 260.0], [220.0, 260.0]]
@@ -154,3 +156,7 @@ def f(x): x | x; f([.], . + [42])
 [[1,2,3,42]]
 [1,2,3,42,42]
 
+# test closures and lexical scoping
+def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x | f($x,$x+x); g($x)
+"more testing"
+[1,100,2100.0,100,2100.0]
