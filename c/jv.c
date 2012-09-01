@@ -602,6 +602,7 @@ static jv* jvp_object_write(jv_complex* object, jvp_string* key) {
     jvp_string_free_p(key);
   } else {
     slot = jvp_object_add_slot(object, key, bucket);
+    slot->value = jv_null();
   }
   if (slot == 0) {
     jvp_object_rehash(object);
@@ -609,6 +610,7 @@ static jv* jvp_object_write(jv_complex* object, jvp_string* key) {
     assert(!jvp_object_find_slot(object, key, bucket));
     slot = jvp_object_add_slot(object, key, bucket);
     assert(slot);
+    slot->value = jv_null();
   }
   return &slot->value;
 }
@@ -654,7 +656,9 @@ jv jv_object_set(jv object, jv key, jv value) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(jv_get_kind(key) == JV_KIND_STRING);
   // copy/free of object, key, value coalesced
-  *jvp_object_write(&object.val.complex, jvp_string_ptr(&key.val.complex)) = value;
+  jv* slot = jvp_object_write(&object.val.complex, jvp_string_ptr(&key.val.complex));
+  jv_free(*slot);
+  *slot = value;
   return object;
 }
 
