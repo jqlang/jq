@@ -1,10 +1,11 @@
 #ifndef JV_H
 #define JV_H
 
-#include <jansson.h>
 #include <stdint.h>
 #include <assert.h>
-
+#include <stddef.h>
+#ifndef NO_JANSSON
+#include <jansson.h>
 static json_t* jv_lookup(json_t* t, json_t* k) {
   json_t* v;
   if (json_is_object(t) && json_is_string(k)) {
@@ -38,7 +39,7 @@ static json_t* jv_insert(json_t* root, json_t* value, json_t** path, int pathlen
   }
   return jv_modify(root, *path, jv_insert(jv_lookup(root, *path), value, path+1, pathlen-1));
 }
-
+#endif
 
 
 
@@ -114,6 +115,10 @@ int jv_object_iter_next(jv, int);
 int jv_object_iter_valid(jv, int);
 jv jv_object_iter_key(jv, int);
 jv jv_object_iter_value(jv, int);
+
+
+void jv_dump(jv);
+
 
 
 #endif

@@ -21,11 +21,12 @@ parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute
 	$(CC) -o $@ $^ -ljansson
 
 jvtest: jvtest.c jv.c jv_print.c
-	$(CC) -o $@ $^ -ljansson
+	$(CC) -DNO_JANSSON -o $@ $^
+
+jv_parse: jv_parse.c jv.c jv_print.c jv_dtoa.c
+	$(CC) -DNO_JANSSON -o $@ $^
+
 
 test: jvtest
 	valgrind --error-exitcode=1 -q --leak-check=full ./jvtest
 
-jsparse: jsparse.l jv.c
-	flex -o jsparse.c jsparse.l
-	gcc -o jsparse jsparse.c -ljansson

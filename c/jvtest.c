@@ -3,8 +3,6 @@
 #include <string.h>
 #include "jv.h"
 
-void jv_dump(jv);
-
 int main(){
   /// Arrays and numbers
   {
