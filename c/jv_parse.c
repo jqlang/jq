@@ -100,7 +100,8 @@ pfunc token(char ch) {
     } else {
       if (jv_get_kind(stack[stackpos-1]) != JV_KIND_OBJECT)
         return "Unmatched '}'";
-      // FIXME: assert object empty
+      if (jv_object_length(jv_copy(stack[stackpos-1])) != 0)
+        return "Expected another key-value pair";
     }
     hasnext = 1;
     next = stack[--stackpos];

@@ -632,6 +632,15 @@ static int jvp_object_delete(jv_complex* object, jvp_string* key) {
   return 0;
 }
 
+static int jvp_object_length(jv_complex* object) {
+  int n = 0;
+  for (int i=0; i<jvp_object_size(object); i++) {
+    struct object_slot* slot = jvp_object_get_slot(object, i);
+    if (slot->string) n++;
+  }
+  return n;
+}
+
 /*
  * Objects (public interface)
  */
@@ -668,6 +677,13 @@ jv jv_object_delete(jv object, jv key) {
   jvp_object_delete(&object.val.complex, jvp_string_ptr(&key.val.complex));
   jv_free(key);
   return object;
+}
+
+int jv_object_length(jv object) {
+  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  int n = jvp_object_length(&object.val.complex);
+  jv_free(object);
+  return n;
 }
 
 /*
