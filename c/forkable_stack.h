@@ -46,6 +46,13 @@ static void forkable_stack_init(struct forkable_stack* s, size_t sz) {
   forkable_stack_check(s);
 }
 
+static void forkable_stack_free(struct forkable_stack* s) {
+  assert(forkable_stack_empty(s));
+  assert(s->savedlimit == s->length);
+  free(s->stk);
+  s->stk = 0;
+}
+
 static void* forkable_stack_push(struct forkable_stack* s, size_t size) {
   forkable_stack_check(s);
   int curr = s->pos < s->savedlimit ? s->pos : s->savedlimit;
@@ -83,14 +90,16 @@ static void* forkable_stack_peek_next(struct forkable_stack* s, void* top) {
   }
 }
 
-// Returns 1 if the object being popped can not be accessed again
-// (i.e. was not saved with a fork)
-static int forkable_stack_pop(struct forkable_stack* s) {
+// Returns 1 if the next forkable_stack_pop will permanently remove an
+// object from the stack (i.e. the top object was not saved with a fork)
+static int forkable_stack_pop_will_free(struct forkable_stack* s) {
+  return s->pos < s->savedlimit ? 1 : 0;
+}
+
+static void forkable_stack_pop(struct forkable_stack* s) {
   forkable_stack_check(s);
-  int finalpop = s->pos < s->savedlimit ? 1 : 0;
   struct forkable_stack_header* elem = forkable_stack_peek(s);
   s->pos = elem->next;
-  return finalpop;
 }
 
 
@@ -114,12 +123,14 @@ static void forkable_stack_switch(struct forkable_stack* s, struct forkable_stac
 
   int curr_limit = s->savedlimit;
   if (curr_pos < curr_limit) s->savedlimit = curr_pos;
-  state->prevlimit = curr_limit;
+  //state->prevlimit = curr_limit; FIXME clean up
   forkable_stack_check(s);
 }
 
 static void forkable_stack_restore(struct forkable_stack* s, struct forkable_stack_state* state) {
   forkable_stack_check(s);
+  assert(s->savedlimit <= state->prevpos);
+  assert(s->savedlimit <= state->prevlimit);
   s->pos = state->prevpos;
   s->savedlimit = state->prevlimit;
   forkable_stack_check(s);

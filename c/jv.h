@@ -82,6 +82,8 @@ jv jv_object_iter_key(jv, int);
 jv jv_object_iter_value(jv, int);
 
 
+int jv_get_refcnt(jv);
+
 void jv_dump(jv);
 jv jv_parse(const char* string);
 

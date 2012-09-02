@@ -24,6 +24,7 @@ int pathsize; // number of allocated elements
 
 // FIXME mem
 int path_push(stackval sv, jv val) {
+  return 0;
   int pos = sv.pathidx;
   assert(pos <= pathsize);
   assert(pos >= 0);
@@ -54,17 +55,18 @@ typedef struct {
   stackval sv;
 } data_stk_elem;
 
-void stk_push(stackval val) {
+void stack_push(stackval val) {
   data_stk_elem* s = forkable_stack_push(&data_stk, sizeof(data_stk_elem));
   s->sv = val;
 }
 
-stackval stk_pop() {
+stackval stack_pop() {
   data_stk_elem* s = forkable_stack_peek(&data_stk);
   stackval sv = s->sv;
-  if (!forkable_stack_pop(&data_stk)) {
+  if (!forkable_stack_pop_will_free(&data_stk)) {
     sv.value = jv_copy(sv.value);
   }
+  forkable_stack_pop(&data_stk);
   return sv;
 }
 
@@ -92,6 +94,14 @@ void stack_switch() {
 }
 
 void stack_restore(){
+  while (!forkable_stack_empty(&data_stk) && 
+         forkable_stack_pop_will_free(&data_stk)) {
+    jv_free(stack_pop().value);
+  }
+  while (!forkable_stack_empty(&frame_stk) && 
+         forkable_stack_pop_will_free(&frame_stk)) {
+    frame_pop(&frame_stk);
+  }
   struct forkpoint* fork = forkable_stack_peek(&fork_stk);
   forkable_stack_restore(&data_stk, &fork->saved_data_stack);
   forkable_stack_restore(&frame_stk, &fork->saved_call_stack);
@@ -113,9 +123,6 @@ static struct closure make_closure(struct forkable_stack* stk, frame_ptr fr, uin
   }
 }
 
-
-#define stack_push stk_push
-#define stack_pop stk_pop
 
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
@@ -142,10 +149,12 @@ jv jq_next() {
       if (i == 0) {
         param = forkable_stack_peek(&data_stk);
       } else {
+        printf(" | ");
         param = forkable_stack_peek_next(&data_stk, param);
       }
+      if (!param) break;
       jv_dump(jv_copy(param->sv.value));
-      if (i < opdesc->stack_in-1) printf(" | ");
+      printf("<%d>", jv_get_refcnt(param->sv.value));
     }
 
     if (backtracking) {
@@ -294,6 +303,7 @@ jv jq_next() {
       int idx = jv_number_value(stack_pop().value);
       stackval array = stack_pop();
       if (idx >= jv_array_length(jv_copy(array.value))) {
+        jv_free(array.value);
         goto do_backtrack;
       } else {
         stack_save();
@@ -314,7 +324,7 @@ jv jq_next() {
     do_backtrack:
     case BACKTRACK: {
       if (forkable_stack_empty(&fork_stk)) {
-        // FIXME: invalid
+        // FIXME: invalid jv value
         return jv_null();
       }
       stack_restore();
@@ -407,11 +417,24 @@ void jq_init(struct bytecode* bc, jv input) {
   forkable_stack_init(&data_stk, sizeof(stackval) * 1000); // FIXME: lower this number, see if it breaks
   forkable_stack_init(&frame_stk, 10240); // FIXME: lower this number, see if it breaks
   forkable_stack_init(&fork_stk, 10240); // FIXME: lower this number, see if it breaks
+  stack_save();
   
   stack_push(stackval_root(input));
   struct closure top = {bc, -1};
   frame_push(&frame_stk, top, 0);
   frame_push_backtrack(&frame_stk, bc->code);
+}
+
+void jq_teardown() {
+  while (!forkable_stack_empty(&fork_stk)) {
+    stack_restore();
+  }
+  assert(forkable_stack_empty(&fork_stk));
+  assert(forkable_stack_empty(&data_stk));
+  assert(forkable_stack_empty(&frame_stk));
+  forkable_stack_free(&fork_stk);
+  forkable_stack_free(&data_stk);
+  forkable_stack_free(&frame_stk);
 }
 
 void run_program(struct bytecode* bc) {

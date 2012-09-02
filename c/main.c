@@ -8,6 +8,7 @@ block compile(const char* str);
 
 void jq_init(struct bytecode* bc, jv value);
 jv jq_next();
+void jq_teardown();
 
 void run_program(struct bytecode* bc);
 
@@ -67,6 +68,7 @@ void run_tests() {
         pass = 0;
         }*/
     }
+    jq_teardown();
     bytecode_free(bc);
     tests++;
     passed+=pass;

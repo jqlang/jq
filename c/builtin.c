@@ -1,15 +1,18 @@
 #include "builtin.h"
 
 static void f_false(jv input[], jv output[]) {
+  jv_free(input[0]);
   output[0] = jv_false();
 }
 
 static void f_true(jv input[], jv output[]) {
+  jv_free(input[0]);
   output[0] = jv_true();
 }
 
 
 static void f_plus(jv input[], jv output[]) {
+  jv_free(input[0]);
   jv a = input[2];
   jv b = input[1];
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
@@ -19,6 +22,8 @@ static void f_plus(jv input[], jv output[]) {
     output[0] = jv_array_concat(a, b);
   } else {
     output[0] = jv_string("wtf gaize");
+    jv_free(a);
+    jv_free(b);
   }
 }
 

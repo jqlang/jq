@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "jv.h"
@@ -641,6 +642,21 @@ static int jvp_object_length(jv_complex* object) {
   return n;
 }
 
+static int jvp_object_equal(jv_complex* o1, jv_complex* o2) {
+  int len2 = jvp_object_length(o2);
+  int len1 = 0;
+  for (int i=0; i<jvp_object_size(o1); i++) {
+    struct object_slot* slot = jvp_object_get_slot(o1, i);
+    if (!slot->string) continue;
+    jv* slot2 = jvp_object_read(o2, slot->string);
+    if (!slot2) return 0;
+    // FIXME: do less refcounting here
+    if (!jv_equal(jv_copy(slot->value), jv_copy(*slot2))) return 0;
+    len1++;
+  }
+  return len1 == len2;
+}
+
 /*
  * Objects (public interface)
  */
@@ -752,6 +768,17 @@ void jv_free(jv j) {
   }
 }
 
+int jv_get_refcnt(jv j) {
+  switch (jv_get_kind(j)) {
+  case JV_KIND_ARRAY:
+  case JV_KIND_STRING:
+  case JV_KIND_OBJECT:
+    return j.val.complex.ptr->count;
+  default:
+    return 1;
+  }
+}
+
 /*
  * Higher-level operations
  */
@@ -772,7 +799,11 @@ int jv_equal(jv a, jv b) {
     case JV_KIND_STRING: {
       r = jvp_string_equal(&a.val.complex, &b.val.complex);
       break;
-    }    
+    }
+    case JV_KIND_OBJECT: {
+      r = jvp_object_equal(&a.val.complex, &b.val.complex);
+      break;
+    }
     default:
       r = 1;
       break;

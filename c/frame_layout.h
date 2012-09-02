@@ -11,6 +11,8 @@ struct continuation {
   struct bytecode* bc;
   stack_idx env;
   uint16_t* retaddr;
+  // FIXME: probably not necessary as a separate field
+  int is_backtrack_frame;
 };
 
 typedef union frame_elem {
@@ -84,6 +86,7 @@ static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl, uint1
   cc->bc = cl.bc;
   cc->env = cl.env;
   cc->retaddr = retaddr;
+  cc->is_backtrack_frame = 0;
   for (int i=0; i<cl.bc->nlocals; i++) {
     *frame_local_var(fp, i) = jv_null();
   }
@@ -93,12 +96,22 @@ static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl, uint1
 static frame_ptr frame_push_backtrack(struct forkable_stack* stk, uint16_t* retaddr) {
   struct continuation cc = *frame_self(frame_current(stk));
   frame_ptr fp = forkable_stack_push(stk, sizeof(union frame_elem) * 2);
+  assert(!cc.is_backtrack_frame);
+  cc.is_backtrack_frame = 1;
   cc.retaddr = retaddr;
   *frame_self(fp) = cc;
   return fp;
 }
 
 static void frame_pop(struct forkable_stack* stk) {
+  frame_ptr fp = frame_current(stk);
+  if (forkable_stack_pop_will_free(stk) && 
+      !frame_self(fp)->is_backtrack_frame) {
+    int nlocals = frame_self(fp)->bc->nlocals;
+    for (int i=0; i<nlocals; i++) {
+      jv_free(*frame_local_var(fp, i));
+    }
+  }
   forkable_stack_pop(stk);
 }
 
