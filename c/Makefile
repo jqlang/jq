@@ -20,13 +20,13 @@ parser.tab.h: parser.tab.c
 parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c
 	$(CC) -o $@ $^
 
-jvtest: jvtest.c jv.c jv_print.c
+jv_test: jv_test.c jv.c jv_print.c jv_dtoa.c
 	$(CC) -DNO_JANSSON -o $@ $^
 
 jv_parse: jv_parse.c jv.c jv_print.c jv_dtoa.c
 	$(CC) -DNO_JANSSON -o $@ $^ -DJV_PARSE_MAIN
 
 
-test: jvtest
-	valgrind --error-exitcode=1 -q --leak-check=full ./jvtest
+test: jv_test
+	valgrind --error-exitcode=1 -q --leak-check=full ./jv_test
 
