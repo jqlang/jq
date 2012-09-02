@@ -15,8 +15,8 @@
 "|=" { return SETPIPE; }
 "."|"="|";"|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"+"|"\$" { return yytext[0];}
 
-[[:digit:]]+  { yylval->num = atoi(yytext);   return NUMBER;}
-[[:alnum:]]+  { yylval->str = strdup(yytext); return IDENT;}
+[[:digit:]]+  { yylval->literal = jv_number((double)atoi(yytext));   return LITERAL;}
+[[:alnum:]]+  { yylval->literal = jv_string(yytext); return IDENT;}
 [ \n\t]+  {}
 %%
 /* perhaps these should be calls... */

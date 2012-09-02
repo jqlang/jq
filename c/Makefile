@@ -24,7 +24,7 @@ jvtest: jvtest.c jv.c jv_print.c
 	$(CC) -DNO_JANSSON -o $@ $^
 
 jv_parse: jv_parse.c jv.c jv_print.c jv_dtoa.c
-	$(CC) -DNO_JANSSON -o $@ $^
+	$(CC) -DNO_JANSSON -o $@ $^ -DJV_PARSE_MAIN
 
 
 test: jvtest

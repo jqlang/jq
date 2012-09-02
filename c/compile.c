@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 #include "opcode.h"
 #include "compile.h"
 
@@ -13,7 +14,7 @@ struct inst {
   union {
     uint16_t intval;
     struct inst* target;
-    json_t* constant;
+    jv constant;
     struct cfunction* cfunc;
   } imm;
 
@@ -52,6 +53,9 @@ static void inst_free(struct inst* i) {
   if (opcode_describe(i->op)->flags & OP_HAS_BLOCK) {
     block_free(i->subfn);
   }
+  if (opcode_describe(i->op)->flags & OP_HAS_CONSTANT) {
+    jv_free(i->imm.constant);
+  }
   free(i);
 }
 
@@ -89,7 +93,7 @@ block gen_op_simple(opcode op) {
 }
 
 
-block gen_op_const(opcode op, json_t* constant) {
+block gen_op_const(opcode op, jv constant) {
   assert(opcode_describe(op)->flags & OP_HAS_CONSTANT);
   inst* i = inst_new(op);
   i->imm.constant = constant;
@@ -267,7 +271,7 @@ block gen_both(block a, block b) {
 block gen_collect(block expr) {
   block c = gen_noop();
   block_append(&c, gen_op_simple(DUP));
-  block_append(&c, gen_op_const(LOADK, json_array()));
+  block_append(&c, gen_op_const(LOADK, jv_array()));
   block array_var = block_bind(gen_op_var_unbound(STOREV, "collect"),
                                gen_noop(), OP_HAS_VARIABLE);
   block_append(&c, array_var);
@@ -395,7 +399,7 @@ static void compile(struct bytecode* bc, block b) {
   uint16_t* code = malloc(sizeof(uint16_t) * bc->codelen);
   bc->code = code;
   pos = 0;
-  json_t* constant_pool = json_array();
+  jv constant_pool = jv_array();
   int maxvar = -1;
   for (inst* curr = b.first; curr; curr = curr->next) {
     const struct opcode_description* op = opcode_describe(curr->op);
@@ -436,8 +440,8 @@ static void compile(struct bytecode* bc, block b) {
       }
       assert(nargs - 1 == desired_params);
     } else if (opflags & OP_HAS_CONSTANT) {
-      code[pos++] = json_array_size(constant_pool);
-      json_array_append(constant_pool, curr->imm.constant);
+      code[pos++] = jv_array_length(jv_copy(constant_pool));
+      constant_pool = jv_array_append(constant_pool, jv_copy(curr->imm.constant));
     } else if (opflags & OP_HAS_VARIABLE) {
       code[pos++] = nesting_level(bc, curr->bound_by);
       uint16_t var = (uint16_t)curr->bound_by->imm.intval;

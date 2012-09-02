@@ -1,11 +1,11 @@
 #ifndef BYTECODE_H
 #define BYTECODE_H
-#include <jansson.h>
 #include <stdint.h>
 
+#include "jv.h"
 #include "opcode.h"
 
-typedef void (*cfunction_ptr)(json_t* input[], json_t* output[]);
+typedef void (*cfunction_ptr)(jv input[], jv output[]);
 
 struct cfunction {
   cfunction_ptr fptr;
@@ -33,7 +33,7 @@ struct bytecode {
   int nlocals;
   int nclosures;
 
-  json_t* constants;
+  jv constants; // JSON array of constants
   struct symbol_table* globals;
 
   struct bytecode** subfunctions;
@@ -45,5 +45,8 @@ struct bytecode {
 void dump_disassembly(int, struct bytecode* code);
 void dump_code(int, struct bytecode* code);
 void dump_operation(struct bytecode* bc, uint16_t* op);
+
+void symbol_table_free(struct symbol_table* syms);
+void bytecode_free(struct bytecode* bc);
 
 #endif

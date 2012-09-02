@@ -4,42 +4,6 @@
 #include <stdint.h>
 #include <assert.h>
 #include <stddef.h>
-#ifndef NO_JANSSON
-#include <jansson.h>
-static json_t* jv_lookup(json_t* t, json_t* k) {
-  json_t* v;
-  if (json_is_object(t) && json_is_string(k)) {
-    v = json_object_get(t, json_string_value(k));
-  } else if (json_is_array(t) && json_is_number(k)) {
-    v = json_array_get(t, json_integer_value(k));
-  } else {
-    assert(0&&"bad lookup");
-  }
-  if (v) 
-    return v;
-  else
-    return json_null();
-}
-
-static json_t* jv_modify(json_t* t, json_t* k, json_t* v) {
-  t = json_copy(t);
-  if (json_is_object(t) && json_is_string(k)) {
-    json_object_set(t, json_string_value(k), v);
-  } else if (json_is_array(t) && json_is_number(k)) {
-    json_array_set(t, json_integer_value(k), v);
-  } else {
-    assert(0 && "bad mod");
-  }
-  return t;
-}
-
-static json_t* jv_insert(json_t* root, json_t* value, json_t** path, int pathlen) {
-  if (pathlen == 0) {
-    return value;
-  }
-  return jv_modify(root, *path, jv_insert(jv_lookup(root, *path), value, path+1, pathlen-1));
-}
-#endif
 
 
 
@@ -99,8 +63,8 @@ jv jv_array_concat(jv, jv);
 jv jv_array_slice(jv, int, int);
 
 
-jv jv_string(char*);
-jv jv_string_sized(char*, int);
+jv jv_string(const char*);
+jv jv_string_sized(const char*, int);
 int jv_string_length(jv);
 uint32_t jv_string_hash(jv);
 const char* jv_string_value(jv);
@@ -119,6 +83,57 @@ jv jv_object_iter_value(jv, int);
 
 
 void jv_dump(jv);
+jv jv_parse(const char* string);
+
+
+
+
+
+static jv jv_lookup(jv t, jv k) {
+  jv v;
+  if (jv_get_kind(t) == JV_KIND_OBJECT && jv_get_kind(k) == JV_KIND_STRING) {
+    v = jv_object_get(t, k);
+  } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
+    // FIXME: don't do lookup for noninteger index
+    v = jv_array_get(t, (int)jv_number_value(k));
+  } else {
+    assert(0&&"bad lookup");
+  }
+  return v;
+  // FIXME: invalid indexes, JV_KIND_INVALID
+  /*
+  if (v) 
+    return v;
+  else
+    return jv_null();
+  */
+}
+
+static jv jv_modify(jv t, jv k, jv v) {
+  if (jv_get_kind(t) == JV_KIND_OBJECT && jv_get_kind(k) == JV_KIND_STRING) {
+    t = jv_object_set(t, k, v);
+  } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
+    t = jv_array_set(t, (int)jv_number_value(k), v);
+  } else {
+    assert(0 && "bad mod");
+  }
+  return t;
+}
+
+static jv jv_insert(jv root, jv value, jv* path, int pathlen) {
+  if (pathlen == 0) {
+    jv_free(root);
+    return value;
+  }
+  return jv_modify(root, *path, 
+                   jv_insert(jv_lookup(jv_copy(root), jv_copy(*path)), value, path+1, pathlen-1));
+}
+
+
+
+
+
+
 
 
 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <jansson.h>
+#include <stdlib.h>
+
 #include "bytecode.h"
 #include "opcode.h"
 
@@ -57,8 +58,7 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
       printf(" %04d", pc + imm);
     } else if (op->flags & OP_HAS_CONSTANT) {
       printf(" ");
-      json_dumpf(json_array_get(bc->constants, imm),
-                 stdout, JSON_ENCODE_ANY);
+      jv_dump(jv_array_get(jv_copy(bc->constants), imm));
     } else if (op->flags & OP_HAS_VARIABLE) {
       uint16_t v = bc->code[pc++];
       printf(" v%d", v);
@@ -69,4 +69,20 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
       printf(" %d", imm);
     }
   }  
+}
+
+void symbol_table_free(struct symbol_table* syms) {
+  free(syms->cfunctions);
+  free(syms);
+}
+
+void bytecode_free(struct bytecode* bc) {
+  free(bc->code);
+  jv_free(bc->constants);
+  for (int i=0; i<bc->nsubfunctions; i++)
+    bytecode_free(bc->subfunctions[i]);
+  if (!bc->parent)
+    symbol_table_free(bc->globals);
+  free(bc->subfunctions);
+  free(bc);
 }

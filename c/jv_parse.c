@@ -327,26 +327,32 @@ pfunc finish() {
   return 0;
 }
 
-
-int main(int argc, char* argv[]) {
-  assert(argc == 2);
+jv jv_parse(const char* string) {
   jvp_dtoa_context_init(&dtoa);
-  char* p = argv[1];
+
+  const char* p = string;
   char ch;
   while ((ch = *p++)) {
     presult msg = scan(ch);
     if (msg){
-      printf("ERROR: %s\n", msg);
-      return 1;
+      printf("ERROR: %s (parsing [%s])\n", msg, string);
+      return jv_null();
     }
   }
   presult msg = finish();
   if (msg) {
-    printf("ERROR: %s\n", msg);
-    return 1;
+    printf("ERROR: %s (parsing [%s])\n", msg, string);
+    return jv_null();
   }
   jvp_dtoa_context_free(&dtoa);
-  jv_dump(next);
+  hasnext = 0;
+  return next;
+}
+#if JV_PARSE_MAIN
+int main(int argc, char* argv[]) {
+  assert(argc == 2);
+  jv_dump(jv_parse(argv[1]));
   printf("\n");
   return 0;
 }
+#endif

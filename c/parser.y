@@ -7,8 +7,7 @@
 %locations
 %define api.pure
 %union {
-  int num;
-  char* str;
+  jv literal;
   block blk;
 }
 
@@ -17,8 +16,8 @@
 %lex-param {yyscan_t lexer}
 
 
-%token <str> IDENT
-%token <num> NUMBER
+%token <literal> IDENT
+%token <literal> LITERAL
 
  /* revolting hack */
 %left ';'
@@ -48,10 +47,6 @@ static block gen_dictpair(block k, block v) {
   return b;
 }
 
-static block gen_string(const char* str) {
-  return gen_op_const(LOADK, json_string(str));
-}
-
 static block gen_index(block obj, block key) {
   return block_join(obj, block_join(gen_subexp(key), gen_op_simple(INDEX)));
 }
@@ -64,18 +59,23 @@ program: Exp { *answer = $1; }
 Exp:
 "def" IDENT ':' Exp ';' Exp {
   block body = block_join($4, gen_op_simple(RET));
-  $$ = block_bind(gen_op_block_defn(CLOSURE_CREATE, $2, body), $6, OP_IS_CALL_PSEUDO);
+  $$ = block_bind(gen_op_block_defn(CLOSURE_CREATE, jv_string_value($2), body), 
+                  $6, OP_IS_CALL_PSEUDO);
+  jv_free($2);
 } |
 
 "def" IDENT '(' IDENT ')' ':' Exp ';' Exp {
-  block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, $4), block_join($7, gen_op_simple(RET)), OP_IS_CALL_PSEUDO);
-  $$ = block_bind(gen_op_block_defn(CLOSURE_CREATE, $2, body), $9, OP_IS_CALL_PSEUDO);
+  block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), block_join($7, gen_op_simple(RET)), OP_IS_CALL_PSEUDO);
+  $$ = block_bind(gen_op_block_defn(CLOSURE_CREATE, jv_string_value($2), body), $9, OP_IS_CALL_PSEUDO);
+  jv_free($2);
+  jv_free($4);
 } |
 
 Term "as" '$' IDENT '|' Exp {
   $$ = gen_op_simple(DUP);
   block_append(&$$, $1);
-  block_append(&$$, block_bind(gen_op_var_unbound(STOREV, $4), $6, OP_HAS_VARIABLE));
+  block_append(&$$, block_bind(gen_op_var_unbound(STOREV, jv_string_value($4)), $6, OP_HAS_VARIABLE));
+  jv_free($4);
 } |
 
 Exp '=' Exp {
@@ -129,10 +129,10 @@ Term:
   $$ = gen_noop(); 
 } |
 Term '.' IDENT {
-  $$ = gen_index($1, gen_string($3)); 
+  $$ = gen_index($1, gen_op_const(LOADK, $3)); 
 } |
 '.' IDENT { 
-  $$ = gen_index(gen_noop(), gen_string($2)); 
+  $$ = gen_index(gen_noop(), gen_op_const(LOADK, $2)); 
 } |
 /* FIXME: string literals */
 Term '[' Exp ']' {
@@ -141,8 +141,8 @@ Term '[' Exp ']' {
 Term '[' ']' {
   $$ = block_join($1, gen_op_simple(EACH)); 
 } |
-NUMBER {
-  $$ = gen_op_const(LOADK, json_integer($1)); 
+LITERAL {
+  $$ = gen_op_const(LOADK, $1); 
 } |
 '(' Exp ')' { 
   $$ = $2; 
@@ -151,26 +151,29 @@ NUMBER {
   $$ = gen_collect($2); 
 } |
 '[' ']' { 
-  $$ = gen_op_const(LOADK, json_array()); 
+  $$ = gen_op_const(LOADK, jv_array()); 
 } |
 '{' MkDict '}' { 
-  $$ = gen_subexp(gen_op_const(LOADK, json_object()));
+  $$ = gen_subexp(gen_op_const(LOADK, jv_object()));
   block_append(&$$, $2);
   block_append(&$$, gen_op_simple(POP));
 } |
 '$' IDENT {
-  $$ = gen_op_var_unbound(LOADV, $2); 
+  $$ = gen_op_var_unbound(LOADV, jv_string_value($2)); 
+  jv_free($2);
 } | 
 IDENT {
-  $$ = gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, $1));
+  $$ = gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, jv_string_value($1)));
+  jv_free($1);
 } |
 IDENT '(' Exp ')' {
   $$ = gen_op_call(CALL_1_1, 
-                   block_join(gen_op_block_unbound(CLOSURE_REF, $1),
+                   block_join(gen_op_block_unbound(CLOSURE_REF, jv_string_value($1)),
                               block_bind(gen_op_block_defn(CLOSURE_CREATE,
                                                 "lambda",
                                                            block_join($3, gen_op_simple(RET))),
                                          gen_noop(), OP_IS_CALL_PSEUDO)));
+  jv_free($1);
 }
 
 MkDict:
@@ -184,11 +187,11 @@ MkDictPair
 
 MkDictPair
 : IDENT ':' ExpD { 
-  $$ = gen_dictpair(gen_string($1), $3);
+  $$ = gen_dictpair(gen_op_const(LOADK, $1), $3);
  }
 | IDENT {
-  $$ = gen_dictpair(gen_string($1),
-                    gen_index(gen_noop(), gen_string($1)));
+  $$ = gen_dictpair(gen_op_const(LOADK, jv_copy($1)),
+                    gen_index(gen_noop(), gen_op_const(LOADK, $1)));
   }
 | '(' Exp ')' ':' ExpD {
   $$ = gen_dictpair($2, $5);

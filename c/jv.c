@@ -278,7 +278,7 @@ static jvp_string* jvp_string_alloc(uint32_t size) {
   return s;
 }
 
-static jv_complex jvp_string_new(char* data, uint32_t length) {
+static jv_complex jvp_string_new(const char* data, uint32_t length) {
   jvp_string* s = jvp_string_alloc(length);
   memcpy(s->data, data, length);
   s->data[length] = 0;
@@ -389,14 +389,14 @@ static int jvp_string_equal(jv_complex* a, jv_complex* b) {
  * Strings (public API)
  */
 
-jv jv_string_sized(char* str, int len) {
+jv jv_string_sized(const char* str, int len) {
   jv j;
   j.kind = JV_KIND_STRING;
   j.val.complex = jvp_string_new(str, len);
   return j;
 }
 
-jv jv_string(char* str) {
+jv jv_string(const char* str) {
   return jv_string_sized(str, strlen(str));
 }
 
