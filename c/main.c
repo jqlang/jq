@@ -81,9 +81,11 @@ int main(int argc, char* argv[]) {
   if (argc == 1) { run_tests(); return 0; }
   block blk = compile(argv[1]);
   block_append(&blk, block_join(gen_op_simple(YIELD), gen_op_simple(BACKTRACK)));
-  struct bytecode* bc = block_compile(gen_cbinding(&builtins, blk));
+  blk = gen_cbinding(&builtins, blk);
+  struct bytecode* bc = block_compile(blk);
   block_free(blk);
   dump_disassembly(0, bc);
   printf("\n");
   run_program(bc);
+  bytecode_free(bc);
 }

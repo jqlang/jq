@@ -93,7 +93,7 @@ void stack_switch() {
   forkable_stack_switch(&frame_stk, &fork->saved_call_stack);
 }
 
-void stack_restore(){
+int stack_restore(){
   while (!forkable_stack_empty(&data_stk) && 
          forkable_stack_pop_will_free(&data_stk)) {
     jv_free(stack_pop().value);
@@ -102,10 +102,15 @@ void stack_restore(){
          forkable_stack_pop_will_free(&frame_stk)) {
     frame_pop(&frame_stk);
   }
-  struct forkpoint* fork = forkable_stack_peek(&fork_stk);
-  forkable_stack_restore(&data_stk, &fork->saved_data_stack);
-  forkable_stack_restore(&frame_stk, &fork->saved_call_stack);
-  forkable_stack_pop(&fork_stk);
+  if (forkable_stack_empty(&fork_stk)) {
+    return 0;
+  } else {
+    struct forkpoint* fork = forkable_stack_peek(&fork_stk);
+    forkable_stack_restore(&data_stk, &fork->saved_data_stack);
+    forkable_stack_restore(&frame_stk, &fork->saved_call_stack);
+    forkable_stack_pop(&fork_stk);
+    return 1;
+  }
 }
 
 static struct closure make_closure(struct forkable_stack* stk, frame_ptr fr, uint16_t* pc) {
@@ -323,11 +328,10 @@ jv jq_next() {
 
     do_backtrack:
     case BACKTRACK: {
-      if (forkable_stack_empty(&fork_stk)) {
+      if (!stack_restore()) {
         // FIXME: invalid jv value
         return jv_null();
       }
-      stack_restore();
       pc = *frame_current_retaddr(&frame_stk);
       frame_pop(&frame_stk);
       backtracking = 1;
@@ -417,7 +421,6 @@ void jq_init(struct bytecode* bc, jv input) {
   forkable_stack_init(&data_stk, sizeof(stackval) * 1000); // FIXME: lower this number, see if it breaks
   forkable_stack_init(&frame_stk, 10240); // FIXME: lower this number, see if it breaks
   forkable_stack_init(&fork_stk, 10240); // FIXME: lower this number, see if it breaks
-  stack_save();
   
   stack_push(stackval_root(input));
   struct closure top = {bc, -1};
@@ -426,9 +429,8 @@ void jq_init(struct bytecode* bc, jv input) {
 }
 
 void jq_teardown() {
-  while (!forkable_stack_empty(&fork_stk)) {
-    stack_restore();
-  }
+  while (stack_restore()) {}
+
   assert(forkable_stack_empty(&fork_stk));
   assert(forkable_stack_empty(&data_stk));
   assert(forkable_stack_empty(&frame_stk));
@@ -447,8 +449,5 @@ void run_program(struct bytecode* bc) {
     printf("\n");
   }
   printf("end of results\n");
-
-  //assert(frame == stack_top_frame(bc->framesize));
-  //stk_pop_frame(bc->framesize);
-  //assert(stackpos == 0);
+  jq_teardown();
 }
