@@ -239,7 +239,7 @@ jv jv_array_concat(jv a, jv b) {
   assert(jv_get_kind(b) == JV_KIND_ARRAY);
 
   // FIXME: could be much faster
-  for (int i=0; i<jv_array_length(b); i++) {
+  for (int i=0; i<jv_array_length(jv_copy(b)); i++) {
     a = jv_array_append(a, jv_array_get(jv_copy(b), i));
   }
   jv_free(b);

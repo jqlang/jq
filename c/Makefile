@@ -17,8 +17,8 @@ parser.tab.c: parser.y lexer.yy.h
 	bison -W -d parser.y -v --report-file=parser.info
 parser.tab.h: parser.tab.c
 
-parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c
-	$(CC) -o $@ $^ -ljansson
+parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c
+	$(CC) -o $@ $^
 
 jvtest: jvtest.c jv.c jv_print.c
 	$(CC) -DNO_JANSSON -o $@ $^

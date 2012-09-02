@@ -6,10 +6,10 @@
 
 block compile(const char* str);
 
-//void jq_init(struct bytecode* bc, jv value);
-//jv jq_next();
+void jq_init(struct bytecode* bc, jv value);
+jv jq_next();
 
-//void run_program(struct bytecode* bc);
+void run_program(struct bytecode* bc);
 
 int skipline(const char* buf) {
   int p = 0;
@@ -39,13 +39,12 @@ void run_tests() {
     printf("\n");
     fgets(buf, sizeof(buf), testdata);
     jv input = jv_parse(buf);
-    jv_free(input); //jq_init(bc, input);
+    jq_init(bc, input);
 
     while (fgets(buf, sizeof(buf), testdata)) {
       if (skipline(buf)) break;
       jv expected = jv_parse(buf);
-      //jv actual = jq_next(); FIXME
-      jv actual = jv_copy(expected);
+      jv actual = jq_next();
       if (!1) {
         printf("Insufficient results\n");
         pass = 0;
@@ -84,5 +83,5 @@ int main(int argc, char* argv[]) {
   block_free(blk);
   dump_disassembly(0, bc);
   printf("\n");
-  //run_program(bc);
+  run_program(bc);
 }

@@ -83,10 +83,14 @@ static void* forkable_stack_peek_next(struct forkable_stack* s, void* top) {
   }
 }
 
-static void forkable_stack_pop(struct forkable_stack* s) {
+// Returns 1 if the object being popped can not be accessed again
+// (i.e. was not saved with a fork)
+static int forkable_stack_pop(struct forkable_stack* s) {
   forkable_stack_check(s);
+  int finalpop = s->pos < s->savedlimit ? 1 : 0;
   struct forkable_stack_header* elem = forkable_stack_peek(s);
   s->pos = elem->next;
+  return finalpop;
 }
 
 

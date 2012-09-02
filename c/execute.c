@@ -1,9 +1,7 @@
-#include <jansson.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
 
 #include "opcode.h"
 #include "bytecode.h"
@@ -16,16 +14,16 @@
 
 
 typedef struct {
-  json_t* value;
+  jv value;
   int pathidx;
 } stackval;
 
 
-json_t** pathbuf;
+jv* pathbuf;
 int pathsize; // number of allocated elements
 
-
-int path_push(stackval sv, json_t* val) {
+// FIXME mem
+int path_push(stackval sv, jv val) {
   int pos = sv.pathidx;
   assert(pos <= pathsize);
   assert(pos >= 0);
@@ -37,14 +35,15 @@ int path_push(stackval sv, json_t* val) {
   return pos + 1;
 }
 
-stackval stackval_replace(stackval value, json_t* newjs) {
+stackval stackval_replace(stackval value, jv newjs) {
+  jv_free(value.value);
   stackval s = {newjs, value.pathidx};
   return s;
 }
 
 
 // Probably all uses of this function are bugs
-stackval stackval_root(json_t* v) {
+stackval stackval_root(jv v) {
   stackval s = {v, 0};
   return s;
 }
@@ -63,7 +62,9 @@ void stk_push(stackval val) {
 stackval stk_pop() {
   data_stk_elem* s = forkable_stack_peek(&data_stk);
   stackval sv = s->sv;
-  forkable_stack_pop(&data_stk);
+  if (!forkable_stack_pop(&data_stk)) {
+    sv.value = jv_copy(sv.value);
+  }
   return sv;
 }
 
@@ -118,9 +119,9 @@ static struct closure make_closure(struct forkable_stack* stk, frame_ptr fr, uin
 
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
-json_t* jq_next() {
-  json_t* cfunc_input[MAX_CFUNCTION_ARGS] = {0};
-  json_t* cfunc_output[MAX_CFUNCTION_ARGS] = {0};
+jv jq_next() {
+  jv cfunc_input[MAX_CFUNCTION_ARGS];
+  jv cfunc_output[MAX_CFUNCTION_ARGS];
 
   assert(!forkable_stack_empty(&frame_stk));
   uint16_t* pc = *frame_current_retaddr(&frame_stk);
@@ -143,7 +144,7 @@ json_t* jq_next() {
       } else {
         param = forkable_stack_peek_next(&data_stk, param);
       }
-      json_dumpf(param->sv.value, stdout, JSON_ENCODE_ANY);
+      jv_dump(jv_copy(param->sv.value));
       if (i < opdesc->stack_in-1) printf(" | ");
     }
 
@@ -159,16 +160,18 @@ json_t* jq_next() {
     default: assert(0 && "invalid instruction");
 
     case LOADK: {
-      json_t* v = json_array_get(frame_current_bytecode(&frame_stk)->constants, *pc++);
-      assert(v);
+      jv v = jv_array_get(jv_copy(frame_current_bytecode(&frame_stk)->constants), *pc++);
+      //FIXME assert(v);
       stack_push(stackval_replace(stack_pop(), v));
       break;
     }
 
     case DUP: {
       stackval v = stack_pop();
+      stackval v2 = v;
+      v2.value = jv_copy(v.value);
       stack_push(v);
-      stack_push(v);
+      stack_push(v2);
       break;
     }
 
@@ -181,44 +184,42 @@ json_t* jq_next() {
     }
       
     case POP: {
-      stack_pop();
+      jv_free(stack_pop().value);
       break;
     }
 
     case APPEND: {
       // FIXME paths
-      json_t* v = stack_pop().value;
-      json_t* array = stack_pop().value;
-      array = json_copy(array);
-      json_array_append(array, v);
+      jv v = stack_pop().value;
+      jv array = stack_pop().value;
+      array = jv_array_append(array, v);
       stack_push(stackval_root(array));
       break;
     }
 
     case INSERT: {
       stackval stktop = stack_pop();
-      json_t* v = stack_pop().value;
-      json_t* k = stack_pop().value;
+      jv v = stack_pop().value;
+      jv k = stack_pop().value;
       stackval objv = stack_pop();
-      assert(json_is_string(k));
-      assert(json_is_object(objv.value));
-      json_t* obj = json_copy(objv.value);
-      json_object_set(obj, json_string_value(k), v);
-      assert(json_is_object(obj));
-      stack_push(stackval_replace(objv, obj));
+      assert(jv_get_kind(k) == JV_KIND_STRING);
+      assert(jv_get_kind(objv.value) == JV_KIND_OBJECT);
+      objv.value = jv_object_set(objv.value, k, v);
+      stack_push(objv);
       stack_push(stktop);
       break;
     }
 
+      // FIXME: loadv/storev may do too much copying/freeing
     case LOADV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
       frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
-      json_t** var = frame_local_var(fp, v);
+      jv* var = frame_local_var(fp, v);
       printf("V%d = ", v);
-      json_dumpf(*var, stdout, JSON_ENCODE_ANY);
+      jv_dump(jv_copy(*var));
       printf("\n");
-      stack_push(stackval_replace(stack_pop(), *var));
+      stack_push(stackval_replace(stack_pop(), jv_copy(*var)));
       break;
     }
 
@@ -226,43 +227,31 @@ json_t* jq_next() {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
       frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
-      json_t** var = frame_local_var(fp, v);
+      jv* var = frame_local_var(fp, v);
       stackval val = stack_pop();
       printf("V%d = ", v);
-      json_dumpf(val.value, stdout, JSON_ENCODE_ANY);
+      jv_dump(jv_copy(val.value));
       printf("\n");
+      jv_free(*var);
       *var = val.value;
       break;
     }
 
-#if 0
-    case DISPLAY: {
-      stackval sv = stack_pop();
-      if (sv.value) {
-        json_dumpf(sv.value, stdout, JSON_ENCODE_ANY);
-      } else {
-        printf("#ERROR");
-      }
-      printf(" - ");
-      for (int i = 0; i < sv.pathidx; i++) {
-        printf("/");
-        json_dumpf(pathbuf[i], stdout, JSON_ENCODE_ANY);
-      }
-      printf("\n");
-      return;
-    }
-#endif
-
     case ASSIGN_DBG: {
+      assert(0);
+      /*
       stackval replacement = stack_pop();
       stackval path_end = stack_pop();
       stackval path_start = stack_pop();
       json_t* obj = jv_insert(path_start.value, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
       stack_push(stackval_replace(path_start, obj));
+      */
       break;
     }
 
     case ASSIGN: {
+      assert(0);
+      /*
       stackval replacement = stack_pop();
       stackval path_end = stack_pop();
       stackval path_start = stack_pop();
@@ -272,17 +261,18 @@ json_t* jq_next() {
       frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
       json_t** var = frame_local_var(fp, v);
       *var = jv_insert(*var, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
+      */
       break;
     }
 
     case INDEX: {
       stackval t = stack_pop();
-      json_t* k = stack_pop().value;
-      json_t* v = jv_lookup(t.value, k);
-      if (v) {
+      jv k = stack_pop().value;
+      jv v = jv_lookup(t.value, k);
+      if (1 /* fixme invalid lookups */) {
         stackval sv;
         sv.value = v;
-        sv.pathidx = path_push(t, k);
+        sv.pathidx = 0; //FIXME path_push(t, k);
         stack_push(sv);
       } else {
         assert(0 && "bad lookup");
@@ -298,23 +288,24 @@ json_t* jq_next() {
     }
 
     case EACH: 
-      stack_push(stackval_root(json_integer(0)));
+      stack_push(stackval_root(jv_number(0)));
       // fallthrough
     case ON_BACKTRACK(EACH): {
-      json_t* idxj = stack_pop().value;
-      int idx = json_integer_value(idxj);
+      int idx = jv_number_value(stack_pop().value);
       stackval array = stack_pop();
-      if (idx >= json_array_size(array.value)) {
+      if (idx >= jv_array_length(jv_copy(array.value))) {
         goto do_backtrack;
       } else {
         stack_save();
-        stack_push(array);
-        stack_push(stackval_root(json_integer(idx+1)));
+        stackval array2 = array;
+        array2.value = jv_copy(array2.value);
+        stack_push(array2);
+        stack_push(stackval_root(jv_number(idx+1)));
         frame_push_backtrack(&frame_stk, pc - 1);
         stack_switch();
         
-        stackval sv = {json_array_get(array.value, idx), 
-                       path_push(array, json_integer(idx))};
+        stackval sv = {jv_array_get(array.value, idx), 
+                       path_push(array, jv_number(idx))};
         stack_push(sv);
       }
       break;
@@ -323,7 +314,8 @@ json_t* jq_next() {
     do_backtrack:
     case BACKTRACK: {
       if (forkable_stack_empty(&fork_stk)) {
-        return 0;
+        // FIXME: invalid
+        return jv_null();
       }
       stack_restore();
       pc = *frame_current_retaddr(&frame_stk);
@@ -347,7 +339,7 @@ json_t* jq_next() {
     }
 
     case YIELD: {
-      json_t* value = stack_pop().value;
+      jv value = stack_pop().value;
       frame_push_backtrack(&frame_stk, pc);
       return value;
     }
@@ -361,7 +353,8 @@ json_t* jq_next() {
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
       printf(" call %s\n", func->name);
       func->fptr(cfunc_input, cfunc_output);
-      stack_push(stackval_replace(top, cfunc_output[0]));
+      top.value = cfunc_output[0];
+      stack_push(top);
       break;
     }
 
@@ -370,15 +363,16 @@ json_t* jq_next() {
       pc++; // skip nclosures
       pc++; // skip level
       stackval top = stack_pop();
-      json_t* a = stack_pop().value;
-      json_t* b = stack_pop().value;
+      jv a = stack_pop().value;
+      jv b = stack_pop().value;
       cfunc_input[0] = top.value;
       cfunc_input[1] = a;
       cfunc_input[2] = b;
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
       printf(" call %s\n", func->name);
       func->fptr(cfunc_input, cfunc_output);
-      stack_push(stackval_replace(top, cfunc_output[0]));
+      top.value = cfunc_output[0];
+      stack_push(top);
       break;
     }
 
@@ -409,7 +403,7 @@ json_t* jq_next() {
 }
 
 
-void jq_init(struct bytecode* bc, json_t* input) {
+void jq_init(struct bytecode* bc, jv input) {
   forkable_stack_init(&data_stk, sizeof(stackval) * 1000); // FIXME: lower this number, see if it breaks
   forkable_stack_init(&frame_stk, 10240); // FIXME: lower this number, see if it breaks
   forkable_stack_init(&fork_stk, 10240); // FIXME: lower this number, see if it breaks
@@ -421,10 +415,12 @@ void jq_init(struct bytecode* bc, json_t* input) {
 }
 
 void run_program(struct bytecode* bc) {
-  jq_init(bc, json_loadf(stdin, 0, 0));
-  json_t* result;
-  while ((result = jq_next())) {
-    json_dumpf(result, stdout, JSON_ENCODE_ANY);
+  char buf[4096];
+  fgets(buf, sizeof(buf), stdin);
+  jq_init(bc, jv_parse(buf));
+  jv result;
+  while (jv_get_kind(result = jq_next()) != JV_KIND_NULL) {
+    jv_dump(result);
     printf("\n");
   }
   printf("end of results\n");

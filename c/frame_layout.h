@@ -1,7 +1,6 @@
 #ifndef FRAME_LAYOUT_H
 #include "forkable_stack.h"
 #include "bytecode.h"
-#include <jansson.h>
 
 struct closure {
   struct bytecode* bc;
@@ -18,7 +17,7 @@ typedef union frame_elem {
   FORKABLE_STACK_HEADER;
   struct continuation cont;
   struct closure closure;
-  json_t* jsonval;
+  jv jsonval;
 } *frame_ptr;
 
 /*
@@ -43,7 +42,7 @@ static struct closure* frame_closure_arg(frame_ptr fr, int closure) {
   return &fr[2+closure].closure;
 }
 
-static json_t** frame_local_var(frame_ptr fr, int var) {
+static jv* frame_local_var(frame_ptr fr, int var) {
   assert(var >= 0);
   assert(var < frame_self(fr)->bc->nlocals);
   return &fr[2 + frame_self(fr)->bc->nclosures + var].jsonval;
@@ -85,6 +84,9 @@ static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl, uint1
   cc->bc = cl.bc;
   cc->env = cl.env;
   cc->retaddr = retaddr;
+  for (int i=0; i<cl.bc->nlocals; i++) {
+    *frame_local_var(fp, i) = jv_null();
+  }
   return fp;
 }
 
