@@ -125,10 +125,13 @@ static int jvp_array_length(jv_complex* a) {
 }
 
 static jv* jvp_array_read(jv_complex* a, int i) {
-  assert(i >= 0 && i < jvp_array_length(a));
-  jvp_array* array = jvp_array_ptr(a);
-  assert(i + a->i[0] < array->length);
-  return &array->elements[i + a->i[0]];
+  if (i >= 0 && i < jvp_array_length(a)) {
+    jvp_array* array = jvp_array_ptr(a);
+    assert(i + a->i[0] < array->length);
+    return &array->elements[i + a->i[0]];
+  } else {
+    return 0;
+  }
 }
 
 static jv* jvp_array_write(jv_complex* a, int i) {
@@ -223,7 +226,13 @@ int jv_array_length(jv j) {
 
 jv jv_array_get(jv j, int idx) {
   assert(jv_get_kind(j) == JV_KIND_ARRAY);
-  jv val = jv_copy(*jvp_array_read(&j.val.complex, idx));
+  jv* slot = jvp_array_read(&j.val.complex, idx);
+  jv val;
+  if (slot) {
+    val = jv_copy(*slot);
+  } else {
+    val = jv_invalid();
+  }
   jv_free(j);
   return val;
 }

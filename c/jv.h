@@ -104,6 +104,14 @@ static jv jv_lookup(jv t, jv k) {
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
     // FIXME: don't do lookup for noninteger index
     v = jv_array_get(t, (int)jv_number_value(k));
+    if (!jv_is_valid(v)) {
+      v = jv_null();
+    }
+  } else if (jv_get_kind(t) == JV_KIND_NULL && 
+             (jv_get_kind(k) == JV_KIND_STRING || jv_get_kind(k) == JV_KIND_NUMBER)) {
+    jv_free(t);
+    jv_free(k);
+    v = jv_null();
   } else {
     assert(0&&"bad lookup");
   }
@@ -118,12 +126,26 @@ static jv jv_lookup(jv t, jv k) {
 }
 
 static jv jv_modify(jv t, jv k, jv v) {
-  if (jv_get_kind(t) == JV_KIND_OBJECT && jv_get_kind(k) == JV_KIND_STRING) {
-    t = jv_object_set(t, k, v);
-  } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
-    t = jv_array_set(t, (int)jv_number_value(k), v);
+  if (jv_get_kind(k) == JV_KIND_STRING) {
+    if (jv_get_kind(t) == JV_KIND_NULL) {
+      t = jv_object();
+    }
+    if (jv_get_kind(t) == JV_KIND_OBJECT) {
+      t = jv_object_set(t, k, v);
+    } else {
+      assert(0 && "bad mod - not an object");
+    }
+  } else if (jv_get_kind(k) == JV_KIND_NUMBER) {
+    if (jv_get_kind(t) == JV_KIND_NULL) {
+      t = jv_array();
+    }
+    if (jv_get_kind(t) == JV_KIND_ARRAY) {
+      t = jv_array_set(t, (int)jv_number_value(k), v);
+    } else {
+      assert(0 && "bad mod - not an array");
+    }
   } else {
-    assert(0 && "bad mod");
+    assert(0 && "bad mod - seriously, wtf");
   }
   return t;
 }

@@ -133,11 +133,17 @@ null
 # Builtin functions
 #
 
-# FIXME: floats vs. integer
-
 1+1
 null
 2
+
+1+1
+"wtasdf"
+2.0
+
+1e+0+0.001e3
+"I wonder what this will be?"
+20e-1
 
 .+4
 15
@@ -212,3 +218,11 @@ def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x
 def inc(x): x |= .+1; inc(.[].a)
 [{"a":1,"b":2},{"a":2,"b":4},{"a":7,"b":8}]
 [{"a":2,"b":2},{"a":3,"b":4},{"a":8,"b":8}]
+
+.[2][3] = 1
+[4]
+[4, null, [null, null, null, 1]]
+
+.foo[2].bar = 1
+{"foo":[11], "bar":42}
+{"foo":[11,null,{"bar":1}], "bar":42}
