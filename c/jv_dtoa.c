@@ -4247,6 +4247,7 @@ jvp_dtoa
 		*b = 0;
 		}
 	else if (decpt <= 0) {
+		*b++ = '0';
 		*b++ = '.';
 		for(; decpt < 0; decpt++)
 			*b++ = '0';
