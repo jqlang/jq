@@ -321,8 +321,7 @@ jv jq_next() {
     do_backtrack:
     case BACKTRACK: {
       if (!stack_restore()) {
-        // FIXME: invalid jv value
-        return jv_null();
+        return jv_invalid();
       }
       pc = *frame_current_retaddr(&frame_stk);
       frame_pop(&frame_stk);
@@ -443,7 +442,7 @@ void run_program(struct bytecode* bc) {
   fgets(buf, sizeof(buf), stdin);
   jq_init(bc, jv_parse(buf));
   jv result;
-  while (jv_get_kind(result = jq_next()) != JV_KIND_NULL) {
+  while (jv_is_valid(result = jq_next())) {
     jv_dump(result);
     printf("\n");
   }

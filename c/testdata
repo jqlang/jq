@@ -59,11 +59,9 @@ null
 {"foo": {"bar": 42}, "bar": "badvalue"}
 42
 
-
-# FIXME strings
-# .["foo"].bar
-# {"foo": {"bar": 42}, "bar": "badvalue"}
-# 42
+.["foo"].bar
+{"foo": {"bar": 42}, "bar": "badvalue"}
+42
 
 
 #
@@ -172,6 +170,12 @@ true
 [1]
 true
 
+null,1,null
+"hello"
+null
+1
+null
+
 [1,2,3]
 [5,6]
 [1,2,3]
@@ -193,3 +197,18 @@ def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x
 [[20,10][1,0] as $x | def f: (100,200) as $y | def g: [$x + $y, .]; . + $x | g; f[0] | [f][0][1] | f]
 "woo, testing!"
 [[110.0, 130.0], [210.0, 130.0], [110.0, 230.0], [210.0, 230.0], [120.0, 160.0], [220.0, 160.0], [120.0, 260.0], [220.0, 260.0]]
+
+#
+# Assignment
+#
+.message = "goodbye"
+{"message": "hello"}
+{"message": "goodbye"}
+
+.foo = .bar
+{"bar":42}
+{"foo":42, "bar":42}
+
+def inc(x): x |= .+1; inc(.[].a)
+[{"a":1,"b":2},{"a":2,"b":4},{"a":7,"b":8}]
+[{"a":2,"b":2},{"a":3,"b":4},{"a":8,"b":8}]

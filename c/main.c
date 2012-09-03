@@ -46,7 +46,7 @@ void run_tests() {
       if (skipline(buf)) break;
       jv expected = jv_parse(buf);
       jv actual = jq_next();
-      if (!1) {
+      if (!jv_is_valid(actual)) {
         printf("Insufficient results\n");
         pass = 0;
         break;
@@ -59,14 +59,14 @@ void run_tests() {
         pass = 0;
       }
     }
-    if (pass && 0) { /*
+    if (pass) {
       jv extra = jq_next();
-      if (extra) {
+      if (jv_is_valid(extra)) {
         printf("Superfluous result: ");
-        json_dumpf(extra, stdout, JSON_ENCODE_ANY);
+        jv_dump(extra);
         printf("\n");
         pass = 0;
-        }*/
+      }
     }
     jq_teardown();
     bytecode_free(bc);

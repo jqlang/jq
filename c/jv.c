@@ -37,9 +37,14 @@ jv_kind jv_get_kind(jv x) {
   return x.kind;
 }
 
+static const jv JV_INVALID = {JV_KIND_INVALID, {0}};
 static const jv JV_NULL = {JV_KIND_NULL, {0}};
 static const jv JV_FALSE = {JV_KIND_FALSE, {0}};
 static const jv JV_TRUE = {JV_KIND_TRUE, {0}};
+
+jv jv_invalid() {
+  return JV_INVALID;
+}
 
 jv jv_true() {
   return JV_TRUE;
@@ -671,7 +676,13 @@ jv jv_object() {
 jv jv_object_get(jv object, jv key) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(jv_get_kind(key) == JV_KIND_STRING);
-  jv val = jv_copy(*jvp_object_read(&object.val.complex, jvp_string_ptr(&key.val.complex)));
+  jv* slot = jvp_object_read(&object.val.complex, jvp_string_ptr(&key.val.complex));
+  jv val;
+  if (slot) {
+    val = jv_copy(*slot);
+  } else {
+    val = jv_invalid();
+  }
   jv_free(object);
   jv_free(key);
   return val;

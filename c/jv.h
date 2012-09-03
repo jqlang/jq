@@ -8,6 +8,7 @@
 
 
 typedef enum {
+  JV_KIND_INVALID,
   JV_KIND_NULL,
   JV_KIND_FALSE,
   JV_KIND_TRUE,
@@ -40,12 +41,14 @@ typedef struct {
  */
 
 jv_kind jv_get_kind(jv);
+static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
 
 jv jv_copy(jv);
 void jv_free(jv);
 
 int jv_equal(jv, jv);
 
+jv jv_invalid();
 jv jv_null();
 jv jv_true();
 jv jv_false();
@@ -95,6 +98,9 @@ static jv jv_lookup(jv t, jv k) {
   jv v;
   if (jv_get_kind(t) == JV_KIND_OBJECT && jv_get_kind(k) == JV_KIND_STRING) {
     v = jv_object_get(t, k);
+    if (!jv_is_valid(v)) {
+      v = jv_null();
+    }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
     // FIXME: don't do lookup for noninteger index
     v = jv_array_get(t, (int)jv_number_value(k));
