@@ -240,7 +240,9 @@ jv jv_array_get(jv j, int idx) {
 jv jv_array_set(jv j, int idx, jv val) {
   assert(jv_get_kind(j) == JV_KIND_ARRAY);
   // copy/free of val,j coalesced
-  *jvp_array_write(&j.val.complex, idx) = val;
+  jv* slot = jvp_array_write(&j.val.complex, idx);
+  jv_free(*slot);
+  *slot = val;
   return j;
 }
 
