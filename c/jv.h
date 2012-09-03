@@ -127,7 +127,7 @@ static jv jv_insert(jv root, jv value, jv* path, int pathlen) {
     jv_free(root);
     return value;
   }
-  return jv_modify(root, *path, 
+  return jv_modify(root, jv_copy(*path), 
                    jv_insert(jv_lookup(jv_copy(root), jv_copy(*path)), value, path+1, pathlen-1));
 }
 

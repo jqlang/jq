@@ -24,14 +24,18 @@ int pathsize; // number of allocated elements
 
 // FIXME mem
 int path_push(stackval sv, jv val) {
-  return 0;
   int pos = sv.pathidx;
   assert(pos <= pathsize);
   assert(pos >= 0);
   if (pos == pathsize) {
-    pathsize = pathsize ? pathsize * 2 : 100;
+    int oldpathsize = pathsize;
+    pathsize = oldpathsize ? oldpathsize * 2 : 100;
     pathbuf = realloc(pathbuf, sizeof(pathbuf[0]) * pathsize);
+    for (int i=oldpathsize; i<pathsize; i++) {
+      pathbuf[i] = jv_null();
+    }
   }
+  jv_free(pathbuf[pos]);
   pathbuf[pos] = val;
   return pos + 1;
 }
@@ -251,42 +255,30 @@ jv jq_next() {
       break;
     }
 
-    case ASSIGN_DBG: {
-      assert(0);
-      /*
-      stackval replacement = stack_pop();
-      stackval path_end = stack_pop();
-      stackval path_start = stack_pop();
-      json_t* obj = jv_insert(path_start.value, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
-      stack_push(stackval_replace(path_start, obj));
-      */
-      break;
-    }
-
     case ASSIGN: {
-      assert(0);
-      /*
       stackval replacement = stack_pop();
       stackval path_end = stack_pop();
       stackval path_start = stack_pop();
+      jv_free(path_end.value);
+      jv_free(path_start.value);
 
       uint16_t level = *pc++;
       uint16_t v = *pc++;
       frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
-      json_t** var = frame_local_var(fp, v);
+      jv* var = frame_local_var(fp, v);
       *var = jv_insert(*var, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
-      */
       break;
     }
 
     case INDEX: {
       stackval t = stack_pop();
       jv k = stack_pop().value;
+      int pathidx = path_push(t, jv_copy(k));
       jv v = jv_lookup(t.value, k);
       if (1 /* fixme invalid lookups */) {
         stackval sv;
         sv.value = v;
-        sv.pathidx = 0; //FIXME path_push(t, k);
+        sv.pathidx = pathidx;
         stack_push(sv);
       } else {
         assert(0 && "bad lookup");
@@ -437,6 +429,13 @@ void jq_teardown() {
   forkable_stack_free(&fork_stk);
   forkable_stack_free(&data_stk);
   forkable_stack_free(&frame_stk);
+
+  for (int i=0; i<pathsize; i++) {
+    jv_free(pathbuf[i]);
+  }
+  free(pathbuf);
+  pathbuf = 0;
+  pathsize = 0;
 }
 
 void run_program(struct bytecode* bc) {
