@@ -2,10 +2,7 @@
 #include <stdlib.h>
 #include "jv.h"
 #include "jv_dtoa.h"
-jv stack[1000];
-int stackpos = 0;
-jv next;
-int hasnext;
+#include "jv_parse.h"
 
 typedef const char* presult;
 
@@ -16,55 +13,78 @@ typedef const char* presult;
 #define pfunc presult
 #endif
 
+void jv_parser_init(struct jv_parser* p) {
+  p->stack = 0;
+  p->stacklen = p->stackpos = 0;
+  p->hasnext = 0;
+  p->next = jv_null(); //FIXME: jv_invalid
+  p->tokenbuf = 0;
+  p->tokenlen = p->tokenpos = 0;
+  p->st = JV_PARSER_NORMAL;
+  jvp_dtoa_context_init(&p->dtoa);
+}
 
+void jv_parser_free(struct jv_parser* p) {
+  if (p->hasnext) jv_free(p->next);
+  free(p->stack);
+  free(p->tokenbuf);
+  jvp_dtoa_context_free(&p->dtoa);
+}
 
-pfunc value(jv val) {
-  if (hasnext) return "Expected separator between values";
-  hasnext = 1;
-  next = val;
+static pfunc value(struct jv_parser* p, jv val) {
+  if (p->hasnext) return "Expected separator between values";
+  p->hasnext = 1;
+  p->next = val;
   return 0;
 }
 
-void push(jv v) {
-  stack[stackpos++] = v;
+static void push(struct jv_parser* p, jv v) {
+  assert(p->stackpos <= p->stacklen);
+  if (p->stackpos == p->stacklen) {
+    p->stacklen = p->stacklen * 2 + 10;
+    p->stack = realloc(p->stack, p->stacklen * sizeof(jv));
+  }
+  assert(p->stackpos < p->stacklen);
+  p->stack[p->stackpos++] = v;
 }
 
-pfunc token(char ch) {
+static pfunc token(struct jv_parser* p, char ch) {
   switch (ch) {
   case '[':
-    if (hasnext) return "Expected separator between values";
-    push(jv_array());
+    if (p->hasnext) return "Expected separator between values";
+    push(p, jv_array());
     break;
 
   case '{':
-    if (hasnext) return "Expected separator between values";
-    push(jv_object());
+    if (p->hasnext) return "Expected separator between values";
+    push(p, jv_object());
     break;
 
   case ':':
-    if (!hasnext) 
+    if (!p->hasnext) 
       return "Expected string key before ':'";
-    if (stackpos == 0 || jv_get_kind(stack[stackpos-1]) != JV_KIND_OBJECT)
+    if (p->stackpos == 0 || jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_OBJECT)
       return "':' not as part of an object";
-    if (jv_get_kind(next) != JV_KIND_STRING)
+    if (jv_get_kind(p->next) != JV_KIND_STRING)
       return "Object keys must be strings";
-    push(next);
-    hasnext = 0;
+    push(p, p->next);
+    p->hasnext = 0;
     break;
 
   case ',':
-    if (!hasnext)
+    if (!p->hasnext)
       return "Expected value before ','";
-    if (stackpos == 0)
+    if (p->stackpos == 0)
       return "',' not as part of an object or array";
-    if (jv_get_kind(stack[stackpos-1]) == JV_KIND_ARRAY) {
-      stack[stackpos-1] = jv_array_append(stack[stackpos-1], next);
-      hasnext = 0;
-    } else if (jv_get_kind(stack[stackpos-1]) == JV_KIND_STRING) {
-      assert(stackpos > 1 && jv_get_kind(stack[stackpos-2]) == JV_KIND_OBJECT);
-      stack[stackpos-2] = jv_object_set(stack[stackpos-2], stack[stackpos-1], next);
-      stackpos--;
-      hasnext = 0;
+    if (jv_get_kind(p->stack[p->stackpos-1]) == JV_KIND_ARRAY) {
+      p->stack[p->stackpos-1] = jv_array_append(p->stack[p->stackpos-1], p->next);
+      p->hasnext = 0;
+    } else if (jv_get_kind(p->stack[p->stackpos-1]) == JV_KIND_STRING) {
+      assert(p->stackpos > 1 && jv_get_kind(p->stack[p->stackpos-2]) == JV_KIND_OBJECT);
+      p->stack[p->stackpos-2] = jv_object_set(p->stack[p->stackpos-2], 
+                                              p->stack[p->stackpos-1], p->next);
+      p->stackpos--;
+      p->hasnext = 0;
     } else {
       // this case hits on input like {"a", "b"}
       return "Objects must consist of key:value pairs";
@@ -72,54 +92,57 @@ pfunc token(char ch) {
     break;
 
   case ']':
-    if (stackpos == 0 || jv_get_kind(stack[stackpos-1]) != JV_KIND_ARRAY)
+    if (p->stackpos == 0 || jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_ARRAY)
       return "Unmatched ']'";
-    if (hasnext) {
-      stack[stackpos-1] = jv_array_append(stack[stackpos-1], next);
-      hasnext = 0;
+    if (p->hasnext) {
+      p->stack[p->stackpos-1] = jv_array_append(p->stack[p->stackpos-1], p->next);
+      p->hasnext = 0;
     } else {
-      if (jv_array_length(jv_copy(stack[stackpos-1])) != 0) {
+      if (jv_array_length(jv_copy(p->stack[p->stackpos-1])) != 0) {
         // this case hits on input like [1,2,3,]
         return "Expected another array element";
       }
     }
-    hasnext = 1;
-    next = stack[--stackpos];
+    p->hasnext = 1;
+    p->next = p->stack[--p->stackpos];
     break;
 
   case '}':
-    if (stackpos == 0)
+    if (p->stackpos == 0)
       return "Unmatched '}'";
-    if (hasnext) {
-      if (jv_get_kind(stack[stackpos-1]) != JV_KIND_STRING)
+    if (p->hasnext) {
+      if (jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_STRING)
         return "Objects must consist of key:value pairs";
-      assert(stackpos > 1 && jv_get_kind(stack[stackpos-2]) == JV_KIND_OBJECT);
-      stack[stackpos-2] = jv_object_set(stack[stackpos-2], stack[stackpos-1], next);
-      stackpos--;
-      hasnext = 0;
+      assert(p->stackpos > 1 && jv_get_kind(p->stack[p->stackpos-2]) == JV_KIND_OBJECT);
+      p->stack[p->stackpos-2] = jv_object_set(p->stack[p->stackpos-2], 
+                                              p->stack[p->stackpos-1], p->next);
+      p->stackpos--;
+      p->hasnext = 0;
     } else {
-      if (jv_get_kind(stack[stackpos-1]) != JV_KIND_OBJECT)
+      if (jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_OBJECT)
         return "Unmatched '}'";
-      if (jv_object_length(jv_copy(stack[stackpos-1])) != 0)
+      if (jv_object_length(jv_copy(p->stack[p->stackpos-1])) != 0)
         return "Expected another key-value pair";
     }
-    hasnext = 1;
-    next = stack[--stackpos];
+    p->hasnext = 1;
+    p->next = p->stack[--p->stackpos];
     break;
   }
   return 0;
 }
 
 
-char tokenbuf[1000];
-int tokenpos;
-struct dtoa_context dtoa;
-
-void tokenadd(char c) {
-  tokenbuf[tokenpos++] = c;
+static void tokenadd(struct jv_parser* p, char c) {
+  assert(p->tokenpos <= p->tokenlen);
+  if (p->tokenpos == p->tokenlen) {
+    p->tokenlen = p->tokenlen*2 + 256;
+    p->tokenbuf = realloc(p->tokenbuf, p->tokenlen);
+  }
+  assert(p->tokenpos < p->tokenlen);
+  p->tokenbuf[p->tokenpos++] = c;
 }
 
-int unhex4(char* hex) {
+static int unhex4(char* hex) {
   int r = 0;
   for (int i=0; i<4; i++) {
     char c = *hex++;
@@ -133,7 +156,7 @@ int unhex4(char* hex) {
   return r;
 }
 
-int utf8_encode(int codepoint, char* out) {
+static int utf8_encode(int codepoint, char* out) {
   assert(codepoint >= 0 && codepoint <= 0x10FFFF);
   char* start = out;
   if (codepoint <= 0x7F) {
@@ -154,10 +177,10 @@ int utf8_encode(int codepoint, char* out) {
   return out - start;
 }
 
-pfunc found_string() {
-  char* in = tokenbuf;
-  char* out = tokenbuf;
-  char* end = tokenbuf + tokenpos;
+static pfunc found_string(struct jv_parser* p) {
+  char* in = p->tokenbuf;
+  char* out = p->tokenbuf;
+  char* end = p->tokenbuf + p->tokenpos;
   
   while (in < end) {
     char c = *in++;
@@ -203,38 +226,38 @@ pfunc found_string() {
       *out++ = c;
     }
   }
-  TRY(value(jv_string_sized(tokenbuf, out - tokenbuf)));
-  tokenpos=0;
+  TRY(value(p, jv_string_sized(p->tokenbuf, out - p->tokenbuf)));
+  p->tokenpos = 0;
   return 0;
 }
 
-pfunc check_literal() {
-  if (tokenpos == 0) return 0;
+static pfunc check_literal(struct jv_parser* p) {
+  if (p->tokenpos == 0) return 0;
 
   const char* pattern = 0;
   int plen;
   jv v;
-  switch (tokenbuf[0]) {
+  switch (p->tokenbuf[0]) {
   case 't': pattern = "true"; plen = 4; v = jv_true(); break;
   case 'f': pattern = "false"; plen = 5; v = jv_false(); break;
   case 'n': pattern = "null"; plen = 4; v = jv_null(); break;
   }
   if (pattern) {
-    if (tokenpos != plen) return "Invalid literal";
+    if (p->tokenpos != plen) return "Invalid literal";
     for (int i=0; i<plen; i++) 
-      if (tokenbuf[i] != pattern[i])
+      if (p->tokenbuf[i] != pattern[i])
         return "Invalid literal";
-    TRY(value(v));
+    TRY(value(p, v));
   } else {
     // FIXME: better parser
-    tokenbuf[tokenpos] = 0; // FIXME: invalid
+    p->tokenbuf[p->tokenpos] = 0; // FIXME: invalid
     char* end = 0;
-    double d = jvp_strtod(&dtoa, tokenbuf, &end);
+    double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
     if (end == 0 || *end != 0)
       return "Invalid numeric literal";
-    TRY(value(jv_number(d)));
+    TRY(value(p, jv_number(d)));
   }
-  tokenpos=0;
+  p->tokenpos = 0;
   return 0;
 }
 
@@ -246,7 +269,7 @@ typedef enum {
   INVALID
 } chclass;
 
-chclass classify(char c) {
+static chclass classify(char c) {
   switch (c) {
   case ' ':
   case '\t':
@@ -268,91 +291,79 @@ chclass classify(char c) {
 }
 
 
-enum state {
-  NORMAL,
-  STRING,
-  STRING_ESCAPE
-};
 
-enum state st = NORMAL;
 
-pfunc scan(char ch) {
-  if (st == NORMAL) {
+static pfunc scan(struct jv_parser* p, char ch) {
+  if (p->st == JV_PARSER_NORMAL) {
     chclass cls = classify(ch);
     if (cls != LITERAL) {
-      TRY(check_literal());
+      TRY(check_literal(p));
     }
     switch (cls) {
     case LITERAL:
-      tokenadd(ch);
+      tokenadd(p, ch);
       break;
     case WHITESPACE:
       break;
     case QUOTE:
-      st = STRING;
+      p->st = JV_PARSER_STRING;
       break;
     case STRUCTURE:
-      TRY(token(ch));
+      TRY(token(p, ch));
       break;
     case INVALID:
       return "Invalid character";
     }
   } else {
-    if (ch == '"' && st == STRING) {
-      TRY(found_string());
-      st = NORMAL;
+    if (ch == '"' && p->st == JV_PARSER_STRING) {
+      TRY(found_string(p));
+      p->st = JV_PARSER_NORMAL;
     } else {
-      tokenadd(ch);
-      if (ch == '\\' && st == STRING) {
-        st = STRING_ESCAPE;
+      tokenadd(p, ch);
+      if (ch == '\\' && p->st == JV_PARSER_STRING) {
+        p->st = JV_PARSER_STRING_ESCAPE;
       } else {
-        st = STRING;
+        p->st = JV_PARSER_STRING;
       }
     }
   }
   return 0;
 }
 
-pfunc finish() {
-  assert(st == NORMAL);
-  TRY(check_literal());
+static pfunc finish(struct jv_parser* p) {
+  if (p->st != JV_PARSER_NORMAL)
+    return "Unfinished string";
+  TRY(check_literal(p));
 
-  if (stackpos != 0)
+  if (p->stackpos != 0)
     return "Unfinished JSON term";
   
   // this will happen on the empty string
-  if (!hasnext)
+  if (!p->hasnext)
     return "Expected JSON value";
   
   return 0;
 }
 
 jv jv_parse(const char* string) {
-  jvp_dtoa_context_init(&dtoa);
+  struct jv_parser parser;
+  jv_parser_init(&parser);
 
   const char* p = string;
   char ch;
   while ((ch = *p++)) {
-    presult msg = scan(ch);
+    presult msg = scan(&parser, ch);
     if (msg){
       printf("ERROR: %s (parsing [%s])\n", msg, string);
       return jv_null();
     }
   }
-  presult msg = finish();
+  presult msg = finish(&parser);
   if (msg) {
     printf("ERROR: %s (parsing [%s])\n", msg, string);
     return jv_null();
   }
-  jvp_dtoa_context_free(&dtoa);
-  hasnext = 0;
-  return next;
+  jv value = jv_copy(parser.next);
+  jv_parser_free(&parser);
+  return value;
 }
-#if JV_PARSE_MAIN
-int main(int argc, char* argv[]) {
-  assert(argc == 2);
-  jv_dump(jv_parse(argv[1]));
-  printf("\n");
-  return 0;
-}
-#endif
