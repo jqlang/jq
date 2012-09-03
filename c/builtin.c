@@ -10,6 +10,10 @@ static void f_true(jv input[], jv output[]) {
   output[0] = jv_true();
 }
 
+static void f_null(jv input[], jv output[]) {
+  jv_free(input[0]);
+  output[0] = jv_null();
+}
 
 static void f_plus(jv input[], jv output[]) {
   jv_free(input[0]);
@@ -30,6 +34,7 @@ static void f_plus(jv input[], jv output[]) {
 struct cfunction function_list[] = {
   {f_true, "true", CALL_BUILTIN_1_1},
   {f_false, "false", CALL_BUILTIN_1_1},
+  {f_null, "null", CALL_BUILTIN_1_1},
   {f_plus, "_plus", CALL_BUILTIN_3_1},
 };
 struct symbol_table builtins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
