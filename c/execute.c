@@ -22,7 +22,6 @@ typedef struct {
 jv* pathbuf;
 int pathsize; // number of allocated elements
 
-// FIXME mem
 int path_push(stackval sv, jv val) {
   int pos = sv.pathidx;
   assert(pos <= pathsize);
@@ -32,7 +31,7 @@ int path_push(stackval sv, jv val) {
     pathsize = oldpathsize ? oldpathsize * 2 : 100;
     pathbuf = realloc(pathbuf, sizeof(pathbuf[0]) * pathsize);
     for (int i=oldpathsize; i<pathsize; i++) {
-      pathbuf[i] = jv_null();
+      pathbuf[i] = jv_invalid();
     }
   }
   jv_free(pathbuf[pos]);
@@ -179,7 +178,7 @@ jv jq_next() {
 
     case LOADK: {
       jv v = jv_array_get(jv_copy(frame_current_bytecode(&frame_stk)->constants), *pc++);
-      //FIXME assert(v);
+      assert(jv_is_valid(v));
       stack_push(stackval_replace(stack_pop(), v));
       break;
     }

@@ -88,7 +88,7 @@ static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl, uint1
   cc->retaddr = retaddr;
   cc->is_backtrack_frame = 0;
   for (int i=0; i<cl.bc->nlocals; i++) {
-    *frame_local_var(fp, i) = jv_null();
+    *frame_local_var(fp, i) = jv_invalid();
   }
   return fp;
 }

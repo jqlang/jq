@@ -619,7 +619,7 @@ static jv* jvp_object_write(jv_complex* object, jvp_string* key) {
     jvp_string_free_p(key);
   } else {
     slot = jvp_object_add_slot(object, key, bucket);
-    slot->value = jv_null();
+    slot->value = jv_invalid();
   }
   if (slot == 0) {
     jvp_object_rehash(object);
@@ -627,7 +627,7 @@ static jv* jvp_object_write(jv_complex* object, jvp_string* key) {
     assert(!jvp_object_find_slot(object, key, bucket));
     slot = jvp_object_add_slot(object, key, bucket);
     assert(slot);
-    slot->value = jv_null();
+    slot->value = jv_invalid();
   }
   return &slot->value;
 }

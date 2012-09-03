@@ -18,7 +18,7 @@ void jv_parser_init(struct jv_parser* p) {
   p->stack = 0;
   p->stacklen = p->stackpos = 0;
   p->hasnext = 0;
-  p->next = jv_null(); //FIXME: jv_invalid
+  p->next = jv_invalid(); //FIXME: jv_invalid
   p->tokenbuf = 0;
   p->tokenlen = p->tokenpos = 0;
   p->st = JV_PARSER_NORMAL;
@@ -357,13 +357,13 @@ jv jv_parse_sized(const char* string, int length) {
     presult msg = scan(&parser, ch);
     if (msg){
       printf("ERROR: %s (parsing '%s')\n", msg, string);
-      return jv_null();
+      return jv_invalid();
     }
   }
   presult msg = finish(&parser);
   if (msg) {
     printf("ERROR: %s (parsing '%s')\n", msg, string);
-    return jv_null();
+    return jv_invalid();
   }
   jv value = jv_copy(parser.next);
   jv_parser_free(&parser);

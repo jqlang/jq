@@ -40,11 +40,13 @@ void run_tests() {
     printf("\n");
     fgets(buf, sizeof(buf), testdata);
     jv input = jv_parse(buf);
+    assert(jv_is_valid(input));
     jq_init(bc, input);
 
     while (fgets(buf, sizeof(buf), testdata)) {
       if (skipline(buf)) break;
       jv expected = jv_parse(buf);
+      assert(jv_is_valid(expected));
       jv actual = jq_next();
       if (!jv_is_valid(actual)) {
         printf("Insufficient results\n");
