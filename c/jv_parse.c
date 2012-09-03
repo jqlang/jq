@@ -347,7 +347,6 @@ static pfunc finish(struct jv_parser* p) {
 }
 
 jv jv_parse_sized(const char* string, int length) {
-  printf("'%s' [%d]", string, length);
   struct jv_parser parser;
   jv_parser_init(&parser);
 
