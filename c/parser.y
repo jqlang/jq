@@ -189,6 +189,10 @@ MkDictPair
 : IDENT ':' ExpD { 
   $$ = gen_dictpair(gen_op_const(LOADK, $1), $3);
  }
+| LITERAL ':' ExpD {
+  assert(jv_get_kind($1) == JV_KIND_STRING);
+  $$ = gen_dictpair(gen_op_const(LOADK, $1), $3);
+  }
 | IDENT {
   $$ = gen_dictpair(gen_op_const(LOADK, jv_copy($1)),
                     gen_index(gen_noop(), gen_op_const(LOADK, $1)));

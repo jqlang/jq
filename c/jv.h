@@ -86,7 +86,7 @@ int jv_get_refcnt(jv);
 
 void jv_dump(jv);
 jv jv_parse(const char* string);
-
+jv jv_parse_sized(const char* string, int length);
 
 
 

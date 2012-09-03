@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "jv.h"
 #include "jv_dtoa.h"
 #include "jv_parse.h"
@@ -345,25 +346,31 @@ static pfunc finish(struct jv_parser* p) {
   return 0;
 }
 
-jv jv_parse(const char* string) {
+jv jv_parse_sized(const char* string, int length) {
+  printf("'%s' [%d]", string, length);
   struct jv_parser parser;
   jv_parser_init(&parser);
 
   const char* p = string;
   char ch;
-  while ((ch = *p++)) {
+  while (p < string + length) {
+    ch = *p++;
     presult msg = scan(&parser, ch);
     if (msg){
-      printf("ERROR: %s (parsing [%s])\n", msg, string);
+      printf("ERROR: %s (parsing '%s')\n", msg, string);
       return jv_null();
     }
   }
   presult msg = finish(&parser);
   if (msg) {
-    printf("ERROR: %s (parsing [%s])\n", msg, string);
+    printf("ERROR: %s (parsing '%s')\n", msg, string);
     return jv_null();
   }
   jv value = jv_copy(parser.next);
   jv_parser_free(&parser);
   return value;
+}
+
+jv jv_parse(const char* string) {
+  return jv_parse_sized(string, strlen(string));
 }

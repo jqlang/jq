@@ -15,9 +15,15 @@
 "|=" { return SETPIPE; }
 "."|"="|";"|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"+"|"\$" { return yytext[0];}
 
-[[:digit:]]+  { yylval->literal = jv_number((double)atoi(yytext));   return LITERAL;}
+\"(\\.|[^\\"])*\" |
+[+-]?[0-9.]+([eE][+-]?[0-9]+)? { 
+   yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL; 
+}
+
 [[:alnum:]]+  { yylval->literal = jv_string(yytext); return IDENT;}
+
 [ \n\t]+  {}
+
 %%
 /* perhaps these should be calls... */
 /*
