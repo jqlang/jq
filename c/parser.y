@@ -25,12 +25,19 @@
 %left '|'
 %left ','
 %token EQ "=="
+%token DEFINEDOR "//"
 %token AS "as"
 %token DEF "def"
 %token SETPIPE "|="
+%token IF "if"
+%token THEN "then"
+%token ELSE "else"
+%token END "end"
+%right "//"
 %nonassoc '=' SETPIPE
 %nonassoc EQ
 %left '+'
+
 
 %type <blk> Exp Term MkDict MkDictPair ExpD
 
@@ -78,6 +85,10 @@ Term "as" '$' IDENT '|' Exp {
   jv_free($4);
 } |
 
+"if" Exp "then" Exp "else" Exp "end" {
+  $$ = gen_cond($2, $4, $6);
+} |
+
 Exp '=' Exp {
   block assign = gen_op_simple(DUP);
   block_append(&assign, $3);
@@ -85,6 +96,10 @@ Exp '=' Exp {
   block_append(&assign, $1);
   block_append(&assign, gen_op_simple(SWAP));
   $$ = gen_assign(assign);
+} |
+
+Exp "//" Exp {
+  $$ = gen_definedor($1, $3);
 } |
 
 Exp "|=" Exp {

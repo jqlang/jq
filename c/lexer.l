@@ -13,6 +13,11 @@
 "as" { return AS; }
 "def" { return DEF; }
 "|=" { return SETPIPE; }
+"if" { return IF; }
+"then" { return THEN; }
+"else" { return ELSE; }
+"end" { return END; }
+"//" { return DEFINEDOR; }
 "."|"="|";"|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"+"|"\$" { return yytext[0];}
 
 \"(\\.|[^\\"])*\" |

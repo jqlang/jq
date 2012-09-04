@@ -26,7 +26,9 @@ block gen_subexp(block a);
 block gen_both(block a, block b);
 block gen_collect(block expr);
 block gen_assign(block expr);
-block gen_else(block a, block b);
+block gen_definedor(block a, block b);
+
+block gen_cond(block cond, block iftrue, block iffalse);
 
 block gen_cbinding(struct symbol_table* functions, block b);
 

@@ -312,8 +312,51 @@ block gen_assign(block expr) {
   return c;
 }
 
-block gen_else(block a, block b) {
-  assert(0);
+block gen_definedor(block a, block b) {
+  // var found := false
+  block c = gen_op_simple(DUP);
+  block_append(&c, gen_op_const(LOADK, jv_false()));
+  block found_var = block_bind(gen_op_var_unbound(STOREV, "found"),
+                               gen_noop(), OP_HAS_VARIABLE);
+  block_append(&c, found_var);
+
+  // if found, backtrack. Otherwise execute b
+  block tail = gen_op_simple(DUP);
+  block_append(&tail, gen_op_var_bound(LOADV, found_var));
+  block backtrack = gen_op_simple(BACKTRACK);
+  block_append(&tail, gen_op_target(JUMP_F, backtrack));
+  block_append(&tail, backtrack);
+  block_append(&tail, gen_op_simple(POP));
+  block_append(&tail, b);
+
+  // try again
+  block if_notfound = gen_op_simple(BACKTRACK);
+
+  // found := true, produce result
+  block if_found = gen_op_simple(DUP);
+  block_append(&if_found, gen_op_const(LOADK, jv_true()));
+  block_append(&if_found, gen_op_var_bound(STOREV, found_var));
+  block_append(&if_found, gen_op_target(JUMP, tail));
+
+  block_append(&c, gen_op_target(FORK, if_notfound));
+  block_append(&c, a);
+  block_append(&c, gen_op_target(JUMP_F, if_found));
+  block_append(&c, if_found);
+  block_append(&c, if_notfound);
+  block_append(&c, tail);
+
+  return c;
+}
+
+block gen_cond(block cond, block iftrue, block iffalse) {
+  block b = gen_op_simple(DUP);
+  block_append(&b, cond);
+
+  block_append(&iftrue, gen_op_target(JUMP, iffalse));
+  block_append(&b, gen_op_target(JUMP_F, iftrue));
+  block_append(&b, block_join(gen_op_simple(POP), iftrue));
+  block_append(&b, block_join(gen_op_simple(POP), iffalse));
+  return b;
 }
 
 block gen_cbinding(struct symbol_table* t, block code) {

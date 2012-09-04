@@ -59,6 +59,7 @@ typedef struct {
 } data_stk_elem;
 
 void stack_push(stackval val) {
+  assert(jv_is_valid(val.value));
   data_stk_elem* s = forkable_stack_push(&data_stk, sizeof(data_stk_elem));
   s->sv = val;
 }
@@ -70,6 +71,7 @@ stackval stack_pop() {
     sv.value = jv_copy(sv.value);
   }
   forkable_stack_pop(&data_stk);
+  assert(jv_is_valid(sv.value));
   return sv;
 }
 
@@ -289,6 +291,17 @@ jv jq_next() {
     case JUMP: {
       uint16_t offset = *pc++;
       pc += offset;
+      break;
+    }
+
+    case JUMP_F: {
+      uint16_t offset = *pc++;
+      stackval t = stack_pop();
+      jv_kind kind = jv_get_kind(t.value);
+      if (kind == JV_KIND_FALSE || kind == JV_KIND_NULL) {
+        pc += offset;
+      }
+      stack_push(t); // FIXME do this better
       break;
     }
 

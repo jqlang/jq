@@ -234,3 +234,18 @@ def inc(x): x |= .+1; inc(.[].a)
 .foo[2].bar = 1
 {"foo":[11], "bar":42}
 {"foo":[11,null,{"bar":1}], "bar":42}
+
+#
+# Conditionals
+#
+
+[.[] | if .foo then "yep" else "nope" end]
+[{"foo":0},{"foo":1},{"foo":[]},{"foo":true},{"foo":false},{"foo":null},{"foo":"foo"},{}]
+["yep","yep","yep","yep","nope","nope","yep","nope"]
+
+# FIXME: define/test behaviour of 'if (.foo,.bar) then A else B end'
+
+[.[] | [.foo[] // .bar]]
+[{"foo":[1,2], "bar": 42}, {"foo":[1], "bar": null}, {"foo":[null,false,3], "bar": 18}, {"foo":[], "bar":42}, {"foo": [null,false,null], "bar": 41}]
+[[1,2], [1], [3], [42], [41]]
+
