@@ -52,14 +52,16 @@ void run_tests() {
         printf("Insufficient results\n");
         pass = 0;
         break;
-      } else if (!jv_equal(expected, actual)) {
+      } else if (!jv_equal(jv_copy(expected), jv_copy(actual))) {
         printf("Expected ");
-        jv_dump(expected);
+        jv_dump(jv_copy(expected));
         printf(", but got ");
-        jv_dump(actual);
+        jv_dump(jv_copy(actual));
         printf("\n");
         pass = 0;
       }
+      jv_free(expected);
+      jv_free(actual);
     }
     if (pass) {
       jv extra = jq_next();
