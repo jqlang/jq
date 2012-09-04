@@ -348,14 +348,49 @@ block gen_definedor(block a, block b) {
   return c;
 }
 
+static block gen_condbranch(block iftrue, block iffalse) {
+  block b = gen_noop();
+  block_append(&iftrue, gen_op_target(JUMP, iffalse));
+  block_append(&b, gen_op_target(JUMP_F, iftrue));
+  block_append(&b, iftrue);
+  block_append(&b, iffalse);
+  return b;
+}
+
+block gen_and(block a, block b) {
+  // a and b = if a then (if b then true else false) else false
+  block code = gen_op_simple(DUP);
+  block_append(&code, a);
+
+  block if_a_true = gen_op_simple(POP);
+  block_append(&if_a_true, b);
+  block_append(&if_a_true, gen_condbranch(gen_op_const(LOADK, jv_true()),
+                                          gen_op_const(LOADK, jv_false())));
+  block_append(&code, gen_condbranch(if_a_true,
+                                     block_join(gen_op_simple(POP), gen_op_const(LOADK, jv_false()))));
+  return code;
+}
+
+block gen_or(block a, block b) {
+  // a or b = if a then true else (if b then true else false)
+  block code = gen_op_simple(DUP);
+  block_append(&code, a);
+
+  block if_a_false = gen_op_simple(POP);
+  block_append(&if_a_false, b);
+  block_append(&if_a_false, gen_condbranch(gen_op_const(LOADK, jv_true()),
+                                           gen_op_const(LOADK, jv_false())));
+  block_append(&code, gen_condbranch(block_join(gen_op_simple(POP), gen_op_const(LOADK, jv_true())),
+                                     if_a_false));
+  return code;
+  
+}
+
 block gen_cond(block cond, block iftrue, block iffalse) {
   block b = gen_op_simple(DUP);
   block_append(&b, cond);
-
-  block_append(&iftrue, gen_op_target(JUMP, iffalse));
-  block_append(&b, gen_op_target(JUMP_F, iftrue));
-  block_append(&b, block_join(gen_op_simple(POP), iftrue));
-  block_append(&b, block_join(gen_op_simple(POP), iffalse));
+  block_append(&b, gen_condbranch(block_join(gen_op_simple(POP), iftrue),
+                                  block_join(gen_op_simple(POP), iffalse)));
   return b;
 }
 

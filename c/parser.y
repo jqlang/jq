@@ -34,9 +34,13 @@
 %token ELSE "else"
 %token ELSE_IF "elif"
 %token END "end"
+%token AND "and"
+%token OR "or"
 %right "//"
 %nonassoc '=' SETPIPE
 %nonassoc EQ
+%left OR
+%left AND
 %left '+'
 
 
@@ -97,6 +101,14 @@ Exp '=' Exp {
   block_append(&assign, $1);
   block_append(&assign, gen_op_simple(SWAP));
   $$ = gen_assign(assign);
+} |
+
+Exp "or" Exp {
+  $$ = gen_or($1, $3);
+} | 
+
+Exp "and" Exp {
+  $$ = gen_and($1, $3);
 } |
 
 Exp "//" Exp {
