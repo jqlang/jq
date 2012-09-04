@@ -36,6 +36,7 @@
 %token END "end"
 %token AND "and"
 %token OR "or"
+%token NOT "not"
 %right "//"
 %nonassoc '=' SETPIPE
 %nonassoc EQ
@@ -109,6 +110,10 @@ Exp "or" Exp {
 
 Exp "and" Exp {
   $$ = gen_and($1, $3);
+} |
+
+"not" Exp {
+  $$ = gen_not($2);
 } |
 
 Exp "//" Exp {

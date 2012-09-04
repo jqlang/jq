@@ -19,6 +19,7 @@
 "elif" { return ELSE_IF; }
 "and" { return AND; }
 "or" { return OR; }
+"not" { return NOT; }
 "end" { return END; }
 "//" { return DEFINEDOR; }
 "."|"="|";"|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"+"|"\$" { return yytext[0];}
