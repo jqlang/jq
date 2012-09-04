@@ -4,6 +4,7 @@
 #include "jv.h"
 #include "jv_dtoa.h"
 #include "jv_parse.h"
+#include "jv_unicode.h"
 
 typedef const char* presult;
 
@@ -157,27 +158,6 @@ static int unhex4(char* hex) {
   return r;
 }
 
-static int utf8_encode(int codepoint, char* out) {
-  assert(codepoint >= 0 && codepoint <= 0x10FFFF);
-  char* start = out;
-  if (codepoint <= 0x7F) {
-    *out++ = codepoint;
-  } else if (codepoint <= 0x7FF) {
-    *out++ = 0xC0 + ((codepoint & 0x7C0) >> 6);
-    *out++ = 0x80 + ((codepoint & 0x03F));
-  } else if(codepoint <= 0xFFFF) {
-    *out++ = 0xE0 + ((codepoint & 0xF000) >> 12);
-    *out++ = 0x80 + ((codepoint & 0x0FC0) >> 6);
-    *out++ = 0x80 + ((codepoint & 0x003F));
-  } else {
-    *out++ = 0xF0 + ((codepoint & 0x1C0000) >> 18);
-    *out++ = 0x80 + ((codepoint & 0x03F000) >> 12);
-    *out++ = 0x80 + ((codepoint & 0x000FC0) >> 6);
-    *out++ = 0x80 + ((codepoint & 0x00003F));
-  }
-  return out - start;
-}
-
 static pfunc found_string(struct jv_parser* p) {
   char* in = p->tokenbuf;
   char* out = p->tokenbuf;
@@ -217,7 +197,7 @@ static pfunc found_string(struct jv_parser* p) {
                                  |(surrogate - 0xDC00));
         }
         // FIXME assert valid codepoint
-        out += utf8_encode(codepoint, out);
+        out += jvp_utf8_encode(codepoint, out);
         break;
 
       default:
