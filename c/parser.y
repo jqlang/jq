@@ -32,6 +32,7 @@
 %token IF "if"
 %token THEN "then"
 %token ELSE "else"
+%token ELSE_IF "elif"
 %token END "end"
 %right "//"
 %nonassoc '=' SETPIPE
@@ -39,7 +40,7 @@
 %left '+'
 
 
-%type <blk> Exp Term MkDict MkDictPair ExpD
+%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody
 
 %{
 #include "lexer.yy.h"
@@ -85,8 +86,8 @@ Term "as" '$' IDENT '|' Exp {
   jv_free($4);
 } |
 
-"if" Exp "then" Exp "else" Exp "end" {
-  $$ = gen_cond($2, $4, $6);
+"if" Exp "then" Exp ElseBody {
+  $$ = gen_cond($2, $4, $5);
 } |
 
 Exp '=' Exp {
@@ -126,6 +127,14 @@ Exp '+' Exp {
 
 Term { 
   $$ = $1; 
+}
+
+ElseBody:
+"elif" Exp "then" Exp ElseBody {
+  $$ = gen_cond($2, $4, $5);
+} |
+"else" Exp "end" {
+  $$ = $2;
 }
 
 

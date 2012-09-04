@@ -243,6 +243,11 @@ def inc(x): x |= .+1; inc(.[].a)
 [{"foo":0},{"foo":1},{"foo":[]},{"foo":true},{"foo":false},{"foo":null},{"foo":"foo"},{}]
 ["yep","yep","yep","yep","nope","nope","yep","nope"]
 
+[.[] | if .baz then "strange" elif .foo then "yep" else "nope" end]
+[{"foo":0},{"foo":1},{"foo":[]},{"foo":true},{"foo":false},{"foo":null},{"foo":"foo"},{}]
+["yep","yep","yep","yep","nope","nope","yep","nope"]
+
+
 # FIXME: define/test behaviour of 'if (.foo,.bar) then A else B end'
 
 [.[] | [.foo[] // .bar]]

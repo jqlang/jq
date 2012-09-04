@@ -16,6 +16,7 @@
 "if" { return IF; }
 "then" { return THEN; }
 "else" { return ELSE; }
+"elif" { return ELSE_IF; }
 "end" { return END; }
 "//" { return DEFINEDOR; }
 "."|"="|";"|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"+"|"\$" { return yytext[0];}
