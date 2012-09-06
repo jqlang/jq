@@ -1,22 +1,25 @@
 #include "jv.h"
 #include <stdio.h>
+#include <float.h>
+#include <math.h>
 
 #include "jv_dtoa.h"
+#include "jv_unicode.h"
 
 static void jv_dump_string(jv str, int ascii_only) {
   assert(jv_get_kind(str) == JV_KIND_STRING);
   const char* i = jv_string_value(str);
-  const char* end = i + jv_string_length(str);
-  while (i < end) {
-    int unicode_escape;
-    int c = (unsigned char)*i++;
+  const char* end = i + jv_string_length(jv_copy(str));
+  int c;
+  while ((i = jvp_utf8_next(i, end, &c))) {
+    assert(c != -1);
+    int unicode_escape = 0;
     if (0x20 <= c && c <= 0x7E) {
       // printable ASCII
       if (c == '"' || c == '\\') {
         putchar('\\');
       }
       putchar(c);
-      unicode_escape = 0;
     } else if (c < 0x20 || c == 0x7F) {
       // ASCII control character
       switch (c) {
@@ -44,8 +47,21 @@ static void jv_dump_string(jv str, int ascii_only) {
         unicode_escape = 1;
         break;
       }
+    } else {
+      unicode_escape = 1;
+    }
+    if (unicode_escape) {
+      if (c <= 0xffff) {
+        printf("\\u%04x", c);
+      } else {
+        c -= 0x10000;
+        printf("\\u%04x\\u%04x", 
+               0xD800 | ((c & 0xffc00) >> 10),
+               0xDC00 | (c & 0x003ff));
+      }
     }
   }
+  assert(c != -1);
 }
 
 static void jv_dump_term(struct dtoa_context* C, jv x) {
@@ -65,7 +81,9 @@ static void jv_dump_term(struct dtoa_context* C, jv x) {
     break;
   case JV_KIND_STRING:
     // FIXME: all sorts of broken
-    printf("\"%s\"", jv_string_value(x));
+    putchar('"');
+    jv_dump_string(x, 0);
+    putchar('"');
     break;
   case JV_KIND_ARRAY: {
     printf("[");

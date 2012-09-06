@@ -1,5 +1,39 @@
+#include <stdio.h>
 #include <assert.h>
 #include "jv_unicode.h"
+#include "jv_utf8_tables.h"
+
+const char* jvp_utf8_next(const char* in, const char* end, int* codepoint) {
+  if (in == end) {
+    codepoint = 0;
+    return 0;
+  }
+  unsigned char first = (unsigned char)in[0];
+  int length = utf8_coding_length[first];
+  if (length == 0 || length == UTF8_CONTINUATION_BYTE || in + length > end) {
+    *codepoint = -1;
+    return 0;
+  }
+  *codepoint = ((unsigned)in[0]) & utf8_coding_bits[first];
+  for (int i=1; i<length; i++) {
+    int ch = (unsigned char)in[i];
+    if (utf8_coding_length[(unsigned char)in[i]] != UTF8_CONTINUATION_BYTE){
+      *codepoint = -1;
+      return 0;
+    }
+    *codepoint = (*codepoint << 6) | (ch & 0x3f);
+  }
+  return in + length;
+}
+
+int jvp_utf8_verify(const char* in, const char* end) {
+  int codepoint = 0;
+  while ((in = jvp_utf8_next(in, end, &codepoint))) {
+    if (codepoint == -1) return 0;
+  }
+  return codepoint != -1;
+}
+
 int jvp_utf8_encode_length(int codepoint) {
   if (codepoint <= 0x7F) return 1;
   else if (codepoint <= 0x7FF) return 2;

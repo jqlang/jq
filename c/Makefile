@@ -8,6 +8,8 @@ clean:
 	sed 's/.*`\(.*\)'\''.*/\1/' | grep -v '^all$$' | \
 	xargs rm
 
+jv_utf8_tables.h: gen_utf8_tables.py
+	python $^ > $@
 
 lexer.yy.c: lexer.l
 	flex -o lexer.yy.c --header-file=lexer.yy.h lexer.l
@@ -16,6 +18,8 @@ lexer.yy.h: lexer.yy.c
 parser.tab.c: parser.y lexer.yy.h
 	bison -W -d parser.y -v --report-file=parser.info
 parser.tab.h: parser.tab.c
+
+jv_unicode.c: jv_utf8_tables.h
 
 parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c
 	$(CC) -o $@ $^
