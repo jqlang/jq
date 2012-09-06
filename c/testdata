@@ -13,9 +13,9 @@ false
 null
 false
 
-# null
-# 42
-# null
+null
+42
+null
 
 1
 null
@@ -41,7 +41,9 @@ null
 null
 {"a":1}
 
-# FIXME: string literals
+{a,b,(.d):.a,e:.b}
+{"a":1, "b":2, "c":3, "d":"c"}
+{"a":1, "b":2, "c":1, "e":2}
 
 #
 # Field access, piping
