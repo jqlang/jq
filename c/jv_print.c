@@ -67,6 +67,9 @@ static void jv_dump_string(jv str, int ascii_only) {
 static void jv_dump_term(struct dtoa_context* C, jv x) {
   char buf[JVP_DTOA_FMT_MAX_LEN];
   switch (jv_get_kind(x)) {
+  case JV_KIND_INVALID:
+    assert(0 && "Invalid value");
+    break;
   case JV_KIND_NULL:
     printf("null");
     break;
@@ -76,9 +79,19 @@ static void jv_dump_term(struct dtoa_context* C, jv x) {
   case JV_KIND_TRUE:
     printf("true");
     break;
-  case JV_KIND_NUMBER:
-    printf("%s", jvp_dtoa_fmt(C, buf, jv_number_value(x)));
+  case JV_KIND_NUMBER: {
+    double d = jv_number_value(x);
+    if (d != d) {
+      // JSON doesn't have NaN, so we'll render it as "null"
+      printf("null");
+    } else {
+      // Normalise infinities to something we can print in valid JSON
+      if (d > DBL_MAX) d = DBL_MAX;
+      if (d < -DBL_MAX) d = -DBL_MAX;
+      printf("%s", jvp_dtoa_fmt(C, buf, d));
+    }
     break;
+  }
   case JV_KIND_STRING:
     // FIXME: all sorts of broken
     putchar('"');
