@@ -24,6 +24,8 @@ static void f_plus(jv input[], jv output[]) {
                           jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
     output[0] = jv_array_concat(a, b);
+  } else if (jv_get_kind(a) == JV_KIND_OBJECT && jv_get_kind(b) == JV_KIND_OBJECT) {
+    output[0] = jv_object_merge(a, b);
   } else {
     output[0] = jv_string("wtf gaize");
     jv_free(a);

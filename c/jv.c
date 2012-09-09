@@ -729,6 +729,16 @@ int jv_object_length(jv object) {
   return n;
 }
 
+jv jv_object_merge(jv a, jv b) {
+  assert(jv_get_kind(a) == JV_KIND_OBJECT);
+  jv_object_foreach(i, b) {
+    a = jv_object_set(a, 
+                      jv_object_iter_key(b, i),
+                      jv_object_iter_value(b, i));
+  }
+  return a;
+}
+
 /*
  * Object iteration (internal helpers)
  */
