@@ -58,6 +58,10 @@ jv jv_null() {
   return JV_NULL;
 }
 
+jv jv_bool(int x) {
+  return x ? JV_TRUE : JV_FALSE;
+}
+
 /*
  * Numbers
  */
@@ -617,11 +621,12 @@ static jv* jvp_object_write(jv_complex* object, jvp_string* key) {
   if (slot) {
     // already has the key
     jvp_string_free_p(key);
-  } else {
-    slot = jvp_object_add_slot(object, key, bucket);
-    slot->value = jv_invalid();
+    return &slot->value;
   }
-  if (slot == 0) {
+  slot = jvp_object_add_slot(object, key, bucket);
+  if (slot) {
+    slot->value = jv_invalid();
+  } else {
     jvp_object_rehash(object);
     bucket = jvp_object_find_bucket(object, key);
     assert(!jvp_object_find_slot(object, key, bucket));

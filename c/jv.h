@@ -52,6 +52,7 @@ jv jv_invalid();
 jv jv_null();
 jv jv_true();
 jv jv_false();
+jv jv_bool(int);
 
 jv jv_number(double);
 double jv_number_value(jv);
