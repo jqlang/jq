@@ -41,6 +41,7 @@ typedef struct {
  */
 
 jv_kind jv_get_kind(jv);
+const char* jv_kind_name(jv_kind);
 static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
 
 jv jv_copy(jv);

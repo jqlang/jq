@@ -38,6 +38,21 @@ jv_kind jv_get_kind(jv x) {
   return x.kind;
 }
 
+const char* jv_kind_name(jv_kind k) {
+  switch (k) {
+  case JV_KIND_INVALID: return "<invalid>";
+  case JV_KIND_NULL:    return "null";
+  case JV_KIND_FALSE:   return "boolean";
+  case JV_KIND_TRUE:    return "boolean";
+  case JV_KIND_NUMBER:  return "number";
+  case JV_KIND_STRING:  return "string";
+  case JV_KIND_ARRAY:   return "array";
+  case JV_KIND_OBJECT:  return "object";
+  }
+  assert(0);
+  return "<unknown>";
+}
+
 static const jv JV_NULL = {JV_KIND_NULL, {0}};
 static const jv JV_FALSE = {JV_KIND_FALSE, {0}};
 static const jv JV_TRUE = {JV_KIND_TRUE, {0}};

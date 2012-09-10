@@ -376,7 +376,16 @@ jv jq_next() {
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
       func->fptr(cfunc_input, cfunc_output);
       top.value = cfunc_output[0];
-      stack_push(top);
+      if (jv_is_valid(top.value)) {
+        stack_push(top);
+      } else {
+        jv msg = jv_invalid_get_msg(top.value);
+        if (jv_get_kind(msg) == JV_KIND_STRING) {
+          fprintf(stderr, "jq: error: %s\n", jv_string_value(msg));
+        }
+        jv_free(msg);
+        goto do_backtrack;
+      }
       break;
     }
 
@@ -393,7 +402,16 @@ jv jq_next() {
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
       func->fptr(cfunc_input, cfunc_output);
       top.value = cfunc_output[0];
-      stack_push(top);
+      if (jv_is_valid(top.value)) {
+        stack_push(top);
+      } else {
+        jv msg = jv_invalid_get_msg(top.value);
+        if (jv_get_kind(msg) == JV_KIND_STRING) {
+          fprintf(stderr, "jq: error: %s\n", jv_string_value(msg));
+        }
+        jv_free(msg);
+        goto do_backtrack;
+      }
       break;
     }
 

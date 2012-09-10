@@ -27,7 +27,9 @@ static void f_plus(jv input[], jv output[]) {
   } else if (jv_get_kind(a) == JV_KIND_OBJECT && jv_get_kind(b) == JV_KIND_OBJECT) {
     output[0] = jv_object_merge(a, b);
   } else {
-    output[0] = jv_string("wtf gaize");
+    output[0] = jv_invalid_with_msg(jv_string_fmt("Attempted to add %s and %s",
+                                                  jv_kind_name(jv_get_kind(a)),
+                                                  jv_kind_name(jv_get_kind(b))));
     jv_free(a);
     jv_free(b);
   }
