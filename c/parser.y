@@ -42,11 +42,10 @@
 %nonassoc EQ
 %left OR
 %left AND
-%left '+'
+%left '+' '-'
 
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody
-
 %{
 #include "lexer.yy.h"
 void yyerror(YYLTYPE* loc, block* answer, yyscan_t lexer, const char *s){
@@ -62,6 +61,21 @@ static block gen_dictpair(block k, block v) {
 
 static block gen_index(block obj, block key) {
   return block_join(obj, block_join(gen_subexp(key), gen_op_simple(INDEX)));
+}
+
+static block gen_binop(block a, block b, char op) {
+  const char* funcname = 0;
+  switch (op) {
+  case '+': funcname = "_plus"; break;
+  case '-': funcname = "_minus"; break;
+  }
+  assert(funcname);
+
+  block c = gen_noop();
+  block_append(&c, gen_subexp(a));
+  block_append(&c, gen_subexp(b));
+  block_append(&c, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, funcname)));
+  return c;
 }
 
 %}
@@ -136,10 +150,11 @@ Exp ',' Exp {
 } |
 
 Exp '+' Exp {
-  $$ = gen_noop();
-  block_append(&$$, gen_subexp($1));
-  block_append(&$$, gen_subexp($3));
-  block_append(&$$, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, "_plus")));
+  $$ = gen_binop($1, $3, '+');
+} |
+
+Exp '-' Exp {
+  $$ = gen_binop($1, $3, '-');
 } |
 
 Term { 
@@ -153,7 +168,6 @@ ElseBody:
 "else" Exp "end" {
   $$ = $2;
 }
-
 
 ExpD:
 ExpD '|' ExpD { 
