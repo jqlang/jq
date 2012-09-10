@@ -49,6 +49,7 @@ void run_tests() {
       assert(jv_is_valid(expected));
       jv actual = jq_next();
       if (!jv_is_valid(actual)) {
+        jv_free(actual);
         printf("Insufficient results\n");
         pass = 0;
         break;
@@ -70,6 +71,8 @@ void run_tests() {
         jv_dump(extra);
         printf("\n");
         pass = 0;
+      } else {
+        jv_free(extra);
       }
     }
     jq_teardown();

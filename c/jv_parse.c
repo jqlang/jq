@@ -18,8 +18,7 @@ typedef const char* presult;
 void jv_parser_init(struct jv_parser* p) {
   p->stack = 0;
   p->stacklen = p->stackpos = 0;
-  p->hasnext = 0;
-  p->next = jv_invalid(); //FIXME: jv_invalid
+  p->next = jv_invalid();
   p->tokenbuf = 0;
   p->tokenlen = p->tokenpos = 0;
   p->st = JV_PARSER_NORMAL;
@@ -27,15 +26,15 @@ void jv_parser_init(struct jv_parser* p) {
 }
 
 void jv_parser_free(struct jv_parser* p) {
-  if (p->hasnext) jv_free(p->next);
+  jv_free(p->next);
   free(p->stack);
   free(p->tokenbuf);
   jvp_dtoa_context_free(&p->dtoa);
 }
 
 static pfunc value(struct jv_parser* p, jv val) {
-  if (p->hasnext) return "Expected separator between values";
-  p->hasnext = 1;
+  if (jv_is_valid(p->next)) return "Expected separator between values";
+  jv_free(p->next);
   p->next = val;
   return 0;
 }
@@ -53,40 +52,40 @@ static void push(struct jv_parser* p, jv v) {
 static pfunc token(struct jv_parser* p, char ch) {
   switch (ch) {
   case '[':
-    if (p->hasnext) return "Expected separator between values";
+    if (jv_is_valid(p->next)) return "Expected separator between values";
     push(p, jv_array());
     break;
 
   case '{':
-    if (p->hasnext) return "Expected separator between values";
+    if (jv_is_valid(p->next)) return "Expected separator between values";
     push(p, jv_object());
     break;
 
   case ':':
-    if (!p->hasnext) 
+    if (!jv_is_valid(p->next)) 
       return "Expected string key before ':'";
     if (p->stackpos == 0 || jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_OBJECT)
       return "':' not as part of an object";
     if (jv_get_kind(p->next) != JV_KIND_STRING)
       return "Object keys must be strings";
     push(p, p->next);
-    p->hasnext = 0;
+    p->next = jv_invalid();
     break;
 
   case ',':
-    if (!p->hasnext)
+    if (!jv_is_valid(p->next))
       return "Expected value before ','";
     if (p->stackpos == 0)
       return "',' not as part of an object or array";
     if (jv_get_kind(p->stack[p->stackpos-1]) == JV_KIND_ARRAY) {
       p->stack[p->stackpos-1] = jv_array_append(p->stack[p->stackpos-1], p->next);
-      p->hasnext = 0;
+      p->next = jv_invalid();
     } else if (jv_get_kind(p->stack[p->stackpos-1]) == JV_KIND_STRING) {
       assert(p->stackpos > 1 && jv_get_kind(p->stack[p->stackpos-2]) == JV_KIND_OBJECT);
       p->stack[p->stackpos-2] = jv_object_set(p->stack[p->stackpos-2], 
                                               p->stack[p->stackpos-1], p->next);
       p->stackpos--;
-      p->hasnext = 0;
+      p->next = jv_invalid();
     } else {
       // this case hits on input like {"a", "b"}
       return "Objects must consist of key:value pairs";
@@ -96,37 +95,37 @@ static pfunc token(struct jv_parser* p, char ch) {
   case ']':
     if (p->stackpos == 0 || jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_ARRAY)
       return "Unmatched ']'";
-    if (p->hasnext) {
+    if (jv_is_valid(p->next)) {
       p->stack[p->stackpos-1] = jv_array_append(p->stack[p->stackpos-1], p->next);
-      p->hasnext = 0;
+      p->next = jv_invalid();
     } else {
       if (jv_array_length(jv_copy(p->stack[p->stackpos-1])) != 0) {
         // this case hits on input like [1,2,3,]
         return "Expected another array element";
       }
     }
-    p->hasnext = 1;
+    jv_free(p->next);
     p->next = p->stack[--p->stackpos];
     break;
 
   case '}':
     if (p->stackpos == 0)
       return "Unmatched '}'";
-    if (p->hasnext) {
+    if (jv_is_valid(p->next)) {
       if (jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_STRING)
         return "Objects must consist of key:value pairs";
       assert(p->stackpos > 1 && jv_get_kind(p->stack[p->stackpos-2]) == JV_KIND_OBJECT);
       p->stack[p->stackpos-2] = jv_object_set(p->stack[p->stackpos-2], 
                                               p->stack[p->stackpos-1], p->next);
       p->stackpos--;
-      p->hasnext = 0;
+      p->next = jv_invalid();
     } else {
       if (jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_OBJECT)
         return "Unmatched '}'";
       if (jv_object_length(jv_copy(p->stack[p->stackpos-1])) != 0)
         return "Expected another key-value pair";
     }
-    p->hasnext = 1;
+    jv_free(p->next);
     p->next = p->stack[--p->stackpos];
     break;
   }
@@ -320,7 +319,7 @@ static pfunc finish(struct jv_parser* p) {
     return "Unfinished JSON term";
   
   // this will happen on the empty string
-  if (!p->hasnext)
+  if (!jv_is_valid(p->next))
     return "Expected JSON value";
   
   return 0;

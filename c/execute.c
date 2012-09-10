@@ -466,6 +466,7 @@ void run_program(struct bytecode* bc) {
     jv_dump(result);
     printf("\n");
   }
+  jv_free(result);
   #if JQ_DEBUG
   printf("end of results\n");
   #endif

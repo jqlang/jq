@@ -4,7 +4,6 @@ struct jv_parser {
   int stackpos;
   int stacklen;
   jv next;
-  int hasnext;
   
   char* tokenbuf;
   int tokenpos;

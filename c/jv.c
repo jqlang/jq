@@ -37,14 +37,9 @@ jv_kind jv_get_kind(jv x) {
   return x.kind;
 }
 
-static const jv JV_INVALID = {JV_KIND_INVALID, {0}};
 static const jv JV_NULL = {JV_KIND_NULL, {0}};
 static const jv JV_FALSE = {JV_KIND_FALSE, {0}};
 static const jv JV_TRUE = {JV_KIND_TRUE, {0}};
-
-jv jv_invalid() {
-  return JV_INVALID;
-}
 
 jv jv_true() {
   return JV_TRUE;
@@ -60,6 +55,43 @@ jv jv_null() {
 
 jv jv_bool(int x) {
   return x ? JV_TRUE : JV_FALSE;
+}
+
+/*
+ * Invalid objects, with optional error messages
+ */ 
+
+typedef struct {
+  jv_refcnt refcnt;
+  jv errmsg;
+} jvp_invalid;
+
+jv jv_invalid_with_msg(jv err) {
+  jv x;
+  x.kind = JV_KIND_INVALID;
+  x.val.complex.i[0] = x.val.complex.i[1] = 0;
+  jvp_invalid* i = malloc(sizeof(jvp_invalid));
+  x.val.complex.ptr = &i->refcnt;
+  i->refcnt.count = 1;
+  i->errmsg = err;
+  return x;
+}
+
+jv jv_invalid() {
+  return jv_invalid_with_msg(jv_null());
+}
+
+jv jv_invalid_get_message(jv inv) {
+  jv x = ((jvp_invalid*)inv.val.complex.ptr)->errmsg;
+  jv_free(inv);
+  return x;
+}
+
+static void jvp_invalid_free(jv_complex* x) {
+  if (jvp_refcnt_dec(x)) {
+    jv_free(((jvp_invalid*)x->ptr)->errmsg);
+    free(x->ptr);
+  }
 }
 
 /*
@@ -789,7 +821,8 @@ jv jv_object_iter_value(jv object, int iter) {
 jv jv_copy(jv j) {
   if (jv_get_kind(j) == JV_KIND_ARRAY || 
       jv_get_kind(j) == JV_KIND_STRING || 
-      jv_get_kind(j) == JV_KIND_OBJECT) {
+      jv_get_kind(j) == JV_KIND_OBJECT ||
+      jv_get_kind(j) == JV_KIND_INVALID) {
     jvp_refcnt_inc(&j.val.complex);
   }
   return j;
@@ -802,6 +835,8 @@ void jv_free(jv j) {
     jvp_string_free(&j.val.complex);
   } else if (jv_get_kind(j) == JV_KIND_OBJECT) {
     jvp_object_free(&j.val.complex);
+  } else if (jv_get_kind(j) == JV_KIND_INVALID) {
+    jvp_invalid_free(&j.val.complex);
   }
 }
 
