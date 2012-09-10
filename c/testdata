@@ -183,6 +183,10 @@ null
 null
 10
 
+1 + tonumber + ("10" | tonumber)
+4
+15
+
 #
 # User-defined functions
 # Oh god.
