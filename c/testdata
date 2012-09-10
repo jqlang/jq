@@ -159,6 +159,14 @@ null
 "asdfasdf"
 {"a":1, "b":2, "c":3}
 
+"asdf" + "jkl;" + .
+"some string"
+"asdfjkl;some string"
+
+"\u0000\u0020\u0000" + .
+"\u0000\u0020\u0000"
+"\u0000 \u0000\u0000 \u0000"
+
 #
 # User-defined functions
 # Oh god.

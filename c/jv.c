@@ -355,6 +355,7 @@ static jv_complex jvp_string_new(const char* data, uint32_t length) {
   return r;
 }
 
+
 static void jvp_string_free(jv_complex* s) {
   if (jvp_refcnt_dec(s)) {
     jvp_string* str = jvp_string_ptr(s);
@@ -375,6 +376,16 @@ static jvp_string* jvp_string_copy_p(jvp_string* s) {
 
 static uint32_t jvp_string_length(jvp_string* s) {
   return s->length_hashed >> 1;
+}
+
+static jv_complex jvp_string_concat(jvp_string* a, jvp_string* b) {
+  uint32_t la = jvp_string_length(a), lb = jvp_string_length(b);
+  jvp_string* s = jvp_string_alloc(la + lb);
+  memcpy(s->data, a->data, la);
+  memcpy(s->data + la, b->data, lb);
+  s->data[la + lb] = 0;
+  jv_complex r = {&s->refcnt, {0,0}};
+  return r;
 }
 
 static const uint32_t HASH_SEED = 0x432A9843;
@@ -486,6 +497,16 @@ uint32_t jv_string_hash(jv j) {
 const char* jv_string_value(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   return jvp_string_ptr(&j.val.complex)->data;
+}
+
+jv jv_string_concat(jv a, jv b) {
+  jv j;
+  j.kind = JV_KIND_STRING;
+  j.val.complex = jvp_string_concat(jvp_string_ptr(&a.val.complex),
+                                    jvp_string_ptr(&b.val.complex));
+  jv_free(a);
+  jv_free(b);
+  return j;
 }
 
 jv jv_string_fmt(const char* fmt, ...) {

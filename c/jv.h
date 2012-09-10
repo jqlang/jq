@@ -76,6 +76,7 @@ jv jv_string_sized(const char*, int);
 int jv_string_length(jv);
 uint32_t jv_string_hash(jv);
 const char* jv_string_value(jv);
+jv jv_string_concat(jv, jv);
 jv jv_string_fmt(const char*, ...);
 
 jv jv_object();
