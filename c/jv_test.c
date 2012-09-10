@@ -108,6 +108,15 @@ int main(){
     jv_free(a1);
     jv_free(a2);
     jv_free(b);
+
+    assert(jv_equal(jv_string("hello42!"), jv_string_fmt("hello%d%s", 42, "!")));
+    char big[20000];
+    for (int i=0; i<sizeof(big); i++) big[i] = 'a';
+    big[sizeof(big)-1] = 0;
+    jv str = jv_string_fmt("%s", big);
+    assert(jv_string_length(jv_copy(str)) == sizeof(big) - 1);
+    assert(!strcmp(big, jv_string_value(str)));
+    jv_free(str);
   }
 
   /// Objects

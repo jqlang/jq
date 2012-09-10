@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "jv.h"
 
@@ -81,8 +82,8 @@ jv jv_invalid() {
   return jv_invalid_with_msg(jv_null());
 }
 
-jv jv_invalid_get_message(jv inv) {
-  jv x = ((jvp_invalid*)inv.val.complex.ptr)->errmsg;
+jv jv_invalid_get_msg(jv inv) {
+  jv x = jv_copy(((jvp_invalid*)inv.val.complex.ptr)->errmsg);
   jv_free(inv);
   return x;
 }
@@ -470,6 +471,25 @@ uint32_t jv_string_hash(jv j) {
 const char* jv_string_value(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   return jvp_string_ptr(&j.val.complex)->data;
+}
+
+jv jv_string_fmt(const char* fmt, ...) {
+  int size = 1024;
+  while (1) {
+    char* buf = malloc(size);
+    va_list args;
+    va_start(args, fmt);
+    int n = vsnprintf(buf, size, fmt, args);
+    va_end(args);
+    if (n < size) {
+      jv ret = jv_string_sized(buf, n);
+      free(buf);
+      return ret;
+    } else {
+      free(buf);
+      size = n * 2;
+    }
+  }
 }
 
 /*

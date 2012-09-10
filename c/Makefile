@@ -27,7 +27,7 @@ parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute
 jq: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c
 	$(CC) -DJQ_DEBUG=0 -o $@ $^
 
-jv_test: jv_test.c jv.c jv_print.c jv_dtoa.c
+jv_test: jv_test.c jv.c jv_print.c jv_dtoa.c jv_unicode.c
 	$(CC) -DNO_JANSSON -o $@ $^
 
 jv_parse: jv_parse.c jv.c jv_print.c jv_dtoa.c
