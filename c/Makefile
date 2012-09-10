@@ -22,7 +22,10 @@ parser.tab.h: parser.tab.c
 jv_unicode.c: jv_utf8_tables.h
 
 parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c
-	$(CC) -o $@ $^
+	$(CC) -DJQ_DEBUG=1 -o $@ $^
+
+jq: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c
+	$(CC) -DJQ_DEBUG=0 -o $@ $^
 
 jv_test: jv_test.c jv.c jv_print.c jv_dtoa.c
 	$(CC) -DNO_JANSSON -o $@ $^

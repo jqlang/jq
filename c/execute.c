@@ -148,10 +148,10 @@ jv jq_next() {
 
   int backtracking = 0;
   while (1) {
+    uint16_t opcode = *pc;
+
+#if JQ_DEBUG
     dump_operation(frame_current_bytecode(&frame_stk), pc);
-
-    uint16_t opcode = *pc++;
-
     printf("\t");
     const struct opcode_description* opdesc = opcode_describe(opcode);
     data_stk_elem* param;
@@ -167,13 +167,15 @@ jv jq_next() {
       printf("<%d>", jv_get_refcnt(param->sv.value));
     }
 
+    if (backtracking) printf("\t<backtracking>");
+
+    printf("\n");
+#endif
     if (backtracking) {
-      printf("\t<backtracking>");
       opcode = ON_BACKTRACK(opcode);
       backtracking = 0;
     }
-
-    printf("\n");
+    pc++;
 
     switch (opcode) {
     default: assert(0 && "invalid instruction");
@@ -235,9 +237,11 @@ jv jq_next() {
       uint16_t v = *pc++;
       frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
       jv* var = frame_local_var(fp, v);
+      #if JQ_DEBUG
       printf("V%d = ", v);
       jv_dump(jv_copy(*var));
       printf("\n");
+      #endif
       stack_push(stackval_replace(stack_pop(), jv_copy(*var)));
       break;
     }
@@ -248,9 +252,11 @@ jv jq_next() {
       frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
       jv* var = frame_local_var(fp, v);
       stackval val = stack_pop();
+      #if JQ_DEBUG
       printf("V%d = ", v);
       jv_dump(jv_copy(val.value));
       printf("\n");
+      #endif
       jv_free(*var);
       *var = val.value;
       break;
@@ -368,7 +374,6 @@ jv jq_next() {
       stackval top = stack_pop();
       cfunc_input[0] = top.value;
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
-      printf(" call %s\n", func->name);
       func->fptr(cfunc_input, cfunc_output);
       top.value = cfunc_output[0];
       stack_push(top);
@@ -386,7 +391,6 @@ jv jq_next() {
       cfunc_input[1] = a;
       cfunc_input[2] = b;
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
-      printf(" call %s\n", func->name);
       func->fptr(cfunc_input, cfunc_output);
       top.value = cfunc_output[0];
       stack_push(top);
@@ -450,7 +454,11 @@ void jq_teardown() {
 }
 
 void run_program(struct bytecode* bc) {
-  char buf[4096];
+#if JQ_DEBUG
+  dump_disassembly(0, bc);
+  printf("\n");
+#endif
+  char buf[409600];
   fgets(buf, sizeof(buf), stdin);
   jq_init(bc, jv_parse(buf));
   jv result;
@@ -458,6 +466,8 @@ void run_program(struct bytecode* bc) {
     jv_dump(result);
     printf("\n");
   }
+  #if JQ_DEBUG
   printf("end of results\n");
+  #endif
   jq_teardown();
 }

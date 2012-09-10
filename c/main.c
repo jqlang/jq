@@ -88,8 +88,6 @@ int main(int argc, char* argv[]) {
   blk = gen_cbinding(&builtins, blk);
   struct bytecode* bc = block_compile(blk);
   block_free(blk);
-  dump_disassembly(0, bc);
-  printf("\n");
   run_program(bc);
   bytecode_free(bc);
 }
