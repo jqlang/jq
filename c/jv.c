@@ -768,6 +768,7 @@ jv jv_object_merge(jv a, jv b) {
                       jv_object_iter_key(b, i),
                       jv_object_iter_value(b, i));
   }
+  jv_free(b);
   return a;
 }
 
