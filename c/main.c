@@ -4,13 +4,36 @@
 #include "builtin.h"
 #include "jv.h"
 
-block compile(const char* str);
+int compile(const char* str, block* answer);
 
 void jq_init(struct bytecode* bc, jv value);
 jv jq_next();
 void jq_teardown();
 
-void run_program(struct bytecode* bc);
+
+void run_program(struct bytecode* bc) {
+#if JQ_DEBUG
+  dump_disassembly(0, bc);
+  printf("\n");
+#endif
+  char buf[409600];
+  fgets(buf, sizeof(buf), stdin);
+  jv value = jv_parse(buf);
+  if (!jv_is_valid(value)) {
+    assert(0 && "couldn't parse input"); //FIXME
+  }
+  jq_init(bc, value);
+  jv result;
+  while (jv_is_valid(result = jq_next())) {
+    jv_dump(result);
+    printf("\n");
+  }
+  jv_free(result);
+  #if JQ_DEBUG
+  printf("end of results\n");
+  #endif
+  jq_teardown();
+}
 
 int skipline(const char* buf) {
   int p = 0;
@@ -29,7 +52,9 @@ void run_tests() {
     if (skipline(buf)) continue;
     printf("Testing %s\n", buf);
     int pass = 1;
-    block program = compile(buf);
+    block program;
+    int nerrors = compile(buf, &program);
+    assert(nerrors == 0);
     block_append(&program, gen_op_simple(YIELD));
     block_append(&program, gen_op_simple(BACKTRACK));
     program = gen_cbinding(&builtins, program);
@@ -86,11 +111,17 @@ void run_tests() {
 
 int main(int argc, char* argv[]) {
   if (argc == 1) { run_tests(); return 0; }
-  block blk = compile(argv[1]);
+  block blk;
+  int nerrors = compile(argv[1], &blk);
+  if (nerrors > 0) {
+    printf("%d compile %s\n", nerrors, nerrors > 1 ? "errors" : "error");
+    return 1;
+  }
   block_append(&blk, block_join(gen_op_simple(YIELD), gen_op_simple(BACKTRACK)));
   blk = gen_cbinding(&builtins, blk);
   struct bytecode* bc = block_compile(blk);
   block_free(blk);
   run_program(bc);
   bytecode_free(bc);
+  return 0;
 }

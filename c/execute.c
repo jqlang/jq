@@ -470,23 +470,3 @@ void jq_teardown() {
   pathbuf = 0;
   pathsize = 0;
 }
-
-void run_program(struct bytecode* bc) {
-#if JQ_DEBUG
-  dump_disassembly(0, bc);
-  printf("\n");
-#endif
-  char buf[409600];
-  fgets(buf, sizeof(buf), stdin);
-  jq_init(bc, jv_parse(buf));
-  jv result;
-  while (jv_is_valid(result = jq_next())) {
-    jv_dump(result);
-    printf("\n");
-  }
-  jv_free(result);
-  #if JQ_DEBUG
-  printf("end of results\n");
-  #endif
-  jq_teardown();
-}

@@ -331,20 +331,18 @@ jv jv_parse_sized(const char* string, int length) {
 
   const char* p = string;
   char ch;
-  while (p < string + length) {
+  presult msg = 0;
+  while (msg == 0 && p < string + length) {
     ch = *p++;
-    presult msg = scan(&parser, ch);
-    if (msg){
-      printf("ERROR: %s (parsing '%s')\n", msg, string);
-      return jv_invalid();
-    }
+    msg = scan(&parser, ch);
   }
-  presult msg = finish(&parser);
+  if (msg == 0) msg = finish(&parser);
+  jv value;
   if (msg) {
-    printf("ERROR: %s (parsing '%s')\n", msg, string);
-    return jv_invalid();
+    value = jv_invalid_with_msg(jv_string_fmt("%s (while parsing '%s')", msg, string));
+  } else {
+    value = jv_copy(parser.next);
   }
-  jv value = jv_copy(parser.next);
   jv_parser_free(&parser);
   return value;
 }

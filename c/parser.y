@@ -4,21 +4,40 @@
 #include "compile.h"
 %}
 
+%code requires {
+#include "locfile.h"
+#define YYLTYPE location
+#define YYLLOC_DEFAULT(Loc, Rhs, N)             \
+  do {                                          \
+    if (N) {                                    \
+      (Loc).start = YYRHSLOC(Rhs, 1).start;     \
+      (Loc).end = YYRHSLOC(Rhs, N).end;         \
+    } else {                                    \
+      (Loc).start = YYRHSLOC(Rhs, 0).end;       \
+      (Loc).end = YYRHSLOC(Rhs, 0).end;         \
+    }                                           \
+  } while (0)
+ }
+
 %locations
+%error-verbose
 %define api.pure
 %union {
   jv literal;
   block blk;
 }
 
+%destructor { jv_free($$); } <literal>
+%destructor { block_free($$); } <blk>
+
 %parse-param {block* answer}
+%parse-param {int* errors}
+%parse-param {struct locfile* locations}
 %parse-param {yyscan_t lexer}
 %lex-param {yyscan_t lexer}
 
-
 %token <literal> IDENT
 %token <literal> LITERAL
-
 %token EQ "=="
 %token DEFINEDOR "//"
 %token AS "as"
@@ -50,8 +69,18 @@
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody
 %{
 #include "lexer.yy.h"
-void yyerror(YYLTYPE* loc, block* answer, yyscan_t lexer, const char *s){
-  printf("ERROR: %s\n", s); 
+#define FAIL(loc, msg)                                   \
+  do {                                                   \
+    location l = loc;                                    \
+    yyerror(&l, answer, errors, locations, lexer, msg);  \
+    /*YYERROR*/;                                         \
+  } while (0)
+
+void yyerror(YYLTYPE* loc, block* answer, int* errors, 
+             struct locfile* locations, yyscan_t lexer, const char *s){
+  (*errors)++;
+  printf("error: %s\n", s);
+  locfile_locate(locations, *loc);
 }
 
 static block gen_dictpair(block k, block v) {
@@ -263,7 +292,9 @@ MkDictPair
   $$ = gen_dictpair(gen_op_const(LOADK, $1), $3);
  }
 | LITERAL ':' ExpD {
-  assert(jv_get_kind($1) == JV_KIND_STRING);
+  if (jv_get_kind($1) != JV_KIND_STRING) {
+    FAIL(@1, "Object keys must be strings");
+  }
   $$ = gen_dictpair(gen_op_const(LOADK, $1), $3);
   }
 | IDENT {
@@ -275,14 +306,22 @@ MkDictPair
   }
 %%
 
-block compile(const char* str) {
+int compile(const char* str, block* answer) {
   yyscan_t scanner;
   YY_BUFFER_STATE buf;
-  block answer = gen_noop();
-  yylex_init(&scanner);
+  yylex_init_extra(0, &scanner);
   buf = yy_scan_string(str, scanner);
-  yyparse(&answer, scanner);
+  int errors = 0;
+  struct locfile locations;
+  locfile_init(&locations, str, strlen(str));
+  *answer = gen_noop();
+  yyparse(answer, &errors, &locations, scanner);
+  locfile_free(&locations);
   yy_delete_buffer(buf, scanner);
   yylex_destroy(scanner);
-  return answer;
+  if (errors > 0) {
+    block_free(*answer);
+    *answer = gen_noop();
+  }
+  return errors;
 }
