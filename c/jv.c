@@ -824,23 +824,23 @@ int jv_equal(jv a, jv b) {
   int r;
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
+  } else if (jv_get_kind(a) == JV_KIND_NUMBER) {
+    r = jv_number_value(a) == jv_number_value(b);
+  } else if (a.val.complex.ptr == b.val.complex.ptr &&
+             a.val.complex.i[0] == b.val.complex.i[0] &&
+             a.val.complex.i[1] == b.val.complex.i[1]) {
+    r = 1;
   } else {
     switch (jv_get_kind(a)) {
-    case JV_KIND_NUMBER:
-      r = jv_number_value(a) == jv_number_value(b);
-      break;
-    case JV_KIND_ARRAY: {
+    case JV_KIND_ARRAY:
       r = jvp_array_equal(&a.val.complex, &b.val.complex);
       break;
-    }
-    case JV_KIND_STRING: {
+    case JV_KIND_STRING:
       r = jvp_string_equal(&a.val.complex, &b.val.complex);
       break;
-    }
-    case JV_KIND_OBJECT: {
+    case JV_KIND_OBJECT:
       r = jvp_object_equal(&a.val.complex, &b.val.complex);
       break;
-    }
     default:
       r = 1;
       break;
