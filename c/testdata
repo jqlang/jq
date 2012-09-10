@@ -175,6 +175,14 @@ null
 1
 [2,4]
 
+[10 * 20, 20 / .]
+4
+[200, 5]
+
+1 + 2 * 2 + 10 / 2
+null
+10
+
 #
 # User-defined functions
 # Oh god.

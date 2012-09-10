@@ -70,11 +70,43 @@ static void f_minus(jv input[], jv output[]) {
   }
 }
 
+static void f_multiply(jv input[], jv output[]) {
+  jv_free(input[0]);
+  jv a = input[2];
+  jv b = input[1];
+  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+    output[0] = jv_number(jv_number_value(a) * jv_number_value(b));
+  } else {
+    output[0] = jv_invalid_with_msg(jv_string_fmt("Attempted to multiply %s and %s",
+                                                  jv_kind_name(jv_get_kind(a)),
+                                                  jv_kind_name(jv_get_kind(b))));
+    jv_free(a);
+    jv_free(b);
+  }  
+}
+
+static void f_divide(jv input[], jv output[]) {
+  jv_free(input[0]);
+  jv a = input[2];
+  jv b = input[1];
+  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+    output[0] = jv_number(jv_number_value(a) / jv_number_value(b));
+  } else {
+    output[0] = jv_invalid_with_msg(jv_string_fmt("Attempted to divide %s by %s",
+                                                  jv_kind_name(jv_get_kind(a)),
+                                                  jv_kind_name(jv_get_kind(b))));
+    jv_free(a);
+    jv_free(b);
+  }  
+}
+
 struct cfunction function_list[] = {
   {f_true, "true", CALL_BUILTIN_1_1},
   {f_false, "false", CALL_BUILTIN_1_1},
   {f_null, "null", CALL_BUILTIN_1_1},
   {f_plus, "_plus", CALL_BUILTIN_3_1},
   {f_minus, "_minus", CALL_BUILTIN_3_1},
+  {f_multiply, "_multiply", CALL_BUILTIN_3_1},
+  {f_divide, "_divide", CALL_BUILTIN_3_1},
 };
 struct symbol_table builtins = {function_list, sizeof(function_list)/sizeof(function_list[0])};

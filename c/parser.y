@@ -43,6 +43,7 @@
 %left OR
 %left AND
 %left '+' '-'
+%left '*' '/'
 
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody
@@ -68,6 +69,8 @@ static block gen_binop(block a, block b, char op) {
   switch (op) {
   case '+': funcname = "_plus"; break;
   case '-': funcname = "_minus"; break;
+  case '*': funcname = "_multiply"; break;
+  case '/': funcname = "_divide"; break;
   }
   assert(funcname);
 
@@ -155,6 +158,14 @@ Exp '+' Exp {
 
 Exp '-' Exp {
   $$ = gen_binop($1, $3, '-');
+} |
+
+Exp '*' Exp {
+  $$ = gen_binop($1, $3, '*');
+} |
+
+Exp '/' Exp {
+  $$ = gen_binop($1, $3, '/');
 } |
 
 Term { 
