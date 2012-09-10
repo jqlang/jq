@@ -183,9 +183,26 @@ null
 null
 10
 
+[16 / 4 / 2, 16 / 4 * 2, 16 - 4 - 2, 16 - 4 + 2]
+null
+[2, 8, 10, 14]
+
 1 + tonumber + ("10" | tonumber)
 4
 15
+
+[{"a":42},.object,10,.num,false,true,null,"b",[1,4]] | .[] as $x | [$x == .[]]
+{"object": {"a":42}, "num":10.0}
+[true,  true,  false, false, false, false, false, false, false]
+[true,  true,  false, false, false, false, false, false, false]
+[false, false, true,  true,  false, false, false, false, false]
+[false, false, true,  true,  false, false, false, false, false]
+[false, false, false, false, true,  false, false, false, false]
+[false, false, false, false, false, true,  false, false, false]
+[false, false, false, false, false, false, true,  false, false]
+[false, false, false, false, false, false, false, true,  false]
+[false, false, false, false, false, false, false, false, true ]
+
 
 #
 # User-defined functions

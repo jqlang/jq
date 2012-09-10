@@ -19,11 +19,6 @@
 %token <literal> IDENT
 %token <literal> LITERAL
 
- /* revolting hack */
-%left ';'
-
-%left '|'
-%left ','
 %token EQ "=="
 %token DEFINEDOR "//"
 %token AS "as"
@@ -37,6 +32,12 @@
 %token AND "and"
 %token OR "or"
 %token NOT "not"
+
+
+ /* revolting hack */
+%left ';'
+%left '|'
+%left ','
 %right "//"
 %nonassoc '=' SETPIPE
 %nonassoc EQ
@@ -64,13 +65,14 @@ static block gen_index(block obj, block key) {
   return block_join(obj, block_join(gen_subexp(key), gen_op_simple(INDEX)));
 }
 
-static block gen_binop(block a, block b, char op) {
+static block gen_binop(block a, block b, int op) {
   const char* funcname = 0;
   switch (op) {
   case '+': funcname = "_plus"; break;
   case '-': funcname = "_minus"; break;
   case '*': funcname = "_multiply"; break;
   case '/': funcname = "_divide"; break;
+  case EQ: funcname = "_equal"; break;
   }
   assert(funcname);
 
@@ -129,6 +131,7 @@ Exp "and" Exp {
   $$ = gen_and($1, $3);
 } |
 
+
 "not" Exp {
   $$ = gen_not($2);
 } |
@@ -166,6 +169,10 @@ Exp '*' Exp {
 
 Exp '/' Exp {
   $$ = gen_binop($1, $3, '/');
+} |
+
+Exp "==" Exp {
+  $$ = gen_binop($1, $3, EQ);
 } |
 
 Term { 
