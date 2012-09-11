@@ -71,9 +71,9 @@ void run_tests() {
         break;
       } else if (!jv_equal(jv_copy(expected), jv_copy(actual))) {
         printf("Expected ");
-        jv_dump(jv_copy(expected));
+        jv_dump(jv_copy(expected), 0);
         printf(", but got ");
-        jv_dump(jv_copy(actual));
+        jv_dump(jv_copy(actual), 0);
         printf("\n");
         pass = 0;
       }
@@ -84,7 +84,7 @@ void run_tests() {
       jv extra = jq_next();
       if (jv_is_valid(extra)) {
         printf("Superfluous result: ");
-        jv_dump(extra);
+        jv_dump(extra, 0);
         printf("\n");
         pass = 0;
       } else {
@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
       jq_init(bc, value);
       jv result;
       while (jv_is_valid(result = jq_next())) {
-        jv_dump(result);
+        jv_dump(result, JV_PRINT_PRETTY);
         printf("\n");
       }
       jv_free(result);

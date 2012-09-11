@@ -64,7 +64,9 @@ static void jv_dump_string(jv str, int ascii_only) {
   assert(c != -1);
 }
 
-static void jv_dump_term(struct dtoa_context* C, jv x) {
+enum { INDENT = 2 };
+
+static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent) {
   char buf[JVP_DTOA_FMT_MAX_LEN];
   switch (jv_get_kind(x)) {
   case JV_KIND_INVALID:
@@ -99,33 +101,51 @@ static void jv_dump_term(struct dtoa_context* C, jv x) {
     putchar('"');
     break;
   case JV_KIND_ARRAY: {
-    printf("[");
-    for (int i=0; i<jv_array_length(jv_copy(x)); i++) {
-      if (i!=0) printf(", ");
-      jv_dump(jv_array_get(jv_copy(x), i));
+    if (jv_array_length(jv_copy(x)) == 0) {
+      printf("[]");
+      break;
     }
+    printf("[");
+    if (flags & JV_PRINT_PRETTY) printf("\n%*s", indent+INDENT, "");
+    for (int i=0; i<jv_array_length(jv_copy(x)); i++) {
+      if (i!=0) {
+        if (flags & JV_PRINT_PRETTY) printf(",\n%*s", indent+INDENT, "");
+        else printf(", ");
+      }
+      jv_dump_term(C, jv_array_get(jv_copy(x), i), flags, indent + INDENT);
+    }
+    if (flags & JV_PRINT_PRETTY) printf("\n%*s", indent, "");
     printf("]");
     break;
   }
   case JV_KIND_OBJECT: {
-    printf("{");
-    int first = 1;
-    for (int i = jv_object_iter(x); jv_object_iter_valid(x,i); i = jv_object_iter_next(x,i)) {
-      if (!first) printf(", ");
-      first = 0;
-      jv_dump(jv_object_iter_key(x, i));
-      printf(": ");
-      jv_dump(jv_object_iter_value(x, i));
+    if (jv_object_length(jv_copy(x)) == 0) {
+      printf("{}");
+      break;
     }
+    printf("{");
+    if (flags & JV_PRINT_PRETTY) printf("\n%*s", indent+INDENT, "");
+    int first = 1;
+    jv_object_foreach(i, x) {
+      if (!first) {
+        if (flags & JV_PRINT_PRETTY) printf(",\n%*s", indent+INDENT, "");
+        else printf(", ");
+      }
+      first = 0;
+      jv_dump_term(C, jv_object_iter_key(x, i), flags, indent + INDENT);
+      printf(": ");
+      jv_dump_term(C, jv_object_iter_value(x, i), flags, indent + INDENT);
+    }
+    if (flags & JV_PRINT_PRETTY) printf("\n%*s", indent, "");
     printf("}");
   }
   }
   jv_free(x);
 }
 
-void jv_dump(jv x) {
+void jv_dump(jv x, int flags) {
   struct dtoa_context C;
   jvp_dtoa_context_init(&C);
-  jv_dump_term(&C, x);
+  jv_dump_term(&C, x, flags, 0);
   jvp_dtoa_context_free(&C);
 }

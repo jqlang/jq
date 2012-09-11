@@ -58,7 +58,7 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
       printf(" %04d", pc + imm);
     } else if (op->flags & OP_HAS_CONSTANT) {
       printf(" ");
-      jv_dump(jv_array_get(jv_copy(bc->constants), imm));
+      jv_dump(jv_array_get(jv_copy(bc->constants), imm), 0);
     } else if (op->flags & OP_HAS_VARIABLE) {
       uint16_t v = bc->code[pc++];
       printf(" v%d", v);
