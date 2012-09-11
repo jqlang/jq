@@ -34,8 +34,13 @@
 %parse-param {int* errors}
 %parse-param {struct locfile* locations}
 %parse-param {yyscan_t lexer}
+%lex-param {block* answer}
+%lex-param {int* errors}
+%lex-param {struct locfile* locations}
 %lex-param {yyscan_t lexer}
 
+
+%token INVALID_CHARACTER
 %token <literal> IDENT
 %token <literal> LITERAL
 %token EQ "=="
@@ -81,6 +86,29 @@ void yyerror(YYLTYPE* loc, block* answer, int* errors,
   (*errors)++;
   printf("error: %s\n", s);
   locfile_locate(locations, *loc);
+}
+
+int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors, 
+          struct locfile* locations, yyscan_t lexer) {
+  while (1) {
+    int tok = jq_yylex(yylval, yylloc, lexer);
+    if (tok == INVALID_CHARACTER) {
+      FAIL(*yylloc, "Invalid character");
+    } else {
+      if (tok == LITERAL && !jv_is_valid(yylval->literal)) {
+        jv msg = jv_invalid_get_msg(jv_copy(yylval->literal));
+        if (jv_get_kind(msg) == JV_KIND_STRING) {
+          FAIL(*yylloc, jv_string_value(msg));
+        } else {
+          FAIL(*yylloc, "Invalid literal");
+        }
+        jv_free(msg);
+        jv_free(yylval->literal);
+        yylval->literal = jv_null();
+      }
+      return tok;
+    }
+  }
 }
 
 static block gen_dictpair(block k, block v) {
@@ -309,16 +337,16 @@ MkDictPair
 int compile(const char* str, block* answer) {
   yyscan_t scanner;
   YY_BUFFER_STATE buf;
-  yylex_init_extra(0, &scanner);
-  buf = yy_scan_string(str, scanner);
+  jq_yylex_init_extra(0, &scanner);
+  buf = jq_yy_scan_string(str, scanner);
   int errors = 0;
   struct locfile locations;
   locfile_init(&locations, str, strlen(str));
   *answer = gen_noop();
   yyparse(answer, &errors, &locations, scanner);
   locfile_free(&locations);
-  yy_delete_buffer(buf, scanner);
-  yylex_destroy(scanner);
+  jq_yy_delete_buffer(buf, scanner);
+  jq_yylex_destroy(scanner);
   if (errors > 0) {
     block_free(*answer);
     *answer = gen_noop();

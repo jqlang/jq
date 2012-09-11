@@ -15,6 +15,7 @@
 %option reentrant
 %option extra-type="int"
 %option bison-bridge bison-locations
+%option prefix="jq_yy"
 
 %%
 
@@ -33,7 +34,7 @@
 "//" { return DEFINEDOR; }
 "."|"="|";"|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"+"|"-"|"*"|"/"|"\$" { return yytext[0];}
 
-\"(\\.|[^\\"])*\" |
+\"(\\.|[^\\\"])*\" |
 -?[0-9.]+([eE][+-]?[0-9]+)? { 
    yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL; 
 }
@@ -41,6 +42,8 @@
 [[:alnum:]]+  { yylval->literal = jv_string(yytext); return IDENT;}
 
 [ \n\t]+  {}
+
+. { return INVALID_CHARACTER; }
 
 %%
 /* perhaps these should be calls... */
