@@ -133,7 +133,14 @@ static struct closure make_closure(struct forkable_stack* stk, frame_ptr fr, uin
   }
 }
 
-
+void print_error(jv value) {
+  assert(!jv_is_valid(value));
+  jv msg = jv_invalid_get_msg(value);
+  if (jv_get_kind(msg) == JV_KIND_STRING) {
+    fprintf(stderr, "jq: error: %s\n", jv_string_value(msg));
+  }
+  jv_free(msg);
+}
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
 jv jq_next() {
@@ -273,7 +280,13 @@ jv jq_next() {
       uint16_t v = *pc++;
       frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
       jv* var = frame_local_var(fp, v);
-      *var = jv_insert(*var, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
+      jv result = jv_insert(*var, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
+      if (jv_is_valid(result)) {
+        *var = result;
+      } else {
+        print_error(result);
+        *var = jv_null();
+      }
       break;
     }
 
@@ -282,13 +295,14 @@ jv jq_next() {
       jv k = stack_pop().value;
       int pathidx = path_push(t, jv_copy(k));
       jv v = jv_lookup(t.value, k);
-      if (1 /* fixme invalid lookups */) {
+      if (jv_is_valid(v)) {
         stackval sv;
         sv.value = v;
         sv.pathidx = pathidx;
         stack_push(sv);
       } else {
-        assert(0 && "bad lookup");
+        print_error(v);
+        goto do_backtrack;
       }
       break;
     }
@@ -379,11 +393,7 @@ jv jq_next() {
       if (jv_is_valid(top.value)) {
         stack_push(top);
       } else {
-        jv msg = jv_invalid_get_msg(top.value);
-        if (jv_get_kind(msg) == JV_KIND_STRING) {
-          fprintf(stderr, "jq: error: %s\n", jv_string_value(msg));
-        }
-        jv_free(msg);
+        print_error(top.value);
         goto do_backtrack;
       }
       break;
@@ -405,11 +415,7 @@ jv jq_next() {
       if (jv_is_valid(top.value)) {
         stack_push(top);
       } else {
-        jv msg = jv_invalid_get_msg(top.value);
-        if (jv_get_kind(msg) == JV_KIND_STRING) {
-          fprintf(stderr, "jq: error: %s\n", jv_string_value(msg));
-        }
-        jv_free(msg);
+        print_error(top.value);
         goto do_backtrack;
       }
       break;

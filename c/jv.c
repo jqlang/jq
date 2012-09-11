@@ -49,7 +49,7 @@ const char* jv_kind_name(jv_kind k) {
   case JV_KIND_ARRAY:   return "array";
   case JV_KIND_OBJECT:  return "object";
   }
-  assert(0);
+  assert(0 && "invalid kind");
   return "<unknown>";
 }
 
