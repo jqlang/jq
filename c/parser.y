@@ -83,8 +83,7 @@
 void yyerror(YYLTYPE* loc, block* answer, int* errors, 
              struct locfile* locations, yyscan_t lexer, const char *s){
   (*errors)++;
-  printf("error: %s\n", s);
-  locfile_locate(locations, *loc);
+  locfile_locate(locations, *loc, "error: %s", s);
 }
 
 int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors, 
@@ -293,11 +292,11 @@ LITERAL {
   block_append(&$$, gen_op_simple(POP));
 } |
 '$' IDENT {
-  $$ = gen_op_var_unbound(LOADV, jv_string_value($2)); 
+  $$ = gen_location(@$, gen_op_var_unbound(LOADV, jv_string_value($2)));
   jv_free($2);
 } | 
 IDENT {
-  $$ = gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, jv_string_value($1)));
+  $$ = gen_location(@$, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, jv_string_value($1))));
   jv_free($1);
 } |
 IDENT '(' Exp ')' {
@@ -307,6 +306,7 @@ IDENT '(' Exp ')' {
                                                 "lambda",
                                                            block_join($3, gen_op_simple(RET))),
                                          gen_noop(), OP_IS_CALL_PSEUDO)));
+  $$ = gen_location(@1, $$);
   jv_free($1);
 } |
 '(' error ')' { $$ = gen_noop(); } |
@@ -342,17 +342,14 @@ MkDictPair
 | '(' error ')' ':' ExpD { $$ = $5; }
 %%
 
-int compile(const char* str, block* answer) {
+int jq_parse(struct locfile* locations, block* answer) {
   yyscan_t scanner;
   YY_BUFFER_STATE buf;
   jq_yylex_init_extra(0, &scanner);
-  buf = jq_yy_scan_string(str, scanner);
+  buf = jq_yy_scan_bytes(locations->data, locations->length, scanner);
   int errors = 0;
-  struct locfile locations;
-  locfile_init(&locations, str, strlen(str));
   *answer = gen_noop();
-  yyparse(answer, &errors, &locations, scanner);
-  locfile_free(&locations);
+  yyparse(answer, &errors, locations, scanner);
   jq_yy_delete_buffer(buf, scanner);
   jq_yylex_destroy(scanner);
   if (errors > 0) {

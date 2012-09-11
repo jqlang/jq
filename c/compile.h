@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "bytecode.h"
 #include "opcode.h"
+#include "locfile.h"
 
 struct inst;
 typedef struct inst inst;
@@ -10,6 +11,8 @@ typedef struct block {
   inst* first;
   inst* last;
 } block;
+
+block gen_location(location, block);
 
 block gen_noop();
 block gen_op_simple(opcode op);
@@ -39,7 +42,7 @@ void block_append(block* b, block b2);
 block block_join(block a, block b);
 block block_bind(block binder, block body, int bindflags);
 
-struct bytecode* block_compile(block);
+int block_compile(block, struct locfile*, struct bytecode**);
 
 void block_free(block);
 

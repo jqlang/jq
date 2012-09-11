@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "opcode.h"
 #include "compile.h"
-
+#include "locfile.h"
 
 struct inst {
   struct inst* next;
@@ -17,6 +17,8 @@ struct inst {
     jv constant;
     struct cfunction* cfunc;
   } imm;
+
+  location source;
 
   // Binding
   // An instruction requiring binding (for parameters/variables)
@@ -45,6 +47,7 @@ static inst* inst_new(opcode op) {
   i->bound_by = 0;
   i->symbol = 0;
   i->subfn = gen_noop();
+  i->source = UNKNOWN_LOCATION;
   return i;
 }
 
@@ -80,6 +83,16 @@ static inst* block_take(block* b) {
     b->last = 0;
   }
   return i;
+}
+
+block gen_location(location loc, block b) {
+  for (inst* i = b.first; i; i = i->next) {
+    if (i->source.start == UNKNOWN_LOCATION.start &&
+        i->source.end == UNKNOWN_LOCATION.end) {
+      i->source = loc;
+    }
+  }
+  return b;
 }
 
 block gen_noop() {
@@ -429,7 +442,8 @@ static int count_cfunctions(block b) {
   return n;
 }
 
-static void compile(struct bytecode* bc, block b) {
+static int compile(struct locfile* locations, struct bytecode* bc, block b) {
+  int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
@@ -442,7 +456,10 @@ static void compile(struct bytecode* bc, block b) {
 
     int opflags = opcode_describe(curr->op)->flags;
     if (opflags & OP_HAS_BINDING) {
-      assert(curr->bound_by && "unbound term");
+      if (!curr->bound_by) {
+        locfile_locate(locations, curr->source, "error: %s is not defined", curr->symbol);
+        errors++;
+      }
     }
     if ((opflags & OP_HAS_VARIABLE) &&
         curr->bound_by == curr) {
@@ -472,7 +489,7 @@ static void compile(struct bytecode* bc, block b) {
       bc->subfunctions[curr->imm.intval] = subfn;
       subfn->globals = bc->globals;
       subfn->parent = bc;
-      compile(subfn, curr->subfn);
+      errors += compile(locations, subfn, curr->subfn);
     }
   } else {
     bc->subfunctions = 0;
@@ -483,7 +500,7 @@ static void compile(struct bytecode* bc, block b) {
   pos = 0;
   jv constant_pool = jv_array();
   int maxvar = -1;
-  for (inst* curr = b.first; curr; curr = curr->next) {
+  if (!errors) for (inst* curr = b.first; curr; curr = curr->next) {
     const struct opcode_description* op = opcode_describe(curr->op);
     if (op->length == 0)
       continue;
@@ -551,18 +568,25 @@ static void compile(struct bytecode* bc, block b) {
   }
   bc->constants = constant_pool;
   bc->nlocals = maxvar + 2; // FIXME: frames of size zero?
+  return errors;
 }
 
-struct bytecode* block_compile(block b) {
+int block_compile(block b, struct locfile* locations, struct bytecode** out) {
   struct bytecode* bc = malloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->globals = malloc(sizeof(struct symbol_table));
   int ncfunc = count_cfunctions(b);
   bc->globals->ncfunctions = 0;
   bc->globals->cfunctions = malloc(sizeof(struct cfunction) * ncfunc);
-  compile(bc, b);
+  int nerrors = compile(locations, bc, b);
   assert(bc->globals->ncfunctions == ncfunc);
-  return bc;
+  if (nerrors > 0) {
+    bytecode_free(bc);
+    *out = 0;
+  } else {
+    *out = bc;
+  }
+  return nerrors;
 }
 
 void block_free(block b) {

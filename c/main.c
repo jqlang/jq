@@ -1,14 +1,35 @@
 #include <stdio.h>
+#include <string.h>
 #include "compile.h"
 #include "parser.tab.h"
 #include "builtin.h"
 #include "jv.h"
+#include "locfile.h"
 
-int compile(const char* str, block* answer);
+int jq_parse(struct locfile* source, block* answer);
 
 void jq_init(struct bytecode* bc, jv value);
 jv jq_next();
 void jq_teardown();
+
+struct bytecode* jq_compile(const char* str) {
+  struct locfile locations;
+  locfile_init(&locations, str, strlen(str));
+  block program;
+  struct bytecode* bc = 0;
+  int nerrors = jq_parse(&locations, &program);
+  if (nerrors == 0) {
+    block_append(&program, block_join(gen_op_simple(YIELD), gen_op_simple(BACKTRACK)));
+    program = gen_cbinding(&builtins, program);
+    nerrors = block_compile(program, &locations, &bc);
+    block_free(program);
+  }
+  if (nerrors) {
+    fprintf(stderr, "%d compile %s\n", nerrors, nerrors > 1 ? "errors" : "error");
+  }
+  locfile_free(&locations);
+  return bc;
+}
 
 
 void run_program(struct bytecode* bc) {
@@ -52,14 +73,8 @@ void run_tests() {
     if (skipline(buf)) continue;
     printf("Testing %s\n", buf);
     int pass = 1;
-    block program;
-    int nerrors = compile(buf, &program);
-    assert(nerrors == 0);
-    block_append(&program, gen_op_simple(YIELD));
-    block_append(&program, gen_op_simple(BACKTRACK));
-    program = gen_cbinding(&builtins, program);
-    struct bytecode* bc = block_compile(program);
-    block_free(program);
+    struct bytecode* bc = jq_compile(buf);
+    assert(bc);
     printf("Disassembly:\n");
     dump_disassembly(2, bc);
     printf("\n");
@@ -111,16 +126,8 @@ void run_tests() {
 
 int main(int argc, char* argv[]) {
   if (argc == 1) { run_tests(); return 0; }
-  block blk;
-  int nerrors = compile(argv[1], &blk);
-  if (nerrors > 0) {
-    printf("%d compile %s\n", nerrors, nerrors > 1 ? "errors" : "error");
-    return 1;
-  }
-  block_append(&blk, block_join(gen_op_simple(YIELD), gen_op_simple(BACKTRACK)));
-  blk = gen_cbinding(&builtins, blk);
-  struct bytecode* bc = block_compile(blk);
-  block_free(blk);
+  struct bytecode* bc = jq_compile(argv[1]);
+  if (!bc) return 1;
   run_program(bc);
   bytecode_free(bc);
   return 0;
