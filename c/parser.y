@@ -3,7 +3,6 @@
 #include <string.h>
 #include "compile.h"
 %}
-
 %code requires {
 #include "locfile.h"
 #define YYLTYPE location
@@ -170,6 +169,10 @@ Term "as" '$' IDENT '|' Exp {
 "if" Exp "then" Exp ElseBody {
   $$ = gen_cond($2, $4, $5);
 } |
+"if" Exp error {
+  FAIL(@$, "Possibly unterminated 'if' statment");
+  $$ = $2;
+} |
 
 Exp '=' Exp {
   block assign = gen_op_simple(DUP);
@@ -187,7 +190,6 @@ Exp "or" Exp {
 Exp "and" Exp {
   $$ = gen_and($1, $3);
 } |
-
 
 "not" Exp {
   $$ = gen_not($2);
@@ -235,6 +237,8 @@ Exp "==" Exp {
 Term { 
   $$ = $1; 
 }
+
+
 
 ElseBody:
 "elif" Exp "then" Exp ElseBody {
@@ -304,16 +308,19 @@ IDENT '(' Exp ')' {
                                                            block_join($3, gen_op_simple(RET))),
                                          gen_noop(), OP_IS_CALL_PSEUDO)));
   jv_free($1);
-}
+} |
+'(' error ')' { $$ = gen_noop(); } |
+'[' error ']' { $$ = gen_noop(); } |
+Term '[' error ']' { $$ = $1; } |
+'{' error '}' { $$ = gen_noop(); }
 
 MkDict:
 { 
   $$=gen_noop(); 
-}
-|
-MkDictPair
-{ $$ = $1; }
+} |
+ MkDictPair { $$ = $1; }
 | MkDictPair ',' MkDict { $$=block_join($1, $3); }
+| error ',' MkDict { $$ = $3; }
 
 MkDictPair
 : IDENT ':' ExpD { 
@@ -332,6 +339,7 @@ MkDictPair
 | '(' Exp ')' ':' ExpD {
   $$ = gen_dictpair($2, $5);
   }
+| '(' error ')' ':' ExpD { $$ = $5; }
 %%
 
 int compile(const char* str, block* answer) {

@@ -39,6 +39,12 @@
    yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL; 
 }
 
+\"(\\.|[^\\\"])* { 
+  yylval->literal = jv_invalid_with_msg(jv_string("Unterminated string"));
+  return LITERAL;
+}
+  
+
 [[:alnum:]]+  { yylval->literal = jv_string(yytext); return IDENT;}
 
 [ \n\t]+  {}
