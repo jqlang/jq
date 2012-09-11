@@ -22,11 +22,15 @@ void jv_parser_init(struct jv_parser* p) {
   p->tokenbuf = 0;
   p->tokenlen = p->tokenpos = 0;
   p->st = JV_PARSER_NORMAL;
+  p->curr_buf = 0;
+  p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
   jvp_dtoa_context_init(&p->dtoa);
 }
 
 void jv_parser_free(struct jv_parser* p) {
   jv_free(p->next);
+  for (int i=0; i<p->stackpos; i++) 
+    jv_free(p->stack[i]);
   free(p->stack);
   free(p->tokenbuf);
   jvp_dtoa_context_free(&p->dtoa);
@@ -271,13 +275,25 @@ static chclass classify(char c) {
 }
 
 
+static presult OK = "output produced";
 
+static int check_done(struct jv_parser* p, jv* out) {
+  if (p->stackpos == 0 && jv_is_valid(p->next)) {
+    *out = p->next;
+    p->next = jv_invalid();
+    return 1;
+  } else {
+    return 0;
+  }
+}
 
-static pfunc scan(struct jv_parser* p, char ch) {
+static pfunc scan(struct jv_parser* p, char ch, jv* out) {
+  presult answer = 0;
   if (p->st == JV_PARSER_NORMAL) {
     chclass cls = classify(ch);
     if (cls != LITERAL) {
       TRY(check_literal(p));
+      if (check_done(p, out)) answer = OK;
     }
     switch (cls) {
     case LITERAL:
@@ -294,10 +310,12 @@ static pfunc scan(struct jv_parser* p, char ch) {
     case INVALID:
       return "Invalid character";
     }
+    if (check_done(p, out)) answer = OK;
   } else {
     if (ch == '"' && p->st == JV_PARSER_STRING) {
       TRY(found_string(p));
       p->st = JV_PARSER_NORMAL;
+      if (check_done(p, out)) answer = OK;
     } else {
       tokenadd(p, ch);
       if (ch == '\\' && p->st == JV_PARSER_STRING) {
@@ -307,43 +325,87 @@ static pfunc scan(struct jv_parser* p, char ch) {
       }
     }
   }
-  return 0;
+  return answer;
 }
 
-static pfunc finish(struct jv_parser* p) {
-  if (p->st != JV_PARSER_NORMAL)
-    return "Unfinished string";
-  TRY(check_literal(p));
+void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial) {
+  assert((p->curr_buf == 0 || p->curr_buf_pos == p->curr_buf_length)
+         && "previous buffer not exhausted");
+  p->curr_buf = buf;
+  p->curr_buf_length = length;
+  p->curr_buf_pos = 0;
+  p->curr_buf_is_partial = is_partial;
+}
 
-  if (p->stackpos != 0)
-    return "Unfinished JSON term";
-  
-  // this will happen on the empty string
-  if (!jv_is_valid(p->next))
-    return "Expected JSON value";
-  
-  return 0;
+jv jv_parser_next(struct jv_parser* p) {
+  assert(p->curr_buf && "a buffer must be provided");
+  jv value;
+  presult msg = 0;
+  while (!msg && p->curr_buf_pos < p->curr_buf_length) {
+    char ch = p->curr_buf[p->curr_buf_pos++];
+    msg = scan(p, ch, &value);
+  }
+  if (msg == OK) {
+    return value;
+  } else if (msg) {
+    return jv_invalid_with_msg(jv_string(msg));
+  } else if (p->curr_buf_is_partial) {
+    assert(p->curr_buf_pos == p->curr_buf_length);
+    // need another buffer
+    return jv_invalid();
+  } else {
+    assert(p->curr_buf_pos == p->curr_buf_length);
+    // at EOF
+    if (p->st != JV_PARSER_NORMAL) 
+      return jv_invalid_with_msg(jv_string("Unfinished string"));
+    if ((msg = check_literal(p)))
+      return jv_invalid_with_msg(jv_string(msg));
+    if (p->stackpos != 0)
+      return jv_invalid_with_msg(jv_string("Unfinished JSON term"));
+    // p->next is either invalid (nothing here but no syntax error)
+    // or valid (this is the value). either way it's the thing to return
+    value = p->next;
+    p->next = jv_invalid();
+    return value;
+  }
 }
 
 jv jv_parse_sized(const char* string, int length) {
   struct jv_parser parser;
   jv_parser_init(&parser);
-
-  const char* p = string;
-  char ch;
-  presult msg = 0;
-  while (msg == 0 && p < string + length) {
-    ch = *p++;
-    msg = scan(&parser, ch);
-  }
-  if (msg == 0) msg = finish(&parser);
-  jv value;
-  if (msg) {
-    value = jv_invalid_with_msg(jv_string_fmt("%s (while parsing '%s')", msg, string));
+  jv_parser_set_buf(&parser, string, length, 0);
+  jv value = jv_parser_next(&parser);
+  if (jv_is_valid(value)) {
+    jv next = jv_parser_next(&parser);
+    if (jv_is_valid(next)) {
+      // multiple JSON values, we only wanted one
+      jv_free(value);
+      jv_free(next);
+      value = jv_invalid_with_msg(jv_string("Unexpected extra JSON values"));
+    } else if (jv_invalid_has_msg(jv_copy(next))) {
+      // parser error after the first JSON value
+      jv_free(value);
+      value = next;
+    } else {
+      // a single valid JSON value
+      jv_free(next);
+    }
+  } else if (jv_invalid_has_msg(jv_copy(value))) {
+    // parse error, we'll return it
   } else {
-    value = jv_copy(parser.next);
+    // no value at all
+    jv_free(value);
+    value = jv_invalid_with_msg(jv_string("Expected JSON value"));
   }
   jv_parser_free(&parser);
+
+  if (!jv_is_valid(value) && jv_invalid_has_msg(jv_copy(value))) {
+    jv msg = jv_invalid_get_msg(value);
+    value = jv_invalid_with_msg(jv_string_fmt("%s (while parsing '%s')",
+                                              jv_string_value(msg),
+                                              string));
+    jv_free(msg);
+  }
   return value;
 }
 

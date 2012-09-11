@@ -1,4 +1,5 @@
-
+#ifndef JV_DTOA_H
+#define JV_DTOA_H
 #define Kmax 7
 
 struct Bigint;
@@ -18,3 +19,4 @@ void jvp_freedtoa(struct dtoa_context* C, char *s);
 
 #define JVP_DTOA_FMT_MAX_LEN 32
 char* jvp_dtoa_fmt(struct dtoa_context* C, register char *b, double x);
+#endif

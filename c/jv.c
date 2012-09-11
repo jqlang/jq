@@ -103,6 +103,13 @@ jv jv_invalid_get_msg(jv inv) {
   return x;
 }
 
+int jv_invalid_has_msg(jv inv) {
+  jv msg = jv_invalid_get_msg(inv);
+  int r = jv_get_kind(msg) != JV_KIND_NULL;
+  jv_free(msg);
+  return r;
+}
+
 static void jvp_invalid_free(jv_complex* x) {
   if (jvp_refcnt_dec(x)) {
     jv_free(((jvp_invalid*)x->ptr)->errmsg);

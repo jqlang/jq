@@ -10,7 +10,7 @@ static void jv_dump_string(jv str, int ascii_only) {
   assert(jv_get_kind(str) == JV_KIND_STRING);
   const char* i = jv_string_value(str);
   const char* end = i + jv_string_length(jv_copy(str));
-  int c;
+  int c = 0;
   while ((i = jvp_utf8_next(i, end, &c))) {
     assert(c != -1);
     int unicode_escape = 0;

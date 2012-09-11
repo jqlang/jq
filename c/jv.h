@@ -52,6 +52,8 @@ int jv_equal(jv, jv);
 jv jv_invalid();
 jv jv_invalid_with_msg(jv);
 jv jv_invalid_get_msg(jv);
+int jv_invalid_has_msg(jv);
+
 
 jv jv_null();
 jv jv_true();
