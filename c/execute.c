@@ -326,25 +326,51 @@ jv jq_next() {
     }
 
     case EACH: 
-      stack_push(stackval_root(jv_number(0)));
+      stack_push(stackval_root(jv_number(-1)));
       // fallthrough
     case ON_BACKTRACK(EACH): {
       int idx = jv_number_value(stack_pop().value);
-      stackval array = stack_pop();
-      if (idx >= jv_array_length(jv_copy(array.value))) {
-        jv_free(array.value);
+      stackval container = stack_pop();
+
+      int is_array, keep_going;
+      jv key, value;
+      if (jv_get_kind(container.value) == JV_KIND_ARRAY) {
+        is_array = 1;
+        if (opcode == EACH) idx = 0;
+        else idx = idx + 1;
+        keep_going = idx < jv_array_length(jv_copy(container.value));
+        if (keep_going) {
+          key = jv_number(idx);
+          value = jv_array_get(jv_copy(container.value), idx);
+        }
+      } else if (jv_get_kind(container.value) == JV_KIND_OBJECT) {
+        is_array = 0;
+        if (opcode == EACH) idx = jv_object_iter(container.value);
+        else idx = jv_object_iter_next(container.value, idx);
+        keep_going = jv_object_iter_valid(container.value, idx);
+        if (keep_going) {
+          key = jv_object_iter_key(container.value, idx);
+          value = jv_object_iter_value(container.value, idx);
+        }
+      } else {
+        assert(opcode == EACH);
+        print_error(jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s",
+                                                      jv_kind_name(jv_get_kind(container.value)))));
+        keep_going = 0;
+      }
+
+      if (!keep_going) {
+        jv_free(container.value);
         goto do_backtrack;
       } else {
         stack_save();
-        stackval array2 = array;
-        array2.value = jv_copy(array2.value);
-        stack_push(array2);
-        stack_push(stackval_root(jv_number(idx+1)));
+        stack_push(container);
+        stack_push(stackval_root(jv_number(idx)));
         frame_push_backtrack(&frame_stk, pc - 1);
         stack_switch();
         
-        stackval sv = {jv_array_get(array.value, idx), 
-                       path_push(array, jv_number(idx))};
+        stackval sv = {value,
+                       path_push(container, key)};
         stack_push(sv);
       }
       break;
