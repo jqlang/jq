@@ -46,7 +46,6 @@
 %token DEFINEDOR "//"
 %token AS "as"
 %token DEF "def"
-%token SETPIPE "|="
 %token IF "if"
 %token THEN "then"
 %token ELSE "else"
@@ -55,14 +54,19 @@
 %token AND "and"
 %token OR "or"
 %token NOT "not"
-
+%token SETPIPE "|="
+%token SETPLUS "+="
+%token SETMINUS "-="
+%token SETMULT "*="
+%token SETDIV "/="
+%token SETDEFINEDOR "//="
 
  /* revolting hack */
 %left ';'
 %left '|'
 %left ','
 %right "//"
-%nonassoc '=' SETPIPE
+%nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETDEFINEDOR
 %nonassoc EQ
 %left OR
 %left AND
@@ -138,6 +142,16 @@ static block gen_binop(block a, block b, int op) {
   return c;
 }
 
+static block gen_update(block a, block op, int optype) {
+  block assign = a;
+  block_append(&assign, gen_op_simple(DUP));
+  if (optype) {
+    op = gen_binop(gen_noop(), op, optype);
+  }
+  block_append(&assign, op);
+  return gen_assign(assign);
+}
+
 %}
 
 %%
@@ -198,11 +212,12 @@ Exp "//" Exp {
   $$ = gen_definedor($1, $3);
 } |
 
+Exp "//=" Exp {
+  $$ = gen_update($1, gen_definedor(gen_noop(), $3), 0);
+} |
+
 Exp "|=" Exp {
-  block assign = $1;
-  block_append(&assign, gen_op_simple(DUP));
-  block_append(&assign, $3);
-  $$ = gen_assign(assign);
+  $$ = gen_update($1, $3, 0);
 } |
 
 Exp '|' Exp { 
@@ -217,16 +232,32 @@ Exp '+' Exp {
   $$ = gen_binop($1, $3, '+');
 } |
 
+Exp "+=" Exp {
+  $$ = gen_update($1, $3, '+');
+} |
+
 Exp '-' Exp {
   $$ = gen_binop($1, $3, '-');
+} |
+
+Exp "-=" Exp {
+  $$ = gen_update($1, $3, '-');
 } |
 
 Exp '*' Exp {
   $$ = gen_binop($1, $3, '*');
 } |
 
+Exp "*=" Exp {
+  $$ = gen_update($1, $3, '*');
+} |
+
 Exp '/' Exp {
   $$ = gen_binop($1, $3, '/');
+} |
+
+Exp "/=" Exp {
+  $$ = gen_update($1, $3, '/');
 } |
 
 Exp "==" Exp {

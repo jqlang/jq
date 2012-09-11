@@ -270,6 +270,13 @@ def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x
 {"foo": 42}
 {"foo": 43}
 
+.[] += 2, .[] *= 2, .[] -= 2, .[] /= 2
+[1,3,5]
+[3,5,7]
+[2,6,10]
+[-1,1,3]
+[0.5, 1.5, 2.5]
+
 .[0].a |= {"old":., "new":(.+1)}
 [{"a":1,"b":2}]
 [{"a":{"old":1, "new":2},"b":2}]
@@ -304,6 +311,10 @@ def inc(x): x |= .+1; inc(.[].a)
 [.[] | [.foo[] // .bar]]
 [{"foo":[1,2], "bar": 42}, {"foo":[1], "bar": null}, {"foo":[null,false,3], "bar": 18}, {"foo":[], "bar":42}, {"foo": [null,false,null], "bar": 41}]
 [[1,2], [1], [3], [42], [41]]
+
+.[] //= 42
+["hello",true,false,[false],null]
+["hello",true,42,[false],42]
 
 .[] | [.[0] and .[1], .[0] or .[1]]
 [[true,[]], [false,1], [42,null], [null,false]]

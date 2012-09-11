@@ -22,7 +22,6 @@
 "==" { return EQ; }
 "as" { return AS; }
 "def" { return DEF; }
-"|=" { return SETPIPE; }
 "if" { return IF; }
 "then" { return THEN; }
 "else" { return ELSE; }
@@ -32,6 +31,12 @@
 "not" { return NOT; }
 "end" { return END; }
 "//" { return DEFINEDOR; }
+"|=" { return SETPIPE; }
+"+=" { return SETPLUS; }
+"-=" { return SETMINUS; }
+"*=" { return SETMULT; }
+"/=" { return SETDIV; }
+"//=" { return SETDEFINEDOR; }
 "."|"="|";"|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"+"|"-"|"*"|"/"|"\$" { return yytext[0];}
 
 \"(\\.|[^\\\"])*\" |
