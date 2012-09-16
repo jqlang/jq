@@ -143,7 +143,7 @@ static void f_length(jv input[], jv output[]) {
   }
 }
 
-struct cfunction function_list[] = {
+static struct cfunction function_list[] = {
   {f_true, "true", CALL_BUILTIN_1_1},
   {f_false, "false", CALL_BUILTIN_1_1},
   {f_null, "null", CALL_BUILTIN_1_1},
@@ -155,4 +155,8 @@ struct cfunction function_list[] = {
   {f_equal, "_equal", CALL_BUILTIN_3_1},
   {f_length, "length", CALL_BUILTIN_1_1},
 };
-struct symbol_table builtins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
+static struct symbol_table builtins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
+
+block builtins_bind(block b) {
+  return gen_cbinding(&builtins, b);
+}

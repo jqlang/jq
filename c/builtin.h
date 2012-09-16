@@ -2,7 +2,8 @@
 #define BUILTIN_H
 
 #include "bytecode.h"
+#include "compile.h"
 
-extern struct symbol_table builtins;
+block builtins_bind(block);
 
 #endif

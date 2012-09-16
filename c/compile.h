@@ -1,3 +1,5 @@
+#ifndef COMPILE_H
+#define COMPILE_H
 #include <stdint.h>
 #include "bytecode.h"
 #include "opcode.h"
@@ -47,3 +49,5 @@ int block_compile(block, struct locfile*, struct bytecode**);
 void block_free(block);
 
 
+
+#endif
