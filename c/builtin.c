@@ -129,6 +129,20 @@ static void f_tonumber(jv input[], jv output[]) {
   }
 }
 
+static void f_length(jv input[], jv output[]) {
+  if (jv_get_kind(input[0]) == JV_KIND_ARRAY) {
+    output[0] = jv_number(jv_array_length(input[0]));
+  } else if (jv_get_kind(input[0]) == JV_KIND_OBJECT) {
+    output[0] = jv_number(jv_object_length(input[0]));
+  } else if (jv_get_kind(input[0]) == JV_KIND_STRING) {
+    output[0] = jv_number(jv_string_length(input[0]));
+  } else {
+    output[0] = jv_invalid_with_msg(jv_string_fmt("Cannot get the length of %s",
+                                                  jv_kind_name(jv_get_kind(input[0]))));
+    jv_free(input[0]);
+  }
+}
+
 struct cfunction function_list[] = {
   {f_true, "true", CALL_BUILTIN_1_1},
   {f_false, "false", CALL_BUILTIN_1_1},
@@ -139,5 +153,6 @@ struct cfunction function_list[] = {
   {f_divide, "_divide", CALL_BUILTIN_3_1},
   {f_tonumber, "tonumber", CALL_BUILTIN_1_1},
   {f_equal, "_equal", CALL_BUILTIN_3_1},
+  {f_length, "length", CALL_BUILTIN_1_1},
 };
 struct symbol_table builtins = {function_list, sizeof(function_list)/sizeof(function_list[0])};

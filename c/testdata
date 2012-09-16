@@ -203,6 +203,9 @@ null
 [false, false, false, false, false, false, false, true,  false]
 [false, false, false, false, false, false, false, false, true ]
 
+[.[] | length]
+[[], {}, [1,2], {"a":42}, "asdf"]
+[0, 0, 2, 1, 4]
 
 #
 # User-defined functions
