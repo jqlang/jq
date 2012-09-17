@@ -137,6 +137,11 @@ static void f_tostring(jv input[], jv output[]) {
   }
 }
 
+static void f_type(jv input[], jv output[]) {
+  output[0] = jv_string(jv_kind_name(jv_get_kind(input[0])));
+  jv_free(input[0]);
+}
+
 static block j_empty() {
   return gen_op_block_defn(CLOSURE_CREATE, "empty", gen_op_simple(BACKTRACK));
 }
@@ -175,6 +180,7 @@ static struct cfunction function_list[] = {
   {f_tostring, "tostring", CALL_BUILTIN_1_1},
   {f_equal, "_equal", CALL_BUILTIN_3_1},
   {f_length, "length", CALL_BUILTIN_1_1},
+  {f_type, "type", CALL_BUILTIN_1_1},
 };
 
 static struct symbol_table builtins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
