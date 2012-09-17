@@ -164,6 +164,13 @@ block gen_op_block_defn(opcode op, const char* name, block block) {
   return inst_block(i);
 }
 
+static void block_bind_subblock(block binder, block body, int bindflags);
+block gen_op_block_defn_rec(opcode op, const char* name, block blk) {
+  block b = gen_op_block_defn(op, name, blk);
+  block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING);
+  return b;
+}
+
 block gen_op_block_unbound(opcode op, const char* name) {
   assert(opcode_describe(op)->flags & OP_IS_CALL_PSEUDO);
   inst* i = inst_new(op);

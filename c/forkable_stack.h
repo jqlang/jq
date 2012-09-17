@@ -6,7 +6,9 @@
 #include <string.h>
 
 struct forkable_stack_header {
-  int next;
+  /* distance in bytes between this header and the header
+     of the next object on the stack */
+  int next_delta;
 };
 
 #define FORKABLE_STACK_HEADER struct forkable_stack_header fk_header_
@@ -54,11 +56,12 @@ static void forkable_stack_free(struct forkable_stack* s) {
 }
 
 static void* forkable_stack_push(struct forkable_stack* s, size_t sz_size) {
+  assert(sz_size > 0 && sz_size % sizeof(struct forkable_stack_header) == 0);
   int size = (int)sz_size;
   forkable_stack_check(s);
   int curr = s->pos < s->savedlimit ? s->pos : s->savedlimit;
   if (curr - size < 0) {
-    assert(0);
+    //assert(0);
     int oldlen = s->length;
     s->length = (size + oldlen + 1024) * 2;
     s->stk = realloc(s->stk, s->length);
@@ -68,9 +71,11 @@ static void* forkable_stack_push(struct forkable_stack* s, size_t sz_size) {
     s->savedlimit += shift;
     curr += shift;
   }
-  void* ret = (void*)(s->stk + curr - size);
-  ((struct forkable_stack_header*)ret)->next = s->pos;
-  s->pos = curr - size;
+  int newpos = curr - size;
+  assert(newpos < s->pos);
+  void* ret = (void*)(s->stk + newpos);
+  ((struct forkable_stack_header*)ret)->next_delta = s->pos - newpos;
+  s->pos = newpos;
   forkable_stack_check(s);
   return ret;
 }
@@ -84,8 +89,11 @@ static void* forkable_stack_peek(struct forkable_stack* s) {
 static void* forkable_stack_peek_next(struct forkable_stack* s, void* top) {
   forkable_stack_check(s);
   struct forkable_stack_header* elem = top;
-  if (elem->next < s->length) {
-    return (void*)(s->stk + elem->next);
+  int elempos = (char*)top - s->stk;
+  assert(elempos >= 0 && elempos < s->length);
+  assert(elempos + elem->next_delta <= s->length);
+  if (elempos + elem->next_delta < s->length) {
+    return (void*)(s->stk + elempos + elem->next_delta);
   } else {
     return 0;
   }
@@ -100,7 +108,7 @@ static int forkable_stack_pop_will_free(struct forkable_stack* s) {
 static void forkable_stack_pop(struct forkable_stack* s) {
   forkable_stack_check(s);
   struct forkable_stack_header* elem = forkable_stack_peek(s);
-  s->pos = elem->next;
+  s->pos += elem->next_delta;
 }
 
 

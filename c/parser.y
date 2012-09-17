@@ -165,14 +165,14 @@ program: Exp { *answer = $1; }
 Exp:
 "def" IDENT ':' Exp ';' Exp {
   block body = block_join($4, gen_op_simple(RET));
-  $$ = block_bind(gen_op_block_defn(CLOSURE_CREATE, jv_string_value($2), body), 
+  $$ = block_bind(gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body), 
                   $6, OP_IS_CALL_PSEUDO);
   jv_free($2);
 } |
 
 "def" IDENT '(' IDENT ')' ':' Exp ';' Exp {
   block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), block_join($7, gen_op_simple(RET)), OP_IS_CALL_PSEUDO);
-  $$ = block_bind(gen_op_block_defn(CLOSURE_CREATE, jv_string_value($2), body), $9, OP_IS_CALL_PSEUDO);
+  $$ = block_bind(gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body), $9, OP_IS_CALL_PSEUDO);
   jv_free($2);
   jv_free($4);
 } |
