@@ -80,6 +80,8 @@ uint32_t jv_string_hash(jv);
 const char* jv_string_value(jv);
 jv jv_string_concat(jv, jv);
 jv jv_string_fmt(const char*, ...);
+jv jv_string_append_buf(jv a, const char* buf, int len);
+jv jv_string_append_str(jv a, const char* str);
 
 jv jv_object();
 jv jv_object_get(jv object, jv key);
@@ -103,7 +105,8 @@ jv jv_object_iter_value(jv, int);
 int jv_get_refcnt(jv);
 
 enum { JV_PRINT_PRETTY = 1, JV_PRINT_ASCII = 2 };
-void jv_dump(jv, int);
+void jv_dump(jv, int flags);
+jv jv_dump_string(jv, int flags);
 
 jv jv_parse(const char* string);
 jv jv_parse_sized(const char* string, int length);

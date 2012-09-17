@@ -340,6 +340,7 @@ typedef struct {
   // high 31 bits are length, low bit is a flag 
   // indicating whether hash has been computed.
   uint32_t length_hashed;
+  uint32_t alloc_length;
   char data[];
 } jvp_string;
 
@@ -350,18 +351,18 @@ static jvp_string* jvp_string_ptr(jv_complex* a) {
 static jvp_string* jvp_string_alloc(uint32_t size) {
   jvp_string* s = malloc(sizeof(jvp_string) + size + 1);
   s->refcnt.count = 1;
-  s->length_hashed = size << 1;
+  s->alloc_length = size;
   return s;
 }
 
 static jv_complex jvp_string_new(const char* data, uint32_t length) {
   jvp_string* s = jvp_string_alloc(length);
+  s->length_hashed = length << 1;
   memcpy(s->data, data, length);
   s->data[length] = 0;
   jv_complex r = {&s->refcnt, {0,0}};
   return r;
 }
-
 
 static void jvp_string_free(jv_complex* s) {
   if (jvp_refcnt_dec(s)) {
@@ -385,14 +386,35 @@ static uint32_t jvp_string_length(jvp_string* s) {
   return s->length_hashed >> 1;
 }
 
-static jv_complex jvp_string_concat(jvp_string* a, jvp_string* b) {
-  uint32_t la = jvp_string_length(a), lb = jvp_string_length(b);
-  jvp_string* s = jvp_string_alloc(la + lb);
-  memcpy(s->data, a->data, la);
-  memcpy(s->data + la, b->data, lb);
-  s->data[la + lb] = 0;
-  jv_complex r = {&s->refcnt, {0,0}};
+static uint32_t jvp_string_remaining_space(jvp_string* s) {
+  uint32_t r = s->alloc_length - jvp_string_length(s);
+  assert(r >= 0);
   return r;
+}
+
+static void jvp_string_append(jv_complex* string, const char* data, uint32_t len) {
+  jvp_string* s = jvp_string_ptr(string);
+  uint32_t currlen = jvp_string_length(s);
+    
+  if (jvp_refcnt_unshared(string) &&
+      jvp_string_remaining_space(s) >= len) {
+    // the next string fits at the end of a
+    memcpy(s->data + currlen, data, len);
+    s->data[currlen + len] = 0;
+    s->length_hashed = (currlen + len) << 1;
+  } else {
+    // allocate a bigger buffer and copy
+    uint32_t allocsz = (currlen + len) * 2;
+    if (allocsz < 32) allocsz = 32;
+    jvp_string* news = jvp_string_alloc(allocsz);
+    news->length_hashed = (currlen + len) << 1;
+    memcpy(news->data, s->data, currlen);
+    memcpy(news->data + currlen, data, len);
+    news->data[currlen + len] = 0;
+    jvp_string_free(string);
+    jv_complex r = {&news->refcnt, {0,0}};
+    *string = r;
+  }
 }
 
 static const uint32_t HASH_SEED = 0x432A9843;
@@ -507,15 +529,21 @@ const char* jv_string_value(jv j) {
 }
 
 jv jv_string_concat(jv a, jv b) {
-  jv j;
-  j.kind = JV_KIND_STRING;
-  j.val.complex = jvp_string_concat(jvp_string_ptr(&a.val.complex),
-                                    jvp_string_ptr(&b.val.complex));
-  jv_free(a);
+  jvp_string* sb = jvp_string_ptr(&b.val.complex);
+  jvp_string_append(&a.val.complex, sb->data, jvp_string_length(sb));
   jv_free(b);
-  return j;
+  return a;
 }
 
+jv jv_string_append_buf(jv a, const char* buf, int len) {
+  jvp_string_append(&a.val.complex, buf, len);
+  return a;
+}
+
+jv jv_string_append_str(jv a, const char* str) {
+  return jv_string_append_buf(a, str, strlen(str));
+}
+                        
 jv jv_string_fmt(const char* fmt, ...) {
   int size = 1024;
   while (1) {
