@@ -11,11 +11,23 @@
 
 %}
 
+%s IN_PAREN
+%s IN_BRACKET
+%s IN_BRACE
+%s IN_QQINTERP
+%x IN_QQSTRING
+%{
+  static int enter(int opening, int state, yyscan_t yyscanner);
+  static int try_exit(int closing, int state, yyscan_t yyscanner);
+%}
+
 %option noyywrap nounput noinput nodefault
 %option reentrant
 %option extra-type="int"
 %option bison-bridge bison-locations
 %option prefix="jq_yy"
+%option stack
+
 
 %%
 
@@ -37,7 +49,16 @@
 "*=" { return SETMULT; }
 "/=" { return SETDIV; }
 "//=" { return SETDEFINEDOR; }
-"."|"="|";"|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"+"|"-"|"*"|"/"|"\$" { return yytext[0];}
+"."|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"\$" { return yytext[0];}
+
+"["|"{"|"(" {
+  return enter(yytext[0], YY_START, yyscanner);
+}
+
+"]"|"}"|")" {
+  return try_exit(yytext[0], YY_START, yyscanner);
+}
+
 
 \"(\\.|[^\\\"])*\" |
 -?[0-9.]+([eE][+-]?[0-9]+)? { 
@@ -47,6 +68,25 @@
 \"(\\.|[^\\\"])* { 
   yylval->literal = jv_invalid_with_msg(jv_string("Unterminated string"));
   return LITERAL;
+}
+
+"@(" {
+  yy_push_state(IN_QQSTRING, yyscanner);
+  return QQSTRING_START;
+}
+
+<IN_QQSTRING>{
+  "%(" {
+    return enter(QQSTRING_INTERP_START, YY_START, yyscanner);
+  }
+  [a-z]+ {
+    yylval->literal = jv_string_sized(yytext, yyleng);
+    return QQSTRING_TEXT;
+  }
+  ")" {
+    yy_pop_state(yyscanner);
+    return QQSTRING_END;
+  }
 }
   
 
@@ -63,3 +103,38 @@
 "false" { return FALSE; }
 "null" { return NULL; }
 */
+static int try_exit(int c, int state, yyscan_t yyscanner) {
+  char match = 0;
+  int ret;
+  switch (state) {
+  case IN_PAREN: match = ret = ')'; break;
+  case IN_BRACKET: match = ret = ']'; break;
+  case IN_BRACE: match = ret = '}'; break;
+
+  case IN_QQINTERP:
+    match = ')'; 
+    ret = QQSTRING_INTERP_END;
+    break;
+  }
+  assert(match);
+  if (match == c) {
+    yy_pop_state(yyscanner);
+    return ret;
+  } else {
+    // FIXME: should we pop? Give a better error at least
+    return INVALID_CHARACTER;
+  }
+}
+
+static int enter(int c, int currstate, yyscan_t yyscanner) {
+  int state = 0;
+  switch (c) {
+  case '(': state = IN_PAREN; break;
+  case '[': state = IN_BRACKET; break;
+  case '{': state = IN_BRACE; break;
+  case QQSTRING_INTERP_START: state = IN_QQINTERP; break;
+  }
+  assert(state);
+  yy_push_state(state, yyscanner);
+  return c;
+}

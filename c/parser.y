@@ -61,6 +61,12 @@
 %token SETDIV "/="
 %token SETDEFINEDOR "//="
 
+%token QQSTRING_START
+%token <literal> QQSTRING_TEXT
+%token QQSTRING_INTERP_START
+%token QQSTRING_INTERP_END
+%token QQSTRING_END
+
  /* revolting hack */
 %left ';'
 %left '|'
@@ -74,7 +80,7 @@
 %left '*' '/'
 
 
-%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody
+%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString
 %{
 #include "lexer.yy.h"
 #define FAIL(loc, msg)                                   \
@@ -264,10 +270,25 @@ Exp "==" Exp {
   $$ = gen_binop($1, $3, EQ);
 } |
 
+QQSTRING_START QQString QQSTRING_END {
+  $$ = $2;
+} |
+
 Term { 
   $$ = $1; 
 }
 
+
+QQString:
+/* empty */ {
+  $$ = gen_op_const(LOADK, jv_string(""));
+} |
+QQString QQSTRING_TEXT {
+  $$ = gen_binop($1, gen_op_const(LOADK, $2), '+');
+} |
+QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END {
+  $$ = gen_binop($1, $3, '+');
+}
 
 
 ElseBody:
