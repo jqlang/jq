@@ -207,6 +207,10 @@ null
 [[], {}, [1,2], {"a":42}, "asdf"]
 [0, 0, 2, 1, 4]
 
+[1,2,empty,3,empty,4]
+null
+[1,2,3,4]
+
 #
 # User-defined functions
 # Oh god.

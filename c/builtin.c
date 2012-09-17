@@ -1,19 +1,5 @@
 #include "builtin.h"
-
-static void f_false(jv input[], jv output[]) {
-  jv_free(input[0]);
-  output[0] = jv_false();
-}
-
-static void f_true(jv input[], jv output[]) {
-  jv_free(input[0]);
-  output[0] = jv_true();
-}
-
-static void f_null(jv input[], jv output[]) {
-  jv_free(input[0]);
-  output[0] = jv_null();
-}
+#include "compile.h"
 
 static void f_plus(jv input[], jv output[]) {
   jv_free(input[0]);
@@ -151,10 +137,30 @@ static void f_tostring(jv input[], jv output[]) {
   }
 }
 
-struct cfunction function_list[] = {
-  {f_true, "true", CALL_BUILTIN_1_1},
-  {f_false, "false", CALL_BUILTIN_1_1},
-  {f_null, "null", CALL_BUILTIN_1_1},
+static block j_empty() {
+  return gen_op_block_defn(CLOSURE_CREATE, "empty", gen_op_simple(BACKTRACK));
+}
+
+static block j_false() {
+  return gen_op_block_defn(CLOSURE_CREATE, "false",
+                           block_join(gen_op_const(LOADK, jv_false()),
+                                      gen_op_simple(RET)));
+}
+
+static block j_true() {
+  return gen_op_block_defn(CLOSURE_CREATE, "true",
+                           block_join(gen_op_const(LOADK, jv_true()),
+                                      gen_op_simple(RET)));
+}
+
+static block j_null() {
+  return gen_op_block_defn(CLOSURE_CREATE, "null",
+                           block_join(gen_op_const(LOADK, jv_null()),
+                                      gen_op_simple(RET)));
+}
+
+
+static struct cfunction function_list[] = {
   {f_plus, "_plus", CALL_BUILTIN_3_1},
   {f_minus, "_minus", CALL_BUILTIN_3_1},
   {f_multiply, "_multiply", CALL_BUILTIN_3_1},
@@ -164,8 +170,21 @@ struct cfunction function_list[] = {
   {f_equal, "_equal", CALL_BUILTIN_3_1},
   {f_length, "length", CALL_BUILTIN_1_1},
 };
+
 static struct symbol_table builtins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
 
+typedef block (*bytecoded_builtin)();
+static bytecoded_builtin bytecoded_builtins[] = {
+  j_empty,
+  j_false,
+  j_true,
+  j_null,
+};
+
+
 block builtins_bind(block b) {
+  for (int i=0; i<sizeof(bytecoded_builtins)/sizeof(bytecoded_builtins[0]); i++) {
+    b = block_bind(bytecoded_builtins[i](), b, OP_IS_CALL_PSEUDO);
+  }
   return gen_cbinding(&builtins, b);
 }
