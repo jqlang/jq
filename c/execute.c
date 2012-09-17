@@ -170,7 +170,7 @@ jv jq_next() {
         param = forkable_stack_peek_next(&data_stk, param);
       }
       if (!param) break;
-      jv_dump(jv_copy(param->sv.value));
+      jv_dump(jv_copy(param->sv.value), 0);
       printf("<%d>", jv_get_refcnt(param->sv.value));
     }
 
@@ -246,7 +246,7 @@ jv jq_next() {
       jv* var = frame_local_var(fp, v);
       #if JQ_DEBUG
       printf("V%d = ", v);
-      jv_dump(jv_copy(*var));
+      jv_dump(jv_copy(*var), 0);
       printf("\n");
       #endif
       stack_push(stackval_replace(stack_pop(), jv_copy(*var)));
@@ -261,7 +261,7 @@ jv jq_next() {
       stackval val = stack_pop();
       #if JQ_DEBUG
       printf("V%d = ", v);
-      jv_dump(jv_copy(val.value));
+      jv_dump(jv_copy(val.value), 0);
       printf("\n");
       #endif
       jv_free(*var);
