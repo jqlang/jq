@@ -190,7 +190,7 @@ static bytecoded_builtin bytecoded_builtins[] = {
 
 
 block builtins_bind(block b) {
-  for (int i=0; i<sizeof(bytecoded_builtins)/sizeof(bytecoded_builtins[0]); i++) {
+  for (unsigned i=0; i<sizeof(bytecoded_builtins)/sizeof(bytecoded_builtins[0]); i++) {
     b = block_bind(bytecoded_builtins[i](), b, OP_IS_CALL_PSEUDO);
   }
   return gen_cbinding(&builtins, b);

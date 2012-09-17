@@ -1,4 +1,4 @@
-CC=gcc -Wall -std=gnu99 -ggdb -Wno-unused-function
+CC=gcc -Werror -Wextra -Wall -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function
 
 .PHONY: all clean
 all: parsertest

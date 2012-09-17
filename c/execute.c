@@ -332,10 +332,9 @@ jv jq_next() {
       int idx = jv_number_value(stack_pop().value);
       stackval container = stack_pop();
 
-      int is_array, keep_going;
+      int keep_going;
       jv key, value;
       if (jv_get_kind(container.value) == JV_KIND_ARRAY) {
-        is_array = 1;
         if (opcode == EACH) idx = 0;
         else idx = idx + 1;
         keep_going = idx < jv_array_length(jv_copy(container.value));
@@ -344,7 +343,6 @@ jv jq_next() {
           value = jv_array_get(jv_copy(container.value), idx);
         }
       } else if (jv_get_kind(container.value) == JV_KIND_OBJECT) {
-        is_array = 0;
         if (opcode == EACH) idx = jv_object_iter(container.value);
         else idx = jv_object_iter_next(container.value, idx);
         keep_going = jv_object_iter_valid(container.value, idx);

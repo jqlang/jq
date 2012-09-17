@@ -5,7 +5,7 @@ mask = lambda n: (1 << n) - 1
 
 def print_table(type, name, t):
     assert len(t) == 256
-    print "const static",type, name+"[]", "="
+    print "static const",type, name+"[]", "="
     first = True
     for i in range(0,len(t),16):
         print (" {" if i == 0 else "  ") +\

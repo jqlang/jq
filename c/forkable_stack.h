@@ -53,7 +53,8 @@ static void forkable_stack_free(struct forkable_stack* s) {
   s->stk = 0;
 }
 
-static void* forkable_stack_push(struct forkable_stack* s, size_t size) {
+static void* forkable_stack_push(struct forkable_stack* s, size_t sz_size) {
+  int size = (int)sz_size;
   forkable_stack_check(s);
   int curr = s->pos < s->savedlimit ? s->pos : s->savedlimit;
   if (curr - size < 0) {

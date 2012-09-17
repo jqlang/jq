@@ -387,8 +387,8 @@ static uint32_t jvp_string_length(jvp_string* s) {
 }
 
 static uint32_t jvp_string_remaining_space(jvp_string* s) {
+  assert(s->alloc_length >= jvp_string_length(s));
   uint32_t r = s->alloc_length - jvp_string_length(s);
-  assert(r >= 0);
   return r;
 }
 
