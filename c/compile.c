@@ -361,7 +361,7 @@ block gen_definedor(block a, block b) {
   return c;
 }
 
-static block gen_condbranch(block iftrue, block iffalse) {
+block gen_condbranch(block iftrue, block iffalse) {
   block b = gen_noop();
   block_append(&iftrue, gen_op_target(JUMP, iffalse));
   block_append(&b, gen_op_target(JUMP_F, iftrue));
@@ -396,11 +396,6 @@ block gen_or(block a, block b) {
   block_append(&code, gen_condbranch(block_join(gen_op_simple(POP), gen_op_const(LOADK, jv_true())),
                                      if_a_false));
   return code;
-}
-
-block gen_not(block a) {
-  return block_join(a, gen_condbranch(gen_op_const(LOADK, jv_false()),
-                                      gen_op_const(LOADK, jv_true())));
 }
 
 block gen_cond(block cond, block iftrue, block iffalse) {

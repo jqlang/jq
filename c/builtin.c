@@ -159,6 +159,12 @@ static block j_null() {
                                       gen_op_simple(RET)));
 }
 
+static block j_not() {
+  return gen_op_block_defn(CLOSURE_CREATE, "not",
+                           block_join(gen_condbranch(gen_op_const(LOADK, jv_false()),
+                                                     gen_op_const(LOADK, jv_true())),
+                                      gen_op_simple(RET)));
+}
 
 static struct cfunction function_list[] = {
   {f_plus, "_plus", CALL_BUILTIN_3_1},
@@ -179,6 +185,7 @@ static bytecoded_builtin bytecoded_builtins[] = {
   j_false,
   j_true,
   j_null,
+  j_not,
 };
 
 

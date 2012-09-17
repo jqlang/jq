@@ -331,6 +331,6 @@ def inc(x): x |= .+1; inc(.[].a)
 [false,true]
 [false,false]
 
-[.[] | not .]
+[.[] | not]
 [1,0,false,null,true,"hello"]
 [false,false,true,true,false,false]
