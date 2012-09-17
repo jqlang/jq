@@ -77,6 +77,11 @@ void run_tests() {
         printf("\n");
         pass = 0;
       }
+      jv as_string = jv_dump_string(jv_copy(expected), rand());
+      jv reparsed = jv_parse_sized(jv_string_value(as_string), jv_string_length(jv_copy(as_string)));
+      assert(jv_equal(jv_copy(expected), jv_copy(reparsed)));
+      jv_free(as_string);
+      jv_free(reparsed);
       jv_free(expected);
       jv_free(actual);
     }

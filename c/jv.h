@@ -105,7 +105,8 @@ jv jv_object_iter_value(jv, int);
 int jv_get_refcnt(jv);
 
 enum { JV_PRINT_PRETTY = 1, JV_PRINT_ASCII = 2 };
-void jv_dump(jv, int);
+void jv_dump(jv, int flags);
+jv jv_dump_string(jv, int flags);
 
 jv jv_parse(const char* string);
 jv jv_parse_sized(const char* string, int length);

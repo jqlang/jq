@@ -544,7 +544,6 @@ jv jv_string_append_str(jv a, const char* str) {
   return jv_string_append_buf(a, str, strlen(str));
 }
                         
-                        
 jv jv_string_fmt(const char* fmt, ...) {
   int size = 1024;
   while (1) {
