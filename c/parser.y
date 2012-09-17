@@ -72,9 +72,9 @@
 %left ','
 %right "//"
 %nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETDEFINEDOR
-%nonassoc EQ
 %left OR
 %left AND
+%nonassoc EQ
 %left '+' '-'
 %left '*' '/'
 
