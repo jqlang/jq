@@ -129,6 +129,14 @@ static void f_tonumber(jv input[], jv output[]) {
   }
 }
 
+static void f_tostring(jv input[], jv output[]) {
+  if (jv_get_kind(input[0]) == JV_KIND_STRING) {
+    output[0] = input[0];
+  } else {
+    output[0] = jv_dump_string(input[0], 0);
+  }
+}
+
 struct cfunction function_list[] = {
   {f_true, "true", CALL_BUILTIN_1_1},
   {f_false, "false", CALL_BUILTIN_1_1},
@@ -138,6 +146,7 @@ struct cfunction function_list[] = {
   {f_multiply, "_multiply", CALL_BUILTIN_3_1},
   {f_divide, "_divide", CALL_BUILTIN_3_1},
   {f_tonumber, "tonumber", CALL_BUILTIN_1_1},
+  {f_tostring, "tostring", CALL_BUILTIN_1_1},
   {f_equal, "_equal", CALL_BUILTIN_3_1},
 };
 struct symbol_table builtins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
