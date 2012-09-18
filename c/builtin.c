@@ -199,23 +199,24 @@ static bytecoded_builtin bytecoded_builtins[] = {
 };
 
 static const char* jq_builtins[] = {
-  "def map(f): [.[] | f];"
+  "def map(f): [.[] | f];",
+  "def select(f): if f then . else empty end;",
 };
 
 
 block builtins_bind(block b) {
-  block builtins = gen_noop();
-  for (unsigned i=0; i<sizeof(bytecoded_builtins)/sizeof(bytecoded_builtins[0]); i++) {
-    block_append(&builtins, bytecoded_builtins[i]());
-  }
-  for (unsigned i=0; i<sizeof(jq_builtins)/sizeof(jq_builtins[0]); i++) {
+  for (int i=(int)(sizeof(jq_builtins)/sizeof(jq_builtins[0]))-1; i>=0; i--) {
     struct locfile src;
     locfile_init(&src, jq_builtins[i], strlen(jq_builtins[i]));
     block funcs;
     int nerrors = jq_parse_library(&src, &funcs);
     assert(!nerrors);
-    block_append(&builtins, funcs);
+    b = block_bind(funcs, b, OP_IS_CALL_PSEUDO);
     locfile_free(&src);
+  }
+  block builtins = gen_noop();
+  for (unsigned i=0; i<sizeof(bytecoded_builtins)/sizeof(bytecoded_builtins[0]); i++) {
+    block_append(&builtins, bytecoded_builtins[i]());
   }
   b = block_bind(builtins, b, OP_IS_CALL_PSEUDO);
   return gen_cbinding(&cbuiltins, b);
