@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include "compile.h"
-#include "parser.tab.h"
 #include "builtin.h"
 #include "jv.h"
 #include "jv_parse.h"
 #include "locfile.h"
+#include "parser.h"
 
-int jq_parse(struct locfile* source, block* answer);
 
 void jq_init(struct bytecode* bc, jv value);
 jv jq_next();

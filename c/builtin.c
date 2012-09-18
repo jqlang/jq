@@ -1,5 +1,9 @@
+#include <string.h>
 #include "builtin.h"
 #include "compile.h"
+#include "parser.h"
+#include "locfile.h"
+
 
 static void f_plus(jv input[], jv output[]) {
   jv_free(input[0]);
@@ -183,7 +187,7 @@ static struct cfunction function_list[] = {
   {f_type, "type", CALL_BUILTIN_1_1},
 };
 
-static struct symbol_table builtins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
+static struct symbol_table cbuiltins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
 
 typedef block (*bytecoded_builtin)();
 static bytecoded_builtin bytecoded_builtins[] = {
@@ -194,10 +198,25 @@ static bytecoded_builtin bytecoded_builtins[] = {
   j_not,
 };
 
+static const char* jq_builtins[] = {
+  "def map(f): [.[] | f];"
+};
+
 
 block builtins_bind(block b) {
+  block builtins = gen_noop();
   for (unsigned i=0; i<sizeof(bytecoded_builtins)/sizeof(bytecoded_builtins[0]); i++) {
-    b = block_bind(bytecoded_builtins[i](), b, OP_IS_CALL_PSEUDO);
+    block_append(&builtins, bytecoded_builtins[i]());
   }
-  return gen_cbinding(&builtins, b);
+  for (unsigned i=0; i<sizeof(jq_builtins)/sizeof(jq_builtins[0]); i++) {
+    struct locfile src;
+    locfile_init(&src, jq_builtins[i], strlen(jq_builtins[i]));
+    block funcs;
+    int nerrors = jq_parse_library(&src, &funcs);
+    assert(!nerrors);
+    block_append(&builtins, funcs);
+    locfile_free(&src);
+  }
+  b = block_bind(builtins, b, OP_IS_CALL_PSEUDO);
+  return gen_cbinding(&cbuiltins, b);
 }

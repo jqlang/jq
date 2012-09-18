@@ -237,6 +237,16 @@ block block_join(block a, block b) {
   return c;
 }
 
+int block_has_only_binders(block binders, int bindflags) {
+  bindflags |= OP_HAS_BINDING;
+  for (inst* curr = binders.first; curr; curr = curr->next) {
+    if ((opcode_describe(curr->op)->flags & bindflags) != bindflags) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
 static void block_bind_subblock(block binder, block body, int bindflags) {
   assert(block_is_single(binder));
   assert((opcode_describe(binder.first->op)->flags & bindflags) == bindflags);
@@ -260,8 +270,11 @@ static void block_bind_subblock(block binder, block body, int bindflags) {
 }
 
 block block_bind(block binder, block body, int bindflags) {
+  assert(block_has_only_binders(binder, bindflags));
   bindflags |= OP_HAS_BINDING;
-  block_bind_subblock(binder, body, bindflags);
+  for (inst* curr = binder.first; curr; curr = curr->next) {
+    block_bind_subblock(inst_block(curr), body, bindflags);
+  }
   return block_join(binder, body);
 }
 

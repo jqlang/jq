@@ -79,7 +79,7 @@
 %left '*' '/'
 
 
-%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString
+%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs
 %{
 #include "lexer.yy.h"
 #define FAIL(loc, msg)                                   \
@@ -160,21 +160,25 @@ static block gen_update(block a, block op, int optype) {
 %}
 
 %%
-program: Exp { *answer = $1; }
+TopLevel:
+Exp {
+  *answer = $1;
+} |
+FuncDefs {
+  *answer = $1;
+} 
+
+FuncDefs:
+/* empty */ {
+  $$ = gen_noop();
+} |
+FuncDef FuncDefs {
+  $$ = block_join($1, $2);
+}
 
 Exp:
-"def" IDENT ':' Exp ';' Exp {
-  block body = block_join($4, gen_op_simple(RET));
-  $$ = block_bind(gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body), 
-                  $6, OP_IS_CALL_PSEUDO);
-  jv_free($2);
-} |
-
-"def" IDENT '(' IDENT ')' ':' Exp ';' Exp {
-  block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), block_join($7, gen_op_simple(RET)), OP_IS_CALL_PSEUDO);
-  $$ = block_bind(gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body), $9, OP_IS_CALL_PSEUDO);
-  jv_free($2);
-  jv_free($4);
+FuncDef Exp %prec ';' {
+  $$ = block_bind($1, $2, OP_IS_CALL_PSEUDO);
 } |
 
 Term "as" '$' IDENT '|' Exp {
@@ -273,6 +277,19 @@ Term {
   $$ = $1; 
 }
 
+FuncDef:
+"def" IDENT ':' Exp ';' {
+  block body = block_join($4, gen_op_simple(RET));
+  $$ = gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body);
+  jv_free($2);
+} |
+
+"def" IDENT '(' IDENT ')' ':' Exp ';' {
+  block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), block_join($7, gen_op_simple(RET)), OP_IS_CALL_PSEUDO);
+  $$ = gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body);
+  jv_free($2);
+  jv_free($4);
+}
 
 QQString:
 /* empty */ {
@@ -404,4 +421,14 @@ int jq_parse(struct locfile* locations, block* answer) {
     *answer = gen_noop();
   }
   return errors;
+}
+
+int jq_parse_library(struct locfile* locations, block* answer) {
+  int errs = jq_parse(locations, answer);
+  if (errs) return errs;
+  if (!block_has_only_binders(*answer, OP_IS_CALL_PSEUDO)) {
+    locfile_locate(locations, UNKNOWN_LOCATION, "error: library should only have function definitions, not a main expression");
+    return 1;
+  }
+  return 0;
 }
