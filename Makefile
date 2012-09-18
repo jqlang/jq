@@ -38,6 +38,7 @@ test: jq_test
 releasedep: lexer.gen.c parser.gen.c jv_utf8_tables.gen.h
 
 docs/content/2.download/source/jq.tgz: jq
+	mkdir -p `dirname $@`
 	tar -czvf $@ `git ls-files; ls *.gen.*`
 
 tarball: docs/content/2.download/source/jq.tgz
