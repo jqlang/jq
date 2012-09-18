@@ -1,0 +1,72 @@
+@charset "utf-8";
+body {
+    padding-top: 60px;
+}
+
+footer {
+    background-color: #F5F5F5;
+    padding: 40px 0;
+    height: 100px;
+    margin-top: 40px;
+    color: #999999;
+}
+
+section {
+    padding-top: 30px;
+}
+
+.manual-example {
+    border-top: 1px solid #E5E5E5;
+}
+
+.manual-example td {
+    white-space: pre-wrap;
+    font-family: Monaco, Menlo, Consolas, "Courier New", monospace;
+}
+
+.manual-example td.jqprogram {
+    font-weight: bold;
+}
+
+.manual-example th {
+    text-align: right;
+    padding-right: 10px;
+}
+
+.tutorial-example {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.tutorial-example pre {
+    margin-bottom: 0px;
+}
+
+.tutorial-example a {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    padding: 15px 8px;
+    color: #777777;
+    font-weight: bold;
+    line-height: 10px;
+    font-size: 12px;
+    border-left: 1px solid #DDDDDD;
+    bottom: 0;
+    display: block;
+}
+
+
+
+#blurb {
+    padding-top: 20px;
+}
+
+#blurb p {
+    font-size: 20pt;
+}
+
+h3 code {
+    border: 0;
+    font-size: 20px;
+}

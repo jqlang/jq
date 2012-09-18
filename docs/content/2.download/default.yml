@@ -1,0 +1,52 @@
+headline: Download jq
+body:
+
+  - text: |
+
+      jq is written in C and has no runtime dependencies, so it should be
+      possible to build it for nearly any platform. Prebuilt binaries are
+      available for Linux (64-bit x86) and OS X.
+    
+       * [Download binary for 64-bit Linux](/download/linux/x68_64/jq)
+       * [Download binary for OS X](/download/osx/64/jq)
+       * [Download source](/download/source/jq.tgz)
+
+      jq is licensed under the MIT license. For all of the gory
+      details, read the file `COPYING` in the source distribution.
+       
+      Hacking on jq
+      =============
+
+      If you want to work on jq, grab the source from
+      [https://github.com/stedolan/jq](https://github.com/stedolan/jq).
+        
+
+      To build it from a git clone, you'll need to install a few
+      packages first:
+
+       * [Flex](http://www.gnu.org/software/flex/)
+       * [Bison](http://www.gnu.org/software/bison/)
+       * [Python](http://www.python.org)
+       * [GCC](http://gcc.gnu.org)
+       * [Make](http://www.gnu.org/software/make)
+
+      Most of these aren't necessary if you're just trying to compile
+      jq from the released tarball - that version has the
+      non-platform-specific build steps already done, so you'll only
+      need a C compiler and `make` to finish it off.
+
+      For Linux systems, these will all be in your system's package
+      manager, and if you do development on the machine they're most
+      likely already installed. I have no idea how to get these
+      installed on OS X, you're on your own there.
+
+      `flex` and `bison` are used to generate the lexer and parser for
+      jq, and some python scripts generate the UTF8 encoding tables
+      needed for JSON parsing.
+   
+      Building the documentation
+      --
+
+      jq's documentation is compiled into static HTML using
+      [Bonsai](http://www.tinytree.info). To view the documentation
+      locally, run `rake serve` from the docs/ subdirectory.

@@ -1,0 +1,239 @@
+headline: Tutorial
+body:
+  - text: |
+    
+      Twitter have a JSON API, so let's play with that. This URL gets
+      us the last 5 tweets about JSON:
+      
+  - command: "curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true'"
+    result: |
+      {"completed_in":0.108,"max_id":247677287108067328,"max_id_str":"247677287108067328","next_page":"?page=2&max_id=247677287108067328&q=json&rpp=5&include_entities=1","page":1,"query":"json","refresh_url":"?since_id=247677287108067328&q=json&include_entities=1","results":[{"created_at":"Mon, 17 Sep 2012 12:44:01 +0000","entities":{"hashtags":[],"urls":[{"url":"http:\/\/t.co\/XRvh1ZVw","expanded_url":"http:\/\/jase.im\/Ri7I0M","display_url":"jase.im\/Ri7I0M","indices":[112,132]}],"user_mentions":[{"screen_name":"imagemechanics","name":"Jason Cotterell","id":57271393,"id_str":"57271393","indices":[3,18]}]},"from_user":"_AaronNg","from_user_id":79771704,"from_user_id_str":"79771704","from_user_name":"NgChenChong","geo":null,"id":247677287108067328,"id_str":"247677287108067328","iso_language_code":"en","metadata":{"result_type":"recent"},"profile_image_url":"http:\/\/a0.twimg.com\/profile_images\/2523558403\/ek8mo4j4beq84iw28gjl_normal.jpeg","profile_image_url_https":"https:\/\/si0.twimg.com\/profile_images\/2523558403\/ek8mo4j4beq84iw28gjl_normal.jpeg","source":"&lt;a href=&quot;http:\/\/twitter.com\/&quot;&gt;web&lt;\/a&gt;","text":"RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp:\/\/t.co\/XRvh1ZVw","to_user":null,"to_user_id":0,"to_user_id_str":"0","to_user_name":null}, ...
+
+  - text: |
+
+      There's lots of info and no whitespace, so to make it a bit more
+      legible we pipe it through jq, telling jq to just spit the input
+      back at us using the expression `.`:
+
+    
+  - command: "curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true' | jq '.'"
+    result: |
+
+      {
+        "since_id_str": "0",
+        "since_id": 0,
+        "results_per_page": 5,
+        "completed_in": 0.108,
+        "max_id": 247677287108067330,
+        "max_id_str": "247677287108067328",
+        "next_page": "?page=2&max_id=247677287108067328&q=json&rpp=5&include_entities=1",
+        "page": 1,
+        "query": "json",
+        "refresh_url": "?since_id=247677287108067328&q=json&include_entities=1",
+        "results": [
+          {
+            "from_user_name": "NgChenChong",
+            "from_user_id_str": "79771704",
+            "from_user_id": 79771704,
+            "from_user": "_AaronNg",
+            "iso_language_code": "en",
+            "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+            "to_user": null
+            /* lots more fields... */
+          },
+          /* lots more results... */
+        ]
+      }
+
+    
+  - text: |
+          
+      Let's pull out the first tweet:
+          
+          
+  - command: "curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true' | jq '.results[0]'"
+    result: |
+      {
+        "from_user_name": "NgChenChong",
+        "from_user_id_str": "79771704",
+        "from_user_id": 79771704,
+        "from_user": "_AaronNg",
+        "iso_language_code": "en",
+        "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+        "to_user": null
+        /* lots more fields... */
+      },
+          
+  - text: |
+
+      For the rest of the examples, I'll leave out the `curl` command - it's not going to change.
+
+    
+      There's still a lot of info we don't care about there, so we'll
+      restrict it down to the most interesting fields.
+          
+
+  - command: "jq '.results[0] | {from_user, text}'"
+    result: |
+      {
+        "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+        "from_user": "_AaronNg"
+      }
+      
+  - text: |
+    
+      The `|` operator in jq feeds the output of one filter
+      (`.results[0]` which gets the first element of the results
+      array) into the input of another (`{from_user, text}` which
+      builds an object of those two fields).
+    
+      Now let's get the rest of the tweets:
+    
+          
+
+  - command: "jq '.results[] | {from_user, text}'"
+    result: |
+      {
+        "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+        "from_user": "_AaronNg"
+      }
+      {
+        "text": "RT @_kud: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt; -- http://t.co/Lhp92IqD",
+        "from_user": "blouerat"
+      }
+      {
+        "text": "Dynamic Forms Mobile App by pmadiset: Few Forms details are hosted on our server in the form of JSON. This JSON ... http://t.co/7KALdWaX",
+        "from_user": "cebu_iphone"
+      }
+      {
+        "text": "iPhone 5 website insanity - Video compressing using JPEG, JSON, and &lt;canvas&gt; http://t.co/28Jesbio (Oh #Apple, U So #Awesome...)",
+        "from_user": "dieswaytoofast"
+      }
+      {
+        "text": "RT @umutm: A very nice web-based JSON editor - http://t.co/M70snaIf",
+        "from_user": "Leolik"
+      }
+         
+          
+  - text: |
+    
+      `.results[]` returns each element of the results array, one at a
+      time, which are all fed into `{from_user, text}`.
+
+
+      Data in jq is represented as streams of JSON values - every jq
+      expression runs for each value in its input stream, and can
+      produce any number of values to its output stream.
+
+      Streams are serialised by just separating JSON values with
+      whitespace. This is a `cat`-friendly format - you can just join
+      two JSON streams together and get a valid JSON stream.
+    
+      If you want to get the output as a single array, you can tell jq to
+      "collect" all of the answers by wrapping the filter in square
+      brackets:
+
+  - command: "jq '[.results[] | {from_user, text}]'"
+    result: |
+      [
+        {
+          "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+          "from_user": "_AaronNg"
+        },
+        {
+          "text": "RT @_kud: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt; -- http://t.co/Lhp92IqD",
+          "from_user": "blouerat"
+        },
+        {
+          "text": "Dynamic Forms Mobile App by pmadiset: Few Forms details are hosted on our server in the form of JSON. This JSON ... http://t.co/7KALdWaX",
+          "from_user": "cebu_iphone"
+        },
+        {
+          "text": "iPhone 5 website insanity - Video compressing using JPEG, JSON, and &lt;canvas&gt; http://t.co/28Jesbio (Oh #Apple, U So #Awesome...)",
+          "from_user": "dieswaytoofast"
+        },
+        {
+          "text": "RT @umutm: A very nice web-based JSON editor - http://t.co/M70snaIf",
+          "from_user": "Leolik"
+        }
+      ]
+          
+          
+  - text: |
+
+      - - -
+    
+      Next, let's try getting the URLs out of those API results as
+      well. In each tweet, the Twitter API includes a field called
+      "entities" which looks like this:
+
+          {
+            "user_mentions": [],
+            "urls": [{
+                "indices": [83, 103],
+                "display_url": "bit.ly/StniqT",
+                "expanded_url": "http://bit.ly/StniqT",
+                "url": "http://t.co/28Jesbio"
+            }],
+            "hashtags": [
+              {"indices": [108, 114], "text": "Apple" },
+              {"indices": [121, 129], "text": "Awesome"}
+            ]
+          }
+
+      We want to pull out all of the "url" fields inside that array of url
+      objects, and make a simple list of strings to go along with the
+      "from_user" and "text" fields we already have.
+    
+          
+
+  - command: "jq '.results[] | {from_user, text, urls: [.entities.urls[].url]}'"
+    result: |
+      {
+       "urls": [
+         "http://t.co/XRvh1ZVw"
+       ],
+       "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+        "from_user": "_AaronNg"
+      }
+      {
+        "urls": [
+          "http://t.co/Lhp92IqD"
+        ],
+        "text": "RT @_kud: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt; -- http://t.co/Lhp92IqD",
+        "from_user": "blouerat"
+      }
+      {
+        "urls": [
+          "http://t.co/7KALdWaX"
+        ],
+        "text": "Dynamic Forms Mobile App by pmadiset: Few Forms details are hosted on our server in the form of JSON. This JSON ... http://t.co/7KALdWaX",
+        "from_user": "cebu_iphone"
+      }
+      {
+        "urls": [
+          "http://t.co/28Jesbio"
+        ],
+        "text": "iPhone 5 website insanity - Video compressing using JPEG, JSON, and &lt;canvas&gt; http://t.co/28Jesbio (Oh #Apple, U So #Awesome...)",
+        "from_user": "dieswaytoofast"
+      }
+      {
+        "urls": [
+          "http://t.co/M70snaIf"
+        ],
+        "text": "RT @umutm: A very nice web-based JSON editor - http://t.co/M70snaIf",
+        "from_user": "Leolik"
+      }
+    
+          
+  - text: |
+    
+      Here we're making an object as before, but this time the urls
+      field is being set to `[.entities.urls[].url]`, which collects
+      all of the URLs defined in the entities object.
+
+  - text: |
+
+      - - -
+
+      asdf

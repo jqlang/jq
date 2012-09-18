@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% include "shared/head" %}
+  <body id="{{slug}}">
+    {% include "shared/header" %}	
+    
+    <div class="container">
+      <div class="row">
+        <div class="hero-unit">
+          <img src="/jq.png" style="width: 400px; height: 220px; float: left; margin-right: 60px">
+          <div id="blurb">
+            {{blurb | markdownify}}
+            <div class="btn-group" style="float:right">
+              <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                Download jq-{{jq_version}}
+                <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="/download/linux/x68_64/jq">Linux (x86_64)</a></li>
+                <li><a href="/download/osx/64/jq">OS X (64-bit)</a></li>
+                <li><a href="/download">Other platforms and source</a></li>
+              </ul>
+            </div>
+
+          </div>
+          <div style="clear:both;"></div>
+        </div>
+      </div>
+        
+      <div class="row">
+
+
+	{{body | markdownify}}
+      </div>
+    </div>
+    {% include "shared/footer" %}    
+  </body>
+</html>
