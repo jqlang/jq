@@ -527,7 +527,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
       int nargs = curr->imm.intval;
       assert(nargs > 0);
       code[pos++] = (uint16_t)nargs;
-      int desired_params;
+      int desired_params = 0;
       for (int i=0; i<nargs; i++) {
         curr = curr->next;
         assert(curr && opcode_describe(curr->op)->flags & OP_IS_CALL_PSEUDO);

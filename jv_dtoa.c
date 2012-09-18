@@ -2120,7 +2120,7 @@ bigcomp
  (struct dtoa_context* C, U *rv, const char *s0, BCinfo *bc)
 {
 	Bigint *b, *d;
-	int b2, bbits, d2, dd, dig, dsign, i, j, nd, nd0, p2, p5, speccase;
+	int b2, bbits, d2, dd=0, dig, dsign, i, j, nd, nd0, p2, p5, speccase;
 
 	dsign = bc->dsign;
 	nd = bc->nd;
