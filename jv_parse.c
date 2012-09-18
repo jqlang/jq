@@ -155,6 +155,7 @@ static int unhex4(char* hex) {
     if ('0' <= c && c <= '9') n = c - '0';
     else if ('a' <= c && c <= 'f') n = c - 'a' + 10;
     else if ('A' <= c && c <= 'F') n = c - 'A' + 10;
+    else return -1;
     r <<= 4;
     r |= n;
   }
@@ -186,7 +187,10 @@ static pfunc found_string(struct jv_parser* p) {
         /* ahh, the complicated case */
         if (in + 4 > end)
           return "Invalid \\uXXXX escape";
-        unsigned long codepoint = unhex4(in);
+        int hexvalue = unhex4(in);
+        if (hexvalue < 0)
+          return "Invalid characters in \\uXXXX escape";
+        unsigned long codepoint = (unsigned long)hexvalue;
         in += 4;
         if (0xD800 <= codepoint && codepoint <= 0xDBFF) {
           /* who thought UTF-16 surrogate pairs were a good idea? */
