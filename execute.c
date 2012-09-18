@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "execute.h"
+
 #include "opcode.h"
 #include "bytecode.h"
 #include "compile.h"
@@ -10,8 +12,10 @@
 #include "forkable_stack.h"
 #include "frame_layout.h"
 
+#include "locfile.h"
 #include "jv.h"
-
+#include "parser.h"
+#include "builtin.h"
 
 typedef struct {
   jv value;
@@ -499,4 +503,23 @@ void jq_teardown() {
   free(pathbuf);
   pathbuf = 0;
   pathsize = 0;
+}
+
+struct bytecode* jq_compile(const char* str) {
+  struct locfile locations;
+  locfile_init(&locations, str, strlen(str));
+  block program;
+  struct bytecode* bc = 0;
+  int nerrors = jq_parse(&locations, &program);
+  if (nerrors == 0) {
+    block_append(&program, block_join(gen_op_simple(YIELD), gen_op_simple(BACKTRACK)));
+    program = builtins_bind(program);
+    nerrors = block_compile(program, &locations, &bc);
+    block_free(program);
+  }
+  if (nerrors) {
+    fprintf(stderr, "%d compile %s\n", nerrors, nerrors > 1 ? "errors" : "error");
+  }
+  locfile_free(&locations);
+  return bc;
 }
