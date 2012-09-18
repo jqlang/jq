@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset=UTF-8>
+  <title>Tutorial | jq</title>
+  
+  <!-- disable for local development to make the links work -->
+  <base href="http://stedolan.github.com/jq" />
+
+  <link rel="stylesheet" href="/bootstrap/css/bootstrap.css" type="text/css">
+  <link rel="stylesheet" href="/css/base.css" type="text/css">
+  <!--[if IE]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+  <script src="/bootstrap/js/bootstrap.js"></script>
+
+</head>
+  <body id="tutorial">
+    
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="brand" href="/">jq</a>
+      <div class="nav-collapse collapse">
+        <ul class="nav">
+          
+            <li  class="active" >
+              <a href="/tutorial/">Tutorial</a>
+            </li>
+          
+            <li >
+              <a href="/download/">Download</a>
+            </li>
+          
+            <li >
+              <a href="/manual/">Manual</a>
+            </li>
+          
+          <li><a href="https://github.com/stedolan/jq/issues">Issues</a></li>
+          <li><a href="https://github.com/stedolan/jq">Source</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+	
+    
+    <div class="container">
+        
+      <div class="row">
+        <h1>Tutorial</h1>
+        
+          
+            <p>Twitter have a JSON API, so let&#8217;s play with that. This URL gets us the last 5 tweets about JSON:</p>
+          
+        
+          
+        
+          
+        
+          
+
+        
+            
+            <div class="tutorial-example">
+              <div class="accordion-heading">
+                <pre>curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true'</pre>
+                <a data-toggle="collapse" href="#result1">Show result</a>
+              </div>
+              <div id="result1" class="accordion-body collapse"><pre>{"completed_in":0.108,"max_id":247677287108067328,"max_id_str":"247677287108067328","next_page":"?page=2&max_id=247677287108067328&q=json&rpp=5&include_entities=1","page":1,"query":"json","refresh_url":"?since_id=247677287108067328&q=json&include_entities=1","results":[{"created_at":"Mon, 17 Sep 2012 12:44:01 +0000","entities":{"hashtags":[],"urls":[{"url":"http:\/\/t.co\/XRvh1ZVw","expanded_url":"http:\/\/jase.im\/Ri7I0M","display_url":"jase.im\/Ri7I0M","indices":[112,132]}],"user_mentions":[{"screen_name":"imagemechanics","name":"Jason Cotterell","id":57271393,"id_str":"57271393","indices":[3,18]}]},"from_user":"_AaronNg","from_user_id":79771704,"from_user_id_str":"79771704","from_user_name":"NgChenChong","geo":null,"id":247677287108067328,"id_str":"247677287108067328","iso_language_code":"en","metadata":{"result_type":"recent"},"profile_image_url":"http:\/\/a0.twimg.com\/profile_images\/2523558403\/ek8mo4j4beq84iw28gjl_normal.jpeg","profile_image_url_https":"https:\/\/si0.twimg.com\/profile_images\/2523558403\/ek8mo4j4beq84iw28gjl_normal.jpeg","source":"&lt;a href=&quot;http:\/\/twitter.com\/&quot;&gt;web&lt;\/a&gt;","text":"RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp:\/\/t.co\/XRvh1ZVw","to_user":null,"to_user_id":0,"to_user_id_str":"0","to_user_name":null}, ...
+</pre></div>
+            </div>
+          
+        
+          
+            <p>There&#8217;s lots of info and no whitespace, so to make it a bit more legible we pipe it through jq, telling jq to just spit the input back at us using the expression <code>.</code>:</p>
+          
+        
+          
+        
+          
+        
+          
+
+        
+            
+            <div class="tutorial-example">
+              <div class="accordion-heading">
+                <pre>curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true' | jq '.'</pre>
+                <a data-toggle="collapse" href="#result2">Show result</a>
+              </div>
+              <div id="result2" class="accordion-body collapse"><pre>
+{
+  "since_id_str": "0",
+  "since_id": 0,
+  "results_per_page": 5,
+  "completed_in": 0.108,
+  "max_id": 247677287108067330,
+  "max_id_str": "247677287108067328",
+  "next_page": "?page=2&max_id=247677287108067328&q=json&rpp=5&include_entities=1",
+  "page": 1,
+  "query": "json",
+  "refresh_url": "?since_id=247677287108067328&q=json&include_entities=1",
+  "results": [
+    {
+      "from_user_name": "NgChenChong",
+      "from_user_id_str": "79771704",
+      "from_user_id": 79771704,
+      "from_user": "_AaronNg",
+      "iso_language_code": "en",
+      "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+      "to_user": null
+      /* lots more fields... */
+    },
+    /* lots more results... */
+  ]
+}
+</pre></div>
+            </div>
+          
+        
+          
+            <p>Let&#8217;s pull out the first tweet:</p>
+          
+        
+          
+        
+          
+        
+          
+
+        
+            
+            <div class="tutorial-example">
+              <div class="accordion-heading">
+                <pre>curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true' | jq '.results[0]'</pre>
+                <a data-toggle="collapse" href="#result3">Show result</a>
+              </div>
+              <div id="result3" class="accordion-body collapse"><pre>{
+  "from_user_name": "NgChenChong",
+  "from_user_id_str": "79771704",
+  "from_user_id": 79771704,
+  "from_user": "_AaronNg",
+  "iso_language_code": "en",
+  "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+  "to_user": null
+  /* lots more fields... */
+},
+</pre></div>
+            </div>
+          
+        
+          
+            <p>For the rest of the examples, I&#8217;ll leave out the <code>curl</code> command - it&#8217;s not going to change.</p>
+
+<p>There&#8217;s still a lot of info we don&#8217;t care about there, so we&#8217;ll restrict it down to the most interesting fields.</p>
+          
+        
+          
+        
+          
+        
+          
+
+        
+            
+            <div class="tutorial-example">
+              <div class="accordion-heading">
+                <pre>jq '.results[0] | {from_user, text}'</pre>
+                <a data-toggle="collapse" href="#result4">Show result</a>
+              </div>
+              <div id="result4" class="accordion-body collapse"><pre>{
+  "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+  "from_user": "_AaronNg"
+}
+</pre></div>
+            </div>
+          
+        
+          
+            <p>The <code>|</code> operator in jq feeds the output of one filter (<code>.results[0]</code> which gets the first element of the results array) into the input of another (<code>{from_user, text}</code> which builds an object of those two fields).</p>
+
+<p>Now let&#8217;s get the rest of the tweets:</p>
+          
+        
+          
+        
+          
+        
+          
+
+        
+            
+            <div class="tutorial-example">
+              <div class="accordion-heading">
+                <pre>jq '.results[] | {from_user, text}'</pre>
+                <a data-toggle="collapse" href="#result5">Show result</a>
+              </div>
+              <div id="result5" class="accordion-body collapse"><pre>{
+  "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+  "from_user": "_AaronNg"
+}
+{
+  "text": "RT @_kud: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt; -- http://t.co/Lhp92IqD",
+  "from_user": "blouerat"
+}
+{
+  "text": "Dynamic Forms Mobile App by pmadiset: Few Forms details are hosted on our server in the form of JSON. This JSON ... http://t.co/7KALdWaX",
+  "from_user": "cebu_iphone"
+}
+{
+  "text": "iPhone 5 website insanity - Video compressing using JPEG, JSON, and &lt;canvas&gt; http://t.co/28Jesbio (Oh #Apple, U So #Awesome...)",
+  "from_user": "dieswaytoofast"
+}
+{
+  "text": "RT @umutm: A very nice web-based JSON editor - http://t.co/M70snaIf",
+  "from_user": "Leolik"
+}
+</pre></div>
+            </div>
+          
+        
+          
+            <p><code>.results[]</code> returns each element of the results array, one at a time, which are all fed into <code>{from_user, text}</code>.</p>
+
+<p>Data in jq is represented as streams of JSON values - every jq expression runs for each value in its input stream, and can produce any number of values to its output stream.</p>
+
+<p>Streams are serialised by just separating JSON values with whitespace. This is a <code>cat</code>-friendly format - you can just join two JSON streams together and get a valid JSON stream.</p>
+
+<p>If you want to get the output as a single array, you can tell jq to &#8220;collect&#8221; all of the answers by wrapping the filter in square brackets:</p>
+          
+        
+          
+        
+          
+        
+          
+
+        
+            
+            <div class="tutorial-example">
+              <div class="accordion-heading">
+                <pre>jq '[.results[] | {from_user, text}]'</pre>
+                <a data-toggle="collapse" href="#result6">Show result</a>
+              </div>
+              <div id="result6" class="accordion-body collapse"><pre>[
+  {
+    "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+    "from_user": "_AaronNg"
+  },
+  {
+    "text": "RT @_kud: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt; -- http://t.co/Lhp92IqD",
+    "from_user": "blouerat"
+  },
+  {
+    "text": "Dynamic Forms Mobile App by pmadiset: Few Forms details are hosted on our server in the form of JSON. This JSON ... http://t.co/7KALdWaX",
+    "from_user": "cebu_iphone"
+  },
+  {
+    "text": "iPhone 5 website insanity - Video compressing using JPEG, JSON, and &lt;canvas&gt; http://t.co/28Jesbio (Oh #Apple, U So #Awesome...)",
+    "from_user": "dieswaytoofast"
+  },
+  {
+    "text": "RT @umutm: A very nice web-based JSON editor - http://t.co/M70snaIf",
+    "from_user": "Leolik"
+  }
+]
+</pre></div>
+            </div>
+          
+        
+          
+            <hr />
+<p>Next, let&#8217;s try getting the URLs out of those API results as well. In each tweet, the Twitter API includes a field called &#8220;entities&#8221; which looks like this:</p>
+
+<pre><code>{
+  &quot;user_mentions&quot;: [],
+  &quot;urls&quot;: [{
+      &quot;indices&quot;: [83, 103],
+      &quot;display_url&quot;: &quot;bit.ly/StniqT&quot;,
+      &quot;expanded_url&quot;: &quot;http://bit.ly/StniqT&quot;,
+      &quot;url&quot;: &quot;http://t.co/28Jesbio&quot;
+  }],
+  &quot;hashtags&quot;: [
+    {&quot;indices&quot;: [108, 114], &quot;text&quot;: &quot;Apple&quot; },
+    {&quot;indices&quot;: [121, 129], &quot;text&quot;: &quot;Awesome&quot;}
+  ]
+}</code></pre>
+
+<p>We want to pull out all of the &#8220;url&#8221; fields inside that array of url objects, and make a simple list of strings to go along with the &#8220;from_user&#8221; and &#8220;text&#8221; fields we already have.</p>
+          
+        
+          
+        
+          
+        
+          
+
+        
+            
+            <div class="tutorial-example">
+              <div class="accordion-heading">
+                <pre>jq '.results[] | {from_user, text, urls: [.entities.urls[].url]}'</pre>
+                <a data-toggle="collapse" href="#result7">Show result</a>
+              </div>
+              <div id="result7" class="accordion-body collapse"><pre>{
+ "urls": [
+   "http://t.co/XRvh1ZVw"
+ ],
+ "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
+  "from_user": "_AaronNg"
+}
+{
+  "urls": [
+    "http://t.co/Lhp92IqD"
+  ],
+  "text": "RT @_kud: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt; -- http://t.co/Lhp92IqD",
+  "from_user": "blouerat"
+}
+{
+  "urls": [
+    "http://t.co/7KALdWaX"
+  ],
+  "text": "Dynamic Forms Mobile App by pmadiset: Few Forms details are hosted on our server in the form of JSON. This JSON ... http://t.co/7KALdWaX",
+  "from_user": "cebu_iphone"
+}
+{
+  "urls": [
+    "http://t.co/28Jesbio"
+  ],
+  "text": "iPhone 5 website insanity - Video compressing using JPEG, JSON, and &lt;canvas&gt; http://t.co/28Jesbio (Oh #Apple, U So #Awesome...)",
+  "from_user": "dieswaytoofast"
+}
+{
+  "urls": [
+    "http://t.co/M70snaIf"
+  ],
+  "text": "RT @umutm: A very nice web-based JSON editor - http://t.co/M70snaIf",
+  "from_user": "Leolik"
+}
+</pre></div>
+            </div>
+          
+        
+          
+            <p>Here we&#8217;re making an object as before, but this time the urls field is being set to <code>[.entities.urls[].url]</code>, which collects all of the URLs defined in the entities object.</p>
+          
+        
+          
+        
+          
+            <hr />
+<p>Here endeth the tutorial! There&#8217;s lots more to play with, go read <a href='/manual'>the manual</a> if you&#8217;re interested, and <a href='/download'>download jq</a> if you haven&#8217;t already.</p>
+          
+        
+          
+        
+      </div>
+    </div>
+    <footer>
+  <div class="container">
+    <p>This website is made with <a href='http://www.tinytree.info'>Bonsai</a> and <a href='http://twitter.github.com/bootstrap/'>Twitter Boostrap</a>. jq is licensed under the MIT license (code) and the <a href='http://creativecommons.org/licenses/by/3.0/'>CC-BY-3.0</a> license (docs).</p>
+  </div>
+</footer>
+
+    
+  </body>
+</html>

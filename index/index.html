@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset=UTF-8>
+  <title>jq | jq</title>
+  
+  <!-- disable for local development to make the links work -->
+  <base href="http://stedolan.github.com/jq" />
+
+  <link rel="stylesheet" href="/bootstrap/css/bootstrap.css" type="text/css">
+  <link rel="stylesheet" href="/css/base.css" type="text/css">
+  <!--[if IE]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+  <script src="/bootstrap/js/bootstrap.js"></script>
+
+</head>
+  <body id="index">
+    
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="brand" href="/">jq</a>
+      <div class="nav-collapse collapse">
+        <ul class="nav">
+          
+            <li >
+              <a href="/tutorial/">Tutorial</a>
+            </li>
+          
+            <li >
+              <a href="/download/">Download</a>
+            </li>
+          
+            <li >
+              <a href="/manual/">Manual</a>
+            </li>
+          
+          <li><a href="https://github.com/stedolan/jq/issues">Issues</a></li>
+          <li><a href="https://github.com/stedolan/jq">Source</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+	
+    
+    <div class="container">
+      <div class="row">
+        <div class="hero-unit">
+          <img src="/jq.png" style="width: 400px; height: 220px; float: left; margin-right: 60px">
+          <div id="blurb">
+            <p>jq is a lightweight and flexible command-line JSON processor.</p>
+            <div class="btn-group" style="float:right">
+              <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                Download jq-1.0
+                <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="/download/linux_x86_64/jq">Linux (x86_64)</a></li>
+                <li><a href="/download/osx_64/jq">OS X (64-bit)</a></li>
+                <li><a href="/download">Other platforms and source</a></li>
+              </ul>
+            </div>
+
+          </div>
+          <div style="clear:both;"></div>
+        </div>
+      </div>
+        
+      <div class="row" id="multiblurb">
+	<div class="span4"><p>jq is like <code>sed</code> for JSON data - you can use it to slice and filter and map and transform structured data with the same ease that <code>sed</code>, <code>awk</code>, <code>grep</code> and friends let you play with text.</p></div>
+        <div class="span4"><p>jq is written in portable C, and it has zero runtime dependencies. You can download a single binary, <code>scp</code> it to a far away machine, and expect it to work.</p></div>
+	<div class="span4"><p>jq can mangle the data format that you have into the one that you want with very little effort, and the program to do so is often shorter and simpler than you&#8217;d expect.</p></div>        
+      </div>
+      <div class="row" style="text-align:center; margin-top: 30px">
+        <p>Go read the <a href='/tutorial'>tutorial</a> for more, or the <a href='/manual'>manual</a> for <em>way</em> more.</p>
+      </div>
+    </div>
+    <footer>
+  <div class="container">
+    <p>This website is made with <a href='http://www.tinytree.info'>Bonsai</a> and <a href='http://twitter.github.com/bootstrap/'>Twitter Boostrap</a>. jq is licensed under the MIT license (code) and the <a href='http://creativecommons.org/licenses/by/3.0/'>CC-BY-3.0</a> license (docs).</p>
+  </div>
+</footer>
+    
+  </body>
+</html>
