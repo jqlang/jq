@@ -1,4 +1,4 @@
-CC=gcc -Werror -Wextra -Wall -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function
+CC=gcc -Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function
 
 .PHONY: all clean
 all: parsertest
