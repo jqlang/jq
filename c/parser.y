@@ -102,7 +102,7 @@ int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors,
     if (tok == INVALID_CHARACTER) {
       FAIL(*yylloc, "Invalid character");
     } else {
-      if (tok == LITERAL && !jv_is_valid(yylval->literal)) {
+      if ((tok == LITERAL || tok == QQSTRING_TEXT) && !jv_is_valid(yylval->literal)) {
         jv msg = jv_invalid_get_msg(jv_copy(yylval->literal));
         if (jv_get_kind(msg) == JV_KIND_STRING) {
           FAIL(*yylloc, jv_string_value(msg));
@@ -147,6 +147,10 @@ static block gen_binop(block a, block b, int op) {
   return c;
 }
 
+static block gen_format(block a) {
+  return block_join(a, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, "tostring")));
+}
+ 
 static block gen_update(block a, block op, int optype) {
   block assign = a;
   block_append(&assign, gen_op_simple(DUP));
@@ -299,7 +303,7 @@ QQString QQSTRING_TEXT {
   $$ = gen_binop($1, gen_op_const(LOADK, $2), '+');
 } |
 QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END {
-  $$ = gen_binop($1, $3, '+');
+  $$ = gen_binop($1, gen_format($3), '+');
 }
 
 

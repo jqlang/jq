@@ -78,13 +78,31 @@
   "%(" {
     return enter(QQSTRING_INTERP_START, YY_START, yyscanner);
   }
-  [a-z]+ {
-    yylval->literal = jv_string_sized(yytext, yyleng);
-    return QQSTRING_TEXT;
+  "%"[^(] {
+    return INVALID_CHARACTER;
   }
   ")" {
     yy_pop_state(yyscanner);
     return QQSTRING_END;
+  }
+  "\\"[)%] {
+    char text[2] = {yytext[1], 0};
+    yylval->literal = jv_string(text);
+    return QQSTRING_TEXT;
+  }
+  (\\[^u)%]|\\u[a-zA-Z0-9]{0,4})+ {
+    /* pass escapes to the json parser */
+    jv escapes = jv_string_fmt("\"%.*s\"", yyleng, yytext);
+    yylval->literal = jv_parse_sized(jv_string_value(escapes), jv_string_length(jv_copy(escapes)));
+    jv_free(escapes);
+    return QQSTRING_TEXT;
+  }
+  [^\\)%]+ {
+    yylval->literal = jv_string_sized(yytext, yyleng);
+    return QQSTRING_TEXT;
+  }
+  . {
+    return INVALID_CHARACTER;
   }
 }
   
