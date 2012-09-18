@@ -59,11 +59,27 @@ section {
 
 
 #blurb {
-    padding-top: 20px;
+    padding-top: 40px;
+    padding-right: 50px;
 }
 
 #blurb p {
     font-size: 20pt;
+}
+
+#blurb .btn-group {
+    margin-top: 20px;
+}
+
+#multiblurb {
+    line-height: 1.7;
+    text-align: center;
+    font-size: 12pt;
+}
+
+#multiblurb code {
+    border: 0;
+    font-size: 12pt;
 }
 
 h3 code {

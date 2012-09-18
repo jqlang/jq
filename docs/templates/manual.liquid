@@ -2,7 +2,7 @@
 <html lang="en">
   {% include "shared/head" %}
   <body id="{{slug}}" data-spy="scroll" data-target="#navcolumn" data-offset="100">
-    {% include "shared/header" %}	
+    {% include "shared/header" %}
     <div class="container">
       <div class="row">
         <div class="span3" id="navcolumn">
@@ -46,6 +46,7 @@
         </div>
         <div class="span9">
           <h1>{{headline}}</h1>
+          {{ body | markdownify }}
           {% for section in sections %}
             <section id="{{section.title | sanitize}}">
               <h2>{{section.title}}</h2>

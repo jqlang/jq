@@ -27,10 +27,13 @@
         </div>
       </div>
         
-      <div class="row">
-
-
-	{{body | markdownify}}
+      <div class="row" id="multiblurb">
+	<div class="span4">{{body1 | markdownify}}</div>
+        <div class="span4">{{body2 | markdownify}}</div>
+	<div class="span4">{{body3 | markdownify}}</div>        
+      </div>
+      <div class="row" style="text-align:center; margin-top: 30px">
+        {{tail | markdownify}}
       </div>
     </div>
     {% include "shared/footer" %}    

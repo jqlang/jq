@@ -1,13 +1,40 @@
 headline: jq Manual
+body: |
+
+  A jq program is a "filter": it takes an input, and produces an
+  output. There are a lot of builtin filters for extracting a
+  particular field of an object, or converting a number to a string,
+  or various other standard tasks.
+
+  Filters can be combined in various ways - you can pipe the output of
+  one filter into another filter, or collect the output of a filter
+  into an array.
+  
+  Some filters produce multiple results, for instance there's one that
+  produces all the elements of its input array. Piping that filter
+  into a second runs the second filter for each element of the
+  array. Generally, things that would be done with loops and iteration
+  in other languages are just done by gluing filters together in jq.
+
+  It's important to remember that every filter has an input and an
+  output. Even literals like "hello" or 42 are filters - they take an
+  input but always produce the same literal as output. Operations that
+  combine two filters, like addition, generally feed the same input to
+  both and combine the results. So, you can implement an averaging
+  filter as `add / length` - feeding the input array both to the `add`
+  filter and the `length` filter and dividing the results.
+
+  But that's getting ahead of ourselves. :) Let's start with something
+  simpler:
+  
 sections:
   - title: Basics
-    body: "{ some *intro* text \n\n\n}\n"
     entries:
       - title: "`.`"
         body: |
           
-          The absolute simplest (and least interesting) jq expression
-          is `.`. This is a jq expression that takes its input and
+          The absolute simplest (and least interesting) filter
+          is `.`. This is a filter that takes its input and
           produces it unchanged as output.
 
           Since jq by default pretty-prints all output, this trivial
@@ -22,7 +49,7 @@ sections:
       - title: "`.foo`"
         body: |
           
-          The simplest *useful* jq expression is .foo. When given a
+          The simplest *useful* filter is .foo. When given a
           JSON object (aka dictionary or hash) as input, it produces
           the value at the key "foo", or null if there\'s none present.
 
@@ -75,11 +102,11 @@ sections:
       - title: "`,`"
         body: |
           
-          If two jq expressions are separated by a comma, then the
+          If two filters are separated by a comma, then the
           input will be fed into both and there will be multiple
           outputs: first, all of the outputs produced by the left
           expression, and then all of the outputs produced by the
-          right. For instance, jq expression `.foo, .bar`, produces
+          right. For instance, filter `.foo, .bar`, produces
           both the "foo" fields and "bar" fields as separate outputs.
 
         examples:
@@ -97,7 +124,7 @@ sections:
           
       - title: "`|`"
         body: |
-          The | operator combines two jq expressions by feeding the output(s) of
+          The | operator combines two filters by feeding the output(s) of
           the one on the left into the input of the one on the right. It\'s
           pretty much the same as the Unix shell\'s pipe, if you\'re used to
           that. 
@@ -135,7 +162,7 @@ sections:
           expressions are collected into one big array. You can use it
           to construct an array out of a known quantity of values (as
           in `[.foo, .bar, .baz]`) or to "collect" all the results of a
-          jq expression into an array (as in `[.items[].name]`)
+          filter into an array (as in `[.items[].name]`)
         
           Once you understand the "," operator, you can look at jq\'s array
           syntax in a different light: the expression [1,2,3] is not using a
@@ -143,7 +170,7 @@ sections:
           the `[]` operator (collect results) to the expression 1,2,3 (which
           produces three different results).
 
-          If you have a jq expression `X` that produces four results,
+          If you have a filter `X` that produces four results,
           then the expression `[X]` will produce a single result, an
           array of four elements.
 
@@ -161,7 +188,7 @@ sections:
           the quotes can be left off. The value can be any expression
           (although you may need to wrap it in parentheses if it\'s a
           complicated one), which gets applied to the {} expression\'s
-          input (remember, all jq expressions have an input and an
+          input (remember, all filters have an input and an
           output).
           
               {foo: .bar}
@@ -222,7 +249,7 @@ sections:
       - title: Addition - `+`
         body: |
 
-          The operator `+` takes two jq expressions, applies them both
+          The operator `+` takes two filters, applies them both
           to the same input, and adds the results together. What
           "adding" means depends on the types involved:
 
@@ -435,7 +462,7 @@ sections:
       - title: Alternative operator - `//`
         body: |
 
-          A jq expression of the form `a // b` produces the same
+          A filter of the form `a // b` produces the same
           results as `a`, if `a` produces results other than `false`
           and `null`. Otherwise, `a // b` produces the same results as `b`.
 
@@ -474,7 +501,7 @@ sections:
       - title: Variables
         body: |
           
-          In jq, all jq expressions have an input and an output, so manual
+          In jq, all filters have an input and an output, so manual
           plumbing is not necessary to pass a value from one part of a program
           to the next. Many expressions, for instance `a + b`, pass their input
           to two distinct subexpressions (here `a` and `b` are both passed the
@@ -520,9 +547,9 @@ sections:
           
               .realnames as $names | .posts[] | {title, author: $names[.author]}
           
-          The expression "asdf as $x" runs asdf, puts the result in $x, and
-          returns the original input. Apart from the side-effect of binding the
-          variable, it has the same effect as ".".
+          The expression "foo as $x" runs foo, puts the result in $x,
+          and returns the original input. Apart from the side-effect
+          of binding the variable, it has the same effect as ".".
           
           Variables are scoped over the rest of the expression that defines
           them, so 
@@ -543,7 +570,7 @@ sections:
       - title: 'Defining Functions'
         body: |
           
-          You can give a jq expression a name using "def" syntax:
+          You can give a filter a name using "def" syntax:
 
               def increment: . + 1;
           
@@ -553,7 +580,7 @@ sections:
 
               def map(f): [.[] | f];
 
-          Arguments are passed as jq expressions, not as values. The
+          Arguments are passed as filters, not as values. The
           same argument may be referenced multiple times with
           different inputs (here `f` is run for each element of the
           input array). Arguments to a function work more like
@@ -597,7 +624,7 @@ sections:
       - title: "`=`"
         body: |
           
-          The jq expression `.foo = 1` will take as input an object
+          The filter `.foo = 1` will take as input an object
           and produce as output an object with the "foo" field set to
           1. There is no notion of "modifying" or "changing" something
           in jq - all jq values are immutable. For instance,
@@ -621,7 +648,7 @@ sections:
       - title: "`|=`"
         body: |
           As well as the assignment operator '=', jq provides the "update"
-          operator '|=', which takes a jq expression on the right-hand side and
+          operator '|=', which takes a filter on the right-hand side and
           works out the new value for the property being assigned to by running
           the old value through this expression. For instance, .foo |= .+1 will
           build an object with the "foo" field set to the input's "foo" plus 1.
@@ -670,7 +697,7 @@ sections:
           When jq encounters an assignment like 'a = b', it records the "path"
           taken to select a part of the input document while executing a. This
           path is then used to find which part of the input to change while
-          executing the assignment. Any jq expression may be used on the
+          executing the assignment. Any filter may be used on the
           left-hand side of an equals - whichever paths it selects from the
           input will be where the assignment is performed.
           
