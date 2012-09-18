@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset=UTF-8>
+  <title>Download jq | jq</title>
+  
+  <!-- disable for local development to make the links work -->
+  <base href="http://stedolan.github.com/jq" />
+
+  <link rel="stylesheet" href="/bootstrap/css/bootstrap.css" type="text/css">
+  <link rel="stylesheet" href="/css/base.css" type="text/css">
+  <!--[if IE]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+  <script src="/bootstrap/js/bootstrap.js"></script>
+
+</head>
+  <body id="download">
+    
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="brand" href="/">jq</a>
+      <div class="nav-collapse collapse">
+        <ul class="nav">
+          
+            <li >
+              <a href="/tutorial/">Tutorial</a>
+            </li>
+          
+            <li  class="active" >
+              <a href="/download/">Download</a>
+            </li>
+          
+            <li >
+              <a href="/manual/">Manual</a>
+            </li>
+          
+          <li><a href="https://github.com/stedolan/jq/issues">Issues</a></li>
+          <li><a href="https://github.com/stedolan/jq">Source</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+	
+    
+    <div class="container">
+        
+      <div class="row">
+        <h1>Download jq</h1>
+        
+          
+            <p>jq is written in C and has no runtime dependencies, so it should be possible to build it for nearly any platform. Prebuilt binaries are available for Linux (64-bit x86) and OS X.</p>
+
+<ul>
+<li><a href='/download/linux_x86_64/jq'>Download binary for 64-bit Linux</a></li>
+
+<li><a href='/download/osx_64/jq'>Download binary for OS X</a></li>
+
+<li><a href='/download/source/jq.tgz'>Download source</a></li>
+</ul>
+
+<p>The binaries should just run, but you may need to make them executable first using:</p>
+
+<pre><code>chmod +x jq</code></pre>
+
+<p>jq is licensed under the MIT license. For all of the gory details, read the file <code>COPYING</code> in the source distribution.</p>
+
+<h1 id='hacking_on_jq'>Hacking on jq</h1>
+
+<p>If you want to work on jq, grab the source from <a href='https://github.com/stedolan/jq'>https://github.com/stedolan/jq</a>.</p>
+
+<p>To build it from a git clone, you&#8217;ll need to install a few packages first:</p>
+
+<ul>
+<li><a href='http://www.gnu.org/software/flex/'>Flex</a></li>
+
+<li><a href='http://www.gnu.org/software/bison/'>Bison</a></li>
+
+<li><a href='http://www.python.org'>Python</a></li>
+
+<li><a href='http://gcc.gnu.org'>GCC</a></li>
+
+<li><a href='http://www.gnu.org/software/make'>Make</a></li>
+</ul>
+
+<p>Most of these aren&#8217;t necessary if you&#8217;re just trying to compile jq from the released tarball - that version has the non-platform-specific build steps already done, so you&#8217;ll only need a C compiler and <code>make</code> to finish it off.</p>
+
+<p>For Linux systems, these will all be in your system&#8217;s package manager, and if you do development on the machine they&#8217;re most likely already installed. I have no idea how to get these installed on OS X, you&#8217;re on your own there.</p>
+
+<p><code>flex</code> and <code>bison</code> are used to generate the lexer and parser for jq, and some python scripts generate the UTF8 encoding tables needed for JSON parsing.</p>
+
+<h2 id='building_the_documentation'>Building the documentation</h2>
+
+<p>jq&#8217;s documentation is compiled into static HTML using <a href='http://www.tinytree.info'>Bonsai</a>. To view the documentation locally, run <code>rake serve</code> from the docs/ subdirectory.</p>
+          
+        
+          
+        
+      </div>
+    </div>
+    <footer>
+  <div class="container">
+    <p>This website is made with <a href='http://www.tinytree.info'>Bonsai</a> and <a href='http://twitter.github.com/bootstrap/'>Twitter Boostrap</a>. jq is licensed under the MIT license (code) and the <a href='http://creativecommons.org/licenses/by/3.0/'>CC-BY-3.0</a> license (docs).</p>
+  </div>
+</footer>
+
+    
+  </body>
+</html>
