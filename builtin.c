@@ -90,6 +90,25 @@ static void f_divide(jv input[], jv output[]) {
   }  
 }
 
+static void f_add(jv input[], jv output[]) {
+  jv array = input[0];
+  if (jv_get_kind(array) != JV_KIND_ARRAY) {
+    output[0] = jv_invalid_with_msg(jv_string_fmt("Cannot add elements of an %s",
+                                                  jv_kind_name(jv_get_kind(array))));
+  } else if (jv_array_length(jv_copy(array)) == 0) {
+    output[0] = jv_null();
+  } else {
+    jv sum = jv_array_get(jv_copy(array), 0);
+    for (int i = 1; i < jv_array_length(jv_copy(array)); i++) {
+      jv x = jv_array_get(jv_copy(array), i);
+      jv add_args[] = {jv_null(), x, sum};
+      f_plus(add_args, &sum);
+    }
+    output[0] = sum;
+  }
+  jv_free(array);
+}
+
 static void f_equal(jv input[], jv output[]) {
   jv_free(input[0]);
   output[0] = jv_bool(jv_equal(input[2], input[1]));
@@ -185,6 +204,7 @@ static struct cfunction function_list[] = {
   {f_equal, "_equal", CALL_BUILTIN_3_1},
   {f_length, "length", CALL_BUILTIN_1_1},
   {f_type, "type", CALL_BUILTIN_1_1},
+  {f_add, "add", CALL_BUILTIN_1_1},
 };
 
 static struct symbol_table cbuiltins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
