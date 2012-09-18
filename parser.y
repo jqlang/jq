@@ -81,7 +81,7 @@
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs
 %{
-#include "lexer.yy.h"
+#include "lexer.gen.h"
 #define FAIL(loc, msg)                                   \
   do {                                                   \
     location l = loc;                                    \

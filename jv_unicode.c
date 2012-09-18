@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "jv_unicode.h"
-#include "jv_utf8_tables.h"
+#include "jv_utf8_tables.gen.h"
 
 const char* jvp_utf8_next(const char* in, const char* end, int* codepoint) {
   if (in == end) {

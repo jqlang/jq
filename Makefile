@@ -8,23 +8,23 @@ clean:
 	sed 's/.*`\(.*\)'\''.*/\1/' | grep -v '^all$$' | \
 	xargs rm
 
-jv_utf8_tables.h: gen_utf8_tables.py
+jv_utf8_tables.gen.h: gen_utf8_tables.py
 	python $^ > $@
 
-lexer.yy.c: lexer.l
-	flex -o lexer.yy.c --header-file=lexer.yy.h lexer.l
-lexer.yy.h: lexer.yy.c
+lexer.gen.c: lexer.l
+	flex -o lexer.gen.c --header-file=lexer.gen.h lexer.l
+lexer.gen.h: lexer.gen.c
 
-parser.tab.c: parser.y lexer.yy.h
-	bison -W -d parser.y -v --report-file=parser.info
-parser.tab.h: parser.tab.c
+parser.gen.c: parser.y lexer.gen.h
+	bison -W -d parser.y -v --report-file=parser.gen.info -o $@
+parser.gen.h: parser.gen.c
 
-jv_unicode.c: jv_utf8_tables.h
+jv_unicode.c: jv_utf8_tables.gen.h
 
-parsertest: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c
+parsertest: parser.gen.c lexer.gen.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c
 	$(CC) -DJQ_DEBUG=1 -o $@ $^
 
-jq: parser.tab.c lexer.yy.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c
+jq: parser.gen.c lexer.gen.c main.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c
 	$(CC) -DJQ_DEBUG=0 -o $@ $^
 
 jv_test: jv_test.c jv.c jv_print.c jv_dtoa.c jv_unicode.c
