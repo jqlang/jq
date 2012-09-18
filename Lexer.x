@@ -7,13 +7,14 @@ import Control.Monad.Error
 
 $digit = 0-9
 $alpha = [a-zA-Z_]
-@reserved = "."|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"=="|"+"
+@reserved = "."|"["|"]"|","|":"|"("|")"|"{"|"}"|"|"|"=="|"+"|"="|"$"|"def"|";"|"else"|"and"|"or"|"as"
 @ident = $alpha [$alpha $digit]*
 @string = \" ($printable)* \"
 
 
 tokens :- 
 
+<0> "#" ($printable # [\n\r])* ;
 <0> $white+             ;
 <0> @reserved           { tok TRes }
 <0> @ident              { tok TIdent }

@@ -3,10 +3,10 @@ import Lexer
 import JQ
 import Text.JSON
 import Text.JSON.String
+import PrettyJSON
 import System.Environment
 import Control.Monad
 import System.IO
-
 
 parseJS :: String -> JSValue
 parseJS s = case runGetJSON readJSValue s of
@@ -16,7 +16,8 @@ parseJS s = case runGetJSON readJSValue s of
   
 main = do
   [program] <- getArgs
+  stdlib <- openFile "stdlib.jq" ReadMode >>= hGetContents
   json <- liftM parseJS $ hGetContents stdin
-  case runLexer program >>= runParser of
+  case runLexer (stdlib ++ program) >>= runParser of
     Left err -> putStrLn err
-    Right program -> mapM_ (putStrLn . encode) (runJQ program json)
+    Right program -> mapM_ (putStrLn . show . renderJSON) (runJQ program json)
