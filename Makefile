@@ -1,7 +1,7 @@
 CC=gcc -Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function
 
-.PHONY: all clean
-all: parsertest
+.PHONY: all clean releasedep tarball
+all: jq
 
 clean:
 	make -Bnd | grep 'Must remake target' | \
@@ -28,9 +28,16 @@ jq_test: $(JQ_SRC) jq_test.c
 	$(CC) -DJQ_DEBUG=1 -o $@ $^
 
 jq: $(JQ_SRC) main.c
-	$(CC) -DJQ_DEBUG=0 -o $@ $^
+	$(CC) -O -DJQ_DEBUG=0 -o $@ $^
 
 
 test: jq_test
 	valgrind --error-exitcode=1 -q --leak-check=full ./jq_test >/dev/null
 
+
+releasedep: lexer.gen.c parser.gen.c jv_utf8_tables.gen.h
+
+docs/content/2.download/source/jq.tgz: jq
+	tar -czvf $@ `git ls-files; ls *.gen.*`
+
+tarball: docs/content/2.download/source/jq.tgz
