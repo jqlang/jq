@@ -1,7 +1,7 @@
 headline: Tutorial
 body:
   - text: |
-    
+
       Twitter have a JSON API, so let's play with that. This URL gets
       us the last 5 tweets about JSON:
       
