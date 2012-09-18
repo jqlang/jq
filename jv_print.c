@@ -32,9 +32,10 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S) {
   assert(jv_get_kind(str) == JV_KIND_STRING);
   const char* i = jv_string_value(str);
   const char* end = i + jv_string_length(jv_copy(str));
+  const char* cstart;
   int c = 0;
   char buf[32];
-  while ((i = jvp_utf8_next(i, end, &c))) {
+  while ((i = jvp_utf8_next((cstart = i), end, &c))) {
     assert(c != -1);
     int unicode_escape = 0;
     if (0x20 <= c && c <= 0x7E) {
@@ -71,7 +72,11 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S) {
         break;
       }
     } else {
-      unicode_escape = 1;
+      if (ascii_only) {
+        unicode_escape = 1;
+      } else {
+        put_buf(cstart, i - cstart, F, S);
+      }
     }
     if (unicode_escape) {
       if (c <= 0xffff) {
@@ -120,7 +125,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   }
   case JV_KIND_STRING:
     put_char('"', F, S);
-    jvp_dump_string(x, 0, F, S);
+    jvp_dump_string(x, flags & JV_PRINT_ASCII, F, S);
     put_char('"', F, S);
     break;
   case JV_KIND_ARRAY: {
