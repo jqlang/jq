@@ -8,7 +8,20 @@
 #include "parser.h"
 #include "execute.h"
 
+static const char* progname;
+
+static void usage() {
+  fprintf(stderr, "\njq - commandline JSON processor\n");
+  fprintf(stderr, "Usage: %s <jq filter>\n\n", progname);
+  fprintf(stderr, "For a description of how to write jq filters and\n");
+  fprintf(stderr, "why you might want to, see the jq documentation at\n");
+  fprintf(stderr, "http://stedolan.github.com/jq\n\n");
+  exit(1);
+}
+
 int main(int argc, char* argv[]) {
+  if (argc) progname = argv[0];
+  if (argc != 2 || !strcmp(argv[1], "--help") || !strcmp(argv[1], "--version")) usage();
   struct bytecode* bc = jq_compile(argv[1]);
   if (!bc) return 1;
 
