@@ -5,7 +5,9 @@ jq_version: 1.0
 footer: |
   
   This website is made with [Bonsai](http://www.tinytree.info) and
-  [Twitter Boostrap](http://twitter.github.com/bootstrap/). jq is
-  licensed under the MIT license (code) and the
+  [Twitter Boostrap](http://twitter.github.com/bootstrap/), themed
+  with [Bootswatch](http://bootswatch.com).
+
+  jq is licensed under the MIT license (code) and the
   [CC-BY-3.0](http://creativecommons.org/licenses/by/3.0/) license
   (docs).
