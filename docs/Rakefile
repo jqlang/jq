@@ -52,3 +52,8 @@ task :serve do
     exit
   end
 end
+
+task :build do
+  Bonsai.root_dir = Dir.pwd
+  Bonsai::Exporter.publish!
+end
