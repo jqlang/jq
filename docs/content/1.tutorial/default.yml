@@ -237,5 +237,5 @@ body:
       - - -
 
       Here endeth the tutorial! There's lots more to play with, go
-      read [the manual](/manual) if you're interested, and [download
-      jq](/download) if you haven't already.
+      read [the manual](../manual) if you're interested, and [download
+      jq](../download) if you haven't already.
