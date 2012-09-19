@@ -2,6 +2,9 @@
 
 
 jq_version: 1.0
+# Next line is needed for publishing to github pages
+# root: '/jq'
+root: ''
 footer: |
   
   This website is made with [Bonsai](http://www.tinytree.info) and

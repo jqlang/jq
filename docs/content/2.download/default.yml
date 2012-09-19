@@ -7,9 +7,9 @@ body:
       possible to build it for nearly any platform. Prebuilt binaries are
       available for Linux (64-bit x86) and OS X.
     
-       * [Download binary for 64-bit Linux](/download/linux_x86_64/jq)
-       * [Download binary for OS X](/download/osx_64/jq)
-       * [Download source](/download/source/jq.tgz)
+       * [Download binary for 64-bit Linux](linux_x86_64/jq)
+       * [Download binary for OS X](osx_64/jq)
+       * [Download source](source/jq.tgz)
 
       The binaries should just run, but you may need to make them
       executable first using:
