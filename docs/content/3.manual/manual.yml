@@ -28,7 +28,59 @@ body: |
   simpler:
   
 sections:
-  - title: Basics
+  - title: Invoking jq
+    body: |
+      
+      jq filters run on a stream of JSON data. The input to jq is
+      parsed as a sequence of whitespace-separated JSON values which
+      are passed through the provided filter one at a time. The
+      output(s) of the filter are written to standard out, again as a
+      sequence of whitespace-separated JSON data.
+
+      You can affect how jq reads and writes its input and output
+      using some command-line options:
+
+      * `--slurp`/`-s` 
+
+        Instead of running the filter for each JSON object in the
+        input, read the entire input stream into a large array and run
+        the filter just once.
+      
+      * `--raw-input`/`-R` 
+      
+        Don't parse the input as JSON. Instead, each line of text is
+        passed to the filter as a string. If combined with `--slurp`,
+        then the entire input is passed to the filter as a single long
+        string.
+
+      * `--null-input`/`-n`
+
+        Don't read any input at all! Instead, the filter is run once
+        using `null` as the input. This is useful when using jq as a
+        simple calculator or to construct JSON data from scratch.
+
+      * `--compact-output` / `-c`
+
+        By default, jq pretty-prints JSON output. Using this option
+        will result in more compact output by instead putting each
+        JSON object on a single line.
+
+      * `--ascii-output` / `-a`
+
+        jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
+        if the input specified them as escape sequences (like
+        "\u03bc"). Using this option, you can force jq to produce pure
+        ASCII output with every non-ASCII character replaced with the
+        equivalent escape sequence.
+
+      * `--raw-output` / `-r`
+
+        With this option, if the filter's result is a string then it
+        will be written directly to standard output rather than being
+        formatted as a JSON string with quotes. This can be useful for
+        making jq filters talk to non-JSON-based systems.
+
+  - title: Basic filters
     entries:
       - title: "`.`"
         body: |
