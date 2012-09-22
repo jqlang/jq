@@ -61,6 +61,10 @@ null
 {"foo": {"bar": 42}, "bar": "badvalue"}
 42
 
+.foo_bar
+{"foo_bar": 2}
+2
+
 .["foo"].bar
 {"foo": {"bar": 42}, "bar": "badvalue"}
 42

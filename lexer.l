@@ -107,7 +107,7 @@
 }
   
 
-[[:alnum:]]+  { yylval->literal = jv_string(yytext); return IDENT;}
+[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext); return IDENT;}
 
 [ \n\t]+  {}
 
