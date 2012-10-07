@@ -59,6 +59,8 @@
 %token SETMULT "*="
 %token SETDIV "/="
 %token SETDEFINEDOR "//="
+%token LESSEQ "<="
+%token GREATEREQ ">="
 
 %token QQSTRING_START
 %token <literal> QQSTRING_TEXT
@@ -77,6 +79,7 @@
 %nonassoc EQ
 %left '+' '-'
 %left '*' '/'
+%right '<' '>' LESSEQ GREATEREQ
 
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs
@@ -137,6 +140,10 @@ static block gen_binop(block a, block b, int op) {
   case '*': funcname = "_multiply"; break;
   case '/': funcname = "_divide"; break;
   case EQ: funcname = "_equal"; break;
+  case '<': funcname = "_less"; break;
+  case '>': funcname = "_greater"; break;
+  case LESSEQ: funcname = "_lesseq"; break;
+  case GREATEREQ: funcname = "_greatereq"; break;
   }
   assert(funcname);
 
@@ -271,6 +278,22 @@ Exp "/=" Exp {
 
 Exp "==" Exp {
   $$ = gen_binop($1, $3, EQ);
+} |
+
+Exp '<' Exp {
+  $$ = gen_binop($1, $3, '<');
+} |
+
+Exp '>' Exp {
+  $$ = gen_binop($1, $3, '>');
+} |
+
+Exp "<=" Exp {
+  $$ = gen_binop($1, $3, LESSEQ);
+} |
+
+Exp ">=" Exp {
+  $$ = gen_binop($1, $3, GREATEREQ);
 } |
 
 QQSTRING_START QQString QQSTRING_END {

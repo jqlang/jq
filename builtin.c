@@ -4,6 +4,12 @@
 #include "parser.h"
 #include "locfile.h"
 
+enum {
+  CMP_OP_LESS,
+  CMP_OP_GREATER,
+  CMP_OP_LESSEQ,
+  CMP_OP_GREATEREQ
+} _cmp_op;
 
 static void f_plus(jv input[], jv output[]) {
   jv_free(input[0]);
@@ -114,6 +120,42 @@ static void f_equal(jv input[], jv output[]) {
   output[0] = jv_bool(jv_equal(input[2], input[1]));
 }
 
+static void order_cmp(jv input[], jv output[], int op) {
+  jv_free(input[0]);
+  jv a = input[2];
+  jv b = input[1];
+  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+    double da = jv_number_value(a);
+    double db = jv_number_value(b);
+    output[0] = jv_bool((op == CMP_OP_LESS && da < db) ||
+                        (op == CMP_OP_LESSEQ && da <= db) ||
+                        (op == CMP_OP_GREATEREQ && da >= db) ||
+                        (op == CMP_OP_GREATER && da > db));
+  } else {
+    output[0] = jv_invalid_with_msg(jv_string_fmt("Attempted to compare order of %s wrt %s",
+                                                  jv_kind_name(jv_get_kind(a)),
+                                                  jv_kind_name(jv_get_kind(b))));
+    jv_free(a);
+    jv_free(b);
+  }
+}
+
+static void f_less(jv input[], jv output[]) {
+  order_cmp(input, output, CMP_OP_LESS);
+}
+
+static void f_greater(jv input[], jv output[]) {
+  order_cmp(input, output, CMP_OP_GREATER);
+}
+
+static void f_lesseq(jv input[], jv output[]) {
+  order_cmp(input, output, CMP_OP_LESSEQ);
+}
+
+static void f_greatereq(jv input[], jv output[]) {
+  order_cmp(input, output, CMP_OP_GREATEREQ);
+}
+
 static void f_tonumber(jv input[], jv output[]) {
   if (jv_get_kind(input[0]) == JV_KIND_NUMBER) {
     output[0] = input[0];
@@ -202,6 +244,10 @@ static struct cfunction function_list[] = {
   {f_tonumber, "tonumber", CALL_BUILTIN_1_1},
   {f_tostring, "tostring", CALL_BUILTIN_1_1},
   {f_equal, "_equal", CALL_BUILTIN_3_1},
+  {f_less, "_less", CALL_BUILTIN_3_1},
+  {f_greater, "_greater", CALL_BUILTIN_3_1},
+  {f_lesseq, "_lesseq", CALL_BUILTIN_3_1},
+  {f_greatereq, "_greatereq", CALL_BUILTIN_3_1},
   {f_length, "length", CALL_BUILTIN_1_1},
   {f_type, "type", CALL_BUILTIN_1_1},
   {f_add, "add", CALL_BUILTIN_1_1},
