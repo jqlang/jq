@@ -76,10 +76,9 @@
 %nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETDEFINEDOR
 %left OR
 %left AND
-%nonassoc EQ
+%nonassoc EQ '<' '>' LESSEQ GREATEREQ
 %left '+' '-'
 %left '*' '/'
-%right '<' '>' LESSEQ GREATEREQ
 
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs
