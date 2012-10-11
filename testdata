@@ -348,3 +348,12 @@ def inc(x): x |= .+1; inc(.[].a)
 [.[] | not]
 [1,0,false,null,true,"hello"]
 [false,false,true,true,false,false]
+
+# Check numeric comparison binops
+[10 > 0, 10 > 10, 10 > 20, 10 < 0, 10 < 10, 10 < 20]
+{}
+[true,false,false,false,false,true]
+
+[10 >= 0, 10 >= 10, 10 >= 20, 10 <= 0, 10 <= 10, 10 <= 20]
+{}
+[true,true,false,false,true,true]
