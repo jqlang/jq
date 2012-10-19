@@ -202,6 +202,39 @@ static void f_tostring(jv input[], jv output[]) {
   }
 }
 
+static int string_cmp(const void* pa, const void* pb){
+  const jv* a = pa;
+  const jv* b = pb;
+  int lena = jv_string_length(jv_copy(*a));
+  int lenb = jv_string_length(jv_copy(*b));
+  int minlen = lena < lenb ? lena : lenb;
+  int r = memcmp(jv_string_value(*a), jv_string_value(*b), minlen);
+  if (r == 0) r = lena - lenb;
+  return r;
+}
+
+static void f_keys(jv input[], jv output[]) {
+  if (jv_get_kind(input[0]) == JV_KIND_OBJECT) {
+    int nkeys = jv_object_length(jv_copy(input[0]));
+    jv* keys = malloc(sizeof(jv) * nkeys);
+    int kidx = 0;
+    jv_object_foreach(i, input[0]) {
+      keys[kidx++] = jv_object_iter_key(input[0], i);
+    }
+    qsort(keys, nkeys, sizeof(jv), string_cmp);
+    output[0] = jv_array_sized(nkeys);
+    for (int i = 0; i<nkeys; i++) {
+      output[0] = jv_array_append(output[0], keys[i]);
+    }
+    free(keys);
+    jv_free(input[0]);
+  } else {
+    output[0] = jv_invalid_with_msg(jv_string_fmt("'keys' only supports object, not %s",
+                                                  jv_kind_name(jv_get_kind(input[0]))));
+    jv_free(input[0]);
+  }
+}
+
 static void f_type(jv input[], jv output[]) {
   output[0] = jv_string(jv_kind_name(jv_get_kind(input[0])));
   jv_free(input[0]);
@@ -243,6 +276,7 @@ static struct cfunction function_list[] = {
   {f_divide, "_divide", CALL_BUILTIN_3_1},
   {f_tonumber, "tonumber", CALL_BUILTIN_1_1},
   {f_tostring, "tostring", CALL_BUILTIN_1_1},
+  {f_keys, "keys", CALL_BUILTIN_1_1},
   {f_equal, "_equal", CALL_BUILTIN_3_1},
   {f_less, "_less", CALL_BUILTIN_3_1},
   {f_greater, "_greater", CALL_BUILTIN_3_1},
