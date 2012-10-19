@@ -31,7 +31,19 @@ null
 null
 []
 
-# FIXME: string literals
+# We test escapes by matching them against Unicode codepoints
+# FIXME: more tests needed for weird unicode stuff (e.g. utf16 pairs)
+"Aa\r\n\t\b\f\u03bc"
+null
+"Aa\u000d\u000a\u0009\u0008\u000c\u03bc"
+
+.
+"Aa\r\n\t\b\f\u03bc"
+"Aa\u000d\u000a\u0009\u0008\u000c\u03bc"
+
+"inter\("pol" + "ation")"
+null
+"interpolation"
 
 #
 # Dictionary construction syntax

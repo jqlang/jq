@@ -81,7 +81,7 @@
 %left '*' '/'
 
 
-%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs
+%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs String
 %{
 #include "lexer.gen.h"
 #define FAIL(loc, msg)                                   \
@@ -295,12 +295,17 @@ Exp ">=" Exp {
   $$ = gen_binop($1, $3, GREATEREQ);
 } |
 
-QQSTRING_START QQString QQSTRING_END {
-  $$ = $2;
+String {
+  $$ = $1;
 } |
 
 Term { 
   $$ = $1; 
+}
+
+String:
+QQSTRING_START QQString QQSTRING_END {
+  $$ = $2;
 }
 
 FuncDef:
@@ -416,11 +421,8 @@ MkDictPair
 : IDENT ':' ExpD { 
   $$ = gen_dictpair(gen_op_const(LOADK, $1), $3);
  }
-| LITERAL ':' ExpD {
-  if (jv_get_kind($1) != JV_KIND_STRING) {
-    FAIL(@1, "Object keys must be strings");
-  }
-  $$ = gen_dictpair(gen_op_const(LOADK, $1), $3);
+| String ':' ExpD {
+  $$ = gen_dictpair($1, $3);
   }
 | IDENT {
   $$ = gen_dictpair(gen_op_const(LOADK, jv_copy($1)),
