@@ -166,7 +166,7 @@ sections:
             input: '{"foo": 42, "bar": "something else", "baz": true}'
             output: ['42', '"something else"']
 
-          - program: "[.user, .projects[]]"
+          - program: ".user, .projects[]"
             input: '{"user":"stedolan", "projects": ["jq", "wikiflow"]}'
             output: ['"stedolan"', '"jq"', '"wikiflow"']            
             
