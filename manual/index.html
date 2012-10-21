@@ -54,7 +54,11 @@
           <ul class="nav nav-pills nav-stacked">
             
               <li  class="active" >
-                <a href="#Basics">Basics</a>
+                <a href="#Invokingjq">Invoking jq</a>
+              </li>
+            
+              <li >
+                <a href="#Basicfilters">Basic filters</a>
               </li>
             
               <li >
@@ -83,6 +87,10 @@
               var section_map = {
                 
                   
+                  "Invoking jq" : "Invokingjq"
+                  ,
+                
+                  
                     "`.`" : "",
                   
                     "`.foo`" : "foo",
@@ -95,7 +103,7 @@
                   
                     "`|`" : "",
                   
-                  "Basics" : "Basics"
+                  "Basic filters" : "Basicfilters"
                   ,
                 
                   
@@ -183,8 +191,54 @@
           <h1>jq Manual</h1>
           <p>A jq program is a &#8220;filter&#8221;: it takes an input, and produces an output. There are a lot of builtin filters for extracting a particular field of an object, or converting a number to a string, or various other standard tasks.</p><p>Filters can be combined in various ways - you can pipe the output of one filter into another filter, or collect the output of a filter into an array.</p><p>Some filters produce multiple results, for instance there&#8217;s one that produces all the elements of its input array. Piping that filter into a second runs the second filter for each element of the array. Generally, things that would be done with loops and iteration in other languages are just done by gluing filters together in jq.</p><p>It&#8217;s important to remember that every filter has an input and an output. Even literals like &#8220;hello&#8221; or 42 are filters - they take an input but always produce the same literal as output. Operations that combine two filters, like addition, generally feed the same input to both and combine the results. So, you can implement an averaging filter as <code>add / length</code> - feeding the input array both to the <code>add</code> filter and the <code>length</code> filter and dividing the results.</p><p>But that&#8217;s getting ahead of ourselves. :) Let&#8217;s start with something simpler:</p>
           
-            <section id="Basics">
-              <h2>Basics</h2>
+            <section id="Invokingjq">
+              <h2>Invoking jq</h2>
+              <p>jq filters run on a stream of JSON data. The input to jq is parsed as a sequence of whitespace-separated JSON values which are passed through the provided filter one at a time. The output(s) of the filter are written to standard out, again as a sequence of whitespace-separated JSON data.</p>
+
+<p>You can affect how jq reads and writes its input and output using some command-line options:</p>
+
+<ul>
+<li>
+<p><code>--slurp</code>/<code>-s</code></p>
+
+<p>Instead of running the filter for each JSON object in the input, read the entire input stream into a large array and run the filter just once.</p>
+</li>
+
+<li>
+<p><code>--raw-input</code>/<code>-R</code></p>
+
+<p>Don&#8217;t parse the input as JSON. Instead, each line of text is passed to the filter as a string. If combined with <code>--slurp</code>, then the entire input is passed to the filter as a single long string.</p>
+</li>
+
+<li>
+<p><code>--null-input</code>/<code>-n</code></p>
+
+<p>Don&#8217;t read any input at all! Instead, the filter is run once using <code>null</code> as the input. This is useful when using jq as a simple calculator or to construct JSON data from scratch.</p>
+</li>
+
+<li>
+<p><code>--compact-output</code> / <code>-c</code></p>
+
+<p>By default, jq pretty-prints JSON output. Using this option will result in more compact output by instead putting each JSON object on a single line.</p>
+</li>
+
+<li>
+<p><code>--ascii-output</code> / <code>-a</code></p>
+
+<p>jq usually outputs non-ASCII Unicode codepoints as UTF-8, even if the input specified them as escape sequences (like &#8220;\u03bc&#8221;). Using this option, you can force jq to produce pure ASCII output with every non-ASCII character replaced with the equivalent escape sequence.</p>
+</li>
+
+<li>
+<p><code>--raw-output</code> / <code>-r</code></p>
+
+<p>With this option, if the filter&#8217;s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes. This can be useful for making jq filters talk to non-JSON-based systems.</p>
+</li>
+</ul>
+              
+            </section>
+          
+            <section id="Basicfilters">
+              <h2>Basic filters</h2>
               
               
                 <section id="">
