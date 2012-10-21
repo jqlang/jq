@@ -1437,7 +1437,7 @@ not</code>.</p>
                 </h3>
                 <p>A filter of the form <code>a // b</code> produces the same results as <code>a</code>, if <code>a</code> produces results other than <code>false</code> and <code>null</code>. Otherwise, <code>a // b</code> produces the same results as <code>b</code>.</p>
 
-<p>This is useful for providing defaults: <code>.foo or 1</code> will evaluate to <code>1</code> if there&#8217;s no <code>.foo</code> element in the input. It&#8217;s similar to how <code>or</code> is sometimes used in Python (jq&#8217;s <code>or</code> operator is reserved for strictly Boolean operations).</p>
+<p>This is useful for providing defaults: <code>.foo // 1</code> will evaluate to <code>1</code> if there&#8217;s no <code>.foo</code> element in the input. It&#8217;s similar to how <code>or</code> is sometimes used in Python (jq&#8217;s <code>or</code> operator is reserved for strictly Boolean operations).</p>
 
                 
                   <div>
