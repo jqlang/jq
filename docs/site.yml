@@ -1,14 +1,14 @@
 # The key value pairs found below are available within the templates.
 
 
-jq_version: 1.0
+jq_version: 1.1
 # Next line is needed for publishing to github pages
-# root: '/jq'
-root: ''
+root: '/jq'
+# root: ''
 footer: |
   
   This website is made with [Bonsai](http://www.tinytree.info) and
-  [Twitter Boostrap](http://twitter.github.com/bootstrap/), themed
+  [Twitter Bootstrap](http://twitter.github.com/bootstrap/), themed
   with [Bootswatch](http://bootswatch.com).
 
   jq is licensed under the MIT license (code) and the
