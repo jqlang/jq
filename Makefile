@@ -1,4 +1,5 @@
 CC=gcc -Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function
+prefix=/usr/local
 
 .PHONY: all clean releasedep tarball
 all: jq
@@ -42,3 +43,13 @@ docs/content/2.download/source/jq.tgz: jq
 	tar -czvf $@ `git ls-files; ls *.gen.*`
 
 tarball: docs/content/2.download/source/jq.tgz
+
+install: jq
+	install -d -m 0755 $(prefix)/bin
+	install -m 0755 jq $(prefix)/bin
+
+uninstall:
+	test -d $(prefix)/bin && \
+	cd $(prefix)/bin && \
+	rm -f jq
+
