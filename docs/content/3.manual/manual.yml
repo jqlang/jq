@@ -555,7 +555,7 @@ sections:
           results as `a`, if `a` produces results other than `false`
           and `null`. Otherwise, `a // b` produces the same results as `b`.
 
-          This is useful for providing defaults: `.foo or 1` will
+          This is useful for providing defaults: `.foo // 1` will
           evaluate to `1` if there's no `.foo` element in the
           input. It's similar to how `or` is sometimes used in Python
           (jq's `or` operator is reserved for strictly Boolean

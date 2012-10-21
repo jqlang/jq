@@ -1,7 +1,7 @@
 CC=gcc -Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function
 prefix=/usr/local
 
-.PHONY: all clean releasedep tarball
+.PHONY: all clean releasedep tarball install uninstall test releasetag
 all: jq
 
 clean:
@@ -22,6 +22,10 @@ jv_utf8_tables.gen.h: gen_utf8_tables.py
 	python $^ > $@
 jv_unicode.c: jv_utf8_tables.gen.h
 
+version.gen.h: VERSION
+	sed 's/.*/#define JQ_VERSION "&"/' $^ > $@
+main.c: version.gen.h
+
 JQ_SRC=parser.gen.c lexer.gen.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c
 
 
@@ -31,12 +35,14 @@ jq_test: $(JQ_SRC) jq_test.c
 jq: $(JQ_SRC) main.c
 	$(CC) -O -DJQ_DEBUG=0 -o $@ $^
 
-
 test: jq_test
 	valgrind --error-exitcode=1 -q --leak-check=full ./jq_test >/dev/null
 
 
 releasedep: lexer.gen.c parser.gen.c jv_utf8_tables.gen.h
+
+releasetag:
+	git tag -s "jq-$$(cat VERSION)" -m "jq release $$(cat VERSION)"
 
 docs/content/2.download/source/jq.tgz: jq
 	mkdir -p `dirname $@`

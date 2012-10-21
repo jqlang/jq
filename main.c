@@ -8,11 +8,12 @@
 #include "locfile.h"
 #include "parser.h"
 #include "execute.h"
+#include "version.gen.h"
 
 static const char* progname;
 
 static void usage() {
-  fprintf(stderr, "\njq - commandline JSON processor\n");
+  fprintf(stderr, "\njq - commandline JSON processor [version %s]\n", JQ_VERSION);
   fprintf(stderr, "Usage: %s [options] <jq filter>\n\n", progname);
   fprintf(stderr, "For a description of the command line options and\n");
   fprintf(stderr, "how to write jq filters (and why you might want to)\n");
@@ -92,6 +93,9 @@ int main(int argc, char* argv[]) {
       options |= PROVIDE_NULL;
     } else if (isoption(argv[i], 'h', "help")) {
       usage();
+    } else if (isoption(argv[i], 'V', "version")) {
+      fprintf(stderr, "jq version %s\n", JQ_VERSION);
+      return 0;
     } else {
       fprintf(stderr, "%s: Unknown option %s\n", progname, argv[i]);
       die();
