@@ -120,8 +120,13 @@ int main(int argc, char* argv[]) {
     process(jv_null());
   } else {
     jv slurped;
-    if (options & SLURP) slurped = jv_invalid();
-    int first = 1;
+    if (options & SLURP) {
+      if (options & RAW_INPUT) {
+        slurped = jv_string("");
+      } else {
+        slurped = jv_array();
+      }
+    }
     struct jv_parser parser;
     jv_parser_init(&parser);
     while (!feof(stdin)) {
@@ -131,8 +136,7 @@ int main(int argc, char* argv[]) {
         int len = strlen(buf);
         if (len > 0) {
           if (options & SLURP) {
-            if (first) slurped = jv_string(buf);
-            else slurped = jv_string_concat(slurped, jv_string(buf));
+            slurped = jv_string_concat(slurped, jv_string(buf));
           } else {
             if (buf[len-1] == '\n') buf[len-1] = 0;
             process(jv_string(buf));
@@ -143,7 +147,6 @@ int main(int argc, char* argv[]) {
         jv value;
         while (jv_is_valid((value = jv_parser_next(&parser)))) {
           if (options & SLURP) {
-            if (first) slurped = jv_array();
             slurped = jv_array_append(slurped, value);
           } else {
             process(value);
@@ -158,15 +161,10 @@ int main(int argc, char* argv[]) {
           jv_free(value);
         }
       }
-      first = 0;
     }
     jv_parser_free(&parser);
     if (options & SLURP) {
-      if (jv_is_valid(slurped)) {
-        process(slurped);
-      } else {
-        jv_free(slurped);
-      }
+      process(slurped);
     }
   }
 
