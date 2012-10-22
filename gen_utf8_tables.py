@@ -5,12 +5,12 @@ mask = lambda n: (1 << n) - 1
 
 def print_table(type, name, t):
     assert len(t) == 256
-    print "static const",type, name+"[]", "="
+    print("static const %s %s[] =" % (type, name))
     first = True
     for i in range(0,len(t),16):
-        print (" {" if i == 0 else "  ") +\
-            ", ".join("0x%02x"%n for n in t[i:i+16]) + \
-            ("," if i + 16 < 256 else "};")
+        print ((" {" if i == 0 else "  ") +
+               ", ".join("0x%02x"%n for n in t[i:i+16]) + 
+               ("," if i + 16 < 256 else "};"))
 
 
 def utf8info(c):
@@ -24,7 +24,7 @@ def utf8info(c):
         
 table = lambda i: [utf8info(c)[i] for c in range(256)]
 
-print "#define UTF8_CONTINUATION_BYTE ((unsigned char)255)"
+print("#define UTF8_CONTINUATION_BYTE ((unsigned char)255)")
 
 print_table("unsigned char", "utf8_coding_length", table(0))
 print_table("unsigned char", "utf8_coding_bits", table(1))
