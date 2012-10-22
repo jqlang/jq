@@ -123,6 +123,8 @@
                   
                     "`length`" : "length",
                   
+                    "`keys`" : "keys",
+                  
                     "`map(x)`" : "mapx",
                   
                     "`add`" : "add",
@@ -131,7 +133,7 @@
                   
                     "`tostring`" : "tostring",
                   
-                    "String interpolation - `@(text)`" : "Stringinterpolationtext",
+                    "String interpolation - `\\(foo)`" : "Stringinterpolationfoo",
                   
                   "Builtin operators and functions" : "Builtinoperatorsandfunctions"
                   ,
@@ -982,6 +984,45 @@
                  
                  </section>
               
+                <section id="keys">
+                <h3>
+                  <p><code>keys</code></p>
+                  
+                </h3>
+                <p>The builtin function <code>keys</code>, when given an object, returns its keys in an array.</p>
+
+<p>The keys are sorted &#8220;alphabetically&#8221;, by unicode codepoint order. This is not an order that makes particular sense in any particular language, but you can count on it being the same for any two objects with the same set of keys, regardless of locale settings.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example13">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example13" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'keys'</td></tr>
+                        <tr><th>Input</th><td>{"abc": 1, "abcd": 2, "Foo": 3}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>["Foo", "abc", "abcd"]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="mapx">
                 <h3>
                   <p><code>map(x)</code></p>
@@ -994,11 +1035,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example13">
+                    <a data-toggle="collapse" href="#example14">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example13" class="collapse">
+                    <div id="example14" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1033,11 +1074,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example14">
+                    <a data-toggle="collapse" href="#example15">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example14" class="collapse">
+                    <div id="example15" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1100,11 +1141,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example15">
+                    <a data-toggle="collapse" href="#example16">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example15" class="collapse">
+                    <div id="example16" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1137,11 +1178,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example16">
+                    <a data-toggle="collapse" href="#example17">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example16" class="collapse">
+                    <div id="example17" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1178,29 +1219,25 @@
                  
                  </section>
               
-                <section id="Stringinterpolationtext">
+                <section id="Stringinterpolationfoo">
                 <h3>
-                  <p>String interpolation - <code>@(text)</code></p>
+                  <p>String interpolation - <code>\(foo)</code></p>
                   
                 </h3>
-                <p>jq supports an alternative syntax for strings. Instead of &#8220;foo&#8221;, you can write <code>@(foo)</code>. When using this syntax, <code>%(expression)</code> may be used to insert the value of <code>expression</code> into the string (converted with <code>tostring</code>).</p>
-
-<p>String interpolation does not occur for normal double-quoted strings (like <code>&quot;foo&quot;</code>) in order to be fully compatible with JSON.</p>
-
-<p>All of the usual JSON escapes (<code>\n</code>, <code>\r</code> and the like) work inside <code>@()</code>-quoted strings, as well as <code>\%</code> and <code>\)</code> if those characters are needed literally.</p>
+                <p>Inside a string, you can put an expression inside parens after a backslash. Whatever the expression returns will be interpolated into the string.</p>
 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example17">
+                    <a data-toggle="collapse" href="#example18">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example17" class="collapse">
+                    <div id="example18" class="collapse">
                       
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq '@(The input was %(.), which is one less than %(.+1))'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq '"The input was \(.), which is one less than \(.+1)"'</td></tr>
                         <tr><th>Input</th><td>42</td></tr>
                         
                         
@@ -1237,11 +1274,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example18">
+                    <a data-toggle="collapse" href="#example19">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example18" class="collapse">
+                    <div id="example19" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1280,11 +1317,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example19">
+                    <a data-toggle="collapse" href="#example20">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example19" class="collapse">
+                    <div id="example20" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1330,11 +1367,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example20">
+                    <a data-toggle="collapse" href="#example21">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example20" class="collapse">
+                    <div id="example21" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1442,11 +1479,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example21">
+                    <a data-toggle="collapse" href="#example22">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example21" class="collapse">
+                    <div id="example22" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1540,11 +1577,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example22">
+                    <a data-toggle="collapse" href="#example23">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example22" class="collapse">
+                    <div id="example23" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1591,11 +1628,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example23">
+                    <a data-toggle="collapse" href="#example24">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example23" class="collapse">
+                    <div id="example24" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1685,11 +1722,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example24">
+                    <a data-toggle="collapse" href="#example25">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example24" class="collapse">
+                    <div id="example25" class="collapse">
                       
                     
                       <table class="manual-example">
