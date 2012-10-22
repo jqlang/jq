@@ -19,7 +19,7 @@ parser.gen.c: parser.y lexer.gen.h
 parser.gen.h: parser.gen.c
 
 jv_utf8_tables.gen.h: gen_utf8_tables.py
-	python $^ > $@
+	python2 $^ > $@
 jv_unicode.c: jv_utf8_tables.gen.h
 
 version.gen.h: VERSION
