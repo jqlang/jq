@@ -125,6 +125,10 @@
                   
                     "`keys`" : "keys",
                   
+                    "`select`" : "select",
+                  
+                    "`empty`" : "empty",
+                  
                     "`map(x)`" : "mapx",
                   
                     "`add`" : "add",
@@ -1023,6 +1027,99 @@
                  
                  </section>
               
+                <section id="select">
+                <h3>
+                  <p><code>select</code></p>
+                  
+                </h3>
+                <p>The function <code>select(foo)</code> produces its input unchanged if <code>foo</code> returns true for that input, and produces no output otherwise.</p>
+
+<p>It&#8217;s useful for filtering lists: <code>[1,2,3] | select(. &gt;= 2)</code> will give you <code>[3]</code>.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example14">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example14" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'select(. >= 2)'</td></tr>
+                        <tr><th>Input</th><td>[1,5,3,0,7]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[5,3,7]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="empty">
+                <h3>
+                  <p><code>empty</code></p>
+                  
+                </h3>
+                <p><code>empty</code> returns no results. None at all. Not even <code>null</code>.</p>
+
+<p>It&#8217;s useful on occasion. You&#8217;ll know if you need it :)</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example15">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example15" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '1, empty, 2'</td></tr>
+                        <tr><th>Input</th><td>null</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>12</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '[1,2,empty,3]'</td></tr>
+                        <tr><th>Input</th><td>null</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[1,2,3]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="mapx">
                 <h3>
                   <p><code>map(x)</code></p>
@@ -1035,11 +1132,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example14">
+                    <a data-toggle="collapse" href="#example16">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example14" class="collapse">
+                    <div id="example16" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1074,11 +1171,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example15">
+                    <a data-toggle="collapse" href="#example17">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example15" class="collapse">
+                    <div id="example17" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1141,11 +1238,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example16">
+                    <a data-toggle="collapse" href="#example18">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example16" class="collapse">
+                    <div id="example18" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1178,11 +1275,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example17">
+                    <a data-toggle="collapse" href="#example19">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example17" class="collapse">
+                    <div id="example19" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1229,11 +1326,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example18">
+                    <a data-toggle="collapse" href="#example20">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example18" class="collapse">
+                    <div id="example20" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1274,11 +1371,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example19">
+                    <a data-toggle="collapse" href="#example21">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example19" class="collapse">
+                    <div id="example21" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1317,11 +1414,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example20">
+                    <a data-toggle="collapse" href="#example22">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example20" class="collapse">
+                    <div id="example22" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1367,11 +1464,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example21">
+                    <a data-toggle="collapse" href="#example23">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example21" class="collapse">
+                    <div id="example23" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1479,11 +1576,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example22">
+                    <a data-toggle="collapse" href="#example24">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example22" class="collapse">
+                    <div id="example24" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1577,11 +1674,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example23">
+                    <a data-toggle="collapse" href="#example25">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example23" class="collapse">
+                    <div id="example25" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1628,11 +1725,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example24">
+                    <a data-toggle="collapse" href="#example26">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example24" class="collapse">
+                    <div id="example26" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1722,11 +1819,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example25">
+                    <a data-toggle="collapse" href="#example27">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example25" class="collapse">
+                    <div id="example27" class="collapse">
                       
                     
                       <table class="manual-example">
