@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function $(EXTRA_CFLAGS)
 
-prefix=/usr/local
+prefix := /usr/local
 mandir=$(prefix)/share/man
 
 
