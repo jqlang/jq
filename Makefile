@@ -4,11 +4,6 @@ prefix=/usr/local
 .PHONY: all clean releasedep tarball install uninstall test releasetag
 all: jq
 
-clean:
-	make -Bnd | grep 'Must remake target' | \
-	sed 's/.*`\(.*\)'\''.*/\1/' | grep -v '^all$$' | \
-	xargs rm
-
 
 lexer.gen.c: lexer.l
 	flex -o lexer.gen.c --header-file=lexer.gen.h lexer.l
