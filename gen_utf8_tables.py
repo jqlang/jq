@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 mask = lambda n: (1 << n) - 1
 
