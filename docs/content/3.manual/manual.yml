@@ -390,6 +390,36 @@ sections:
             input: '{"abc": 1, "abcd": 2, "Foo": 3}'
             output: ['["Foo", "abc", "abcd"]']
 
+      - title: `select`
+        body: |
+          
+          The function `select(foo)` produces its input unchanged if
+          `foo` returns true for that input, and produces no output
+          otherwise.
+
+          It's useful for filtering lists: `[1,2,3] | select(. >= 2)`
+          will give you `[3]`.
+
+        examples:
+          - program: 'select(. >= 2)'
+            input: '[1,5,3,0,7]'
+            output: ['[5,3,7]']
+
+      - title: `empty`
+        body: |
+          
+          `empty` returns no results. None at all. Not even `null`.
+
+          It's useful on occasion. You'll know if you need it :)
+
+        examples:
+          - program: '1, empty, 2'
+            input: 'null'
+            output: [1,2]
+          - program: '[1,2,empty,3]'
+            input: 'null'
+            output: ['[1,2,3]']
+
       - title: `map(x)`
         body: |
 
