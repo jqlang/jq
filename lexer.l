@@ -31,6 +31,8 @@
 
 %%
 
+"#"[^\r\n]* { /* comments */ }
+
 "==" { return EQ; }
 "as" { return AS; }
 "def" { return DEF; }

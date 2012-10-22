@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <errno.h>
 #include <string.h>
 #include <ctype.h>
 #include "compile.h"
@@ -49,6 +50,8 @@ enum {
   RAW_OUTPUT = 8,
   COMPACT_OUTPUT = 16,
   ASCII_OUTPUT = 32,
+
+  FROM_FILE = 64,
 };
 static int options = 0;
 static struct bytecode* bc;
@@ -71,6 +74,29 @@ static void process(jv value) {
   jq_teardown();
 }
 
+static jv slurp_file(const char* filename) {
+  FILE* file = fopen(filename, "r");
+  if (!file) {
+    return jv_invalid_with_msg(jv_string_fmt("Could not open %s: %s",
+                                             filename,
+                                             strerror(errno)));
+  }
+  jv data = jv_string("");
+  while (!feof(file) && !ferror(file)) {
+    char buf[4096];
+    size_t n = fread(buf, 1, sizeof(buf), file);
+    data = jv_string_concat(data, jv_string_sized(buf, (int)n));
+  }
+  int badread = ferror(file);
+  fclose(file);
+  if (badread) {
+    jv_free(data);
+    return jv_invalid_with_msg(jv_string_fmt("Error reading from %s",
+                                             filename));
+  }
+  return data;
+}
+
 int main(int argc, char* argv[]) {
   if (argc) progname = argv[0];
 
@@ -91,6 +117,8 @@ int main(int argc, char* argv[]) {
       options |= RAW_INPUT;
     } else if (isoption(argv[i], 'n', "null-input")) {
       options |= PROVIDE_NULL;
+    } else if (isoption(argv[i], 'f', "from-file")) {
+      options |= FROM_FILE;
     } else if (isoption(argv[i], 'h', "help")) {
       usage();
     } else if (isoption(argv[i], 'V', "version")) {
@@ -104,11 +132,23 @@ int main(int argc, char* argv[]) {
   if (!program) usage();
 
   if ((options & PROVIDE_NULL) && (options & (RAW_INPUT | SLURP))) {
-    fprintf(stderr, "%s: --null-input cannot be used with --raw-input or --slurp\n", program);
+    fprintf(stderr, "%s: --null-input cannot be used with --raw-input or --slurp\n", progname);
     die();
   }
-
-  bc = jq_compile(program);
+  
+  if (options & FROM_FILE) {
+    jv data = slurp_file(program);
+    if (!jv_is_valid(data)) {
+      data = jv_invalid_get_msg(data);
+      fprintf(stderr, "%s: %s\n", progname, jv_string_value(data));
+      jv_free(data);
+      return 1;
+    }
+    bc = jq_compile(jv_string_value(data));
+    jv_free(data);
+  } else {
+    bc = jq_compile(program);
+  }
   if (!bc) return 1;
 
 #if JQ_DEBUG
