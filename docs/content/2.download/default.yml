@@ -9,6 +9,7 @@ body:
     
        * [Download binary for 64-bit Linux](linux_x86_64/jq)
        * [Download binary for OS X](osx_64/jq)
+         (or use [homebrew](http://mxcl.github.com/homebrew/): `brew install jq`) 
        * [Download source](source/jq.tgz)
 
       The binaries should just run, but you may need to make them

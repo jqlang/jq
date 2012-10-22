@@ -373,6 +373,23 @@ sections:
             input: '[[1,2], "string", {"a":2}, null]'
             output: [2, 6, 1, 0]
 
+      - title: `keys`
+        body: |
+          
+          The builtin function `keys`, when given an object, returns
+          its keys in an array.
+
+          The keys are sorted "alphabetically", by unicode codepoint
+          order. This is not an order that makes particular sense in
+          any particular language, but you can count on it being the
+          same for any two objects with the same set of keys,
+          regardless of locale settings.
+
+        examples:
+          - program: 'keys'
+            input: '{"abc": 1, "abcd": 2, "Foo": 3}'
+            output: ['["Foo", "abc", "abcd"]']
+
       - title: `map(x)`
         body: |
 
@@ -434,24 +451,15 @@ sections:
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
 
-      - title: "String interpolation - `@(text)`"
+      - title: "String interpolation - `\(foo)`"
         body: |
 
-          jq supports an alternative syntax for strings. Instead of
-          "foo", you can write `@(foo)`. When using this syntax,
-          `%(expression)` may be used to insert the value of
-          `expression` into the string (converted with `tostring`).
-
-          String interpolation does not occur for normal double-quoted
-          strings (like `"foo"`) in order to be fully compatible with
-          JSON.
-
-          All of the usual JSON escapes (`\n`, `\r` and the like) work
-          inside `@()`-quoted strings, as well as `\%` and `\)` if
-          those characters are needed literally.
+          Inside a string, you can put an expression inside parens
+          after a backslash. Whatever the expression returns will be
+          interpolated into the string.
 
         examples:
-          - program: '@(The input was %(.), which is one less than %(.+1))'
+          - program: '"The input was \(.), which is one less than \(.+1)"'
             input: '42'
             output: ['"The input was 42, which is one less than 43"']
           
