@@ -354,7 +354,7 @@ extern int jq_yylex \
 #undef YY_DECL
 #endif
 
-#line 104 "lexer.l"
+#line 106 "lexer.l"
 
 
 #line 361 "lexer.gen.h"
