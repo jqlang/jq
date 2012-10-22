@@ -228,6 +228,12 @@ static void f_keys(jv input[], jv output[]) {
     }
     free(keys);
     jv_free(input[0]);
+  } else if (jv_get_kind(input[0]) == JV_KIND_ARRAY) {
+    int n = jv_array_length(input[0]);
+    output[0] = jv_array();
+    for (int i=0; i<n; i++){
+      output[0] = jv_array_set(output[0], i, jv_number(i));
+    }
   } else {
     output[0] = jv_invalid_with_msg(jv_string_fmt("'keys' only supports object, not %s",
                                                   jv_kind_name(jv_get_kind(input[0]))));

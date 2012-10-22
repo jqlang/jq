@@ -385,10 +385,16 @@ sections:
           same for any two objects with the same set of keys,
           regardless of locale settings.
 
+          When `keys` is given an array, it returns the valid indices
+          for that array: the integers from 0 to length-1.
+
         examples:
           - program: 'keys'
             input: '{"abc": 1, "abcd": 2, "Foo": 3}'
             output: ['["Foo", "abc", "abcd"]']
+          - program: 'keys'
+            input: '[42,3,35]'
+            output: ['[0,1,2]']
 
       - title: `select`
         body: |
