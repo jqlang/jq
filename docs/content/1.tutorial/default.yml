@@ -2,7 +2,7 @@ headline: Tutorial
 body:
   - text: |
 
-      Twitter have a JSON API, so let's play with that. This URL gets
+      Twitter has a JSON API, so let's play with that. This URL gets
       us the last 5 tweets about JSON:
       
   - command: "curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true'"
