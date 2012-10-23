@@ -20,6 +20,18 @@ body:
       jq is licensed under the MIT license. For all of the gory
       details, read the file `COPYING` in the source distribution.
 
+      Arch Linux
+      ----------
+
+      A PKGBUILD for jq-1.1 is in the
+      [AUR](https://aur.archlinux.org/packages.php?ID=63849), as well as a
+      PKGBUILD for the HEAD of master
+      ([jq-git](https://aur.archlinux.org/packages.php?ID=63850)).
+
+      You can install jq using [Yaourt](https://wiki.archlinux.org/index.php/Yaourt)
+      or manually by following instructions on
+      [Arch Linux's Wiki](https://wiki.archlinux.org/index.php/Arch_User_Repository).
+
       Hacking on jq
       =============
 
