@@ -46,6 +46,7 @@ typedef void* yyscan_t;
 %token <literal> IDENT
 %token <literal> LITERAL
 %token EQ "=="
+%token NEQ "!="
 %token DEFINEDOR "//"
 %token AS "as"
 %token DEF "def"
@@ -79,7 +80,7 @@ typedef void* yyscan_t;
 %nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETDEFINEDOR
 %left OR
 %left AND
-%nonassoc EQ '<' '>' LESSEQ GREATEREQ
+%nonassoc NEQ EQ '<' '>' LESSEQ GREATEREQ
 %left '+' '-'
 %left '*' '/'
 
@@ -142,6 +143,7 @@ static block gen_binop(block a, block b, int op) {
   case '*': funcname = "_multiply"; break;
   case '/': funcname = "_divide"; break;
   case EQ: funcname = "_equal"; break;
+  case NEQ: funcname = "_notequal"; break;
   case '<': funcname = "_less"; break;
   case '>': funcname = "_greater"; break;
   case LESSEQ: funcname = "_lesseq"; break;
@@ -280,6 +282,10 @@ Exp "/=" Exp {
 
 Exp "==" Exp {
   $$ = gen_binop($1, $3, EQ);
+} |
+
+Exp "!=" Exp {
+  $$ = gen_binop($1, $3, NEQ);
 } |
 
 Exp '<' Exp {

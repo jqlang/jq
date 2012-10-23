@@ -33,6 +33,7 @@
 
 "#"[^\r\n]* { /* comments */ }
 
+"!=" { return NEQ; }
 "==" { return EQ; }
 "as" { return AS; }
 "def" { return DEF; }
