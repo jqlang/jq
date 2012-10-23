@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "compile.h"
+
+typedef void* yyscan_t;
+
 %}
 %code requires {
 #include "locfile.h"
