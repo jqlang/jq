@@ -120,6 +120,11 @@ static void f_equal(jv input[], jv output[]) {
   output[0] = jv_bool(jv_equal(input[2], input[1]));
 }
 
+static void f_notequal(jv input[], jv output[]) {
+  jv_free(input[0]);
+  output[0] = jv_bool(jv_equal(input[2], input[1]) == 0);
+}
+
 static void order_cmp(jv input[], jv output[], int op) {
   jv_free(input[0]);
   jv a = input[2];
@@ -284,6 +289,7 @@ static struct cfunction function_list[] = {
   {f_tostring, "tostring", CALL_BUILTIN_1_1},
   {f_keys, "keys", CALL_BUILTIN_1_1},
   {f_equal, "_equal", CALL_BUILTIN_3_1},
+  {f_notequal, "_notequal", CALL_BUILTIN_3_1},
   {f_less, "_less", CALL_BUILTIN_3_1},
   {f_greater, "_greater", CALL_BUILTIN_3_1},
   {f_lesseq, "_lesseq", CALL_BUILTIN_3_1},
