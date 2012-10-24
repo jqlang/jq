@@ -69,7 +69,7 @@
 #include <string.h>
 #include "compile.h"
 
-typedef void* yyscan_t;
+struct lexer_param;
 
 
 /* Line 336 of yacc.c  */
@@ -201,7 +201,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (block* answer, int* errors, struct locfile* locations, yyscan_t lexer);
+int yyparse (block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr);
 #else
 int yyparse ();
 #endif
@@ -214,21 +214,25 @@ int yyparse ();
 #line 89 "parser.y"
 
 #include "lexer.gen.h"
-#define FAIL(loc, msg)                                   \
-  do {                                                   \
-    location l = loc;                                    \
-    yyerror(&l, answer, errors, locations, lexer, msg);  \
-    /*YYERROR*/;                                         \
+struct lexer_param {
+  yyscan_t lexer;
+};
+#define FAIL(loc, msg)                                             \
+  do {                                                             \
+    location l = loc;                                              \
+    yyerror(&l, answer, errors, locations, lexer_param_ptr, msg);  \
+    /*YYERROR*/;                                                   \
   } while (0)
 
 void yyerror(YYLTYPE* loc, block* answer, int* errors, 
-             struct locfile* locations, yyscan_t lexer, const char *s){
+             struct locfile* locations, struct lexer_param* lexer_param_ptr, const char *s){
   (*errors)++;
   locfile_locate(locations, *loc, "error: %s", s);
 }
 
 int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors, 
-          struct locfile* locations, yyscan_t lexer) {
+          struct locfile* locations, struct lexer_param* lexer_param_ptr) {
+  yyscan_t lexer = lexer_param_ptr->lexer;
   while (1) {
     int tok = jq_yylex(yylval, yylloc, lexer);
     if (tok == INVALID_CHARACTER) {
@@ -300,7 +304,7 @@ static block gen_update(block a, block op, int optype) {
 
 
 /* Line 353 of yacc.c  */
-#line 304 "parser.gen.c"
+#line 308 "parser.gen.c"
 
 #ifdef short
 # undef short
@@ -623,13 +627,13 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   179,   179,   182,   187,   190,   195,   199,   206,   209,
-     214,   223,   227,   231,   235,   239,   243,   247,   251,   255,
-     259,   263,   267,   271,   275,   279,   283,   287,   291,   295,
-     299,   303,   307,   311,   316,   321,   327,   335,   338,   341,
-     347,   350,   355,   359,   365,   368,   371,   375,   378,   381,
-     384,   387,   390,   393,   398,   402,   406,   416,   417,   418,
-     419,   422,   425,   426,   427,   430,   433,   436,   440,   443
+       0,   183,   183,   186,   191,   194,   199,   203,   210,   213,
+     218,   227,   231,   235,   239,   243,   247,   251,   255,   259,
+     263,   267,   271,   275,   279,   283,   287,   291,   295,   299,
+     303,   307,   311,   315,   320,   325,   331,   339,   342,   345,
+     351,   354,   359,   363,   369,   372,   375,   379,   382,   385,
+     388,   391,   394,   397,   402,   406,   410,   420,   421,   422,
+     423,   426,   429,   430,   431,   434,   437,   440,   444,   447
 };
 #endif
 
@@ -992,7 +996,7 @@ do                                                              \
     }                                                           \
   else                                                          \
     {                                                           \
-      yyerror (&yylloc, answer, errors, locations, lexer, YY_("syntax error: cannot back up")); \
+      yyerror (&yylloc, answer, errors, locations, lexer_param_ptr, YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
 while (YYID (0))
@@ -1050,7 +1054,7 @@ while (YYID (0))
 #ifdef YYLEX_PARAM
 # define YYLEX yylex (&yylval, &yylloc, YYLEX_PARAM)
 #else
-# define YYLEX yylex (&yylval, &yylloc, answer, errors, locations, lexer)
+# define YYLEX yylex (&yylval, &yylloc, answer, errors, locations, lexer_param_ptr)
 #endif
 
 /* Enable debugging if requested.  */
@@ -1073,7 +1077,7 @@ do {									  \
     {									  \
       YYFPRINTF (stderr, "%s ", Title);					  \
       yy_symbol_print (stderr,						  \
-		  Type, Value, Location, answer, errors, locations, lexer); \
+		  Type, Value, Location, answer, errors, locations, lexer_param_ptr); \
       YYFPRINTF (stderr, "\n");						  \
     }									  \
 } while (YYID (0))
@@ -1087,10 +1091,10 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, block* answer, int* errors, struct locfile* locations, yyscan_t lexer)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr)
 #else
 static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, locations, lexer)
+yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, locations, lexer_param_ptr)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
@@ -1098,7 +1102,7 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, 
     block* answer;
     int* errors;
     struct locfile* locations;
-    yyscan_t lexer;
+    struct lexer_param* lexer_param_ptr;
 #endif
 {
   FILE *yyo = yyoutput;
@@ -1109,7 +1113,7 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, 
   YYUSE (answer);
   YYUSE (errors);
   YYUSE (locations);
-  YYUSE (lexer);
+  YYUSE (lexer_param_ptr);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
@@ -1131,10 +1135,10 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, 
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, block* answer, int* errors, struct locfile* locations, yyscan_t lexer)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr)
 #else
 static void
-yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, locations, lexer)
+yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, locations, lexer_param_ptr)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
@@ -1142,7 +1146,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, locati
     block* answer;
     int* errors;
     struct locfile* locations;
-    yyscan_t lexer;
+    struct lexer_param* lexer_param_ptr;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -1152,7 +1156,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, locati
 
   YY_LOCATION_PRINT (yyoutput, *yylocationp);
   YYFPRINTF (yyoutput, ": ");
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, locations, lexer);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, answer, errors, locations, lexer_param_ptr);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -1195,17 +1199,17 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule, block* answer, int* errors, struct locfile* locations, yyscan_t lexer)
+yy_reduce_print (YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule, block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr)
 #else
 static void
-yy_reduce_print (yyvsp, yylsp, yyrule, answer, errors, locations, lexer)
+yy_reduce_print (yyvsp, yylsp, yyrule, answer, errors, locations, lexer_param_ptr)
     YYSTYPE *yyvsp;
     YYLTYPE *yylsp;
     int yyrule;
     block* answer;
     int* errors;
     struct locfile* locations;
-    yyscan_t lexer;
+    struct lexer_param* lexer_param_ptr;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -1219,7 +1223,7 @@ yy_reduce_print (yyvsp, yylsp, yyrule, answer, errors, locations, lexer)
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       , &(yylsp[(yyi + 1) - (yynrhs)])		       , answer, errors, locations, lexer);
+		       , &(yylsp[(yyi + 1) - (yynrhs)])		       , answer, errors, locations, lexer_param_ptr);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1227,7 +1231,7 @@ yy_reduce_print (yyvsp, yylsp, yyrule, answer, errors, locations, lexer)
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, yylsp, Rule, answer, errors, locations, lexer); \
+    yy_reduce_print (yyvsp, yylsp, Rule, answer, errors, locations, lexer_param_ptr); \
 } while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1504,10 +1508,10 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp, block* answer, int* errors, struct locfile* locations, yyscan_t lexer)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp, block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep, yylocationp, answer, errors, locations, lexer)
+yydestruct (yymsg, yytype, yyvaluep, yylocationp, answer, errors, locations, lexer_param_ptr)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
@@ -1515,7 +1519,7 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp, answer, errors, locations, lex
     block* answer;
     int* errors;
     struct locfile* locations;
-    yyscan_t lexer;
+    struct lexer_param* lexer_param_ptr;
 #endif
 {
   YYUSE (yyvaluep);
@@ -1523,7 +1527,7 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp, answer, errors, locations, lex
   YYUSE (answer);
   YYUSE (errors);
   YYUSE (locations);
-  YYUSE (lexer);
+  YYUSE (lexer_param_ptr);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1536,91 +1540,91 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp, answer, errors, locations, lex
 #line 32 "parser.y"
 	{ jv_free(((*yyvaluep).literal)); };
 /* Line 1381 of yacc.c  */
-#line 1540 "parser.gen.c"
+#line 1544 "parser.gen.c"
 	break;
       case 5: /* LITERAL */
 /* Line 1381 of yacc.c  */
 #line 32 "parser.y"
 	{ jv_free(((*yyvaluep).literal)); };
 /* Line 1381 of yacc.c  */
-#line 1547 "parser.gen.c"
+#line 1551 "parser.gen.c"
 	break;
       case 27: /* QQSTRING_TEXT */
 /* Line 1381 of yacc.c  */
 #line 32 "parser.y"
 	{ jv_free(((*yyvaluep).literal)); };
 /* Line 1381 of yacc.c  */
-#line 1554 "parser.gen.c"
+#line 1558 "parser.gen.c"
 	break;
       case 52: /* FuncDefs */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1561 "parser.gen.c"
+#line 1565 "parser.gen.c"
 	break;
       case 53: /* Exp */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1568 "parser.gen.c"
+#line 1572 "parser.gen.c"
 	break;
       case 54: /* String */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1575 "parser.gen.c"
+#line 1579 "parser.gen.c"
 	break;
       case 55: /* FuncDef */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1582 "parser.gen.c"
+#line 1586 "parser.gen.c"
 	break;
       case 56: /* QQString */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1589 "parser.gen.c"
+#line 1593 "parser.gen.c"
 	break;
       case 57: /* ElseBody */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1596 "parser.gen.c"
+#line 1600 "parser.gen.c"
 	break;
       case 58: /* ExpD */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1603 "parser.gen.c"
+#line 1607 "parser.gen.c"
 	break;
       case 59: /* Term */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1610 "parser.gen.c"
+#line 1614 "parser.gen.c"
 	break;
       case 60: /* MkDict */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1617 "parser.gen.c"
+#line 1621 "parser.gen.c"
 	break;
       case 61: /* MkDictPair */
 /* Line 1381 of yacc.c  */
 #line 33 "parser.y"
 	{ block_free(((*yyvaluep).blk)); };
 /* Line 1381 of yacc.c  */
-#line 1624 "parser.gen.c"
+#line 1628 "parser.gen.c"
 	break;
 
       default:
@@ -1649,14 +1653,14 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (block* answer, int* errors, struct locfile* locations, yyscan_t lexer)
+yyparse (block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr)
 #else
 int
-yyparse (answer, errors, locations, lexer)
+yyparse (answer, errors, locations, lexer_param_ptr)
     block* answer;
     int* errors;
     struct locfile* locations;
-    yyscan_t lexer;
+    struct lexer_param* lexer_param_ptr;
 #endif
 #endif
 {
@@ -1936,7 +1940,7 @@ yyreduce:
     {
         case 2:
 /* Line 1787 of yacc.c  */
-#line 179 "parser.y"
+#line 183 "parser.y"
     {
   *answer = (yyvsp[(1) - (1)].blk);
 }
@@ -1944,7 +1948,7 @@ yyreduce:
 
   case 3:
 /* Line 1787 of yacc.c  */
-#line 182 "parser.y"
+#line 186 "parser.y"
     {
   *answer = (yyvsp[(1) - (1)].blk);
 }
@@ -1952,7 +1956,7 @@ yyreduce:
 
   case 4:
 /* Line 1787 of yacc.c  */
-#line 187 "parser.y"
+#line 191 "parser.y"
     {
   (yyval.blk) = gen_noop();
 }
@@ -1960,7 +1964,7 @@ yyreduce:
 
   case 5:
 /* Line 1787 of yacc.c  */
-#line 190 "parser.y"
+#line 194 "parser.y"
     {
   (yyval.blk) = block_join((yyvsp[(1) - (2)].blk), (yyvsp[(2) - (2)].blk));
 }
@@ -1968,7 +1972,7 @@ yyreduce:
 
   case 6:
 /* Line 1787 of yacc.c  */
-#line 195 "parser.y"
+#line 199 "parser.y"
     {
   (yyval.blk) = block_bind((yyvsp[(1) - (2)].blk), (yyvsp[(2) - (2)].blk), OP_IS_CALL_PSEUDO);
 }
@@ -1976,7 +1980,7 @@ yyreduce:
 
   case 7:
 /* Line 1787 of yacc.c  */
-#line 199 "parser.y"
+#line 203 "parser.y"
     {
   (yyval.blk) = gen_op_simple(DUP);
   block_append(&(yyval.blk), (yyvsp[(1) - (6)].blk));
@@ -1987,7 +1991,7 @@ yyreduce:
 
   case 8:
 /* Line 1787 of yacc.c  */
-#line 206 "parser.y"
+#line 210 "parser.y"
     {
   (yyval.blk) = gen_cond((yyvsp[(2) - (5)].blk), (yyvsp[(4) - (5)].blk), (yyvsp[(5) - (5)].blk));
 }
@@ -1995,7 +1999,7 @@ yyreduce:
 
   case 9:
 /* Line 1787 of yacc.c  */
-#line 209 "parser.y"
+#line 213 "parser.y"
     {
   FAIL((yyloc), "Possibly unterminated 'if' statment");
   (yyval.blk) = (yyvsp[(2) - (3)].blk);
@@ -2004,7 +2008,7 @@ yyreduce:
 
   case 10:
 /* Line 1787 of yacc.c  */
-#line 214 "parser.y"
+#line 218 "parser.y"
     {
   block assign = gen_op_simple(DUP);
   block_append(&assign, (yyvsp[(3) - (3)].blk));
@@ -2017,7 +2021,7 @@ yyreduce:
 
   case 11:
 /* Line 1787 of yacc.c  */
-#line 223 "parser.y"
+#line 227 "parser.y"
     {
   (yyval.blk) = gen_or((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk));
 }
@@ -2025,7 +2029,7 @@ yyreduce:
 
   case 12:
 /* Line 1787 of yacc.c  */
-#line 227 "parser.y"
+#line 231 "parser.y"
     {
   (yyval.blk) = gen_and((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk));
 }
@@ -2033,7 +2037,7 @@ yyreduce:
 
   case 13:
 /* Line 1787 of yacc.c  */
-#line 231 "parser.y"
+#line 235 "parser.y"
     {
   (yyval.blk) = gen_definedor((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk));
 }
@@ -2041,7 +2045,7 @@ yyreduce:
 
   case 14:
 /* Line 1787 of yacc.c  */
-#line 235 "parser.y"
+#line 239 "parser.y"
     {
   (yyval.blk) = gen_update((yyvsp[(1) - (3)].blk), gen_definedor(gen_noop(), (yyvsp[(3) - (3)].blk)), 0);
 }
@@ -2049,7 +2053,7 @@ yyreduce:
 
   case 15:
 /* Line 1787 of yacc.c  */
-#line 239 "parser.y"
+#line 243 "parser.y"
     {
   (yyval.blk) = gen_update((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), 0);
 }
@@ -2057,7 +2061,7 @@ yyreduce:
 
   case 16:
 /* Line 1787 of yacc.c  */
-#line 243 "parser.y"
+#line 247 "parser.y"
     { 
   (yyval.blk) = block_join((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk)); 
 }
@@ -2065,7 +2069,7 @@ yyreduce:
 
   case 17:
 /* Line 1787 of yacc.c  */
-#line 247 "parser.y"
+#line 251 "parser.y"
     { 
   (yyval.blk) = gen_both((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk)); 
 }
@@ -2073,7 +2077,7 @@ yyreduce:
 
   case 18:
 /* Line 1787 of yacc.c  */
-#line 251 "parser.y"
+#line 255 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '+');
 }
@@ -2081,7 +2085,7 @@ yyreduce:
 
   case 19:
 /* Line 1787 of yacc.c  */
-#line 255 "parser.y"
+#line 259 "parser.y"
     {
   (yyval.blk) = gen_update((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '+');
 }
@@ -2089,7 +2093,7 @@ yyreduce:
 
   case 20:
 /* Line 1787 of yacc.c  */
-#line 259 "parser.y"
+#line 263 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '-');
 }
@@ -2097,7 +2101,7 @@ yyreduce:
 
   case 21:
 /* Line 1787 of yacc.c  */
-#line 263 "parser.y"
+#line 267 "parser.y"
     {
   (yyval.blk) = gen_update((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '-');
 }
@@ -2105,7 +2109,7 @@ yyreduce:
 
   case 22:
 /* Line 1787 of yacc.c  */
-#line 267 "parser.y"
+#line 271 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '*');
 }
@@ -2113,7 +2117,7 @@ yyreduce:
 
   case 23:
 /* Line 1787 of yacc.c  */
-#line 271 "parser.y"
+#line 275 "parser.y"
     {
   (yyval.blk) = gen_update((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '*');
 }
@@ -2121,7 +2125,7 @@ yyreduce:
 
   case 24:
 /* Line 1787 of yacc.c  */
-#line 275 "parser.y"
+#line 279 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '/');
 }
@@ -2129,7 +2133,7 @@ yyreduce:
 
   case 25:
 /* Line 1787 of yacc.c  */
-#line 279 "parser.y"
+#line 283 "parser.y"
     {
   (yyval.blk) = gen_update((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '/');
 }
@@ -2137,7 +2141,7 @@ yyreduce:
 
   case 26:
 /* Line 1787 of yacc.c  */
-#line 283 "parser.y"
+#line 287 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), EQ);
 }
@@ -2145,7 +2149,7 @@ yyreduce:
 
   case 27:
 /* Line 1787 of yacc.c  */
-#line 287 "parser.y"
+#line 291 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), NEQ);
 }
@@ -2153,7 +2157,7 @@ yyreduce:
 
   case 28:
 /* Line 1787 of yacc.c  */
-#line 291 "parser.y"
+#line 295 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '<');
 }
@@ -2161,7 +2165,7 @@ yyreduce:
 
   case 29:
 /* Line 1787 of yacc.c  */
-#line 295 "parser.y"
+#line 299 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), '>');
 }
@@ -2169,7 +2173,7 @@ yyreduce:
 
   case 30:
 /* Line 1787 of yacc.c  */
-#line 299 "parser.y"
+#line 303 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), LESSEQ);
 }
@@ -2177,7 +2181,7 @@ yyreduce:
 
   case 31:
 /* Line 1787 of yacc.c  */
-#line 303 "parser.y"
+#line 307 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk), GREATEREQ);
 }
@@ -2185,7 +2189,7 @@ yyreduce:
 
   case 32:
 /* Line 1787 of yacc.c  */
-#line 307 "parser.y"
+#line 311 "parser.y"
     {
   (yyval.blk) = (yyvsp[(1) - (1)].blk);
 }
@@ -2193,7 +2197,7 @@ yyreduce:
 
   case 33:
 /* Line 1787 of yacc.c  */
-#line 311 "parser.y"
+#line 315 "parser.y"
     { 
   (yyval.blk) = (yyvsp[(1) - (1)].blk); 
 }
@@ -2201,7 +2205,7 @@ yyreduce:
 
   case 34:
 /* Line 1787 of yacc.c  */
-#line 316 "parser.y"
+#line 320 "parser.y"
     {
   (yyval.blk) = (yyvsp[(2) - (3)].blk);
 }
@@ -2209,7 +2213,7 @@ yyreduce:
 
   case 35:
 /* Line 1787 of yacc.c  */
-#line 321 "parser.y"
+#line 325 "parser.y"
     {
   block body = block_join((yyvsp[(4) - (5)].blk), gen_op_simple(RET));
   (yyval.blk) = gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value((yyvsp[(2) - (5)].literal)), body);
@@ -2219,7 +2223,7 @@ yyreduce:
 
   case 36:
 /* Line 1787 of yacc.c  */
-#line 327 "parser.y"
+#line 331 "parser.y"
     {
   block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value((yyvsp[(4) - (8)].literal))), block_join((yyvsp[(7) - (8)].blk), gen_op_simple(RET)), OP_IS_CALL_PSEUDO);
   (yyval.blk) = gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value((yyvsp[(2) - (8)].literal)), body);
@@ -2230,7 +2234,7 @@ yyreduce:
 
   case 37:
 /* Line 1787 of yacc.c  */
-#line 335 "parser.y"
+#line 339 "parser.y"
     {
   (yyval.blk) = gen_op_const(LOADK, jv_string(""));
 }
@@ -2238,7 +2242,7 @@ yyreduce:
 
   case 38:
 /* Line 1787 of yacc.c  */
-#line 338 "parser.y"
+#line 342 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (2)].blk), gen_op_const(LOADK, (yyvsp[(2) - (2)].literal)), '+');
 }
@@ -2246,7 +2250,7 @@ yyreduce:
 
   case 39:
 /* Line 1787 of yacc.c  */
-#line 341 "parser.y"
+#line 345 "parser.y"
     {
   (yyval.blk) = gen_binop((yyvsp[(1) - (4)].blk), gen_format((yyvsp[(3) - (4)].blk)), '+');
 }
@@ -2254,7 +2258,7 @@ yyreduce:
 
   case 40:
 /* Line 1787 of yacc.c  */
-#line 347 "parser.y"
+#line 351 "parser.y"
     {
   (yyval.blk) = gen_cond((yyvsp[(2) - (5)].blk), (yyvsp[(4) - (5)].blk), (yyvsp[(5) - (5)].blk));
 }
@@ -2262,7 +2266,7 @@ yyreduce:
 
   case 41:
 /* Line 1787 of yacc.c  */
-#line 350 "parser.y"
+#line 354 "parser.y"
     {
   (yyval.blk) = (yyvsp[(2) - (3)].blk);
 }
@@ -2270,7 +2274,7 @@ yyreduce:
 
   case 42:
 /* Line 1787 of yacc.c  */
-#line 355 "parser.y"
+#line 359 "parser.y"
     { 
   (yyval.blk) = block_join((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk));
 }
@@ -2278,7 +2282,7 @@ yyreduce:
 
   case 43:
 /* Line 1787 of yacc.c  */
-#line 359 "parser.y"
+#line 363 "parser.y"
     {
   (yyval.blk) = (yyvsp[(1) - (1)].blk);
 }
@@ -2286,7 +2290,7 @@ yyreduce:
 
   case 44:
 /* Line 1787 of yacc.c  */
-#line 365 "parser.y"
+#line 369 "parser.y"
     {
   (yyval.blk) = gen_noop(); 
 }
@@ -2294,7 +2298,7 @@ yyreduce:
 
   case 45:
 /* Line 1787 of yacc.c  */
-#line 368 "parser.y"
+#line 372 "parser.y"
     {
   (yyval.blk) = gen_index((yyvsp[(1) - (3)].blk), gen_op_const(LOADK, (yyvsp[(3) - (3)].literal))); 
 }
@@ -2302,7 +2306,7 @@ yyreduce:
 
   case 46:
 /* Line 1787 of yacc.c  */
-#line 371 "parser.y"
+#line 375 "parser.y"
     { 
   (yyval.blk) = gen_index(gen_noop(), gen_op_const(LOADK, (yyvsp[(2) - (2)].literal))); 
 }
@@ -2310,7 +2314,7 @@ yyreduce:
 
   case 47:
 /* Line 1787 of yacc.c  */
-#line 375 "parser.y"
+#line 379 "parser.y"
     {
   (yyval.blk) = gen_index((yyvsp[(1) - (4)].blk), (yyvsp[(3) - (4)].blk)); 
 }
@@ -2318,7 +2322,7 @@ yyreduce:
 
   case 48:
 /* Line 1787 of yacc.c  */
-#line 378 "parser.y"
+#line 382 "parser.y"
     {
   (yyval.blk) = block_join((yyvsp[(1) - (3)].blk), gen_op_simple(EACH)); 
 }
@@ -2326,7 +2330,7 @@ yyreduce:
 
   case 49:
 /* Line 1787 of yacc.c  */
-#line 381 "parser.y"
+#line 385 "parser.y"
     {
   (yyval.blk) = gen_op_const(LOADK, (yyvsp[(1) - (1)].literal)); 
 }
@@ -2334,7 +2338,7 @@ yyreduce:
 
   case 50:
 /* Line 1787 of yacc.c  */
-#line 384 "parser.y"
+#line 388 "parser.y"
     { 
   (yyval.blk) = (yyvsp[(2) - (3)].blk); 
 }
@@ -2342,7 +2346,7 @@ yyreduce:
 
   case 51:
 /* Line 1787 of yacc.c  */
-#line 387 "parser.y"
+#line 391 "parser.y"
     { 
   (yyval.blk) = gen_collect((yyvsp[(2) - (3)].blk)); 
 }
@@ -2350,7 +2354,7 @@ yyreduce:
 
   case 52:
 /* Line 1787 of yacc.c  */
-#line 390 "parser.y"
+#line 394 "parser.y"
     { 
   (yyval.blk) = gen_op_const(LOADK, jv_array()); 
 }
@@ -2358,7 +2362,7 @@ yyreduce:
 
   case 53:
 /* Line 1787 of yacc.c  */
-#line 393 "parser.y"
+#line 397 "parser.y"
     { 
   (yyval.blk) = gen_subexp(gen_op_const(LOADK, jv_object()));
   block_append(&(yyval.blk), (yyvsp[(2) - (3)].blk));
@@ -2368,7 +2372,7 @@ yyreduce:
 
   case 54:
 /* Line 1787 of yacc.c  */
-#line 398 "parser.y"
+#line 402 "parser.y"
     {
   (yyval.blk) = gen_location((yyloc), gen_op_var_unbound(LOADV, jv_string_value((yyvsp[(2) - (2)].literal))));
   jv_free((yyvsp[(2) - (2)].literal));
@@ -2377,7 +2381,7 @@ yyreduce:
 
   case 55:
 /* Line 1787 of yacc.c  */
-#line 402 "parser.y"
+#line 406 "parser.y"
     {
   (yyval.blk) = gen_location((yyloc), gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, jv_string_value((yyvsp[(1) - (1)].literal)))));
   jv_free((yyvsp[(1) - (1)].literal));
@@ -2386,7 +2390,7 @@ yyreduce:
 
   case 56:
 /* Line 1787 of yacc.c  */
-#line 406 "parser.y"
+#line 410 "parser.y"
     {
   (yyval.blk) = gen_op_call(CALL_1_1, 
                    block_join(gen_op_block_unbound(CLOSURE_REF, jv_string_value((yyvsp[(1) - (4)].literal))),
@@ -2401,31 +2405,31 @@ yyreduce:
 
   case 57:
 /* Line 1787 of yacc.c  */
-#line 416 "parser.y"
+#line 420 "parser.y"
     { (yyval.blk) = gen_noop(); }
     break;
 
   case 58:
 /* Line 1787 of yacc.c  */
-#line 417 "parser.y"
+#line 421 "parser.y"
     { (yyval.blk) = gen_noop(); }
     break;
 
   case 59:
 /* Line 1787 of yacc.c  */
-#line 418 "parser.y"
+#line 422 "parser.y"
     { (yyval.blk) = (yyvsp[(1) - (4)].blk); }
     break;
 
   case 60:
 /* Line 1787 of yacc.c  */
-#line 419 "parser.y"
+#line 423 "parser.y"
     { (yyval.blk) = gen_noop(); }
     break;
 
   case 61:
 /* Line 1787 of yacc.c  */
-#line 422 "parser.y"
+#line 426 "parser.y"
     { 
   (yyval.blk)=gen_noop(); 
 }
@@ -2433,25 +2437,25 @@ yyreduce:
 
   case 62:
 /* Line 1787 of yacc.c  */
-#line 425 "parser.y"
+#line 429 "parser.y"
     { (yyval.blk) = (yyvsp[(1) - (1)].blk); }
     break;
 
   case 63:
 /* Line 1787 of yacc.c  */
-#line 426 "parser.y"
+#line 430 "parser.y"
     { (yyval.blk)=block_join((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk)); }
     break;
 
   case 64:
 /* Line 1787 of yacc.c  */
-#line 427 "parser.y"
+#line 431 "parser.y"
     { (yyval.blk) = (yyvsp[(3) - (3)].blk); }
     break;
 
   case 65:
 /* Line 1787 of yacc.c  */
-#line 430 "parser.y"
+#line 434 "parser.y"
     { 
   (yyval.blk) = gen_dictpair(gen_op_const(LOADK, (yyvsp[(1) - (3)].literal)), (yyvsp[(3) - (3)].blk));
  }
@@ -2459,7 +2463,7 @@ yyreduce:
 
   case 66:
 /* Line 1787 of yacc.c  */
-#line 433 "parser.y"
+#line 437 "parser.y"
     {
   (yyval.blk) = gen_dictpair((yyvsp[(1) - (3)].blk), (yyvsp[(3) - (3)].blk));
   }
@@ -2467,7 +2471,7 @@ yyreduce:
 
   case 67:
 /* Line 1787 of yacc.c  */
-#line 436 "parser.y"
+#line 440 "parser.y"
     {
   (yyval.blk) = gen_dictpair(gen_op_const(LOADK, jv_copy((yyvsp[(1) - (1)].literal))),
                     gen_index(gen_noop(), gen_op_const(LOADK, (yyvsp[(1) - (1)].literal))));
@@ -2476,7 +2480,7 @@ yyreduce:
 
   case 68:
 /* Line 1787 of yacc.c  */
-#line 440 "parser.y"
+#line 444 "parser.y"
     {
   (yyval.blk) = gen_dictpair((yyvsp[(2) - (5)].blk), (yyvsp[(5) - (5)].blk));
   }
@@ -2484,13 +2488,13 @@ yyreduce:
 
   case 69:
 /* Line 1787 of yacc.c  */
-#line 443 "parser.y"
+#line 447 "parser.y"
     { (yyval.blk) = (yyvsp[(5) - (5)].blk); }
     break;
 
 
 /* Line 1787 of yacc.c  */
-#line 2494 "parser.gen.c"
+#line 2498 "parser.gen.c"
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2541,7 +2545,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (&yylloc, answer, errors, locations, lexer, YY_("syntax error"));
+      yyerror (&yylloc, answer, errors, locations, lexer_param_ptr, YY_("syntax error"));
 #else
 # define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
                                         yyssp, yytoken)
@@ -2568,7 +2572,7 @@ yyerrlab:
                 yymsgp = yymsg;
               }
           }
-        yyerror (&yylloc, answer, errors, locations, lexer, yymsgp);
+        yyerror (&yylloc, answer, errors, locations, lexer_param_ptr, yymsgp);
         if (yysyntax_error_status == 2)
           goto yyexhaustedlab;
       }
@@ -2592,7 +2596,7 @@ yyerrlab:
       else
 	{
 	  yydestruct ("Error: discarding",
-		      yytoken, &yylval, &yylloc, answer, errors, locations, lexer);
+		      yytoken, &yylval, &yylloc, answer, errors, locations, lexer_param_ptr);
 	  yychar = YYEMPTY;
 	}
     }
@@ -2649,7 +2653,7 @@ yyerrlab1:
 
       yyerror_range[1] = *yylsp;
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp, yylsp, answer, errors, locations, lexer);
+		  yystos[yystate], yyvsp, yylsp, answer, errors, locations, lexer_param_ptr);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -2689,7 +2693,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (&yylloc, answer, errors, locations, lexer, YY_("memory exhausted"));
+  yyerror (&yylloc, answer, errors, locations, lexer_param_ptr, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -2701,7 +2705,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, &yylloc, answer, errors, locations, lexer);
+                  yytoken, &yylval, &yylloc, answer, errors, locations, lexer_param_ptr);
     }
   /* Do not reclaim the symbols of the rule which action triggered
      this YYABORT or YYACCEPT.  */
@@ -2710,7 +2714,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp, yylsp, answer, errors, locations, lexer);
+		  yystos[*yyssp], yyvsp, yylsp, answer, errors, locations, lexer_param_ptr);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -2727,19 +2731,19 @@ yyreturn:
 
 
 /* Line 2048 of yacc.c  */
-#line 444 "parser.y"
+#line 448 "parser.y"
 
 
 int jq_parse(struct locfile* locations, block* answer) {
-  yyscan_t scanner;
+  struct lexer_param scanner;
   YY_BUFFER_STATE buf;
-  jq_yylex_init_extra(0, &scanner);
-  buf = jq_yy_scan_bytes(locations->data, locations->length, scanner);
+  jq_yylex_init_extra(0, &scanner.lexer);
+  buf = jq_yy_scan_bytes(locations->data, locations->length, scanner.lexer);
   int errors = 0;
   *answer = gen_noop();
-  yyparse(answer, &errors, locations, scanner);
-  jq_yy_delete_buffer(buf, scanner);
-  jq_yylex_destroy(scanner);
+  yyparse(answer, &errors, locations, &scanner);
+  jq_yy_delete_buffer(buf, scanner.lexer);
+  jq_yylex_destroy(scanner.lexer);
   if (errors > 0) {
     block_free(*answer);
     *answer = gen_noop();

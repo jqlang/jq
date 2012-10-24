@@ -138,7 +138,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (block* answer, int* errors, struct locfile* locations, yyscan_t lexer);
+int yyparse (block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr);
 #else
 int yyparse ();
 #endif
