@@ -308,10 +308,6 @@ Exp ">=" Exp {
   $$ = gen_binop($1, $3, GREATEREQ);
 } |
 
-String {
-  $$ = $1;
-} |
-
 Term { 
   $$ = $1; 
 }
@@ -384,6 +380,9 @@ Term '[' ']' {
 } |
 LITERAL {
   $$ = gen_op_const(LOADK, $1); 
+} |
+String {
+  $$ = $1;
 } |
 '(' Exp ')' { 
   $$ = $2; 

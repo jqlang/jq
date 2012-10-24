@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 2.6.2.  */
+/* A Bison parser, made by GNU Bison 2.5.  */
 
 /* Bison interface for Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989-1990, 2000-2012 Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989-1990, 2000-2011 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,17 +30,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_PARSER_GEN_H
-# define YY_PARSER_GEN_H
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
 /* "%code requires" blocks.  */
-/* Line 2049 of yacc.c  */
+
+/* Line 2068 of yacc.c  */
 #line 9 "parser.y"
 
 #include "locfile.h"
@@ -57,8 +49,9 @@ extern int yydebug;
   } while (0)
  
 
-/* Line 2049 of yacc.c  */
-#line 62 "parser.gen.h"
+
+/* Line 2068 of yacc.c  */
+#line 55 "parser.gen.h"
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -98,23 +91,28 @@ extern int yydebug;
 #endif
 
 
+
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
 {
-/* Line 2049 of yacc.c  */
+
+/* Line 2068 of yacc.c  */
 #line 27 "parser.y"
 
   jv literal;
   block blk;
 
 
-/* Line 2049 of yacc.c  */
-#line 113 "parser.gen.h"
+
+/* Line 2068 of yacc.c  */
+#line 109 "parser.gen.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 #endif
+
+
 
 #if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
 typedef struct YYLTYPE
@@ -130,18 +128,4 @@ typedef struct YYLTYPE
 #endif
 
 
-#ifdef YYPARSE_PARAM
-#if defined __STDC__ || defined __cplusplus
-int yyparse (void *YYPARSE_PARAM);
-#else
-int yyparse ();
-#endif
-#else /* ! YYPARSE_PARAM */
-#if defined __STDC__ || defined __cplusplus
-int yyparse (block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr);
-#else
-int yyparse ();
-#endif
-#endif /* ! YYPARSE_PARAM */
 
-#endif /* !YY_PARSER_GEN_H  */
