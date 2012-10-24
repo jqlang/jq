@@ -250,6 +250,27 @@ static int jvp_array_equal(jv_complex* a, jv_complex* b) {
   return 1;
 }
 
+static int jvp_array_contains(jv_complex* a, jv_complex* b) {
+  int r = 1;
+  for (int bi = 0; bi < jvp_array_length(b); bi++) {
+    int ri = 0;
+    jv* bval = jvp_array_read(b, bi);
+    for (int ai = 0; ai < jvp_array_length(a); ai++) {
+      jv aval = jv_copy(*jvp_array_read(a, ai));
+      jv bval_copy = jv_copy(*bval);
+      if (jv_contains(aval, bval_copy)) {
+        ri = 1;
+        break;
+      }
+    }
+    if (!ri) {
+      r = 0;
+      break;
+    }
+  }
+  return r;
+}
+
 static jv_complex jvp_array_slice(jv_complex* a, int start, int end) {
   // FIXME: maybe slice should reallocate if the slice is small enough
   assert(start <= end);
@@ -863,6 +884,27 @@ jv jv_object_merge(jv a, jv b) {
   return a;
 }
 
+int jv_object_contains(jv a, jv b) {
+  assert(jv_get_kind(a) == JV_KIND_OBJECT);
+  assert(jv_get_kind(b) == JV_KIND_OBJECT);
+  int r = 1;
+
+  for (int i=0; i<jvp_object_size(&b.val.complex); i++) {
+    struct object_slot* slotb = jvp_object_get_slot(&b.val.complex, i);
+    if (!slotb->string) continue;
+    jv* slota = jvp_object_read(&a.val.complex, slotb->string);
+    if (!(slota && jv_get_kind(slotb->value) == jv_get_kind(*slota)
+       && jv_contains(jv_copy(*slota), jv_copy(slotb->value)))) {
+      r = 0;
+      break;
+    }
+  }
+
+  jv_free(a);
+  jv_free(b);
+  return r;
+}
+
 /*
  * Object iteration (internal helpers)
  */
@@ -972,6 +1014,24 @@ int jv_equal(jv a, jv b) {
       r = 1;
       break;
     }
+  }
+  jv_free(a);
+  jv_free(b);
+  return r;
+}
+
+int jv_contains(jv a, jv b) {
+  int r = 1;
+  if (jv_get_kind(a) != jv_get_kind(b)) {
+    r = 0;
+  } else if (jv_get_kind(a) == JV_KIND_OBJECT) {
+    r = jv_object_contains(jv_copy(a), jv_copy(b));
+  } else if (jv_get_kind(a) == JV_KIND_ARRAY) {
+    r = jvp_array_contains(&a.val.complex, &b.val.complex);
+  } else if (jv_get_kind(a) == JV_KIND_STRING) {
+    r = strstr(jv_string_value(a), jv_string_value(b)) != 0;
+  } else {
+    r = jv_equal(jv_copy(a), jv_copy(b));
   }
   jv_free(a);
   jv_free(b);

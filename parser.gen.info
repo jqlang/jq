@@ -1,16 +1,16 @@
-Terminaux inutilisés dans la grammaire
+Terminals unused in grammar
 
    INVALID_CHARACTER
 
 
-Grammaire
+Grammar
 
     0 $accept: TopLevel $end
 
     1 TopLevel: Exp
     2         | FuncDefs
 
-    3 FuncDefs: /* vide */
+    3 FuncDefs: /* empty */
     4         | FuncDef FuncDefs
 
     5 Exp: FuncDef Exp
@@ -39,90 +39,91 @@ Grammaire
    28    | Exp '>' Exp
    29    | Exp "<=" Exp
    30    | Exp ">=" Exp
-   31    | String
-   32    | Term
+   31    | Exp "contains" Exp
+   32    | String
+   33    | Term
 
-   33 String: QQSTRING_START QQString QQSTRING_END
+   34 String: QQSTRING_START QQString QQSTRING_END
 
-   34 FuncDef: "def" IDENT ':' Exp ';'
-   35        | "def" IDENT '(' IDENT ')' ':' Exp ';'
+   35 FuncDef: "def" IDENT ':' Exp ';'
+   36        | "def" IDENT '(' IDENT ')' ':' Exp ';'
 
-   36 QQString: /* vide */
-   37         | QQString QQSTRING_TEXT
-   38         | QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END
+   37 QQString: /* empty */
+   38         | QQString QQSTRING_TEXT
+   39         | QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END
 
-   39 ElseBody: "elif" Exp "then" Exp ElseBody
-   40         | "else" Exp "end"
+   40 ElseBody: "elif" Exp "then" Exp ElseBody
+   41         | "else" Exp "end"
 
-   41 ExpD: ExpD '|' ExpD
-   42     | Term
+   42 ExpD: ExpD '|' ExpD
+   43     | Term
 
-   43 Term: '.'
-   44     | Term '.' IDENT
-   45     | '.' IDENT
-   46     | Term '[' Exp ']'
-   47     | Term '[' ']'
-   48     | LITERAL
-   49     | '(' Exp ')'
-   50     | '[' Exp ']'
-   51     | '[' ']'
-   52     | '{' MkDict '}'
-   53     | '$' IDENT
-   54     | IDENT
-   55     | IDENT '(' Exp ')'
-   56     | '(' error ')'
-   57     | '[' error ']'
-   58     | Term '[' error ']'
-   59     | '{' error '}'
+   44 Term: '.'
+   45     | Term '.' IDENT
+   46     | '.' IDENT
+   47     | Term '[' Exp ']'
+   48     | Term '[' ']'
+   49     | LITERAL
+   50     | '(' Exp ')'
+   51     | '[' Exp ']'
+   52     | '[' ']'
+   53     | '{' MkDict '}'
+   54     | '$' IDENT
+   55     | IDENT
+   56     | IDENT '(' Exp ')'
+   57     | '(' error ')'
+   58     | '[' error ']'
+   59     | Term '[' error ']'
+   60     | '{' error '}'
 
-   60 MkDict: /* vide */
-   61       | MkDictPair
-   62       | MkDictPair ',' MkDict
-   63       | error ',' MkDict
+   61 MkDict: /* empty */
+   62       | MkDictPair
+   63       | MkDictPair ',' MkDict
+   64       | error ',' MkDict
 
-   64 MkDictPair: IDENT ':' ExpD
-   65           | String ':' ExpD
-   66           | IDENT
-   67           | '(' Exp ')' ':' ExpD
-   68           | '(' error ')' ':' ExpD
+   65 MkDictPair: IDENT ':' ExpD
+   66           | String ':' ExpD
+   67           | IDENT
+   68           | '(' Exp ')' ':' ExpD
+   69           | '(' error ')' ':' ExpD
 
 
-Terminaux, suivis des règles où ils apparaissent
+Terminals, with rules where they appear
 
 $end (0) 0
-'$' (36) 6 53
-'(' (40) 35 49 55 56 67 68
-')' (41) 35 49 55 56 67 68
+'$' (36) 6 54
+'(' (40) 36 50 56 57 68 69
+')' (41) 36 50 56 57 68 69
 '*' (42) 21
 '+' (43) 17
-',' (44) 16 62 63
+',' (44) 16 63 64
 '-' (45) 19
-'.' (46) 43 44 45
+'.' (46) 44 45 46
 '/' (47) 23
-':' (58) 34 35 64 65 67 68
-';' (59) 34 35
+':' (58) 35 36 65 66 68 69
+';' (59) 35 36
 '<' (60) 27
 '=' (61) 9
 '>' (62) 28
-'[' (91) 46 47 50 51 57 58
-']' (93) 46 47 50 51 57 58
-'{' (123) 52 59
-'|' (124) 6 15 41
-'}' (125) 52 59
-error (256) 8 56 57 58 59 63 68
+'[' (91) 47 48 51 52 58 59
+']' (93) 47 48 51 52 58 59
+'{' (123) 53 60
+'|' (124) 6 15 42
+'}' (125) 53 60
+error (256) 8 57 58 59 60 64 69
 INVALID_CHARACTER (258)
-IDENT (259) 6 34 35 44 45 53 54 55 64 66
-LITERAL (260) 48
+IDENT (259) 6 35 36 45 46 54 55 56 65 67
+LITERAL (260) 49
 "==" (261) 25
 "!=" (262) 26
 "//" (263) 12
 "as" (264) 6
-"def" (265) 34 35
+"def" (265) 35 36
 "if" (266) 7 8
-"then" (267) 7 39
-"else" (268) 40
-"elif" (269) 39
-"end" (270) 40
+"then" (267) 7 40
+"else" (268) 41
+"elif" (269) 40
+"end" (270) 41
 "and" (271) 11
 "or" (272) 10
 "|=" (273) 14
@@ -133,223 +134,224 @@ LITERAL (260) 48
 "//=" (278) 13
 "<=" (279) 29
 ">=" (280) 30
-QQSTRING_START (281) 33
-QQSTRING_TEXT (282) 37
-QQSTRING_INTERP_START (283) 38
-QQSTRING_INTERP_END (284) 38
-QQSTRING_END (285) 33
+"contains" (281) 31
+QQSTRING_START (282) 34
+QQSTRING_TEXT (283) 38
+QQSTRING_INTERP_START (284) 39
+QQSTRING_INTERP_END (285) 39
+QQSTRING_END (286) 34
 
 
-Non-terminaux, suivis des règles où ils apparaissent
+Nonterminals, with rules where they appear
 
-$accept (50)
-    à gauche: 0
-TopLevel (51)
-    à gauche: 1 2, à droite: 0
-FuncDefs (52)
-    à gauche: 3 4, à droite: 2 4
-Exp (53)
-    à gauche: 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
-    24 25 26 27 28 29 30 31 32, à droite: 1 5 6 7 8 9 10 11 12 13
-    14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 34 35 38 39
-    40 46 49 50 55 67
-String (54)
-    à gauche: 33, à droite: 31 65
-FuncDef (55)
-    à gauche: 34 35, à droite: 4 5
-QQString (56)
-    à gauche: 36 37 38, à droite: 33 37 38
-ElseBody (57)
-    à gauche: 39 40, à droite: 7 39
-ExpD (58)
-    à gauche: 41 42, à droite: 41 64 65 67 68
-Term (59)
-    à gauche: 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59,
-    à droite: 6 32 42 44 46 47 58
-MkDict (60)
-    à gauche: 60 61 62 63, à droite: 52 62 63
-MkDictPair (61)
-    à gauche: 64 65 66 67 68, à droite: 61 62
+$accept (51)
+    on left: 0
+TopLevel (52)
+    on left: 1 2, on right: 0
+FuncDefs (53)
+    on left: 3 4, on right: 2 4
+Exp (54)
+    on left: 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+    25 26 27 28 29 30 31 32 33, on right: 1 5 6 7 8 9 10 11 12 13 14
+    15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 35 36 39 40
+    41 47 50 51 56 68
+String (55)
+    on left: 34, on right: 32 66
+FuncDef (56)
+    on left: 35 36, on right: 4 5
+QQString (57)
+    on left: 37 38 39, on right: 34 38 39
+ElseBody (58)
+    on left: 40 41, on right: 7 40
+ExpD (59)
+    on left: 42 43, on right: 42 65 66 68 69
+Term (60)
+    on left: 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60, on right:
+    6 33 43 45 47 48 59
+MkDict (61)
+    on left: 61 62 63 64, on right: 53 63 64
+MkDictPair (62)
+    on left: 65 66 67 68 69, on right: 62 63
 
 
-état 0
+state 0
 
     0 $accept: . TopLevel $end
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    $défaut  réduction par utilisation de la règle 3 (FuncDefs)
+    $default  reduce using rule 3 (FuncDefs)
 
-    TopLevel  aller à l'état 11
-    FuncDefs  aller à l'état 12
-    Exp       aller à l'état 13
-    String    aller à l'état 14
-    FuncDef   aller à l'état 15
-    Term      aller à l'état 16
-
-
-état 1
-
-   54 Term: IDENT .
-   55     | IDENT . '(' Exp ')'
-
-    '('  décalage et aller à l'état 17
-
-    $défaut  réduction par utilisation de la règle 54 (Term)
+    TopLevel  go to state 11
+    FuncDefs  go to state 12
+    Exp       go to state 13
+    String    go to state 14
+    FuncDef   go to state 15
+    Term      go to state 16
 
 
-état 2
+state 1
 
-   48 Term: LITERAL .
+   55 Term: IDENT .
+   56     | IDENT . '(' Exp ')'
 
-    $défaut  réduction par utilisation de la règle 48 (Term)
+    '('  shift, and go to state 17
 
-
-état 3
-
-   34 FuncDef: "def" . IDENT ':' Exp ';'
-   35        | "def" . IDENT '(' IDENT ')' ':' Exp ';'
-
-    IDENT  décalage et aller à l'état 18
+    $default  reduce using rule 55 (Term)
 
 
-état 4
+state 2
+
+   49 Term: LITERAL .
+
+    $default  reduce using rule 49 (Term)
+
+
+state 3
+
+   35 FuncDef: "def" . IDENT ':' Exp ';'
+   36        | "def" . IDENT '(' IDENT ')' ':' Exp ';'
+
+    IDENT  shift, and go to state 18
+
+
+state 4
 
     7 Exp: "if" . Exp "then" Exp ElseBody
     8    | "if" . Exp error
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 19
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
-
-
-état 5
-
-   33 String: QQSTRING_START . QQString QQSTRING_END
-
-    $défaut  réduction par utilisation de la règle 36 (QQString)
-
-    QQString  aller à l'état 21
+    Exp      go to state 19
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 6
+state 5
 
-   53 Term: '$' . IDENT
+   34 String: QQSTRING_START . QQString QQSTRING_END
 
-    IDENT  décalage et aller à l'état 22
+    $default  reduce using rule 37 (QQString)
 
-
-état 7
-
-   49 Term: '(' . Exp ')'
-   56     | '(' . error ')'
-
-    error           décalage et aller à l'état 23
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 24
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    QQString  go to state 21
 
 
-état 8
+state 6
 
-   43 Term: '.' .
-   45     | '.' . IDENT
+   54 Term: '$' . IDENT
 
-    IDENT  décalage et aller à l'état 25
-
-    $défaut  réduction par utilisation de la règle 43 (Term)
+    IDENT  shift, and go to state 22
 
 
-état 9
+state 7
 
-   50 Term: '[' . Exp ']'
-   51     | '[' . ']'
-   57     | '[' . error ']'
+   50 Term: '(' . Exp ')'
+   57     | '(' . error ')'
 
-    error           décalage et aller à l'état 26
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    ']'             décalage et aller à l'état 27
-    '{'             décalage et aller à l'état 10
+    error           shift, and go to state 23
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 28
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 24
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 10
+state 8
 
-   52 Term: '{' . MkDict '}'
-   59     | '{' . error '}'
+   44 Term: '.' .
+   46     | '.' . IDENT
 
-    error           décalage et aller à l'état 29
-    IDENT           décalage et aller à l'état 30
-    QQSTRING_START  décalage et aller à l'état 5
-    '('             décalage et aller à l'état 31
+    IDENT  shift, and go to state 25
 
-    '}'  réduction par utilisation de la règle 60 (MkDict)
-
-    String      aller à l'état 32
-    MkDict      aller à l'état 33
-    MkDictPair  aller à l'état 34
+    $default  reduce using rule 44 (Term)
 
 
-état 11
+state 9
+
+   51 Term: '[' . Exp ']'
+   52     | '[' . ']'
+   58     | '[' . error ']'
+
+    error           shift, and go to state 26
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    ']'             shift, and go to state 27
+    '{'             shift, and go to state 10
+
+    Exp      go to state 28
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
+state 10
+
+   53 Term: '{' . MkDict '}'
+   60     | '{' . error '}'
+
+    error           shift, and go to state 29
+    IDENT           shift, and go to state 30
+    QQSTRING_START  shift, and go to state 5
+    '('             shift, and go to state 31
+
+    '}'  reduce using rule 61 (MkDict)
+
+    String      go to state 32
+    MkDict      go to state 33
+    MkDictPair  go to state 34
+
+
+state 11
 
     0 $accept: TopLevel . $end
 
-    $end  décalage et aller à l'état 35
+    $end  shift, and go to state 35
 
 
-état 12
+state 12
 
     2 TopLevel: FuncDefs .
 
-    $défaut  réduction par utilisation de la règle 2 (TopLevel)
+    $default  reduce using rule 2 (TopLevel)
 
 
-état 13
+state 13
 
     1 TopLevel: Exp .
     9 Exp: Exp . '=' Exp
@@ -374,112 +376,114 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 1 (TopLevel)
-
-
-état 14
-
-   31 Exp: String .
-
-    $défaut  réduction par utilisation de la règle 31 (Exp)
+    $default  reduce using rule 1 (TopLevel)
 
 
-état 15
+state 14
+
+   32 Exp: String .
+
+    $default  reduce using rule 32 (Exp)
+
+
+state 15
 
     4 FuncDefs: FuncDef . FuncDefs
     5 Exp: FuncDef . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    $défaut  réduction par utilisation de la règle 3 (FuncDefs)
+    $default  reduce using rule 3 (FuncDefs)
 
-    FuncDefs  aller à l'état 58
-    Exp       aller à l'état 59
-    String    aller à l'état 14
-    FuncDef   aller à l'état 15
-    Term      aller à l'état 16
+    FuncDefs  go to state 59
+    Exp       go to state 60
+    String    go to state 14
+    FuncDef   go to state 15
+    Term      go to state 16
 
 
-état 16
+state 16
 
     6 Exp: Term . "as" '$' IDENT '|' Exp
-   32    | Term .
-   44 Term: Term . '.' IDENT
-   46     | Term . '[' Exp ']'
-   47     | Term . '[' ']'
-   58     | Term . '[' error ']'
+   33    | Term .
+   45 Term: Term . '.' IDENT
+   47     | Term . '[' Exp ']'
+   48     | Term . '[' ']'
+   59     | Term . '[' error ']'
 
-    "as"  décalage et aller à l'état 60
-    '.'   décalage et aller à l'état 61
-    '['   décalage et aller à l'état 62
+    "as"  shift, and go to state 61
+    '.'   shift, and go to state 62
+    '['   shift, and go to state 63
 
-    $défaut  réduction par utilisation de la règle 32 (Exp)
-
-
-état 17
-
-   55 Term: IDENT '(' . Exp ')'
-
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 63
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    $default  reduce using rule 33 (Exp)
 
 
-état 18
+state 17
 
-   34 FuncDef: "def" IDENT . ':' Exp ';'
-   35        | "def" IDENT . '(' IDENT ')' ':' Exp ';'
+   56 Term: IDENT '(' . Exp ')'
 
-    ':'  décalage et aller à l'état 64
-    '('  décalage et aller à l'état 65
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 64
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 19
+state 18
+
+   35 FuncDef: "def" IDENT . ':' Exp ';'
+   36        | "def" IDENT . '(' IDENT ')' ':' Exp ';'
+
+    ':'  shift, and go to state 65
+    '('  shift, and go to state 66
+
+
+state 19
 
     7 Exp: "if" Exp . "then" Exp ElseBody
     8    | "if" Exp . error
@@ -505,152 +509,82 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    error   décalage et aller à l'état 66
-    "=="    décalage et aller à l'état 36
-    "!="    décalage et aller à l'état 37
-    "//"    décalage et aller à l'état 38
-    "then"  décalage et aller à l'état 67
-    "and"   décalage et aller à l'état 39
-    "or"    décalage et aller à l'état 40
-    "|="    décalage et aller à l'état 41
-    "+="    décalage et aller à l'état 42
-    "-="    décalage et aller à l'état 43
-    "*="    décalage et aller à l'état 44
-    "/="    décalage et aller à l'état 45
-    "//="   décalage et aller à l'état 46
-    "<="    décalage et aller à l'état 47
-    ">="    décalage et aller à l'état 48
-    '|'     décalage et aller à l'état 49
-    ','     décalage et aller à l'état 50
-    '='     décalage et aller à l'état 51
-    '<'     décalage et aller à l'état 52
-    '>'     décalage et aller à l'état 53
-    '+'     décalage et aller à l'état 54
-    '-'     décalage et aller à l'état 55
-    '*'     décalage et aller à l'état 56
-    '/'     décalage et aller à l'état 57
+    error       shift, and go to state 67
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "then"      shift, and go to state 68
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
 
-état 20
+state 20
 
     5 Exp: FuncDef . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 59
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
-
-
-état 21
-
-   33 String: QQSTRING_START QQString . QQSTRING_END
-   37 QQString: QQString . QQSTRING_TEXT
-   38         | QQString . QQSTRING_INTERP_START Exp QQSTRING_INTERP_END
-
-    QQSTRING_TEXT          décalage et aller à l'état 68
-    QQSTRING_INTERP_START  décalage et aller à l'état 69
-    QQSTRING_END           décalage et aller à l'état 70
+    Exp      go to state 60
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 22
+state 21
 
-   53 Term: '$' IDENT .
+   34 String: QQSTRING_START QQString . QQSTRING_END
+   38 QQString: QQString . QQSTRING_TEXT
+   39         | QQString . QQSTRING_INTERP_START Exp QQSTRING_INTERP_END
 
-    $défaut  réduction par utilisation de la règle 53 (Term)
-
-
-état 23
-
-   56 Term: '(' error . ')'
-
-    ')'  décalage et aller à l'état 71
+    QQSTRING_TEXT          shift, and go to state 69
+    QQSTRING_INTERP_START  shift, and go to state 70
+    QQSTRING_END           shift, and go to state 71
 
 
-état 24
+state 22
 
-    9 Exp: Exp . '=' Exp
-   10    | Exp . "or" Exp
-   11    | Exp . "and" Exp
-   12    | Exp . "//" Exp
-   13    | Exp . "//=" Exp
-   14    | Exp . "|=" Exp
-   15    | Exp . '|' Exp
-   16    | Exp . ',' Exp
-   17    | Exp . '+' Exp
-   18    | Exp . "+=" Exp
-   19    | Exp . '-' Exp
-   20    | Exp . "-=" Exp
-   21    | Exp . '*' Exp
-   22    | Exp . "*=" Exp
-   23    | Exp . '/' Exp
-   24    | Exp . "/=" Exp
-   25    | Exp . "==" Exp
-   26    | Exp . "!=" Exp
-   27    | Exp . '<' Exp
-   28    | Exp . '>' Exp
-   29    | Exp . "<=" Exp
-   30    | Exp . ">=" Exp
-   49 Term: '(' Exp . ')'
+   54 Term: '$' IDENT .
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
-    ')'    décalage et aller à l'état 72
+    $default  reduce using rule 54 (Term)
 
 
-état 25
+state 23
 
-   45 Term: '.' IDENT .
+   57 Term: '(' error . ')'
 
-    $défaut  réduction par utilisation de la règle 45 (Term)
-
-
-état 26
-
-   57 Term: '[' error . ']'
-
-    ']'  décalage et aller à l'état 73
+    ')'  shift, and go to state 72
 
 
-état 27
-
-   51 Term: '[' ']' .
-
-    $défaut  réduction par utilisation de la règle 51 (Term)
-
-
-état 28
+state 24
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -674,576 +608,673 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   50 Term: '[' Exp . ']'
+   31    | Exp . "contains" Exp
+   50 Term: '(' Exp . ')'
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
-    ']'    décalage et aller à l'état 74
-
-
-état 29
-
-   59 Term: '{' error . '}'
-   63 MkDict: error . ',' MkDict
-
-    ','  décalage et aller à l'état 75
-    '}'  décalage et aller à l'état 76
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ')'         shift, and go to state 73
 
 
-état 30
+state 25
 
-   64 MkDictPair: IDENT . ':' ExpD
-   66           | IDENT .
+   46 Term: '.' IDENT .
 
-    ':'  décalage et aller à l'état 77
-
-    $défaut  réduction par utilisation de la règle 66 (MkDictPair)
+    $default  reduce using rule 46 (Term)
 
 
-état 31
+state 26
 
-   67 MkDictPair: '(' . Exp ')' ':' ExpD
-   68           | '(' . error ')' ':' ExpD
+   58 Term: '[' error . ']'
 
-    error           décalage et aller à l'état 78
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 79
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    ']'  shift, and go to state 74
 
 
-état 32
+state 27
 
-   65 MkDictPair: String . ':' ExpD
+   52 Term: '[' ']' .
 
-    ':'  décalage et aller à l'état 80
-
-
-état 33
-
-   52 Term: '{' MkDict . '}'
-
-    '}'  décalage et aller à l'état 81
+    $default  reduce using rule 52 (Term)
 
 
-état 34
+state 28
 
-   61 MkDict: MkDictPair .
-   62       | MkDictPair . ',' MkDict
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+   51 Term: '[' Exp . ']'
 
-    ','  décalage et aller à l'état 82
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ']'         shift, and go to state 75
 
-    $défaut  réduction par utilisation de la règle 61 (MkDict)
+
+state 29
+
+   60 Term: '{' error . '}'
+   64 MkDict: error . ',' MkDict
+
+    ','  shift, and go to state 76
+    '}'  shift, and go to state 77
 
 
-état 35
+state 30
+
+   65 MkDictPair: IDENT . ':' ExpD
+   67           | IDENT .
+
+    ':'  shift, and go to state 78
+
+    $default  reduce using rule 67 (MkDictPair)
+
+
+state 31
+
+   68 MkDictPair: '(' . Exp ')' ':' ExpD
+   69           | '(' . error ')' ':' ExpD
+
+    error           shift, and go to state 79
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 80
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
+state 32
+
+   66 MkDictPair: String . ':' ExpD
+
+    ':'  shift, and go to state 81
+
+
+state 33
+
+   53 Term: '{' MkDict . '}'
+
+    '}'  shift, and go to state 82
+
+
+state 34
+
+   62 MkDict: MkDictPair .
+   63       | MkDictPair . ',' MkDict
+
+    ','  shift, and go to state 83
+
+    $default  reduce using rule 62 (MkDict)
+
+
+state 35
 
     0 $accept: TopLevel $end .
 
-    $défaut  accepter
+    $default  accept
 
 
-état 36
+state 36
 
    25 Exp: Exp "==" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 83
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 84
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 37
+state 37
 
    26 Exp: Exp "!=" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 84
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 85
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 38
+state 38
 
    12 Exp: Exp "//" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 85
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 86
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 39
+state 39
 
    11 Exp: Exp "and" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 86
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 87
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 40
+state 40
 
    10 Exp: Exp "or" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 87
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 88
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 41
+state 41
 
    14 Exp: Exp "|=" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 88
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 89
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 42
+state 42
 
    18 Exp: Exp "+=" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 89
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 90
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 43
+state 43
 
    20 Exp: Exp "-=" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 90
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 91
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 44
+state 44
 
    22 Exp: Exp "*=" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 91
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 92
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 45
+state 45
 
    24 Exp: Exp "/=" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 92
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 93
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 46
+state 46
 
    13 Exp: Exp "//=" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 93
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 94
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 47
+state 47
 
    29 Exp: Exp "<=" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 94
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 95
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 48
+state 48
 
    30 Exp: Exp ">=" . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 95
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 96
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 49
+state 49
+
+   31 Exp: Exp "contains" . Exp
+
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 97
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
+state 50
 
    15 Exp: Exp '|' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 96
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 98
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 50
+state 51
 
    16 Exp: Exp ',' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 97
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 99
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 51
+state 52
 
     9 Exp: Exp '=' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 98
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 100
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 52
+state 53
 
    27 Exp: Exp '<' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 99
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 101
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 53
+state 54
 
    28 Exp: Exp '>' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 100
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 102
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 54
+state 55
 
    17 Exp: Exp '+' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 101
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 103
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 55
+state 56
 
    19 Exp: Exp '-' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 102
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 104
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 56
+state 57
 
    21 Exp: Exp '*' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 103
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 105
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 57
+state 58
 
    23 Exp: Exp '/' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 104
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 106
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 58
+state 59
 
     4 FuncDefs: FuncDef FuncDefs .
 
-    $défaut  réduction par utilisation de la règle 4 (FuncDefs)
+    $default  reduce using rule 4 (FuncDefs)
 
 
-état 59
+state 60
 
     5 Exp: FuncDef Exp .
     9    | Exp . '=' Exp
@@ -1268,73 +1299,75 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 5 (Exp)
+    $default  reduce using rule 5 (Exp)
 
 
-état 60
+state 61
 
     6 Exp: Term "as" . '$' IDENT '|' Exp
 
-    '$'  décalage et aller à l'état 105
+    '$'  shift, and go to state 107
 
 
-état 61
+state 62
 
-   44 Term: Term '.' . IDENT
+   45 Term: Term '.' . IDENT
 
-    IDENT  décalage et aller à l'état 106
-
-
-état 62
-
-   46 Term: Term '[' . Exp ']'
-   47     | Term '[' . ']'
-   58     | Term '[' . error ']'
-
-    error           décalage et aller à l'état 107
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    ']'             décalage et aller à l'état 108
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 109
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    IDENT  shift, and go to state 108
 
 
-état 63
+state 63
+
+   47 Term: Term '[' . Exp ']'
+   48     | Term '[' . ']'
+   59     | Term '[' . error ']'
+
+    error           shift, and go to state 109
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    ']'             shift, and go to state 110
+    '{'             shift, and go to state 10
+
+    Exp      go to state 111
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
+state 64
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1358,199 +1391,201 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   55 Term: IDENT '(' Exp . ')'
+   31    | Exp . "contains" Exp
+   56 Term: IDENT '(' Exp . ')'
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
-    ')'    décalage et aller à l'état 110
-
-
-état 64
-
-   34 FuncDef: "def" IDENT ':' . Exp ';'
-
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 111
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ')'         shift, and go to state 112
 
 
-état 65
+state 65
 
-   35 FuncDef: "def" IDENT '(' . IDENT ')' ':' Exp ';'
+   35 FuncDef: "def" IDENT ':' . Exp ';'
 
-    IDENT  décalage et aller à l'état 112
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 113
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 66
+state 66
+
+   36 FuncDef: "def" IDENT '(' . IDENT ')' ':' Exp ';'
+
+    IDENT  shift, and go to state 114
+
+
+state 67
 
     8 Exp: "if" Exp error .
 
-    $défaut  réduction par utilisation de la règle 8 (Exp)
+    $default  reduce using rule 8 (Exp)
 
 
-état 67
+state 68
 
     7 Exp: "if" Exp "then" . Exp ElseBody
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 113
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
-
-
-état 68
-
-   37 QQString: QQString QQSTRING_TEXT .
-
-    $défaut  réduction par utilisation de la règle 37 (QQString)
+    Exp      go to state 115
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 69
+state 69
 
-   38 QQString: QQString QQSTRING_INTERP_START . Exp QQSTRING_INTERP_END
+   38 QQString: QQString QQSTRING_TEXT .
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 114
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    $default  reduce using rule 38 (QQString)
 
 
-état 70
+state 70
 
-   33 String: QQSTRING_START QQString QQSTRING_END .
+   39 QQString: QQString QQSTRING_INTERP_START . Exp QQSTRING_INTERP_END
 
-    $défaut  réduction par utilisation de la règle 33 (String)
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-
-état 71
-
-   56 Term: '(' error ')' .
-
-    $défaut  réduction par utilisation de la règle 56 (Term)
-
-
-état 72
-
-   49 Term: '(' Exp ')' .
-
-    $défaut  réduction par utilisation de la règle 49 (Term)
-
-
-état 73
-
-   57 Term: '[' error ']' .
-
-    $défaut  réduction par utilisation de la règle 57 (Term)
+    Exp      go to state 116
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 74
+state 71
 
-   50 Term: '[' Exp ']' .
+   34 String: QQSTRING_START QQString QQSTRING_END .
 
-    $défaut  réduction par utilisation de la règle 50 (Term)
-
-
-état 75
-
-   63 MkDict: error ',' . MkDict
-
-    error           décalage et aller à l'état 115
-    IDENT           décalage et aller à l'état 30
-    QQSTRING_START  décalage et aller à l'état 5
-    '('             décalage et aller à l'état 31
-
-    '}'  réduction par utilisation de la règle 60 (MkDict)
-
-    String      aller à l'état 32
-    MkDict      aller à l'état 116
-    MkDictPair  aller à l'état 34
+    $default  reduce using rule 34 (String)
 
 
-état 76
+state 72
 
-   59 Term: '{' error '}' .
+   57 Term: '(' error ')' .
 
-    $défaut  réduction par utilisation de la règle 59 (Term)
-
-
-état 77
-
-   64 MkDictPair: IDENT ':' . ExpD
-
-    IDENT    décalage et aller à l'état 1
-    LITERAL  décalage et aller à l'état 2
-    '$'      décalage et aller à l'état 6
-    '('      décalage et aller à l'état 7
-    '.'      décalage et aller à l'état 8
-    '['      décalage et aller à l'état 9
-    '{'      décalage et aller à l'état 10
-
-    ExpD  aller à l'état 117
-    Term  aller à l'état 118
+    $default  reduce using rule 57 (Term)
 
 
-état 78
+state 73
 
-   68 MkDictPair: '(' error . ')' ':' ExpD
+   50 Term: '(' Exp ')' .
 
-    ')'  décalage et aller à l'état 119
+    $default  reduce using rule 50 (Term)
 
 
-état 79
+state 74
+
+   58 Term: '[' error ']' .
+
+    $default  reduce using rule 58 (Term)
+
+
+state 75
+
+   51 Term: '[' Exp ']' .
+
+    $default  reduce using rule 51 (Term)
+
+
+state 76
+
+   64 MkDict: error ',' . MkDict
+
+    error           shift, and go to state 117
+    IDENT           shift, and go to state 30
+    QQSTRING_START  shift, and go to state 5
+    '('             shift, and go to state 31
+
+    '}'  reduce using rule 61 (MkDict)
+
+    String      go to state 32
+    MkDict      go to state 118
+    MkDictPair  go to state 34
+
+
+state 77
+
+   60 Term: '{' error '}' .
+
+    $default  reduce using rule 60 (Term)
+
+
+state 78
+
+   65 MkDictPair: IDENT ':' . ExpD
+
+    IDENT    shift, and go to state 1
+    LITERAL  shift, and go to state 2
+    '$'      shift, and go to state 6
+    '('      shift, and go to state 7
+    '.'      shift, and go to state 8
+    '['      shift, and go to state 9
+    '{'      shift, and go to state 10
+
+    ExpD  go to state 119
+    Term  go to state 120
+
+
+state 79
+
+   69 MkDictPair: '(' error . ')' ':' ExpD
+
+    ')'  shift, and go to state 121
+
+
+state 80
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1574,73 +1609,75 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   67 MkDictPair: '(' Exp . ')' ':' ExpD
+   31    | Exp . "contains" Exp
+   68 MkDictPair: '(' Exp . ')' ':' ExpD
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
-    ')'    décalage et aller à l'état 120
-
-
-état 80
-
-   65 MkDictPair: String ':' . ExpD
-
-    IDENT    décalage et aller à l'état 1
-    LITERAL  décalage et aller à l'état 2
-    '$'      décalage et aller à l'état 6
-    '('      décalage et aller à l'état 7
-    '.'      décalage et aller à l'état 8
-    '['      décalage et aller à l'état 9
-    '{'      décalage et aller à l'état 10
-
-    ExpD  aller à l'état 121
-    Term  aller à l'état 118
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ')'         shift, and go to state 122
 
 
-état 81
+state 81
 
-   52 Term: '{' MkDict '}' .
+   66 MkDictPair: String ':' . ExpD
 
-    $défaut  réduction par utilisation de la règle 52 (Term)
+    IDENT    shift, and go to state 1
+    LITERAL  shift, and go to state 2
+    '$'      shift, and go to state 6
+    '('      shift, and go to state 7
+    '.'      shift, and go to state 8
+    '['      shift, and go to state 9
+    '{'      shift, and go to state 10
 
-
-état 82
-
-   62 MkDict: MkDictPair ',' . MkDict
-
-    error           décalage et aller à l'état 115
-    IDENT           décalage et aller à l'état 30
-    QQSTRING_START  décalage et aller à l'état 5
-    '('             décalage et aller à l'état 31
-
-    '}'  réduction par utilisation de la règle 60 (MkDict)
-
-    String      aller à l'état 32
-    MkDict      aller à l'état 122
-    MkDictPair  aller à l'état 34
+    ExpD  go to state 123
+    Term  go to state 120
 
 
-état 83
+state 82
+
+   53 Term: '{' MkDict '}' .
+
+    $default  reduce using rule 53 (Term)
+
+
+state 83
+
+   63 MkDict: MkDictPair ',' . MkDict
+
+    error           shift, and go to state 117
+    IDENT           shift, and go to state 30
+    QQSTRING_START  shift, and go to state 5
+    '('             shift, and go to state 31
+
+    '}'  reduce using rule 61 (MkDict)
+
+    String      go to state 32
+    MkDict      go to state 124
+    MkDictPair  go to state 34
+
+
+state 84
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1665,23 +1702,25 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '+'  décalage et aller à l'état 54
-    '-'  décalage et aller à l'état 55
-    '*'  décalage et aller à l'état 56
-    '/'  décalage et aller à l'état 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  erreur (non-associative)
-    "!="  erreur (non-associative)
-    "<="  erreur (non-associative)
-    ">="  erreur (non-associative)
-    '<'   erreur (non-associative)
-    '>'   erreur (non-associative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 25 (Exp)
+    $default  reduce using rule 25 (Exp)
 
 
-état 84
+state 85
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1706,23 +1745,25 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '+'  décalage et aller à l'état 54
-    '-'  décalage et aller à l'état 55
-    '*'  décalage et aller à l'état 56
-    '/'  décalage et aller à l'état 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  erreur (non-associative)
-    "!="  erreur (non-associative)
-    "<="  erreur (non-associative)
-    ">="  erreur (non-associative)
-    '<'   erreur (non-associative)
-    '>'   erreur (non-associative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 26 (Exp)
+    $default  reduce using rule 26 (Exp)
 
 
-état 85
+state 86
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1747,32 +1788,34 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 12 (Exp)
+    $default  reduce using rule 12 (Exp)
 
 
-état 86
+state 87
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1797,22 +1840,24 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="  décalage et aller à l'état 36
-    "!="  décalage et aller à l'état 37
-    "<="  décalage et aller à l'état 47
-    ">="  décalage et aller à l'état 48
-    '<'   décalage et aller à l'état 52
-    '>'   décalage et aller à l'état 53
-    '+'   décalage et aller à l'état 54
-    '-'   décalage et aller à l'état 55
-    '*'   décalage et aller à l'état 56
-    '/'   décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 11 (Exp)
+    $default  reduce using rule 11 (Exp)
 
 
-état 87
+state 88
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1837,23 +1882,25 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "and"  décalage et aller à l'état 39
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 10 (Exp)
+    $default  reduce using rule 10 (Exp)
 
 
-état 88
+state 89
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1878,32 +1925,34 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    "|="   erreur (non-associative)
-    "+="   erreur (non-associative)
-    "-="   erreur (non-associative)
-    "*="   erreur (non-associative)
-    "/="   erreur (non-associative)
-    "//="  erreur (non-associative)
-    '='    erreur (non-associative)
+    "|="   error (nonassociative)
+    "+="   error (nonassociative)
+    "-="   error (nonassociative)
+    "*="   error (nonassociative)
+    "/="   error (nonassociative)
+    "//="  error (nonassociative)
+    '='    error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 14 (Exp)
+    $default  reduce using rule 14 (Exp)
 
 
-état 89
+state 90
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1928,32 +1977,34 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    "|="   erreur (non-associative)
-    "+="   erreur (non-associative)
-    "-="   erreur (non-associative)
-    "*="   erreur (non-associative)
-    "/="   erreur (non-associative)
-    "//="  erreur (non-associative)
-    '='    erreur (non-associative)
+    "|="   error (nonassociative)
+    "+="   error (nonassociative)
+    "-="   error (nonassociative)
+    "*="   error (nonassociative)
+    "/="   error (nonassociative)
+    "//="  error (nonassociative)
+    '='    error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 18 (Exp)
+    $default  reduce using rule 18 (Exp)
 
 
-état 90
+state 91
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1978,32 +2029,34 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    "|="   erreur (non-associative)
-    "+="   erreur (non-associative)
-    "-="   erreur (non-associative)
-    "*="   erreur (non-associative)
-    "/="   erreur (non-associative)
-    "//="  erreur (non-associative)
-    '='    erreur (non-associative)
+    "|="   error (nonassociative)
+    "+="   error (nonassociative)
+    "-="   error (nonassociative)
+    "*="   error (nonassociative)
+    "/="   error (nonassociative)
+    "//="  error (nonassociative)
+    '='    error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 20 (Exp)
+    $default  reduce using rule 20 (Exp)
 
 
-état 91
+state 92
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2028,32 +2081,34 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    "|="   erreur (non-associative)
-    "+="   erreur (non-associative)
-    "-="   erreur (non-associative)
-    "*="   erreur (non-associative)
-    "/="   erreur (non-associative)
-    "//="  erreur (non-associative)
-    '='    erreur (non-associative)
+    "|="   error (nonassociative)
+    "+="   error (nonassociative)
+    "-="   error (nonassociative)
+    "*="   error (nonassociative)
+    "/="   error (nonassociative)
+    "//="  error (nonassociative)
+    '='    error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 22 (Exp)
+    $default  reduce using rule 22 (Exp)
 
 
-état 92
+state 93
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2078,32 +2133,34 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    "|="   erreur (non-associative)
-    "+="   erreur (non-associative)
-    "-="   erreur (non-associative)
-    "*="   erreur (non-associative)
-    "/="   erreur (non-associative)
-    "//="  erreur (non-associative)
-    '='    erreur (non-associative)
+    "|="   error (nonassociative)
+    "+="   error (nonassociative)
+    "-="   error (nonassociative)
+    "*="   error (nonassociative)
+    "/="   error (nonassociative)
+    "//="  error (nonassociative)
+    '='    error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 24 (Exp)
+    $default  reduce using rule 24 (Exp)
 
 
-état 93
+state 94
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2128,32 +2185,34 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    "|="   erreur (non-associative)
-    "+="   erreur (non-associative)
-    "-="   erreur (non-associative)
-    "*="   erreur (non-associative)
-    "/="   erreur (non-associative)
-    "//="  erreur (non-associative)
-    '='    erreur (non-associative)
+    "|="   error (nonassociative)
+    "+="   error (nonassociative)
+    "-="   error (nonassociative)
+    "*="   error (nonassociative)
+    "/="   error (nonassociative)
+    "//="  error (nonassociative)
+    '='    error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 13 (Exp)
+    $default  reduce using rule 13 (Exp)
 
 
-état 94
+state 95
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2178,23 +2237,25 @@ MkDictPair (61)
    29    | Exp . "<=" Exp
    29    | Exp "<=" Exp .
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '+'  décalage et aller à l'état 54
-    '-'  décalage et aller à l'état 55
-    '*'  décalage et aller à l'état 56
-    '/'  décalage et aller à l'état 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  erreur (non-associative)
-    "!="  erreur (non-associative)
-    "<="  erreur (non-associative)
-    ">="  erreur (non-associative)
-    '<'   erreur (non-associative)
-    '>'   erreur (non-associative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 29 (Exp)
+    $default  reduce using rule 29 (Exp)
 
 
-état 95
+state 96
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2219,23 +2280,68 @@ MkDictPair (61)
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
    30    | Exp ">=" Exp .
+   31    | Exp . "contains" Exp
 
-    '+'  décalage et aller à l'état 54
-    '-'  décalage et aller à l'état 55
-    '*'  décalage et aller à l'état 56
-    '/'  décalage et aller à l'état 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  erreur (non-associative)
-    "!="  erreur (non-associative)
-    "<="  erreur (non-associative)
-    ">="  erreur (non-associative)
-    '<'   erreur (non-associative)
-    '>'   erreur (non-associative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 30 (Exp)
+    $default  reduce using rule 30 (Exp)
 
 
-état 96
+state 97
+
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+   31    | Exp "contains" Exp .
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
+
+    $default  reduce using rule 31 (Exp)
+
+
+state 98
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2260,33 +2366,35 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 15 (Exp)
+    $default  reduce using rule 15 (Exp)
 
 
-état 97
+state 99
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2311,32 +2419,34 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 16 (Exp)
+    $default  reduce using rule 16 (Exp)
 
 
-état 98
+state 100
 
     9 Exp: Exp . '=' Exp
     9    | Exp '=' Exp .
@@ -2361,32 +2471,34 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    "|="   erreur (non-associative)
-    "+="   erreur (non-associative)
-    "-="   erreur (non-associative)
-    "*="   erreur (non-associative)
-    "/="   erreur (non-associative)
-    "//="  erreur (non-associative)
-    '='    erreur (non-associative)
+    "|="   error (nonassociative)
+    "+="   error (nonassociative)
+    "-="   error (nonassociative)
+    "*="   error (nonassociative)
+    "/="   error (nonassociative)
+    "//="  error (nonassociative)
+    '='    error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 9 (Exp)
+    $default  reduce using rule 9 (Exp)
 
 
-état 99
+state 101
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2411,23 +2523,25 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '+'  décalage et aller à l'état 54
-    '-'  décalage et aller à l'état 55
-    '*'  décalage et aller à l'état 56
-    '/'  décalage et aller à l'état 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  erreur (non-associative)
-    "!="  erreur (non-associative)
-    "<="  erreur (non-associative)
-    ">="  erreur (non-associative)
-    '<'   erreur (non-associative)
-    '>'   erreur (non-associative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 27 (Exp)
+    $default  reduce using rule 27 (Exp)
 
 
-état 100
+state 102
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2452,23 +2566,25 @@ MkDictPair (61)
    28    | Exp '>' Exp .
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '+'  décalage et aller à l'état 54
-    '-'  décalage et aller à l'état 55
-    '*'  décalage et aller à l'état 56
-    '/'  décalage et aller à l'état 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  erreur (non-associative)
-    "!="  erreur (non-associative)
-    "<="  erreur (non-associative)
-    ">="  erreur (non-associative)
-    '<'   erreur (non-associative)
-    '>'   erreur (non-associative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
-    $défaut  réduction par utilisation de la règle 28 (Exp)
+    $default  reduce using rule 28 (Exp)
 
 
-état 101
+state 103
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2493,14 +2609,15 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '*'  décalage et aller à l'état 56
-    '/'  décalage et aller à l'état 57
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 17 (Exp)
+    $default  reduce using rule 17 (Exp)
 
 
-état 102
+state 104
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2525,14 +2642,15 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '*'  décalage et aller à l'état 56
-    '/'  décalage et aller à l'état 57
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 19 (Exp)
+    $default  reduce using rule 19 (Exp)
 
 
-état 103
+state 105
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2557,11 +2675,12 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    $défaut  réduction par utilisation de la règle 21 (Exp)
+    $default  reduce using rule 21 (Exp)
 
 
-état 104
+state 106
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2586,97 +2705,40 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    $défaut  réduction par utilisation de la règle 23 (Exp)
+    $default  reduce using rule 23 (Exp)
 
 
-état 105
+state 107
 
     6 Exp: Term "as" '$' . IDENT '|' Exp
 
-    IDENT  décalage et aller à l'état 123
+    IDENT  shift, and go to state 125
 
 
-état 106
+state 108
 
-   44 Term: Term '.' IDENT .
+   45 Term: Term '.' IDENT .
 
-    $défaut  réduction par utilisation de la règle 44 (Term)
-
-
-état 107
-
-   58 Term: Term '[' error . ']'
-
-    ']'  décalage et aller à l'état 124
+    $default  reduce using rule 45 (Term)
 
 
-état 108
+state 109
 
-   47 Term: Term '[' ']' .
+   59 Term: Term '[' error . ']'
 
-    $défaut  réduction par utilisation de la règle 47 (Term)
-
-
-état 109
-
-    9 Exp: Exp . '=' Exp
-   10    | Exp . "or" Exp
-   11    | Exp . "and" Exp
-   12    | Exp . "//" Exp
-   13    | Exp . "//=" Exp
-   14    | Exp . "|=" Exp
-   15    | Exp . '|' Exp
-   16    | Exp . ',' Exp
-   17    | Exp . '+' Exp
-   18    | Exp . "+=" Exp
-   19    | Exp . '-' Exp
-   20    | Exp . "-=" Exp
-   21    | Exp . '*' Exp
-   22    | Exp . "*=" Exp
-   23    | Exp . '/' Exp
-   24    | Exp . "/=" Exp
-   25    | Exp . "==" Exp
-   26    | Exp . "!=" Exp
-   27    | Exp . '<' Exp
-   28    | Exp . '>' Exp
-   29    | Exp . "<=" Exp
-   30    | Exp . ">=" Exp
-   46 Term: Term '[' Exp . ']'
-
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
-    ']'    décalage et aller à l'état 125
+    ']'  shift, and go to state 126
 
 
-état 110
+state 110
 
-   55 Term: IDENT '(' Exp ')' .
+   48 Term: Term '[' ']' .
 
-    $défaut  réduction par utilisation de la règle 55 (Term)
+    $default  reduce using rule 48 (Term)
 
 
-état 111
+state 111
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2700,41 +2762,103 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   34 FuncDef: "def" IDENT ':' Exp . ';'
+   31    | Exp . "contains" Exp
+   47 Term: Term '[' Exp . ']'
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    ';'    décalage et aller à l'état 126
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
-
-
-état 112
-
-   35 FuncDef: "def" IDENT '(' IDENT . ')' ':' Exp ';'
-
-    ')'  décalage et aller à l'état 127
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ']'         shift, and go to state 127
 
 
-état 113
+state 112
+
+   56 Term: IDENT '(' Exp ')' .
+
+    $default  reduce using rule 56 (Term)
+
+
+state 113
+
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+   35 FuncDef: "def" IDENT ':' Exp . ';'
+
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    ';'         shift, and go to state 128
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+
+
+state 114
+
+   36 FuncDef: "def" IDENT '(' IDENT . ')' ':' Exp ';'
+
+    ')'  shift, and go to state 129
+
+
+state 115
 
     7 Exp: "if" Exp "then" Exp . ElseBody
     9    | Exp . '=' Exp
@@ -2759,36 +2883,38 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="    décalage et aller à l'état 36
-    "!="    décalage et aller à l'état 37
-    "//"    décalage et aller à l'état 38
-    "else"  décalage et aller à l'état 128
-    "elif"  décalage et aller à l'état 129
-    "and"   décalage et aller à l'état 39
-    "or"    décalage et aller à l'état 40
-    "|="    décalage et aller à l'état 41
-    "+="    décalage et aller à l'état 42
-    "-="    décalage et aller à l'état 43
-    "*="    décalage et aller à l'état 44
-    "/="    décalage et aller à l'état 45
-    "//="   décalage et aller à l'état 46
-    "<="    décalage et aller à l'état 47
-    ">="    décalage et aller à l'état 48
-    '|'     décalage et aller à l'état 49
-    ','     décalage et aller à l'état 50
-    '='     décalage et aller à l'état 51
-    '<'     décalage et aller à l'état 52
-    '>'     décalage et aller à l'état 53
-    '+'     décalage et aller à l'état 54
-    '-'     décalage et aller à l'état 55
-    '*'     décalage et aller à l'état 56
-    '/'     décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "else"      shift, and go to state 130
+    "elif"      shift, and go to state 131
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    ElseBody  aller à l'état 130
+    ElseBody  go to state 132
 
 
-état 114
+state 116
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2812,335 +2938,286 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   38 QQString: QQString QQSTRING_INTERP_START Exp . QQSTRING_INTERP_END
+   31    | Exp . "contains" Exp
+   39 QQString: QQString QQSTRING_INTERP_START Exp . QQSTRING_INTERP_END
 
-    "=="                 décalage et aller à l'état 36
-    "!="                 décalage et aller à l'état 37
-    "//"                 décalage et aller à l'état 38
-    "and"                décalage et aller à l'état 39
-    "or"                 décalage et aller à l'état 40
-    "|="                 décalage et aller à l'état 41
-    "+="                 décalage et aller à l'état 42
-    "-="                 décalage et aller à l'état 43
-    "*="                 décalage et aller à l'état 44
-    "/="                 décalage et aller à l'état 45
-    "//="                décalage et aller à l'état 46
-    "<="                 décalage et aller à l'état 47
-    ">="                 décalage et aller à l'état 48
-    QQSTRING_INTERP_END  décalage et aller à l'état 131
-    '|'                  décalage et aller à l'état 49
-    ','                  décalage et aller à l'état 50
-    '='                  décalage et aller à l'état 51
-    '<'                  décalage et aller à l'état 52
-    '>'                  décalage et aller à l'état 53
-    '+'                  décalage et aller à l'état 54
-    '-'                  décalage et aller à l'état 55
-    '*'                  décalage et aller à l'état 56
-    '/'                  décalage et aller à l'état 57
-
-
-état 115
-
-   63 MkDict: error . ',' MkDict
-
-    ','  décalage et aller à l'état 75
+    "=="                 shift, and go to state 36
+    "!="                 shift, and go to state 37
+    "//"                 shift, and go to state 38
+    "and"                shift, and go to state 39
+    "or"                 shift, and go to state 40
+    "|="                 shift, and go to state 41
+    "+="                 shift, and go to state 42
+    "-="                 shift, and go to state 43
+    "*="                 shift, and go to state 44
+    "/="                 shift, and go to state 45
+    "//="                shift, and go to state 46
+    "<="                 shift, and go to state 47
+    ">="                 shift, and go to state 48
+    "contains"           shift, and go to state 49
+    QQSTRING_INTERP_END  shift, and go to state 133
+    '|'                  shift, and go to state 50
+    ','                  shift, and go to state 51
+    '='                  shift, and go to state 52
+    '<'                  shift, and go to state 53
+    '>'                  shift, and go to state 54
+    '+'                  shift, and go to state 55
+    '-'                  shift, and go to state 56
+    '*'                  shift, and go to state 57
+    '/'                  shift, and go to state 58
 
 
-état 116
+state 117
 
-   63 MkDict: error ',' MkDict .
+   64 MkDict: error . ',' MkDict
 
-    $défaut  réduction par utilisation de la règle 63 (MkDict)
-
-
-état 117
-
-   41 ExpD: ExpD . '|' ExpD
-   64 MkDictPair: IDENT ':' ExpD .
-
-    '|'  décalage et aller à l'état 132
-
-    $défaut  réduction par utilisation de la règle 64 (MkDictPair)
+    ','  shift, and go to state 76
 
 
-état 118
+state 118
 
-   42 ExpD: Term .
-   44 Term: Term . '.' IDENT
-   46     | Term . '[' Exp ']'
-   47     | Term . '[' ']'
-   58     | Term . '[' error ']'
+   64 MkDict: error ',' MkDict .
 
-    '.'  décalage et aller à l'état 61
-    '['  décalage et aller à l'état 62
-
-    $défaut  réduction par utilisation de la règle 42 (ExpD)
+    $default  reduce using rule 64 (MkDict)
 
 
-état 119
+state 119
 
-   68 MkDictPair: '(' error ')' . ':' ExpD
+   42 ExpD: ExpD . '|' ExpD
+   65 MkDictPair: IDENT ':' ExpD .
 
-    ':'  décalage et aller à l'état 133
+    '|'  shift, and go to state 134
 
-
-état 120
-
-   67 MkDictPair: '(' Exp ')' . ':' ExpD
-
-    ':'  décalage et aller à l'état 134
+    $default  reduce using rule 65 (MkDictPair)
 
 
-état 121
+state 120
 
-   41 ExpD: ExpD . '|' ExpD
-   65 MkDictPair: String ':' ExpD .
+   43 ExpD: Term .
+   45 Term: Term . '.' IDENT
+   47     | Term . '[' Exp ']'
+   48     | Term . '[' ']'
+   59     | Term . '[' error ']'
 
-    '|'  décalage et aller à l'état 132
+    '.'  shift, and go to state 62
+    '['  shift, and go to state 63
 
-    $défaut  réduction par utilisation de la règle 65 (MkDictPair)
-
-
-état 122
-
-   62 MkDict: MkDictPair ',' MkDict .
-
-    $défaut  réduction par utilisation de la règle 62 (MkDict)
+    $default  reduce using rule 43 (ExpD)
 
 
-état 123
+state 121
+
+   69 MkDictPair: '(' error ')' . ':' ExpD
+
+    ':'  shift, and go to state 135
+
+
+state 122
+
+   68 MkDictPair: '(' Exp ')' . ':' ExpD
+
+    ':'  shift, and go to state 136
+
+
+state 123
+
+   42 ExpD: ExpD . '|' ExpD
+   66 MkDictPair: String ':' ExpD .
+
+    '|'  shift, and go to state 134
+
+    $default  reduce using rule 66 (MkDictPair)
+
+
+state 124
+
+   63 MkDict: MkDictPair ',' MkDict .
+
+    $default  reduce using rule 63 (MkDict)
+
+
+state 125
 
     6 Exp: Term "as" '$' IDENT . '|' Exp
 
-    '|'  décalage et aller à l'état 135
+    '|'  shift, and go to state 137
 
 
-état 124
+state 126
 
-   58 Term: Term '[' error ']' .
+   59 Term: Term '[' error ']' .
 
-    $défaut  réduction par utilisation de la règle 58 (Term)
-
-
-état 125
-
-   46 Term: Term '[' Exp ']' .
-
-    $défaut  réduction par utilisation de la règle 46 (Term)
+    $default  reduce using rule 59 (Term)
 
 
-état 126
+state 127
 
-   34 FuncDef: "def" IDENT ':' Exp ';' .
+   47 Term: Term '[' Exp ']' .
 
-    $défaut  réduction par utilisation de la règle 34 (FuncDef)
-
-
-état 127
-
-   35 FuncDef: "def" IDENT '(' IDENT ')' . ':' Exp ';'
-
-    ':'  décalage et aller à l'état 136
+    $default  reduce using rule 47 (Term)
 
 
-état 128
+state 128
 
-   40 ElseBody: "else" . Exp "end"
+   35 FuncDef: "def" IDENT ':' Exp ';' .
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 137
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    $default  reduce using rule 35 (FuncDef)
 
 
-état 129
+state 129
 
-   39 ElseBody: "elif" . Exp "then" Exp ElseBody
+   36 FuncDef: "def" IDENT '(' IDENT ')' . ':' Exp ';'
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 138
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    ':'  shift, and go to state 138
 
 
-état 130
+state 130
+
+   41 ElseBody: "else" . Exp "end"
+
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 139
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
+state 131
+
+   40 ElseBody: "elif" . Exp "then" Exp ElseBody
+
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 140
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
+state 132
 
     7 Exp: "if" Exp "then" Exp ElseBody .
 
-    $défaut  réduction par utilisation de la règle 7 (Exp)
+    $default  reduce using rule 7 (Exp)
 
 
-état 131
+state 133
 
-   38 QQString: QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END .
+   39 QQString: QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END .
 
-    $défaut  réduction par utilisation de la règle 38 (QQString)
-
-
-état 132
-
-   41 ExpD: ExpD '|' . ExpD
-
-    IDENT    décalage et aller à l'état 1
-    LITERAL  décalage et aller à l'état 2
-    '$'      décalage et aller à l'état 6
-    '('      décalage et aller à l'état 7
-    '.'      décalage et aller à l'état 8
-    '['      décalage et aller à l'état 9
-    '{'      décalage et aller à l'état 10
-
-    ExpD  aller à l'état 139
-    Term  aller à l'état 118
+    $default  reduce using rule 39 (QQString)
 
 
-état 133
+state 134
 
-   68 MkDictPair: '(' error ')' ':' . ExpD
+   42 ExpD: ExpD '|' . ExpD
 
-    IDENT    décalage et aller à l'état 1
-    LITERAL  décalage et aller à l'état 2
-    '$'      décalage et aller à l'état 6
-    '('      décalage et aller à l'état 7
-    '.'      décalage et aller à l'état 8
-    '['      décalage et aller à l'état 9
-    '{'      décalage et aller à l'état 10
+    IDENT    shift, and go to state 1
+    LITERAL  shift, and go to state 2
+    '$'      shift, and go to state 6
+    '('      shift, and go to state 7
+    '.'      shift, and go to state 8
+    '['      shift, and go to state 9
+    '{'      shift, and go to state 10
 
-    ExpD  aller à l'état 140
-    Term  aller à l'état 118
-
-
-état 134
-
-   67 MkDictPair: '(' Exp ')' ':' . ExpD
-
-    IDENT    décalage et aller à l'état 1
-    LITERAL  décalage et aller à l'état 2
-    '$'      décalage et aller à l'état 6
-    '('      décalage et aller à l'état 7
-    '.'      décalage et aller à l'état 8
-    '['      décalage et aller à l'état 9
-    '{'      décalage et aller à l'état 10
-
-    ExpD  aller à l'état 141
-    Term  aller à l'état 118
+    ExpD  go to state 141
+    Term  go to state 120
 
 
-état 135
+state 135
+
+   69 MkDictPair: '(' error ')' ':' . ExpD
+
+    IDENT    shift, and go to state 1
+    LITERAL  shift, and go to state 2
+    '$'      shift, and go to state 6
+    '('      shift, and go to state 7
+    '.'      shift, and go to state 8
+    '['      shift, and go to state 9
+    '{'      shift, and go to state 10
+
+    ExpD  go to state 142
+    Term  go to state 120
+
+
+state 136
+
+   68 MkDictPair: '(' Exp ')' ':' . ExpD
+
+    IDENT    shift, and go to state 1
+    LITERAL  shift, and go to state 2
+    '$'      shift, and go to state 6
+    '('      shift, and go to state 7
+    '.'      shift, and go to state 8
+    '['      shift, and go to state 9
+    '{'      shift, and go to state 10
+
+    ExpD  go to state 143
+    Term  go to state 120
+
+
+state 137
 
     6 Exp: Term "as" '$' IDENT '|' . Exp
 
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
 
-    Exp      aller à l'état 142
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
-
-
-état 136
-
-   35 FuncDef: "def" IDENT '(' IDENT ')' ':' . Exp ';'
-
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 143
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
+    Exp      go to state 144
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 137
+state 138
 
-    9 Exp: Exp . '=' Exp
-   10    | Exp . "or" Exp
-   11    | Exp . "and" Exp
-   12    | Exp . "//" Exp
-   13    | Exp . "//=" Exp
-   14    | Exp . "|=" Exp
-   15    | Exp . '|' Exp
-   16    | Exp . ',' Exp
-   17    | Exp . '+' Exp
-   18    | Exp . "+=" Exp
-   19    | Exp . '-' Exp
-   20    | Exp . "-=" Exp
-   21    | Exp . '*' Exp
-   22    | Exp . "*=" Exp
-   23    | Exp . '/' Exp
-   24    | Exp . "/=" Exp
-   25    | Exp . "==" Exp
-   26    | Exp . "!=" Exp
-   27    | Exp . '<' Exp
-   28    | Exp . '>' Exp
-   29    | Exp . "<=" Exp
-   30    | Exp . ">=" Exp
-   40 ElseBody: "else" Exp . "end"
+   36 FuncDef: "def" IDENT '(' IDENT ')' ':' . Exp ';'
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "end"  décalage et aller à l'état 144
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 145
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
-état 138
+state 139
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -3164,62 +3241,117 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   39 ElseBody: "elif" Exp . "then" Exp ElseBody
+   31    | Exp . "contains" Exp
+   41 ElseBody: "else" Exp . "end"
 
-    "=="    décalage et aller à l'état 36
-    "!="    décalage et aller à l'état 37
-    "//"    décalage et aller à l'état 38
-    "then"  décalage et aller à l'état 145
-    "and"   décalage et aller à l'état 39
-    "or"    décalage et aller à l'état 40
-    "|="    décalage et aller à l'état 41
-    "+="    décalage et aller à l'état 42
-    "-="    décalage et aller à l'état 43
-    "*="    décalage et aller à l'état 44
-    "/="    décalage et aller à l'état 45
-    "//="   décalage et aller à l'état 46
-    "<="    décalage et aller à l'état 47
-    ">="    décalage et aller à l'état 48
-    '|'     décalage et aller à l'état 49
-    ','     décalage et aller à l'état 50
-    '='     décalage et aller à l'état 51
-    '<'     décalage et aller à l'état 52
-    '>'     décalage et aller à l'état 53
-    '+'     décalage et aller à l'état 54
-    '-'     décalage et aller à l'état 55
-    '*'     décalage et aller à l'état 56
-    '/'     décalage et aller à l'état 57
-
-
-état 139
-
-   41 ExpD: ExpD . '|' ExpD
-   41     | ExpD '|' ExpD .
-
-    $défaut  réduction par utilisation de la règle 41 (ExpD)
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "end"       shift, and go to state 146
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
 
-état 140
+state 140
 
-   41 ExpD: ExpD . '|' ExpD
-   68 MkDictPair: '(' error ')' ':' ExpD .
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+   40 ElseBody: "elif" Exp . "then" Exp ElseBody
 
-    '|'  décalage et aller à l'état 132
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "then"      shift, and go to state 147
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 68 (MkDictPair)
+
+state 141
+
+   42 ExpD: ExpD . '|' ExpD
+   42     | ExpD '|' ExpD .
+
+    $default  reduce using rule 42 (ExpD)
 
 
-état 141
+state 142
 
-   41 ExpD: ExpD . '|' ExpD
-   67 MkDictPair: '(' Exp ')' ':' ExpD .
+   42 ExpD: ExpD . '|' ExpD
+   69 MkDictPair: '(' error ')' ':' ExpD .
 
-    '|'  décalage et aller à l'état 132
+    '|'  shift, and go to state 134
 
-    $défaut  réduction par utilisation de la règle 67 (MkDictPair)
+    $default  reduce using rule 69 (MkDictPair)
 
 
-état 142
+state 143
+
+   42 ExpD: ExpD . '|' ExpD
+   68 MkDictPair: '(' Exp ')' ':' ExpD .
+
+    '|'  shift, and go to state 134
+
+    $default  reduce using rule 68 (MkDictPair)
+
+
+state 144
 
     6 Exp: Term "as" '$' IDENT '|' Exp .
     9    | Exp . '=' Exp
@@ -3244,119 +3376,35 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    $défaut  réduction par utilisation de la règle 6 (Exp)
-
-
-état 143
-
-    9 Exp: Exp . '=' Exp
-   10    | Exp . "or" Exp
-   11    | Exp . "and" Exp
-   12    | Exp . "//" Exp
-   13    | Exp . "//=" Exp
-   14    | Exp . "|=" Exp
-   15    | Exp . '|' Exp
-   16    | Exp . ',' Exp
-   17    | Exp . '+' Exp
-   18    | Exp . "+=" Exp
-   19    | Exp . '-' Exp
-   20    | Exp . "-=" Exp
-   21    | Exp . '*' Exp
-   22    | Exp . "*=" Exp
-   23    | Exp . '/' Exp
-   24    | Exp . "/=" Exp
-   25    | Exp . "==" Exp
-   26    | Exp . "!=" Exp
-   27    | Exp . '<' Exp
-   28    | Exp . '>' Exp
-   29    | Exp . "<=" Exp
-   30    | Exp . ">=" Exp
-   35 FuncDef: "def" IDENT '(' IDENT ')' ':' Exp . ';'
-
-    "=="   décalage et aller à l'état 36
-    "!="   décalage et aller à l'état 37
-    "//"   décalage et aller à l'état 38
-    "and"  décalage et aller à l'état 39
-    "or"   décalage et aller à l'état 40
-    "|="   décalage et aller à l'état 41
-    "+="   décalage et aller à l'état 42
-    "-="   décalage et aller à l'état 43
-    "*="   décalage et aller à l'état 44
-    "/="   décalage et aller à l'état 45
-    "//="  décalage et aller à l'état 46
-    "<="   décalage et aller à l'état 47
-    ">="   décalage et aller à l'état 48
-    ';'    décalage et aller à l'état 146
-    '|'    décalage et aller à l'état 49
-    ','    décalage et aller à l'état 50
-    '='    décalage et aller à l'état 51
-    '<'    décalage et aller à l'état 52
-    '>'    décalage et aller à l'état 53
-    '+'    décalage et aller à l'état 54
-    '-'    décalage et aller à l'état 55
-    '*'    décalage et aller à l'état 56
-    '/'    décalage et aller à l'état 57
+    $default  reduce using rule 6 (Exp)
 
 
-état 144
-
-   40 ElseBody: "else" Exp "end" .
-
-    $défaut  réduction par utilisation de la règle 40 (ElseBody)
-
-
-état 145
-
-   39 ElseBody: "elif" Exp "then" . Exp ElseBody
-
-    IDENT           décalage et aller à l'état 1
-    LITERAL         décalage et aller à l'état 2
-    "def"           décalage et aller à l'état 3
-    "if"            décalage et aller à l'état 4
-    QQSTRING_START  décalage et aller à l'état 5
-    '$'             décalage et aller à l'état 6
-    '('             décalage et aller à l'état 7
-    '.'             décalage et aller à l'état 8
-    '['             décalage et aller à l'état 9
-    '{'             décalage et aller à l'état 10
-
-    Exp      aller à l'état 147
-    String   aller à l'état 14
-    FuncDef  aller à l'état 20
-    Term     aller à l'état 16
-
-
-état 146
-
-   35 FuncDef: "def" IDENT '(' IDENT ')' ':' Exp ';' .
-
-    $défaut  réduction par utilisation de la règle 35 (FuncDef)
-
-
-état 147
+state 145
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -3380,38 +3428,128 @@ MkDictPair (61)
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   39 ElseBody: "elif" Exp "then" Exp . ElseBody
+   31    | Exp . "contains" Exp
+   36 FuncDef: "def" IDENT '(' IDENT ')' ':' Exp . ';'
 
-    "=="    décalage et aller à l'état 36
-    "!="    décalage et aller à l'état 37
-    "//"    décalage et aller à l'état 38
-    "else"  décalage et aller à l'état 128
-    "elif"  décalage et aller à l'état 129
-    "and"   décalage et aller à l'état 39
-    "or"    décalage et aller à l'état 40
-    "|="    décalage et aller à l'état 41
-    "+="    décalage et aller à l'état 42
-    "-="    décalage et aller à l'état 43
-    "*="    décalage et aller à l'état 44
-    "/="    décalage et aller à l'état 45
-    "//="   décalage et aller à l'état 46
-    "<="    décalage et aller à l'état 47
-    ">="    décalage et aller à l'état 48
-    '|'     décalage et aller à l'état 49
-    ','     décalage et aller à l'état 50
-    '='     décalage et aller à l'état 51
-    '<'     décalage et aller à l'état 52
-    '>'     décalage et aller à l'état 53
-    '+'     décalage et aller à l'état 54
-    '-'     décalage et aller à l'état 55
-    '*'     décalage et aller à l'état 56
-    '/'     décalage et aller à l'état 57
-
-    ElseBody  aller à l'état 148
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    ';'         shift, and go to state 148
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
 
-état 148
+state 146
 
-   39 ElseBody: "elif" Exp "then" Exp ElseBody .
+   41 ElseBody: "else" Exp "end" .
 
-    $défaut  réduction par utilisation de la règle 39 (ElseBody)
+    $default  reduce using rule 41 (ElseBody)
+
+
+state 147
+
+   40 ElseBody: "elif" Exp "then" . Exp ElseBody
+
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 149
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
+state 148
+
+   36 FuncDef: "def" IDENT '(' IDENT ')' ':' Exp ';' .
+
+    $default  reduce using rule 36 (FuncDef)
+
+
+state 149
+
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+   40 ElseBody: "elif" Exp "then" Exp . ElseBody
+
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "else"      shift, and go to state 130
+    "elif"      shift, and go to state 131
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+
+    ElseBody  go to state 150
+
+
+state 150
+
+   40 ElseBody: "elif" Exp "then" Exp ElseBody .
+
+    $default  reduce using rule 40 (ElseBody)
