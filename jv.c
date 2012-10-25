@@ -250,27 +250,6 @@ static int jvp_array_equal(jv_complex* a, jv_complex* b) {
   return 1;
 }
 
-static int jvp_array_contains(jv_complex* a, jv_complex* b) {
-  int r = 1;
-  for (int bi = 0; bi < jvp_array_length(b); bi++) {
-    int ri = 0;
-    jv* bval = jvp_array_read(b, bi);
-    for (int ai = 0; ai < jvp_array_length(a); ai++) {
-      jv aval = jv_copy(*jvp_array_read(a, ai));
-      jv bval_copy = jv_copy(*bval);
-      if (jv_contains(aval, bval_copy)) {
-        ri = 1;
-        break;
-      }
-    }
-    if (!ri) {
-      r = 0;
-      break;
-    }
-  }
-  return r;
-}
-
 static jv_complex jvp_array_slice(jv_complex* a, int start, int end) {
   // FIXME: maybe slice should reallocate if the slice is small enough
   assert(start <= end);
@@ -348,6 +327,28 @@ jv jv_array_slice(jv a, int start, int end) {
   // copy/free of a coalesced
   a.val.complex = jvp_array_slice(&a.val.complex, start, end);
   return a;
+}
+
+int jv_array_contains(jv a, jv b) {
+  int r = 1;
+  int a_length = jv_array_length(jv_copy(a));
+  int b_length = jv_array_length(jv_copy(b));
+  for (int bi = 0; bi < b_length; bi++) {
+    int ri = 0;
+    for (int ai = 0; ai < a_length; ai++) {
+      if (jv_contains(jv_array_get(jv_copy(a), ai), jv_array_get(jv_copy(b), bi))) {
+        ri = 1;
+        break;
+      }
+    }
+    if (!ri) {
+      r = 0;
+      break;
+    }
+  }
+  jv_free(a);
+  jv_free(b);
+  return r;
 }
 
 
@@ -889,16 +890,32 @@ int jv_object_contains(jv a, jv b) {
   assert(jv_get_kind(b) == JV_KIND_OBJECT);
   int r = 1;
 
-  for (int i=0; i<jvp_object_size(&b.val.complex); i++) {
-    struct object_slot* slotb = jvp_object_get_slot(&b.val.complex, i);
-    if (!slotb->string) continue;
-    jv* slota = jvp_object_read(&a.val.complex, slotb->string);
-    if (!(slota && jv_get_kind(slotb->value) == jv_get_kind(*slota)
-       && jv_contains(jv_copy(*slota), jv_copy(slotb->value)))) {
-      r = 0;
-      break;
-    }
+  int nkeys = jv_object_length(jv_copy(b));
+  jv* keys = malloc(sizeof(jv) * nkeys);
+  int kidx = 0;
+  jv_object_foreach(i, b) {
+    keys[kidx++] = jv_object_iter_key(b, i);
   }
+
+  for (int i=0; i < nkeys; i++) {
+    jv a_val = jv_object_get(jv_copy(a), jv_copy(keys[i]));
+    jv b_val = jv_object_get(jv_copy(b), jv_copy(keys[i]));
+
+    if (!(jv_get_kind(a_val) == jv_get_kind(b_val)
+       && jv_contains(jv_copy(a_val), jv_copy(b_val)))) {
+      r = 0;
+    }
+
+    jv_free(a_val);
+    jv_free(b_val);
+
+    if (!r) break;
+  }
+
+  for (int i=0; i < nkeys; i++) {
+    jv_free(keys[i]);
+  }
+  free(keys);
 
   jv_free(a);
   jv_free(b);
@@ -1027,7 +1044,7 @@ int jv_contains(jv a, jv b) {
   } else if (jv_get_kind(a) == JV_KIND_OBJECT) {
     r = jv_object_contains(jv_copy(a), jv_copy(b));
   } else if (jv_get_kind(a) == JV_KIND_ARRAY) {
-    r = jvp_array_contains(&a.val.complex, &b.val.complex);
+    r = jv_array_contains(jv_copy(a), jv_copy(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING) {
     r = strstr(jv_string_value(a), jv_string_value(b)) != 0;
   } else {
