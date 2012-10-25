@@ -329,6 +329,28 @@ jv jv_array_slice(jv a, int start, int end) {
   return a;
 }
 
+int jv_array_contains(jv a, jv b) {
+  int r = 1;
+  int a_length = jv_array_length(jv_copy(a));
+  int b_length = jv_array_length(jv_copy(b));
+  for (int bi = 0; bi < b_length; bi++) {
+    int ri = 0;
+    for (int ai = 0; ai < a_length; ai++) {
+      if (jv_contains(jv_array_get(jv_copy(a), ai), jv_array_get(jv_copy(b), bi))) {
+        ri = 1;
+        break;
+      }
+    }
+    if (!ri) {
+      r = 0;
+      break;
+    }
+  }
+  jv_free(a);
+  jv_free(b);
+  return r;
+}
+
 
 /*
  * Strings (internal helpers)
@@ -863,6 +885,27 @@ jv jv_object_merge(jv a, jv b) {
   return a;
 }
 
+int jv_object_contains(jv a, jv b) {
+  assert(jv_get_kind(a) == JV_KIND_OBJECT);
+  assert(jv_get_kind(b) == JV_KIND_OBJECT);
+  int r = 1;
+
+  jv_object_foreach(i, b) {
+    jv key = jv_object_iter_key(b, i);
+    jv a_val = jv_object_get(jv_copy(a), jv_copy(key));
+    jv b_val = jv_object_get(jv_copy(b), jv_copy(key));
+
+    r = jv_contains(a_val, b_val);
+    jv_free(key);
+
+    if (!r) break;
+  }
+
+  jv_free(a);
+  jv_free(b);
+  return r;
+}
+
 /*
  * Object iteration (internal helpers)
  */
@@ -972,6 +1015,24 @@ int jv_equal(jv a, jv b) {
       r = 1;
       break;
     }
+  }
+  jv_free(a);
+  jv_free(b);
+  return r;
+}
+
+int jv_contains(jv a, jv b) {
+  int r = 1;
+  if (jv_get_kind(a) != jv_get_kind(b)) {
+    r = 0;
+  } else if (jv_get_kind(a) == JV_KIND_OBJECT) {
+    r = jv_object_contains(jv_copy(a), jv_copy(b));
+  } else if (jv_get_kind(a) == JV_KIND_ARRAY) {
+    r = jv_array_contains(jv_copy(a), jv_copy(b));
+  } else if (jv_get_kind(a) == JV_KIND_STRING) {
+    r = strstr(jv_string_value(a), jv_string_value(b)) != 0;
+  } else {
+    r = jv_equal(jv_copy(a), jv_copy(b));
   }
   jv_free(a);
   jv_free(b);
