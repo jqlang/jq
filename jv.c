@@ -890,32 +890,16 @@ int jv_object_contains(jv a, jv b) {
   assert(jv_get_kind(b) == JV_KIND_OBJECT);
   int r = 1;
 
-  int nkeys = jv_object_length(jv_copy(b));
-  jv* keys = malloc(sizeof(jv) * nkeys);
-  int kidx = 0;
   jv_object_foreach(i, b) {
-    keys[kidx++] = jv_object_iter_key(b, i);
-  }
+    jv key = jv_object_iter_key(b, i);
+    jv a_val = jv_object_get(jv_copy(a), jv_copy(key));
+    jv b_val = jv_object_get(jv_copy(b), jv_copy(key));
 
-  for (int i=0; i < nkeys; i++) {
-    jv a_val = jv_object_get(jv_copy(a), jv_copy(keys[i]));
-    jv b_val = jv_object_get(jv_copy(b), jv_copy(keys[i]));
-
-    if (!(jv_get_kind(a_val) == jv_get_kind(b_val)
-       && jv_contains(jv_copy(a_val), jv_copy(b_val)))) {
-      r = 0;
-    }
-
-    jv_free(a_val);
-    jv_free(b_val);
+    r = jv_contains(a_val, b_val);
+    jv_free(key);
 
     if (!r) break;
   }
-
-  for (int i=0; i < nkeys; i++) {
-    jv_free(keys[i]);
-  }
-  free(keys);
 
   jv_free(a);
   jv_free(b);
