@@ -59,5 +59,8 @@ RELEASE ?= 1
 rpmbuild: jq
 	@echo "Packaging jq as an RPM ..."
 	mkdir -p rpm/SOURCES rpm/BUILD rpm/BUILDROOT rpm/RPMS
-	tar --transform="s+^+jq-$$(cat VERSION)/bin/+" -zcf rpm/SOURCES/jq-$$(cat VERSION).tgz jq
+	rm -rf jq-$$(cat VERSION)
+	mkdir -p jq-$$(cat VERSION)/bin
+	cp jq jq-$$(cat VERSION)/bin
+	tar -zcf rpm/SOURCES/jq-$$(cat VERSION).tgz jq-$$(cat VERSION)/bin/jq
 	rpmbuild --target $$(uname -m) --buildroot ${PWD}/rpm/BUILDROOT/jq-$$(cat VERSION)-${RELEASE}.noarch --define "_topdir ${PWD}/rpm" --define "version $$(cat VERSION)" --define "release ${RELEASE}" -bb --clean rpm/SPECS/jq.spec
