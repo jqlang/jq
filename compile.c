@@ -30,7 +30,9 @@ struct inst {
   // are bound, and even then only for instructions which bind.
   struct inst* bound_by;
   char* symbol;
+
   block subfn;
+  block arglist;
 
   // This instruction is compiled as part of which function?
   // (only used during block_compile)
@@ -47,6 +49,7 @@ static inst* inst_new(opcode op) {
   i->bound_by = 0;
   i->symbol = 0;
   i->subfn = gen_noop();
+  i->arglist = gen_noop();
   i->source = UNKNOWN_LOCATION;
   return i;
 }
@@ -55,6 +58,9 @@ static void inst_free(struct inst* i) {
   free(i->symbol);
   if (opcode_describe(i->op)->flags & OP_HAS_BLOCK) {
     block_free(i->subfn);
+  }
+  if (opcode_describe(i->op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
+    block_free(i->arglist);
   }
   if (opcode_describe(i->op)->flags & OP_HAS_CONSTANT) {
     jv_free(i->imm.constant);
@@ -186,30 +192,11 @@ block gen_op_block_bound(opcode op, block binder) {
 }
 
 block gen_op_call(opcode op, block arglist) {
+  assert(op == CALL_1_1);
   assert(opcode_describe(op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST);
   inst* i = inst_new(op);
-  block prelude = gen_noop();
-  block call = inst_block(i);
-  int nargs = 0;
-  inst* curr = 0;
-  while ((curr = block_take(&arglist))) {
-    assert(opcode_describe(curr->op)->flags & OP_IS_CALL_PSEUDO);
-    block bcurr = inst_block(curr);
-    switch (curr->op) {
-    default: assert(0 && "Unknown type of parameter"); break;
-    case CLOSURE_REF:
-      block_append(&call, bcurr);
-      break;
-    case CLOSURE_CREATE:
-      block_append(&prelude, bcurr);
-      block_append(&call, gen_op_block_bound(CLOSURE_REF, bcurr));
-      break;
-    }
-    nargs++;
-  }
-  assert(nargs < 100); //FIXME
-  i->imm.intval = nargs;
-  return block_join(prelude, call);
+  i->arglist = arglist;
+  return block_join(inst_block(i), inst_block(inst_new(CALLSEQ_END)));
 }
 
 static void inst_join(inst* a, inst* b) {
@@ -218,6 +205,32 @@ static void inst_join(inst* a, inst* b) {
   assert(!b->prev);
   a->next = b;
   b->prev = a;
+}
+
+static void block_insert_after(inst* i, block b) {
+  if (b.first) {
+    assert(b.last);
+    if (i->next) {
+      inst* j = i->next;
+      i->next = 0;
+      j->prev = 0;
+      inst_join(b.last, j);
+    }
+    inst_join(i, b.first);
+  }
+}
+
+static void block_insert_before(inst* i, block b) {
+  if (b.first) {
+    assert(b.last);
+    if (i->prev) {
+      inst* j = i->prev;
+      i->prev = 0;
+      j->next = 0;
+      inst_join(j, b.first);
+    }
+    inst_join(b.last, i);
+  }
 }
 
 void block_append(block* b, block b2) {
@@ -265,6 +278,10 @@ static void block_bind_subblock(block binder, block body, int bindflags) {
     if (flags & OP_HAS_BLOCK) {
       // binding recurses into closures
       block_bind_subblock(binder, i->subfn, bindflags);
+    }
+    if (flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
+      // binding recurses into argument list
+      block_bind_subblock(binder, i->arglist, bindflags);
     }
   }
 }
@@ -457,12 +474,70 @@ static int count_cfunctions(block b) {
   return n;
 }
 
+
+// Expands call instructions into a calling sequence
+// Checking for argument count compatibility happens later
+static void expand_call_arglist(struct bytecode* bc, block b) {
+  for (inst* curr = b.first; curr; curr = curr->next) {
+    if (opcode_describe(curr->op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
+      assert(curr->op == CALL_1_1);
+      assert(curr->next && curr->next->op == CALLSEQ_END);
+      // We expand the argument list as a series of instructions
+      block arglist = curr->arglist;
+      curr->arglist = gen_noop();
+      assert(arglist.first && "zeroth argument (function to call) must be present");
+      inst* function = arglist.first->bound_by;
+      assert(function);
+
+      switch (function->op) {
+      default: assert(0 && "Unknown parameter type"); break;
+      case CLOSURE_CREATE: 
+      case CLOSURE_PARAM: {
+        block prelude = gen_noop();
+        block callargs = gen_noop();
+        int nargs = 0;
+        for (inst* i; (i = block_take(&arglist));) {
+          assert(opcode_describe(i->op)->flags & OP_IS_CALL_PSEUDO);
+          block b = inst_block(i);
+          switch (i->op) {
+          default: assert(0 && "Unknown type of parameter"); break;
+          case CLOSURE_REF:
+            block_append(&callargs, b);
+            break;
+          case CLOSURE_CREATE:
+            block_append(&prelude, b);
+            block_append(&callargs, gen_op_block_bound(CLOSURE_REF, b));
+            break;
+          }
+          nargs++;
+        }
+
+        assert(!arglist.first);
+        block_insert_before(curr, prelude);
+        block_insert_after(curr, callargs);
+        curr->imm.intval = nargs;
+        break;
+      }
+
+      case CLOSURE_CREATE_C:
+        // Arguments to C functions not yet supported
+        assert(block_is_single(arglist));
+        assert(arglist.first->op == CLOSURE_REF);
+        block_insert_after(curr, arglist);
+        curr->imm.intval = 1;
+        break;
+      }
+    }
+  }
+}
+
 static int compile(struct locfile* locations, struct bytecode* bc, block b) {
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
   bc->nclosures = 0;
+  expand_call_arglist(bc, b);
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
     pos += opcode_length(curr->op);
@@ -484,6 +559,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
       assert(curr->bound_by == curr);
       curr->imm.intval = bc->nsubfunctions++;
     }
+
     if (curr->op == CLOSURE_PARAM) {
       assert(curr->bound_by == curr);
       curr->imm.intval = bc->nclosures++;
@@ -524,9 +600,11 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
     int opflags = op->flags;
     assert(!(op->flags & OP_IS_CALL_PSEUDO));
     if (opflags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
+      assert(curr->op == CALL_1_1);
       int nargs = curr->imm.intval;
       assert(nargs > 0);
       code[pos++] = (uint16_t)nargs;
+
       int desired_params = 0;
       for (int i=0; i<nargs; i++) {
         curr = curr->next;
