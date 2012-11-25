@@ -129,14 +129,11 @@ int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors,
 }
 
 static block gen_dictpair(block k, block v) {
-  block b = gen_subexp(k);
-  block_append(&b, gen_subexp(v));
-  block_append(&b, gen_op_simple(INSERT));
-  return b;
+  return BLOCK(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
 }
 
 static block gen_index(block obj, block key) {
-  return block_join(obj, block_join(gen_subexp(key), gen_op_simple(INDEX)));
+  return BLOCK(obj, gen_subexp(key), gen_op_simple(INDEX));
 }
 
 static block gen_binop(block a, block b, int op) {
@@ -155,25 +152,19 @@ static block gen_binop(block a, block b, int op) {
   }
   assert(funcname);
 
-  block c = gen_noop();
-  block_append(&c, gen_subexp(a));
-  block_append(&c, gen_subexp(b));
-  block_append(&c, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, funcname)));
-  return c;
+  return BLOCK(gen_subexp(a), gen_subexp(b), 
+               gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, funcname)));
 }
 
 static block gen_format(block a) {
-  return block_join(a, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, "tostring")));
+  return BLOCK(a, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, "tostring")));
 }
  
 static block gen_update(block a, block op, int optype) {
-  block assign = a;
-  block_append(&assign, gen_op_simple(DUP));
   if (optype) {
     op = gen_binop(gen_noop(), op, optype);
   }
-  block_append(&assign, op);
-  return gen_assign(assign);
+  return gen_assign(BLOCK(a, gen_op_simple(DUP), op));
 }
 
 %}
@@ -201,9 +192,9 @@ FuncDef Exp %prec ';' {
 } |
 
 Term "as" '$' IDENT '|' Exp {
-  $$ = gen_op_simple(DUP);
-  block_append(&$$, $1);
-  block_append(&$$, block_bind(gen_op_var_unbound(STOREV, jv_string_value($4)), $6, OP_HAS_VARIABLE));
+  $$ = BLOCK(gen_op_simple(DUP), $1, 
+             block_bind(gen_op_var_unbound(STOREV, jv_string_value($4)), 
+                        $6, OP_HAS_VARIABLE));
   jv_free($4);
 } |
 
@@ -216,12 +207,7 @@ Term "as" '$' IDENT '|' Exp {
 } |
 
 Exp '=' Exp {
-  block assign = gen_op_simple(DUP);
-  block_append(&assign, $3);
-  block_append(&assign, gen_op_simple(SWAP));
-  block_append(&assign, $1);
-  block_append(&assign, gen_op_simple(SWAP));
-  $$ = gen_assign(assign);
+  $$ = gen_assign(BLOCK(gen_op_simple(DUP), $3, gen_op_simple(SWAP), $1, gen_op_simple(SWAP)));
 } |
 
 Exp "or" Exp {
@@ -394,9 +380,7 @@ String {
   $$ = gen_op_const(LOADK, jv_array()); 
 } |
 '{' MkDict '}' { 
-  $$ = gen_subexp(gen_op_const(LOADK, jv_object()));
-  block_append(&$$, $2);
-  block_append(&$$, gen_op_simple(POP));
+  $$ = BLOCK(gen_subexp(gen_op_const(LOADK, jv_object())), $2, gen_op_simple(POP));
 } |
 '$' IDENT {
   $$ = gen_location(@$, gen_op_var_unbound(LOADV, jv_string_value($2)));

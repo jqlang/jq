@@ -52,4 +52,20 @@ void block_free(block);
 
 
 
+// Here's some horrible preprocessor gunk so that code
+// sequences can be contructed as BLOCK(block1, block2, block3)
+
+#define BLOCK_1(b1) (b1)
+#define BLOCK_2(b1,b2) (block_join((b1),(b2)))
+#define BLOCK_3(b1,b2,b3) (block_join(BLOCK_2(b1,b2),(b3)))
+#define BLOCK_4(b1,b2,b3,b4) (block_join(BLOCK_3(b1,b2,b3),(b4)))
+#define BLOCK_5(b1,b2,b3,b4,b5) (block_join(BLOCK_4(b1,b2,b3,b4),(b5)))
+#define BLOCK_6(b1,b2,b3,b4,b5,b6) (block_join(BLOCK_5(b1,b2,b3,b4,b5),(b6)))
+#define BLOCK_7(b1,b2,b3,b4,b5,b6,b7) (block_join(BLOCK_6(b1,b2,b3,b4,b5,b6),(b7)))
+
+#define BLOCK_IDX(_1,_2,_3,_4,_5,_6,_7,NAME,...) NAME
+#define BLOCK(...) \
+  BLOCK_IDX(__VA_ARGS__, BLOCK_7, BLOCK_6, BLOCK_5, BLOCK_4, BLOCK_3, BLOCK_2, BLOCK_1)(__VA_ARGS__)
+
+
 #endif

@@ -297,150 +297,115 @@ block block_bind(block binder, block body, int bindflags) {
 
 
 block gen_subexp(block a) {
-  block c = gen_noop();
-  block_append(&c, gen_op_simple(DUP));
-  block_append(&c, a);
-  block_append(&c, gen_op_simple(SWAP));
-  return c;
+  return BLOCK(gen_op_simple(DUP), a, gen_op_simple(SWAP));
 }
 
 block gen_both(block a, block b) {
-  block c = gen_noop();
   block jump = gen_op_targetlater(JUMP);
-  block fork = gen_op_targetlater(FORK);
-  block_append(&c, fork);
-  block_append(&c, a);
-  block_append(&c, jump);
-  inst_set_target(fork, c);
-  block_append(&c, b);
+  block fork = gen_op_target(FORK, jump);
+  block c = BLOCK(fork, a, jump, b);
   inst_set_target(jump, c);
   return c;
 }
 
 
 block gen_collect(block expr) {
-  block c = gen_noop();
-  block_append(&c, gen_op_simple(DUP));
-  block_append(&c, gen_op_const(LOADK, jv_array()));
   block array_var = block_bind(gen_op_var_unbound(STOREV, "collect"),
                                gen_noop(), OP_HAS_VARIABLE);
-  block_append(&c, array_var);
+  block c = BLOCK(gen_op_simple(DUP), gen_op_const(LOADK, jv_array()), array_var);
 
-  block tail = {0};
-  block_append(&tail, gen_op_simple(DUP));
-  block_append(&tail, gen_op_var_bound(LOADV, array_var));
-  block_append(&tail, gen_op_simple(SWAP));
-  block_append(&tail, gen_op_simple(APPEND));
-  block_append(&tail, gen_op_var_bound(STOREV, array_var));
-  block_append(&tail, gen_op_simple(BACKTRACK));
+  block tail = BLOCK(gen_op_simple(DUP),
+                     gen_op_var_bound(LOADV, array_var),
+                     gen_op_simple(SWAP),
+                     gen_op_simple(APPEND),
+                     gen_op_var_bound(STOREV, array_var),
+                     gen_op_simple(BACKTRACK));
 
-  block_append(&c, gen_op_target(FORK, tail));
-  block_append(&c, expr);
-  block_append(&c, tail);
-
-  block_append(&c, gen_op_var_bound(LOADV, array_var));
-
-  return c;
+  return BLOCK(c,
+               gen_op_target(FORK, tail),
+               expr, 
+               tail,
+               gen_op_var_bound(LOADV, array_var));
 }
 
 block gen_assign(block expr) {
-  block c = gen_noop();
-  block_append(&c, gen_op_simple(DUP));
   block result_var = block_bind(gen_op_var_unbound(STOREV, "result"),
                                 gen_noop(), OP_HAS_VARIABLE);
-  block_append(&c, result_var);
 
-  block loop = gen_noop();
-  block_append(&loop, gen_op_simple(DUP));
-  block_append(&loop, expr);
-  block_append(&loop, gen_op_var_bound(ASSIGN, result_var));
-  block_append(&loop, gen_op_simple(BACKTRACK));
+  block loop = BLOCK(gen_op_simple(DUP),
+                     expr,
+                     gen_op_var_bound(ASSIGN, result_var),
+                     gen_op_simple(BACKTRACK));
 
-  block_append(&c, gen_op_target(FORK, loop));
-  block_append(&c, loop);
-  block_append(&c, gen_op_var_bound(LOADV, result_var));
-  return c;
+  return BLOCK(gen_op_simple(DUP),
+               result_var,
+               gen_op_target(FORK, loop),
+               loop,
+               gen_op_var_bound(LOADV, result_var));
 }
 
 block gen_definedor(block a, block b) {
   // var found := false
-  block c = gen_op_simple(DUP);
-  block_append(&c, gen_op_const(LOADK, jv_false()));
   block found_var = block_bind(gen_op_var_unbound(STOREV, "found"),
                                gen_noop(), OP_HAS_VARIABLE);
-  block_append(&c, found_var);
+  block init = BLOCK(gen_op_simple(DUP), gen_op_const(LOADK, jv_false()), found_var);
 
   // if found, backtrack. Otherwise execute b
-  block tail = gen_op_simple(DUP);
-  block_append(&tail, gen_op_var_bound(LOADV, found_var));
   block backtrack = gen_op_simple(BACKTRACK);
-  block_append(&tail, gen_op_target(JUMP_F, backtrack));
-  block_append(&tail, backtrack);
-  block_append(&tail, gen_op_simple(POP));
-  block_append(&tail, b);
+  block tail = BLOCK(gen_op_simple(DUP),
+                     gen_op_var_bound(LOADV, found_var),
+                     gen_op_target(JUMP_F, backtrack),
+                     backtrack,
+                     gen_op_simple(POP),
+                     b);
 
   // try again
   block if_notfound = gen_op_simple(BACKTRACK);
 
   // found := true, produce result
-  block if_found = gen_op_simple(DUP);
-  block_append(&if_found, gen_op_const(LOADK, jv_true()));
-  block_append(&if_found, gen_op_var_bound(STOREV, found_var));
-  block_append(&if_found, gen_op_target(JUMP, tail));
+  block if_found = BLOCK(gen_op_simple(DUP),
+                         gen_op_const(LOADK, jv_true()),
+                         gen_op_var_bound(STOREV, found_var),
+                         gen_op_target(JUMP, tail));
 
-  block_append(&c, gen_op_target(FORK, if_notfound));
-  block_append(&c, a);
-  block_append(&c, gen_op_target(JUMP_F, if_found));
-  block_append(&c, if_found);
-  block_append(&c, if_notfound);
-  block_append(&c, tail);
-
-  return c;
+  return BLOCK(init,
+               gen_op_target(FORK, if_notfound),
+               a,
+               gen_op_target(JUMP_F, if_found),
+               if_found,
+               if_notfound,
+               tail);
 }
 
 block gen_condbranch(block iftrue, block iffalse) {
-  block b = gen_noop();
-  block_append(&iftrue, gen_op_target(JUMP, iffalse));
-  block_append(&b, gen_op_target(JUMP_F, iftrue));
-  block_append(&b, iftrue);
-  block_append(&b, iffalse);
-  return b;
+  iftrue = BLOCK(iftrue, gen_op_target(JUMP, iffalse));
+  return BLOCK(gen_op_target(JUMP_F, iftrue), iftrue, iffalse);
 }
 
 block gen_and(block a, block b) {
   // a and b = if a then (if b then true else false) else false
-  block code = gen_op_simple(DUP);
-  block_append(&code, a);
-
-  block if_a_true = gen_op_simple(POP);
-  block_append(&if_a_true, b);
-  block_append(&if_a_true, gen_condbranch(gen_op_const(LOADK, jv_true()),
-                                          gen_op_const(LOADK, jv_false())));
-  block_append(&code, gen_condbranch(if_a_true,
-                                     block_join(gen_op_simple(POP), gen_op_const(LOADK, jv_false()))));
-  return code;
+  return BLOCK(gen_op_simple(DUP), a, 
+               gen_condbranch(BLOCK(gen_op_simple(POP),
+                                    b,
+                                    gen_condbranch(gen_op_const(LOADK, jv_true()),
+                                                   gen_op_const(LOADK, jv_false()))),
+                              BLOCK(gen_op_simple(POP), gen_op_const(LOADK, jv_false()))));
 }
 
 block gen_or(block a, block b) {
   // a or b = if a then true else (if b then true else false)
-  block code = gen_op_simple(DUP);
-  block_append(&code, a);
-
-  block if_a_false = gen_op_simple(POP);
-  block_append(&if_a_false, b);
-  block_append(&if_a_false, gen_condbranch(gen_op_const(LOADK, jv_true()),
-                                           gen_op_const(LOADK, jv_false())));
-  block_append(&code, gen_condbranch(block_join(gen_op_simple(POP), gen_op_const(LOADK, jv_true())),
-                                     if_a_false));
-  return code;
+  return BLOCK(gen_op_simple(DUP), a,
+               gen_condbranch(BLOCK(gen_op_simple(POP), gen_op_const(LOADK, jv_true())),
+                              BLOCK(gen_op_simple(POP),
+                                    b,
+                                    gen_condbranch(gen_op_const(LOADK, jv_true()),
+                                                   gen_op_const(LOADK, jv_false())))));
 }
 
 block gen_cond(block cond, block iftrue, block iffalse) {
-  block b = gen_op_simple(DUP);
-  block_append(&b, cond);
-  block_append(&b, gen_condbranch(block_join(gen_op_simple(POP), iftrue),
-                                  block_join(gen_op_simple(POP), iffalse)));
-  return b;
+  return BLOCK(gen_op_simple(DUP), cond, 
+               gen_condbranch(BLOCK(gen_op_simple(POP), iftrue),
+                              BLOCK(gen_op_simple(POP), iffalse)));
 }
 
 block gen_cbinding(struct symbol_table* t, block code) {
