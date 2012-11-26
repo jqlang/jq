@@ -305,14 +305,13 @@ QQSTRING_START QQString QQSTRING_END {
 
 FuncDef:
 "def" IDENT ':' Exp ';' {
-  block body = block_join($4, gen_op_simple(RET));
-  $$ = gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body);
+  $$ = gen_function(jv_string_value($2), $4);
   jv_free($2);
 } |
 
 "def" IDENT '(' IDENT ')' ':' Exp ';' {
-  block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), block_join($7, gen_op_simple(RET)), OP_IS_CALL_PSEUDO);
-  $$ = gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body);
+  block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), $7, OP_IS_CALL_PSEUDO);
+  $$ = gen_function(jv_string_value($2), body);
   jv_free($2);
   jv_free($4);
 }
@@ -393,9 +392,7 @@ IDENT {
 IDENT '(' Exp ')' {
   $$ = gen_op_call(CALL_1_1, 
                    block_join(gen_op_block_unbound(CLOSURE_REF, jv_string_value($1)),
-                              block_bind(gen_op_block_defn(CLOSURE_CREATE,
-                                                "lambda",
-                                                           block_join($3, gen_op_simple(RET))),
+                              block_bind(gen_function("@lambda", $3),
                                          gen_noop(), OP_IS_CALL_PSEUDO)));
   $$ = gen_location(@1, $$);
   jv_free($1);

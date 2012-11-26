@@ -512,7 +512,6 @@ struct bytecode* jq_compile(const char* str) {
   struct bytecode* bc = 0;
   int nerrors = jq_parse(&locations, &program);
   if (nerrors == 0) {
-    block_append(&program, block_join(gen_op_simple(YIELD), gen_op_simple(BACKTRACK)));
     program = builtins_bind(program);
     nerrors = block_compile(program, &locations, &bc);
     block_free(program);

@@ -161,22 +161,6 @@ block gen_op_symbol(opcode op, const char* sym) {
   return inst_block(i);
 }
 
-block gen_op_block_defn(opcode op, const char* name, block block) {
-  assert(opcode_describe(op)->flags & OP_IS_CALL_PSEUDO);
-  assert(opcode_describe(op)->flags & OP_HAS_BLOCK);
-  inst* i = inst_new(op);
-  i->subfn = block;
-  i->symbol = strdup(name);
-  return inst_block(i);
-}
-
-static void block_bind_subblock(block binder, block body, int bindflags);
-block gen_op_block_defn_rec(opcode op, const char* name, block blk) {
-  block b = gen_op_block_defn(op, name, blk);
-  block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING);
-  return b;
-}
-
 block gen_op_block_unbound(opcode op, const char* name) {
   assert(opcode_describe(op)->flags & OP_IS_CALL_PSEUDO);
   inst* i = inst_new(op);
@@ -293,6 +277,16 @@ block block_bind(block binder, block body, int bindflags) {
     block_bind_subblock(inst_block(curr), body, bindflags);
   }
   return block_join(binder, body);
+}
+
+
+block gen_function(const char* name, block body) {
+  inst* i = inst_new(CLOSURE_CREATE);
+  i->subfn = body;
+  i->symbol = strdup(name);
+  block b = inst_block(i);
+  block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING);
+  return b;
 }
 
 
@@ -442,11 +436,13 @@ static int count_cfunctions(block b) {
 
 // Expands call instructions into a calling sequence
 // Checking for argument count compatibility happens later
-static void expand_call_arglist(struct bytecode* bc, block b) {
-  for (inst* curr = b.first; curr; curr = curr->next) {
+static block expand_call_arglist(struct bytecode* bc, block b) {
+  block ret = gen_noop();
+  for (inst* curr; (curr = block_take(&b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
       assert(curr->op == CALL_1_1);
-      assert(curr->next && curr->next->op == CALLSEQ_END);
+      inst* seq_end = block_take(&b);
+      assert(seq_end && seq_end->op == CALLSEQ_END);
       // We expand the argument list as a series of instructions
       block arglist = curr->arglist;
       curr->arglist = gen_noop();
@@ -478,9 +474,8 @@ static void expand_call_arglist(struct bytecode* bc, block b) {
         }
 
         assert(!arglist.first);
-        block_insert_before(curr, prelude);
-        block_insert_after(curr, callargs);
         curr->imm.intval = nargs;
+        ret = BLOCK(ret, prelude, inst_block(curr), callargs, inst_block(seq_end));
         break;
       }
 
@@ -488,11 +483,20 @@ static void expand_call_arglist(struct bytecode* bc, block b) {
         // Arguments to C functions not yet supported
         assert(block_is_single(arglist));
         assert(arglist.first->op == CLOSURE_REF);
-        block_insert_after(curr, arglist);
         curr->imm.intval = 1;
+        ret = BLOCK(ret, inst_block(curr), arglist, inst_block(seq_end));
         break;
       }
+    } else {
+      ret = BLOCK(ret, inst_block(curr));
     }
+  }
+  if (bc->parent) {
+    // functions should end in a return
+    return BLOCK(ret, gen_op_simple(RET));
+  } else {
+    // the toplevel should YIELD;BACKTRACK; when it finds an answer
+    return BLOCK(ret, gen_op_simple(YIELD), gen_op_simple(BACKTRACK));
   }
 }
 
@@ -502,7 +506,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
   bc->nclosures = 0;
-  expand_call_arglist(bc, b);
+  b = expand_call_arglist(bc, b);
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
     pos += opcode_length(curr->op);

@@ -252,32 +252,24 @@ static void f_type(jv input[], jv output[]) {
 }
 
 static block j_empty() {
-  return gen_op_block_defn(CLOSURE_CREATE, "empty", gen_op_simple(BACKTRACK));
+  return gen_function("empty", gen_op_simple(BACKTRACK));
 }
 
 static block j_false() {
-  return gen_op_block_defn(CLOSURE_CREATE, "false",
-                           block_join(gen_op_const(LOADK, jv_false()),
-                                      gen_op_simple(RET)));
+  return gen_function("false", gen_op_const(LOADK, jv_false()));
 }
 
 static block j_true() {
-  return gen_op_block_defn(CLOSURE_CREATE, "true",
-                           block_join(gen_op_const(LOADK, jv_true()),
-                                      gen_op_simple(RET)));
+  return gen_function("true", gen_op_const(LOADK, jv_true()));
 }
 
 static block j_null() {
-  return gen_op_block_defn(CLOSURE_CREATE, "null",
-                           block_join(gen_op_const(LOADK, jv_null()),
-                                      gen_op_simple(RET)));
+  return gen_function("null", gen_op_const(LOADK, jv_null()));
 }
 
 static block j_not() {
-  return gen_op_block_defn(CLOSURE_CREATE, "not",
-                           block_join(gen_condbranch(gen_op_const(LOADK, jv_false()),
-                                                     gen_op_const(LOADK, jv_true())),
-                                      gen_op_simple(RET)));
+  return gen_function("not", gen_condbranch(gen_op_const(LOADK, jv_false()),
+                                            gen_op_const(LOADK, jv_true())));
 }
 
 static struct cfunction function_list[] = {
