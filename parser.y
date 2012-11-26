@@ -152,12 +152,11 @@ static block gen_binop(block a, block b, int op) {
   }
   assert(funcname);
 
-  return BLOCK(gen_subexp(a), gen_subexp(b), 
-               gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, funcname)));
+  return gen_call(funcname, BLOCK(gen_lambda(a), gen_lambda(b)));
 }
 
 static block gen_format(block a) {
-  return BLOCK(a, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, "tostring")));
+  return BLOCK(a, gen_call("tostring", gen_noop()));
 }
  
 static block gen_update(block a, block op, int optype) {
@@ -386,14 +385,11 @@ String {
   jv_free($2);
 } | 
 IDENT {
-  $$ = gen_location(@$, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, jv_string_value($1))));
+  $$ = gen_location(@$, gen_call(jv_string_value($1), gen_noop()));
   jv_free($1);
 } |
 IDENT '(' Exp ')' {
-  $$ = gen_op_call(CALL_1_1, 
-                   block_join(gen_op_block_unbound(CLOSURE_REF, jv_string_value($1)),
-                              block_bind(gen_function("@lambda", $3),
-                                         gen_noop(), OP_IS_CALL_PSEUDO)));
+  $$ = gen_call(jv_string_value($1), gen_lambda($3));
   $$ = gen_location(@1, $$);
   jv_free($1);
 } |

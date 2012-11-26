@@ -514,7 +514,6 @@ struct bytecode* jq_compile(const char* str) {
   if (nerrors == 0) {
     program = builtins_bind(program);
     nerrors = block_compile(program, &locations, &bc);
-    block_free(program);
   }
   if (nerrors) {
     fprintf(stderr, "%d compile %s\n", nerrors, nerrors > 1 ? "errors" : "error");

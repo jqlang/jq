@@ -175,14 +175,6 @@ block gen_op_block_bound(opcode op, block binder) {
   return b;
 }
 
-block gen_op_call(opcode op, block arglist) {
-  assert(op == CALL_1_1);
-  assert(opcode_describe(op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST);
-  inst* i = inst_new(op);
-  i->arglist = arglist;
-  return block_join(inst_block(i), inst_block(inst_new(CALLSEQ_END)));
-}
-
 static void inst_join(inst* a, inst* b) {
   assert(a && b);
   assert(!a->next);
@@ -288,6 +280,17 @@ block gen_function(const char* name, block body) {
   block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING);
   return b;
 }
+
+block gen_lambda(block body) {
+  return gen_function("@lambda", body);
+}
+
+block gen_call(const char* name, block args) {
+  inst* i = inst_new(CALL_1_1);
+  i->arglist = BLOCK(gen_op_block_unbound(CLOSURE_REF, name), args);
+  return BLOCK(inst_block(i), inst_block(inst_new(CALLSEQ_END)));
+}
+
 
 
 block gen_subexp(block a) {
@@ -436,7 +439,7 @@ static int count_cfunctions(block b) {
 
 // Expands call instructions into a calling sequence
 // Checking for argument count compatibility happens later
-static block expand_call_arglist(struct bytecode* bc, block b) {
+static block expand_call_arglist(block b) {
   block ret = gen_noop();
   for (inst* curr; (curr = block_take(&b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
@@ -448,7 +451,7 @@ static block expand_call_arglist(struct bytecode* bc, block b) {
       curr->arglist = gen_noop();
       assert(arglist.first && "zeroth argument (function to call) must be present");
       inst* function = arglist.first->bound_by;
-      assert(function);
+      assert(function); // FIXME better errors
 
       switch (function->op) {
       default: assert(0 && "Unknown parameter type"); break;
@@ -479,25 +482,30 @@ static block expand_call_arglist(struct bytecode* bc, block b) {
         break;
       }
 
-      case CLOSURE_CREATE_C:
+      case CLOSURE_CREATE_C: {
         // Arguments to C functions not yet supported
-        assert(block_is_single(arglist));
-        assert(arglist.first->op == CLOSURE_REF);
+        inst* cfunction_ref = block_take(&arglist);
+        block prelude = gen_noop();
+        int nargs = 0;
+        for (inst* i; (i = block_take(&arglist)); ) {
+          assert(i->op == CLOSURE_CREATE); // FIXME
+          block body = i->subfn;
+          i->subfn = gen_noop();
+          inst_free(i);
+          prelude = BLOCK(prelude, gen_subexp(expand_call_arglist(body)));
+          nargs++;
+        }
+        assert(curr->op == CALL_1_1);
         curr->imm.intval = 1;
-        ret = BLOCK(ret, inst_block(curr), arglist, inst_block(seq_end));
+        ret = BLOCK(ret, prelude, inst_block(curr), inst_block(cfunction_ref), inst_block(seq_end));
         break;
+      }
       }
     } else {
       ret = BLOCK(ret, inst_block(curr));
     }
   }
-  if (bc->parent) {
-    // functions should end in a return
-    return BLOCK(ret, gen_op_simple(RET));
-  } else {
-    // the toplevel should YIELD;BACKTRACK; when it finds an answer
-    return BLOCK(ret, gen_op_simple(YIELD), gen_op_simple(BACKTRACK));
-  }
+  return ret;
 }
 
 static int compile(struct locfile* locations, struct bytecode* bc, block b) {
@@ -506,7 +514,14 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
   bc->nclosures = 0;
-  b = expand_call_arglist(bc, b);
+  b = expand_call_arglist(b);
+  if (bc->parent) {
+    // functions should end in a return
+    b = BLOCK(b, gen_op_simple(RET));
+  } else {
+    // the toplevel should YIELD;BACKTRACK; when it finds an answer
+    b = BLOCK(b, gen_op_simple(YIELD), gen_op_simple(BACKTRACK));
+  }
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
     pos += opcode_length(curr->op);
@@ -550,6 +565,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
       subfn->globals = bc->globals;
       subfn->parent = bc;
       errors += compile(locations, subfn, curr->subfn);
+      curr->subfn = gen_noop();
     }
   } else {
     bc->subfunctions = 0;
@@ -571,7 +587,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
     if (opflags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
       assert(curr->op == CALL_1_1);
       int nargs = curr->imm.intval;
-      assert(nargs > 0);
+      assert(nargs > 0 && nargs < 100); //FIXME
       code[pos++] = (uint16_t)nargs;
 
       int desired_params = 0;
@@ -630,6 +646,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
   }
   bc->constants = constant_pool;
   bc->nlocals = maxvar + 2; // FIXME: frames of size zero?
+  block_free(b);
   return errors;
 }
 

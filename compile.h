@@ -23,10 +23,11 @@ block gen_op_target(opcode op, block target);
 block gen_op_var_unbound(opcode op, const char* name);
 block gen_op_var_bound(opcode op, block binder);
 block gen_op_block_unbound(opcode op, const char* name);
-block gen_op_call(opcode op, block arglist);
 block gen_op_symbol(opcode op, const char* name);
 
 block gen_function(const char* name, block body);
+block gen_lambda(block body);
+block gen_call(const char* name, block body);
 block gen_subexp(block a);
 block gen_both(block a, block b);
 block gen_collect(block expr);
