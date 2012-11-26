@@ -400,3 +400,28 @@ def inc(x): x |= .+1; inc(.[].a)
 [{"foo":[1,2,{"bar":18},"world"]} == {"foo":[1,2,{"bar":18},"world"]},{"foo":[1,2,{"bar":18},"world"]} == {"foo":[1,2,{"bar":19},"world"]}]
 {}
 [true,false]
+
+# containment operator
+["foo" contains "foo", "foobar" contains "foo", "foo" contains "foobar"]
+{}
+[true, true, false]
+
+[[] contains [], [1,2,3] contains [1,2], [1,2,3] contains [3,1], [1,2,3] contains [4], [1,2,3] contains [1,4]]
+{}
+[true, true, true, false, false]
+
+[["foobar", "foobaz"] contains ["baz", "bar"], ["foobar", "foobaz"] contains ["foo"], ["foobar", "foobaz"] contains ["blap"]]
+{}
+[true, true, false]
+
+[{foo: 12, bar:13} contains {foo: 12}, {foo: 12} contains {}, {foo: 12, bar:13} contains {baz:14}]
+{}
+[true, true, false]
+
+{foo: {baz: 12, blap: {bar: 13}}, bar: 14} contains {bar: 14, foo: {blap: {}}}
+{}
+true
+
+{foo: {baz: 12, blap: {bar: 13}}, bar: 14} contains {bar: 14, foo: {blap: {bar: 14}}}
+{}
+false

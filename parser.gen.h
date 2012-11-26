@@ -82,11 +82,12 @@
      SETDEFINEDOR = 278,
      LESSEQ = 279,
      GREATEREQ = 280,
-     QQSTRING_START = 281,
-     QQSTRING_TEXT = 282,
-     QQSTRING_INTERP_START = 283,
-     QQSTRING_INTERP_END = 284,
-     QQSTRING_END = 285
+     CONTAINS = 281,
+     QQSTRING_START = 282,
+     QQSTRING_TEXT = 283,
+     QQSTRING_INTERP_START = 284,
+     QQSTRING_INTERP_END = 285,
+     QQSTRING_END = 286
    };
 #endif
 
@@ -105,7 +106,7 @@ typedef union YYSTYPE
 
 
 /* Line 2068 of yacc.c  */
-#line 109 "parser.gen.h"
+#line 110 "parser.gen.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

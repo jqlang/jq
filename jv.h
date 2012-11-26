@@ -48,6 +48,7 @@ jv jv_copy(jv);
 void jv_free(jv);
 
 int jv_equal(jv, jv);
+int jv_contains(jv, jv);
 
 jv jv_invalid();
 jv jv_invalid_with_msg(jv);

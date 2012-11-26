@@ -56,6 +56,7 @@ struct lexer_param;
 "//=" { return SETDEFINEDOR; }
 "<=" { return LESSEQ; }
 ">=" { return GREATEREQ; }
+"contains" { return CONTAINS; }
 "."|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"\$"|"<"|">" { return yytext[0];}
 
 "["|"{"|"(" {

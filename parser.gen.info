@@ -39,90 +39,91 @@ Grammar
    28    | Exp '>' Exp
    29    | Exp "<=" Exp
    30    | Exp ">=" Exp
-   31    | Term
+   31    | Exp "contains" Exp
+   32    | Term
 
-   32 String: QQSTRING_START QQString QQSTRING_END
+   33 String: QQSTRING_START QQString QQSTRING_END
 
-   33 FuncDef: "def" IDENT ':' Exp ';'
-   34        | "def" IDENT '(' IDENT ')' ':' Exp ';'
+   34 FuncDef: "def" IDENT ':' Exp ';'
+   35        | "def" IDENT '(' IDENT ')' ':' Exp ';'
 
-   35 QQString: /* empty */
-   36         | QQString QQSTRING_TEXT
-   37         | QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END
+   36 QQString: /* empty */
+   37         | QQString QQSTRING_TEXT
+   38         | QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END
 
-   38 ElseBody: "elif" Exp "then" Exp ElseBody
-   39         | "else" Exp "end"
+   39 ElseBody: "elif" Exp "then" Exp ElseBody
+   40         | "else" Exp "end"
 
-   40 ExpD: ExpD '|' ExpD
-   41     | Term
+   41 ExpD: ExpD '|' ExpD
+   42     | Term
 
-   42 Term: '.'
-   43     | Term '.' IDENT
-   44     | '.' IDENT
-   45     | Term '[' Exp ']'
-   46     | Term '[' ']'
-   47     | LITERAL
-   48     | String
-   49     | '(' Exp ')'
-   50     | '[' Exp ']'
-   51     | '[' ']'
-   52     | '{' MkDict '}'
-   53     | '$' IDENT
-   54     | IDENT
-   55     | IDENT '(' Exp ')'
-   56     | '(' error ')'
-   57     | '[' error ']'
-   58     | Term '[' error ']'
-   59     | '{' error '}'
+   43 Term: '.'
+   44     | Term '.' IDENT
+   45     | '.' IDENT
+   46     | Term '[' Exp ']'
+   47     | Term '[' ']'
+   48     | LITERAL
+   49     | String
+   50     | '(' Exp ')'
+   51     | '[' Exp ']'
+   52     | '[' ']'
+   53     | '{' MkDict '}'
+   54     | '$' IDENT
+   55     | IDENT
+   56     | IDENT '(' Exp ')'
+   57     | '(' error ')'
+   58     | '[' error ']'
+   59     | Term '[' error ']'
+   60     | '{' error '}'
 
-   60 MkDict: /* empty */
-   61       | MkDictPair
-   62       | MkDictPair ',' MkDict
-   63       | error ',' MkDict
+   61 MkDict: /* empty */
+   62       | MkDictPair
+   63       | MkDictPair ',' MkDict
+   64       | error ',' MkDict
 
-   64 MkDictPair: IDENT ':' ExpD
-   65           | String ':' ExpD
-   66           | IDENT
-   67           | '(' Exp ')' ':' ExpD
-   68           | '(' error ')' ':' ExpD
+   65 MkDictPair: IDENT ':' ExpD
+   66           | String ':' ExpD
+   67           | IDENT
+   68           | '(' Exp ')' ':' ExpD
+   69           | '(' error ')' ':' ExpD
 
 
 Terminals, with rules where they appear
 
 $end (0) 0
-'$' (36) 6 53
-'(' (40) 34 49 55 56 67 68
-')' (41) 34 49 55 56 67 68
+'$' (36) 6 54
+'(' (40) 35 50 56 57 68 69
+')' (41) 35 50 56 57 68 69
 '*' (42) 21
 '+' (43) 17
-',' (44) 16 62 63
+',' (44) 16 63 64
 '-' (45) 19
-'.' (46) 42 43 44
+'.' (46) 43 44 45
 '/' (47) 23
-':' (58) 33 34 64 65 67 68
-';' (59) 33 34
+':' (58) 34 35 65 66 68 69
+';' (59) 34 35
 '<' (60) 27
 '=' (61) 9
 '>' (62) 28
-'[' (91) 45 46 50 51 57 58
-']' (93) 45 46 50 51 57 58
-'{' (123) 52 59
-'|' (124) 6 15 40
-'}' (125) 52 59
-error (256) 8 56 57 58 59 63 68
+'[' (91) 46 47 51 52 58 59
+']' (93) 46 47 51 52 58 59
+'{' (123) 53 60
+'|' (124) 6 15 41
+'}' (125) 53 60
+error (256) 8 57 58 59 60 64 69
 INVALID_CHARACTER (258)
-IDENT (259) 6 33 34 43 44 53 54 55 64 66
-LITERAL (260) 47
+IDENT (259) 6 34 35 44 45 54 55 56 65 67
+LITERAL (260) 48
 "==" (261) 25
 "!=" (262) 26
 "//" (263) 12
 "as" (264) 6
-"def" (265) 33 34
+"def" (265) 34 35
 "if" (266) 7 8
-"then" (267) 7 38
-"else" (268) 39
-"elif" (269) 38
-"end" (270) 39
+"then" (267) 7 39
+"else" (268) 40
+"elif" (269) 39
+"end" (270) 40
 "and" (271) 11
 "or" (272) 10
 "|=" (273) 14
@@ -133,43 +134,44 @@ LITERAL (260) 47
 "//=" (278) 13
 "<=" (279) 29
 ">=" (280) 30
-QQSTRING_START (281) 32
-QQSTRING_TEXT (282) 36
-QQSTRING_INTERP_START (283) 37
-QQSTRING_INTERP_END (284) 37
-QQSTRING_END (285) 32
+"contains" (281) 31
+QQSTRING_START (282) 33
+QQSTRING_TEXT (283) 37
+QQSTRING_INTERP_START (284) 38
+QQSTRING_INTERP_END (285) 38
+QQSTRING_END (286) 33
 
 
 Nonterminals, with rules where they appear
 
-$accept (50)
+$accept (51)
     on left: 0
-TopLevel (51)
+TopLevel (52)
     on left: 1 2, on right: 0
-FuncDefs (52)
+FuncDefs (53)
     on left: 3 4, on right: 2 4
-Exp (53)
+Exp (54)
     on left: 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
-    25 26 27 28 29 30 31, on right: 1 5 6 7 8 9 10 11 12 13 14 15 16
-    17 18 19 20 21 22 23 24 25 26 27 28 29 30 33 34 37 38 39 45 49
-    50 55 67
-String (54)
-    on left: 32, on right: 48 65
-FuncDef (55)
-    on left: 33 34, on right: 4 5
-QQString (56)
-    on left: 35 36 37, on right: 32 36 37
-ElseBody (57)
-    on left: 38 39, on right: 7 38
-ExpD (58)
-    on left: 40 41, on right: 40 64 65 67 68
-Term (59)
-    on left: 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59,
-    on right: 6 31 41 43 45 46 58
-MkDict (60)
-    on left: 60 61 62 63, on right: 52 62 63
-MkDictPair (61)
-    on left: 64 65 66 67 68, on right: 61 62
+    25 26 27 28 29 30 31 32, on right: 1 5 6 7 8 9 10 11 12 13 14 15
+    16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 34 35 38 39 40
+    46 50 51 56 68
+String (55)
+    on left: 33, on right: 49 66
+FuncDef (56)
+    on left: 34 35, on right: 4 5
+QQString (57)
+    on left: 36 37 38, on right: 33 37 38
+ElseBody (58)
+    on left: 39 40, on right: 7 39
+ExpD (59)
+    on left: 41 42, on right: 41 65 66 68 69
+Term (60)
+    on left: 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60,
+    on right: 6 32 42 44 46 47 59
+MkDict (61)
+    on left: 61 62 63 64, on right: 53 63 64
+MkDictPair (62)
+    on left: 65 66 67 68 69, on right: 62 63
 
 
 state 0
@@ -199,25 +201,25 @@ state 0
 
 state 1
 
-   54 Term: IDENT .
-   55     | IDENT . '(' Exp ')'
+   55 Term: IDENT .
+   56     | IDENT . '(' Exp ')'
 
     '('  shift, and go to state 17
 
-    $default  reduce using rule 54 (Term)
+    $default  reduce using rule 55 (Term)
 
 
 state 2
 
-   47 Term: LITERAL .
+   48 Term: LITERAL .
 
-    $default  reduce using rule 47 (Term)
+    $default  reduce using rule 48 (Term)
 
 
 state 3
 
-   33 FuncDef: "def" . IDENT ':' Exp ';'
-   34        | "def" . IDENT '(' IDENT ')' ':' Exp ';'
+   34 FuncDef: "def" . IDENT ':' Exp ';'
+   35        | "def" . IDENT '(' IDENT ')' ':' Exp ';'
 
     IDENT  shift, and go to state 18
 
@@ -246,24 +248,24 @@ state 4
 
 state 5
 
-   32 String: QQSTRING_START . QQString QQSTRING_END
+   33 String: QQSTRING_START . QQString QQSTRING_END
 
-    $default  reduce using rule 35 (QQString)
+    $default  reduce using rule 36 (QQString)
 
     QQString  go to state 21
 
 
 state 6
 
-   53 Term: '$' . IDENT
+   54 Term: '$' . IDENT
 
     IDENT  shift, and go to state 22
 
 
 state 7
 
-   49 Term: '(' . Exp ')'
-   56     | '(' . error ')'
+   50 Term: '(' . Exp ')'
+   57     | '(' . error ')'
 
     error           shift, and go to state 23
     IDENT           shift, and go to state 1
@@ -285,19 +287,19 @@ state 7
 
 state 8
 
-   42 Term: '.' .
-   44     | '.' . IDENT
+   43 Term: '.' .
+   45     | '.' . IDENT
 
     IDENT  shift, and go to state 25
 
-    $default  reduce using rule 42 (Term)
+    $default  reduce using rule 43 (Term)
 
 
 state 9
 
-   50 Term: '[' . Exp ']'
-   51     | '[' . ']'
-   57     | '[' . error ']'
+   51 Term: '[' . Exp ']'
+   52     | '[' . ']'
+   58     | '[' . error ']'
 
     error           shift, and go to state 26
     IDENT           shift, and go to state 1
@@ -320,15 +322,15 @@ state 9
 
 state 10
 
-   52 Term: '{' . MkDict '}'
-   59     | '{' . error '}'
+   53 Term: '{' . MkDict '}'
+   60     | '{' . error '}'
 
     error           shift, and go to state 29
     IDENT           shift, and go to state 30
     QQSTRING_START  shift, and go to state 5
     '('             shift, and go to state 31
 
-    '}'  reduce using rule 60 (MkDict)
+    '}'  reduce using rule 61 (MkDict)
 
     String      go to state 32
     MkDict      go to state 33
@@ -374,38 +376,40 @@ state 13
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     $default  reduce using rule 1 (TopLevel)
 
 
 state 14
 
-   48 Term: String .
+   49 Term: String .
 
-    $default  reduce using rule 48 (Term)
+    $default  reduce using rule 49 (Term)
 
 
 state 15
@@ -426,8 +430,8 @@ state 15
 
     $default  reduce using rule 3 (FuncDefs)
 
-    FuncDefs  go to state 58
-    Exp       go to state 59
+    FuncDefs  go to state 59
+    Exp       go to state 60
     String    go to state 14
     FuncDef   go to state 15
     Term      go to state 16
@@ -436,22 +440,22 @@ state 15
 state 16
 
     6 Exp: Term . "as" '$' IDENT '|' Exp
-   31    | Term .
-   43 Term: Term . '.' IDENT
-   45     | Term . '[' Exp ']'
-   46     | Term . '[' ']'
-   58     | Term . '[' error ']'
+   32    | Term .
+   44 Term: Term . '.' IDENT
+   46     | Term . '[' Exp ']'
+   47     | Term . '[' ']'
+   59     | Term . '[' error ']'
 
-    "as"  shift, and go to state 60
-    '.'   shift, and go to state 61
-    '['   shift, and go to state 62
+    "as"  shift, and go to state 61
+    '.'   shift, and go to state 62
+    '['   shift, and go to state 63
 
-    $default  reduce using rule 31 (Exp)
+    $default  reduce using rule 32 (Exp)
 
 
 state 17
 
-   55 Term: IDENT '(' . Exp ')'
+   56 Term: IDENT '(' . Exp ')'
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -464,7 +468,7 @@ state 17
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 63
+    Exp      go to state 64
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -472,11 +476,11 @@ state 17
 
 state 18
 
-   33 FuncDef: "def" IDENT . ':' Exp ';'
-   34        | "def" IDENT . '(' IDENT ')' ':' Exp ';'
+   34 FuncDef: "def" IDENT . ':' Exp ';'
+   35        | "def" IDENT . '(' IDENT ')' ':' Exp ';'
 
-    ':'  shift, and go to state 64
-    '('  shift, and go to state 65
+    ':'  shift, and go to state 65
+    '('  shift, and go to state 66
 
 
 state 19
@@ -505,31 +509,33 @@ state 19
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    error   shift, and go to state 66
-    "=="    shift, and go to state 36
-    "!="    shift, and go to state 37
-    "//"    shift, and go to state 38
-    "then"  shift, and go to state 67
-    "and"   shift, and go to state 39
-    "or"    shift, and go to state 40
-    "|="    shift, and go to state 41
-    "+="    shift, and go to state 42
-    "-="    shift, and go to state 43
-    "*="    shift, and go to state 44
-    "/="    shift, and go to state 45
-    "//="   shift, and go to state 46
-    "<="    shift, and go to state 47
-    ">="    shift, and go to state 48
-    '|'     shift, and go to state 49
-    ','     shift, and go to state 50
-    '='     shift, and go to state 51
-    '<'     shift, and go to state 52
-    '>'     shift, and go to state 53
-    '+'     shift, and go to state 54
-    '-'     shift, and go to state 55
-    '*'     shift, and go to state 56
-    '/'     shift, and go to state 57
+    error       shift, and go to state 67
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "then"      shift, and go to state 68
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
 
 state 20
@@ -547,7 +553,7 @@ state 20
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 59
+    Exp      go to state 60
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -555,27 +561,27 @@ state 20
 
 state 21
 
-   32 String: QQSTRING_START QQString . QQSTRING_END
-   36 QQString: QQString . QQSTRING_TEXT
-   37         | QQString . QQSTRING_INTERP_START Exp QQSTRING_INTERP_END
+   33 String: QQSTRING_START QQString . QQSTRING_END
+   37 QQString: QQString . QQSTRING_TEXT
+   38         | QQString . QQSTRING_INTERP_START Exp QQSTRING_INTERP_END
 
-    QQSTRING_TEXT          shift, and go to state 68
-    QQSTRING_INTERP_START  shift, and go to state 69
-    QQSTRING_END           shift, and go to state 70
+    QQSTRING_TEXT          shift, and go to state 69
+    QQSTRING_INTERP_START  shift, and go to state 70
+    QQSTRING_END           shift, and go to state 71
 
 
 state 22
 
-   53 Term: '$' IDENT .
+   54 Term: '$' IDENT .
 
-    $default  reduce using rule 53 (Term)
+    $default  reduce using rule 54 (Term)
 
 
 state 23
 
-   56 Term: '(' error . ')'
+   57 Term: '(' error . ')'
 
-    ')'  shift, and go to state 71
+    ')'  shift, and go to state 72
 
 
 state 24
@@ -602,52 +608,54 @@ state 24
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   49 Term: '(' Exp . ')'
+   31    | Exp . "contains" Exp
+   50 Term: '(' Exp . ')'
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
-    ')'    shift, and go to state 72
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ')'         shift, and go to state 73
 
 
 state 25
 
-   44 Term: '.' IDENT .
+   45 Term: '.' IDENT .
 
-    $default  reduce using rule 44 (Term)
+    $default  reduce using rule 45 (Term)
 
 
 state 26
 
-   57 Term: '[' error . ']'
+   58 Term: '[' error . ']'
 
-    ']'  shift, and go to state 73
+    ']'  shift, and go to state 74
 
 
 state 27
 
-   51 Term: '[' ']' .
+   52 Term: '[' ']' .
 
-    $default  reduce using rule 51 (Term)
+    $default  reduce using rule 52 (Term)
 
 
 state 28
@@ -674,58 +682,60 @@ state 28
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   50 Term: '[' Exp . ']'
+   31    | Exp . "contains" Exp
+   51 Term: '[' Exp . ']'
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
-    ']'    shift, and go to state 74
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ']'         shift, and go to state 75
 
 
 state 29
 
-   59 Term: '{' error . '}'
-   63 MkDict: error . ',' MkDict
+   60 Term: '{' error . '}'
+   64 MkDict: error . ',' MkDict
 
-    ','  shift, and go to state 75
-    '}'  shift, and go to state 76
+    ','  shift, and go to state 76
+    '}'  shift, and go to state 77
 
 
 state 30
 
-   64 MkDictPair: IDENT . ':' ExpD
-   66           | IDENT .
+   65 MkDictPair: IDENT . ':' ExpD
+   67           | IDENT .
 
-    ':'  shift, and go to state 77
+    ':'  shift, and go to state 78
 
-    $default  reduce using rule 66 (MkDictPair)
+    $default  reduce using rule 67 (MkDictPair)
 
 
 state 31
 
-   67 MkDictPair: '(' . Exp ')' ':' ExpD
-   68           | '(' . error ')' ':' ExpD
+   68 MkDictPair: '(' . Exp ')' ':' ExpD
+   69           | '(' . error ')' ':' ExpD
 
-    error           shift, and go to state 78
+    error           shift, and go to state 79
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
     "def"           shift, and go to state 3
@@ -737,7 +747,7 @@ state 31
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 79
+    Exp      go to state 80
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -745,26 +755,26 @@ state 31
 
 state 32
 
-   65 MkDictPair: String . ':' ExpD
+   66 MkDictPair: String . ':' ExpD
 
-    ':'  shift, and go to state 80
+    ':'  shift, and go to state 81
 
 
 state 33
 
-   52 Term: '{' MkDict . '}'
+   53 Term: '{' MkDict . '}'
 
-    '}'  shift, and go to state 81
+    '}'  shift, and go to state 82
 
 
 state 34
 
-   61 MkDict: MkDictPair .
-   62       | MkDictPair . ',' MkDict
+   62 MkDict: MkDictPair .
+   63       | MkDictPair . ',' MkDict
 
-    ','  shift, and go to state 82
+    ','  shift, and go to state 83
 
-    $default  reduce using rule 61 (MkDict)
+    $default  reduce using rule 62 (MkDict)
 
 
 state 35
@@ -789,7 +799,7 @@ state 36
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 83
+    Exp      go to state 84
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -810,7 +820,7 @@ state 37
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 84
+    Exp      go to state 85
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -831,7 +841,7 @@ state 38
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 85
+    Exp      go to state 86
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -852,7 +862,7 @@ state 39
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 86
+    Exp      go to state 87
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -873,7 +883,7 @@ state 40
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 87
+    Exp      go to state 88
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -894,7 +904,7 @@ state 41
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 88
+    Exp      go to state 89
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -915,7 +925,7 @@ state 42
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 89
+    Exp      go to state 90
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -936,7 +946,7 @@ state 43
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 90
+    Exp      go to state 91
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -957,7 +967,7 @@ state 44
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 91
+    Exp      go to state 92
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -978,7 +988,7 @@ state 45
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 92
+    Exp      go to state 93
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -999,7 +1009,7 @@ state 46
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 93
+    Exp      go to state 94
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -1020,7 +1030,7 @@ state 47
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 94
+    Exp      go to state 95
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -1041,7 +1051,7 @@ state 48
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 95
+    Exp      go to state 96
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
@@ -1049,28 +1059,7 @@ state 48
 
 state 49
 
-   15 Exp: Exp '|' . Exp
-
-    IDENT           shift, and go to state 1
-    LITERAL         shift, and go to state 2
-    "def"           shift, and go to state 3
-    "if"            shift, and go to state 4
-    QQSTRING_START  shift, and go to state 5
-    '$'             shift, and go to state 6
-    '('             shift, and go to state 7
-    '.'             shift, and go to state 8
-    '['             shift, and go to state 9
-    '{'             shift, and go to state 10
-
-    Exp      go to state 96
-    String   go to state 14
-    FuncDef  go to state 20
-    Term     go to state 16
-
-
-state 50
-
-   16 Exp: Exp ',' . Exp
+   31 Exp: Exp "contains" . Exp
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1089,9 +1078,9 @@ state 50
     Term     go to state 16
 
 
-state 51
+state 50
 
-    9 Exp: Exp '=' . Exp
+   15 Exp: Exp '|' . Exp
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1110,9 +1099,9 @@ state 51
     Term     go to state 16
 
 
-state 52
+state 51
 
-   27 Exp: Exp '<' . Exp
+   16 Exp: Exp ',' . Exp
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1131,9 +1120,9 @@ state 52
     Term     go to state 16
 
 
-state 53
+state 52
 
-   28 Exp: Exp '>' . Exp
+    9 Exp: Exp '=' . Exp
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1152,9 +1141,9 @@ state 53
     Term     go to state 16
 
 
-state 54
+state 53
 
-   17 Exp: Exp '+' . Exp
+   27 Exp: Exp '<' . Exp
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1173,9 +1162,9 @@ state 54
     Term     go to state 16
 
 
-state 55
+state 54
 
-   19 Exp: Exp '-' . Exp
+   28 Exp: Exp '>' . Exp
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1194,9 +1183,9 @@ state 55
     Term     go to state 16
 
 
-state 56
+state 55
 
-   21 Exp: Exp '*' . Exp
+   17 Exp: Exp '+' . Exp
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1215,9 +1204,9 @@ state 56
     Term     go to state 16
 
 
-state 57
+state 56
 
-   23 Exp: Exp '/' . Exp
+   19 Exp: Exp '-' . Exp
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1236,14 +1225,56 @@ state 57
     Term     go to state 16
 
 
+state 57
+
+   21 Exp: Exp '*' . Exp
+
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 105
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
 state 58
+
+   23 Exp: Exp '/' . Exp
+
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 106
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
+state 59
 
     4 FuncDefs: FuncDef FuncDefs .
 
     $default  reduce using rule 4 (FuncDefs)
 
 
-state 59
+state 60
 
     5 Exp: FuncDef Exp .
     9    | Exp . '=' Exp
@@ -1268,54 +1299,56 @@ state 59
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     $default  reduce using rule 5 (Exp)
 
 
-state 60
+state 61
 
     6 Exp: Term "as" . '$' IDENT '|' Exp
 
-    '$'  shift, and go to state 105
-
-
-state 61
-
-   43 Term: Term '.' . IDENT
-
-    IDENT  shift, and go to state 106
+    '$'  shift, and go to state 107
 
 
 state 62
 
-   45 Term: Term '[' . Exp ']'
-   46     | Term '[' . ']'
-   58     | Term '[' . error ']'
+   44 Term: Term '.' . IDENT
 
-    error           shift, and go to state 107
+    IDENT  shift, and go to state 108
+
+
+state 63
+
+   46 Term: Term '[' . Exp ']'
+   47     | Term '[' . ']'
+   59     | Term '[' . error ']'
+
+    error           shift, and go to state 109
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
     "def"           shift, and go to state 3
@@ -1325,16 +1358,16 @@ state 62
     '('             shift, and go to state 7
     '.'             shift, and go to state 8
     '['             shift, and go to state 9
-    ']'             shift, and go to state 108
+    ']'             shift, and go to state 110
     '{'             shift, and go to state 10
 
-    Exp      go to state 109
+    Exp      go to state 111
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
 
 
-state 63
+state 64
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1358,71 +1391,38 @@ state 63
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   55 Term: IDENT '(' Exp . ')'
+   31    | Exp . "contains" Exp
+   56 Term: IDENT '(' Exp . ')'
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
-    ')'    shift, and go to state 110
-
-
-state 64
-
-   33 FuncDef: "def" IDENT ':' . Exp ';'
-
-    IDENT           shift, and go to state 1
-    LITERAL         shift, and go to state 2
-    "def"           shift, and go to state 3
-    "if"            shift, and go to state 4
-    QQSTRING_START  shift, and go to state 5
-    '$'             shift, and go to state 6
-    '('             shift, and go to state 7
-    '.'             shift, and go to state 8
-    '['             shift, and go to state 9
-    '{'             shift, and go to state 10
-
-    Exp      go to state 111
-    String   go to state 14
-    FuncDef  go to state 20
-    Term     go to state 16
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ')'         shift, and go to state 112
 
 
 state 65
 
-   34 FuncDef: "def" IDENT '(' . IDENT ')' ':' Exp ';'
-
-    IDENT  shift, and go to state 112
-
-
-state 66
-
-    8 Exp: "if" Exp error .
-
-    $default  reduce using rule 8 (Exp)
-
-
-state 67
-
-    7 Exp: "if" Exp "then" . Exp ElseBody
+   34 FuncDef: "def" IDENT ':' . Exp ';'
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1441,16 +1441,23 @@ state 67
     Term     go to state 16
 
 
+state 66
+
+   35 FuncDef: "def" IDENT '(' . IDENT ')' ':' Exp ';'
+
+    IDENT  shift, and go to state 114
+
+
+state 67
+
+    8 Exp: "if" Exp error .
+
+    $default  reduce using rule 8 (Exp)
+
+
 state 68
 
-   36 QQString: QQString QQSTRING_TEXT .
-
-    $default  reduce using rule 36 (QQString)
-
-
-state 69
-
-   37 QQString: QQString QQSTRING_INTERP_START . Exp QQSTRING_INTERP_END
+    7 Exp: "if" Exp "then" . Exp ElseBody
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1463,73 +1470,101 @@ state 69
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 114
+    Exp      go to state 115
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
 
 
+state 69
+
+   37 QQString: QQString QQSTRING_TEXT .
+
+    $default  reduce using rule 37 (QQString)
+
+
 state 70
 
-   32 String: QQSTRING_START QQString QQSTRING_END .
+   38 QQString: QQString QQSTRING_INTERP_START . Exp QQSTRING_INTERP_END
 
-    $default  reduce using rule 32 (String)
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 116
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
 
 
 state 71
 
-   56 Term: '(' error ')' .
+   33 String: QQSTRING_START QQString QQSTRING_END .
 
-    $default  reduce using rule 56 (Term)
+    $default  reduce using rule 33 (String)
 
 
 state 72
 
-   49 Term: '(' Exp ')' .
-
-    $default  reduce using rule 49 (Term)
-
-
-state 73
-
-   57 Term: '[' error ']' .
+   57 Term: '(' error ')' .
 
     $default  reduce using rule 57 (Term)
 
 
-state 74
+state 73
 
-   50 Term: '[' Exp ']' .
+   50 Term: '(' Exp ')' .
 
     $default  reduce using rule 50 (Term)
 
 
+state 74
+
+   58 Term: '[' error ']' .
+
+    $default  reduce using rule 58 (Term)
+
+
 state 75
 
-   63 MkDict: error ',' . MkDict
+   51 Term: '[' Exp ']' .
 
-    error           shift, and go to state 115
-    IDENT           shift, and go to state 30
-    QQSTRING_START  shift, and go to state 5
-    '('             shift, and go to state 31
-
-    '}'  reduce using rule 60 (MkDict)
-
-    String      go to state 32
-    MkDict      go to state 116
-    MkDictPair  go to state 34
+    $default  reduce using rule 51 (Term)
 
 
 state 76
 
-   59 Term: '{' error '}' .
+   64 MkDict: error ',' . MkDict
 
-    $default  reduce using rule 59 (Term)
+    error           shift, and go to state 117
+    IDENT           shift, and go to state 30
+    QQSTRING_START  shift, and go to state 5
+    '('             shift, and go to state 31
+
+    '}'  reduce using rule 61 (MkDict)
+
+    String      go to state 32
+    MkDict      go to state 118
+    MkDictPair  go to state 34
 
 
 state 77
 
-   64 MkDictPair: IDENT ':' . ExpD
+   60 Term: '{' error '}' .
+
+    $default  reduce using rule 60 (Term)
+
+
+state 78
+
+   65 MkDictPair: IDENT ':' . ExpD
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1541,18 +1576,18 @@ state 77
     '{'             shift, and go to state 10
 
     String  go to state 14
-    ExpD    go to state 117
-    Term    go to state 118
-
-
-state 78
-
-   68 MkDictPair: '(' error . ')' ':' ExpD
-
-    ')'  shift, and go to state 119
+    ExpD    go to state 119
+    Term    go to state 120
 
 
 state 79
+
+   69 MkDictPair: '(' error . ')' ':' ExpD
+
+    ')'  shift, and go to state 121
+
+
+state 80
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1576,36 +1611,38 @@ state 79
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   67 MkDictPair: '(' Exp . ')' ':' ExpD
+   31    | Exp . "contains" Exp
+   68 MkDictPair: '(' Exp . ')' ':' ExpD
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
-    ')'    shift, and go to state 120
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ')'         shift, and go to state 122
 
 
-state 80
+state 81
 
-   65 MkDictPair: String ':' . ExpD
+   66 MkDictPair: String ':' . ExpD
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -1617,34 +1654,34 @@ state 80
     '{'             shift, and go to state 10
 
     String  go to state 14
-    ExpD    go to state 121
-    Term    go to state 118
-
-
-state 81
-
-   52 Term: '{' MkDict '}' .
-
-    $default  reduce using rule 52 (Term)
+    ExpD    go to state 123
+    Term    go to state 120
 
 
 state 82
 
-   62 MkDict: MkDictPair ',' . MkDict
+   53 Term: '{' MkDict '}' .
 
-    error           shift, and go to state 115
+    $default  reduce using rule 53 (Term)
+
+
+state 83
+
+   63 MkDict: MkDictPair ',' . MkDict
+
+    error           shift, and go to state 117
     IDENT           shift, and go to state 30
     QQSTRING_START  shift, and go to state 5
     '('             shift, and go to state 31
 
-    '}'  reduce using rule 60 (MkDict)
+    '}'  reduce using rule 61 (MkDict)
 
     String      go to state 32
-    MkDict      go to state 122
+    MkDict      go to state 124
     MkDictPair  go to state 34
 
 
-state 83
+state 84
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1669,23 +1706,25 @@ state 83
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '+'  shift, and go to state 54
-    '-'  shift, and go to state 55
-    '*'  shift, and go to state 56
-    '/'  shift, and go to state 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  error (nonassociative)
-    "!="  error (nonassociative)
-    "<="  error (nonassociative)
-    ">="  error (nonassociative)
-    '<'   error (nonassociative)
-    '>'   error (nonassociative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
     $default  reduce using rule 25 (Exp)
 
 
-state 84
+state 85
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1710,23 +1749,25 @@ state 84
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '+'  shift, and go to state 54
-    '-'  shift, and go to state 55
-    '*'  shift, and go to state 56
-    '/'  shift, and go to state 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  error (nonassociative)
-    "!="  error (nonassociative)
-    "<="  error (nonassociative)
-    ">="  error (nonassociative)
-    '<'   error (nonassociative)
-    '>'   error (nonassociative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
     $default  reduce using rule 26 (Exp)
 
 
-state 85
+state 86
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1751,32 +1792,34 @@ state 85
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     $default  reduce using rule 12 (Exp)
 
 
-state 86
+state 87
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1801,22 +1844,24 @@ state 86
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="  shift, and go to state 36
-    "!="  shift, and go to state 37
-    "<="  shift, and go to state 47
-    ">="  shift, and go to state 48
-    '<'   shift, and go to state 52
-    '>'   shift, and go to state 53
-    '+'   shift, and go to state 54
-    '-'   shift, and go to state 55
-    '*'   shift, and go to state 56
-    '/'   shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     $default  reduce using rule 11 (Exp)
 
 
-state 87
+state 88
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1841,23 +1886,25 @@ state 87
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "and"  shift, and go to state 39
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     $default  reduce using rule 10 (Exp)
 
 
-state 88
+state 89
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1882,19 +1929,21 @@ state 88
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     "|="   error (nonassociative)
     "+="   error (nonassociative)
@@ -1907,7 +1956,7 @@ state 88
     $default  reduce using rule 14 (Exp)
 
 
-state 89
+state 90
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1932,19 +1981,21 @@ state 89
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     "|="   error (nonassociative)
     "+="   error (nonassociative)
@@ -1957,7 +2008,7 @@ state 89
     $default  reduce using rule 18 (Exp)
 
 
-state 90
+state 91
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -1982,19 +2033,21 @@ state 90
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     "|="   error (nonassociative)
     "+="   error (nonassociative)
@@ -2007,7 +2060,7 @@ state 90
     $default  reduce using rule 20 (Exp)
 
 
-state 91
+state 92
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2032,19 +2085,21 @@ state 91
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     "|="   error (nonassociative)
     "+="   error (nonassociative)
@@ -2057,7 +2112,7 @@ state 91
     $default  reduce using rule 22 (Exp)
 
 
-state 92
+state 93
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2082,19 +2137,21 @@ state 92
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     "|="   error (nonassociative)
     "+="   error (nonassociative)
@@ -2107,7 +2164,7 @@ state 92
     $default  reduce using rule 24 (Exp)
 
 
-state 93
+state 94
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2132,19 +2189,21 @@ state 93
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     "|="   error (nonassociative)
     "+="   error (nonassociative)
@@ -2155,47 +2214,6 @@ state 93
     '='    error (nonassociative)
 
     $default  reduce using rule 13 (Exp)
-
-
-state 94
-
-    9 Exp: Exp . '=' Exp
-   10    | Exp . "or" Exp
-   11    | Exp . "and" Exp
-   12    | Exp . "//" Exp
-   13    | Exp . "//=" Exp
-   14    | Exp . "|=" Exp
-   15    | Exp . '|' Exp
-   16    | Exp . ',' Exp
-   17    | Exp . '+' Exp
-   18    | Exp . "+=" Exp
-   19    | Exp . '-' Exp
-   20    | Exp . "-=" Exp
-   21    | Exp . '*' Exp
-   22    | Exp . "*=" Exp
-   23    | Exp . '/' Exp
-   24    | Exp . "/=" Exp
-   25    | Exp . "==" Exp
-   26    | Exp . "!=" Exp
-   27    | Exp . '<' Exp
-   28    | Exp . '>' Exp
-   29    | Exp . "<=" Exp
-   29    | Exp "<=" Exp .
-   30    | Exp . ">=" Exp
-
-    '+'  shift, and go to state 54
-    '-'  shift, and go to state 55
-    '*'  shift, and go to state 56
-    '/'  shift, and go to state 57
-
-    "=="  error (nonassociative)
-    "!="  error (nonassociative)
-    "<="  error (nonassociative)
-    ">="  error (nonassociative)
-    '<'   error (nonassociative)
-    '>'   error (nonassociative)
-
-    $default  reduce using rule 29 (Exp)
 
 
 state 95
@@ -2221,25 +2239,113 @@ state 95
    27    | Exp . '<' Exp
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
+   29    | Exp "<=" Exp .
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
+
+    $default  reduce using rule 29 (Exp)
+
+
+state 96
+
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
    30    | Exp ">=" Exp .
+   31    | Exp . "contains" Exp
 
-    '+'  shift, and go to state 54
-    '-'  shift, and go to state 55
-    '*'  shift, and go to state 56
-    '/'  shift, and go to state 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  error (nonassociative)
-    "!="  error (nonassociative)
-    "<="  error (nonassociative)
-    ">="  error (nonassociative)
-    '<'   error (nonassociative)
-    '>'   error (nonassociative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
     $default  reduce using rule 30 (Exp)
 
 
-state 96
+state 97
+
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+   31    | Exp "contains" Exp .
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
+
+    $default  reduce using rule 31 (Exp)
+
+
+state 98
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2264,33 +2370,35 @@ state 96
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     $default  reduce using rule 15 (Exp)
 
 
-state 97
+state 99
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2315,32 +2423,34 @@ state 97
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     $default  reduce using rule 16 (Exp)
 
 
-state 98
+state 100
 
     9 Exp: Exp . '=' Exp
     9    | Exp '=' Exp .
@@ -2365,19 +2475,21 @@ state 98
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     "|="   error (nonassociative)
     "+="   error (nonassociative)
@@ -2390,7 +2502,7 @@ state 98
     $default  reduce using rule 9 (Exp)
 
 
-state 99
+state 101
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2415,23 +2527,25 @@ state 99
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '+'  shift, and go to state 54
-    '-'  shift, and go to state 55
-    '*'  shift, and go to state 56
-    '/'  shift, and go to state 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  error (nonassociative)
-    "!="  error (nonassociative)
-    "<="  error (nonassociative)
-    ">="  error (nonassociative)
-    '<'   error (nonassociative)
-    '>'   error (nonassociative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
     $default  reduce using rule 27 (Exp)
 
 
-state 100
+state 102
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2456,23 +2570,25 @@ state 100
    28    | Exp '>' Exp .
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '+'  shift, and go to state 54
-    '-'  shift, and go to state 55
-    '*'  shift, and go to state 56
-    '/'  shift, and go to state 57
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
-    "=="  error (nonassociative)
-    "!="  error (nonassociative)
-    "<="  error (nonassociative)
-    ">="  error (nonassociative)
-    '<'   error (nonassociative)
-    '>'   error (nonassociative)
+    "=="        error (nonassociative)
+    "!="        error (nonassociative)
+    "<="        error (nonassociative)
+    ">="        error (nonassociative)
+    "contains"  error (nonassociative)
+    '<'         error (nonassociative)
+    '>'         error (nonassociative)
 
     $default  reduce using rule 28 (Exp)
 
 
-state 101
+state 103
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2497,14 +2613,15 @@ state 101
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '*'  shift, and go to state 56
-    '/'  shift, and go to state 57
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
     $default  reduce using rule 17 (Exp)
 
 
-state 102
+state 104
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2529,14 +2646,15 @@ state 102
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    '*'  shift, and go to state 56
-    '/'  shift, and go to state 57
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
 
     $default  reduce using rule 19 (Exp)
 
 
-state 103
+state 105
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2561,11 +2679,12 @@ state 103
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
     $default  reduce using rule 21 (Exp)
 
 
-state 104
+state 106
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2590,94 +2709,37 @@ state 104
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
     $default  reduce using rule 23 (Exp)
 
 
-state 105
+state 107
 
     6 Exp: Term "as" '$' . IDENT '|' Exp
 
-    IDENT  shift, and go to state 123
-
-
-state 106
-
-   43 Term: Term '.' IDENT .
-
-    $default  reduce using rule 43 (Term)
-
-
-state 107
-
-   58 Term: Term '[' error . ']'
-
-    ']'  shift, and go to state 124
+    IDENT  shift, and go to state 125
 
 
 state 108
 
-   46 Term: Term '[' ']' .
+   44 Term: Term '.' IDENT .
 
-    $default  reduce using rule 46 (Term)
+    $default  reduce using rule 44 (Term)
 
 
 state 109
 
-    9 Exp: Exp . '=' Exp
-   10    | Exp . "or" Exp
-   11    | Exp . "and" Exp
-   12    | Exp . "//" Exp
-   13    | Exp . "//=" Exp
-   14    | Exp . "|=" Exp
-   15    | Exp . '|' Exp
-   16    | Exp . ',' Exp
-   17    | Exp . '+' Exp
-   18    | Exp . "+=" Exp
-   19    | Exp . '-' Exp
-   20    | Exp . "-=" Exp
-   21    | Exp . '*' Exp
-   22    | Exp . "*=" Exp
-   23    | Exp . '/' Exp
-   24    | Exp . "/=" Exp
-   25    | Exp . "==" Exp
-   26    | Exp . "!=" Exp
-   27    | Exp . '<' Exp
-   28    | Exp . '>' Exp
-   29    | Exp . "<=" Exp
-   30    | Exp . ">=" Exp
-   45 Term: Term '[' Exp . ']'
+   59 Term: Term '[' error . ']'
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
-    ']'    shift, and go to state 125
+    ']'  shift, and go to state 126
 
 
 state 110
 
-   55 Term: IDENT '(' Exp ')' .
+   47 Term: Term '[' ']' .
 
-    $default  reduce using rule 55 (Term)
+    $default  reduce using rule 47 (Term)
 
 
 state 111
@@ -2704,41 +2766,103 @@ state 111
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   33 FuncDef: "def" IDENT ':' Exp . ';'
+   31    | Exp . "contains" Exp
+   46 Term: Term '[' Exp . ']'
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    ';'    shift, and go to state 126
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+    ']'         shift, and go to state 127
 
 
 state 112
 
-   34 FuncDef: "def" IDENT '(' IDENT . ')' ':' Exp ';'
+   56 Term: IDENT '(' Exp ')' .
 
-    ')'  shift, and go to state 127
+    $default  reduce using rule 56 (Term)
 
 
 state 113
+
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+   34 FuncDef: "def" IDENT ':' Exp . ';'
+
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    ';'         shift, and go to state 128
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
+
+
+state 114
+
+   35 FuncDef: "def" IDENT '(' IDENT . ')' ':' Exp ';'
+
+    ')'  shift, and go to state 129
+
+
+state 115
 
     7 Exp: "if" Exp "then" Exp . ElseBody
     9    | Exp . '=' Exp
@@ -2763,36 +2887,38 @@ state 113
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="    shift, and go to state 36
-    "!="    shift, and go to state 37
-    "//"    shift, and go to state 38
-    "else"  shift, and go to state 128
-    "elif"  shift, and go to state 129
-    "and"   shift, and go to state 39
-    "or"    shift, and go to state 40
-    "|="    shift, and go to state 41
-    "+="    shift, and go to state 42
-    "-="    shift, and go to state 43
-    "*="    shift, and go to state 44
-    "/="    shift, and go to state 45
-    "//="   shift, and go to state 46
-    "<="    shift, and go to state 47
-    ">="    shift, and go to state 48
-    '|'     shift, and go to state 49
-    ','     shift, and go to state 50
-    '='     shift, and go to state 51
-    '<'     shift, and go to state 52
-    '>'     shift, and go to state 53
-    '+'     shift, and go to state 54
-    '-'     shift, and go to state 55
-    '*'     shift, and go to state 56
-    '/'     shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "else"      shift, and go to state 130
+    "elif"      shift, and go to state 131
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    ElseBody  go to state 130
+    ElseBody  go to state 132
 
 
-state 114
+state 116
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -2816,7 +2942,8 @@ state 114
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   37 QQString: QQString QQSTRING_INTERP_START Exp . QQSTRING_INTERP_END
+   31    | Exp . "contains" Exp
+   38 QQString: QQString QQSTRING_INTERP_START Exp . QQSTRING_INTERP_END
 
     "=="                 shift, and go to state 36
     "!="                 shift, and go to state 37
@@ -2831,146 +2958,126 @@ state 114
     "//="                shift, and go to state 46
     "<="                 shift, and go to state 47
     ">="                 shift, and go to state 48
-    QQSTRING_INTERP_END  shift, and go to state 131
-    '|'                  shift, and go to state 49
-    ','                  shift, and go to state 50
-    '='                  shift, and go to state 51
-    '<'                  shift, and go to state 52
-    '>'                  shift, and go to state 53
-    '+'                  shift, and go to state 54
-    '-'                  shift, and go to state 55
-    '*'                  shift, and go to state 56
-    '/'                  shift, and go to state 57
-
-
-state 115
-
-   63 MkDict: error . ',' MkDict
-
-    ','  shift, and go to state 75
-
-
-state 116
-
-   63 MkDict: error ',' MkDict .
-
-    $default  reduce using rule 63 (MkDict)
+    "contains"           shift, and go to state 49
+    QQSTRING_INTERP_END  shift, and go to state 133
+    '|'                  shift, and go to state 50
+    ','                  shift, and go to state 51
+    '='                  shift, and go to state 52
+    '<'                  shift, and go to state 53
+    '>'                  shift, and go to state 54
+    '+'                  shift, and go to state 55
+    '-'                  shift, and go to state 56
+    '*'                  shift, and go to state 57
+    '/'                  shift, and go to state 58
 
 
 state 117
 
-   40 ExpD: ExpD . '|' ExpD
-   64 MkDictPair: IDENT ':' ExpD .
+   64 MkDict: error . ',' MkDict
 
-    '|'  shift, and go to state 132
-
-    $default  reduce using rule 64 (MkDictPair)
+    ','  shift, and go to state 76
 
 
 state 118
 
-   41 ExpD: Term .
-   43 Term: Term . '.' IDENT
-   45     | Term . '[' Exp ']'
-   46     | Term . '[' ']'
-   58     | Term . '[' error ']'
+   64 MkDict: error ',' MkDict .
 
-    '.'  shift, and go to state 61
-    '['  shift, and go to state 62
-
-    $default  reduce using rule 41 (ExpD)
+    $default  reduce using rule 64 (MkDict)
 
 
 state 119
 
-   68 MkDictPair: '(' error ')' . ':' ExpD
+   41 ExpD: ExpD . '|' ExpD
+   65 MkDictPair: IDENT ':' ExpD .
 
-    ':'  shift, and go to state 133
-
-
-state 120
-
-   67 MkDictPair: '(' Exp ')' . ':' ExpD
-
-    ':'  shift, and go to state 134
-
-
-state 121
-
-   40 ExpD: ExpD . '|' ExpD
-   65 MkDictPair: String ':' ExpD .
-
-    '|'  shift, and go to state 132
+    '|'  shift, and go to state 134
 
     $default  reduce using rule 65 (MkDictPair)
 
 
+state 120
+
+   42 ExpD: Term .
+   44 Term: Term . '.' IDENT
+   46     | Term . '[' Exp ']'
+   47     | Term . '[' ']'
+   59     | Term . '[' error ']'
+
+    '.'  shift, and go to state 62
+    '['  shift, and go to state 63
+
+    $default  reduce using rule 42 (ExpD)
+
+
+state 121
+
+   69 MkDictPair: '(' error ')' . ':' ExpD
+
+    ':'  shift, and go to state 135
+
+
 state 122
 
-   62 MkDict: MkDictPair ',' MkDict .
-
-    $default  reduce using rule 62 (MkDict)
-
-
-state 123
-
-    6 Exp: Term "as" '$' IDENT . '|' Exp
-
-    '|'  shift, and go to state 135
-
-
-state 124
-
-   58 Term: Term '[' error ']' .
-
-    $default  reduce using rule 58 (Term)
-
-
-state 125
-
-   45 Term: Term '[' Exp ']' .
-
-    $default  reduce using rule 45 (Term)
-
-
-state 126
-
-   33 FuncDef: "def" IDENT ':' Exp ';' .
-
-    $default  reduce using rule 33 (FuncDef)
-
-
-state 127
-
-   34 FuncDef: "def" IDENT '(' IDENT ')' . ':' Exp ';'
+   68 MkDictPair: '(' Exp ')' . ':' ExpD
 
     ':'  shift, and go to state 136
 
 
+state 123
+
+   41 ExpD: ExpD . '|' ExpD
+   66 MkDictPair: String ':' ExpD .
+
+    '|'  shift, and go to state 134
+
+    $default  reduce using rule 66 (MkDictPair)
+
+
+state 124
+
+   63 MkDict: MkDictPair ',' MkDict .
+
+    $default  reduce using rule 63 (MkDict)
+
+
+state 125
+
+    6 Exp: Term "as" '$' IDENT . '|' Exp
+
+    '|'  shift, and go to state 137
+
+
+state 126
+
+   59 Term: Term '[' error ']' .
+
+    $default  reduce using rule 59 (Term)
+
+
+state 127
+
+   46 Term: Term '[' Exp ']' .
+
+    $default  reduce using rule 46 (Term)
+
+
 state 128
 
-   39 ElseBody: "else" . Exp "end"
+   34 FuncDef: "def" IDENT ':' Exp ';' .
 
-    IDENT           shift, and go to state 1
-    LITERAL         shift, and go to state 2
-    "def"           shift, and go to state 3
-    "if"            shift, and go to state 4
-    QQSTRING_START  shift, and go to state 5
-    '$'             shift, and go to state 6
-    '('             shift, and go to state 7
-    '.'             shift, and go to state 8
-    '['             shift, and go to state 9
-    '{'             shift, and go to state 10
-
-    Exp      go to state 137
-    String   go to state 14
-    FuncDef  go to state 20
-    Term     go to state 16
+    $default  reduce using rule 34 (FuncDef)
 
 
 state 129
 
-   38 ElseBody: "elif" . Exp "then" Exp ElseBody
+   35 FuncDef: "def" IDENT '(' IDENT ')' . ':' Exp ';'
+
+    ':'  shift, and go to state 138
+
+
+state 130
+
+   40 ElseBody: "else" . Exp "end"
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -2983,65 +3090,50 @@ state 129
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 138
+    Exp      go to state 139
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
 
 
-state 130
+state 131
+
+   39 ElseBody: "elif" . Exp "then" Exp ElseBody
+
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    "def"           shift, and go to state 3
+    "if"            shift, and go to state 4
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    Exp      go to state 140
+    String   go to state 14
+    FuncDef  go to state 20
+    Term     go to state 16
+
+
+state 132
 
     7 Exp: "if" Exp "then" Exp ElseBody .
 
     $default  reduce using rule 7 (Exp)
 
 
-state 131
-
-   37 QQString: QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END .
-
-    $default  reduce using rule 37 (QQString)
-
-
-state 132
-
-   40 ExpD: ExpD '|' . ExpD
-
-    IDENT           shift, and go to state 1
-    LITERAL         shift, and go to state 2
-    QQSTRING_START  shift, and go to state 5
-    '$'             shift, and go to state 6
-    '('             shift, and go to state 7
-    '.'             shift, and go to state 8
-    '['             shift, and go to state 9
-    '{'             shift, and go to state 10
-
-    String  go to state 14
-    ExpD    go to state 139
-    Term    go to state 118
-
-
 state 133
 
-   68 MkDictPair: '(' error ')' ':' . ExpD
+   38 QQString: QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END .
 
-    IDENT           shift, and go to state 1
-    LITERAL         shift, and go to state 2
-    QQSTRING_START  shift, and go to state 5
-    '$'             shift, and go to state 6
-    '('             shift, and go to state 7
-    '.'             shift, and go to state 8
-    '['             shift, and go to state 9
-    '{'             shift, and go to state 10
-
-    String  go to state 14
-    ExpD    go to state 140
-    Term    go to state 118
+    $default  reduce using rule 38 (QQString)
 
 
 state 134
 
-   67 MkDictPair: '(' Exp ')' ':' . ExpD
+   41 ExpD: ExpD '|' . ExpD
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -3054,10 +3146,46 @@ state 134
 
     String  go to state 14
     ExpD    go to state 141
-    Term    go to state 118
+    Term    go to state 120
 
 
 state 135
+
+   69 MkDictPair: '(' error ')' ':' . ExpD
+
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    String  go to state 14
+    ExpD    go to state 142
+    Term    go to state 120
+
+
+state 136
+
+   68 MkDictPair: '(' Exp ')' ':' . ExpD
+
+    IDENT           shift, and go to state 1
+    LITERAL         shift, and go to state 2
+    QQSTRING_START  shift, and go to state 5
+    '$'             shift, and go to state 6
+    '('             shift, and go to state 7
+    '.'             shift, and go to state 8
+    '['             shift, and go to state 9
+    '{'             shift, and go to state 10
+
+    String  go to state 14
+    ExpD    go to state 143
+    Term    go to state 120
+
+
+state 137
 
     6 Exp: Term "as" '$' IDENT '|' . Exp
 
@@ -3072,15 +3200,15 @@ state 135
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 142
+    Exp      go to state 144
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
 
 
-state 136
+state 138
 
-   34 FuncDef: "def" IDENT '(' IDENT ')' ':' . Exp ';'
+   35 FuncDef: "def" IDENT '(' IDENT ')' ':' . Exp ';'
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -3093,143 +3221,147 @@ state 136
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 143
+    Exp      go to state 145
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
 
 
-state 137
-
-    9 Exp: Exp . '=' Exp
-   10    | Exp . "or" Exp
-   11    | Exp . "and" Exp
-   12    | Exp . "//" Exp
-   13    | Exp . "//=" Exp
-   14    | Exp . "|=" Exp
-   15    | Exp . '|' Exp
-   16    | Exp . ',' Exp
-   17    | Exp . '+' Exp
-   18    | Exp . "+=" Exp
-   19    | Exp . '-' Exp
-   20    | Exp . "-=" Exp
-   21    | Exp . '*' Exp
-   22    | Exp . "*=" Exp
-   23    | Exp . '/' Exp
-   24    | Exp . "/=" Exp
-   25    | Exp . "==" Exp
-   26    | Exp . "!=" Exp
-   27    | Exp . '<' Exp
-   28    | Exp . '>' Exp
-   29    | Exp . "<=" Exp
-   30    | Exp . ">=" Exp
-   39 ElseBody: "else" Exp . "end"
-
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "end"  shift, and go to state 144
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
-
-
-state 138
-
-    9 Exp: Exp . '=' Exp
-   10    | Exp . "or" Exp
-   11    | Exp . "and" Exp
-   12    | Exp . "//" Exp
-   13    | Exp . "//=" Exp
-   14    | Exp . "|=" Exp
-   15    | Exp . '|' Exp
-   16    | Exp . ',' Exp
-   17    | Exp . '+' Exp
-   18    | Exp . "+=" Exp
-   19    | Exp . '-' Exp
-   20    | Exp . "-=" Exp
-   21    | Exp . '*' Exp
-   22    | Exp . "*=" Exp
-   23    | Exp . '/' Exp
-   24    | Exp . "/=" Exp
-   25    | Exp . "==" Exp
-   26    | Exp . "!=" Exp
-   27    | Exp . '<' Exp
-   28    | Exp . '>' Exp
-   29    | Exp . "<=" Exp
-   30    | Exp . ">=" Exp
-   38 ElseBody: "elif" Exp . "then" Exp ElseBody
-
-    "=="    shift, and go to state 36
-    "!="    shift, and go to state 37
-    "//"    shift, and go to state 38
-    "then"  shift, and go to state 145
-    "and"   shift, and go to state 39
-    "or"    shift, and go to state 40
-    "|="    shift, and go to state 41
-    "+="    shift, and go to state 42
-    "-="    shift, and go to state 43
-    "*="    shift, and go to state 44
-    "/="    shift, and go to state 45
-    "//="   shift, and go to state 46
-    "<="    shift, and go to state 47
-    ">="    shift, and go to state 48
-    '|'     shift, and go to state 49
-    ','     shift, and go to state 50
-    '='     shift, and go to state 51
-    '<'     shift, and go to state 52
-    '>'     shift, and go to state 53
-    '+'     shift, and go to state 54
-    '-'     shift, and go to state 55
-    '*'     shift, and go to state 56
-    '/'     shift, and go to state 57
-
-
 state 139
 
-   40 ExpD: ExpD . '|' ExpD
-   40     | ExpD '|' ExpD .
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+   40 ElseBody: "else" Exp . "end"
 
-    $default  reduce using rule 40 (ExpD)
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "end"       shift, and go to state 146
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
 
 state 140
 
-   40 ExpD: ExpD . '|' ExpD
-   68 MkDictPair: '(' error ')' ':' ExpD .
+    9 Exp: Exp . '=' Exp
+   10    | Exp . "or" Exp
+   11    | Exp . "and" Exp
+   12    | Exp . "//" Exp
+   13    | Exp . "//=" Exp
+   14    | Exp . "|=" Exp
+   15    | Exp . '|' Exp
+   16    | Exp . ',' Exp
+   17    | Exp . '+' Exp
+   18    | Exp . "+=" Exp
+   19    | Exp . '-' Exp
+   20    | Exp . "-=" Exp
+   21    | Exp . '*' Exp
+   22    | Exp . "*=" Exp
+   23    | Exp . '/' Exp
+   24    | Exp . "/=" Exp
+   25    | Exp . "==" Exp
+   26    | Exp . "!=" Exp
+   27    | Exp . '<' Exp
+   28    | Exp . '>' Exp
+   29    | Exp . "<=" Exp
+   30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
+   39 ElseBody: "elif" Exp . "then" Exp ElseBody
 
-    '|'  shift, and go to state 132
-
-    $default  reduce using rule 68 (MkDictPair)
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "then"      shift, and go to state 147
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
 
 state 141
 
-   40 ExpD: ExpD . '|' ExpD
-   67 MkDictPair: '(' Exp ')' ':' ExpD .
+   41 ExpD: ExpD . '|' ExpD
+   41     | ExpD '|' ExpD .
 
-    '|'  shift, and go to state 132
-
-    $default  reduce using rule 67 (MkDictPair)
+    $default  reduce using rule 41 (ExpD)
 
 
 state 142
+
+   41 ExpD: ExpD . '|' ExpD
+   69 MkDictPair: '(' error ')' ':' ExpD .
+
+    '|'  shift, and go to state 134
+
+    $default  reduce using rule 69 (MkDictPair)
+
+
+state 143
+
+   41 ExpD: ExpD . '|' ExpD
+   68 MkDictPair: '(' Exp ')' ':' ExpD .
+
+    '|'  shift, and go to state 134
+
+    $default  reduce using rule 68 (MkDictPair)
+
+
+state 144
 
     6 Exp: Term "as" '$' IDENT '|' Exp .
     9    | Exp . '=' Exp
@@ -3254,33 +3386,35 @@ state 142
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
+   31    | Exp . "contains" Exp
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
     $default  reduce using rule 6 (Exp)
 
 
-state 143
+state 145
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -3304,43 +3438,45 @@ state 143
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   34 FuncDef: "def" IDENT '(' IDENT ')' ':' Exp . ';'
+   31    | Exp . "contains" Exp
+   35 FuncDef: "def" IDENT '(' IDENT ')' ':' Exp . ';'
 
-    "=="   shift, and go to state 36
-    "!="   shift, and go to state 37
-    "//"   shift, and go to state 38
-    "and"  shift, and go to state 39
-    "or"   shift, and go to state 40
-    "|="   shift, and go to state 41
-    "+="   shift, and go to state 42
-    "-="   shift, and go to state 43
-    "*="   shift, and go to state 44
-    "/="   shift, and go to state 45
-    "//="  shift, and go to state 46
-    "<="   shift, and go to state 47
-    ">="   shift, and go to state 48
-    ';'    shift, and go to state 146
-    '|'    shift, and go to state 49
-    ','    shift, and go to state 50
-    '='    shift, and go to state 51
-    '<'    shift, and go to state 52
-    '>'    shift, and go to state 53
-    '+'    shift, and go to state 54
-    '-'    shift, and go to state 55
-    '*'    shift, and go to state 56
-    '/'    shift, and go to state 57
-
-
-state 144
-
-   39 ElseBody: "else" Exp "end" .
-
-    $default  reduce using rule 39 (ElseBody)
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    ';'         shift, and go to state 148
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
 
-state 145
+state 146
 
-   38 ElseBody: "elif" Exp "then" . Exp ElseBody
+   40 ElseBody: "else" Exp "end" .
+
+    $default  reduce using rule 40 (ElseBody)
+
+
+state 147
+
+   39 ElseBody: "elif" Exp "then" . Exp ElseBody
 
     IDENT           shift, and go to state 1
     LITERAL         shift, and go to state 2
@@ -3353,20 +3489,20 @@ state 145
     '['             shift, and go to state 9
     '{'             shift, and go to state 10
 
-    Exp      go to state 147
+    Exp      go to state 149
     String   go to state 14
     FuncDef  go to state 20
     Term     go to state 16
 
 
-state 146
+state 148
 
-   34 FuncDef: "def" IDENT '(' IDENT ')' ':' Exp ';' .
+   35 FuncDef: "def" IDENT '(' IDENT ')' ':' Exp ';' .
 
-    $default  reduce using rule 34 (FuncDef)
+    $default  reduce using rule 35 (FuncDef)
 
 
-state 147
+state 149
 
     9 Exp: Exp . '=' Exp
    10    | Exp . "or" Exp
@@ -3390,38 +3526,40 @@ state 147
    28    | Exp . '>' Exp
    29    | Exp . "<=" Exp
    30    | Exp . ">=" Exp
-   38 ElseBody: "elif" Exp "then" Exp . ElseBody
+   31    | Exp . "contains" Exp
+   39 ElseBody: "elif" Exp "then" Exp . ElseBody
 
-    "=="    shift, and go to state 36
-    "!="    shift, and go to state 37
-    "//"    shift, and go to state 38
-    "else"  shift, and go to state 128
-    "elif"  shift, and go to state 129
-    "and"   shift, and go to state 39
-    "or"    shift, and go to state 40
-    "|="    shift, and go to state 41
-    "+="    shift, and go to state 42
-    "-="    shift, and go to state 43
-    "*="    shift, and go to state 44
-    "/="    shift, and go to state 45
-    "//="   shift, and go to state 46
-    "<="    shift, and go to state 47
-    ">="    shift, and go to state 48
-    '|'     shift, and go to state 49
-    ','     shift, and go to state 50
-    '='     shift, and go to state 51
-    '<'     shift, and go to state 52
-    '>'     shift, and go to state 53
-    '+'     shift, and go to state 54
-    '-'     shift, and go to state 55
-    '*'     shift, and go to state 56
-    '/'     shift, and go to state 57
+    "=="        shift, and go to state 36
+    "!="        shift, and go to state 37
+    "//"        shift, and go to state 38
+    "else"      shift, and go to state 130
+    "elif"      shift, and go to state 131
+    "and"       shift, and go to state 39
+    "or"        shift, and go to state 40
+    "|="        shift, and go to state 41
+    "+="        shift, and go to state 42
+    "-="        shift, and go to state 43
+    "*="        shift, and go to state 44
+    "/="        shift, and go to state 45
+    "//="       shift, and go to state 46
+    "<="        shift, and go to state 47
+    ">="        shift, and go to state 48
+    "contains"  shift, and go to state 49
+    '|'         shift, and go to state 50
+    ','         shift, and go to state 51
+    '='         shift, and go to state 52
+    '<'         shift, and go to state 53
+    '>'         shift, and go to state 54
+    '+'         shift, and go to state 55
+    '-'         shift, and go to state 56
+    '*'         shift, and go to state 57
+    '/'         shift, and go to state 58
 
-    ElseBody  go to state 148
+    ElseBody  go to state 150
 
 
-state 148
+state 150
 
-   38 ElseBody: "elif" Exp "then" Exp ElseBody .
+   39 ElseBody: "elif" Exp "then" Exp ElseBody .
 
-    $default  reduce using rule 38 (ElseBody)
+    $default  reduce using rule 39 (ElseBody)

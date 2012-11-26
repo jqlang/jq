@@ -161,6 +161,21 @@ static void f_greatereq(jv input[], jv output[]) {
   order_cmp(input, output, CMP_OP_GREATEREQ);
 }
 
+static void f_contains(jv input[], jv output[]) {
+  jv_free(input[0]);
+  jv a = input[2];
+  jv b = input[1];
+  jv_kind akind = jv_get_kind(a);
+
+  if (akind == jv_get_kind(b)) {
+    output[0] = jv_bool(jv_contains(a, b));
+  } else {  
+    output[0] = jv_invalid_with_msg(jv_string_fmt("Can only check containment of values of the same type."));
+    jv_free(a);
+    jv_free(b);
+  }
+}
+
 static void f_tonumber(jv input[], jv output[]) {
   if (jv_get_kind(input[0]) == JV_KIND_NUMBER) {
     output[0] = input[0];
@@ -265,6 +280,7 @@ static struct cfunction function_list[] = {
   {f_greater, "_greater", CALL_BUILTIN_3_1},
   {f_lesseq, "_lesseq", CALL_BUILTIN_3_1},
   {f_greatereq, "_greatereq", CALL_BUILTIN_3_1},
+  {f_contains, "_contains", CALL_BUILTIN_3_1},
   {f_length, "length", CALL_BUILTIN_1_1},
   {f_type, "type", CALL_BUILTIN_1_1},
   {f_add, "add", CALL_BUILTIN_1_1},
