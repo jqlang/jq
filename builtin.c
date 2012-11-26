@@ -251,27 +251,6 @@ static void f_type(jv input[], jv output[]) {
   jv_free(input[0]);
 }
 
-static block j_empty() {
-  return gen_function("empty", gen_op_simple(BACKTRACK));
-}
-
-static block j_false() {
-  return gen_function("false", gen_op_const(LOADK, jv_false()));
-}
-
-static block j_true() {
-  return gen_function("true", gen_op_const(LOADK, jv_true()));
-}
-
-static block j_null() {
-  return gen_function("null", gen_op_const(LOADK, jv_null()));
-}
-
-static block j_not() {
-  return gen_function("not", gen_condbranch(gen_op_const(LOADK, jv_false()),
-                                            gen_op_const(LOADK, jv_true())));
-}
-
 static struct cfunction function_list[] = {
   {f_plus, "_plus", CALL_BUILTIN_3_1},
   {f_minus, "_minus", CALL_BUILTIN_3_1},
@@ -294,13 +273,22 @@ static struct cfunction function_list[] = {
 static struct symbol_table cbuiltins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
 
 typedef block (*bytecoded_builtin)();
-static bytecoded_builtin bytecoded_builtins[] = {
-  j_empty,
-  j_false,
-  j_true,
-  j_null,
-  j_not,
-};
+struct bytecoded_builtin { const char* name; block code; };
+static block bind_bytecoded_builtins(block b) {
+  struct bytecoded_builtin builtin_defs[] = {
+    {"empty", gen_op_simple(BACKTRACK)},
+    {"false", gen_op_const(LOADK, jv_false())},
+    {"true", gen_op_const(LOADK, jv_true())},
+    {"null", gen_op_const(LOADK, jv_null())},
+    {"not", gen_condbranch(gen_op_const(LOADK, jv_false()),
+                           gen_op_const(LOADK, jv_true()))}
+  };
+  block builtins = gen_noop();
+  for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
+    builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, builtin_defs[i].code));
+  }
+  return block_bind(builtins, b, OP_IS_CALL_PSEUDO);
+}
 
 static const char* jq_builtins[] = {
   "def map(f): [.[] | f];",
@@ -318,10 +306,6 @@ block builtins_bind(block b) {
     b = block_bind(funcs, b, OP_IS_CALL_PSEUDO);
     locfile_free(&src);
   }
-  block builtins = gen_noop();
-  for (unsigned i=0; i<sizeof(bytecoded_builtins)/sizeof(bytecoded_builtins[0]); i++) {
-    block_append(&builtins, bytecoded_builtins[i]());
-  }
-  b = block_bind(builtins, b, OP_IS_CALL_PSEUDO);
+  b = bind_bytecoded_builtins(b);
   return gen_cbinding(&cbuiltins, b);
 }
