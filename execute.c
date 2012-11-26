@@ -14,6 +14,7 @@
 
 #include "locfile.h"
 #include "jv.h"
+#include "jv_aux.h"
 #include "parser.h"
 #include "builtin.h"
 
