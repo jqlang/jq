@@ -126,6 +126,10 @@ static int try_exit(int c, int state, yyscan_t yyscanner) {
     match = ')'; 
     ret = QQSTRING_INTERP_END;
     break;
+
+  default:
+    // may not be the best error to give
+    return INVALID_CHARACTER;
   }
   assert(match);
   if (match == c) {
