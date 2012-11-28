@@ -8,8 +8,12 @@ AM_INIT_AUTOMAKE([parallel-tests])
 AC_PROG_CC
 AC_PROG_CC_STDC
 AC_PROG_CPP_WERROR
+AC_PROG_YACC
 
 AM_PROG_CC_C_O
+
+dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
+dnl AC_PROG_YACC macros...
 
 dnl   CFLAGS is concidered a packagers variable, not a developer variable
 dnl   in Auto-tools.  For developer ease of use, CFLAGS are set how the
@@ -27,6 +31,10 @@ dnl AM_CONDITIONAL(DEVCFLAGS, test x$enable_devcflags = xyes)
 if test "$enable_devcflags" = "yes"; then
   AM_CONDITIONAL(DEVCFLAGS_ENABLED, true)
 fi
+
+dnl
+dnl these program checks should probably be deleted
+dnl
 
 dnl Check for sed
 AC_CHECK_PROGS(regex_cmd, sed)
@@ -46,8 +54,6 @@ if test x$bison_cmd = "x" ; then
     AC_MSG_NOTICE([bison is required to patch jq.])
 fi
 
- AC_CONFIG_HEADERS(config.h)
-
 dnl Check for python
 AC_CHECK_PROGS(python_cmd, python)
 if test x$python_cmd = "x" ; then
@@ -61,6 +67,7 @@ if test x$valgrind_cmd = "x" ; then
 fi
 
 dnl AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([-Wall dist-bzip2 dist-zip])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

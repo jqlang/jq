@@ -88,7 +88,7 @@ struct lexer_param;
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs String
 %{
-#include "lexer.gen.h"
+#include "lexer.h"
 struct lexer_param {
   yyscan_t lexer;
 };
