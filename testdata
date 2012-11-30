@@ -425,3 +425,7 @@ true
 {foo: {baz: 12, blap: {bar: 13}}, bar: 14} contains {bar: 14, foo: {blap: {bar: 14}}}
 {}
 false
+
+sort
+[42,[2,5,3,11],10,{"a":42,"b":2},{"a":42},true,2,[2,6],"hello",null,[2,5,6],{"a":[],"b":1},"abc","ab",[3,10],{},false,"abcd",null]
+[null,null,false,true,2,10,42,"ab","abc","abcd","hello",[2,5,3,11],[2,5,6],[2,6],[3,10],{},{"a":42},{"a":42,"b":2},{"a":[],"b":1}]

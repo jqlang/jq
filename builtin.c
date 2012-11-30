@@ -3,6 +3,7 @@
 #include "compile.h"
 #include "parser.h"
 #include "locfile.h"
+#include "jv_aux.h"
 
 enum {
   CMP_OP_LESS,
@@ -127,22 +128,11 @@ static void f_notequal(jv input[], jv output[]) {
 
 static void order_cmp(jv input[], jv output[], int op) {
   jv_free(input[0]);
-  jv a = input[2];
-  jv b = input[1];
-  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    double da = jv_number_value(a);
-    double db = jv_number_value(b);
-    output[0] = jv_bool((op == CMP_OP_LESS && da < db) ||
-                        (op == CMP_OP_LESSEQ && da <= db) ||
-                        (op == CMP_OP_GREATEREQ && da >= db) ||
-                        (op == CMP_OP_GREATER && da > db));
-  } else {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("Attempted to compare order of %s wrt %s",
-                                                  jv_kind_name(jv_get_kind(a)),
-                                                  jv_kind_name(jv_get_kind(b))));
-    jv_free(a);
-    jv_free(b);
-  }
+  int r = jv_cmp(input[2], input[1]);
+  output[0] = jv_bool((op == CMP_OP_LESS && r < 0) ||
+                      (op == CMP_OP_LESSEQ && r <= 0) ||
+                      (op == CMP_OP_GREATEREQ && r >= 0) ||
+                      (op == CMP_OP_GREATER && r > 0));
 }
 
 static void f_less(jv input[], jv output[]) {
@@ -222,40 +212,21 @@ static void f_tostring(jv input[], jv output[]) {
   }
 }
 
-static int string_cmp(const void* pa, const void* pb){
-  const jv* a = pa;
-  const jv* b = pb;
-  int lena = jv_string_length(jv_copy(*a));
-  int lenb = jv_string_length(jv_copy(*b));
-  int minlen = lena < lenb ? lena : lenb;
-  int r = memcmp(jv_string_value(*a), jv_string_value(*b), minlen);
-  if (r == 0) r = lena - lenb;
-  return r;
-}
-
 static void f_keys(jv input[], jv output[]) {
-  if (jv_get_kind(input[0]) == JV_KIND_OBJECT) {
-    int nkeys = jv_object_length(jv_copy(input[0]));
-    jv* keys = malloc(sizeof(jv) * nkeys);
-    int kidx = 0;
-    jv_object_foreach(i, input[0]) {
-      keys[kidx++] = jv_object_iter_key(input[0], i);
-    }
-    qsort(keys, nkeys, sizeof(jv), string_cmp);
-    output[0] = jv_array_sized(nkeys);
-    for (int i = 0; i<nkeys; i++) {
-      output[0] = jv_array_append(output[0], keys[i]);
-    }
-    free(keys);
-    jv_free(input[0]);
-  } else if (jv_get_kind(input[0]) == JV_KIND_ARRAY) {
-    int n = jv_array_length(input[0]);
-    output[0] = jv_array();
-    for (int i=0; i<n; i++){
-      output[0] = jv_array_set(output[0], i, jv_number(i));
-    }
+  if (jv_get_kind(input[0]) == JV_KIND_OBJECT || jv_get_kind(input[0]) == JV_KIND_ARRAY) {
+    output[0] = jv_keys(input[0]);
   } else {
     output[0] = jv_invalid_with_msg(jv_string_fmt("'keys' only supports object, not %s",
+                                                  jv_kind_name(jv_get_kind(input[0]))));
+    jv_free(input[0]);
+  }
+}
+
+static void f_sort(jv input[], jv output[]){
+  if (jv_get_kind(input[0]) == JV_KIND_ARRAY) {
+    output[0] = jv_sort(input[0], jv_copy(input[0]));
+  } else {
+    output[0] = jv_invalid_with_msg(jv_string_fmt("only arrays may be sorted, not %s",
                                                   jv_kind_name(jv_get_kind(input[0]))));
     jv_free(input[0]);
   }
@@ -284,6 +255,7 @@ static struct cfunction function_list[] = {
   {f_length, "length", CALL_BUILTIN_1_1},
   {f_type, "type", CALL_BUILTIN_1_1},
   {f_add, "add", CALL_BUILTIN_1_1},
+  {f_sort, "sort", CALL_BUILTIN_1_1},
 };
 
 static struct symbol_table cbuiltins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
