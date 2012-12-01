@@ -56,12 +56,8 @@ static inst* inst_new(opcode op) {
 
 static void inst_free(struct inst* i) {
   free(i->symbol);
-  if (opcode_describe(i->op)->flags & OP_HAS_BLOCK) {
-    block_free(i->subfn);
-  }
-  if (opcode_describe(i->op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-    block_free(i->arglist);
-  }
+  block_free(i->subfn);
+  block_free(i->arglist);
   if (opcode_describe(i->op)->flags & OP_HAS_CONSTANT) {
     jv_free(i->imm.constant);
   }
@@ -486,7 +482,7 @@ static block expand_call_arglist(block b) {
         // Arguments to C functions not yet supported
         inst* cfunction_ref = block_take(&arglist);
         block prelude = gen_noop();
-        int nargs = 0;
+        int nargs = 2;
         for (inst* i; (i = block_take(&arglist)); ) {
           assert(i->op == CLOSURE_CREATE); // FIXME
           block body = i->subfn;
@@ -496,8 +492,11 @@ static block expand_call_arglist(block b) {
           nargs++;
         }
         assert(curr->op == CALL_1_1);
-        curr->imm.intval = 1;
-        ret = BLOCK(ret, prelude, inst_block(curr), inst_block(cfunction_ref), inst_block(seq_end));
+        curr->op = CALL_BUILTIN_1_1;
+        curr->imm.intval = nargs;
+        assert(!curr->arglist.first);
+        curr->arglist = inst_block(cfunction_ref);
+        ret = BLOCK(ret, prelude, inst_block(curr), inst_block(seq_end));
         break;
       }
       }
@@ -584,38 +583,46 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
     code[pos++] = curr->op;
     int opflags = op->flags;
     assert(!(op->flags & OP_IS_CALL_PSEUDO));
-    if (opflags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
+    if (curr->op == CALL_BUILTIN_1_1) {
+      int nargs = curr->imm.intval;
+      code[pos++] = (uint16_t)nargs;
+      assert(block_is_single(curr->arglist));
+      inst* cfunc = curr->arglist.first;
+      assert(cfunc && cfunc->bound_by->op == CLOSURE_CREATE_C);
+      assert(opcode_length(*opcode_rewrite) == 
+             opcode_length(bc->globals->cfunctions[cfunc->bound_by->imm.intval].callop));
+      *opcode_rewrite = bc->globals->cfunctions[cfunc->bound_by->imm.intval].callop;
+      code[pos++] = cfunc->bound_by->imm.intval;
+      // FIXME arg errors
+      assert(nargs > 0);
+    } else if (opflags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
       assert(curr->op == CALL_1_1);
       int nargs = curr->imm.intval;
       assert(nargs > 0 && nargs < 100); //FIXME
       code[pos++] = (uint16_t)nargs;
-
-      int desired_params = 0;
-      for (int i=0; i<nargs; i++) {
+      curr = curr->next;
+      assert(curr && opcode_describe(curr->op)->flags & OP_IS_CALL_PSEUDO);
+      assert(curr->bound_by->op == CLOSURE_CREATE ||
+             curr->bound_by->op == CLOSURE_PARAM);
+      code[pos++] = nesting_level(bc, curr->bound_by);
+      if (curr->bound_by->op == CLOSURE_CREATE) {
+        code[pos++] = curr->bound_by->imm.intval | ARG_NEWCLOSURE;
+        inst* i = curr->bound_by;
+        // FIXME arg errors
+        assert(nargs - 1 == i->compiled->subfunctions[i->imm.intval]->nclosures);
+      } else {
+        code[pos++] = curr->bound_by->imm.intval;
+        // FIXME arg errors
+        assert(nargs == 1);
+      }
+      for (int i=1; i<nargs; i++) {
         curr = curr->next;
         assert(curr && opcode_describe(curr->op)->flags & OP_IS_CALL_PSEUDO);
+        assert(curr->op == CLOSURE_REF);
         code[pos++] = nesting_level(bc, curr->bound_by);
-        switch (curr->bound_by->op) {
-        default: assert(0 && "Unknown type of argument");
-        case CLOSURE_CREATE:
-          code[pos++] = curr->bound_by->imm.intval | ARG_NEWCLOSURE;
-          if (i == 0) {
-            inst* i = curr->bound_by;
-            desired_params = i->compiled->subfunctions[i->imm.intval]->nclosures;
-          }
-          break;
-        case CLOSURE_PARAM:
-          code[pos++] = curr->bound_by->imm.intval;
-          if (i == 0) desired_params = 0;
-          break;
-        case CLOSURE_CREATE_C:
-          code[pos++] = curr->bound_by->imm.intval;
-          *opcode_rewrite = bc->globals->cfunctions[curr->bound_by->imm.intval].callop;
-          if (i == 0) desired_params = 0;
-          break;
-        }
+        assert(curr->bound_by->op == CLOSURE_CREATE);
+        code[pos++] = curr->bound_by->imm.intval | ARG_NEWCLOSURE;
       }
-      assert(nargs - 1 == desired_params);
     } else if (opflags & OP_HAS_CONSTANT) {
       code[pos++] = jv_array_length(jv_copy(constant_pool));
       constant_pool = jv_array_append(constant_pool, jv_copy(curr->imm.constant));
@@ -629,17 +636,6 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
       assert(curr->imm.target->bytecode_pos > pos); // only forward branches
       code[pos] = curr->imm.target->bytecode_pos - (pos + 1);
       pos++;
-    } else if (opflags & OP_HAS_CFUNC) {
-      assert(curr->symbol);
-      int found = 0;
-      for (int i=0; i<bc->globals->ncfunctions; i++) {
-        if (!strcmp(curr->symbol, bc->globals->cfunctions[i].name)) {
-          code[pos++] = i;
-          found = 1;
-          break;
-        }
-      }
-      assert(found);
     } else if (op->length > 1) {
       assert(0 && "codegen not implemented for this operation");
     }
