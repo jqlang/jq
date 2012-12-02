@@ -1,5 +1,6 @@
 #include <string.h>
 #include "builtin.h"
+#include "bytecode.h"
 #include "compile.h"
 #include "parser.h"
 #include "locfile.h"

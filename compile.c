@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "opcode.h"
 #include "compile.h"
+#include "bytecode.h"
 #include "locfile.h"
 
 struct inst {

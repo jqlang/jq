@@ -7,7 +7,6 @@
 
 #include "opcode.h"
 #include "bytecode.h"
-#include "compile.h"
 
 #include "forkable_stack.h"
 #include "frame_layout.h"

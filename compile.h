@@ -1,9 +1,12 @@
 #ifndef COMPILE_H
 #define COMPILE_H
 #include <stdint.h>
-#include "bytecode.h"
+#include "jv.h"
 #include "opcode.h"
 #include "locfile.h"
+
+struct bytecode;
+struct symbol_table;
 
 struct inst;
 typedef struct inst inst;
