@@ -31,6 +31,13 @@ null
 null
 []
 
+# The input line starts with a 0xFEFF (byte order mark) codepoint
+# No, there is no reason to have a byte order mark in UTF8 text.
+# But apparently people do, so jq shouldn't break on it.
+.
+﻿"byte order mark"
+"byte order mark"
+
 # We test escapes by matching them against Unicode codepoints
 # FIXME: more tests needed for weird unicode stuff (e.g. utf16 pairs)
 "Aa\r\n\t\b\f\u03bc"

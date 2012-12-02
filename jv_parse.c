@@ -24,6 +24,7 @@ void jv_parser_init(struct jv_parser* p) {
   p->st = JV_PARSER_NORMAL;
   p->curr_buf = 0;
   p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
+  p->bom_strip_position = 0;
   jvp_dtoa_context_init(&p->dtoa);
 }
 
@@ -332,9 +333,27 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   return answer;
 }
 
+static unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
+
 void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial) {
   assert((p->curr_buf == 0 || p->curr_buf_pos == p->curr_buf_length)
          && "previous buffer not exhausted");
+  while (p->bom_strip_position < sizeof(UTF8_BOM)) {
+    if ((unsigned char)*buf == UTF8_BOM[p->bom_strip_position]) {
+      // matched a BOM character
+      buf++;
+      length--;
+      p->bom_strip_position++;
+    } else {
+      if (p->bom_strip_position == 0) {
+        // no BOM in this document
+        p->bom_strip_position = sizeof(UTF8_BOM);
+      } else {
+        // malformed BOM (prefix present, rest missing)
+        p->bom_strip_position = 0xff;
+      }
+    }
+  }
   p->curr_buf = buf;
   p->curr_buf_length = length;
   p->curr_buf_pos = 0;
@@ -343,6 +362,7 @@ void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_
 
 jv jv_parser_next(struct jv_parser* p) {
   assert(p->curr_buf && "a buffer must be provided");
+  if (p->bom_strip_position == 0xff) return jv_invalid_with_msg(jv_string("Malformed BOM"));
   jv value;
   presult msg = 0;
   while (!msg && p->curr_buf_pos < p->curr_buf_length) {
