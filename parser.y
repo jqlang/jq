@@ -75,7 +75,7 @@ struct lexer_param;
 
  /* revolting hack */
 %left ';'
-%left '|'
+%right '|'
 %left ','
 %right "//"
 %nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETDEFINEDOR
