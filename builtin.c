@@ -161,8 +161,7 @@ static jv f_greatereq(jv input, jv a, jv b) {
   return order_cmp(input, a, b, CMP_OP_GREATEREQ);
 }
 
-static jv f_contains(jv input, jv a, jv b) {
-  jv_free(input);
+static jv f_contains(jv a, jv b) {
   jv_kind akind = jv_get_kind(a);
 
   if (akind == jv_get_kind(b)) {
@@ -242,7 +241,7 @@ static struct cfunction function_list[] = {
   {(cfunction_ptr)f_greater, "_greater", 3},
   {(cfunction_ptr)f_lesseq, "_lesseq", 3},
   {(cfunction_ptr)f_greatereq, "_greatereq", 3},
-  {(cfunction_ptr)f_contains, "_contains", 3},
+  {(cfunction_ptr)f_contains, "contains", 2},
   {(cfunction_ptr)f_length, "length", 1},
   {(cfunction_ptr)f_type, "type", 1},
   {(cfunction_ptr)f_add, "add", 1},

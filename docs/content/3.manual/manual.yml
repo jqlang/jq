@@ -487,6 +487,35 @@ sections:
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
 
+      - title: `contains`
+        body: |
+
+          The filter `contains(b)` will produce true if b is
+          completely contained within the input. A string B is
+          contained in a string A if B is a substring of A. An array B
+          is contained in an array A is all elements in B are
+          contained in any element in A. An object B is contained in
+          object A if all of the values in B are contained in the
+          value in A with the same key. All other types are assumed to
+          be contained in each other if they are equal.
+
+        examples:
+          - program: 'contains("bar")'
+            input: '"foobar"'
+            output: ['true']
+          - program: 'contains(["baz", "bar"])'
+            input: '["foobar", "foobaz", "blarp"]'
+            output: ['true']
+          - program: 'contains(["bazzzzz", "bar"])'
+            input: '["foobar", "foobaz", "blarp"]'
+            output: ['false']
+          - program: 'contains({foo: 12, bar: [{barp: 12}]})'
+            input: '{foo: 12, bar:[1,2,{barp:12, blip:13}]}'
+            output: ['true']
+          - program: 'contains({foo: 12, bar: [{barp: 15}]})'
+            input: '{foo: 12, bar:[1,2,{barp:12, blip:13}]}'
+            output: ['false']
+
       - title: "String interpolation - `\(foo)`"
         body: |
 
@@ -522,33 +551,6 @@ sections:
           - program: '.[] == 1'
             input: '[1, 1.0, "1", "banana"]'
             output: ['[true, true, false, false]']
-      - title: `contains`
-        body: |
-
-          The expression 'a contains b' will produce true if b is completely
-          contained within a. A string B is contained in a string A if B is a
-          substring of A. An array B is contained in an array A is all elements
-          in B are contained in any element in A. An object B is contained in
-          object A if all of the values in B are contained in the value in A with
-          the same key. All other types are assumed to be contained in each other
-          if they are equal.
-
-        examples:
-          - program: '. == contains "bar"'
-            input: '"foobar"'
-            output: ['true']
-          - program: '. contains ["baz", "bar"]'
-            input: '["foobar", "foobaz", "blarp"]'
-            output: ['true']
-          - program: '. contains ["bazzzzz", "bar"]'
-            input: '["foobar", "foobaz", "blarp"]'
-            output: ['false']
-          - program: '. contains {foo: 12, bar: [{barp: 12}]}'
-            input: '{foo: 12, bar:[1,2,{barp:12, blip:13}]}'
-            output: ['true']
-          - program: '. contains {foo: 12, bar: [{barp: 15}]}'
-            input: '{foo: 12, bar:[1,2,{barp:12, blip:13}]}'
-            output: ['false']
       - title: if-then-else
         body: |
 

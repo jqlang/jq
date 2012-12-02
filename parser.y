@@ -65,7 +65,6 @@ struct lexer_param;
 %token SETDEFINEDOR "//="
 %token LESSEQ "<="
 %token GREATEREQ ">="
-%token CONTAINS "contains"
 
 %token QQSTRING_START
 %token <literal> QQSTRING_TEXT
@@ -81,7 +80,7 @@ struct lexer_param;
 %nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETDEFINEDOR
 %left OR
 %left AND
-%nonassoc NEQ EQ '<' '>' LESSEQ GREATEREQ CONTAINS
+%nonassoc NEQ EQ '<' '>' LESSEQ GREATEREQ
 %left '+' '-'
 %left '*' '/'
 
@@ -150,7 +149,6 @@ static block gen_binop(block a, block b, int op) {
   case '>': funcname = "_greater"; break;
   case LESSEQ: funcname = "_lesseq"; break;
   case GREATEREQ: funcname = "_greatereq"; break;
-  case CONTAINS: funcname = "_contains"; break;
   }
   assert(funcname);
 
@@ -293,10 +291,6 @@ Exp "<=" Exp {
 
 Exp ">=" Exp {
   $$ = gen_binop($1, $3, GREATEREQ);
-} |
-
-Exp "contains" Exp {
-  $$ = gen_binop($1, $3, CONTAINS);
 } |
 
 Term { 
