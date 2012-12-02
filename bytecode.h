@@ -10,7 +10,7 @@ typedef void (*cfunction_ptr)(jv input[], jv output[]);
 struct cfunction {
   cfunction_ptr fptr;
   const char* name;
-  opcode callop;
+  int nargs;
 };
 
 #define MAX_CFUNCTION_ARGS 10

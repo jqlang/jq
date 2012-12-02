@@ -7,7 +7,7 @@
 
 static int bytecode_operation_length(uint16_t* codeptr) {
   if (opcode_describe(*codeptr)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-    return 2 + codeptr[1] * 2;
+    return 4 + codeptr[1] * 2;
   } else {
     return opcode_length(*codeptr);
   }
@@ -42,7 +42,7 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
   if (op->length > 1) {
     uint16_t imm = bc->code[pc++];
     if (op->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-      for (int i=0; i<imm; i++) {
+      for (int i=0; i<imm+1; i++) {
         uint16_t level = bc->code[pc++];
         uint16_t idx = bc->code[pc++];
         if (idx & ARG_NEWCLOSURE) {

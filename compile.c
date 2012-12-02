@@ -282,7 +282,7 @@ block gen_lambda(block body) {
 }
 
 block gen_call(const char* name, block args) {
-  inst* i = inst_new(CALL_1_1);
+  inst* i = inst_new(CALL_JQ);
   i->arglist = BLOCK(gen_op_block_unbound(CLOSURE_REF, name), args);
   return BLOCK(inst_block(i), inst_block(inst_new(CALLSEQ_END)));
 }
@@ -439,7 +439,7 @@ static block expand_call_arglist(block b) {
   block ret = gen_noop();
   for (inst* curr; (curr = block_take(&b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-      assert(curr->op == CALL_1_1);
+      assert(curr->op == CALL_JQ);
       inst* seq_end = block_take(&b);
       assert(seq_end && seq_end->op == CALLSEQ_END);
       // We expand the argument list as a series of instructions
@@ -473,7 +473,8 @@ static block expand_call_arglist(block b) {
         }
 
         assert(!arglist.first);
-        curr->imm.intval = nargs;
+        assert(nargs > 0);
+        curr->imm.intval = nargs - 1;
         ret = BLOCK(ret, prelude, inst_block(curr), callargs, inst_block(seq_end));
         break;
       }
@@ -482,7 +483,7 @@ static block expand_call_arglist(block b) {
         // Arguments to C functions not yet supported
         inst* cfunction_ref = block_take(&arglist);
         block prelude = gen_noop();
-        int nargs = 2;
+        int nargs = 1;
         for (inst* i; (i = block_take(&arglist)); ) {
           assert(i->op == CLOSURE_CREATE); // FIXME
           block body = i->subfn;
@@ -491,8 +492,8 @@ static block expand_call_arglist(block b) {
           prelude = BLOCK(prelude, gen_subexp(expand_call_arglist(body)));
           nargs++;
         }
-        assert(curr->op == CALL_1_1);
-        curr->op = CALL_BUILTIN_1_1;
+        assert(curr->op == CALL_JQ);
+        curr->op = CALL_BUILTIN;
         curr->imm.intval = nargs;
         assert(!curr->arglist.first);
         curr->arglist = inst_block(cfunction_ref);
@@ -579,26 +580,23 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
     const struct opcode_description* op = opcode_describe(curr->op);
     if (op->length == 0)
       continue;
-    uint16_t* opcode_rewrite = &code[pos];
     code[pos++] = curr->op;
     int opflags = op->flags;
     assert(!(op->flags & OP_IS_CALL_PSEUDO));
-    if (curr->op == CALL_BUILTIN_1_1) {
+    if (curr->op == CALL_BUILTIN) {
       int nargs = curr->imm.intval;
       code[pos++] = (uint16_t)nargs;
       assert(block_is_single(curr->arglist));
       inst* cfunc = curr->arglist.first;
       assert(cfunc && cfunc->bound_by->op == CLOSURE_CREATE_C);
-      assert(opcode_length(*opcode_rewrite) == 
-             opcode_length(bc->globals->cfunctions[cfunc->bound_by->imm.intval].callop));
-      *opcode_rewrite = bc->globals->cfunctions[cfunc->bound_by->imm.intval].callop;
+      //*opcode_rewrite = bc->globals->cfunctions[cfunc->bound_by->imm.intval].callop;
       code[pos++] = cfunc->bound_by->imm.intval;
       // FIXME arg errors
-      assert(nargs > 0);
+      assert(nargs == bc->globals->cfunctions[cfunc->bound_by->imm.intval].nargs);
     } else if (opflags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-      assert(curr->op == CALL_1_1);
+      assert(curr->op == CALL_JQ);
       int nargs = curr->imm.intval;
-      assert(nargs > 0 && nargs < 100); //FIXME
+      assert(nargs >= 0 && nargs < 100); //FIXME
       code[pos++] = (uint16_t)nargs;
       curr = curr->next;
       assert(curr && opcode_describe(curr->op)->flags & OP_IS_CALL_PSEUDO);
@@ -609,13 +607,13 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
         code[pos++] = curr->bound_by->imm.intval | ARG_NEWCLOSURE;
         inst* i = curr->bound_by;
         // FIXME arg errors
-        assert(nargs - 1 == i->compiled->subfunctions[i->imm.intval]->nclosures);
+        assert(nargs == i->compiled->subfunctions[i->imm.intval]->nclosures);
       } else {
         code[pos++] = curr->bound_by->imm.intval;
         // FIXME arg errors
-        assert(nargs == 1);
+        assert(nargs == 0);
       }
-      for (int i=1; i<nargs; i++) {
+      for (int i=0; i<nargs; i++) {
         curr = curr->next;
         assert(curr && opcode_describe(curr->op)->flags & OP_IS_CALL_PSEUDO);
         assert(curr->op == CLOSURE_REF);

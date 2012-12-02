@@ -167,7 +167,9 @@ jv jq_next() {
     printf("\t");
     const struct opcode_description* opdesc = opcode_describe(opcode);
     data_stk_elem* param;
-    for (int i=0; i<opdesc->stack_in; i++) {
+    int stack_in = opdesc->stack_in;
+    if (stack_in == -1) stack_in = pc[1];
+    for (int i=0; i<stack_in; i++) {
       if (i == 0) {
         param = forkable_stack_peek(&data_stk);
       } else {
@@ -410,11 +412,13 @@ jv jq_next() {
       return value;
     }
       
-    case CALL_BUILTIN_1_1: {
-      assert(*pc == 2);
-      pc++; // skip nclosures
+    case CALL_BUILTIN: {
+      int nargs = *pc++;
       stackval top = stack_pop();
       cfunc_input[0] = top.value;
+      for (int i = 1; i < nargs; i++) {
+        cfunc_input[i] = stack_pop().value;
+      }
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
       func->fptr(cfunc_input, cfunc_output);
       top.value = cfunc_output[0];
@@ -427,36 +431,16 @@ jv jq_next() {
       break;
     }
 
-    case CALL_BUILTIN_3_1: {
-      assert(*pc == 4); // no closure args allowed
-      pc++; // skip nclosures
-      stackval top = stack_pop();
-      jv a = stack_pop().value;
-      jv b = stack_pop().value;
-      cfunc_input[0] = top.value;
-      cfunc_input[1] = a;
-      cfunc_input[2] = b;
-      struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
-      func->fptr(cfunc_input, cfunc_output);
-      top.value = cfunc_output[0];
-      if (jv_is_valid(top.value)) {
-        stack_push(top);
-      } else {
-        print_error(top.value);
-        goto do_backtrack;
-      }
-      break;
-    }
-
-    case CALL_1_1: {
+    case CALL_JQ: {
       uint16_t nclosures = *pc++;
+      uint16_t* retaddr = pc + 2 + nclosures*2;
       frame_ptr new_frame = frame_push(&frame_stk, 
                                        make_closure(&frame_stk, frame_current(&frame_stk), pc),
-                                       pc + nclosures * 2);
+                                       retaddr);
       pc += 2;
       frame_ptr old_frame = forkable_stack_peek_next(&frame_stk, new_frame);
-      assert(nclosures - 1 == frame_self(new_frame)->bc->nclosures);
-      for (int i=0; i<nclosures-1; i++) {
+      assert(nclosures == frame_self(new_frame)->bc->nclosures);
+      for (int i=0; i<nclosures; i++) {
         *frame_closure_arg(new_frame, i) = make_closure(&frame_stk, old_frame, pc);
         pc += 2;
       }
