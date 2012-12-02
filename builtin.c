@@ -221,6 +221,26 @@ static jv f_sort(jv input){
   }
 }
 
+static jv f_sort_by_impl(jv input, jv keys) {
+  if (jv_get_kind(input) == JV_KIND_ARRAY && 
+      jv_get_kind(keys) == JV_KIND_ARRAY &&
+      jv_array_length(jv_copy(input)) == jv_array_length(jv_copy(keys))) {
+    return jv_sort(input, keys);
+  } else {
+    return type_error2(input, keys, "cannot be sorted, as they are not both arrays");
+  }
+}
+
+static jv f_group_by_impl(jv input, jv keys) {
+  if (jv_get_kind(input) == JV_KIND_ARRAY && 
+      jv_get_kind(keys) == JV_KIND_ARRAY &&
+      jv_array_length(jv_copy(input)) == jv_array_length(jv_copy(keys))) {
+    return jv_group(input, keys);
+  } else {
+    return type_error2(input, keys, "cannot be sorted, as they are not both arrays");
+  }
+}
+
 static jv f_type(jv input) {
   jv out = jv_string(jv_kind_name(jv_get_kind(input)));
   jv_free(input);
@@ -246,6 +266,8 @@ static struct cfunction function_list[] = {
   {(cfunction_ptr)f_type, "type", 1},
   {(cfunction_ptr)f_add, "add", 1},
   {(cfunction_ptr)f_sort, "sort", 1},
+  {(cfunction_ptr)f_sort_by_impl, "_sort_by_impl", 2},
+  {(cfunction_ptr)f_group_by_impl, "_group_by_impl", 2},
 };
 
 static struct symbol_table cbuiltins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
@@ -271,6 +293,8 @@ static block bind_bytecoded_builtins(block b) {
 static const char* jq_builtins[] = {
   "def map(f): [.[] | f];",
   "def select(f): if f then . else empty end;",
+  "def sort_by(f): _sort_by_impl(map([f]));",
+  "def group_by(f): _group_by_impl(map([f]));",
 };
 
 

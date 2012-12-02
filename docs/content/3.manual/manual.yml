@@ -487,6 +487,55 @@ sections:
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
 
+      - title: `sort, sort_by`
+        body: |
+          
+          The `sort` functions sorts its input, which must be an
+          array. Values are sorted in the following order:
+
+          * `null`
+          * `false`
+          * `true`
+          * numbers
+          * strings, in alphabetical order (by unicode codepoint value)
+          * arrays, in lexical order
+          * objects
+
+          The ordering for objects is a little complex: first they're
+          compared by comparing their sets of keys (as arrays in
+          sorted order), and if their keys are equal then the values
+          are compared key by key.
+
+          `sort_by` may be used to sort by a particular field of an
+          object, or by applying any jq filter. `sort_by(foo)`
+          compares two elements by comparing the result of `foo` on
+          each element.
+
+        examples:
+          - program: 'sort'
+            input: '[8,3,null,6]'
+            output: ['[null,3,6,8]']
+          - program: 'sort_by(.foo)'
+            input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]'
+            output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]']
+
+      - title: `group_by`
+        body: |
+          
+          `group_by(.foo)` takes as input an array, groups the
+          elements having the same `.foo` field into separate arrays,
+          and produces all of these arrays as elements of a larger
+          array, sorted by the value of the `.foo` field.
+
+          Any jq expression, not just a field access, may be used in
+          place of `.foo`. The sorting order is the same as described
+          in the `sort` function above.
+
+        examples:
+          - program: 'group_by(.foo)'
+            input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
+            output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
+
       - title: `contains`
         body: |
 
@@ -583,6 +632,21 @@ sections:
               end
             input: 2
             output: ['"many"']
+      
+      - title: `>, >=, <=, <`
+        body: |
+          
+          The comparison operators `>`, `>=`, `<=`, `<` return whether
+          their left argument is greater than, greater than or equal
+          to, less than or equal to or less than their right argument
+          (respectively).
+
+          The ordering is the same as that described for `sort`, above.
+
+        examples:
+          - program: '. < 5'
+            input: 2
+            output: ['true']
 
       - title: and/or/not
         body: |
