@@ -144,7 +144,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
           put_str(",\n", F, S);
           put_space(indent+INDENT, F, S);
         } else {
-          put_str(", ", F, S);
+          put_str(",", F, S);
         }
       }
       jv_dump_term(C, jv_array_get(jv_copy(x), i), flags, indent + INDENT, F, S);
@@ -173,12 +173,12 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
           put_str(",\n", F, S);
           put_space(indent+INDENT, F, S);
         } else {
-          put_str(", ", F, S);
+          put_str(",", F, S);
         }
       }
       first = 0;
       jv_dump_term(C, jv_object_iter_key(x, i), flags, indent + INDENT, F, S);
-      put_str(": ", F, S);
+      put_str(":", F, S);
       jv_dump_term(C, jv_object_iter_value(x, i), flags, indent + INDENT, F, S);
     }
     if (flags & JV_PRINT_PRETTY) {
