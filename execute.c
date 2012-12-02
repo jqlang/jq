@@ -149,7 +149,6 @@ void print_error(jv value) {
 
 jv jq_next() {
   jv cfunc_input[MAX_CFUNCTION_ARGS];
-  jv cfunc_output[MAX_CFUNCTION_ARGS];
 
   assert(!forkable_stack_empty(&frame_stk));
   uint16_t* pc = *frame_current_retaddr(&frame_stk);
@@ -419,8 +418,7 @@ jv jq_next() {
         cfunc_input[i] = stack_pop().value;
       }
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
-      func->fptr(cfunc_input, cfunc_output);
-      top.value = cfunc_output[0];
+      top.value = cfunction_invoke(func, cfunc_input);
       if (jv_is_valid(top.value)) {
         stack_push(top);
       } else {

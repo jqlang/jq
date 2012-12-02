@@ -6,41 +6,62 @@
 #include "locfile.h"
 #include "jv_aux.h"
 
-enum {
-  CMP_OP_LESS,
-  CMP_OP_GREATER,
-  CMP_OP_LESSEQ,
-  CMP_OP_GREATEREQ
-} _cmp_op;
 
-static void f_plus(jv input[], jv output[]) {
-  jv_free(input[0]);
-  jv a = input[2];
-  jv b = input[1];
-  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    output[0] = jv_number(jv_number_value(a) + 
-                          jv_number_value(b));
-  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
-    output[0] = jv_string_concat(a, b);
-  } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
-    output[0] = jv_array_concat(a, b);
-  } else if (jv_get_kind(a) == JV_KIND_OBJECT && jv_get_kind(b) == JV_KIND_OBJECT) {
-    output[0] = jv_object_merge(a, b);
-  } else {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("Attempted to add %s and %s",
-                                                  jv_kind_name(jv_get_kind(a)),
-                                                  jv_kind_name(jv_get_kind(b))));
-    jv_free(a);
-    jv_free(b);
+typedef jv (*func_1)(jv);
+typedef jv (*func_2)(jv,jv);
+typedef jv (*func_3)(jv,jv,jv);
+typedef jv (*func_4)(jv,jv,jv,jv);
+typedef jv (*func_5)(jv,jv,jv,jv,jv);
+jv cfunction_invoke(struct cfunction* function, jv input[]) {
+  switch (function->nargs) {
+  case 1: return ((func_1)function->fptr)(input[0]);
+  case 2: return ((func_2)function->fptr)(input[0], input[1]);
+  case 3: return ((func_3)function->fptr)(input[0], input[1], input[2]);
+  case 4: return ((func_4)function->fptr)(input[0], input[1], input[2], input[3]);
+  case 5: return ((func_5)function->fptr)(input[0], input[1], input[2], input[3], input[4]);
+  default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
   }
 }
 
-static void f_minus(jv input[], jv output[]) {
-  jv_free(input[0]);
-  jv a = input[2];
-  jv b = input[1];
+static jv type_error(jv bad, const char* msg) {
+  jv err = jv_invalid_with_msg(jv_string_fmt("%s %s",
+                                             jv_kind_name(jv_get_kind(bad)),
+                                             msg));
+  jv_free(bad);
+  return err;
+}
+
+static jv type_error2(jv bad1, jv bad2, const char* msg) {
+  jv err = jv_invalid_with_msg(jv_string_fmt("%s and %s %s",
+                                             jv_kind_name(jv_get_kind(bad1)),
+                                             jv_kind_name(jv_get_kind(bad2)),
+                                             msg));
+  jv_free(bad1);
+  jv_free(bad2);
+  return err;
+}
+
+
+static jv f_plus(jv input, jv a, jv b) {
+  jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    output[0] = jv_number(jv_number_value(a) - jv_number_value(b));
+    return jv_number(jv_number_value(a) + 
+                     jv_number_value(b));
+  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
+    return jv_string_concat(a, b);
+  } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
+    return jv_array_concat(a, b);
+  } else if (jv_get_kind(a) == JV_KIND_OBJECT && jv_get_kind(b) == JV_KIND_OBJECT) {
+    return jv_object_merge(a, b);
+  } else {
+    return type_error2(a, b, "cannot be added");
+  }
+}
+
+static jv f_minus(jv input, jv a, jv b) {
+  jv_free(input);
+  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+    return jv_number(jv_number_value(a) - jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
     jv out = jv_array();
     for (int i=0; i<jv_array_length(jv_copy(a)); i++) {
@@ -58,205 +79,174 @@ static void f_minus(jv input[], jv output[]) {
     }
     jv_free(a);
     jv_free(b);
-    output[0] = out;
+    return out;
   } else {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("Attempted to subtract %s and %s",
-                                                  jv_kind_name(jv_get_kind(a)),
-                                                  jv_kind_name(jv_get_kind(b))));
-    jv_free(a);
-    jv_free(b);
+    return type_error2(a, b, "cannot be subtracted");
   }
 }
 
-static void f_multiply(jv input[], jv output[]) {
-  jv_free(input[0]);
-  jv a = input[2];
-  jv b = input[1];
+static jv f_multiply(jv input, jv a, jv b) {
+  jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    output[0] = jv_number(jv_number_value(a) * jv_number_value(b));
+    return jv_number(jv_number_value(a) * jv_number_value(b));
   } else {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("Attempted to multiply %s and %s",
-                                                  jv_kind_name(jv_get_kind(a)),
-                                                  jv_kind_name(jv_get_kind(b))));
-    jv_free(a);
-    jv_free(b);
+    return type_error2(a, b, "cannot be multiplied");
   }  
 }
 
-static void f_divide(jv input[], jv output[]) {
-  jv_free(input[0]);
-  jv a = input[2];
-  jv b = input[1];
+static jv f_divide(jv input, jv a, jv b) {
+  jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    output[0] = jv_number(jv_number_value(a) / jv_number_value(b));
+    return jv_number(jv_number_value(a) / jv_number_value(b));
   } else {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("Attempted to divide %s by %s",
-                                                  jv_kind_name(jv_get_kind(a)),
-                                                  jv_kind_name(jv_get_kind(b))));
-    jv_free(a);
-    jv_free(b);
+    return type_error2(a, b, "cannot be divided");
   }  
 }
 
-static void f_add(jv input[], jv output[]) {
-  jv array = input[0];
+static jv f_add(jv array) {
   if (jv_get_kind(array) != JV_KIND_ARRAY) {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("Cannot add elements of an %s",
-                                                  jv_kind_name(jv_get_kind(array))));
+    return type_error(array, "cannot have its elements added");
   } else if (jv_array_length(jv_copy(array)) == 0) {
-    output[0] = jv_null();
+    jv_free(array);
+    return jv_null();
   } else {
     jv sum = jv_array_get(jv_copy(array), 0);
     for (int i = 1; i < jv_array_length(jv_copy(array)); i++) {
-      jv x = jv_array_get(jv_copy(array), i);
-      jv add_args[] = {jv_null(), x, sum};
-      f_plus(add_args, &sum);
+      sum = f_plus(jv_null(), sum, jv_array_get(jv_copy(array), i));
     }
-    output[0] = sum;
+    jv_free(array);
+    return sum;
   }
-  jv_free(array);
 }
 
-static void f_equal(jv input[], jv output[]) {
-  jv_free(input[0]);
-  output[0] = jv_bool(jv_equal(input[2], input[1]));
+static jv f_equal(jv input, jv a, jv b) {
+  jv_free(input);
+  return jv_bool(jv_equal(a, b));
 }
 
-static void f_notequal(jv input[], jv output[]) {
-  jv_free(input[0]);
-  output[0] = jv_bool(jv_equal(input[2], input[1]) == 0);
+static jv f_notequal(jv input, jv a, jv b) {
+  jv_free(input);
+  return jv_bool(!jv_equal(a, b));
 }
 
-static void order_cmp(jv input[], jv output[], int op) {
-  jv_free(input[0]);
-  int r = jv_cmp(input[2], input[1]);
-  output[0] = jv_bool((op == CMP_OP_LESS && r < 0) ||
-                      (op == CMP_OP_LESSEQ && r <= 0) ||
-                      (op == CMP_OP_GREATEREQ && r >= 0) ||
-                      (op == CMP_OP_GREATER && r > 0));
+enum cmp_op {
+  CMP_OP_LESS,
+  CMP_OP_GREATER,
+  CMP_OP_LESSEQ,
+  CMP_OP_GREATEREQ
+};
+
+static jv order_cmp(jv input, jv a, jv b, enum cmp_op op) {
+  jv_free(input);
+  int r = jv_cmp(a, b);
+  return jv_bool((op == CMP_OP_LESS && r < 0) ||
+                 (op == CMP_OP_LESSEQ && r <= 0) ||
+                 (op == CMP_OP_GREATEREQ && r >= 0) ||
+                 (op == CMP_OP_GREATER && r > 0));
 }
 
-static void f_less(jv input[], jv output[]) {
-  order_cmp(input, output, CMP_OP_LESS);
+static jv f_less(jv input, jv a, jv b) {
+  return order_cmp(input, a, b, CMP_OP_LESS);
 }
 
-static void f_greater(jv input[], jv output[]) {
-  order_cmp(input, output, CMP_OP_GREATER);
+static jv f_greater(jv input, jv a, jv b) {
+  return order_cmp(input, a, b, CMP_OP_GREATER);
 }
 
-static void f_lesseq(jv input[], jv output[]) {
-  order_cmp(input, output, CMP_OP_LESSEQ);
+static jv f_lesseq(jv input, jv a, jv b) {
+  return order_cmp(input, a, b, CMP_OP_LESSEQ);
 }
 
-static void f_greatereq(jv input[], jv output[]) {
-  order_cmp(input, output, CMP_OP_GREATEREQ);
+static jv f_greatereq(jv input, jv a, jv b) {
+  return order_cmp(input, a, b, CMP_OP_GREATEREQ);
 }
 
-static void f_contains(jv input[], jv output[]) {
-  jv_free(input[0]);
-  jv a = input[2];
-  jv b = input[1];
+static jv f_contains(jv input, jv a, jv b) {
+  jv_free(input);
   jv_kind akind = jv_get_kind(a);
 
   if (akind == jv_get_kind(b)) {
-    output[0] = jv_bool(jv_contains(a, b));
-  } else {  
-    output[0] = jv_invalid_with_msg(jv_string_fmt("Can only check containment of values of the same type."));
-    jv_free(a);
-    jv_free(b);
+    return jv_bool(jv_contains(a, b));
+  } else {
+    return type_error2(a, b, "cannot have their containment checked");
   }
 }
 
-static void f_tonumber(jv input[], jv output[]) {
-  if (jv_get_kind(input[0]) == JV_KIND_NUMBER) {
-    output[0] = input[0];
-  } else if (jv_get_kind(input[0]) == JV_KIND_STRING) {
-    jv parsed = jv_parse(jv_string_value(input[0]));
-    if (!jv_is_valid(parsed)) {
-      jv_free(input[0]);
-      output[0] = parsed;
-    } else if (jv_get_kind(parsed) != JV_KIND_NUMBER) {
-      output[0] = jv_invalid_with_msg(jv_string_fmt("'%s' is not a number",
-                                                    jv_string_value(input[0])));
-      jv_free(input[0]);
-    } else {
-      jv_free(input[0]);
-      output[0] = parsed;
+static jv f_tonumber(jv input) {
+  if (jv_get_kind(input) == JV_KIND_NUMBER) {
+    return input;
+  }
+  if (jv_get_kind(input) == JV_KIND_STRING) {
+    jv parsed = jv_parse(jv_string_value(input));
+    if (!jv_is_valid(parsed) || jv_get_kind(parsed) == JV_KIND_NUMBER) {
+      jv_free(input);
+      return parsed;
     }
+  }
+  return type_error(input, "cannot be parsed as a number");
+}
+
+static jv f_length(jv input) {
+  if (jv_get_kind(input) == JV_KIND_ARRAY) {
+    return jv_number(jv_array_length(input));
+  } else if (jv_get_kind(input) == JV_KIND_OBJECT) {
+    return jv_number(jv_object_length(input));
+  } else if (jv_get_kind(input) == JV_KIND_STRING) {
+    return jv_number(jv_string_length(input));
   } else {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("Cannot parse %s as a number",
-                                                  jv_kind_name(jv_get_kind(input[0]))));
-    jv_free(input[0]);
-    return;
+    return type_error(input, "has no length");
   }
 }
 
-static void f_length(jv input[], jv output[]) {
-  if (jv_get_kind(input[0]) == JV_KIND_ARRAY) {
-    output[0] = jv_number(jv_array_length(input[0]));
-  } else if (jv_get_kind(input[0]) == JV_KIND_OBJECT) {
-    output[0] = jv_number(jv_object_length(input[0]));
-  } else if (jv_get_kind(input[0]) == JV_KIND_STRING) {
-    output[0] = jv_number(jv_string_length(input[0]));
+static jv f_tostring(jv input) {
+  if (jv_get_kind(input) == JV_KIND_STRING) {
+    return input;
   } else {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("Cannot get the length of %s",
-                                                  jv_kind_name(jv_get_kind(input[0]))));
-    jv_free(input[0]);
+    return jv_dump_string(input, 0);
   }
 }
 
-static void f_tostring(jv input[], jv output[]) {
-  if (jv_get_kind(input[0]) == JV_KIND_STRING) {
-    output[0] = input[0];
+static jv f_keys(jv input) {
+  if (jv_get_kind(input) == JV_KIND_OBJECT || jv_get_kind(input) == JV_KIND_ARRAY) {
+    return jv_keys(input);
   } else {
-    output[0] = jv_dump_string(input[0], 0);
+    return type_error(input, "has no keys");
   }
 }
 
-static void f_keys(jv input[], jv output[]) {
-  if (jv_get_kind(input[0]) == JV_KIND_OBJECT || jv_get_kind(input[0]) == JV_KIND_ARRAY) {
-    output[0] = jv_keys(input[0]);
+static jv f_sort(jv input){
+  if (jv_get_kind(input) == JV_KIND_ARRAY) {
+    return jv_sort(input, jv_copy(input));
   } else {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("'keys' only supports object, not %s",
-                                                  jv_kind_name(jv_get_kind(input[0]))));
-    jv_free(input[0]);
+    return type_error(input, "cannot be sorted, as it is not an array");
   }
 }
 
-static void f_sort(jv input[], jv output[]){
-  if (jv_get_kind(input[0]) == JV_KIND_ARRAY) {
-    output[0] = jv_sort(input[0], jv_copy(input[0]));
-  } else {
-    output[0] = jv_invalid_with_msg(jv_string_fmt("only arrays may be sorted, not %s",
-                                                  jv_kind_name(jv_get_kind(input[0]))));
-    jv_free(input[0]);
-  }
-}
-
-static void f_type(jv input[], jv output[]) {
-  output[0] = jv_string(jv_kind_name(jv_get_kind(input[0])));
-  jv_free(input[0]);
+static jv f_type(jv input) {
+  jv out = jv_string(jv_kind_name(jv_get_kind(input)));
+  jv_free(input);
+  return out;
 }
 
 static struct cfunction function_list[] = {
-  {f_plus, "_plus", 3},
-  {f_minus, "_minus", 3},
-  {f_multiply, "_multiply", 3},
-  {f_divide, "_divide", 3},
-  {f_tonumber, "tonumber", 1},
-  {f_tostring, "tostring", 1},
-  {f_keys, "keys", 1},
-  {f_equal, "_equal", 3},
-  {f_notequal, "_notequal", 3},
-  {f_less, "_less", 3},
-  {f_greater, "_greater", 3},
-  {f_lesseq, "_lesseq", 3},
-  {f_greatereq, "_greatereq", 3},
-  {f_contains, "_contains", 3},
-  {f_length, "length", 1},
-  {f_type, "type", 1},
-  {f_add, "add", 1},
-  {f_sort, "sort", 1},
+  {(cfunction_ptr)f_plus, "_plus", 3},
+  {(cfunction_ptr)f_minus, "_minus", 3},
+  {(cfunction_ptr)f_multiply, "_multiply", 3},
+  {(cfunction_ptr)f_divide, "_divide", 3},
+  {(cfunction_ptr)f_tonumber, "tonumber", 1},
+  {(cfunction_ptr)f_tostring, "tostring", 1},
+  {(cfunction_ptr)f_keys, "keys", 1},
+  {(cfunction_ptr)f_equal, "_equal", 3},
+  {(cfunction_ptr)f_notequal, "_notequal", 3},
+  {(cfunction_ptr)f_less, "_less", 3},
+  {(cfunction_ptr)f_greater, "_greater", 3},
+  {(cfunction_ptr)f_lesseq, "_lesseq", 3},
+  {(cfunction_ptr)f_greatereq, "_greatereq", 3},
+  {(cfunction_ptr)f_contains, "_contains", 3},
+  {(cfunction_ptr)f_length, "length", 1},
+  {(cfunction_ptr)f_type, "type", 1},
+  {(cfunction_ptr)f_add, "add", 1},
+  {(cfunction_ptr)f_sort, "sort", 1},
 };
 
 static struct symbol_table cbuiltins = {function_list, sizeof(function_list)/sizeof(function_list[0])};

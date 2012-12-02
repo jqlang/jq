@@ -490,7 +490,8 @@ static block expand_call_arglist(block b) {
           block body = i->subfn;
           i->subfn = gen_noop();
           inst_free(i);
-          prelude = BLOCK(prelude, gen_subexp(expand_call_arglist(body)));
+          // arguments should be pushed in reverse order, prepend them to prelude
+          prelude = BLOCK(gen_subexp(expand_call_arglist(body)), prelude);
           nargs++;
         }
         assert(curr->op == CALL_JQ);
