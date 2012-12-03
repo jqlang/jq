@@ -295,6 +295,7 @@ static const char* jq_builtins[] = {
   "def select(f): if f then . else empty end;",
   "def sort_by(f): _sort_by_impl(map([f]));",
   "def group_by(f): _group_by_impl(map([f]));",
+  "def unique: group_by(.) | map(.[0]);",
 };
 
 
