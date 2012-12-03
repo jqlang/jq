@@ -1,5 +1,6 @@
 OP(LOADK, CONSTANT, 1, 1)
 OP(DUP,   NONE,     1, 2)
+OP(DUP2,  NONE,     2, 3)
 OP(SWAP,  NONE,     2, 2)
 OP(POP,   NONE,     1, 0)
 OP(LOADV, VARIABLE, 1, 1)

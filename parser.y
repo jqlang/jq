@@ -414,6 +414,10 @@ MkDictPair
 | String ':' ExpD {
   $$ = gen_dictpair($1, $3);
   }
+| String {
+  $$ = gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
+                              gen_op_simple(DUP2), gen_op_simple(INDEX)));
+  }
 | IDENT {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
                     gen_index(gen_noop(), gen_const($1)));

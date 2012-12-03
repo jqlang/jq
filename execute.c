@@ -208,6 +208,17 @@ jv jq_next() {
       break;
     }
 
+    case DUP2: {
+      stackval keep = stack_pop();
+      stackval v = stack_pop();
+      stackval v2 = v;
+      v2.value = jv_copy(v.value);
+      stack_push(v);
+      stack_push(keep);
+      stack_push(v2);
+      break;
+    }
+
     case SWAP: {
       stackval a = stack_pop();
       stackval b = stack_pop();
