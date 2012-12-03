@@ -109,9 +109,9 @@ block gen_op_simple(opcode op) {
 }
 
 
-block gen_op_const(opcode op, jv constant) {
-  assert(opcode_describe(op)->flags & OP_HAS_CONSTANT);
-  inst* i = inst_new(op);
+block gen_const(jv constant) {
+  assert(opcode_describe(LOADK)->flags & OP_HAS_CONSTANT);
+  inst* i = inst_new(LOADK);
   i->imm.constant = constant;
   return inst_block(i);
 }
@@ -151,13 +151,6 @@ block gen_op_var_bound(opcode op, block binder) {
   return b;
 }
 
-block gen_op_symbol(opcode op, const char* sym) {
-  assert(opcode_describe(op)->flags & OP_HAS_SYMBOL);
-  inst* i = inst_new(op);
-  i->symbol = strdup(sym);
-  return inst_block(i);
-}
-
 block gen_op_block_unbound(opcode op, const char* name) {
   assert(opcode_describe(op)->flags & OP_IS_CALL_PSEUDO);
   inst* i = inst_new(op);
@@ -178,32 +171,6 @@ static void inst_join(inst* a, inst* b) {
   assert(!b->prev);
   a->next = b;
   b->prev = a;
-}
-
-static void block_insert_after(inst* i, block b) {
-  if (b.first) {
-    assert(b.last);
-    if (i->next) {
-      inst* j = i->next;
-      i->next = 0;
-      j->prev = 0;
-      inst_join(b.last, j);
-    }
-    inst_join(i, b.first);
-  }
-}
-
-static void block_insert_before(inst* i, block b) {
-  if (b.first) {
-    assert(b.last);
-    if (i->prev) {
-      inst* j = i->prev;
-      i->prev = 0;
-      j->next = 0;
-      inst_join(j, b.first);
-    }
-    inst_join(b.last, i);
-  }
 }
 
 void block_append(block* b, block b2) {
@@ -248,14 +215,10 @@ static void block_bind_subblock(block binder, block body, int bindflags) {
       // bind this instruction
       i->bound_by = binder.first;
     }
-    if (flags & OP_HAS_BLOCK) {
-      // binding recurses into closures
-      block_bind_subblock(binder, i->subfn, bindflags);
-    }
-    if (flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-      // binding recurses into argument list
-      block_bind_subblock(binder, i->arglist, bindflags);
-    }
+    // binding recurses into closures
+    block_bind_subblock(binder, i->subfn, bindflags);
+    // binding recurses into argument list
+    block_bind_subblock(binder, i->arglist, bindflags);
   }
 }
 
@@ -306,7 +269,7 @@ block gen_both(block a, block b) {
 block gen_collect(block expr) {
   block array_var = block_bind(gen_op_var_unbound(STOREV, "collect"),
                                gen_noop(), OP_HAS_VARIABLE);
-  block c = BLOCK(gen_op_simple(DUP), gen_op_const(LOADK, jv_array()), array_var);
+  block c = BLOCK(gen_op_simple(DUP), gen_const(jv_array()), array_var);
 
   block tail = BLOCK(gen_op_simple(DUP),
                      gen_op_var_bound(LOADV, array_var),
@@ -342,7 +305,7 @@ block gen_definedor(block a, block b) {
   // var found := false
   block found_var = block_bind(gen_op_var_unbound(STOREV, "found"),
                                gen_noop(), OP_HAS_VARIABLE);
-  block init = BLOCK(gen_op_simple(DUP), gen_op_const(LOADK, jv_false()), found_var);
+  block init = BLOCK(gen_op_simple(DUP), gen_const(jv_false()), found_var);
 
   // if found, backtrack. Otherwise execute b
   block backtrack = gen_op_simple(BACKTRACK);
@@ -358,7 +321,7 @@ block gen_definedor(block a, block b) {
 
   // found := true, produce result
   block if_found = BLOCK(gen_op_simple(DUP),
-                         gen_op_const(LOADK, jv_true()),
+                         gen_const(jv_true()),
                          gen_op_var_bound(STOREV, found_var),
                          gen_op_target(JUMP, tail));
 
@@ -381,19 +344,19 @@ block gen_and(block a, block b) {
   return BLOCK(gen_op_simple(DUP), a, 
                gen_condbranch(BLOCK(gen_op_simple(POP),
                                     b,
-                                    gen_condbranch(gen_op_const(LOADK, jv_true()),
-                                                   gen_op_const(LOADK, jv_false()))),
-                              BLOCK(gen_op_simple(POP), gen_op_const(LOADK, jv_false()))));
+                                    gen_condbranch(gen_const(jv_true()),
+                                                   gen_const(jv_false()))),
+                              BLOCK(gen_op_simple(POP), gen_const(jv_false()))));
 }
 
 block gen_or(block a, block b) {
   // a or b = if a then true else (if b then true else false)
   return BLOCK(gen_op_simple(DUP), a,
-               gen_condbranch(BLOCK(gen_op_simple(POP), gen_op_const(LOADK, jv_true())),
+               gen_condbranch(BLOCK(gen_op_simple(POP), gen_const(jv_true())),
                               BLOCK(gen_op_simple(POP),
                                     b,
-                                    gen_condbranch(gen_op_const(LOADK, jv_true()),
-                                                   gen_op_const(LOADK, jv_false())))));
+                                    gen_condbranch(gen_const(jv_true()),
+                                                   gen_const(jv_false())))));
 }
 
 block gen_cond(block cond, block iftrue, block iffalse) {
@@ -427,8 +390,7 @@ static int count_cfunctions(block b) {
   int n = 0;
   for (inst* i = b.first; i; i = i->next) {
     if (i->op == CLOSURE_CREATE_C) n++;
-    if (opcode_describe(i->op)->flags & OP_HAS_BLOCK)
-      n += count_cfunctions(i->subfn);
+    n += count_cfunctions(i->subfn);
   }
   return n;
 }
@@ -439,8 +401,7 @@ static int count_cfunctions(block b) {
 static block expand_call_arglist(block b) {
   block ret = gen_noop();
   for (inst* curr; (curr = block_take(&b));) {
-    if (opcode_describe(curr->op)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-      assert(curr->op == CALL_JQ);
+    if (curr->op == CALL_JQ) {
       inst* seq_end = block_take(&b);
       assert(seq_end && seq_end->op == CALLSEQ_END);
       // We expand the argument list as a series of instructions
@@ -541,11 +502,11 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
         curr->bound_by == curr) {
       curr->imm.intval = var_frame_idx++;
     }
-    if (opflags & OP_HAS_BLOCK) {
+
+    if (curr->op == CLOSURE_CREATE) {
       assert(curr->bound_by == curr);
       curr->imm.intval = bc->nsubfunctions++;
     }
-
     if (curr->op == CLOSURE_PARAM) {
       assert(curr->bound_by == curr);
       curr->imm.intval = bc->nclosures++;
@@ -560,14 +521,14 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
   if (bc->nsubfunctions) {
     bc->subfunctions = malloc(sizeof(struct bytecode*) * bc->nsubfunctions);
     for (inst* curr = b.first; curr; curr = curr->next) {
-      if (!(opcode_describe(curr->op)->flags & OP_HAS_BLOCK))
-        continue;
-      struct bytecode* subfn = malloc(sizeof(struct bytecode));
-      bc->subfunctions[curr->imm.intval] = subfn;
-      subfn->globals = bc->globals;
-      subfn->parent = bc;
-      errors += compile(locations, subfn, curr->subfn);
-      curr->subfn = gen_noop();
+      if (curr->op == CLOSURE_CREATE) {
+        struct bytecode* subfn = malloc(sizeof(struct bytecode));
+        bc->subfunctions[curr->imm.intval] = subfn;
+        subfn->globals = bc->globals;
+        subfn->parent = bc;
+        errors += compile(locations, subfn, curr->subfn);
+        curr->subfn = gen_noop();
+      }
     }
   } else {
     bc->subfunctions = 0;
@@ -583,7 +544,6 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
     if (op->length == 0)
       continue;
     code[pos++] = curr->op;
-    int opflags = op->flags;
     assert(!(op->flags & OP_IS_CALL_PSEUDO));
     if (curr->op == CALL_BUILTIN) {
       int nargs = curr->imm.intval;
@@ -591,12 +551,10 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
       assert(block_is_single(curr->arglist));
       inst* cfunc = curr->arglist.first;
       assert(cfunc && cfunc->bound_by->op == CLOSURE_CREATE_C);
-      //*opcode_rewrite = bc->globals->cfunctions[cfunc->bound_by->imm.intval].callop;
       code[pos++] = cfunc->bound_by->imm.intval;
       // FIXME arg errors
       assert(nargs == bc->globals->cfunctions[cfunc->bound_by->imm.intval].nargs);
-    } else if (opflags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-      assert(curr->op == CALL_JQ);
+    } else if (curr->op == CALL_JQ) {
       int nargs = curr->imm.intval;
       assert(nargs >= 0 && nargs < 100); //FIXME
       code[pos++] = (uint16_t)nargs;
@@ -623,15 +581,15 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
         assert(curr->bound_by->op == CLOSURE_CREATE);
         code[pos++] = curr->bound_by->imm.intval | ARG_NEWCLOSURE;
       }
-    } else if (opflags & OP_HAS_CONSTANT) {
+    } else if (op->flags & OP_HAS_CONSTANT) {
       code[pos++] = jv_array_length(jv_copy(constant_pool));
       constant_pool = jv_array_append(constant_pool, jv_copy(curr->imm.constant));
-    } else if (opflags & OP_HAS_VARIABLE) {
+    } else if (op->flags & OP_HAS_VARIABLE) {
       code[pos++] = nesting_level(bc, curr->bound_by);
       uint16_t var = (uint16_t)curr->bound_by->imm.intval;
       code[pos++] = var;
       if (var > maxvar) maxvar = var;
-    } else if (opflags & OP_HAS_BRANCH) {
+    } else if (op->flags & OP_HAS_BRANCH) {
       assert(curr->imm.target->bytecode_pos != -1);
       assert(curr->imm.target->bytecode_pos > pos); // only forward branches
       code[pos] = curr->imm.target->bytecode_pos - (pos + 1);

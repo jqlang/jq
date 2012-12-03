@@ -297,11 +297,6 @@ Term {
   $$ = $1; 
 }
 
-String:
-QQSTRING_START QQString QQSTRING_END {
-  $$ = $2;
-}
-
 FuncDef:
 "def" IDENT ':' Exp ';' {
   $$ = gen_function(jv_string_value($2), $4);
@@ -315,12 +310,18 @@ FuncDef:
   jv_free($4);
 }
 
+
+String:
+QQSTRING_START QQString QQSTRING_END {
+  $$ = $2;
+}
+
 QQString:
 /* empty */ {
-  $$ = gen_op_const(LOADK, jv_string(""));
+  $$ = gen_const(jv_string(""));
 } |
 QQString QQSTRING_TEXT {
-  $$ = gen_binop($1, gen_op_const(LOADK, $2), '+');
+  $$ = gen_binop($1, gen_const($2), '+');
 } |
 QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END {
   $$ = gen_binop($1, gen_format($3), '+');
@@ -350,10 +351,10 @@ Term:
   $$ = gen_noop(); 
 } |
 Term '.' IDENT {
-  $$ = gen_index($1, gen_op_const(LOADK, $3)); 
+  $$ = gen_index($1, gen_const($3)); 
 } |
 '.' IDENT { 
-  $$ = gen_index(gen_noop(), gen_op_const(LOADK, $2)); 
+  $$ = gen_index(gen_noop(), gen_const($2)); 
 } |
 /* FIXME: string literals */
 Term '[' Exp ']' {
@@ -363,7 +364,7 @@ Term '[' ']' {
   $$ = block_join($1, gen_op_simple(EACH)); 
 } |
 LITERAL {
-  $$ = gen_op_const(LOADK, $1); 
+  $$ = gen_const($1); 
 } |
 String {
   $$ = $1;
@@ -375,10 +376,10 @@ String {
   $$ = gen_collect($2); 
 } |
 '[' ']' { 
-  $$ = gen_op_const(LOADK, jv_array()); 
+  $$ = gen_const(jv_array()); 
 } |
 '{' MkDict '}' { 
-  $$ = BLOCK(gen_subexp(gen_op_const(LOADK, jv_object())), $2, gen_op_simple(POP));
+  $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
 } |
 '$' IDENT {
   $$ = gen_location(@$, gen_op_var_unbound(LOADV, jv_string_value($2)));
@@ -408,14 +409,14 @@ MkDict:
 
 MkDictPair
 : IDENT ':' ExpD { 
-  $$ = gen_dictpair(gen_op_const(LOADK, $1), $3);
+  $$ = gen_dictpair(gen_const($1), $3);
  }
 | String ':' ExpD {
   $$ = gen_dictpair($1, $3);
   }
 | IDENT {
-  $$ = gen_dictpair(gen_op_const(LOADK, jv_copy($1)),
-                    gen_index(gen_noop(), gen_op_const(LOADK, $1)));
+  $$ = gen_dictpair(gen_const(jv_copy($1)),
+                    gen_index(gen_noop(), gen_const($1)));
   }
 | '(' Exp ')' ':' ExpD {
   $$ = gen_dictpair($2, $5);

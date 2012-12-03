@@ -15,7 +15,6 @@ struct forkable_stack_header {
 
 struct forkable_stack {
   // Stack grows down from stk+length
-
   char* stk;
 
   // stk+length is just past end of allocated area
@@ -61,7 +60,6 @@ static void* forkable_stack_push(struct forkable_stack* s, size_t sz_size) {
   forkable_stack_check(s);
   int curr = s->pos < s->savedlimit ? s->pos : s->savedlimit;
   if (curr - size < 0) {
-    //assert(0);
     int oldlen = s->length;
     s->length = (size + oldlen + 1024) * 2;
     s->stk = realloc(s->stk, s->length);

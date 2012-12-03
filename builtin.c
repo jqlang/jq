@@ -277,11 +277,11 @@ struct bytecoded_builtin { const char* name; block code; };
 static block bind_bytecoded_builtins(block b) {
   struct bytecoded_builtin builtin_defs[] = {
     {"empty", gen_op_simple(BACKTRACK)},
-    {"false", gen_op_const(LOADK, jv_false())},
-    {"true", gen_op_const(LOADK, jv_true())},
-    {"null", gen_op_const(LOADK, jv_null())},
-    {"not", gen_condbranch(gen_op_const(LOADK, jv_false()),
-                           gen_op_const(LOADK, jv_true()))}
+    {"false", gen_const(jv_false())},
+    {"true", gen_const(jv_true())},
+    {"null", gen_const(jv_null())},
+    {"not", gen_condbranch(gen_const(jv_false()),
+                           gen_const(jv_true()))}
   };
   block builtins = gen_noop();
   for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
