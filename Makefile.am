@@ -3,7 +3,7 @@
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
-EXTRA_DIST = setup.sh config.h.in ChangeLog VERSION lexer.l lexer.h gen_utf8_tables.py
+EXTRA_DIST = setup.sh config.h.in ChangeLog VERSION lexer.l lexer.h gen_utf8_tables.py jq.spec
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
@@ -56,7 +56,7 @@ jv_utf8_tables.gen.h: gen_utf8_tables.py
 jv_unicode.c: jv_utf8_tables.gen.h
 
 ChangeLog:
-	git log --name-status > $@
+	git log --name-status > $@ || echo "no changelog" > $@
 
 main.c: config.h
 
@@ -67,12 +67,11 @@ releasetag:
 RELEASE ?= 1
 rpmbuild: jq
 	@echo "Packaging jq as an RPM ..."
-	mkdir -p rpm/SOURCES rpm/BUILD rpm/BUILDROOT rpm/RPMS
-	rm -rf jq-$$(cat VERSION)
-	mkdir -p jq-$$(cat VERSION)/bin
-	cp jq jq-$$(cat VERSION)/bin
-	tar -zcf rpm/SOURCES/jq-$$(cat VERSION).tgz jq-$$(cat VERSION)/bin/jq
-	rpmbuild --target $$(uname -m) --buildroot ${PWD}/rpm/BUILDROOT/jq-$$(cat VERSION)-${RELEASE}.noarch --define "_topdir ${PWD}/rpm" --define "version $$(cat VERSION)" --define "release ${RELEASE}" -bb --clean rpm/SPECS/jq.spec
+	mkdir -p rpm/SOURCES rpm/BUILD rpm/BUILDROOT rpm/RPMS rpm/SPECS
+	cp jq-$$(cat VERSION).tar.gz rpm/SOURCES/
+	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix ${HOME}" --define "version $$(cat VERSION)" --define "release ${RELEASE}" rpm/SOURCES/jq-$$(cat VERSION).tar.gz
+	mv rpm/RPMS/* ./
+	rm -rf rpm
 
 dist-clean-local:
 	rm -f $(BUILT_SOURCES)
