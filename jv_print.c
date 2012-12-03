@@ -6,6 +6,20 @@
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
 
+#define ESC "\033"
+#define COL(c) (ESC "[" c "m")
+#define COLRESET (ESC "[0m")
+
+// Colour table. See http://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+// for how to choose these.
+static jv_kind colour_kinds[] = 
+  {JV_KIND_NULL,   JV_KIND_FALSE, JV_KIND_TRUE, JV_KIND_NUMBER,
+   JV_KIND_STRING, JV_KIND_ARRAY, JV_KIND_OBJECT};
+static const char* colours[] =
+  {COL("30;1"),    COL("0"),      COL("0"),     COL("0"),
+   COL("32"),      COL("37"),     COL("37")};
+#define FIELD_COLOUR COL("34;1")
+
 static void put_buf(const char* s, int len, FILE* fout, jv* strout) {
   if (strout) {
     *strout = jv_string_append_buf(*strout, s, len);
@@ -35,6 +49,7 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S) {
   const char* cstart;
   int c = 0;
   char buf[32];
+  put_char('"', F, S);
   while ((i = jvp_utf8_next((cstart = i), end, &c))) {
     assert(c != -1);
     int unicode_escape = 0;
@@ -91,12 +106,23 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S) {
     }
   }
   assert(c != -1);
+  put_char('"', F, S);
 }
 
 enum { INDENT = 2 };
 
 static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FILE* F, jv* S) {
   char buf[JVP_DTOA_FMT_MAX_LEN];
+  const char* colour = 0;
+  if (flags & JV_PRINT_COLOUR) {
+    for (unsigned i=0; i<sizeof(colour_kinds)/sizeof(colour_kinds[0]); i++) {
+      if (jv_get_kind(x) == colour_kinds[i]) {
+        colour = colours[i];
+        put_str(colour, F, S);
+        break;
+      }
+    }
+  }
   switch (jv_get_kind(x)) {
   case JV_KIND_INVALID:
     assert(0 && "Invalid value");
@@ -124,9 +150,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     break;
   }
   case JV_KIND_STRING:
-    put_char('"', F, S);
     jvp_dump_string(x, flags & JV_PRINT_ASCII, F, S);
-    put_char('"', F, S);
     break;
   case JV_KIND_ARRAY: {
     if (jv_array_length(jv_copy(x)) == 0) {
@@ -148,11 +172,13 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
         }
       }
       jv_dump_term(C, jv_array_get(jv_copy(x), i), flags, indent + INDENT, F, S);
+      if (colour) put_str(colour, F, S);
     }
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S);
       put_space(indent, F, S);
     }
+    if (colour) put_str(colour, F, S);
     put_char(']', F, S);
     break;
   }
@@ -176,19 +202,34 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
           put_str(",", F, S);
         }
       }
+      if (colour) put_str(COLRESET, F, S);
+
       first = 0;
-      jv_dump_term(C, jv_object_iter_key(x, i), flags, indent + INDENT, F, S);
-      put_str(":", F, S);
+      jv key = jv_object_iter_key(x, i);
+      if (colour) put_str(FIELD_COLOUR, F, S);
+      jvp_dump_string(key, flags & JV_PRINT_ASCII, F, S);
+      jv_free(key);
+      if (colour) put_str(COLRESET, F, S);
+
+      if (colour) put_str(colour, F, S);
+      put_str((flags & JV_PRINT_PRETTY) ? ": " : ":", F, S);
+      if (colour) put_str(COLRESET, F, S);
+      
       jv_dump_term(C, jv_object_iter_value(x, i), flags, indent + INDENT, F, S);
+      if (colour) put_str(colour, F, S);
     }
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S);
       put_space(indent, F, S);
     }
+    if (colour) put_str(colour, F, S);
     put_char('}', F, S);
   }
   }
   jv_free(x);
+  if (colour) {
+    put_str(COLRESET, F, S);
+  }
 }
 
 void jv_dump(jv x, int flags) {

@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "compile.h"
 #include "builtin.h"
 #include "jv.h"
@@ -50,8 +51,10 @@ enum {
   RAW_OUTPUT = 8,
   COMPACT_OUTPUT = 16,
   ASCII_OUTPUT = 32,
+  COLOUR_OUTPUT = 64,
+  NO_COLOUR_OUTPUT = 128,
 
-  FROM_FILE = 64,
+  FROM_FILE = 256,
 };
 static int options = 0;
 static struct bytecode* bc;
@@ -63,9 +66,11 @@ static void process(jv value) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       fwrite(jv_string_value(result), 1, jv_string_length(jv_copy(result)), stdout);
     } else {
-      int dumpopts = 0;
+      int dumpopts = isatty(fileno(stdout)) ? JV_PRINT_COLOUR : 0;
       if (!(options & COMPACT_OUTPUT)) dumpopts |= JV_PRINT_PRETTY;
       if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
+      if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
+      if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
       jv_dump(result, dumpopts);
     }
     printf("\n");
@@ -111,6 +116,10 @@ int main(int argc, char* argv[]) {
       options |= RAW_OUTPUT;
     } else if (isoption(argv[i], 'c', "compact-output")) {
       options |= COMPACT_OUTPUT;
+    } else if (isoption(argv[i], 'C', "color-output")) {
+      options |= COLOUR_OUTPUT;
+    } else if (isoption(argv[i], 'M', "monochrome-output")) {
+      options |= NO_COLOUR_OUTPUT;
     } else if (isoption(argv[i], 'a', "ascii-output")) {
       options |= ASCII_OUTPUT;
     } else if (isoption(argv[i], 'R', "raw-input")) {
