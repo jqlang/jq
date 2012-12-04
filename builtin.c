@@ -241,6 +241,56 @@ static jv f_group_by_impl(jv input, jv keys) {
   }
 }
 
+static jv minmax_by(jv values, jv keys, int is_min) {
+  if (jv_get_kind(values) != JV_KIND_ARRAY)
+    return type_error2(values, keys, "cannot be iterated over");
+  if (jv_get_kind(keys) != JV_KIND_ARRAY)
+    return type_error2(values, keys, "cannot be iterated over");
+  if (jv_array_length(jv_copy(values)) != jv_array_length(jv_copy(keys)))
+    return type_error2(values, keys, "have wrong length");
+
+  if (jv_array_length(jv_copy(values)) == 0) {
+    jv_free(values);
+    jv_free(keys);
+    return jv_null();
+  }
+  jv ret = jv_array_get(jv_copy(values), 0);
+  jv retkey = jv_array_get(jv_copy(keys), 0);
+  for (int i=1; i<jv_array_length(jv_copy(values)); i++) {
+    jv item = jv_array_get(jv_copy(keys), i);
+    int cmp = jv_cmp(jv_copy(item), jv_copy(retkey));
+    if ((cmp < 0) == (is_min == 1)) {
+      jv_free(retkey);
+      retkey = item;
+      jv_free(ret);
+      ret = jv_array_get(jv_copy(values), i);
+    } else {
+      jv_free(item);
+    }
+  }
+  jv_free(values);
+  jv_free(keys);
+  jv_free(retkey);
+  return ret;
+}
+
+static jv f_min(jv x) {
+  return minmax_by(x, jv_copy(x), 1);
+}
+
+static jv f_max(jv x) {
+  return minmax_by(x, jv_copy(x), 0);
+}
+
+static jv f_min_by_impl(jv x, jv y) {
+  return minmax_by(x, y, 1);
+}
+
+static jv f_max_by_impl(jv x, jv y) {
+  return minmax_by(x, y, 0);
+}
+
+
 static jv f_type(jv input) {
   jv out = jv_string(jv_kind_name(jv_get_kind(input)));
   jv_free(input);
@@ -268,9 +318,14 @@ static struct cfunction function_list[] = {
   {(cfunction_ptr)f_sort, "sort", 1},
   {(cfunction_ptr)f_sort_by_impl, "_sort_by_impl", 2},
   {(cfunction_ptr)f_group_by_impl, "_group_by_impl", 2},
+  {(cfunction_ptr)f_min, "min", 1},
+  {(cfunction_ptr)f_max, "max", 1},
+  {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
+  {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
 };
 
-static struct symbol_table cbuiltins = {function_list, sizeof(function_list)/sizeof(function_list[0])};
+static struct symbol_table cbuiltins = 
+  {function_list, sizeof(function_list)/sizeof(function_list[0])};
 
 typedef block (*bytecoded_builtin)();
 struct bytecoded_builtin { const char* name; block code; };
@@ -297,6 +352,8 @@ static const char* jq_builtins[] = {
   "def sort_by(f): _sort_by_impl(map([f]));",
   "def group_by(f): _group_by_impl(map([f]));",
   "def unique: group_by(.) | map(.[0]);",
+  "def max_by(f): _max_by_impl(map([f]));",
+  "def min_by(f): _min_by_impl(map([f]));",
 };
 
 

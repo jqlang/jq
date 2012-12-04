@@ -542,6 +542,22 @@ sections:
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
             output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
 
+      - title: `min`, `max`, `min_by`, `max_by`
+        body: |
+          
+          Find the minimum or maximum element of the input array. The
+          `_by` versions allow you to specify a particular field or
+          property to examine, e.g. `min_by(.foo)` finds the object
+          with the smallest `foo` field.
+
+        examples:
+          - program: 'min'
+            input: '[5,4,2,7]'
+            output: ['2']
+          - program: 'max_by(.foo)'
+            input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
+            output: ['{"foo":2, "bar":3}']
+
       - title: `unique`
         body: |
           
