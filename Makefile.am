@@ -65,7 +65,7 @@ releasetag:
 
 # can probably delete and have RPM created off autoconf generated tarball releases
 RELEASE ?= 1
-rpmbuild: jq
+rpm: jq jq_test
 	@echo "Packaging jq as an RPM ..."
 	mkdir -p rpm/SOURCES rpm/BUILD rpm/BUILDROOT rpm/RPMS rpm/SPECS
 	cp jq-$$(cat VERSION).tar.gz rpm/SOURCES/
