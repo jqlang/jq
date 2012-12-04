@@ -32,7 +32,6 @@ jq_CPPFLAGS = -O $(DEVCFLAGS) -DJQ_DEBUG=0
 
 TESTS = jq_test
 jq_test_SOURCES = $(JQ_SRC) jq_test.c
-dist_jq_test_SOURCES = $(DIST_JQ_SRC)
 jq_test_CPPFLAGS = $(DEVCFLAGS) -DJQ_DEBUG=1
 LOG_COMPILER = valgrind
 AM_LOG_FLAGS = --error-exitcode=1 -q --leak-check=full
