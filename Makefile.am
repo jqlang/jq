@@ -70,7 +70,7 @@ rpm: jq jq_test
 	mkdir -p rpm/SOURCES rpm/BUILD rpm/BUILDROOT rpm/RPMS rpm/SPECS
 	cp jq-$$(cat VERSION).tar.gz rpm/SOURCES/
 	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix ${HOME}" --define "version $$(cat VERSION)" --define "release ${RELEASE}" rpm/SOURCES/jq-$$(cat VERSION).tar.gz
-	mv rpm/RPMS/* ./
+	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
 
 dist-clean-local:
