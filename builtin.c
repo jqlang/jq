@@ -285,7 +285,8 @@ static block bind_bytecoded_builtins(block b) {
   };
   block builtins = gen_noop();
   for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
-    builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, builtin_defs[i].code));
+    builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, gen_noop(),
+                                            builtin_defs[i].code));
   }
   return block_bind(builtins, b, OP_IS_CALL_PSEUDO);
 }

@@ -299,13 +299,14 @@ Term {
 
 FuncDef:
 "def" IDENT ':' Exp ';' {
-  $$ = gen_function(jv_string_value($2), $4);
+  $$ = gen_function(jv_string_value($2), gen_noop(), $4);
   jv_free($2);
 } |
 
 "def" IDENT '(' IDENT ')' ':' Exp ';' {
-  block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), $7, OP_IS_CALL_PSEUDO);
-  $$ = gen_function(jv_string_value($2), body);
+  $$ = gen_function(jv_string_value($2), 
+                    gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), 
+                    $7);
   jv_free($2);
   jv_free($4);
 }

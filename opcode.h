@@ -38,8 +38,4 @@ struct opcode_description {
 
 const struct opcode_description* opcode_describe(opcode op);
 
-static inline int opcode_length(opcode op) {
-  return opcode_describe(op)->length;
-}
-
 #endif

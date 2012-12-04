@@ -6,11 +6,11 @@
 #include "opcode.h"
 
 static int bytecode_operation_length(uint16_t* codeptr) {
+  int length = opcode_describe(*codeptr)->length;
   if (*codeptr == CALL_JQ) {
-    return 4 + codeptr[1] * 2;
-  } else {
-    return opcode_length(*codeptr);
+    length += codeptr[1] * 2;
   }
+  return length;
 }
 
 void dump_disassembly(int indent, struct bytecode* bc) {
