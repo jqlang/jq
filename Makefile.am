@@ -16,7 +16,6 @@ JQ_SRC = opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_pr
 
 if DEVCFLAGS_ENABLED
 DEVCFLAGS = -Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function
-AM_CPPFLAGS = $(DEVCFLAGS)
 endif
 
 # Tell YACC (bison) autoconf macros that you want a header file created.
@@ -27,12 +26,14 @@ AM_YFLAGS = --warnings=all -d
 bin_PROGRAMS = jq jq_test
 BUILT_SOURCES = jv_utf8_tables.gen.h lexer.h lexer.c
 jq_SOURCES = $(JQ_SRC) main.c
-jq_CPPFLAGS = -O $(DEVCFLAGS) -DJQ_DEBUG=0
+jq_CPPFLAGS = $(DEVCFLAGS) -O -DJQ_DEBUG=0
+jq_CFLAGS = $(DEVCFLAGS) -O -DJQ_DEBUG=0
 
 
 TESTS = jq_test
 jq_test_SOURCES = $(JQ_SRC) jq_test.c
 jq_test_CPPFLAGS = $(DEVCFLAGS) -DJQ_DEBUG=1
+jq_test_CFLAGS = $(DEVCFLAGS) -DJQ_DEBUG=1
 LOG_COMPILER = valgrind
 AM_LOG_FLAGS = --error-exitcode=1 -q --leak-check=full
 
