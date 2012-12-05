@@ -8,7 +8,7 @@ Source0: jq-%{version}.tar.gz
 URL: https://github.com/stedolan/jq
 License: BSD
 AutoReqProv: no
-BuildPrereq: autoconf, libtool, automake, flex, bison, python
+#BuildPrereq: autoconf, libtool, automake, flex, bison, python
 
 Group: Applications/System
 # Requires:
