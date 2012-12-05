@@ -13,7 +13,7 @@ elif [ "superclean" == "$1" ]; then
       chmod -R u+w jq-${ver}
       rm -rf jq-${ver}
     fi
-    rm -f jq-${ver}.*
+    rm -f jq-${ver}*
   fi
 else
   autoreconf --install

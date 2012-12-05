@@ -3,7 +3,7 @@
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
-EXTRA_DIST = setup.sh config.h.in ChangeLog VERSION lexer.l lexer.h gen_utf8_tables.py jq.spec
+EXTRA_DIST = setup.sh config.h.in ChangeLog VERSION lexer.l lexer.h gen_utf8_tables.py jq.spec testdata
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
@@ -27,13 +27,11 @@ bin_PROGRAMS = jq jq_test
 BUILT_SOURCES = jv_utf8_tables.gen.h lexer.h lexer.c
 jq_SOURCES = $(JQ_SRC) main.c
 jq_CPPFLAGS = $(DEVCFLAGS) -O -DJQ_DEBUG=0
-jq_CFLAGS = $(DEVCFLAGS) -O -DJQ_DEBUG=0
 
 
 TESTS = jq_test
 jq_test_SOURCES = $(JQ_SRC) jq_test.c
 jq_test_CPPFLAGS = $(DEVCFLAGS) -DJQ_DEBUG=1
-jq_test_CFLAGS = $(DEVCFLAGS) -DJQ_DEBUG=1
 LOG_COMPILER = valgrind
 AM_LOG_FLAGS = --error-exitcode=1 -q --leak-check=full
 

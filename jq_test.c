@@ -24,10 +24,21 @@ static int skipline(const char* buf) {
 }
 
 static void run_jq_tests() {
-  FILE* testdata = fopen("testdata","r");
+  FILE* testdata = NULL;
   char buf[4096];
   int tests = 0, passed = 0;
 
+  testdata = fopen("testdata","r");
+  if ( NULL == testdata )
+  {
+    /* in an autoconf distcheck, the binary file will be in a _build subdirectory */
+    testdata = fopen("../testdata", "r");
+    if ( NULL == testdata )
+    {
+      fprintf(stderr, "Could not find testdata file\n");
+      exit(1);
+    }
+  }
   while (1) {
     if (!fgets(buf, sizeof(buf), testdata)) break;
     if (skipline(buf)) continue;
