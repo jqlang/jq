@@ -14,7 +14,7 @@
 
 #include "locfile.h"
 #include "jv.h"
-#include "parser.h"
+#include "jq_parser.h"
 #include "builtin.h"
 
 typedef struct {

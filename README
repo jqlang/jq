@@ -1,0 +1,5 @@
+Since this is a github project and an autoconf project, the
+README file is not used, README.md is the file to READ!
+
+When you checkout the file, run "setup.sh" which gets autoconf initialized.
+Then follow the instructions in INSTALL.  Real standard stuff...
