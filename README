@@ -3,3 +3,8 @@ README file is not used, README.md is the file to READ!
 
 When you checkout the file, run "setup.sh" which gets autoconf initialized.
 Then follow the instructions in INSTALL.  Real standard stuff...
+
+
+   $ ./setup.sh             # initializes Autoconf and builds your release
+   $ ./setup.sh clean       # cleans all the temp files out of your tree
+   $ ./setup.sh superclean  # deletes your release files so you can try again
