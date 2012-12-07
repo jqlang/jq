@@ -55,11 +55,10 @@ body:
 
       For Linux systems, these will all be in your system's package
       manager, and if you do development on the machine they're most
-      likely already installed. I have no idea how to get these
-      installed on OS X, you're on your own there.
+      likely already installed.
 
       On OS X, these are all included in Apple's command line tools, which
-      can be installed from [Xcode](developer.apple.com/technologies/tools/).
+      can be installed from [Xcode](http://developer.apple.com/technologies/tools/).
       However, you may find that you need a newer version of Bison than the one provided
       by Apple. This can be found in [Homebrew](http://mxcl.github.com/homebrew/)
       or [MacPorts](http://macports.org/).
