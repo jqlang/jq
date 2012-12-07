@@ -133,7 +133,7 @@ static block gen_dictpair(block k, block v) {
 }
 
 static block gen_index(block obj, block key) {
-  return BLOCK(obj, gen_subexp(key), gen_op_simple(INDEX));
+  return BLOCK(gen_subexp(key), obj, gen_op_simple(INDEX));
 }
 
 static block gen_binop(block a, block b, int op) {

@@ -464,3 +464,7 @@ unique
 [min,max,min_by(.),max_by(.)]
 []
 [null,null,null,null]
+
+.foo[.baz]
+{"foo":{"bar":4},"baz":"bar"}
+4
