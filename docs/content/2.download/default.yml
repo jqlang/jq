@@ -58,6 +58,12 @@ body:
       likely already installed. I have no idea how to get these
       installed on OS X, you're on your own there.
 
+      On OS X, these are all included in Apple's command line tools, which
+      can be installed from [Xcode](developer.apple.com/technologies/tools/).
+      However, you may find that you need a newer version of Bison than the one provided
+      by Apple. This can be found in [Homebrew](http://mxcl.github.com/homebrew/)
+      or [MacPorts](http://macports.org/).
+
       `flex` and `bison` are used to generate the lexer and parser for
       jq, and some python scripts generate the UTF8 encoding tables
       needed for JSON parsing.
