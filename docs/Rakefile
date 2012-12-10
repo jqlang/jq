@@ -38,11 +38,13 @@ task :serve do
     
     server = fork {        
       app = Rack::Builder.app {
-        use Bonsai::StaticPassThrough, :root => Bonsai.root_dir + "/output", :urls => ["/"]
+        map "/jq" do
+          use Bonsai::StaticPassThrough, :root => Bonsai.root_dir + "/output", :urls => ["/"]
+        end
         run Bonsai::DevelopmentServer
       }
       Rack::Handler.default.run(app, :Port => 5000) do
-        Launchy.open("http://localhost:5000/")
+        Launchy.open("http://localhost:5000/jq")
       end
     }    
     Watch.new("{content,templates,public}/**/*") { Bonsai::Exporter.process! }
