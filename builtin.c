@@ -41,7 +41,6 @@ static jv type_error2(jv bad1, jv bad2, const char* msg) {
   return err;
 }
 
-
 static jv f_plus(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
@@ -297,6 +296,13 @@ static jv f_type(jv input) {
   return out;
 }
 
+static jv f_error(jv input, jv msg) {
+  jv_free(input);
+  msg = f_tostring(msg);
+  return jv_invalid_with_msg(msg);
+}
+
+
 static struct cfunction function_list[] = {
   {(cfunction_ptr)f_plus, "_plus", 3},
   {(cfunction_ptr)f_minus, "_minus", 3},
@@ -322,6 +328,7 @@ static struct cfunction function_list[] = {
   {(cfunction_ptr)f_max, "max", 1},
   {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
+  {(cfunction_ptr)f_error, "error", 2},
 };
 
 static struct symbol_table cbuiltins = 
