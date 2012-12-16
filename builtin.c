@@ -191,6 +191,9 @@ static jv f_length(jv input) {
     return jv_number(jv_object_length(input));
   } else if (jv_get_kind(input) == JV_KIND_STRING) {
     return jv_number(jv_string_length(input));
+  } else if (jv_get_kind(input) == JV_KIND_NULL) {
+    jv_free(input);
+    return jv_number(0);
   } else {
     return type_error(input, "has no length");
   }
