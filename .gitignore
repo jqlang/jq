@@ -9,5 +9,7 @@ jv_test
 jv_parse
 parsertest*~
 
+build
+
 # Something delightfully recursive happens otherwise
 docs/content/2.download/source/*

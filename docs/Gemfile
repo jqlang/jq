@@ -2,3 +2,4 @@ source :rubygems
 
 gem "bonsai"
 gem "maruku"
+gem "ronn"

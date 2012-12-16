@@ -26,6 +26,15 @@ body: |
 
   But that's getting ahead of ourselves. :) Let's start with something
   simpler:
+
+manpage_intro: |
+  jq(1) -- Command-line JSON processor
+  ====================================
+
+  ## SYNOPSIS
+
+  `jq` [<options>...] <filter>
+
   
 sections:
   - title: Invoking jq
@@ -40,51 +49,51 @@ sections:
       You can affect how jq reads and writes its input and output
       using some command-line options:
 
-      * `--slurp`/`-s` 
-
-        Instead of running the filter for each JSON object in the
-        input, read the entire input stream into a large array and run
-        the filter just once.
-      
-      * `--raw-input`/`-R` 
-      
-        Don't parse the input as JSON. Instead, each line of text is
-        passed to the filter as a string. If combined with `--slurp`,
-        then the entire input is passed to the filter as a single long
-        string.
-
-      * `--null-input`/`-n`
-
-        Don't read any input at all! Instead, the filter is run once
-        using `null` as the input. This is useful when using jq as a
-        simple calculator or to construct JSON data from scratch.
-
-      * `--compact-output` / `-c`
-
-        By default, jq pretty-prints JSON output. Using this option
-        will result in more compact output by instead putting each
-        JSON object on a single line.
-
-      * `--colour-output` / `-C` and `--monochrome-output` / `-M`
-      
-        By default, jq outputs colored JSON if writing to a
-        terminal. You can force it to produce color even if writing to
-        a pipe or a file using `-C`, and disable color with `-M`.
-
-      * `--ascii-output` / `-a`
-
-        jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
-        if the input specified them as escape sequences (like
-        "\u03bc"). Using this option, you can force jq to produce pure
-        ASCII output with every non-ASCII character replaced with the
-        equivalent escape sequence.
-
-      * `--raw-output` / `-r`
-
-        With this option, if the filter's result is a string then it
-        will be written directly to standard output rather than being
-        formatted as a JSON string with quotes. This can be useful for
-        making jq filters talk to non-JSON-based systems.
+        * `--slurp`/`-s`:
+  
+          Instead of running the filter for each JSON object in the
+          input, read the entire input stream into a large array and run
+          the filter just once.
+        
+        * `--raw-input`/`-R`:
+        
+          Don't parse the input as JSON. Instead, each line of text is
+          passed to the filter as a string. If combined with `--slurp`,
+          then the entire input is passed to the filter as a single long
+          string.
+  
+        * `--null-input`/`-n`:
+  
+          Don't read any input at all! Instead, the filter is run once
+          using `null` as the input. This is useful when using jq as a
+          simple calculator or to construct JSON data from scratch.
+  
+        * `--compact-output` / `-c`:
+  
+          By default, jq pretty-prints JSON output. Using this option
+          will result in more compact output by instead putting each
+          JSON object on a single line.
+  
+        * `--colour-output` / `-C` and `--monochrome-output` / `-M`:
+        
+          By default, jq outputs colored JSON if writing to a
+          terminal. You can force it to produce color even if writing to
+          a pipe or a file using `-C`, and disable color with `-M`.
+  
+        * `--ascii-output` / `-a`:
+  
+          jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
+          if the input specified them as escape sequences (like
+          "\u03bc"). Using this option, you can force jq to produce pure
+          ASCII output with every non-ASCII character replaced with the
+          equivalent escape sequence.
+  
+        * `--raw-output` / `-r`:
+  
+          With this option, if the filter's result is a string then it
+          will be written directly to standard output rather than being
+          formatted as a JSON string with quotes. This can be useful for
+          making jq filters talk to non-JSON-based systems.
 
   - title: Basic filters
     entries:
@@ -148,7 +157,7 @@ sections:
 
         examples:
           - program: '.[]'
-            input: '[{name":"JSON", "good":true}, {"name":"XML", "good":false}]'
+            input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output:
               - '{"name":"JSON", "good":true}'
               - '{"name":"XML", "good":false}'
@@ -178,7 +187,7 @@ sections:
             
           - program: '.[4,2]'
             input: '["a","b","c","d","e"]'
-            output: ['"d"', '"c"']
+            output: ['"e"', '"c"']
           
       - title: "`|`"
         body: |
@@ -194,7 +203,7 @@ sections:
 
         examples:
           - program: '.[] | .name'
-            input: '[{name":"JSON", "good":true}, {"name":"XML", "good":false}]'
+            input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output: ['"JSON"', '"XML"']
 
   - title: Types and Values
@@ -325,7 +334,7 @@ sections:
         examples:
           - program: '.a + 1'
             input: '{"a": 7}'
-            output: '{"a": 8}'
+            output: ['8']
           - program: '.a + .b'
             input: '{"a": [1,2], "b": [3,4]}'
             output: ['[1,2,3,4]']
@@ -409,11 +418,11 @@ sections:
           `foo` returns true for that input, and produces no output
           otherwise.
 
-          It's useful for filtering lists: `[1,2,3] | select(. >= 2)`
+          It's useful for filtering lists: `[1,2,3] | map(select(. >= 2))`
           will give you `[3]`.
 
         examples:
-          - program: 'select(. >= 2)'
+          - program: 'map(select(. >= 2))'
             input: '[1,5,3,0,7]'
             output: ['[5,3,7]']
 
@@ -427,7 +436,7 @@ sections:
         examples:
           - program: '1, empty, 2'
             input: 'null'
-            output: [1,2]
+            output: [1, 2]
           - program: '[1,2,empty,3]'
             input: 'null'
             output: ['[1,2,3]']
@@ -461,7 +470,7 @@ sections:
         examples:
           - program: add
             input: '["a","b","c"]'
-            output: ["abc"]
+            output: ['"abc"']
           - program: add
             input: '[1, 2, 3]'
             output: [6]
@@ -479,7 +488,7 @@ sections:
         examples:
           - program: '.[] | tonumber'
             input: '[1, "1"]'
-            output: [1,1]
+            output: [1, 1]
 
       - title: `tostring`
         body: |
@@ -593,10 +602,10 @@ sections:
             input: '["foobar", "foobaz", "blarp"]'
             output: ['false']
           - program: 'contains({foo: 12, bar: [{barp: 12}]})'
-            input: '{foo: 12, bar:[1,2,{barp:12, blip:13}]}'
+            input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
             output: ['true']
           - program: 'contains({foo: 12, bar: [{barp: 15}]})'
-            input: '{foo: 12, bar:[1,2,{barp:12, blip:13}]}'
+            input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
             output: ['false']
 
       - title: "String interpolation - `\(foo)`"
@@ -633,7 +642,7 @@ sections:
         examples:
           - program: '.[] == 1'
             input: '[1, 1.0, "1", "banana"]'
-            output: ['[true, true, false, false]']
+            output: ['true', 'true', 'false', 'false']
       - title: if-then-else
         body: |
 
@@ -854,12 +863,12 @@ sections:
           input's `.foo` field to each element of the array.
 
         examples:
-          - program: 'def addvalue(f): map(. + [$value]); addvalue(.[0])'
+          - program: 'def addvalue(f): . + [f]; map(addvalue(.[0]))'
             input: '[[1,2],[10,20]]'
             output: ['[[1,2,1], [10,20,10]]']
-          - program: 'def addvalue(f): f as $x | map (. + $x); addvalue(.[0])'
+          - program: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
             input: '[[1,2],[10,20]]'
-            output: ['[[1,2,[1,2]], [10,20,[1,2]]]']
+            output: ['[[1,2,1,2], [10,20,1,2]]']
       
 
   - title: Assignment
@@ -971,4 +980,5 @@ sections:
           "stedolan" wrote, and we can comment on each of them in the same way
           that we did before:
           
-              (.posts[] | select(.author == "stedolan") | .comments) |= . + ["terrible."]
+              (.posts[] | select(.author == "stedolan") | .comments) |=
+                  . + ["terrible."]

@@ -8,9 +8,24 @@
 static void jv_test();
 static void run_jq_tests();
 
-int main() {
+FILE* testdata;
+
+int main(int argc, char* argv[]) {
   jv_test();
+  if (argc == 1) {
+    testdata = fopen("testdata", "r");
+  } else if (argc == 2) {
+    if (!strcmp(argv[1], "-")) {
+      testdata = stdin;
+    } else {
+      testdata = fopen(argv[1], "r");
+    }
+  } else {
+    printf("usage: %s OR cat testdata | %s - OR %s testdata\n", argv[0], argv[0], argv[0]);
+    return 127;
+  }
   run_jq_tests();
+  if (testdata != stdin) fclose(testdata);
 }
 
 
@@ -24,37 +39,40 @@ static int skipline(const char* buf) {
 }
 
 static void run_jq_tests() {
-  FILE* testdata = fopen("testdata","r");
   char buf[4096];
-  int tests = 0, passed = 0;
+  int tests = 0, passed = 0, invalid = 0;
 
   while (1) {
     if (!fgets(buf, sizeof(buf), testdata)) break;
     if (skipline(buf)) continue;
+    if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = 0;
     printf("Testing %s\n", buf);
     int pass = 1;
+    tests++;
     struct bytecode* bc = jq_compile(buf);
-    assert(bc);
+    if (!bc) {invalid++; continue;}
+#if JQ_DEBUG
     printf("Disassembly:\n");
     dump_disassembly(2, bc);
     printf("\n");
+#endif
     fgets(buf, sizeof(buf), testdata);
     jv input = jv_parse(buf);
-    assert(jv_is_valid(input));
+    if (!jv_is_valid(input)){ invalid++; continue; }
     jq_init(bc, input);
 
     while (fgets(buf, sizeof(buf), testdata)) {
       if (skipline(buf)) break;
       jv expected = jv_parse(buf);
-      assert(jv_is_valid(expected));
+      if (!jv_is_valid(expected)){ invalid++; continue; }
       jv actual = jq_next();
       if (!jv_is_valid(actual)) {
         jv_free(actual);
-        printf("Insufficient results\n");
+        printf("*** Insufficient results\n");
         pass = 0;
         break;
       } else if (!jv_equal(jv_copy(expected), jv_copy(actual))) {
-        printf("Expected ");
+        printf("*** Expected ");
         jv_dump(jv_copy(expected), 0);
         printf(", but got ");
         jv_dump(jv_copy(actual), 0);
@@ -72,7 +90,7 @@ static void run_jq_tests() {
     if (pass) {
       jv extra = jq_next();
       if (jv_is_valid(extra)) {
-        printf("Superfluous result: ");
+        printf("*** Superfluous result: ");
         jv_dump(extra, 0);
         printf("\n");
         pass = 0;
@@ -82,11 +100,9 @@ static void run_jq_tests() {
     }
     jq_teardown();
     bytecode_free(bc);
-    tests++;
     passed+=pass;
   }
-  fclose(testdata);
-  printf("%d of %d tests passed\n", passed,tests);
+  printf("%d of %d tests passed (%d malformed)\n", passed,tests,invalid);
   if (passed != tests) exit(1);
 }
 
