@@ -35,6 +35,17 @@ manpage_intro: |
 
   `jq` [<options>...] <filter>
 
+  `jq` can transform JSON in various ways, by selecting, iterating,
+  reducing and otherwise mangling JSON documents. For instance,
+  running the command `jq 'map(.price) | add'` will take an array of
+  JSON objects as input and return the sum of their "price" fields.
+  
+  The <options> are described in the [INVOKING JQ] section, they
+  mostly concern input and output formatting. The <filter> is written
+  in the jq language and specifies how to transform the input
+  document.
+
+  ## FILTERS
   
 sections:
   - title: Invoking jq

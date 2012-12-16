@@ -81,6 +81,12 @@ task :manpage do
         f.puts "### #{entry['title']}\n"
         f.puts entry['body']
         f.puts ""
+        (entry['examples'] || []).each do |example|
+          f.puts "    jq '#{example['program']}'"
+          f.puts "       #{example['input']}"
+          f.puts "    => #{example['output'].join(", ")}"
+          f.puts
+        end
       end
       f.puts ""
     end
