@@ -16,10 +16,11 @@ static const char* progname;
 
 static void usage() {
   fprintf(stderr, "\njq - commandline JSON processor [version %s]\n", JQ_VERSION);
-  fprintf(stderr, "Usage: %s [options] <jq filter>\n\n", progname);
+  fprintf(stderr, "Usage: %s [options] <jq filter> [file...]\n\n", progname);
   fprintf(stderr, "For a description of the command line options and\n");
   fprintf(stderr, "how to write jq filters (and why you might want to)\n");
-  fprintf(stderr, "see the jq documentation at http://stedolan.github.com/jq\n\n");
+  fprintf(stderr, "see the jq manpage, or the online documentation at\n");
+  fprintf(stderr, "http://stedolan.github.com/jq\n\n");
   exit(1);
 }
 
@@ -102,14 +103,53 @@ static jv slurp_file(const char* filename) {
   return data;
 }
 
+FILE* current_input;
+const char** input_filenames;
+int ninput_files;
+int next_input_idx;
+static int read_more(char* buf, size_t size) {
+  while (!current_input || feof(current_input)) {
+    if (current_input) {
+      fclose(current_input);
+      current_input = 0;
+    }
+    if (next_input_idx == ninput_files) {
+      return 0;
+    }
+    if (!strcmp(input_filenames[next_input_idx], "-")) {
+      current_input = stdin;
+    } else {
+      current_input = fopen(input_filenames[next_input_idx], "r");
+    }
+    if (!current_input) {
+      fprintf(stderr, "%s: %s: %s\n", progname, input_filenames[next_input_idx], strerror(errno));
+    }
+    next_input_idx++;
+  }
+
+  if (!fgets(buf, sizeof(buf), current_input)) buf[0] = 0;
+  return 1;
+}
+
 int main(int argc, char* argv[]) {
   if (argc) progname = argv[0];
 
   const char* program = 0;
+  input_filenames = malloc(sizeof(const char*) * argc);
+  ninput_files = 0;
+  int further_args_are_files = 0;
   for (int i=1; i<argc; i++) {
-    if (!isoptish(argv[i])) {
-      if (program) usage();
-      program = argv[i];
+    if (further_args_are_files) {
+      input_filenames[ninput_files++] = argv[i];
+    } else if (!strcmp(argv[i], "--")) {
+      if (!program) usage();
+      further_args_are_files = 1;
+    } else if (!isoptish(argv[i])) {
+      if (program) {
+        input_filenames[ninput_files++] = argv[i];
+      } else {
+        program = argv[i];
+      }
     } else if (isoption(argv[i], 's', "slurp")) {
       options |= SLURP;
     } else if (isoption(argv[i], 'r', "raw-output")) {
@@ -139,6 +179,7 @@ int main(int argc, char* argv[]) {
     }
   }
   if (!program) usage();
+  if (ninput_files == 0) current_input = stdin;
 
   if ((options & PROVIDE_NULL) && (options & (RAW_INPUT | SLURP))) {
     fprintf(stderr, "%s: --null-input cannot be used with --raw-input or --slurp\n", progname);
@@ -178,9 +219,8 @@ int main(int argc, char* argv[]) {
     }
     struct jv_parser parser;
     jv_parser_init(&parser);
-    while (!feof(stdin)) {
-      char buf[4096];
-      if (!fgets(buf, sizeof(buf), stdin)) buf[0] = 0;
+    char buf[4096];
+    while (read_more(buf, sizeof(buf))) {
       if (options & RAW_INPUT) {
         int len = strlen(buf);
         if (len > 0) {
@@ -216,7 +256,7 @@ int main(int argc, char* argv[]) {
       process(slurped);
     }
   }
-
+  free(input_filenames);
   bytecode_free(bc);
   return 0;
 }

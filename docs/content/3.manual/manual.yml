@@ -33,12 +33,16 @@ manpage_intro: |
 
   ## SYNOPSIS
 
-  `jq` [<options>...] <filter>
+  `jq` [<options>...] <filter> [<files>...]
 
   `jq` can transform JSON in various ways, by selecting, iterating,
   reducing and otherwise mangling JSON documents. For instance,
   running the command `jq 'map(.price) | add'` will take an array of
   JSON objects as input and return the sum of their "price" fields.
+
+  By default, `jq` reads a stream of JSON objects (whitespace
+  separated) from `stdin`. One or more <files> may be specified, in
+  which case `jq` will read input from those instead.
   
   The <options> are described in the [INVOKING JQ] section, they
   mostly concern input and output formatting. The <filter> is written
