@@ -112,21 +112,24 @@ static void forkable_stack_pop(struct forkable_stack* s) {
 
 
 struct forkable_stack_state {
-  int prevpos, prevlimit;
+  // We save the previous pos, savedlimit as
+  // length-pos, length-savedlimit since these
+  // values are stable across stack reallocations.
+  int prev_pos_delta, prev_limit_delta;
 };
 
 static void forkable_stack_save(struct forkable_stack* s, struct forkable_stack_state* state) {
   forkable_stack_check(s);
-  state->prevpos = s->pos;
-  state->prevlimit = s->savedlimit;
+  state->prev_pos_delta = s->length - s->pos;
+  state->prev_limit_delta = s->length - s->savedlimit;
   if (s->pos < s->savedlimit) s->savedlimit = s->pos;
 }
 
 static void forkable_stack_switch(struct forkable_stack* s, struct forkable_stack_state* state) {
   forkable_stack_check(s);
   int curr_pos = s->pos;
-  s->pos = state->prevpos;
-  state->prevpos = curr_pos;
+  s->pos = s->length - state->prev_pos_delta;
+  state->prev_pos_delta = s->length - curr_pos;
 
   int curr_limit = s->savedlimit;
   if (curr_pos < curr_limit) s->savedlimit = curr_pos;
@@ -136,10 +139,10 @@ static void forkable_stack_switch(struct forkable_stack* s, struct forkable_stac
 
 static void forkable_stack_restore(struct forkable_stack* s, struct forkable_stack_state* state) {
   forkable_stack_check(s);
-  assert(s->savedlimit <= state->prevpos);
-  assert(s->savedlimit <= state->prevlimit);
-  s->pos = state->prevpos;
-  s->savedlimit = state->prevlimit;
+  assert(s->savedlimit <= s->length - state->prev_pos_delta);
+  assert(s->savedlimit <= s->length - state->prev_limit_delta);
+  s->pos = s->length - state->prev_pos_delta;
+  s->savedlimit = s->length - state->prev_limit_delta;
   forkable_stack_check(s);
 }
 

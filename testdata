@@ -311,6 +311,11 @@ def fac: if . == 1 then 1 else . * (. - 1 | fac) end; [.[] | fac]
 [1,2,3,4]
 [1,2,6,24]
 
+# test stack overflow and reallocation
+# this test is disabled for now, it takes a realllllly long time.
+# def f: if length > 1000 then . else .+[1]|f end; f | length
+# []
+# 1001
 
 #
 # Assignment

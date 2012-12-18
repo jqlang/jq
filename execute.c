@@ -469,9 +469,9 @@ jv jq_next() {
 
 
 void jq_init(struct bytecode* bc, jv input) {
-  forkable_stack_init(&data_stk, sizeof(stackval) * 1000); // FIXME: lower this number, see if it breaks
-  forkable_stack_init(&frame_stk, 10240); // FIXME: lower this number, see if it breaks
-  forkable_stack_init(&fork_stk, 10240); // FIXME: lower this number, see if it breaks
+  forkable_stack_init(&data_stk, sizeof(stackval) * 100);
+  forkable_stack_init(&frame_stk, 1024);
+  forkable_stack_init(&fork_stk, 1024);
   
   stack_push(stackval_root(input));
   struct closure top = {bc, -1};
