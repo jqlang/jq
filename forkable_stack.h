@@ -1,9 +1,9 @@
 #ifndef FORKABLE_STACK_H
 #define FORKABLE_STACK_H
-#include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>
+#include "jv_alloc.h"
 
 struct forkable_stack_header {
   /* distance in bytes between this header and the header
@@ -18,7 +18,7 @@ struct forkable_stack {
   char* stk;
 
   // stk+length is just past end of allocated area
-  // stk = malloc(length)
+  // stk = jv_mem_alloc(length)
   int length;
 
   // stk+pos is header of top object, or stk+length if empty
@@ -40,7 +40,7 @@ static int forkable_stack_empty(struct forkable_stack* s) {
 }
 
 static void forkable_stack_init(struct forkable_stack* s, size_t sz) {
-  s->stk = malloc(sz);
+  s->stk = jv_mem_alloc(sz);
   s->length = sz;
   s->pos = s->length;
   s->savedlimit = s->length;
@@ -50,7 +50,7 @@ static void forkable_stack_init(struct forkable_stack* s, size_t sz) {
 static void forkable_stack_free(struct forkable_stack* s) {
   assert(forkable_stack_empty(s));
   assert(s->savedlimit == s->length);
-  free(s->stk);
+  jv_mem_free(s->stk);
   s->stk = 0;
 }
 
@@ -62,7 +62,7 @@ static void* forkable_stack_push(struct forkable_stack* s, size_t sz_size) {
   if (curr - size < 0) {
     int oldlen = s->length;
     s->length = (size + oldlen + 1024) * 2;
-    s->stk = realloc(s->stk, s->length);
+    s->stk = jv_mem_realloc(s->stk, s->length);
     int shift = s->length - oldlen;
     memmove(s->stk + shift, s->stk, oldlen);
     s->pos += shift;

@@ -1,4 +1,5 @@
 %{
+#include "jv_alloc.h"
 #include "compile.h"
 
 struct lexer_param;
@@ -25,6 +26,7 @@ struct lexer_param;
 %}
 
 %option noyywrap nounput noinput nodefault
+%option noyyalloc noyyrealloc noyyfree
 %option reentrant
 %option extra-type="int"
 %option bison-bridge bison-locations
@@ -152,4 +154,14 @@ static int enter(int c, int currstate, yyscan_t yyscanner) {
   assert(state);
   yy_push_state(state, yyscanner);
   return c;
+}
+
+void* yyalloc(size_t sz, void* extra) {
+  return jv_mem_alloc(sz);
+}
+void* yyrealloc(void* p, size_t sz, void* extra) {
+  return jv_mem_realloc(p, sz);
+}
+void yyfree(void* p, void* extra) {
+  jv_mem_free(p);
 }

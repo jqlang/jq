@@ -195,6 +195,11 @@
 
 #include "jv_dtoa.h"
 
+#include "jv_alloc.h"
+#define MALLOC jv_mem_alloc
+#define FREE jv_mem_free
+
+
 
 #ifndef Long
 #define Long long
@@ -572,7 +577,7 @@ void jvp_dtoa_context_free(struct dtoa_context* C) {
     while (C->freelist[k]) {
       Bigint* v = C->freelist[k];
       C->freelist[k] = v->next;
-      free(v);
+      FREE(v);
     }
   }
 }

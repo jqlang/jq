@@ -1,6 +1,7 @@
 #include "jv_aux.h"
 #include <string.h>
 #include <stdlib.h>
+#include "jv_alloc.h"
 
 jv jv_lookup(jv t, jv k) {
   jv v;
@@ -78,7 +79,7 @@ static int string_cmp(const void* pa, const void* pb){
 jv jv_keys(jv x) {
   if (jv_get_kind(x) == JV_KIND_OBJECT) {
     int nkeys = jv_object_length(jv_copy(x));
-    jv* keys = malloc(sizeof(jv) * nkeys);
+    jv* keys = jv_mem_alloc(sizeof(jv) * nkeys);
     int kidx = 0;
     jv_object_foreach(i, x) {
       keys[kidx++] = jv_object_iter_key(x, i);
@@ -88,7 +89,7 @@ jv jv_keys(jv x) {
     for (int i = 0; i<nkeys; i++) {
       answer = jv_array_append(answer, keys[i]);
     }
-    free(keys);
+    jv_mem_free(keys);
     jv_free(x);
     return answer;
   } else if (jv_get_kind(x) == JV_KIND_ARRAY) {
@@ -199,7 +200,7 @@ static struct sort_entry* sort_items(jv objects, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
   int n = jv_array_length(jv_copy(objects));
-  struct sort_entry* entries = malloc(sizeof(struct sort_entry) * n);
+  struct sort_entry* entries = jv_mem_alloc(sizeof(struct sort_entry) * n);
   for (int i=0; i<n; i++) {
     entries[i].object = jv_array_get(jv_copy(objects), i);
     entries[i].key = jv_array_get(jv_copy(keys), i);
@@ -221,7 +222,7 @@ jv jv_sort(jv objects, jv keys) {
     jv_free(entries[i].key);
     ret = jv_array_set(ret, i, entries[i].object);
   }
-  free(entries);
+  jv_mem_free(entries);
   return ret;
 }
 
@@ -247,6 +248,6 @@ jv jv_group(jv objects, jv keys) {
   }
   jv_free(curr_key);
   ret = jv_array_append(ret, group);
-  free(entries);
+  jv_mem_free(entries);
   return ret;
 }

@@ -1,3 +1,4 @@
+#define _GNU_SOURCE // for strdup
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -5,6 +6,7 @@
 #include "compile.h"
 #include "bytecode.h"
 #include "locfile.h"
+#include "jv_alloc.h"
 
 /*
   The intermediate representation for jq filters is as a sequence of
@@ -57,7 +59,7 @@ struct inst {
 };
 
 static inst* inst_new(opcode op) {
-  inst* i = malloc(sizeof(inst));
+  inst* i = jv_mem_alloc(sizeof(inst));
   i->next = i->prev = 0;
   i->op = op;
   i->bytecode_pos = -1;
@@ -70,13 +72,13 @@ static inst* inst_new(opcode op) {
 }
 
 static void inst_free(struct inst* i) {
-  free(i->symbol);
+  jv_mem_free(i->symbol);
   block_free(i->subfn);
   block_free(i->arglist);
   if (opcode_describe(i->op)->flags & OP_HAS_CONSTANT) {
     jv_free(i->imm.constant);
   }
-  free(i);
+  jv_mem_free(i);
 }
 
 static block inst_block(inst* i) {
@@ -546,10 +548,10 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
     }
   }
   if (bc->nsubfunctions) {
-    bc->subfunctions = malloc(sizeof(struct bytecode*) * bc->nsubfunctions);
+    bc->subfunctions = jv_mem_alloc(sizeof(struct bytecode*) * bc->nsubfunctions);
     for (inst* curr = b.first; curr; curr = curr->next) {
       if (curr->op == CLOSURE_CREATE) {
-        struct bytecode* subfn = malloc(sizeof(struct bytecode));
+        struct bytecode* subfn = jv_mem_alloc(sizeof(struct bytecode));
         bc->subfunctions[curr->imm.intval] = subfn;
         subfn->globals = bc->globals;
         subfn->parent = bc;
@@ -568,7 +570,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
     bc->subfunctions = 0;
   }
   bc->codelen = pos;
-  uint16_t* code = malloc(sizeof(uint16_t) * bc->codelen);
+  uint16_t* code = jv_mem_alloc(sizeof(uint16_t) * bc->codelen);
   bc->code = code;
   pos = 0;
   jv constant_pool = jv_array();
@@ -620,13 +622,13 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
 }
 
 int block_compile(block b, struct locfile* locations, struct bytecode** out) {
-  struct bytecode* bc = malloc(sizeof(struct bytecode));
+  struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
-  bc->globals = malloc(sizeof(struct symbol_table));
+  bc->globals = jv_mem_alloc(sizeof(struct symbol_table));
   int ncfunc = count_cfunctions(b);
   bc->globals->ncfunctions = 0;
-  bc->globals->cfunctions = malloc(sizeof(struct cfunction) * ncfunc);
+  bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
   int nerrors = compile(locations, bc, b);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {

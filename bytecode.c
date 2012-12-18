@@ -4,6 +4,7 @@
 
 #include "bytecode.h"
 #include "opcode.h"
+#include "jv_alloc.h"
 
 static int bytecode_operation_length(uint16_t* codeptr) {
   int length = opcode_describe(*codeptr)->length;
@@ -72,17 +73,17 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
 }
 
 void symbol_table_free(struct symbol_table* syms) {
-  free(syms->cfunctions);
-  free(syms);
+  jv_mem_free(syms->cfunctions);
+  jv_mem_free(syms);
 }
 
 void bytecode_free(struct bytecode* bc) {
-  free(bc->code);
+  jv_mem_free(bc->code);
   jv_free(bc->constants);
   for (int i=0; i<bc->nsubfunctions; i++)
     bytecode_free(bc->subfunctions[i]);
   if (!bc->parent)
     symbol_table_free(bc->globals);
-  free(bc->subfunctions);
-  free(bc);
+  jv_mem_free(bc->subfunctions);
+  jv_mem_free(bc);
 }

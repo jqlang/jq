@@ -5,6 +5,7 @@
 #include "jv_dtoa.h"
 #include "jv_parse.h"
 #include "jv_unicode.h"
+#include "jv_alloc.h"
 
 typedef const char* presult;
 
@@ -32,8 +33,8 @@ void jv_parser_free(struct jv_parser* p) {
   jv_free(p->next);
   for (int i=0; i<p->stackpos; i++) 
     jv_free(p->stack[i]);
-  free(p->stack);
-  free(p->tokenbuf);
+  jv_mem_free(p->stack);
+  jv_mem_free(p->tokenbuf);
   jvp_dtoa_context_free(&p->dtoa);
 }
 
@@ -48,7 +49,7 @@ static void push(struct jv_parser* p, jv v) {
   assert(p->stackpos <= p->stacklen);
   if (p->stackpos == p->stacklen) {
     p->stacklen = p->stacklen * 2 + 10;
-    p->stack = realloc(p->stack, p->stacklen * sizeof(jv));
+    p->stack = jv_mem_realloc(p->stack, p->stacklen * sizeof(jv));
   }
   assert(p->stackpos < p->stacklen);
   p->stack[p->stackpos++] = v;
@@ -142,7 +143,7 @@ static void tokenadd(struct jv_parser* p, char c) {
   assert(p->tokenpos <= p->tokenlen);
   if (p->tokenpos == p->tokenlen) {
     p->tokenlen = p->tokenlen*2 + 256;
-    p->tokenbuf = realloc(p->tokenbuf, p->tokenlen);
+    p->tokenbuf = jv_mem_realloc(p->tokenbuf, p->tokenlen);
   }
   assert(p->tokenpos < p->tokenlen);
   p->tokenbuf[p->tokenpos++] = c;

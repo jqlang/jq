@@ -1,3 +1,4 @@
+#define _POSIX_SOURCE
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -10,6 +11,7 @@
 #include "locfile.h"
 #include "parser.h"
 #include "execute.h"
+#include "jv_alloc.h"
 #include "version.gen.h"
 
 static const char* progname;
@@ -135,7 +137,7 @@ int main(int argc, char* argv[]) {
   if (argc) progname = argv[0];
 
   const char* program = 0;
-  input_filenames = malloc(sizeof(const char*) * argc);
+  input_filenames = jv_mem_alloc(sizeof(const char*) * argc);
   ninput_files = 0;
   int further_args_are_files = 0;
   for (int i=1; i<argc; i++) {
@@ -256,7 +258,7 @@ int main(int argc, char* argv[]) {
       process(slurped);
     }
   }
-  free(input_filenames);
+  jv_mem_free(input_filenames);
   bytecode_free(bc);
   return 0;
 }

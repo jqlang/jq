@@ -11,6 +11,7 @@
 #include "forkable_stack.h"
 #include "frame_layout.h"
 
+#include "jv_alloc.h"
 #include "locfile.h"
 #include "jv.h"
 #include "jv_aux.h"
@@ -33,7 +34,7 @@ int path_push(stackval sv, jv val) {
   if (pos == pathsize) {
     int oldpathsize = pathsize;
     pathsize = oldpathsize ? oldpathsize * 2 : 100;
-    pathbuf = realloc(pathbuf, sizeof(pathbuf[0]) * pathsize);
+    pathbuf = jv_mem_realloc(pathbuf, sizeof(pathbuf[0]) * pathsize);
     for (int i=oldpathsize; i<pathsize; i++) {
       pathbuf[i] = jv_invalid();
     }
@@ -491,7 +492,7 @@ void jq_teardown() {
   for (int i=0; i<pathsize; i++) {
     jv_free(pathbuf[i]);
   }
-  free(pathbuf);
+  jv_mem_free(pathbuf);
   pathbuf = 0;
   pathsize = 0;
 }

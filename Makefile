@@ -24,7 +24,7 @@ version.gen.h: VERSION
 	sed 's/.*/#define JQ_VERSION "&"/' $^ > $@
 main.c: version.gen.h
 
-JQ_SRC=parser.gen.c lexer.gen.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c
+JQ_SRC=parser.gen.c lexer.gen.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_alloc.c
 
 jq_test: CFLAGS += -DJQ_DEBUG=1
 jq_test: $(JQ_SRC) jq_test.c
