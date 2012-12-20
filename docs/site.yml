@@ -1,7 +1,7 @@
 # The key value pairs found below are available within the templates.
 
 
-jq_version: 1.1
+jq_version: 1.2
 root: '/jq'
 footer: |
   
