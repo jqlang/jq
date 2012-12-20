@@ -50,6 +50,17 @@ manpage_intro: |
   document.
 
   ## FILTERS
+
+manpage_epilogue: |
+  ## BUGS
+
+  Presumably. Report them or discuss them at:
+
+      https://github.com/stedolan/jq/issues
+
+  ## AUTHOR
+
+  Stephen Dolan `<mu@netsoc.tcd.ie>`
   
 sections:
   - title: Invoking jq

@@ -90,6 +90,7 @@ task :manpage do
       end
       f.puts ""
     end
+    f.puts manual['manpage_epilogue']
     f.close
     puts Ronn::Document.new(f.path).convert('roff').gsub(/<\/?code>/,"")
   end  
