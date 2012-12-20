@@ -53,25 +53,51 @@
         <h1>Download jq</h1>
         
           
-            <p>jq is written in C and has no runtime dependencies, so it should be possible to build it for nearly any platform. Prebuilt binaries are available for Linux (64-bit x86) and OS X.</p>
+            <p>jq is written in C and has no runtime dependencies, so it should be possible to build it for nearly any platform. Prebuilt binaries are available for Linux, OS X and Windows.</p>
 
-<ul>
-<li><a href='linux_x86_64/jq'>Download binary for 64-bit Linux</a></li>
-
-<li><a href='osx_64/jq'>Download binary for OS X</a> (or use <a href='http://mxcl.github.com/homebrew/'>homebrew</a>: <code>brew install jq</code>)</li>
-
-<li><a href='source/jq.tgz'>Download source</a></li>
-</ul>
-
-<p>The binaries should just run, but you may need to make them executable first using:</p>
-
-<pre><code>chmod +x jq</code></pre>
+<p>The binaries should just run, but on OS X and Linux you may need to make them executable first using <code>chmod +x jq</code>.</p>
 
 <p>jq is licensed under the MIT license. For all of the gory details, read the file <code>COPYING</code> in the source distribution.</p>
 
-<h1 id='hacking_on_jq'>Hacking on jq</h1>
+<h3 id='linux'>Linux</h3>
 
-<p>If you want to work on jq, grab the source from <a href='https://github.com/stedolan/jq'>https://github.com/stedolan/jq</a>.</p>
+<ul>
+<li>
+<p>Binaries for <a href='linux64/jq'>64-bit</a> or <a href='linux32/jq'>32-bit</a> systems.</p>
+</li>
+
+<li>
+<p>For Arch users, a PKGBUILD for jq-1.1 is in the <a href='https://aur.archlinux.org/packages.php?ID=63849'>AUR</a>, as well as a PKGBUILD for the HEAD of master (<a href='https://aur.archlinux.org/packages.php?ID=63850'>jq-git</a>). You can install them using <a href='https://wiki.archlinux.org/index.php/Yaourt'>Yaourt</a> or manually by following instructions on <a href='https://wiki.archlinux.org/index.php/Arch_UseRepository'>Arch Linux&#8217;s Wiki</a>.</p>
+</li>
+
+<li>
+<p>Debian/Ubuntu packages are coming Real Soon Now.</p>
+</li>
+</ul>
+
+<h3 id='os_x'>OS X</h3>
+
+<ul>
+<li>
+<p><code>brew install jq</code> using <a href='http://mxcl.github.com/homebrew/'>homebrew</a></p>
+</li>
+
+<li>
+<p>Or, grab prebuilt <a href='osx64/jq'>64-bit binaries</a> or <a href='osx32/jq'>32-bit binaries</a></p>
+</li>
+</ul>
+
+<h3 id='windows'>Windows</h3>
+
+<ul>
+<li>Executables for <a href='win64/jq'>64-bit</a> or <a href='win32/jq'>32-bit</a></li>
+</ul>
+
+<h3 id='from_source_on_linux_or_os_x'>From source on Linux or OS X</h3>
+
+<pre><code>git clone https://github.com/stedolan/jq.git
+cd jq
+make &amp;&amp; sudo make install</code></pre>
 
 <p>To build it from a git clone, you&#8217;ll need to install a few packages first:</p>
 
@@ -87,13 +113,13 @@
 <li><a href='http://www.gnu.org/software/make'>Make</a></li>
 </ul>
 
-<p>Most of these aren&#8217;t necessary if you&#8217;re just trying to compile jq from the released tarball - that version has the non-platform-specific build steps already done, so you&#8217;ll only need a C compiler and <code>make</code> to finish it off.</p>
+<p>For Linux systems, these will all be in your system&#8217;s package manager, and if you do development on the machine they&#8217;re most likely already installed.</p>
 
-<p>For Linux systems, these will all be in your system&#8217;s package manager, and if you do development on the machine they&#8217;re most likely already installed. I have no idea how to get these installed on OS X, you&#8217;re on your own there.</p>
+<p>On OS X, these are all included in Apple&#8217;s command line tools, which can be installed from <a href='http://developer.apple.com/technologies/tools/'>Xcode</a>. However, you may find that you need a newer version of Bison than the one provided by Apple. This can be found in <a href='http://mxcl.github.com/homebrew/'>Homebrew</a> or <a href='http://macports.org/'>MacPorts</a>.</p>
 
 <p><code>flex</code> and <code>bison</code> are used to generate the lexer and parser for jq, and some python scripts generate the UTF8 encoding tables needed for JSON parsing.</p>
 
-<h2 id='building_the_documentation'>Building the documentation</h2>
+<h4 id='building_the_documentation'>Building the documentation</h4>
 
 <p>jq&#8217;s documentation is compiled into static HTML using <a href='http://www.tinytree.info'>Bonsai</a>. To view the documentation locally, run <code>rake serve</code> from the docs/ subdirectory.</p>
           

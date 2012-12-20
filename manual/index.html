@@ -137,6 +137,16 @@
                   
                     "`tostring`" : "tostring",
                   
+                    "`sort, sort_by`" : "sortsort_by",
+                  
+                    "`group_by`" : "group_by",
+                  
+                    "`min`, `max`, `min_by`, `max_by`" : "minmaxmin_bymax_by",
+                  
+                    "`unique`" : "unique",
+                  
+                    "`contains`" : "contains",
+                  
                     "String interpolation - `\\(foo)`" : "Stringinterpolationfoo",
                   
                   "Builtin operators and functions" : "Builtinoperatorsandfunctions"
@@ -146,6 +156,8 @@
                     "`==`, `!=`" : "",
                   
                     "if-then-else" : "ifthenelse",
+                  
+                    "`>, >=, <=, <`" : "",
                   
                     "and/or/not" : "andornot",
                   
@@ -195,7 +207,23 @@
         </div>
         <div class="span9">
           <h1>jq Manual</h1>
-          <p>A jq program is a &#8220;filter&#8221;: it takes an input, and produces an output. There are a lot of builtin filters for extracting a particular field of an object, or converting a number to a string, or various other standard tasks.</p><p>Filters can be combined in various ways - you can pipe the output of one filter into another filter, or collect the output of a filter into an array.</p><p>Some filters produce multiple results, for instance there&#8217;s one that produces all the elements of its input array. Piping that filter into a second runs the second filter for each element of the array. Generally, things that would be done with loops and iteration in other languages are just done by gluing filters together in jq.</p><p>It&#8217;s important to remember that every filter has an input and an output. Even literals like &#8220;hello&#8221; or 42 are filters - they take an input but always produce the same literal as output. Operations that combine two filters, like addition, generally feed the same input to both and combine the results. So, you can implement an averaging filter as <code>add / length</code> - feeding the input array both to the <code>add</code> filter and the <code>length</code> filter and dividing the results.</p><p>But that&#8217;s getting ahead of ourselves. :) Let&#8217;s start with something simpler:</p>
+          <p>A jq program is a &ldquo;filter&rdquo;: it takes an input, and produces an
+output. There are a lot of builtin filters for extracting a
+particular field of an object, or converting a number to a string,
+or various other standard tasks.</p><p>Filters can be combined in various ways &ndash; you can pipe the output of
+one filter into another filter, or collect the output of a filter
+into an array.</p><p>Some filters produce multiple results, for instance there&rsquo;s one that
+produces all the elements of its input array. Piping that filter
+into a second runs the second filter for each element of the
+array. Generally, things that would be done with loops and iteration
+in other languages are just done by gluing filters together in jq.</p><p>It&rsquo;s important to remember that every filter has an input and an
+output. Even literals like &ldquo;hello&rdquo; or 42 are filters &ndash; they take an
+input but always produce the same literal as output. Operations that
+combine two filters, like addition, generally feed the same input to
+both and combine the results. So, you can implement an averaging
+filter as <code>add / length</code> &ndash; feeding the input array both to the <code>add</code>
+filter and the <code>length</code> filter and dividing the results.</p><p>But that&rsquo;s getting ahead of ourselves. :) Let&rsquo;s start with something
+simpler:</p>
           
             <section id="Invokingjq">
               <h2>Invoking jq</h2>
@@ -203,43 +231,51 @@
 
 <p>You can affect how jq reads and writes its input and output using some command-line options:</p>
 
-<ul>
-<li>
-<p><code>--slurp</code>/<code>-s</code></p>
+<p>* <code>--slurp</code>/<code>-s</code>:</p>
 
-<p>Instead of running the filter for each JSON object in the input, read the entire input stream into a large array and run the filter just once.</p>
-</li>
+<pre><code>Instead of running the filter for each JSON object in the
+input, read the entire input stream into a large array and run
+the filter just once.</code></pre>
 
-<li>
-<p><code>--raw-input</code>/<code>-R</code></p>
+<p>* <code>--raw-input</code>/<code>-R</code>:</p>
 
-<p>Don&#8217;t parse the input as JSON. Instead, each line of text is passed to the filter as a string. If combined with <code>--slurp</code>, then the entire input is passed to the filter as a single long string.</p>
-</li>
+<pre><code>Don&#39;t parse the input as JSON. Instead, each line of text is
+passed to the filter as a string. If combined with `--slurp`,
+then the entire input is passed to the filter as a single long
+string.</code></pre>
 
-<li>
-<p><code>--null-input</code>/<code>-n</code></p>
+<p>* <code>--null-input</code>/<code>-n</code>:</p>
 
-<p>Don&#8217;t read any input at all! Instead, the filter is run once using <code>null</code> as the input. This is useful when using jq as a simple calculator or to construct JSON data from scratch.</p>
-</li>
+<pre><code>Don&#39;t read any input at all! Instead, the filter is run once
+using `null` as the input. This is useful when using jq as a
+simple calculator or to construct JSON data from scratch.</code></pre>
 
-<li>
-<p><code>--compact-output</code> / <code>-c</code></p>
+<p>* <code>--compact-output</code> / <code>-c</code>:</p>
 
-<p>By default, jq pretty-prints JSON output. Using this option will result in more compact output by instead putting each JSON object on a single line.</p>
-</li>
+<pre><code>By default, jq pretty-prints JSON output. Using this option
+will result in more compact output by instead putting each
+JSON object on a single line.</code></pre>
 
-<li>
-<p><code>--ascii-output</code> / <code>-a</code></p>
+<p>* <code>--colour-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</p>
 
-<p>jq usually outputs non-ASCII Unicode codepoints as UTF-8, even if the input specified them as escape sequences (like &#8220;\u03bc&#8221;). Using this option, you can force jq to produce pure ASCII output with every non-ASCII character replaced with the equivalent escape sequence.</p>
-</li>
+<pre><code>By default, jq outputs colored JSON if writing to a
+terminal. You can force it to produce color even if writing to
+a pipe or a file using `-C`, and disable color with `-M`.</code></pre>
 
-<li>
-<p><code>--raw-output</code> / <code>-r</code></p>
+<p>* <code>--ascii-output</code> / <code>-a</code>:</p>
 
-<p>With this option, if the filter&#8217;s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes. This can be useful for making jq filters talk to non-JSON-based systems.</p>
-</li>
-</ul>
+<pre><code>jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
+if the input specified them as escape sequences (like
+&quot;\u03bc&quot;). Using this option, you can force jq to produce pure
+ASCII output with every non-ASCII character replaced with the
+equivalent escape sequence.</code></pre>
+
+<p>* <code>--raw-output</code> / <code>-r</code>:</p>
+
+<pre><code>With this option, if the filter&#39;s result is a string then it
+will be written directly to standard output rather than being
+formatted as a JSON string with quotes. This can be useful for
+making jq filters talk to non-JSON-based systems.</code></pre>
               
             </section>
           
@@ -409,7 +445,7 @@
                     
                       <table class="manual-example">
                         <tr><th></th><td class="jqprogram">jq '.[]'</td></tr>
-                        <tr><th>Input</th><td>[{name":"JSON", "good":true}, {"name":"XML", "good":false}]</td></tr>
+                        <tr><th>Input</th><td>[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]</td></tr>
                         
                         
                           <tr>
@@ -524,7 +560,7 @@
                             
                               <th>Output</th>
                             
-                            <td>"d"</td>
+                            <td>"e"</td>
                           </tr>
                         
                           <tr>
@@ -563,7 +599,7 @@
                     
                       <table class="manual-example">
                         <tr><th></th><td class="jqprogram">jq '.[] | .name'</td></tr>
-                        <tr><th>Input</th><td>[{name":"JSON", "good":true}, {"name":"XML", "good":false}]</td></tr>
+                        <tr><th>Input</th><td>[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]</td></tr>
                         
                         
                           <tr>
@@ -772,17 +808,12 @@
                         <tr><th></th><td class="jqprogram">jq '.a + 1'</td></tr>
                         <tr><th>Input</th><td>{"a": 7}</td></tr>
                         
-                          <tr>
-                            <th>Output</th>
-                            <td><i>none</i></td>
-                          </tr>
-                        
                         
                           <tr>
                             
                               <th>Output</th>
                             
-                            <td>{"a": 8}</td>
+                            <td>8</td>
                           </tr>
                         
                         
@@ -997,12 +1028,14 @@
 
 <p>The keys are sorted &#8220;alphabetically&#8221;, by unicode codepoint order. This is not an order that makes particular sense in any particular language, but you can count on it being the same for any two objects with the same set of keys, regardless of locale settings.</p>
 
+<p>When <code>keys</code> is given an array, it returns the valid indices for that array: the integers from 0 to length-1.</p>
+
                 
                   <div>
                     
                     <a data-toggle="collapse" href="#example13">
                       <i class="icon-chevron-right"></i>
-                      Example
+                      Examples
                     </a>
                     <div id="example13" class="collapse">
                       
@@ -1022,6 +1055,21 @@
                         
                       </table>
                     
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'keys'</td></tr>
+                        <tr><th>Input</th><td>[42,3,35]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[0,1,2]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
                     </div>
                   </div>
                  
@@ -1034,7 +1082,7 @@
                 </h3>
                 <p>The function <code>select(foo)</code> produces its input unchanged if <code>foo</code> returns true for that input, and produces no output otherwise.</p>
 
-<p>It&#8217;s useful for filtering lists: <code>[1,2,3] | select(. &gt;= 2)</code> will give you <code>[3]</code>.</p>
+<p>It&#8217;s useful for filtering lists: <code>[1,2,3] | map(select(. &gt;= 2))</code> will give you <code>[3]</code>.</p>
 
                 
                   <div>
@@ -1047,7 +1095,7 @@
                       
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq 'select(. >= 2)'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq 'map(select(. >= 2))'</td></tr>
                         <tr><th>Input</th><td>[1,5,3,0,7]</td></tr>
                         
                         
@@ -1094,7 +1142,14 @@
                             
                               <th>Output</th>
                             
-                            <td>12</td>
+                            <td>1</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>2</td>
                           </tr>
                         
                         
@@ -1187,7 +1242,7 @@
                             
                               <th>Output</th>
                             
-                            <td>abc</td>
+                            <td>"abc"</td>
                           </tr>
                         
                         
@@ -1254,7 +1309,14 @@
                             
                               <th>Output</th>
                             
-                            <td>11</td>
+                            <td>1</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>1</td>
                           </tr>
                         
                         
@@ -1316,6 +1378,303 @@
                  
                  </section>
               
+                <section id="sortsort_by">
+                <h3>
+                  <p><code>sort, sort_by</code></p>
+                  
+                </h3>
+                <p>The <code>sort</code> functions sorts its input, which must be an array. Values are sorted in the following order:</p>
+
+<ul>
+<li><code>null</code></li>
+
+<li><code>false</code></li>
+
+<li><code>true</code></li>
+
+<li>numbers</li>
+
+<li>strings, in alphabetical order (by unicode codepoint value)</li>
+
+<li>arrays, in lexical order</li>
+
+<li>objects</li>
+</ul>
+
+<p>The ordering for objects is a little complex: first they&#8217;re compared by comparing their sets of keys (as arrays in sorted order), and if their keys are equal then the values are compared key by key.</p>
+
+<p><code>sort_by</code> may be used to sort by a particular field of an object, or by applying any jq filter. <code>sort_by(foo)</code> compares two elements by comparing the result of <code>foo</code> on each element.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example20">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example20" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'sort'</td></tr>
+                        <tr><th>Input</th><td>[8,3,null,6]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[null,3,6,8]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'sort_by(.foo)'</td></tr>
+                        <tr><th>Input</th><td>[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="group_by">
+                <h3>
+                  <p><code>group_by</code></p>
+                  
+                </h3>
+                <p><code>group_by(.foo)</code> takes as input an array, groups the elements having the same <code>.foo</code> field into separate arrays, and produces all of these arrays as elements of a larger array, sorted by the value of the <code>.foo</code> field.</p>
+
+<p>Any jq expression, not just a field access, may be used in place of <code>.foo</code>. The sorting order is the same as described in the <code>sort</code> function above.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example21">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example21" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'group_by(.foo)'</td></tr>
+                        <tr><th>Input</th><td>[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="minmaxmin_bymax_by">
+                <h3>
+                  <p><code>min</code>, <code>max</code>, <code>min_by</code>, <code>max_by</code></p>
+                  
+                </h3>
+                <p>Find the minimum or maximum element of the input array. The <code>_by</code> versions allow you to specify a particular field or property to examine, e.g. <code>min_by(.foo)</code> finds the object with the smallest <code>foo</code> field.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example22">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example22" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'min'</td></tr>
+                        <tr><th>Input</th><td>[5,4,2,7]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>2</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'max_by(.foo)'</td></tr>
+                        <tr><th>Input</th><td>[{"foo":1, "bar":14}, {"foo":2, "bar":3}]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"foo":2, "bar":3}</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="unique">
+                <h3>
+                  <p><code>unique</code></p>
+                  
+                </h3>
+                <p>The <code>unique</code> function takes as input an array and produces an array of the same elements, in sorted order, with duplicates removed.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example23">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example23" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'unique'</td></tr>
+                        <tr><th>Input</th><td>[1,2,5,3,5,3,1,3]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[1,2,3,5]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="contains">
+                <h3>
+                  <p><code>contains</code></p>
+                  
+                </h3>
+                <p>The filter <code>contains(b)</code> will produce true if b is completely contained within the input. A string B is contained in a string A if B is a substring of A. An array B is contained in an array A is all elements in B are contained in any element in A. An object B is contained in object A if all of the values in B are contained in the value in A with the same key. All other types are assumed to be contained in each other if they are equal.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example24">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example24" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'contains("bar")'</td></tr>
+                        <tr><th>Input</th><td>"foobar"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'contains(["baz", "bar"])'</td></tr>
+                        <tr><th>Input</th><td>["foobar", "foobaz", "blarp"]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'contains(["bazzzzz", "bar"])'</td></tr>
+                        <tr><th>Input</th><td>["foobar", "foobaz", "blarp"]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>false</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'contains({foo: 12, bar: [{barp: 12}]})'</td></tr>
+                        <tr><th>Input</th><td>{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'contains({foo: 12, bar: [{barp: 15}]})'</td></tr>
+                        <tr><th>Input</th><td>{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>false</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="Stringinterpolationfoo">
                 <h3>
                   <p>String interpolation - <code>\(foo)</code></p>
@@ -1326,11 +1685,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example20">
+                    <a data-toggle="collapse" href="#example25">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example20" class="collapse">
+                    <div id="example25" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1371,11 +1730,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example21">
+                    <a data-toggle="collapse" href="#example26">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example21" class="collapse">
+                    <div id="example26" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1387,7 +1746,28 @@
                             
                               <th>Output</th>
                             
-                            <td>[true, true, false, false]</td>
+                            <td>true</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>false</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>false</td>
                           </tr>
                         
                         
@@ -1414,11 +1794,11 @@
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example22">
+                    <a data-toggle="collapse" href="#example27">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example22" class="collapse">
+                    <div id="example27" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1447,6 +1827,45 @@ end'</td></tr>
                  
                  </section>
               
+                <section id="">
+                <h3>
+                  <p><code>&gt;, &gt;=, &lt;=, &lt;</code></p>
+                  
+                </h3>
+                <p>The comparison operators <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;</code> return whether their left argument is greater than, greater than or equal to, less than or equal to or less than their right argument (respectively).</p>
+
+<p>The ordering is the same as that described for <code>sort</code>, above.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example28">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example28" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '. < 5'</td></tr>
+                        <tr><th>Input</th><td>2</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="andornot">
                 <h3>
                   <p>and/or/not</p>
@@ -1464,11 +1883,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example23">
+                    <a data-toggle="collapse" href="#example29">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example23" class="collapse">
+                    <div id="example29" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1576,11 +1995,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example24">
+                    <a data-toggle="collapse" href="#example30">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example24" class="collapse">
+                    <div id="example30" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1674,11 +2093,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example25">
+                    <a data-toggle="collapse" href="#example31">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example25" class="collapse">
+                    <div id="example31" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1725,15 +2144,15 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example26">
+                    <a data-toggle="collapse" href="#example32">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example26" class="collapse">
+                    <div id="example32" class="collapse">
                       
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq 'def addvalue(f): map(. + [$value]); addvalue(.[0])'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq 'def addvalue(f): . + [f]; map(addvalue(.[0]))'</td></tr>
                         <tr><th>Input</th><td>[[1,2],[10,20]]</td></tr>
                         
                         
@@ -1748,7 +2167,7 @@ not</code>.</p>
                       </table>
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq 'def addvalue(f): f as $x | map (. + $x); addvalue(.[0])'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'</td></tr>
                         <tr><th>Input</th><td>[[1,2],[10,20]]</td></tr>
                         
                         
@@ -1756,7 +2175,7 @@ not</code>.</p>
                             
                               <th>Output</th>
                             
-                            <td>[[1,2,[1,2]], [10,20,[1,2]]]</td>
+                            <td>[[1,2,1,2], [10,20,1,2]]</td>
                           </tr>
                         
                         
@@ -1819,11 +2238,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example27">
+                    <a data-toggle="collapse" href="#example33">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example27" class="collapse">
+                    <div id="example33" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1869,7 +2288,8 @@ not</code>.</p>
 
 <p>The paths provided by this operation point to each of the posts that &#8220;stedolan&#8221; wrote, and we can comment on each of them in the same way that we did before:</p>
 
-<pre><code>(.posts[] | select(.author == &quot;stedolan&quot;) | .comments) |= . + [&quot;terrible.&quot;]</code></pre>
+<pre><code>(.posts[] | select(.author == &quot;stedolan&quot;) | .comments) |=
+    . + [&quot;terrible.&quot;]</code></pre>
 
                 
                  </section>
