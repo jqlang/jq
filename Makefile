@@ -53,12 +53,19 @@ build/osx64%:   CC='i686-apple-darwin10-gcc -m64'
 build/win32%:   CC='i686-w64-mingw32-gcc -m32'   EXTRA_CFLAGS=-DJQ_DEFAULT_ENABLE_COLOR=0
 build/win64%:   CC='x86_64-w64-mingw32-gcc -m64' EXTRA_CFLAGS=-DJQ_DEFAULT_ENABLE_COLOR=0
 
-ALL_BINARIES=$(foreach platform, $(PLATFORMS), $(foreach binary, $(BINARIES), build/$(platform)/$(binary)))
+BIN_SUFFIX_win32 = .exe
+BIN_SUFFIX_win64 = .exe
+
+ALL_BINARIES=\
+  $(foreach platform, $(PLATFORMS), \
+    $(foreach binary, $(BINARIES), \
+      build/$(platform)/$(binary)$(BIN_SUFFIX_$(platform))))
 
 $(ALL_BINARIES): build/%:
 	mkdir -p $(@D)
+	echo $(dir $*)
 	make -B $(BINARIES) CC=$(CC)
-	cp $(BINARIES) $(@D)
+	$(foreach binary, $(BINARIES), cp $(binary) $(@D)/$(binary)$(suffix $*);)
 
 binaries: $(ALL_BINARIES)
 
@@ -97,6 +104,6 @@ docs/output:
 	cd docs; rake build
 
 www_binaries: docs/output binaries
-	$(foreach platform, $(PLATFORMS), $(foreach binary, $(BINARIES), \
+	$(foreach platform, $(PLATFORMS), \
 	  mkdir -p docs/output/download/$(platform); \
-	  cp build/$(platform)/$(binary) docs/output/download/$(platform)/$(binary); ))
+	  cp build/$(platform)/* docs/output/download/$(platform)/; )

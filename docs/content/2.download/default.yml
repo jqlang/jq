@@ -38,7 +38,7 @@ body:
 
       ### Windows
 
-       * Executables for [64-bit](win64/jq) or [32-bit](win32/jq)
+       * Executables for [64-bit](win64/jq.exe) or [32-bit](win32/jq.exe)
 
       ### From source on Linux or OS X
 
