@@ -90,3 +90,13 @@ uninstall:
 	rm -vf $(prefix)/bin/jq
 	rm -vf $(mandir)/man1/jq.1
 
+
+www: docs/output www_binaries
+
+docs/output:
+	cd docs; rake build
+
+www_binaries: docs/output binaries
+	$(foreach platform, $(PLATFORMS), $(foreach binary, $(BINARIES), \
+	  mkdir -p docs/output/download/$(platform); \
+	  cp build/$(platform)/$(binary) docs/output/download/$(platform)/$(binary); ))
