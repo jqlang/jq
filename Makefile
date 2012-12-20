@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function
+CFLAGS=-Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function $(EXTRA_CFLAGS)
 
 prefix=/usr/local
 mandir=$(prefix)/share/man
@@ -50,8 +50,8 @@ build/osx64%:   CC='i686-apple-darwin10-gcc -m64'
 
 # On Debian, you can get windows compilers in the
 # gcc-mingw-w64-i686 and gcc-mingw-w64-x86-64 packages.
-build/win32%:   CC='i686-w64-mingw32-gcc -m32'
-build/win64%:   CC='x86_64-w64-mingw32-gcc -m64'
+build/win32%:   CC='i686-w64-mingw32-gcc -m32'   EXTRA_CFLAGS=-DJQ_DEFAULT_ENABLE_COLOR=0
+build/win64%:   CC='x86_64-w64-mingw32-gcc -m64' EXTRA_CFLAGS=-DJQ_DEFAULT_ENABLE_COLOR=0
 
 ALL_BINARIES=$(foreach platform, $(PLATFORMS), $(foreach binary, $(BINARIES), build/$(platform)/$(binary)))
 

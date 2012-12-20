@@ -69,7 +69,12 @@ static void process(jv value) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       fwrite(jv_string_value(result), 1, jv_string_length(jv_copy(result)), stdout);
     } else {
-      int dumpopts = isatty(fileno(stdout)) ? JV_PRINT_COLOUR : 0;
+      int dumpopts;
+#ifdef JQ_DEFAULT_ENABLE_COLOR
+      dumpopts = JQ_DEFAULT_ENABLE_COLOR ? JV_PRINT_COLOUR : 0;
+#else
+      dumpopts = isatty(fileno(stdout)) ? JV_PRINT_COLOUR : 0;
+#endif
       if (!(options & COMPACT_OUTPUT)) dumpopts |= JV_PRINT_PRETTY;
       if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
       if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
