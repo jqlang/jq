@@ -68,6 +68,7 @@ static void process(jv value) {
   while (jv_is_valid(result = jq_next())) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       fwrite(jv_string_value(result), 1, jv_string_length(jv_copy(result)), stdout);
+      jv_free(result);
     } else {
       int dumpopts;
 #ifdef JQ_DEFAULT_ENABLE_COLOR
