@@ -100,13 +100,22 @@ static void* forkable_stack_peek_next(struct forkable_stack* s, void* top) {
 // Returns 1 if the next forkable_stack_pop will permanently remove an
 // object from the stack (i.e. the top object was not saved with a fork)
 static int forkable_stack_pop_will_free(struct forkable_stack* s) {
-  return s->pos < s->savedlimit ? 1 : 0;
+  return s->pos < s->savedlimit;
 }
 
 static void forkable_stack_pop(struct forkable_stack* s) {
   forkable_stack_check(s);
   struct forkable_stack_header* elem = forkable_stack_peek(s);
-  s->pos += elem->next_delta;
+  int reclaim_upto = s->pos + elem->next_delta < s->savedlimit ? 
+    s->pos + elem->next_delta : s->savedlimit;
+  assert(reclaim_upto <= s->length);
+  int reclaimed = reclaim_upto > s->pos ? reclaim_upto - s->pos : 0;
+  assert(0 <= reclaimed && s->pos + reclaimed <= s->length);
+  // s->pos <= i < reclaim_upto means that position i is to be freed
+  assert((reclaimed > 0) == forkable_stack_pop_will_free(s));
+  int new_pos = s->pos + elem->next_delta;
+  jv_mem_invalidate(elem, reclaimed);
+  s->pos = new_pos;
 }
 
 

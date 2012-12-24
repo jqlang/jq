@@ -26,3 +26,12 @@ void* jv_mem_realloc(void* p, size_t sz) {
   }
   return p;
 }
+
+#if JQ_DEBUG
+volatile char jv_mem_uninitialised;
+__attribute__((constructor)) void jv_mem_uninit_setup(){
+  char* p = malloc(1);
+  jv_mem_uninitialised = *p;
+  free(p);
+}
+#endif
