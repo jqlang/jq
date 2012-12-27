@@ -135,7 +135,7 @@ static int read_more(char* buf, size_t size) {
     next_input_idx++;
   }
 
-  if (!fgets(buf, sizeof(buf), current_input)) buf[0] = 0;
+  if (!fgets(buf, size, current_input)) buf[0] = 0;
   return 1;
 }
 
