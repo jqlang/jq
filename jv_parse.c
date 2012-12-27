@@ -26,6 +26,8 @@ void jv_parser_init(struct jv_parser* p) {
   p->curr_buf = 0;
   p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
   p->bom_strip_position = 0;
+  p->line = 1;
+  p->column = 0;
   jvp_dtoa_context_init(&p->dtoa);
 }
 
@@ -294,6 +296,11 @@ static int check_done(struct jv_parser* p, jv* out) {
 }
 
 static pfunc scan(struct jv_parser* p, char ch, jv* out) {
+  p->column++;
+  if (ch == '\n') {
+    p->line++;
+    p->column = 0;
+  }
   presult answer = 0;
   if (p->st == JV_PARSER_NORMAL) {
     chclass cls = classify(ch);
@@ -373,7 +380,7 @@ jv jv_parser_next(struct jv_parser* p) {
   if (msg == OK) {
     return value;
   } else if (msg) {
-    return jv_invalid_with_msg(jv_string(msg));
+    return jv_invalid_with_msg(jv_string_fmt("%s at line %d, column %d", msg, p->line, p->column));
   } else if (p->curr_buf_is_partial) {
     assert(p->curr_buf_pos == p->curr_buf_length);
     // need another buffer

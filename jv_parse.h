@@ -16,6 +16,8 @@ struct jv_parser {
   char* tokenbuf;
   int tokenpos;
   int tokenlen;
+
+  int line, column;
   
   struct dtoa_context dtoa;
 
