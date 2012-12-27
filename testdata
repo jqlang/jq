@@ -52,6 +52,20 @@ null
 null
 "interpolation"
 
+@text,@json,([1,.] | @csv),@html,@uri,@sh,@base64
+"<>&'\""
+"<>&'\""
+"\"<>&'\\\"\""
+"1,\"<>&'\"\"\""
+"&lt;&gt;&amp;&apos;&quot;"
+"%3c%3e%26'%22"
+"'<>&'\\''\"'"
+"PD4mJyI="
+
+@html "<b>\(.)</b>"
+"<script>hax</script>"
+"<b>&lt;script&gt;hax&lt;/script&gt;</b>"
+
 #
 # Dictionary construction syntax
 #

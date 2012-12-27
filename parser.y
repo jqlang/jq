@@ -48,6 +48,7 @@ struct lexer_param;
 %token INVALID_CHARACTER
 %token <literal> IDENT
 %token <literal> LITERAL
+%token <literal> FORMAT
 %token EQ "=="
 %token NEQ "!="
 %token DEFINEDOR "//"
@@ -158,8 +159,8 @@ static block gen_binop(block a, block b, int op) {
   return gen_call(funcname, BLOCK(gen_lambda(a), gen_lambda(b)));
 }
 
-static block gen_format(block a) {
-  return BLOCK(a, gen_call("tostring", gen_noop()));
+static block gen_format(block a, jv fmt) {
+  return BLOCK(a, gen_call("format", BLOCK(gen_lambda(gen_const(fmt)))));
 }
  
 static block gen_update(block a, block op, int optype) {
@@ -316,9 +317,15 @@ FuncDef:
 
 
 String:
-QQSTRING_START QQString QQSTRING_END {
-  $$ = $2;
+QQSTRING_START { $<literal>$ = jv_string("text"); } QQString QQSTRING_END {
+  $$ = $3;
+  jv_free($<literal>2);
+} |
+FORMAT QQSTRING_START { $<literal>$ = $1; } QQString QQSTRING_END {
+  $$ = $4;
+  jv_free($<literal>3);
 }
+
 
 QQString:
 /* empty */ {
@@ -328,7 +335,7 @@ QQString QQSTRING_TEXT {
   $$ = gen_binop($1, gen_const($2), '+');
 } |
 QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END {
-  $$ = gen_binop($1, gen_format($3), '+');
+  $$ = gen_binop($1, gen_format($3, jv_copy($<literal>0)), '+');
 }
 
 
@@ -372,6 +379,9 @@ LITERAL {
 } |
 String {
   $$ = $1;
+} |
+FORMAT {
+  $$ = gen_format(gen_noop(), $1);
 } |
 '(' Exp ')' { 
   $$ = $2; 

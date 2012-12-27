@@ -68,6 +68,9 @@ struct lexer_param;
   return try_exit(yytext[0], YY_START, yyscanner);
 }
 
+"@"[a-zA-Z0-9_]+ {
+  yylval->literal = jv_string_sized(yytext + 1, yyleng - 1); return FORMAT;
+}
 
 -?[0-9.]+([eE][+-]?[0-9]+)? { 
    yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL; 

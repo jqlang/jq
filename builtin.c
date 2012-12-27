@@ -5,6 +5,8 @@
 #include "parser.h"
 #include "locfile.h"
 #include "jv_aux.h"
+#include "jv_unicode.h"
+
 
 
 typedef jv (*func_1)(jv);
@@ -207,6 +209,174 @@ static jv f_tostring(jv input) {
   }
 }
 
+#define CHARS_ALPHANUM "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+
+static jv escape_string(jv input, const char* escapings) {
+
+  assert(jv_get_kind(input) == JV_KIND_STRING);
+  const char* lookup[128] = {0};
+  const char* p = escapings;
+  while (*p) {
+    lookup[(int)*p] = p+1;
+    p++;
+    p += strlen(p);
+    p++;
+  }
+
+  jv ret = jv_string("");
+  const char* i = jv_string_value(input);
+  const char* end = i + jv_string_length(jv_copy(input));
+  const char* cstart;
+  int c = 0;
+  while ((i = jvp_utf8_next((cstart = i), end, &c))) {
+    assert(c != -1);
+    if (c < 128 && lookup[c]) {
+      ret = jv_string_append_str(ret, lookup[c]);
+    } else {
+      ret = jv_string_append_buf(ret, cstart, i - cstart);
+    }
+  }
+  jv_free(input);
+  return ret;
+
+}
+
+static jv f_format(jv input, jv fmt) {
+  if (jv_get_kind(fmt) != JV_KIND_STRING) {
+    jv_free(input);
+    return type_error(fmt, "is not a valid format");
+  }
+  const char* fmt_s = jv_string_value(fmt);
+  if (!strcmp(fmt_s, "json")) {
+    jv_free(fmt);
+    return jv_dump_string(input, 0);
+  } else if (!strcmp(fmt_s, "text")) {
+    jv_free(fmt);
+    return f_tostring(input);
+  } else if (!strcmp(fmt_s, "csv")) {
+    jv_free(fmt);
+    if (jv_get_kind(input) != JV_KIND_ARRAY)
+      return type_error(input, "cannot be csv-formatted, only array");
+    jv line = jv_string("");
+    for (int i=0; i<jv_array_length(jv_copy(input)); i++) {
+      if (i) line = jv_string_append_str(line, ",");
+      jv x = jv_array_get(jv_copy(input), i);
+      switch (jv_get_kind(x)) {
+      case JV_KIND_NULL:
+        /* null rendered as empty string */
+        jv_free(x);
+        break;
+      case JV_KIND_TRUE:
+      case JV_KIND_FALSE:
+        line = jv_string_concat(line, jv_dump_string(x, 0));
+        break;
+      case JV_KIND_NUMBER:
+        if (jv_number_value(x) != jv_number_value(x)) {
+          /* NaN, render as empty string */
+          jv_free(x);
+        } else {
+          line = jv_string_concat(line, jv_dump_string(x, 0));
+        }
+        break;
+      case JV_KIND_STRING: {
+        line = jv_string_append_str(line, "\"");
+        line = jv_string_concat(line, escape_string(x, "\"\"\"\0"));
+        line = jv_string_append_str(line, "\"");
+        break;
+      }
+      default:
+        jv_free(input);
+        jv_free(line);
+        return type_error(x, "is not valid in a csv row");
+      }
+    }
+    jv_free(input);
+    return line;
+  } else if (!strcmp(fmt_s, "html")) {
+    jv_free(fmt);
+    return escape_string(f_tostring(input), "&&amp;\0<&lt;\0>&gt;\0'&apos;\0\"&quot;\0");
+  } else if (!strcmp(fmt_s, "uri")) {
+    jv_free(fmt);
+    input = f_tostring(input);
+
+    int unreserved[128] = {0};
+    const char* p = CHARS_ALPHANUM "-_.!~*'()";
+    while (*p) unreserved[(int)*p++] = 1;
+
+    jv line = jv_string("");
+    const char* s = jv_string_value(input);
+    for (int i=0; i<jv_string_length(jv_copy(input)); i++) {
+      unsigned ch = (unsigned)*s;
+      if (ch < 128 && unreserved[ch]) {
+        line = jv_string_append_buf(line, s, 1);
+      } else {
+        line = jv_string_concat(line, jv_string_fmt("%%%02x", ch));
+      }
+      s++;
+    }
+    jv_free(input);
+    return line;
+  } else if (!strcmp(fmt_s, "sh")) {
+    jv_free(fmt);
+    if (jv_get_kind(input) != JV_KIND_ARRAY)
+      input = jv_array_set(jv_array(), 0, input);
+    jv line = jv_string("");
+    for (int i=0; i<jv_array_length(jv_copy(input)); i++) {
+      if (i) line = jv_string_append_str(line, " ");
+      jv x = jv_array_get(jv_copy(input), i);
+      switch (jv_get_kind(x)) {
+      case JV_KIND_NULL:
+      case JV_KIND_TRUE:
+      case JV_KIND_FALSE:
+      case JV_KIND_NUMBER:
+        line = jv_string_concat(line, jv_dump_string(x, 0));
+        break;
+
+      case JV_KIND_STRING: {
+        line = jv_string_append_str(line, "'");
+        line = jv_string_concat(line, escape_string(x, "''\\''\0"));
+        line = jv_string_append_str(line, "'");
+        break;
+      }
+
+      default:
+        jv_free(input);
+        jv_free(line);
+        return type_error(x, "can not be escaped for shell");
+      }
+    }
+    jv_free(input);
+    return line;
+  } else if (!strcmp(fmt_s, "base64")) {
+    jv_free(fmt);
+    input = f_tostring(input);
+    jv line = jv_string("");
+    const char b64[64 + 1] = CHARS_ALPHANUM "+/";
+    const char* data = jv_string_value(input);
+    int len = jv_string_length(jv_copy(input));
+    for (int i=0; i<len; i+=3) {
+      uint32_t code = 0;
+      int n = len - i >= 3 ? 3 : len-i;
+      for (int j=0; j<3; j++) {
+        code <<= 8;
+        code |= j < n ? (unsigned)data[i+j] : 0;
+      }
+      char buf[4];
+      for (int j=0; j<4; j++) {
+        buf[j] = b64[(code >> (18 - j*6)) & 0x3f];
+      }
+      if (n < 3) buf[3] = '=';
+      if (n < 2) buf[2] = '=';
+      line = jv_string_append_buf(line, buf, sizeof(buf));
+    }
+    jv_free(input);
+    return line;
+  } else {
+    jv_free(input);
+    return jv_invalid_with_msg(jv_string_concat(fmt, jv_string(" is not a valid format")));
+  }
+}
+
 static jv f_keys(jv input) {
   if (jv_get_kind(input) == JV_KIND_OBJECT || jv_get_kind(input) == JV_KIND_ARRAY) {
     return jv_keys(input);
@@ -332,6 +502,7 @@ static struct cfunction function_list[] = {
   {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
   {(cfunction_ptr)f_error, "error", 2},
+  {(cfunction_ptr)f_format, "format", 2},
 };
 
 static struct symbol_table cbuiltins = 

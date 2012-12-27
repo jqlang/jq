@@ -75,51 +75,51 @@ sections:
       You can affect how jq reads and writes its input and output
       using some command-line options:
 
-        * `--slurp`/`-s`:
+      * `--slurp`/`-s`:
   
-          Instead of running the filter for each JSON object in the
-          input, read the entire input stream into a large array and run
-          the filter just once.
-        
-        * `--raw-input`/`-R`:
-        
-          Don't parse the input as JSON. Instead, each line of text is
-          passed to the filter as a string. If combined with `--slurp`,
-          then the entire input is passed to the filter as a single long
-          string.
+        Instead of running the filter for each JSON object in the
+        input, read the entire input stream into a large array and run
+        the filter just once.
+      
+      * `--raw-input`/`-R`:
+      
+        Don't parse the input as JSON. Instead, each line of text is
+        passed to the filter as a string. If combined with `--slurp`,
+        then the entire input is passed to the filter as a single long
+        string.
   
-        * `--null-input`/`-n`:
+      * `--null-input`/`-n`:
   
-          Don't read any input at all! Instead, the filter is run once
-          using `null` as the input. This is useful when using jq as a
-          simple calculator or to construct JSON data from scratch.
+        Don't read any input at all! Instead, the filter is run once
+        using `null` as the input. This is useful when using jq as a
+        simple calculator or to construct JSON data from scratch.
   
-        * `--compact-output` / `-c`:
+      * `--compact-output` / `-c`:
   
-          By default, jq pretty-prints JSON output. Using this option
-          will result in more compact output by instead putting each
-          JSON object on a single line.
+        By default, jq pretty-prints JSON output. Using this option
+        will result in more compact output by instead putting each
+        JSON object on a single line.
   
-        * `--colour-output` / `-C` and `--monochrome-output` / `-M`:
-        
-          By default, jq outputs colored JSON if writing to a
-          terminal. You can force it to produce color even if writing to
-          a pipe or a file using `-C`, and disable color with `-M`.
+      * `--colour-output` / `-C` and `--monochrome-output` / `-M`:
+      
+        By default, jq outputs colored JSON if writing to a
+        terminal. You can force it to produce color even if writing to
+        a pipe or a file using `-C`, and disable color with `-M`.
   
-        * `--ascii-output` / `-a`:
+      * `--ascii-output` / `-a`:
   
-          jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
-          if the input specified them as escape sequences (like
-          "\u03bc"). Using this option, you can force jq to produce pure
-          ASCII output with every non-ASCII character replaced with the
-          equivalent escape sequence.
+        jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
+        if the input specified them as escape sequences (like
+        "\u03bc"). Using this option, you can force jq to produce pure
+        ASCII output with every non-ASCII character replaced with the
+        equivalent escape sequence.
   
-        * `--raw-output` / `-r`:
+      * `--raw-output` / `-r`:
   
-          With this option, if the filter's result is a string then it
-          will be written directly to standard output rather than being
-          formatted as a JSON string with quotes. This can be useful for
-          making jq filters talk to non-JSON-based systems.
+        With this option, if the filter's result is a string then it
+        will be written directly to standard output rather than being
+        formatted as a JSON string with quotes. This can be useful for
+        making jq filters talk to non-JSON-based systems.
 
   - title: Basic filters
     entries:
@@ -646,10 +646,77 @@ sections:
             input: '42'
             output: ['"The input was 42, which is one less than 43"']
           
-              
+      - title: "Format strings and escaping"
+        body: |
 
-              
+          The `@foo` syntax is used to format and escape strings,
+          which is useful for building URLs, documents in a language
+          like HTML or XML, and so forth. `@foo` can be used as a
+          filter on its own, the possible escapings are:
 
+          * `@text`:
+
+            Calls `tostring`, see that function for details.
+
+          * `@json`:
+
+            Serialises the input as JSON.
+
+          * `@html`:
+
+            Applies HTML/XML escaping, by mapping the characters
+            `<>&'"` to their entity equivalents `&lt;`, `&gt;`,
+            `&amp;`, `&apos;`, `&quot;`.
+
+          * `@uri`:
+
+            Applies percent-encoding, by mapping all reserved URI
+            characters to a `%xx` sequence.
+
+          * `@csv`:
+            
+            The input must be an array, and it is rendered as CSV
+            with double quotes for strings, and quotes escaped by
+            repetition.
+
+          * `@sh`:
+            
+            The input is escaped suitable for use in a command-line
+            for a POSIX shell. If the input is an array, the output
+            will be a series of space-separated strings.
+            
+          * `@base64`:
+
+            The input is converted to base64 as specified by RFC 4648.
+
+          This syntax can be combined with string interpolation in a
+          useful way. You can follow a `@foo` token with a string
+          literal. The contents of the string literal will *not* be
+          escaped. However, all interpolations made inside that string
+          literal will be escaped. For instance,
+
+              @uri "http://www.google.com/search?q=\(.search)"
+
+          will produce the following output for the input
+          `{"search":"jq!"}`:
+
+              http://www.google.com/search?q=jq%21
+
+          Note that the slashes, question mark, etc. in the URL are
+          not escaped, as they were part of the string literal.
+
+        examples:
+          - program: '@html'
+            input: '"This works if x < y"'
+            output: ['"This works if x &lt; y"']
+
+#          - program: '@html "<span>Anonymous said: \(.)</span>"'
+#            input: '"<script>alert(\"lol hax\");</script>"'
+#            output: ["<span>Anonymous said: &lt;script&gt;alert(&quot;lol hax&quot;);&lt;/script&gt;</span>"]
+
+          - program: '@sh "echo \(.)"'
+            input: "\"O'Hara's Ale\""
+            output: ["\"echo 'O'\\''Hara'\\''s Ale\""]
         
   - title: Conditionals and Comparisons
     entries:
