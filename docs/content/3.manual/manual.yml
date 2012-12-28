@@ -841,7 +841,7 @@ sections:
             input: '{}'
             output: [42]
           
-  - title: Variables and Functions
+  - title: Advanced features
     body: |
       Variables are an absolute necessity in most programming languages, but
       they're relegated to an "advanced feature" in jq.
@@ -857,6 +857,10 @@ sections:
       is a feature whose biggest use is defining jq's standard library
       (many jq functions such as `map` and `find` are in fact written
       in jq).
+
+      Finally, jq has a `fold` operation, which is very powerful but a
+      bit tricky. Again, it's mostly used internally, to define some
+      useful bits of jq's standard library.
 
     entries:
       - title: Variables
@@ -962,6 +966,39 @@ sections:
           - program: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
             input: '[[1,2],[10,20]]'
             output: ['[[1,2,1,2], [10,20,1,2]]']
+
+      - title: Fold
+        body: |
+        
+          The `fold` syntax in jq allows you to combine all of the
+          results of an expression by accumulating them into a single
+          answer. As an example, we'll pass `[3,2,1]` to this expression:
+
+              fold 0 as $sum (.[] | $sum + .)
+          
+          The variable `$sum` is first given the value `0`. The body
+          of the fold (i.e. `.[] | $sum + .`) is evaluated. `.[]`
+          produces three results, `3`, `2`, and `1`. For the first
+          one, `$sum + .` gives `3`.
+
+          Having produced this answer, jq backtracks to find the next
+          result as per usual. However, this time, `$sum` is set to
+          the previous value of the body, so `$sum + .` gives
+          `5`. After the final backtracking, `$sum + .` gives
+          `6`. This final value is used as the value of the entire
+          `fold` expression, so the above filter returns `6`.
+
+          More formally, in order to evaluate `fold INIT as $VAR
+          (BODY)`, jq first sets `$VAR` to the value of `INIT`. It
+          then runs through `BODY`. Each time `BODY` produces a value,
+          `$VAR` is set to that value and jq backtracks to find the
+          next one. When `BODY` stops producing values, the final
+          value of `$VAR` is the result of the entire expression.
+
+        examples:
+          - program: 'fold 0 as $sum (.[] | $sum + .)'
+            input: '[10,2,5,3]'
+            output: ['20']
       
 
   - title: Assignment

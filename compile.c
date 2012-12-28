@@ -306,6 +306,17 @@ block gen_collect(block expr) {
                gen_op_var_bound(LOADV, array_var));
 }
 
+block gen_fold(const char* varname, block init, block fold) {
+  block loop = BLOCK(fold, gen_op_var_unbound(STOREV, varname), gen_op_simple(BACKTRACK));
+  return BLOCK(gen_op_simple(DUP),
+               init,
+               block_bind(gen_op_var_unbound(STOREV, varname),
+                          BLOCK(gen_op_target(FORK, loop),
+                                loop,
+                                gen_op_var_unbound(LOADV, varname)),
+                          OP_HAS_VARIABLE));
+}
+
 block gen_assign(block expr) {
   block result_var = block_bind(gen_op_var_unbound(STOREV, "result"),
                                 gen_noop(), OP_HAS_VARIABLE);

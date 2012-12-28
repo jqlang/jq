@@ -58,6 +58,7 @@ struct lexer_param;
 %token THEN "then"
 %token ELSE "else"
 %token ELSE_IF "elif"
+%token FOLD "fold"
 %token END "end"
 %token AND "and"
 %token OR "or"
@@ -199,6 +200,11 @@ Term "as" '$' IDENT '|' Exp {
              block_bind(gen_op_var_unbound(STOREV, jv_string_value($4)), 
                         $6, OP_HAS_VARIABLE));
   jv_free($4);
+} |
+
+"fold" Term "as" '$' IDENT '(' Exp ')' {
+  $$ = gen_fold(jv_string_value($5), $2, $7);
+  jv_free($5);
 } |
 
 "if" Exp "then" Exp ElseBody {
