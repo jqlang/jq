@@ -1,0 +1,325 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" (C) Copyright 2012 Simon Elsbrock <simon@iodev.org>,
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.TH JQ 1 "December 27, 2012"
+.\" Please adjust this date whenever revising the manpage.
+.SH NAME
+jq \- command-line json processor
+.SH SYNOPSIS
+.B jq
+.RI [options] " <filter> "
+.SH DESCRIPTION
+.PP
+\fBjq\fP is a flexible and lightweight command-line utility that allows you to
+run filters on JSON data in an efficient manner.
+.SH OPTIONS
+For a complete description, see the homepage of the project.
+.TP
+.B \-s, \-\-slurp
+Read the entire input stream into a large array and run
+the filter just once.
+.TP
+.B \-R, \-\-raw\-input
+Treat each line of text as a string instead of JSON. If combined with
+\fB--slurp\fR, the entire input is passed to the filter as a single long
+string.
+.TP
+.B \-n, \-\-null\-input
+Don't read any input at all. Instead, run the filter once using `null` as the
+input. Useful for constructing JSON and doing calculations.
+.TP
+.B \-c, \-\-compact\-output
+Do not pretty-print JSON, but compact output by putting each JSON object on a
+single line.
+.TP
+.B \-C, \-\-colour\-output
+Force color output even if writing to a pipe or file.
+.TP
+.B \-M, \-\-monochrome\-output
+Force disable color output.
+.TP
+.B \-a, \-\-ascii\-output
+Force output of ASCII characters only. Non-ASCII character will be replaced
+with the equivalent escape sequence.
+.TP
+.B \-r, \-\-raw\-output
+If the filter's result is a string, write it directly to standard output rather
+than formatting it as a JSON string with quotes.
+.SH FILTERS
+For a complete description, see the homepage of the project.
+.TP
+.B .
+Returns the input unchanged as output.
+.TP
+.B .foo
+Returns the value at the key `foo` of a given JSON object. Shorthand version of
+\fB.["foo"]\fR.
+.TP
+.B .[foo]
+Returns the value at the key `foo` of a given JSON object. Also works with
+arrays.
+.TP
+.B .[]
+Returns all elements of a given array.
+.TP
+.B ,
+Combines two filters and emits their outputs beginning with the first one.
+.TP
+.B |
+Combines two filters by piping the output of the first into the input of the
+second filter.
+.SH TYPES
+For a complete description, see the homepage of the project.
+.TP
+.B []
+Constructs an array.
+.TP
+.B {}
+Constructs a JSON object (dictionary or hash).
+.SH OPERATORS
+For a complete description, see the homepage of the project.
+.TP
+.B +
+Takes two filters, applies them both to the same input, and adds the output
+together. The way adding works depends on the types involved:
+.IP
+\(bu Numbers are added by normal arithmetic.
+.IP
+\(bu Arrays are added by being concatenated into a larger array.
+.IP
+\(bu Strings are added by being joined into a larger string.
+.IP
+\(bu Objects are added by merging. If both objects contain a value for the same
+key, the object on the right of the + wins.
+.TP
+.B -
+Applies arithmetic subtraction on numbers; may also be used on arrays to remove
+all occurrences of second array's elements in the first array.
+.TP
+.B *, /
+Apply arithmetic multiplication and division; only works on numbers.
+.SH FUNCTIONS
+For a complete description, see the homepage of the project.
+.TP
+.B length
+Gets the length of various different types of value:
+.IP
+\(bu The length of a string is the number of Unicode codepoints it contains.
+.IP
+\(bu The length of an array is the number of elements.
+.IP
+\(bu The length of an object is the number of key-value pairs.
+.IP
+\(bu The length of null is zero.
+.TP
+.B keys
+Returns an array containing the keys of a given object in "alphabetical",
+unicode codepoint order.
+.TP
+.B select(p)
+Filters given input data according to the predicate \fBp\fR; if the predicate
+returns true for the input, the data is returned.
+.TP
+.B empty
+Returns void.
+.TP
+.B map(x)
+For any filter \fBx\fR, \fBmap(x)\fR will run that filter for each element of
+the input array, and produce the outputs a new array.
+.TP
+.B add
+Takes as input an array, and produces as output the elements of the array added
+together. The rules are the same as those for the \fB+\fR operator.
+.TP
+.B tonumber
+Parses its input as a number. It will convert correctly-formatted strings to
+their numeric equivalent, leave numbers alone, and give an error on all other
+input.
+.TP
+.B tostring
+Prints its input as a string. Strings are left unchanged, and all other values
+are JSON-encoded.
+.TP
+.B sort, sort_by
+Sorts its input, which must be an array. Values are sorted in the following order:
+.IP
+\(bu null
+.IP
+\(bu false
+.IP
+\(bu true
+.IP
+\(bu numbers
+.IP
+\(bu strings, in alphabetical order (by unicode codepoint value)
+.IP
+\(bu arrays, in lexical order
+.IP
+\(bu objects
+The ordering for objects is a little complex: first they’re compared by
+comparing their sets of keys (as arrays in sorted order), and if their keys are
+equal then the values are compared key by key.
+
+\fBsort_by\fR may be used to sort by a particular field of an object, or by
+applying any jq filter. \fBsort_by(foo)\fR compares two elements by comparing
+the result of foo on each element.
+.TP
+.B group_by(.foo)
+Takes as input an array, groups the elements having the same .foo field into
+separate arrays, and produces all of these arrays as elements of a larger
+array, sorted by the value of the .foo field. The sorting order is the same as
+described in the \fBsort\fR function.
+.TP
+.B min, max, min_by(f), max_by(f)
+Find the minimum or maximum element of the input array. The _by versions allow
+you to specify a particular field or property to examine.
+.TP
+.B unique
+Takes as input an array and produces an array of the same elements, in sorted
+order, with duplicates removed.
+.TP
+.B contains(b)
+Will produce true if b is completely contained within the input. A string B is
+contained in a string A if B is a substring of A. An array B is contained in an
+array A is all elements in B are contained in any element in A. An object B is
+contained in object A if all of the values in B are contained in the value in A
+with the same key. All other types are assumed to be contained in each other if
+they are equal.
+.TP
+.B \\\(foo)
+Interpolate the expression result into a string.
+.SH CONDITIONALS, COMPARISONS
+For a complete description, see the homepage of the project.
+.TP
+.B ==, !=
+Will produce ‘true’ if the result of a and b are equal (that is, if they
+represent equivalent JSON documents) and ‘false’ otherwise.
+
+In particular, strings are never considered equal to numbers. If you’re coming
+from Javascript, jq’s == is like Javascript’s === - considering values equal
+only when they have the same type as well as the same value.
+
+!= is "not equal", and ‘a != b’ returns the opposite value of ‘a == b’.
+.TP
+.B if-then-else
+\fBif A then B else C\fR end will act the same as B if A produces a value other
+than false or null, but act the same as C otherwise.
+
+Checking for false or null is a simpler notion of "truthiness" than is found in
+Javascript or Python, but it means that you’ll sometimes have to be more
+explicit about the condition you want: you can’t test whether, e.g. a string is
+empty using if .name then A else B end, you’ll need something more like ‘if
+(.name | count) > 0 then A else B end’ instead.
+
+If the condition A produces multiple results, it is considered "true" if any of
+those results is not false or null. If it produces zero results, it’s
+considered false.
+
+More cases can be added to an if using \fBelif A then B\fR syntax.
+.TP
+.B >, >=, <=, <
+Return whether their left argument is greater than, greater than or equal to,
+less than or equal to or less than their right argument (respectively).
+
+The ordering is the same as that described for \fBsort\fR.
+.TP
+.B and/or/not
+The normal Boolean operators and/or/not. They have the same standard of truth
+as if expressions - false and null are considered "false values", and anything
+else is a "true value".
+
+If an operand of one of these operators produces multiple results, the operator
+itself will produce a result for each input.
+
+not is in fact a builtin function rather than an operator, so it is called as a
+filter to which things can be piped rather than with special syntax, as in
+\fB.foo and .bar | not\fR.
+
+These three only produce the values "true" and "false", and so are only useful
+for genuine Boolean operations, rather than the common Perl/Python/Ruby idiom
+of "value_that_may_be_null or default". If you want to use this form of "or",
+picking between two values rather than evaluating a condition, see the \fB//\fR
+operator below.
+.TP
+.B //
+A filter of the form \fBa // b\fR produces the same results as a, if a produces
+results other than false and null. Otherwise, \fBa // b\fR produces the same
+results as b.
+
+This is useful for providing defaults: \fB.foo // 1\fR will evaluate to 1 if
+there’s no .foo element in the input. It’s similar to how or is sometimes used
+in Python (jq’s or operator is reserved for strictly Boolean operations).
+.SH VARIABLES
+Variables can be defined using \fBexpression as $variable\fR. All variable
+names start with $. Variables are scoped over the rest of the expression that
+defines them.
+.SH FUNCTIONS
+Filters can be given names using the \fBdef\fR keyword. A function may take
+arguments which are passed as filters, not as values. The same argument may be
+referenced multiple times with different inputs. Arguments to a function work
+more like callbacks than like value arguments. If you want the value-argument
+behaviour for defining simple functions, just use a variable.
+.SH ASSIGNMENT
+jq doesn’t distinguish between references to and copies of something - two
+objects or arrays are either equal or not equal, without any further notion of
+being "the same object" or "not the same object".
+.TP
+.B =
+Takes as input an object and produce as output an object with the field set to
+the value. All jq values are immutable.
+.TP
+.B |=
+Takes a filter on the right-hand side and works out the new value for the
+property being assigned to by running the old value through this expression.
+.TP
+.B +=, -=, *=, /=, //=
+Work equivalently as \fB|=\fR but perform arithmetic operations.
+.SH EXAMPLES
+.IP "\(bu" 4
+Prettify the JSON source using the \fB.\fR operator:
+.Sp
+curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true' | jq '.'
+.IP "\(bu" 4
+Pull out the first tweet:
+.Sp
+jq '.results[0]'
+.IP "\(bu" 4
+Restrict it to the most interesting fields:
+.Sp
+jq '.results[0] | {from_user, text}'
+.IP "\(bu" 4
+Pull out all of the "url" fields inside that array of url objects, and make a
+simple list of strings to go along with the "from_user" and "text" fields:
+.Sp
+jq '.results[] | {from_user, text, urls: [.entities.urls[].url]}'
+.SH AUTHOR
+Stephen Dolan, "<mu@netsoc.tcd.ie>"
+.SH BUGS
+Please report any bugs or feature requests to the issues list at Github:
+<http://github.com/stedolan/jq/issues>
+.SH SUPPORT
+More information on \fBjq\fP as well as support can be found at:
+.IP "\(bu" 4
+The jq homepage
+.Sp
+<http://stedolan.github.com/jq/>
+.IP "\(bu" 4
+The jq issues list at Github
+.Sp
+<http://github.com/stedolan/jq/issues>
+.IP "\(bu" 4
+Git source repository
+.Sp
+<http://github.com/stedolan/jq>
+.SH SEE ALSO
+.BR sed (1),
+.BR awk (1),
+.BR ack-grep (1).
+.SH COPYRIGHT & LICENSE
+Copyright 2012 Stephen Dolan.
+.PP
+This program is free software; you can redistribute it and/or modify it under
+the terms of the MIT License.
