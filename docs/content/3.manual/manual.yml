@@ -748,8 +748,8 @@ sections:
           means that you'll sometimes have to be more explicit about
           the condition you want: you can't test whether, e.g. a
           string is empty using `if .name then A else B end`, you'll
-          need something more like 'if (.name | count) > 0 then A else
-          B end' instead.
+          need something more like `if (.name | count) > 0 then A else
+          B end` instead.
           
           If the condition A produces multiple results, it is
           considered "true" if any of those results is not false or
@@ -872,8 +872,8 @@ sections:
           For instance, calculating the average value of an array of numbers
           requires a few variables in most languages - at least one to hold the
           array, perhaps one for each element or for a loop counter. In jq, it's
-          simply `add / length` - the `sum` expression is given the array and
-          produces its sum, and the `count` expression is given the array and
+          simply `add / length` - the `add` expression is given the array and
+          produces its sum, and the `length` expression is given the array and
           produces its length.
           
           So, there's generally a cleaner way to solve most problems in jq that
