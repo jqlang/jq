@@ -336,6 +336,50 @@ fold 0 as $s (.[] | $s + .)
 7
 
 #
+# Paths
+#
+
+path(.foo[0,1])
+null
+["foo", 0]
+["foo", 1]
+
+path(.[] | select(.>3))
+[1,5,3]
+[1]
+
+path(.)
+42
+[]
+
+["foo",1] as $p | getpath($p), setpath($p; 20), delpath($p)
+{"bar": 42, "foo": ["a", "b", "c", "d"]}
+"b"
+{"bar": 42, "foo": ["a", 20, "c", "d"]}
+{"bar": 42, "foo": ["a", "c", "d"]}
+
+map(getpath([2])), map(setpath([2]; 42)), map(delpath([2]))
+[[0], [0,1], [0,1,2]]
+[null, null, 2]
+[[0,null,42], [0,1,42], [0,1,42]]
+[[0], [0,1], [0,1]]
+
+map(delpath([0,"foo"]))
+[[{"foo":2, "x":1}], [{"bar":2}]]
+[[{"x":1}], [{"bar":2}]]
+
+["foo",1] as $p | getpath($p), setpath($p; 20), delpath($p)
+{"bar":false}
+null
+{"bar":false, "foo": [null, 20]}
+{"bar":false}
+
+delpath([-200])
+[1,2,3]
+[1,2,3]
+
+
+#
 # Assignment
 #
 .message = "goodbye"

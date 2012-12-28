@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "jv_alloc.h"
 
-jv jv_lookup(jv t, jv k) {
+jv jv_get(jv t, jv k) {
   jv v;
   if (jv_get_kind(t) == JV_KIND_OBJECT && jv_get_kind(k) == JV_KIND_STRING) {
     v = jv_object_get(t, k);
@@ -33,7 +33,12 @@ jv jv_lookup(jv t, jv k) {
   return v;
 }
 
-jv jv_modify(jv t, jv k, jv v) {
+jv jv_set(jv t, jv k, jv v) {
+  if (!jv_is_valid(v)) {
+    jv_free(t);
+    jv_free(k);
+    return v;
+  }
   int isnull = jv_get_kind(t) == JV_KIND_NULL;
   if (jv_get_kind(k) == JV_KIND_STRING && 
       (jv_get_kind(t) == JV_KIND_OBJECT || isnull)) {
@@ -55,15 +60,100 @@ jv jv_modify(jv t, jv k, jv v) {
   return t;
 }
 
-jv jv_insert(jv root, jv value, jv* path, int pathlen) {
-  if (pathlen == 0) {
+jv jv_del(jv t, jv k) {
+  if (jv_get_kind(t) == JV_KIND_NULL) {
+    jv_free(k);
+  } else if (jv_get_kind(t) == JV_KIND_ARRAY && 
+             jv_get_kind(k) == JV_KIND_NUMBER) {
+    int idx = (int)jv_number_value(k);
+    jv_free(k);
+    int len = jv_array_length(jv_copy(t));
+    if (idx >= 0 && idx < len) {
+      for (int i = idx+1; i < len; i++) {
+        t = jv_array_set(t, i-1, jv_array_get(jv_copy(t), i));
+      }
+      t = jv_array_slice(t, 0, len-1);
+    }
+  } else if (jv_get_kind(t) == JV_KIND_OBJECT &&
+             jv_get_kind(k) == JV_KIND_STRING) {
+    t = jv_object_delete(t, k);
+  } else {
+    jv err = jv_invalid_with_msg(jv_string_fmt("Cannot delete field at %s index of %s",
+                                               jv_kind_name(jv_get_kind(k)),
+                                               jv_kind_name(jv_get_kind(t))));
+    jv_free(t);
+    jv_free(k);
+    t = err;
+  }
+  return t;
+}
+
+jv jv_setpath(jv root, jv path, jv value) {
+  if (jv_get_kind(path) != JV_KIND_ARRAY) {
+    jv_free(value);
+    jv_free(root);
+    jv_free(path);
+    return jv_invalid_with_msg(jv_string("Path must be specified as an array"));
+  }
+  if (!jv_is_valid(root)){
+    jv_free(value);
+    jv_free(path);
+    return root;
+  }
+  if (jv_array_length(jv_copy(path)) == 0) {
+    jv_free(path);
     jv_free(root);
     return value;
   }
-  return jv_modify(root, jv_copy(*path), 
-                   jv_insert(jv_lookup(jv_copy(root), jv_copy(*path)), value, path+1, pathlen-1));
+  jv pathcurr = jv_array_get(jv_copy(path), 0);
+  jv pathrest = jv_array_slice(path, 1, jv_array_length(jv_copy(path)));
+  return jv_set(root, pathcurr, 
+                jv_setpath(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest, value));
 }
 
+jv jv_getpath(jv root, jv path) {
+  if (jv_get_kind(path) != JV_KIND_ARRAY) {
+    jv_free(root);
+    jv_free(path);
+    return jv_invalid_with_msg(jv_string("Path must be specified as an array"));
+  }
+  if (!jv_is_valid(root)) {
+    jv_free(path);
+    return root;
+  }
+  if (jv_array_length(jv_copy(path)) == 0) {
+    jv_free(path);
+    return root;
+  }
+  jv pathcurr = jv_array_get(jv_copy(path), 0);
+  jv pathrest = jv_array_slice(path, 1, jv_array_length(jv_copy(path)));
+  return jv_getpath(jv_get(root, pathcurr), pathrest);
+}
+
+jv jv_delpath(jv root, jv path) {
+  if (jv_get_kind(path) != JV_KIND_ARRAY) {
+    jv_free(root);
+    jv_free(path);
+    return jv_invalid_with_msg(jv_string("Path must be specified as an array"));
+  }
+  if (!jv_is_valid(root)) {
+    jv_free(path);
+    return root;
+  }
+  if (jv_array_length(jv_copy(path)) == 1) {
+    return jv_del(root, jv_array_get(path, 0));
+  }
+  jv pathcurr = jv_array_get(jv_copy(path), 0);
+  jv pathrest = jv_array_slice(path, 1, jv_array_length(jv_copy(path)));
+  jv new_obj = jv_delpath(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest);
+  if (jv_get_kind(new_obj) == JV_KIND_NULL) {
+    jv_free(pathcurr);
+    jv_free(new_obj);
+    return root;
+  } else {
+    return jv_set(root, pathcurr, new_obj);
+  }
+}
 
 static int string_cmp(const void* pa, const void* pb){
   const jv* a = pa;

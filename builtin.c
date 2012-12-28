@@ -484,6 +484,9 @@ static struct cfunction function_list[] = {
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
   {(cfunction_ptr)f_keys, "keys", 1},
+  {(cfunction_ptr)jv_setpath, "setpath", 3}, // FIXME typechecking
+  {(cfunction_ptr)jv_getpath, "getpath", 2},
+  {(cfunction_ptr)jv_delpath, "delpath", 2},
   {(cfunction_ptr)f_equal, "_equal", 3},
   {(cfunction_ptr)f_notequal, "_notequal", 3},
   {(cfunction_ptr)f_less, "_less", 3},
@@ -508,22 +511,36 @@ static struct cfunction function_list[] = {
 static struct symbol_table cbuiltins = 
   {function_list, sizeof(function_list)/sizeof(function_list[0])};
 
-typedef block (*bytecoded_builtin)();
 struct bytecoded_builtin { const char* name; block code; };
 static block bind_bytecoded_builtins(block b) {
-  struct bytecoded_builtin builtin_defs[] = {
-    {"empty", gen_op_simple(BACKTRACK)},
-    {"false", gen_const(jv_false())},
-    {"true", gen_const(jv_true())},
-    {"null", gen_const(jv_null())},
-    {"not", gen_condbranch(gen_const(jv_false()),
-                           gen_const(jv_true()))}
-  };
   block builtins = gen_noop();
-  for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
-    builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, gen_noop(),
-                                            builtin_defs[i].code));
+  {
+    struct bytecoded_builtin builtin_defs[] = {
+      {"empty", gen_op_simple(BACKTRACK)},
+      {"false", gen_const(jv_false())},
+      {"true", gen_const(jv_true())},
+      {"null", gen_const(jv_null())},
+      {"not", gen_condbranch(gen_const(jv_false()),
+                             gen_const(jv_true()))}
+    };
+    for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
+      builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, gen_noop(),
+                                              builtin_defs[i].code));
+    }
   }
+  {
+    struct bytecoded_builtin builtin_def_1arg[] = {
+      {"path", BLOCK(gen_op_simple(DUP), 
+                     gen_call("arg", gen_noop()),
+                     gen_op_simple(GETPATH))},
+    };
+    for (unsigned i=0; i<sizeof(builtin_def_1arg)/sizeof(builtin_def_1arg[0]); i++) {
+      builtins = BLOCK(builtins, gen_function(builtin_def_1arg[i].name,
+                                              gen_op_block_unbound(CLOSURE_PARAM, "arg"),
+                                              builtin_def_1arg[i].code));
+    }
+  }
+  
   return block_bind(builtins, b, OP_IS_CALL_PSEUDO);
 }
 
@@ -535,6 +552,7 @@ static const char* jq_builtins[] = {
   "def unique: group_by(.) | map(.[0]);",
   "def max_by(f): _max_by_impl(map([f]));",
   "def min_by(f): _min_by_impl(map([f]));",
+  "def del(f): delpath(path(f));",
 };
 
 

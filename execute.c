@@ -286,6 +286,18 @@ jv jq_next() {
       break;
     }
 
+    case GETPATH: {
+      stackval path_end = stack_pop();
+      stackval path_start = stack_pop();
+      jv_free(path_end.value);
+      jv path = jv_array();
+      for (int i=path_start.pathidx; i<path_end.pathidx; i++) {
+        path = jv_array_set(path, i, jv_copy(pathbuf[i]));
+      }
+      stack_push(stackval_replace(path_start, path));
+      break;
+    }
+
     case ASSIGN: {
       stackval replacement = stack_pop();
       stackval path_end = stack_pop();
@@ -293,11 +305,18 @@ jv jq_next() {
       jv_free(path_end.value);
       jv_free(path_start.value);
 
+      jv path = jv_array();
+      for (int i=path_start.pathidx; i<path_end.pathidx; i++) {
+        path = jv_array_set(path, i, jv_copy(pathbuf[i]));
+      }
+
+
+
       uint16_t level = *pc++;
       uint16_t v = *pc++;
       frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
       jv* var = frame_local_var(fp, v);
-      jv result = jv_insert(*var, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
+      jv result = jv_setpath(*var, path, replacement.value);
       if (jv_is_valid(result)) {
         *var = result;
       } else {
@@ -311,7 +330,7 @@ jv jq_next() {
       stackval t = stack_pop();
       jv k = stack_pop().value;
       int pathidx = path_push(t, jv_copy(k));
-      jv v = jv_lookup(t.value, k);
+      jv v = jv_get(t.value, k);
       if (jv_is_valid(v)) {
         stackval sv;
         sv.value = v;

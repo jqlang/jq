@@ -254,8 +254,7 @@ static int jvp_array_equal(jv_complex* a, jv_complex* b) {
 static jv_complex jvp_array_slice(jv_complex* a, int start, int end) {
   // FIXME: maybe slice should reallocate if the slice is small enough
   assert(start <= end);
-  jvp_array* array = jvp_array_ptr(a);
-  assert(a->i[1] + end < array->length);
+  assert(a->i[0] + end <= a->i[1]);
   jv_complex slice = *a;
   slice.i[0] += start;
   slice.i[1] = slice.i[0] + (end - start);
