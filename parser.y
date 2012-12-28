@@ -319,7 +319,18 @@ FuncDef:
                     $7);
   jv_free($2);
   jv_free($4);
+} |
+
+"def" IDENT '(' IDENT ';' IDENT ')' ':' Exp ';' {
+  $$ = gen_function(jv_string_value($2), 
+                    BLOCK(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), 
+                          gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($6))),
+                    $9);
+  jv_free($2);
+  jv_free($4);
+  jv_free($6);
 }
+
 
 
 String:
@@ -411,6 +422,11 @@ IDENT {
 } |
 IDENT '(' Exp ')' {
   $$ = gen_call(jv_string_value($1), gen_lambda($3));
+  $$ = gen_location(@1, $$);
+  jv_free($1);
+} |
+IDENT '(' Exp ';' Exp ')' {
+  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5)));
   $$ = gen_location(@1, $$);
   jv_free($1);
 } |
