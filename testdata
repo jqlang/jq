@@ -62,6 +62,10 @@ null
 "'<>&'\\''\"'"
 "PD4mJyI="
 
+@uri
+"\u03bc"
+"%ce%bc"
+
 @html "<b>\(.)</b>"
 "<script>hax</script>"
 "<b>&lt;script&gt;hax&lt;/script&gt;</b>"

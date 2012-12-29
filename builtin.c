@@ -306,7 +306,7 @@ static jv f_format(jv input, jv fmt) {
     jv line = jv_string("");
     const char* s = jv_string_value(input);
     for (int i=0; i<jv_string_length(jv_copy(input)); i++) {
-      unsigned ch = (unsigned)*s;
+      unsigned ch = (unsigned)(unsigned char)*s;
       if (ch < 128 && unreserved[ch]) {
         line = jv_string_append_buf(line, s, 1);
       } else {
