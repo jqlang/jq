@@ -356,32 +356,38 @@ path(.)
 42
 []
 
-["foo",1] as $p | getpath($p), setpath($p; 20), delpath($p)
+["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
 {"bar": 42, "foo": ["a", "b", "c", "d"]}
 "b"
 {"bar": 42, "foo": ["a", 20, "c", "d"]}
 {"bar": 42, "foo": ["a", "c", "d"]}
 
-map(getpath([2])), map(setpath([2]; 42)), map(delpath([2]))
+map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))
 [[0], [0,1], [0,1,2]]
 [null, null, 2]
 [[0,null,42], [0,1,42], [0,1,42]]
 [[0], [0,1], [0,1]]
 
-map(delpath([0,"foo"]))
+map(delpaths([[0,"foo"]]))
 [[{"foo":2, "x":1}], [{"bar":2}]]
 [[{"x":1}], [{"bar":2}]]
 
-["foo",1] as $p | getpath($p), setpath($p; 20), delpath($p)
+["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
 {"bar":false}
 null
 {"bar":false, "foo": [null, 20]}
 {"bar":false}
 
-delpath([-200])
+delpaths([[-200]])
 [1,2,3]
 [1,2,3]
 
+del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)
+{"foo": [0,1,2,3,4], "bar": [0,1]}
+null
+{"foo": [0,1,2,3,4], "bar": [0,1]}
+{"foo": [1,4], "bar": [1]}
+{"bar": [1]}
 
 #
 # Assignment

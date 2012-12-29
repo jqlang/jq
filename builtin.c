@@ -475,7 +475,6 @@ static jv f_error(jv input, jv msg) {
   return jv_invalid_with_msg(msg);
 }
 
-
 static struct cfunction function_list[] = {
   {(cfunction_ptr)f_plus, "_plus", 3},
   {(cfunction_ptr)f_minus, "_minus", 3},
@@ -486,7 +485,7 @@ static struct cfunction function_list[] = {
   {(cfunction_ptr)f_keys, "keys", 1},
   {(cfunction_ptr)jv_setpath, "setpath", 3}, // FIXME typechecking
   {(cfunction_ptr)jv_getpath, "getpath", 2},
-  {(cfunction_ptr)jv_delpath, "delpath", 2},
+  {(cfunction_ptr)jv_delpaths, "delpaths", 2},
   {(cfunction_ptr)f_equal, "_equal", 3},
   {(cfunction_ptr)f_notequal, "_notequal", 3},
   {(cfunction_ptr)f_less, "_less", 3},
@@ -552,7 +551,7 @@ static const char* jq_builtins[] = {
   "def unique: group_by(.) | map(.[0]);",
   "def max_by(f): _max_by_impl(map([f]));",
   "def min_by(f): _min_by_impl(map([f]));",
-  "def del(f): delpath(path(f));",
+  "def del(f): delpaths([path(f)]);",
 };
 
 

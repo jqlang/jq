@@ -60,31 +60,63 @@ jv jv_set(jv t, jv k, jv v) {
   return t;
 }
 
-jv jv_del(jv t, jv k) {
-  if (jv_get_kind(t) == JV_KIND_NULL) {
-    jv_free(k);
-  } else if (jv_get_kind(t) == JV_KIND_ARRAY && 
-             jv_get_kind(k) == JV_KIND_NUMBER) {
-    int idx = (int)jv_number_value(k);
-    jv_free(k);
-    int len = jv_array_length(jv_copy(t));
-    if (idx >= 0 && idx < len) {
-      for (int i = idx+1; i < len; i++) {
-        t = jv_array_set(t, i-1, jv_array_get(jv_copy(t), i));
+// assumes keys is a sorted array
+jv jv_dels(jv t, jv keys) {
+  assert(jv_get_kind(keys) == JV_KIND_ARRAY);
+  assert(jv_is_valid(t));
+  
+  if (jv_get_kind(t) == JV_KIND_NULL || jv_array_length(jv_copy(keys)) == 0) {
+    // no change
+  } else if (jv_get_kind(t) == JV_KIND_ARRAY) {
+    jv new_array = jv_array();
+    int kidx = 0;
+    for (int i=0; i<jv_array_length(jv_copy(t)); i++) {
+      int del = 0;
+      while (kidx < jv_array_length(jv_copy(keys))) {
+        jv nextdel = jv_array_get(jv_copy(keys), kidx);
+        if (jv_get_kind(nextdel) != JV_KIND_NUMBER) {
+          jv err = jv_invalid_with_msg(jv_string_fmt("Cannot delete %s element of array",
+                                                     jv_kind_name(jv_get_kind(nextdel))));
+          jv_free(nextdel);
+          jv_free(new_array);
+          new_array = err;
+          goto arr_out; // break twice
+        }
+        int delidx = (int)jv_number_value(nextdel);
+        jv_free(nextdel);
+        if (i == delidx) {
+          del = 1;
+        }
+        if (i < delidx) {
+          break;
+        }
+        kidx++;
       }
-      t = jv_array_slice(t, 0, len-1);
+      if (!del)
+        new_array = jv_array_append(new_array, jv_array_get(jv_copy(t), i));
     }
-  } else if (jv_get_kind(t) == JV_KIND_OBJECT &&
-             jv_get_kind(k) == JV_KIND_STRING) {
-    t = jv_object_delete(t, k);
+  arr_out:
+    jv_free(t);
+    t = new_array;
+  } else if (jv_get_kind(t) == JV_KIND_OBJECT) {
+    for (int i=0; i<jv_array_length(jv_copy(keys)); i++) {
+      jv k = jv_array_get(jv_copy(keys), i);
+      if (jv_get_kind(k) != JV_KIND_STRING) {
+        jv_free(t);
+        t = jv_invalid_with_msg(jv_string_fmt("Cannot delete %s field of object",
+                                              jv_kind_name(jv_get_kind(k))));
+        jv_free(k);
+        break;
+      }
+      t = jv_object_delete(t, k);      
+    }
   } else {
-    jv err = jv_invalid_with_msg(jv_string_fmt("Cannot delete field at %s index of %s",
-                                               jv_kind_name(jv_get_kind(k)),
+    jv err = jv_invalid_with_msg(jv_string_fmt("Cannot delete fields from %s",
                                                jv_kind_name(jv_get_kind(t))));
     jv_free(t);
-    jv_free(k);
     t = err;
   }
+  jv_free(keys);
   return t;
 }
 
@@ -130,30 +162,82 @@ jv jv_getpath(jv root, jv path) {
   return jv_getpath(jv_get(root, pathcurr), pathrest);
 }
 
-jv jv_delpath(jv root, jv path) {
-  if (jv_get_kind(path) != JV_KIND_ARRAY) {
-    jv_free(root);
-    jv_free(path);
-    return jv_invalid_with_msg(jv_string("Path must be specified as an array"));
+// assumes paths is a sorted array of arrays
+static jv delpaths_sorted(jv object, jv paths, int start) {
+  jv delkeys = jv_array();
+  for (int i=0; i<jv_array_length(jv_copy(paths));) {
+    int j = i;
+    assert(jv_array_length(jv_array_get(jv_copy(paths), i)) > start);
+    int delkey = jv_array_length(jv_array_get(jv_copy(paths), i)) == start + 1;
+    jv key = jv_array_get(jv_array_get(jv_copy(paths), i), start);
+    while (j < jv_array_length(jv_copy(paths)) &&
+           jv_equal(jv_copy(key), jv_array_get(jv_array_get(jv_copy(paths), j), start)))
+      j++;
+    // if i <= entry < j, then entry starts with key
+    if (delkey) {
+      // deleting this entire key, we don't care about any more specific deletions
+      delkeys = jv_array_append(delkeys, key);
+    } else {
+      // deleting certain sub-parts of this key
+      jv subobject = jv_get(jv_copy(object), jv_copy(key));
+      if (!jv_is_valid(subobject)) {
+        jv_free(key);
+        jv_free(object);
+        object = subobject;
+        break;
+      } else if (jv_get_kind(subobject) == JV_KIND_NULL) {
+        jv_free(key);
+        jv_free(subobject);
+      } else {
+        jv newsubobject = delpaths_sorted(subobject, jv_array_slice(jv_copy(paths), i, j), start+1);
+        if (!jv_is_valid(newsubobject)) {
+          jv_free(key);
+          jv_free(object);
+          object = newsubobject;
+          break;
+        }
+        object = jv_set(object, key, newsubobject);
+      }
+      if (!jv_is_valid(object)) break;
+    }
+    i = j;
   }
-  if (!jv_is_valid(root)) {
-    jv_free(path);
-    return root;
-  }
-  if (jv_array_length(jv_copy(path)) == 1) {
-    return jv_del(root, jv_array_get(path, 0));
-  }
-  jv pathcurr = jv_array_get(jv_copy(path), 0);
-  jv pathrest = jv_array_slice(path, 1, jv_array_length(jv_copy(path)));
-  jv new_obj = jv_delpath(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest);
-  if (jv_get_kind(new_obj) == JV_KIND_NULL) {
-    jv_free(pathcurr);
-    jv_free(new_obj);
-    return root;
-  } else {
-    return jv_set(root, pathcurr, new_obj);
-  }
+  jv_free(paths);
+  if (jv_is_valid(object))
+    object = jv_dels(object, delkeys);
+  else 
+    jv_free(delkeys);
+  return object;
 }
+
+jv jv_delpaths(jv object, jv paths) {
+  paths = jv_sort(paths, jv_copy(paths));
+  for (int i=0; i<jv_array_length(jv_copy(paths)); i++) {
+    jv elem = jv_array_get(jv_copy(paths), i);
+    if (jv_get_kind(elem) != JV_KIND_ARRAY) {
+      jv_free(object);
+      jv_free(paths);
+      jv err = jv_invalid_with_msg(jv_string_fmt("Path must be specified as array, not %s",
+                                                 jv_kind_name(jv_get_kind(elem))));
+      jv_free(elem);
+      return err;
+    }
+    jv_free(elem);
+  }
+  if (jv_array_length(jv_copy(paths)) == 0) {
+    // nothing is being deleted
+    jv_free(paths);
+    return object;
+  }
+  if (jv_array_length(jv_array_get(jv_copy(paths), 0)) == 0) {
+    // everything is being deleted
+    jv_free(paths);
+    jv_free(object);
+    return jv_null();
+  }
+  return delpaths_sorted(object, paths, 0);
+}
+
 
 static int string_cmp(const void* pa, const void* pb){
   const jv* a = pa;
