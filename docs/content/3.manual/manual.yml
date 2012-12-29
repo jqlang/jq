@@ -643,6 +643,38 @@ sections:
             input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
             output: ['false']
 
+      - title: `recurse`
+        body: |
+          
+          The `recurse` function allows you to search through a
+          recursive structure, and extract interesting data from all
+          levels. Suppose your input represents a filesystem:
+
+              {"name": "/", "children": [
+                {"name": "/bin", "children": [
+                  {"name": "/bin/ls", "children": []},
+                  {"name": "/bin/sh", "children": []}]},
+                {"name": "/home", "children": [
+                  {"name": "/home/stephen", "children": [
+                    {"name": "/home/stephen/jq", "children": []}]}]}]}
+          
+          Now suppose you want to extract all of the filenames
+          present. You need to retrieve `.name`, `.children[].name`,
+          `.children[].children[].name`, and so on. You can do this
+          with:
+
+              recurse(.children[]) | .name
+
+        examples:
+          - program: 'recurse(.foo[])'
+            input: '{"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}'
+            output: 
+              - '{"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}'
+              - '{"foo":[]}'
+              - '{"foo":[{"foo":[]}]}'
+              - '{"foo":[]}'
+
+
       - title: "String interpolation - `\(foo)`"
         body: |
 

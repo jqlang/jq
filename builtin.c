@@ -544,7 +544,7 @@ static const char* jq_builtins[] = {
   "def del(f): delpaths([path(f)]);",
   "def _assign(paths; value): value as $v | fold . as $obj (path(paths) as $p | $obj | setpath($p; $v));",
   "def _modify(paths; update): fold . as $obj (path(paths) as $p | $obj | setpath($p; getpath($p) | update));",
-  
+  "def recurse(f): ., (f | select(. != null) | recurse(f));",
 };
 
 
