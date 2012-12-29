@@ -45,7 +45,13 @@ static jv type_error2(jv bad1, jv bad2, const char* msg) {
 
 static jv f_plus(jv input, jv a, jv b) {
   jv_free(input);
-  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+  if (jv_get_kind(a) == JV_KIND_NULL) {
+    jv_free(a);
+    return b;
+  } else if (jv_get_kind(b) == JV_KIND_NULL) {
+    jv_free(b);
+    return a;
+  } else if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) + 
                      jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
@@ -102,22 +108,6 @@ static jv f_divide(jv input, jv a, jv b) {
   } else {
     return type_error2(a, b, "cannot be divided");
   }  
-}
-
-static jv f_add(jv array) {
-  if (jv_get_kind(array) != JV_KIND_ARRAY) {
-    return type_error(array, "cannot have its elements added");
-  } else if (jv_array_length(jv_copy(array)) == 0) {
-    jv_free(array);
-    return jv_null();
-  } else {
-    jv sum = jv_array_get(jv_copy(array), 0);
-    for (int i = 1; i < jv_array_length(jv_copy(array)); i++) {
-      sum = f_plus(jv_null(), sum, jv_array_get(jv_copy(array), i));
-    }
-    jv_free(array);
-    return sum;
-  }
 }
 
 static jv f_equal(jv input, jv a, jv b) {
@@ -495,7 +485,6 @@ static struct cfunction function_list[] = {
   {(cfunction_ptr)f_contains, "contains", 2},
   {(cfunction_ptr)f_length, "length", 1},
   {(cfunction_ptr)f_type, "type", 1},
-  {(cfunction_ptr)f_add, "add", 1},
   {(cfunction_ptr)f_sort, "sort", 1},
   {(cfunction_ptr)f_sort_by_impl, "_sort_by_impl", 2},
   {(cfunction_ptr)f_group_by_impl, "_group_by_impl", 2},
@@ -551,6 +540,7 @@ static const char* jq_builtins[] = {
   "def unique: group_by(.) | map(.[0]);",
   "def max_by(f): _max_by_impl(map([f]));",
   "def min_by(f): _min_by_impl(map([f]));",
+  "def add: fold null as $sum (.[] | $sum + .);",
   "def del(f): delpaths([path(f)]);",
   "def _assign(paths; value): value as $v | fold . as $obj (path(paths) as $p | $obj | setpath($p; $v));",
   "def _modify(paths; update): fold . as $obj (path(paths) as $p | $obj | setpath($p; getpath($p) | update));",

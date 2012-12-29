@@ -356,6 +356,9 @@ sections:
               the key-value pairs from both objects into a single
               combined object. If both objects contain a value for the
               same key, the object on the right of the `+` wins.
+          
+          `null` can be added to any value, and returns the other
+          value unchanged.
 
         examples:
           - program: '.a + 1'
@@ -364,6 +367,12 @@ sections:
           - program: '.a + .b'
             input: '{"a": [1,2], "b": [3,4]}'
             output: ['[1,2,3,4]']
+          - program: '.a + null'
+            input: '{"a": 1}'
+            output: ['1']
+          - program: '.a + 1'
+            input: '{}'
+            output: ['1']
           - program: '{a: 1} + {b: 2} + {c: 3} + {a: 42}'
             input: 'null'
             output: ['{"a": 42, "b": 2, "c": 3}']
