@@ -317,22 +317,6 @@ block gen_fold(const char* varname, block init, block fold) {
                           OP_HAS_VARIABLE));
 }
 
-block gen_assign(block expr) {
-  block result_var = block_bind(gen_op_var_unbound(STOREV, "result"),
-                                gen_noop(), OP_HAS_VARIABLE);
-
-  block loop = BLOCK(gen_op_simple(DUP),
-                     expr,
-                     gen_op_var_bound(ASSIGN, result_var),
-                     gen_op_simple(BACKTRACK));
-
-  return BLOCK(gen_op_simple(DUP),
-               result_var,
-               gen_op_target(FORK, loop),
-               loop,
-               gen_op_var_bound(LOADV, result_var));
-}
-
 block gen_definedor(block a, block b) {
   // var found := false
   block found_var = block_bind(gen_op_var_unbound(STOREV, "found"),

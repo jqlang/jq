@@ -164,11 +164,16 @@ static block gen_format(block a, jv fmt) {
   return BLOCK(a, gen_call("format", BLOCK(gen_lambda(gen_const(fmt)))));
 }
  
-static block gen_update(block a, block op, int optype) {
-  if (optype) {
-    op = gen_binop(gen_noop(), op, optype);
-  }
-  return gen_assign(BLOCK(a, gen_op_simple(DUP), op));
+static block gen_update(block object, block val, int optype) {
+  block tmp = block_bind(gen_op_var_unbound(STOREV, "tmp"),
+                         gen_noop(), OP_HAS_VARIABLE);
+  return BLOCK(gen_op_simple(DUP),
+               val,
+               tmp,
+               gen_call("_modify", BLOCK(gen_lambda(object), 
+                                         gen_lambda(gen_binop(gen_noop(),
+                                                              gen_op_var_bound(LOADV, tmp),
+                                                              optype)))));
 }
 
 %}
@@ -216,7 +221,7 @@ Term "as" '$' IDENT '|' Exp {
 } |
 
 Exp '=' Exp {
-  $$ = gen_assign(BLOCK(gen_op_simple(DUP), $3, gen_op_simple(SWAP), $1, gen_op_simple(SWAP)));
+  $$ = gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3)));
 } |
 
 Exp "or" Exp {
@@ -236,7 +241,7 @@ Exp "//=" Exp {
 } |
 
 Exp "|=" Exp {
-  $$ = gen_update($1, $3, 0);
+  $$ = gen_call("_modify", BLOCK(gen_lambda($1), gen_lambda($3)));
 } |
 
 Exp '|' Exp { 

@@ -552,6 +552,9 @@ static const char* jq_builtins[] = {
   "def max_by(f): _max_by_impl(map([f]));",
   "def min_by(f): _min_by_impl(map([f]));",
   "def del(f): delpaths([path(f)]);",
+  "def _assign(paths; value): value as $v | fold . as $obj (path(paths) as $p | $obj | setpath($p; $v));",
+  "def _modify(paths; update): fold . as $obj (path(paths) as $p | $obj | setpath($p; getpath($p) | update));",
+  
 };
 
 

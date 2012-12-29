@@ -298,34 +298,6 @@ jv jq_next() {
       break;
     }
 
-    case ASSIGN: {
-      stackval replacement = stack_pop();
-      stackval path_end = stack_pop();
-      stackval path_start = stack_pop();
-      jv_free(path_end.value);
-      jv_free(path_start.value);
-
-      jv path = jv_array();
-      for (int i=path_start.pathidx; i<path_end.pathidx; i++) {
-        path = jv_array_set(path, i, jv_copy(pathbuf[i]));
-      }
-
-
-
-      uint16_t level = *pc++;
-      uint16_t v = *pc++;
-      frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
-      jv* var = frame_local_var(fp, v);
-      jv result = jv_setpath(*var, path, replacement.value);
-      if (jv_is_valid(result)) {
-        *var = result;
-      } else {
-        print_error(result);
-        *var = jv_null();
-      }
-      break;
-    }
-
     case INDEX: {
       stackval t = stack_pop();
       jv k = stack_pop().value;
