@@ -162,7 +162,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       put_char('\n', F, S);
       put_space(indent+INDENT, F, S);
     }
-    for (int i=0; i<jv_array_length(jv_copy(x)); i++) {
+    jv_array_foreach(x, i, elem) {
       if (i!=0) {
         if (flags & JV_PRINT_PRETTY) {
           put_str(",\n", F, S);
@@ -171,7 +171,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
           put_str(",", F, S);
         }
       }
-      jv_dump_term(C, jv_array_get(jv_copy(x), i), flags, indent + INDENT, F, S);
+      jv_dump_term(C, elem, flags, indent + INDENT, F, S);
       if (colour) put_str(colour, F, S);
     }
     if (flags & JV_PRINT_PRETTY) {
@@ -193,7 +193,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       put_space(indent+INDENT, F, S);
     }
     int first = 1;
-    jv_object_foreach(i, x) {
+    jv_object_foreach(x, key, value) {
       if (!first) {
         if (flags & JV_PRINT_PRETTY){
           put_str(",\n", F, S);
@@ -205,7 +205,6 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       if (colour) put_str(COLRESET, F, S);
 
       first = 0;
-      jv key = jv_object_iter_key(x, i);
       if (colour) put_str(FIELD_COLOUR, F, S);
       jvp_dump_string(key, flags & JV_PRINT_ASCII, F, S);
       jv_free(key);
@@ -215,7 +214,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       put_str((flags & JV_PRINT_PRETTY) ? ": " : ":", F, S);
       if (colour) put_str(COLRESET, F, S);
       
-      jv_dump_term(C, jv_object_iter_value(x, i), flags, indent + INDENT, F, S);
+      jv_dump_term(C, value, flags, indent + INDENT, F, S);
       if (colour) put_str(colour, F, S);
     }
     if (flags & JV_PRINT_PRETTY) {

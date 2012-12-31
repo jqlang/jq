@@ -71,11 +71,10 @@ static jv f_minus(jv input, jv a, jv b) {
     return jv_number(jv_number_value(a) - jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
     jv out = jv_array();
-    for (int i=0; i<jv_array_length(jv_copy(a)); i++) {
-      jv x = jv_array_get(jv_copy(a), i);
+    jv_array_foreach(a, i, x) {
       int include = 1;
-      for (int j=0; j<jv_array_length(jv_copy(b)); j++) {
-        if (jv_equal(jv_copy(x), jv_array_get(jv_copy(b), j))) {
+      jv_array_foreach(b, j, y) {
+        if (jv_equal(jv_copy(x), y)) {
           include = 0;
           break;
         }
@@ -153,9 +152,7 @@ static jv f_greatereq(jv input, jv a, jv b) {
 }
 
 static jv f_contains(jv a, jv b) {
-  jv_kind akind = jv_get_kind(a);
-
-  if (akind == jv_get_kind(b)) {
+  if (jv_get_kind(a) == jv_get_kind(b)) {
     return jv_bool(jv_contains(a, b));
   } else {
     return type_error2(a, b, "cannot have their containment checked");
@@ -248,9 +245,8 @@ static jv f_format(jv input, jv fmt) {
     if (jv_get_kind(input) != JV_KIND_ARRAY)
       return type_error(input, "cannot be csv-formatted, only array");
     jv line = jv_string("");
-    for (int i=0; i<jv_array_length(jv_copy(input)); i++) {
+    jv_array_foreach(input, i, x) {
       if (i) line = jv_string_append_str(line, ",");
-      jv x = jv_array_get(jv_copy(input), i);
       switch (jv_get_kind(x)) {
       case JV_KIND_NULL:
         /* null rendered as empty string */
@@ -311,9 +307,8 @@ static jv f_format(jv input, jv fmt) {
     if (jv_get_kind(input) != JV_KIND_ARRAY)
       input = jv_array_set(jv_array(), 0, input);
     jv line = jv_string("");
-    for (int i=0; i<jv_array_length(jv_copy(input)); i++) {
+    jv_array_foreach(input, i, x) {
       if (i) line = jv_string_append_str(line, " ");
-      jv x = jv_array_get(jv_copy(input), i);
       switch (jv_get_kind(x)) {
       case JV_KIND_NULL:
       case JV_KIND_TRUE:

@@ -315,8 +315,8 @@ jv jv_array_concat(jv a, jv b) {
   assert(jv_get_kind(b) == JV_KIND_ARRAY);
 
   // FIXME: could be much faster
-  for (int i=0; i<jv_array_length(jv_copy(b)); i++) {
-    a = jv_array_append(a, jv_array_get(jv_copy(b), i));
+  jv_array_foreach(b, i, elem) {
+    a = jv_array_append(a, elem);
   }
   jv_free(b);
   return a;
@@ -331,16 +331,15 @@ jv jv_array_slice(jv a, int start, int end) {
 
 int jv_array_contains(jv a, jv b) {
   int r = 1;
-  int a_length = jv_array_length(jv_copy(a));
-  int b_length = jv_array_length(jv_copy(b));
-  for (int bi = 0; bi < b_length; bi++) {
+  jv_array_foreach(b, bi, belem) {
     int ri = 0;
-    for (int ai = 0; ai < a_length; ai++) {
-      if (jv_contains(jv_array_get(jv_copy(a), ai), jv_array_get(jv_copy(b), bi))) {
+    jv_array_foreach(a, ai, aelem) {
+      if (jv_contains(aelem, jv_copy(belem))) {
         ri = 1;
         break;
       }
     }
+    jv_free(belem);
     if (!ri) {
       r = 0;
       break;
@@ -876,10 +875,8 @@ int jv_object_length(jv object) {
 
 jv jv_object_merge(jv a, jv b) {
   assert(jv_get_kind(a) == JV_KIND_OBJECT);
-  jv_object_foreach(i, b) {
-    a = jv_object_set(a, 
-                      jv_object_iter_key(b, i),
-                      jv_object_iter_value(b, i));
+  jv_object_foreach(b, k, v) {
+    a = jv_object_set(a, k, v);
   }
   jv_free(b);
   return a;
@@ -890,10 +887,8 @@ int jv_object_contains(jv a, jv b) {
   assert(jv_get_kind(b) == JV_KIND_OBJECT);
   int r = 1;
 
-  jv_object_foreach(i, b) {
-    jv key = jv_object_iter_key(b, i);
+  jv_object_foreach(b, key, b_val) {
     jv a_val = jv_object_get(jv_copy(a), jv_copy(key));
-    jv b_val = jv_object_get(jv_copy(b), jv_copy(key));
 
     r = jv_contains(a_val, b_val);
     jv_free(key);

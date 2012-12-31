@@ -70,7 +70,7 @@ jv jv_dels(jv t, jv keys) {
   } else if (jv_get_kind(t) == JV_KIND_ARRAY) {
     jv new_array = jv_array();
     int kidx = 0;
-    for (int i=0; i<jv_array_length(jv_copy(t)); i++) {
+    jv_array_foreach(t, i, elem) {
       int del = 0;
       while (kidx < jv_array_length(jv_copy(keys))) {
         jv nextdel = jv_array_get(jv_copy(keys), kidx);
@@ -79,6 +79,7 @@ jv jv_dels(jv t, jv keys) {
                                                      jv_kind_name(jv_get_kind(nextdel))));
           jv_free(nextdel);
           jv_free(new_array);
+          jv_free(elem);
           new_array = err;
           goto arr_out; // break twice
         }
@@ -93,14 +94,15 @@ jv jv_dels(jv t, jv keys) {
         kidx++;
       }
       if (!del)
-        new_array = jv_array_append(new_array, jv_array_get(jv_copy(t), i));
+        new_array = jv_array_append(new_array, elem);
+      else
+        jv_free(elem);
     }
   arr_out:
     jv_free(t);
     t = new_array;
   } else if (jv_get_kind(t) == JV_KIND_OBJECT) {
-    for (int i=0; i<jv_array_length(jv_copy(keys)); i++) {
-      jv k = jv_array_get(jv_copy(keys), i);
+    jv_array_foreach(keys, i, k) {
       if (jv_get_kind(k) != JV_KIND_STRING) {
         jv_free(t);
         t = jv_invalid_with_msg(jv_string_fmt("Cannot delete %s field of object",
@@ -212,8 +214,7 @@ static jv delpaths_sorted(jv object, jv paths, int start) {
 
 jv jv_delpaths(jv object, jv paths) {
   paths = jv_sort(paths, jv_copy(paths));
-  for (int i=0; i<jv_array_length(jv_copy(paths)); i++) {
-    jv elem = jv_array_get(jv_copy(paths), i);
+  jv_array_foreach(paths, i, elem) {
     if (jv_get_kind(elem) != JV_KIND_ARRAY) {
       jv_free(object);
       jv_free(paths);
@@ -255,8 +256,9 @@ jv jv_keys(jv x) {
     int nkeys = jv_object_length(jv_copy(x));
     jv* keys = jv_mem_alloc(sizeof(jv) * nkeys);
     int kidx = 0;
-    jv_object_foreach(i, x) {
-      keys[kidx++] = jv_object_iter_key(x, i);
+    jv_object_foreach(x, key, value) {
+      keys[kidx++] = key;
+      jv_free(value);
     }
     qsort(keys, nkeys, sizeof(jv), string_cmp);
     jv answer = jv_array_sized(nkeys);
@@ -337,8 +339,7 @@ int jv_cmp(jv a, jv b) {
     jv keys_b = jv_keys(jv_copy(b));
     r = jv_cmp(jv_copy(keys_a), keys_b);
     if (r == 0) {
-      for (int i=0; i<jv_array_length(jv_copy(keys_a)); i++) {
-        jv key = jv_array_get(jv_copy(keys_a), i);
+      jv_array_foreach(keys_a, i, key) {
         jv xa = jv_object_get(jv_copy(a), jv_copy(key));
         jv xb = jv_object_get(jv_copy(b), key);
         r = jv_cmp(xa, xb);

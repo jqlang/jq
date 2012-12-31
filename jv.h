@@ -72,7 +72,13 @@ jv jv_array_set(jv, int, jv);
 jv jv_array_append(jv, jv);
 jv jv_array_concat(jv, jv);
 jv jv_array_slice(jv, int, int);
-
+#define jv_array_foreach(a, i, x) \
+  for (int jv_len__ = jv_array_length(jv_copy(a)), i=0, jv_j__ = 1;     \
+       jv_j__; jv_j__ = 0)                                              \
+    for (jv x;                                                          \
+         i < jv_len__ ?                                                 \
+           (x = jv_array_get(jv_copy(a), i), 1) : 0;                    \
+         i++)
 
 jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
@@ -96,10 +102,15 @@ int jv_object_iter_next(jv, int);
 int jv_object_iter_valid(jv, int);
 jv jv_object_iter_key(jv, int);
 jv jv_object_iter_value(jv, int);
-#define jv_object_foreach(i,t) \
-  for (int i = jv_object_iter(t);               \
-       jv_object_iter_valid(t, i);              \
-       i = jv_object_iter_next(t, i))           \
+#define jv_object_foreach(t, k, v)                                      \
+  for (int jv_i__ = jv_object_iter(t), jv_j__ = 1; jv_j__; jv_j__ = 0)  \
+    for (jv k, v;                                                       \
+         jv_object_iter_valid((t), jv_i__) ?                            \
+           (k = jv_object_iter_key(t, jv_i__),                          \
+            v = jv_object_iter_value(t, jv_i__),                        \
+            1)                                                          \
+           : 0;                                                         \
+         jv_i__ = jv_object_iter_next(t, jv_i__))                       \
  
 
 
