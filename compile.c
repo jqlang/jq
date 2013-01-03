@@ -292,11 +292,7 @@ block gen_collect(block expr) {
                                gen_noop(), OP_HAS_VARIABLE);
   block c = BLOCK(gen_op_simple(DUP), gen_const(jv_array()), array_var);
 
-  block tail = BLOCK(gen_op_simple(DUP),
-                     gen_op_var_bound(LOADV, array_var),
-                     gen_op_simple(SWAP),
-                     gen_op_simple(APPEND),
-                     gen_op_var_bound(STOREV, array_var),
+  block tail = BLOCK(gen_op_var_bound(APPEND, array_var),
                      gen_op_simple(BACKTRACK));
 
   return BLOCK(c,

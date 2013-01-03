@@ -236,9 +236,12 @@ jv jq_next() {
     case APPEND: {
       // FIXME paths
       jv v = stack_pop().value;
-      jv array = stack_pop().value;
-      array = jv_array_append(array, v);
-      stack_push(stackval_root(array));
+      uint16_t level = *pc++;
+      uint16_t vidx = *pc++;
+      frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
+      jv* var = frame_local_var(fp, vidx);
+      assert(jv_get_kind(*var) == JV_KIND_ARRAY);
+      *var = jv_array_append(*var, v);
       break;
     }
 
