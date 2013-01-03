@@ -260,6 +260,10 @@ Exp "+=" Exp {
   $$ = gen_update($1, $3, '+');
 } |
 
+'-' Exp {
+  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
+} |
+
 Exp '-' Exp {
   $$ = gen_binop($1, $3, '-');
 } |

@@ -65,6 +65,15 @@ static jv f_plus(jv input, jv a, jv b) {
   }
 }
 
+static jv f_negate(jv input) {
+  if (jv_get_kind(input) != JV_KIND_NUMBER) {
+    return type_error(input, "cannot be negated");
+  }
+  jv ret = jv_number(-jv_number_value(input));
+  jv_free(input);
+  return ret;
+}
+
 static jv f_minus(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
@@ -462,6 +471,7 @@ static jv f_error(jv input, jv msg) {
 
 static struct cfunction function_list[] = {
   {(cfunction_ptr)f_plus, "_plus", 3},
+  {(cfunction_ptr)f_negate, "_negate", 1},
   {(cfunction_ptr)f_minus, "_minus", 3},
   {(cfunction_ptr)f_multiply, "_multiply", 3},
   {(cfunction_ptr)f_divide, "_divide", 3},

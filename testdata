@@ -21,6 +21,11 @@ null
 null
 1
 
+
+-1
+null
+-1
+
 # FIXME: much more number testing needed
 
 {}
@@ -196,6 +201,14 @@ null
 1+1
 "wtasdf"
 2.0
+
+2-1
+null
+1
+
+2-(-1)
+null
+3
 
 1e+0+0.001e3
 "I wonder what this will be?"
