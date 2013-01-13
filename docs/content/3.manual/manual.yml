@@ -995,7 +995,7 @@ sections:
           If you want the value-argument behaviour for defining simple
           functions, you can just use a variable:
 
-              def addvalue(f): f as $value | map(, + $value);
+              def addvalue(f): f as $value | map(. + $value);
 
           With that definition, `addvalue(.foo)` will add the current
           input's `.foo` field to each element of the array.
