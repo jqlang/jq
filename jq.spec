@@ -31,11 +31,11 @@ echo "Building in: \"$(pwd)\""
 make
 
 %install
-echo "Installing to: \"${RPM_BUILD_ROOT}\""
-make install DESTDIR=${RPM_BUILD_ROOT}
+echo "Installing to: \"${_buildroot}\""
+make install DESTDIR=${_buildroot}
 
 %clean
-rm -rf ${RPM_BUILD_ROOT}
+rm -rf ${_buildroot}
 
 %files
 %defattr(-,root,root)
