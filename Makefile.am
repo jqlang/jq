@@ -10,9 +10,41 @@ EXTRA_DIST = setup.sh config.h.in ChangeLog VERSION lexer.l lexer.h gen_utf8_tab
 docdir = ${datadir}/doc/${PACKAGE}
 dist_doc_DATA = README.md INSTALL COPYING AUTHORS README NEWS
 
-JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h forkable_stack.h frame_layout.h jv.h jv_dtoa.h jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h parser.y jv_utf8_tables.gen.h
+JQ_INCS = \
+  jq_parser.h \
+  builtin.h \
+  bytecode.h \
+  compile.h \
+  execute.h \
+  forkable_stack.h \
+  frame_layout.h \
+  jv.h \
+  jv_alloc.h \
+  jv_aux.h \
+  jv_dtoa.h \
+  jv_parse.h \
+  jv_unicode.h \
+  locfile.h \
+  opcode.h \
+  opcode_list.h \
+  parser.y \
+  jv_utf8_tables.gen.h
 
-JQ_SRC = opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c lexer.c $(JQ_INCS)
+JQ_SRC = \
+  opcode.c \
+  bytecode.c \
+  compile.c \
+  execute.c \
+  builtin.c \
+  jv.c \
+  jv_parse.c \
+  jv_print.c \
+  jv_dtoa.c \
+  jv_unicode.c \
+  jv_aux.c \
+  jv_alloc.c \
+  lexer.c \
+  $(JQ_INCS)
 
 if DEVCFLAGS_ENABLED
 DEVCFLAGS = -Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function

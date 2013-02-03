@@ -1,10 +1,8 @@
 # The key value pairs found below are available within the templates.
 
 
-jq_version: 1.1
-# Next line is needed for publishing to github pages
+jq_version: 1.2
 root: '/jq'
-# root: ''
 footer: |
   
   This website is made with [Bonsai](http://www.tinytree.info) and

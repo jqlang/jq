@@ -1,10 +1,10 @@
 *.o
 *~
 
-# Test binaries
-jv_test
-jv_parse
-parsertest*~
+jq_test
+build
+jq
+jq.1
 
 # Something delightfully recursive happens otherwise
 docs/content/2.download/source/*

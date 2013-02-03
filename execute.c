@@ -7,14 +7,15 @@
 
 #include "opcode.h"
 #include "bytecode.h"
-#include "compile.h"
 
 #include "forkable_stack.h"
 #include "frame_layout.h"
 
+#include "jv_alloc.h"
 #include "locfile.h"
 #include "jv.h"
-#include "jq_parser.h"
+#include "jv_aux.h"
+#include "parser.h"
 #include "builtin.h"
 
 typedef struct {
@@ -33,7 +34,7 @@ int path_push(stackval sv, jv val) {
   if (pos == pathsize) {
     int oldpathsize = pathsize;
     pathsize = oldpathsize ? oldpathsize * 2 : 100;
-    pathbuf = realloc(pathbuf, sizeof(pathbuf[0]) * pathsize);
+    pathbuf = jv_mem_realloc(pathbuf, sizeof(pathbuf[0]) * pathsize);
     for (int i=oldpathsize; i<pathsize; i++) {
       pathbuf[i] = jv_invalid();
     }
@@ -149,7 +150,6 @@ void print_error(jv value) {
 
 jv jq_next() {
   jv cfunc_input[MAX_CFUNCTION_ARGS];
-  jv cfunc_output[MAX_CFUNCTION_ARGS];
 
   assert(!forkable_stack_empty(&frame_stk));
   uint16_t* pc = *frame_current_retaddr(&frame_stk);
@@ -166,7 +166,9 @@ jv jq_next() {
     printf("\t");
     const struct opcode_description* opdesc = opcode_describe(opcode);
     data_stk_elem* param;
-    for (int i=0; i<opdesc->stack_in; i++) {
+    int stack_in = opdesc->stack_in;
+    if (stack_in == -1) stack_in = pc[1];
+    for (int i=0; i<stack_in; i++) {
       if (i == 0) {
         param = forkable_stack_peek(&data_stk);
       } else {
@@ -207,6 +209,17 @@ jv jq_next() {
       break;
     }
 
+    case DUP2: {
+      stackval keep = stack_pop();
+      stackval v = stack_pop();
+      stackval v2 = v;
+      v2.value = jv_copy(v.value);
+      stack_push(v);
+      stack_push(keep);
+      stack_push(v2);
+      break;
+    }
+
     case SWAP: {
       stackval a = stack_pop();
       stackval b = stack_pop();
@@ -223,9 +236,12 @@ jv jq_next() {
     case APPEND: {
       // FIXME paths
       jv v = stack_pop().value;
-      jv array = stack_pop().value;
-      array = jv_array_append(array, v);
-      stack_push(stackval_root(array));
+      uint16_t level = *pc++;
+      uint16_t vidx = *pc++;
+      frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
+      jv* var = frame_local_var(fp, vidx);
+      assert(jv_get_kind(*var) == JV_KIND_ARRAY);
+      *var = jv_array_append(*var, v);
       break;
     }
 
@@ -273,24 +289,15 @@ jv jq_next() {
       break;
     }
 
-    case ASSIGN: {
-      stackval replacement = stack_pop();
+    case GETPATH: {
       stackval path_end = stack_pop();
       stackval path_start = stack_pop();
       jv_free(path_end.value);
-      jv_free(path_start.value);
-
-      uint16_t level = *pc++;
-      uint16_t v = *pc++;
-      frame_ptr fp = frame_get_level(&frame_stk, frame_current(&frame_stk), level);
-      jv* var = frame_local_var(fp, v);
-      jv result = jv_insert(*var, replacement.value, pathbuf + path_start.pathidx, path_end.pathidx - path_start.pathidx);
-      if (jv_is_valid(result)) {
-        *var = result;
-      } else {
-        print_error(result);
-        *var = jv_null();
+      jv path = jv_array();
+      for (int i=path_start.pathidx; i<path_end.pathidx; i++) {
+        path = jv_array_set(path, i, jv_copy(pathbuf[i]));
       }
+      stack_push(stackval_replace(path_start, path));
       break;
     }
 
@@ -298,7 +305,7 @@ jv jq_next() {
       stackval t = stack_pop();
       jv k = stack_pop().value;
       int pathidx = path_push(t, jv_copy(k));
-      jv v = jv_lookup(t.value, k);
+      jv v = jv_get(t.value, k);
       if (jv_is_valid(v)) {
         stackval sv;
         sv.value = v;
@@ -409,15 +416,15 @@ jv jq_next() {
       return value;
     }
       
-    case CALL_BUILTIN_1_1: {
-      assert(*pc == 1); // no closure args allowed
-      pc++; // skip nclosures
-      pc++; // skip level
+    case CALL_BUILTIN: {
+      int nargs = *pc++;
       stackval top = stack_pop();
       cfunc_input[0] = top.value;
+      for (int i = 1; i < nargs; i++) {
+        cfunc_input[i] = stack_pop().value;
+      }
       struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
-      func->fptr(cfunc_input, cfunc_output);
-      top.value = cfunc_output[0];
+      top.value = cfunction_invoke(func, cfunc_input);
       if (jv_is_valid(top.value)) {
         stack_push(top);
       } else {
@@ -427,37 +434,16 @@ jv jq_next() {
       break;
     }
 
-    case CALL_BUILTIN_3_1: {
-      assert(*pc == 1); // no closure args allowed
-      pc++; // skip nclosures
-      pc++; // skip level
-      stackval top = stack_pop();
-      jv a = stack_pop().value;
-      jv b = stack_pop().value;
-      cfunc_input[0] = top.value;
-      cfunc_input[1] = a;
-      cfunc_input[2] = b;
-      struct cfunction* func = &frame_current_bytecode(&frame_stk)->globals->cfunctions[*pc++];
-      func->fptr(cfunc_input, cfunc_output);
-      top.value = cfunc_output[0];
-      if (jv_is_valid(top.value)) {
-        stack_push(top);
-      } else {
-        print_error(top.value);
-        goto do_backtrack;
-      }
-      break;
-    }
-
-    case CALL_1_1: {
+    case CALL_JQ: {
       uint16_t nclosures = *pc++;
+      uint16_t* retaddr = pc + 2 + nclosures*2;
       frame_ptr new_frame = frame_push(&frame_stk, 
                                        make_closure(&frame_stk, frame_current(&frame_stk), pc),
-                                       pc + nclosures * 2);
+                                       retaddr);
       pc += 2;
       frame_ptr old_frame = forkable_stack_peek_next(&frame_stk, new_frame);
-      assert(nclosures - 1 == frame_self(new_frame)->bc->nclosures);
-      for (int i=0; i<nclosures-1; i++) {
+      assert(nclosures == frame_self(new_frame)->bc->nclosures);
+      for (int i=0; i<nclosures; i++) {
         *frame_closure_arg(new_frame, i) = make_closure(&frame_stk, old_frame, pc);
         pc += 2;
       }
@@ -477,9 +463,9 @@ jv jq_next() {
 
 
 void jq_init(struct bytecode* bc, jv input) {
-  forkable_stack_init(&data_stk, sizeof(stackval) * 1000); // FIXME: lower this number, see if it breaks
-  forkable_stack_init(&frame_stk, 10240); // FIXME: lower this number, see if it breaks
-  forkable_stack_init(&fork_stk, 10240); // FIXME: lower this number, see if it breaks
+  forkable_stack_init(&data_stk, sizeof(stackval) * 100);
+  forkable_stack_init(&frame_stk, 1024);
+  forkable_stack_init(&fork_stk, 1024);
   
   stack_push(stackval_root(input));
   struct closure top = {bc, -1};
@@ -500,7 +486,7 @@ void jq_teardown() {
   for (int i=0; i<pathsize; i++) {
     jv_free(pathbuf[i]);
   }
-  free(pathbuf);
+  jv_mem_free(pathbuf);
   pathbuf = 0;
   pathsize = 0;
 }
@@ -512,10 +498,8 @@ struct bytecode* jq_compile(const char* str) {
   struct bytecode* bc = 0;
   int nerrors = jq_parse(&locations, &program);
   if (nerrors == 0) {
-    block_append(&program, block_join(gen_op_simple(YIELD), gen_op_simple(BACKTRACK)));
     program = builtins_bind(program);
     nerrors = block_compile(program, &locations, &bc);
-    block_free(program);
   }
   if (nerrors) {
     fprintf(stderr, "%d compile %s\n", nerrors, nerrors > 1 ? "errors" : "error");

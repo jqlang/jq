@@ -18,6 +18,7 @@ elif [ "superclean" == "$1" ]; then
 else
   autoreconf --install
   ./configure --prefix=/opt/junk
+  make check
   mkdir tmp
   make DESTDIR=./tmp install
   make distcheck

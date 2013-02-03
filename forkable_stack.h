@@ -1,9 +1,9 @@
 #ifndef FORKABLE_STACK_H
 #define FORKABLE_STACK_H
-#include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>
+#include "jv_alloc.h"
 
 struct forkable_stack_header {
   /* distance in bytes between this header and the header
@@ -15,11 +15,10 @@ struct forkable_stack_header {
 
 struct forkable_stack {
   // Stack grows down from stk+length
-
   char* stk;
 
   // stk+length is just past end of allocated area
-  // stk = malloc(length)
+  // stk = jv_mem_alloc(length)
   int length;
 
   // stk+pos is header of top object, or stk+length if empty
@@ -41,7 +40,7 @@ static int forkable_stack_empty(struct forkable_stack* s) {
 }
 
 static void forkable_stack_init(struct forkable_stack* s, size_t sz) {
-  s->stk = malloc(sz);
+  s->stk = jv_mem_alloc(sz);
   s->length = sz;
   s->pos = s->length;
   s->savedlimit = s->length;
@@ -51,7 +50,7 @@ static void forkable_stack_init(struct forkable_stack* s, size_t sz) {
 static void forkable_stack_free(struct forkable_stack* s) {
   assert(forkable_stack_empty(s));
   assert(s->savedlimit == s->length);
-  free(s->stk);
+  jv_mem_free(s->stk);
   s->stk = 0;
 }
 
@@ -61,10 +60,9 @@ static void* forkable_stack_push(struct forkable_stack* s, size_t sz_size) {
   forkable_stack_check(s);
   int curr = s->pos < s->savedlimit ? s->pos : s->savedlimit;
   if (curr - size < 0) {
-    //assert(0);
     int oldlen = s->length;
     s->length = (size + oldlen + 1024) * 2;
-    s->stk = realloc(s->stk, s->length);
+    s->stk = jv_mem_realloc(s->stk, s->length);
     int shift = s->length - oldlen;
     memmove(s->stk + shift, s->stk, oldlen);
     s->pos += shift;
@@ -102,33 +100,45 @@ static void* forkable_stack_peek_next(struct forkable_stack* s, void* top) {
 // Returns 1 if the next forkable_stack_pop will permanently remove an
 // object from the stack (i.e. the top object was not saved with a fork)
 static int forkable_stack_pop_will_free(struct forkable_stack* s) {
-  return s->pos < s->savedlimit ? 1 : 0;
+  return s->pos < s->savedlimit;
 }
 
 static void forkable_stack_pop(struct forkable_stack* s) {
   forkable_stack_check(s);
   struct forkable_stack_header* elem = forkable_stack_peek(s);
-  s->pos += elem->next_delta;
+  int reclaim_upto = s->pos + elem->next_delta < s->savedlimit ? 
+    s->pos + elem->next_delta : s->savedlimit;
+  assert(reclaim_upto <= s->length);
+  int reclaimed = reclaim_upto > s->pos ? reclaim_upto - s->pos : 0;
+  assert(0 <= reclaimed && s->pos + reclaimed <= s->length);
+  // s->pos <= i < reclaim_upto means that position i is to be freed
+  assert((reclaimed > 0) == forkable_stack_pop_will_free(s));
+  int new_pos = s->pos + elem->next_delta;
+  jv_mem_invalidate(elem, reclaimed);
+  s->pos = new_pos;
 }
 
 
 
 struct forkable_stack_state {
-  int prevpos, prevlimit;
+  // We save the previous pos, savedlimit as
+  // length-pos, length-savedlimit since these
+  // values are stable across stack reallocations.
+  int prev_pos_delta, prev_limit_delta;
 };
 
 static void forkable_stack_save(struct forkable_stack* s, struct forkable_stack_state* state) {
   forkable_stack_check(s);
-  state->prevpos = s->pos;
-  state->prevlimit = s->savedlimit;
+  state->prev_pos_delta = s->length - s->pos;
+  state->prev_limit_delta = s->length - s->savedlimit;
   if (s->pos < s->savedlimit) s->savedlimit = s->pos;
 }
 
 static void forkable_stack_switch(struct forkable_stack* s, struct forkable_stack_state* state) {
   forkable_stack_check(s);
   int curr_pos = s->pos;
-  s->pos = state->prevpos;
-  state->prevpos = curr_pos;
+  s->pos = s->length - state->prev_pos_delta;
+  state->prev_pos_delta = s->length - curr_pos;
 
   int curr_limit = s->savedlimit;
   if (curr_pos < curr_limit) s->savedlimit = curr_pos;
@@ -138,10 +148,10 @@ static void forkable_stack_switch(struct forkable_stack* s, struct forkable_stac
 
 static void forkable_stack_restore(struct forkable_stack* s, struct forkable_stack_state* state) {
   forkable_stack_check(s);
-  assert(s->savedlimit <= state->prevpos);
-  assert(s->savedlimit <= state->prevlimit);
-  s->pos = state->prevpos;
-  s->savedlimit = state->prevlimit;
+  assert(s->savedlimit <= s->length - state->prev_pos_delta);
+  assert(s->savedlimit <= s->length - state->prev_limit_delta);
+  s->pos = s->length - state->prev_pos_delta;
+  s->savedlimit = s->length - state->prev_limit_delta;
   forkable_stack_check(s);
 }
 

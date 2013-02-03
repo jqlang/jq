@@ -5,6 +5,7 @@
 #include "jv_dtoa.h"
 #include "jv_parse.h"
 #include "jv_unicode.h"
+#include "jv_alloc.h"
 
 typedef const char* presult;
 
@@ -24,6 +25,9 @@ void jv_parser_init(struct jv_parser* p) {
   p->st = JV_PARSER_NORMAL;
   p->curr_buf = 0;
   p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
+  p->bom_strip_position = 0;
+  p->line = 1;
+  p->column = 0;
   jvp_dtoa_context_init(&p->dtoa);
 }
 
@@ -31,8 +35,8 @@ void jv_parser_free(struct jv_parser* p) {
   jv_free(p->next);
   for (int i=0; i<p->stackpos; i++) 
     jv_free(p->stack[i]);
-  free(p->stack);
-  free(p->tokenbuf);
+  jv_mem_free(p->stack);
+  jv_mem_free(p->tokenbuf);
   jvp_dtoa_context_free(&p->dtoa);
 }
 
@@ -47,7 +51,7 @@ static void push(struct jv_parser* p, jv v) {
   assert(p->stackpos <= p->stacklen);
   if (p->stackpos == p->stacklen) {
     p->stacklen = p->stacklen * 2 + 10;
-    p->stack = realloc(p->stack, p->stacklen * sizeof(jv));
+    p->stack = jv_mem_realloc(p->stack, p->stacklen * sizeof(jv));
   }
   assert(p->stackpos < p->stacklen);
   p->stack[p->stackpos++] = v;
@@ -141,7 +145,7 @@ static void tokenadd(struct jv_parser* p, char c) {
   assert(p->tokenpos <= p->tokenlen);
   if (p->tokenpos == p->tokenlen) {
     p->tokenlen = p->tokenlen*2 + 256;
-    p->tokenbuf = realloc(p->tokenbuf, p->tokenlen);
+    p->tokenbuf = jv_mem_realloc(p->tokenbuf, p->tokenlen);
   }
   assert(p->tokenpos < p->tokenlen);
   p->tokenbuf[p->tokenpos++] = c;
@@ -292,6 +296,11 @@ static int check_done(struct jv_parser* p, jv* out) {
 }
 
 static pfunc scan(struct jv_parser* p, char ch, jv* out) {
+  p->column++;
+  if (ch == '\n') {
+    p->line++;
+    p->column = 0;
+  }
   presult answer = 0;
   if (p->st == JV_PARSER_NORMAL) {
     chclass cls = classify(ch);
@@ -332,9 +341,27 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   return answer;
 }
 
+static unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
+
 void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial) {
   assert((p->curr_buf == 0 || p->curr_buf_pos == p->curr_buf_length)
          && "previous buffer not exhausted");
+  while (p->bom_strip_position < sizeof(UTF8_BOM)) {
+    if ((unsigned char)*buf == UTF8_BOM[p->bom_strip_position]) {
+      // matched a BOM character
+      buf++;
+      length--;
+      p->bom_strip_position++;
+    } else {
+      if (p->bom_strip_position == 0) {
+        // no BOM in this document
+        p->bom_strip_position = sizeof(UTF8_BOM);
+      } else {
+        // malformed BOM (prefix present, rest missing)
+        p->bom_strip_position = 0xff;
+      }
+    }
+  }
   p->curr_buf = buf;
   p->curr_buf_length = length;
   p->curr_buf_pos = 0;
@@ -343,6 +370,7 @@ void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_
 
 jv jv_parser_next(struct jv_parser* p) {
   assert(p->curr_buf && "a buffer must be provided");
+  if (p->bom_strip_position == 0xff) return jv_invalid_with_msg(jv_string("Malformed BOM"));
   jv value;
   presult msg = 0;
   while (!msg && p->curr_buf_pos < p->curr_buf_length) {
@@ -352,7 +380,7 @@ jv jv_parser_next(struct jv_parser* p) {
   if (msg == OK) {
     return value;
   } else if (msg) {
-    return jv_invalid_with_msg(jv_string(msg));
+    return jv_invalid_with_msg(jv_string_fmt("%s at line %d, column %d", msg, p->line, p->column));
   } else if (p->curr_buf_is_partial) {
     assert(p->curr_buf_pos == p->curr_buf_length);
     // need another buffer

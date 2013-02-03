@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "jv_alloc.h"
 #include "jv.h"
 
 /*
@@ -86,7 +87,7 @@ jv jv_invalid_with_msg(jv err) {
   jv x;
   x.kind = JV_KIND_INVALID;
   x.val.complex.i[0] = x.val.complex.i[1] = 0;
-  jvp_invalid* i = malloc(sizeof(jvp_invalid));
+  jvp_invalid* i = jv_mem_alloc(sizeof(jvp_invalid));
   x.val.complex.ptr = &i->refcnt;
   i->refcnt.count = 1;
   i->errmsg = err;
@@ -113,7 +114,7 @@ int jv_invalid_has_msg(jv inv) {
 static void jvp_invalid_free(jv_complex* x) {
   if (jvp_refcnt_dec(x)) {
     jv_free(((jvp_invalid*)x->ptr)->errmsg);
-    free(x->ptr);
+    jv_mem_free(x->ptr);
   }
 }
 
@@ -157,7 +158,7 @@ static jvp_array* jvp_array_ptr(jv_complex* a) {
 }
 
 static jvp_array* jvp_array_alloc(unsigned size) {
-  jvp_array* a = malloc(sizeof(jvp_array) + sizeof(jv) * size);
+  jvp_array* a = jv_mem_alloc(sizeof(jvp_array) + sizeof(jv) * size);
   a->refcnt.count = 1;
   a->length = 0;
   a->alloc_length = size;
@@ -175,7 +176,7 @@ static void jvp_array_free(jv_complex* a) {
     for (int i=0; i<array->length; i++) {
       jv_free(array->elements[i]);
     }
-    free(array);
+    jv_mem_free(array);
   }
 }
 
@@ -253,8 +254,7 @@ static int jvp_array_equal(jv_complex* a, jv_complex* b) {
 static jv_complex jvp_array_slice(jv_complex* a, int start, int end) {
   // FIXME: maybe slice should reallocate if the slice is small enough
   assert(start <= end);
-  jvp_array* array = jvp_array_ptr(a);
-  assert(a->i[1] + end < array->length);
+  assert(a->i[0] + end <= a->i[1]);
   jv_complex slice = *a;
   slice.i[0] += start;
   slice.i[1] = slice.i[0] + (end - start);
@@ -315,8 +315,8 @@ jv jv_array_concat(jv a, jv b) {
   assert(jv_get_kind(b) == JV_KIND_ARRAY);
 
   // FIXME: could be much faster
-  for (int i=0; i<jv_array_length(jv_copy(b)); i++) {
-    a = jv_array_append(a, jv_array_get(jv_copy(b), i));
+  jv_array_foreach(b, i, elem) {
+    a = jv_array_append(a, elem);
   }
   jv_free(b);
   return a;
@@ -331,16 +331,15 @@ jv jv_array_slice(jv a, int start, int end) {
 
 int jv_array_contains(jv a, jv b) {
   int r = 1;
-  int a_length = jv_array_length(jv_copy(a));
-  int b_length = jv_array_length(jv_copy(b));
-  for (int bi = 0; bi < b_length; bi++) {
+  jv_array_foreach(b, bi, belem) {
     int ri = 0;
-    for (int ai = 0; ai < a_length; ai++) {
-      if (jv_contains(jv_array_get(jv_copy(a), ai), jv_array_get(jv_copy(b), bi))) {
+    jv_array_foreach(a, ai, aelem) {
+      if (jv_contains(aelem, jv_copy(belem))) {
         ri = 1;
         break;
       }
     }
+    jv_free(belem);
     if (!ri) {
       r = 0;
       break;
@@ -371,7 +370,7 @@ static jvp_string* jvp_string_ptr(jv_complex* a) {
 }
 
 static jvp_string* jvp_string_alloc(uint32_t size) {
-  jvp_string* s = malloc(sizeof(jvp_string) + size + 1);
+  jvp_string* s = jv_mem_alloc(sizeof(jvp_string) + size + 1);
   s->refcnt.count = 1;
   s->alloc_length = size;
   return s;
@@ -389,7 +388,7 @@ static jv_complex jvp_string_new(const char* data, uint32_t length) {
 static void jvp_string_free(jv_complex* s) {
   if (jvp_refcnt_dec(s)) {
     jvp_string* str = jvp_string_ptr(s);
-    free(str);
+    jv_mem_free(str);
   }
 }
 
@@ -569,17 +568,17 @@ jv jv_string_append_str(jv a, const char* str) {
 jv jv_string_fmt(const char* fmt, ...) {
   int size = 1024;
   while (1) {
-    char* buf = malloc(size);
+    char* buf = jv_mem_alloc(size);
     va_list args;
     va_start(args, fmt);
     int n = vsnprintf(buf, size, fmt, args);
     va_end(args);
     if (n < size) {
       jv ret = jv_string_sized(buf, n);
-      free(buf);
+      jv_mem_free(buf);
       return ret;
     } else {
-      free(buf);
+      jv_mem_free(buf);
       size = n * 2;
     }
   }
@@ -609,9 +608,9 @@ static jv_complex jvp_object_new(int size) {
 
   // size must be a power of two
   assert(size > 0 && (size & (size - 1)) == 0);
-  jvp_object* obj = malloc(sizeof(jvp_object) + 
-                           sizeof(struct object_slot) * size +
-                           sizeof(int) * (size * 2));
+  jvp_object* obj = jv_mem_alloc(sizeof(jvp_object) + 
+                                 sizeof(struct object_slot) * size +
+                                 sizeof(int) * (size * 2));
   obj->refcnt.count = 1;
   for (int i=0; i<size; i++) {
     obj->elements[i].next = i - 1;
@@ -711,7 +710,7 @@ static void jvp_object_free(jv_complex* o) {
         jv_free(slot->value);
       }
     }
-    free(jvp_object_ptr(o));
+    jv_mem_free(jvp_object_ptr(o));
   }
 }
 
@@ -730,7 +729,7 @@ static void jvp_object_rehash(jv_complex* object) {
     new_slot->value = slot->value;
   }
   // references are transported, just drop the old table
-  free(jvp_object_ptr(object));
+  jv_mem_free(jvp_object_ptr(object));
   *object = new_object;
 }
 
@@ -876,10 +875,8 @@ int jv_object_length(jv object) {
 
 jv jv_object_merge(jv a, jv b) {
   assert(jv_get_kind(a) == JV_KIND_OBJECT);
-  jv_object_foreach(i, b) {
-    a = jv_object_set(a, 
-                      jv_object_iter_key(b, i),
-                      jv_object_iter_value(b, i));
+  jv_object_foreach(b, k, v) {
+    a = jv_object_set(a, k, v);
   }
   jv_free(b);
   return a;
@@ -890,10 +887,8 @@ int jv_object_contains(jv a, jv b) {
   assert(jv_get_kind(b) == JV_KIND_OBJECT);
   int r = 1;
 
-  jv_object_foreach(i, b) {
-    jv key = jv_object_iter_key(b, i);
+  jv_object_foreach(b, key, b_val) {
     jv a_val = jv_object_get(jv_copy(a), jv_copy(key));
-    jv b_val = jv_object_get(jv_copy(b), jv_copy(key));
 
     r = jv_contains(a_val, b_val);
     jv_free(key);

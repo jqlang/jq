@@ -4,13 +4,14 @@
 
 #include "bytecode.h"
 #include "opcode.h"
+#include "jv_alloc.h"
 
 static int bytecode_operation_length(uint16_t* codeptr) {
-  if (opcode_describe(*codeptr)->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-    return 2 + codeptr[1] * 2;
-  } else {
-    return opcode_length(*codeptr);
+  int length = opcode_describe(*codeptr)->length;
+  if (*codeptr == CALL_JQ) {
+    length += codeptr[1] * 2;
   }
+  return length;
 }
 
 void dump_disassembly(int indent, struct bytecode* bc) {
@@ -41,8 +42,8 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
   printf("%s", op->name);
   if (op->length > 1) {
     uint16_t imm = bc->code[pc++];
-    if (op->flags & OP_HAS_VARIABLE_LENGTH_ARGLIST) {
-      for (int i=0; i<imm; i++) {
+    if (op->op == CALL_JQ) {
+      for (int i=0; i<imm+1; i++) {
         uint16_t level = bc->code[pc++];
         uint16_t idx = bc->code[pc++];
         if (idx & ARG_NEWCLOSURE) {
@@ -72,17 +73,17 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
 }
 
 void symbol_table_free(struct symbol_table* syms) {
-  free(syms->cfunctions);
-  free(syms);
+  jv_mem_free(syms->cfunctions);
+  jv_mem_free(syms);
 }
 
 void bytecode_free(struct bytecode* bc) {
-  free(bc->code);
+  jv_mem_free(bc->code);
   jv_free(bc->constants);
   for (int i=0; i<bc->nsubfunctions; i++)
     bytecode_free(bc->subfunctions[i]);
   if (!bc->parent)
     symbol_table_free(bc->globals);
-  free(bc->subfunctions);
-  free(bc);
+  jv_mem_free(bc->subfunctions);
+  jv_mem_free(bc);
 }

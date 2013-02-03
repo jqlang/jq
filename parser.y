@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "compile.h"
+#include "jv_alloc.h"
+#define YYMALLOC jv_mem_alloc
+#define YYFREE jv_mem_free
 
 struct lexer_param;
 
@@ -45,6 +48,7 @@ struct lexer_param;
 %token INVALID_CHARACTER
 %token <literal> IDENT
 %token <literal> LITERAL
+%token <literal> FORMAT
 %token EQ "=="
 %token NEQ "!="
 %token DEFINEDOR "//"
@@ -54,6 +58,7 @@ struct lexer_param;
 %token THEN "then"
 %token ELSE "else"
 %token ELSE_IF "elif"
+%token FOLD "fold"
 %token END "end"
 %token AND "and"
 %token OR "or"
@@ -65,7 +70,6 @@ struct lexer_param;
 %token SETDEFINEDOR "//="
 %token LESSEQ "<="
 %token GREATEREQ ">="
-%token CONTAINS "contains"
 
 %token QQSTRING_START
 %token <literal> QQSTRING_TEXT
@@ -75,13 +79,13 @@ struct lexer_param;
 
  /* revolting hack */
 %left ';'
-%left '|'
+%right '|'
 %left ','
 %right "//"
 %nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETDEFINEDOR
 %left OR
 %left AND
-%nonassoc NEQ EQ '<' '>' LESSEQ GREATEREQ CONTAINS
+%nonassoc NEQ EQ '<' '>' LESSEQ GREATEREQ
 %left '+' '-'
 %left '*' '/'
 
@@ -130,14 +134,11 @@ int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors,
 }
 
 static block gen_dictpair(block k, block v) {
-  block b = gen_subexp(k);
-  block_append(&b, gen_subexp(v));
-  block_append(&b, gen_op_simple(INSERT));
-  return b;
+  return BLOCK(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
 }
 
 static block gen_index(block obj, block key) {
-  return block_join(obj, block_join(gen_subexp(key), gen_op_simple(INDEX)));
+  return BLOCK(gen_subexp(key), obj, gen_op_simple(INDEX));
 }
 
 static block gen_binop(block a, block b, int op) {
@@ -153,29 +154,26 @@ static block gen_binop(block a, block b, int op) {
   case '>': funcname = "_greater"; break;
   case LESSEQ: funcname = "_lesseq"; break;
   case GREATEREQ: funcname = "_greatereq"; break;
-  case CONTAINS: funcname = "_contains"; break;
   }
   assert(funcname);
 
-  block c = gen_noop();
-  block_append(&c, gen_subexp(a));
-  block_append(&c, gen_subexp(b));
-  block_append(&c, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, funcname)));
-  return c;
+  return gen_call(funcname, BLOCK(gen_lambda(a), gen_lambda(b)));
 }
 
-static block gen_format(block a) {
-  return block_join(a, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, "tostring")));
+static block gen_format(block a, jv fmt) {
+  return BLOCK(a, gen_call("format", BLOCK(gen_lambda(gen_const(fmt)))));
 }
  
-static block gen_update(block a, block op, int optype) {
-  block assign = a;
-  block_append(&assign, gen_op_simple(DUP));
-  if (optype) {
-    op = gen_binop(gen_noop(), op, optype);
-  }
-  block_append(&assign, op);
-  return gen_assign(assign);
+static block gen_update(block object, block val, int optype) {
+  block tmp = block_bind(gen_op_var_unbound(STOREV, "tmp"),
+                         gen_noop(), OP_HAS_VARIABLE);
+  return BLOCK(gen_op_simple(DUP),
+               val,
+               tmp,
+               gen_call("_modify", BLOCK(gen_lambda(object), 
+                                         gen_lambda(gen_binop(gen_noop(),
+                                                              gen_op_var_bound(LOADV, tmp),
+                                                              optype)))));
 }
 
 %}
@@ -203,10 +201,15 @@ FuncDef Exp %prec ';' {
 } |
 
 Term "as" '$' IDENT '|' Exp {
-  $$ = gen_op_simple(DUP);
-  block_append(&$$, $1);
-  block_append(&$$, block_bind(gen_op_var_unbound(STOREV, jv_string_value($4)), $6, OP_HAS_VARIABLE));
+  $$ = BLOCK(gen_op_simple(DUP), $1, 
+             block_bind(gen_op_var_unbound(STOREV, jv_string_value($4)), 
+                        $6, OP_HAS_VARIABLE));
   jv_free($4);
+} |
+
+"fold" Term "as" '$' IDENT '(' Exp ')' {
+  $$ = gen_fold(jv_string_value($5), $2, $7);
+  jv_free($5);
 } |
 
 "if" Exp "then" Exp ElseBody {
@@ -218,12 +221,7 @@ Term "as" '$' IDENT '|' Exp {
 } |
 
 Exp '=' Exp {
-  block assign = gen_op_simple(DUP);
-  block_append(&assign, $3);
-  block_append(&assign, gen_op_simple(SWAP));
-  block_append(&assign, $1);
-  block_append(&assign, gen_op_simple(SWAP));
-  $$ = gen_assign(assign);
+  $$ = gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3)));
 } |
 
 Exp "or" Exp {
@@ -243,7 +241,7 @@ Exp "//=" Exp {
 } |
 
 Exp "|=" Exp {
-  $$ = gen_update($1, $3, 0);
+  $$ = gen_call("_modify", BLOCK(gen_lambda($1), gen_lambda($3)));
 } |
 
 Exp '|' Exp { 
@@ -260,6 +258,10 @@ Exp '+' Exp {
 
 Exp "+=" Exp {
   $$ = gen_update($1, $3, '+');
+} |
+
+'-' Exp {
+  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
 } |
 
 Exp '-' Exp {
@@ -310,42 +312,56 @@ Exp ">=" Exp {
   $$ = gen_binop($1, $3, GREATEREQ);
 } |
 
-Exp "contains" Exp {
-  $$ = gen_binop($1, $3, CONTAINS);
-} |
-
 Term { 
   $$ = $1; 
 }
 
-String:
-QQSTRING_START QQString QQSTRING_END {
-  $$ = $2;
-}
-
 FuncDef:
 "def" IDENT ':' Exp ';' {
-  block body = block_join($4, gen_op_simple(RET));
-  $$ = gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body);
+  $$ = gen_function(jv_string_value($2), gen_noop(), $4);
   jv_free($2);
 } |
 
 "def" IDENT '(' IDENT ')' ':' Exp ';' {
-  block body = block_bind(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), block_join($7, gen_op_simple(RET)), OP_IS_CALL_PSEUDO);
-  $$ = gen_op_block_defn_rec(CLOSURE_CREATE, jv_string_value($2), body);
+  $$ = gen_function(jv_string_value($2), 
+                    gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), 
+                    $7);
   jv_free($2);
   jv_free($4);
+} |
+
+"def" IDENT '(' IDENT ';' IDENT ')' ':' Exp ';' {
+  $$ = gen_function(jv_string_value($2), 
+                    BLOCK(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), 
+                          gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($6))),
+                    $9);
+  jv_free($2);
+  jv_free($4);
+  jv_free($6);
 }
+
+
+
+String:
+QQSTRING_START { $<literal>$ = jv_string("text"); } QQString QQSTRING_END {
+  $$ = $3;
+  jv_free($<literal>2);
+} |
+FORMAT QQSTRING_START { $<literal>$ = $1; } QQString QQSTRING_END {
+  $$ = $4;
+  jv_free($<literal>3);
+}
+
 
 QQString:
 /* empty */ {
-  $$ = gen_op_const(LOADK, jv_string(""));
+  $$ = gen_const(jv_string(""));
 } |
 QQString QQSTRING_TEXT {
-  $$ = gen_binop($1, gen_op_const(LOADK, $2), '+');
+  $$ = gen_binop($1, gen_const($2), '+');
 } |
 QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END {
-  $$ = gen_binop($1, gen_format($3), '+');
+  $$ = gen_binop($1, gen_format($3, jv_copy($<literal>0)), '+');
 }
 
 
@@ -372,10 +388,10 @@ Term:
   $$ = gen_noop(); 
 } |
 Term '.' IDENT {
-  $$ = gen_index($1, gen_op_const(LOADK, $3)); 
+  $$ = gen_index($1, gen_const($3)); 
 } |
 '.' IDENT { 
-  $$ = gen_index(gen_noop(), gen_op_const(LOADK, $2)); 
+  $$ = gen_index(gen_noop(), gen_const($2)); 
 } |
 /* FIXME: string literals */
 Term '[' Exp ']' {
@@ -385,10 +401,13 @@ Term '[' ']' {
   $$ = block_join($1, gen_op_simple(EACH)); 
 } |
 LITERAL {
-  $$ = gen_op_const(LOADK, $1); 
+  $$ = gen_const($1); 
 } |
 String {
   $$ = $1;
+} |
+FORMAT {
+  $$ = gen_format(gen_noop(), $1);
 } |
 '(' Exp ')' { 
   $$ = $2; 
@@ -397,28 +416,26 @@ String {
   $$ = gen_collect($2); 
 } |
 '[' ']' { 
-  $$ = gen_op_const(LOADK, jv_array()); 
+  $$ = gen_const(jv_array()); 
 } |
 '{' MkDict '}' { 
-  $$ = gen_subexp(gen_op_const(LOADK, jv_object()));
-  block_append(&$$, $2);
-  block_append(&$$, gen_op_simple(POP));
+  $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
 } |
 '$' IDENT {
   $$ = gen_location(@$, gen_op_var_unbound(LOADV, jv_string_value($2)));
   jv_free($2);
 } | 
 IDENT {
-  $$ = gen_location(@$, gen_op_call(CALL_1_1, gen_op_block_unbound(CLOSURE_REF, jv_string_value($1))));
+  $$ = gen_location(@$, gen_call(jv_string_value($1), gen_noop()));
   jv_free($1);
 } |
 IDENT '(' Exp ')' {
-  $$ = gen_op_call(CALL_1_1, 
-                   block_join(gen_op_block_unbound(CLOSURE_REF, jv_string_value($1)),
-                              block_bind(gen_op_block_defn(CLOSURE_CREATE,
-                                                "lambda",
-                                                           block_join($3, gen_op_simple(RET))),
-                                         gen_noop(), OP_IS_CALL_PSEUDO)));
+  $$ = gen_call(jv_string_value($1), gen_lambda($3));
+  $$ = gen_location(@1, $$);
+  jv_free($1);
+} |
+IDENT '(' Exp ';' Exp ')' {
+  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5)));
   $$ = gen_location(@1, $$);
   jv_free($1);
 } |
@@ -437,14 +454,18 @@ MkDict:
 
 MkDictPair
 : IDENT ':' ExpD { 
-  $$ = gen_dictpair(gen_op_const(LOADK, $1), $3);
+  $$ = gen_dictpair(gen_const($1), $3);
  }
 | String ':' ExpD {
   $$ = gen_dictpair($1, $3);
   }
+| String {
+  $$ = gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
+                              gen_op_simple(DUP2), gen_op_simple(INDEX)));
+  }
 | IDENT {
-  $$ = gen_dictpair(gen_op_const(LOADK, jv_copy($1)),
-                    gen_index(gen_noop(), gen_op_const(LOADK, $1)));
+  $$ = gen_dictpair(gen_const(jv_copy($1)),
+                    gen_index(gen_noop(), gen_const($1)));
   }
 | '(' Exp ')' ':' ExpD {
   $$ = gen_dictpair($2, $5);

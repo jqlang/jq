@@ -1,4 +1,5 @@
 %{
+#include "jv_alloc.h"
 #include "compile.h"
 
 struct lexer_param;
@@ -25,6 +26,7 @@ struct lexer_param;
 %}
 
 %option noyywrap nounput noinput nodefault
+%option noyyalloc noyyrealloc noyyfree
 %option reentrant
 %option extra-type="int"
 %option bison-bridge bison-locations
@@ -47,6 +49,7 @@ struct lexer_param;
 "and" { return AND; }
 "or" { return OR; }
 "end" { return END; }
+"fold" { return FOLD; }
 "//" { return DEFINEDOR; }
 "|=" { return SETPIPE; }
 "+=" { return SETPLUS; }
@@ -56,7 +59,6 @@ struct lexer_param;
 "//=" { return SETDEFINEDOR; }
 "<=" { return LESSEQ; }
 ">=" { return GREATEREQ; }
-"contains" { return CONTAINS; }
 "."|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"\$"|"<"|">" { return yytext[0];}
 
 "["|"{"|"(" {
@@ -67,8 +69,11 @@ struct lexer_param;
   return try_exit(yytext[0], YY_START, yyscanner);
 }
 
+"@"[a-zA-Z0-9_]+ {
+  yylval->literal = jv_string_sized(yytext + 1, yyleng - 1); return FORMAT;
+}
 
--?[0-9.]+([eE][+-]?[0-9]+)? { 
+[0-9.]+([eE][+-]?[0-9]+)? { 
    yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL; 
 }
 
@@ -127,6 +132,10 @@ static int try_exit(int c, int state, yyscan_t yyscanner) {
     match = ')'; 
     ret = QQSTRING_INTERP_END;
     break;
+
+  default:
+    // may not be the best error to give
+    return INVALID_CHARACTER;
   }
   assert(match);
   if (match == c) {
@@ -149,4 +158,14 @@ static int enter(int c, int currstate, yyscan_t yyscanner) {
   assert(state);
   yy_push_state(state, yyscanner);
   return c;
+}
+
+void* yyalloc(size_t sz, void* extra) {
+  return jv_mem_alloc(sz);
+}
+void* yyrealloc(void* p, size_t sz, void* extra) {
+  return jv_mem_realloc(p, sz);
+}
+void yyfree(void* p, void* extra) {
+  jv_mem_free(p);
 }

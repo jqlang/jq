@@ -19,12 +19,9 @@ enum {
   OP_HAS_CONSTANT = 2,
   OP_HAS_VARIABLE = 4,
   OP_HAS_BRANCH = 8,
-  OP_HAS_SYMBOL = 16,
   OP_HAS_CFUNC = 32,
   OP_HAS_UFUNC = 64,
   OP_IS_CALL_PSEUDO = 128,
-  OP_HAS_VARIABLE_LENGTH_ARGLIST = 256,
-  OP_HAS_BLOCK = 512,
   OP_HAS_BINDING = 1024,
 };
 struct opcode_description {
@@ -40,9 +37,5 @@ struct opcode_description {
 };
 
 const struct opcode_description* opcode_describe(opcode op);
-
-static inline int opcode_length(opcode op) {
-  return opcode_describe(op)->length;
-}
 
 #endif

@@ -6,6 +6,7 @@ struct jv_parser {
   int curr_buf_length;
   int curr_buf_pos;
   int curr_buf_is_partial;
+  unsigned bom_strip_position;
 
   jv* stack;
   int stackpos;
@@ -15,6 +16,8 @@ struct jv_parser {
   char* tokenbuf;
   int tokenpos;
   int tokenlen;
+
+  int line, column;
   
   struct dtoa_context dtoa;
 

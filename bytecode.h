@@ -4,14 +4,7 @@
 
 #include "jv.h"
 #include "opcode.h"
-
-typedef void (*cfunction_ptr)(jv input[], jv output[]);
-
-struct cfunction {
-  cfunction_ptr fptr;
-  const char* name;
-  opcode callop;
-};
+#include "builtin.h"
 
 #define MAX_CFUNCTION_ARGS 10
 struct symbol_table {

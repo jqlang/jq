@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
+#include "jv_alloc.h"
 typedef struct {
   int start, end;
 } location;
@@ -24,7 +25,7 @@ static void locfile_init(struct locfile* l, const char* data, int length) {
   for (int i=0; i<length; i++) {
     if (data[i] == '\n') l->nlines++;
   }
-  l->linemap = malloc(sizeof(int) * (l->nlines + 1));
+  l->linemap = jv_mem_alloc(sizeof(int) * (l->nlines + 1));
   l->linemap[0] = 0;
   int line = 1;
   for (int i=0; i<length; i++) {
@@ -37,7 +38,7 @@ static void locfile_init(struct locfile* l, const char* data, int length) {
 }
 
 static void locfile_free(struct locfile* l) {
-  free(l->linemap);
+  jv_mem_free(l->linemap);
 }
 
 static int locfile_get_line(struct locfile* l, int pos) {

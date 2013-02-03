@@ -72,7 +72,13 @@ jv jv_array_set(jv, int, jv);
 jv jv_array_append(jv, jv);
 jv jv_array_concat(jv, jv);
 jv jv_array_slice(jv, int, int);
-
+#define jv_array_foreach(a, i, x) \
+  for (int jv_len__ = jv_array_length(jv_copy(a)), i=0, jv_j__ = 1;     \
+       jv_j__; jv_j__ = 0)                                              \
+    for (jv x;                                                          \
+         i < jv_len__ ?                                                 \
+           (x = jv_array_get(jv_copy(a), i), 1) : 0;                    \
+         i++)
 
 jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
@@ -96,83 +102,27 @@ int jv_object_iter_next(jv, int);
 int jv_object_iter_valid(jv, int);
 jv jv_object_iter_key(jv, int);
 jv jv_object_iter_value(jv, int);
-#define jv_object_foreach(i,t) \
-  for (int i = jv_object_iter(t);               \
-       jv_object_iter_valid(t, i);              \
-       i = jv_object_iter_next(t, i))           \
+#define jv_object_foreach(t, k, v)                                      \
+  for (int jv_i__ = jv_object_iter(t), jv_j__ = 1; jv_j__; jv_j__ = 0)  \
+    for (jv k, v;                                                       \
+         jv_object_iter_valid((t), jv_i__) ?                            \
+           (k = jv_object_iter_key(t, jv_i__),                          \
+            v = jv_object_iter_value(t, jv_i__),                        \
+            1)                                                          \
+           : 0;                                                         \
+         jv_i__ = jv_object_iter_next(t, jv_i__))                       \
  
 
 
 int jv_get_refcnt(jv);
 
-enum { JV_PRINT_PRETTY = 1, JV_PRINT_ASCII = 2 };
+enum { JV_PRINT_PRETTY = 1, JV_PRINT_ASCII = 2, JV_PRINT_COLOUR = 4 };
 void jv_dump(jv, int flags);
 jv jv_dump_string(jv, int flags);
 
 jv jv_parse(const char* string);
 jv jv_parse_sized(const char* string, int length);
 
-
-static jv jv_lookup(jv t, jv k) {
-  jv v;
-  if (jv_get_kind(t) == JV_KIND_OBJECT && jv_get_kind(k) == JV_KIND_STRING) {
-    v = jv_object_get(t, k);
-    if (!jv_is_valid(v)) {
-      jv_free(v);
-      v = jv_null();
-    }
-  } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
-    // FIXME: don't do lookup for noninteger index
-    v = jv_array_get(t, (int)jv_number_value(k));
-    if (!jv_is_valid(v)) {
-      jv_free(v);
-      v = jv_null();
-    }
-  } else if (jv_get_kind(t) == JV_KIND_NULL && 
-             (jv_get_kind(k) == JV_KIND_STRING || jv_get_kind(k) == JV_KIND_NUMBER)) {
-    jv_free(t);
-    jv_free(k);
-    v = jv_null();
-  } else {
-    v = jv_invalid_with_msg(jv_string_fmt("Cannot index %s with %s",
-                                          jv_kind_name(jv_get_kind(t)),
-                                          jv_kind_name(jv_get_kind(k))));
-    jv_free(t);
-    jv_free(k);
-  }
-  return v;
-}
-
-static jv jv_modify(jv t, jv k, jv v) {
-  int isnull = jv_get_kind(t) == JV_KIND_NULL;
-  if (jv_get_kind(k) == JV_KIND_STRING && 
-      (jv_get_kind(t) == JV_KIND_OBJECT || isnull)) {
-    if (isnull) t = jv_object();
-    t = jv_object_set(t, k, v);
-  } else if (jv_get_kind(k) == JV_KIND_NUMBER &&
-             (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
-    if (isnull) t = jv_array();
-    t = jv_array_set(t, (int)jv_number_value(k), v);
-  } else {
-    jv err = jv_invalid_with_msg(jv_string_fmt("Cannot update field at %s index of %s",
-                                               jv_kind_name(jv_get_kind(t)),
-                                               jv_kind_name(jv_get_kind(v))));
-    jv_free(t);
-    jv_free(k);
-    jv_free(v);
-    t = err;
-  }
-  return t;
-}
-
-static jv jv_insert(jv root, jv value, jv* path, int pathlen) {
-  if (pathlen == 0) {
-    jv_free(root);
-    return value;
-  }
-  return jv_modify(root, jv_copy(*path), 
-                   jv_insert(jv_lookup(jv_copy(root), jv_copy(*path)), value, path+1, pathlen-1));
-}
 
 
 

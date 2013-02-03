@@ -21,6 +21,11 @@ null
 null
 1
 
+
+-1
+null
+-1
+
 # FIXME: much more number testing needed
 
 {}
@@ -30,6 +35,13 @@ null
 []
 null
 []
+
+# The input line starts with a 0xFEFF (byte order mark) codepoint
+# No, there is no reason to have a byte order mark in UTF8 text.
+# But apparently people do, so jq shouldn't break on it.
+.
+﻿"byte order mark"
+"byte order mark"
 
 # We test escapes by matching them against Unicode codepoints
 # FIXME: more tests needed for weird unicode stuff (e.g. utf16 pairs)
@@ -45,6 +57,24 @@ null
 null
 "interpolation"
 
+@text,@json,([1,.] | @csv),@html,@uri,@sh,@base64
+"<>&'\""
+"<>&'\""
+"\"<>&'\\\"\""
+"1,\"<>&'\"\"\""
+"&lt;&gt;&amp;&apos;&quot;"
+"%3c%3e%26'%22"
+"'<>&'\\''\"'"
+"PD4mJyI="
+
+@uri
+"\u03bc"
+"%ce%bc"
+
+@html "<b>\(.)</b>"
+"<script>hax</script>"
+"<b>&lt;script&gt;hax&lt;/script&gt;</b>"
+
 #
 # Dictionary construction syntax
 #
@@ -56,6 +86,10 @@ null
 {a,b,(.d):.a,e:.b}
 {"a":1, "b":2, "c":3, "d":"c"}
 {"a":1, "b":2, "c":1, "e":2}
+
+{"a",b,"a$\(1+1)"}
+{"a":1, "b":2, "c":3, "a$2":4}
+{"a":1, "b":2, "a$2":4}
 
 #
 # Field access, piping
@@ -96,6 +130,11 @@ null
 []
 1
 1
+
+1,.
+[]
+1
+[]
 
 [.]
 [2]
@@ -141,6 +180,10 @@ null
 [6]
 [7]
 
+42 as $x | . | . | . + 432 | $x + 1
+34324
+43
+
 1 as $x | [$x,$x,$x as $x | $x]
 null
 [1,1,1]
@@ -159,6 +202,14 @@ null
 "wtasdf"
 2.0
 
+2-1
+null
+1
+
+2-(-1)
+null
+3
+
 1e+0+0.001e3
 "I wonder what this will be?"
 20e-1
@@ -166,6 +217,18 @@ null
 .+4
 15
 19.0
+
+.+null
+{"a":42}
+{"a":42}
+
+null+.
+null
+null
+
+.a+.b
+{"a":42}
+42
 
 [1,2,3] + [.]
 null
@@ -291,6 +354,65 @@ def fac: if . == 1 then 1 else . * (. - 1 | fac) end; [.[] | fac]
 [1,2,3,4]
 [1,2,6,24]
 
+# test stack overflow and reallocation
+# this test is disabled for now, it takes a realllllly long time.
+# def f: if length > 1000 then . else .+[1]|f end; f | length
+# []
+# 1001
+
+fold 0 as $s (.[] | $s + .)
+[1,2,4]
+7
+
+#
+# Paths
+#
+
+path(.foo[0,1])
+null
+["foo", 0]
+["foo", 1]
+
+path(.[] | select(.>3))
+[1,5,3]
+[1]
+
+path(.)
+42
+[]
+
+["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
+{"bar": 42, "foo": ["a", "b", "c", "d"]}
+"b"
+{"bar": 42, "foo": ["a", 20, "c", "d"]}
+{"bar": 42, "foo": ["a", "c", "d"]}
+
+map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))
+[[0], [0,1], [0,1,2]]
+[null, null, 2]
+[[0,null,42], [0,1,42], [0,1,42]]
+[[0], [0,1], [0,1]]
+
+map(delpaths([[0,"foo"]]))
+[[{"foo":2, "x":1}], [{"bar":2}]]
+[[{"x":1}], [{"bar":2}]]
+
+["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
+{"bar":false}
+null
+{"bar":false, "foo": [null, 20]}
+{"bar":false}
+
+delpaths([[-200]])
+[1,2,3]
+[1,2,3]
+
+del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)
+{"foo": [0,1,2,3,4], "bar": [0,1]}
+null
+{"foo": [0,1,2,3,4], "bar": [0,1]}
+{"foo": [1,4], "bar": [1]}
+{"bar": [1]}
 
 #
 # Assignment
@@ -313,6 +435,10 @@ def fac: if . == 1 then 1 else . * (. - 1 | fac) end; [.[] | fac]
 [2,6,10]
 [-1,1,3]
 [0.5, 1.5, 2.5]
+
+.foo += .foo
+{"foo":2}
+{"foo":4}
 
 .[0].a |= {"old":., "new":(.+1)}
 [{"a":1,"b":2}]
@@ -397,26 +523,54 @@ def inc(x): x |= .+1; inc(.[].a)
 [true,false]
 
 # containment operator
-["foo" contains "foo", "foobar" contains "foo", "foo" contains "foobar"]
+[("foo" | contains("foo")), ("foobar" | contains("foo")), ("foo" | contains("foobar"))]
 {}
 [true, true, false]
 
-[[] contains [], [1,2,3] contains [1,2], [1,2,3] contains [3,1], [1,2,3] contains [4], [1,2,3] contains [1,4]]
-{}
+map(.[1] as $needle | .[0] | contains($needle))
+[[[],[]], [[1,2,3], [1,2]], [[1,2,3], [3,1]], [[1,2,3], [4]], [[1,2,3], [1,4]]]
 [true, true, true, false, false]
 
-[["foobar", "foobaz"] contains ["baz", "bar"], ["foobar", "foobaz"] contains ["foo"], ["foobar", "foobaz"] contains ["blap"]]
+map(.[1] as $needle | .[0] | contains($needle))
+[[["foobar", "foobaz"], ["baz", "bar"]], [["foobar", "foobaz"], ["foo"]], [["foobar", "foobaz"], ["blap"]]]
+[true, true, false]
+
+[({foo: 12, bar:13} | contains({foo: 12})), ({foo: 12} | contains({})), ({foo: 12, bar:13} | contains({baz:14}))]
 {}
 [true, true, false]
 
-[{foo: 12, bar:13} contains {foo: 12}, {foo: 12} contains {}, {foo: 12, bar:13} contains {baz:14}]
-{}
-[true, true, false]
-
-{foo: {baz: 12, blap: {bar: 13}}, bar: 14} contains {bar: 14, foo: {blap: {}}}
+{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {}}})
 {}
 true
 
-{foo: {baz: 12, blap: {bar: 13}}, bar: 14} contains {bar: 14, foo: {blap: {bar: 14}}}
+{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {bar: 14}}})
 {}
 false
+
+sort
+[42,[2,5,3,11],10,{"a":42,"b":2},{"a":42},true,2,[2,6],"hello",null,[2,5,6],{"a":[],"b":1},"abc","ab",[3,10],{},false,"abcd",null]
+[null,null,false,true,2,10,42,"ab","abc","abcd","hello",[2,5,3,11],[2,5,6],[2,6],[3,10],{},{"a":42},{"a":42,"b":2},{"a":[],"b":1}]
+
+(sort_by(.b) | sort_by(.a)), sort_by(.a, .b), sort_by(.b, .c), group_by(.b), group_by(.a + .b - .c == 2)
+[{"a": 1, "b": 4, "c": 14}, {"a": 4, "b": 1, "c": 3}, {"a": 1, "b": 4, "c": 3}, {"a": 0, "b": 2, "c": 43}]
+[{"a": 0, "b": 2, "c": 43}, {"a": 1, "b": 4, "c": 14}, {"a": 1, "b": 4, "c": 3}, {"a": 4, "b": 1, "c": 3}]
+[{"a": 0, "b": 2, "c": 43}, {"a": 1, "b": 4, "c": 14}, {"a": 1, "b": 4, "c": 3}, {"a": 4, "b": 1, "c": 3}]
+[{"a": 4, "b": 1, "c": 3}, {"a": 0, "b": 2, "c": 43}, {"a": 1, "b": 4, "c": 3}, {"a": 1, "b": 4, "c": 14}]
+[[{"a": 4, "b": 1, "c": 3}], [{"a": 0, "b": 2, "c": 43}], [{"a": 1, "b": 4, "c": 14}, {"a": 1, "b": 4, "c": 3}]]
+[[{"a": 1, "b": 4, "c": 14}, {"a": 0, "b": 2, "c": 43}], [{"a": 4, "b": 1, "c": 3}, {"a": 1, "b": 4, "c": 3}]]
+
+unique
+[1,2,5,3,5,3,1,3]
+[1,2,3,5]
+
+[min, max, min_by(.[1]), max_by(.[1]), min_by(.[2]), max_by(.[2])]
+[[4,2,"a"],[3,1,"a"],[2,4,"a"],[1,3,"a"]]
+[[1,3,"a"],[4,2,"a"],[3,1,"a"],[2,4,"a"],[4,2,"a"],[1,3,"a"]]
+
+[min,max,min_by(.),max_by(.)]
+[]
+[null,null,null,null]
+
+.foo[.baz]
+{"foo":{"bar":4},"baz":"bar"}
+4
