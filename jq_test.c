@@ -8,12 +8,24 @@
 static void jv_test();
 static void run_jq_tests();
 
-FILE* testdata;
 
 int main(int argc, char* argv[]) {
+  FILE* testdata;
+
   jv_test();
   if (argc == 1) {
     testdata = fopen("testdata", "r");
+    if ( NULL == testdata )
+    {
+      /* in an autoconf distcheck, the binary file will be in a _build subdirectory */
+      testdata = fopen("../testdata", "r");
+      if ( NULL == testdata )
+      {
+        fprintf(stderr, "Could not find testdata file\n");
+        exit(1);
+      }
+    }
+
   } else if (argc == 2) {
     if (!strcmp(argv[1], "-")) {
       testdata = stdin;
@@ -24,7 +36,7 @@ int main(int argc, char* argv[]) {
     printf("usage: %s OR cat testdata | %s - OR %s testdata\n", argv[0], argv[0], argv[0]);
     return 127;
   }
-  run_jq_tests();
+  run_jq_tests(testdata);
   if (testdata != stdin) fclose(testdata);
 }
 
@@ -38,22 +50,10 @@ static int skipline(const char* buf) {
   return 0;
 }
 
-static void run_jq_tests() {
-  FILE* testdata = NULL;
+static void run_jq_tests(FILE *testdata) {
   char buf[4096];
   int tests = 0, passed = 0, invalid = 0;
 
-  testdata = fopen("testdata","r");
-  if ( NULL == testdata )
-  {
-    /* in an autoconf distcheck, the binary file will be in a _build subdirectory */
-    testdata = fopen("../testdata", "r");
-    if ( NULL == testdata )
-    {
-      fprintf(stderr, "Could not find testdata file\n");
-      exit(1);
-    }
-  }
   while (1) {
     if (!fgets(buf, sizeof(buf), testdata)) break;
     if (skipline(buf)) continue;
