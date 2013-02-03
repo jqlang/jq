@@ -99,7 +99,7 @@ rpm: jq jq_test
 	@echo "Packaging jq as an RPM ..."
 	mkdir -p rpm/SOURCES rpm/BUILD rpm/BUILDROOT rpm/RPMS rpm/SPECS
 	cp jq-$$(cat VERSION).tar.gz rpm/SOURCES/
-	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix ${HOME}" --define "version $$(cat VERSION)" --define "release ${RELEASE}" rpm/SOURCES/jq-$$(cat VERSION).tar.gz
+	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "version $$(cat VERSION)" --define "release ${RELEASE}" rpm/SOURCES/jq-$$(cat VERSION).tar.gz
 	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
 
