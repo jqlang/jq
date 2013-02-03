@@ -2,9 +2,9 @@
 # Your OS of choice will likely ignore this RPM spec file.
 Summary: Command-line JSON processor
 Name: jq
-Version: %{version}
-Release: %{release}
-Source0: jq-%{version}.tar.gz
+Version: %{myver}
+Release: %{myrel}%{?dist}
+Source0: jq-%{myver}.tar.gz
 URL: https://github.com/stedolan/jq
 License: BSD
 AutoReqProv: no
@@ -18,16 +18,22 @@ Group: Applications/System
 %global debug_package %{nil}
 %global __os_install_post %{nil}
 
+# Crank up the compression
+%define _binary_payload w7.lzdio
+
 %description
 jq is a command-line JSON processor
 
 %prep
-
 %setup
 
 %build
 echo "Building in: \"$(pwd)\""
+%if "%{devbuild}" == "yes"
+./configure --prefix=%{_prefix} --enable-devel
+%else
 ./configure --prefix=%{_prefix}
+%endif
 make
 
 %install
@@ -40,13 +46,16 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root)
 %{_bindir}/jq
-%{_bindir}/jq_test
-%{_datadir}/doc/jq/AUTHORS
-%{_datadir}/doc/jq/COPYING
-%{_datadir}/doc/jq/INSTALL
-%{_datadir}/doc/jq/NEWS
-%{_datadir}/doc/jq/README
-%{_datadir}/doc/jq/README.md
+%if "%{devbuild}" == "yes"
+%{_libexecdir}/%{name}/jq_test
+%{_libexecdir}/%{name}/testdata
+%endif
+%{_datadir}/doc/%{name}/AUTHORS
+%{_datadir}/doc/%{name}/COPYING
+%{_datadir}/doc/%{name}/INSTALL
+%{_datadir}/doc/%{name}/NEWS
+%{_datadir}/doc/%{name}/README
+%{_datadir}/doc/%{name}/README.md
 
 %changelog
 

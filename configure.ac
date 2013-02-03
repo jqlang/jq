@@ -22,16 +22,16 @@ dnl   developers like them by default but the packager can disable if so
 dnl   desired.  This is useful if something other than gcc is needed or
 dnl   for distros that need to heavily tweek the compiler (gentoo, ARM cpu
 dnl   linux's, etc)
-AC_ARG_ENABLE([devcflags],
-              [AC_HELP_STRING([--enable-devcflags=@<:@yes/no@:>@],
-                              [Enable the same CFLAGS used by jq developers @<:@default=yes@:>@])],
-              [enable_devcflags=$enableval],
-              [enable_devcflags=yes])
-AC_MSG_RESULT($enable_devcflags)
-dnl AM_CONDITIONAL(DEVCFLAGS, test x$enable_devcflags = xyes)
-if test "$enable_devcflags" = "yes"; then
-  AM_CONDITIONAL(DEVCFLAGS_ENABLED, true)
-fi
+AC_ARG_ENABLE(
+  [devel],
+  [AC_HELP_STRING(
+    [--enable-devel],
+    [Build the tests and enable the same CFLAGS used by jq developers @<:@default=no@:>@])],
+  [],
+  [enable_devel=no]
+)
+AC_MSG_RESULT($enable_devel)
+AM_CONDITIONAL([DEVELOPMENT_ENABLED], [test x$enable_devel = xyes])
 
 dnl
 dnl these program checks should probably be deleted

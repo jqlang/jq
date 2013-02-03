@@ -44,10 +44,14 @@ JQ_SRC = \
   jv_aux.c \
   jv_alloc.c \
   lexer.c \
-  $(JQ_INCS)
+  ${JQ_INCS}
 
-if DEVCFLAGS_ENABLED
-DEVCFLAGS = -Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function
+if DEVELOPMENT_ENABLED
+DEVCFLAGS = -Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function -O0 -DJQ_DEBUG=1
+RPMBINS = jq jq_test
+else
+DEVCFLAGS = -DJQ_DEBUG=0
+RPMBINS = jq
 endif
 
 # Tell YACC (bison) autoconf macros that you want a header file created.
@@ -55,15 +59,31 @@ endif
 # OSX ships an old bison, so update with homebrew or macports
 AM_YFLAGS = --warnings=all -d
 
-bin_PROGRAMS = jq jq_test
+bin_PROGRAMS = jq
 BUILT_SOURCES = jv_utf8_tables.gen.h lexer.h lexer.c
-jq_SOURCES = $(JQ_SRC) main.c
-jq_CPPFLAGS = $(DEVCFLAGS) -O -DJQ_DEBUG=0
+jq_SOURCES = ${JQ_SRC} main.c
+jq_CPPFLAGS = ${DEVCFLAGS}
 
+# always test, but conditionally distribute to /usr/libexec/jq/jq_test
+if DEVELOPMENT_ENABLED
+  pkglibexec_PROGRAMS = jq_test
+  # automake doesn't like putting data in libexec (pkglibexec_DATA)
+  # so we'll create our own macro and distribute testdata
+  mydatadir = ${libexecdir}/${PACKAGE}
+  mydata_DATA = testdata
 
+  DEVBUILD=yes
+else
+  noinst_PROGRAMS = jq_test
+
+  DEVBUILD=no
+endif
+
+jq_test_SOURCES = ${JQ_SRC} jq_test.c
+jq_test_CPPFLAGS = ${DEVCFLAGS}
+
+# this is what gets "make check" to work
 TESTS = jq_test
-jq_test_SOURCES = $(JQ_SRC) jq_test.c
-jq_test_CPPFLAGS = $(DEVCFLAGS) -DJQ_DEBUG=1
 LOG_COMPILER = valgrind
 AM_LOG_FLAGS = --error-exitcode=1 -q --leak-check=full
 
@@ -93,15 +113,14 @@ main.c: config.h
 releasetag:
 	git tag -s "jq-$$(cat VERSION)" -m "jq release $$(cat VERSION)"
 
-# can probably delete and have RPM created off autoconf generated tarball releases
 RELEASE ?= 1
-rpm: jq jq_test
+rpm: ${RPMBINS}
 	@echo "Packaging jq as an RPM ..."
 	mkdir -p rpm/SOURCES rpm/BUILD rpm/BUILDROOT rpm/RPMS rpm/SPECS
 	cp jq-$$(cat VERSION).tar.gz rpm/SOURCES/
-	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "version $$(cat VERSION)" --define "release ${RELEASE}" rpm/SOURCES/jq-$$(cat VERSION).tar.gz
+	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "myver $$(cat VERSION)" --define "myrel ${RELEASE}" --define "devbuild ${DEVBUILD}" rpm/SOURCES/jq-$$(cat VERSION).tar.gz
 	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
 
 dist-clean-local:
-	rm -f $(BUILT_SOURCES)
+	rm -f ${BUILT_SOURCES}
