@@ -164,3 +164,8 @@ rpm: ${RPMBINS}
 
 dist-clean-local:
 	rm -f ${BUILT_SOURCES}
+
+# Not sure why this doesn't get cleaned up automatically, guess
+# automake used to man pages which are hand coded?
+clean-local:
+	rm -f jq.1
