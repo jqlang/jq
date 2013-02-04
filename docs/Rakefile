@@ -1,3 +1,4 @@
+require 'yaml'
 require 'bonsai'
 require 'liquid'
 require 'maruku'
