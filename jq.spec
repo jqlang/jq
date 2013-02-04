@@ -56,6 +56,7 @@ rm -rf %{buildroot}
 %{_datadir}/doc/%{name}/NEWS
 %{_datadir}/doc/%{name}/README
 %{_datadir}/doc/%{name}/README.md
+%{_datadir}/man/man1/jq.1
 
 %changelog
 

@@ -3,7 +3,42 @@
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
-EXTRA_DIST = setup.sh config.h.in ChangeLog VERSION lexer.l lexer.h gen_utf8_tables.py jq.spec testdata
+EXTRA_DIST = \
+  setup.sh \
+  config.h.in \
+  ChangeLog \
+  VERSION \
+  lexer.l \
+  lexer.h \
+  gen_utf8_tables.py \
+  jq.spec \
+  testdata \
+  docs/content/1.tutorial/default.yml \
+  docs/content/2.download/default.yml \
+  docs/content/3.manual/manual.yml \
+  docs/content/index/index.yml \
+  docs/Gemfile \
+  docs/Gemfile.lock \
+  docs/public/.htaccess \
+  docs/public/bootstrap/css/bootstrap-responsive.css \
+  docs/public/bootstrap/css/bootstrap-responsive.min.css \
+  docs/public/bootstrap/css/bootstrap.css \
+  docs/public/bootstrap/css/bootstrap.min.css \
+  docs/public/bootstrap/img/glyphicons-halflings-white.png \
+  docs/public/bootstrap/img/glyphicons-halflings.png \
+  docs/public/bootstrap/js/bootstrap.js \
+  docs/public/bootstrap/js/bootstrap.min.js \
+  docs/public/css/base.scss \
+  docs/public/jq.png \
+  docs/public/robots.txt \
+  docs/Rakefile \
+  docs/site.yml \
+  docs/templates/default.liquid \
+  docs/templates/index.liquid \
+  docs/templates/manual.liquid \
+  docs/templates/shared/_footer.liquid \
+  docs/templates/shared/_head.liquid \
+  docs/templates/shared/_header.liquid
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
@@ -86,6 +121,11 @@ jq_test_CPPFLAGS = ${DEVCFLAGS}
 TESTS = jq_test
 LOG_COMPILER = valgrind
 AM_LOG_FLAGS = --error-exitcode=1 -q --leak-check=full
+
+man_MANS = jq.1
+
+jq.1 :
+	cd ${abs_srcdir}/docs; rake manpage > ${abs_builddir}/$@
 
 # nasty circular dependency on header files between the generated C files
 parser.o: lexer.c
