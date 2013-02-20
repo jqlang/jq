@@ -1,8 +1,8 @@
 CC=gcc
-CFLAGS=-Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function $(EXTRA_CFLAGS)
+CFLAGS+=-Wextra -Wall -Wno-missing-field-initializers -Wno-unused-parameter -std=gnu99 -ggdb -Wno-unused-function $(EXTRA_CFLAGS)
 
-prefix=/usr/local
-mandir=$(prefix)/share/man
+prefix=$(DESTDIR)
+mandir=$(DESTDIR)/usr/share/man
 
 
 .PHONY: all clean releasedep tarball install uninstall test releasetag
@@ -28,11 +28,11 @@ JQ_SRC=parser.gen.c lexer.gen.c opcode.c bytecode.c compile.c execute.c builtin.
 
 jq_test: CFLAGS += -DJQ_DEBUG=1
 jq_test: $(JQ_SRC) jq_test.c
-	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) -o $@ $^
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(CFLAGS_DEBUG) -o $@ $^
 
 jq: CFLAGS += -O -DJQ_DEBUG=0
 jq: $(JQ_SRC) main.c
-	$(CC) $(CFLAGS) $(CFLAGS_OPT) -o $@ $^
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(CFLAGS_OPT) -o $@ $^
 
 test: jq_test
 	valgrind --error-exitcode=1 -q --leak-check=full ./jq_test >/dev/null
@@ -71,7 +71,7 @@ binaries: $(ALL_BINARIES)
 
 clean:
 	rm -rf build
-	rm -f $(BINARIES) *.gen.*
+	rm -f $(BINARIES) *.gen.* jq.1
 
 releasedep: lexer.gen.c parser.gen.c jv_utf8_tables.gen.h
 
@@ -88,8 +88,8 @@ jq.1: docs/content/3.manual/manual.yml
 	( cd docs; rake manpage; ) > $@
 
 install: jq jq.1
-	install -d -m 0755 $(prefix)/bin
-	install -m 0755 jq $(prefix)/bin
+	install -d -m 0755 $(prefix)/usr/bin
+	install -m 0755 jq $(prefix)/usr/bin
 	install -d -m 0755 $(mandir)/man1
 	install -m 0755 jq.1 $(mandir)/man1
 
