@@ -178,7 +178,7 @@ sections:
           If you use the `.[foo]` syntax, but omit the index
           entirely, it will return *all* of the elements of an
           array. Running `.[]` with the input `[1,2,3]` will produce the
-          numbers as three seperate results, rather than as a single
+          numbers as three separate results, rather than as a single
           array.
 
         examples:
