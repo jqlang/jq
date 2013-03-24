@@ -4,6 +4,7 @@ require 'maruku'
 require 'json'
 require 'ronn'
 require 'tempfile'
+require 'yaml'
 
 module ExtraFilters
   def markdownify(input)
