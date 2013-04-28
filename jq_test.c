@@ -41,6 +41,7 @@ static int skipline(const char* buf) {
 static void run_jq_tests() {
   char buf[4096];
   int tests = 0, passed = 0, invalid = 0;
+  jq_state *jq = NULL;
 
   while (1) {
     if (!fgets(buf, sizeof(buf), testdata)) break;
@@ -59,13 +60,13 @@ static void run_jq_tests() {
     fgets(buf, sizeof(buf), testdata);
     jv input = jv_parse(buf);
     if (!jv_is_valid(input)){ invalid++; continue; }
-    jq_init(bc, input);
+    jq_init(bc, input, &jq);
 
     while (fgets(buf, sizeof(buf), testdata)) {
       if (skipline(buf)) break;
       jv expected = jv_parse(buf);
       if (!jv_is_valid(expected)){ invalid++; continue; }
-      jv actual = jq_next();
+      jv actual = jq_next(jq);
       if (!jv_is_valid(actual)) {
         jv_free(actual);
         printf("*** Insufficient results\n");
@@ -88,7 +89,7 @@ static void run_jq_tests() {
       jv_free(actual);
     }
     if (pass) {
-      jv extra = jq_next();
+      jv extra = jq_next(jq);
       if (jv_is_valid(extra)) {
         printf("*** Superfluous result: ");
         jv_dump(extra, 0);
@@ -98,7 +99,7 @@ static void run_jq_tests() {
         jv_free(extra);
       }
     }
-    jq_teardown();
+    jq_teardown(&jq);
     bytecode_free(bc);
     passed+=pass;
   }
