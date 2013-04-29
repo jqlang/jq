@@ -5,11 +5,8 @@
 #include <ctype.h>
 #include <unistd.h>
 #include "compile.h"
-#include "builtin.h"
 #include "jv.h"
 #include "jv_parse.h"
-#include "locfile.h"
-#include "parser.h"
 #include "execute.h"
 #include "jv_alloc.h"
 #include "version.gen.h"
