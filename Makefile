@@ -37,6 +37,7 @@ jq: $(JQ_SRC) main.c
 test: jq_test
 	valgrind --error-exitcode=1 -q --leak-check=full ./jq_test >/dev/null
 
+LIBRARIES=libjq
 BINARIES=jq jq_test
 PLATFORMS=linux32 linux64 osx32 osx64 win32 win64
 
@@ -55,6 +56,14 @@ build/win64%:   CC='x86_64-w64-mingw32-gcc -m64' EXTRA_CFLAGS=-DJQ_DEFAULT_ENABL
 
 BIN_SUFFIX_win32 = .exe
 BIN_SUFFIX_win64 = .exe
+LIB_SUFFIX_win32 = .dll
+LIB_SUFFIX_win64 = .dll
+
+LIB_SUFFIX_linux32 = .so
+LIB_SUFFIX_linux64 = .so
+
+LIB_SUFFIX_osx32 = .so
+LIB_SUFFIX_osx64 = .so
 
 ALL_BINARIES=\
   $(foreach platform, $(PLATFORMS), \
@@ -67,11 +76,27 @@ $(ALL_BINARIES): build/%:
 	make -B $(BINARIES) CC=$(CC)
 	$(foreach binary, $(BINARIES), cp $(binary) $(@D)/$(binary)$(suffix $*);)
 
+libjq: CFLAGS += -fPIC
+libjq: $(JQ_SRC)
+	$(CC) -shared -Wl,-soname,libjq.so.1 $(CFLAGS) $(CFLAGS_OPT) -o $@ $^
+
+ALL_LIBRARIES=\
+  $(foreach platform, $(PLATFORMS), \
+    $(foreach library, $(LIBRARIES), \
+      build/$(platform)/$(library)$(LIB_SUFFIX_$(platform))))
+
+$(ALL_LIBRARIES): build/%:
+	mkdir -p $(@D)
+	echo $(dir $*)
+	make -B $(LIBRARIES) CC=$(CC)
+	$(foreach library, $(LIBRARIES), cp $(library) $(@D)/$(library)$(suffix $*);)
+
 binaries: $(ALL_BINARIES)
+libraries: $(ALL_LIBRARIES)
 
 clean:
 	rm -rf build
-	rm -f $(BINARIES) *.gen.*
+	rm -f $(LIBRARIES) $(BINARIES) *.gen.*
 
 releasedep: lexer.gen.c parser.gen.c jv_utf8_tables.gen.h
 
@@ -87,14 +112,26 @@ tarball: docs/content/2.download/source/jq.tgz
 jq.1: docs/content/3.manual/manual.yml
 	( cd docs; bundle exec rake manpage; ) > $@
 
-install: jq jq.1
+install: jq jq.1 libjq
 	install -d -m 0755 $(prefix)/bin
+	install -d -m 0755 $(prefix)/lib
+	install -d -m 0755 $(prefix)/include
+	install -d -m 0755 $(prefix)/include/jq
 	install -m 0755 jq $(prefix)/bin
+	ln libjq libjq.so.1
+	install -m 0755 execute.h $(prefix)/include/jq
+	install -m 0755 compile.h $(prefix)/include/jq
+	install -m 0755 jv.h $(prefix)/include/jq
+	install -m 0755 jv_parse.h $(prefix)/include/jq
+	install -m 0755 jv_alloc.h $(prefix)/include/jq
+	install -m 0755 libjq.so.1 $(prefix)/bin
+	install -m 0644 execute.h $(prefix)/bin
 	install -d -m 0755 $(mandir)/man1
 	install -m 0644 jq.1 $(mandir)/man1
 
 uninstall:
 	rm -vf $(prefix)/bin/jq
+	rm -vf $(prefix)/lib/libjq.so.1
 	rm -vf $(mandir)/man1/jq.1
 
 

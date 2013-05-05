@@ -5,11 +5,8 @@
 #include <ctype.h>
 #include <unistd.h>
 #include "compile.h"
-#include "builtin.h"
 #include "jv.h"
 #include "jv_parse.h"
-#include "locfile.h"
-#include "parser.h"
 #include "execute.h"
 #include "jv_alloc.h"
 #include "version.gen.h"
@@ -63,9 +60,10 @@ static int options = 0;
 static struct bytecode* bc;
 
 static void process(jv value) {
-  jq_init(bc, value);
+  jq_state *jq = NULL;
+  jq_init(bc, value, &jq);
   jv result;
-  while (jv_is_valid(result = jq_next())) {
+  while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       fwrite(jv_string_value(result), 1, jv_string_length(jv_copy(result)), stdout);
       jv_free(result);
@@ -85,7 +83,7 @@ static void process(jv value) {
     printf("\n");
   }
   jv_free(result);
-  jq_teardown();
+  jq_teardown(&jq);
 }
 
 static jv slurp_file(const char* filename) {
