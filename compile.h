@@ -7,6 +7,7 @@
 
 struct bytecode;
 struct symbol_table;
+struct cfunction;
 
 struct inst;
 typedef struct inst inst;
@@ -41,7 +42,7 @@ block gen_or(block a, block b);
 
 block gen_cond(block cond, block iftrue, block iffalse);
 
-block gen_cbinding(struct symbol_table* functions, block b);
+block gen_cbinding(const struct cfunction* functions, int nfunctions, block b);
 
 void block_append(block* b, block b2);
 block block_join(block a, block b);

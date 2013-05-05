@@ -12,10 +12,10 @@
 
 // Colour table. See http://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 // for how to choose these.
-static jv_kind colour_kinds[] = 
+static const jv_kind colour_kinds[] = 
   {JV_KIND_NULL,   JV_KIND_FALSE, JV_KIND_TRUE, JV_KIND_NUMBER,
    JV_KIND_STRING, JV_KIND_ARRAY, JV_KIND_OBJECT};
-static const char* colours[] =
+static const char* const colours[] =
   {COL("30;1"),    COL("0"),      COL("0"),     COL("0"),
    COL("32"),      COL("37"),     COL("37")};
 #define FIELD_COLOUR COL("34;1")

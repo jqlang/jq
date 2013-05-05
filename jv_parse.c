@@ -283,7 +283,7 @@ static chclass classify(char c) {
 }
 
 
-static presult OK = "output produced";
+static const presult OK = "output produced";
 
 static int check_done(struct jv_parser* p, jv* out) {
   if (p->stackpos == 0 && jv_is_valid(p->next)) {
@@ -341,7 +341,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   return answer;
 }
 
-static unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
+static const unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
 
 void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial) {
   assert((p->curr_buf == 0 || p->curr_buf_pos == p->curr_buf_length)

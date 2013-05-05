@@ -1,6 +1,5 @@
 #include <string.h>
 #include "builtin.h"
-#include "bytecode.h"
 #include "compile.h"
 #include "parser.h"
 #include "locfile.h"
@@ -469,7 +468,7 @@ static jv f_error(jv input, jv msg) {
   return jv_invalid_with_msg(msg);
 }
 
-static struct cfunction function_list[] = {
+static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_plus, "_plus", 3},
   {(cfunction_ptr)f_negate, "_negate", 1},
   {(cfunction_ptr)f_minus, "_minus", 3},
@@ -500,9 +499,6 @@ static struct cfunction function_list[] = {
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
 };
-
-static struct symbol_table cbuiltins = 
-  {function_list, sizeof(function_list)/sizeof(function_list[0])};
 
 struct bytecoded_builtin { const char* name; block code; };
 static block bind_bytecoded_builtins(block b) {
@@ -537,7 +533,7 @@ static block bind_bytecoded_builtins(block b) {
   return block_bind(builtins, b, OP_IS_CALL_PSEUDO);
 }
 
-static const char* jq_builtins[] = {
+static const char* const jq_builtins[] = {
   "def map(f): [.[] | f];",
   "def select(f): if f then . else empty end;",
   "def sort_by(f): _sort_by_impl(map([f]));",
@@ -564,5 +560,5 @@ block builtins_bind(block b) {
     locfile_free(&src);
   }
   b = bind_bytecoded_builtins(b);
-  return gen_cbinding(&cbuiltins, b);
+  return gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), b);
 }

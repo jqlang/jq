@@ -30,7 +30,7 @@ struct inst {
     uint16_t intval;
     struct inst* target;
     jv constant;
-    struct cfunction* cfunc;
+    const struct cfunction* cfunc;
   } imm;
 
   location source;
@@ -377,10 +377,10 @@ block gen_cond(block cond, block iftrue, block iffalse) {
                               BLOCK(gen_op_simple(POP), iffalse)));
 }
 
-block gen_cbinding(struct symbol_table* t, block code) {
-  for (int cfunc=0; cfunc<t->ncfunctions; cfunc++) {
+block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block code) {
+  for (int cfunc=0; cfunc<ncfunctions; cfunc++) {
     inst* i = inst_new(CLOSURE_CREATE_C);
-    i->imm.cfunc = &t->cfunctions[cfunc];
+    i->imm.cfunc = &cfunctions[cfunc];
     i->symbol = strdup(i->imm.cfunc->name);
     code = block_bind(inst_block(i), code, OP_IS_CALL_PSEUDO);
   }
