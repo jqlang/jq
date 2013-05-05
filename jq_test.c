@@ -53,11 +53,9 @@ static void run_jq_tests() {
     tests++;
     struct bytecode* bc = jq_compile(buf);
     if (!bc) {invalid++; continue;}
-#if JQ_DEBUG
     printf("Disassembly:\n");
     dump_disassembly(2, bc);
     printf("\n");
-#endif
     fgets(buf, sizeof(buf), testdata);
     jv input = jv_parse(buf);
     if (!jv_is_valid(input)){ invalid++; continue; }

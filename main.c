@@ -57,6 +57,9 @@ enum {
   NO_COLOUR_OUTPUT = 128,
 
   FROM_FILE = 256,
+
+  /* debugging only */
+  DUMP_DISASM = 2048,
 };
 static int options = 0;
 static struct bytecode* bc;
@@ -180,6 +183,8 @@ int main(int argc, char* argv[]) {
       options |= PROVIDE_NULL;
     } else if (isoption(argv[i], 'f', "from-file")) {
       options |= FROM_FILE;
+    } else if (isoption(argv[i],  0,  "debug-dump-disasm")) {
+      options |= DUMP_DISASM;
     } else if (isoption(argv[i], 'h', "help")) {
       usage();
     } else if (isoption(argv[i], 'V', "version")) {
@@ -213,10 +218,10 @@ int main(int argc, char* argv[]) {
   }
   if (!bc) return 1;
 
-#if JQ_DEBUG
-  dump_disassembly(0, bc);
-  printf("\n");
-#endif
+  if (options & DUMP_DISASM) {
+    dump_disassembly(0, bc);
+    printf("\n");
+  }
 
   if (options & PROVIDE_NULL) {
     process(jv_null());
