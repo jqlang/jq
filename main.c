@@ -64,9 +64,9 @@ enum {
 static int options = 0;
 static struct bytecode* bc;
 
-static void process(jv value) {
+static void process(jv value, int flags) {
   jq_state *jq = NULL;
-  jq_init(bc, value, &jq);
+  jq_init(bc, value, &jq, flags);
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
@@ -153,6 +153,7 @@ int main(int argc, char* argv[]) {
   input_filenames = jv_mem_alloc(sizeof(const char*) * argc);
   ninput_files = 0;
   int further_args_are_files = 0;
+  int jq_flags = 0;
   for (int i=1; i<argc; i++) {
     if (further_args_are_files) {
       input_filenames[ninput_files++] = argv[i];
@@ -185,6 +186,8 @@ int main(int argc, char* argv[]) {
       options |= FROM_FILE;
     } else if (isoption(argv[i],  0,  "debug-dump-disasm")) {
       options |= DUMP_DISASM;
+    } else if (isoption(argv[i],  0,  "debug-trace")) {
+      jq_flags |= JQ_DEBUG_TRACE;
     } else if (isoption(argv[i], 'h', "help")) {
       usage();
     } else if (isoption(argv[i], 'V', "version")) {
@@ -224,7 +227,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (options & PROVIDE_NULL) {
-    process(jv_null());
+    process(jv_null(), jq_flags);
   } else {
     jv slurped;
     if (options & SLURP) {
@@ -245,7 +248,7 @@ int main(int argc, char* argv[]) {
             slurped = jv_string_concat(slurped, jv_string(buf));
           } else {
             if (buf[len-1] == '\n') buf[len-1] = 0;
-            process(jv_string(buf));
+            process(jv_string(buf), jq_flags);
           }
         }
       } else {
@@ -255,7 +258,7 @@ int main(int argc, char* argv[]) {
           if (options & SLURP) {
             slurped = jv_array_append(slurped, value);
           } else {
-            process(value);
+            process(value, jq_flags);
           }
         }
         if (jv_invalid_has_msg(jv_copy(value))) {
@@ -270,7 +273,7 @@ int main(int argc, char* argv[]) {
     }
     jv_parser_free(&parser);
     if (options & SLURP) {
-      process(slurped);
+      process(slurped, jq_flags);
     }
   }
   jv_mem_free(input_filenames);

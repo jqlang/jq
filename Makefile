@@ -26,19 +26,15 @@ main.c: version.gen.h
 
 JQ_SRC=parser.gen.c lexer.gen.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_alloc.c
 
-jq_test: CFLAGS += -DJQ_DEBUG=1
-jq_test: $(JQ_SRC) main.c jq_test.c
-	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) -o $@ $^
 
-jq: CFLAGS += -O -DJQ_DEBUG=0
 jq: $(JQ_SRC) main.c jq_test.c
 	$(CC) $(CFLAGS) $(CFLAGS_OPT) -o $@ $^
 
-test: jq_test
-	valgrind --error-exitcode=1 -q --leak-check=full ./jq_test --run-tests >/dev/null
+test: jq
+	valgrind --error-exitcode=1 -q --leak-check=full ./jq --run-tests >/dev/null
 
 LIBRARIES=libjq
-BINARIES=jq jq_test
+BINARIES=jq
 PLATFORMS=linux32 linux64 osx32 osx64 win32 win64
 
 build/linux32%: CC='x86_64-linux-gnu-gcc -m32'

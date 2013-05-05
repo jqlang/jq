@@ -3,12 +3,12 @@
 
 #include <stddef.h>
 
-#if JQ_DEBUG
+#ifndef NDEBUG
 extern volatile char jv_mem_uninitialised;
 #endif
 
 static void jv_mem_invalidate(void* mem, size_t n) {
-#if JQ_DEBUG
+#ifndef NDEBUG
   char* m = mem;
   while (n--) *m++ ^= jv_mem_uninitialised ^ jv_mem_uninitialised;
 #endif

@@ -29,6 +29,7 @@ struct jq_state {
   struct forkable_stack fork_stk;
   jv* pathbuf;
   int pathsize; // number of allocated elements
+  int debug_trace_enabled;
 };
 
 int path_push(jq_state *jq, stackval sv, jv val) {
@@ -162,29 +163,29 @@ jv jq_next(jq_state *jq) {
   while (1) {
     uint16_t opcode = *pc;
 
-#if JQ_DEBUG
-    dump_operation(frame_current_bytecode(&jq->frame_stk), pc);
-    printf("\t");
-    const struct opcode_description* opdesc = opcode_describe(opcode);
-    data_stk_elem* param;
-    int stack_in = opdesc->stack_in;
-    if (stack_in == -1) stack_in = pc[1];
-    for (int i=0; i<stack_in; i++) {
-      if (i == 0) {
-        param = forkable_stack_peek(&jq->data_stk);
-      } else {
-        printf(" | ");
-        param = forkable_stack_peek_next(&jq->data_stk, param);
+    if (jq->debug_trace_enabled) {
+      dump_operation(frame_current_bytecode(&jq->frame_stk), pc);
+      printf("\t");
+      const struct opcode_description* opdesc = opcode_describe(opcode);
+      data_stk_elem* param;
+      int stack_in = opdesc->stack_in;
+      if (stack_in == -1) stack_in = pc[1];
+      for (int i=0; i<stack_in; i++) {
+        if (i == 0) {
+          param = forkable_stack_peek(&jq->data_stk);
+        } else {
+          printf(" | ");
+          param = forkable_stack_peek_next(&jq->data_stk, param);
+        }
+        if (!param) break;
+        jv_dump(jv_copy(param->sv.value), 0);
+        printf("<%d>", jv_get_refcnt(param->sv.value));
       }
-      if (!param) break;
-      jv_dump(jv_copy(param->sv.value), 0);
-      printf("<%d>", jv_get_refcnt(param->sv.value));
+
+      if (backtracking) printf("\t<backtracking>");
+
+      printf("\n");
     }
-
-    if (backtracking) printf("\t<backtracking>");
-
-    printf("\n");
-#endif
     if (backtracking) {
       opcode = ON_BACKTRACK(opcode);
       backtracking = 0;
@@ -265,11 +266,11 @@ jv jq_next(jq_state *jq) {
       uint16_t v = *pc++;
       frame_ptr fp = frame_get_level(&jq->frame_stk, frame_current(&jq->frame_stk), level);
       jv* var = frame_local_var(fp, v);
-      #if JQ_DEBUG
-      printf("V%d = ", v);
-      jv_dump(jv_copy(*var), 0);
-      printf("\n");
-      #endif
+      if (jq->debug_trace_enabled) {
+        printf("V%d = ", v);
+        jv_dump(jv_copy(*var), 0);
+        printf("\n");
+      }
       stack_push(jq, stackval_replace(stack_pop(jq), jv_copy(*var)));
       break;
     }
@@ -280,11 +281,11 @@ jv jq_next(jq_state *jq) {
       frame_ptr fp = frame_get_level(&jq->frame_stk, frame_current(&jq->frame_stk), level);
       jv* var = frame_local_var(fp, v);
       stackval val = stack_pop(jq);
-      #if JQ_DEBUG
-      printf("V%d = ", v);
-      jv_dump(jv_copy(val.value), 0);
-      printf("\n");
-      #endif
+      if (jq->debug_trace_enabled) {
+        printf("V%d = ", v);
+        jv_dump(jv_copy(val.value), 0);
+        printf("\n");
+      }
       jv_free(*var);
       *var = val.value;
       break;
@@ -463,7 +464,7 @@ jv jq_next(jq_state *jq) {
 }
 
 
-void jq_init(struct bytecode* bc, jv input, jq_state **jq) {
+void jq_init(struct bytecode* bc, jv input, jq_state **jq, int flags) {
   jq_state *new_jq;
   new_jq = jv_mem_alloc(sizeof(*new_jq));
   memset(new_jq, 0, sizeof(*new_jq));
@@ -475,6 +476,11 @@ void jq_init(struct bytecode* bc, jv input, jq_state **jq) {
   struct closure top = {bc, -1};
   frame_push(&new_jq->frame_stk, top, 0);
   frame_push_backtrack(&new_jq->frame_stk, bc->code);
+  if (flags & JQ_DEBUG_TRACE) {
+    new_jq->debug_trace_enabled = 1;
+  } else {
+    new_jq->debug_trace_enabled = 0;
+  }
   *jq = new_jq;
 }
 

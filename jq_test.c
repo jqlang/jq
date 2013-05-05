@@ -59,7 +59,7 @@ static void run_jq_tests() {
     fgets(buf, sizeof(buf), testdata);
     jv input = jv_parse(buf);
     if (!jv_is_valid(input)){ invalid++; continue; }
-    jq_init(bc, input, &jq);
+    jq_init(bc, input, &jq, JQ_DEBUG_TRACE);
 
     while (fgets(buf, sizeof(buf), testdata)) {
       if (skipline(buf)) break;
