@@ -10,7 +10,7 @@ static void run_jq_tests();
 
 FILE* testdata;
 
-int main(int argc, char* argv[]) {
+int jq_testsuite(int argc, char* argv[]) {
   jv_test();
   if (argc == 1) {
     testdata = fopen("testdata", "r");
@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
   }
   run_jq_tests();
   if (testdata != stdin) fclose(testdata);
+  return 0;
 }
 
 

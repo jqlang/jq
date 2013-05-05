@@ -11,6 +11,8 @@
 #include "jv_alloc.h"
 #include "version.gen.h"
 
+int jq_testsuite(int argc, char* argv[]);
+
 static const char* progname;
 
 static void usage() {
@@ -139,6 +141,10 @@ static int read_more(char* buf, size_t size) {
 
 int main(int argc, char* argv[]) {
   if (argc) progname = argv[0];
+
+  if (argc > 1 && !strcmp(argv[1], "--run-tests")) {
+    return jq_testsuite(argc - 1, argv + 1);
+  }
 
   const char* program = 0;
   input_filenames = jv_mem_alloc(sizeof(const char*) * argc);
