@@ -480,6 +480,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)jv_setpath, "setpath", 3}, // FIXME typechecking
   {(cfunction_ptr)jv_getpath, "getpath", 2},
   {(cfunction_ptr)jv_delpaths, "delpaths", 2},
+  {(cfunction_ptr)jv_has, "has", 2},
   {(cfunction_ptr)f_equal, "_equal", 3},
   {(cfunction_ptr)f_notequal, "_notequal", 3},
   {(cfunction_ptr)f_less, "_less", 3},

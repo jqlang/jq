@@ -60,6 +60,34 @@ jv jv_set(jv t, jv k, jv v) {
   return t;
 }
 
+jv jv_has(jv t, jv k) {
+  assert(jv_is_valid(t));
+  assert(jv_is_valid(k));
+  jv ret;
+  if (jv_get_kind(t) == JV_KIND_NULL) {
+    jv_free(t);
+    jv_free(k);
+    ret = jv_false();
+  } else if (jv_get_kind(t) == JV_KIND_OBJECT &&
+             jv_get_kind(k) == JV_KIND_STRING) {
+    jv elem = jv_object_get(t, k);
+    ret = jv_bool(jv_is_valid(elem));
+    jv_free(elem);
+  } else if (jv_get_kind(t) == JV_KIND_ARRAY &&
+             jv_get_kind(k) == JV_KIND_NUMBER) {
+    jv elem = jv_array_get(t, (int)jv_number_value(k));
+    ret = jv_bool(jv_is_valid(elem));
+    jv_free(elem);
+  } else {
+    ret = jv_invalid_with_msg(jv_string_fmt("Cannot check whether %s has a %s key",
+                                            jv_kind_name(jv_get_kind(t)),
+                                            jv_kind_name(jv_get_kind(k))));
+    jv_free(t);
+    jv_free(k);
+  }
+  return ret;
+}
+
 // assumes keys is a sorted array
 jv jv_dels(jv t, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);

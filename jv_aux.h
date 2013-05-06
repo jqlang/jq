@@ -5,6 +5,7 @@
 
 jv jv_get(jv t, jv k);
 jv jv_set(jv t, jv k, jv v);
+jv jv_has(jv t, jv k);
 jv jv_setpath(jv root, jv path, jv value);
 jv jv_getpath(jv root, jv path);
 jv jv_delpaths(jv root, jv paths);

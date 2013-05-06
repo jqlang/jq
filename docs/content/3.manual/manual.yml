@@ -453,6 +453,25 @@ sections:
             input: '[42,3,35]'
             output: ['[0,1,2]']
 
+      - title: `has`
+        body: |
+          
+          The builtin function `has` returns whether the input object
+          has the given key, or the input array has an element at the
+          given index.
+
+          `has($key)` has the same effect as checking whether `$key`
+          is a member of the array returned by `keys`, although `has`
+          will be faster.
+
+        examples:
+          - program: 'map(has("foo"))'
+            input: '[{"foo": 42}, {}]'
+            output: ['[true, false]']
+          - program: 'map(has(2))'
+            input: '[[0,1], ["a","b","c"]]'
+            output: ['[false, true]']
+
       - title: `select`
         body: |
           
