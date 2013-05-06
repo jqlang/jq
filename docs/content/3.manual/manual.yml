@@ -181,6 +181,9 @@ sections:
           numbers as three separate results, rather than as a single
           array.
 
+          You can also use this on an object, and it will return all
+          the values of the object.
+
         examples:
           - program: '.[]'
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
@@ -191,6 +194,10 @@ sections:
           - program: '.[]'
             input: '[]'
             output: []
+
+          - program: '.[]'
+            input: '{"a": 1, "b": 2}'
+            output: ['[1, 2]']
 
       - title: "`,`"
         body: |
