@@ -1,0 +1,5 @@
+jq (1.2-1) UNRELEASED; urgency=low
+
+  * Initial release.
+
+ -- Pierre Carrier <pierre.carrier@airbnb.com>  Thu, 21 Mar 2013 23:08:06 +0000
