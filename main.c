@@ -92,18 +92,32 @@ static void process(jv value, int flags) {
   jq_teardown(&jq);
 }
 
-static jv slurp_file(const char* filename) {
+static jv slurp_file(const char* filename, int raw) {
   FILE* file = fopen(filename, "r");
+  struct jv_parser parser;
+  jv data;
   if (!file) {
     return jv_invalid_with_msg(jv_string_fmt("Could not open %s: %s",
                                              filename,
                                              strerror(errno)));
   }
-  jv data = jv_string("");
+  if (raw) {
+    data = jv_string("");
+  } else {
+    data = jv_array();
+    jv_parser_init(&parser);
+  }
   while (!feof(file) && !ferror(file)) {
     char buf[4096];
     size_t n = fread(buf, 1, sizeof(buf), file);
-    data = jv_string_concat(data, jv_string_sized(buf, (int)n));
+    if (raw) {
+      data = jv_string_concat(data, jv_string_sized(buf, (int)n));
+    } else {
+      jv_parser_set_buf(&parser, buf, strlen(buf), !feof(file));
+      jv value;
+      while (jv_is_valid((value = jv_parser_next(&parser))))
+        data = jv_array_append(data, value);
+    }
   }
   int badread = ferror(file);
   fclose(file);
@@ -197,6 +211,26 @@ int main(int argc, char* argv[]) {
       arg = jv_object_set(arg, jv_string("value"), jv_string(argv[i+2]));
       program_arguments = jv_array_append(program_arguments, arg);
       i += 2; // skip the next two arguments
+    } else if (isoption(argv[i], 0, "argfile")) {
+      if (i >= argc - 2) {
+        fprintf(stderr, "%s: --argfile takes two parameters (e.g. -a varname filename)\n", progname);
+        die();
+      }
+      jv arg = jv_object();
+      arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
+      jv data = slurp_file(argv[i+2], 0);
+      if (!jv_is_valid(data)) {
+        data = jv_invalid_get_msg(data);
+        fprintf(stderr, "%s: Bad JSON in --argfile %s %s: %s\n", progname,
+                argv[i+1], argv[i+2], jv_string_value(data));
+        jv_free(data);
+        return 1;
+      }
+      if (jv_array_length(data) == 1)
+          data = jv_array_get(data, 0);
+      arg = jv_object_set(arg, jv_string("value"), data);
+      program_arguments = jv_array_append(program_arguments, arg);
+      i += 2; // skip the next two arguments
     } else if (isoption(argv[i],  0,  "debug-dump-disasm")) {
       options |= DUMP_DISASM;
     } else if (isoption(argv[i],  0,  "debug-trace")) {
@@ -220,7 +254,7 @@ int main(int argc, char* argv[]) {
   }
   
   if (options & FROM_FILE) {
-    jv data = slurp_file(program);
+    jv data = slurp_file(program, 1);
     if (!jv_is_valid(data)) {
       data = jv_invalid_get_msg(data);
       fprintf(stderr, "%s: %s\n", progname, jv_string_value(data));
