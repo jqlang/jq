@@ -121,6 +121,12 @@ sections:
         formatted as a JSON string with quotes. This can be useful for
         making jq filters talk to non-JSON-based systems.
 
+      * `--arg name value`:
+
+        This option passes a value to the jq program as a predefined
+        variable. If you run jq with `--arg foo bar`, then `$foo` is
+        available in the program and has the value `"bar"`.
+
   - title: Basic filters
     entries:
       - title: "`.`"

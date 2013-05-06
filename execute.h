@@ -3,7 +3,11 @@
 #include "bytecode.h"
 
 
+
 struct bytecode* jq_compile(const char* str);
+
+/* args must be an array of the form [{name:"foo", value:"thing"}, {name:"bar",value:3}] */
+struct bytecode* jq_compile_args(const char* str, jv args);
 
 typedef struct jq_state jq_state;
 enum {JQ_DEBUG_TRACE = 1};

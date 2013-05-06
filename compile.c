@@ -371,6 +371,12 @@ block gen_or(block a, block b) {
                                                    gen_const(jv_false())))));
 }
 
+block gen_var_binding(block var, const char* name, block body) {
+  return BLOCK(gen_op_simple(DUP), var,
+               block_bind(gen_op_var_unbound(STOREV, name),
+                          body, OP_HAS_VARIABLE));
+}
+
 block gen_cond(block cond, block iftrue, block iffalse) {
   return BLOCK(gen_op_simple(DUP), cond, 
                gen_condbranch(BLOCK(gen_op_simple(POP), iftrue),

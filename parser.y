@@ -201,9 +201,7 @@ FuncDef Exp %prec ';' {
 } |
 
 Term "as" '$' IDENT '|' Exp {
-  $$ = BLOCK(gen_op_simple(DUP), $1, 
-             block_bind(gen_op_var_unbound(STOREV, jv_string_value($4)), 
-                        $6, OP_HAS_VARIABLE));
+  $$ = gen_var_binding($1, jv_string_value($4), $6);
   jv_free($4);
 } |
 

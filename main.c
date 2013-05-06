@@ -154,6 +154,7 @@ int main(int argc, char* argv[]) {
   ninput_files = 0;
   int further_args_are_files = 0;
   int jq_flags = 0;
+  jv program_arguments = jv_array();
   for (int i=1; i<argc; i++) {
     if (further_args_are_files) {
       input_filenames[ninput_files++] = argv[i];
@@ -184,6 +185,16 @@ int main(int argc, char* argv[]) {
       options |= PROVIDE_NULL;
     } else if (isoption(argv[i], 'f', "from-file")) {
       options |= FROM_FILE;
+    } else if (isoption(argv[i], 0, "arg")) {
+      if (i >= argc - 2) {
+        fprintf(stderr, "%s: --arg takes two parameters (e.g. -a varname value)\n", progname);
+        die();
+      }
+      jv arg = jv_object();
+      arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
+      arg = jv_object_set(arg, jv_string("value"), jv_string(argv[i+2]));
+      program_arguments = jv_array_append(program_arguments, arg);
+      i += 2; // skip the next two arguments
     } else if (isoption(argv[i],  0,  "debug-dump-disasm")) {
       options |= DUMP_DISASM;
     } else if (isoption(argv[i],  0,  "debug-trace")) {
@@ -214,10 +225,10 @@ int main(int argc, char* argv[]) {
       jv_free(data);
       return 1;
     }
-    bc = jq_compile(jv_string_value(data));
+    bc = jq_compile_args(jv_string_value(data), program_arguments);
     jv_free(data);
   } else {
-    bc = jq_compile(program);
+    bc = jq_compile_args(program, program_arguments);
   }
   if (!bc) return 1;
 

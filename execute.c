@@ -506,13 +506,22 @@ void jq_teardown(jq_state **jq) {
   jv_mem_free(old_jq);
 }
 
-struct bytecode* jq_compile(const char* str) {
+struct bytecode* jq_compile_args(const char* str, jv args) {
+  assert(jv_get_kind(args) == JV_KIND_ARRAY);
   struct locfile locations;
   locfile_init(&locations, str, strlen(str));
   block program;
   struct bytecode* bc = 0;
   int nerrors = jq_parse(&locations, &program);
   if (nerrors == 0) {
+    for (int i=0; i<jv_array_length(jv_copy(args)); i++) {
+      jv arg = jv_array_get(jv_copy(args), i);
+      jv name = jv_object_get(jv_copy(arg), jv_string("name"));
+      jv value = jv_object_get(arg, jv_string("value"));
+      program = gen_var_binding(gen_const(value), jv_string_value(name), program);
+      jv_free(name);
+    }
+    jv_free(args);
     program = builtins_bind(program);
     nerrors = block_compile(program, &locations, &bc);
   }
@@ -521,4 +530,8 @@ struct bytecode* jq_compile(const char* str) {
   }
   locfile_free(&locations);
   return bc;
+}
+
+struct bytecode* jq_compile(const char* str) {
+  return jq_compile_args(str, jv_array());
 }
