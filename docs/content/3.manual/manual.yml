@@ -537,6 +537,18 @@ sections:
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
 
+      - title: `type`
+        body: |
+          
+          The `type` function returns the type of its argument as a
+          string, which is one of null, boolean, number, string, array
+          or object.
+
+        examples:
+          - program: 'map(type)'
+            input: '[0, false, [], {}, null, "hello"]'
+            output: ['["number", "boolean", "array", "object", "null", "string"]']
+
       - title: `sort, sort_by`
         body: |
           
