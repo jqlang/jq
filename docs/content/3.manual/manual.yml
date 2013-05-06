@@ -972,10 +972,11 @@ sections:
           
               .realnames as $names | .posts[] | {title, author: $names[.author]}
           
-          The expression "foo as $x" runs foo, puts the result in $x,
-          and returns the original input. Apart from the side-effect
-          of binding the variable, it has the same effect as ".".
-          
+          The expression `exp as $x | ...` means: for each value of expression
+          `exp`, run the rest of the pipeline with the entire original input, and
+          with `$x` set to that value.  Thus `as` functions as something of a 
+          foreach loop.
+
           Variables are scoped over the rest of the expression that defines
           them, so 
           
