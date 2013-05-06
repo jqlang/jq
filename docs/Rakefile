@@ -47,7 +47,7 @@ task :serve do
         run Bonsai::DevelopmentServer
       }
       Rack::Handler.default.run(app, :Port => 5000) do
-        Launchy.open("http://localhost:5000/jq")
+        Launchy.open("http://localhost:5000/jq/")
       end
     }    
     Watch.new("{content,templates,public}/**/*") { Bonsai::Exporter.process! }
