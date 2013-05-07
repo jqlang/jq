@@ -8,15 +8,15 @@
 #include "jv.h"
 #include "jv_parse.h"
 #include "execute.h"
+#include "config.h"  /* Autoconf generated header file */
 #include "jv_alloc.h"
-#include "version.gen.h"
 
 int jq_testsuite(int argc, char* argv[]);
 
 static const char* progname;
 
 static void usage() {
-  fprintf(stderr, "\njq - commandline JSON processor [version %s]\n", JQ_VERSION);
+  fprintf(stderr, "\njq - commandline JSON processor [version %s]\n", PACKAGE_VERSION);
   fprintf(stderr, "Usage: %s [options] <jq filter> [file...]\n\n", progname);
   fprintf(stderr, "For a description of the command line options and\n");
   fprintf(stderr, "how to write jq filters (and why you might want to)\n");
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
     } else if (isoption(argv[i], 'h', "help")) {
       usage();
     } else if (isoption(argv[i], 'V', "version")) {
-      fprintf(stderr, "jq version %s\n", JQ_VERSION);
+      fprintf(stderr, "jq version %s\n", PACKAGE_VERSION);
       return 0;
     } else {
       fprintf(stderr, "%s: Unknown option %s\n", progname, argv[i]);

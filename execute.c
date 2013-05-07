@@ -12,6 +12,7 @@
 #include "frame_layout.h"
 
 #include "jv_alloc.h"
+#include "jq_parser.h"
 #include "locfile.h"
 #include "jv.h"
 #include "jv_aux.h"
