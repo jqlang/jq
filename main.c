@@ -74,8 +74,10 @@ static void process(jv value, int flags) {
       jv_free(result);
     } else {
       int dumpopts;
-#ifdef JQ_DEFAULT_ENABLE_COLOR
-      dumpopts = JQ_DEFAULT_ENABLE_COLOR ? JV_PRINT_COLOUR : 0;
+      /* Disable colour by default on Windows builds as Windows
+         terminals tend not to display it correctly */
+#ifdef WIN32
+      dumpopts = 0;
 #else
       dumpopts = isatty(fileno(stdout)) ? JV_PRINT_COLOUR : 0;
 #endif

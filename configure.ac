@@ -45,4 +45,3 @@ AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
 
-dnl FIXME should disable colour output on windows somehow
