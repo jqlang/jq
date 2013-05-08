@@ -20,7 +20,7 @@ AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
 
 # While there is some autoconf macro support for lex/flex, it doesn't support
 # header file creation so we'll use good old make
-BUILT_SOURCES = lexer.h lexer.c
+BUILT_SOURCES = lexer.h lexer.c parser.h parser.c
 lexer.c: lexer.l
 	flex -o lexer.c --header-file=lexer.h lexer.l
 lexer.h: lexer.c
