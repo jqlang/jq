@@ -13,20 +13,20 @@
  * Internal refcounting helpers
  */
 
-static void jvp_refcnt_init(jv_complex* c) {
+static void jvp_refcnt_init(jv_nontrivial* c) {
   c->ptr->count = 1;
 }
 
-static void jvp_refcnt_inc(jv_complex* c) {
+static void jvp_refcnt_inc(jv_nontrivial* c) {
   c->ptr->count++;
 }
 
-static int jvp_refcnt_dec(jv_complex* c) {
+static int jvp_refcnt_dec(jv_nontrivial* c) {
   c->ptr->count--;
   return c->ptr->count == 0;
 }
 
-static int jvp_refcnt_unshared(jv_complex* c) {
+static int jvp_refcnt_unshared(jv_nontrivial* c) {
   assert(c->ptr->count > 0);
   return c->ptr->count == 1;
 }
@@ -86,9 +86,9 @@ typedef struct {
 jv jv_invalid_with_msg(jv err) {
   jv x;
   x.kind = JV_KIND_INVALID;
-  x.val.complex.i[0] = x.val.complex.i[1] = 0;
+  x.val.nontrivial.i[0] = x.val.nontrivial.i[1] = 0;
   jvp_invalid* i = jv_mem_alloc(sizeof(jvp_invalid));
-  x.val.complex.ptr = &i->refcnt;
+  x.val.nontrivial.ptr = &i->refcnt;
   i->refcnt.count = 1;
   i->errmsg = err;
   return x;
@@ -99,7 +99,7 @@ jv jv_invalid() {
 }
 
 jv jv_invalid_get_msg(jv inv) {
-  jv x = jv_copy(((jvp_invalid*)inv.val.complex.ptr)->errmsg);
+  jv x = jv_copy(((jvp_invalid*)inv.val.nontrivial.ptr)->errmsg);
   jv_free(inv);
   return x;
 }
@@ -111,7 +111,7 @@ int jv_invalid_has_msg(jv inv) {
   return r;
 }
 
-static void jvp_invalid_free(jv_complex* x) {
+static void jvp_invalid_free(jv_nontrivial* x) {
   if (jvp_refcnt_dec(x)) {
     jv_free(((jvp_invalid*)x->ptr)->errmsg);
     jv_mem_free(x->ptr);
@@ -153,7 +153,7 @@ typedef struct {
   jv elements[];
 } jvp_array;
 
-static jvp_array* jvp_array_ptr(jv_complex* a) {
+static jvp_array* jvp_array_ptr(jv_nontrivial* a) {
   return (jvp_array*)a->ptr;
 }
 
@@ -165,12 +165,12 @@ static jvp_array* jvp_array_alloc(unsigned size) {
   return a;
 }
 
-static jv_complex jvp_array_new(unsigned size) {
-  jv_complex r = {&jvp_array_alloc(size)->refcnt, {0, 0}};
+static jv_nontrivial jvp_array_new(unsigned size) {
+  jv_nontrivial r = {&jvp_array_alloc(size)->refcnt, {0, 0}};
   return r;
 }
 
-static void jvp_array_free(jv_complex* a) {
+static void jvp_array_free(jv_nontrivial* a) {
   if (jvp_refcnt_dec(a)) {
     jvp_array* array = jvp_array_ptr(a);
     for (int i=0; i<array->length; i++) {
@@ -180,11 +180,11 @@ static void jvp_array_free(jv_complex* a) {
   }
 }
 
-static int jvp_array_length(jv_complex* a) {
+static int jvp_array_length(jv_nontrivial* a) {
   return a->i[1] - a->i[0];
 }
 
-static jv* jvp_array_read(jv_complex* a, int i) {
+static jv* jvp_array_read(jv_nontrivial* a, int i) {
   if (i >= 0 && i < jvp_array_length(a)) {
     jvp_array* array = jvp_array_ptr(a);
     assert(i + a->i[0] < array->length);
@@ -194,7 +194,7 @@ static jv* jvp_array_read(jv_complex* a, int i) {
   }
 }
 
-static jv* jvp_array_write(jv_complex* a, int i) {
+static jv* jvp_array_write(jv_nontrivial* a, int i) {
   assert(i >= 0);
   jvp_array* array = jvp_array_ptr(a);
 
@@ -237,7 +237,7 @@ static jv* jvp_array_write(jv_complex* a, int i) {
   return &new_array->elements[i];
 }
 
-static int jvp_array_equal(jv_complex* a, jv_complex* b) {
+static int jvp_array_equal(jv_nontrivial* a, jv_nontrivial* b) {
   if (jvp_array_length(a) != jvp_array_length(b)) 
     return 0;
   if (jvp_array_ptr(a) == jvp_array_ptr(b) &&
@@ -251,11 +251,11 @@ static int jvp_array_equal(jv_complex* a, jv_complex* b) {
   return 1;
 }
 
-static jv_complex jvp_array_slice(jv_complex* a, int start, int end) {
+static jv_nontrivial jvp_array_slice(jv_nontrivial* a, int start, int end) {
   // FIXME: maybe slice should reallocate if the slice is small enough
   assert(start <= end);
   assert(a->i[0] + end <= a->i[1]);
-  jv_complex slice = *a;
+  jv_nontrivial slice = *a;
   slice.i[0] += start;
   slice.i[1] = slice.i[0] + (end - start);
   return slice;
@@ -268,7 +268,7 @@ static jv_complex jvp_array_slice(jv_complex* a, int start, int end) {
 jv jv_array_sized(int n) {
   jv j;
   j.kind = JV_KIND_ARRAY;
-  j.val.complex = jvp_array_new(n);
+  j.val.nontrivial = jvp_array_new(n);
   return j;
 }
 
@@ -278,14 +278,14 @@ jv jv_array() {
 
 int jv_array_length(jv j) {
   assert(jv_get_kind(j) == JV_KIND_ARRAY);
-  int len = jvp_array_length(&j.val.complex);
+  int len = jvp_array_length(&j.val.nontrivial);
   jv_free(j);
   return len;
 }
 
 jv jv_array_get(jv j, int idx) {
   assert(jv_get_kind(j) == JV_KIND_ARRAY);
-  jv* slot = jvp_array_read(&j.val.complex, idx);
+  jv* slot = jvp_array_read(&j.val.nontrivial, idx);
   jv val;
   if (slot) {
     val = jv_copy(*slot);
@@ -299,7 +299,7 @@ jv jv_array_get(jv j, int idx) {
 jv jv_array_set(jv j, int idx, jv val) {
   assert(jv_get_kind(j) == JV_KIND_ARRAY);
   // copy/free of val,j coalesced
-  jv* slot = jvp_array_write(&j.val.complex, idx);
+  jv* slot = jvp_array_write(&j.val.nontrivial, idx);
   jv_free(*slot);
   *slot = val;
   return j;
@@ -325,7 +325,7 @@ jv jv_array_concat(jv a, jv b) {
 jv jv_array_slice(jv a, int start, int end) {
   assert(jv_get_kind(a) == JV_KIND_ARRAY);
   // copy/free of a coalesced
-  a.val.complex = jvp_array_slice(&a.val.complex, start, end);
+  a.val.nontrivial = jvp_array_slice(&a.val.nontrivial, start, end);
   return a;
 }
 
@@ -365,7 +365,7 @@ typedef struct {
   char data[];
 } jvp_string;
 
-static jvp_string* jvp_string_ptr(jv_complex* a) {
+static jvp_string* jvp_string_ptr(jv_nontrivial* a) {
   return (jvp_string*)a->ptr;
 }
 
@@ -376,16 +376,16 @@ static jvp_string* jvp_string_alloc(uint32_t size) {
   return s;
 }
 
-static jv_complex jvp_string_new(const char* data, uint32_t length) {
+static jv_nontrivial jvp_string_new(const char* data, uint32_t length) {
   jvp_string* s = jvp_string_alloc(length);
   s->length_hashed = length << 1;
   memcpy(s->data, data, length);
   s->data[length] = 0;
-  jv_complex r = {&s->refcnt, {0,0}};
+  jv_nontrivial r = {&s->refcnt, {0,0}};
   return r;
 }
 
-static void jvp_string_free(jv_complex* s) {
+static void jvp_string_free(jv_nontrivial* s) {
   if (jvp_refcnt_dec(s)) {
     jvp_string* str = jvp_string_ptr(s);
     jv_mem_free(str);
@@ -393,12 +393,12 @@ static void jvp_string_free(jv_complex* s) {
 }
 
 static void jvp_string_free_p(jvp_string* s) {
-  jv_complex p = {&s->refcnt,{0,0}};
+  jv_nontrivial p = {&s->refcnt,{0,0}};
   jvp_string_free(&p);
 }
 
 static jvp_string* jvp_string_copy_p(jvp_string* s) {
-  jv_complex p = {&s->refcnt,{0,0}};
+  jv_nontrivial p = {&s->refcnt,{0,0}};
   jvp_refcnt_inc(&p);
   return s;
 }
@@ -413,7 +413,7 @@ static uint32_t jvp_string_remaining_space(jvp_string* s) {
   return r;
 }
 
-static void jvp_string_append(jv_complex* string, const char* data, uint32_t len) {
+static void jvp_string_append(jv_nontrivial* string, const char* data, uint32_t len) {
   jvp_string* s = jvp_string_ptr(string);
   uint32_t currlen = jvp_string_length(s);
     
@@ -433,7 +433,7 @@ static void jvp_string_append(jv_complex* string, const char* data, uint32_t len
     memcpy(news->data + currlen, data, len);
     news->data[currlen + len] = 0;
     jvp_string_free(string);
-    jv_complex r = {&news->refcnt, {0,0}};
+    jv_nontrivial r = {&news->refcnt, {0,0}};
     *string = r;
   }
 }
@@ -508,7 +508,7 @@ static int jvp_string_equal_hashed(jvp_string* a, jvp_string* b) {
   return memcmp(a->data, b->data, jvp_string_length(a)) == 0;
 }
 
-static int jvp_string_equal(jv_complex* a, jv_complex* b) {
+static int jvp_string_equal(jv_nontrivial* a, jv_nontrivial* b) {
   jvp_string* stra = jvp_string_ptr(a);
   jvp_string* strb = jvp_string_ptr(b);
   if (jvp_string_length(stra) != jvp_string_length(strb)) return 0;
@@ -522,7 +522,7 @@ static int jvp_string_equal(jv_complex* a, jv_complex* b) {
 jv jv_string_sized(const char* str, int len) {
   jv j;
   j.kind = JV_KIND_STRING;
-  j.val.complex = jvp_string_new(str, len);
+  j.val.nontrivial = jvp_string_new(str, len);
   return j;
 }
 
@@ -532,32 +532,32 @@ jv jv_string(const char* str) {
 
 int jv_string_length(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
-  int r = jvp_string_length(jvp_string_ptr(&j.val.complex));
+  int r = jvp_string_length(jvp_string_ptr(&j.val.nontrivial));
   jv_free(j);
   return r;
 }
 
 uint32_t jv_string_hash(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
-  uint32_t hash = jvp_string_hash(jvp_string_ptr(&j.val.complex));
+  uint32_t hash = jvp_string_hash(jvp_string_ptr(&j.val.nontrivial));
   jv_free(j);
   return hash;
 }
 
 const char* jv_string_value(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
-  return jvp_string_ptr(&j.val.complex)->data;
+  return jvp_string_ptr(&j.val.nontrivial)->data;
 }
 
 jv jv_string_concat(jv a, jv b) {
-  jvp_string* sb = jvp_string_ptr(&b.val.complex);
-  jvp_string_append(&a.val.complex, sb->data, jvp_string_length(sb));
+  jvp_string* sb = jvp_string_ptr(&b.val.nontrivial);
+  jvp_string_append(&a.val.nontrivial, sb->data, jvp_string_length(sb));
   jv_free(b);
   return a;
 }
 
 jv jv_string_append_buf(jv a, const char* buf, int len) {
-  jvp_string_append(&a.val.complex, buf, len);
+  jvp_string_append(&a.val.nontrivial, buf, len);
   return a;
 }
 
@@ -602,8 +602,8 @@ typedef struct {
 } jvp_object;
 
 
-/* warning: complex justification of alignment */
-static jv_complex jvp_object_new(int size) {
+/* warning: nontrivial justification of alignment */
+static jv_nontrivial jvp_object_new(int size) {
   // Allocates an object of (size) slots and (size*2) hash buckets.
 
   // size must be a power of two
@@ -620,7 +620,7 @@ static jv_complex jvp_object_new(int size) {
   }
   obj->first_free = size - 1;
   int* hashbuckets = (int*)(&obj->elements[size]);
-  jv_complex r = {&obj->refcnt, 
+  jv_nontrivial r = {&obj->refcnt, 
                   {size*2 - 1, (char*)hashbuckets - (char*)obj}};
   for (int i=0; i<size*2; i++) {
     hashbuckets[i] = -1;
@@ -628,39 +628,39 @@ static jv_complex jvp_object_new(int size) {
   return r;
 }
 
-static jvp_object* jvp_object_ptr(jv_complex* o) {
+static jvp_object* jvp_object_ptr(jv_nontrivial* o) {
   return (jvp_object*)o->ptr;
 }
 
-static uint32_t jvp_object_mask(jv_complex* o) {
+static uint32_t jvp_object_mask(jv_nontrivial* o) {
   return o->i[0];
 }
 
-static int jvp_object_size(jv_complex* o) {
+static int jvp_object_size(jv_nontrivial* o) {
   return (o->i[0] + 1) >> 1;
 }
 
-static int* jvp_object_buckets(jv_complex* o) {
+static int* jvp_object_buckets(jv_nontrivial* o) {
   int* buckets = (int*)((char*)o->ptr + o->i[1]);
   assert(buckets == (int*)&jvp_object_ptr(o)->elements[jvp_object_size(o)]);
   return buckets;
 }
 
-static int* jvp_object_find_bucket(jv_complex* object, jvp_string* key) {
+static int* jvp_object_find_bucket(jv_nontrivial* object, jvp_string* key) {
   return jvp_object_buckets(object) + (jvp_object_mask(object) & jvp_string_hash(key));
 }
 
-static struct object_slot* jvp_object_get_slot(jv_complex* object, int slot) {
+static struct object_slot* jvp_object_get_slot(jv_nontrivial* object, int slot) {
   assert(slot == -1 || (slot >= 0 && slot < jvp_object_size(object)));
   if (slot == -1) return 0;
   else return &jvp_object_ptr(object)->elements[slot];
 }
 
-static struct object_slot* jvp_object_next_slot(jv_complex* object, struct object_slot* slot) {
+static struct object_slot* jvp_object_next_slot(jv_nontrivial* object, struct object_slot* slot) {
   return jvp_object_get_slot(object, slot->next);
 }
 
-static struct object_slot* jvp_object_find_slot(jv_complex* object, jvp_string* keystr, int* bucket) {
+static struct object_slot* jvp_object_find_slot(jv_nontrivial* object, jvp_string* keystr, int* bucket) {
   for (struct object_slot* curr = jvp_object_get_slot(object, *bucket); 
        curr; 
        curr = jvp_object_next_slot(object, curr)) {
@@ -671,7 +671,7 @@ static struct object_slot* jvp_object_find_slot(jv_complex* object, jvp_string* 
   return 0;
 }
 
-static struct object_slot* jvp_object_add_slot(jv_complex* object, jvp_string* key, int* bucket) {
+static struct object_slot* jvp_object_add_slot(jv_nontrivial* object, jvp_string* key, int* bucket) {
   jvp_object* o = jvp_object_ptr(object);
   int newslot_idx = o->first_free;
   struct object_slot* newslot = jvp_object_get_slot(object, newslot_idx);
@@ -684,7 +684,7 @@ static struct object_slot* jvp_object_add_slot(jv_complex* object, jvp_string* k
   return newslot;
 }
 
-static void jvp_object_free_slot(jv_complex* object, struct object_slot* slot) {
+static void jvp_object_free_slot(jv_nontrivial* object, struct object_slot* slot) {
   jvp_object* o = jvp_object_ptr(object);
   slot->next = o->first_free;
   assert(slot->string);
@@ -694,14 +694,14 @@ static void jvp_object_free_slot(jv_complex* object, struct object_slot* slot) {
   o->first_free = slot - jvp_object_get_slot(object, 0);
 }
 
-static jv* jvp_object_read(jv_complex* object, jvp_string* key) {
+static jv* jvp_object_read(jv_nontrivial* object, jvp_string* key) {
   int* bucket = jvp_object_find_bucket(object, key);
   struct object_slot* slot = jvp_object_find_slot(object, key, bucket);
   if (slot == 0) return 0;
   else return &slot->value;
 }
 
-static void jvp_object_free(jv_complex* o) {
+static void jvp_object_free(jv_nontrivial* o) {
   if (jvp_refcnt_dec(o)) {
     for (int i=0; i<jvp_object_size(o); i++) {
       struct object_slot* slot = jvp_object_get_slot(o, i);
@@ -714,10 +714,10 @@ static void jvp_object_free(jv_complex* o) {
   }
 }
 
-static void jvp_object_rehash(jv_complex* object) {
+static void jvp_object_rehash(jv_nontrivial* object) {
   assert(jvp_refcnt_unshared(object));
   int size = jvp_object_size(object);
-  jv_complex new_object = jvp_object_new(size * 2);
+  jv_nontrivial new_object = jvp_object_new(size * 2);
   for (int i=0; i<size; i++) {
     struct object_slot* slot = jvp_object_get_slot(object, i);
     if (!slot->string) continue;
@@ -733,11 +733,11 @@ static void jvp_object_rehash(jv_complex* object) {
   *object = new_object;
 }
 
-static void jvp_object_unshare(jv_complex* object) {
+static void jvp_object_unshare(jv_nontrivial* object) {
   if (jvp_refcnt_unshared(object))
     return;
 
-  jv_complex new_object = jvp_object_new(jvp_object_size(object));
+  jv_nontrivial new_object = jvp_object_new(jvp_object_size(object));
   jvp_object_ptr(&new_object)->first_free = jvp_object_ptr(object)->first_free;
   for (int i=0; i<jvp_object_size(&new_object); i++) {
     struct object_slot* old_slot = jvp_object_get_slot(object, i);
@@ -758,7 +758,7 @@ static void jvp_object_unshare(jv_complex* object) {
   assert(jvp_refcnt_unshared(object));
 }
 
-static jv* jvp_object_write(jv_complex* object, jvp_string* key) {
+static jv* jvp_object_write(jv_nontrivial* object, jvp_string* key) {
   jvp_object_unshare(object);
   int* bucket = jvp_object_find_bucket(object, key);
   struct object_slot* slot = jvp_object_find_slot(object, key, bucket);
@@ -781,7 +781,7 @@ static jv* jvp_object_write(jv_complex* object, jvp_string* key) {
   return &slot->value;
 }
 
-static int jvp_object_delete(jv_complex* object, jvp_string* key) {
+static int jvp_object_delete(jv_nontrivial* object, jvp_string* key) {
   jvp_object_unshare(object);
   int* bucket = jvp_object_find_bucket(object, key);
   int* prev_ptr = bucket;
@@ -798,7 +798,7 @@ static int jvp_object_delete(jv_complex* object, jvp_string* key) {
   return 0;
 }
 
-static int jvp_object_length(jv_complex* object) {
+static int jvp_object_length(jv_nontrivial* object) {
   int n = 0;
   for (int i=0; i<jvp_object_size(object); i++) {
     struct object_slot* slot = jvp_object_get_slot(object, i);
@@ -807,7 +807,7 @@ static int jvp_object_length(jv_complex* object) {
   return n;
 }
 
-static int jvp_object_equal(jv_complex* o1, jv_complex* o2) {
+static int jvp_object_equal(jv_nontrivial* o1, jv_nontrivial* o2) {
   int len2 = jvp_object_length(o2);
   int len1 = 0;
   for (int i=0; i<jvp_object_size(o1); i++) {
@@ -829,14 +829,14 @@ static int jvp_object_equal(jv_complex* o1, jv_complex* o2) {
 jv jv_object() {
   jv j;
   j.kind = JV_KIND_OBJECT;
-  j.val.complex = jvp_object_new(8);
+  j.val.nontrivial = jvp_object_new(8);
   return j;
 }
 
 jv jv_object_get(jv object, jv key) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(jv_get_kind(key) == JV_KIND_STRING);
-  jv* slot = jvp_object_read(&object.val.complex, jvp_string_ptr(&key.val.complex));
+  jv* slot = jvp_object_read(&object.val.nontrivial, jvp_string_ptr(&key.val.nontrivial));
   jv val;
   if (slot) {
     val = jv_copy(*slot);
@@ -852,7 +852,7 @@ jv jv_object_set(jv object, jv key, jv value) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(jv_get_kind(key) == JV_KIND_STRING);
   // copy/free of object, key, value coalesced
-  jv* slot = jvp_object_write(&object.val.complex, jvp_string_ptr(&key.val.complex));
+  jv* slot = jvp_object_write(&object.val.nontrivial, jvp_string_ptr(&key.val.nontrivial));
   jv_free(*slot);
   *slot = value;
   return object;
@@ -861,14 +861,14 @@ jv jv_object_set(jv object, jv key, jv value) {
 jv jv_object_delete(jv object, jv key) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(jv_get_kind(key) == JV_KIND_STRING);
-  jvp_object_delete(&object.val.complex, jvp_string_ptr(&key.val.complex));
+  jvp_object_delete(&object.val.nontrivial, jvp_string_ptr(&key.val.nontrivial));
   jv_free(key);
   return object;
 }
 
 int jv_object_length(jv object) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
-  int n = jvp_object_length(&object.val.complex);
+  int n = jvp_object_length(&object.val.nontrivial);
   jv_free(object);
   return n;
 }
@@ -919,7 +919,7 @@ int jv_object_iter(jv object) {
 int jv_object_iter_next(jv object, int iter) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(iter != ITER_FINISHED);
-  jv_complex* o = &object.val.complex;
+  jv_nontrivial* o = &object.val.nontrivial;
   struct object_slot* slot;
   do {
     iter++;
@@ -931,18 +931,18 @@ int jv_object_iter_next(jv object, int iter) {
 }
 
 jv jv_object_iter_key(jv object, int iter) {
-  jvp_string* s = jvp_object_get_slot(&object.val.complex, iter)->string;
+  jvp_string* s = jvp_object_get_slot(&object.val.nontrivial, iter)->string;
   assert(s);
   jv j;
   j.kind = JV_KIND_STRING;
-  j.val.complex.ptr = &s->refcnt;
-  j.val.complex.i[0] = 0;
-  j.val.complex.i[1] = 0;
+  j.val.nontrivial.ptr = &s->refcnt;
+  j.val.nontrivial.i[0] = 0;
+  j.val.nontrivial.i[1] = 0;
   return jv_copy(j);
 }
 
 jv jv_object_iter_value(jv object, int iter) {
-  return jv_copy(jvp_object_get_slot(&object.val.complex, iter)->value);
+  return jv_copy(jvp_object_get_slot(&object.val.nontrivial, iter)->value);
 }
 
 /*
@@ -953,20 +953,20 @@ jv jv_copy(jv j) {
       jv_get_kind(j) == JV_KIND_STRING || 
       jv_get_kind(j) == JV_KIND_OBJECT ||
       jv_get_kind(j) == JV_KIND_INVALID) {
-    jvp_refcnt_inc(&j.val.complex);
+    jvp_refcnt_inc(&j.val.nontrivial);
   }
   return j;
 }
 
 void jv_free(jv j) {
   if (jv_get_kind(j) == JV_KIND_ARRAY) {
-    jvp_array_free(&j.val.complex);
+    jvp_array_free(&j.val.nontrivial);
   } else if (jv_get_kind(j) == JV_KIND_STRING) {
-    jvp_string_free(&j.val.complex);
+    jvp_string_free(&j.val.nontrivial);
   } else if (jv_get_kind(j) == JV_KIND_OBJECT) {
-    jvp_object_free(&j.val.complex);
+    jvp_object_free(&j.val.nontrivial);
   } else if (jv_get_kind(j) == JV_KIND_INVALID) {
-    jvp_invalid_free(&j.val.complex);
+    jvp_invalid_free(&j.val.nontrivial);
   }
 }
 
@@ -975,7 +975,7 @@ int jv_get_refcnt(jv j) {
   case JV_KIND_ARRAY:
   case JV_KIND_STRING:
   case JV_KIND_OBJECT:
-    return j.val.complex.ptr->count;
+    return j.val.nontrivial.ptr->count;
   default:
     return 1;
   }
@@ -991,20 +991,20 @@ int jv_equal(jv a, jv b) {
     r = 0;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER) {
     r = jv_number_value(a) == jv_number_value(b);
-  } else if (a.val.complex.ptr == b.val.complex.ptr &&
-             a.val.complex.i[0] == b.val.complex.i[0] &&
-             a.val.complex.i[1] == b.val.complex.i[1]) {
+  } else if (a.val.nontrivial.ptr == b.val.nontrivial.ptr &&
+             a.val.nontrivial.i[0] == b.val.nontrivial.i[0] &&
+             a.val.nontrivial.i[1] == b.val.nontrivial.i[1]) {
     r = 1;
   } else {
     switch (jv_get_kind(a)) {
     case JV_KIND_ARRAY:
-      r = jvp_array_equal(&a.val.complex, &b.val.complex);
+      r = jvp_array_equal(&a.val.nontrivial, &b.val.nontrivial);
       break;
     case JV_KIND_STRING:
-      r = jvp_string_equal(&a.val.complex, &b.val.complex);
+      r = jvp_string_equal(&a.val.nontrivial, &b.val.nontrivial);
       break;
     case JV_KIND_OBJECT:
-      r = jvp_object_equal(&a.val.complex, &b.val.complex);
+      r = jvp_object_equal(&a.val.nontrivial, &b.val.nontrivial);
       break;
     default:
       r = 1;

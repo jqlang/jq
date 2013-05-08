@@ -25,13 +25,13 @@ typedef struct {
 typedef struct{
   jv_refcnt* ptr;
   int i[2];
-} jv_complex;
+} jv_nontrivial;
 
 typedef struct {
   jv_kind kind;
   union {
     double number;
-    jv_complex complex;
+    jv_nontrivial nontrivial;
   } val;
 } jv;
 

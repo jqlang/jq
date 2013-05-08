@@ -132,9 +132,9 @@ static void jv_test() {
     jv_free(a2);
 
 
-    assert(a.val.complex.ptr->count == 1);
+    assert(a.val.nontrivial.ptr->count == 1);
     a = jv_array_append(a, jv_copy(a));
-    assert(a.val.complex.ptr->count == 1);
+    assert(a.val.nontrivial.ptr->count == 1);
 
     assert(jv_array_length(jv_copy(a)) == 2);
     assert(jv_number_value(jv_array_get(jv_copy(a), 0)) == 42);
@@ -167,9 +167,9 @@ static void jv_test() {
 
     jv_free(subarray);
 
-    void* before = sub2.val.complex.ptr;
+    void* before = sub2.val.nontrivial.ptr;
     sub2 = jv_array_append(sub2, jv_number(200));
-    void* after = sub2.val.complex.ptr;
+    void* after = sub2.val.nontrivial.ptr;
     assert(before == after);
     jv_free(sub2);
 
