@@ -10,38 +10,10 @@ static void run_jq_tests();
 
 
 int jq_testsuite(int argc, char* argv[]) {
-  FILE* testdata;
   jv_test();
-  if (argc == 1) {
-    testdata = fopen("testdata", "r");
-    if ( NULL == testdata )
-    {
-      /* in an autoconf distcheck, the binary file will be in a _build subdirectory */
-      testdata = fopen("../testdata", "r");
-      if ( NULL == testdata )
-      {
-        fprintf(stderr, "Could not find testdata file\n");
-        exit(1);
-      }
-    }
-
-  } else if (argc == 2) {
-    if (!strcmp(argv[1], "-")) {
-      testdata = stdin;
-    } else {
-      testdata = fopen(argv[1], "r");
-    }
-  } else {
-    printf("usage: %s OR cat testdata | %s - OR %s testdata\n", argv[0], argv[0], argv[0]);
-    return 127;
-  }
-  run_jq_tests(testdata);
-  if (testdata != stdin) fclose(testdata);
+  run_jq_tests(stdin);
   return 0;
 }
-
-
-
 
 static int skipline(const char* buf) {
   int p = 0;
