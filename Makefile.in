@@ -359,7 +359,7 @@ AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
 
 # While there is some autoconf macro support for lex/flex, it doesn't support
 # header file creation so we'll use good old make
-BUILT_SOURCES = lexer.h lexer.c
+BUILT_SOURCES = lexer.h lexer.c parser.h parser.c
 
 # Tell YACC (bison) autoconf macros that you want a header file created.
 # If the --warnings=all fails, you probably have an old version of bison
@@ -372,8 +372,6 @@ jq_SOURCES = ${JQ_SRC} main.c
 # this is what gets "make check" to work
 TESTS = tests/all.test
 TEST_LOG_COMPILER = tests/run
-
-### Packaging
 
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
@@ -1098,6 +1096,12 @@ lexer.h: lexer.c
 ### Building the jq binary
 
 main.c: config.h
+
+### Packaging
+
+docs/site.yml: configure.ac
+	sed 's/^jq_version: .*/jq_version: $(VERSION)/' $@ > $@.new
+	mv $@.new $@
 
 jq.1 :
 	cd ${abs_srcdir}/docs; rake manpage > ${abs_builddir}/$@

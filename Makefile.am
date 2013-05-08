@@ -50,6 +50,10 @@ TEST_LOG_COMPILER = tests/run
 
 ### Packaging
 
+docs/site.yml: configure.ac
+	sed 's/^jq_version: .*/jq_version: $(VERSION)/' $@ > $@.new
+	mv $@.new $@
+
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.

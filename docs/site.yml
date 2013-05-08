@@ -1,7 +1,10 @@
 # The key value pairs found below are available within the templates.
 
 
+# This line is modified by the Makefile. To change the version number,
+# edit the Autoconf version number at the top of configure.ac
 jq_version: 1.2
+
 root: '/jq'
 footer: |
   
