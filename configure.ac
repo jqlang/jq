@@ -4,7 +4,7 @@ AC_INIT([jq], m4_esyscmd([tr -d '\n' <VERSION]), [mu@netsoc.tcd.ie],
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.61])
 AC_CONFIG_AUX_DIR([config])
-AM_INIT_AUTOMAKE([parallel-tests])
+AM_INIT_AUTOMAKE([parallel-tests foreign])
 AM_SILENT_RULES([yes])
 AC_PROG_CC
 AC_PROG_CC_STDC

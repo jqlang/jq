@@ -53,13 +53,13 @@ TEST_LOG_COMPILER = tests/run
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
-EXTRA_DIST = setup.sh config.h.in ChangeLog VERSION lexer.l lexer.h	\
+EXTRA_DIST = setup.sh config.h.in ChangeLog lexer.l lexer.h	\
   gen_utf8_tables.py jq.spec testdata
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
 docdir = ${datadir}/doc/${PACKAGE}
-dist_doc_DATA = README.md INSTALL COPYING AUTHORS README NEWS
+dist_doc_DATA = README.md COPYING AUTHORS README
 
 man_MANS = jq.1
 
