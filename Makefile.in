@@ -57,8 +57,8 @@ subdir = .
 DIST_COMMON = README $(am__configure_deps) $(dist_doc_DATA) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure AUTHORS COPYING \
-	ChangeLog config/compile config/depcomp config/install-sh \
-	config/missing config/ylwrap parser.c parser.h
+	config/compile config/depcomp config/install-sh config/missing \
+	config/ylwrap lexer.c parser.c parser.h
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -72,12 +72,12 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" \
 	"$(DESTDIR)$(docdir)"
 PROGRAMS = $(bin_PROGRAMS)
-am__objects_1 = parser.$(OBJEXT)
+am__objects_1 = parser.$(OBJEXT) lexer.$(OBJEXT)
 am__objects_2 = opcode.$(OBJEXT) bytecode.$(OBJEXT) compile.$(OBJEXT) \
 	execute.$(OBJEXT) builtin.$(OBJEXT) jv.$(OBJEXT) \
 	jv_parse.$(OBJEXT) jv_print.$(OBJEXT) jv_dtoa.$(OBJEXT) \
 	jv_unicode.$(OBJEXT) jv_aux.$(OBJEXT) jv_alloc.$(OBJEXT) \
-	lexer.$(OBJEXT) jq_test.$(OBJEXT) $(am__objects_1)
+	jq_test.$(OBJEXT) $(am__objects_1)
 am_jq_OBJECTS = $(am__objects_2) main.$(OBJEXT)
 jq_OBJECTS = $(am_jq_OBJECTS)
 jq_LDADD = $(LDADD)
@@ -98,11 +98,15 @@ LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD  " $@;
+LEXCOMPILE = $(LEX) $(AM_LFLAGS) $(LFLAGS)
+AM_V_LEX = $(am__v_LEX_@AM_V@)
+am__v_LEX_ = $(am__v_LEX_@AM_DEFAULT_V@)
+am__v_LEX_0 = @echo "  LEX   " $@;
+YLWRAP = $(top_srcdir)/config/ylwrap
 YACCCOMPILE = $(YACC) $(AM_YFLAGS) $(YFLAGS)
 AM_V_YACC = $(am__v_YACC_@AM_V@)
 am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
 am__v_YACC_0 = @echo "  YACC  " $@;
-YLWRAP = $(top_srcdir)/config/ylwrap
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
@@ -241,7 +245,7 @@ am__remove_distdir = \
       && rm -rf "$(distdir)" \
       || { sleep 5 && rm -rf "$(distdir)"; }; \
   else :; fi
-DIST_ARCHIVES = $(distdir).tar.gz $(distdir).tar.bz2 $(distdir).zip
+DIST_ARCHIVES = $(distdir).tar.gz
 GZIP_ENV = --best
 distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
@@ -272,6 +276,9 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+LEXLIB = @LEXLIB@
+LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -303,7 +310,6 @@ am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
-bison_cmd = @bison_cmd@
 build_alias = @build_alias@
 builddir = @builddir@
 datadir = @datadir@
@@ -343,11 +349,11 @@ valgrind_cmd = @valgrind_cmd@
 JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h		\
   forkable_stack.h frame_layout.h jv.h jv_alloc.h jv_aux.h jv_dtoa.h	\
   jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h parser.y	\
-  jv_utf8_tables.h
+  jv_utf8_tables.h lexer.l
 
 JQ_SRC = opcode.c bytecode.c compile.c execute.c builtin.c jv.c		\
   jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_alloc.c	\
-  lexer.c jq_test.c ${JQ_INCS}
+  jq_test.c ${JQ_INCS}
 
 
 ### C build options
@@ -367,25 +373,25 @@ BUILT_SOURCES = lexer.h lexer.c parser.h parser.c
 AM_YFLAGS = --warnings=all -d
 jq_SOURCES = ${JQ_SRC} main.c
 
-### Tests
-
-# this is what gets "make check" to work
+### Tests (make check)
 TESTS = tests/all.test
 TEST_LOG_COMPILER = tests/run
+
+### Building the manpage
+man_MANS = jq.1
 
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
-EXTRA_DIST = setup.sh config.h.in ChangeLog lexer.l lexer.h	\
-  gen_utf8_tables.py jq.spec testdata
+EXTRA_DIST = config.h.in $(BUILT_SOURCES) $(man_MANS) $(TESTS)	\
+	$(TEST_LOG_COMPILER) gen_utf8_tables.py jq.spec
 
 dist_doc_DATA = README.md COPYING AUTHORS README
-man_MANS = jq.1
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .html .log .o .obj .test .test$(EXEEXT) .y
+.SUFFIXES: .c .html .l .log .o .obj .test .test$(EXEEXT) .y
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -518,6 +524,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+.l.c:
+	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
 
 .y.c:
 	$(AM_V_YACC)$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h $*.h y.output $*.output -- $(YACCCOMPILE)
@@ -824,6 +833,7 @@ distdir: $(DISTFILES)
 dist-gzip: distdir
 	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).tar.gz
 	$(am__remove_distdir)
+
 dist-bzip2: distdir
 	tardir=$(distdir) && $(am__tar) | BZIP2=$${BZIP2--9} bzip2 -c >$(distdir).tar.bz2
 	$(am__remove_distdir)
@@ -847,6 +857,7 @@ dist-tarZ: distdir
 dist-shar: distdir
 	shar $(distdir) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).shar.gz
 	$(am__remove_distdir)
+
 dist-zip: distdir
 	-rm -f $(distdir).zip
 	zip -rq $(distdir).zip $(distdir)
@@ -854,9 +865,6 @@ dist-zip: distdir
 
 dist dist-all: distdir
 	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).tar.gz
-	tardir=$(distdir) && $(am__tar) | BZIP2=$${BZIP2--9} bzip2 -c >$(distdir).tar.bz2
-	-rm -f $(distdir).zip
-	zip -rq $(distdir).zip $(distdir)
 	$(am__remove_distdir)
 
 # This target untars the dist file and tries a VPATH configuration.  Then
@@ -988,6 +996,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-rm -f lexer.c
 	-rm -f parser.c
 	-rm -f parser.h
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
@@ -1096,6 +1105,8 @@ lexer.h: lexer.c
 ### Building the jq binary
 
 main.c: config.h
+jq.1: docs/content/3.manual/manual.yml
+	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || rm -f $@
 
 ### Packaging
 
@@ -1105,9 +1116,6 @@ docs/site.yml: configure.ac
 
 install-binaries: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec
-
-jq.1: docs/content/3.manual/manual.yml
-	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || rm -f $@
 
 releasetag:
 	git tag -s "jq-$$(cat VERSION)" -m "jq release $$(cat VERSION)"

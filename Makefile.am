@@ -3,11 +3,11 @@
 JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h		\
   forkable_stack.h frame_layout.h jv.h jv_alloc.h jv_aux.h jv_dtoa.h	\
   jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h parser.y	\
-  jv_utf8_tables.h
+  jv_utf8_tables.h lexer.l
 
 JQ_SRC = opcode.c bytecode.c compile.c execute.c builtin.c jv.c		\
   jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_alloc.c	\
-  lexer.c jq_test.c ${JQ_INCS}
+  jq_test.c ${JQ_INCS}
 
 
 ### C build options
@@ -40,11 +40,17 @@ bin_PROGRAMS = jq
 jq_SOURCES = ${JQ_SRC} main.c
 
 
-### Tests
+### Tests (make check)
 
-# this is what gets "make check" to work
 TESTS = tests/all.test
 TEST_LOG_COMPILER = tests/run
+
+
+### Building the manpage
+
+man_MANS = jq.1
+jq.1: docs/content/3.manual/manual.yml
+	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || rm -f $@
 
 
 
@@ -61,18 +67,13 @@ install-binaries: $(BUILT_SOURCES)
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
-EXTRA_DIST = setup.sh config.h.in ChangeLog lexer.l lexer.h	\
-  gen_utf8_tables.py jq.spec testdata
+EXTRA_DIST = config.h.in $(BUILT_SOURCES) $(man_MANS) $(TESTS)	\
+	$(TEST_LOG_COMPILER) gen_utf8_tables.py jq.spec
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
 docdir = ${datadir}/doc/${PACKAGE}
 dist_doc_DATA = README.md COPYING AUTHORS README
-
-man_MANS = jq.1
-
-jq.1: docs/content/3.manual/manual.yml
-	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || rm -f $@
 
 releasetag:
 	git tag -s "jq-$$(cat VERSION)" -m "jq release $$(cat VERSION)"

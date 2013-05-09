@@ -20,16 +20,16 @@ dnl
 dnl these program checks should probably be deleted
 dnl
 
+AC_PROG_LEX
+if test "x$LEX" != xflex; then
+  LEX="$SHELL $missing_dir/missing flex"
+fi
+
+
 dnl Check for flex
 AC_CHECK_PROGS(flex_cmd, flex)
 if test x$flex_cmd = "x" ; then
     AC_MSG_NOTICE([flex is required to patch jq.])
-fi
-
-dnl Check for bison
-AC_CHECK_PROGS(bison_cmd, bison)
-if test x$bison_cmd = "x" ; then
-    AC_MSG_NOTICE([bison is required to patch jq.])
 fi
 
 dnl Check for valgrind
@@ -40,7 +40,7 @@ fi
 
 dnl AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
-AM_INIT_AUTOMAKE([-Wall dist-bzip2 dist-zip])
+AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
