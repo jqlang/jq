@@ -1,4 +1,4 @@
-### C source files to be built
+### C source files to be built and distributed.
 
 JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h		\
   forkable_stack.h frame_layout.h jv.h jv_alloc.h jv_aux.h jv_dtoa.h	\
@@ -31,7 +31,6 @@ lexer.h: lexer.c
 AM_YFLAGS = --warnings=all -d
 
 
-
 ### Building the jq binary
 
 main.c: config.h
@@ -48,21 +47,29 @@ TEST_LOG_COMPILER = ${srcdir}/tests/run
 
 ### Building the manpage
 
+# If ENABLE_DOCS is not set, just copy jq.1.default to jq.1
+# The real_docs target succeeds (possibly after building jq.1) only if ENABLE_DOCS is set
+# Thus, making "dist" depend on "real_docs" ensures that we never build a tarball with
+# a stub manpage.
+
 man_MANS = jq.1
 .PHONY: real_docs
 if ENABLE_DOCS
 jq.1: $(srcdir)/docs/content/3.manual/manual.yml
-	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || { rm -f $@; false; }
-real_docs:
-	true
+	( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage ) > $@ || { rm -f $@; false; }
+jq.1.default: $(srcdir)/docs/default_manpage.md
+	( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage_default ) > $@ || { rm -f $@; false; }
+real_docs: jq.1
+	cmp jq.1 $(srcdir)/jq.1.default > /dev/null && { rm -f jq.1; $(MAKE) $(AM_MAKEFLAGS) jq.1; }
 else
-jq.1: jq.1.default
+jq.1: $(srcdir)/jq.1.default
 	cp $^ $@
 real_docs:
-	@echo "Cannot build full manpage" > /dev/stderr
+	@echo "Ruby dependencies not found, cannot build manpage." > /dev/stderr
+	@echo "Follow the instructions in docs/README.md to install them" > /dev/stderr
+	@echo "and then rerun ./configure" > /dev/stderr
 	false
 endif
-
 
 
 ### Packaging

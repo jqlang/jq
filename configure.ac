@@ -34,19 +34,28 @@ fi
 
 
 dnl Don't attempt to build docs if there's no Ruby lying around
-AC_ARG_ENABLE([docs], 
+AC_ARG_ENABLE([docs],
    AC_HELP_STRING([--disable-docs], [don't build docs]))
 
 AS_IF([test "x$enable_docs" != "xno"],[
-   AC_CHECK_PROG(bundle_cmd, bundle)
+   AC_CHECK_PROGS(bundle_cmd, bundle)
    AS_IF([test "x$bundle_cmd" = "x" || \
-      ! ( cd ${srcdir}/docs; bundle check 2>/dev/null )],[
+      ! ( cd ${srcdir}/docs; "$bundle_cmd" check 2>/dev/null )],[
          AC_MSG_WARN([no bundler])
+         cat <<EOF
+*****************************************************************
+*  Ruby dependencies for building jq documentation not found.   *
+*  You can still build, install and hack on jq, but the manpage *
+*  will not be rebuilt and some of the tests won't run.         *
+*  See docs/README.md for how to install the docs dependencies. *
+*****************************************************************
+EOF
          enable_docs=no
    ])
 ])
 
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
+AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 dnl AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)

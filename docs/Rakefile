@@ -120,6 +120,10 @@ task :manpage do
   end  
 end
 
+task :manpage_default => ["default_manpage.md"] do
+  puts Ronn::Document.new("default_manpage.md").convert('roff').gsub(/<\/?code>/,"")
+end
+
 task :mantests do
   load_manual['sections'].each do |section|
     (section['entries'] || []).each do |entry|
@@ -132,3 +136,4 @@ task :mantests do
     end
   end
 end
+
