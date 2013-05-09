@@ -86,11 +86,16 @@ install-binaries: $(BUILT_SOURCES)
 # Ensure "make dist" fails when we can't build the real manpage
 dist-hook: real_docs
 
+DOC_FILES = docs/content docs/public docs/templates docs/site.yml	\
+            docs/Gemfile docs/Gemfile.lock docs/Rakefile docs/README.md \
+            docs/default_manpage.md jq.1.default
+
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
 EXTRA_DIST = config.h.in $(BUILT_SOURCES) $(man_MANS) $(TESTS)	\
-	$(TEST_LOG_COMPILER) gen_utf8_tables.py jq.spec
+	$(TEST_LOG_COMPILER) gen_utf8_tables.py jq.spec \
+	$(DOC_FILES)
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
