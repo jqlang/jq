@@ -166,7 +166,7 @@ sections:
           You can also look up fields of an object using syntax like
           `.["foo"]` (.foo above is a shorthand version of this). This
           one works for arrays as well, if the key is an
-          integer. Arrays are zero-based (like javascript), so .[2]
+          integer. Arrays are zero-based (like javascript), so `.[2]`
           returns the third element of the array.
 
         examples:
@@ -271,7 +271,7 @@ sections:
           filter into an array (as in `[.items[].name]`)
         
           Once you understand the "," operator, you can look at jq's array
-          syntax in a different light: the expression [1,2,3] is not using a
+          syntax in a different light: the expression `[1,2,3]` is not using a
           built-in syntax for comma-separated arrays, but is instead applying
           the `[]` operator (collect results) to the expression 1,2,3 (which
           produces three different results).

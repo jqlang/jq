@@ -1,5 +1,6 @@
 # The key value pairs found below are available within the templates.
 
+:url: http://stedolan.github.io/jq
 
 # This line is modified by the Makefile. To change the version number,
 # edit the Autoconf version number at the top of configure.ac
