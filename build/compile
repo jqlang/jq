@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# This script is used to cross-compile binaries for 
+# platforms other than the current one
+
+# Usage: $0 <platformname> <configure options>
+# <platformname> is arbitrary, it is the name
+# of the directory which will be created to contain
+# the output binaries.
+
+# e.g. $0 win32 --host=i686-w64-mingw32
+
+set -e
+cd `dirname "$0"`
+
+plat="$1"
+[ -z "$plat" ] && exit 1
+shift
+
+[ -d "$plat" ] || mkdir "$plat"
+rm -rf "$plat/tmp"
+mkdir "$plat/tmp"
+cd "$plat/tmp"
+mkdir install_other
+../../../configure \
+    --prefix="`pwd`/install_other" \
+    --bindir="`pwd`/.." \
+    "$@"
+make install-binaries
+cd ..
+rm -rf tmp

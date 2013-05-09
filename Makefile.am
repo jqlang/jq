@@ -22,7 +22,7 @@ AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
 # header file creation so we'll use good old make
 BUILT_SOURCES = lexer.h lexer.c parser.h parser.c
 lexer.c: lexer.l
-	flex -o lexer.c --header-file=lexer.h lexer.l
+	flex -o lexer.c --header-file=lexer.h $<
 lexer.h: lexer.c
 
 # Tell YACC (bison) autoconf macros that you want a header file created.
@@ -53,6 +53,10 @@ TEST_LOG_COMPILER = tests/run
 docs/site.yml: configure.ac
 	sed 's/^jq_version: .*/jq_version: $(VERSION)/' $@ > $@.new
 	mv $@.new $@
+
+install-binaries: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec
+
 
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 

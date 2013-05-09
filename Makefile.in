@@ -1090,7 +1090,7 @@ uninstall-man: uninstall-man1
 	uninstall-man1
 
 lexer.c: lexer.l
-	flex -o lexer.c --header-file=lexer.h lexer.l
+	flex -o lexer.c --header-file=lexer.h $<
 lexer.h: lexer.c
 
 ### Building the jq binary
@@ -1102,6 +1102,9 @@ main.c: config.h
 docs/site.yml: configure.ac
 	sed 's/^jq_version: .*/jq_version: $(VERSION)/' $@ > $@.new
 	mv $@.new $@
+
+install-binaries: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec
 
 jq.1 :
 	cd ${abs_srcdir}/docs; rake manpage > ${abs_builddir}/$@
