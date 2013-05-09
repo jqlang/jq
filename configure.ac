@@ -26,17 +26,27 @@ if test "x$LEX" != xflex; then
 fi
 
 
-dnl Check for flex
-AC_CHECK_PROGS(flex_cmd, flex)
-if test x$flex_cmd = "x" ; then
-    AC_MSG_NOTICE([flex is required to patch jq.])
-fi
-
 dnl Check for valgrind
 AC_CHECK_PROGS(valgrind_cmd, valgrind)
-if test x$valgrind_cmd = "x" ; then
-    AC_MSG_NOTICE([valgrind is required to test jq.])
+if test "x$valgrind_cmd" = "x" ; then
+    AC_MSG_WARN([valgrind is required to test jq.])
 fi
+
+
+dnl Don't attempt to build docs if there's no Ruby lying around
+AC_ARG_ENABLE([docs], 
+   AC_HELP_STRING([--disable-docs], [don't build docs]))
+
+AS_IF([test "x$enable_docs" != "xno"],[
+   AC_CHECK_PROG(bundle_cmd, bundle)
+   AS_IF([test "x$bundle_cmd" = "x" || \
+      ! ( cd ${srcdir}/docs; bundle check 2>/dev/null )],[
+         AC_MSG_WARN([no bundler])
+         enable_docs=no
+   ])
+])
+
+AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 
 dnl AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)

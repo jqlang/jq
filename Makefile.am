@@ -49,8 +49,19 @@ TEST_LOG_COMPILER = ${srcdir}/tests/run
 ### Building the manpage
 
 man_MANS = jq.1
+.PHONY: real_docs
+if ENABLE_DOCS
 jq.1: $(srcdir)/docs/content/3.manual/manual.yml
 	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || { rm -f $@; false; }
+real_docs:
+	true
+else
+jq.1: jq.1.default
+	cp $^ $@
+real_docs:
+	@echo "Cannot build full manpage" > /dev/stderr
+	false
+endif
 
 
 
@@ -63,6 +74,8 @@ docs/site.yml: configure.ac
 install-binaries: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec
 
+# Ensure "make dist" fails when we can't build the real manpage
+dist-hook: real_docs
 
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
