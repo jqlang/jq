@@ -50,7 +50,7 @@ TEST_LOG_COMPILER = tests/run
 
 man_MANS = jq.1
 jq.1: docs/content/3.manual/manual.yml
-	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || rm -f $@
+	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || { rm -f $@; false; }
 
 
 
