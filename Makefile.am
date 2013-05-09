@@ -71,11 +71,8 @@ dist_doc_DATA = README.md COPYING AUTHORS README
 
 man_MANS = jq.1
 
-jq.1 :
-	cd ${abs_srcdir}/docs; rake manpage > ${abs_builddir}/$@
-
-ChangeLog:
-	git log --name-status > $@ || echo "no changelog" > $@
+jq.1: docs/content/3.manual/manual.yml
+	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || rm -f $@
 
 releasetag:
 	git tag -s "jq-$$(cat VERSION)" -m "jq release $$(cat VERSION)"
