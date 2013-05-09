@@ -60,7 +60,9 @@ jq.1: $(srcdir)/docs/content/3.manual/manual.yml
 jq.1.default: $(srcdir)/docs/default_manpage.md
 	( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage_default ) > $@ || { rm -f $@; false; }
 real_docs: jq.1
-	cmp jq.1 $(srcdir)/jq.1.default > /dev/null && { rm -f jq.1; $(MAKE) $(AM_MAKEFLAGS) jq.1; }
+	if cmp jq.1 $(srcdir)/jq.1.default > /dev/null; then\
+	  rm -f jq.1; $(MAKE) $(AM_MAKEFLAGS) jq.1;\
+	fi
 else
 jq.1: $(srcdir)/jq.1.default
 	cp $^ $@
