@@ -43,13 +43,13 @@ jq_SOURCES = ${JQ_SRC} main.c
 ### Tests (make check)
 
 TESTS = tests/all.test
-TEST_LOG_COMPILER = tests/run
+TEST_LOG_COMPILER = ${srcdir}/tests/run
 
 
 ### Building the manpage
 
 man_MANS = jq.1
-jq.1: docs/content/3.manual/manual.yml
+jq.1: $(srcdir)/docs/content/3.manual/manual.yml
 	( cd ${abs_srcdir}/docs; rake manpage ) > $@ || { rm -f $@; false; }
 
 
