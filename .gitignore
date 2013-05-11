@@ -1,7 +1,6 @@
 *.o
 *~
 
-build
 jq
 jq.1
 
@@ -23,3 +22,4 @@ config.status
 autom4te.cache
 config.h
 Makefile
+jq-*.tar.gz

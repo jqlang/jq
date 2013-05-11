@@ -75,7 +75,7 @@ $BINARIES = {
 
 $BINARIES.each do |name, args|
   file "../build/#{name}" do |t|
-    sh "MAKEFLAGS=-j4 ../build/compile #{name} #{args}"
+    sh "MAKEFLAGS=-j4 ../scripts/crosscompile #{name} #{args}"
   end
   task :binaries => ["../build/#{name}"]
 end
@@ -139,7 +139,7 @@ end
 
 directory "output/download/source"
 task :tarball => ["output/download/source"] do
-  sh "cd ..; make dist"
+  sh "cd ..; ./configure && make dist && make distclean"
   sh "cp ../jq-*.tar.gz output/download/source"
 end
 
