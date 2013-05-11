@@ -8,29 +8,12 @@
 static void jv_test();
 static void run_jq_tests();
 
-FILE* testdata;
 
 int jq_testsuite(int argc, char* argv[]) {
   jv_test();
-  if (argc == 1) {
-    testdata = fopen("testdata", "r");
-  } else if (argc == 2) {
-    if (!strcmp(argv[1], "-")) {
-      testdata = stdin;
-    } else {
-      testdata = fopen(argv[1], "r");
-    }
-  } else {
-    printf("usage: %s OR cat testdata | %s - OR %s testdata\n", argv[0], argv[0], argv[0]);
-    return 127;
-  }
-  run_jq_tests();
-  if (testdata != stdin) fclose(testdata);
+  run_jq_tests(stdin);
   return 0;
 }
-
-
-
 
 static int skipline(const char* buf) {
   int p = 0;
@@ -39,7 +22,7 @@ static int skipline(const char* buf) {
   return 0;
 }
 
-static void run_jq_tests() {
+static void run_jq_tests(FILE *testdata) {
   char buf[4096];
   int tests = 0, passed = 0, invalid = 0;
   jq_state *jq = NULL;

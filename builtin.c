@@ -1,7 +1,7 @@
 #include <string.h>
 #include "builtin.h"
 #include "compile.h"
-#include "parser.h"
+#include "jq_parser.h"
 #include "locfile.h"
 #include "jv_aux.h"
 #include "jv_unicode.h"

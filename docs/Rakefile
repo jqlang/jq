@@ -1,3 +1,4 @@
+require 'yaml'
 require 'bonsai'
 require 'liquid'
 require 'maruku'
@@ -63,6 +64,28 @@ task :build do
   Bonsai::Exporter.publish!
 end
 
+$BINARIES = {
+  :osx32 => "--host=i686-apple-darwin10 CFLAGS='-m32 -g -O'",
+  :osx64 => "--host=i686-apple-darwin10 CFLAGS='-m64 -g -O'",
+  :win32 => "--host=i686-w64-mingw32 CFLAGS='-g -O'",
+  :win64 => "--host=x86_64-w64-mingw32 CFLAGS='-g -O'",
+  :linux32 => "--host=x86_64-linux-gnu CFLAGS='-m32 -g -O'",
+  :linux64 => "--host=x86_64-linux-gnu CFLAGS='-m64 -g -O'"
+}
+
+$BINARIES.each do |name, args|
+  file "../build/#{name}" do |t|
+    sh "MAKEFLAGS=-j4 ../scripts/crosscompile #{name} #{args}"
+  end
+  task :binaries => ["../build/#{name}"]
+end
+
+task :binaries => ["output/download"] do
+  $BINARIES.each do |name, args|
+    FileUtils.cp_r "../build/#{name}", "output/download/"
+  end
+end
+
 def load_manual
   YAML::ENGINE.yamler = 'syck'
   YAML::load(File.open("content/3.manual/manual.yml"))
@@ -97,6 +120,10 @@ task :manpage do
   end  
 end
 
+task :manpage_default => ["default_manpage.md"] do
+  puts Ronn::Document.new("default_manpage.md").convert('roff').gsub(/<\/?code>/,"")
+end
+
 task :mantests do
   load_manual['sections'].each do |section|
     (section['entries'] || []).each do |entry|
@@ -109,3 +136,11 @@ task :mantests do
     end
   end
 end
+
+directory "output/download/source"
+task :tarball => ["output/download/source"] do
+  sh "cd ..; ./configure && make dist && make distclean"
+  sh "cp ../jq-*.tar.gz output/download/source"
+end
+
+task :dist => [:build, :binaries, :tarball]

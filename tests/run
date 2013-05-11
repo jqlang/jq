@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cat $@ | valgrind --error-exitcode=1 -q --leak-check=full ./jq --run-tests

@@ -12,6 +12,7 @@
 #include "frame_layout.h"
 
 #include "jv_alloc.h"
+#include "jq_parser.h"
 #include "locfile.h"
 #include "jv.h"
 #include "jv_aux.h"
@@ -167,7 +168,7 @@ jv jq_next(jq_state *jq) {
       dump_operation(frame_current_bytecode(&jq->frame_stk), pc);
       printf("\t");
       const struct opcode_description* opdesc = opcode_describe(opcode);
-      data_stk_elem* param;
+      data_stk_elem* param = 0;
       int stack_in = opdesc->stack_in;
       if (stack_in == -1) stack_in = pc[1];
       for (int i=0; i<stack_in; i++) {

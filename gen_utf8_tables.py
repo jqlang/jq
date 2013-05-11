@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# This program was used to generate jv_utf8_tables.gen.h
+
 mask = lambda n: (1 << n) - 1
 
 
