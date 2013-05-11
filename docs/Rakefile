@@ -137,3 +137,10 @@ task :mantests do
   end
 end
 
+directory "output/download/source"
+task :tarball => ["output/download/source"] do
+  sh "cd ..; make dist"
+  sh "cp ../jq-*.tar.gz output/download/source"
+end
+
+task :dist => [:build, :binaries, :tarball]
