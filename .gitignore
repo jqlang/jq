@@ -23,3 +23,6 @@ autom4te.cache
 config.h
 Makefile
 jq-*.tar.gz
+configure
+aclocal.m4
+Makefile.in
