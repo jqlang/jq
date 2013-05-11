@@ -180,7 +180,8 @@ jv jq_next(jq_state *jq) {
         }
         if (!param) break;
         jv_dump(jv_copy(param->sv.value), 0);
-        printf("<%d>", jv_get_refcnt(param->sv.value));
+        //printf("<%d>", jv_get_refcnt(param->sv.value));
+        printf("<%d>", param->sv.pathidx);
       }
 
       if (backtracking) printf("\t<backtracking>");
@@ -298,7 +299,7 @@ jv jq_next(jq_state *jq) {
       jv_free(path_end.value);
       jv path = jv_array();
       for (int i=path_start.pathidx; i<path_end.pathidx; i++) {
-        path = jv_array_set(path, i, jv_copy(jq->pathbuf[i]));
+        path = jv_array_append(path, jv_copy(jq->pathbuf[i]));
       }
       stack_push(jq, stackval_replace(path_start, path));
       break;

@@ -574,3 +574,11 @@ unique
 .foo[.baz]
 {"foo":{"bar":4},"baz":"bar"}
 4
+
+.[] | .error = "no, it's OK"
+[{"error":true}]
+{"error": "no, it's OK"}
+
+[{a:1}] | .[] | .a=999
+null
+{"a": 999}
