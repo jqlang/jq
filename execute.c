@@ -250,10 +250,19 @@ jv jq_next(jq_state *jq) {
       jv v = stack_pop(jq);
       jv k = stack_pop(jq);
       jv objv = stack_pop(jq);
-      assert(jv_get_kind(k) == JV_KIND_STRING);
       assert(jv_get_kind(objv) == JV_KIND_OBJECT);
-      stack_push(jq, jv_object_set(objv, k, v));
-      stack_push(jq, stktop);
+      if (jv_get_kind(k) == JV_KIND_STRING) {
+        stack_push(jq, jv_object_set(objv, k, v));
+        stack_push(jq, stktop);
+      } else {
+        print_error(jv_invalid_with_msg(jv_string_fmt("Cannot use %s as object key",
+                                                      jv_kind_name(jv_get_kind(k)))));
+        jv_free(stktop);
+        jv_free(v);
+        jv_free(k);
+        jv_free(objv);
+        goto do_backtrack;
+      }
       break;
     }
 
