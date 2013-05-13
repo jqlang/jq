@@ -163,6 +163,16 @@ static block gen_binop(block a, block b, int op) {
 static block gen_format(block a, jv fmt) {
   return BLOCK(a, gen_call("format", BLOCK(gen_lambda(gen_const(fmt)))));
 }
+
+static block gen_definedor_assign(block object, block val) {
+  block tmp = block_bind(gen_op_var_unbound(STOREV, "tmp"),
+                         gen_noop(), OP_HAS_VARIABLE);
+  return BLOCK(gen_op_simple(DUP),
+               val, tmp,
+               gen_call("_modify", BLOCK(gen_lambda(object),
+                                         gen_lambda(gen_definedor(gen_noop(), 
+                                                                  gen_op_var_bound(LOADV, tmp))))));
+}
  
 static block gen_update(block object, block val, int optype) {
   block tmp = block_bind(gen_op_var_unbound(STOREV, "tmp"),
@@ -235,7 +245,7 @@ Exp "//" Exp {
 } |
 
 Exp "//=" Exp {
-  $$ = gen_update($1, gen_definedor(gen_noop(), $3), 0);
+  $$ = gen_definedor_assign($1, $3);
 } |
 
 Exp "|=" Exp {
