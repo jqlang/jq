@@ -160,7 +160,7 @@ sections:
             input: '{"notfoo": true, "alsonotfoo": false}'
             output: ['null']
 
-      - title: "`.[foo]`"
+      - title: "`.[foo]`, `.[2]`, `.[10:15]`"
         body: |
           
           You can also look up fields of an object using syntax like
@@ -168,6 +168,13 @@ sections:
           one works for arrays as well, if the key is an
           integer. Arrays are zero-based (like javascript), so `.[2]`
           returns the third element of the array.
+
+          The `.[10:15]` syntax can be used to return a subarray of an
+          array. The array returned by `.[10:15]` will be of length 5,
+          containing the elements from index 10 (inclusive) to index
+          15 (exclusive). Either index may be negative (in which case
+          it counts backwards from the end of the array), or omitted
+          (in which case it refers to the start or end of the array).
 
         examples:
           - program: '.[0]'
@@ -177,6 +184,18 @@ sections:
           - program: '.[2]'
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output: ['null']
+
+          - program: '.[2:4]'
+            input: '["a","b","c","d","e"]'
+            output: ['["c", "d"]']
+          
+          - program: '.[:3]'
+            input: '["a","b","c","d","e"]'
+            output: ['["a", "b", "c"]']
+
+          - program: '.[-2:]'
+            input: '["a","b","c","d","e"]'
+            output: ['["d", "e"]']
 
       - title: "`.[]`"
         body: |

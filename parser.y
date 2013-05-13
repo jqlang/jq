@@ -141,6 +141,17 @@ static block gen_index(block obj, block key) {
   return BLOCK(gen_subexp(key), obj, gen_op_simple(INDEX));
 }
 
+static block gen_slice_index(block obj, block start, block end) {
+  block key = BLOCK(gen_subexp(gen_const(jv_object())),
+                    gen_subexp(gen_const(jv_string("start"))),
+                    gen_subexp(start),
+                    gen_op_simple(INSERT),
+                    gen_subexp(gen_const(jv_string("end"))),
+                    gen_subexp(end),
+                    gen_op_simple(INSERT));
+  return BLOCK(key, obj, gen_op_simple(INDEX));
+}
+
 static block gen_binop(block a, block b, int op) {
   const char* funcname = 0;
   switch (op) {
@@ -407,6 +418,15 @@ Term '[' Exp ']' {
 } |
 Term '[' ']' {
   $$ = block_join($1, gen_op_simple(EACH)); 
+} |
+Term '[' Exp ':' Exp ']' {
+  $$ = gen_slice_index($1, $3, $5);
+} |
+Term '[' Exp ':' ']' {
+  $$ = gen_slice_index($1, $3, gen_const(jv_null()));
+} |
+Term '[' ':' Exp ']' {
+  $$ = gen_slice_index($1, gen_const(jv_null()), $4);
 } |
 LITERAL {
   $$ = gen_const($1); 
