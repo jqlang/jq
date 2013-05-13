@@ -478,6 +478,31 @@ sections:
             input: '[[0,1], ["a","b","c"]]'
             output: ['[false, true]']
 
+      - title: `to_entries`, `from_entries`, `with_entries`
+        body: |
+          
+          These functions convert between an object and an array of
+          key-value pairs. If `to_entries` is passed an object, then
+          for each `k: v` entry in the input, the output array
+          includes `{"key": k, "value": v}`. 
+
+          `from_entries` does the opposite conversion, and
+          `with_entries(foo)` is a shorthand for `to_entries |
+          map(foo) | from_entries`, useful for doing some operation to
+          all keys and values of an object.
+
+        examples:
+          - program: 'to_entries'
+            input: '[{"a": 1}, {"b": 2}]'
+            output: ['[{"key":"a", "value":1}, {"key":"b", "value":2}]']
+          - program: 'from_entries'
+            input: '[{"key":"a", "value":1}, {"key":"b", "value":2}]'
+            output: ['[{"a": 1}, {"b": 2}]']
+          - program: 'with_entries(.key |= "KEY_" + .)'
+            input: '[{"a": 1}, {"b": 2}]'
+            output: ['[{"KEY_a": 1}, {"KEY_b": 2}]']
+
+
       - title: `select`
         body: |
           
