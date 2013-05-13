@@ -520,9 +520,9 @@ static block bind_bytecoded_builtins(block b) {
   }
   {
     struct bytecoded_builtin builtin_def_1arg[] = {
-      {"path", BLOCK(gen_op_simple(DUP), 
+      {"path", BLOCK(gen_op_simple(PATH_BEGIN), 
                      gen_call("arg", gen_noop()),
-                     gen_op_simple(GETPATH))},
+                     gen_op_simple(PATH_END))},
     };
     for (unsigned i=0; i<sizeof(builtin_def_1arg)/sizeof(builtin_def_1arg[0]); i++) {
       builtins = BLOCK(builtins, gen_function(builtin_def_1arg[i].name,

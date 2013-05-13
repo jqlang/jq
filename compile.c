@@ -275,7 +275,7 @@ block gen_call(const char* name, block args) {
 
 
 block gen_subexp(block a) {
-  return BLOCK(gen_op_simple(DUP), a, gen_op_simple(SWAP));
+  return BLOCK(gen_op_simple(SUBEXP_BEGIN), a, gen_op_simple(SUBEXP_END));
 }
 
 block gen_both(block a, block b) {

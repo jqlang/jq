@@ -124,6 +124,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     }
   }
   switch (jv_get_kind(x)) {
+  default:
   case JV_KIND_INVALID:
     assert(0 && "Invalid value");
     break;
