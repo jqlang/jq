@@ -214,7 +214,7 @@ static jv* jvp_array_write(jv_nontrivial* a, int i) {
         array->elements[j] = JV_NULL;
       }
       array->length = imax(pos + 1, array->length);
-      a->i[1] = imax(pos + 1, array->length);
+      a->i[1] = imax(pos + 1, a->i[1]);
       return &array->elements[pos];
     }
   }

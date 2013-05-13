@@ -164,6 +164,18 @@ static void jv_test() {
     jv_free(a3);
 
 
+    jv a4 = jv_array();
+    a4 = jv_array_append(a4, jv_number(1));
+    a4 = jv_array_append(a4, jv_number(2));
+    jv a5 = jv_copy(a4);
+    a4 = jv_array_append(a4, jv_number(3));
+    a4 = jv_array_slice(a4, 0, 1);
+    assert(jv_array_length(jv_copy(a4)) == 1);
+    a4 = jv_array_append(a4, jv_number(4));
+    assert(jv_array_length(a4) == 2);
+    assert(jv_array_length(a5) == 2);
+
+
     assert(jv_array_length(jv_copy(a)) == 2);
     assert(jv_number_value(jv_array_get(jv_copy(a), 0)) == 42);
     assert(jv_array_length(jv_array_get(jv_copy(a), 1)) == 1);
