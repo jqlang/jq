@@ -221,8 +221,8 @@ sections:
             output: []
 
           - program: '.[]'
-            input: '{"a": 1, "b": 2}'
-            output: ['[1, 2]']
+            input: '{"a": 1, "b": 1}'
+            output: ['1', '1']
 
       - title: "`,`"
         body: |
@@ -512,14 +512,14 @@ sections:
 
         examples:
           - program: 'to_entries'
-            input: '[{"a": 1}, {"b": 2}]'
+            input: '{"a": 1, "b": 2}'
             output: ['[{"key":"a", "value":1}, {"key":"b", "value":2}]']
           - program: 'from_entries'
             input: '[{"key":"a", "value":1}, {"key":"b", "value":2}]'
-            output: ['[{"a": 1}, {"b": 2}]']
+            output: ['{"a": 1, "b": 2}']
           - program: 'with_entries(.key |= "KEY_" + .)'
-            input: '[{"a": 1}, {"b": 2}]'
-            output: ['[{"KEY_a": 1}, {"KEY_b": 2}]']
+            input: '{"a": 1, "b": 2}'
+            output: ['{"KEY_a": 1, "KEY_b": 2}']
 
 
       - title: `select`
@@ -845,7 +845,7 @@ sections:
 
           - program: '@sh "echo \(.)"'
             input: "\"O'Hara's Ale\""
-            output: ["\"echo 'O'\\''Hara'\\''s Ale\""]
+            output: ["\"echo 'O'\\\\''Hara'\\\\''s Ale'\""]
         
   - title: Conditionals and Comparisons
     entries:
@@ -942,9 +942,12 @@ sections:
           - program: '(true, false) or false'
             input: 'null'
             output: ['true', 'false']
-          - program: '(true, false) and (true, false)'
+#          - program: '(true, false) and (true, false)'
+#            input: 'null'
+#            output: ['true', 'false', 'false', 'false']
+          - program: '(true, true) and (true, false)'
             input: 'null'
-            output: ['true', 'false', 'false', 'false']
+            output: ['true', 'false', 'true', 'false']
           - program: '[true, false | not]'
             input: 'null'
             output: ['[false, true]']
