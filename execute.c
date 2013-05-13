@@ -56,16 +56,18 @@ struct forkpoint {
   struct forkable_stack_state saved_data_stack;
   struct forkable_stack_state saved_call_stack;
   int path_len, subexp_nest;
+  uint16_t* return_address;
 };
 
 
-void stack_save(jq_state *jq){
+void stack_save(jq_state *jq, uint16_t* retaddr){
   struct forkpoint* fork = forkable_stack_push(&jq->fork_stk, sizeof(struct forkpoint));
   forkable_stack_save(&jq->data_stk, &fork->saved_data_stack);
   forkable_stack_save(&jq->frame_stk, &fork->saved_call_stack);
   fork->path_len = 
     jv_get_kind(jq->path) == JV_KIND_ARRAY ? jv_array_length(jv_copy(jq->path)) : 0;
   fork->subexp_nest = jq->subexp_nest;
+  fork->return_address = retaddr;
 }
 
 void stack_switch(jq_state *jq) {
@@ -85,7 +87,7 @@ void path_append(jq_state* jq, jv component) {
   }
 }
 
-int stack_restore(jq_state *jq){
+uint16_t* stack_restore(jq_state *jq){
   while (!forkable_stack_empty(&jq->data_stk) && 
          forkable_stack_pop_will_free(&jq->data_stk)) {
     jv_free(stack_pop(jq));
@@ -100,6 +102,7 @@ int stack_restore(jq_state *jq){
   }
 
   struct forkpoint* fork = forkable_stack_peek(&jq->fork_stk);
+  uint16_t* retaddr = fork->return_address;
   forkable_stack_restore(&jq->data_stk, &fork->saved_data_stack);
   forkable_stack_restore(&jq->frame_stk, &fork->saved_call_stack);
   int path_len = fork->path_len;
@@ -111,7 +114,7 @@ int stack_restore(jq_state *jq){
   }
   jq->subexp_nest = fork->subexp_nest;
   forkable_stack_pop(&jq->fork_stk);
-  return 1;
+  return retaddr;
 }
 
 
@@ -143,11 +146,8 @@ void print_error(jv value) {
 jv jq_next(jq_state *jq) {
   jv cfunc_input[MAX_CFUNCTION_ARGS];
 
-  assert(!forkable_stack_empty(&jq->frame_stk));
-  uint16_t* pc = *frame_current_retaddr(&jq->frame_stk);
-  frame_pop(&jq->frame_stk);
-  
-  assert(!forkable_stack_empty(&jq->frame_stk));
+  uint16_t* pc = stack_restore(jq);
+  assert(pc);
 
   int backtracking = 0;
   while (1) {
@@ -293,8 +293,7 @@ jv jq_next(jq_state *jq) {
       jv v = stack_pop(jq);
       stack_push(jq, jq->path);
 
-      stack_save(jq);
-      frame_push_backtrack(&jq->frame_stk, pc - 1);
+      stack_save(jq, pc - 1);
       stack_switch(jq);
 
       stack_push(jq, jv_number(jq->subexp_nest));
@@ -314,9 +313,8 @@ jv jq_next(jq_state *jq) {
       jv path = jq->path;
       jq->path = stack_pop(jq);
 
-      stack_save(jq);
+      stack_save(jq, pc - 1);
       stack_push(jq, jv_copy(path));
-      frame_push_backtrack(&jq->frame_stk, pc - 1);
       stack_switch(jq);
 
       stack_push(jq, path);
@@ -399,10 +397,9 @@ jv jq_next(jq_state *jq) {
         jv_free(container);
         goto do_backtrack;
       } else {
-        stack_save(jq);
+        stack_save(jq, pc - 1);
         stack_push(jq, container);
         stack_push(jq, jv_number(idx));
-        frame_push_backtrack(&jq->frame_stk, pc - 1);
         stack_switch(jq);
         path_append(jq, key);
         stack_push(jq, value);
@@ -412,18 +409,16 @@ jv jq_next(jq_state *jq) {
 
     do_backtrack:
     case BACKTRACK: {
-      if (!stack_restore(jq)) {
+      pc = stack_restore(jq);
+      if (!pc) {
         return jv_invalid();
       }
-      pc = *frame_current_retaddr(&jq->frame_stk);
-      frame_pop(&jq->frame_stk);
       backtracking = 1;
       break;
     }
 
     case FORK: {
-      stack_save(jq);
-      frame_push_backtrack(&jq->frame_stk, pc - 1);
+      stack_save(jq, pc - 1);
       stack_switch(jq);
       pc++; // skip offset this time
       break;
@@ -437,7 +432,8 @@ jv jq_next(jq_state *jq) {
 
     case YIELD: {
       jv value = stack_pop(jq);
-      frame_push_backtrack(&jq->frame_stk, pc);
+      stack_save(jq, pc);
+      stack_switch(jq);
       return value;
     }
       
@@ -499,7 +495,8 @@ void jq_init(struct bytecode* bc, jv input, jq_state **jq, int flags) {
   stack_push(new_jq, input);
   struct closure top = {bc, -1};
   frame_push(&new_jq->frame_stk, top, 0);
-  frame_push_backtrack(&new_jq->frame_stk, bc->code);
+  stack_save(new_jq, bc->code);
+  stack_switch(new_jq);
   if (flags & JQ_DEBUG_TRACE) {
     new_jq->debug_trace_enabled = 1;
   } else {
