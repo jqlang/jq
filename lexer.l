@@ -93,7 +93,7 @@ struct lexer_param;
   (\\[^u(]|\\u[a-zA-Z0-9]{0,4})+ {
     /* pass escapes to the json parser */
     jv escapes = jv_string_fmt("\"%.*s\"", yyleng, yytext);
-    yylval->literal = jv_parse_sized(jv_string_value(escapes), jv_string_length(jv_copy(escapes)));
+    yylval->literal = jv_parse_sized(jv_string_value(escapes), jv_string_length_bytes(jv_copy(escapes)));
     jv_free(escapes);
     return QQSTRING_TEXT;
   }

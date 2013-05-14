@@ -8,6 +8,7 @@
 
 #include "jv_alloc.h"
 #include "jv.h"
+#include "jv_unicode.h"
 
 /*
  * Internal refcounting helpers
@@ -530,11 +531,21 @@ jv jv_string(const char* str) {
   return jv_string_sized(str, strlen(str));
 }
 
-int jv_string_length(jv j) {
+int jv_string_length_bytes(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   int r = jvp_string_length(jvp_string_ptr(&j.val.nontrivial));
   jv_free(j);
   return r;
+}
+
+int jv_string_length_codepoints(jv j) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  const char* i = jv_string_value(j);
+  const char* end = i + jv_string_length_bytes(jv_copy(j));
+  int c = 0, len = 0;
+  while ((i = jvp_utf8_next(i, end, &c))) len++;
+  jv_free(j);
+  return len;
 }
 
 uint32_t jv_string_hash(jv j) {

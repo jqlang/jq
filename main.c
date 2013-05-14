@@ -69,7 +69,7 @@ static void process(jv value, int flags) {
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
-      fwrite(jv_string_value(result), 1, jv_string_length(jv_copy(result)), stdout);
+      fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
       jv_free(result);
     } else {
       int dumpopts;

@@ -302,8 +302,8 @@ null
 [false, false, false, false, false, false, false, false, true ]
 
 [.[] | length]
-[[], {}, [1,2], {"a":42}, "asdf"]
-[0, 0, 2, 1, 4]
+[[], {}, [1,2], {"a":42}, "asdf", "\u03bc"]
+[0, 0, 2, 1, 4, 1]
 
 map(keys)
 [{}, {"abcd":1,"abc":2,"abcde":3}, {"x":1, "z": 3, "y":2}]

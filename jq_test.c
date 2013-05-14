@@ -63,7 +63,7 @@ static void run_jq_tests(FILE *testdata) {
         pass = 0;
       }
       jv as_string = jv_dump_string(jv_copy(expected), rand() & ~JV_PRINT_COLOUR);
-      jv reparsed = jv_parse_sized(jv_string_value(as_string), jv_string_length(jv_copy(as_string)));
+      jv reparsed = jv_parse_sized(jv_string_value(as_string), jv_string_length_bytes(jv_copy(as_string)));
       assert(jv_equal(jv_copy(expected), jv_copy(reparsed)));
       jv_free(as_string);
       jv_free(reparsed);
@@ -191,8 +191,8 @@ static void jv_test() {
     assert(jv_equal(jv_string("foo"), jv_string_sized("foo", 3)));
     char nasty[] = "foo\0";
     jv shortstr = jv_string(nasty), longstr = jv_string_sized(nasty, sizeof(nasty));
-    assert(jv_string_length(shortstr) == (int)strlen(nasty));
-    assert(jv_string_length(longstr) == (int)sizeof(nasty));
+    assert(jv_string_length_bytes(shortstr) == (int)strlen(nasty));
+    assert(jv_string_length_bytes(longstr) == (int)sizeof(nasty));
 
   
     char a1s[] = "hello", a2s[] = "hello", bs[] = "goodbye";
@@ -213,7 +213,7 @@ static void jv_test() {
     for (int i=0; i<(int)sizeof(big); i++) big[i] = 'a';
     big[sizeof(big)-1] = 0;
     jv str = jv_string_fmt("%s", big);
-    assert(jv_string_length(jv_copy(str)) == sizeof(big) - 1);
+    assert(jv_string_length_bytes(jv_copy(str)) == sizeof(big) - 1);
     assert(!strcmp(big, jv_string_value(str)));
     jv_free(str);
   }

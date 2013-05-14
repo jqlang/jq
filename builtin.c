@@ -187,7 +187,7 @@ static jv f_length(jv input) {
   } else if (jv_get_kind(input) == JV_KIND_OBJECT) {
     return jv_number(jv_object_length(input));
   } else if (jv_get_kind(input) == JV_KIND_STRING) {
-    return jv_number(jv_string_length(input));
+    return jv_number(jv_string_length_codepoints(input));
   } else if (jv_get_kind(input) == JV_KIND_NULL) {
     jv_free(input);
     return jv_number(0);
@@ -220,7 +220,7 @@ static jv escape_string(jv input, const char* escapings) {
 
   jv ret = jv_string("");
   const char* i = jv_string_value(input);
-  const char* end = i + jv_string_length(jv_copy(input));
+  const char* end = i + jv_string_length_bytes(jv_copy(input));
   const char* cstart;
   int c = 0;
   while ((i = jvp_utf8_next((cstart = i), end, &c))) {
@@ -299,7 +299,7 @@ static jv f_format(jv input, jv fmt) {
 
     jv line = jv_string("");
     const char* s = jv_string_value(input);
-    for (int i=0; i<jv_string_length(jv_copy(input)); i++) {
+    for (int i=0; i<jv_string_length_bytes(jv_copy(input)); i++) {
       unsigned ch = (unsigned)(unsigned char)*s;
       if (ch < 128 && unreserved[ch]) {
         line = jv_string_append_buf(line, s, 1);
@@ -346,7 +346,7 @@ static jv f_format(jv input, jv fmt) {
     jv line = jv_string("");
     const char b64[64 + 1] = CHARS_ALPHANUM "+/";
     const char* data = jv_string_value(input);
-    int len = jv_string_length(jv_copy(input));
+    int len = jv_string_length_bytes(jv_copy(input));
     for (int i=0; i<len; i+=3) {
       uint32_t code = 0;
       int n = len - i >= 3 ? 3 : len-i;
