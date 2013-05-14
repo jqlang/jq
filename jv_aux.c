@@ -26,9 +26,12 @@ static int parse_slice(jv array, jv slice, int* pstart, int* pend) {
     int end = (int)jv_number_value(end_jv);
     if (start < 0) start = len + start;
     if (end < 0) end = len + end;
+
     if (start < 0) start = 0;
+    if (start > len) start = len;
     if (end > len) end = len;
     if (end < start) end = start;
+    assert(0 <= start && start <= end && end <= len);
     *pstart = start;
     *pend = end;
     return 1;
