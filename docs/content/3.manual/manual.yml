@@ -588,6 +588,22 @@ sections:
           - program: add
             input: '[]'
             output: ["null"]
+
+      - title: `range`
+        body: |
+          
+          The `range` function produces a range of numbers. `range(4;10)`
+          produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers
+          are produced as separate outputs. Use `[range(4;10)]` to get a range as 
+          an array.
+
+        examples:
+          - program: 'range(2;4)'
+            input: 'null'
+            output: ['2', '3']
+          - program: '[range(2;4)]'
+            input: 'null'
+            output: ['[2,3]']
             
       - title: `tonumber`
         body: |

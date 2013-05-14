@@ -266,6 +266,33 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case ON_BACKTRACK(RANGE):
+    case RANGE: {
+      uint16_t level = *pc++;
+      uint16_t v = *pc++;
+      frame_ptr fp = frame_get_level(&jq->frame_stk, frame_current(&jq->frame_stk), level);
+      jv* var = frame_local_var(fp, v);
+      jv max = stack_pop(jq);
+      if (jv_get_kind(*var) != JV_KIND_NUMBER ||
+          jv_get_kind(max) != JV_KIND_NUMBER) {
+        print_error(jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
+        jv_free(max);
+        goto do_backtrack;
+      } else if (jv_number_value(jv_copy(*var)) >= jv_number_value(jv_copy(max))) {
+        /* finished iterating */
+        goto do_backtrack;
+      } else {
+        jv curr = jv_copy(*var);
+        *var = jv_number(jv_number_value(*var) + 1);
+
+        stack_save(jq, pc - 3);
+        stack_push(jq, jv_copy(max));
+        stack_switch(jq);
+        stack_push(jq, curr);
+      }
+      break;
+    }
+
       // FIXME: loadv/storev may do too much copying/freeing
     case LOADV: {
       uint16_t level = *pc++;
