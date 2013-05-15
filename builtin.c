@@ -543,7 +543,7 @@ static block bind_bytecoded_builtins(block b) {
                                             range));
   }
   
-  return block_bind(builtins, b, OP_IS_CALL_PSEUDO);
+  return block_bind_referenced(builtins, b, OP_IS_CALL_PSEUDO);
 }
 
 static const char* const jq_builtins[] = {
@@ -572,7 +572,7 @@ block builtins_bind(block b) {
     block funcs;
     int nerrors = jq_parse_library(&src, &funcs);
     assert(!nerrors);
-    b = block_bind(funcs, b, OP_IS_CALL_PSEUDO);
+    b = block_bind_referenced(funcs, b, OP_IS_CALL_PSEUDO);
     locfile_free(&src);
   }
   b = bind_bytecoded_builtins(b);

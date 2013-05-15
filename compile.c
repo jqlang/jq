@@ -216,13 +216,14 @@ int block_has_only_binders(block binders, int bindflags) {
   return 1;
 }
 
-static void block_bind_subblock(block binder, block body, int bindflags) {
+static int block_bind_subblock(block binder, block body, int bindflags) {
   assert(block_is_single(binder));
   assert((opcode_describe(binder.first->op)->flags & bindflags) == bindflags);
   assert(binder.first->symbol);
   assert(binder.first->bound_by == 0 || binder.first->bound_by == binder.first);
 
   binder.first->bound_by = binder.first;
+  int nrefs = 0;
   for (inst* i = body.first; i; i = i->next) {
     int flags = opcode_describe(i->op)->flags;
     if ((flags & bindflags) == bindflags &&
@@ -230,12 +231,14 @@ static void block_bind_subblock(block binder, block body, int bindflags) {
         !strcmp(i->symbol, binder.first->symbol)) {
       // bind this instruction
       i->bound_by = binder.first;
+      nrefs++;
     }
     // binding recurses into closures
-    block_bind_subblock(binder, i->subfn, bindflags);
+    nrefs += block_bind_subblock(binder, i->subfn, bindflags);
     // binding recurses into argument list
-    block_bind_subblock(binder, i->arglist, bindflags);
+    nrefs += block_bind_subblock(binder, i->arglist, bindflags);
   }
+  return nrefs;
 }
 
 static void block_bind_each(block binder, block body, int bindflags) {
@@ -249,6 +252,21 @@ static void block_bind_each(block binder, block body, int bindflags) {
 block block_bind(block binder, block body, int bindflags) {
   block_bind_each(binder, body, bindflags);
   return block_join(binder, body);
+}
+
+block block_bind_referenced(block binder, block body, int bindflags) {
+  assert(block_has_only_binders(binder, bindflags));
+  bindflags |= OP_HAS_BINDING;
+  block refd = gen_noop();
+  for (inst* curr; (curr = block_take(&binder));) {
+    block b = inst_block(curr);
+    if (block_bind_subblock(b, body, bindflags)) {
+      refd = BLOCK(refd, b);
+    } else {
+      block_free(b);
+    }
+  }
+  return block_join(refd, body);
 }
 
 block gen_function(const char* name, block formals, block body) {
