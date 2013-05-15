@@ -507,13 +507,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
   errors += expand_call_arglist(locations, &b);
-  if (bc->parent) {
-    // functions should end in a return
-    b = BLOCK(b, gen_op_simple(RET));
-  } else {
-    // the toplevel should YIELD;BACKTRACK; when it finds an answer
-    b = BLOCK(b, gen_op_simple(YIELD), gen_op_simple(BACKTRACK));
-  }
+  b = BLOCK(b, gen_op_simple(RET));
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
     int length = opcode_describe(curr->op)->length;

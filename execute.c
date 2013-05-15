@@ -26,6 +26,7 @@ struct jq_state {
   jv path;
   int subexp_nest;
   int debug_trace_enabled;
+  int initial_execution;
 };
 
 typedef struct {
@@ -149,7 +150,8 @@ jv jq_next(jq_state *jq) {
   uint16_t* pc = stack_restore(jq);
   assert(pc);
 
-  int backtracking = 0;
+  int backtracking = !jq->initial_execution;
+  jq->initial_execution = 0;
   while (1) {
     uint16_t opcode = *pc;
 
@@ -465,13 +467,6 @@ jv jq_next(jq_state *jq) {
       pc += offset;
       break;
     }
-
-    case YIELD: {
-      jv value = stack_pop(jq);
-      stack_save(jq, pc);
-      stack_switch(jq);
-      return value;
-    }
       
     case CALL_BUILTIN: {
       int nargs = *pc++;
@@ -510,9 +505,24 @@ jv jq_next(jq_state *jq) {
     }
 
     case RET: {
-      pc = *frame_current_retaddr(&jq->frame_stk);
-      frame_pop(&jq->frame_stk);
+      uint16_t* retaddr = *frame_current_retaddr(&jq->frame_stk);
+      if (retaddr) {
+        // function return
+        pc = retaddr;
+        frame_pop(&jq->frame_stk);
+      } else {
+        // top-level return, yielding value
+        jv value = stack_pop(jq);
+        stack_save(jq, pc - 1);
+        stack_push(jq, jv_null());
+        stack_switch(jq);
+        return value;
+      }
       break;
+    }
+    case ON_BACKTRACK(RET): {
+      // resumed after top-level return
+      goto do_backtrack;
     }
     }
   }
@@ -538,6 +548,7 @@ void jq_init(struct bytecode* bc, jv input, jq_state **jq, int flags) {
   } else {
     new_jq->debug_trace_enabled = 0;
   }
+  new_jq->initial_execution = 1;
   *jq = new_jq;
 }
 
