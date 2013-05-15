@@ -526,6 +526,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
   bc->nsubfunctions = 0;
   errors += expand_call_arglist(locations, &b);
   b = BLOCK(b, gen_op_simple(RET));
+  jv localnames = jv_array();
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
     int length = opcode_describe(curr->op)->length;
@@ -543,6 +544,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
     if ((opcode_describe(curr->op)->flags & OP_HAS_VARIABLE) &&
         curr->bound_by == curr) {
       curr->imm.intval = var_frame_idx++;
+      localnames = jv_array_append(localnames, jv_string(curr->symbol));
     }
 
     if (curr->op == CLOSURE_CREATE) {
@@ -552,10 +554,13 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
     if (curr->op == CLOSURE_CREATE_C) {
       assert(curr->bound_by == curr);
       int idx = bc->globals->ncfunctions++;
+      bc->globals->cfunc_names = jv_array_append(bc->globals->cfunc_names,
+                                                 jv_string(curr->symbol));
       bc->globals->cfunctions[idx] = *curr->imm.cfunc;
       curr->imm.intval = idx;
     }
   }
+  bc->debuginfo = jv_object_set(bc->debuginfo, jv_string("locals"), localnames);
   if (bc->nsubfunctions) {
     bc->subfunctions = jv_mem_alloc(sizeof(struct bytecode*) * bc->nsubfunctions);
     for (inst* curr = b.first; curr; curr = curr->next) {
@@ -565,12 +570,16 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
         subfn->globals = bc->globals;
         subfn->parent = bc;
         subfn->nclosures = 0;
+        subfn->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_string(curr->symbol));
+        jv params = jv_array();
         for (inst* param = curr->arglist.first; param; param = param->next) {
           assert(param->op == CLOSURE_PARAM);
           assert(param->bound_by == param);
           param->imm.intval = subfn->nclosures++;
           param->compiled = subfn;
+          params = jv_array_append(params, jv_string(param->symbol));
         }
+        subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
         errors += compile(locations, subfn, curr->subfn);
         curr->subfn = gen_noop();
       }
@@ -638,6 +647,8 @@ int block_compile(block b, struct locfile* locations, struct bytecode** out) {
   int ncfunc = count_cfunctions(b);
   bc->globals->ncfunctions = 0;
   bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
+  bc->globals->cfunc_names = jv_array();
+  bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
   int nerrors = compile(locations, bc, b);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {

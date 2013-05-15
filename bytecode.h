@@ -10,6 +10,7 @@
 struct symbol_table {
   struct cfunction* cfunctions;
   int ncfunctions;
+  jv cfunc_names;
 };
 
 // The bytecode format matters in:
@@ -33,6 +34,8 @@ struct bytecode {
   int nsubfunctions;
 
   struct bytecode* parent;
+
+  jv debuginfo;
 };
 
 void dump_disassembly(int, struct bytecode* code);
