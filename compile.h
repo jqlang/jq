@@ -34,7 +34,7 @@ block gen_call(const char* name, block body);
 block gen_subexp(block a);
 block gen_both(block a, block b);
 block gen_collect(block expr);
-block gen_fold(const char* varname, block init, block body);
+block gen_reduce(const char* varname, block source, block init, block body);
 block gen_definedor(block a, block b);
 block gen_condbranch(block iftrue, block iffalse);
 block gen_and(block a, block b);

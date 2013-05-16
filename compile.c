@@ -320,15 +320,24 @@ block gen_collect(block expr) {
                gen_op_var_bound(LOADV, array_var));
 }
 
-block gen_fold(const char* varname, block init, block fold) {
-  block loop = BLOCK(fold, gen_op_var_unbound(STOREV, varname), gen_op_simple(BACKTRACK));
+block gen_reduce(const char* varname, block source, block init, block body) {
+  block res_var = block_bind(gen_op_var_unbound(STOREV, "reduce"),
+                             gen_noop(), OP_HAS_VARIABLE);
+
+  block loop = BLOCK(gen_op_simple(DUP),
+                     source,
+                     block_bind(gen_op_var_unbound(STOREV, varname),
+                                BLOCK(gen_op_var_bound(LOADVN, res_var),
+                                      body,
+                                      gen_op_var_bound(STOREV, res_var)),
+                                OP_HAS_VARIABLE),
+                     gen_op_simple(BACKTRACK));
   return BLOCK(gen_op_simple(DUP),
                init,
-               block_bind(gen_op_var_unbound(STOREV, varname),
-                          BLOCK(gen_op_target(FORK, loop),
-                                loop,
-                                gen_op_var_unbound(LOADV, varname)),
-                          OP_HAS_VARIABLE));
+               res_var,
+               gen_op_target(FORK, loop),
+               loop,
+               gen_op_var_bound(LOADVN, res_var));
 }
 
 block gen_definedor(block a, block b) {

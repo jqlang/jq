@@ -379,7 +379,7 @@ def fac: if . == 1 then 1 else . * (. - 1 | fac) end; [.[] | fac]
 # []
 # 1001
 
-fold 0 as $s (.[] | $s + .)
+reduce .[] as $x (0; . + $x)
 [1,2,4]
 7
 

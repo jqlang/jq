@@ -58,7 +58,7 @@ struct lexer_param;
 %token THEN "then"
 %token ELSE "else"
 %token ELSE_IF "elif"
-%token FOLD "fold"
+%token REDUCE "reduce"
 %token END "end"
 %token AND "and"
 %token OR "or"
@@ -226,8 +226,8 @@ Term "as" '$' IDENT '|' Exp {
   jv_free($4);
 } |
 
-"fold" Term "as" '$' IDENT '(' Exp ')' {
-  $$ = gen_fold(jv_string_value($5), $2, $7);
+"reduce" Term "as" '$' IDENT '(' Exp ';' Exp ')' {
+  $$ = gen_reduce(jv_string_value($5), $2, $7, $9);
   jv_free($5);
 } |
 

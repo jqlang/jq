@@ -49,7 +49,7 @@ struct lexer_param;
 "and" { return AND; }
 "or" { return OR; }
 "end" { return END; }
-"fold" { return FOLD; }
+"reduce" { return REDUCE; }
 "//" { return DEFINEDOR; }
 "|=" { return SETPIPE; }
 "+=" { return SETPLUS; }
