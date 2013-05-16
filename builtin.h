@@ -3,7 +3,7 @@
 
 #include "compile.h"
 
-block builtins_bind(block);
+int builtins_bind(block*);
 
 
 typedef void (*cfunction_ptr)(void);
