@@ -317,7 +317,7 @@ block gen_collect(block expr) {
                gen_op_target(FORK, tail),
                expr, 
                tail,
-               gen_op_var_bound(LOADV, array_var));
+               gen_op_var_bound(LOADVN, array_var));
 }
 
 block gen_reduce(const char* varname, block source, block init, block body) {
