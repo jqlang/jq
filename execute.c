@@ -311,6 +311,23 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+      // Does a load but replaces the variable with null
+    case LOADVN: {
+      uint16_t level = *pc++;
+      uint16_t v = *pc++;
+      frame_ptr fp = frame_get_level(&jq->frame_stk, frame_current(&jq->frame_stk), level);
+      jv* var = frame_local_var(fp, v);
+      if (jq->debug_trace_enabled) {
+        printf("V%d = ", v);
+        jv_dump(jv_copy(*var), 0);
+        printf("\n");
+      }
+      jv_free(stack_pop(jq));
+      stack_push(jq, *var);
+      *var = jv_null();
+      break;
+    }
+
     case STOREV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
