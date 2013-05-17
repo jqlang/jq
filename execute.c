@@ -423,12 +423,14 @@ jv jq_next(jq_state *jq) {
       int idx = jv_number_value(stack_pop(jq));
       jv container = stack_pop(jq);
 
-      int keep_going;
+      int keep_going, is_last = 0;
       jv key, value;
       if (jv_get_kind(container) == JV_KIND_ARRAY) {
         if (opcode == EACH) idx = 0;
         else idx = idx + 1;
-        keep_going = idx < jv_array_length(jv_copy(container));
+        int len = jv_array_length(jv_copy(container));
+        keep_going = idx < len;
+        is_last = idx == len - 1;
         if (keep_going) {
           key = jv_number(idx);
           value = jv_array_get(jv_copy(container), idx);
@@ -451,6 +453,11 @@ jv jq_next(jq_state *jq) {
       if (!keep_going) {
         jv_free(container);
         goto do_backtrack;
+      } else if (is_last) {
+        // we don't need to make a backtrack point
+        jv_free(container);
+        path_append(jq, key);
+        stack_push(jq, value);
       } else {
         stack_save(jq, pc - 1);
         stack_push(jq, container);
