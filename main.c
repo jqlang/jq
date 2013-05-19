@@ -230,6 +230,17 @@ int main(int argc, char* argv[]) {
     bc = jq_compile_args(jv_string_value(data), program_arguments);
     jv_free(data);
   } else {
+    char* home = getenv("HOME");
+    if (home) {   // silently ignore no $HOME
+      jv filename = jv_string_append_str(jv_string(home), "/.jq");
+      jv data = slurp_file(jv_string_value(filename));
+      if (jv_is_valid(data)) {
+        data = jv_string_append_str(data, program);   // prepend
+        program = jv_string_value(data);
+      }
+      jv_free(filename);
+      jv_free(data);
+    }
     bc = jq_compile_args(program, program_arguments);
   }
   if (!bc) return 1;
