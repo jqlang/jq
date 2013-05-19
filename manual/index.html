@@ -74,7 +74,7 @@
               </li>
             
               <li >
-                <a href="#VariablesandFunctions">Variables and Functions</a>
+                <a href="#Advancedfeatures">Advanced features</a>
               </li>
             
               <li >
@@ -95,7 +95,7 @@
                   
                     "`.foo`" : "foo",
                   
-                    "`.[foo]`" : "foo",
+                    "`.[foo]`, `.[2]`, `.[10:15]`" : "foo21015",
                   
                     "`.[]`" : "",
                   
@@ -125,6 +125,10 @@
                   
                     "`keys`" : "keys",
                   
+                    "`has`" : "has",
+                  
+                    "`to_entries`, `from_entries`, `with_entries`" : "to_entriesfrom_entrieswith_entries",
+                  
                     "`select`" : "select",
                   
                     "`empty`" : "empty",
@@ -133,9 +137,13 @@
                   
                     "`add`" : "add",
                   
+                    "`range`" : "range",
+                  
                     "`tonumber`" : "tonumber",
                   
                     "`tostring`" : "tostring",
+                  
+                    "`type`" : "type",
                   
                     "`sort, sort_by`" : "sortsort_by",
                   
@@ -145,9 +153,15 @@
                   
                     "`unique`" : "unique",
                   
+                    "`reverse`" : "reverse",
+                  
                     "`contains`" : "contains",
                   
+                    "`recurse`" : "recurse",
+                  
                     "String interpolation - `\\(foo)`" : "Stringinterpolationfoo",
+                  
+                    "Format strings and escaping" : "Formatstringsandescaping",
                   
                   "Builtin operators and functions" : "Builtinoperatorsandfunctions"
                   ,
@@ -171,7 +185,9 @@
                   
                     "Defining Functions" : "DefiningFunctions",
                   
-                  "Variables and Functions" : "VariablesandFunctions"
+                    "Reduce" : "Reduce",
+                  
+                  "Advanced features" : "Advancedfeatures"
                   ,
                 
                   
@@ -231,51 +247,55 @@ simpler:</p>
 
 <p>You can affect how jq reads and writes its input and output using some command-line options:</p>
 
-<p>* <code>--slurp</code>/<code>-s</code>:</p>
+<ul>
+<li>
+<p><code>--slurp</code>/<code>-s</code>:</p>
 
-<pre><code>Instead of running the filter for each JSON object in the
-input, read the entire input stream into a large array and run
-the filter just once.</code></pre>
+<p>Instead of running the filter for each JSON object in the input, read the entire input stream into a large array and run the filter just once.</p>
+</li>
 
-<p>* <code>--raw-input</code>/<code>-R</code>:</p>
+<li>
+<p><code>--raw-input</code>/<code>-R</code>:</p>
 
-<pre><code>Don&#39;t parse the input as JSON. Instead, each line of text is
-passed to the filter as a string. If combined with `--slurp`,
-then the entire input is passed to the filter as a single long
-string.</code></pre>
+<p>Don&#8217;t parse the input as JSON. Instead, each line of text is passed to the filter as a string. If combined with <code>--slurp</code>, then the entire input is passed to the filter as a single long string.</p>
+</li>
 
-<p>* <code>--null-input</code>/<code>-n</code>:</p>
+<li>
+<p><code>--null-input</code>/<code>-n</code>:</p>
 
-<pre><code>Don&#39;t read any input at all! Instead, the filter is run once
-using `null` as the input. This is useful when using jq as a
-simple calculator or to construct JSON data from scratch.</code></pre>
+<p>Don&#8217;t read any input at all! Instead, the filter is run once using <code>null</code> as the input. This is useful when using jq as a simple calculator or to construct JSON data from scratch.</p>
+</li>
 
-<p>* <code>--compact-output</code> / <code>-c</code>:</p>
+<li>
+<p><code>--compact-output</code> / <code>-c</code>:</p>
 
-<pre><code>By default, jq pretty-prints JSON output. Using this option
-will result in more compact output by instead putting each
-JSON object on a single line.</code></pre>
+<p>By default, jq pretty-prints JSON output. Using this option will result in more compact output by instead putting each JSON object on a single line.</p>
+</li>
 
-<p>* <code>--colour-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</p>
+<li>
+<p><code>--colour-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</p>
 
-<pre><code>By default, jq outputs colored JSON if writing to a
-terminal. You can force it to produce color even if writing to
-a pipe or a file using `-C`, and disable color with `-M`.</code></pre>
+<p>By default, jq outputs colored JSON if writing to a terminal. You can force it to produce color even if writing to a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.</p>
+</li>
 
-<p>* <code>--ascii-output</code> / <code>-a</code>:</p>
+<li>
+<p><code>--ascii-output</code> / <code>-a</code>:</p>
 
-<pre><code>jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
-if the input specified them as escape sequences (like
-&quot;\u03bc&quot;). Using this option, you can force jq to produce pure
-ASCII output with every non-ASCII character replaced with the
-equivalent escape sequence.</code></pre>
+<p>jq usually outputs non-ASCII Unicode codepoints as UTF-8, even if the input specified them as escape sequences (like &#8220;\u03bc&#8221;). Using this option, you can force jq to produce pure ASCII output with every non-ASCII character replaced with the equivalent escape sequence.</p>
+</li>
 
-<p>* <code>--raw-output</code> / <code>-r</code>:</p>
+<li>
+<p><code>--raw-output</code> / <code>-r</code>:</p>
 
-<pre><code>With this option, if the filter&#39;s result is a string then it
-will be written directly to standard output rather than being
-formatted as a JSON string with quotes. This can be useful for
-making jq filters talk to non-JSON-based systems.</code></pre>
+<p>With this option, if the filter&#8217;s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes. This can be useful for making jq filters talk to non-JSON-based systems.</p>
+</li>
+
+<li>
+<p><code>--arg name value</code>:</p>
+
+<p>This option passes a value to the jq program as a predefined variable. If you run jq with <code>--arg foo bar</code>, then <code>$foo</code> is available in the program and has the value <code>&quot;bar&quot;</code>.</p>
+</li>
+</ul>
               
             </section>
           
@@ -327,7 +347,7 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                   <p><code>.foo</code></p>
                   
                 </h3>
-                <p>The simplest <em>useful</em> filter is .foo. When given a JSON object (aka dictionary or hash) as input, it produces the value at the key &#8220;foo&#8221;, or null if there&#39;s none present.</p>
+                <p>The simplest <em>useful</em> filter is .foo. When given a JSON object (aka dictionary or hash) as input, it produces the value at the key &#8220;foo&#8221;, or null if there&#8217;s none present.</p>
 
                 
                   <div>
@@ -374,12 +394,14 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                  
                  </section>
               
-                <section id="foo">
+                <section id="foo21015">
                 <h3>
-                  <p><code>.[foo]</code></p>
+                  <p><code>.[foo]</code>, <code>.[2]</code>, <code>.[10:15]</code></p>
                   
                 </h3>
-                <p>You can also look up fields of an object using syntax like <code>.[&quot;foo&quot;]</code> (.foo above is a shorthand version of this). This one works for arrays as well, if the key is an integer. Arrays are zero-based (like javascript), so .<span>2</span> returns the third element of the array.</p>
+                <p>You can also look up fields of an object using syntax like <code>.[&quot;foo&quot;]</code> (.foo above is a shorthand version of this). This one works for arrays as well, if the key is an integer. Arrays are zero-based (like javascript), so <code>.[2]</code> returns the third element of the array.</p>
+
+<p>The <code>.[10:15]</code> syntax can be used to return a subarray of an array. The array returned by <code>.[10:15]</code> will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive). Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array).</p>
 
                 
                   <div>
@@ -421,6 +443,51 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                         
                       </table>
                     
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.[2:4]'</td></tr>
+                        <tr><th>Input</th><td>["a","b","c","d","e"]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>["c", "d"]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.[:3]'</td></tr>
+                        <tr><th>Input</th><td>["a","b","c","d","e"]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>["a", "b", "c"]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.[-2:]'</td></tr>
+                        <tr><th>Input</th><td>["a","b","c","d","e"]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>["d", "e"]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
                     </div>
                   </div>
                  
@@ -431,7 +498,9 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                   <p><code>.[]</code></p>
                   
                 </h3>
-                <p>If you use the <code>.[foo]</code> syntax, but omit the index entirely, it will return <em>all</em> of the elements of an array. Running <code>.[]</code> with the input <code>[1,2,3]</code> will produce the numbers as three seperate results, rather than as a single array.</p>
+                <p>If you use the <code>.[foo]</code> syntax, but omit the index entirely, it will return <em>all</em> of the elements of an array. Running <code>.[]</code> with the input <code>[1,2,3]</code> will produce the numbers as three separate results, rather than as a single array.</p>
+
+<p>You can also use this on an object, and it will return all the values of the object.</p>
 
                 
                   <div>
@@ -474,6 +543,28 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                             <td><i>none</i></td>
                           </tr>
                         
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.[]'</td></tr>
+                        <tr><th>Input</th><td>{"a": 1, "b": 1}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>1</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>1</td>
+                          </tr>
                         
                         
                       </table>
@@ -583,7 +674,7 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                   <p><code>|</code></p>
                   
                 </h3>
-                <p>The | operator combines two filters by feeding the output(s) of the one on the left into the input of the one on the right. It&#39;s pretty much the same as the Unix shell&#39;s pipe, if you&#39;re used to that.</p>
+                <p>The | operator combines two filters by feeding the output(s) of the one on the left into the input of the one on the right. It&#8217;s pretty much the same as the Unix shell&#8217;s pipe, if you&#8217;re used to that.</p>
 
 <p>If the one on the left produces multiple results, the one on the right will be run for each of those results. So, the expression <code>.[] | .foo</code> retrieves the &#8220;foo&#8221; field of each element of the input array.</p>
 
@@ -639,7 +730,7 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 </h3>
                 <p>As in JSON, <code>[]</code> is used to construct arrays, as in <code>[1,2,3]</code>. The elements of the arrays can be any jq expression. All of the results produced by all of the expressions are collected into one big array. You can use it to construct an array out of a known quantity of values (as in <code>[.foo, .bar, .baz]</code>) or to &#8220;collect&#8221; all the results of a filter into an array (as in <code>[.items[].name]</code>)</p>
 
-<p>Once you understand the &#8221;,&#8221; operator, you can look at jq&#39;s array syntax in a different light: the expression <span>1,2,3</span> is not using a built-in syntax for comma-separated arrays, but is instead applying the <code>[]</code> operator (collect results) to the expression 1,2,3 (which produces three different results).</p>
+<p>Once you understand the &#8221;,&#8221; operator, you can look at jq&#8217;s array syntax in a different light: the expression <code>[1,2,3]</code> is not using a built-in syntax for comma-separated arrays, but is instead applying the <code>[]</code> operator (collect results) to the expression 1,2,3 (which produces three different results).</p>
 
 <p>If you have a filter <code>X</code> that produces four results, then the expression <code>[X]</code> will produce a single result, an array of four elements.</p>
 
@@ -680,7 +771,7 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 </h3>
                 <p>Like JSON, <code>{}</code> is for constructing objects (aka dictionaries or hashes), as in: <code>{&quot;a&quot;: 42, &quot;b&quot;: 17}</code>.</p>
 
-<p>If the keys are &#8220;sensible&#8221; (all alphabetic characters), then the quotes can be left off. The value can be any expression (although you may need to wrap it in parentheses if it&#39;s a complicated one), which gets applied to the {} expression&#39;s input (remember, all filters have an input and an output).</p>
+<p>If the keys are &#8220;sensible&#8221; (all alphabetic characters), then the quotes can be left off. The value can be any expression (although you may need to wrap it in parentheses if it&#8217;s a complicated one), which gets applied to the {} expression&#8217;s input (remember, all filters have an input and an output).</p>
 
 <pre><code>{foo: .bar}</code></pre>
 
@@ -688,9 +779,9 @@ making jq filters talk to non-JSON-based systems.</code></pre>
 
 <pre><code>{user: .user, title: .title}</code></pre>
 
-<p>Because that&#39;s so common, there&#39;s a shortcut syntax: <code>{user, title}</code>.</p>
+<p>Because that&#8217;s so common, there&#8217;s a shortcut syntax: <code>{user, title}</code>.</p>
 
-<p>If one of the expressions produces multiple results, multiple dictionaries will be produced. If the input&#39;s</p>
+<p>If one of the expressions produces multiple results, multiple dictionaries will be produced. If the input&#8217;s</p>
 
 <pre><code>{&quot;user&quot;:&quot;stedolan&quot;,&quot;titles&quot;:[&quot;JQ Primer&quot;, &quot;More JQ&quot;]}</code></pre>
 
@@ -794,6 +885,8 @@ making jq filters talk to non-JSON-based systems.</code></pre>
 </li>
 </ul>
 
+<p><code>null</code> can be added to any value, and returns the other value unchanged.</p>
+
                 
                   <div>
                     
@@ -829,6 +922,36 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                               <th>Output</th>
                             
                             <td>[1,2,3,4]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.a + null'</td></tr>
+                        <tr><th>Input</th><td>{"a": 1}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>1</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.a + 1'</td></tr>
+                        <tr><th>Input</th><td>{}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>1</td>
                           </tr>
                         
                         
@@ -1075,6 +1198,130 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                  
                  </section>
               
+                <section id="has">
+                <h3>
+                  <p><code>has</code></p>
+                  
+                </h3>
+                <p>The builtin function <code>has</code> returns whether the input object has the given key, or the input array has an element at the given index.</p>
+
+<p><code>has($key)</code> has the same effect as checking whether <code>$key</code> is a member of the array returned by <code>keys</code>, although <code>has</code> will be faster.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example14">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example14" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'map(has("foo"))'</td></tr>
+                        <tr><th>Input</th><td>[{"foo": 42}, {}]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[true, false]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'map(has(2))'</td></tr>
+                        <tr><th>Input</th><td>[[0,1], ["a","b","c"]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[false, true]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="to_entriesfrom_entrieswith_entries">
+                <h3>
+                  <p><code>to_entries</code>, <code>from_entries</code>, <code>with_entries</code></p>
+                  
+                </h3>
+                <p>These functions convert between an object and an array of key-value pairs. If <code>to_entries</code> is passed an object, then for each <code>k: v</code> entry in the input, the output array includes <code>{&quot;key&quot;: k, &quot;value&quot;: v}</code>.</p>
+
+<p><code>from_entries</code> does the opposite conversion, and <code>with_entries(foo)</code> is a shorthand for <code>to_entries |
+map(foo) | from_entries</code>, useful for doing some operation to all keys and values of an object.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example15">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example15" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'to_entries'</td></tr>
+                        <tr><th>Input</th><td>{"a": 1, "b": 2}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[{"key":"a", "value":1}, {"key":"b", "value":2}]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'from_entries'</td></tr>
+                        <tr><th>Input</th><td>[{"key":"a", "value":1}, {"key":"b", "value":2}]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"a": 1, "b": 2}</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'with_entries(.key |= "KEY_" + .)'</td></tr>
+                        <tr><th>Input</th><td>{"a": 1, "b": 2}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"KEY_a": 1, "KEY_b": 2}</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="select">
                 <h3>
                   <p><code>select</code></p>
@@ -1087,11 +1334,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example14">
+                    <a data-toggle="collapse" href="#example16">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example14" class="collapse">
+                    <div id="example16" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1126,11 +1373,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example15">
+                    <a data-toggle="collapse" href="#example17">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example15" class="collapse">
+                    <div id="example17" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1187,11 +1434,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example16">
+                    <a data-toggle="collapse" href="#example18">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example16" class="collapse">
+                    <div id="example18" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1226,11 +1473,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example17">
+                    <a data-toggle="collapse" href="#example19">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example17" class="collapse">
+                    <div id="example19" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1283,6 +1530,65 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                  
                  </section>
               
+                <section id="range">
+                <h3>
+                  <p><code>range</code></p>
+                  
+                </h3>
+                <p>The <code>range</code> function produces a range of numbers. <code>range(4;10)</code> produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers are produced as separate outputs. Use <code>[range(4;10)]</code> to get a range as an array.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example20">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example20" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'range(2;4)'</td></tr>
+                        <tr><th>Input</th><td>null</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>2</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>3</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '[range(2;4)]'</td></tr>
+                        <tr><th>Input</th><td>null</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[2,3]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="tonumber">
                 <h3>
                   <p><code>tonumber</code></p>
@@ -1293,11 +1599,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example18">
+                    <a data-toggle="collapse" href="#example21">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example18" class="collapse">
+                    <div id="example21" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1337,11 +1643,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example19">
+                    <a data-toggle="collapse" href="#example22">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example19" class="collapse">
+                    <div id="example22" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1368,6 +1674,43 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                               <th></th>
                             
                             <td>"[1]"</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="type">
+                <h3>
+                  <p><code>type</code></p>
+                  
+                </h3>
+                <p>The <code>type</code> function returns the type of its argument as a string, which is one of null, boolean, number, string, array or object.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example23">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example23" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'map(type)'</td></tr>
+                        <tr><th>Input</th><td>[0, false, [], {}, null, "hello"]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>["number", "boolean", "array", "object", "null", "string"]</td>
                           </tr>
                         
                         
@@ -1408,11 +1751,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example20">
+                    <a data-toggle="collapse" href="#example24">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example20" class="collapse">
+                    <div id="example24" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1462,11 +1805,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example21">
+                    <a data-toggle="collapse" href="#example25">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example21" class="collapse">
+                    <div id="example25" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1499,11 +1842,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example22">
+                    <a data-toggle="collapse" href="#example26">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example22" class="collapse">
+                    <div id="example26" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1551,11 +1894,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example23">
+                    <a data-toggle="collapse" href="#example27">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example23" class="collapse">
+                    <div id="example27" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1578,6 +1921,43 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                  
                  </section>
               
+                <section id="reverse">
+                <h3>
+                  <p><code>reverse</code></p>
+                  
+                </h3>
+                <p>This function reverses an array.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example28">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example28" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'reverse'</td></tr>
+                        <tr><th>Input</th><td>[1,2,3,4]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[4,3,2,1]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="contains">
                 <h3>
                   <p><code>contains</code></p>
@@ -1588,11 +1968,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example24">
+                    <a data-toggle="collapse" href="#example29">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example24" class="collapse">
+                    <div id="example29" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1675,6 +2055,76 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                  
                  </section>
               
+                <section id="recurse">
+                <h3>
+                  <p><code>recurse</code></p>
+                  
+                </h3>
+                <p>The <code>recurse</code> function allows you to search through a recursive structure, and extract interesting data from all levels. Suppose your input represents a filesystem:</p>
+
+<pre><code>{&quot;name&quot;: &quot;/&quot;, &quot;children&quot;: [
+  {&quot;name&quot;: &quot;/bin&quot;, &quot;children&quot;: [
+    {&quot;name&quot;: &quot;/bin/ls&quot;, &quot;children&quot;: []},
+    {&quot;name&quot;: &quot;/bin/sh&quot;, &quot;children&quot;: []}]},
+  {&quot;name&quot;: &quot;/home&quot;, &quot;children&quot;: [
+    {&quot;name&quot;: &quot;/home/stephen&quot;, &quot;children&quot;: [
+      {&quot;name&quot;: &quot;/home/stephen/jq&quot;, &quot;children&quot;: []}]}]}]}</code></pre>
+
+<p>Now suppose you want to extract all of the filenames present. You need to retrieve <code>.name</code>, <code>.children[].name</code>, <code>.children[].children[].name</code>, and so on. You can do this with:</p>
+
+<pre><code>recurse(.children[]) | .name</code></pre>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example30">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example30" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'recurse(.foo[])'</td></tr>
+                        <tr><th>Input</th><td>{"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>{"foo":[]}</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>{"foo":[{"foo":[]}]}</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>{"foo":[]}</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="Stringinterpolationfoo">
                 <h3>
                   <p>String interpolation - <code>\(foo)</code></p>
@@ -1685,11 +2135,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example25">
+                    <a data-toggle="collapse" href="#example31">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example25" class="collapse">
+                    <div id="example31" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1702,6 +2152,112 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                               <th>Output</th>
                             
                             <td>"The input was 42, which is one less than 43"</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="Formatstringsandescaping">
+                <h3>
+                  <p>Format strings and escaping</p>
+                  
+                </h3>
+                <p>The <code>@foo</code> syntax is used to format and escape strings, which is useful for building URLs, documents in a language like HTML or XML, and so forth. <code>@foo</code> can be used as a filter on its own, the possible escapings are:</p>
+
+<ul>
+<li>
+<p><code>@text</code>:</p>
+
+<p>Calls <code>tostring</code>, see that function for details.</p>
+</li>
+
+<li>
+<p><code>@json</code>:</p>
+
+<p>Serialises the input as JSON.</p>
+</li>
+
+<li>
+<p><code>@html</code>:</p>
+
+<p>Applies HTML/XML escaping, by mapping the characters <code>&lt;&gt;&amp;&#39;&quot;</code> to their entity equivalents <code>&amp;lt;</code>, <code>&amp;gt;</code>, <code>&amp;amp;</code>, <code>&amp;apos;</code>, <code>&amp;quot;</code>.</p>
+</li>
+
+<li>
+<p><code>@uri</code>:</p>
+
+<p>Applies percent-encoding, by mapping all reserved URI characters to a <code>%xx</code> sequence.</p>
+</li>
+
+<li>
+<p><code>@csv</code>:</p>
+
+<p>The input must be an array, and it is rendered as CSV with double quotes for strings, and quotes escaped by repetition.</p>
+</li>
+
+<li>
+<p><code>@sh</code>:</p>
+
+<p>The input is escaped suitable for use in a command-line for a POSIX shell. If the input is an array, the output will be a series of space-separated strings.</p>
+</li>
+
+<li>
+<p><code>@base64</code>:</p>
+
+<p>The input is converted to base64 as specified by RFC 4648.</p>
+</li>
+</ul>
+
+<p>This syntax can be combined with string interpolation in a useful way. You can follow a <code>@foo</code> token with a string literal. The contents of the string literal will <em>not</em> be escaped. However, all interpolations made inside that string literal will be escaped. For instance,</p>
+
+<pre><code>@uri &quot;http://www.google.com/search?q=\(.search)&quot;</code></pre>
+
+<p>will produce the following output for the input <code>{&quot;search&quot;:&quot;jq!&quot;}</code>:</p>
+
+<pre><code>http://www.google.com/search?q=jq%21</code></pre>
+
+<p>Note that the slashes, question mark, etc. in the URL are not escaped, as they were part of the string literal.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example32">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example32" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '@html'</td></tr>
+                        <tr><th>Input</th><td>"This works if x < y"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>"This works if x &lt; y"</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '@sh "echo \(.)"'</td></tr>
+                        <tr><th>Input</th><td>"O'Hara's Ale"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>"echo 'O'\\''Hara'\\''s Ale'"</td>
                           </tr>
                         
                         
@@ -1730,11 +2286,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example26">
+                    <a data-toggle="collapse" href="#example33">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example26" class="collapse">
+                    <div id="example33" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1785,7 +2341,8 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 </h3>
                 <p><code>if A then B else C end</code> will act the same as <code>B</code> if <code>A</code> produces a value other than false or null, but act the same as <code>C</code> otherwise.</p>
 
-<p>Checking for false or null is a simpler notion of &#8220;truthiness&#8221; than is found in Javascript or Python, but it means that you&#8217;ll sometimes have to be more explicit about the condition you want: you can&#8217;t test whether, e.g. a string is empty using <code>if .name then A else B end</code>, you&#8217;ll need something more like &#8216;if (.name | count) &gt; 0 then A else B end&#8217; instead.</p>
+<p>Checking for false or null is a simpler notion of &#8220;truthiness&#8221; than is found in Javascript or Python, but it means that you&#8217;ll sometimes have to be more explicit about the condition you want: you can&#8217;t test whether, e.g. a string is empty using <code>if .name then A else B end</code>, you&#8217;ll need something more like <code>if (.name | count) &gt; 0 then A else
+B end</code> instead.</p>
 
 <p>If the condition A produces multiple results, it is considered &#8220;true&#8221; if any of those results is not false or null. If it produces zero results, it&#8217;s considered false.</p>
 
@@ -1794,11 +2351,11 @@ making jq filters talk to non-JSON-based systems.</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example27">
+                    <a data-toggle="collapse" href="#example34">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example27" class="collapse">
+                    <div id="example34" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1839,11 +2396,11 @@ end'</td></tr>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example28">
+                    <a data-toggle="collapse" href="#example35">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example28" class="collapse">
+                    <div id="example35" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1883,11 +2440,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example29">
+                    <a data-toggle="collapse" href="#example36">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example29" class="collapse">
+                    <div id="example36" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1928,7 +2485,7 @@ not</code>.</p>
                       </table>
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq '(true, false) and (true, false)'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq '(true, true) and (true, false)'</td></tr>
                         <tr><th>Input</th><td>null</td></tr>
                         
                         
@@ -1950,7 +2507,7 @@ not</code>.</p>
                             
                               <th></th>
                             
-                            <td>false</td>
+                            <td>true</td>
                           </tr>
                         
                           <tr>
@@ -1995,11 +2552,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example30">
+                    <a data-toggle="collapse" href="#example37">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example30" class="collapse">
+                    <div id="example37" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2039,13 +2596,15 @@ not</code>.</p>
               
             </section>
           
-            <section id="VariablesandFunctions">
-              <h2>Variables and Functions</h2>
+            <section id="Advancedfeatures">
+              <h2>Advanced features</h2>
               <p>Variables are an absolute necessity in most programming languages, but they&#8217;re relegated to an &#8220;advanced feature&#8221; in jq.</p>
 
 <p>In most languages, variables are the only means of passing around data. If you calculate a value, and you want to use it more than once, you&#8217;ll need to store it in a variable. To pass a value to another part of the program, you&#8217;ll need that part of the program to define a variable (as a function parameter, object member, or whatever) in which to place the data.</p>
 
 <p>It is also possible to define functions in jq, although this is is a feature whose biggest use is defining jq&#8217;s standard library (many jq functions such as <code>map</code> and <code>find</code> are in fact written in jq).</p>
+
+<p>Finally, jq has a <code>reduce</code> operation, which is very powerful but a bit tricky. Again, it&#8217;s mostly used internally, to define some useful bits of jq&#8217;s standard library.</p>
               
                 <section id="Variables">
                 <h3>
@@ -2054,7 +2613,7 @@ not</code>.</p>
                 </h3>
                 <p>In jq, all filters have an input and an output, so manual plumbing is not necessary to pass a value from one part of a program to the next. Many expressions, for instance <code>a + b</code>, pass their input to two distinct subexpressions (here <code>a</code> and <code>b</code> are both passed the same input), so variables aren&#8217;t usually necessary in order to use a value twice.</p>
 
-<p>For instance, calculating the average value of an array of numbers requires a few variables in most languages - at least one to hold the array, perhaps one for each element or for a loop counter. In jq, it&#8217;s simply <code>add / length</code> - the <code>sum</code> expression is given the array and produces its sum, and the <code>count</code> expression is given the array and produces its length.</p>
+<p>For instance, calculating the average value of an array of numbers requires a few variables in most languages - at least one to hold the array, perhaps one for each element or for a loop counter. In jq, it&#8217;s simply <code>add / length</code> - the <code>add</code> expression is given the array and produces its sum, and the <code>length</code> expression is given the array and produces its length.</p>
 
 <p>So, there&#8217;s generally a cleaner way to solve most problems in jq that defining variables. Still, sometimes they do make things easier, so jq lets you define variables using <code>expression as $variable</code>. All variable names start with <code>$</code>. Here&#8217;s a slightly uglier version of the array-averaging example:</p>
 
@@ -2078,7 +2637,7 @@ not</code>.</p>
 
 <pre><code>.realnames as $names | .posts[] | {title, author: $names[.author]}</code></pre>
 
-<p>The expression &#8220;foo as $x&#8221; runs foo, puts the result in $x, and returns the original input. Apart from the side-effect of binding the variable, it has the same effect as &#8221;.&#8221;.</p>
+<p>The expression <code>exp as $x | ...</code> means: for each value of expression <code>exp</code>, run the rest of the pipeline with the entire original input, and with <code>$x</code> set to that value. Thus <code>as</code> functions as something of a foreach loop.</p>
 
 <p>Variables are scoped over the rest of the expression that defines them, so</p>
 
@@ -2093,11 +2652,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example31">
+                    <a data-toggle="collapse" href="#example38">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example31" class="collapse">
+                    <div id="example38" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2137,18 +2696,18 @@ not</code>.</p>
 
 <p>If you want the value-argument behaviour for defining simple functions, you can just use a variable:</p>
 
-<pre><code>def addvalue(f): f as $value | map(, + $value);</code></pre>
+<pre><code>def addvalue(f): f as $value | map(. + $value);</code></pre>
 
 <p>With that definition, <code>addvalue(.foo)</code> will add the current input&#8217;s <code>.foo</code> field to each element of the array.</p>
 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example32">
+                    <a data-toggle="collapse" href="#example39">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example32" class="collapse">
+                    <div id="example39" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2176,6 +2735,51 @@ not</code>.</p>
                               <th>Output</th>
                             
                             <td>[[1,2,1,2], [10,20,1,2]]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="Reduce">
+                <h3>
+                  <p>Reduce</p>
+                  
+                </h3>
+                <p>The <code>reduce</code> syntax in jq allows you to combine all of the results of an expression by accumulating them into a single answer. As an example, we&#8217;ll pass <code>[3,2,1]</code> to this expression:</p>
+
+<pre><code>reduce .[] as $item (0; . + $item)</code></pre>
+
+<p>For each result that <code>.[]</code> produces, <code>. + $item</code> is run to accumulate a running total, starting from 0. In this example, <code>.[]</code> produces the results 3, 2, and 1, so the effect is similar to running something like this:</p>
+
+<pre><code>0 | (3 as $item | . + $item) | 
+    (2 as $item | . + $item) |
+    (1 as $item | . + $item)</code></pre>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example40">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example40" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'reduce .[] as $item (0; . + $item)'</td></tr>
+                        <tr><th>Input</th><td>[10,2,5,3]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>20</td>
                           </tr>
                         
                         
@@ -2238,11 +2842,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example33">
+                    <a data-toggle="collapse" href="#example41">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example33" class="collapse">
+                    <div id="example41" class="collapse">
                       
                     
                       <table class="manual-example">
