@@ -1,0 +1,28 @@
+DirectoryIndex index.html
+FileETag All
+
+# Compress all static assets
+<IfModule mod_deflate.c>
+	# compress content with type html, text, and css
+  AddOutputFilterByType DEFLATE text/css text/html text/javascript application/javascript application/x-javascript text/js text/plain text/xml
+
+	<IfModule mod_headers.c>
+		# properly handle requests coming from behind proxies
+		Header append Vary User-Agent
+	</IfModule>
+</IfModule>
+
+# Cache, aggressively 
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 10 days"
+
+	<FilesMatch "\.(eot|ttf|otf)$">
+		ExpiresDefault "access plus 10 years"
+	</filesMatch>
+</IfModule>
+
+# Mime-types
+AddType application/vnd.ms-fontobject .eot
+AddType font/ttf .ttf
+AddType font/otf .otf

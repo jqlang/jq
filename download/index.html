@@ -71,7 +71,7 @@
 </li>
 
 <li>
-<p>Debian/Ubuntu packages are coming Real Soon Now.</p>
+<p>jq 1.2 is <a href='http://packages.debian.org/jq'>in Debian</a></p>
 </li>
 </ul>
 
@@ -95,9 +95,21 @@
 
 <h3 id='from_source_on_linux_or_os_x'>From source on Linux or OS X</h3>
 
+<ul>
+<li><a href='source/jq-1.3.tar.gz'>Source tarball for jq 1.3</a></li>
+</ul>
+
+<p>You can build it using the usual <code>./configure &amp;&amp; make &amp;&amp; sudo
+make install</code> rigmarole.</p>
+
+<p>If you&#8217;re interested in using the lastest development version, try:</p>
+
 <pre><code>git clone https://github.com/stedolan/jq.git
 cd jq
-make &amp;&amp; sudo make install</code></pre>
+autoreconf
+./configure
+make
+sudo make install</code></pre>
 
 <p>To build it from a git clone, you&#8217;ll need to install a few packages first:</p>
 
@@ -106,11 +118,11 @@ make &amp;&amp; sudo make install</code></pre>
 
 <li><a href='http://www.gnu.org/software/bison/'>Bison</a></li>
 
-<li><a href='http://www.python.org'>Python</a></li>
-
 <li><a href='http://gcc.gnu.org'>GCC</a></li>
 
 <li><a href='http://www.gnu.org/software/make'>Make</a></li>
+
+<li><a href='http://www.gnu.org/software/automake'>Autotools</a></li>
 </ul>
 
 <p>For Linux systems, these will all be in your system&#8217;s package manager, and if you do development on the machine they&#8217;re most likely already installed.</p>
@@ -121,7 +133,7 @@ make &amp;&amp; sudo make install</code></pre>
 
 <h4 id='building_the_documentation'>Building the documentation</h4>
 
-<p>jq&#8217;s documentation is compiled into static HTML using <a href='http://www.tinytree.info'>Bonsai</a>. To view the documentation locally, run <code>rake serve</code> from the docs/ subdirectory.</p>
+<p>jq&#8217;s documentation is compiled into static HTML using <a href='http://www.tinytree.info'>Bonsai</a>. To view the documentation locally, run <code>rake serve</code> from the docs/ subdirectory. You&#8217;ll need a few Ruby dependencies, which can be installed by following the instructions in <code>docs/README.md</code>.</p>
           
         
           
