@@ -77,7 +77,7 @@ endif
 ### Packaging
 
 docs/site.yml: configure.ac
-	sed 's/^jq_version: .*/jq_version: $(VERSION)/' $@ > $@.new
+	sed 's/^jq_version: .*/jq_version: "$(VERSION)"/' $@ > $@.new
 	mv $@.new $@
 
 install-binaries: $(BUILT_SOURCES)

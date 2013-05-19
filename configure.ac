@@ -1,4 +1,4 @@
-AC_INIT([jq], [1.2], [mu@netsoc.tcd.ie],
+AC_INIT([jq], [1.3], [mu@netsoc.tcd.ie],
              [jq], [http://stedolan.github.com/jq/])
 
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12

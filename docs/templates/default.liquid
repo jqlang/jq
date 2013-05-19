@@ -10,7 +10,7 @@
         <h1>{{headline}}</h1>
         {% for item in body %}
           {% if item.text %}
-            {{ item.text | markdownify }}
+            {{ item.text | replace: '$JQ_VERSION', jq_version | markdownify }}
           {% endif %}
         
           {% if item.command %}

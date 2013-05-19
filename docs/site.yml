@@ -4,7 +4,7 @@
 
 # This line is modified by the Makefile. To change the version number,
 # edit the Autoconf version number at the top of configure.ac
-jq_version: 1.2
+jq_version: "1.3"
 
 root: '/jq'
 footer: |
