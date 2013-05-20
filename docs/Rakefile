@@ -91,6 +91,10 @@ def load_manual
   YAML::load(File.open("content/3.manual/manual.yml"))
 end
 
+def jq_version
+  YAML::load(File.open("site.yml"))["jq_version"]
+end
+
 task :manpage do
   Tempfile.open "manpage" do |f|
     manual = load_manual
@@ -137,10 +141,14 @@ task :mantests do
   end
 end
 
+$TARBALL = "../jq-#{jq_version}.tar.gz"
+file $TARBALL do
+  sh "cd ..; ./configure && make dist && make distclean"  
+end
+
 directory "output/download/source"
-task :tarball => ["output/download/source"] do
-  sh "cd ..; ./configure && make dist && make distclean"
-  sh "cp ../jq-*.tar.gz output/download/source"
+task :tarball => ["output/download/source", $TARBALL] do
+  sh "cp #{$TARBALL} output/download/source"
 end
 
 task :dist => [:build, :binaries, :tarball]

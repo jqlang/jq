@@ -47,7 +47,7 @@ body:
       You can build it using the usual `./configure && make && sudo
       make install` rigmarole.
 
-      If you're interested in using the lastest development version, try:
+      If you're interested in using the latest development version, try:
 
           git clone https://github.com/stedolan/jq.git
           cd jq
