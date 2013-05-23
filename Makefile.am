@@ -119,5 +119,8 @@ dist-clean-local:
 
 # Not sure why this doesn't get cleaned up automatically, guess
 # automake used to man pages which are hand coded?
+if ENABLE_DOCS
+# 'make clean' doesn't delete the manpage if it can't be rebuilt
 clean-local:
 	rm -f jq.1
+endif
