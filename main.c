@@ -20,13 +20,13 @@ static void usage() {
   fprintf(stderr, "For a description of the command line options and\n");
   fprintf(stderr, "how to write jq filters (and why you might want to)\n");
   fprintf(stderr, "see the jq manpage, or the online documentation at\n");
-  fprintf(stderr, "http://stedolan.github.com/jq\n\n");
+  fprintf(stderr, "http://stedolan.github.io/jq\n\n");
   exit(1);
 }
 
 static void die() {
   fprintf(stderr, "Use %s --help for help with command-line options,\n", progname);
-  fprintf(stderr, "or see the jq documentation at http://stedolan.github.com/jq\n");
+  fprintf(stderr, "or see the jq documentation at http://stedolan.github.io/jq\n");
   exit(1);
 }
 
