@@ -116,10 +116,6 @@ static jv slurp_file(const char* filename, int raw) {
       jv value;
       while (jv_is_valid((value = jv_parser_next(&parser))))
         data = jv_array_append(data, value);
-      if (jv_get_kind(data) == JV_KIND_ARRAY) {
-        data = jv_array_get(data, 0);
-        break;
-      }
     }
   }
   int badread = ferror(file);
@@ -224,11 +220,13 @@ int main(int argc, char* argv[]) {
       jv data = slurp_file(argv[i+2], 0);
       if (!jv_is_valid(data)) {
         data = jv_invalid_get_msg(data);
-        fprintf(stderr, "%s: Bad JSON in --argfile %s: %s\n", progname,
-                argv[i+2], jv_string_value(data));
+        fprintf(stderr, "%s: Bad JSON in --argfile %s %s: %s\n", progname,
+                argv[i+1], argv[i+2], jv_string_value(data));
         jv_free(data);
         return 1;
       }
+      if (jv_array_length(data) == 1)
+          data = jv_array_get(data, 0);
       arg = jv_object_set(arg, jv_string("value"), data);
       program_arguments = jv_array_append(program_arguments, arg);
       i += 2; // skip the next two arguments
