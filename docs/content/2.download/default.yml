@@ -31,7 +31,7 @@ body:
 
       ### OS X
 
-       * `brew install jq` using [homebrew](http://mxcl.github.com/homebrew/)
+       * `brew install jq` using [homebrew](http://mxcl.github.io/homebrew/)
 
        * Or, grab prebuilt [64-bit binaries](osx64/jq) or [32-bit
          binaries](osx32/jq)
@@ -72,7 +72,7 @@ body:
       On OS X, these are all included in Apple's command line tools, which
       can be installed from [Xcode](http://developer.apple.com/technologies/tools/).
       However, you may find that you need a newer version of Bison than the one provided
-      by Apple. This can be found in [Homebrew](http://mxcl.github.com/homebrew/)
+      by Apple. This can be found in [Homebrew](http://mxcl.github.io/homebrew/)
       or [MacPorts](http://macports.org/).
 
       `flex` and `bison` are used to generate the lexer and parser for
