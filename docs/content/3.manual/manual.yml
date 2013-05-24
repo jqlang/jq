@@ -127,6 +127,14 @@ sections:
         variable. If you run jq with `--arg foo bar`, then `$foo` is
         available in the program and has the value `"bar"`.
 
+      * `--argfile name filename`:
+
+        This option passes the first value from the named file as a
+        value to the jq program as a predefined variable. If you run jq
+        with `--argfile foo bar`, then `$foo` is available in the
+        program and has the value resulting from parsing the content of
+        the file named `bar`.
+
   - title: Basic filters
     entries:
       - title: "`.`"
