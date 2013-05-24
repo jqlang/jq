@@ -33,7 +33,10 @@ AM_YFLAGS = --warnings=all -d
 
 ### Building the jq binary
 
-main.c: config.h
+version.h:
+	@ { $(srcdir)/scripts/version || echo '$(VERSION)'; } | sed 's/.*/#define JQ_VERSION "&"/'> $@
+
+main.c: config.h version.h
 
 bin_PROGRAMS = jq
 jq_SOURCES = ${JQ_SRC} main.c
@@ -95,15 +98,12 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml	\
 # the developer setup script in the tarball.
 EXTRA_DIST = config.h.in $(BUILT_SOURCES) $(man_MANS) $(TESTS)	\
 	$(TEST_LOG_COMPILER) gen_utf8_tables.py jq.spec \
-	$(DOC_FILES)
+	$(DOC_FILES) scripts/version
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
 docdir = ${datadir}/doc/${PACKAGE}
 dist_doc_DATA = README.md COPYING AUTHORS README
-
-releasetag:
-	git tag -s "jq-$$(cat VERSION)" -m "jq release $$(cat VERSION)"
 
 RELEASE ?= 1
 rpm: jq

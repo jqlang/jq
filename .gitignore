@@ -26,3 +26,4 @@ jq-*.tar.gz
 configure
 aclocal.m4
 Makefile.in
+version.h
