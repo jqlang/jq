@@ -3,7 +3,7 @@
 JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h		\
   forkable_stack.h frame_layout.h jv.h jv_alloc.h jv_aux.h jv_dtoa.h	\
   jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h parser.y	\
-  jv_utf8_tables.h lexer.l
+  jv_utf8_tables.h main.h lexer.l
 
 JQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c		\
   jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_alloc.c	\
@@ -20,7 +20,7 @@ AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
 
 # While there is some autoconf macro support for lex/flex, it doesn't support
 # header file creation so we'll use good old make
-BUILT_SOURCES = lexer.h lexer.c parser.h parser.c
+BUILT_SOURCES = lexer.h lexer.c parser.h parser.c version.h
 lexer.c: lexer.l
 	flex -o lexer.c --header-file=lexer.h $<
 lexer.h: lexer.c
@@ -33,14 +33,17 @@ AM_YFLAGS = --warnings=all -d
 
 ### Building the jq binary
 
-version.h:
-	@ { $(srcdir)/scripts/version || echo '$(VERSION)'; } | sed 's/.*/#define JQ_VERSION "&"/'> $@
-
-main.c: config.h version.h
+# Remake the version.h header file if, and only if, the git ID has changed
+.PHONY: .FORCE
+.FORCE:
+generate_ver = ver="`{ $(srcdir)/scripts/version || echo '$(VERSION)' ; } | sed 's/.*/\#define JQ_VERSION \"&\"/'`"
+.remake-version-h: .FORCE
+	@ $(generate_ver); test "x`cat version.h 2>/dev/null`" = "x$$ver" || touch .remake-version-h
+version.h: .remake-version-h
+	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
 
 bin_PROGRAMS = jq
 jq_SOURCES = ${JQ_SRC} main.c
-
 
 ### Tests (make check)
 
@@ -59,16 +62,16 @@ man_MANS = jq.1
 .PHONY: real_docs
 if ENABLE_DOCS
 jq.1: $(srcdir)/docs/content/3.manual/manual.yml
-	( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage ) > $@ || { rm -f $@; false; }
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage ) > $@ || { rm -f $@; false; }
 jq.1.default: $(srcdir)/docs/default_manpage.md
-	( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage_default ) > $@ || { rm -f $@; false; }
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage_default ) > $@ || { rm -f $@; false; }
 real_docs: jq.1
 	if cmp jq.1 $(srcdir)/jq.1.default > /dev/null; then\
 	  rm -f jq.1; $(MAKE) $(AM_MAKEFLAGS) jq.1;\
 	fi
 else
 jq.1: $(srcdir)/jq.1.default
-	cp $^ $@
+	$(AM_V_GEN) cp $^ $@
 real_docs:
 	@echo "Ruby dependencies not found, cannot build manpage." > /dev/stderr
 	@echo "Follow the instructions in docs/README.md to install them" > /dev/stderr
@@ -96,9 +99,10 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml	\
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
-EXTRA_DIST = config.h.in $(BUILT_SOURCES) $(man_MANS) $(TESTS)	\
+EXTRA_DIST = config.h.in $(man_MANS) $(TESTS)	\
 	$(TEST_LOG_COMPILER) gen_utf8_tables.py jq.spec \
-	$(DOC_FILES) scripts/version
+	$(DOC_FILES) scripts/version \
+	parser.h parser.c lexer.h lexer.c
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
@@ -119,8 +123,12 @@ dist-clean-local:
 
 # Not sure why this doesn't get cleaned up automatically, guess
 # automake used to man pages which are hand coded?
-if ENABLE_DOCS
 # 'make clean' doesn't delete the manpage if it can't be rebuilt
-clean-local:
+.PHONY: clean-local-docs
+clean-local-docs:
+if ENABLE_DOCS
 	rm -f jq.1
 endif 
+
+clean-local: clean-local-docs
+	rm -f version.h .remake-version-h
