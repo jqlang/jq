@@ -66,8 +66,8 @@ static void locfile_locate(struct locfile* l, location loc, const char* fmt, ...
   }
   int startline = locfile_get_line(l, loc.start);
   int offset = l->linemap[startline];
-  fprintf(stderr, "%.*s\n", locfile_line_length(l, startline), l->data + offset);
-  fprintf(stderr, "%*s", loc.start - offset, "");
+	fprintf(stderr, "%.*s\n", locfile_line_length(l, startline)-(startline!=0), l->data + offset +(startline!=0));
+  fprintf(stderr, "%*s", loc.start - offset -(startline!=0), "");
   for (int i = loc.start; 
        i < loc.end && i < offset + locfile_line_length(l, startline);
        i++){
