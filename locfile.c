@@ -18,11 +18,11 @@ void locfile_init(struct locfile* l, const char* data, int length) {
   int line = 1;
   for (int i=0; i<length; i++) {
     if (data[i] == '\n') {
-      l->linemap[line] = i;
+      l->linemap[line] = i+1;   // at start of line, not of \n
       line++;
     }
   }
-  l->linemap[l->nlines] = length;
+  l->linemap[l->nlines] = length+1;   // virtual last \n
 }
 
 void locfile_free(struct locfile* l) {
@@ -31,15 +31,15 @@ void locfile_free(struct locfile* l) {
 
 static int locfile_get_line(struct locfile* l, int pos) {
   assert(pos < l->length);
-  int line = 0;
-  while (l->linemap[line+1] < pos) line++;
-  assert(line < l->nlines);
-  return line;
+  int line = 1;
+  while (l->linemap[line] <= pos) line++;   // == if pos at start (before, never ==, because pos never on \n)
+  assert(line-1 < l->nlines);
+  return line-1;
 }
 
 static int locfile_line_length(struct locfile* l, int line) {
   assert(line < l->nlines);
-  return l->linemap[line+1] - l->linemap[line];
+  return l->linemap[line+1] - l->linemap[line] -1;   // -1 to omit \n
 }
 
 void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
@@ -54,11 +54,8 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
   }
   int startline = locfile_get_line(l, loc.start);
   int offset = l->linemap[startline];
-	fprintf(stderr, "HERE1\n%.*s\n", locfile_line_length(l, startline)-(startline!=0), l->data + offset +(startline!=0));		// if not first line, this starts at the '\n' in l
-  fprintf(stderr, "HERE2\n%*s", loc.start - offset -(startline!=0), "");		// space padding.  If not first line, offset is the '\n' at beginning of line, and one too many
-			/* ASIDE: because all this code is in locfile.h instead of locfile.c, it recompiles everything, and takes forever */
-			/* I've separated it out, into locfile.h;  removed static */
-			/* Problem:  a few files include locfile.h to get the *.h it includes... this seems bad to me */
+  fprintf(stderr, "%.*s\n", locfile_line_length(l, startline), l->data + offset);
+  fprintf(stderr, "%*s", loc.start - offset, "");
   for (int i = loc.start; 
        i < loc.end && i < offset + locfile_line_length(l, startline);
        i++){
