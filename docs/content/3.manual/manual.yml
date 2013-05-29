@@ -113,7 +113,11 @@ sections:
         "\u03bc"). Using this option, you can force jq to produce pure
         ASCII output with every non-ASCII character replaced with the
         equivalent escape sequence.
-  
+
+      * `--sort-keys` / `-S`:
+        
+        Output the fields of each object with the keys in sorted order.
+
       * `--raw-output` / `-r`:
   
         With this option, if the filter's result is a string then it

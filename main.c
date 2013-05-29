@@ -56,8 +56,9 @@ enum {
   ASCII_OUTPUT = 32,
   COLOUR_OUTPUT = 64,
   NO_COLOUR_OUTPUT = 128,
+  SORTED_OUTPUT = 256,
 
-  FROM_FILE = 256,
+  FROM_FILE = 512,
 
   /* debugging only */
   DUMP_DISASM = 2048,
@@ -82,6 +83,7 @@ static void process(jv value, int flags) {
 #else
       dumpopts = isatty(fileno(stdout)) ? JV_PRINT_COLOUR : 0;
 #endif
+      if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
       if (!(options & COMPACT_OUTPUT)) dumpopts |= JV_PRINT_PRETTY;
       if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
       if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
@@ -197,6 +199,8 @@ int main(int argc, char* argv[]) {
       options |= NO_COLOUR_OUTPUT;
     } else if (isoption(argv[i], 'a', "ascii-output")) {
       options |= ASCII_OUTPUT;
+    } else if (isoption(argv[i], 'S', "sort-keys")) {
+      options |= SORTED_OUTPUT;
     } else if (isoption(argv[i], 'R', "raw-input")) {
       options |= RAW_INPUT;
     } else if (isoption(argv[i], 'n', "null-input")) {
