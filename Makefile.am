@@ -5,7 +5,7 @@ JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h		\
   jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h parser.y	\
   jv_utf8_tables.h lexer.l
 
-JQ_SRC = opcode.c bytecode.c compile.c execute.c builtin.c jv.c		\
+JQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c		\
   jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_alloc.c	\
   jq_test.c ${JQ_INCS}
 
@@ -123,4 +123,4 @@ if ENABLE_DOCS
 # 'make clean' doesn't delete the manpage if it can't be rebuilt
 clean-local:
 	rm -f jq.1
-endif
+endif 
