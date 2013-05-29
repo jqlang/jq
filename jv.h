@@ -117,7 +117,7 @@ jv jv_object_iter_value(jv, int);
 
 int jv_get_refcnt(jv);
 
-enum { JV_PRINT_PRETTY = 1, JV_PRINT_ASCII = 2, JV_PRINT_COLOUR = 4 };
+enum { JV_PRINT_PRETTY = 1, JV_PRINT_ASCII = 2, JV_PRINT_COLOUR = 4, JV_PRINT_SORTED = 8 };
 void jv_dump(jv, int flags);
 jv jv_dump_string(jv, int flags);
 
