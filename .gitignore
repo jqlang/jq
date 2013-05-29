@@ -1,5 +1,7 @@
 *.o
 *~
+.*.sw[a-p]
+tags
 
 jq
 jq.1

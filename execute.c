@@ -611,8 +611,10 @@ struct bytecode* jq_compile_args(const char* str, jv args) {
       jv_free(name);
     }
     jv_free(args);
-    program = builtins_bind(program);
-    nerrors = block_compile(program, &locations, &bc);
+    nerrors = builtins_bind(&program);
+    if (nerrors == 0) {
+      nerrors = block_compile(program, &locations, &bc);
+    }
   }
   if (nerrors) {
     fprintf(stderr, "%d compile %s\n", nerrors, nerrors > 1 ? "errors" : "error");

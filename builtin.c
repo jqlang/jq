@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include "builtin.h"
 #include "compile.h"
@@ -5,6 +6,7 @@
 #include "locfile.h"
 #include "jv_aux.h"
 #include "jv_unicode.h"
+#include "main.h"
 
 
 
@@ -566,16 +568,44 @@ static const char* const jq_builtins[] = {
 };
 
 
-block builtins_bind(block b) {
-  for (int i=(int)(sizeof(jq_builtins)/sizeof(jq_builtins[0]))-1; i>=0; i--) {
-    struct locfile src;
-    locfile_init(&src, jq_builtins[i], strlen(jq_builtins[i]));
-    block funcs;
-    int nerrors = jq_parse_library(&src, &funcs);
-    assert(!nerrors);
-    b = block_bind_referenced(funcs, b, OP_IS_CALL_PSEUDO);
-    locfile_free(&src);
+int builtins_bind_one(block* bb, const char* code) {
+  struct locfile src;
+  locfile_init(&src, code, strlen(code));
+  block funcs;
+  int nerrors = jq_parse_library(&src, &funcs);
+  if (nerrors == 0) {
+    *bb = block_bind_referenced(funcs, *bb, OP_IS_CALL_PSEUDO);
   }
-  b = bind_bytecoded_builtins(b);
-  return gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), b);
+  locfile_free(&src);
+  return nerrors;
+}
+
+int slurp_lib(block* bb) {
+  int nerrors = 0;
+  char* home = getenv("HOME");
+  if (home) {    // silently ignore no $HOME
+    jv filename = jv_string_append_str(jv_string(home), "/.jq");
+    jv data = slurp_file(jv_string_value(filename), 1);
+    if (jv_is_valid(data)) {
+      nerrors = builtins_bind_one(bb, jv_string_value(data) );
+    }
+    jv_free(filename);
+    jv_free(data);
+  }
+  return nerrors;
+}
+
+int builtins_bind(block* bb) {
+  int nerrors = slurp_lib(bb);
+  if (nerrors) {
+    block_free(*bb);
+    return nerrors;
+  }
+  for (int i=(int)(sizeof(jq_builtins)/sizeof(jq_builtins[0]))-1; i>=0; i--) {
+    nerrors = builtins_bind_one(bb, jq_builtins[i]);
+    assert(!nerrors);
+  }
+  *bb = bind_bytecoded_builtins(*bb);
+  *bb = gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), *bb);
+  return nerrors;
 }

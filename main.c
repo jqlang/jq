@@ -93,7 +93,7 @@ static void process(jv value, int flags) {
   jq_teardown(&jq);
 }
 
-static jv slurp_file(const char* filename, int raw) {
+jv slurp_file(const char* filename, int raw) {
   FILE* file = fopen(filename, "r");
   struct jv_parser parser;
   jv data;
