@@ -195,7 +195,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       put_space(indent+INDENT, F, S);
     }
     int first = 1;
-    int i;
+    int i = 0;
     jv keyset = jv_null();
     while (1) {
       jv key, value;
