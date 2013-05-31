@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "jv.h"
 #include "execute.h"
 
@@ -39,7 +40,11 @@ static void run_jq_tests(FILE *testdata) {
     printf("Disassembly:\n");
     dump_disassembly(2, bc);
     printf("\n");
-    fgets(buf, sizeof(buf), testdata);
+    if (!fgets(buf, sizeof(buf), testdata)) {
+      invalid++;
+      printf("%s\n", (errno==0)?"Premature EOF":strerror(errno));
+      break;
+    }
     jv input = jv_parse(buf);
     if (!jv_is_valid(input)){ invalid++; continue; }
     jq_init(bc, input, &jq, JQ_DEBUG_TRACE);
