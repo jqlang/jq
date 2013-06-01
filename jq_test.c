@@ -39,7 +39,7 @@ static void run_jq_tests(FILE *testdata) {
     printf("Disassembly:\n");
     dump_disassembly(2, bc);
     printf("\n");
-    fgets(buf, sizeof(buf), testdata);
+    if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
     jv input = jv_parse(buf);
     if (!jv_is_valid(input)){ invalid++; continue; }
     jq_init(bc, input, &jq, JQ_DEBUG_TRACE);
