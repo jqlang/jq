@@ -244,7 +244,7 @@ int main(int argc, char* argv[]) {
     } else if (isoption(argv[i], 'h', "help")) {
       usage();
     } else if (isoption(argv[i], 'V', "version")) {
-      fprintf(stderr, "jq-%s\n", JQ_VERSION);
+      printf("jq-%s\n", JQ_VERSION);
       return 0;
     } else {
       fprintf(stderr, "%s: Unknown option %s\n", progname, argv[i]);
