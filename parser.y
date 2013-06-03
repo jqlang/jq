@@ -5,12 +5,11 @@
 #include "jv_alloc.h"
 #define YYMALLOC jv_mem_alloc
 #define YYFREE jv_mem_free
-
-struct lexer_param;
-
 %}
 %code requires {
 #include "locfile.h"
+struct lexer_param;
+
 #define YYLTYPE location
 #define YYLLOC_DEFAULT(Loc, Rhs, N)             \
   do {                                          \
@@ -112,25 +111,19 @@ void yyerror(YYLTYPE* loc, block* answer, int* errors,
 int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors, 
           struct locfile* locations, struct lexer_param* lexer_param_ptr) {
   yyscan_t lexer = lexer_param_ptr->lexer;
-  while (1) {
-    int tok = jq_yylex(yylval, yylloc, lexer);
-    if (tok == INVALID_CHARACTER) {
-      FAIL(*yylloc, "Invalid character");
+  int tok = jq_yylex(yylval, yylloc, lexer);
+  if ((tok == LITERAL || tok == QQSTRING_TEXT) && !jv_is_valid(yylval->literal)) {
+    jv msg = jv_invalid_get_msg(jv_copy(yylval->literal));
+    if (jv_get_kind(msg) == JV_KIND_STRING) {
+      FAIL(*yylloc, jv_string_value(msg));
     } else {
-      if ((tok == LITERAL || tok == QQSTRING_TEXT) && !jv_is_valid(yylval->literal)) {
-        jv msg = jv_invalid_get_msg(jv_copy(yylval->literal));
-        if (jv_get_kind(msg) == JV_KIND_STRING) {
-          FAIL(*yylloc, jv_string_value(msg));
-        } else {
-          FAIL(*yylloc, "Invalid literal");
-        }
-        jv_free(msg);
-        jv_free(yylval->literal);
-        yylval->literal = jv_null();
-      }
-      return tok;
+      FAIL(*yylloc, "Invalid literal");
     }
+    jv_free(msg);
+    jv_free(yylval->literal);
+    yylval->literal = jv_null();
   }
+  return tok;
 }
 
 static block gen_dictpair(block k, block v) {
