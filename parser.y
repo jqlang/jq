@@ -227,7 +227,7 @@ Term "as" '$' IDENT '|' Exp {
 "if" Exp "then" Exp ElseBody {
   $$ = gen_cond($2, $4, $5);
 } |
-"if" Exp error {
+"if" Exp "then" error {
   FAIL(@$, "Possibly unterminated 'if' statment");
   $$ = $2;
 } |
@@ -405,6 +405,15 @@ Term '.' IDENT {
 '.' IDENT { 
   $$ = gen_index(gen_noop(), gen_const($2)); 
 } |
+'.' error {
+  FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
+  $$ = gen_noop();
+} |
+'.' IDENT error {
+  jv_free($2);
+  FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
+  $$ = gen_noop();
+} | 
 /* FIXME: string literals */
 Term '[' Exp ']' {
   $$ = gen_index($1, $3); 
