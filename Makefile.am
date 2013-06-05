@@ -22,7 +22,7 @@ AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
 # header file creation so we'll use good old make
 BUILT_SOURCES = lexer.h lexer.c parser.h parser.c version.h
 lexer.c: lexer.l
-	flex -o lexer.c --header-file=lexer.h $<
+	$(AM_V_LEX) flex -o lexer.c --header-file=lexer.h $<
 lexer.h: lexer.c
 
 # Tell YACC (bison) autoconf macros that you want a header file created.
