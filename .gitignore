@@ -30,3 +30,4 @@ aclocal.m4
 Makefile.in
 version.h
 .remake-version-h
+config.cache

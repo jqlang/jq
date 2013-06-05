@@ -39,10 +39,13 @@ AC_ARG_ENABLE([docs],
 
 AS_IF([test "x$enable_docs" != "xno"],[
    AC_CHECK_PROGS(bundle_cmd, bundle)
-   AS_IF([test "x$bundle_cmd" = "x" || \
-      ! ( cd ${srcdir}/docs; "$bundle_cmd" check 2>/dev/null )],[
-         AC_MSG_WARN([no bundler])
-         cat <<EOF
+
+   AC_CACHE_CHECK([for Ruby dependencies], [jq_cv_ruby_deps],
+     [jq_cv_ruby_deps=yes;
+        AS_IF([test "x$bundle_cmd" = "x" || \
+        ! bmsg="`cd ${srcdir}/docs; "$bundle_cmd" check 2>/dev/null`"],[
+           AC_MSG_WARN([$bmsg])
+           cat <<EOF
 *****************************************************************
 *  Ruby dependencies for building jq documentation not found.   *
 *  You can still build, install and hack on jq, but the manpage *
@@ -50,8 +53,12 @@ AS_IF([test "x$enable_docs" != "xno"],[
 *  See docs/README.md for how to install the docs dependencies. *
 *****************************************************************
 EOF
-         enable_docs=no
-   ])
+           jq_cv_ruby_deps=no
+     ])])
+
+   if test "x$jq_cv_ruby_deps" != "xyes"; then
+     enable_docs=no
+   fi
 ])
 
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
