@@ -46,6 +46,7 @@ struct lexer_param;
 
 %token INVALID_CHARACTER
 %token <literal> IDENT
+%token <literal> FIELD
 %token <literal> LITERAL
 %token <literal> FORMAT
 %token EQ "=="
@@ -399,11 +400,11 @@ Term:
 '.' {
   $$ = gen_noop(); 
 } |
-Term '.' IDENT {
-  $$ = gen_index($1, gen_const($3)); 
+Term FIELD {
+  $$ = gen_index($1, gen_const($2));
 } |
-'.' IDENT { 
-  $$ = gen_index(gen_noop(), gen_const($2)); 
+FIELD { 
+  $$ = gen_index(gen_noop(), gen_const($1)); 
 } |
 '.' error {
   FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
