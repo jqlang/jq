@@ -27,6 +27,9 @@ static void run_jq_tests(FILE *testdata) {
   int tests = 0, passed = 0, invalid = 0;
   jq_state *jq = NULL;
 
+  jq = jq_init();
+  assert(jq);
+
   while (1) {
     if (!fgets(buf, sizeof(buf), testdata)) break;
     if (skipline(buf)) continue;
@@ -34,15 +37,15 @@ static void run_jq_tests(FILE *testdata) {
     printf("Testing %s\n", buf);
     int pass = 1;
     tests++;
-    struct bytecode* bc = jq_compile(buf);
-    if (!bc) {invalid++; continue;}
+    int compiled = jq_compile(jq, buf);
+    if (!compiled) {invalid++; continue;}
     printf("Disassembly:\n");
-    dump_disassembly(2, bc);
+    jq_dump_disassembly(jq, 2);
     printf("\n");
     if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
     jv input = jv_parse(buf);
     if (!jv_is_valid(input)){ invalid++; continue; }
-    jq_init(bc, input, &jq, JQ_DEBUG_TRACE);
+    jq_start(jq, input, JQ_DEBUG_TRACE);
 
     while (fgets(buf, sizeof(buf), testdata)) {
       if (skipline(buf)) break;
@@ -81,10 +84,9 @@ static void run_jq_tests(FILE *testdata) {
         jv_free(extra);
       }
     }
-    jq_teardown(&jq);
-    bytecode_free(bc);
     passed+=pass;
   }
+  jq_teardown(&jq);
   printf("%d of %d tests passed (%d malformed)\n", passed,tests,invalid);
   if (passed != tests) exit(1);
 }

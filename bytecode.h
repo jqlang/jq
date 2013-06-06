@@ -39,10 +39,8 @@ struct bytecode {
 };
 
 void dump_disassembly(int, struct bytecode* code);
-void dump_code(int, struct bytecode* code);
 void dump_operation(struct bytecode* bc, uint16_t* op);
 
-void symbol_table_free(struct symbol_table* syms);
 void bytecode_free(struct bytecode* bc);
 
 #endif
