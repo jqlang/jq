@@ -21,7 +21,7 @@ struct lexer_param;
       (Loc).end = YYRHSLOC(Rhs, 0).end;         \
     }                                           \
   } while (0)
- }
+}
 
 %locations
 %error-verbose
@@ -77,6 +77,8 @@ struct lexer_param;
 %token QQSTRING_INTERP_START
 %token QQSTRING_INTERP_END
 %token QQSTRING_END
+
+%token MYEOF 0 "end of file"
 
  /* revolting hack */
 %left ';'
