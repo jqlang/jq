@@ -155,7 +155,7 @@ static void forkable_stack_restore(struct forkable_stack* s, struct forkable_sta
   forkable_stack_check(s);
 }
 
-typedef int stack_idx;
+typedef int stack_idx; // never zero when valid
 
 static stack_idx forkable_stack_to_idx(struct forkable_stack* s, void* ptr) {
   char* item = ptr;

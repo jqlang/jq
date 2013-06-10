@@ -10,6 +10,7 @@ struct closure {
 struct continuation {
   struct bytecode* bc;
   stack_idx env;
+  stack_idx next;
   uint16_t* retaddr;
 };
 
@@ -49,10 +50,12 @@ static jv* frame_local_var(frame_ptr fr, int var) {
 }
 
 
-static frame_ptr frame_current(struct forkable_stack* stk) {
-  frame_ptr fp = forkable_stack_peek(stk);
-  if (forkable_stack_peek_next(stk, fp)) {
-    struct bytecode* bc = frame_self(forkable_stack_peek_next(stk, fp))->bc;
+static frame_ptr frame_current(struct forkable_stack* stk, stack_idx idx) {
+  frame_ptr fp = forkable_stack_from_idx(stk, idx);
+
+  if (frame_self(fp)->next) {
+    frame_ptr fpnext = forkable_stack_from_idx(stk, frame_self(fp)->next);
+    struct bytecode* bc = frame_self(fpnext)->bc;
     assert(frame_self(fp)->retaddr >= bc->code && frame_self(fp)->retaddr < bc->code + bc->codelen);
   } else {
     assert(frame_self(fp)->retaddr == 0);
@@ -60,11 +63,11 @@ static frame_ptr frame_current(struct forkable_stack* stk) {
   return fp;
 }
 
-static struct bytecode* frame_current_bytecode(struct forkable_stack* stk) {
-  return frame_self(frame_current(stk))->bc;
+static struct bytecode* frame_current_bytecode(struct forkable_stack* stk, stack_idx curr) {
+  return frame_self(frame_current(stk, curr))->bc;
 }
-static uint16_t** frame_current_retaddr(struct forkable_stack* stk) {
-  return &frame_self(frame_current(stk))->retaddr;
+static uint16_t** frame_current_retaddr(struct forkable_stack* stk, stack_idx curr) {
+  return &frame_self(frame_current(stk, curr))->retaddr;
 }
 
 static frame_ptr frame_get_parent(struct forkable_stack* stk, frame_ptr fr) {
@@ -78,11 +81,12 @@ static frame_ptr frame_get_level(struct forkable_stack* stk, frame_ptr fr, int l
   return fr;
 }
 
-static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl, uint16_t* retaddr) {
+static frame_ptr frame_push(struct forkable_stack* stk, stack_idx curr, struct closure cl, uint16_t* retaddr) {
   frame_ptr fp = forkable_stack_push(stk, frame_size(cl.bc));
   struct continuation* cc = frame_self(fp);
   cc->bc = cl.bc;
   cc->env = cl.env;
+  cc->next = curr;
   cc->retaddr = retaddr;
   for (int i=0; i<cl.bc->nlocals; i++) {
     *frame_local_var(fp, i) = jv_invalid();
@@ -90,8 +94,10 @@ static frame_ptr frame_push(struct forkable_stack* stk, struct closure cl, uint1
   return fp;
 }
 
-static void frame_pop(struct forkable_stack* stk) {
-  frame_ptr fp = frame_current(stk);
+static stack_idx frame_pop(struct forkable_stack* stk, stack_idx curr) {
+  frame_ptr fp = frame_current(stk, curr);
+  stack_idx next = frame_self(fp)->next;
+  assert(fp == forkable_stack_peek(stk));
   if (forkable_stack_pop_will_free(stk)) {
     int nlocals = frame_self(fp)->bc->nlocals;
     for (int i=0; i<nlocals; i++) {
@@ -99,6 +105,7 @@ static void frame_pop(struct forkable_stack* stk) {
     }
   }
   forkable_stack_pop(stk);
+  return next;
 }
 
 #endif

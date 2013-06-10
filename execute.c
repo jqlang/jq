@@ -21,7 +21,7 @@
 
 struct jq_state {
   struct forkable_stack data_stk;
-  struct forkable_stack frame_stk;
+  stack_idx curr_frame;
   struct forkable_stack fork_stk;
   jv path;
   int subexp_nest;
@@ -55,8 +55,8 @@ jv stack_pop(jq_state *jq) {
 struct forkpoint {
   FORKABLE_STACK_HEADER;
   struct forkable_stack_state saved_data_stack;
-  struct forkable_stack_state saved_call_stack;
   int path_len, subexp_nest;
+  stack_idx saved_curr_frame;
   uint16_t* return_address;
 };
 
@@ -64,17 +64,16 @@ struct forkpoint {
 void stack_save(jq_state *jq, uint16_t* retaddr){
   struct forkpoint* fork = forkable_stack_push(&jq->fork_stk, sizeof(struct forkpoint));
   forkable_stack_save(&jq->data_stk, &fork->saved_data_stack);
-  forkable_stack_save(&jq->frame_stk, &fork->saved_call_stack);
   fork->path_len = 
     jv_get_kind(jq->path) == JV_KIND_ARRAY ? jv_array_length(jv_copy(jq->path)) : 0;
   fork->subexp_nest = jq->subexp_nest;
+  fork->saved_curr_frame = jq->curr_frame;
   fork->return_address = retaddr;
 }
 
 void stack_switch(jq_state *jq) {
   struct forkpoint* fork = forkable_stack_peek(&jq->fork_stk);
   forkable_stack_switch(&jq->data_stk, &fork->saved_data_stack);
-  forkable_stack_switch(&jq->frame_stk, &fork->saved_call_stack);
 }
 
 void path_append(jq_state* jq, jv component) {
@@ -91,11 +90,11 @@ void path_append(jq_state* jq, jv component) {
 uint16_t* stack_restore(jq_state *jq){
   while (!forkable_stack_empty(&jq->data_stk) && 
          forkable_stack_pop_will_free(&jq->data_stk)) {
-    jv_free(stack_pop(jq));
-  }
-  while (!forkable_stack_empty(&jq->frame_stk) && 
-         forkable_stack_pop_will_free(&jq->frame_stk)) {
-    frame_pop(&jq->frame_stk);
+    if (forkable_stack_peek(&jq->data_stk) != forkable_stack_from_idx(&jq->data_stk, jq->curr_frame)) {
+      jv_free(stack_pop(jq));
+    } else {
+      jq->curr_frame = frame_pop(&jq->data_stk, jq->curr_frame);
+    }
   }
 
   if (forkable_stack_empty(&jq->fork_stk)) {
@@ -105,7 +104,7 @@ uint16_t* stack_restore(jq_state *jq){
   struct forkpoint* fork = forkable_stack_peek(&jq->fork_stk);
   uint16_t* retaddr = fork->return_address;
   forkable_stack_restore(&jq->data_stk, &fork->saved_data_stack);
-  forkable_stack_restore(&jq->frame_stk, &fork->saved_call_stack);
+  jq->curr_frame = fork->saved_curr_frame;
   int path_len = fork->path_len;
   if (jv_get_kind(jq->path) == JV_KIND_ARRAY) {
     assert(path_len >= 0);
@@ -156,27 +155,29 @@ jv jq_next(jq_state *jq) {
     uint16_t opcode = *pc;
 
     if (jq->debug_trace_enabled) {
-      dump_operation(frame_current_bytecode(&jq->frame_stk), pc);
+      dump_operation(frame_current_bytecode(&jq->data_stk, jq->curr_frame), pc);
       printf("\t");
       const struct opcode_description* opdesc = opcode_describe(opcode);
       data_stk_elem* param = 0;
-      int stack_in = opdesc->stack_in;
-      if (stack_in == -1) stack_in = pc[1];
-      for (int i=0; i<stack_in; i++) {
-        if (i == 0) {
-          param = forkable_stack_peek(&jq->data_stk);
-        } else {
-          printf(" | ");
-          param = forkable_stack_peek_next(&jq->data_stk, param);
+      if (!backtracking) {
+        int stack_in = opdesc->stack_in;
+        if (stack_in == -1) stack_in = pc[1];
+        for (int i=0; i<stack_in; i++) {
+          if (i == 0) {
+            param = forkable_stack_peek(&jq->data_stk);
+          } else {
+            printf(" | ");
+            param = forkable_stack_peek_next(&jq->data_stk, param);
+          }
+          if (!param) break;
+          jv_dump(jv_copy(param->val), 0);
+          //printf("<%d>", jv_get_refcnt(param->val));
+          //printf(" -- ");
+          //jv_dump(jv_copy(jq->path), 0);
         }
-        if (!param) break;
-        jv_dump(jv_copy(param->val), 0);
-        //printf("<%d>", jv_get_refcnt(param->val));
-        //printf(" -- ");
-        //jv_dump(jv_copy(jq->path), 0);
+      } else {
+        printf("\t<backtracking>");
       }
-
-      if (backtracking) printf("\t<backtracking>");
 
       printf("\n");
     }
@@ -190,7 +191,7 @@ jv jq_next(jq_state *jq) {
     default: assert(0 && "invalid instruction");
 
     case LOADK: {
-      jv v = jv_array_get(jv_copy(frame_current_bytecode(&jq->frame_stk)->constants), *pc++);
+      jv v = jv_array_get(jv_copy(frame_current_bytecode(&jq->data_stk, jq->curr_frame)->constants), *pc++);
       assert(jv_is_valid(v));
       jv_free(stack_pop(jq));
       stack_push(jq, v);
@@ -240,7 +241,7 @@ jv jq_next(jq_state *jq) {
       jv v = stack_pop(jq);
       uint16_t level = *pc++;
       uint16_t vidx = *pc++;
-      frame_ptr fp = frame_get_level(&jq->frame_stk, frame_current(&jq->frame_stk), level);
+      frame_ptr fp = frame_get_level(&jq->data_stk, frame_current(&jq->data_stk, jq->curr_frame), level);
       jv* var = frame_local_var(fp, vidx);
       assert(jv_get_kind(*var) == JV_KIND_ARRAY);
       *var = jv_array_append(*var, v);
@@ -272,7 +273,7 @@ jv jq_next(jq_state *jq) {
     case RANGE: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
-      frame_ptr fp = frame_get_level(&jq->frame_stk, frame_current(&jq->frame_stk), level);
+      frame_ptr fp = frame_get_level(&jq->data_stk, frame_current(&jq->data_stk, jq->curr_frame), level);
       jv* var = frame_local_var(fp, v);
       jv max = stack_pop(jq);
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
@@ -299,7 +300,7 @@ jv jq_next(jq_state *jq) {
     case LOADV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
-      frame_ptr fp = frame_get_level(&jq->frame_stk, frame_current(&jq->frame_stk), level);
+      frame_ptr fp = frame_get_level(&jq->data_stk, frame_current(&jq->data_stk, jq->curr_frame), level);
       jv* var = frame_local_var(fp, v);
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
@@ -315,7 +316,7 @@ jv jq_next(jq_state *jq) {
     case LOADVN: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
-      frame_ptr fp = frame_get_level(&jq->frame_stk, frame_current(&jq->frame_stk), level);
+      frame_ptr fp = frame_get_level(&jq->data_stk, frame_current(&jq->data_stk, jq->curr_frame), level);
       jv* var = frame_local_var(fp, v);
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
@@ -331,7 +332,7 @@ jv jq_next(jq_state *jq) {
     case STOREV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
-      frame_ptr fp = frame_get_level(&jq->frame_stk, frame_current(&jq->frame_stk), level);
+      frame_ptr fp = frame_get_level(&jq->data_stk, frame_current(&jq->data_stk, jq->curr_frame), level);
       jv* var = frame_local_var(fp, v);
       jv val = stack_pop(jq);
       if (jq->debug_trace_enabled) {
@@ -499,7 +500,7 @@ jv jq_next(jq_state *jq) {
       for (int i = 1; i < nargs; i++) {
         cfunc_input[i] = stack_pop(jq);
       }
-      struct cfunction* func = &frame_current_bytecode(&jq->frame_stk)->globals->cfunctions[*pc++];
+      struct cfunction* func = &frame_current_bytecode(&jq->data_stk, jq->curr_frame)->globals->cfunctions[*pc++];
       top = cfunction_invoke(func, cfunc_input);
       if (jv_is_valid(top)) {
         stack_push(jq, top);
@@ -511,37 +512,42 @@ jv jq_next(jq_state *jq) {
     }
 
     case CALL_JQ: {
+      jv input = stack_pop(jq);
       uint16_t nclosures = *pc++;
       uint16_t* retaddr = pc + 2 + nclosures*2;
-      frame_ptr new_frame = frame_push(&jq->frame_stk, 
-                                       make_closure(&jq->frame_stk, frame_current(&jq->frame_stk), pc),
+      frame_ptr new_frame = frame_push(&jq->data_stk, jq->curr_frame,
+                                       make_closure(&jq->data_stk, frame_current(&jq->data_stk, jq->curr_frame), pc),
                                        retaddr);
       pc += 2;
-      frame_ptr old_frame = forkable_stack_peek_next(&jq->frame_stk, new_frame);
+      frame_ptr old_frame = frame_current(&jq->data_stk, jq->curr_frame);
+      jq->curr_frame = forkable_stack_to_idx(&jq->data_stk, forkable_stack_peek(&jq->data_stk));
+
       assert(nclosures == frame_self(new_frame)->bc->nclosures);
       for (int i=0; i<nclosures; i++) {
-        *frame_closure_arg(new_frame, i) = make_closure(&jq->frame_stk, old_frame, pc);
+        *frame_closure_arg(new_frame, i) = make_closure(&jq->data_stk, old_frame, pc);
         pc += 2;
       }
 
-      pc = frame_current_bytecode(&jq->frame_stk)->code;
+      pc = frame_current_bytecode(&jq->data_stk, jq->curr_frame)->code;
+      stack_push(jq, input);
       break;
     }
 
     case RET: {
-      uint16_t* retaddr = *frame_current_retaddr(&jq->frame_stk);
+      jv value = stack_pop(jq);
+      uint16_t* retaddr = *frame_current_retaddr(&jq->data_stk, jq->curr_frame);
       if (retaddr) {
         // function return
         pc = retaddr;
-        frame_pop(&jq->frame_stk);
+        jq->curr_frame = frame_pop(&jq->data_stk, jq->curr_frame);
       } else {
         // top-level return, yielding value
-        jv value = stack_pop(jq);
         stack_save(jq, pc - 1);
         stack_push(jq, jv_null());
         stack_switch(jq);
         return value;
       }
+      stack_push(jq, value);
       break;
     }
     case ON_BACKTRACK(RET): {
@@ -559,12 +565,12 @@ void jq_init(struct bytecode* bc, jv input, jq_state **jq, int flags) {
   memset(new_jq, 0, sizeof(*new_jq));
   new_jq->path = jv_null();
   forkable_stack_init(&new_jq->data_stk, sizeof(data_stk_elem) * 100);
-  forkable_stack_init(&new_jq->frame_stk, 1024);
   forkable_stack_init(&new_jq->fork_stk, 1024);
   
-  stack_push(new_jq, input);
   struct closure top = {bc, -1};
-  frame_push(&new_jq->frame_stk, top, 0);
+  frame_push(&new_jq->data_stk, 0, top, 0);
+  new_jq->curr_frame = forkable_stack_to_idx(&new_jq->data_stk, forkable_stack_peek(&new_jq->data_stk));
+  stack_push(new_jq, input);
   stack_save(new_jq, bc->code);
   stack_switch(new_jq);
   if (flags & JQ_DEBUG_TRACE) {
@@ -586,10 +592,8 @@ void jq_teardown(jq_state **jq) {
 
   assert(forkable_stack_empty(&old_jq->fork_stk));
   assert(forkable_stack_empty(&old_jq->data_stk));
-  assert(forkable_stack_empty(&old_jq->frame_stk));
   forkable_stack_free(&old_jq->fork_stk);
   forkable_stack_free(&old_jq->data_stk);
-  forkable_stack_free(&old_jq->frame_stk);
 
   jv_free(old_jq->path);
   jv_mem_free(old_jq);
