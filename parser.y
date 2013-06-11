@@ -406,6 +406,12 @@ Term FIELD {
 FIELD { 
   $$ = gen_index(gen_noop(), gen_const($1)); 
 } |
+Term '.' String {
+  $$ = gen_index($1, $3);
+} |
+'.' String {
+  $$ = gen_index(gen_noop(), $2);
+} |
 '.' error {
   FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
   $$ = gen_noop();

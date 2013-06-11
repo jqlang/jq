@@ -160,10 +160,13 @@ sections:
       - title: "`.foo`"
         body: |
           
-          The simplest *useful* filter is .foo. When given a
+          The simplest *useful* filter is `.foo`. When given a
           JSON object (aka dictionary or hash) as input, it produces
           the value at the key "foo", or null if there's none present.
 
+          If the key contains special characters, you need to surround
+          it with double quotes like this: `."foo$"`.
+          
         examples:
           - program: '.foo'
             input: '{"foo": 42, "bar": "less interesting data"}'
@@ -171,6 +174,9 @@ sections:
           - program: '.foo'
             input: '{"notfoo": true, "alsonotfoo": false}'
             output: ['null']
+          - program: '."foo"'
+            input: '{"foo": 42}'
+            output: [42]
 
       - title: "`.[foo]`, `.[2]`, `.[10:15]`"
         body: |

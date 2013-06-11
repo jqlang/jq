@@ -115,6 +115,10 @@ null
 {"foo": {"bar": 42}, "bar": "badvalue"}
 42
 
+."foo"."bar"
+{"foo": {"bar": 20}}
+20
+
 
 #
 # Multiple outputs, iteration
