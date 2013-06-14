@@ -86,18 +86,3 @@ stack_ptr stack_pop_block(struct stack* s, stack_ptr p, size_t sz) {
   }
   return r;
 }
-
-#if 0
-int main() {
-  stack s;
-  stack_init(&s);
-  stack_ptr top = 0;
-  top = stack_push_block(&s, top, sizeof(double));
-  double* d1 = stack_block(&s, top);
-  *d1 = 42;
-  top = stack_push_block(&s, top, sizeof(double));
-  double* d2 = stack_block(&s, top);
-  *d2 = 33;
-
-}
-#endif

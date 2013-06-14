@@ -125,11 +125,11 @@ static struct closure make_closure(struct jq_state* jq, stack_ptr fridx, uint16_
   uint16_t level = *pc++;
   uint16_t idx = *pc++;
   fridx = frame_get_level(&jq->stk, fridx, level);
-  frame_ptr fr = frame_current(&jq->stk, fridx);
+  struct frame* fr = frame_current(&jq->stk, fridx);
   if (idx & ARG_NEWCLOSURE) {
     int subfn_idx = idx & ~ARG_NEWCLOSURE;
-    assert(subfn_idx < frame_self(fr)->bc->nsubfunctions);
-    struct closure cl = {frame_self(fr)->bc->subfunctions[subfn_idx],
+    assert(subfn_idx < fr->bc->nsubfunctions);
+    struct closure cl = {fr->bc->subfunctions[subfn_idx],
                          fridx};
     return cl;
   } else {
@@ -159,7 +159,7 @@ jv jq_next(jq_state *jq) {
     uint16_t opcode = *pc;
 
     if (jq->debug_trace_enabled) {
-      dump_operation(frame_current_bytecode(&jq->stk, jq->curr_frame), pc);
+      dump_operation(frame_current(&jq->stk, jq->curr_frame)->bc, pc);
       printf("\t");
       const struct opcode_description* opdesc = opcode_describe(opcode);
       stack_ptr param = 0;
@@ -196,7 +196,7 @@ jv jq_next(jq_state *jq) {
     default: assert(0 && "invalid instruction");
 
     case LOADK: {
-      jv v = jv_array_get(jv_copy(frame_current_bytecode(&jq->stk, jq->curr_frame)->constants), *pc++);
+      jv v = jv_array_get(jv_copy(frame_current(&jq->stk, jq->curr_frame)->bc->constants), *pc++);
       assert(jv_is_valid(v));
       jv_free(stack_pop(jq));
       stack_push(jq, v);
@@ -246,7 +246,7 @@ jv jq_next(jq_state *jq) {
       jv v = stack_pop(jq);
       uint16_t level = *pc++;
       uint16_t vidx = *pc++;
-      frame_ptr fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
+      struct frame* fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
       jv* var = frame_local_var(fp, vidx);
       assert(jv_get_kind(*var) == JV_KIND_ARRAY);
       *var = jv_array_append(*var, v);
@@ -278,7 +278,7 @@ jv jq_next(jq_state *jq) {
     case RANGE: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
-      frame_ptr fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
+      struct frame* fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
       jv* var = frame_local_var(fp, v);
       jv max = stack_pop(jq);
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
@@ -306,7 +306,7 @@ jv jq_next(jq_state *jq) {
     case LOADV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
-      frame_ptr fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
+      struct frame* fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
       jv* var = frame_local_var(fp, v);
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
@@ -322,7 +322,7 @@ jv jq_next(jq_state *jq) {
     case LOADVN: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
-      frame_ptr fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
+      struct frame* fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
       jv* var = frame_local_var(fp, v);
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
@@ -338,7 +338,7 @@ jv jq_next(jq_state *jq) {
     case STOREV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
-      frame_ptr fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
+      struct frame* fp = frame_current(&jq->stk, frame_get_level(&jq->stk, jq->curr_frame, level));
       jv* var = frame_local_var(fp, v);
       jv val = stack_pop(jq);
       if (jq->debug_trace_enabled) {
@@ -504,7 +504,7 @@ jv jq_next(jq_state *jq) {
       for (int i = 1; i < nargs; i++) {
         cfunc_input[i] = stack_pop(jq);
       }
-      struct cfunction* func = &frame_current_bytecode(&jq->stk, jq->curr_frame)->globals->cfunctions[*pc++];
+      struct cfunction* func = &frame_current(&jq->stk, jq->curr_frame)->bc->globals->cfunctions[*pc++];
       top = cfunction_invoke(func, cfunc_input);
       if (jv_is_valid(top)) {
         stack_push(jq, top);
@@ -525,22 +525,22 @@ jv jq_next(jq_state *jq) {
                                   retaddr, jq->stk_top);
       pc += 2;
 
-      frame_ptr new_frame = frame_current(&jq->stk, jq->curr_frame);
-      assert(nclosures == frame_self(new_frame)->bc->nclosures);
+      struct frame* new_frame = frame_current(&jq->stk, jq->curr_frame);
+      assert(nclosures == new_frame->bc->nclosures);
       for (int i=0; i<nclosures; i++) {
         *frame_closure_arg(new_frame, i) = make_closure(jq, old_frame, pc);
         pc += 2;
       }
 
-      pc = frame_current_bytecode(&jq->stk, jq->curr_frame)->code;
+      pc = frame_current(&jq->stk, jq->curr_frame)->bc->code;
       stack_push(jq, input);
       break;
     }
 
     case RET: {
       jv value = stack_pop(jq);
-      assert(jq->stk_top == frame_self(frame_current(&jq->stk, jq->curr_frame))->retdata);
-      uint16_t* retaddr = *frame_current_retaddr(&jq->stk, jq->curr_frame);
+      assert(jq->stk_top == frame_current(&jq->stk, jq->curr_frame)->retdata);
+      uint16_t* retaddr = frame_current(&jq->stk, jq->curr_frame)->retaddr;
       if (retaddr) {
         // function return
         pc = retaddr;
