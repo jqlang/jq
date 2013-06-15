@@ -5,8 +5,8 @@
 #include "jq_parser.h"
 #include "locfile.h"
 #include "jv_aux.h"
+#include "jv_file.h"
 #include "jv_unicode.h"
-#include "main.h"
 
 
 
@@ -585,7 +585,7 @@ int slurp_lib(block* bb) {
   char* home = getenv("HOME");
   if (home) {    // silently ignore no $HOME
     jv filename = jv_string_append_str(jv_string(home), "/.jq");
-    jv data = slurp_file(jv_string_value(filename), 1);
+    jv data = jv_load_file(jv_string_value(filename), 1);
     if (jv_is_valid(data)) {
       nerrors = builtins_bind_one(bb, jv_string_value(data) );
     }

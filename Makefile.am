@@ -2,12 +2,12 @@
 
 JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h		\
   forkable_stack.h frame_layout.h jv.h jv_alloc.h jv_aux.h jv_dtoa.h	\
-  jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h parser.y	\
-  jv_utf8_tables.h main.h lexer.l
+  jv_file.h jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h 	\
+  parser.y jv_utf8_tables.h main.h lexer.l
 
-JQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c jv.c		\
-  jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_alloc.c	\
-  jq_test.c ${JQ_INCS}
+JQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c 	\
+  jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_file.c	\
+  jv_alloc.c jq_test.c ${JQ_INCS}
 
 
 ### C build options
