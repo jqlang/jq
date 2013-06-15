@@ -66,7 +66,7 @@ enum {
 };
 static int options = 0;
 
-static void process(jq_state *jq, jv value, int flags) {
+static void process(jq *jq, jv value, int flags) {
   jq_start(jq, value, flags);
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
@@ -123,7 +123,7 @@ static int read_more(char* buf, size_t size) {
 }
 
 int main(int argc, char* argv[]) {
-  jq_state *jq;
+  jq *jq;
   int ret = 0;
   int compiled = 0;
 

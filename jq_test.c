@@ -33,7 +33,7 @@ static int skipline(const char* buf) {
 static void run_jq_tests(FILE *testdata) {
   char buf[4096];
   int tests = 0, passed = 0, invalid = 0;
-  jq_state *jq = NULL;
+  jq *jq = NULL;
 
   jq = jq_init();
   assert(jq);

@@ -19,7 +19,7 @@
 #include "parser.h"
 #include "builtin.h"
 
-struct jq_state {
+struct jq {
   struct forkable_stack data_stk;
   struct forkable_stack frame_stk;
   struct forkable_stack fork_stk;
@@ -37,13 +37,13 @@ typedef struct {
   jv val;
 } data_stk_elem;
 
-void stack_push(jq_state *jq, jv val) {
+void stack_push(jq *jq, jv val) {
   assert(jv_is_valid(val));
   data_stk_elem* s = forkable_stack_push(&jq->data_stk, sizeof(data_stk_elem));
   s->val = val;
 }
 
-jv stack_pop(jq_state *jq) {
+jv stack_pop(jq *jq) {
   data_stk_elem* s = forkable_stack_peek(&jq->data_stk);
   jv val = s->val;
   if (!forkable_stack_pop_will_free(&jq->data_stk)) {
@@ -64,7 +64,7 @@ struct forkpoint {
 };
 
 
-void stack_save(jq_state *jq, uint16_t* retaddr){
+void stack_save(jq *jq, uint16_t* retaddr){
   struct forkpoint* fork = forkable_stack_push(&jq->fork_stk, sizeof(struct forkpoint));
   forkable_stack_save(&jq->data_stk, &fork->saved_data_stack);
   forkable_stack_save(&jq->frame_stk, &fork->saved_call_stack);
@@ -74,13 +74,13 @@ void stack_save(jq_state *jq, uint16_t* retaddr){
   fork->return_address = retaddr;
 }
 
-void stack_switch(jq_state *jq) {
+void stack_switch(jq *jq) {
   struct forkpoint* fork = forkable_stack_peek(&jq->fork_stk);
   forkable_stack_switch(&jq->data_stk, &fork->saved_data_stack);
   forkable_stack_switch(&jq->frame_stk, &fork->saved_call_stack);
 }
 
-void path_append(jq_state* jq, jv component) {
+void path_append(jq* jq, jv component) {
   if (jq->subexp_nest == 0 && jv_get_kind(jq->path) == JV_KIND_ARRAY) {
     int n1 = jv_array_length(jv_copy(jq->path));
     jq->path = jv_array_append(jq->path, component);
@@ -91,7 +91,7 @@ void path_append(jq_state* jq, jv component) {
   }
 }
 
-uint16_t* stack_restore(jq_state *jq){
+uint16_t* stack_restore(jq *jq){
   while (!forkable_stack_empty(&jq->data_stk) && 
          forkable_stack_pop_will_free(&jq->data_stk)) {
     jv_free(stack_pop(jq));
@@ -121,7 +121,7 @@ uint16_t* stack_restore(jq_state *jq){
   return retaddr;
 }
 
-static void jq_reset(jq_state *jq) {
+static void jq_reset(jq *jq) {
   while (stack_restore(jq)) {}
   assert(forkable_stack_empty(&jq->fork_stk));
   assert(forkable_stack_empty(&jq->data_stk));
@@ -158,7 +158,7 @@ void print_error(jv value) {
 }
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
-jv jq_next(jq_state *jq) {
+jv jq_next(jq *jq) {
   jv cfunc_input[MAX_CFUNCTION_ARGS];
 
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
@@ -568,8 +568,8 @@ jv jq_next(jq_state *jq) {
   }
 }
 
-jq_state *jq_init(void) {
-  jq_state *jq;
+jq *jq_init(void) {
+  jq *jq;
   jq = jv_mem_alloc_unguarded(sizeof(*jq));
   if (jq == NULL)
     return NULL;
@@ -583,13 +583,13 @@ jq_state *jq_init(void) {
   return jq;
 }
 
-void jq_set_nomem_handler(jq_state *jq, void (*nomem_handler)(void *), void *data) {
+void jq_set_nomem_handler(jq *jq, void (*nomem_handler)(void *), void *data) {
   jv_nomem_handler(nomem_handler, data);
   jq->nomem_handler = nomem_handler;
   jq->nomem_handler_data = data;
 }
 
-void jq_start(jq_state *jq, jv input, int flags) {
+void jq_start(jq *jq, jv input, int flags) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   jq_reset(jq);
   stack_push(jq, input);
@@ -605,8 +605,9 @@ void jq_start(jq_state *jq, jv input, int flags) {
   jq->initial_execution = 1;
 }
 
-void jq_teardown(jq_state **jq) {
-  jq_state *old_jq = *jq;
+void jq_teardown(jq **jq) {
+  /* XXX jq *old_jq = *jq; is ambiguous, fails to compile */
+  struct jq *old_jq = *jq;
   if (old_jq == NULL)
     return;
   *jq = NULL;
@@ -620,7 +621,7 @@ void jq_teardown(jq_state **jq) {
   jv_mem_free(old_jq);
 }
 
-int jq_compile_args(jq_state *jq, const char* str, jv args) {
+int jq_compile_args(jq *jq, const char* str, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   assert(jv_get_kind(args) == JV_KIND_ARRAY);
   struct locfile locations;
@@ -653,10 +654,10 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   return jq->bc != NULL;
 }
 
-int jq_compile(jq_state *jq, const char* str) {
+int jq_compile(jq *jq, const char* str) {
   return jq_compile_args(jq, str, jv_array());
 }
 
-void jq_dump_disassembly(jq_state *jq, int indent) {
+void jq_dump_disassembly(jq *jq, int indent) {
   dump_disassembly(indent, jq->bc);
 }
