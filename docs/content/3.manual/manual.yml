@@ -515,7 +515,7 @@ sections:
             input: '[[0,1], ["a","b","c"]]'
             output: ['[false, true]']
 
-      - title: `to_entries`, `from_entries`, `with_entries`
+      - title: `to_entries`, `from_entries`, `with_entries, to_entries_upper, with_entries_upper`
         body: |
           
           These functions convert between an object and an array of
@@ -527,6 +527,10 @@ sections:
           `with_entries(foo)` is a shorthand for `to_entries |
           map(foo) | from_entries`, useful for doing some operation to
           all keys and values of an object.
+          
+          `to_entries_upper` and `with_entries_upper` function the same
+          as `to_entries` and `with_entries`, but will generate entries
+          with `Key` and `Value` instead of `key` and `value`.
 
         examples:
           - program: 'to_entries'
