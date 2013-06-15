@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
   if (argc) progname = argv[0];
 
   if (argc > 1 && !strcmp(argv[1], "--run-tests")) {
-    return jq_testsuite(argc - 1, argv + 1);
+    return jq_testsuite(argc, argv);
   }
 
   jq = jq_init();

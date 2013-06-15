@@ -10,8 +10,16 @@ static void run_jq_tests();
 
 
 int jq_testsuite(int argc, char* argv[]) {
+  FILE *testdata = stdin;
   jv_test();
-  run_jq_tests(stdin);
+  if (argc > 2) {
+    testdata = fopen(argv[2], "re");
+    if (!testdata) {
+      perror("fopen");
+      exit(1);
+    }
+  }
+  run_jq_tests(testdata);
   return 0;
 }
 
