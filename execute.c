@@ -23,6 +23,9 @@ struct jq_state {
   struct forkable_stack data_stk;
   struct forkable_stack frame_stk;
   struct forkable_stack fork_stk;
+  void (*nomem_handler)(void *);
+  void *nomem_handler_data;
+  struct bytecode* bc;
   jv path;
   int subexp_nest;
   int debug_trace_enabled;
@@ -118,6 +121,17 @@ uint16_t* stack_restore(jq_state *jq){
   return retaddr;
 }
 
+static void jq_reset(jq_state *jq) {
+  while (stack_restore(jq)) {}
+  assert(forkable_stack_empty(&jq->fork_stk));
+  assert(forkable_stack_empty(&jq->data_stk));
+  assert(forkable_stack_empty(&jq->frame_stk));
+
+  if (jv_get_kind(jq->path) != JV_KIND_INVALID)
+    jv_free(jq->path);
+  jq->path = jv_null();
+}
+
 
 static struct closure make_closure(struct forkable_stack* stk, frame_ptr fr, uint16_t* pc) {
   uint16_t level = *pc++;
@@ -146,6 +160,8 @@ void print_error(jv value) {
 
 jv jq_next(jq_state *jq) {
   jv cfunc_input[MAX_CFUNCTION_ARGS];
+
+  jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
 
   uint16_t* pc = stack_restore(jq);
   assert(pc);
@@ -552,28 +568,41 @@ jv jq_next(jq_state *jq) {
   }
 }
 
+jq_state *jq_init(void) {
+  jq_state *jq;
+  jq = jv_mem_alloc_unguarded(sizeof(*jq));
+  if (jq == NULL)
+    return NULL;
+  memset(jq, 0, sizeof(*jq));
+  jq->debug_trace_enabled = 0;
+  jq->initial_execution = 1;
+  forkable_stack_init(&jq->data_stk, sizeof(data_stk_elem) * 100);
+  forkable_stack_init(&jq->frame_stk, 1024);
+  forkable_stack_init(&jq->fork_stk, 1024);
+  jq->path = jv_null();
+  return jq;
+}
 
-void jq_init(struct bytecode* bc, jv input, jq_state **jq, int flags) {
-  jq_state *new_jq;
-  new_jq = jv_mem_alloc(sizeof(*new_jq));
-  memset(new_jq, 0, sizeof(*new_jq));
-  new_jq->path = jv_null();
-  forkable_stack_init(&new_jq->data_stk, sizeof(data_stk_elem) * 100);
-  forkable_stack_init(&new_jq->frame_stk, 1024);
-  forkable_stack_init(&new_jq->fork_stk, 1024);
-  
-  stack_push(new_jq, input);
-  struct closure top = {bc, -1};
-  frame_push(&new_jq->frame_stk, top, 0);
-  stack_save(new_jq, bc->code);
-  stack_switch(new_jq);
+void jq_set_nomem_handler(jq_state *jq, void (*nomem_handler)(void *), void *data) {
+  jv_nomem_handler(nomem_handler, data);
+  jq->nomem_handler = nomem_handler;
+  jq->nomem_handler_data = data;
+}
+
+void jq_start(jq_state *jq, jv input, int flags) {
+  jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
+  jq_reset(jq);
+  stack_push(jq, input);
+  struct closure top = {jq->bc, -1};
+  frame_push(&jq->frame_stk, top, 0);
+  stack_save(jq, jq->bc->code);
+  stack_switch(jq);
   if (flags & JQ_DEBUG_TRACE) {
-    new_jq->debug_trace_enabled = 1;
+    jq->debug_trace_enabled = 1;
   } else {
-    new_jq->debug_trace_enabled = 0;
+    jq->debug_trace_enabled = 0;
   }
-  new_jq->initial_execution = 1;
-  *jq = new_jq;
+  jq->initial_execution = 1;
 }
 
 void jq_teardown(jq_state **jq) {
@@ -582,25 +611,26 @@ void jq_teardown(jq_state **jq) {
     return;
   *jq = NULL;
 
-  while (stack_restore(old_jq)) {}
-
-  assert(forkable_stack_empty(&old_jq->fork_stk));
-  assert(forkable_stack_empty(&old_jq->data_stk));
-  assert(forkable_stack_empty(&old_jq->frame_stk));
+  jq_reset(old_jq);
   forkable_stack_free(&old_jq->fork_stk);
   forkable_stack_free(&old_jq->data_stk);
   forkable_stack_free(&old_jq->frame_stk);
-
-  jv_free(old_jq->path);
+  bytecode_free(old_jq->bc);
+  old_jq->bc = 0;
   jv_mem_free(old_jq);
 }
 
-struct bytecode* jq_compile_args(const char* str, jv args) {
+int jq_compile_args(jq_state *jq, const char* str, jv args) {
+  jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   assert(jv_get_kind(args) == JV_KIND_ARRAY);
   struct locfile locations;
   locfile_init(&locations, str, strlen(str));
   block program;
-  struct bytecode* bc = 0;
+  jq_reset(jq);
+  if (jq->bc) {
+    bytecode_free(jq->bc);
+    jq->bc = 0;
+  }
   int nerrors = jq_parse(&locations, &program);
   if (nerrors == 0) {
     for (int i=0; i<jv_array_length(jv_copy(args)); i++) {
@@ -613,16 +643,20 @@ struct bytecode* jq_compile_args(const char* str, jv args) {
     jv_free(args);
     nerrors = builtins_bind(&program);
     if (nerrors == 0) {
-      nerrors = block_compile(program, &locations, &bc);
+      nerrors = block_compile(program, &locations, &jq->bc);
     }
   }
   if (nerrors) {
     fprintf(stderr, "%d compile %s\n", nerrors, nerrors > 1 ? "errors" : "error");
   }
   locfile_free(&locations);
-  return bc;
+  return jq->bc != NULL;
 }
 
-struct bytecode* jq_compile(const char* str) {
-  return jq_compile_args(str, jv_array());
+int jq_compile(jq_state *jq, const char* str) {
+  return jq_compile_args(jq, str, jv_array());
+}
+
+void jq_dump_disassembly(jq_state *jq, int indent) {
+  dump_disassembly(indent, jq->bc);
 }

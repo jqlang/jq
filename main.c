@@ -65,11 +65,9 @@ enum {
   DUMP_DISASM = 2048,
 };
 static int options = 0;
-static struct bytecode* bc;
 
-static void process(jv value, int flags) {
-  jq_state *jq = NULL;
-  jq_init(bc, value, &jq, flags);
+static void process(jq_state *jq, jv value, int flags) {
+  jq_start(jq, value, flags);
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
@@ -94,7 +92,6 @@ static void process(jv value, int flags) {
     printf("\n");
   }
   jv_free(result);
-  jq_teardown(&jq);
 }
 
 FILE* current_input;
@@ -126,11 +123,20 @@ static int read_more(char* buf, size_t size) {
 }
 
 int main(int argc, char* argv[]) {
+  jq_state *jq;
   int ret = 0;
+  int compiled = 0;
+
   if (argc) progname = argv[0];
 
   if (argc > 1 && !strcmp(argv[1], "--run-tests")) {
-    return jq_testsuite(argc - 1, argv + 1);
+    return jq_testsuite(argc, argv);
+  }
+
+  jq = jq_init();
+  if (jq == NULL) {
+    perror("malloc");
+    return 1;
   }
 
   const char* program = 0;
@@ -231,20 +237,20 @@ int main(int argc, char* argv[]) {
       jv_free(data);
       return 1;
     }
-    bc = jq_compile_args(jv_string_value(data), program_arguments);
+    compiled = jq_compile_args(jq, jv_string_value(data), program_arguments);
     jv_free(data);
   } else {
-    bc = jq_compile_args(program, program_arguments);
+    compiled = jq_compile_args(jq, program, program_arguments);
   }
-  if (!bc) return 1;
+  if (!compiled) return 1;
 
   if (options & DUMP_DISASM) {
-    dump_disassembly(0, bc);
+    jq_dump_disassembly(jq, 0);
     printf("\n");
   }
 
   if (options & PROVIDE_NULL) {
-    process(jv_null(), jq_flags);
+    process(jq, jv_null(), jq_flags);
   } else {
     jv slurped;
     if (options & SLURP) {
@@ -265,7 +271,7 @@ int main(int argc, char* argv[]) {
             slurped = jv_string_concat(slurped, jv_string(buf));
           } else {
             if (buf[len-1] == '\n') buf[len-1] = 0;
-            process(jv_string(buf), jq_flags);
+            process(jq, jv_string(buf), jq_flags);
           }
         }
       } else {
@@ -275,7 +281,7 @@ int main(int argc, char* argv[]) {
           if (options & SLURP) {
             slurped = jv_array_append(slurped, value);
           } else {
-            process(value, jq_flags);
+            process(jq, value, jq_flags);
           }
         }
         if (jv_invalid_has_msg(jv_copy(value))) {
@@ -293,11 +299,11 @@ int main(int argc, char* argv[]) {
     if (ret != 0)
       goto out;
     if (options & SLURP) {
-      process(slurped, jq_flags);
+      process(jq, slurped, jq_flags);
     }
   }
 out:
   jv_mem_free(input_filenames);
-  bytecode_free(bc);
+  jq_teardown(&jq);
   return ret;
 }
