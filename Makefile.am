@@ -1,13 +1,13 @@
 ### C source files to be built and distributed.
 
-JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h		\
-  forkable_stack.h frame_layout.h jv.h jv_alloc.h jv_aux.h jv_dtoa.h	\
-  jv_file.h jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h 	\
+LIBJQ_INCS = jq_parser.h builtin.h bytecode.h compile.h 		\
+  forkable_stack.h frame_layout.h jv_alloc.h jv_dtoa.h			\
+  jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h 		\
   parser.y jv_utf8_tables.h lexer.l
 
-JQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c 	\
+LIBJQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c \
   jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_file.c	\
-  jv_alloc.c jq_test.c ${JQ_INCS}
+  jv_alloc.c jq_test.c ${LIBJQ_INCS}
 
 
 ### C build options
@@ -15,6 +15,7 @@ JQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c 	\
 AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
   -Wno-unused-parameter -Wno-unused-function
 
+ACLOCAL_AMFLAGS = -I m4
 
 ### Generating the lexer and parser
 
@@ -30,6 +31,22 @@ lexer.h: lexer.c
 # OSX ships an old bison, so update with homebrew or macports
 AM_YFLAGS = --warnings=all -d
 
+### libjq
+
+# noinst for now?
+lib_LIBRARIES = libjq.a
+libjq_a_SOURCES = ${LIBJQ_SRC}
+libjq_a_CFLAGS = $(AM_CFLAGS)
+
+lib_LTLIBRARIES = libjq.la
+libjq_la_SOURCES = ${LIBJQ_SRC}
+libjq_la_LIBADD = -lm
+if HAVE_LD_VERSION_SCRIPT
+libjq_la_LDFLAGS = -Wl,--version-script=$(srcdir)/libjq.map -version-info 1:4:0
+endif
+
+include_HEADERS = jv.h jq.h
+
 
 ### Building the jq binary
 
@@ -43,7 +60,8 @@ version.h: .remake-version-h
 	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
 
 bin_PROGRAMS = jq
-jq_SOURCES = ${JQ_SRC} main.c
+jq_SOURCES = main.c
+jq_LDADD = libjq.la -lm
 
 ### Tests (make check)
 

@@ -1,4 +1,10 @@
 *.o
+*.a
+*.lo
+*.la
+*.lai
+*.so
+*.so.*
 *~
 .*.sw[a-p]
 tags

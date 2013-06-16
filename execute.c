@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "execute.h"
-
 #include "exec_stack.h"
 #include "opcode.h"
 #include "bytecode.h"
@@ -13,7 +11,7 @@
 #include "jq_parser.h"
 #include "locfile.h"
 #include "jv.h"
-#include "jv_aux.h"
+#include "jq.h"
 #include "parser.h"
 #include "builtin.h"
 

@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "jv.h"
-#include "jv_aux.h"
 #include "jv_parse.h"
 
 jv jv_load_file(const char* filename, int raw) {

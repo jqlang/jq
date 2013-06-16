@@ -24,6 +24,7 @@ elif [ "superclean" == "$1" ]; then
   fi
 else
   autoreconf --install
+  automake --add-missing
   ./configure --prefix=/opt/junk
   make check
   [ -d tmp ] && mv tmp tmp-
