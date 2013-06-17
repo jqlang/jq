@@ -238,6 +238,7 @@ static void jq_reset(jq_state *jq) {
   if (jv_get_kind(jq->path) != JV_KIND_INVALID)
     jv_free(jq->path);
   jq->path = jv_null();
+  jq->subexp_nest = 0;
 }
 
 
@@ -660,9 +661,8 @@ jq_state *jq_init(void) {
   jq = jv_mem_alloc_unguarded(sizeof(*jq));
   if (jq == NULL)
     return NULL;
-  memset(jq, 0, sizeof(*jq));
-  jq->debug_trace_enabled = 0;
-  jq->initial_execution = 1;
+
+  jq->bc = 0;
 
   stack_init(&jq->stk);
   jq->stk_top = 0;
