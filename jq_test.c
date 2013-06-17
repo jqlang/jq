@@ -13,7 +13,7 @@ int jq_testsuite(int argc, char* argv[]) {
   FILE *testdata = stdin;
   jv_test();
   if (argc > 2) {
-    testdata = fopen(argv[2], "re");
+    testdata = fopen(argv[2], "r");
     if (!testdata) {
       perror("fopen");
       exit(1);
