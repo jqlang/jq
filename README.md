@@ -11,13 +11,18 @@ If you want to hack on jq, feel free, but be warned that its internals
 are not well-documented at the moment. Bring a hard hat and a
 shovel. Also, read the wiki: http://github.com/stedolan/jq/wiki
 
-To build jq, run
-
-    ./configure
-    make
-    sudo make install (optionally)
-
-If you've just checked out the latest version from git (rather than
-using a released source tarball) then you'll need to run this first:
+If you're building directly from the latest git, you'll need flex and
+bison installed. To build, run:
 
     autoreconf
+    ./configure
+    make
+
+After make finishes, you'll be able to use `./jq`. You can also
+install it using:
+
+    sudo make install
+
+If you're not using the latest git version but instead building a
+released tarball (available on the website), then you won't need to
+run `autoreconf` (and shouldn't), and you won't need flex or bison.
