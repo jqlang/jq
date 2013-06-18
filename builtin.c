@@ -119,6 +119,25 @@ static jv f_divide(jv input, jv a, jv b) {
   }  
 }
 
+static jv f_mod(jv input, jv a, jv b) {
+  double da, db, r;
+  jv_free(input);
+  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+    da = jv_number_value(a);
+    db = jv_number_value(b);
+    r = remainder(da, db);
+    if (r == -0.0)
+      r = 0.0;
+    else if (da >= 0.0 && r < 0.0)
+      r += floor(db);
+    else if (da < 0.0 && r > 0.0)
+      r -= floor(db);
+    return jv_number(r);
+  } else {
+    return type_error2(a, b, "cannot be divided");
+  }  
+}
+
 static jv f_equal(jv input, jv a, jv b) {
   jv_free(input);
   return jv_bool(jv_equal(a, b));
@@ -476,6 +495,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_minus, "_minus", 3},
   {(cfunction_ptr)f_multiply, "_multiply", 3},
   {(cfunction_ptr)f_divide, "_divide", 3},
+  {(cfunction_ptr)f_mod, "_mod", 3},
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
   {(cfunction_ptr)f_keys, "keys", 1},

@@ -49,6 +49,7 @@ struct lexer_param;
 %token <literal> FIELD
 %token <literal> LITERAL
 %token <literal> FORMAT
+%token SETMOD "%="
 %token EQ "=="
 %token NEQ "!="
 %token DEFINEDOR "//"
@@ -82,12 +83,12 @@ struct lexer_param;
 %right '|'
 %left ','
 %right "//"
-%nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETDEFINEDOR
+%nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETMOD SETDEFINEDOR
 %left OR
 %left AND
 %nonassoc NEQ EQ '<' '>' LESSEQ GREATEREQ
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' '%'
 
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs String
@@ -153,6 +154,7 @@ static block gen_binop(block a, block b, int op) {
   case '-': funcname = "_minus"; break;
   case '*': funcname = "_multiply"; break;
   case '/': funcname = "_divide"; break;
+  case '%': funcname = "_mod"; break;
   case EQ: funcname = "_equal"; break;
   case NEQ: funcname = "_notequal"; break;
   case '<': funcname = "_less"; break;
@@ -295,8 +297,16 @@ Exp '/' Exp {
   $$ = gen_binop($1, $3, '/');
 } |
 
+Exp '%' Exp {
+  $$ = gen_binop($1, $3, '%');
+} |
+
 Exp "/=" Exp {
   $$ = gen_update($1, $3, '/');
+} |
+
+Exp SETMOD Exp {
+  $$ = gen_update($1, $3, '%');
 } |
 
 Exp "==" Exp {
