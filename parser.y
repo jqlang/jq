@@ -99,6 +99,7 @@ struct lexer_param;
 struct lexer_param {
   yyscan_t lexer;
 };
+
 #define FAIL(loc, msg)                                             \
   do {                                                             \
     location l = loc;                                              \
@@ -109,7 +110,21 @@ struct lexer_param {
 void yyerror(YYLTYPE* loc, block* answer, int* errors, 
              struct locfile* locations, struct lexer_param* lexer_param_ptr, const char *s){
   (*errors)++;
-  locfile_locate(locations, *loc, "error: %s", s);
+  locfile_locate(locations, *loc, "%s", s);
+}
+
+#define FIELD_HINT_MSG \
+	"try .\"field\" instead of .field for unusually named fields"
+#define IF_HINT_MSG \
+	"Possibly unterminated 'if' statment. Syntax:  if A then B else C end"
+#define HINT(loc, msg)                                             \
+  do {                                                             \
+    location l = loc;                                              \
+    hint(&l, locations, msg);                                      \
+  } while (0)
+
+void hint(location* loc, struct locfile* locations, const char *s){
+  locfile_locate(locations, *loc, "hint: %s", s);
 }
 
 int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors, 
@@ -231,11 +246,11 @@ Term "as" '$' IDENT '|' Exp {
   $$ = gen_cond($2, $4, $5);
 } |
 "if" Exp "then" error {
-  FAIL(@$, "Possibly unterminated 'if' statment. Syntax:  if A then B else C end");
+  HINT(@$, IF_HINT_MSG);
   $$ = $2;
 } |
 "if" error {
-  FAIL(@$, "Possibly unterminated 'if' statment. Syntax:  if A then B else C end");
+  HINT(@$, IF_HINT_MSG);
   $$ = gen_noop();
 } |
 
@@ -427,17 +442,17 @@ Term '.' String {
   $$ = gen_index(gen_noop(), $2);
 } |
 '.' error {
-  FAIL(@$, "try .\"field\" instead of .field for unusually named fields");
+  HINT(@$, FIELD_HINT_MSG);
   $$ = gen_noop();
 } |
 FIELD error { 
   jv_free($1);
-  FAIL(@$, "try .\"field\" instead of .field for unusually named fields");
+  HINT(@$, FIELD_HINT_MSG);
   $$ = gen_noop();
 } |
 '.' IDENT error { 
   jv_free($2);
-  FAIL(@$, "For field lookup, dot must be next to field: .field not . field");
+  HINT(@$, "For field lookup, dot must be next to field: .field not . field");
   $$ = gen_noop();
 } |
 Term '[' Exp ']' {
