@@ -44,6 +44,7 @@ version.h: .remake-version-h
 
 bin_PROGRAMS = jq
 jq_SOURCES = ${JQ_SRC} main.c
+jq_LDADD = -lm
 
 ### Tests (make check)
 
