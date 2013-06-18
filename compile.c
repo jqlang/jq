@@ -153,33 +153,26 @@ void inst_set_target(block b, block target) {
   b.first->imm.target = target.last;
 }
 
-block gen_op_var_unbound(opcode op, const char* name) {
+block gen_op_unbound(opcode op, const char* name) {
+  assert(opcode_describe(op)->flags & OP_HAS_BINDING);
+  inst* i = inst_new(op);
+  i->symbol = strdup(name);
+  return inst_block(i);
+}
+
+block gen_op_var_fresh(opcode op, const char* name) {
   assert(opcode_describe(op)->flags & OP_HAS_VARIABLE);
-  inst* i = inst_new(op);
-  i->symbol = strdup(name);
-  return inst_block(i);
+  return block_bind(gen_op_unbound(op, name),
+                    gen_noop(), OP_HAS_VARIABLE);
 }
 
-block gen_op_var_bound(opcode op, block binder) {
+block gen_op_bound(opcode op, block binder) {
   assert(block_is_single(binder));
-  block b = gen_op_var_unbound(op, binder.first->symbol);
+  block b = gen_op_unbound(op, binder.first->symbol);
   b.first->bound_by = binder.first;
   return b;
 }
 
-block gen_op_block_unbound(opcode op, const char* name) {
-  assert(opcode_describe(op)->flags & OP_IS_CALL_PSEUDO);
-  inst* i = inst_new(op);
-  i->symbol = strdup(name);
-  return inst_block(i);
-}
-
-block gen_op_block_bound(opcode op, block binder) {
-  assert(block_is_single(binder));
-  block b = gen_op_block_unbound(op, binder.first->symbol);
-  b.first->bound_by = binder.first;
-  return b;
-}
 
 static void inst_join(inst* a, inst* b) {
   assert(a && b);
@@ -280,12 +273,16 @@ block gen_function(const char* name, block formals, block body) {
   return b;
 }
 
+block gen_param(const char* name) {
+  return gen_op_unbound(CLOSURE_PARAM, name);
+}
+
 block gen_lambda(block body) {
   return gen_function("@lambda", gen_noop(), body);
 }
 
 block gen_call(const char* name, block args) {
-  block b = gen_op_block_unbound(CALL_JQ, name);
+  block b = gen_op_unbound(CALL_JQ, name);
   b.first->arglist = args;
   return b;
 }
@@ -306,30 +303,27 @@ block gen_both(block a, block b) {
 
 
 block gen_collect(block expr) {
-  block array_var = block_bind(gen_op_var_unbound(STOREV, "collect"),
-                               gen_noop(), OP_HAS_VARIABLE);
+  block array_var = gen_op_var_fresh(STOREV, "collect");
   block c = BLOCK(gen_op_simple(DUP), gen_const(jv_array()), array_var);
 
-  block tail = BLOCK(gen_op_var_bound(APPEND, array_var),
+  block tail = BLOCK(gen_op_bound(APPEND, array_var),
                      gen_op_simple(BACKTRACK));
 
   return BLOCK(c,
                gen_op_target(FORK, tail),
                expr, 
                tail,
-               gen_op_var_bound(LOADVN, array_var));
+               gen_op_bound(LOADVN, array_var));
 }
 
 block gen_reduce(const char* varname, block source, block init, block body) {
-  block res_var = block_bind(gen_op_var_unbound(STOREV, "reduce"),
-                             gen_noop(), OP_HAS_VARIABLE);
-
+  block res_var = gen_op_var_fresh(STOREV, "reduce");
   block loop = BLOCK(gen_op_simple(DUP),
                      source,
-                     block_bind(gen_op_var_unbound(STOREV, varname),
-                                BLOCK(gen_op_var_bound(LOADVN, res_var),
+                     block_bind(gen_op_unbound(STOREV, varname),
+                                BLOCK(gen_op_bound(LOADVN, res_var),
                                       body,
-                                      gen_op_var_bound(STOREV, res_var)),
+                                      gen_op_bound(STOREV, res_var)),
                                 OP_HAS_VARIABLE),
                      gen_op_simple(BACKTRACK));
   return BLOCK(gen_op_simple(DUP),
@@ -337,19 +331,18 @@ block gen_reduce(const char* varname, block source, block init, block body) {
                res_var,
                gen_op_target(FORK, loop),
                loop,
-               gen_op_var_bound(LOADVN, res_var));
+               gen_op_bound(LOADVN, res_var));
 }
 
 block gen_definedor(block a, block b) {
   // var found := false
-  block found_var = block_bind(gen_op_var_unbound(STOREV, "found"),
-                               gen_noop(), OP_HAS_VARIABLE);
+  block found_var = gen_op_var_fresh(STOREV, "found");
   block init = BLOCK(gen_op_simple(DUP), gen_const(jv_false()), found_var);
 
   // if found, backtrack. Otherwise execute b
   block backtrack = gen_op_simple(BACKTRACK);
   block tail = BLOCK(gen_op_simple(DUP),
-                     gen_op_var_bound(LOADV, found_var),
+                     gen_op_bound(LOADV, found_var),
                      gen_op_target(JUMP_F, backtrack),
                      backtrack,
                      gen_op_simple(POP),
@@ -361,7 +354,7 @@ block gen_definedor(block a, block b) {
   // found := true, produce result
   block if_found = BLOCK(gen_op_simple(DUP),
                          gen_const(jv_true()),
-                         gen_op_var_bound(STOREV, found_var),
+                         gen_op_bound(STOREV, found_var),
                          gen_op_target(JUMP, tail));
 
   return BLOCK(init,
@@ -400,7 +393,7 @@ block gen_or(block a, block b) {
 
 block gen_var_binding(block var, const char* name, block body) {
   return BLOCK(gen_op_simple(DUP), var,
-               block_bind(gen_op_var_unbound(STOREV, name),
+               block_bind(gen_op_unbound(STOREV, name),
                           body, OP_HAS_VARIABLE));
 }
 
@@ -475,7 +468,7 @@ static int expand_call_arglist(struct locfile* locations, block* b) {
             break;
           case CLOSURE_CREATE:
             block_append(&prelude, b);
-            block_append(&callargs, gen_op_block_bound(CLOSURE_REF, b));
+            block_append(&callargs, gen_op_bound(CLOSURE_REF, b));
             break;
           }
           actual_args++;

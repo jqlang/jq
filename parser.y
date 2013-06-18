@@ -170,24 +170,22 @@ static block gen_format(block a, jv fmt) {
 }
 
 static block gen_definedor_assign(block object, block val) {
-  block tmp = block_bind(gen_op_var_unbound(STOREV, "tmp"),
-                         gen_noop(), OP_HAS_VARIABLE);
+  block tmp = gen_op_var_fresh(STOREV, "tmp");
   return BLOCK(gen_op_simple(DUP),
                val, tmp,
                gen_call("_modify", BLOCK(gen_lambda(object),
                                          gen_lambda(gen_definedor(gen_noop(), 
-                                                                  gen_op_var_bound(LOADV, tmp))))));
+                                                                  gen_op_bound(LOADV, tmp))))));
 }
  
 static block gen_update(block object, block val, int optype) {
-  block tmp = block_bind(gen_op_var_unbound(STOREV, "tmp"),
-                         gen_noop(), OP_HAS_VARIABLE);
+  block tmp = gen_op_var_fresh(STOREV, "tmp");
   return BLOCK(gen_op_simple(DUP),
                val,
                tmp,
                gen_call("_modify", BLOCK(gen_lambda(object), 
                                          gen_lambda(gen_binop(gen_noop(),
-                                                              gen_op_var_bound(LOADV, tmp),
+                                                              gen_op_bound(LOADV, tmp),
                                                               optype)))));
 }
 
@@ -337,7 +335,7 @@ FuncDef:
 
 "def" IDENT '(' IDENT ')' ':' Exp ';' {
   $$ = gen_function(jv_string_value($2), 
-                    gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), 
+                    gen_param(jv_string_value($4)), 
                     $7);
   jv_free($2);
   jv_free($4);
@@ -345,8 +343,8 @@ FuncDef:
 
 "def" IDENT '(' IDENT ';' IDENT ')' ':' Exp ';' {
   $$ = gen_function(jv_string_value($2), 
-                    BLOCK(gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($4)), 
-                          gen_op_block_unbound(CLOSURE_PARAM, jv_string_value($6))),
+                    BLOCK(gen_param(jv_string_value($4)), 
+                          gen_param(jv_string_value($6))),
                     $9);
   jv_free($2);
   jv_free($4);
@@ -459,7 +457,7 @@ FORMAT {
   $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
 } |
 '$' IDENT {
-  $$ = gen_location(@$, gen_op_var_unbound(LOADV, jv_string_value($2)));
+  $$ = gen_location(@$, gen_op_unbound(LOADV, jv_string_value($2)));
   jv_free($2);
 } | 
 IDENT {

@@ -528,20 +528,18 @@ static block bind_bytecoded_builtins(block b) {
     };
     for (unsigned i=0; i<sizeof(builtin_def_1arg)/sizeof(builtin_def_1arg[0]); i++) {
       builtins = BLOCK(builtins, gen_function(builtin_def_1arg[i].name,
-                                              gen_op_block_unbound(CLOSURE_PARAM, "arg"),
+                                              gen_param("arg"),
                                               builtin_def_1arg[i].code));
     }
   }
   {
-    block rangevar = block_bind(gen_op_var_unbound(STOREV, "rangevar"),
-                                gen_noop(), OP_HAS_VARIABLE);
+    block rangevar = gen_op_var_fresh(STOREV, "rangevar");
     block init = BLOCK(gen_op_simple(DUP), gen_call("start", gen_noop()), rangevar);
     block range = BLOCK(init, 
                         gen_call("end", gen_noop()),
-                        gen_op_var_bound(RANGE, rangevar));
+                        gen_op_bound(RANGE, rangevar));
     builtins = BLOCK(builtins, gen_function("range",
-                                            BLOCK(gen_op_block_unbound(CLOSURE_PARAM, "start"),
-                                                  gen_op_block_unbound(CLOSURE_PARAM, "end")),
+                                            BLOCK(gen_param("start"), gen_param("end")),
                                             range));
   }
   
