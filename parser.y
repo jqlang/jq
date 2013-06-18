@@ -231,8 +231,12 @@ Term "as" '$' IDENT '|' Exp {
   $$ = gen_cond($2, $4, $5);
 } |
 "if" Exp "then" error {
-  FAIL(@$, "Possibly unterminated 'if' statment");
+  FAIL(@$, "Possibly unterminated 'if' statment. Syntax:  if A then B else C end");
   $$ = $2;
+} |
+"if" error {
+  FAIL(@$, "Possibly unterminated 'if' statment. Syntax:  if A then B else C end");
+  $$ = gen_noop();
 } |
 
 Exp '=' Exp {
@@ -436,7 +440,6 @@ FIELD error {
   FAIL(@$, "For field lookup, dot must be next to field: .field not . field");
   $$ = gen_noop();
 } |
-/* FIXME: string literals */
 Term '[' Exp ']' {
   $$ = gen_index($1, $3); 
 } |
