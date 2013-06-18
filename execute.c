@@ -6,7 +6,6 @@
 #include "execute.h"
 
 #include "exec_stack.h"
-#include "opcode.h"
 #include "bytecode.h"
 
 #include "jv_alloc.h"
