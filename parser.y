@@ -423,12 +423,12 @@ Term '.' String {
   $$ = gen_index(gen_noop(), $2);
 } |
 '.' error {
-  FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
+  FAIL(@$, "try .\"field\" instead of .field for unusually named fields");
   $$ = gen_noop();
 } |
 FIELD error { 
   jv_free($1);
-  FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
+  FAIL(@$, "try .\"field\" instead of .field for unusually named fields");
   $$ = gen_noop();
 } |
 '.' IDENT error { 
