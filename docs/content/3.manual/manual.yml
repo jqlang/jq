@@ -623,6 +623,16 @@ sections:
             input: 'null'
             output: ['[2,3]']
             
+      - title: `floor`
+        body: |
+
+          The `floor` function returns the floor of its numeric input.
+
+        examples:
+          - program: '.[] | tonumber'
+            input: '[1, "1"]'
+            output: [1, 1]
+            
       - title: `tonumber`
         body: |
 
