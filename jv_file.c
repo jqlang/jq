@@ -28,12 +28,15 @@ jv jv_load_file(const char* filename, int raw) {
     if (raw) {
       data = jv_string_concat(data, jv_string_sized(buf, (int)n));
     } else {
-      jv_parser_set_buf(&parser, buf, strlen(buf), !feof(file));
+      jv_parser_set_buf(&parser, buf, n, !feof(file));
       jv value;
       while (jv_is_valid((value = jv_parser_next(&parser))))
         data = jv_array_append(data, value);
+      jv_free(value);
     }
   }
+  if (!raw)
+      jv_parser_free(&parser);
   int badread = ferror(file);
   fclose(file);
   if (badread) {

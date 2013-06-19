@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
         jv_free(data);
         return 1;
       }
-      if (jv_array_length(data) == 1)
+      if (jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
           data = jv_array_get(data, 0);
       arg = jv_object_set(arg, jv_string("value"), data);
       program_arguments = jv_array_append(program_arguments, arg);
