@@ -442,7 +442,7 @@ sections:
             input: '["xml", "yaml", "json"]'
             output: ['["json"]']
 
-      - title: Multiplication, division - `*` and `/`
+      - title: Multiplication, division, modulo - `*`, `/`, and `%`
         body: |
 
           These operators only work on numbers, and do the expected.
@@ -1229,7 +1229,7 @@ sections:
           input, and produce the output {"a": 20}. The latter will set the "a"
           field of the input to the "a" field's "b" field, producing {"a": 10}.
 
-      - title: "`+=`, `-=`, `*=`, `/=`, `//=`"
+      - title: "`+=`, `-=`, `*=`, `/=`, `%=`, `//=`"
         body: |
 
           jq has a few operators of the form `a op= b`, which are all
