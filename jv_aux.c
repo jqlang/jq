@@ -1,4 +1,3 @@
-#include "jv_aux.h"
 #include <string.h>
 #include <stdlib.h>
 #include "jv_alloc.h"

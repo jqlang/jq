@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "jv.h"
-#include "execute.h"
+#include "jq.h"
 
 static void jv_test();
 static void run_jq_tests();

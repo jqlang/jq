@@ -10,6 +10,32 @@ AC_PROG_CC
 AC_PROG_CC_STDC
 AC_PROG_CPP_WERROR
 AC_PROG_YACC
+AC_OBJEXT
+AC_EXEEXT
+LT_INIT([shared static win32-dll])
+AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
+
+AC_MSG_CHECKING([if libraries can be versioned])
+GLD=`$LD --help < /dev/null 2>/dev/null | grep version-script`
+if test "$GLD"; then
+    have_ld_version_script=yes
+    AC_MSG_RESULT(yes)
+else
+    have_ld_version_script=no
+    AC_MSG_RESULT(no)
+    AC_MSG_WARN(*** You have not enabled versioned symbols.)
+fi
+AM_CONDITIONAL(HAVE_LD_VERSION_SCRIPT, test "$have_ld_version_script" = "yes")
+
+if test "$have_ld_version_script" = "yes"; then
+    AC_MSG_CHECKING([for symbol prefix])
+    SYMBOL_PREFIX=`echo "PREFIX=__USER_LABEL_PREFIX__" \
+                   | ${CPP-${CC-gcc} -E} - 2>&1 \
+                   | ${EGREP-grep} "^PREFIX=" \
+                   | ${SED-sed} "s:^PREFIX=::"`
+    AC_SUBST(SYMBOL_PREFIX)
+    AC_MSG_RESULT($SYMBOL_PREFIX)
+fi
 
 AM_PROG_CC_C_O
 
@@ -64,7 +90,7 @@ EOF
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
-dnl AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_FILES([Makefile])

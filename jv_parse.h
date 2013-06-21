@@ -28,10 +28,4 @@ struct jv_parser {
   } st;
 };
 
-void jv_parser_init(struct jv_parser* p);
-void jv_parser_free(struct jv_parser* p);
-
-void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial);
-
-jv jv_parser_next(struct jv_parser* p);
 #endif

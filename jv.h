@@ -124,13 +124,27 @@ jv jv_dump_string(jv, int flags);
 jv jv_parse(const char* string);
 jv jv_parse_sized(const char* string, int length);
 
+typedef void (*jv_nomem_handler_f)(void *);
+void jv_nomem_handler(jv_nomem_handler_f, void *);
 
+jv jv_load_file(const char *, int);
 
+struct jv_parser;
+void jv_parser_init(struct jv_parser*);
+void jv_parser_free(struct jv_parser*);
+void jv_parser_set_buf(struct jv_parser*, const char*, int, int);
+jv jv_parser_next(struct jv_parser*);
 
-
-
-
-
+jv jv_get(jv, jv);
+jv jv_set(jv, jv, jv);
+jv jv_has(jv, jv);
+jv jv_setpath(jv, jv, jv);
+jv jv_getpath(jv, jv);
+jv jv_delpaths(jv, jv);
+jv jv_keys(jv /*object or array*/);
+int jv_cmp(jv, jv);
+jv jv_group(jv, jv);
+jv jv_sort(jv, jv);
 
 
 #endif

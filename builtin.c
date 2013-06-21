@@ -4,8 +4,6 @@
 #include "compile.h"
 #include "jq_parser.h"
 #include "locfile.h"
-#include "jv_aux.h"
-#include "jv_file.h"
 #include "jv_unicode.h"
 
 
