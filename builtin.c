@@ -3,28 +3,12 @@
 #include "builtin.h"
 #include "compile.h"
 #include "jq_parser.h"
+#include "bytecode.h"
 #include "locfile.h"
 #include "jv_aux.h"
 #include "jv_file.h"
 #include "jv_unicode.h"
 
-
-
-typedef jv (*func_1)(jv);
-typedef jv (*func_2)(jv,jv);
-typedef jv (*func_3)(jv,jv,jv);
-typedef jv (*func_4)(jv,jv,jv,jv);
-typedef jv (*func_5)(jv,jv,jv,jv,jv);
-jv cfunction_invoke(struct cfunction* function, jv input[]) {
-  switch (function->nargs) {
-  case 1: return ((func_1)function->fptr)(input[0]);
-  case 2: return ((func_2)function->fptr)(input[0], input[1]);
-  case 3: return ((func_3)function->fptr)(input[0], input[1], input[2]);
-  case 4: return ((func_4)function->fptr)(input[0], input[1], input[2], input[3]);
-  case 5: return ((func_5)function->fptr)(input[0], input[1], input[2], input[3], input[4]);
-  default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
-  }
-}
 
 static jv type_error(jv bad, const char* msg) {
   jv err = jv_invalid_with_msg(jv_string_fmt("%s %s",

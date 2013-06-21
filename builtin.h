@@ -6,7 +6,4 @@
 
 int builtins_bind(block*);
 
-jv cfunction_invoke(struct cfunction* function, jv input[]);
-
-
 #endif
