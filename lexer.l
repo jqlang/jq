@@ -56,10 +56,11 @@ struct lexer_param;
 "-=" { return SETMINUS; }
 "*=" { return SETMULT; }
 "/=" { return SETDIV; }
+"%=" { return SETMOD; }
 "//=" { return SETDEFINEDOR; }
 "<=" { return LESSEQ; }
 ">=" { return GREATEREQ; }
-"."|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"\$"|"<"|">" { return yytext[0];}
+"."|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"%"|"\$"|"<"|">" { return yytext[0];}
 
 "["|"{"|"(" {
   return enter(yytext[0], YY_START, yyscanner);

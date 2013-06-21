@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include "builtin.h"
@@ -66,6 +67,15 @@ static jv f_plus(jv input, jv a, jv b) {
   }
 }
 
+static jv f_floor(jv input) {
+  if (jv_get_kind(input) != JV_KIND_NUMBER) {
+    return type_error(input, "cannot be floored");
+  }
+  jv ret = jv_number(floor(jv_number_value(input)));
+  jv_free(input);
+  return ret;
+}
+
 static jv f_negate(jv input) {
   if (jv_get_kind(input) != JV_KIND_NUMBER) {
     return type_error(input, "cannot be negated");
@@ -114,6 +124,25 @@ static jv f_divide(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) / jv_number_value(b));
+  } else {
+    return type_error2(a, b, "cannot be divided");
+  }  
+}
+
+static jv f_mod(jv input, jv a, jv b) {
+  double da, db, r;
+  jv_free(input);
+  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+    da = jv_number_value(a);
+    db = jv_number_value(b);
+    r = remainder(da, db);
+    if (r == -0.0)
+      r = 0.0;
+    else if (da >= 0.0 && r < 0.0)
+      r += floor(db);
+    else if (da < 0.0 && r > 0.0)
+      r -= floor(db);
+    return jv_number(r);
   } else {
     return type_error2(a, b, "cannot be divided");
   }  
@@ -471,11 +500,13 @@ static jv f_error(jv input, jv msg) {
 }
 
 static const struct cfunction function_list[] = {
+  {(cfunction_ptr)f_floor, "_floor", 1},
   {(cfunction_ptr)f_plus, "_plus", 3},
   {(cfunction_ptr)f_negate, "_negate", 1},
   {(cfunction_ptr)f_minus, "_minus", 3},
   {(cfunction_ptr)f_multiply, "_multiply", 3},
   {(cfunction_ptr)f_divide, "_divide", 3},
+  {(cfunction_ptr)f_mod, "_mod", 3},
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
   {(cfunction_ptr)f_keys, "keys", 1},
@@ -554,6 +585,7 @@ static const char* const jq_builtins[] = {
   "def unique: group_by(.) | map(.[0]);",
   "def max_by(f): _max_by_impl(map([f]));",
   "def min_by(f): _min_by_impl(map([f]));",
+  "def floor: _floor;",
   "def add: reduce .[] as $x (null; . + $x);",
   "def del(f): delpaths([path(f)]);",
   "def _assign(paths; value): value as $v | reduce path(paths) as $p (.; setpath($p; $v));",
