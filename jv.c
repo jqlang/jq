@@ -94,6 +94,8 @@ jv jv_invalid_with_msg(jv err) {
   x.kind = JV_KIND_INVALID;
   x.val.nontrivial.i[0] = x.val.nontrivial.i[1] = 0;
   jvp_invalid* i = jv_mem_alloc(sizeof(jvp_invalid));
+  if (!i)
+      return jv_nomem;
   x.val.nontrivial.ptr = &i->refcnt;
   i->refcnt.count = 1;
   i->errmsg = err;
@@ -104,7 +106,27 @@ jv jv_invalid() {
   return jv_invalid_with_msg(jv_null());
 }
 
+jv jv_nomem = {
+    .kind = JV_KIND_INVALID,
+    .val.nontrivial.ptr = NULL
+};
+
+static jv_nontrivial jv_nt_null = {
+    .ptr = NULL,
+    .i = {0, 0}
+};
+
+jv jv_enomem() {
+  jv x;
+  x.kind = JV_KIND_INVALID;
+  x.val.nontrivial.i[0] = x.val.nontrivial.i[1] = 0;
+  x.val.nontrivial.ptr = NULL;
+  return x;
+}
+
 jv jv_invalid_get_msg(jv inv) {
+  if (inv.val.nontrivial.ptr == NULL)
+    return jv_nomem;
   jv x = jv_copy(((jvp_invalid*)inv.val.nontrivial.ptr)->errmsg);
   jv_free(inv);
   return x;
@@ -118,7 +140,7 @@ int jv_invalid_has_msg(jv inv) {
 }
 
 static void jvp_invalid_free(jv_nontrivial* x) {
-  if (jvp_refcnt_dec(x)) {
+  if (x->ptr != NULL && jvp_refcnt_dec(x)) {
     jv_free(((jvp_invalid*)x->ptr)->errmsg);
     jv_mem_free(x->ptr);
   }
@@ -165,6 +187,8 @@ static jvp_array* jvp_array_ptr(jv_nontrivial* a) {
 
 static jvp_array* jvp_array_alloc(unsigned size) {
   jvp_array* a = jv_mem_alloc(sizeof(jvp_array) + sizeof(jv) * size);
+  if (!a)
+      return NULL;
   a->refcnt.count = 1;
   a->length = 0;
   a->alloc_length = size;
@@ -172,6 +196,9 @@ static jvp_array* jvp_array_alloc(unsigned size) {
 }
 
 static jv_nontrivial jvp_array_new(unsigned size) {
+  jvp_array *a = jvp_array_alloc(size);
+  if (!a)
+      return jv_nt_null;
   jv_nontrivial r = {&jvp_array_alloc(size)->refcnt, {0, 0}};
   return r;
 }
@@ -228,6 +255,8 @@ static jv* jvp_array_write(jv_nontrivial* a, int i) {
   
   int new_length = imax(i + 1, jvp_array_length(a));
   jvp_array* new_array = jvp_array_alloc(ARRAY_SIZE_ROUND_UP(new_length));
+  if (!new_array)
+      return NULL;
   int j;
   for (j = 0; j < jvp_array_length(a); j++) {
     new_array->elements[j] = jv_copy(array->elements[j + a->i[0]]);
@@ -275,6 +304,8 @@ jv jv_array_sized(int n) {
   jv j;
   j.kind = JV_KIND_ARRAY;
   j.val.nontrivial = jvp_array_new(n);
+  if (!j.val.nontrivial.ptr)
+      return jv_nomem;
   return j;
 }
 
@@ -283,6 +314,8 @@ jv jv_array() {
 }
 
 int jv_array_length(jv j) {
+  if (IS_JV_NOMEM(j))
+    return 0;
   assert(jv_get_kind(j) == JV_KIND_ARRAY);
   int len = jvp_array_length(&j.val.nontrivial);
   jv_free(j);
@@ -290,6 +323,8 @@ int jv_array_length(jv j) {
 }
 
 jv jv_array_get(jv j, int idx) {
+  if (IS_JV_NOMEM(j))
+    return jv_nomem;
   assert(jv_get_kind(j) == JV_KIND_ARRAY);
   jv* slot = jvp_array_read(&j.val.nontrivial, idx);
   jv val;
@@ -303,9 +338,13 @@ jv jv_array_get(jv j, int idx) {
 }
 
 jv jv_array_set(jv j, int idx, jv val) {
+  if (IS_JV_NOMEM(j))
+    return jv_nomem;
   assert(jv_get_kind(j) == JV_KIND_ARRAY);
   // copy/free of val,j coalesced
   jv* slot = jvp_array_write(&j.val.nontrivial, idx);
+  if (!slot)
+    return jv_nomem;
   jv_free(*slot);
   *slot = val;
   return j;
@@ -317,6 +356,8 @@ jv jv_array_append(jv j, jv val) {
 }
 
 jv jv_array_concat(jv a, jv b) {
+  if (IS_JV_NOMEM(a) || IS_JV_NOMEM(b))
+    return jv_nomem;
   assert(jv_get_kind(a) == JV_KIND_ARRAY);
   assert(jv_get_kind(b) == JV_KIND_ARRAY);
 
@@ -329,6 +370,8 @@ jv jv_array_concat(jv a, jv b) {
 }
 
 jv jv_array_slice(jv a, int start, int end) {
+  if (IS_JV_NOMEM(a))
+    return jv_nomem;
   assert(jv_get_kind(a) == JV_KIND_ARRAY);
   // copy/free of a coalesced
   a.val.nontrivial = jvp_array_slice(&a.val.nontrivial, start, end);
@@ -336,6 +379,8 @@ jv jv_array_slice(jv a, int start, int end) {
 }
 
 int jv_array_contains(jv a, jv b) {
+  if (IS_JV_NOMEM(a))
+    return 0;
   int r = 1;
   jv_array_foreach(b, bi, belem) {
     int ri = 0;
@@ -377,6 +422,8 @@ static jvp_string* jvp_string_ptr(jv_nontrivial* a) {
 
 static jvp_string* jvp_string_alloc(uint32_t size) {
   jvp_string* s = jv_mem_alloc(sizeof(jvp_string) + size + 1);
+  if (!s)
+      return NULL;
   s->refcnt.count = 1;
   s->alloc_length = size;
   return s;
@@ -384,6 +431,8 @@ static jvp_string* jvp_string_alloc(uint32_t size) {
 
 static jv_nontrivial jvp_string_new(const char* data, uint32_t length) {
   jvp_string* s = jvp_string_alloc(length);
+  if (!s)
+    return jv_nt_null;
   s->length_hashed = length << 1;
   memcpy(s->data, data, length);
   s->data[length] = 0;
@@ -392,7 +441,7 @@ static jv_nontrivial jvp_string_new(const char* data, uint32_t length) {
 }
 
 static void jvp_string_free(jv_nontrivial* s) {
-  if (jvp_refcnt_dec(s)) {
+  if (s->ptr && jvp_refcnt_dec(s)) {
     jvp_string* str = jvp_string_ptr(s);
     jv_mem_free(str);
   }
@@ -419,7 +468,7 @@ static uint32_t jvp_string_remaining_space(jvp_string* s) {
   return r;
 }
 
-static void jvp_string_append(jv_nontrivial* string, const char* data, uint32_t len) {
+static int jvp_string_append(jv_nontrivial* string, const char* data, uint32_t len) {
   jvp_string* s = jvp_string_ptr(string);
   uint32_t currlen = jvp_string_length(s);
     
@@ -434,6 +483,8 @@ static void jvp_string_append(jv_nontrivial* string, const char* data, uint32_t 
     uint32_t allocsz = (currlen + len) * 2;
     if (allocsz < 32) allocsz = 32;
     jvp_string* news = jvp_string_alloc(allocsz);
+    if (!news)
+      return 0;
     news->length_hashed = (currlen + len) << 1;
     memcpy(news->data, s->data, currlen);
     memcpy(news->data + currlen, data, len);
@@ -442,6 +493,7 @@ static void jvp_string_append(jv_nontrivial* string, const char* data, uint32_t 
     jv_nontrivial r = {&news->refcnt, {0,0}};
     *string = r;
   }
+  return 1;
 }
 
 static const uint32_t HASH_SEED = 0x432A9843;
@@ -529,6 +581,8 @@ jv jv_string_sized(const char* str, int len) {
   jv j;
   j.kind = JV_KIND_STRING;
   j.val.nontrivial = jvp_string_new(str, len);
+  if (!j.val.nontrivial.ptr)
+    return jv_nomem;
   return j;
 }
 
@@ -566,14 +620,18 @@ const char* jv_string_value(jv j) {
 }
 
 jv jv_string_concat(jv a, jv b) {
+  if (IS_JV_NOMEM(a) || IS_JV_NOMEM(b))
+    return jv_nomem;
   jvp_string* sb = jvp_string_ptr(&b.val.nontrivial);
-  jvp_string_append(&a.val.nontrivial, sb->data, jvp_string_length(sb));
+  if (!jvp_string_append(&a.val.nontrivial, sb->data, jvp_string_length(sb)))
+    return jv_nomem;
   jv_free(b);
   return a;
 }
 
 jv jv_string_append_buf(jv a, const char* buf, int len) {
-  jvp_string_append(&a.val.nontrivial, buf, len);
+  if (!jvp_string_append(&a.val.nontrivial, buf, len))
+    return jv_nomem;
   return a;
 }
 
@@ -585,6 +643,8 @@ jv jv_string_fmt(const char* fmt, ...) {
   int size = 1024;
   while (1) {
     char* buf = jv_mem_alloc(size);
+    if (buf == NULL)
+        return jv_nomem;
     va_list args;
     va_start(args, fmt);
     int n = vsnprintf(buf, size, fmt, args);
@@ -627,6 +687,8 @@ static jv_nontrivial jvp_object_new(int size) {
   jvp_object* obj = jv_mem_alloc(sizeof(jvp_object) + 
                                  sizeof(struct object_slot) * size +
                                  sizeof(int) * (size * 2));
+  if (!obj)
+      return jv_nt_null;
   obj->refcnt.count = 1;
   for (int i=0; i<size; i++) {
     obj->elements[i].next = i - 1;
@@ -730,10 +792,12 @@ static void jvp_object_free(jv_nontrivial* o) {
   }
 }
 
-static void jvp_object_rehash(jv_nontrivial* object) {
+static int jvp_object_rehash(jv_nontrivial* object) {
   assert(jvp_refcnt_unshared(object));
   int size = jvp_object_size(object);
   jv_nontrivial new_object = jvp_object_new(size * 2);
+  if (!new_object.ptr)
+    return 0;
   for (int i=0; i<size; i++) {
     struct object_slot* slot = jvp_object_get_slot(object, i);
     if (!slot->string) continue;
@@ -747,13 +811,16 @@ static void jvp_object_rehash(jv_nontrivial* object) {
   // references are transported, just drop the old table
   jv_mem_free(jvp_object_ptr(object));
   *object = new_object;
+  return 1;
 }
 
-static void jvp_object_unshare(jv_nontrivial* object) {
+static int jvp_object_unshare(jv_nontrivial* object) {
   if (jvp_refcnt_unshared(object))
-    return;
+    return 1;
 
   jv_nontrivial new_object = jvp_object_new(jvp_object_size(object));
+  if (!new_object.ptr)
+    return 0;
   jvp_object_ptr(&new_object)->first_free = jvp_object_ptr(object)->first_free;
   for (int i=0; i<jvp_object_size(&new_object); i++) {
     struct object_slot* old_slot = jvp_object_get_slot(object, i);
@@ -772,10 +839,13 @@ static void jvp_object_unshare(jv_nontrivial* object) {
   jvp_object_free(object);
   *object = new_object;
   assert(jvp_refcnt_unshared(object));
+
+  return 1;
 }
 
 static jv* jvp_object_write(jv_nontrivial* object, jvp_string* key) {
-  jvp_object_unshare(object);
+  if (!jvp_object_unshare(object))
+    return NULL;
   int* bucket = jvp_object_find_bucket(object, key);
   struct object_slot* slot = jvp_object_find_slot(object, key, bucket);
   if (slot) {
@@ -787,7 +857,8 @@ static jv* jvp_object_write(jv_nontrivial* object, jvp_string* key) {
   if (slot) {
     slot->value = jv_invalid();
   } else {
-    jvp_object_rehash(object);
+    if (!jvp_object_rehash(object))
+      return NULL;
     bucket = jvp_object_find_bucket(object, key);
     assert(!jvp_object_find_slot(object, key, bucket));
     slot = jvp_object_add_slot(object, key, bucket);
@@ -798,7 +869,8 @@ static jv* jvp_object_write(jv_nontrivial* object, jvp_string* key) {
 }
 
 static int jvp_object_delete(jv_nontrivial* object, jvp_string* key) {
-  jvp_object_unshare(object);
+  if (!jvp_object_unshare(object))
+    return 0;
   int* bucket = jvp_object_find_bucket(object, key);
   int* prev_ptr = bucket;
   for (struct object_slot* curr = jvp_object_get_slot(object, *bucket); 
@@ -811,7 +883,7 @@ static int jvp_object_delete(jv_nontrivial* object, jvp_string* key) {
     }
     prev_ptr = &curr->next;
   }
-  return 0;
+  return 1;
 }
 
 static int jvp_object_length(jv_nontrivial* object) {
@@ -846,6 +918,8 @@ jv jv_object() {
   jv j;
   j.kind = JV_KIND_OBJECT;
   j.val.nontrivial = jvp_object_new(8);
+  if (!j.val.nontrivial.ptr)
+    return jv_nomem;
   return j;
 }
 
@@ -865,10 +939,17 @@ jv jv_object_get(jv object, jv key) {
 }
 
 jv jv_object_set(jv object, jv key, jv value) {
+  if (IS_JV_NOMEM(object) || IS_JV_NOMEM(key) || IS_JV_NOMEM(value)) {
+    jv_free(value);
+    jv_free(object);
+    return jv_nomem;
+  }
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(jv_get_kind(key) == JV_KIND_STRING);
   // copy/free of object, key, value coalesced
   jv* slot = jvp_object_write(&object.val.nontrivial, jvp_string_ptr(&key.val.nontrivial));
+  if (!slot)
+    return jv_nomem;
   jv_free(*slot);
   *slot = value;
   return object;
@@ -877,7 +958,10 @@ jv jv_object_set(jv object, jv key, jv value) {
 jv jv_object_delete(jv object, jv key) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(jv_get_kind(key) == JV_KIND_STRING);
-  jvp_object_delete(&object.val.nontrivial, jvp_string_ptr(&key.val.nontrivial));
+  if (!jvp_object_delete(&object.val.nontrivial, jvp_string_ptr(&key.val.nontrivial))) {
+    jv_free(object);
+    object = jv_nomem;
+  }
   jv_free(key);
   return object;
 }
@@ -968,7 +1052,7 @@ jv jv_copy(jv j) {
   if (jv_get_kind(j) == JV_KIND_ARRAY || 
       jv_get_kind(j) == JV_KIND_STRING || 
       jv_get_kind(j) == JV_KIND_OBJECT ||
-      jv_get_kind(j) == JV_KIND_INVALID) {
+      (jv_get_kind(j) == JV_KIND_INVALID && !IS_JV_NOMEM(j))) {
     jvp_refcnt_inc(&j.val.nontrivial);
   }
   return j;
@@ -981,7 +1065,7 @@ void jv_free(jv j) {
     jvp_string_free(&j.val.nontrivial);
   } else if (jv_get_kind(j) == JV_KIND_OBJECT) {
     jvp_object_free(&j.val.nontrivial);
-  } else if (jv_get_kind(j) == JV_KIND_INVALID) {
+  } else if (jv_get_kind(j) == JV_KIND_INVALID && !IS_JV_NOMEM(j)) {
     jvp_invalid_free(&j.val.nontrivial);
   }
 }
