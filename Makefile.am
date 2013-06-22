@@ -32,11 +32,6 @@ AM_YFLAGS = --warnings=all -d
 
 ### libjq
 
-# noinst for now?
-lib_LIBRARIES = libjq.a
-libjq_a_SOURCES = ${LIBJQ_SRC}
-libjq_a_CFLAGS = $(AM_CFLAGS)
-
 lib_LTLIBRARIES = libjq.la
 libjq_la_SOURCES = ${LIBJQ_SRC}
 libjq_la_LIBADD = -lm
@@ -60,6 +55,7 @@ version.h: .remake-version-h
 
 bin_PROGRAMS = jq
 jq_SOURCES = main.c
+jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
 
 ### Tests (make check)
