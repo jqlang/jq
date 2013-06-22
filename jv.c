@@ -377,6 +377,32 @@ static jvp_string* jvp_string_alloc(uint32_t size) {
   return s;
 }
 
+/* Copy a UTF8 string, replacing all badly encoded points with U+FFFD */
+static jv_nontrivial jvp_string_copy_replace_bad(const char* data, uint32_t length) {
+  const char* end = data + length;
+  const char* i = data;
+  const char* cstart;
+
+  uint32_t maxlength = length * 3 + 1; // worst case: all bad bytes, each becomes a 3-byte U+FFFD
+  jvp_string* s = jvp_string_alloc(maxlength);
+  char* out = s->data;
+  int c = 0;
+
+  while ((i = jvp_utf8_next((cstart = i), end, &c))) {
+    if (c == -1) {
+      c = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
+    }
+    out += jvp_utf8_encode(c, out);
+    assert(out < s->data + maxlength);
+  }
+  length = out - s->data;
+  s->data[length] = 0;
+  s->length_hashed = length << 1;
+  jv_nontrivial r = {&s->refcnt, {0,0}};
+  return r;
+}
+
+/* Assumes valid UTF8 */
 static jv_nontrivial jvp_string_new(const char* data, uint32_t length) {
   jvp_string* s = jvp_string_alloc(length);
   s->length_hashed = length << 1;
@@ -523,7 +549,9 @@ static int jvp_string_equal(jv_nontrivial* a, jv_nontrivial* b) {
 jv jv_string_sized(const char* str, int len) {
   jv j;
   j.kind = JV_KIND_STRING;
-  j.val.nontrivial = jvp_string_new(str, len);
+  j.val.nontrivial = jvp_utf8_is_valid(str, str+len) ? 
+    jvp_string_new(str, len) :
+    jvp_string_copy_replace_bad(str, len);
   return j;
 }
 
@@ -568,14 +596,21 @@ jv jv_string_concat(jv a, jv b) {
 }
 
 jv jv_string_append_buf(jv a, const char* buf, int len) {
-  jvp_string_append(&a.val.nontrivial, buf, len);
+  if (jvp_utf8_is_valid(buf, buf+len)) {
+    jvp_string_append(&a.val.nontrivial, buf, len);
+  } else {
+    jv b;
+    b.kind = JV_KIND_STRING;
+    b.val.nontrivial = jvp_string_copy_replace_bad(buf, len);
+    a = jv_string_concat(a, b);
+  }
   return a;
 }
 
 jv jv_string_append_str(jv a, const char* str) {
   return jv_string_append_buf(a, str, strlen(str));
 }
-                        
+
 jv jv_string_fmt(const char* fmt, ...) {
   int size = 1024;
   while (1) {
