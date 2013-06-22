@@ -33,6 +33,10 @@ const char* jvp_utf8_next(const char* in, const char* end, int* codepoint_ret) {
       }
       codepoint = (codepoint << 6) | (ch & 0x3f);
     }
+    if (codepoint < utf8_first_codepoint[length]) {
+      /* Overlong UTF8 sequence */
+      codepoint = -1;
+    }
     if (0xD800 <= codepoint && codepoint <= 0xDFFF) {
       /* Surrogate codepoints can't be encoded in UTF8 */
       codepoint = -1;
