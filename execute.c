@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include "exec_stack.h"
-#include "opcode.h"
 #include "bytecode.h"
 
 #include "jv_alloc.h"
@@ -238,6 +237,8 @@ static void jq_reset(jq_state *jq) {
   jq->path = jv_null();
   jq->subexp_nest = 0;
 }
+
+
 
 
 void print_error(jv value) {
@@ -600,12 +601,26 @@ jv jq_next(jq_state *jq) {
     case CALL_BUILTIN: {
       int nargs = *pc++;
       jv top = stack_pop(jq);
-      cfunc_input[0] = top;
+      jv* in = cfunc_input;
+      in[0] = top;
       for (int i = 1; i < nargs; i++) {
-        cfunc_input[i] = stack_pop(jq);
+        in[i] = stack_pop(jq);
       }
-      struct cfunction* func = &frame_current(jq)->bc->globals->cfunctions[*pc++];
-      top = cfunction_invoke(func, cfunc_input);
+      struct cfunction* function = &frame_current(jq)->bc->globals->cfunctions[*pc++];
+      typedef jv (*func_1)(jv);
+      typedef jv (*func_2)(jv,jv);
+      typedef jv (*func_3)(jv,jv,jv);
+      typedef jv (*func_4)(jv,jv,jv,jv);
+      typedef jv (*func_5)(jv,jv,jv,jv,jv);
+      switch (function->nargs) {
+      case 1: top = ((func_1)function->fptr)(in[0]); break;
+      case 2: top = ((func_2)function->fptr)(in[0], in[1]); break;
+      case 3: top = ((func_3)function->fptr)(in[0], in[1], in[2]); break;
+      case 4: top = ((func_4)function->fptr)(in[0], in[1], in[2], in[3]); break;
+      case 5: top = ((func_5)function->fptr)(in[0], in[1], in[2], in[3], in[4]); break;
+      default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
+      }
+      
       if (jv_is_valid(top)) {
         stack_push(jq, top);
       } else {
