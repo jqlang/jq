@@ -629,9 +629,9 @@ sections:
           The `floor` function returns the floor of its numeric input.
 
         examples:
-          - program: '.[] | tonumber'
-            input: '[1, "1"]'
-            output: [1, 1]
+          - program: 'floor'
+            input: '3.14159'
+            output: ['3']
             
       - title: `tonumber`
         body: |
