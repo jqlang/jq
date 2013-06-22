@@ -1,9 +1,8 @@
 ### C source files to be built and distributed.
 
-LIBJQ_INCS = jq_parser.h builtin.h bytecode.h compile.h 		\
-  forkable_stack.h frame_layout.h jv_alloc.h jv_dtoa.h			\
-  jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h 		\
-  parser.y jv_utf8_tables.h lexer.l
+LIBJQ_INCS = jq_parser.h builtin.h bytecode.h compile.h exec_stack.h	\
+   jv_alloc.h jv_dtoa.h jv_parse.h jv_unicode.h locfile.h opcode.h	\
+   opcode_list.h parser.y jv_utf8_tables.h lexer.l
 
 LIBJQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c \
   jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_file.c	\
@@ -120,7 +119,7 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml	\
 EXTRA_DIST = config.h.in $(man_MANS) $(TESTS)	\
 	$(TEST_LOG_COMPILER) gen_utf8_tables.py jq.spec \
 	$(DOC_FILES) scripts/version \
-	parser.h parser.c lexer.h lexer.c
+	parser.h parser.c lexer.h lexer.c libjq.map
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
