@@ -431,6 +431,11 @@ FIELD error {
   FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
   $$ = gen_noop();
 } |
+'.' IDENT error { 
+  jv_free($2);
+  FAIL(@$, "For field lookup, dot must be next to field: .field not . field");
+  $$ = gen_noop();
+} |
 /* FIXME: string literals */
 Term '[' Exp ']' {
   $$ = gen_index($1, $3); 
