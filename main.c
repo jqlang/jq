@@ -7,7 +7,6 @@
 #include "compile.h"
 #include "jv.h"
 #include "jq.h"
-#include "jv_parse.h"
 #include "jv_alloc.h"
 #include "version.h"
 
@@ -258,8 +257,7 @@ int main(int argc, char* argv[]) {
         slurped = jv_array();
       }
     }
-    struct jv_parser parser;
-    jv_parser_init(&parser);
+    struct jv_parser* parser = jv_parser_new();
     char buf[4096];
     while (read_more(buf, sizeof(buf))) {
       if (options & RAW_INPUT) {
@@ -273,9 +271,9 @@ int main(int argc, char* argv[]) {
           }
         }
       } else {
-        jv_parser_set_buf(&parser, buf, strlen(buf), !feof(stdin));
+        jv_parser_set_buf(parser, buf, strlen(buf), !feof(stdin));
         jv value;
-        while (jv_is_valid((value = jv_parser_next(&parser)))) {
+        while (jv_is_valid((value = jv_parser_next(parser)))) {
           if (options & SLURP) {
             slurped = jv_array_append(slurped, value);
           } else {
@@ -293,7 +291,7 @@ int main(int argc, char* argv[]) {
         }
       }
     }
-    jv_parser_free(&parser);
+    jv_parser_free(parser);
     if (ret != 0)
       goto out;
     if (options & SLURP) {

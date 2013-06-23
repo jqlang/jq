@@ -3,9 +3,9 @@
 #include <string.h>
 #include "jv.h"
 #include "jv_dtoa.h"
-#include "jv_parse.h"
 #include "jv_unicode.h"
 #include "jv_alloc.h"
+#include "jv_dtoa.h"
 
 typedef const char* presult;
 
@@ -16,7 +16,35 @@ typedef const char* presult;
 #define pfunc presult
 #endif
 
-void jv_parser_init(struct jv_parser* p) {
+struct jv_parser {
+  const char* curr_buf;
+  int curr_buf_length;
+  int curr_buf_pos;
+  int curr_buf_is_partial;
+  unsigned bom_strip_position;
+
+  jv* stack;
+  int stackpos;
+  int stacklen;
+  jv next;
+  
+  char* tokenbuf;
+  int tokenpos;
+  int tokenlen;
+
+  int line, column;
+  
+  struct dtoa_context dtoa;
+
+  enum {
+    JV_PARSER_NORMAL,
+    JV_PARSER_STRING,
+    JV_PARSER_STRING_ESCAPE
+  } st;
+};
+
+
+static void parser_init(struct jv_parser* p) {
   p->stack = 0;
   p->stacklen = p->stackpos = 0;
   p->next = jv_invalid();
@@ -31,7 +59,7 @@ void jv_parser_init(struct jv_parser* p) {
   jvp_dtoa_context_init(&p->dtoa);
 }
 
-void jv_parser_free(struct jv_parser* p) {
+static void parser_free(struct jv_parser* p) {
   jv_free(p->next);
   for (int i=0; i<p->stackpos; i++) 
     jv_free(p->stack[i]);
@@ -341,6 +369,17 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   return answer;
 }
 
+struct jv_parser* jv_parser_new() {
+  struct jv_parser* p = jv_mem_alloc(sizeof(struct jv_parser));
+  parser_init(p);
+  return p;
+}
+
+void jv_parser_free(struct jv_parser* p) {
+  parser_free(p);
+  jv_mem_free(p);
+}
+
 static const unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
 
 void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial) {
@@ -404,7 +443,7 @@ jv jv_parser_next(struct jv_parser* p) {
 
 jv jv_parse_sized(const char* string, int length) {
   struct jv_parser parser;
-  jv_parser_init(&parser);
+  parser_init(&parser);
   jv_parser_set_buf(&parser, string, length, 0);
   jv value = jv_parser_next(&parser);
   if (jv_is_valid(value)) {
@@ -429,7 +468,7 @@ jv jv_parse_sized(const char* string, int length) {
     jv_free(value);
     value = jv_invalid_with_msg(jv_string("Expected JSON value"));
   }
-  jv_parser_free(&parser);
+  parser_free(&parser);
 
   if (!jv_is_valid(value) && jv_invalid_has_msg(jv_copy(value))) {
     jv msg = jv_invalid_get_msg(value);

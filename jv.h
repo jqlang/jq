@@ -130,10 +130,10 @@ void jv_nomem_handler(jv_nomem_handler_f, void *);
 jv jv_load_file(const char *, int);
 
 struct jv_parser;
-void jv_parser_init(struct jv_parser*);
-void jv_parser_free(struct jv_parser*);
+struct jv_parser* jv_parser_new();
 void jv_parser_set_buf(struct jv_parser*, const char*, int, int);
 jv jv_parser_next(struct jv_parser*);
+void jv_parser_free(struct jv_parser*);
 
 jv jv_get(jv, jv);
 jv jv_set(jv, jv, jv);
