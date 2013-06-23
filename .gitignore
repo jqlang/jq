@@ -23,17 +23,14 @@ parser.h
 
 # Autotools junk
 .libs
-config/config.guess
-config/config.sub
-config/ltmain.sh
-libtool
-m4
 .deps
+libtool
 *.log
 stamp-h1
 config.log
 config.status
 autom4te.cache
+INSTALL
 Makefile
 jq-*.tar.gz
 configure
