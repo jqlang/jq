@@ -13,30 +13,6 @@ AC_PROG_YACC
 AC_OBJEXT
 AC_EXEEXT
 LT_INIT([shared static win32-dll])
-AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
-
-AC_MSG_CHECKING([if libraries can be versioned])
-GLD=`$LD --help < /dev/null 2>/dev/null | grep version-script`
-if test "$GLD"; then
-    have_ld_version_script=yes
-    AC_MSG_RESULT(yes)
-else
-    have_ld_version_script=no
-    AC_MSG_RESULT(no)
-    AC_MSG_WARN(*** You have not enabled versioned symbols.)
-fi
-AM_CONDITIONAL(HAVE_LD_VERSION_SCRIPT, test "$have_ld_version_script" = "yes")
-
-if test "$have_ld_version_script" = "yes"; then
-    AC_MSG_CHECKING([for symbol prefix])
-    SYMBOL_PREFIX=`echo "PREFIX=__USER_LABEL_PREFIX__" \
-                   | ${CPP-${CC-gcc} -E} - 2>&1 \
-                   | ${EGREP-grep} "^PREFIX=" \
-                   | ${SED-sed} "s:^PREFIX=::"`
-    AC_SUBST(SYMBOL_PREFIX)
-    AC_MSG_RESULT($SYMBOL_PREFIX)
-fi
-
 AM_PROG_CC_C_O
 
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the

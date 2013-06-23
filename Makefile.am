@@ -35,9 +35,7 @@ AM_YFLAGS = --warnings=all -d
 lib_LTLIBRARIES = libjq.la
 libjq_la_SOURCES = ${LIBJQ_SRC}
 libjq_la_LIBADD = -lm
-if HAVE_LD_VERSION_SCRIPT
-libjq_la_LDFLAGS = -Wl,--version-script=$(srcdir)/libjq.map -version-info 1:4:0
-endif
+libjq_la_LDFLAGS = -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
 include_HEADERS = jv.h jq.h
 
