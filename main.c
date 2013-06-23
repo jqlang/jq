@@ -8,7 +8,6 @@
 #include "jv.h"
 #include "jq.h"
 #include "jv_parse.h"
-#include "config.h"  /* Autoconf generated header file */
 #include "jv_alloc.h"
 #include "version.h"
 
