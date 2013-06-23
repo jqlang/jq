@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "builtin.h"
 #include "compile.h"
 #include "jq_parser.h"

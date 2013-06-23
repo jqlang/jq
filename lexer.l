@@ -1,4 +1,5 @@
 %{
+#include <assert.h>
 #include "jv_alloc.h"
 #include "compile.h"
 

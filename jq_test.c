@@ -125,9 +125,9 @@ static void jv_test() {
     jv_free(a2);
 
 
-    assert(a.val.nontrivial.ptr->count == 1);
+    assert(jv_get_refcnt(a) == 1);
     a = jv_array_append(a, jv_copy(a));
-    assert(a.val.nontrivial.ptr->count == 1);
+    assert(jv_get_refcnt(a) == 1);
 
     assert(jv_array_length(jv_copy(a)) == 2);
     assert(jv_number_value(jv_array_get(jv_copy(a), 0)) == 42);

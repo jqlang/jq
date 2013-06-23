@@ -1,12 +1,6 @@
 #ifndef JV_H
 #define JV_H
 
-#include <stdint.h>
-#include <assert.h>
-#include <stddef.h>
-
-
-
 typedef enum {
   JV_KIND_INVALID,
   JV_KIND_NULL,
@@ -18,12 +12,9 @@ typedef enum {
   JV_KIND_OBJECT
 } jv_kind;
 
-typedef struct {
-  size_t count;
-} jv_refcnt;
-
+struct jv_refcnt;
 typedef struct{
-  jv_refcnt* ptr;
+  struct jv_refcnt* ptr;
   int i[2];
 } jv_nontrivial;
 
@@ -46,6 +37,8 @@ static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
 
 jv jv_copy(jv);
 void jv_free(jv);
+
+int jv_get_refcnt(jv);
 
 int jv_equal(jv, jv);
 int jv_contains(jv, jv);
@@ -84,7 +77,7 @@ jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
 int jv_string_length_bytes(jv);
 int jv_string_length_codepoints(jv);
-uint32_t jv_string_hash(jv);
+unsigned long jv_string_hash(jv);
 const char* jv_string_value(jv);
 jv jv_string_concat(jv, jv);
 jv jv_string_fmt(const char*, ...);
