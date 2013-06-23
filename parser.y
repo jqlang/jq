@@ -426,11 +426,11 @@ Term '.' String {
   FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
   $$ = gen_noop();
 } |
-'.' IDENT error {
-  jv_free($2);
+FIELD error { 
+  jv_free($1);
   FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
   $$ = gen_noop();
-} | 
+} |
 /* FIXME: string literals */
 Term '[' Exp ']' {
   $$ = gen_index($1, $3); 
