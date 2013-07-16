@@ -26,6 +26,12 @@ typedef struct {
   } val;
 } jv;
 
+extern jv jv_nomem;
+extern jv jv_nomem_str;
+
+#define IS_JV_NOMEM(a) \
+    ((a).kind == jv_nomem.kind && (a).val.nontrivial.ptr == jv_nomem.val.nontrivial.ptr)
+
 /*
  * All jv_* functions consume (decref) input and produce (incref) output
  * Except jv_copy
