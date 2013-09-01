@@ -4,7 +4,7 @@ AC_INIT([jq], [1.3], [mu@netsoc.tcd.ie],
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.61])
 AC_CONFIG_AUX_DIR([config])
-AM_INIT_AUTOMAKE([parallel-tests foreign])
+AM_INIT_AUTOMAKE([parallel-tests foreign -Wall])
 AM_SILENT_RULES([yes])
 AC_PROG_CC
 AC_PROG_CC_STDC
@@ -66,7 +66,6 @@ AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 dnl AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
-AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
