@@ -1066,7 +1066,7 @@ sections:
           produces its sum, and the `length` expression is given the array and
           produces its length.
           
-          So, there's generally a cleaner way to solve most problems in jq that
+          So, there's generally a cleaner way to solve most problems in jq than
           defining variables. Still, sometimes they do make things easier, so jq
           lets you define variables using `expression as $variable`. All
           variable names start with `$`. Here's a slightly uglier version of the
