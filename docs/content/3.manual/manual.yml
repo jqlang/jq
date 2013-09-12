@@ -633,6 +633,16 @@ sections:
             input: '3.14159'
             output: ['3']
             
+      - title: `sqrt`
+        body: |
+
+          The `sqrt` function returns the square root of its numeric input.
+
+        examples:
+          - program: 'sqrt'
+            input: '9'
+            output: ['3']
+            
       - title: `tonumber`
         body: |
 
