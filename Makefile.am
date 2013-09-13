@@ -1,7 +1,7 @@
 ### C source files to be built and distributed.
 
 JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h		\
-  forkable_stack.h frame_layout.h jv.h jv_alloc.h jv_aux.h jv_dtoa.h	\
+  exec_stack.h jv.h jv_alloc.h jv_aux.h jv_dtoa.h			\
   jv_file.h jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h 	\
   parser.y jv_utf8_tables.h lexer.l
 
