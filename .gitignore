@@ -1,4 +1,10 @@
 *.o
+*.a
+*.lo
+*.la
+*.lai
+*.so
+*.so.*
 *~
 .*.sw[a-p]
 tags
@@ -16,13 +22,15 @@ parser.c
 parser.h
 
 # Autotools junk
+.libs
 .deps
+libtool
 *.log
 stamp-h1
 config.log
 config.status
 autom4te.cache
-config.h
+INSTALL
 Makefile
 jq-*.tar.gz
 configure

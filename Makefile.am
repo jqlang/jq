@@ -1,13 +1,12 @@
 ### C source files to be built and distributed.
 
-JQ_INCS = jq_parser.h builtin.h bytecode.h compile.h execute.h		\
-  exec_stack.h jv.h jv_alloc.h jv_aux.h jv_dtoa.h			\
-  jv_file.h jv_parse.h jv_unicode.h locfile.h opcode.h opcode_list.h 	\
-  parser.y jv_utf8_tables.h lexer.l
+LIBJQ_INCS = jq_parser.h builtin.h bytecode.h compile.h exec_stack.h	\
+   jv_alloc.h jv_dtoa.h jv_unicode.h locfile.h		\
+   opcode_list.h parser.y jv_utf8_tables.h lexer.l
 
-JQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c 	\
-  jv.c jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_file.c	\
-  jv_alloc.c jq_test.c ${JQ_INCS}
+LIBJQ_SRC = locfile.c bytecode.c compile.c execute.c builtin.c jv.c	\
+  jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_file.c	\
+  jv_alloc.c jq_test.c ${LIBJQ_INCS}
 
 
 ### C build options
@@ -15,6 +14,7 @@ JQ_SRC = locfile.c opcode.c bytecode.c compile.c execute.c builtin.c 	\
 AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
   -Wno-unused-parameter -Wno-unused-function
 
+ACLOCAL_AMFLAGS = -I config/m4
 
 ### Generating the lexer and parser
 
@@ -30,6 +30,15 @@ lexer.h: lexer.c
 # OSX ships an old bison, so update with homebrew or macports
 AM_YFLAGS = --warnings=all -d
 
+### libjq
+
+lib_LTLIBRARIES = libjq.la
+libjq_la_SOURCES = ${LIBJQ_SRC}
+libjq_la_LIBADD = -lm
+libjq_la_LDFLAGS = -export-symbols-regex '^j[qv]_' -version-info 1:4:0
+
+include_HEADERS = jv.h jq.h
+
 
 ### Building the jq binary
 
@@ -43,8 +52,9 @@ version.h: .remake-version-h
 	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
 
 bin_PROGRAMS = jq
-jq_SOURCES = ${JQ_SRC} main.c
-jq_LDADD = -lm
+jq_SOURCES = main.c
+jq_LDFLAGS = -static-libtool-libs
+jq_LDADD = libjq.la -lm
 
 ### Tests (make check)
 
@@ -100,10 +110,9 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml	\
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
-EXTRA_DIST = config.h.in $(man_MANS) $(TESTS)	\
-	$(TEST_LOG_COMPILER) gen_utf8_tables.py jq.spec \
-	$(DOC_FILES) scripts/version \
-	parser.h parser.c lexer.h lexer.c
+EXTRA_DIST = $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER) jq.spec	\
+	 $(DOC_FILES) scripts/version parser.h parser.c lexer.h	\
+	 lexer.c
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.

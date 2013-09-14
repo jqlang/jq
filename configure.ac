@@ -10,7 +10,9 @@ AC_PROG_CC
 AC_PROG_CC_STDC
 AC_PROG_CPP_WERROR
 AC_PROG_YACC
-
+AC_OBJEXT
+AC_EXEEXT
+LT_INIT([shared static win32-dll])
 AM_PROG_CC_C_O
 
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
@@ -64,8 +66,7 @@ EOF
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
-dnl AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_HEADERS(config.h)
+AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 

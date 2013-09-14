@@ -1,6 +1,6 @@
-#include "jv_aux.h"
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "jv_alloc.h"
 
 static int parse_slice(jv array, jv slice, int* pstart, int* pend) {

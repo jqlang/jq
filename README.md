@@ -14,7 +14,7 @@ shovel. Also, read the wiki: http://github.com/stedolan/jq/wiki
 If you're building directly from the latest git, you'll need flex and
 bison installed. To build, run:
 
-    autoreconf
+    autoreconf -i
     ./configure
     make
 

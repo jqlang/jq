@@ -14,6 +14,11 @@
  * Internal refcounting helpers
  */
 
+typedef struct jv_refcnt {
+  size_t count;
+} jv_refcnt;
+
+
 static void jvp_refcnt_init(jv_nontrivial* c) {
   c->ptr->count = 1;
 }
@@ -576,7 +581,7 @@ int jv_string_length_codepoints(jv j) {
   return len;
 }
 
-uint32_t jv_string_hash(jv j) {
+unsigned long jv_string_hash(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   uint32_t hash = jvp_string_hash(jvp_string_ptr(&j.val.nontrivial));
   jv_free(j);

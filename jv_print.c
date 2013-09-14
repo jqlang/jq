@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <float.h>
 #include <string.h>
+#include <assert.h>
 
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
-#include "jv_aux.h"
 
 #define ESC "\033"
 #define COL(c) (ESC "[" c "m")

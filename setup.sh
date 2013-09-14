@@ -26,6 +26,7 @@ else
   autoreconf --install
   ./configure --prefix=/opt/junk
   make check
+  [ -d tmp ] && mv tmp tmp-
   mkdir tmp
   make DESTDIR=./tmp install
   make distcheck

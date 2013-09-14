@@ -1,0 +1,8 @@
+config.guess
+config.sub
+compile
+depcomp
+install-sh
+ltmain.sh
+missing
+ylwrap
