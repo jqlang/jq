@@ -59,6 +59,15 @@ static jv f_floor(jv input) {
   return ret;
 }
 
+static jv f_sqrt(jv input) {
+  if (jv_get_kind(input) != JV_KIND_NUMBER) {
+    return type_error(input, "has no square root");
+  }
+  jv ret = jv_number(sqrt(jv_number_value(input)));
+  jv_free(input);
+  return ret;
+}
+
 static jv f_negate(jv input) {
   if (jv_get_kind(input) != JV_KIND_NUMBER) {
     return type_error(input, "cannot be negated");
@@ -474,6 +483,7 @@ static jv f_error(jv input, jv msg) {
 
 static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_floor, "_floor", 1},
+  {(cfunction_ptr)f_sqrt, "_sqrt", 1},
   {(cfunction_ptr)f_plus, "_plus", 3},
   {(cfunction_ptr)f_negate, "_negate", 1},
   {(cfunction_ptr)f_minus, "_minus", 3},
@@ -559,6 +569,7 @@ static const char* const jq_builtins[] = {
   "def max_by(f): _max_by_impl(map([f]));",
   "def min_by(f): _min_by_impl(map([f]));",
   "def floor: _floor;",
+  "def sqrt: _sqrt;",
   "def add: reduce .[] as $x (null; . + $x);",
   "def del(f): delpaths([path(f)]);",
   "def _assign(paths; value): value as $v | reduce path(paths) as $p (.; setpath($p; $v));",
