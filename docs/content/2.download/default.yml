@@ -51,7 +51,7 @@ body:
 
           git clone https://github.com/stedolan/jq.git
           cd jq
-          autoreconf
+          autoreconf -i
           ./configure
           make
           sudo make install
