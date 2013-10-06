@@ -230,7 +230,7 @@ Term "as" '$' IDENT '|' Exp {
   $$ = gen_cond($2, $4, $5);
 } |
 "if" Exp "then" error {
-  FAIL(@$, "Possibly unterminated 'if' statment");
+  FAIL(@$, "Possibly unterminated 'if' statement");
   $$ = $2;
 } |
 
