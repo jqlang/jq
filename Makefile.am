@@ -120,11 +120,11 @@ docdir = ${datadir}/doc/${PACKAGE}
 dist_doc_DATA = README.md COPYING AUTHORS README
 
 RELEASE ?= 1
-rpm: jq
+rpm: dist jq.spec
 	@echo "Packaging jq as an RPM ..."
 	mkdir -p rpm/SOURCES rpm/BUILD rpm/BUILDROOT rpm/RPMS rpm/SPECS
-	cp jq-$$(cat VERSION).tar.gz rpm/SOURCES/
-	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "myver $$(cat VERSION)" --define "myrel ${RELEASE}" rpm/SOURCES/jq-$$(cat VERSION).tar.gz
+	cp jq-$(VERSION).tar.gz rpm/SOURCES/
+	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "myver $(VERSION)" --define "myrel ${RELEASE}" rpm/SOURCES/jq-$(VERSION).tar.gz
 	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
 
