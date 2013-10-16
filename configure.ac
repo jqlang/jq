@@ -28,13 +28,6 @@ if test "x$LEX" != xflex; then
 fi
 
 
-dnl Check for valgrind
-AC_CHECK_PROGS(valgrind_cmd, valgrind)
-if test "x$valgrind_cmd" = "x" ; then
-    AC_MSG_WARN([valgrind is required to test jq.])
-fi
-
-
 dnl Don't attempt to build docs if there's no Ruby lying around
 AC_ARG_ENABLE([docs],
    AC_HELP_STRING([--disable-docs], [don't build docs]))
