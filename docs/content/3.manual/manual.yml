@@ -125,6 +125,11 @@ sections:
         formatted as a JSON string with quotes. This can be useful for
         making jq filters talk to non-JSON-based systems.
 
+      * `-f filename` / `--from-file filename`:
+
+        Read filter from the file rather than from a command line, like
+        awk's -f option. You can also use '#' to make comments.
+
       * `--arg name value`:
 
         This option passes a value to the jq program as a predefined
