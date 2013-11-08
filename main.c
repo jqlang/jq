@@ -55,6 +55,7 @@ enum {
   COLOUR_OUTPUT = 64,
   NO_COLOUR_OUTPUT = 128,
   SORTED_OUTPUT = 256,
+  UNBUFFERED_OUTPUT = 4096,
 
   FROM_FILE = 512,
 
@@ -84,6 +85,7 @@ static void process(jq_state *jq, jv value, int flags) {
       if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
       if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
       if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
+      if (options & UNBUFFERED_OUTPUT) dumpopts |= JV_PRINT_UNBUFFERED;
       jv_dump(result, dumpopts);
     }
     printf("\n");
@@ -166,6 +168,8 @@ int main(int argc, char* argv[]) {
       options |= NO_COLOUR_OUTPUT;
     } else if (isoption(argv[i], 'a', "ascii-output")) {
       options |= ASCII_OUTPUT;
+    } else if (isoption(argv[i], 0, "unbuffered")) {
+      options |= UNBUFFERED_OUTPUT;
     } else if (isoption(argv[i], 'S', "sort-keys")) {
       options |= SORTED_OUTPUT;
     } else if (isoption(argv[i], 'R', "raw-input")) {

@@ -265,6 +265,9 @@ void jv_dump(jv x, int flags) {
   jvp_dtoa_context_init(&C);
   jv_dump_term(&C, x, flags, 0, stdout, 0);
   jvp_dtoa_context_free(&C);
+  if (flags & JV_PRINT_UNBUFFERED) {
+    fflush(stdout);
+  }
 }
 
 jv jv_dump_string(jv x, int flags) {

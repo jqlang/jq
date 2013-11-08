@@ -114,6 +114,12 @@ sections:
         ASCII output with every non-ASCII character replaced with the
         equivalent escape sequence.
 
+      * `--unbuffered`
+
+        Flush the output after each JSON object is printed (useful if
+        you're piping a slow data source into jq and piping jq's
+        output elsewhere).
+
       * `--sort-keys` / `-S`:
         
         Output the fields of each object with the keys in sorted order.
