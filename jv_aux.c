@@ -437,7 +437,7 @@ int jv_cmp(jv a, jv b) {
     break;
 
   case JV_KIND_NUMBER: {
-    double da = jv_number_value(a), db = jv_number_value(b);
+    double da = jv_number_value(jv_copy(a)), db = jv_number_value(jv_copy(b));
     
     // handle NaN as though it were null
     if (da != da) r = jv_cmp(jv_null(), jv_number(db));

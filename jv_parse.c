@@ -276,7 +276,7 @@ static pfunc check_literal(struct jv_parser* p) {
     double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
     if (end == 0 || *end != 0)
       return "Invalid numeric literal";
-    TRY(value(p, jv_number(d)));
+    TRY(value(p, jv_number_s(p->tokenbuf, d)));
   }
   p->tokenpos = 0;
   return 0;

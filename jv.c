@@ -42,19 +42,27 @@ static int jvp_refcnt_unshared(jv_nontrivial* c) {
  */
 
 jv_kind jv_get_kind(jv x) {
+  if (x.kind == JV_KIND_NUMBER_S) {
+    return JV_KIND_NUMBER;
+  }
+  return x.kind;
+}
+
+jv_kind jvp_get_kind_real(jv x) {
   return x.kind;
 }
 
 const char* jv_kind_name(jv_kind k) {
   switch (k) {
-  case JV_KIND_INVALID: return "<invalid>";
-  case JV_KIND_NULL:    return "null";
-  case JV_KIND_FALSE:   return "boolean";
-  case JV_KIND_TRUE:    return "boolean";
-  case JV_KIND_NUMBER:  return "number";
-  case JV_KIND_STRING:  return "string";
-  case JV_KIND_ARRAY:   return "array";
-  case JV_KIND_OBJECT:  return "object";
+  case JV_KIND_INVALID:  return "<invalid>";
+  case JV_KIND_NULL:     return "null";
+  case JV_KIND_FALSE:    return "boolean";
+  case JV_KIND_TRUE:     return "boolean";
+  case JV_KIND_NUMBER:   return "number";
+  case JV_KIND_NUMBER_S: return "number";
+  case JV_KIND_STRING:   return "string";
+  case JV_KIND_ARRAY:    return "array";
+  case JV_KIND_OBJECT:   return "object";
   }
   assert(0 && "invalid kind");
   return "<unknown>";
@@ -125,7 +133,38 @@ static void jvp_invalid_free(jv_nontrivial* x) {
 }
 
 /*
- * Numbers
+ * Numbers (internal helpers)
+ */
+
+typedef struct {
+  jv_refcnt refcnt;
+  double number;
+  char data[];
+} jvp_number_s;
+
+static jvp_number_s* jvp_number_s_ptr(jv_nontrivial* a) {
+  return (jvp_number_s*)a->ptr;
+}
+
+static jv_nontrivial jvp_number_s_new(const char* data, uint32_t length, double x) {
+  jvp_number_s* s = jv_mem_alloc(sizeof(jvp_number_s) + length + 1);
+  s->refcnt.count = 1;
+  s->number = x;
+  memcpy(s->data, data, length);
+  s->data[length] = 0;
+  jv_nontrivial r = {&s->refcnt, {0,0}};
+  return r;
+}
+
+static void jvp_number_s_free(jv_nontrivial* s) {
+  if (jvp_refcnt_dec(s)) {
+    jvp_number_s* str = jvp_number_s_ptr(s);
+    jv_mem_free(str);
+  }
+}
+
+/*
+ * Numbers (public api)
  */
 
 jv jv_number(double x) {
@@ -135,9 +174,31 @@ jv jv_number(double x) {
   return j;
 }
 
+jv jv_number_s(const char* str, double x) {
+  jv j;
+  j.kind = JV_KIND_NUMBER_S;
+  j.val.nontrivial = jvp_number_s_new(str, strlen(str), x);
+  return j;
+}
+
 double jv_number_value(jv j) {
   assert(jv_get_kind(j) == JV_KIND_NUMBER);
-  return j.val.number;
+  if (jvp_get_kind_real(j) == JV_KIND_NUMBER) {
+    return j.val.number;
+  }
+
+  double number = jvp_number_s_ptr(&j.val.nontrivial)->number;
+  jv_free(j);
+  return number;
+}
+
+const char* jv_number_str(jv j) {
+  assert(jv_get_kind(j) == JV_KIND_NUMBER);
+  if (jvp_get_kind_real(j) == JV_KIND_NUMBER_S) {
+    jvp_number_s* s = jvp_number_s_ptr(&j.val.nontrivial);
+    return s->data;
+  }
+  return NULL;
 }
 
 
@@ -1003,7 +1064,8 @@ jv jv_copy(jv j) {
   if (jv_get_kind(j) == JV_KIND_ARRAY || 
       jv_get_kind(j) == JV_KIND_STRING || 
       jv_get_kind(j) == JV_KIND_OBJECT ||
-      jv_get_kind(j) == JV_KIND_INVALID) {
+      jv_get_kind(j) == JV_KIND_INVALID ||
+      jvp_get_kind_real(j) == JV_KIND_NUMBER_S) {
     jvp_refcnt_inc(&j.val.nontrivial);
   }
   return j;
@@ -1018,14 +1080,17 @@ void jv_free(jv j) {
     jvp_object_free(&j.val.nontrivial);
   } else if (jv_get_kind(j) == JV_KIND_INVALID) {
     jvp_invalid_free(&j.val.nontrivial);
+  } else if (jvp_get_kind_real(j) == JV_KIND_NUMBER_S) {
+    jvp_number_s_free(&j.val.nontrivial);
   }
 }
 
 int jv_get_refcnt(jv j) {
-  switch (jv_get_kind(j)) {
+  switch (jvp_get_kind_real(j)) {
   case JV_KIND_ARRAY:
   case JV_KIND_STRING:
   case JV_KIND_OBJECT:
+  case JV_KIND_NUMBER_S:
     return j.val.nontrivial.ptr->count;
   default:
     return 1;
@@ -1041,7 +1106,7 @@ int jv_equal(jv a, jv b) {
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER) {
-    r = jv_number_value(a) == jv_number_value(b);
+    r = jv_number_value(jv_copy(a)) == jv_number_value(jv_copy(b));
   } else if (a.val.nontrivial.ptr == b.val.nontrivial.ptr &&
              a.val.nontrivial.i[0] == b.val.nontrivial.i[0] &&
              a.val.nontrivial.i[1] == b.val.nontrivial.i[1]) {
