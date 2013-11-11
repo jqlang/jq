@@ -633,3 +633,27 @@ unique
 [{a:1}] | .[] | .a=999
 null
 {"a": 999}
+
+to_entries
+{"a": 1, "b": 2}
+[{"key":"a", "value":1}, {"key":"b", "value":2}]
+
+from_entries
+[{"key":"a", "value":1}, {"key":"b", "value":2}]
+{"a": 1, "b": 2}
+
+with_entries(.key |= "KEY_" + .)
+{"a": 1, "b": 2}
+{"KEY_a": 1, "KEY_b": 2}
+
+map(has("foo"))
+[{"foo": 42}, {}]
+[true, false]
+
+map(has(2))
+[[0,1], ["a","b","c"]]
+[false, true]
+
+keys
+[42,3,35]
+[0,1,2]
