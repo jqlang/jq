@@ -56,6 +56,7 @@ enum {
   NO_COLOUR_OUTPUT = 128,
   SORTED_OUTPUT = 256,
   UNBUFFERED_OUTPUT = 4096,
+  JOIN_OUTPUT = 8192,
 
   FROM_FILE = 512,
 
@@ -88,7 +89,9 @@ static void process(jq_state *jq, jv value, int flags) {
       if (options & UNBUFFERED_OUTPUT) dumpopts |= JV_PRINT_UNBUFFERED;
       jv_dump(result, dumpopts);
     }
-    printf("\n");
+    if (!(options & JOIN_OUTPUT)) {
+      printf("\n");
+    }
   }
   jv_free(result);
 }
@@ -178,6 +181,8 @@ int main(int argc, char* argv[]) {
       options |= PROVIDE_NULL;
     } else if (isoption(argv[i], 'f', "from-file")) {
       options |= FROM_FILE;
+    } else if (isoption(argv[i], 'j', "join-output")) {
+      options |= JOIN_OUTPUT;
     } else if (isoption(argv[i], 0, "arg")) {
       if (i >= argc - 2) {
         fprintf(stderr, "%s: --arg takes two parameters (e.g. -a varname value)\n", progname);
