@@ -75,14 +75,18 @@ jv jv_array_slice(jv, int, int);
 
 jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
+jv jv_string_empty(int len);
 int jv_string_length_bytes(jv);
 int jv_string_length_codepoints(jv);
 unsigned long jv_string_hash(jv);
 const char* jv_string_value(jv);
 jv jv_string_concat(jv, jv);
 jv jv_string_fmt(const char*, ...);
+jv jv_string_append_codepoint(jv a, int c);
 jv jv_string_append_buf(jv a, const char* buf, int len);
 jv jv_string_append_str(jv a, const char* str);
+jv jv_string_explode(jv j);
+jv jv_string_implode(jv j);
 
 jv jv_object();
 jv jv_object_get(jv object, jv key);

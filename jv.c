@@ -417,6 +417,14 @@ static jv_nontrivial jvp_string_new(const char* data, uint32_t length) {
   return r;
 }
 
+static jv_nontrivial jvp_string_empty_new(uint32_t length) {
+  jvp_string* s = jvp_string_alloc(length);
+  s->length_hashed = 0;
+  memset(s->data, 0, length);
+  jv_nontrivial r = {&s->refcnt, {0,0}};
+  return r;
+}
+
 static void jvp_string_free(jv_nontrivial* s) {
   if (jvp_refcnt_dec(s)) {
     jvp_string* str = jvp_string_ptr(s);
@@ -560,6 +568,13 @@ jv jv_string_sized(const char* str, int len) {
   return j;
 }
 
+jv jv_string_empty(int len) {
+  jv j;
+  j.kind = JV_KIND_STRING;
+  j.val.nontrivial = jvp_string_empty_new(len);
+  return j;
+}
+
 jv jv_string(const char* str) {
   return jv_string_sized(str, strlen(str));
 }
@@ -579,6 +594,37 @@ int jv_string_length_codepoints(jv j) {
   while ((i = jvp_utf8_next(i, end, &c))) len++;
   jv_free(j);
   return len;
+}
+
+jv jv_string_explode(jv j) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  const char* i = jv_string_value(j);
+  int len = jv_string_length_bytes(jv_copy(j));
+  const char* end = i + len;
+  jv a = jv_array_sized(len);
+  int c;
+  while ((i = jvp_utf8_next(i, end, &c)))
+    a = jv_array_append(a, jv_number(c));
+  jv_free(j);
+  return a;
+}
+
+jv jv_string_implode(jv j) {
+  assert(jv_get_kind(j) == JV_KIND_ARRAY);
+  int len = jv_array_length(jv_copy(j));
+  jv s = jv_string_empty(len);
+  int i;
+
+  assert(len >= 0);
+
+  for (i = 0; i < len; i++) {
+    jv n = jv_array_get(j, i);
+    assert(jv_get_kind(n) == JV_KIND_NUMBER);
+    s = jv_string_append_codepoint(s, jv_number_value(n));
+  }
+
+  jv_free(j);
+  return s;
 }
 
 unsigned long jv_string_hash(jv j) {
@@ -609,6 +655,13 @@ jv jv_string_append_buf(jv a, const char* buf, int len) {
     b.val.nontrivial = jvp_string_copy_replace_bad(buf, len);
     a = jv_string_concat(a, b);
   }
+  return a;
+}
+
+jv jv_string_append_codepoint(jv a, int c) {
+  char buf[5];
+  int len = jvp_utf8_encode(c, buf);
+  jvp_string_append(&a.val.nontrivial, buf, len);
   return a;
 }
 
