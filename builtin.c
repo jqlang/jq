@@ -77,6 +77,37 @@ static jv f_negate(jv input) {
   return ret;
 }
 
+static jv f_startswith(jv a, jv b) {
+  int alen = jv_string_length_bytes(jv_copy(a));
+  int blen = jv_string_length_bytes(jv_copy(b));
+  jv ret;
+
+  if (blen <= alen && memcmp(jv_string_value(a), jv_string_value(b), blen) == 0)
+    ret = jv_true();
+  else
+    ret = jv_false();
+  jv_free(a);
+  jv_free(b);
+  return ret;
+}
+
+static jv f_endswith(jv a, jv b) {
+  const char *astr = jv_string_value(a);
+  const char *bstr = jv_string_value(b);
+  size_t alen = jv_string_length_bytes(jv_copy(a));
+  size_t blen = jv_string_length_bytes(jv_copy(b));
+  jv ret;;
+
+  if (alen < blen ||
+     memcmp(astr + (alen - blen), bstr, blen) != 0)
+    ret = jv_false();
+  else
+    ret = jv_true();
+  jv_free(a);
+  jv_free(b);
+  return ret;
+}
+
 static jv f_minus(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
@@ -493,6 +524,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
   {(cfunction_ptr)f_keys, "keys", 1},
+  {(cfunction_ptr)f_startswith, "startswith", 2},
+  {(cfunction_ptr)f_endswith, "endswith", 2},
   {(cfunction_ptr)jv_string_explode, "explode", 1},
   {(cfunction_ptr)jv_string_implode, "implode", 1},
   {(cfunction_ptr)jv_setpath, "setpath", 3}, // FIXME typechecking
