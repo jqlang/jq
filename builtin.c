@@ -493,6 +493,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
   {(cfunction_ptr)f_keys, "keys", 1},
+  {(cfunction_ptr)jv_string_explode, "explode", 1},
+  {(cfunction_ptr)jv_string_implode, "implode", 1},
   {(cfunction_ptr)jv_setpath, "setpath", 3}, // FIXME typechecking
   {(cfunction_ptr)jv_getpath, "getpath", 2},
   {(cfunction_ptr)jv_delpaths, "delpaths", 2},

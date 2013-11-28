@@ -618,7 +618,7 @@ jv jv_string_implode(jv j) {
   assert(len >= 0);
 
   for (i = 0; i < len; i++) {
-    jv n = jv_array_get(j, i);
+    jv n = jv_array_get(jv_copy(j), i);
     assert(jv_get_kind(n) == JV_KIND_NUMBER);
     s = jv_string_append_codepoint(s, jv_number_value(n));
   }
