@@ -658,7 +658,7 @@ jv jv_string_append_buf(jv a, const char* buf, int len) {
   return a;
 }
 
-jv jv_string_append_codepoint(jv a, int c) {
+jv jv_string_append_codepoint(jv a, uint32_t c) {
   char buf[5];
   int len = jvp_utf8_encode(c, buf);
   jvp_string_append(&a.val.nontrivial, buf, len);
