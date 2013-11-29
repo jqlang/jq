@@ -915,6 +915,24 @@ sections:
             input: '42'
             output: ['"The input was 42, which is one less than 43"']
           
+      - title: "Convert to/from JSON"
+
+          The `tojson` and `fromjson` builtins dump values as JSON texts
+          or parse JSON texts into values, respectively.  The tojson
+          builtin differs from tostring in that tostring returns strings
+          unmodified, while tojson encodes strings as JSON strings.
+
+        examples:
+          - program: '[.[]|tostring]'
+            input: '[1, "foo", ["foo"]]'
+            output: '["1","foo","[\"foo\"]"]'
+          - program: '[.[]|tojson]'
+            input: '[1, "foo", ["foo"]]'
+            output: '["1","\"foo\"","[\"foo\"]"]'
+          - program: '[.[]|tojson|fromjson]'
+            input: '[1, "foo", ["foo"]]'
+            output: '[1,"foo",["foo"]]'
+
       - title: "Format strings and escaping"
         body: |
 
