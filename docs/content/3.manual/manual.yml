@@ -80,6 +80,12 @@ sections:
         Instead of running the filter for each JSON object in the
         input, read the entire input stream into a large array and run
         the filter just once.
+
+      * `--online-input`/`-I`:
+  
+        When the top-level input value is an array produce its elements
+        instead of the array.  This allows on-line processing of
+        potentially very large top-level arrays' elements.
       
       * `--raw-input`/`-R`:
       
