@@ -75,6 +75,10 @@ null
 "<script>hax</script>"
 "<b>&lt;script&gt;hax&lt;/script&gt;</b>"
 
+[.[]|tojson|fromjson]
+["foo", 1, ["a", 1, "b", 2, {"foo":"bar"}]]
+["foo",1,["a",1,"b",2,{"foo":"bar"}]]
+
 #
 # Dictionary construction syntax
 #
