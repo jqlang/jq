@@ -861,6 +861,16 @@ sections:
             input: '[65, 66, 67]'
             output: ['"ABC"']
 
+      - title: `split`
+        body: |
+
+          Splits an input string on the separator argument.
+
+        examples:
+          - program: 'split(", ")'
+            input: '"a, b,c,d, e"'
+            output: ['["a","b,c,d","e"]']
+
       - title: `recurse`
         body: |
           
