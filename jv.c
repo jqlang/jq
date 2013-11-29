@@ -596,6 +596,54 @@ int jv_string_length_codepoints(jv j) {
   return len;
 }
 
+#ifndef HAVE_MEMMEM
+static const void *memmem(const void *haystack, size_t haystacklen,
+                          const void *needle, size_t needlelen)
+{
+  const char *h = haystack;
+  const char *n = needle;
+  size_t hi, hi2, ni;
+
+  if (haystacklen < needlelen || haystacklen == 0)
+    return NULL;
+  for (hi = 0; hi < (haystacklen - needlelen + 1); hi++) {
+    for (ni = 0, hi2 = hi; ni < needlelen; ni++, hi2++) {
+      if (h[hi2] != n[ni])
+        goto not_this;
+    }
+
+    return &h[hi];
+
+not_this:
+    continue;
+  }
+  return NULL;
+}
+#endif /* HAVE_MEMMEM */
+
+jv jv_string_split(jv j, jv sep) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(jv_get_kind(sep) == JV_KIND_STRING);
+  const char *jstr = jv_string_value(j);
+  const char *sepstr = jv_string_value(sep);
+  const char *p, *s;
+  int jlen = jv_string_length_bytes(jv_copy(j));
+  int seplen = jv_string_length_bytes(jv_copy(sep));
+  jv a = jv_array();
+
+  assert(jv_get_refcnt(a) == 1);
+
+  for (p = jstr; p < jstr + jlen; p = s + seplen) {
+    s = memmem(p, (jstr + jlen) - p, sepstr, seplen);
+    if (s == NULL)
+      s = jstr + jlen;
+    a = jv_array_append(a, jv_string_sized(p, s - p));
+  }
+  jv_free(j);
+  jv_free(sep);
+  return a;
+}
+
 jv jv_string_explode(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   const char* i = jv_string_value(j);

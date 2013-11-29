@@ -160,6 +160,8 @@ static jv f_divide(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) / jv_number_value(b));
+  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
+    return jv_string_split(a, b);
   } else {
     return type_error2(a, b, "cannot be divided");
   }  
@@ -539,6 +541,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_keys, "keys", 1},
   {(cfunction_ptr)f_startswith, "startswith", 2},
   {(cfunction_ptr)f_endswith, "endswith", 2},
+  {(cfunction_ptr)jv_string_split, "split", 2},
   {(cfunction_ptr)jv_string_explode, "explode", 1},
   {(cfunction_ptr)jv_string_implode, "implode", 1},
   {(cfunction_ptr)jv_setpath, "setpath", 3}, // FIXME typechecking
