@@ -463,10 +463,19 @@ sections:
 
           These operators only work on numbers, and do the expected.
 
+          Multiplying a string by a number produces the concatenation of
+          that string that many times.
+
+          Dividing a string by another splits the first using the second
+          as separators.
+
         examples:
           - program: '10 / . * 3'
             input: 5
             output: [6]
+          - program: '. / ", "'
+            input: '"a, b,c,d, e"'
+            output: ['["a","b,c,d","e"]']
 
       - title: `length`
         body: |
