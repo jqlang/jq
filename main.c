@@ -159,6 +159,7 @@ int main(int argc, char* argv[]) {
   ninput_files = 0;
   int further_args_are_files = 0;
   int jq_flags = 0;
+  jv_parser_flags parser_flags = 0;
   jv program_arguments = jv_array();
   for (int i=1; i<argc; i++) {
     if (further_args_are_files) {
@@ -196,6 +197,8 @@ int main(int argc, char* argv[]) {
       options |= FROM_FILE;
     } else if (isoption(argv[i], 'e', "exit-status")) {
       options |= EXIT_STATUS;
+    } else if (isoption(argv[i], 'I', "online-input")) {
+      parser_flags = JV_PARSE_EXPLODE_TOPLEVEL_ARRAY;
     } else if (isoption(argv[i], 0, "arg")) {
       if (i >= argc - 2) {
         fprintf(stderr, "%s: --arg takes two parameters (e.g. -a varname value)\n", progname);
@@ -279,7 +282,7 @@ int main(int argc, char* argv[]) {
         slurped = jv_array();
       }
     }
-    struct jv_parser* parser = jv_parser_new();
+    struct jv_parser* parser = jv_parser_new(parser_flags);
     char buf[4096];
     while (read_more(buf, sizeof(buf))) {
       if (options & RAW_INPUT) {
