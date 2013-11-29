@@ -138,6 +138,19 @@ static jv f_multiply(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) * jv_number_value(b));
+  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_NUMBER) {
+    int n;
+    size_t alen = jv_string_length_bytes(jv_copy(a));
+    jv res = a;
+
+    for (n = jv_number_value(b) - 1; n > 0; n--)
+      res = jv_string_append_buf(res, jv_string_value(a), alen);
+
+    if (n < 0) {
+      jv_free(a);
+      return jv_null();
+    }
+    return res;
   } else {
     return type_error2(a, b, "cannot be multiplied");
   }  
