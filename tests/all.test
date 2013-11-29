@@ -574,6 +574,19 @@ def inc(x): x |= .+1; inc(.[].a)
 {}
 [true, true, false]
 
+# string operations
+[.[]|startswith("foo")]
+["fo", "foo", "barfoo", "foobar", "barfoob"]
+[false, true, false, true, false]
+
+[.[]|endswith("foo")]
+["fo", "foo", "barfoo", "foobar", "barfoob"]
+[false, true, true, false, false]
+
+[.[] * 3]
+["a", "ab", "abc"]
+["aaa", "ababab", "abcabcabc"]
+
 map(.[1] as $needle | .[0] | contains($needle))
 [[[],[]], [[1,2,3], [1,2]], [[1,2,3], [3,1]], [[1,2,3], [4]], [[1,2,3], [1,4]]]
 [true, true, true, false, false]
