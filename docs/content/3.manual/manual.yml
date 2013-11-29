@@ -136,6 +136,13 @@ sections:
         Read filter from the file rather than from a command line, like
         awk's -f option. You can also use '#' to make comments.
 
+      * `-e` / `--exit-status`:
+
+        Sets the exit status of jq to 10 if the last output values was
+        `false`, 11 if the last output value was `null`, or 0 if the
+        last output value was valid. Normally jq exits with 0, or 1 if
+        there was any usage problem or other error.
+
       * `--arg name value`:
 
         This option passes a value to the jq program as a predefined
