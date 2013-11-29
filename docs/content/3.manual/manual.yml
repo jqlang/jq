@@ -199,11 +199,12 @@ sections:
           returns the third element of the array.
 
           The `.[10:15]` syntax can be used to return a subarray of an
-          array. The array returned by `.[10:15]` will be of length 5,
-          containing the elements from index 10 (inclusive) to index
-          15 (exclusive). Either index may be negative (in which case
-          it counts backwards from the end of the array), or omitted
-          (in which case it refers to the start or end of the array).
+          array or substring of a string. The array returned by
+          `.[10:15]` will be of length 5, containing the elements from
+          index 10 (inclusive) to index 15 (exclusive). Either index may
+          be negative (in which case it counts backwards from the end of
+          the array), or omitted (in which case it refers to the start
+          or end of the array).
 
         examples:
           - program: '.[0]'
@@ -217,6 +218,10 @@ sections:
           - program: '.[2:4]'
             input: '["a","b","c","d","e"]'
             output: ['["c", "d"]']
+
+          - program: '.[2:4]'
+            input: '"abcdefghi"'
+            output: ['"cd"']
           
           - program: '.[:3]'
             input: '["a","b","c","d","e"]'
@@ -805,6 +810,47 @@ sections:
           - program: 'contains({foo: 12, bar: [{barp: 15}]})'
             input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
             output: ['false']
+
+      - title: `startswith`
+        body: |
+
+          Outputs true if . starts with the given string argument.
+
+        examples:
+          - program: '[.[]|startswith("foo")]'
+            input: '["fo", "foo", "barfoo", "foobar", "barfoob"]'
+            output: ['[false, true, false, true, false]']
+
+      - title: `endswith`
+        body: |
+
+          Outputs true if . ends with the given string argument.
+
+        examples:
+          - program: '[.[]|endswith("foo")]'
+            input: '["foobar", "barfoo"]'
+            output: ['[false, true, true, false, false]']
+
+      - title: `explode`
+        body: |
+
+          Converts an input string into an array of the string's
+          codepoint numbers.
+
+        examples:
+          - program: 'explode'
+            input: '"foobar"'
+            output: ['[102,111,111,98,97,114]']
+
+      - title: `implode`
+        body: |
+
+          The inverse of explode.
+
+        examples:
+          - program: 'implode'
+            input: '[65, 66, 67]'
+            output: ['"ABC"']
 
       - title: `recurse`
         body: |
