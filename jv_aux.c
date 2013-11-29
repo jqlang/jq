@@ -3,15 +3,19 @@
 #include <assert.h>
 #include "jv_alloc.h"
 
-static int parse_slice(jv array, jv slice, int* pstart, int* pend) {
+static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
   // Array slices
-  int len = jv_array_length(jv_copy(array));
   jv start_jv = jv_object_get(jv_copy(slice), jv_string("start"));
   jv end_jv = jv_object_get(slice, jv_string("end"));
   if (jv_get_kind(start_jv) == JV_KIND_NULL) {
     jv_free(start_jv);
     start_jv = jv_number(0);
   }
+  int len;
+  if (jv_get_kind(j) == JV_KIND_ARRAY)
+    len = jv_array_length(jv_copy(j));
+  else
+    len = jv_string_length_codepoints(jv_copy(j));
   if (jv_get_kind(end_jv) == JV_KIND_NULL) {
     jv_free(end_jv);
     end_jv = jv_number(len);
@@ -59,6 +63,14 @@ jv jv_get(jv t, jv k) {
       v = jv_array_slice(t, start, end);
     } else {
       v = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
+      jv_free(t);
+    }
+  } else if (jv_get_kind(t) == JV_KIND_STRING && jv_get_kind(k) == JV_KIND_OBJECT) {
+    int start, end;
+    if (parse_slice(t, k, &start, &end)) {
+      v = jv_string_slice(t, start, end);
+    } else {
+      v = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an string slice must be numbers"));
       jv_free(t);
     }
   } else if (jv_get_kind(t) == JV_KIND_NULL && 

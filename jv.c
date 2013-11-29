@@ -687,6 +687,63 @@ const char* jv_string_value(jv j) {
   return jvp_string_ptr(&j.val.nontrivial)->data;
 }
 
+jv jv_string_slice(jv j, int start, int end) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  const char *s = jv_string_value(j);
+  int len = jv_string_length_bytes(jv_copy(j));
+  int i;
+  const char *p, *e;
+  int c;
+  jv res;
+
+  if (start < 0) start = len + start;
+  if (end < 0) end = len + end;
+
+  if (start < 0) start = 0;
+  if (start > len) start = len;
+  if (end > len) end = len;
+  if (end < start) end = start;
+  if (start < 0 || start > end || end > len)
+    return jv_invalid_with_msg(jv_string("Invalid string slice indices"));
+  assert(0 <= start && start <= end && end <= len);
+
+  /* Look for byte offset corresponding to start codepoints */
+  for (p = s, i = 0; i < start; i++) {
+    p = jvp_utf8_next(p, s + len, &c);
+    if (p == NULL) {
+      jv_free(j);
+      return jv_string_empty(16);
+    }
+    if (c == -1) {
+      jv_free(j);
+      return jv_invalid_with_msg(jv_string("Invalid UTF-8 string"));
+    }
+  }
+  /* Look for byte offset corresponding to end codepoints */
+  for (e = p; e != NULL && i < end; i++) {
+    e = jvp_utf8_next(e, s + len, &c);
+    if (e == NULL) {
+      e = s + len;
+      break;
+    }
+    if (c == -1) {
+      jv_free(j);
+      return jv_invalid_with_msg(jv_string("Invalid UTF-8 string"));
+    }
+  }
+
+  /*
+   * NOTE: Ideally we should do here what jvp_array_slice() does instead
+   * of allocating a new string as we do!  However, we assume NUL-
+   * terminated strings all over, and in the jv API, so for now we waste
+   * memory like a drunken navy programmer.  There's probably nothing we
+   * can do about it.
+   */
+  res = jv_string_sized(p, e - p);
+  jv_free(j);
+  return res;
+}
+
 jv jv_string_concat(jv a, jv b) {
   jvp_string* sb = jvp_string_ptr(&b.val.nontrivial);
   jvp_string_append(&a.val.nontrivial, sb->data, jvp_string_length(sb));
