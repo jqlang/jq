@@ -108,6 +108,33 @@ static jv f_endswith(jv a, jv b) {
   return ret;
 }
 
+static jv f_ltrimstr(jv input, jv left) {
+  if (jv_get_kind(f_startswith(jv_copy(input), jv_copy(left))) != JV_KIND_TRUE) {
+    jv_free(left);
+    return input;
+  }
+  /*
+   * FIXME It'd be better to share the suffix with the original input --
+   * that we could do, we just can't share prefixes.
+   */
+  int prefixlen = jv_string_length_bytes(left);
+  jv res = jv_string_sized(jv_string_value(input) + prefixlen,
+                           jv_string_length_bytes(jv_copy(input)) - prefixlen);
+  jv_free(input);
+  return res;
+}
+
+static jv f_rtrimstr(jv input, jv right) {
+  if (jv_get_kind(f_endswith(jv_copy(input), jv_copy(right))) == JV_KIND_TRUE) {
+    jv res = jv_string_sized(jv_string_value(input),
+                             jv_string_length_bytes(jv_copy(input)) - jv_string_length_bytes(right));
+    jv_free(input);
+    return res;
+  }
+  jv_free(right);
+  return input;
+}
+
 static jv f_minus(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
@@ -556,6 +583,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_keys, "keys", 1},
   {(cfunction_ptr)f_startswith, "startswith", 2},
   {(cfunction_ptr)f_endswith, "endswith", 2},
+  {(cfunction_ptr)f_ltrimstr, "ltrimstr", 2},
+  {(cfunction_ptr)f_rtrimstr, "rtrimstr", 2},
   {(cfunction_ptr)jv_string_split, "split", 2},
   {(cfunction_ptr)jv_string_explode, "explode", 1},
   {(cfunction_ptr)jv_string_implode, "implode", 1},
