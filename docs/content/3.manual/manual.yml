@@ -853,6 +853,28 @@ sections:
             input: '["foobar", "barfoo"]'
             output: ['[false, true, true, false, false]']
 
+      - title: `ltrimstr`
+        body: |
+
+          Outputs its input with the given prefix string removed, if it
+          starts with it.
+
+        examples:
+          - program: '[.[]|ltrimstr("foo")]'
+            input: ["fo", "foo", "barfoo", "foobar", "afoo"]
+            output: ['["fo","","barfoo","bar","afoo"]']
+
+      - title: `rtrimstr`
+        body: |
+
+          Outputs its input with the given suffix string removed, if it
+          starts with it.
+
+        examples:
+          - program: '[.[]|rtrimstr("foo")]'
+            input: ["fo", "foo", "barfoo", "foobar", "foob"]
+            output: ['["fo","","bar","foobar","foob"]']
+
       - title: `explode`
         body: |
 
