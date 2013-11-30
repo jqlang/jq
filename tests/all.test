@@ -591,6 +591,14 @@ def inc(x): x |= .+1; inc(.[].a)
 ["fo", "foo", "barfoo", "foobar", "barfoob"]
 [false, true, true, false, false]
 
+[.[]|ltrimstr("foo")]
+["fo", "foo", "barfoo", "foobar", "afoo"]
+["fo","","barfoo","bar","afoo"]
+
+[.[]|rtrimstr("foo")]
+["fo", "foo", "barfoo", "foobar", "foob"]
+["fo","","bar","foobar","foob"]
+
 [.[]|split(",")]
 ["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
 [["a"," bc"," def"," ghij"," jklmn"," a","b"," c","d"," e","f"],["a","b","c","d"," e","f","g","h"]]
