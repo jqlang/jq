@@ -677,9 +677,9 @@ static const char* const jq_builtins[] = {
 };
 
 
-int builtins_bind_one(block* bb, const char* code) {
+static int builtins_bind_one(jq_state *jq, block* bb, const char* code) {
   struct locfile src;
-  locfile_init(&src, code, strlen(code));
+  locfile_init(&src, jq, code, strlen(code));
   block funcs;
   int nerrors = jq_parse_library(&src, &funcs);
   if (nerrors == 0) {
@@ -689,14 +689,14 @@ int builtins_bind_one(block* bb, const char* code) {
   return nerrors;
 }
 
-int slurp_lib(block* bb) {
+static int slurp_lib(jq_state *jq, block* bb) {
   int nerrors = 0;
   char* home = getenv("HOME");
   if (home) {    // silently ignore no $HOME
     jv filename = jv_string_append_str(jv_string(home), "/.jq");
     jv data = jv_load_file(jv_string_value(filename), 1);
     if (jv_is_valid(data)) {
-      nerrors = builtins_bind_one(bb, jv_string_value(data) );
+      nerrors = builtins_bind_one(jq, bb, jv_string_value(data) );
     }
     jv_free(filename);
     jv_free(data);
@@ -704,14 +704,14 @@ int slurp_lib(block* bb) {
   return nerrors;
 }
 
-int builtins_bind(block* bb) {
-  int nerrors = slurp_lib(bb);
+int builtins_bind(jq_state *jq, block* bb) {
+  int nerrors = slurp_lib(jq, bb);
   if (nerrors) {
     block_free(*bb);
     return nerrors;
   }
   for (int i=(int)(sizeof(jq_builtins)/sizeof(jq_builtins[0]))-1; i>=0; i--) {
-    nerrors = builtins_bind_one(bb, jq_builtins[i]);
+    nerrors = builtins_bind_one(jq, bb, jq_builtins[i]);
     assert(!nerrors);
   }
   *bb = bind_bytecoded_builtins(*bb);
