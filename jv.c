@@ -621,6 +621,26 @@ not_this:
 }
 #endif /* HAVE_MEMMEM */
 
+jv jv_string_indexes(jv j, jv k) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(jv_get_kind(k) == JV_KIND_STRING);
+  const char *jstr = jv_string_value(j);
+  const char *idxstr = jv_string_value(k);
+  const char *p;
+  int jlen = jv_string_length_bytes(jv_copy(j));
+  int idxlen = jv_string_length_bytes(jv_copy(k));
+  jv a = jv_array();
+
+  p = jstr;
+  while ((p = memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
+    a = jv_array_append(a, jv_number(p - jstr));
+    p += idxlen;
+  }
+  jv_free(j);
+  jv_free(k);
+  return a;
+}
+
 jv jv_string_split(jv j, jv sep) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   assert(jv_get_kind(sep) == JV_KIND_STRING);
