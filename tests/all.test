@@ -599,6 +599,22 @@ def inc(x): x |= .+1; inc(.[].a)
 ["fo", "foo", "barfoo", "foobar", "foob"]
 ["fo","","bar","foobar","foob"]
 
+.[","]
+"a,bc,def,ghij,klmno"
+[1,4,8,13]
+
+.[", "]
+"a,bc,def,ghij,klmno"
+[]
+
+.[", "]
+"a,b,, c, d,ef, , ghi, jklmn, o"
+[4,7,13,15,20,27]
+
+[(index(","), rindex(","))]
+"a,bc,def,ghij,klmno"
+[1,13]
+
 [.[]|split(",")]
 ["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
 [["a"," bc"," def"," ghij"," jklmn"," a","b"," c","d"," e","f"],["a","b","c","d"," e","f","g","h"]]
