@@ -676,6 +676,8 @@ static const char* const jq_builtins[] = {
   "def from_entries: map({(.key): .value}) | add;",
   "def with_entries(f): to_entries | map(f) | from_entries;",
   "def reverse: [.[length - 1 - range(0;length)]];",
+  "def index(i): .[i][0];",
+  "def rindex(i): .[i][-1:][0];",
 };
 
 
