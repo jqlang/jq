@@ -640,15 +640,15 @@ jv jv_string_fmt(const char* fmt, ...) {
  */
 
 struct object_slot {
-  int next;
-  jvp_string* string;
+  int next; /* next slot with same hash, for collisions */
   uint32_t hash;
+  jvp_string* string;
   jv value;
 };
 
 typedef struct {
   jv_refcnt refcnt;
-  int first_free;
+  int next_free;
   struct object_slot elements[];
 } jvp_object;
 
@@ -669,7 +669,7 @@ static jv_nontrivial jvp_object_new(int size) {
     obj->elements[i].hash = 0;
     obj->elements[i].value = JV_NULL;
   }
-  obj->first_free = size - 1;
+  obj->next_free = 0;
   int* hashbuckets = (int*)(&obj->elements[size]);
   jv_nontrivial r = {&obj->refcnt, 
                   {size*2 - 1, (char*)hashbuckets - (char*)obj}};
@@ -724,25 +724,15 @@ static struct object_slot* jvp_object_find_slot(jv_nontrivial* object, jvp_strin
 
 static struct object_slot* jvp_object_add_slot(jv_nontrivial* object, jvp_string* key, int* bucket) {
   jvp_object* o = jvp_object_ptr(object);
-  int newslot_idx = o->first_free;
+  int newslot_idx = o->next_free;
+  if (newslot_idx == jvp_object_size(object)) return 0;
   struct object_slot* newslot = jvp_object_get_slot(object, newslot_idx);
-  if (newslot == 0) return 0;
-  o->first_free = newslot->next;
+  o->next_free++;
   newslot->next = *bucket;
   *bucket = newslot_idx;
   newslot->hash = jvp_string_hash(key);
   newslot->string = key;
   return newslot;
-}
-
-static void jvp_object_free_slot(jv_nontrivial* object, struct object_slot* slot) {
-  jvp_object* o = jvp_object_ptr(object);
-  slot->next = o->first_free;
-  assert(slot->string);
-  jvp_string_free_p(slot->string);
-  slot->string = 0;
-  jv_free(slot->value);
-  o->first_free = slot - jvp_object_get_slot(object, 0);
 }
 
 static jv* jvp_object_read(jv_nontrivial* object, jvp_string* key) {
@@ -789,7 +779,7 @@ static void jvp_object_unshare(jv_nontrivial* object) {
     return;
 
   jv_nontrivial new_object = jvp_object_new(jvp_object_size(object));
-  jvp_object_ptr(&new_object)->first_free = jvp_object_ptr(object)->first_free;
+  jvp_object_ptr(&new_object)->next_free = jvp_object_ptr(object)->next_free;
   for (int i=0; i<jvp_object_size(&new_object); i++) {
     struct object_slot* old_slot = jvp_object_get_slot(object, i);
     struct object_slot* new_slot = jvp_object_get_slot(&new_object, i);
@@ -841,7 +831,9 @@ static int jvp_object_delete(jv_nontrivial* object, jvp_string* key) {
        curr = jvp_object_next_slot(object, curr)) {
     if (jvp_string_equal_hashed(key, curr->string)) {
       *prev_ptr = curr->next;
-      jvp_object_free_slot(object, curr);
+      jvp_string_free_p(curr->string);
+      curr->string = 0;
+      jv_free(curr->value);
       return 1;
     }
     prev_ptr = &curr->next;
