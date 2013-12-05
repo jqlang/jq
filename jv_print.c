@@ -139,7 +139,13 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     put_str("true", F, S);
     break;
   case JV_KIND_NUMBER: {
-    double d = jv_number_value(x);
+    const char* number_str;
+    if ((number_str = jv_number_str(x))) {
+      put_str(number_str, F, S);
+      break;
+    }
+
+    double d = jv_number_value(jv_copy(x));
     if (d != d) {
       // JSON doesn't have NaN, so we'll render it as "null"
       put_str("null", F, S);

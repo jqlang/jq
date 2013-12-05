@@ -10,6 +10,7 @@ typedef enum {
   JV_KIND_FALSE,
   JV_KIND_TRUE,
   JV_KIND_NUMBER,
+  JV_KIND_NUMBER_S, // number with original string
   JV_KIND_STRING,
   JV_KIND_ARRAY,
   JV_KIND_OBJECT
@@ -58,7 +59,9 @@ jv jv_false();
 jv jv_bool(int);
 
 jv jv_number(double);
+jv jv_number_s(const char* str, double x);
 double jv_number_value(jv);
+const char* jv_number_str(jv);
 
 jv jv_array();
 jv jv_array_sized(int);

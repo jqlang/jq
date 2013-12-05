@@ -55,7 +55,6 @@ static jv f_floor(jv input) {
     return type_error(input, "cannot be floored");
   }
   jv ret = jv_number(floor(jv_number_value(input)));
-  jv_free(input);
   return ret;
 }
 
@@ -64,7 +63,6 @@ static jv f_sqrt(jv input) {
     return type_error(input, "has no square root");
   }
   jv ret = jv_number(sqrt(jv_number_value(input)));
-  jv_free(input);
   return ret;
 }
 
@@ -73,7 +71,6 @@ static jv f_negate(jv input) {
     return type_error(input, "cannot be negated");
   }
   jv ret = jv_number(-jv_number_value(input));
-  jv_free(input);
   return ret;
 }
 
@@ -366,7 +363,7 @@ static jv f_format(jv input, jv fmt) {
         line = jv_string_concat(line, jv_dump_string(x, 0));
         break;
       case JV_KIND_NUMBER:
-        if (jv_number_value(x) != jv_number_value(x)) {
+        if (jv_number_value(jv_copy(x)) != jv_number_value(jv_copy(x))) {
           /* NaN, render as empty string */
           jv_free(x);
         } else {
