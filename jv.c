@@ -774,14 +774,14 @@ jv jv_string_append_str(jv a, const char* str) {
   return jv_string_append_buf(a, str, strlen(str));
 }
 
-jv jv_string_fmt(const char* fmt, ...) {
+jv jv_string_vfmt(const char* fmt, va_list ap) {
   int size = 1024;
   while (1) {
     char* buf = jv_mem_alloc(size);
-    va_list args;
-    va_start(args, fmt);
-    int n = vsnprintf(buf, size, fmt, args);
-    va_end(args);
+    va_list ap2;
+    va_copy(ap2, ap);
+    int n = vsnprintf(buf, size, fmt, ap2);
+    va_end(ap2);
     if (n < size) {
       jv ret = jv_string_sized(buf, n);
       jv_mem_free(buf);
@@ -791,6 +791,14 @@ jv jv_string_fmt(const char* fmt, ...) {
       size = n * 2;
     }
   }
+}
+
+jv jv_string_fmt(const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  jv res = jv_string_vfmt(fmt, args);
+  va_end(args);
+  return res;
 }
 
 /*

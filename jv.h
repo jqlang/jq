@@ -1,6 +1,7 @@
 #ifndef JV_H
 #define JV_H
 
+#include <stdarg.h>
 #include <stdint.h>
 
 typedef enum {
@@ -84,6 +85,7 @@ unsigned long jv_string_hash(jv);
 const char* jv_string_value(jv);
 jv jv_string_slice(jv j, int start, int end);
 jv jv_string_concat(jv, jv);
+jv jv_string_vfmt(const char*, va_list);
 jv jv_string_fmt(const char*, ...);
 jv jv_string_append_codepoint(jv a, uint32_t c);
 jv jv_string_append_buf(jv a, const char* buf, int len);
