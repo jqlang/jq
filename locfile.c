@@ -1,12 +1,16 @@
+#include <assert.h>
+#include <errno.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
-#include <stdarg.h>
+#include <string.h>
+#include "jq.h"
 #include "jv_alloc.h"
 #include "locfile.h"
 
 
-void locfile_init(struct locfile* l, const char* data, int length) {
+void locfile_init(struct locfile* l, jq_state *jq, const char* data, int length) {
+  l->jq = jq;
   l->data = data;
   l->length = length;
   l->nlines = 1;
@@ -43,23 +47,57 @@ static int locfile_line_length(struct locfile* l, int line) {
 }
 
 void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
+  jq_err_cb cb;
+  void *cb_data;
   va_list fmtargs;
   va_start(fmtargs, fmt);
-  vfprintf(stderr, fmt, fmtargs);
-  va_end(fmtargs);
-  fprintf(stderr, "\n");
+  int startline;
+  int offset;
+
+  if (loc.start != -1) {
+    startline = locfile_get_line(l, loc.start);
+    offset = l->linemap[startline];
+  }
+
+  jq_get_error_cb(l->jq, &cb, &cb_data);
+
+  jv m1 = jv_string_vfmt(fmt, fmtargs);
+  if (!jv_is_valid(m1)) {
+    jv_free(m1);
+    goto enomem;
+  }
+  jv m2;
   if (loc.start == -1) {
-    fprintf(stderr, "<unknown location>\n");
+    m2 = jv_string_fmt("%s\n<unknown location>", jv_string_value(m1));
+    if (cb)
+      cb(cb_data, m2);
+    else
+      fprintf(stderr, "%s", jv_string_value(m2));
+    jv_free(m1);
+    jv_free(m2);
     return;
   }
-  int startline = locfile_get_line(l, loc.start);
-  int offset = l->linemap[startline];
-  fprintf(stderr, "%.*s\n", locfile_line_length(l, startline), l->data + offset);
-  fprintf(stderr, "%*s", loc.start - offset, "");
-  for (int i = loc.start; 
-       i < loc.end && i < offset + locfile_line_length(l, startline);
-       i++){
-    fprintf(stderr, "^");
+  m2 = jv_string_fmt("%s\n%.*s%*s", jv_string_value(m1),
+                     locfile_line_length(l, startline), l->data + offset,
+                     loc.start - offset, "");
+  jv_free(m1);
+  if (!jv_is_valid(m2)) {
+    jv_free(m2);
+    goto enomem;
   }
-  fprintf(stderr, "\n");
+  if (cb)
+    cb(cb_data, m2);
+  else
+    fprintf(stderr, "%s", jv_string_value(m2));
+  jv_free(m2);
+  return;
+
+enomem:
+  if (cb != NULL)
+    cb(cb_data, jv_invalid());
+  else if (errno == ENOMEM || errno == 0)
+    vfprintf(stderr, "Error formatting jq compilation error: %s", strerror(errno ? errno : ENOMEM));
+  else
+    vfprintf(stderr, "Error formatting jq compilation error: %s", strerror(errno));
+  return;
 }

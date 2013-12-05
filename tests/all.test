@@ -75,6 +75,10 @@ null
 "<script>hax</script>"
 "<b>&lt;script&gt;hax&lt;/script&gt;</b>"
 
+[.[]|tojson|fromjson]
+["foo", 1, ["a", 1, "b", 2, {"foo":"bar"}]]
+["foo",1,["a",1,"b",2,{"foo":"bar"}]]
+
 #
 # Dictionary construction syntax
 #
@@ -177,6 +181,10 @@ null
 [.[3:2], .[-5:4], .[:-2], .[-2:], .[3:3][1:], .[10:]]
 [0,1,2,3,4,5,6]
 [[], [2,3], [0,1,2,3,4], [5,6], [], []]
+
+[.[3:2], .[-5:4], .[:-2], .[-2:], .[3:3][1:], .[10:]]
+"abcdefghi"
+["","","abcdefg","hi","",""]
 
 del(.[2:4],.[0],.[-2:])
 [0,1,2,3,4,5,6,7]
@@ -573,6 +581,59 @@ def inc(x): x |= .+1; inc(.[].a)
 [("foo" | contains("foo")), ("foobar" | contains("foo")), ("foo" | contains("foobar"))]
 {}
 [true, true, false]
+
+# string operations
+[.[]|startswith("foo")]
+["fo", "foo", "barfoo", "foobar", "barfoob"]
+[false, true, false, true, false]
+
+[.[]|endswith("foo")]
+["fo", "foo", "barfoo", "foobar", "barfoob"]
+[false, true, true, false, false]
+
+[.[]|ltrimstr("foo")]
+["fo", "foo", "barfoo", "foobar", "afoo"]
+["fo","","barfoo","bar","afoo"]
+
+[.[]|rtrimstr("foo")]
+["fo", "foo", "barfoo", "foobar", "foob"]
+["fo","","bar","foobar","foob"]
+
+.[","]
+"a,bc,def,ghij,klmno"
+[1,4,8,13]
+
+.[", "]
+"a,bc,def,ghij,klmno"
+[]
+
+.[", "]
+"a,b,, c, d,ef, , ghi, jklmn, o"
+[4,7,13,15,20,27]
+
+[(index(","), rindex(","))]
+"a,bc,def,ghij,klmno"
+[1,13]
+
+[.[]|split(",")]
+["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
+[["a"," bc"," def"," ghij"," jklmn"," a","b"," c","d"," e","f"],["a","b","c","d"," e","f","g","h"]]
+
+[.[]|split(", ")]
+["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
+[["a","bc","def","ghij","jklmn","a,b","c,d","e,f"],["a,b,c,d","e,f,g,h"]]
+
+[.[] * 3]
+["a", "ab", "abc"]
+["aaa", "ababab", "abcabcabc"]
+
+[.[] / ","]
+["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
+[["a"," bc"," def"," ghij"," jklmn"," a","b"," c","d"," e","f"],["a","b","c","d"," e","f","g","h"]]
+
+[.[] / ", "]
+["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
+[["a","bc","def","ghij","jklmn","a,b","c,d","e,f"],["a,b,c,d","e,f,g,h"]]
 
 map(.[1] as $needle | .[0] | contains($needle))
 [[[],[]], [[1,2,3], [1,2]], [[1,2,3], [3,1]], [[1,2,3], [4]], [[1,2,3], [1,4]]]

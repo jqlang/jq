@@ -1,6 +1,9 @@
 #ifndef JV_H
 #define JV_H
 
+#include <stdarg.h>
+#include <stdint.h>
+
 typedef enum {
   JV_KIND_INVALID,
   JV_KIND_NULL,
@@ -75,14 +78,22 @@ jv jv_array_slice(jv, int, int);
 
 jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
+jv jv_string_empty(int len);
 int jv_string_length_bytes(jv);
 int jv_string_length_codepoints(jv);
 unsigned long jv_string_hash(jv);
 const char* jv_string_value(jv);
+jv jv_string_indexes(jv j, jv k);
+jv jv_string_slice(jv j, int start, int end);
 jv jv_string_concat(jv, jv);
+jv jv_string_vfmt(const char*, va_list);
 jv jv_string_fmt(const char*, ...);
+jv jv_string_append_codepoint(jv a, uint32_t c);
 jv jv_string_append_buf(jv a, const char* buf, int len);
 jv jv_string_append_str(jv a, const char* str);
+jv jv_string_split(jv j, jv sep);
+jv jv_string_explode(jv j);
+jv jv_string_implode(jv j);
 
 jv jv_object();
 jv jv_object_get(jv object, jv key);
@@ -122,6 +133,9 @@ void jv_nomem_handler(jv_nomem_handler_f, void *);
 
 jv jv_load_file(const char *, int);
 
+typedef enum {
+  JV_PARSE_EXPLODE_TOPLEVEL_ARRAY = 1
+} jv_parser_flags;
 struct jv_parser;
 struct jv_parser* jv_parser_new();
 void jv_parser_set_buf(struct jv_parser*, const char*, int, int);

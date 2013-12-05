@@ -485,6 +485,26 @@ IDENT '(' Exp ';' Exp ')' {
   $$ = gen_location(@1, $$);
   jv_free($1);
 } |
+IDENT '(' Exp ';' Exp ';' Exp ')' {
+  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7)));
+  $$ = gen_location(@1, $$);
+  jv_free($1);
+} |
+IDENT '(' Exp ';' Exp ';' Exp ';' Exp ')' {
+  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7), gen_lambda($9)));
+  $$ = gen_location(@1, $$);
+  jv_free($1);
+} |
+IDENT '(' Exp ';' Exp ';' Exp ';' Exp ';' Exp ')' {
+  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7), gen_lambda($9), gen_lambda($11)));
+  $$ = gen_location(@1, $$);
+  jv_free($1);
+} |
+IDENT '(' Exp ';' Exp ';' Exp ';' Exp ';' Exp ';' Exp ')' {
+  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7), gen_lambda($9), gen_lambda($11), gen_lambda($13)));
+  $$ = gen_location(@1, $$);
+  jv_free($1);
+} |
 '(' error ')' { $$ = gen_noop(); } |
 '[' error ']' { $$ = gen_noop(); } |
 Term '[' error ']' { $$ = $1; } |

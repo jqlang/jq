@@ -417,6 +417,14 @@ static jv_nontrivial jvp_string_new(const char* data, uint32_t length) {
   return r;
 }
 
+static jv_nontrivial jvp_string_empty_new(uint32_t length) {
+  jvp_string* s = jvp_string_alloc(length);
+  s->length_hashed = 0;
+  memset(s->data, 0, length);
+  jv_nontrivial r = {&s->refcnt, {0,0}};
+  return r;
+}
+
 static void jvp_string_free(jv_nontrivial* s) {
   if (jvp_refcnt_dec(s)) {
     jvp_string* str = jvp_string_ptr(s);
@@ -560,6 +568,13 @@ jv jv_string_sized(const char* str, int len) {
   return j;
 }
 
+jv jv_string_empty(int len) {
+  jv j;
+  j.kind = JV_KIND_STRING;
+  j.val.nontrivial = jvp_string_empty_new(len);
+  return j;
+}
+
 jv jv_string(const char* str) {
   return jv_string_sized(str, strlen(str));
 }
@@ -581,6 +596,105 @@ int jv_string_length_codepoints(jv j) {
   return len;
 }
 
+#ifndef HAVE_MEMMEM
+static const void *memmem(const void *haystack, size_t haystacklen,
+                          const void *needle, size_t needlelen)
+{
+  const char *h = haystack;
+  const char *n = needle;
+  size_t hi, hi2, ni;
+
+  if (haystacklen < needlelen || haystacklen == 0)
+    return NULL;
+  for (hi = 0; hi < (haystacklen - needlelen + 1); hi++) {
+    for (ni = 0, hi2 = hi; ni < needlelen; ni++, hi2++) {
+      if (h[hi2] != n[ni])
+        goto not_this;
+    }
+
+    return &h[hi];
+
+not_this:
+    continue;
+  }
+  return NULL;
+}
+#endif /* HAVE_MEMMEM */
+
+jv jv_string_indexes(jv j, jv k) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(jv_get_kind(k) == JV_KIND_STRING);
+  const char *jstr = jv_string_value(j);
+  const char *idxstr = jv_string_value(k);
+  const char *p;
+  int jlen = jv_string_length_bytes(jv_copy(j));
+  int idxlen = jv_string_length_bytes(jv_copy(k));
+  jv a = jv_array();
+
+  p = jstr;
+  while ((p = memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
+    a = jv_array_append(a, jv_number(p - jstr));
+    p += idxlen;
+  }
+  jv_free(j);
+  jv_free(k);
+  return a;
+}
+
+jv jv_string_split(jv j, jv sep) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(jv_get_kind(sep) == JV_KIND_STRING);
+  const char *jstr = jv_string_value(j);
+  const char *sepstr = jv_string_value(sep);
+  const char *p, *s;
+  int jlen = jv_string_length_bytes(jv_copy(j));
+  int seplen = jv_string_length_bytes(jv_copy(sep));
+  jv a = jv_array();
+
+  assert(jv_get_refcnt(a) == 1);
+
+  for (p = jstr; p < jstr + jlen; p = s + seplen) {
+    s = memmem(p, (jstr + jlen) - p, sepstr, seplen);
+    if (s == NULL)
+      s = jstr + jlen;
+    a = jv_array_append(a, jv_string_sized(p, s - p));
+  }
+  jv_free(j);
+  jv_free(sep);
+  return a;
+}
+
+jv jv_string_explode(jv j) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  const char* i = jv_string_value(j);
+  int len = jv_string_length_bytes(jv_copy(j));
+  const char* end = i + len;
+  jv a = jv_array_sized(len);
+  int c;
+  while ((i = jvp_utf8_next(i, end, &c)))
+    a = jv_array_append(a, jv_number(c));
+  jv_free(j);
+  return a;
+}
+
+jv jv_string_implode(jv j) {
+  assert(jv_get_kind(j) == JV_KIND_ARRAY);
+  int len = jv_array_length(jv_copy(j));
+  jv s = jv_string_empty(len);
+  int i;
+
+  assert(len >= 0);
+
+  for (i = 0; i < len; i++) {
+    jv n = jv_array_get(jv_copy(j), i);
+    assert(jv_get_kind(n) == JV_KIND_NUMBER);
+    s = jv_string_append_codepoint(s, jv_number_value(n));
+  }
+
+  jv_free(j);
+  return s;
+}
+
 unsigned long jv_string_hash(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   uint32_t hash = jvp_string_hash(jvp_string_ptr(&j.val.nontrivial));
@@ -591,6 +705,63 @@ unsigned long jv_string_hash(jv j) {
 const char* jv_string_value(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   return jvp_string_ptr(&j.val.nontrivial)->data;
+}
+
+jv jv_string_slice(jv j, int start, int end) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  const char *s = jv_string_value(j);
+  int len = jv_string_length_bytes(jv_copy(j));
+  int i;
+  const char *p, *e;
+  int c;
+  jv res;
+
+  if (start < 0) start = len + start;
+  if (end < 0) end = len + end;
+
+  if (start < 0) start = 0;
+  if (start > len) start = len;
+  if (end > len) end = len;
+  if (end < start) end = start;
+  if (start < 0 || start > end || end > len)
+    return jv_invalid_with_msg(jv_string("Invalid string slice indices"));
+  assert(0 <= start && start <= end && end <= len);
+
+  /* Look for byte offset corresponding to start codepoints */
+  for (p = s, i = 0; i < start; i++) {
+    p = jvp_utf8_next(p, s + len, &c);
+    if (p == NULL) {
+      jv_free(j);
+      return jv_string_empty(16);
+    }
+    if (c == -1) {
+      jv_free(j);
+      return jv_invalid_with_msg(jv_string("Invalid UTF-8 string"));
+    }
+  }
+  /* Look for byte offset corresponding to end codepoints */
+  for (e = p; e != NULL && i < end; i++) {
+    e = jvp_utf8_next(e, s + len, &c);
+    if (e == NULL) {
+      e = s + len;
+      break;
+    }
+    if (c == -1) {
+      jv_free(j);
+      return jv_invalid_with_msg(jv_string("Invalid UTF-8 string"));
+    }
+  }
+
+  /*
+   * NOTE: Ideally we should do here what jvp_array_slice() does instead
+   * of allocating a new string as we do!  However, we assume NUL-
+   * terminated strings all over, and in the jv API, so for now we waste
+   * memory like a drunken navy programmer.  There's probably nothing we
+   * can do about it.
+   */
+  res = jv_string_sized(p, e - p);
+  jv_free(j);
+  return res;
 }
 
 jv jv_string_concat(jv a, jv b) {
@@ -612,18 +783,25 @@ jv jv_string_append_buf(jv a, const char* buf, int len) {
   return a;
 }
 
+jv jv_string_append_codepoint(jv a, uint32_t c) {
+  char buf[5];
+  int len = jvp_utf8_encode(c, buf);
+  jvp_string_append(&a.val.nontrivial, buf, len);
+  return a;
+}
+
 jv jv_string_append_str(jv a, const char* str) {
   return jv_string_append_buf(a, str, strlen(str));
 }
 
-jv jv_string_fmt(const char* fmt, ...) {
+jv jv_string_vfmt(const char* fmt, va_list ap) {
   int size = 1024;
   while (1) {
     char* buf = jv_mem_alloc(size);
-    va_list args;
-    va_start(args, fmt);
-    int n = vsnprintf(buf, size, fmt, args);
-    va_end(args);
+    va_list ap2;
+    va_copy(ap2, ap);
+    int n = vsnprintf(buf, size, fmt, ap2);
+    va_end(ap2);
     if (n < size) {
       jv ret = jv_string_sized(buf, n);
       jv_mem_free(buf);
@@ -633,6 +811,14 @@ jv jv_string_fmt(const char* fmt, ...) {
       size = n * 2;
     }
   }
+}
+
+jv jv_string_fmt(const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  jv res = jv_string_vfmt(fmt, args);
+  va_end(args);
+  return res;
 }
 
 /*

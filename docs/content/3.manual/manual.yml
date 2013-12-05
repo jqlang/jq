@@ -80,6 +80,12 @@ sections:
         Instead of running the filter for each JSON object in the
         input, read the entire input stream into a large array and run
         the filter just once.
+
+      * `--online-input`/`-I`:
+  
+        When the top-level input value is an array produce its elements
+        instead of the array.  This allows on-line processing of
+        potentially very large top-level arrays' elements.
       
       * `--raw-input`/`-R`:
       
@@ -135,6 +141,13 @@ sections:
 
         Read filter from the file rather than from a command line, like
         awk's -f option. You can also use '#' to make comments.
+
+      * `-e` / `--exit-status`:
+
+        Sets the exit status of jq to 10 if the last output values was
+        `false`, 11 if the last output value was `null`, or 0 if the
+        last output value was valid. Normally jq exits with 0, or 1 if
+        there was any usage problem or other error.
 
       * `--arg name value`:
 
@@ -199,11 +212,12 @@ sections:
           returns the third element of the array.
 
           The `.[10:15]` syntax can be used to return a subarray of an
-          array. The array returned by `.[10:15]` will be of length 5,
-          containing the elements from index 10 (inclusive) to index
-          15 (exclusive). Either index may be negative (in which case
-          it counts backwards from the end of the array), or omitted
-          (in which case it refers to the start or end of the array).
+          array or substring of a string. The array returned by
+          `.[10:15]` will be of length 5, containing the elements from
+          index 10 (inclusive) to index 15 (exclusive). Either index may
+          be negative (in which case it counts backwards from the end of
+          the array), or omitted (in which case it refers to the start
+          or end of the array).
 
         examples:
           - program: '.[0]'
@@ -217,6 +231,10 @@ sections:
           - program: '.[2:4]'
             input: '["a","b","c","d","e"]'
             output: ['["c", "d"]']
+
+          - program: '.[2:4]'
+            input: '"abcdefghi"'
+            output: ['"cd"']
           
           - program: '.[:3]'
             input: '["a","b","c","d","e"]'
@@ -458,10 +476,19 @@ sections:
 
           These operators only work on numbers, and do the expected.
 
+          Multiplying a string by a number produces the concatenation of
+          that string that many times.
+
+          Dividing a string by another splits the first using the second
+          as separators.
+
         examples:
           - program: '10 / . * 3'
             input: 5
             output: [6]
+          - program: '. / ", "'
+            input: '"a, b,c,d, e"'
+            output: ['["a","b,c,d","e"]']
 
       - title: `length`
         body: |
@@ -806,6 +833,79 @@ sections:
             input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
             output: ['false']
 
+      - title: `startswith`
+        body: |
+
+          Outputs true if . starts with the given string argument.
+
+        examples:
+          - program: '[.[]|startswith("foo")]'
+            input: '["fo", "foo", "barfoo", "foobar", "barfoob"]'
+            output: ['[false, true, false, true, false]']
+
+      - title: `endswith`
+        body: |
+
+          Outputs true if . ends with the given string argument.
+
+        examples:
+          - program: '[.[]|endswith("foo")]'
+            input: '["foobar", "barfoo"]'
+            output: ['[false, true, true, false, false]']
+
+      - title: `ltrimstr`
+        body: |
+
+          Outputs its input with the given prefix string removed, if it
+          starts with it.
+
+        examples:
+          - program: '[.[]|ltrimstr("foo")]'
+            input: ["fo", "foo", "barfoo", "foobar", "afoo"]
+            output: ['["fo","","barfoo","bar","afoo"]']
+
+      - title: `rtrimstr`
+        body: |
+
+          Outputs its input with the given suffix string removed, if it
+          starts with it.
+
+        examples:
+          - program: '[.[]|rtrimstr("foo")]'
+            input: ["fo", "foo", "barfoo", "foobar", "foob"]
+            output: ['["fo","","bar","foobar","foob"]']
+
+      - title: `explode`
+        body: |
+
+          Converts an input string into an array of the string's
+          codepoint numbers.
+
+        examples:
+          - program: 'explode'
+            input: '"foobar"'
+            output: ['[102,111,111,98,97,114]']
+
+      - title: `implode`
+        body: |
+
+          The inverse of explode.
+
+        examples:
+          - program: 'implode'
+            input: '[65, 66, 67]'
+            output: ['"ABC"']
+
+      - title: `split`
+        body: |
+
+          Splits an input string on the separator argument.
+
+        examples:
+          - program: 'split(", ")'
+            input: '"a, b,c,d, e"'
+            output: ['["a","b,c,d","e"]']
+
       - title: `recurse`
         body: |
           
@@ -850,6 +950,24 @@ sections:
             input: '42'
             output: ['"The input was 42, which is one less than 43"']
           
+      - title: "Convert to/from JSON"
+
+          The `tojson` and `fromjson` builtins dump values as JSON texts
+          or parse JSON texts into values, respectively.  The tojson
+          builtin differs from tostring in that tostring returns strings
+          unmodified, while tojson encodes strings as JSON strings.
+
+        examples:
+          - program: '[.[]|tostring]'
+            input: '[1, "foo", ["foo"]]'
+            output: '["1","foo","[\"foo\"]"]'
+          - program: '[.[]|tojson]'
+            input: '[1, "foo", ["foo"]]'
+            output: '["1","\"foo\"","[\"foo\"]"]'
+          - program: '[.[]|tojson|fromjson]'
+            input: '[1, "foo", ["foo"]]'
+            output: '[1,"foo",["foo"]]'
+
       - title: "Format strings and escaping"
         body: |
 

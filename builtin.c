@@ -77,6 +77,64 @@ static jv f_negate(jv input) {
   return ret;
 }
 
+static jv f_startswith(jv a, jv b) {
+  int alen = jv_string_length_bytes(jv_copy(a));
+  int blen = jv_string_length_bytes(jv_copy(b));
+  jv ret;
+
+  if (blen <= alen && memcmp(jv_string_value(a), jv_string_value(b), blen) == 0)
+    ret = jv_true();
+  else
+    ret = jv_false();
+  jv_free(a);
+  jv_free(b);
+  return ret;
+}
+
+static jv f_endswith(jv a, jv b) {
+  const char *astr = jv_string_value(a);
+  const char *bstr = jv_string_value(b);
+  size_t alen = jv_string_length_bytes(jv_copy(a));
+  size_t blen = jv_string_length_bytes(jv_copy(b));
+  jv ret;;
+
+  if (alen < blen ||
+     memcmp(astr + (alen - blen), bstr, blen) != 0)
+    ret = jv_false();
+  else
+    ret = jv_true();
+  jv_free(a);
+  jv_free(b);
+  return ret;
+}
+
+static jv f_ltrimstr(jv input, jv left) {
+  if (jv_get_kind(f_startswith(jv_copy(input), jv_copy(left))) != JV_KIND_TRUE) {
+    jv_free(left);
+    return input;
+  }
+  /*
+   * FIXME It'd be better to share the suffix with the original input --
+   * that we could do, we just can't share prefixes.
+   */
+  int prefixlen = jv_string_length_bytes(left);
+  jv res = jv_string_sized(jv_string_value(input) + prefixlen,
+                           jv_string_length_bytes(jv_copy(input)) - prefixlen);
+  jv_free(input);
+  return res;
+}
+
+static jv f_rtrimstr(jv input, jv right) {
+  if (jv_get_kind(f_endswith(jv_copy(input), jv_copy(right))) == JV_KIND_TRUE) {
+    jv res = jv_string_sized(jv_string_value(input),
+                             jv_string_length_bytes(jv_copy(input)) - jv_string_length_bytes(right));
+    jv_free(input);
+    return res;
+  }
+  jv_free(right);
+  return input;
+}
+
 static jv f_minus(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
@@ -107,6 +165,19 @@ static jv f_multiply(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) * jv_number_value(b));
+  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_NUMBER) {
+    int n;
+    size_t alen = jv_string_length_bytes(jv_copy(a));
+    jv res = a;
+
+    for (n = jv_number_value(b) - 1; n > 0; n--)
+      res = jv_string_append_buf(res, jv_string_value(a), alen);
+
+    if (n < 0) {
+      jv_free(a);
+      return jv_null();
+    }
+    return res;
   } else {
     return type_error2(a, b, "cannot be multiplied");
   }  
@@ -116,6 +187,8 @@ static jv f_divide(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) / jv_number_value(b));
+  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
+    return jv_string_split(a, b);
   } else {
     return type_error2(a, b, "cannot be divided");
   }  
@@ -180,6 +253,19 @@ static jv f_contains(jv a, jv b) {
   }
 }
 
+static jv f_dump(jv input) {
+  return jv_dump_string(input, 0);
+}
+
+static jv f_json_parse(jv input) {
+  if (jv_get_kind(input) != JV_KIND_STRING)
+    return type_error(input, "only strings can be parsed");
+  jv res = jv_parse_sized(jv_string_value(input),
+                          jv_string_length_bytes(jv_copy(input)));
+  jv_free(input);
+  return res;
+}
+
 static jv f_tonumber(jv input) {
   if (jv_get_kind(input) == JV_KIND_NUMBER) {
     return input;
@@ -201,6 +287,8 @@ static jv f_length(jv input) {
     return jv_number(jv_object_length(input));
   } else if (jv_get_kind(input) == JV_KIND_STRING) {
     return jv_number(jv_string_length_codepoints(input));
+  } else if (jv_get_kind(input) == JV_KIND_NUMBER) {
+    return jv_number(fabs(jv_number_value(input)));
   } else if (jv_get_kind(input) == JV_KIND_NULL) {
     jv_free(input);
     return jv_number(0);
@@ -490,9 +578,18 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_multiply, "_multiply", 3},
   {(cfunction_ptr)f_divide, "_divide", 3},
   {(cfunction_ptr)f_mod, "_mod", 3},
+  {(cfunction_ptr)f_dump, "tojson", 1},
+  {(cfunction_ptr)f_json_parse, "fromjson", 1},
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
   {(cfunction_ptr)f_keys, "keys", 1},
+  {(cfunction_ptr)f_startswith, "startswith", 2},
+  {(cfunction_ptr)f_endswith, "endswith", 2},
+  {(cfunction_ptr)f_ltrimstr, "ltrimstr", 2},
+  {(cfunction_ptr)f_rtrimstr, "rtrimstr", 2},
+  {(cfunction_ptr)jv_string_split, "split", 2},
+  {(cfunction_ptr)jv_string_explode, "explode", 1},
+  {(cfunction_ptr)jv_string_implode, "implode", 1},
   {(cfunction_ptr)jv_setpath, "setpath", 3}, // FIXME typechecking
   {(cfunction_ptr)jv_getpath, "getpath", 2},
   {(cfunction_ptr)jv_delpaths, "delpaths", 2},
@@ -579,12 +676,14 @@ static const char* const jq_builtins[] = {
   "def from_entries: map({(.key): .value}) | add;",
   "def with_entries(f): to_entries | map(f) | from_entries;",
   "def reverse: [.[length - 1 - range(0;length)]];",
+  "def index(i): .[i][0];",
+  "def rindex(i): .[i][-1:][0];",
 };
 
 
-int builtins_bind_one(block* bb, const char* code) {
+static int builtins_bind_one(jq_state *jq, block* bb, const char* code) {
   struct locfile src;
-  locfile_init(&src, code, strlen(code));
+  locfile_init(&src, jq, code, strlen(code));
   block funcs;
   int nerrors = jq_parse_library(&src, &funcs);
   if (nerrors == 0) {
@@ -594,14 +693,14 @@ int builtins_bind_one(block* bb, const char* code) {
   return nerrors;
 }
 
-int slurp_lib(block* bb) {
+static int slurp_lib(jq_state *jq, block* bb) {
   int nerrors = 0;
   char* home = getenv("HOME");
   if (home) {    // silently ignore no $HOME
     jv filename = jv_string_append_str(jv_string(home), "/.jq");
     jv data = jv_load_file(jv_string_value(filename), 1);
     if (jv_is_valid(data)) {
-      nerrors = builtins_bind_one(bb, jv_string_value(data) );
+      nerrors = builtins_bind_one(jq, bb, jv_string_value(data) );
     }
     jv_free(filename);
     jv_free(data);
@@ -609,14 +708,14 @@ int slurp_lib(block* bb) {
   return nerrors;
 }
 
-int builtins_bind(block* bb) {
-  int nerrors = slurp_lib(bb);
+int builtins_bind(jq_state *jq, block* bb) {
+  int nerrors = slurp_lib(jq, bb);
   if (nerrors) {
     block_free(*bb);
     return nerrors;
   }
   for (int i=(int)(sizeof(jq_builtins)/sizeof(jq_builtins[0]))-1; i>=0; i--) {
-    nerrors = builtins_bind_one(bb, jq_builtins[i]);
+    nerrors = builtins_bind_one(jq, bb, jq_builtins[i]);
     assert(!nerrors);
   }
   *bb = bind_bytecoded_builtins(*bb);

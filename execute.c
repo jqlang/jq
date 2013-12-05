@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -18,6 +20,9 @@ struct jq_state {
   void (*nomem_handler)(void *);
   void *nomem_handler_data;
   struct bytecode* bc;
+
+  jq_err_cb err_cb;
+  void *err_cb_data;
 
   struct stack stk;
   stack_ptr curr_frame;
@@ -238,15 +243,22 @@ static void jq_reset(jq_state *jq) {
   jq->subexp_nest = 0;
 }
 
-
-
-
-void print_error(jv value) {
+static void print_error(jq_state *jq, jv value) {
   assert(!jv_is_valid(value));
   jv msg = jv_invalid_get_msg(value);
-  if (jv_get_kind(msg) == JV_KIND_STRING) {
-    fprintf(stderr, "jq: error: %s\n", jv_string_value(msg));
-  }
+  jv msg2;
+  if (jv_get_kind(msg) == JV_KIND_STRING)
+    msg2 = jv_string_fmt("jq: error: %s", jv_string_value(msg));
+  else
+    msg2 = jv_string_fmt("jq: error: <unknown>");
+  jv_free(msg);
+
+  if (jq->err_cb)
+    jq->err_cb(jq->err_cb_data, msg2);
+  else if (jv_get_kind(msg2) == JV_KIND_STRING)
+    fprintf(stderr, "%s\n", jv_string_value(msg2));
+  else
+    fprintf(stderr, "jq: error: %s\n", strerror(ENOMEM));
   jv_free(msg);
 }
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
@@ -368,8 +380,8 @@ jv jq_next(jq_state *jq) {
         stack_push(jq, jv_object_set(objv, k, v));
         stack_push(jq, stktop);
       } else {
-        print_error(jv_invalid_with_msg(jv_string_fmt("Cannot use %s as object key",
-                                                      jv_kind_name(jv_get_kind(k)))));
+        print_error(jq, jv_invalid_with_msg(jv_string_fmt("Cannot use %s as object key",
+                                                          jv_kind_name(jv_get_kind(k)))));
         jv_free(stktop);
         jv_free(v);
         jv_free(k);
@@ -387,7 +399,7 @@ jv jq_next(jq_state *jq) {
       jv max = stack_pop(jq);
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
           jv_get_kind(max) != JV_KIND_NUMBER) {
-        print_error(jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
+        print_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
         jv_free(max);
         goto do_backtrack;
       } else if (jv_number_value(jv_copy(*var)) >= jv_number_value(jv_copy(max))) {
@@ -499,7 +511,7 @@ jv jq_next(jq_state *jq) {
       if (jv_is_valid(v)) {
         stack_push(jq, v);
       } else {
-        print_error(v);
+        print_error(jq, v);
         goto do_backtrack;
       }
       break;
@@ -552,8 +564,8 @@ jv jq_next(jq_state *jq) {
         }
       } else {
         assert(opcode == EACH);
-        print_error(jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s",
-                                                      jv_kind_name(jv_get_kind(container)))));
+        print_error(jq, jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s",
+                                                          jv_kind_name(jv_get_kind(container)))));
         keep_going = 0;
       }
 
@@ -624,7 +636,7 @@ jv jq_next(jq_state *jq) {
       if (jv_is_valid(top)) {
         stack_push(jq, top);
       } else {
-        print_error(top);
+        print_error(jq, top);
         goto do_backtrack;
       }
       break;
@@ -682,8 +694,21 @@ jq_state *jq_init(void) {
   jq->fork_top = 0;
   jq->curr_frame = 0;
 
+  jq->err_cb = NULL;
+  jq->err_cb_data = NULL;
+
   jq->path = jv_null();
   return jq;
+}
+
+void jq_set_error_cb(jq_state *jq, jq_err_cb cb, void *data) {
+  jq->err_cb = cb;
+  jq->err_cb_data = data;
+}
+
+void jq_get_error_cb(jq_state *jq, jq_err_cb *cb, void **data) {
+  *cb = jq->err_cb;
+  *data = jq->err_cb_data;
 }
 
 void jq_set_nomem_handler(jq_state *jq, void (*nomem_handler)(void *), void *data) {
@@ -729,7 +754,7 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   assert(jv_get_kind(args) == JV_KIND_ARRAY);
   struct locfile locations;
-  locfile_init(&locations, str, strlen(str));
+  locfile_init(&locations, jq, str, strlen(str));
   block program;
   jq_reset(jq);
   if (jq->bc) {
@@ -746,13 +771,21 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
       jv_free(name);
     }
     jv_free(args);
-    nerrors = builtins_bind(&program);
+    nerrors = builtins_bind(jq, &program);
     if (nerrors == 0) {
       nerrors = block_compile(program, &locations, &jq->bc);
     }
   }
   if (nerrors) {
-    fprintf(stderr, "%d compile %s\n", nerrors, nerrors > 1 ? "errors" : "error");
+    jv s = jv_string_fmt("%d compile %s", nerrors,
+                         nerrors > 1 ? "errors" : "error");
+    if (jq->err_cb != NULL)
+      jq->err_cb(jq->err_cb_data, s);
+    else if (!jv_is_valid(s))
+      fprintf(stderr, "Error formatting jq compilation errors: %s\n", strerror(errno));
+    else
+      fprintf(stderr, "%s\n", jv_string_value(s));
+    jv_free(s);
   }
   locfile_free(&locations);
   return jq->bc != NULL;
