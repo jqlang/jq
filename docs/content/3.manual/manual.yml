@@ -836,7 +836,7 @@ sections:
       - title: `startswith`
         body: |
 
-          Outputs true if . starts with the given string argument.
+          Outputs `true` if . starts with the given string argument.
 
         examples:
           - program: '[.[]|startswith("foo")]'
@@ -846,7 +846,7 @@ sections:
       - title: `endswith`
         body: |
 
-          Outputs true if . ends with the given string argument.
+          Outputs `true` if . ends with the given string argument.
 
         examples:
           - program: '[.[]|endswith("foo")]'
@@ -861,7 +861,7 @@ sections:
 
         examples:
           - program: '[.[]|ltrimstr("foo")]'
-            input: ["fo", "foo", "barfoo", "foobar", "afoo"]
+            input: '["fo", "foo", "barfoo", "foobar", "afoo"]'
             output: ['["fo","","barfoo","bar","afoo"]']
 
       - title: `rtrimstr`
@@ -872,7 +872,7 @@ sections:
 
         examples:
           - program: '[.[]|rtrimstr("foo")]'
-            input: ["fo", "foo", "barfoo", "foobar", "foob"]
+            input: '["fo", "foo", "barfoo", "foobar", "foob"]'
             output: ['["fo","","bar","foobar","foob"]']
 
       - title: `explode`
@@ -951,6 +951,7 @@ sections:
             output: ['"The input was 42, which is one less than 43"']
           
       - title: "Convert to/from JSON"
+        body: |
 
           The `tojson` and `fromjson` builtins dump values as JSON texts
           or parse JSON texts into values, respectively.  The tojson
@@ -960,13 +961,13 @@ sections:
         examples:
           - program: '[.[]|tostring]'
             input: '[1, "foo", ["foo"]]'
-            output: '["1","foo","[\"foo\"]"]'
+            output: ['["1","foo","[\"foo\"]"]']
           - program: '[.[]|tojson]'
             input: '[1, "foo", ["foo"]]'
-            output: '["1","\"foo\"","[\"foo\"]"]'
+            output: ['["1","\"foo\"","[\"foo\"]"]']
           - program: '[.[]|tojson|fromjson]'
             input: '[1, "foo", ["foo"]]'
-            output: '[1,"foo",["foo"]]'
+            output: ['[1,"foo",["foo"]]']
 
       - title: "Format strings and escaping"
         body: |
