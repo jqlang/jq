@@ -259,7 +259,7 @@ static void print_error(jq_state *jq, jv value) {
     fprintf(stderr, "%s\n", jv_string_value(msg2));
   else
     fprintf(stderr, "jq: error: %s\n", strerror(ENOMEM));
-  jv_free(msg);
+  jv_free(msg2);
 }
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
