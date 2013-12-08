@@ -182,8 +182,10 @@ static void jv_test() {
     a4 = jv_array_slice(a4, 0, 1);
     assert(jv_array_length(jv_copy(a4)) == 1);
     a4 = jv_array_append(a4, jv_number(4));
-    assert(jv_array_length(a4) == 2);
-    assert(jv_array_length(a5) == 2);
+    assert(jv_array_length(jv_copy(a4)) == 2);
+    assert(jv_array_length(jv_copy(a5)) == 2);
+    jv_free(a4);
+    jv_free(a5);
 
 
     assert(jv_array_length(jv_copy(a)) == 2);
@@ -201,8 +203,10 @@ static void jv_test() {
     assert(jv_equal(jv_string("foo"), jv_string_sized("foo", 3)));
     char nasty[] = "foo\0";
     jv shortstr = jv_string(nasty), longstr = jv_string_sized(nasty, sizeof(nasty));
-    assert(jv_string_length_bytes(shortstr) == (int)strlen(nasty));
-    assert(jv_string_length_bytes(longstr) == (int)sizeof(nasty));
+    assert(jv_string_length_bytes(jv_copy(shortstr)) == (int)strlen(nasty));
+    assert(jv_string_length_bytes(jv_copy(longstr)) == (int)sizeof(nasty));
+    jv_free(shortstr);
+    jv_free(longstr);
 
   
     char a1s[] = "hello", a2s[] = "hello", bs[] = "goodbye";
