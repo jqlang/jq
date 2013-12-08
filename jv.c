@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #include "jv_alloc.h"
 #include "jv.h"
@@ -51,6 +52,7 @@ const char* jv_kind_name(jv_kind k) {
   case JV_KIND_FALSE:   return "boolean";
   case JV_KIND_TRUE:    return "boolean";
   case JV_KIND_NUMBER:  return "number";
+  case JV_KIND_INTEGER: return "number";
   case JV_KIND_STRING:  return "string";
   case JV_KIND_ARRAY:   return "array";
   case JV_KIND_OBJECT:  return "object";
@@ -128,6 +130,11 @@ static void jvp_invalid_free(jv x) {
  */
 
 jv jv_number(double x) {
+  int64_t i = (int64_t)x;
+  if(x == (double)i){
+    return jv_integer(i); 
+  }
+
   jv j;
   j.kind_flags = JV_KIND_NUMBER;
   j.size = 0;
@@ -135,9 +142,24 @@ jv jv_number(double x) {
   return j;
 }
 
-double jv_number_value(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_NUMBER);
-  return j.u.number;
+jv jv_integer(int64_t x){
+  jv j;
+  j.kind_flags = JV_KIND_INTEGER;
+  j.u.integer = x;
+  return j;
+}
+
+int jv_is_number(jv j){
+  return (jv_get_kind(j) == JV_KIND_NUMBER) || (jv_get_kind(j) == JV_KIND_INTEGER);
+}
+
+double jv_number_value(jv j){
+  assert(jv_is_number(j));
+  if(jv_get_kind(j) == JV_KIND_NUMBER){
+    return j.u.number;
+  } else {
+    return (double)j.u.integer;
+  }
 }
 
 
@@ -664,7 +686,7 @@ jv jv_string_implode(jv j) {
 
   for (i = 0; i < len; i++) {
     jv n = jv_array_get(jv_copy(j), i);
-    assert(jv_get_kind(n) == JV_KIND_NUMBER);
+    assert(jv_is_number(n));
     s = jv_string_append_codepoint(s, jv_number_value(n));
   }
 
@@ -1193,7 +1215,7 @@ int jv_equal(jv a, jv b) {
   int r;
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
-  } else if (jv_get_kind(a) == JV_KIND_NUMBER) {
+  } else if (jv_is_number(a)) {
     r = jv_number_value(a) == jv_number_value(b);
   } else if (a.kind_flags == b.kind_flags &&
              a.size == b.size &&

@@ -138,7 +138,8 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   case JV_KIND_TRUE:
     put_str("true", F, S);
     break;
-  case JV_KIND_NUMBER: {
+  case JV_KIND_NUMBER:
+  case JV_KIND_INTEGER: {
     double d = jv_number_value(x);
     if (d != d) {
       // JSON doesn't have NaN, so we'll render it as "null"
