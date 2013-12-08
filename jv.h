@@ -20,7 +20,8 @@ struct jv_refcnt;
 /* All of the fields of this struct are private.
    Really. Do not play with them. */
 typedef struct {
-  unsigned char kind;
+  unsigned char kind_flags;
+  unsigned char pad_;
   unsigned short offset;  /* array offsets */
   int size;
   union {
