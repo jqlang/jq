@@ -248,4 +248,11 @@ static void jv_test() {
 
     jv_free(o2);
   }
+
+  /// Compile errors
+  {
+    jq_state *jq = jq_init();
+    jq_compile_args(jq, "}", jv_array());
+    jq_teardown(&jq);
+  }
 }
