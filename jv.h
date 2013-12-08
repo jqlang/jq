@@ -16,17 +16,17 @@ typedef enum {
 } jv_kind;
 
 struct jv_refcnt;
-typedef struct{
-  struct jv_refcnt* ptr;
-  int i[2];
-} jv_nontrivial;
 
+/* All of the fields of this struct are private.
+   Really. Do not play with them. */
 typedef struct {
-  jv_kind kind;
+  unsigned char kind;
+  unsigned short offset;  /* array offsets */
+  int size;
   union {
+    struct jv_refcnt* ptr;
     double number;
-    jv_nontrivial nontrivial;
-  } val;
+  } u;
 } jv;
 
 /*

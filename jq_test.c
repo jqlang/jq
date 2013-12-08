@@ -160,9 +160,9 @@ static void jv_test() {
 
     jv_free(subarray);
 
-    void* before = sub2.val.nontrivial.ptr;
+    void* before = sub2.u.ptr;
     sub2 = jv_array_append(sub2, jv_number(200));
-    void* after = sub2.val.nontrivial.ptr;
+    void* after = sub2.u.ptr;
     assert(before == after);
     jv_free(sub2);
 
