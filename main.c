@@ -110,7 +110,7 @@ static int process(jq_state *jq, jv value, int flags) {
 }
 
 FILE* current_input;
-const char** input_filenames;
+const char** input_filenames = NULL;
 int ninput_files;
 int next_input_idx;
 static int read_more(char* buf, size_t size) {
@@ -138,7 +138,7 @@ static int read_more(char* buf, size_t size) {
 }
 
 int main(int argc, char* argv[]) {
-  jq_state *jq;
+  jq_state *jq = NULL;
   int ret = 0;
   int compiled = 0;
 
@@ -151,7 +151,8 @@ int main(int argc, char* argv[]) {
   jq = jq_init();
   if (jq == NULL) {
     perror("malloc");
-    return 1;
+    ret = 1;
+    goto out;
   }
 
   const char* program = 0;
@@ -222,7 +223,8 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "%s: Bad JSON in --argfile %s %s: %s\n", progname,
                 argv[i+1], argv[i+2], jv_string_value(data));
         jv_free(data);
-        return 1;
+        ret = 1;
+        goto out;
       }
       if (jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
           data = jv_array_get(data, 0);
@@ -237,7 +239,8 @@ int main(int argc, char* argv[]) {
       usage();
     } else if (isoption(argv[i], 'V', "version")) {
       printf("jq-%s\n", JQ_VERSION);
-      return 0;
+      ret = 0;
+      goto out;
     } else {
       fprintf(stderr, "%s: Unknown option %s\n", progname, argv[i]);
       die();
@@ -257,14 +260,18 @@ int main(int argc, char* argv[]) {
       data = jv_invalid_get_msg(data);
       fprintf(stderr, "%s: %s\n", progname, jv_string_value(data));
       jv_free(data);
-      return 1;
+      ret = 1;
+      goto out;
     }
     compiled = jq_compile_args(jq, jv_string_value(data), program_arguments);
     jv_free(data);
   } else {
     compiled = jq_compile_args(jq, program, program_arguments);
   }
-  if (!compiled) return 1;
+  if (!compiled){
+    ret = 1;
+    goto out;
+  }
 
   if (options & DUMP_DISASM) {
     jq_dump_disassembly(jq, 0);
@@ -324,8 +331,12 @@ int main(int argc, char* argv[]) {
     }
   }
 out:
-  jv_mem_free(input_filenames);
-  jq_teardown(&jq);
+  if(input_filenames != NULL){
+    jv_mem_free(input_filenames);
+  }
+  if(jq != NULL){
+    jq_teardown(&jq);
+  }
   if (ret >= 10 && ret <= 11 && !(options & EXIT_STATUS))
     return 0;
   return ret;
