@@ -96,8 +96,8 @@ enomem:
   if (cb != NULL)
     cb(cb_data, jv_invalid());
   else if (errno == ENOMEM || errno == 0)
-    vfprintf(stderr, "Error formatting jq compilation error: %s", strerror(errno ? errno : ENOMEM));
+    fprintf(stderr, "Error formatting jq compilation error: %s", strerror(errno ? errno : ENOMEM));
   else
-    vfprintf(stderr, "Error formatting jq compilation error: %s", strerror(errno));
+    fprintf(stderr, "Error formatting jq compilation error: %s", strerror(errno));
   return;
 }
