@@ -770,12 +770,12 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
       program = gen_var_binding(gen_const(value), jv_string_value(name), program);
       jv_free(name);
     }
-    jv_free(args);
     nerrors = builtins_bind(jq, &program);
     if (nerrors == 0) {
       nerrors = block_compile(program, &locations, &jq->bc);
     }
   }
+  jv_free(args);
   if (nerrors) {
     jv s = jv_string_fmt("%d compile %s", nerrors,
                          nerrors > 1 ? "errors" : "error");
