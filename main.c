@@ -331,12 +331,8 @@ int main(int argc, char* argv[]) {
     }
   }
 out:
-  if(input_filenames != NULL){
-    jv_mem_free(input_filenames);
-  }
-  if(jq != NULL){
-    jq_teardown(&jq);
-  }
+  jv_mem_free(input_filenames);
+  jq_teardown(&jq);
   if (ret >= 10 && ret <= 11 && !(options & EXIT_STATUS))
     return 0;
   return ret;
