@@ -20,8 +20,8 @@ static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
     jv_free(end_jv);
     end_jv = jv_number(len);
   }
-  if (jv_get_kind(start_jv) != JV_KIND_NUMBER ||
-      jv_get_kind(end_jv) != JV_KIND_NUMBER) {
+  if (!jv_is_number(start_jv) ||
+       !jv_is_number(end_jv)) {
     jv_free(start_jv);
     jv_free(end_jv);
     return 0;
@@ -50,7 +50,7 @@ jv jv_get(jv t, jv k) {
       jv_free(v);
       v = jv_null();
     }
-  } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
+  } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_is_number(k)) {
     // FIXME: don't do lookup for noninteger index
     v = jv_array_get(t, (int)jv_number_value(k));
     if (!jv_is_valid(v)) {
@@ -77,7 +77,7 @@ jv jv_get(jv t, jv k) {
     v = jv_string_indexes(t, k);
   } else if (jv_get_kind(t) == JV_KIND_NULL && 
              (jv_get_kind(k) == JV_KIND_STRING || 
-              jv_get_kind(k) == JV_KIND_NUMBER || 
+              jv_is_number(k) || 
               jv_get_kind(k) == JV_KIND_OBJECT)) {
     jv_free(t);
     jv_free(k);
@@ -103,7 +103,7 @@ jv jv_set(jv t, jv k, jv v) {
       (jv_get_kind(t) == JV_KIND_OBJECT || isnull)) {
     if (isnull) t = jv_object();
     t = jv_object_set(t, k, v);
-  } else if (jv_get_kind(k) == JV_KIND_NUMBER &&
+  } else if (jv_is_number(k) &&
              (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
     if (isnull) t = jv_array();
     t = jv_array_set(t, (int)jv_number_value(k), v);
@@ -172,7 +172,7 @@ jv jv_has(jv t, jv k) {
     ret = jv_bool(jv_is_valid(elem));
     jv_free(elem);
   } else if (jv_get_kind(t) == JV_KIND_ARRAY &&
-             jv_get_kind(k) == JV_KIND_NUMBER) {
+             jv_is_number(k)) {
     jv elem = jv_array_get(t, (int)jv_number_value(k));
     ret = jv_bool(jv_is_valid(elem));
     jv_free(elem);
@@ -200,7 +200,7 @@ jv jv_dels(jv t, jv keys) {
     jv new_array = jv_array();
     jv starts = jv_array(), ends = jv_array();
     jv_array_foreach(orig_keys, i, key) {
-      if (jv_get_kind(key) == JV_KIND_NUMBER) {
+      if (jv_is_number(key)) {
         keys = jv_array_append(keys, key);
       } else if (jv_get_kind(key) == JV_KIND_OBJECT) {
         int start, end;
@@ -433,7 +433,7 @@ jv jv_keys(jv x) {
 }
 
 int jv_cmp(jv a, jv b) {
-  if (jv_get_kind(a) != jv_get_kind(b)) {
+  if ((jv_get_kind(a) != jv_get_kind(b)) && !(jv_is_number(a) && jv_is_number(b))) {
     int r = (int)jv_get_kind(a) - (int)jv_get_kind(b);
     jv_free(a);
     jv_free(b);
@@ -450,7 +450,8 @@ int jv_cmp(jv a, jv b) {
     r = 0;
     break;
 
-  case JV_KIND_NUMBER: {
+  case JV_KIND_NUMBER:
+  case JV_KIND_INTEGER: {
     double da = jv_number_value(a), db = jv_number_value(b);
     
     // handle NaN as though it were null

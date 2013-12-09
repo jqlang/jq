@@ -10,10 +10,10 @@ typedef enum {
   JV_KIND_FALSE,
   JV_KIND_TRUE,
   JV_KIND_NUMBER,
+  JV_KIND_INTEGER,
   JV_KIND_STRING,
   JV_KIND_ARRAY,
   JV_KIND_OBJECT,
-  JV_KIND_INTEGER,
 } jv_kind;
 
 struct jv_refcnt;

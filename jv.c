@@ -52,7 +52,7 @@ const char* jv_kind_name(jv_kind k) {
   case JV_KIND_FALSE:   return "boolean";
   case JV_KIND_TRUE:    return "boolean";
   case JV_KIND_NUMBER:  return "number";
-  case JV_KIND_INTEGER: return "number";
+  case JV_KIND_INTEGER: return "integer";
   case JV_KIND_STRING:  return "string";
   case JV_KIND_ARRAY:   return "array";
   case JV_KIND_OBJECT:  return "object";
