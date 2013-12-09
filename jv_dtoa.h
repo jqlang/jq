@@ -17,6 +17,6 @@ double jvp_strtod(struct dtoa_context* C, const char* s, char** se);
 char* jvp_dtoa(struct dtoa_context* C, double dd, int mode, int ndigits, int *decpt, int *sign, char **rve);
 void jvp_freedtoa(struct dtoa_context* C, char *s);
 
-#define JVP_DTOA_FMT_MAX_LEN 32
+#define JVP_DTOA_FMT_MAX_LEN 64
 char* jvp_dtoa_fmt(struct dtoa_context* C, register char *b, double x);
 #endif

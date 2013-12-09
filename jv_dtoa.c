@@ -4225,7 +4225,7 @@ jvp_dtoa
 		while((*b++ = *s++));
 		goto done0;
 		}
-	if (decpt <= -4 || decpt > se - s + 5) {
+	if (decpt <= -4 || decpt > se - s + 15) {
 		*b++ = *s++;
 		if (*s) {
 			*b++ = '.';
