@@ -165,7 +165,7 @@ double jv_number_value(jv j){
 intmax_t jv_integer_value(jv j){
   assert(jv_is_number(j));
   if(jv_get_kind(j) == JV_KIND_NUMBER){
-    return (double)j.u.integer;
+    return (intmax_t)j.u.number;
   } else {
     return j.u.integer;
   }
