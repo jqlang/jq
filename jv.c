@@ -130,11 +130,6 @@ static void jvp_invalid_free(jv x) {
  */
 
 jv jv_number(double x) {
-  intmax_t i = (intmax_t)x;
-  if(x == (double)i){
-    return jv_integer(i); 
-  }
-
   jv j;
   j.kind_flags = JV_KIND_NUMBER;
   j.size = 0;
@@ -1221,15 +1216,11 @@ int jv_get_refcnt(jv j) {
 
 int jv_equal(jv a, jv b) {
   int r;
-  if (jv_get_kind(a) != jv_get_kind(b)) {
+  if (jv_is_number(a) && jv_is_number(b)) {
+    r = (jv_integer_value(a) == jv_integer_value(b)) &&
+        (jv_number_value(a) == jv_number_value(b));
+  } else if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
-  } else if (jv_is_number(a)) {
-    if(jv_get_kind(a) == JV_KIND_INTEGER || jv_get_kind(b) == JV_KIND_INTEGER ){
-      r = (jv_integer_value(a) == jv_integer_value(b)) && 
-          (jv_number_value(a) == jv_number_value(b));
-    } else {
-      r = jv_number_value(a) == jv_number_value(b);
-    }
   } else if (a.kind_flags == b.kind_flags &&
              a.size == b.size &&
              a.u.ptr == b.u.ptr) {
