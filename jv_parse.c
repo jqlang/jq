@@ -291,7 +291,7 @@ static pfunc check_literal(struct jv_parser* p) {
       return "Invalid numeric literal";
 
     // FIXME: This is awful
-    int potential_integer = (d <= INT64_MAX) && (d >= INT64_MIN);
+    int potential_integer = (d <= INTMAX_MAX) && (d >= INTMAX_MIN);
     for(char *c = p->tokenbuf; c < end; c++){
       if(!potential_integer) break;
       if((*c != '-') && (*c < '0' || *c > '9')){
@@ -299,7 +299,7 @@ static pfunc check_literal(struct jv_parser* p) {
       }
     }
     if(potential_integer){
-      int64_t i = strtoll(p->tokenbuf, NULL, 10);
+      intmax_t i = strtoll(p->tokenbuf, NULL, 10);
       TRY(value(p, jv_integer(i)));
     } else {
       TRY(value(p, jv_number(d)));

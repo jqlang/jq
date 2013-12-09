@@ -37,6 +37,11 @@ static jv f_plus(jv input, jv a, jv b) {
     jv_free(b);
     return a;
   } else if (jv_is_number(a) && jv_is_number(b)) {
+    if(jv_both_integers(a, b)){
+      return jv_integer(jv_integer_value(a) +
+                        jv_integer_value(b));
+    }
+
     return jv_number(jv_number_value(a) + 
                      jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
@@ -138,6 +143,11 @@ static jv f_rtrimstr(jv input, jv right) {
 static jv f_minus(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_is_number(a) && jv_is_number(b)) {
+    if(jv_both_integers(a, b)){
+      return jv_integer(jv_integer_value(a) -
+                        jv_integer_value(b));
+    }
+
     return jv_number(jv_number_value(a) - jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
     jv out = jv_array();
@@ -164,6 +174,9 @@ static jv f_minus(jv input, jv a, jv b) {
 static jv f_multiply(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_is_number(a) && jv_is_number(b)) {
+    if(jv_both_integers(a, b)){
+      return jv_integer(jv_integer_value(a) * jv_integer_value(b));
+    }
     return jv_number(jv_number_value(a) * jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_is_number(b)) {
     int n;
@@ -197,7 +210,7 @@ static jv f_divide(jv input, jv a, jv b) {
 static jv f_mod(jv input, jv a, jv b) {
   jv_free(input);
   if (jv_is_number(a) && jv_is_number(b)) {
-    return jv_number((intmax_t)jv_number_value(a) % (intmax_t)jv_number_value(b));
+    return jv_integer(jv_integer_value(a) % jv_integer_value(b));
   } else {
     return type_error2(a, b, "cannot be divided");
   }  

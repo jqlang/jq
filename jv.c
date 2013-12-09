@@ -130,7 +130,7 @@ static void jvp_invalid_free(jv x) {
  */
 
 jv jv_number(double x) {
-  int64_t i = (int64_t)x;
+  intmax_t i = (intmax_t)x;
   if(x == (double)i){
     return jv_integer(i); 
   }
@@ -142,7 +142,7 @@ jv jv_number(double x) {
   return j;
 }
 
-jv jv_integer(int64_t x){
+jv jv_integer(intmax_t x){
   jv j;
   j.kind_flags = JV_KIND_INTEGER;
   j.u.integer = x;
@@ -162,12 +162,12 @@ double jv_number_value(jv j){
   }
 }
 
-int64_t jv_integer_value(jv j){
+intmax_t jv_integer_value(jv j){
   assert(jv_is_number(j));
   if(jv_get_kind(j) == JV_KIND_NUMBER){
-    return (double)j.val.integer;
+    return (double)j.u.integer;
   } else {
-    return j.val.integer;
+    return j.u.integer;
   }
 }
 
@@ -695,7 +695,7 @@ jv jv_string_implode(jv j) {
   for (i = 0; i < len; i++) {
     jv n = jv_array_get(jv_copy(j), i);
     assert(jv_is_number(n));
-    s = jv_string_append_codepoint(s, jv_number_value(n));
+    s = jv_string_append_codepoint(s, jv_integer_value(n));
   }
 
   jv_free(j);
@@ -1224,7 +1224,11 @@ int jv_equal(jv a, jv b) {
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
   } else if (jv_is_number(a)) {
-    r = jv_number_value(a) == jv_number_value(b);
+    if(jv_both_integers(a, b)){
+      r = jv_integer_value(a) == jv_integer_value(b);
+    } else {
+      r = jv_number_value(a) == jv_number_value(b);
+    }
   } else if (a.kind_flags == b.kind_flags &&
              a.size == b.size &&
              a.u.ptr == b.u.ptr) {
