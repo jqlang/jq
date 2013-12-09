@@ -1224,8 +1224,9 @@ int jv_equal(jv a, jv b) {
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
   } else if (jv_is_number(a)) {
-    if(jv_both_integers(a, b)){
-      r = jv_integer_value(a) == jv_integer_value(b);
+    if(jv_get_kind(a) == JV_KIND_INTEGER || jv_get_kind(b) == JV_KIND_INTEGER ){
+      r = (jv_integer_value(a) == jv_integer_value(b)) && 
+          (jv_number_value(a) == jv_number_value(b));
     } else {
       r = jv_number_value(a) == jv_number_value(b);
     }
