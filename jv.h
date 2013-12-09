@@ -63,6 +63,7 @@ jv jv_bool(int);
 jv jv_integer(int64_t);
 jv jv_number(double);
 double jv_number_value(jv);
+int64_t jv_integer_value(jv);
 int jv_is_number(jv);
 
 jv jv_array();

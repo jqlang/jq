@@ -432,8 +432,32 @@ jv jv_keys(jv x) {
   }
 }
 
+int jv_both_integers(jv a, jv b){
+  return (jv_get_kind(a) == JV_KIND_INTEGER) && (jv_get_kind(b) == JV_KIND_INTEGER);  
+}
+
 int jv_cmp(jv a, jv b) {
-  if ((jv_get_kind(a) != jv_get_kind(b)) && !(jv_is_number(a) && jv_is_number(b))) {
+  if(jv_is_number(a) && jv_is_number(b)){
+    int r = 0;
+    if(jv_both_integers(a, b)){
+      int64_t ia = jv_integer_value(a), ib = jv_integer_value(b);
+      if (ia < ib) r = -1;
+      else if (ia == ib) r = 0;
+      else r = 1;
+    } else {
+      double da = jv_number_value(a), db = jv_number_value(b);
+      
+      // handle NaN as though it were null
+      if (da != da) r = jv_cmp(jv_null(), jv_number(db));
+      else if (db != db) r = jv_cmp(jv_number(da), jv_null());
+      else if (da < db) r = -1;
+      else if (da == db) r = 0;
+      else r = 1;
+    }
+    return r;
+  }
+
+  if ((jv_get_kind(a) != jv_get_kind(b))) {
     int r = (int)jv_get_kind(a) - (int)jv_get_kind(b);
     jv_free(a);
     jv_free(b);
@@ -452,15 +476,7 @@ int jv_cmp(jv a, jv b) {
 
   case JV_KIND_NUMBER:
   case JV_KIND_INTEGER: {
-    double da = jv_number_value(a), db = jv_number_value(b);
-    
-    // handle NaN as though it were null
-    if (da != da) r = jv_cmp(jv_null(), jv_number(db));
-    else if (db != db) r = jv_cmp(jv_number(da), jv_null());
-    else if (da < db) r = -1;
-    else if (da == db) r = 0;
-    else r = 1;
-    break;
+    assert(0);
   }
 
   case JV_KIND_STRING: {

@@ -162,6 +162,14 @@ double jv_number_value(jv j){
   }
 }
 
+int64_t jv_integer_value(jv j){
+  assert(jv_is_number(j));
+  if(jv_get_kind(j) == JV_KIND_NUMBER){
+    return (double)j.val.integer;
+  } else {
+    return j.val.integer;
+  }
+}
 
 /*
  * Arrays (internal helpers)

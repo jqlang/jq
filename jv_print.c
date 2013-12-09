@@ -3,6 +3,7 @@
 #include <float.h>
 #include <string.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
@@ -138,8 +139,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   case JV_KIND_TRUE:
     put_str("true", F, S);
     break;
-  case JV_KIND_NUMBER:
-  case JV_KIND_INTEGER: {
+  case JV_KIND_NUMBER: {
     double d = jv_number_value(x);
     if (d != d) {
       // JSON doesn't have NaN, so we'll render it as "null"
@@ -150,6 +150,15 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       if (d < -DBL_MAX) d = -DBL_MAX;
       put_str(jvp_dtoa_fmt(C, buf, d), F, S);
     }
+    break;
+  }
+  case JV_KIND_INTEGER: {
+    int64_t i = jv_integer_value(x);
+    // 19 digits, possibly a minus, and a terminating '\0'
+    char c[21];
+    int written = snprintf(c, 21, "%" PRId64, i);
+    assert(written < 21);
+    put_str(c, F, S);
     break;
   }
   case JV_KIND_STRING:
