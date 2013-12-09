@@ -299,7 +299,7 @@ static pfunc check_literal(struct jv_parser* p) {
       }
     }
     if(potential_integer){
-      intmax_t i = strtoll(p->tokenbuf, NULL, 10);
+      int64_t i = strtoll(p->tokenbuf, NULL, 10);
       TRY(value(p, jv_integer(i)));
     } else {
       TRY(value(p, jv_number(d)));

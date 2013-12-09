@@ -28,7 +28,7 @@ typedef struct {
   union {
     struct jv_refcnt* ptr;
     double number;
-    intmax_t integer;
+    int64_t integer;
   } u;
 } jv;
 
@@ -60,10 +60,10 @@ jv jv_true();
 jv jv_false();
 jv jv_bool(int);
 
-jv jv_integer(intmax_t);
+jv jv_integer(int64_t);
 jv jv_number(double);
 double jv_number_value(jv);
-intmax_t jv_integer_value(jv);
+int64_t jv_integer_value(jv);
 int jv_both_integers(jv,jv);
 int jv_is_number(jv);
 

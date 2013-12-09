@@ -137,7 +137,7 @@ jv jv_number(double x) {
   return j;
 }
 
-jv jv_integer(intmax_t x){
+jv jv_integer(int64_t x){
   jv j;
   j.kind_flags = JV_KIND_INTEGER;
   j.u.integer = x;
@@ -157,10 +157,10 @@ double jv_number_value(jv j){
   }
 }
 
-intmax_t jv_integer_value(jv j){
+int64_t jv_integer_value(jv j){
   assert(jv_is_number(j));
   if(jv_get_kind(j) == JV_KIND_NUMBER){
-    return (intmax_t)j.u.number;
+    return (int64_t)j.u.number;
   } else {
     return j.u.integer;
   }

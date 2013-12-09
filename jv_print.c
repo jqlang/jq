@@ -153,7 +153,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     break;
   }
   case JV_KIND_INTEGER: {
-    intmax_t i = jv_integer_value(x);
+    int64_t i = jv_integer_value(x);
     // 19 digits, possibly a minus, and a terminating '\0'
     char c[21];
     int written = snprintf(c, 21, "%" PRIdMAX, i);

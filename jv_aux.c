@@ -440,7 +440,7 @@ int jv_cmp(jv a, jv b) {
   if(jv_is_number(a) && jv_is_number(b)){
     int r = 0;
     if(jv_both_integers(a, b)){
-      intmax_t ia = jv_integer_value(a), ib = jv_integer_value(b);
+      int64_t ia = jv_integer_value(a), ib = jv_integer_value(b);
       if (ia < ib) r = -1;
       else if (ia == ib) r = 0;
       else r = 1;
