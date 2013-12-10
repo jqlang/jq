@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #include "jv_alloc.h"
 #include "jv.h"
@@ -140,6 +141,17 @@ double jv_number_value(jv j) {
   return j.u.number;
 }
 
+int jv_is_integer(jv j){
+  if(jv_get_kind(j) != JV_KIND_NUMBER){
+    return 0;
+  }
+  double x = jv_number_value(j);
+  if(x != x || x > INT_MAX || x < INT_MIN){
+    return 0;
+  }
+
+  return x == (int)x;
+}
 
 /*
  * Arrays (internal helpers)

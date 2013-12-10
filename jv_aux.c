@@ -51,10 +51,15 @@ jv jv_get(jv t, jv k) {
       v = jv_null();
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
-    // FIXME: don't do lookup for noninteger index
-    v = jv_array_get(t, (int)jv_number_value(k));
-    if (!jv_is_valid(v)) {
-      jv_free(v);
+    if(jv_is_integer(k)){
+      v = jv_array_get(t, (int)jv_number_value(k));
+      if (!jv_is_valid(v)) {
+        jv_free(v);
+        v = jv_null();
+      }
+    } else {
+      jv_free(t);
+      jv_free(k);
       v = jv_null();
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_OBJECT) {
