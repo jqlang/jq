@@ -36,7 +36,12 @@ static jv f_plus(jv input, jv a, jv b) {
   } else if (jv_get_kind(b) == JV_KIND_NULL) {
     jv_free(b);
     return a;
-  } else if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+  } else if (jv_is_number(a) && jv_is_number(b)) {
+    if(jv_both_integers(a, b)){
+      return jv_integer(jv_integer_value(a) +
+                        jv_integer_value(b));
+    }
+
     return jv_number(jv_number_value(a) + 
                      jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
@@ -51,7 +56,7 @@ static jv f_plus(jv input, jv a, jv b) {
 }
 
 static jv f_floor(jv input) {
-  if (jv_get_kind(input) != JV_KIND_NUMBER) {
+  if (!jv_is_number(input)) {
     return type_error(input, "cannot be floored");
   }
   jv ret = jv_number(floor(jv_number_value(input)));
@@ -60,7 +65,7 @@ static jv f_floor(jv input) {
 }
 
 static jv f_sqrt(jv input) {
-  if (jv_get_kind(input) != JV_KIND_NUMBER) {
+  if (!jv_is_number(input)) {
     return type_error(input, "has no square root");
   }
   jv ret = jv_number(sqrt(jv_number_value(input)));
@@ -69,7 +74,7 @@ static jv f_sqrt(jv input) {
 }
 
 static jv f_negate(jv input) {
-  if (jv_get_kind(input) != JV_KIND_NUMBER) {
+  if (!jv_is_number(input)) {
     return type_error(input, "cannot be negated");
   }
   jv ret = jv_number(-jv_number_value(input));
@@ -137,7 +142,12 @@ static jv f_rtrimstr(jv input, jv right) {
 
 static jv f_minus(jv input, jv a, jv b) {
   jv_free(input);
-  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+  if (jv_is_number(a) && jv_is_number(b)) {
+    if(jv_both_integers(a, b)){
+      return jv_integer(jv_integer_value(a) -
+                        jv_integer_value(b));
+    }
+
     return jv_number(jv_number_value(a) - jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
     jv out = jv_array();
@@ -163,9 +173,12 @@ static jv f_minus(jv input, jv a, jv b) {
 
 static jv f_multiply(jv input, jv a, jv b) {
   jv_free(input);
-  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+  if (jv_is_number(a) && jv_is_number(b)) {
+    if(jv_both_integers(a, b)){
+      return jv_integer(jv_integer_value(a) * jv_integer_value(b));
+    }
     return jv_number(jv_number_value(a) * jv_number_value(b));
-  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_NUMBER) {
+  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_is_number(b)) {
     int n;
     size_t alen = jv_string_length_bytes(jv_copy(a));
     jv res = a;
@@ -185,7 +198,7 @@ static jv f_multiply(jv input, jv a, jv b) {
 
 static jv f_divide(jv input, jv a, jv b) {
   jv_free(input);
-  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+  if (jv_is_number(a) && jv_is_number(b)) {
     return jv_number(jv_number_value(a) / jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
     return jv_string_split(a, b);
@@ -196,8 +209,8 @@ static jv f_divide(jv input, jv a, jv b) {
 
 static jv f_mod(jv input, jv a, jv b) {
   jv_free(input);
-  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    return jv_number((intmax_t)jv_number_value(a) % (intmax_t)jv_number_value(b));
+  if (jv_is_number(a) && jv_is_number(b)) {
+    return jv_integer(jv_integer_value(a) % jv_integer_value(b));
   } else {
     return type_error2(a, b, "cannot be divided");
   }  
@@ -267,12 +280,12 @@ static jv f_json_parse(jv input) {
 }
 
 static jv f_tonumber(jv input) {
-  if (jv_get_kind(input) == JV_KIND_NUMBER) {
+  if (jv_is_number(input)) {
     return input;
   }
   if (jv_get_kind(input) == JV_KIND_STRING) {
     jv parsed = jv_parse(jv_string_value(input));
-    if (!jv_is_valid(parsed) || jv_get_kind(parsed) == JV_KIND_NUMBER) {
+    if (!jv_is_valid(parsed) || jv_is_number(parsed)) {
       jv_free(input);
       return parsed;
     }
@@ -287,7 +300,7 @@ static jv f_length(jv input) {
     return jv_number(jv_object_length(input));
   } else if (jv_get_kind(input) == JV_KIND_STRING) {
     return jv_number(jv_string_length_codepoints(input));
-  } else if (jv_get_kind(input) == JV_KIND_NUMBER) {
+  } else if (jv_is_number(input)) {
     return jv_number(fabs(jv_number_value(input)));
   } else if (jv_get_kind(input) == JV_KIND_NULL) {
     jv_free(input);
@@ -366,6 +379,7 @@ static jv f_format(jv input, jv fmt) {
         line = jv_string_concat(line, jv_dump_string(x, 0));
         break;
       case JV_KIND_NUMBER:
+      case JV_KIND_INTEGER:
         if (jv_number_value(x) != jv_number_value(x)) {
           /* NaN, render as empty string */
           jv_free(x);
@@ -423,6 +437,7 @@ static jv f_format(jv input, jv fmt) {
       case JV_KIND_TRUE:
       case JV_KIND_FALSE:
       case JV_KIND_NUMBER:
+      case JV_KIND_INTEGER:
         line = jv_string_concat(line, jv_dump_string(x, 0));
         break;
 

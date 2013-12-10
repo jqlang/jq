@@ -7,6 +7,7 @@
 #include "jv_unicode.h"
 #include "jv_alloc.h"
 #include "jv_dtoa.h"
+#include "inttypes.h"
 
 typedef const char* presult;
 
@@ -288,7 +289,21 @@ static pfunc check_literal(struct jv_parser* p) {
     double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
     if (end == 0 || *end != 0)
       return "Invalid numeric literal";
-    TRY(value(p, jv_number(d)));
+
+    // FIXME: This is awful
+    int potential_integer = (d <= INTMAX_MAX) && (d >= INTMAX_MIN);
+    for(char *c = p->tokenbuf; c < end; c++){
+      if(!potential_integer) break;
+      if((*c != '-') && (*c < '0' || *c > '9')){
+        potential_integer = 0;
+      }
+    }
+    if(potential_integer){
+      int64_t i = strtoll(p->tokenbuf, NULL, 10);
+      TRY(value(p, jv_integer(i)));
+    } else {
+      TRY(value(p, jv_number(d)));
+    }
   }
   p->tokenpos = 0;
   return 0;

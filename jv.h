@@ -10,9 +10,10 @@ typedef enum {
   JV_KIND_FALSE,
   JV_KIND_TRUE,
   JV_KIND_NUMBER,
+  JV_KIND_INTEGER,
   JV_KIND_STRING,
   JV_KIND_ARRAY,
-  JV_KIND_OBJECT
+  JV_KIND_OBJECT,
 } jv_kind;
 
 struct jv_refcnt;
@@ -27,6 +28,7 @@ typedef struct {
   union {
     struct jv_refcnt* ptr;
     double number;
+    int64_t integer;
   } u;
 } jv;
 
@@ -58,8 +60,12 @@ jv jv_true(void);
 jv jv_false(void);
 jv jv_bool(int);
 
+jv jv_integer(int64_t);
 jv jv_number(double);
 double jv_number_value(jv);
+int64_t jv_integer_value(jv);
+int jv_both_integers(jv,jv);
+int jv_is_number(jv);
 
 jv jv_array(void);
 jv jv_array_sized(int);
