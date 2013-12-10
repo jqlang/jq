@@ -47,21 +47,21 @@ int jv_get_refcnt(jv);
 int jv_equal(jv, jv);
 int jv_contains(jv, jv);
 
-jv jv_invalid();
+jv jv_invalid(void);
 jv jv_invalid_with_msg(jv);
 jv jv_invalid_get_msg(jv);
 int jv_invalid_has_msg(jv);
 
 
-jv jv_null();
-jv jv_true();
-jv jv_false();
+jv jv_null(void);
+jv jv_true(void);
+jv jv_false(void);
 jv jv_bool(int);
 
 jv jv_number(double);
 double jv_number_value(jv);
 
-jv jv_array();
+jv jv_array(void);
 jv jv_array_sized(int);
 int jv_array_length(jv);
 jv jv_array_get(jv, int);
@@ -96,7 +96,7 @@ jv jv_string_split(jv j, jv sep);
 jv jv_string_explode(jv j);
 jv jv_string_implode(jv j);
 
-jv jv_object();
+jv jv_object(void);
 jv jv_object_get(jv object, jv key);
 jv jv_object_set(jv object, jv key, jv value);
 jv jv_object_delete(jv object, jv key);
@@ -138,7 +138,7 @@ typedef enum {
   JV_PARSE_EXPLODE_TOPLEVEL_ARRAY = 1
 } jv_parser_flags;
 struct jv_parser;
-struct jv_parser* jv_parser_new();
+struct jv_parser* jv_parser_new(jv_parser_flags);
 void jv_parser_set_buf(struct jv_parser*, const char*, int, int);
 jv jv_parser_next(struct jv_parser*);
 void jv_parser_free(struct jv_parser*);
