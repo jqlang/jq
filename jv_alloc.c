@@ -16,6 +16,7 @@ static __thread struct nomem_handler nomem_handler;
 
 void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
   nomem_handler.handler = handler;
+  nomem_handler.data = data;
 }
 
 static void memory_exhausted() {
