@@ -26,13 +26,18 @@ static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
     jv_free(end_jv);
     return 0;
   } else {
-    int start = (int)jv_number_value(start_jv);
-    int end = (int)jv_number_value(end_jv);
-    if (start < 0) start = len + start;
-    if (end < 0) end = len + end;
+    double dstart = jv_number_value(start_jv);
+    double dend = jv_number_value(end_jv);
+    if (dstart < 0) dstart += len;
+    if (dend < 0) dend += len;
+    if (dstart < 0) dstart = 0;
+    if (dstart > len) dstart = len;
 
-    if (start < 0) start = 0;
-    if (start > len) start = len;
+    int start = (int)dstart;
+    int end = (dend > len) ? len : (int)dend;
+    // Ends are exclusive but e.g. 1 < 1.5 so :1.5 should be :2 not :1
+    if(end < dend) end += 1;
+
     if (end > len) end = len;
     if (end < start) end = start;
     assert(0 <= start && start <= end && end <= len);
@@ -51,10 +56,15 @@ jv jv_get(jv t, jv k) {
       v = jv_null();
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
-    // FIXME: don't do lookup for noninteger index
-    v = jv_array_get(t, (int)jv_number_value(k));
-    if (!jv_is_valid(v)) {
-      jv_free(v);
+    if(jv_is_integer(k)){
+      v = jv_array_get(t, (int)jv_number_value(k));
+      if (!jv_is_valid(v)) {
+        jv_free(v);
+        v = jv_null();
+      }
+    } else {
+      jv_free(t);
+      jv_free(k);
       v = jv_null();
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_OBJECT) {
