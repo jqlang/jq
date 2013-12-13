@@ -1,3 +1,4 @@
 #!/bin/sh
 
+uname -m | egrep -q 'armel|mips|mipsel|powerpc|s390x' && exit 0
 cat $@ | valgrind --error-exitcode=1 -q --leak-check=full ./jq --run-tests
