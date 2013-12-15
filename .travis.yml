@@ -1,0 +1,17 @@
+language: c
+
+before_script:
+    - sudo apt-get install -qq valgrind
+    - bundle install --gemfile=docs/Gemfile
+    - autoreconf -i
+
+script:
+    - ./setup.sh
+    - ./configure && make
+
+compiler:
+    - gcc
+    - clang
+
+notifications:
+    email: false
