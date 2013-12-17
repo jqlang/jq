@@ -16,6 +16,12 @@
 #include "parser.h"
 #include "builtin.h"
 
+typedef struct jq_handle {
+  void *handle;
+  void (*destructor)(void *);
+  jv type;
+} jq_handle;
+
 struct jq_state {
   void (*nomem_handler)(void *);
   void *nomem_handler_data;
@@ -33,7 +39,125 @@ struct jq_state {
   int subexp_nest;
   int debug_trace_enabled;
   int initial_execution;
+
+  jq_handle *handles;
+  int nhandles;
 };
+
+int jq_handle_create(jq_state *jq,
+                     const char *type,
+                     void *handle,
+                     void (*destructor)(void *)) {
+  int i;
+
+  errno = EINVAL;
+  if (type == NULL || *type == '\0')
+    return -1;
+
+  for (i = 0; i < jq->nhandles; i++) {
+    if (jq->handles[i].handle == NULL)
+      break;
+  }
+
+  /* FIXME This should be a #define in some header or a tunable */
+  if (i > 128)
+    return -1;
+
+  if (i == jq->nhandles) {
+    jq->handles = jv_mem_realloc(jq->handles, sizeof(*jq->handles) * (i + 1));
+    jq->nhandles = i + 1;
+  }
+
+  jq->handles[i].type = jv_string(type);
+  jq->handles[i].handle = handle;
+  jq->handles[i].destructor = destructor;
+
+  return i;
+}
+
+static void destroy_stdio_handle(void *data) {
+  struct jq_stdio_handle *h = data;
+  if (h->close_it)
+    fclose(h->f);
+  if (h->p)
+      jv_parser_free(h->p);
+  jv_free(h->s);
+  jv_mem_free(h);
+}
+
+int jq_handle_create_stdio(jq_state *jq,
+                           FILE *f,
+                           int close_it,
+                           int raw,
+                           int slurp) {
+  struct jq_stdio_handle *h = jv_mem_alloc(sizeof(*h));
+
+  h->buf[0] = '\0';
+  h->f = f;
+  h->p = NULL;
+  h->s = jv_invalid();
+  h->close_it = close_it;
+  if (!raw)
+    h->p = jv_parser_new(0);
+  if (slurp && raw)
+    h->s = jv_string("");
+  else if (slurp)
+    h->s = jv_array();
+
+  int hdl = jq_handle_create(jq, "FILE", h, destroy_stdio_handle);
+  if (hdl < 0)
+    destroy_stdio_handle(h);
+  return hdl;
+}
+
+static int
+handle_validate(jq_state *jq, const char *type, int handle) {
+  errno = EBADF;
+  if (handle > jq->nhandles)
+    return 0;
+
+  errno = EINVAL;
+  if (type == NULL || *type == '\0' ||
+      !jv_is_valid(jq->handles[handle].type) ||
+      strcmp(type, jv_string_value(jq->handles[handle].type)) != 0)
+    return 0;
+  return 1;
+}
+
+int jq_handle_get(jq_state *jq,
+                  const char *type,
+                  int hdl,
+                  void **handle,
+                  void (**destructor)(void *)) {
+  if (handle != NULL)
+    *handle = NULL;
+  if (destructor != NULL)
+    *destructor = NULL;
+
+  if (!handle_validate(jq, type, hdl))
+    return 0;
+
+  if (handle != NULL)
+    *handle = jq->handles[hdl].handle;
+  if (destructor != NULL)
+    *destructor = jq->handles[hdl].destructor;
+  return 1;
+}
+
+void jq_handle_delete(jq_state *jq,
+                      const char *type,
+                      int hdl) {
+  if (!handle_validate(jq, type, hdl))
+    return;
+
+  if (jq->handles[hdl].destructor != NULL)
+    jq->handles[hdl].destructor(jq->handles[hdl].handle);
+  jv_free(jq->handles[hdl].type);
+  jq->handles[hdl].type = jv_null();
+  jq->handles[hdl].destructor = NULL;
+  jq->handles[hdl].handle = NULL;
+}
+
 
 struct closure {
   struct bytecode* bc;
@@ -619,17 +743,17 @@ jv jq_next(jq_state *jq) {
         in[i] = stack_pop(jq);
       }
       struct cfunction* function = &frame_current(jq)->bc->globals->cfunctions[*pc++];
-      typedef jv (*func_1)(jv);
-      typedef jv (*func_2)(jv,jv);
-      typedef jv (*func_3)(jv,jv,jv);
-      typedef jv (*func_4)(jv,jv,jv,jv);
-      typedef jv (*func_5)(jv,jv,jv,jv,jv);
+      typedef jv (*func_1)(jq_state *, jv);
+      typedef jv (*func_2)(jq_state *, jv,jv);
+      typedef jv (*func_3)(jq_state *, jv,jv,jv);
+      typedef jv (*func_4)(jq_state *, jv,jv,jv,jv);
+      typedef jv (*func_5)(jq_state *, jv,jv,jv,jv,jv);
       switch (function->nargs) {
-      case 1: top = ((func_1)function->fptr)(in[0]); break;
-      case 2: top = ((func_2)function->fptr)(in[0], in[1]); break;
-      case 3: top = ((func_3)function->fptr)(in[0], in[1], in[2]); break;
-      case 4: top = ((func_4)function->fptr)(in[0], in[1], in[2], in[3]); break;
-      case 5: top = ((func_5)function->fptr)(in[0], in[1], in[2], in[3], in[4]); break;
+      case 1: top = ((func_1)function->fptr)(jq, in[0]); break;
+      case 2: top = ((func_2)function->fptr)(jq, in[0], in[1]); break;
+      case 3: top = ((func_3)function->fptr)(jq, in[0], in[1], in[2]); break;
+      case 4: top = ((func_4)function->fptr)(jq, in[0], in[1], in[2], in[3]); break;
+      case 5: top = ((func_5)function->fptr)(jq, in[0], in[1], in[2], in[3], in[4]); break;
       default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
       }
       
@@ -697,6 +821,9 @@ jq_state *jq_init(void) {
   jq->err_cb = NULL;
   jq->err_cb_data = NULL;
 
+  jq->handles = NULL;
+  jq->nhandles = 0;
+
   jq->path = jv_null();
   return jq;
 }
@@ -747,6 +874,11 @@ void jq_teardown(jq_state **jq) {
   bytecode_free(old_jq->bc);
   old_jq->bc = 0;
 
+  for (int i = 0; i < old_jq->nhandles; i++) {
+    if (old_jq->handles[i].handle != NULL)
+      jq_handle_delete(old_jq, jv_string_value(old_jq->handles[i].type), i);
+  }
+  jv_mem_free(old_jq->handles);
   jv_mem_free(old_jq);
 }
 
