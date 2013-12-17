@@ -221,6 +221,12 @@ int main(int argc, char* argv[]) {
       arg = jv_object_set(arg, jv_string("value"), data);
       program_arguments = jv_array_append(program_arguments, arg);
       i += 2; // skip the next two arguments
+    } else if (isoption(argv[i],  0,  "allow-open")) {
+      jq_flags |= JQ_OPEN_FILES;
+    } else if (isoption(argv[i],  0,  "allow-write")) {
+      jq_flags |= JQ_OPEN_FILES | JQ_OPEN_WRITE;
+    } else if (isoption(argv[i],  0,  "allow-exec")) {
+      jq_flags |= JQ_EXEC;
     } else if (isoption(argv[i],  0,  "debug-dump-disasm")) {
       options |= DUMP_DISASM;
     } else if (isoption(argv[i],  0,  "debug-trace")) {
@@ -291,6 +297,11 @@ int main(int argc, char* argv[]) {
     jq_dump_disassembly(jq, 0);
     printf("\n");
   }
+
+  jq_handle_create_stdio(jq, 0, stdin, 0, 0);
+  jq_handle_create_stdio(jq, 1, stdout, 0, 0);
+  jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+  jq_handle_create_buffer(jq, 3);
 
   if (options & PROVIDE_NULL) {
     ret = process(jq, jv_null(), jq_flags);

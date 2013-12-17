@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -8,6 +9,22 @@
 #include "bytecode.h"
 #include "locfile.h"
 #include "jv_unicode.h"
+
+#ifndef WIFEXITED
+#define WIFEXITED(s) 1
+#endif
+#ifndef WIFSIGNALED
+#define WIFSIGNALED(s) 0
+#endif
+#ifndef WEXITSTATUS
+#define WEXITSTATUS(s) (s)
+#endif
+#ifndef WCOREDUMP
+#define WCOREDUMP(s) (0)
+#endif
+#ifndef WTERMSIG
+#define WTERMSIG(s) (0)
+#endif
 
 
 static jv type_error(jv bad, const char* msg) {
@@ -28,7 +45,7 @@ static jv type_error2(jv bad1, jv bad2, const char* msg) {
   return err;
 }
 
-static jv f_plus(jv input, jv a, jv b) {
+static jv f_plus(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NULL) {
     jv_free(a);
@@ -50,7 +67,7 @@ static jv f_plus(jv input, jv a, jv b) {
   }
 }
 
-static jv f_floor(jv input) {
+static jv f_floor(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_NUMBER) {
     return type_error(input, "cannot be floored");
   }
@@ -59,7 +76,7 @@ static jv f_floor(jv input) {
   return ret;
 }
 
-static jv f_sqrt(jv input) {
+static jv f_sqrt(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_NUMBER) {
     return type_error(input, "has no square root");
   }
@@ -68,7 +85,7 @@ static jv f_sqrt(jv input) {
   return ret;
 }
 
-static jv f_negate(jv input) {
+static jv f_negate(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_NUMBER) {
     return type_error(input, "cannot be negated");
   }
@@ -77,7 +94,7 @@ static jv f_negate(jv input) {
   return ret;
 }
 
-static jv f_startswith(jv a, jv b) {
+static jv f_startswith(jq_state *jq, jv a, jv b) {
   int alen = jv_string_length_bytes(jv_copy(a));
   int blen = jv_string_length_bytes(jv_copy(b));
   jv ret;
@@ -91,7 +108,7 @@ static jv f_startswith(jv a, jv b) {
   return ret;
 }
 
-static jv f_endswith(jv a, jv b) {
+static jv f_endswith(jq_state *jq, jv a, jv b) {
   const char *astr = jv_string_value(a);
   const char *bstr = jv_string_value(b);
   size_t alen = jv_string_length_bytes(jv_copy(a));
@@ -108,8 +125,8 @@ static jv f_endswith(jv a, jv b) {
   return ret;
 }
 
-static jv f_ltrimstr(jv input, jv left) {
-  if (jv_get_kind(f_startswith(jv_copy(input), jv_copy(left))) != JV_KIND_TRUE) {
+static jv f_ltrimstr(jq_state *jq, jv input, jv left) {
+  if (jv_get_kind(f_startswith(jq, jv_copy(input), jv_copy(left))) != JV_KIND_TRUE) {
     jv_free(left);
     return input;
   }
@@ -124,8 +141,8 @@ static jv f_ltrimstr(jv input, jv left) {
   return res;
 }
 
-static jv f_rtrimstr(jv input, jv right) {
-  if (jv_get_kind(f_endswith(jv_copy(input), jv_copy(right))) == JV_KIND_TRUE) {
+static jv f_rtrimstr(jq_state *jq, jv input, jv right) {
+  if (jv_get_kind(f_endswith(jq, jv_copy(input), jv_copy(right))) == JV_KIND_TRUE) {
     jv res = jv_string_sized(jv_string_value(input),
                              jv_string_length_bytes(jv_copy(input)) - jv_string_length_bytes(right));
     jv_free(input);
@@ -135,7 +152,7 @@ static jv f_rtrimstr(jv input, jv right) {
   return input;
 }
 
-static jv f_minus(jv input, jv a, jv b) {
+static jv f_minus(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) - jv_number_value(b));
@@ -161,7 +178,7 @@ static jv f_minus(jv input, jv a, jv b) {
   }
 }
 
-static jv f_multiply(jv input, jv a, jv b) {
+static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) * jv_number_value(b));
@@ -183,7 +200,7 @@ static jv f_multiply(jv input, jv a, jv b) {
   }  
 }
 
-static jv f_divide(jv input, jv a, jv b) {
+static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) / jv_number_value(b));
@@ -194,7 +211,7 @@ static jv f_divide(jv input, jv a, jv b) {
   }  
 }
 
-static jv f_mod(jv input, jv a, jv b) {
+static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     return jv_number((intmax_t)jv_number_value(a) % (intmax_t)jv_number_value(b));
@@ -203,12 +220,12 @@ static jv f_mod(jv input, jv a, jv b) {
   }  
 }
 
-static jv f_equal(jv input, jv a, jv b) {
+static jv f_equal(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   return jv_bool(jv_equal(a, b));
 }
 
-static jv f_notequal(jv input, jv a, jv b) {
+static jv f_notequal(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   return jv_bool(!jv_equal(a, b));
 }
@@ -229,23 +246,23 @@ static jv order_cmp(jv input, jv a, jv b, enum cmp_op op) {
                  (op == CMP_OP_GREATER && r > 0));
 }
 
-static jv f_less(jv input, jv a, jv b) {
+static jv f_less(jq_state *jq, jv input, jv a, jv b) {
   return order_cmp(input, a, b, CMP_OP_LESS);
 }
 
-static jv f_greater(jv input, jv a, jv b) {
+static jv f_greater(jq_state *jq, jv input, jv a, jv b) {
   return order_cmp(input, a, b, CMP_OP_GREATER);
 }
 
-static jv f_lesseq(jv input, jv a, jv b) {
+static jv f_lesseq(jq_state *jq, jv input, jv a, jv b) {
   return order_cmp(input, a, b, CMP_OP_LESSEQ);
 }
 
-static jv f_greatereq(jv input, jv a, jv b) {
+static jv f_greatereq(jq_state *jq, jv input, jv a, jv b) {
   return order_cmp(input, a, b, CMP_OP_GREATEREQ);
 }
 
-static jv f_contains(jv a, jv b) {
+static jv f_contains(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) == jv_get_kind(b)) {
     return jv_bool(jv_contains(a, b));
   } else {
@@ -253,11 +270,11 @@ static jv f_contains(jv a, jv b) {
   }
 }
 
-static jv f_dump(jv input) {
+static jv f_dump(jq_state *jq, jv input) {
   return jv_dump_string(input, 0);
 }
 
-static jv f_json_parse(jv input) {
+static jv f_json_parse(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_STRING)
     return type_error(input, "only strings can be parsed");
   jv res = jv_parse_sized(jv_string_value(input),
@@ -266,7 +283,7 @@ static jv f_json_parse(jv input) {
   return res;
 }
 
-static jv f_tonumber(jv input) {
+static jv f_tonumber(jq_state *jq, jv input) {
   if (jv_get_kind(input) == JV_KIND_NUMBER) {
     return input;
   }
@@ -280,7 +297,7 @@ static jv f_tonumber(jv input) {
   return type_error(input, "cannot be parsed as a number");
 }
 
-static jv f_length(jv input) {
+static jv f_length(jq_state *jq, jv input) {
   if (jv_get_kind(input) == JV_KIND_ARRAY) {
     return jv_number(jv_array_length(input));
   } else if (jv_get_kind(input) == JV_KIND_OBJECT) {
@@ -297,7 +314,7 @@ static jv f_length(jv input) {
   }
 }
 
-static jv f_tostring(jv input) {
+static jv f_tostring(jq_state *jq, jv input) {
   if (jv_get_kind(input) == JV_KIND_STRING) {
     return input;
   } else {
@@ -337,7 +354,7 @@ static jv escape_string(jv input, const char* escapings) {
 
 }
 
-static jv f_format(jv input, jv fmt) {
+static jv f_format(jq_state *jq, jv input, jv fmt) {
   if (jv_get_kind(fmt) != JV_KIND_STRING) {
     jv_free(input);
     return type_error(fmt, "is not a valid format");
@@ -348,7 +365,7 @@ static jv f_format(jv input, jv fmt) {
     return jv_dump_string(input, 0);
   } else if (!strcmp(fmt_s, "text")) {
     jv_free(fmt);
-    return f_tostring(input);
+    return f_tostring(jq, input);
   } else if (!strcmp(fmt_s, "csv")) {
     jv_free(fmt);
     if (jv_get_kind(input) != JV_KIND_ARRAY)
@@ -389,10 +406,10 @@ static jv f_format(jv input, jv fmt) {
     return line;
   } else if (!strcmp(fmt_s, "html")) {
     jv_free(fmt);
-    return escape_string(f_tostring(input), "&&amp;\0<&lt;\0>&gt;\0'&apos;\0\"&quot;\0");
+    return escape_string(f_tostring(jq, input), "&&amp;\0<&lt;\0>&gt;\0'&apos;\0\"&quot;\0");
   } else if (!strcmp(fmt_s, "uri")) {
     jv_free(fmt);
-    input = f_tostring(input);
+    input = f_tostring(jq, input);
 
     int unreserved[128] = {0};
     const char* p = CHARS_ALPHANUM "-_.!~*'()";
@@ -443,7 +460,7 @@ static jv f_format(jv input, jv fmt) {
     return line;
   } else if (!strcmp(fmt_s, "base64")) {
     jv_free(fmt);
-    input = f_tostring(input);
+    input = f_tostring(jq, input);
     jv line = jv_string("");
     const char b64[64 + 1] = CHARS_ALPHANUM "+/";
     const char* data = jv_string_value(input);
@@ -471,7 +488,7 @@ static jv f_format(jv input, jv fmt) {
   }
 }
 
-static jv f_keys(jv input) {
+static jv f_keys(jq_state *jq, jv input) {
   if (jv_get_kind(input) == JV_KIND_OBJECT || jv_get_kind(input) == JV_KIND_ARRAY) {
     return jv_keys(input);
   } else {
@@ -479,7 +496,7 @@ static jv f_keys(jv input) {
   }
 }
 
-static jv f_sort(jv input){
+static jv f_sort(jq_state *jq, jv input){
   if (jv_get_kind(input) == JV_KIND_ARRAY) {
     return jv_sort(input, jv_copy(input));
   } else {
@@ -487,7 +504,7 @@ static jv f_sort(jv input){
   }
 }
 
-static jv f_sort_by_impl(jv input, jv keys) {
+static jv f_sort_by_impl(jq_state *jq, jv input, jv keys) {
   if (jv_get_kind(input) == JV_KIND_ARRAY && 
       jv_get_kind(keys) == JV_KIND_ARRAY &&
       jv_array_length(jv_copy(input)) == jv_array_length(jv_copy(keys))) {
@@ -497,7 +514,7 @@ static jv f_sort_by_impl(jv input, jv keys) {
   }
 }
 
-static jv f_group_by_impl(jv input, jv keys) {
+static jv f_group_by_impl(jq_state *jq, jv input, jv keys) {
   if (jv_get_kind(input) == JV_KIND_ARRAY && 
       jv_get_kind(keys) == JV_KIND_ARRAY &&
       jv_array_length(jv_copy(input)) == jv_array_length(jv_copy(keys))) {
@@ -540,33 +557,432 @@ static jv minmax_by(jv values, jv keys, int is_min) {
   return ret;
 }
 
-static jv f_min(jv x) {
+static jv f_min(jq_state *jq, jv x) {
   return minmax_by(x, jv_copy(x), 1);
 }
 
-static jv f_max(jv x) {
+static jv f_max(jq_state *jq, jv x) {
   return minmax_by(x, jv_copy(x), 0);
 }
 
-static jv f_min_by_impl(jv x, jv y) {
+static jv f_min_by_impl(jq_state *jq, jv x, jv y) {
   return minmax_by(x, y, 1);
 }
 
-static jv f_max_by_impl(jv x, jv y) {
+static jv f_max_by_impl(jq_state *jq, jv x, jv y) {
   return minmax_by(x, y, 0);
 }
 
 
-static jv f_type(jv input) {
+static jv f_type(jq_state *jq, jv input) {
   jv out = jv_string(jv_kind_name(jv_get_kind(input)));
   jv_free(input);
   return out;
 }
 
-static jv f_error(jv input, jv msg) {
+static jv f_error(jq_state *jq, jv input, jv msg) {
   jv_free(input);
-  msg = f_tostring(msg);
+  msg = f_tostring(jq, msg);
   return jv_invalid_with_msg(msg);
+}
+
+static int flag_is_set(jv o, const char *s) {
+  if (jv_get_kind(o) != JV_KIND_OBJECT)
+    return 0;
+  jv k = jv_string(s);
+  jv v = jv_object_get(jv_copy(o), k);
+  jv_kind kind = jv_get_kind(v);
+  jv_free(v);
+  switch (kind) {
+  case JV_KIND_NULL:
+  case JV_KIND_FALSE:
+  case JV_KIND_INVALID: // can't happen
+    return 0;
+  default:
+    return 1;
+  }
+}
+
+static jv get_option(jv o, const char *s, jv def) {
+  if (jv_get_kind(o) != JV_KIND_OBJECT)
+    return jv_null();
+  jv k = jv_string(s);
+  jv v = jv_object_get(jv_copy(o), k);
+  if (jv_get_kind(v) == JV_KIND_NULL || jv_get_kind(v) == JV_KIND_INVALID) {
+    jv_free(v);
+    return def;
+  }
+  jv_free(def);
+  return v;
+}
+
+static jv f_buffer(jq_state *jq, jv input, jv def) {
+  jv_free(input);
+  int hdl = jq_handle_create_buffer(jq, -1);
+  
+  if (hdl > -1) {
+    jv *v;
+    jq_handle_get(jq, hdl, NULL, (void **)&v, NULL);
+    jv_free(*v);
+    *v = def;
+  }
+  return jv_number(hdl);
+}
+
+static jv f_feof(jq_state *jq, jv input, jv handle) {
+  jv_free(input);
+  if (jv_get_kind(handle) != JV_KIND_NUMBER)
+    return type_error(handle, "not a handle");
+  int hdl = jv_number_value(handle);
+  if (jv_number_value(handle) != (double)hdl)
+    return type_error(handle, "not a handle (must be integer)");
+  if (hdl < 0)
+    return type_error(handle, "not a valid handle (must be non-negative)");
+  jv_free(handle);
+
+  const char *type;
+  void *raw_handle;
+  jq_handle_get(jq, hdl, &type, &raw_handle, NULL);
+  if (type == NULL)
+    return jv_invalid_with_msg(jv_string_fmt("no file handle %d", hdl));
+
+  if (strcmp(type, "null") == 0)
+    return jv_true();
+  if (strcmp(type, "buffer") == 0)
+    return jv_false();
+  if (strcmp(type, "FILE") != 0)
+    return jv_invalid_with_msg(jv_string_fmt("unknown file handle type for %d", hdl));
+  struct jq_stdio_handle *h = raw_handle;
+  if (h->f == NULL)
+    return jv_true();
+  return feof(h->f) ? jv_true() : jv_false();
+}
+
+static jv f_fopen(jq_state *jq, jv input, jv filename, jv options) {
+  FILE *f = NULL;
+  int hdl = -1;
+  jv err = jv_null();
+  jq_runtime_flags flags = jq_flags(jq);
+  jv desired_handle = get_option(options, "handle", jv_number(-1));
+
+  if (jv_get_kind(desired_handle) == JV_KIND_NUMBER)
+    hdl = jv_number_value(desired_handle);
+  jv_free(desired_handle);
+
+  jv_free(input);
+
+  if (jv_get_kind(filename) == JV_KIND_STRING) {
+    /* Open a named file; first validate inputs */
+    if (!(flags & JQ_OPEN_FILES)) {
+      err = jv_invalid_with_msg(jv_string("file opens not allowed"));
+      goto out;
+    }
+    jv fopen_mode = get_option(options, "mode", jv_string("r"));
+    if (jv_get_kind(fopen_mode) != JV_KIND_STRING) {
+      err = type_error(fopen_mode, "not a file open mode");
+      goto out;
+    }
+    if (!(flags & JQ_OPEN_WRITE) &&
+        strspn(jv_string_value(fopen_mode), "cemr") != strlen(jv_string_value(fopen_mode))) {
+      err = jv_invalid_with_msg(jv_string("file opens for write not allowed"));
+      goto out;
+    }
+    /*
+     * FIXME: What should we do if f == NULL?  Returning a jv_invalid with
+     * the error would be nice, but without a way to catch errors in jq
+     * programs that's not too useful.  We could return a string instead
+     * of a number, but later, when we add a way to catch errors we'd be
+     * breaking this.  For now we return null.
+     */
+    f = fopen(jv_string_value(filename), jv_string_value(fopen_mode));
+    jv_free(fopen_mode);
+    if (f == NULL)
+      goto out;
+    hdl = jq_handle_create_stdio(jq, hdl, f, 1, 0);
+  } else if (jv_get_kind(filename) == JV_KIND_NULL) {
+    /* Open a notional /dev/null */
+    hdl = jq_handle_create_null(jq, hdl);
+  } else if (jv_get_kind(filename) != JV_KIND_NULL) {
+    err = type_error(filename, "not an filename string");
+    goto out;
+  }
+
+out:
+  jv_free(filename);
+  jv_free(options);
+  if (jv_get_kind(err) == JV_KIND_INVALID)
+    return err;
+  return jv_number(hdl);
+}
+
+/* FIXME: We've no way to return the result from pclose() */
+static jv f_popen(jq_state *jq, jv input, jv cmdline, jv options) {
+  int hdl = -1;
+  jv err = jv_null();
+  jq_runtime_flags flags = jq_flags(jq);
+  jv popen_type = get_option(options, "mode", jv_string("r"));
+  jv desired_handle = get_option(options, "handle", jv_number(-1));
+
+  jv_free(input);
+
+  if (jv_get_kind(desired_handle) == JV_KIND_NUMBER)
+    hdl = jv_number_value(desired_handle);
+  jv_free(desired_handle);
+
+  if (!(flags & JQ_EXEC)) {
+    err = jv_invalid_with_msg(jv_string("executing external programs not allowed"));
+    goto out;
+  }
+  if (jv_get_kind(cmdline) != JV_KIND_STRING) {
+    err = type_error(cmdline, "not a command");
+    goto out;
+  }
+  if (jv_get_kind(popen_type) != JV_KIND_STRING) {
+    err = type_error(popen_type, "not a popen type string");
+    goto out;
+  }
+  FILE *f = popen(jv_string_value(cmdline), jv_string_value(popen_type));
+
+  /*
+   * FIXME: What should we do if f == NULL?  Returning a jv_invalid with
+   * the error would be nice, but without a way to catch errors in jq
+   * programs that's not too useful.  We could return a string instead
+   * of a number, but later, when we add a way to catch errors we'd be
+   * breaking this.  For now we return null.
+   */
+  if (f == NULL)
+    goto out;
+  
+  hdl = jq_handle_create_stdio(jq, hdl, f, 1, 1);
+
+out:
+  jv_free(popen_type);
+  jv_free(cmdline);
+  jv_free(options);
+  if (jv_get_kind(err) == JV_KIND_INVALID)
+    return err;
+  return jv_number(hdl);
+}
+
+static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
+  void *raw_handle;
+  struct jq_stdio_handle *h;
+  int hdl;
+  int fl = 0;
+  int raw = 0;
+  int newline = 1;
+  int do_fflush = 0;
+  jv *v;
+  const char *type;
+
+  if (jv_get_kind(handle) != JV_KIND_NUMBER) {
+    jv_free(flags);
+    return type_error(handle, "not a handle");
+  }
+  hdl = jv_number_value(handle);
+  if (jv_number_value(handle) != (double)hdl) {
+    jv_free(flags);
+    return type_error(handle, "not a handle (must be integer)");
+  }
+  if (hdl < 0) {
+    jv_free(flags);
+    return type_error(handle, "not a valid handle (must be non-negative)");
+  }
+  jv_free(handle);
+
+  jq_handle_get(jq, hdl, &type, &raw_handle, NULL);
+  if (strcmp(type, "FILE") != 0)
+    jv_free(flags);
+
+  if (strcmp(type, "null") == 0)
+    return input; // "/dev/null"
+
+  if (strcmp(type, "buffer") == 0) {
+    v = raw_handle;
+    jv_free(*v);
+    *v = jv_copy(input);
+    return input;
+  }
+
+  if (strcmp(type, "FILE") != 0) {
+    jv_free(input);
+    jv err = jv_invalid_with_msg(jv_string_fmt("%d is not a valid file handle", hdl));
+    return err;
+  }
+
+  h = raw_handle;
+
+  if (jv_get_kind(flags) == JV_KIND_OBJECT) {
+    if (flag_is_set(flags, "ascii"))
+        fl |= JV_PRINT_ASCII;
+    if (flag_is_set(flags, "raw"))
+      raw = 1;
+    if (flag_is_set(flags, "no-newline"))
+      newline = 0;
+    if (flag_is_set(flags, "pretty"))
+      fl |= JV_PRINT_PRETTY;
+    if (flag_is_set(flags, "color") || flag_is_set(flags, "colour"))
+      fl |= JV_PRINT_COLOUR;
+    if (flag_is_set(flags, "sorted"))
+      fl |= JV_PRINT_SORTED;
+    if (flag_is_set(flags, "unbuffered"))
+      do_fflush = 1;
+  }
+  jv_free(flags);
+
+  if (raw && jv_get_kind(input) == JV_KIND_STRING)
+    fwrite(jv_string_value(input), 1, jv_string_length_bytes(jv_copy(input)), h->f);
+  else
+    jv_dumpf(jv_copy(input), h->f, fl);
+  if (newline)
+    fwrite("\n", 1, sizeof("\n") - 1, h->f);
+  if (do_fflush)
+    fflush(h->f);
+  return input;
+}
+
+static jv f_read(jq_state *jq, jv input, jv handle, jv flags) {
+  const char *type;
+  void *raw_handle;
+  struct jq_stdio_handle *h;
+  int hdl;
+
+  jv_free(input);
+
+  if (jv_get_kind(handle) != JV_KIND_NUMBER)
+    return type_error(handle, "not a handle");
+  hdl = jv_number_value(handle);
+  if (jv_number_value(handle) != (double)hdl)
+    return type_error(handle, "not a handle (must be integer)");
+  if (hdl < 0)
+    return type_error(handle, "not a valid handle (must be non-negative)");
+  jv_free(handle);
+
+  jv a = jv_array_sized(2);
+
+  jq_handle_get(jq, hdl, &type, &raw_handle, NULL);
+  if (strcmp(type, "FILE") != 0)
+    jv_free(flags);
+
+  if (strcmp(type, "null") == 0)
+    /* "/dev/null" */
+    return a;
+
+  if (strcmp(type, "buffer") == 0) {
+    a = jv_array_append(a, jv_copy(*(jv *)raw_handle));
+    return a;
+  }
+
+  if (strcmp(type, "FILE") != 0) {
+    jv err = jv_invalid_with_msg(jv_string_fmt("%d is not a valid file handle", hdl));
+    jv_free(a);
+    return err;
+  }
+
+  h = raw_handle;
+  if (h->f == NULL)
+    return a; // EOF received earlier on what must have been a pipe
+
+  jv res;
+  int len;
+  int raw = flag_is_set(flags, "raw");
+  int slurp = flag_is_set(flags, "slurp");
+  jv_free(flags);
+
+  char buf[4096]; // FIXME Make configurable via flags
+
+  struct jv_parser *p = NULL;
+
+  if (!raw)
+    p = jv_parser_new(0); // JV_PARSE_EXPLODE_TOPLEVEL_ARRAY no supported here
+
+  if (raw && slurp)
+    res = jv_string("");
+  else if (slurp)
+    res = jv_array();
+  else // raw && ! slurp
+    res = jv_invalid();
+
+  while (!feof(h->f)) {
+    if (!fgets(buf, sizeof(buf), h->f)) {
+      buf[0] = 0;
+      break;
+    }
+    len = strlen(buf);
+    if (len < 1)
+      continue;
+
+    if (!raw) {
+      jv_parser_set_buf(p, buf, strlen(buf), !feof(h->f));
+      jv value = jv_parser_next(p);
+      if (!jv_is_valid(value))
+        continue;                           // Need more input
+      if (!slurp) {
+        res = value;
+        break;                              // Done
+      }
+
+      res = jv_array_append(res, value);    // Keep going till EOF
+    } else if (raw && slurp) {
+      res = jv_string_concat(res, jv_string(buf));
+    } else {
+      /* raw && !slurp */
+      if (buf[len-1] == '\n')
+        buf[len-1] = 0;
+      res = jv_string(buf);
+      break;
+    }
+  }
+
+  if (!raw)
+    jv_parser_free(p);
+
+  if (h->is_pipe && feof(h->f)) {
+    int status = pclose(h->f);
+    jv stat = jv_object();
+
+    stat = jv_object_set(stat, jv_string("status"), jv_number(status));
+    if (WIFEXITED(status))
+      stat = jv_object_set(stat, jv_string("exitstatus"), jv_number(WEXITSTATUS(status)));
+    if (WIFSIGNALED(status))
+      stat = jv_object_set(stat, jv_string("termsig"), jv_number(WTERMSIG(status)));
+    if (WCOREDUMP(status))
+      stat = jv_object_set(stat, jv_string("coredump"), jv_true());
+    h->f = NULL;
+
+    a = jv_array_append(a, stat);
+  }
+  if (jv_is_valid(res))
+    return jv_array_append(a, res);
+  return a;
+}
+
+static jv f_string_split(jq_state *jq, jv input, jv sep) {
+  return jv_string_split(input, sep);
+}
+
+static jv f_string_explode(jq_state *jq, jv input) {
+  return jv_string_explode(input);
+}
+
+static jv f_string_implode(jq_state *jq, jv input) {
+  return jv_string_implode(input);
+}
+
+static jv f_setpath(jq_state *jq, jv input, jv path, jv value) {
+  return jv_setpath(input, path, value);
+}
+
+static jv f_getpath(jq_state *jq, jv input, jv path) {
+  return jv_getpath(input, path);
+}
+
+static jv f_delpaths(jq_state *jq, jv input, jv paths) {
+  return jv_delpaths(input, paths);
+}
+
+static jv f_has(jq_state *jq, jv input, jv k) {
+  return jv_has(input, k);
 }
 
 static const struct cfunction function_list[] = {
@@ -587,13 +1003,13 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_endswith, "endswith", 2},
   {(cfunction_ptr)f_ltrimstr, "ltrimstr", 2},
   {(cfunction_ptr)f_rtrimstr, "rtrimstr", 2},
-  {(cfunction_ptr)jv_string_split, "split", 2},
-  {(cfunction_ptr)jv_string_explode, "explode", 1},
-  {(cfunction_ptr)jv_string_implode, "implode", 1},
-  {(cfunction_ptr)jv_setpath, "setpath", 3}, // FIXME typechecking
-  {(cfunction_ptr)jv_getpath, "getpath", 2},
-  {(cfunction_ptr)jv_delpaths, "delpaths", 2},
-  {(cfunction_ptr)jv_has, "has", 2},
+  {(cfunction_ptr)f_string_split, "split", 2},
+  {(cfunction_ptr)f_string_explode, "explode", 1},
+  {(cfunction_ptr)f_string_implode, "implode", 1},
+  {(cfunction_ptr)f_setpath, "setpath", 3}, // FIXME typechecking
+  {(cfunction_ptr)f_getpath, "getpath", 2},
+  {(cfunction_ptr)f_delpaths, "delpaths", 2},
+  {(cfunction_ptr)f_has, "has", 2},
   {(cfunction_ptr)f_equal, "_equal", 3},
   {(cfunction_ptr)f_notequal, "_notequal", 3},
   {(cfunction_ptr)f_less, "_less", 3},
@@ -612,6 +1028,12 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
+  {(cfunction_ptr)f_read, "_read", 3},
+  {(cfunction_ptr)f_write, "write", 3},
+  {(cfunction_ptr)f_buffer, "buffer", 2},
+  {(cfunction_ptr)f_fopen, "fopen", 3},
+  {(cfunction_ptr)f_popen, "popen", 3},
+  {(cfunction_ptr)f_feof, "eof", 2},
 };
 
 struct bytecoded_builtin { const char* name; block code; };
@@ -660,6 +1082,7 @@ static block bind_bytecoded_builtins(block b) {
 static const char* const jq_builtins[] = {
   "def map(f): [.[] | f];",
   "def select(f): if f then . else empty end;",
+  "def read(handle; flags): _read(handle; flags)|if length == 0 then empty elif length == 2 then . else .[0] end;",
   "def sort_by(f): _sort_by_impl(map([f]));",
   "def group_by(f): _group_by_impl(map([f]));",
   "def unique: group_by(.) | map(.[0]);",
