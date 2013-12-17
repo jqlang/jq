@@ -458,7 +458,9 @@ ExpD:
 ExpD '|' ExpD { 
   $$ = block_join($1, $3);
 } |
-
+'-' ExpD {
+  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
+} |
 Term {
   $$ = $1;
 }

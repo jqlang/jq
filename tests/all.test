@@ -36,6 +36,10 @@ null
 null
 []
 
+{x: -1}
+null
+{"x": -1}
+
 # The input line starts with a 0xFEFF (byte order mark) codepoint
 # No, there is no reason to have a byte order mark in UTF8 text.
 # But apparently people do, so jq shouldn't break on it.
