@@ -586,6 +586,10 @@ int jv_string_length_codepoints(jv j) {
 }
 
 #ifndef HAVE_MEMMEM
+#ifdef memmem
+#undef memmem
+#endif
+#define memmem my_memmem
 static const void *memmem(const void *haystack, size_t haystacklen,
                           const void *needle, size_t needlelen)
 {
