@@ -1021,9 +1021,9 @@ sections:
               @uri "http://www.google.com/search?q=\(.search)"
 
           will produce the following output for the input
-          `{"search":"jq!"}`:
+          `{"search":"what is jq?"}`:
 
-              http://www.google.com/search?q=jq%21
+              "http://www.google.com/search?q=what%20is%20jq%3f"
 
           Note that the slashes, question mark, etc. in the URL are
           not escaped, as they were part of the string literal.
