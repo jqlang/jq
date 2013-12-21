@@ -6,3 +6,4 @@ install-sh
 ltmain.sh
 missing
 ylwrap
+test-driver
