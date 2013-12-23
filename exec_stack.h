@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "jv_alloc.h"
 
 struct determine_alignment {
   char x;
@@ -53,7 +54,7 @@ static void stack_reallocate(struct stack* s, size_t sz) {
   char* old_mem_start = s->mem_end - old_mem_length;
   
   int new_mem_length = align_round_up((old_mem_length + sz + 256) * 2);
-  char* new_mem_start = realloc(old_mem_start, new_mem_length);
+  char* new_mem_start = jv_mem_realloc(old_mem_start, new_mem_length);
   memmove(new_mem_start + (new_mem_length - old_mem_length),
             new_mem_start, old_mem_length);
   s->mem_end = new_mem_start + new_mem_length;
