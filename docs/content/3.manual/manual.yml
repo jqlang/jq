@@ -49,6 +49,13 @@ manpage_intro: |
   in the jq language and specifies how to transform the input
   document.
 
+  Note: it is important to mind the shell's quoting rules.  As a
+  general rule it's best to always quote (with single-quote
+  characters) the jq program, as too many characters with special
+  meaning to jq are also shell meta-characters.  For example, `jq
+  "foo"` will fail on most Unix shells because that will be the same
+  as `jq foo`, which will generally fail because `foo is not defined`.
+
   ## FILTERS
 
 manpage_epilogue: |
