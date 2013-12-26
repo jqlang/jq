@@ -30,9 +30,6 @@ static void die() {
   exit(2);
 }
 
-
-
-
 static int isoptish(const char* text) {
   return text[0] == '-' && (text[1] == '-' || isalpha(text[1]));
 }
@@ -60,6 +57,8 @@ enum {
   FROM_FILE = 512,
 
   EXIT_STATUS = 8192,
+
+  ARGS = 16384,
 
   /* debugging only */
   DUMP_DISASM = 2048,
@@ -151,23 +150,19 @@ int main(int argc, char* argv[]) {
   const char* program = 0;
   input_filenames = jv_mem_alloc(sizeof(const char*) * argc);
   ninput_files = 0;
-  int further_args_are_files = 0;
   int jq_flags = 0;
+  int i;
   jv_parser_flags parser_flags = 0;
   jv program_arguments = jv_array();
-  for (int i=1; i<argc; i++) {
-    if (further_args_are_files) {
-      input_filenames[ninput_files++] = argv[i];
-    } else if (!strcmp(argv[i], "--")) {
-      if (!program) usage();
-      further_args_are_files = 1;
-    } else if (!isoptish(argv[i])) {
-      if (program) {
-        input_filenames[ninput_files++] = argv[i];
-      } else {
-        program = argv[i];
-      }
-    } else if (isoption(argv[i], 's', "slurp")) {
+  jv args = jv_null();
+  for (i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--") == 0) {
+      i++;
+      break;
+    }
+    if (!isoptish(argv[i]))
+      break;
+    if (isoption(argv[i], 's', "slurp")) {
       options |= SLURP;
     } else if (isoption(argv[i], 'r', "raw-output")) {
       options |= RAW_OUTPUT;
@@ -191,6 +186,8 @@ int main(int argc, char* argv[]) {
       options |= FROM_FILE;
     } else if (isoption(argv[i], 'e', "exit-status")) {
       options |= EXIT_STATUS;
+    } else if (isoption(argv[i], 0, "args")) {
+      options |= ARGS;
     } else if (isoption(argv[i], 'I', "online-input")) {
       parser_flags = JV_PARSE_EXPLODE_TOPLEVEL_ARRAY;
     } else if (isoption(argv[i], 0, "arg")) {
@@ -239,7 +236,31 @@ int main(int argc, char* argv[]) {
       die();
     }
   }
-  if (!program) usage();
+
+  if (!program) {
+    if (i >= argc)
+      usage();
+    program = argv[i++];
+  }
+  if (!*program)
+    usage();
+
+  /* Remaining arguments are... */
+  if (options & ARGS) {
+    /* ...strings, as an array */
+    args = jv_array_sized(argc - i);
+    for (; i < argc; i++)
+      args = jv_array_append(args, jv_string(argv[i]));
+    jv arg = jv_object();
+    arg = jv_object_set(arg, jv_string("name"), jv_string("args"));
+    arg = jv_object_set(arg, jv_string("value"), args);
+    program_arguments = jv_array_append(program_arguments, arg);
+  } else {
+    /* ...input files */
+    for (; i < argc; i++)
+      input_filenames[ninput_files++] = argv[i];
+  }
+
   if (ninput_files == 0) current_input = stdin;
 
   if ((options & PROVIDE_NULL) && (options & (RAW_INPUT | SLURP))) {
