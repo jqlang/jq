@@ -21,13 +21,13 @@ static void usage() {
   fprintf(stderr, "how to write jq filters (and why you might want to)\n");
   fprintf(stderr, "see the jq manpage, or the online documentation at\n");
   fprintf(stderr, "http://stedolan.github.com/jq\n\n");
-  exit(1);
+  exit(2);
 }
 
 static void die() {
   fprintf(stderr, "Use %s --help for help with command-line options,\n", progname);
   fprintf(stderr, "or see the jq documentation at http://stedolan.github.com/jq\n");
-  exit(1);
+  exit(2);
 }
 
 
@@ -67,18 +67,13 @@ enum {
 static int options = 0;
 
 static int process(jq_state *jq, jv value, int flags) {
-  int ret = 0;
+  int ret = 14; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
-      if (jv_get_kind(result) == JV_KIND_FALSE)
-        ret = 10;
-      else if (jv_get_kind(result) == JV_KIND_NULL)
-        ret = 11;
-      else
-        ret = 0;
+      ret = 0;
       jv_free(result);
     } else {
       int dumpopts;
@@ -95,9 +90,7 @@ static int process(jq_state *jq, jv value, int flags) {
       if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
       if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
       if (options & UNBUFFERED_OUTPUT) dumpopts |= JV_PRINT_UNBUFFERED;
-      if (jv_get_kind(result) == JV_KIND_FALSE)
-        ret = 10;
-      else if (jv_get_kind(result) == JV_KIND_NULL)
+      if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
         ret = 11;
       else
         ret = 0;
@@ -151,7 +144,7 @@ int main(int argc, char* argv[]) {
   jq = jq_init();
   if (jq == NULL) {
     perror("malloc");
-    ret = 1;
+    ret = 2;
     goto out;
   }
 
@@ -223,7 +216,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "%s: Bad JSON in --argfile %s %s: %s\n", progname,
                 argv[i+1], argv[i+2], jv_string_value(data));
         jv_free(data);
-        ret = 1;
+        ret = 2;
         goto out;
       }
       if (jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
@@ -260,7 +253,7 @@ int main(int argc, char* argv[]) {
       data = jv_invalid_get_msg(data);
       fprintf(stderr, "%s: %s\n", progname, jv_string_value(data));
       jv_free(data);
-      ret = 1;
+      ret = 2;
       goto out;
     }
     compiled = jq_compile_args(jq, jv_string_value(data), program_arguments);
@@ -269,7 +262,7 @@ int main(int argc, char* argv[]) {
     compiled = jq_compile_args(jq, program, program_arguments);
   }
   if (!compiled){
-    ret = 1;
+    ret = 3;
     goto out;
   }
 
@@ -316,7 +309,7 @@ int main(int argc, char* argv[]) {
           jv msg = jv_invalid_get_msg(value);
           fprintf(stderr, "parse error: %s\n", jv_string_value(msg));
           jv_free(msg);
-          ret = 1;
+          ret = 4;
           break;
         } else {
           jv_free(value);
@@ -333,7 +326,9 @@ int main(int argc, char* argv[]) {
 out:
   jv_mem_free(input_filenames);
   jq_teardown(&jq);
-  if (ret >= 10 && ret <= 11 && !(options & EXIT_STATUS))
+  if (ret >= 10 && (options & EXIT_STATUS))
+    return ret - 10;
+  if (ret >= 10)
     return 0;
   return ret;
 }
