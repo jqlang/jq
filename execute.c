@@ -42,6 +42,8 @@ struct jq_state {
 
   jq_handle *handles;
   int nhandles;
+
+  jq_runtime_flags flags;
 };
 
 int jq_handle_create(jq_state *jq,
@@ -845,9 +847,11 @@ void jq_set_nomem_handler(jq_state *jq, void (*nomem_handler)(void *), void *dat
 }
 
 
-void jq_start(jq_state *jq, jv input, int flags) {
+void jq_start(jq_state *jq, jv input, jq_runtime_flags flags) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   jq_reset(jq);
+
+  jq->flags = flags;
   
   struct closure top = {jq->bc, -1};
   struct frame* top_frame = frame_push(jq, top, 0, 0);

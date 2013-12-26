@@ -4,7 +4,11 @@
 #include <stdio.h>
 #include <jv.h>
 
-enum {JQ_DEBUG_TRACE = 1};
+typedef enum jq_runtime_flags {
+  JQ_DEBUG_TRACE = 1,   /* trace jq program execution */
+  JQ_OPEN_FILES = 2,    /* jq program allowed to open any file */
+  JQ_OPEN_WRITE = 4,    /* jq program allowed to open files for writing */
+} jq_runtime_flags;
 
 typedef struct jq_state jq_state;
 typedef void (*jq_err_cb)(void *, jv);
@@ -16,7 +20,7 @@ void jq_set_nomem_handler(jq_state *, void (*)(void *), void *);
 int jq_compile(jq_state *, const char* str);
 int jq_compile_args(jq_state *, const char* str, jv args);
 void jq_dump_disassembly(jq_state *, int);
-void jq_start(jq_state *, jv value, int flags);
+void jq_start(jq_state *, jv value, jq_runtime_flags flags);
 jv jq_next(jq_state *);
 int jq_handle_create(jq_state *, const char *, void *, void (*)(void *));
 int jq_handle_create_stdio(jq_state *, FILE *, int, int, int);
