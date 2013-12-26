@@ -221,6 +221,12 @@ int main(int argc, char* argv[]) {
       arg = jv_object_set(arg, jv_string("value"), data);
       program_arguments = jv_array_append(program_arguments, arg);
       i += 2; // skip the next two arguments
+    } else if (isoption(argv[i],  0,  "allow-open")) {
+      jq_flags |= JQ_OPEN_FILES;
+    } else if (isoption(argv[i],  0,  "allow-write")) {
+      jq_flags |= JQ_OPEN_FILES | JQ_OPEN_WRITE;
+    } else if (isoption(argv[i],  0,  "allow-exec")) {
+      jq_flags |= JQ_EXEC;
     } else if (isoption(argv[i],  0,  "debug-dump-disasm")) {
       options |= DUMP_DISASM;
     } else if (isoption(argv[i],  0,  "debug-trace")) {

@@ -11,7 +11,9 @@ struct jq_stdio_handle {
   FILE *f;
   struct jv_parser *p;
   jv s;
-  int close_it;
+  unsigned int close_it:1;
+  unsigned int is_pipe:1;
+  unsigned int is_null:1;
 };
 
 int builtins_bind(jq_state *, block*);

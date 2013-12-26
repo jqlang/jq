@@ -10,6 +10,22 @@
 #include "locfile.h"
 #include "jv_unicode.h"
 
+#ifndef WIFEXITED
+#define WIFEXITED(s) 1
+#endif
+#ifndef WIFSIGNALED
+#define WIFSIGNALED(s) 0
+#endif
+#ifndef WEXITSTATUS
+#define WEXITSTATUS(s) (s)
+#endif
+#ifndef WCOREDUMP
+#define WCOREDUMP(s) (0)
+#endif
+#ifndef WTERMSIG
+#define WTERMSIG(s) (0)
+#endif
+
 
 static jv type_error(jv bad, const char* msg) {
   jv err = jv_invalid_with_msg(jv_string_fmt("%s %s",
@@ -570,6 +586,127 @@ static jv f_error(jq_state *jq, jv input, jv msg) {
   return jv_invalid_with_msg(msg);
 }
 
+static int flag_is_set(jv o, const char *s) {
+  if (jv_get_kind(o) != JV_KIND_OBJECT)
+    return 0;
+  jv k = jv_string(s);
+  jv v = jv_object_get(jv_copy(o), k);
+  jv_kind kind = jv_get_kind(v);
+  jv_free(v);
+  switch (kind) {
+  case JV_KIND_NULL:
+  case JV_KIND_FALSE:
+  case JV_KIND_INVALID: // can't happen
+    return 0;
+  default:
+    return 1;
+  }
+}
+
+static jv get_option(jv o, const char *s, jv def) {
+  if (jv_get_kind(o) != JV_KIND_OBJECT)
+    return jv_null();
+  jv k = jv_string(s);
+  jv v = jv_object_get(jv_copy(o), k);
+  if (jv_get_kind(v) == JV_KIND_NULL || jv_get_kind(v) == JV_KIND_INVALID) {
+    jv_free(v);
+    return def;
+  }
+  jv_free(def);
+  return v;
+}
+
+static jv f_fopen(jq_state *jq, jv input, jv options) {
+  FILE *f = NULL;
+  int hdl = -1;
+  jv err = jv_null();
+  jq_runtime_flags flags = jq_flags(jq);
+
+  if (jv_get_kind(input) == JV_KIND_STRING) {
+    /* Open a named file; first validate inputs */
+    if (!(flags & JQ_OPEN_FILES)) {
+      err = jv_invalid_with_msg(jv_string("file opens not allowed"));
+      goto out;
+    }
+    jv fopen_mode = get_option(options, "mode", jv_string("r"));
+    if (jv_get_kind(fopen_mode) != JV_KIND_STRING) {
+      err = type_error(fopen_mode, "not a file open mode");
+      goto out;
+    }
+    if (!(flags & JQ_OPEN_WRITE) &&
+        strspn(jv_string_value(fopen_mode), "cemr") != strlen(jv_string_value(fopen_mode))) {
+      err = jv_invalid_with_msg(jv_string("file opens for write not allowed"));
+      goto out;
+    }
+    /*
+     * FIXME: What should we do if f == NULL?  Returning a jv_invalid with
+     * the error would be nice, but without a way to catch errors in jq
+     * programs that's not too useful.  We could return a string instead
+     * of a number, but later, when we add a way to catch errors we'd be
+     * breaking this.  For now we return null.
+     */
+    f = fopen(jv_string_value(input), jv_string_value(fopen_mode));
+    jv_free(fopen_mode);
+    if (f == NULL)
+      goto out;
+    hdl = jq_handle_create_stdio(jq, f, 1, 0, flag_is_set(options, "raw"),
+                                 flag_is_set(options, "slurp"));
+  } else if (jv_get_kind(input) == JV_KIND_NULL) {
+    /* Open a notional /dev/null */
+    hdl = jq_handle_create_null(jq);
+  } else if (jv_get_kind(input) != JV_KIND_NULL) {
+    err = type_error(input, "not an filename string");
+    goto out;
+  }
+
+out:
+  jv_free(input);
+  if (jv_get_kind(err) == JV_KIND_INVALID)
+    return err;
+  return jv_number(hdl);
+}
+
+/* FIXME: We've no way to return the result from pclose() */
+static jv f_popen(jq_state *jq, jv input, jv options) {
+  int hdl = -1;
+  jv err = jv_null();
+  jq_runtime_flags flags = jq_flags(jq);
+  jv popen_type = get_option(options, "mode", jv_string("r"));
+  if (!(flags & JQ_EXEC)) {
+    err = jv_invalid_with_msg(jv_string("executing external programs not allowed"));
+    goto out;
+  }
+  if (jv_get_kind(input) != JV_KIND_STRING) {
+    err = type_error(input, "not a command");
+    goto out;
+  }
+  if (jv_get_kind(popen_type) != JV_KIND_STRING) {
+    err = type_error(popen_type, "not a popen type string");
+    goto out;
+  }
+  FILE *f = popen(jv_string_value(input), jv_string_value(popen_type));
+
+  /*
+   * FIXME: What should we do if f == NULL?  Returning a jv_invalid with
+   * the error would be nice, but without a way to catch errors in jq
+   * programs that's not too useful.  We could return a string instead
+   * of a number, but later, when we add a way to catch errors we'd be
+   * breaking this.  For now we return null.
+   */
+  if (f == NULL)
+    goto out;
+  
+  hdl = jq_handle_create_stdio(jq, f, 1, 1, flag_is_set(options, "raw"),
+                                 flag_is_set(options, "slurp"));
+
+out:
+  jv_free(popen_type);
+  jv_free(input);
+  if (jv_get_kind(err) == JV_KIND_INVALID)
+    return err;
+  return jv_number(hdl);
+}
+
 static jv f_read(jq_state *jq, jv input) {
   struct jq_stdio_handle *h;
   int hdl;
@@ -581,6 +718,18 @@ static jv f_read(jq_state *jq, jv input) {
     return type_error(input, "not a handle (must be integer)");
   if (hdl < 0)
     return type_error(input, "not a valid handle (must be non-negative)");
+  jv_free(input);
+
+  jv a = jv_array_sized(2);
+
+  if (jq_handle_get(jq, "null", hdl, NULL, NULL))
+    /* "/dev/null" */
+    return a;
+
+  if (jq_handle_get(jq, "buffer", hdl, (void **)&v, NULL)) {
+    a = jv_array_append(a, jv_copy(*v));
+    return a;
+  }
 
   if (!jq_handle_get(jq, "FILE", hdl, (void **)&h, NULL)) {
     jv err = jv_invalid_with_msg(jv_string_fmt("%d is not a valid file handle", hdl));
@@ -588,7 +737,8 @@ static jv f_read(jq_state *jq, jv input) {
     return err;
   }
 
-  jv_free(input);
+  if (h->f == NULL)
+    return a; // EOF received earlier
 
   jv value = jv_invalid();
   int len;
@@ -622,11 +772,26 @@ static jv f_read(jq_state *jq, jv input) {
       break;
     }
   }
+
+  if (h->is_pipe && feof(h->f)) {
+    int status = pclose(h->f);
+    jv stat = jv_object();
+
+    stat = jv_object_set(stat, jv_string("status"), jv_number(status));
+    if (WIFEXITED(status))
+      stat = jv_object_set(stat, jv_string("exitstatus"), jv_number(WEXITSTATUS(status)));
+    if (WIFSIGNALED(status))
+      stat = jv_object_set(stat, jv_string("termsig"), jv_number(WTERMSIG(status)));
+    if (WCOREDUMP(status))
+      stat = jv_object_set(stat, jv_string("coredump"), jv_true());
+    h->f = NULL;
+
+    a = jv_array_append(a, stat);
+  }
   if (jv_is_valid(h->s)) {
     value = h->s;
     h->s = jv_null();
   }
-  jv a = jv_array_sized(1);
   if (jv_is_valid(value))
     return jv_array_append(a, value);
   return a;
@@ -704,6 +869,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_read, "_read", 1},
+  {(cfunction_ptr)f_fopen, "fopen", 2},
+  {(cfunction_ptr)f_popen, "popen", 2},
 };
 
 struct bytecoded_builtin { const char* name; block code; };
@@ -752,7 +919,7 @@ static block bind_bytecoded_builtins(block b) {
 static const char* const jq_builtins[] = {
   "def map(f): [.[] | f];",
   "def select(f): if f then . else empty end;",
-  "def read: _read|if length == 0 then empty else .[0] end;",
+  "def read: _read|if length == 0 then empty elif length == 2 then . else .[0] end;",
   "def sort_by(f): _sort_by_impl(map([f]));",
   "def group_by(f): _group_by_impl(map([f]));",
   "def unique: group_by(.) | map(.[0]);",

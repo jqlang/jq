@@ -79,7 +79,9 @@ int jq_handle_create(jq_state *jq,
 
 static void destroy_stdio_handle(void *data) {
   struct jq_stdio_handle *h = data;
-  if (h->close_it)
+  if (h->f != NULL && h->is_pipe)
+    pclose(h->f);
+  else if (h->f != NULL && h->close_it)
     fclose(h->f);
   if (h->p)
       jv_parser_free(h->p);
@@ -87,9 +89,14 @@ static void destroy_stdio_handle(void *data) {
   jv_mem_free(h);
 }
 
+int jq_handle_create_null(jq_state *jq) {
+  return jq_handle_create(jq, "null", &jq, NULL); // Any "handle" address will do
+}
+
 int jq_handle_create_stdio(jq_state *jq,
                            FILE *f,
                            int close_it,
+                           int is_pipe,
                            int raw,
                            int slurp) {
   struct jq_stdio_handle *h = jv_mem_alloc(sizeof(*h));
@@ -99,6 +106,7 @@ int jq_handle_create_stdio(jq_state *jq,
   h->p = NULL;
   h->s = jv_invalid();
   h->close_it = close_it;
+  h->is_pipe = is_pipe;
   if (!raw)
     h->p = jv_parser_new(0);
   if (slurp && raw)
@@ -866,6 +874,10 @@ void jq_start(jq_state *jq, jv input, jq_runtime_flags flags) {
     jq->debug_trace_enabled = 0;
   }
   jq->initial_execution = 1;
+}
+
+jq_runtime_flags jq_flags(jq_state *jq) {
+  return jq->flags;
 }
 
 void jq_teardown(jq_state **jq) {
