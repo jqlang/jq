@@ -162,6 +162,11 @@ sections:
         problem or system error, 3 if there was a jq program compile
         error, or 0 if the jq program ran.
 
+      * `--args`:
+
+        This option passes all remaining command-line arguments after
+        the jq program as an array of strings bound to `$args`.
+
       * `--arg name value`:
 
         This option passes a value to the jq program as a predefined
