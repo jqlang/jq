@@ -181,6 +181,18 @@ sections:
         program and has the value resulting from parsing the content of
         the file named `bar`.
 
+      * `--allow-open`:
+
+        Allow the jq program to open files.
+
+      * `--allow-write`:
+
+        Allow the jq program to open files for writing.
+
+      * `--allow-exec`:
+
+        Allow the jq program to run external programs.
+
   - title: Basic filters
     entries:
       - title: "`.`"
