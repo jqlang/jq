@@ -151,10 +151,12 @@ sections:
 
       * `-e` / `--exit-status`:
 
-        Sets the exit status of jq to 10 if the last output values was
-        `false`, 11 if the last output value was `null`, or 0 if the
-        last output value was valid. Normally jq exits with 0, or 1 if
-        there was any usage problem or other error.
+        Sets the exit status of jq to 0 if the last output values was
+        neither `false` nor `null`, 1 if the last output value was
+        either `false` or `null`, or 4 if no valid result was ever
+        produced.  Normally jq exits with 2 if there was any usage
+        problem or system error, 3 if there was a jq program compile
+        error, or 0 if the jq program ran.
 
       * `--arg name value`:
 
