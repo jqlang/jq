@@ -707,6 +707,82 @@ out:
   return jv_number(hdl);
 }
 
+static int flag_is_set(jv o, const char *s) {
+  jv k = jv_string(s);
+  jv v = jv_object_get(jv_copy(o), k);
+  jv_kind kind = jv_get_kind(v);
+  jv_free(v);
+  switch (kind) {
+  case JV_KIND_NULL:
+  case JV_KIND_FALSE:
+  case JV_KIND_INVALID: // can't happen
+    return 0;
+  default:
+    return 1;
+  }
+}
+
+static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
+  struct jq_stdio_handle *h;
+  int hdl;
+  int fl = 0;
+  int raw = 0;
+  int newline = 1;
+  int do_fflush = 0;
+
+  if (jv_get_kind(handle) != JV_KIND_NUMBER) {
+    jv_free(flags);
+    return type_error(handle, "not a handle");
+  }
+  hdl = jv_number_value(handle);
+  if (jv_number_value(handle) != (double)hdl) {
+    jv_free(flags);
+    return type_error(handle, "not a handle (must be integer)");
+  }
+  if (hdl < 0) {
+    jv_free(flags);
+    return type_error(handle, "not a valid handle (must be non-negative)");
+  }
+  jv_free(handle);
+
+  if (jq_handle_get(jq, "null", hdl, NULL, NULL))
+    return input; /* "/dev/null" */
+
+  if (!jq_handle_get(jq, "FILE", hdl, (void **)&h, NULL)) {
+    jv_free(flags);
+    jv err = jv_invalid_with_msg(jv_string_fmt("%d is not a valid file handle", hdl));
+    return err;
+  }
+
+  if (jv_get_kind(flags) == JV_KIND_OBJECT) {
+    if (flag_is_set(flags, "ascii"))
+        fl |= JV_PRINT_ASCII;
+    if (flag_is_set(flags, "raw"))
+      raw = 1;
+    if (flag_is_set(flags, "no-newline"))
+      newline = 0;
+    if (flag_is_set(flags, "pretty"))
+      fl |= JV_PRINT_PRETTY;
+    if (flag_is_set(flags, "color") || flag_is_set(flags, "colour"))
+      fl |= JV_PRINT_COLOUR;
+    if (flag_is_set(flags, "sorted"))
+      fl |= JV_PRINT_SORTED;
+    if (flag_is_set(flags, "unbuffered"))
+      do_fflush = 1;
+  }
+  jv_free(flags);
+
+  if (raw && jv_get_kind(input) == JV_KIND_STRING)
+    fwrite(jv_string_value(input), 1, jv_string_length_bytes(jv_copy(input)), h->f);
+  else
+    jv_dumpf(jv_copy(input), h->f, fl);
+  if (newline)
+    fwrite("\n", 1, sizeof("\n") - 1, h->f);
+  if (do_fflush)
+    fflush(h->f);
+  return input;
+}
+
 static jv f_read(jq_state *jq, jv input) {
   struct jq_stdio_handle *h;
   int hdl;
@@ -733,7 +809,6 @@ static jv f_read(jq_state *jq, jv input) {
 
   if (!jq_handle_get(jq, "FILE", hdl, (void **)&h, NULL)) {
     jv err = jv_invalid_with_msg(jv_string_fmt("%d is not a valid file handle", hdl));
-    jv_free(input);
     return err;
   }
 
@@ -869,6 +944,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_read, "_read", 1},
+  {(cfunction_ptr)f_write, "write", 3},
   {(cfunction_ptr)f_fopen, "fopen", 2},
   {(cfunction_ptr)f_popen, "popen", 2},
 };
