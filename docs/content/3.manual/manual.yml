@@ -1221,6 +1221,114 @@ sections:
       useful bits of jq's standard library.
 
     entries:
+      - title: Input/Output
+        body: |
+
+          Normally jq programs cannot open files or execute programs.
+          If the `--allow-open` option is given then the jq program will
+          be able to use the `open` builtin to open files for reading.
+          If the `--allow-write` option is given then the jq program will
+          be able to use the `open` builtin to open files for reading
+          and writing.
+
+          If the `--allow-exec` option is given then the jq program will
+          be able to run external commands with the `popen` builtin.
+
+          In all cases the file handles `0`, `1`, and `2` are available,
+          corresponding to standard input, output, and error, and jq
+          programs may read and/or write (as appropriate) from/to these.
+
+          - title: "read"
+            body: |
+
+              The `read` builtin reads and outputs a value from the
+              handle given as its input.
+
+              Whether inputs are read as raw strings or parsed JSON
+              texts is specified by the "raw" options to `fopen` and
+              `popen`.  Whether all inputs are read and returned as one
+              value, or whether they are read one at a time is specified
+              by the "slurp" option.
+
+              When the "slurp" is false (or missing) then on EOF `read`
+              behaves like `empty`.
+
+              When "slurp" is false and "raw" is true then each value
+              output by `read` will be one line of input from the file.
+              When "slurp" and "raw" are false then each value output by
+              `read` will be one JSON value (parsed JSON text) read from
+              the file.
+
+              When "slurp" is true and the input handle is for a pipe
+              (see `popen` below) then `read` returns an array of the
+              command's exit status and the value read.
+
+              When "slurp" is false and the input handle is for a pipe
+              then the last value output by `read` will be the command's
+              exit status.
+
+          - title: "write(handle; flags)"
+            body: |
+
+              The `write` builtin writes its input to the given handle.
+              The `flags` argument is either `null` or an object whose
+              keys are any of: "raw", "ascii", "no-newline", "pretty",
+              "color" (or "colour"), "sorted", and "unbuffered".
+
+              Note that `write` outputs its input just like `.`.
+
+              If "raw" printing is requested and the input is a string
+              then it will be printed without double quotes or escaping.
+
+              If the "ascii" flag is given then all non-ASCII characters
+              will be escaped.
+
+              If the "pretty" flag is given then the output will be
+              pretty-printed.
+
+              If the "color" (or "colour") flags is given then the
+              output will be colorized.
+
+              If the "sorted" flag is given object keys will be sorted.
+
+              If the "unbuffered" flag is given then the stream will be
+              flushed.
+
+              If the "no-newline" option is given then no newline will
+              be printed.
+
+          - title: "fopen(options)"
+            body: |
+
+              The file denoted by the input string will be opened.  If
+              the filname is null then read on the resulting handle will
+              behave like `empty`, and writes will be permitted and
+              ignored.
+
+              The `options` argument may be null or an object with any
+              of these keys: "mode", "raw", "slurp".  See `read` above
+              for a description of the "raw" and "slurp" options.
+
+              mode is as for the stdio fopen(3) function.  A file handle
+              for use as an input to `read` and/or `write` is output.
+
+              If `raw` is true then the input will not be parsed as a
+              JSON text; instead the input string(s) will be returned.
+              If `slurp` is false then the input stream will be read one
+              line at a time.
+
+              If `slurp` is true then the input will be read until EOF.
+              If `raw` is true then a single string will be returned,
+              else an array of parsed inputs will be returned.
+
+              The `raw` and `slurp` arguments are ignored when writing.
+
+          - title: "popen(options)"
+            body: |
+
+              Like `fopen`, but the input specifies a command/pipe and
+              the type argument is as for the stdio popen(3) function.
+
       - title: Variables
         body: |
           
