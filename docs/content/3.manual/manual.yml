@@ -1201,6 +1201,12 @@ sections:
           
   - title: Advanced features
     body: |
+      Normally jq programs are pure filters, however, sometimes it is
+      necessary to interact with standard input and output streams in
+      other ways than read one value, filter, write.  And sometimes it's
+      necessary to interact with files, devices, and external programs
+      in ways other than as a command in a filter.
+
       Variables are an absolute necessity in most programming languages, but
       they're relegated to an "advanced feature" in jq.
 
@@ -1237,6 +1243,9 @@ sections:
           In all cases the file handles `0`, `1`, and `2` are available,
           corresponding to standard input, output, and error, and jq
           programs may read and/or write (as appropriate) from/to these.
+
+          Note also the `buffer` builtin, which allows for keeping state
+          between filter invocations.
 
           - title: "read"
             body: |
@@ -1328,6 +1337,15 @@ sections:
 
               Like `fopen`, but the input specifies a command/pipe and
               the type argument is as for the stdio popen(3) function.
+
+          - title: "buffer"
+            body: |
+
+              The `buffer` builtin is like `fopen` of a temporary file
+              in that it returns a handle that can be written to and
+              read from.  The last value written is always the value
+              returned by read, and buffers always start out with a null
+              value.
 
       - title: Variables
         body: |
