@@ -302,6 +302,7 @@ int main(int argc, char* argv[]) {
                          (options & RAW_INPUT) ? 1 : 0, (options & SLURP) ? 1 : 0);
   jq_handle_create_stdio(jq, stdout, 0, 0, 0, 0);
   jq_handle_create_stdio(jq, stderr, 0, 0, 0, 0);
+  jq_handle_create_buffer(jq);
 
   if (options & PROVIDE_NULL) {
     ret = process(jq, jv_null(), jq_flags);

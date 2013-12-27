@@ -616,6 +616,12 @@ static jv get_option(jv o, const char *s, jv def) {
   return v;
 }
 
+static jv f_buffer(jq_state *jq, jv input) {
+  jv_free(input);
+  int hdl = jq_handle_create_buffer(jq);
+  return jv_number(hdl);
+}
+
 static jv f_fopen(jq_state *jq, jv input, jv options) {
   FILE *f = NULL;
   int hdl = -1;
@@ -707,21 +713,6 @@ out:
   return jv_number(hdl);
 }
 
-static int flag_is_set(jv o, const char *s) {
-  jv k = jv_string(s);
-  jv v = jv_object_get(jv_copy(o), k);
-  jv_kind kind = jv_get_kind(v);
-  jv_free(v);
-  switch (kind) {
-  case JV_KIND_NULL:
-  case JV_KIND_FALSE:
-  case JV_KIND_INVALID: // can't happen
-    return 0;
-  default:
-    return 1;
-  }
-}
-
 static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
   struct jq_stdio_handle *h;
   int hdl;
@@ -729,6 +720,7 @@ static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
   int raw = 0;
   int newline = 1;
   int do_fflush = 0;
+  jv *v;
 
   if (jv_get_kind(handle) != JV_KIND_NUMBER) {
     jv_free(flags);
@@ -747,6 +739,12 @@ static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
 
   if (jq_handle_get(jq, "null", hdl, NULL, NULL))
     return input; /* "/dev/null" */
+
+  if (jq_handle_get(jq, "buffer", hdl, (void **)&v, NULL)) {
+    jv_free(*v);
+    *v = jv_copy(input);
+    return input;
+  }
 
   if (!jq_handle_get(jq, "FILE", hdl, (void **)&h, NULL)) {
     jv_free(flags);
@@ -786,6 +784,7 @@ static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
 static jv f_read(jq_state *jq, jv input) {
   struct jq_stdio_handle *h;
   int hdl;
+  jv *v;
 
   if (jv_get_kind(input) != JV_KIND_NUMBER)
     return type_error(input, "not a handle");
@@ -809,6 +808,7 @@ static jv f_read(jq_state *jq, jv input) {
 
   if (!jq_handle_get(jq, "FILE", hdl, (void **)&h, NULL)) {
     jv err = jv_invalid_with_msg(jv_string_fmt("%d is not a valid file handle", hdl));
+    jv_free(a);
     return err;
   }
 
@@ -945,6 +945,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_read, "_read", 1},
   {(cfunction_ptr)f_write, "write", 3},
+  {(cfunction_ptr)f_buffer, "buffer", 1},
   {(cfunction_ptr)f_fopen, "fopen", 2},
   {(cfunction_ptr)f_popen, "popen", 2},
 };
