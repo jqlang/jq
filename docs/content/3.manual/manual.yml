@@ -190,7 +190,7 @@ sections:
             input: '"Hello, world!"'
             output: ['"Hello, world!"']
 
-      - title: "`.foo`"
+      - title: "`.foo`, `.foo.bar`"
         body: |
           
           The simplest *useful* filter is `.foo`. When given a
@@ -199,6 +199,8 @@ sections:
 
           If the key contains special characters, you need to surround
           it with double quotes like this: `."foo$"`.
+
+          A filter of the form `.foo.bar` is equivalent to `.foo|.bar`.
           
         examples:
           - program: '.foo'
