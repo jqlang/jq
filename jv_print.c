@@ -260,14 +260,24 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   }
 }
 
-void jv_dump(jv x, int flags) {
+void jv_dumpf(jv x, FILE *f, int flags) {
   struct dtoa_context C;
   jvp_dtoa_context_init(&C);
-  jv_dump_term(&C, x, flags, 0, stdout, 0);
+  jv_dump_term(&C, x, flags, 0, f, 0);
   jvp_dtoa_context_free(&C);
   if (flags & JV_PRINT_UNBUFFERED) {
-    fflush(stdout);
+    fflush(f);
   }
+}
+
+void jv_dump(jv x, int flags) {
+  jv_dumpf(x, stdout, flags);
+}
+
+void jv_show(jv x, int flags) {
+  if (flags == -1)
+    flags = JV_PRINT_PRETTY | JV_PRINT_COLOUR | JV_PRINT_UNBUFFERED;
+  jv_dumpf(jv_copy(x), stderr, flags);
 }
 
 jv jv_dump_string(jv x, int flags) {
