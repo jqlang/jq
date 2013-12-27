@@ -82,6 +82,10 @@ sections:
       You can affect how jq reads and writes its input and output
       using some command-line options:
 
+      * `--version`:
+
+        Output the jq version and exit with zero.
+
       * `--slurp`/`-s`:
   
         Instead of running the filter for each JSON object in the
