@@ -197,7 +197,7 @@ static block gen_update(block object, block val, int optype) {
 %%
 TopLevel:
 Exp {
-  *answer = $1;
+  *answer = BLOCK(gen_op_simple(TOP), gen_begin_end($1));
 } |
 FuncDefs {
   *answer = $1;
@@ -213,7 +213,10 @@ FuncDef FuncDefs {
 
 Exp:
 FuncDef Exp %prec ';' {
-  $$ = block_bind($1, $2, OP_IS_CALL_PSEUDO);
+  if (block_is_funcdef($2))
+    $$ = block_bind($1, $2, OP_IS_CALL_PSEUDO);
+  else
+    $$ = block_bind($1, BLOCK(gen_op_simple(TOP), gen_begin_end($2)), OP_IS_CALL_PSEUDO);
 } |
 
 Term "as" '$' IDENT '|' Exp {
@@ -620,9 +623,11 @@ int jq_parse(struct locfile* locations, block* answer) {
 int jq_parse_library(struct locfile* locations, block* answer) {
   int errs = jq_parse(locations, answer);
   if (errs) return errs;
-  if (!block_has_only_binders(*answer, OP_IS_CALL_PSEUDO)) {
+  assert(answer->first != NULL);
+  if (block_has_main(*answer)) {
     locfile_locate(locations, UNKNOWN_LOCATION, "error: library should only have function definitions, not a main expression");
     return 1;
   }
+  assert(block_has_only_binders(*answer, OP_IS_CALL_PSEUDO));
   return 0;
 }

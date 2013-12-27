@@ -89,13 +89,20 @@ static int process(jq_state *jq, jv value, int flags) {
       if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
       if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
       if (options & UNBUFFERED_OUTPUT) dumpopts |= JV_PRINT_UNBUFFERED;
-      if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
+
+      if (jv_get_kind(result) == JV_KIND_FALSE)
         ret = 11;
+      else if (jv_get_kind(result) == JV_KIND_NULL && !((flags & (JQ_BEGIN|JQ_END))))
+        ret = 0;
       else
         ret = 0;
-      jv_dump(result, dumpopts);
+      if (!(flags & JQ_BEGIN))
+        jv_dump(result, dumpopts);
+      else
+        jv_free(result);
     }
-    printf("\n");
+    if (!(flags & JQ_BEGIN))
+      printf("\n");
   }
   jv_free(result);
   return ret;
@@ -283,10 +290,10 @@ int main(int argc, char* argv[]) {
       ret = 2;
       goto out;
     }
-    compiled = jq_compile_args(jq, jv_string_value(data), program_arguments);
+    compiled = jq_compile_args(jq, jv_string_value(data), JQ_BEGIN_END, program_arguments);
     jv_free(data);
   } else {
-    compiled = jq_compile_args(jq, program, program_arguments);
+    compiled = jq_compile_args(jq, program, JQ_BEGIN_END, program_arguments);
   }
   if (!compiled){
     ret = 3;
@@ -302,6 +309,11 @@ int main(int argc, char* argv[]) {
   jq_handle_create_stdio(jq, 1, stdout, 0, 0);
   jq_handle_create_stdio(jq, 2, stderr, 0, 0);
   jq_handle_create_buffer(jq, 3);
+
+  ret = process(jq, jv_null(), jq_flags | JQ_BEGIN);
+  if (ret != 0 && ret != 14)
+    goto out;
+  ret = 0;
 
   if (options & PROVIDE_NULL) {
     ret = process(jq, jv_null(), jq_flags);
@@ -341,7 +353,7 @@ int main(int argc, char* argv[]) {
           jv msg = jv_invalid_get_msg(value);
           fprintf(stderr, "parse error: %s\n", jv_string_value(msg));
           jv_free(msg);
-          ret = 4;
+          ret = 5;
           break;
         } else {
           jv_free(value);
@@ -355,7 +367,13 @@ int main(int argc, char* argv[]) {
       ret = process(jq, slurped, jq_flags);
     }
   }
+
 out:
+  if (ret == 0 || ret == 14) {
+    int ret_end = process(jq, jv_null(), jq_flags | JQ_END);
+    if (ret_end != 14)
+      ret = ret_end; // If the top-level program emitted nothing but END did, use that
+  }
   jv_mem_free(input_filenames);
   jq_teardown(&jq);
   if (ret >= 10 && (options & EXIT_STATUS))

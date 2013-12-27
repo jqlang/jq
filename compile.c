@@ -367,6 +367,27 @@ block gen_definedor(block a, block b) {
                tail);
 }
 
+block gen_begin_end(block top) {
+  for (inst* curr = top.first; curr; curr = curr->next) {
+    if (curr->op == TOP)
+      return top;
+  }
+  block chk_begin = BLOCK(gen_call("_begin", gen_noop()));
+  block chk_end = BLOCK(gen_call("_end", gen_noop()));
+  block elif_chk_end = gen_cond(chk_end, gen_call("END", gen_noop()), top);
+  return gen_cond(chk_begin, gen_call("BEGIN", gen_noop()), elif_chk_end);
+}
+
+int block_has_main(block top) {
+  return top.first->op == TOP;
+}
+
+int block_is_funcdef(block b) {
+  if (b.first != NULL && b.first->op == CLOSURE_CREATE)
+    return 1;
+  return 0;
+}
+
 block gen_condbranch(block iftrue, block iffalse) {
   iftrue = BLOCK(iftrue, gen_op_target(JUMP, iffalse));
   return BLOCK(gen_op_target(JUMP_F, iftrue), iftrue, iffalse);

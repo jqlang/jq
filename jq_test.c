@@ -256,7 +256,7 @@ static void jv_test() {
   /// Compile errors
   {
     jq_state *jq = jq_init();
-    jq_compile_args(jq, "}", jv_array());
+    jq_compile_args(jq, "}", 0, jv_array());
     jq_teardown(&jq);
   }
 }

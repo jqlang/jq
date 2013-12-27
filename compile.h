@@ -41,13 +41,18 @@ block gen_var_binding(block var, const char* name, block body);
 
 block gen_cond(block cond, block iftrue, block iffalse);
 
+block gen_begin_end(block top);
+
 block gen_cbinding(const struct cfunction* functions, int nfunctions, block b);
 
 void block_append(block* b, block b2);
 block block_join(block a, block b);
 int block_has_only_binders(block, int bindflags);
+int block_has_main(block);
 block block_bind(block binder, block body, int bindflags);
 block block_bind_referenced(block binder, block body, int bindflags);
+
+int block_is_funcdef(block b);
 
 int block_compile(block, struct locfile*, struct bytecode**);
 
