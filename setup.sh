@@ -14,7 +14,7 @@ if [ "clean" == "$1" ]; then
   rm -f jv_utf8_tables.gen.h lexer.c lexer.h parser.c parser.h
 elif [ "superclean" == "$1" ]; then
   # if autoconf errors during distcheck, it leaves files that need chmod'ing
-  ver=$(tr -d '\n' <VERSION)
+  ver=$(scripts/version|tr -d '\n')
   if [ "x${ver}" != "x" ]; then
     if [ -d jq-${ver} ]; then
       chmod -R u+w jq-${ver}
