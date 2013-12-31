@@ -1207,6 +1207,16 @@ sections:
       necessary to interact with files, devices, and external programs
       in ways other than as a command in a filter.
 
+      jq also has awk-like `BEGIN` and `END` blocks, really,
+      user-defined functions named "BEGIN" and "END".  The "BEGIN"
+      function will be called once before the jq program is applied to
+      any inputs.  The "END" function will be called once after all
+      inputs have been processed.  If the "BEGIN" function outputs false
+      then the program will terminate without processing any inputs.  If
+      the `-e` option is given and the "END" function outputs false then
+      the program will terminate with an error code of 1.  Programs may
+      define one, the other, both, or neither of these two functions.
+
       Variables are an absolute necessity in most programming languages, but
       they're relegated to an "advanced feature" in jq.
 
