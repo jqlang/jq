@@ -450,6 +450,7 @@ jv jq_next(jq_state *jq) {
     switch (opcode) {
     default: assert(0 && "invalid instruction");
 
+    case NOOP:
     case TOP: {
       break;
     }
@@ -532,6 +533,33 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case ON_BACKTRACK(REPEAT_T):
+    case ON_BACKTRACK(REPEAT_F):
+    case REPEAT_T:
+    case REPEAT_F: {
+      uint16_t level = *pc++;
+      uint16_t v = *pc++;
+      jv cond = *frame_local_var(jq, v, level);
+      if (jq->debug_trace_enabled) {
+        printf("V%d = ", v);
+        jv_dump(jv_copy(cond), 0);
+        printf("\n");
+      }
+      int trueish = jv_is_valid(cond) && jv_get_kind(cond) != JV_KIND_FALSE && jv_get_kind(cond) != JV_KIND_NULL;
+      int falseish = jv_is_valid(cond) && (jv_get_kind(cond) == JV_KIND_FALSE || jv_get_kind(cond) == JV_KIND_NULL);
+      int t = opcode == REPEAT_T || opcode == ON_BACKTRACK(REPEAT_T);
+      if ((t && trueish) || (!t && falseish)) {
+        struct stack_pos spos = stack_get_pos(jq);
+        jv curr = jv_copy(cond);
+        stack_save(jq, pc - 3, spos);
+        stack_push(jq, curr);
+      } else {
+        jv_free(cond);
+        goto do_backtrack;
+      }
+      break;
+    }
+
     case ON_BACKTRACK(RANGE):
     case RANGE: {
       uint16_t level = *pc++;
@@ -545,6 +573,7 @@ jv jq_next(jq_state *jq) {
         goto do_backtrack;
       } else if (jv_number_value(jv_copy(*var)) >= jv_number_value(jv_copy(max))) {
         /* finished iterating */
+        jv_free(max);
         goto do_backtrack;
       } else {
         jv curr = jv_copy(*var);
@@ -670,6 +699,17 @@ jv jq_next(jq_state *jq) {
       jv t = stack_pop(jq);
       jv_kind kind = jv_get_kind(t);
       if (kind == JV_KIND_FALSE || kind == JV_KIND_NULL) {
+        pc += offset;
+      }
+      stack_push(jq, t); // FIXME do this better
+      break;
+    }
+
+    case JUMP_T: {
+      uint16_t offset = *pc++;
+      jv t = stack_pop(jq);
+      jv_kind kind = jv_get_kind(t);
+      if (kind != JV_KIND_FALSE && kind != JV_KIND_NULL) {
         pc += offset;
       }
       stack_push(jq, t); // FIXME do this better
