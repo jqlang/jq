@@ -616,9 +616,16 @@ static jv get_option(jv o, const char *s, jv def) {
   return v;
 }
 
-static jv f_buffer(jq_state *jq, jv input) {
+static jv f_buffer(jq_state *jq, jv input, jv def) {
   jv_free(input);
   int hdl = jq_handle_create_buffer(jq);
+  jv *v;
+  if (jv_get_kind(def) != JV_KIND_NULL && jq_handle_get(jq, "buffer", hdl, (void **)&v, NULL)) {
+    jv_free(*v);
+    *v = def;
+  } else {
+    jv_free(def);
+  }
   return jv_number(hdl);
 }
 
@@ -945,7 +952,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_read, "_read", 1},
   {(cfunction_ptr)f_write, "write", 3},
-  {(cfunction_ptr)f_buffer, "buffer", 1},
+  {(cfunction_ptr)f_buffer, "buffer", 2},
   {(cfunction_ptr)f_fopen, "fopen", 2},
   {(cfunction_ptr)f_popen, "popen", 2},
 };
