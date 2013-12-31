@@ -1338,14 +1338,14 @@ sections:
               Like `fopen`, but the input specifies a command/pipe and
               the type argument is as for the stdio popen(3) function.
 
-          - title: "buffer"
+          - title: "buffer(initial)"
             body: |
 
               The `buffer` builtin is like `fopen` of a temporary file
               in that it returns a handle that can be written to and
               read from.  The last value written is always the value
-              returned by read, and buffers always start out with a null
-              value.
+              returned by read, and buffers always start out with the
+              given initial value.
 
       - title: Variables
         body: |
