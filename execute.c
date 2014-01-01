@@ -47,6 +47,7 @@ struct jq_state {
 };
 
 int jq_handle_create(jq_state *jq,
+                     int desired_handle,
                      const char *type,
                      void *handle,
                      void (*destructor)(void *)) {
@@ -56,17 +57,25 @@ int jq_handle_create(jq_state *jq,
   if (type == NULL || *type == '\0')
     return -1;
 
-  for (i = 0; i < jq->nhandles; i++) {
-    if (jq->handles[i].handle == NULL)
-      break;
+  if (desired_handle > -1) {
+    i = desired_handle;
+    if (i < jq->nhandles)
+      jq_handle_delete(jq, i);
+  } else {
+    for (i = 0; i < jq->nhandles; i++) {
+      if (jq->handles[i].handle == NULL)
+        break;
+    }
   }
 
   /* FIXME This should be a #define in some header or a tunable */
   if (i > 128)
     return -1;
 
-  if (i == jq->nhandles) {
+  if (i >= jq->nhandles) {
     jq->handles = jv_mem_realloc(jq->handles, sizeof(*jq->handles) * (i + 1));
+    /* FIXME: don't use memset() for this */
+    memset(&jq->handles[jq->nhandles], 0, sizeof(*jq->handles) * (i - jq->nhandles));
     jq->nhandles = i + 1;
   }
 
@@ -89,8 +98,8 @@ static void destroy_stdio_handle(void *data) {
   jv_mem_free(h);
 }
 
-int jq_handle_create_null(jq_state *jq) {
-  return jq_handle_create(jq, "null", &jq, NULL); // Any "handle" address will do
+int jq_handle_create_null(jq_state *jq, int desired_handle) {
+  return jq_handle_create(jq, desired_handle, "null", &jq, NULL); // Any "handle" address will do
 }
 
 static void destroy_buffer_handle(void *data) {
@@ -98,17 +107,18 @@ static void destroy_buffer_handle(void *data) {
   jv_mem_free(data);
 }
 
-int jq_handle_create_buffer(jq_state *jq) {
+int jq_handle_create_buffer(jq_state *jq, int desired_handle) {
   jv *v = jv_mem_alloc(sizeof(*v));
   *v = jv_null();
 
-  int hdl = jq_handle_create(jq, "buffer", v, destroy_buffer_handle);
+  int hdl = jq_handle_create(jq, desired_handle, "buffer", v, destroy_buffer_handle);
   if (hdl < 0)
     jv_free(*v);
   return hdl;
 }
 
 int jq_handle_create_stdio(jq_state *jq,
+                           int desired_handle,
                            FILE *f,
                            int close_it,
                            int is_pipe,
@@ -129,7 +139,7 @@ int jq_handle_create_stdio(jq_state *jq,
   else if (slurp)
     h->s = jv_array();
 
-  int hdl = jq_handle_create(jq, "FILE", h, destroy_stdio_handle);
+  int hdl = jq_handle_create(jq, desired_handle, "FILE", h, destroy_stdio_handle);
   if (hdl < 0)
     destroy_stdio_handle(h);
   return hdl;
@@ -138,7 +148,10 @@ int jq_handle_create_stdio(jq_state *jq,
 static int
 handle_validate(jq_state *jq, const char *type, int handle) {
   errno = EBADF;
-  if (handle > jq->nhandles)
+  if (handle >= jq->nhandles)
+    return 0;
+
+  if (jq->handles[handle].handle == NULL)
     return 0;
 
   errno = EINVAL;
@@ -169,10 +182,8 @@ int jq_handle_get(jq_state *jq,
   return 1;
 }
 
-void jq_handle_delete(jq_state *jq,
-                      const char *type,
-                      int hdl) {
-  if (!handle_validate(jq, type, hdl))
+void jq_handle_delete(jq_state *jq, int hdl) {
+  if (hdl < 0 || hdl >= jq->nhandles || jq->handles[hdl].handle == NULL)
     return;
 
   if (jq->handles[hdl].destructor != NULL)
@@ -907,7 +918,7 @@ void jq_teardown(jq_state **jq) {
 
   for (int i = 0; i < old_jq->nhandles; i++) {
     if (old_jq->handles[i].handle != NULL)
-      jq_handle_delete(old_jq, jv_string_value(old_jq->handles[i].type), i);
+      jq_handle_delete(old_jq, i);
   }
   jv_mem_free(old_jq->handles);
   jv_mem_free(old_jq);
