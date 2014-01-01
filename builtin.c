@@ -629,6 +629,28 @@ static jv f_buffer(jq_state *jq, jv input, jv def) {
   return jv_number(hdl);
 }
 
+static jv f_feof(jq_state *jq, jv input, jv handle) {
+  jv_free(input);
+  if (jv_get_kind(handle) != JV_KIND_NUMBER)
+    return type_error(handle, "not a handle");
+  int hdl = jv_number_value(handle);
+  if (jv_number_value(handle) != (double)hdl)
+    return type_error(handle, "not a handle (must be integer)");
+  if (hdl < 0)
+    return type_error(handle, "not a valid handle (must be non-negative)");
+  jv_free(handle);
+  if (jq_handle_get(jq, "null", hdl, NULL, NULL))
+    return jv_true();
+  if (jq_handle_get(jq, "buffer", hdl, NULL, NULL))
+    return jv_false();
+  struct jq_stdio_handle *h;
+  if (!jq_handle_get(jq, "FILE", hdl, (void **)&h, NULL))
+    return jv_false();
+  if (h->f != NULL)
+    return feof(h->f) ? jv_true() : jv_false();
+  return jv_invalid_with_msg(jv_string_fmt("unknown file handle type for %d", hdl));
+}
+
 static jv f_fopen(jq_state *jq, jv input, jv options) {
   FILE *f = NULL;
   int hdl = -1;
@@ -955,7 +977,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_buffer, "buffer", 2},
   {(cfunction_ptr)f_fopen, "fopen", 2},
   {(cfunction_ptr)f_popen, "popen", 2},
-  {(cfunction_ptr)f_feof, "eof", 1},
+  {(cfunction_ptr)f_feof, "eof", 2},
 };
 
 struct bytecoded_builtin { const char* name; block code; };
