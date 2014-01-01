@@ -618,7 +618,7 @@ static jv get_option(jv o, const char *s, jv def) {
 
 static jv f_buffer(jq_state *jq, jv input, jv def) {
   jv_free(input);
-  int hdl = jq_handle_create_buffer(jq);
+  int hdl = jq_handle_create_buffer(jq, -1);
   jv *v;
   if (jv_get_kind(def) != JV_KIND_NULL && jq_handle_get(jq, "buffer", hdl, (void **)&v, NULL)) {
     jv_free(*v);
@@ -662,11 +662,11 @@ static jv f_fopen(jq_state *jq, jv input, jv options) {
     jv_free(fopen_mode);
     if (f == NULL)
       goto out;
-    hdl = jq_handle_create_stdio(jq, f, 1, 0, flag_is_set(options, "raw"),
+    hdl = jq_handle_create_stdio(jq, -1, f, 1, 0, flag_is_set(options, "raw"),
                                  flag_is_set(options, "slurp"));
   } else if (jv_get_kind(input) == JV_KIND_NULL) {
     /* Open a notional /dev/null */
-    hdl = jq_handle_create_null(jq);
+    hdl = jq_handle_create_null(jq, -1);
   } else if (jv_get_kind(input) != JV_KIND_NULL) {
     err = type_error(input, "not an filename string");
     goto out;
@@ -709,7 +709,7 @@ static jv f_popen(jq_state *jq, jv input, jv options) {
   if (f == NULL)
     goto out;
   
-  hdl = jq_handle_create_stdio(jq, f, 1, 1, flag_is_set(options, "raw"),
+  hdl = jq_handle_create_stdio(jq, -1, f, 1, 1, flag_is_set(options, "raw"),
                                  flag_is_set(options, "slurp"));
 
 out:
@@ -955,6 +955,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_buffer, "buffer", 2},
   {(cfunction_ptr)f_fopen, "fopen", 2},
   {(cfunction_ptr)f_popen, "popen", 2},
+  {(cfunction_ptr)f_feof, "eof", 1},
 };
 
 struct bytecoded_builtin { const char* name; block code; };
