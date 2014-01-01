@@ -656,6 +656,11 @@ static jv f_fopen(jq_state *jq, jv input, jv options) {
   int hdl = -1;
   jv err = jv_null();
   jq_runtime_flags flags = jq_flags(jq);
+  jv desired_handle = get_option(options, "handle", jv_number(-1));
+
+  if (jv_get_kind(desired_handle) == JV_KIND_NUMBER)
+    hdl = jv_number_value(desired_handle);
+  jv_free(desired_handle);
 
   if (jv_get_kind(input) == JV_KIND_STRING) {
     /* Open a named file; first validate inputs */
@@ -684,11 +689,11 @@ static jv f_fopen(jq_state *jq, jv input, jv options) {
     jv_free(fopen_mode);
     if (f == NULL)
       goto out;
-    hdl = jq_handle_create_stdio(jq, -1, f, 1, 0, flag_is_set(options, "raw"),
+    hdl = jq_handle_create_stdio(jq, hdl, f, 1, 0, flag_is_set(options, "raw"),
                                  flag_is_set(options, "slurp"));
   } else if (jv_get_kind(input) == JV_KIND_NULL) {
     /* Open a notional /dev/null */
-    hdl = jq_handle_create_null(jq, -1);
+    hdl = jq_handle_create_null(jq, hdl);
   } else if (jv_get_kind(input) != JV_KIND_NULL) {
     err = type_error(input, "not an filename string");
     goto out;
@@ -707,6 +712,12 @@ static jv f_popen(jq_state *jq, jv input, jv options) {
   jv err = jv_null();
   jq_runtime_flags flags = jq_flags(jq);
   jv popen_type = get_option(options, "mode", jv_string("r"));
+  jv desired_handle = get_option(options, "handle", jv_number(-1));
+
+  if (jv_get_kind(desired_handle) == JV_KIND_NUMBER)
+    hdl = jv_number_value(desired_handle);
+  jv_free(desired_handle);
+
   if (!(flags & JQ_EXEC)) {
     err = jv_invalid_with_msg(jv_string("executing external programs not allowed"));
     goto out;
@@ -731,7 +742,7 @@ static jv f_popen(jq_state *jq, jv input, jv options) {
   if (f == NULL)
     goto out;
   
-  hdl = jq_handle_create_stdio(jq, -1, f, 1, 1, flag_is_set(options, "raw"),
+  hdl = jq_handle_create_stdio(jq, hdl, f, 1, 1, flag_is_set(options, "raw"),
                                  flag_is_set(options, "slurp"));
 
 out:
