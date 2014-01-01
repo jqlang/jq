@@ -127,7 +127,18 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   switch (jv_get_kind(x)) {
   default:
   case JV_KIND_INVALID:
-    assert(0 && "Invalid value");
+    if (flags & JV_PRINT_INVALID) {
+      jv msg = jv_invalid_get_msg(jv_copy(x));
+      if (jv_get_kind(msg) == JV_KIND_STRING) {
+        put_str("<invalid:", F, S);
+        jvp_dump_string(msg, flags | JV_PRINT_ASCII, F, S);
+        put_str(">", F, S);
+      } else {
+        put_str("<invalid>", F, S);
+      }
+    } else {
+      assert(0 && "Invalid value");
+    }
     break;
   case JV_KIND_NULL:
     put_str("null", F, S);
@@ -271,10 +282,11 @@ void jv_dump(jv x, int flags) {
   jv_dumpf(x, stdout, flags);
 }
 
+/* This one is nice for use in debuggers */
 void jv_show(jv x, int flags) {
   if (flags == -1)
     flags = JV_PRINT_PRETTY | JV_PRINT_COLOUR;
-  jv_dumpf(jv_copy(x), stderr, flags);
+  jv_dumpf(jv_copy(x), stderr, flags | JV_PRINT_INVALID);
   fflush(stderr);
 }
 
