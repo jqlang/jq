@@ -20,6 +20,17 @@ AM_PROG_CC_C_O
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
 dnl AC_PROG_YACC macros...
 
+dnl check bison version
+AC_MSG_CHECKING([bison version])
+if test "$YACC" != "bison -y"; then
+  AC_MSG_RESULT([not bison])
+elif $YACC --help | grep -- --warnings >/dev/null; then 
+  AC_MSG_RESULT([ok])
+else 
+  AC_MSG_RESULT([no])
+  AC_MSG_ERROR([You need bison version 2.5 or more recent.])
+fi
+
 dnl
 dnl these program checks should probably be deleted
 dnl
