@@ -1253,33 +1253,32 @@ sections:
               The `eof` builtin produces true if the given handle is at
               EOF, else false.
 
-          - title: "read"
+          - title: "read(handle; flags)"
             body: |
 
-              The `read` builtin reads and outputs a value from the
-              handle given as its input.
+              The `read` builtin reads a value from the given handle.
 
-              Whether inputs are read as raw strings or parsed JSON
-              texts is specified by the "raw" options to `fopen` and
-              `popen`.  Whether all inputs are read and returned as one
-              value, or whether they are read one at a time is specified
-              by the "slurp" option.
+              If flags is an object with a key named "raw" then `read`
+              will read raw text.  Otherwise a JSON text is read and
+              parsed.
 
-              When the "slurp" is false (or missing) then on EOF `read`
-              behaves like `empty`.
+              If flags has a key named "slurp" then `read` will read all
+              inputs.  And if "raw" is set then `read` will return a single
+              large string, else it will return an array of parsed
+              values.
 
-              When "slurp" is false and "raw" is true then each value
-              output by `read` will be one line of input from the file.
-              When "slurp" and "raw" are false then each value output by
-              `read` will be one JSON value (parsed JSON text) read from
-              the file.
+              When "slurp" is set, on EOF `read` always returns an
+              appropriate value (a string if "raw", an array otherwise).
+
+              When "slurp" is not set, on EOF `read` behaves like
+              `empty`.
 
               When "slurp" is true and the input handle is for a pipe
               (see `popen` below) then `read` returns an array of the
               command's exit status and the value read.
 
               When "slurp" is false and the input handle is for a pipe
-              then the last value output by `read` will be the command's
+              then the last value returned by `read` will be the command's
               exit status.
 
           - title: "write(handle; flags)"
@@ -1290,7 +1289,7 @@ sections:
               keys are any of: "raw", "ascii", "no-newline", "pretty",
               "color" (or "colour"), "sorted", and "unbuffered".
 
-              Note that `write` outputs its input just like `.`.
+              Note that `write` returns its input just like `.`.
 
               If "raw" printing is requested and the input is a string
               then it will be printed without double quotes or escaping.
@@ -1298,11 +1297,11 @@ sections:
               If the "ascii" flag is given then all non-ASCII characters
               will be escaped.
 
-              If the "pretty" flag is given then the output will be
+              If the "pretty" flag is given then the returned value will be
               pretty-printed.
 
               If the "color" (or "colour") flags is given then the
-              output will be colorized.
+              returned value will be colorized.
 
               If the "sorted" flag is given object keys will be sorted.
 
@@ -1321,27 +1320,15 @@ sections:
               ignored.
 
               The `options` argument may be null or an object with any
-              of these keys: "mode", "raw", "slurp".  See `read` above
-              for a description of the "raw" and "slurp" options.
+              of these keys: "mode".
 
               mode is as for the stdio fopen(3) function.  A file handle
-              for use as an input to `read` and/or `write` is output.
-
-              If `raw` is true then the input will not be parsed as a
-              JSON text; instead the input string(s) will be returned.
-              If `slurp` is false then the input stream will be read one
-              line at a time.
-
-              If `slurp` is true then the input will be read until EOF.
-              If `raw` is true then a single string will be returned,
-              else an array of parsed inputs will be returned.
-
-              The `raw` and `slurp` arguments are ignored when writing.
+              for use as an input to `read` and/or `write` is returned.
 
           - title: "popen(options)"
             body: |
 
-              Like `fopen`, but the input specifies a command/pipe and
+              Like `fopen`, but the input specifies a command/pipe, and
               the type argument is as for the stdio popen(3) function.
 
           - title: "buffer(initial)"
