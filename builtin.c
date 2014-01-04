@@ -689,8 +689,7 @@ static jv f_fopen(jq_state *jq, jv input, jv options) {
     jv_free(fopen_mode);
     if (f == NULL)
       goto out;
-    hdl = jq_handle_create_stdio(jq, hdl, f, 1, 0, flag_is_set(options, "raw"),
-                                 flag_is_set(options, "slurp"));
+    hdl = jq_handle_create_stdio(jq, hdl, f, 1, 0);
   } else if (jv_get_kind(input) == JV_KIND_NULL) {
     /* Open a notional /dev/null */
     hdl = jq_handle_create_null(jq, hdl);
@@ -742,8 +741,7 @@ static jv f_popen(jq_state *jq, jv input, jv options) {
   if (f == NULL)
     goto out;
   
-  hdl = jq_handle_create_stdio(jq, hdl, f, 1, 1, flag_is_set(options, "raw"),
-                                 flag_is_set(options, "slurp"));
+  hdl = jq_handle_create_stdio(jq, hdl, f, 1, 1);
 
 out:
   jv_free(popen_type);
@@ -821,19 +819,21 @@ static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
   return input;
 }
 
-static jv f_read(jq_state *jq, jv input) {
+static jv f_read(jq_state *jq, jv input, jv handle, jv flags) {
   struct jq_stdio_handle *h;
   int hdl;
   jv *v;
 
-  if (jv_get_kind(input) != JV_KIND_NUMBER)
-    return type_error(input, "not a handle");
-  hdl = jv_number_value(input);
-  if (jv_number_value(input) != (double)hdl)
-    return type_error(input, "not a handle (must be integer)");
-  if (hdl < 0)
-    return type_error(input, "not a valid handle (must be non-negative)");
   jv_free(input);
+
+  if (jv_get_kind(handle) != JV_KIND_NUMBER)
+    return type_error(handle, "not a handle");
+  hdl = jv_number_value(handle);
+  if (jv_number_value(handle) != (double)hdl)
+    return type_error(handle, "not a handle (must be integer)");
+  if (hdl < 0)
+    return type_error(handle, "not a valid handle (must be non-negative)");
+  jv_free(handle);
 
   jv a = jv_array_sized(2);
 
@@ -853,40 +853,61 @@ static jv f_read(jq_state *jq, jv input) {
   }
 
   if (h->f == NULL)
-    return a; // EOF received earlier
+    return a; // EOF received earlier on what must have been a pipe
 
-  jv value = jv_invalid();
+  jv res;
   int len;
+  int raw = flag_is_set(flags, "raw");
+  int slurp = flag_is_set(flags, "slurp");
+  jv_free(flags);
+
+  char buf[4096]; // FIXME Make configurable via flags
+
+  struct jv_parser *p = NULL;
+
+  if (!raw)
+    p = jv_parser_new(0); // JV_PARSE_EXPLODE_TOPLEVEL_ARRAY no supported here
+
+  if (raw && slurp)
+    res = jv_string("");
+  else if (slurp)
+    res = jv_array();
+  else // raw && ! slurp
+    res = jv_invalid();
 
   while (!feof(h->f)) {
-    if (!fgets(h->buf, sizeof(h->buf), h->f)) {
-      h->buf[0] = 0;
+    if (!fgets(buf, sizeof(buf), h->f)) {
+      buf[0] = 0;
       break;
     }
-    len = strlen(h->buf);
+    len = strlen(buf);
     if (len < 1)
       continue;
-    if (h->p != NULL) {
-      jv_parser_set_buf(h->p, h->buf, strlen(h->buf), !feof(h->f));
-      value = jv_parser_next(h->p);
-      if (jv_is_valid(value)) {
-        if (jv_is_valid(h->s))
-          /* Slurp parsed values */
-          h->s = jv_array_append(h->s, value);
-        else
-          break;
+
+    if (!raw) {
+      jv_parser_set_buf(p, buf, strlen(buf), !feof(h->f));
+      jv value = jv_parser_next(p);
+      if (!jv_is_valid(value))
+        continue;                           // Need more input
+      if (!slurp) {
+        res = value;
+        break;                              // Done
       }
-    } else if (jv_is_valid(h->s)) {
-      /* Slurp raw text */
-      h->s = jv_string_concat(h->s, jv_string(h->buf));
+
+      res = jv_array_append(res, value);    // Keep going till EOF
+    } else if (raw && slurp) {
+      res = jv_string_concat(res, jv_string(buf));
     } else {
-      /* Read raw lines up to sizeof(h->buf) */
-      if (h->buf[len-1] == '\n')
-        h->buf[len-1] = 0;
-      value = jv_string(h->buf);
+      /* raw && !slurp */
+      if (buf[len-1] == '\n')
+        buf[len-1] = 0;
+      res = jv_string(buf);
       break;
     }
   }
+
+  if (!raw)
+    jv_parser_free(p);
 
   if (h->is_pipe && feof(h->f)) {
     int status = pclose(h->f);
@@ -903,12 +924,8 @@ static jv f_read(jq_state *jq, jv input) {
 
     a = jv_array_append(a, stat);
   }
-  if (jv_is_valid(h->s)) {
-    value = h->s;
-    h->s = jv_null();
-  }
-  if (jv_is_valid(value))
-    return jv_array_append(a, value);
+  if (jv_is_valid(res))
+    return jv_array_append(a, res);
   return a;
 }
 
@@ -983,7 +1000,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
-  {(cfunction_ptr)f_read, "_read", 1},
+  {(cfunction_ptr)f_read, "_read", 3},
   {(cfunction_ptr)f_write, "write", 3},
   {(cfunction_ptr)f_buffer, "buffer", 2},
   {(cfunction_ptr)f_fopen, "fopen", 2},
@@ -1037,7 +1054,7 @@ static block bind_bytecoded_builtins(block b) {
 static const char* const jq_builtins[] = {
   "def map(f): [.[] | f];",
   "def select(f): if f then . else empty end;",
-  "def read: _read|if length == 0 then empty elif length == 2 then . else .[0] end;",
+  "def read(handle; flags): _read(handle; flags)|if length == 0 then empty elif length == 2 then . else .[0] end;",
   "def sort_by(f): _sort_by_impl(map([f]));",
   "def group_by(f): _group_by_impl(map([f]));",
   "def unique: group_by(.) | map(.[0]);",

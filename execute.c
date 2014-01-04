@@ -92,9 +92,6 @@ static void destroy_stdio_handle(void *data) {
     pclose(h->f);
   else if (h->f != NULL && h->close_it)
     fclose(h->f);
-  if (h->p)
-      jv_parser_free(h->p);
-  jv_free(h->s);
   jv_mem_free(h);
 }
 
@@ -117,27 +114,13 @@ int jq_handle_create_buffer(jq_state *jq, int desired_handle) {
   return hdl;
 }
 
-int jq_handle_create_stdio(jq_state *jq,
-                           int desired_handle,
-                           FILE *f,
-                           int close_it,
-                           int is_pipe,
-                           int raw,
-                           int slurp) {
+int jq_handle_create_stdio(jq_state *jq, int desired_handle,
+                           FILE *f, int close_it, int is_pipe) {
   struct jq_stdio_handle *h = jv_mem_alloc(sizeof(*h));
 
-  h->buf[0] = '\0';
   h->f = f;
-  h->p = NULL;
-  h->s = jv_invalid();
   h->close_it = close_it;
   h->is_pipe = is_pipe;
-  if (!raw)
-    h->p = jv_parser_new(0);
-  if (slurp && raw)
-    h->s = jv_string("");
-  else if (slurp)
-    h->s = jv_array();
 
   int hdl = jq_handle_create(jq, desired_handle, "FILE", h, destroy_stdio_handle);
   if (hdl < 0)
