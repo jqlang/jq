@@ -1247,6 +1247,12 @@ sections:
           Note also the `buffer` builtin, which allows for keeping state
           between filter invocations.
 
+          - title: "eof(handle)"
+            body: |
+
+              The `eof` builtin produces true if the given handle is at
+              EOF, else false.
+
           - title: "read"
             body: |
 
