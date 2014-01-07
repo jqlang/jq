@@ -619,12 +619,12 @@ static jv get_option(jv o, const char *s, jv def) {
 static jv f_buffer(jq_state *jq, jv input, jv def) {
   jv_free(input);
   int hdl = jq_handle_create_buffer(jq, -1);
-  jv *v;
-  if (jv_get_kind(def) != JV_KIND_NULL && jq_handle_get(jq, "buffer", hdl, (void **)&v, NULL)) {
+  
+  if (hdl > -1) {
+    jv *v;
+    jq_handle_get(jq, hdl, NULL, (void **)&v, NULL);
     jv_free(*v);
     *v = def;
-  } else {
-    jv_free(def);
   }
   return jv_number(hdl);
 }
@@ -639,16 +639,23 @@ static jv f_feof(jq_state *jq, jv input, jv handle) {
   if (hdl < 0)
     return type_error(handle, "not a valid handle (must be non-negative)");
   jv_free(handle);
-  if (jq_handle_get(jq, "null", hdl, NULL, NULL))
+
+  const char *type;
+  void *raw_handle;
+  jq_handle_get(jq, hdl, &type, &raw_handle, NULL);
+  if (type == NULL)
+    return jv_invalid_with_msg(jv_string_fmt("no file handle %d", hdl));
+
+  if (strcmp(type, "null") == 0)
     return jv_true();
-  if (jq_handle_get(jq, "buffer", hdl, NULL, NULL))
+  if (strcmp(type, "buffer") == 0)
     return jv_false();
-  struct jq_stdio_handle *h;
-  if (!jq_handle_get(jq, "FILE", hdl, (void **)&h, NULL))
-    return jv_false();
-  if (h->f != NULL)
-    return feof(h->f) ? jv_true() : jv_false();
-  return jv_invalid_with_msg(jv_string_fmt("unknown file handle type for %d", hdl));
+  if (strcmp(type, "FILE") != 0)
+    return jv_invalid_with_msg(jv_string_fmt("unknown file handle type for %d", hdl));
+  struct jq_stdio_handle *h = raw_handle;
+  if (h->f == NULL)
+    return jv_true();
+  return feof(h->f) ? jv_true() : jv_false();
 }
 
 static jv f_fopen(jq_state *jq, jv input, jv options) {
@@ -699,6 +706,7 @@ static jv f_fopen(jq_state *jq, jv input, jv options) {
   }
 
 out:
+  jv_free(options);
   jv_free(input);
   if (jv_get_kind(err) == JV_KIND_INVALID)
     return err;
@@ -745,6 +753,7 @@ static jv f_popen(jq_state *jq, jv input, jv options) {
 
 out:
   jv_free(popen_type);
+  jv_free(options);
   jv_free(input);
   if (jv_get_kind(err) == JV_KIND_INVALID)
     return err;
@@ -752,6 +761,7 @@ out:
 }
 
 static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
+  void *raw_handle;
   struct jq_stdio_handle *h;
   int hdl;
   int fl = 0;
@@ -759,6 +769,7 @@ static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
   int newline = 1;
   int do_fflush = 0;
   jv *v;
+  const char *type;
 
   if (jv_get_kind(handle) != JV_KIND_NUMBER) {
     jv_free(flags);
@@ -775,20 +786,27 @@ static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
   }
   jv_free(handle);
 
-  if (jq_handle_get(jq, "null", hdl, NULL, NULL))
-    return input; /* "/dev/null" */
+  jq_handle_get(jq, hdl, &type, &raw_handle, NULL);
+  if (strcmp(type, "FILE") != 0)
+    jv_free(flags);
 
-  if (jq_handle_get(jq, "buffer", hdl, (void **)&v, NULL)) {
+  if (strcmp(type, "null") == 0)
+    return input; // "/dev/null"
+
+  if (strcmp(type, "buffer") == 0) {
+    v = raw_handle;
     jv_free(*v);
     *v = jv_copy(input);
     return input;
   }
 
-  if (!jq_handle_get(jq, "FILE", hdl, (void **)&h, NULL)) {
-    jv_free(flags);
+  if (strcmp(type, "FILE") != 0) {
+    jv_free(input);
     jv err = jv_invalid_with_msg(jv_string_fmt("%d is not a valid file handle", hdl));
     return err;
   }
+
+  h = raw_handle;
 
   if (jv_get_kind(flags) == JV_KIND_OBJECT) {
     if (flag_is_set(flags, "ascii"))
@@ -820,9 +838,10 @@ static jv f_write(jq_state *jq, jv input, jv handle, jv flags) {
 }
 
 static jv f_read(jq_state *jq, jv input, jv handle, jv flags) {
+  const char *type;
+  void *raw_handle;
   struct jq_stdio_handle *h;
   int hdl;
-  jv *v;
 
   jv_free(input);
 
@@ -837,21 +856,26 @@ static jv f_read(jq_state *jq, jv input, jv handle, jv flags) {
 
   jv a = jv_array_sized(2);
 
-  if (jq_handle_get(jq, "null", hdl, NULL, NULL))
+  jq_handle_get(jq, hdl, &type, &raw_handle, NULL);
+  if (strcmp(type, "FILE") != 0)
+    jv_free(flags);
+
+  if (strcmp(type, "null") == 0)
     /* "/dev/null" */
     return a;
 
-  if (jq_handle_get(jq, "buffer", hdl, (void **)&v, NULL)) {
-    a = jv_array_append(a, jv_copy(*v));
+  if (strcmp(type, "buffer") == 0) {
+    a = jv_array_append(a, jv_copy(*(jv *)raw_handle));
     return a;
   }
 
-  if (!jq_handle_get(jq, "FILE", hdl, (void **)&h, NULL)) {
+  if (strcmp(type, "FILE") != 0) {
     jv err = jv_invalid_with_msg(jv_string_fmt("%d is not a valid file handle", hdl));
     jv_free(a);
     return err;
   }
 
+  h = raw_handle;
   if (h->f == NULL)
     return a; // EOF received earlier on what must have been a pipe
 

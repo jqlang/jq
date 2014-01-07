@@ -128,41 +128,27 @@ int jq_handle_create_stdio(jq_state *jq, int desired_handle,
   return hdl;
 }
 
-static int
-handle_validate(jq_state *jq, const char *type, int handle) {
-  errno = EBADF;
-  if (handle >= jq->nhandles)
-    return 0;
-
-  if (jq->handles[handle].handle == NULL)
-    return 0;
-
-  errno = EINVAL;
-  if (type == NULL || *type == '\0' ||
-      !jv_is_valid(jq->handles[handle].type) ||
-      strcmp(type, jv_string_value(jq->handles[handle].type)) != 0)
-    return 0;
-  return 1;
-}
-
-int jq_handle_get(jq_state *jq,
-                  const char *type,
-                  int hdl,
-                  void **handle,
-                  void (**destructor)(void *)) {
+void jq_handle_get(jq_state *jq, int hdl, const char **type,
+                  void **handle, void (**destructor)(void *)) {
+  if (type != NULL)
+    *type = NULL;
   if (handle != NULL)
     *handle = NULL;
   if (destructor != NULL)
     *destructor = NULL;
 
-  if (!handle_validate(jq, type, hdl))
-    return 0;
+  if (hdl >= jq->nhandles)
+    return;
+  if (jq->handles[hdl].handle == NULL)
+    return;
 
+  if (type != NULL)
+    *type = jv_string_value(jq->handles[hdl].type);
   if (handle != NULL)
     *handle = jq->handles[hdl].handle;
   if (destructor != NULL)
     *destructor = jq->handles[hdl].destructor;
-  return 1;
+  return;
 }
 
 void jq_handle_delete(jq_state *jq, int hdl) {
