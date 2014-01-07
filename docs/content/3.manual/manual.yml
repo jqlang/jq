@@ -162,6 +162,11 @@ sections:
         problem or system error, 3 if there was a jq program compile
         error, or 0 if the jq program ran.
 
+      * `--args`:
+
+        This option passes all remaining command-line arguments after
+        the jq program as an array of strings bound to `$args`.
+
       * `--arg name value`:
 
         This option passes a value to the jq program as a predefined
@@ -175,6 +180,18 @@ sections:
         with `--argfile foo bar`, then `$foo` is available in the
         program and has the value resulting from parsing the content of
         the file named `bar`.
+
+      * `--allow-open`:
+
+        Allow the jq program to open files.
+
+      * `--allow-write`:
+
+        Allow the jq program to open files for writing.
+
+      * `--allow-exec`:
+
+        Allow the jq program to run external programs.
 
   - title: Basic filters
     entries:
@@ -1184,6 +1201,12 @@ sections:
           
   - title: Advanced features
     body: |
+      Normally jq programs are pure filters, however, sometimes it is
+      necessary to interact with standard input and output streams in
+      other ways than read one value, filter, write.  And sometimes it's
+      necessary to interact with files, devices, and external programs
+      in ways other than as a command in a filter.
+
       Variables are an absolute necessity in most programming languages, but
       they're relegated to an "advanced feature" in jq.
 
@@ -1204,6 +1227,119 @@ sections:
       useful bits of jq's standard library.
 
     entries:
+      - title: Input/Output
+        body: |
+
+          Normally jq programs cannot open files or execute programs.
+          If the `--allow-open` option is given then the jq program will
+          be able to use the `open` builtin to open files for reading.
+          If the `--allow-write` option is given then the jq program will
+          be able to use the `open` builtin to open files for reading
+          and writing.
+
+          If the `--allow-exec` option is given then the jq program will
+          be able to run external commands with the `popen` builtin.
+
+          In all cases the file handles `0`, `1`, and `2` are available,
+          corresponding to standard input, output, and error, and jq
+          programs may read and/or write (as appropriate) from/to these.
+
+          Note also the `buffer` builtin, which allows for keeping state
+          between filter invocations.
+
+          - title: "eof(handle)"
+            body: |
+
+              The `eof` builtin produces true if the given handle is at
+              EOF, else false.
+
+          - title: "read(handle; flags)"
+            body: |
+
+              The `read` builtin reads a value from the given handle.
+
+              If flags is an object with a key named "raw" then `read`
+              will read raw text.  Otherwise a JSON text is read and
+              parsed.
+
+              If flags has a key named "slurp" then `read` will read all
+              inputs.  And if "raw" is set then `read` will return a single
+              large string, else it will return an array of parsed
+              values.
+
+              When "slurp" is set, on EOF `read` always returns an
+              appropriate value (a string if "raw", an array otherwise).
+
+              When "slurp" is not set, on EOF `read` behaves like
+              `empty`.
+
+              When "slurp" is true and the input handle is for a pipe
+              (see `popen` below) then `read` returns an array of the
+              command's exit status and the value read.
+
+              When "slurp" is false and the input handle is for a pipe
+              then the last value returned by `read` will be the command's
+              exit status.
+
+          - title: "write(handle; flags)"
+            body: |
+
+              The `write` builtin writes its input to the given handle.
+              The `flags` argument is either `null` or an object whose
+              keys are any of: "raw", "ascii", "no-newline", "pretty",
+              "color" (or "colour"), "sorted", and "unbuffered".
+
+              Note that `write` returns its input just like `.`.
+
+              If "raw" printing is requested and the input is a string
+              then it will be printed without double quotes or escaping.
+
+              If the "ascii" flag is given then all non-ASCII characters
+              will be escaped.
+
+              If the "pretty" flag is given then the returned value will be
+              pretty-printed.
+
+              If the "color" (or "colour") flags is given then the
+              returned value will be colorized.
+
+              If the "sorted" flag is given object keys will be sorted.
+
+              If the "unbuffered" flag is given then the stream will be
+              flushed.
+
+              If the "no-newline" option is given then no newline will
+              be printed.
+
+          - title: "fopen(options)"
+            body: |
+
+              The file denoted by the input string will be opened.  If
+              the filname is null then read on the resulting handle will
+              behave like `empty`, and writes will be permitted and
+              ignored.
+
+              The `options` argument may be null or an object with any
+              of these keys: "mode".
+
+              mode is as for the stdio fopen(3) function.  A file handle
+              for use as an input to `read` and/or `write` is returned.
+
+          - title: "popen(options)"
+            body: |
+
+              Like `fopen`, but the input specifies a command/pipe, and
+              the type argument is as for the stdio popen(3) function.
+
+          - title: "buffer(initial)"
+            body: |
+
+              The `buffer` builtin is like `fopen` of a temporary file
+              in that it returns a handle that can be written to and
+              read from.  The last value written is always the value
+              returned by read, and buffers always start out with the
+              given initial value.
+
       - title: Variables
         body: |
           

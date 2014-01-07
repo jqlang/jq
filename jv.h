@@ -124,7 +124,7 @@ jv jv_object_iter_value(jv, int);
 
 int jv_get_refcnt(jv);
 
-enum { JV_PRINT_PRETTY = 1, JV_PRINT_ASCII = 2, JV_PRINT_COLOUR = 4, JV_PRINT_SORTED = 8, JV_PRINT_UNBUFFERED = 16 };
+enum { JV_PRINT_PRETTY = 1, JV_PRINT_ASCII = 2, JV_PRINT_COLOUR = 4, JV_PRINT_SORTED = 8, JV_PRINT_UNBUFFERED = 16, JV_PRINT_INVALID = 32 };
 void jv_dumpf(jv, FILE *f, int flags);
 void jv_dump(jv, int flags);
 void jv_show(jv, int flags);
