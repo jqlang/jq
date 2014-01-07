@@ -1227,6 +1227,10 @@ sections:
       variable (as a function parameter, object member, or whatever) in
       which to place the data.
 
+      When reading from a file or device it helps to be able to
+      repeatedly execute an expression as long as EOF is not reached.
+      The `while` and `until` builtins allow this.
+
       It is also possible to define functions in jq, although this is
       is a feature whose biggest use is defining jq's standard library
       (many jq functions such as `map` and `find` are in fact written
@@ -1349,6 +1353,18 @@ sections:
               read from.  The last value written is always the value
               returned by read, and buffers always start out with the
               given initial value.
+
+          - title: "while(condition)"
+            body: |
+
+              The `while` builtin produces the result of its "condition"
+              argument as long as it is not false or null.
+
+          - title: "until(condition)"
+            body: |
+
+              The `until` builtin produces the result of its "condition"
+              argument as long as it is false or null.
 
       - title: Variables
         body: |
