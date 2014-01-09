@@ -136,10 +136,17 @@ static int read_more(char* buf, size_t size) {
   return 1;
 }
 
+/*
+ * Note that main() returns, except when it calls usage() or die().
+ * This fact is useful for testing: jv_test() uses it to test jq -e
+ * behavior by re-entering main().
+ */
 int main(int argc, char* argv[]) {
   jq_state *jq = NULL;
   int ret = 0;
   int compiled = 0;
+
+  options = 0; // reset because of re-entrance from jq_test(); see above
 
   if (argc) progname = argv[0];
 

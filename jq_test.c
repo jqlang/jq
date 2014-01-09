@@ -5,6 +5,8 @@
 #include "jv.h"
 #include "jq.h"
 
+extern int main(int, char **);
+
 static void jv_test();
 static void run_jq_tests();
 
@@ -409,5 +411,41 @@ static void jv_test() {
     assert(jv_get_kind(res) == JV_KIND_STRING && strcmp(jv_string_value(res), "foo"));
     jv_free(res);
     jq_teardown(&jq);
+  }
+
+  /*
+   * Test jq -e and BEGIN/END behavior.
+   *
+   * We ought to re-direct stdout here, but it doesn't really matter for
+   * now.
+   */
+  {
+    char *args[] = { "jq", "-n", "-e", "def BEGIN: 0|write(3;{}); def END: read(3;{}); empty", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 0);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "-e", "empty", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 4);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "-e", "def BEGIN: false; true", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 1);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "-e", "def END: false; true", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 1);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "-e", "def END: true; empty", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 0);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "empty", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 0);
   }
 }
