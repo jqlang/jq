@@ -1257,6 +1257,9 @@ sections:
           In all cases the file handles `0`, `1`, and `2` are available,
           corresponding to standard input, output, and error, and jq
           programs may read and/or write (as appropriate) from/to these.
+          Also available is a handle `3`, consisting of a `buffer`
+          initially containing an empty object.  These are also
+          available as `stdin`, `stdout`, `stderr`, and `stdbuf`.
 
           Note also the `buffer` builtin, which allows for keeping state
           between filter invocations.
