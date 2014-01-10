@@ -1,3 +1,7 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif /* NDEBUG */
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -276,7 +280,7 @@ static void jv_test() {
      *
      * Roughly like:
      *
-     *     % printf '0\n"foo"\n2\n' | jq -n 'until(eof(0))|read(0;{})|write(0;{})|empty'
+     *     % printf '0\n"foo"\n2\n' | jq -n 'until(eof(stdin))|read(stdin;{})|write(stdout;{})|empty'
      *
      * then make sure that we find '1\n"foo"\n3\n' in the output.
      *
@@ -288,7 +292,7 @@ static void jv_test() {
     jq_handle_create_stdio(jq, 1, out, 0, 0);
     jq_handle_create_stdio(jq, 2, stderr, 0, 0);
     jq_handle_create_buffer(jq, 3);
-    jq_compile_args(jq, "until(eof(0))|read(0;{})|write(1;{})|empty", 0, jv_array());
+    jq_compile_args(jq, "until(eof(stdin))|read(stdin;{})|write(stdout;{})|empty", 0, jv_array());
     jq_start(jq, jv_null(), 0);
     jv res = jq_next(jq);
     assert(jv_get_kind(res) == JV_KIND_INVALID);
@@ -410,6 +414,94 @@ static void jv_test() {
     res = jq_next(jq);
     assert(jv_get_kind(res) == JV_KIND_STRING && strcmp(jv_string_value(res), "foo"));
     jv_free(res);
+    jq_teardown(&jq);
+
+    /* 
+     * Test BEGIN/END behavior.
+     */
+    rewind(in);
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, ".", JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NULL);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), JQ_END);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_teardown(&jq);
+
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, "def BEGIN: true; .", JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_TRUE);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NULL);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), JQ_END);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_teardown(&jq);
+
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, "def END: true; .", JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NULL);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), JQ_END);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_TRUE);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_teardown(&jq);
+
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, "def BEGIN: true; def END: true; .", JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_TRUE);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NULL);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), JQ_END);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_TRUE);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
     jq_teardown(&jq);
   }
 
