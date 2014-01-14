@@ -61,6 +61,7 @@ const char* jv_kind_name(jv_kind k) {
 }
 
 static const jv JV_NULL = {JV_KIND_NULL, 0, 0, 0, {0}};
+static const jv JV_INVALID = {JV_KIND_INVALID, 0, 0, 0, {0}};
 static const jv JV_FALSE = {JV_KIND_FALSE, 0, 0, 0, {0}};
 static const jv JV_TRUE = {JV_KIND_TRUE, 0, 0, 0, {0}};
 
@@ -90,6 +91,8 @@ typedef struct {
 } jvp_invalid;
 
 jv jv_invalid_with_msg(jv err) {
+  if (jv_get_kind(err) == JV_KIND_NULL)
+    return JV_INVALID;
   jvp_invalid* i = jv_mem_alloc(sizeof(jvp_invalid));
   i->refcnt = JV_REFCNT_INIT;
   i->errmsg = err;
@@ -99,12 +102,16 @@ jv jv_invalid_with_msg(jv err) {
 }
 
 jv jv_invalid() {
-  return jv_invalid_with_msg(jv_null());
+  return JV_INVALID;
 }
 
 jv jv_invalid_get_msg(jv inv) {
   assert(jv_get_kind(inv) == JV_KIND_INVALID);
-  jv x = jv_copy(((jvp_invalid*)inv.u.ptr)->errmsg);
+  jv x;
+  if (inv.u.ptr == 0)
+    x = jv_null();
+  else
+    x = jv_copy(((jvp_invalid*)inv.u.ptr)->errmsg);
   jv_free(inv);
   return x;
 }
@@ -118,7 +125,7 @@ int jv_invalid_has_msg(jv inv) {
 
 static void jvp_invalid_free(jv x) {
   assert(jv_get_kind(x) == JV_KIND_INVALID);
-  if (jvp_refcnt_dec(x.u.ptr)) {
+  if (x.u.ptr != 0 && jvp_refcnt_dec(x.u.ptr)) {
     jv_free(((jvp_invalid*)x.u.ptr)->errmsg);
     jv_mem_free(x.u.ptr);
   }
@@ -1172,7 +1179,7 @@ jv jv_copy(jv j) {
   if (jv_get_kind(j) == JV_KIND_ARRAY || 
       jv_get_kind(j) == JV_KIND_STRING || 
       jv_get_kind(j) == JV_KIND_OBJECT ||
-      jv_get_kind(j) == JV_KIND_INVALID) {
+      (jv_get_kind(j) == JV_KIND_INVALID && j.u.ptr != 0)) {
     jvp_refcnt_inc(j.u.ptr);
   }
   return j;

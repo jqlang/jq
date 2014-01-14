@@ -1,9 +1,15 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif /* NDEBUG */
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "jv.h"
 #include "jq.h"
+
+extern int main(int, char **);
 
 static void jv_test();
 static void run_jq_tests();
@@ -256,7 +262,282 @@ static void jv_test() {
   /// Compile errors
   {
     jq_state *jq = jq_init();
-    jq_compile_args(jq, "}", jv_array());
+    int compiled = jq_compile_args(jq, "}", 0, jv_array());
+    assert(!compiled);
     jq_teardown(&jq);
+  }
+
+  // while/until and I/O
+  {
+    FILE *in = tmpfile();
+    FILE *out = tmpfile();
+    fprintf(in, "0\n\"foo\"\n2\n");
+    fflush(in);
+    rewind(in);
+
+    /*
+     * Test stdio I/O handles, read, write, eof, until.
+     *
+     * Roughly like:
+     *
+     *     % printf '0\n"foo"\n2\n' | jq -n 'until(eof(stdin))|read(stdin;{})|write(stdout;{})|empty'
+     *
+     * then make sure that we find '1\n"foo"\n3\n' in the output.
+     *
+     * (We don't just use numbers to make sure that we don't leak jv's
+     * that need jv_free()ing.)
+     */
+    jq_state *jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, out, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, "until(eof(stdin))|read(stdin;{})|write(stdout;{})|empty", 0, jv_array());
+    jq_start(jq, jv_null(), 0);
+    jv res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jv_free(res);
+    jq_teardown(&jq);
+
+    char buf[64];
+    rewind(out);
+    int i = 0;
+    while (fgets(buf, sizeof(buf), out)) {
+      switch (i) {
+      case 0: assert(strcmp(buf, "0\n") == 0); break;
+      case 1: assert(strcmp(buf, "\"foo\"\n") == 0); break;
+      case 2: assert(strcmp(buf, "2\n") == 0); break;
+      }
+      i++;
+    }
+    assert(i == 3);
+    fclose(out);
+
+    /*
+     * Test buffer I/O handles.
+     *
+     * Roughly like:
+     *
+     *     % printf '0\n"foo"\n2\n' | jq -n 'def END: read(3;{}); until(eof(0))|read(0;{})|write(3;{})|empty'
+     *
+     * then make sure that we find '3' in the output (except that the
+     * output here is the output of jq_next() executing JQ_END, not
+     * anything in stdout).
+     */
+    rewind(in);
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, "def BEGIN: true; def END: read(3;{}); until(eof(0))|read(0;{})|write(3;{})|empty", JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), JQ_END);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NUMBER && jv_number_value(res) == 2);
+    jv_free(res);
+    jq_teardown(&jq);
+
+    /*
+     * Test null I/O handles, using fopen.
+     *
+     * Roughly like:
+     *
+     *     % printf '0\n"foo"\n2\n' | jq --allow-write -n \
+     *          'def BEGIN: null|fopen({"mode":"w+"})|write(3;{});
+     *           read(3;{})|. as $null_handle|until(eof(0))|read(0;{})|write(3;{})|empty'
+     *
+     * then make sure that we find nothing in the output.
+     */
+    rewind(in);
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq,
+                    "def BEGIN: fopen(null; {\"mode\":\"w+\"})|write(3;{}); "
+                    "read(3;{})|. as $null_handle|"
+                    "until(eof(0))|read(0;{})|write($null_handle;{})|empty",
+                    JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NUMBER && jv_number_value(res) == 4);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jv_free(res);
+    jq_teardown(&jq);
+
+    /*
+     * Test stdio fopen.
+     */
+    rewind(in);
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq,
+                    "def BEGIN: fopen(.; {\"mode\":\"w+\"})|write(3;{}); "
+                    "read(3;{})|until(eof(0))|read(0;{})|write(3;{})|empty",
+                    JQ_BEGIN_END, jv_array());
+    char fname_buf[2048];
+    jq_start(jq, jv_string(tmpnam(fname_buf)), JQ_BEGIN | JQ_OPEN_FILES | JQ_OPEN_WRITE);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NUMBER && jv_number_value(res) == 4);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jv_free(res);
+    jq_teardown(&jq);
+
+    /*
+     * Test stdio popen.
+     */
+    rewind(in);
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq,
+                    "def BEGIN: popen(\"echo foo\"; {\"mode\":\"r\"})|write(3;{}); "
+                    "read(3;{})|read(0;{\"raw\":true})",
+                    JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN | JQ_EXEC);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NUMBER && jv_number_value(res) == 4);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_STRING && strcmp(jv_string_value(res), "foo"));
+    jv_free(res);
+    jq_teardown(&jq);
+
+    /* 
+     * Test BEGIN/END behavior.
+     */
+    rewind(in);
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, ".", JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NULL);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), JQ_END);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_teardown(&jq);
+
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, "def BEGIN: true; .", JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_TRUE);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NULL);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), JQ_END);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_teardown(&jq);
+
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, "def END: true; .", JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NULL);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), JQ_END);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_TRUE);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_teardown(&jq);
+
+    jq = jq_init();
+    jq_handle_create_stdio(jq, 0, in, 0, 0);
+    jq_handle_create_stdio(jq, 1, stderr, 0, 0);
+    jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+    jq_handle_create_buffer(jq, 3);
+    jq_compile_args(jq, "def BEGIN: true; def END: true; .", JQ_BEGIN_END, jv_array());
+    jq_start(jq, jv_null(), JQ_BEGIN);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_TRUE);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), 0);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_NULL);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_start(jq, jv_null(), JQ_END);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_TRUE);
+    res = jq_next(jq);
+    assert(jv_get_kind(res) == JV_KIND_INVALID);
+    jq_teardown(&jq);
+  }
+
+  /*
+   * Test jq -e and BEGIN/END behavior.
+   *
+   * We ought to re-direct stdout here, but it doesn't really matter for
+   * now.
+   */
+  {
+    char *args[] = { "jq", "-n", "-e", "def BEGIN: 0|write(3;{}); def END: read(3;{}); empty", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 0);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "-e", "empty", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 4);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "-e", "def BEGIN: false; true", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 1);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "-e", "def END: false; true", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 1);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "-e", "def END: true; empty", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 0);
+  }
+
+  {
+    char *args[] = { "jq", "-n", "empty", NULL };
+    assert(main(sizeof(args)/sizeof(args[0]) - 1, args) == 0);
   }
 }

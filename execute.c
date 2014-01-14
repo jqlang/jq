@@ -16,6 +16,12 @@
 #include "parser.h"
 #include "builtin.h"
 
+typedef struct jq_handle {
+  void *handle;
+  void (*destructor)(void *);
+  jv type;
+} jq_handle;
+
 struct jq_state {
   void (*nomem_handler)(void *);
   void *nomem_handler_data;
@@ -33,7 +39,131 @@ struct jq_state {
   int subexp_nest;
   int debug_trace_enabled;
   int initial_execution;
+
+  jq_handle *handles;
+  int nhandles;
+
+  jq_compile_flags cflags;
+  jq_runtime_flags rflags;
 };
+
+int jq_handle_create(jq_state *jq,
+                     int desired_handle,
+                     const char *type,
+                     void *handle,
+                     void (*destructor)(void *)) {
+  int i;
+
+  errno = EINVAL;
+  if (type == NULL || *type == '\0')
+    return -1;
+
+  if (desired_handle > -1) {
+    i = desired_handle;
+    if (i < jq->nhandles)
+      jq_handle_delete(jq, i);
+  } else {
+    for (i = 0; i < jq->nhandles; i++) {
+      if (jq->handles[i].handle == NULL)
+        break;
+    }
+  }
+
+  /* FIXME This should be a #define in some header or a tunable */
+  if (i > 128)
+    return -1;
+
+  if (i >= jq->nhandles) {
+    jq->handles = jv_mem_realloc(jq->handles, sizeof(*jq->handles) * (i + 1));
+    /* FIXME: don't use memset() for this */
+    memset(&jq->handles[jq->nhandles], 0, sizeof(*jq->handles) * (i - jq->nhandles));
+    jq->nhandles = i + 1;
+  }
+
+  jq->handles[i].type = jv_string(type);
+  jq->handles[i].handle = handle;
+  jq->handles[i].destructor = destructor;
+
+  return i;
+}
+
+static void destroy_stdio_handle(void *data) {
+  struct jq_stdio_handle *h = data;
+  if (h->f != NULL && h->is_pipe)
+    pclose(h->f);
+  else if (h->f != NULL && h->close_it)
+    fclose(h->f);
+  jv_mem_free(h);
+}
+
+int jq_handle_create_null(jq_state *jq, int desired_handle) {
+  return jq_handle_create(jq, desired_handle, "null", &jq, NULL); // Any "handle" address will do
+}
+
+static void destroy_buffer_handle(void *data) {
+  jv_free(*(jv *)data);
+  jv_mem_free(data);
+}
+
+int jq_handle_create_buffer(jq_state *jq, int desired_handle) {
+  jv *v = jv_mem_alloc(sizeof(*v));
+  *v = jv_null();
+
+  int hdl = jq_handle_create(jq, desired_handle, "buffer", v, destroy_buffer_handle);
+  if (hdl < 0)
+    jv_free(*v);
+  return hdl;
+}
+
+int jq_handle_create_stdio(jq_state *jq, int desired_handle,
+                           FILE *f, int close_it, int is_pipe) {
+  struct jq_stdio_handle *h = jv_mem_alloc(sizeof(*h));
+
+  h->f = f;
+  h->close_it = close_it;
+  h->is_pipe = is_pipe;
+
+  int hdl = jq_handle_create(jq, desired_handle, "FILE", h, destroy_stdio_handle);
+  if (hdl < 0)
+    destroy_stdio_handle(h);
+  return hdl;
+}
+
+void jq_handle_get(jq_state *jq, int hdl, const char **type,
+                  void **handle, void (**destructor)(void *)) {
+  if (type != NULL)
+    *type = NULL;
+  if (handle != NULL)
+    *handle = NULL;
+  if (destructor != NULL)
+    *destructor = NULL;
+
+  if (hdl >= jq->nhandles)
+    return;
+  if (jq->handles[hdl].handle == NULL)
+    return;
+
+  if (type != NULL)
+    *type = jv_string_value(jq->handles[hdl].type);
+  if (handle != NULL)
+    *handle = jq->handles[hdl].handle;
+  if (destructor != NULL)
+    *destructor = jq->handles[hdl].destructor;
+  return;
+}
+
+void jq_handle_delete(jq_state *jq, int hdl) {
+  if (hdl < 0 || hdl >= jq->nhandles || jq->handles[hdl].handle == NULL)
+    return;
+
+  if (jq->handles[hdl].destructor != NULL)
+    jq->handles[hdl].destructor(jq->handles[hdl].handle);
+  jv_free(jq->handles[hdl].type);
+  jq->handles[hdl].type = jv_null();
+  jq->handles[hdl].destructor = NULL;
+  jq->handles[hdl].handle = NULL;
+}
+
 
 struct closure {
   struct bytecode* bc;
@@ -268,6 +398,13 @@ jv jq_next(jq_state *jq) {
 
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
 
+  /*
+   * Default BEGIN/END for programs that don't get the gen_begin_end()
+   * treatment.  (That's programs that define no defs.)
+   */
+  if (!(jq->cflags & JQ_BEGIN_END) && (jq->rflags & (JQ_BEGIN|JQ_END)))
+    return jv_true();
+
   uint16_t* pc = stack_restore(jq);
   assert(pc);
 
@@ -312,6 +449,11 @@ jv jq_next(jq_state *jq) {
 
     switch (opcode) {
     default: assert(0 && "invalid instruction");
+
+    case NOOP:
+    case TOP: {
+      break;
+    }
 
     case LOADK: {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
@@ -391,6 +533,33 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case ON_BACKTRACK(REPEAT_T):
+    case ON_BACKTRACK(REPEAT_F):
+    case REPEAT_T:
+    case REPEAT_F: {
+      uint16_t level = *pc++;
+      uint16_t v = *pc++;
+      jv cond = *frame_local_var(jq, v, level);
+      if (jq->debug_trace_enabled) {
+        printf("V%d = ", v);
+        jv_dump(jv_copy(cond), 0);
+        printf("\n");
+      }
+      int trueish = jv_is_valid(cond) && jv_get_kind(cond) != JV_KIND_FALSE && jv_get_kind(cond) != JV_KIND_NULL;
+      int falseish = jv_is_valid(cond) && (jv_get_kind(cond) == JV_KIND_FALSE || jv_get_kind(cond) == JV_KIND_NULL);
+      int t = opcode == REPEAT_T || opcode == ON_BACKTRACK(REPEAT_T);
+      if ((t && trueish) || (!t && falseish)) {
+        struct stack_pos spos = stack_get_pos(jq);
+        jv curr = jv_copy(cond);
+        stack_save(jq, pc - 3, spos);
+        stack_push(jq, curr);
+      } else {
+        jv_free(cond);
+        goto do_backtrack;
+      }
+      break;
+    }
+
     case ON_BACKTRACK(RANGE):
     case RANGE: {
       uint16_t level = *pc++;
@@ -404,6 +573,7 @@ jv jq_next(jq_state *jq) {
         goto do_backtrack;
       } else if (jv_number_value(jv_copy(*var)) >= jv_number_value(jv_copy(max))) {
         /* finished iterating */
+        jv_free(max);
         goto do_backtrack;
       } else {
         jv curr = jv_copy(*var);
@@ -535,6 +705,17 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case JUMP_T: {
+      uint16_t offset = *pc++;
+      jv t = stack_pop(jq);
+      jv_kind kind = jv_get_kind(t);
+      if (kind != JV_KIND_FALSE && kind != JV_KIND_NULL) {
+        pc += offset;
+      }
+      stack_push(jq, t); // FIXME do this better
+      break;
+    }
+
     case EACH: 
       stack_push(jq, jv_number(-1));
       // fallthrough
@@ -619,17 +800,17 @@ jv jq_next(jq_state *jq) {
         in[i] = stack_pop(jq);
       }
       struct cfunction* function = &frame_current(jq)->bc->globals->cfunctions[*pc++];
-      typedef jv (*func_1)(jv);
-      typedef jv (*func_2)(jv,jv);
-      typedef jv (*func_3)(jv,jv,jv);
-      typedef jv (*func_4)(jv,jv,jv,jv);
-      typedef jv (*func_5)(jv,jv,jv,jv,jv);
+      typedef jv (*func_1)(jq_state *, jv);
+      typedef jv (*func_2)(jq_state *, jv,jv);
+      typedef jv (*func_3)(jq_state *, jv,jv,jv);
+      typedef jv (*func_4)(jq_state *, jv,jv,jv,jv);
+      typedef jv (*func_5)(jq_state *, jv,jv,jv,jv,jv);
       switch (function->nargs) {
-      case 1: top = ((func_1)function->fptr)(in[0]); break;
-      case 2: top = ((func_2)function->fptr)(in[0], in[1]); break;
-      case 3: top = ((func_3)function->fptr)(in[0], in[1], in[2]); break;
-      case 4: top = ((func_4)function->fptr)(in[0], in[1], in[2], in[3]); break;
-      case 5: top = ((func_5)function->fptr)(in[0], in[1], in[2], in[3], in[4]); break;
+      case 1: top = ((func_1)function->fptr)(jq, in[0]); break;
+      case 2: top = ((func_2)function->fptr)(jq, in[0], in[1]); break;
+      case 3: top = ((func_3)function->fptr)(jq, in[0], in[1], in[2]); break;
+      case 4: top = ((func_4)function->fptr)(jq, in[0], in[1], in[2], in[3]); break;
+      case 5: top = ((func_5)function->fptr)(jq, in[0], in[1], in[2], in[3], in[4]); break;
       default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
       }
       
@@ -697,6 +878,9 @@ jq_state *jq_init(void) {
   jq->err_cb = NULL;
   jq->err_cb_data = NULL;
 
+  jq->handles = NULL;
+  jq->nhandles = 0;
+
   jq->path = jv_null();
   return jq;
 }
@@ -718,9 +902,11 @@ void jq_set_nomem_handler(jq_state *jq, void (*nomem_handler)(void *), void *dat
 }
 
 
-void jq_start(jq_state *jq, jv input, int flags) {
+void jq_start(jq_state *jq, jv input, jq_runtime_flags flags) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   jq_reset(jq);
+
+  jq->rflags = flags;
   
   struct closure top = {jq->bc, -1};
   struct frame* top_frame = frame_push(jq, top, 0, 0);
@@ -737,6 +923,10 @@ void jq_start(jq_state *jq, jv input, int flags) {
   jq->initial_execution = 1;
 }
 
+jq_runtime_flags jq_flags(jq_state *jq) {
+  return jq->rflags;
+}
+
 void jq_teardown(jq_state **jq) {
   jq_state *old_jq = *jq;
   if (old_jq == NULL)
@@ -747,10 +937,15 @@ void jq_teardown(jq_state **jq) {
   bytecode_free(old_jq->bc);
   old_jq->bc = 0;
 
+  for (int i = 0; i < old_jq->nhandles; i++) {
+    if (old_jq->handles[i].handle != NULL)
+      jq_handle_delete(old_jq, i);
+  }
+  jv_mem_free(old_jq->handles);
   jv_mem_free(old_jq);
 }
 
-int jq_compile_args(jq_state *jq, const char* str, jv args) {
+int jq_compile_args(jq_state *jq, const char* str, jq_compile_flags flags, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   assert(jv_get_kind(args) == JV_KIND_ARRAY);
   struct locfile locations;
@@ -763,6 +958,14 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   }
   int nerrors = jq_parse(&locations, &program);
   if (nerrors == 0) {
+    /*
+     * Ideally we'd gen_begin_end() here, if (flags & JQ_BEGIN_END).
+     * But that doesn't work because the functions we want to bind the
+     * new instructions to are already in program.  We need a new binder
+     * function to deal with this.  For now we record JQ_BEGIN_END and
+     * deal with it as a run-time flag.
+     */
+    jq->cflags = flags;
     for (int i=0; i<jv_array_length(jv_copy(args)); i++) {
       jv arg = jv_array_get(jv_copy(args), i);
       jv name = jv_object_get(jv_copy(arg), jv_string("name"));
@@ -792,7 +995,7 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
 }
 
 int jq_compile(jq_state *jq, const char* str) {
-  return jq_compile_args(jq, str, jv_array());
+  return jq_compile_args(jq, str, 0, jv_array());
 }
 
 void jq_dump_disassembly(jq_state *jq, int indent) {

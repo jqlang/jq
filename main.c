@@ -30,9 +30,6 @@ static void die() {
   exit(2);
 }
 
-
-
-
 static int isoptish(const char* text) {
   return text[0] == '-' && (text[1] == '-' || isalpha(text[1]));
 }
@@ -60,6 +57,8 @@ enum {
   FROM_FILE = 512,
 
   EXIT_STATUS = 8192,
+
+  ARGS = 16384,
 
   /* debugging only */
   DUMP_DISASM = 2048,
@@ -90,13 +89,20 @@ static int process(jq_state *jq, jv value, int flags) {
       if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
       if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
       if (options & UNBUFFERED_OUTPUT) dumpopts |= JV_PRINT_UNBUFFERED;
-      if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
+
+      if (jv_get_kind(result) == JV_KIND_FALSE)
         ret = 11;
+      else if (jv_get_kind(result) == JV_KIND_NULL && !((flags & (JQ_BEGIN|JQ_END))))
+        ret = 0;
       else
         ret = 0;
-      jv_dump(result, dumpopts);
+      if (!(flags & JQ_BEGIN))
+        jv_dump(result, dumpopts);
+      else
+        jv_free(result);
     }
-    printf("\n");
+    if (!(flags & JQ_BEGIN))
+      printf("\n");
   }
   jv_free(result);
   return ret;
@@ -130,10 +136,17 @@ static int read_more(char* buf, size_t size) {
   return 1;
 }
 
+/*
+ * Note that main() returns, except when it calls usage() or die().
+ * This fact is useful for testing: jv_test() uses it to test jq -e
+ * behavior by re-entering main().
+ */
 int main(int argc, char* argv[]) {
   jq_state *jq = NULL;
   int ret = 0;
   int compiled = 0;
+
+  options = 0; // reset because of re-entrance from jq_test(); see above
 
   if (argc) progname = argv[0];
 
@@ -151,23 +164,19 @@ int main(int argc, char* argv[]) {
   const char* program = 0;
   input_filenames = jv_mem_alloc(sizeof(const char*) * argc);
   ninput_files = 0;
-  int further_args_are_files = 0;
   int jq_flags = 0;
+  int i;
   jv_parser_flags parser_flags = 0;
   jv program_arguments = jv_array();
-  for (int i=1; i<argc; i++) {
-    if (further_args_are_files) {
-      input_filenames[ninput_files++] = argv[i];
-    } else if (!strcmp(argv[i], "--")) {
-      if (!program) usage();
-      further_args_are_files = 1;
-    } else if (!isoptish(argv[i])) {
-      if (program) {
-        input_filenames[ninput_files++] = argv[i];
-      } else {
-        program = argv[i];
-      }
-    } else if (isoption(argv[i], 's', "slurp")) {
+  jv args = jv_null();
+  for (i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--") == 0) {
+      i++;
+      break;
+    }
+    if (!isoptish(argv[i]))
+      break;
+    if (isoption(argv[i], 's', "slurp")) {
       options |= SLURP;
     } else if (isoption(argv[i], 'r', "raw-output")) {
       options |= RAW_OUTPUT;
@@ -191,6 +200,8 @@ int main(int argc, char* argv[]) {
       options |= FROM_FILE;
     } else if (isoption(argv[i], 'e', "exit-status")) {
       options |= EXIT_STATUS;
+    } else if (isoption(argv[i], 0, "args")) {
+      options |= ARGS;
     } else if (isoption(argv[i], 'I', "online-input")) {
       parser_flags = JV_PARSE_EXPLODE_TOPLEVEL_ARRAY;
     } else if (isoption(argv[i], 0, "arg")) {
@@ -224,6 +235,12 @@ int main(int argc, char* argv[]) {
       arg = jv_object_set(arg, jv_string("value"), data);
       program_arguments = jv_array_append(program_arguments, arg);
       i += 2; // skip the next two arguments
+    } else if (isoption(argv[i],  0,  "allow-open")) {
+      jq_flags |= JQ_OPEN_FILES;
+    } else if (isoption(argv[i],  0,  "allow-write")) {
+      jq_flags |= JQ_OPEN_FILES | JQ_OPEN_WRITE;
+    } else if (isoption(argv[i],  0,  "allow-exec")) {
+      jq_flags |= JQ_EXEC;
     } else if (isoption(argv[i],  0,  "debug-dump-disasm")) {
       options |= DUMP_DISASM;
     } else if (isoption(argv[i],  0,  "debug-trace")) {
@@ -239,7 +256,31 @@ int main(int argc, char* argv[]) {
       die();
     }
   }
-  if (!program) usage();
+
+  if (!program) {
+    if (i >= argc)
+      usage();
+    program = argv[i++];
+  }
+  if (!*program)
+    usage();
+
+  /* Remaining arguments are... */
+  if (options & ARGS) {
+    /* ...strings, as an array */
+    args = jv_array_sized(argc - i);
+    for (; i < argc; i++)
+      args = jv_array_append(args, jv_string(argv[i]));
+    jv arg = jv_object();
+    arg = jv_object_set(arg, jv_string("name"), jv_string("args"));
+    arg = jv_object_set(arg, jv_string("value"), args);
+    program_arguments = jv_array_append(program_arguments, arg);
+  } else {
+    /* ...input files */
+    for (; i < argc; i++)
+      input_filenames[ninput_files++] = argv[i];
+  }
+
   if (ninput_files == 0) current_input = stdin;
 
   if ((options & PROVIDE_NULL) && (options & (RAW_INPUT | SLURP))) {
@@ -256,10 +297,10 @@ int main(int argc, char* argv[]) {
       ret = 2;
       goto out;
     }
-    compiled = jq_compile_args(jq, jv_string_value(data), program_arguments);
+    compiled = jq_compile_args(jq, jv_string_value(data), JQ_BEGIN_END, program_arguments);
     jv_free(data);
   } else {
-    compiled = jq_compile_args(jq, program, program_arguments);
+    compiled = jq_compile_args(jq, program, JQ_BEGIN_END, program_arguments);
   }
   if (!compiled){
     ret = 3;
@@ -270,6 +311,16 @@ int main(int argc, char* argv[]) {
     jq_dump_disassembly(jq, 0);
     printf("\n");
   }
+
+  jq_handle_create_stdio(jq, 0, stdin, 0, 0);
+  jq_handle_create_stdio(jq, 1, stdout, 0, 0);
+  jq_handle_create_stdio(jq, 2, stderr, 0, 0);
+  jq_handle_create_buffer(jq, 3);
+
+  ret = process(jq, jv_null(), jq_flags | JQ_BEGIN);
+  if (ret != 0 && ret != 14)
+    goto out;
+  ret = 0;
 
   if (options & PROVIDE_NULL) {
     ret = process(jq, jv_null(), jq_flags);
@@ -309,7 +360,7 @@ int main(int argc, char* argv[]) {
           jv msg = jv_invalid_get_msg(value);
           fprintf(stderr, "parse error: %s\n", jv_string_value(msg));
           jv_free(msg);
-          ret = 4;
+          ret = 5;
           break;
         } else {
           jv_free(value);
@@ -323,7 +374,13 @@ int main(int argc, char* argv[]) {
       ret = process(jq, slurped, jq_flags);
     }
   }
+
 out:
+  if (ret == 0 || ret == 14) {
+    int ret_end = process(jq, jv_null(), jq_flags | JQ_END);
+    if (ret_end != 14)
+      ret = ret_end; // If the top-level program emitted nothing but END did, use that
+  }
   jv_mem_free(input_filenames);
   jq_teardown(&jq);
   if (ret >= 10 && (options & EXIT_STATUS))
