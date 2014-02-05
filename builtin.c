@@ -678,6 +678,8 @@ static const char* const jq_builtins[] = {
   "def reverse: [.[length - 1 - range(0;length)]];",
   "def index(i): .[i][0];",
   "def rindex(i): .[i][-1:][0];",
+  "def paths: path(recurse(if (type|. == \"array\" or . == \"object\") then .[] else empty end))|select(length > 0);",
+  "def leaf_paths: . as $dot|paths|select(. as $p|$dot|getpath($p)|type|. == \"array\" or . == \"object\");",
 };
 
 
