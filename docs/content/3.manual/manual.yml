@@ -638,6 +638,36 @@ sections:
             input: '[1,2,3]'
             output: ['[2,3,4]']
 
+      - title: `paths`
+        body: |
+
+          Outputs the paths to all the elements in its input (except it
+          does not output the empty list, representing . itself).
+
+          `paths` is equivalent to 
+
+              def paths: path(recurse(if (type|. == "array" or . == "object") then .[] else empty end))|select(length > 0);
+
+        examples:
+          - program: '[paths]'
+            input: '[1,[[],{"a":2}]]'
+            output: ['[[0],[1],[1,0],[1,1],[1,1,"a"]]']
+
+      - title: `leaf_paths`
+        body: |
+
+          Outputs the paths to all the leaves (non-array, non-object
+          elements) in its input.
+
+          `leaf_paths` is equivalent to 
+
+              def leaf_paths: . as $dot|paths|select(. as $p|$dot|getpath($p)|type|. != "array" and . != "object");
+
+        examples:
+          - program: '[leaf_paths]'
+            input: '[1,[[],{"a":2}]]'
+            output: ['[[0],[1,1,"a"]]']
+
       - title: `add`
         body: |
 
