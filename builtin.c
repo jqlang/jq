@@ -672,6 +672,7 @@ static const char* const jq_builtins[] = {
   "def _assign(paths; value): value as $v | reduce path(paths) as $p (.; setpath($p; $v));",
   "def _modify(paths; update): reduce path(paths) as $p (.; setpath($p; getpath($p) | update));",
   "def recurse(f): ., (f | select(. != null) | recurse(f));",
+  "def recurse_down: recurse(.[]?);",
   "def to_entries: [keys[] as $k | {key: $k, value: .[$k]}];",
   "def from_entries: map({(.key): .value}) | add;",
   "def with_entries(f): to_entries | map(f) | from_entries;",

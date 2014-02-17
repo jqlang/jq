@@ -61,7 +61,8 @@ struct lexer_param;
 "//=" { return SETDEFINEDOR; }
 "<=" { return LESSEQ; }
 ">=" { return GREATEREQ; }
-"."|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"%"|"\$"|"<"|">" { return yytext[0];}
+".." { return REC; }
+"."|"?"|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"%"|"\$"|"<"|">" { return yytext[0];}
 
 "["|"{"|"(" {
   return enter(yytext[0], YY_START, yyscanner);
