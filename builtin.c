@@ -680,6 +680,8 @@ static const char* const jq_builtins[] = {
   "def rindex(i): .[i][-1:][0];",
   "def paths: path(recurse(if (type|. == \"array\" or . == \"object\") then .[] else empty end))|select(length > 0);",
   "def leaf_paths: . as $dot|paths|select(. as $p|$dot|getpath($p)|type|. != \"array\" and . != \"object\");",
+  "def any: reduce .[] as $i (false; . or $i);",
+  "def all: reduce .[] as $i (true; . and $i);",
 };
 
 
