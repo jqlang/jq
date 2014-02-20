@@ -217,6 +217,26 @@ sections:
             input: '{"foo": 42}'
             output: [42]
 
+      - title: "`.foo?`"
+        body: |
+          
+          Just like `.foo`, but does not output even an error when `.`
+          is not an array or an object.
+
+        examples:
+          - program: '.foo?'
+            input: '{"foo": 42, "bar": "less interesting data"}'
+            output: [42]
+          - program: '.foo?'
+            input: '{"notfoo": true, "alsonotfoo": false}'
+            output: ['null']
+          - program: '.["foo"]?'
+            input: '{"foo": 42}'
+            output: [42]
+          - program: '[.foo?]'
+            input: '[1,2]'
+            output: ['[]']
+
       - title: "`.[<string>]`, `.[2]`, `.[10:15]`"
         body: |
           
@@ -233,6 +253,10 @@ sections:
           be negative (in which case it counts backwards from the end of
           the array), or omitted (in which case it refers to the start
           or end of the array).
+
+          The `?` "operator" can also be used with the slice operator,
+          as in `.[10:15]?`, which outputs values where the inputs are
+          slice-able.
 
         examples:
           - program: '.[0]'
@@ -285,6 +309,12 @@ sections:
           - program: '.[]'
             input: '{"a": 1, "b": 1}'
             output: ['1', '1']
+
+      - title: "`.[]?`"
+        body: |
+          
+          Like `.[]`, but no errors will be output if . is not an array
+          or object.
 
       - title: "`,`"
         body: |
@@ -1022,6 +1052,24 @@ sections:
               - '{"foo":[{"foo":[]}]}'
               - '{"foo":[]}'
 
+      - title: `recurse_down`
+        body: |
+          
+          A quieter version of `recurse(.[])`, equivalent to:
+
+              def recurse_down: recurse(.[]?);
+
+      - title: `..`
+        body: |
+          
+          Short-hand for `recurse_down`.  This is intended to resemble
+          the XPath `//` operator.  Note that `..a` does not work; use
+          `..|a` instead.
+
+        examples:
+          - program: '..|.a?'
+            input: '[[{"a":1}]]'
+            output: ['1']
 
       - title: "String interpolation - `\(foo)`"
         body: |

@@ -50,6 +50,8 @@ struct lexer_param;
 %token <literal> FIELD
 %token <literal> LITERAL
 %token <literal> FORMAT
+%token Q "?"
+%token REC ".."
 %token SETMOD "%="
 %token EQ "=="
 %token NEQ "!="
@@ -137,7 +139,11 @@ static block gen_index(block obj, block key) {
   return BLOCK(gen_subexp(key), obj, gen_op_simple(INDEX));
 }
 
-static block gen_slice_index(block obj, block start, block end) {
+static block gen_index_opt(block obj, block key) {
+  return BLOCK(gen_subexp(key), obj, gen_op_simple(INDEX_OPT));
+}
+
+static block gen_slice_index(block obj, block start, block end, opcode idx_op) {
   block key = BLOCK(gen_subexp(gen_const(jv_object())),
                     gen_subexp(gen_const(jv_string("start"))),
                     gen_subexp(start),
@@ -145,7 +151,7 @@ static block gen_slice_index(block obj, block start, block end) {
                     gen_subexp(gen_const(jv_string("end"))),
                     gen_subexp(end),
                     gen_op_simple(INSERT));
-  return BLOCK(key, obj, gen_op_simple(INDEX));
+  return BLOCK(key, obj, gen_op_simple(idx_op));
 }
 
 static block gen_binop(block a, block b, int op) {
@@ -470,6 +476,21 @@ Term:
 '.' {
   $$ = gen_noop(); 
 } |
+REC {
+  $$ = gen_call("recurse_down", gen_noop());
+} |
+Term FIELD '?' {
+  $$ = gen_index_opt($1, gen_const($2));
+} |
+FIELD '?' { 
+  $$ = gen_index_opt(gen_noop(), gen_const($1)); 
+} |
+Term '.' String '?' {
+  $$ = gen_index_opt($1, $3);
+} |
+'.' String '?' {
+  $$ = gen_index_opt(gen_noop(), $2);
+} |
 Term FIELD {
   $$ = gen_index($1, gen_const($2));
 } |
@@ -492,20 +513,35 @@ Term '.' String {
   $$ = gen_noop();
 } | 
 /* FIXME: string literals */
+Term '[' Exp ']' '?' {
+  $$ = gen_index_opt($1, $3); 
+} |
 Term '[' Exp ']' {
   $$ = gen_index($1, $3); 
+} |
+Term '[' ']' '?' {
+  $$ = block_join($1, gen_op_simple(EACH_OPT)); 
 } |
 Term '[' ']' {
   $$ = block_join($1, gen_op_simple(EACH)); 
 } |
+Term '[' Exp ':' Exp ']' '?' {
+  $$ = gen_slice_index($1, $3, $5, INDEX_OPT);
+} |
+Term '[' Exp ':' ']' '?' {
+  $$ = gen_slice_index($1, $3, gen_const(jv_null()), INDEX_OPT);
+} |
+Term '[' ':' Exp ']' '?' {
+  $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX_OPT);
+} |
 Term '[' Exp ':' Exp ']' {
-  $$ = gen_slice_index($1, $3, $5);
+  $$ = gen_slice_index($1, $3, $5, INDEX);
 } |
 Term '[' Exp ':' ']' {
-  $$ = gen_slice_index($1, $3, gen_const(jv_null()));
+  $$ = gen_slice_index($1, $3, gen_const(jv_null()), INDEX);
 } |
 Term '[' ':' Exp ']' {
-  $$ = gen_slice_index($1, gen_const(jv_null()), $4);
+  $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX);
 } |
 LITERAL {
   $$ = gen_const($1); 

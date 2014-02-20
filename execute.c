@@ -503,7 +503,8 @@ jv jq_next(jq_state *jq) {
       goto do_backtrack;
     }
 
-    case INDEX: {
+    case INDEX:
+    case INDEX_OPT: {
       jv t = stack_pop(jq);
       jv k = stack_pop(jq);
       path_append(jq, jv_copy(k));
@@ -511,7 +512,10 @@ jv jq_next(jq_state *jq) {
       if (jv_is_valid(v)) {
         stack_push(jq, v);
       } else {
-        print_error(jq, v);
+        if (opcode == INDEX)
+          print_error(jq, v);
+        else
+          jv_free(v);
         goto do_backtrack;
       }
       break;
@@ -536,16 +540,18 @@ jv jq_next(jq_state *jq) {
     }
 
     case EACH: 
+    case EACH_OPT: 
       stack_push(jq, jv_number(-1));
       // fallthrough
-    case ON_BACKTRACK(EACH): {
+    case ON_BACKTRACK(EACH):
+    case ON_BACKTRACK(EACH_OPT): {
       int idx = jv_number_value(stack_pop(jq));
       jv container = stack_pop(jq);
 
       int keep_going, is_last = 0;
       jv key, value;
       if (jv_get_kind(container) == JV_KIND_ARRAY) {
-        if (opcode == EACH) idx = 0;
+        if (opcode == EACH || opcode == EACH_OPT) idx = 0;
         else idx = idx + 1;
         int len = jv_array_length(jv_copy(container));
         keep_going = idx < len;
@@ -555,7 +561,7 @@ jv jq_next(jq_state *jq) {
           value = jv_array_get(jv_copy(container), idx);
         }
       } else if (jv_get_kind(container) == JV_KIND_OBJECT) {
-        if (opcode == EACH) idx = jv_object_iter(container);
+        if (opcode == EACH || opcode == EACH_OPT) idx = jv_object_iter(container);
         else idx = jv_object_iter_next(container, idx);
         keep_going = jv_object_iter_valid(container, idx);
         if (keep_going) {
@@ -563,9 +569,12 @@ jv jq_next(jq_state *jq) {
           value = jv_object_iter_value(container, idx);
         }
       } else {
-        assert(opcode == EACH);
-        print_error(jq, jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s",
-                                                          jv_kind_name(jv_get_kind(container)))));
+        assert(opcode == EACH || opcode == EACH_OPT);
+        if (opcode == EACH) {
+          print_error(jq,
+                      jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s",
+                                                        jv_kind_name(jv_get_kind(container)))));
+        }
         keep_going = 0;
       }
 
