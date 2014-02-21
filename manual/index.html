@@ -1436,7 +1436,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 </h3>
                 <p>The function <code>select(foo)</code> produces its input unchanged if <code>foo</code> returns true for that input, and produces no output otherwise.</p>
 
-<p>It&#8217;s useful for filtering lists: <code>[1,2,3] | map(select(. &gt;= 2))</code> will give you <code>[3]</code>.</p>
+<p>It&#8217;s useful for filtering lists: <code>[1,2,3] | map(select(. &gt;= 2))</code> will give you <code>[2,3]</code>.</p>
 
                 
                   <div>
