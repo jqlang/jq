@@ -23,12 +23,12 @@ LIBM_DD(tanh)
 LIBM_DD(tgamma)
 LIBM_DD(y0)
 LIBM_DD(y1)
-/* LIBM_DID(jn) */
-/* LIBM_DID(yn) */
-/* LIBM_DDD(pow) */
-/* LIBM_DDD(atan2) */
-/* LIBM_DDD(hypot) */
-/* LIBM_DDD(remainder) */
-/* LIBM_DDI(scalbn) */
+LIBM_DID(jn)
+LIBM_DID(yn)
+LIBM_DDD(pow)
+LIBM_DDD(atan2)
+LIBM_DDD(hypot)
+LIBM_DDD(remainder)
+LIBM_DDI(scalbn)
 /* LIBM_DDIP(lgamma_r) */
 
