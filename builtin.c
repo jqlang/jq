@@ -50,23 +50,17 @@ static jv f_plus(jv input, jv a, jv b) {
   }
 }
 
-static jv f_floor(jv input) {
-  if (jv_get_kind(input) != JV_KIND_NUMBER) {
-    return type_error(input, "cannot be floored");
-  }
-  jv ret = jv_number(floor(jv_number_value(input)));
-  jv_free(input);
-  return ret;
+#define LIBM_DD(name) \
+static jv f_ ## name(jv input) { \
+  if (jv_get_kind(input) != JV_KIND_NUMBER) { \
+    return type_error(input, "number required"); \
+  } \
+  jv ret = jv_number(name(jv_number_value(input))); \
+  jv_free(input); \
+  return ret; \
 }
-
-static jv f_sqrt(jv input) {
-  if (jv_get_kind(input) != JV_KIND_NUMBER) {
-    return type_error(input, "has no square root");
-  }
-  jv ret = jv_number(sqrt(jv_number_value(input)));
-  jv_free(input);
-  return ret;
-}
+#include "libm.h"
+#undef LIBM_DD
 
 static jv f_negate(jv input) {
   if (jv_get_kind(input) != JV_KIND_NUMBER) {
@@ -569,9 +563,11 @@ static jv f_error(jv input, jv msg) {
   return jv_invalid_with_msg(msg);
 }
 
+#define LIBM_DD(name) \
+  {(cfunction_ptr)f_ ## name, "_" #name, 1},
+   
 static const struct cfunction function_list[] = {
-  {(cfunction_ptr)f_floor, "_floor", 1},
-  {(cfunction_ptr)f_sqrt, "_sqrt", 1},
+#include "libm.h"
   {(cfunction_ptr)f_plus, "_plus", 3},
   {(cfunction_ptr)f_negate, "_negate", 1},
   {(cfunction_ptr)f_minus, "_minus", 3},
@@ -613,6 +609,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
 };
+#undef LIBM_DD
 
 struct bytecoded_builtin { const char* name; block code; };
 static block bind_bytecoded_builtins(block b) {
@@ -657,6 +654,8 @@ static block bind_bytecoded_builtins(block b) {
   return block_bind_referenced(builtins, b, OP_IS_CALL_PSEUDO);
 }
 
+#define LIBM_DD(name) "def " #name ": _" #name ";",
+
 static const char* const jq_builtins[] = {
   "def map(f): [.[] | f];",
   "def select(f): if f then . else empty end;",
@@ -665,8 +664,7 @@ static const char* const jq_builtins[] = {
   "def unique: group_by(.) | map(.[0]);",
   "def max_by(f): _max_by_impl(map([f]));",
   "def min_by(f): _min_by_impl(map([f]));",
-  "def floor: _floor;",
-  "def sqrt: _sqrt;",
+#include "libm.h"
   "def add: reduce .[] as $x (null; . + $x);",
   "def del(f): delpaths([path(f)]);",
   "def _assign(paths; value): value as $v | reduce path(paths) as $p (.; setpath($p; $v));",
@@ -684,6 +682,7 @@ static const char* const jq_builtins[] = {
   "def any: reduce .[] as $i (false; . or $i);",
   "def all: reduce .[] as $i (true; . and $i);",
 };
+#undef LIBM_DD
 
 
 static int builtins_bind_one(jq_state *jq, block* bb, const char* code) {
