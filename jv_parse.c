@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "config.h"
 #include "jv.h"
 #include "jv_dtoa.h"
 #include "jv_unicode.h"

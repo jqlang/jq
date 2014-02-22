@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "config.h"
 #include "jq.h"
 #include "jv_alloc.h"
 #include "locfile.h"

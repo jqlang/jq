@@ -5,7 +5,9 @@ AC_INIT([jq], [jq_version], [mu@netsoc.tcd.ie],
 
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.61])
+AC_CONFIG_MACRO_DIR([cf])
 AC_CONFIG_AUX_DIR([config])
+AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([parallel-tests foreign -Wall])
 AM_SILENT_RULES([yes])
 AC_PROG_CC
@@ -19,6 +21,58 @@ AM_PROG_CC_C_O
 
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
 dnl AC_PROG_YACC macros...
+
+dnl check -lm functions
+AC_FIND_LIBM_FUNC(acos, [0.2])
+AC_FIND_LIBM_FUNC(acosh, [0.2])
+AC_FIND_LIBM_FUNC(asin, [0.2])
+AC_FIND_LIBM_FUNC(asinh, [0.2])
+AC_FIND_LIBM_FUNC(atan, [0.2])
+AC_FIND_LIBM_FUNC(atan2, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(atanh, [0.2])
+AC_FIND_LIBM_FUNC(cbrt, [0.2])
+AC_FIND_LIBM_FUNC(cos, [0.2])
+AC_FIND_LIBM_FUNC(cosh, [0.2])
+AC_FIND_LIBM_FUNC(erfc, [0.2])
+AC_FIND_LIBM_FUNC(exp, [0.2])
+AC_FIND_LIBM_FUNC(exp2, [0.2])
+AC_FIND_LIBM_FUNC(expm1, [0.2])
+AC_FIND_LIBM_FUNC(fabs, [0.2])
+AC_FIND_LIBM_FUNC(fdim, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(floor, [0.2])
+AC_FIND_LIBM_FUNC(fmax, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(fmin, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(frexp, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(gamma, [0.2])
+AC_FIND_LIBM_FUNC(hypot, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(j0, [0.2])
+AC_FIND_LIBM_FUNC(j1, [0.2])
+AC_FIND_LIBM_FUNC(jn, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(ldexp, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(lgamma, [0.2])
+AC_FIND_LIBM_FUNC(lgamma_r, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(log, [0.2])
+AC_FIND_LIBM_FUNC(log10, [0.2])
+AC_FIND_LIBM_FUNC(log1p, [0.2])
+AC_FIND_LIBM_FUNC(log2, [0.2])
+AC_FIND_LIBM_FUNC(logb, [0.2])
+AC_FIND_LIBM_FUNC(nearbyint, [0.2])
+AC_FIND_LIBM_FUNC(nextafter, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(nexttoward, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(pow, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(remainder, [0.2, 0.2])
+AC_FIND_LIBM_FUNC(rint, [0.2])
+AC_FIND_LIBM_FUNC(significand, [0.2])
+AC_FIND_LIBM_FUNC(sin, [0.2])
+AC_FIND_LIBM_FUNC(sinh, [0.2])
+AC_FIND_LIBM_FUNC(sqrt, [0.2])
+AC_FIND_LIBM_FUNC(tan, [0.2])
+AC_FIND_LIBM_FUNC(tanh, [0.2])
+AC_FIND_LIBM_FUNC(tgamma, [0.2])
+AC_FIND_LIBM_FUNC(trunc, [0.2])
+AC_FIND_LIBM_FUNC(y0, [0.2])
+AC_FIND_LIBM_FUNC(y1, [0.2])
+AC_FIND_LIBM_FUNC(yn, [0.2, 0.2])
 
 dnl check bison version
 AC_MSG_CHECKING([bison version])
@@ -39,7 +93,6 @@ AC_PROG_LEX
 if test "x$LEX" != xflex; then
   LEX="$SHELL $missing_dir/missing flex"
 fi
-
 
 dnl Check for valgrind
 AC_CHECK_PROGS(valgrind_cmd, valgrind)

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "jv.h"
 
 jv jv_load_file(const char* filename, int raw) {

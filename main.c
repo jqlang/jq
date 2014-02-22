@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include "config.h"
 #include "compile.h"
 #include "jv.h"
 #include "jq.h"

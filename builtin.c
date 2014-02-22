@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "config.h"
 #include "builtin.h"
 #include "compile.h"
 #include "jq_parser.h"
@@ -71,14 +72,26 @@ static jv f_plus(jv input, jv a, jv b) {
     return ret;                                                         \
   }
 
+#define LIBM_DDIP(name) \
+  static jv f_ ## name(jv input) {                                      \
+    if (jv_get_kind(input) != JV_KIND_NUMBER)                           \
+      return type_error(input, "number required");                      \
+    int i;                                                              \
+    jv k = jv_number(name(jv_number_value(input), &i));                 \
+    jv ret = jv_array_append(jv_array(), k);                            \
+    return jv_array_append(ret, jv_number(i));                          \
+  }
+
 #define LIBM_DID LIBM_DDD
 #define LIBM_DDI LIBM_DDD
 
 #include "libm.h"
+
 #undef LIBM_DD
 #undef LIBM_DDD
 #undef LIBM_DID
 #undef LIBM_DDI
+#undef LIBM_DDIP
 
 static jv f_negate(jv input) {
   if (jv_get_kind(input) != JV_KIND_NUMBER) {
@@ -584,6 +597,8 @@ static jv f_error(jv input, jv msg) {
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 1},
 
+#define LIBM_DDIP LIBM_DD
+
 #define LIBM_DDD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 3},
 
@@ -637,6 +652,7 @@ static const struct cfunction function_list[] = {
 #undef LIBM_DDD
 #undef LIBM_DID
 #undef LIBM_DDI
+#undef LIBM_DDIP
 
 struct bytecoded_builtin { const char* name; block code; };
 static block bind_bytecoded_builtins(block b) {
@@ -682,6 +698,7 @@ static block bind_bytecoded_builtins(block b) {
 }
 
 #define LIBM_DD(name)   "def " #name ": _" #name ";",
+#define LIBM_DDIP LIBM_DD
 #define LIBM_DDD(name)  "def " #name "(a;b): _" #name "(a;b);",
 #define LIBM_DID LIBM_DDD
 #define LIBM_DDI LIBM_DDD

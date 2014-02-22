@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#include "config.h"
 #include "jv_alloc.h"
 #include "jv.h"
 #include "jv_unicode.h"
