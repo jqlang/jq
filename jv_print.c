@@ -265,9 +265,6 @@ void jv_dumpf(jv x, FILE *f, int flags) {
   jvp_dtoa_context_init(&C);
   jv_dump_term(&C, x, flags, 0, f, 0);
   jvp_dtoa_context_free(&C);
-  if (flags & JV_PRINT_UNBUFFERED) {
-    fflush(f);
-  }
 }
 
 void jv_dump(jv x, int flags) {
