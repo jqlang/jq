@@ -273,8 +273,9 @@ void jv_dump(jv x, int flags) {
 
 void jv_show(jv x, int flags) {
   if (flags == -1)
-    flags = JV_PRINT_PRETTY | JV_PRINT_COLOUR | JV_PRINT_UNBUFFERED;
+    flags = JV_PRINT_PRETTY | JV_PRINT_COLOUR;
   jv_dumpf(jv_copy(x), stderr, flags);
+  fflush(stderr);
 }
 
 jv jv_dump_string(jv x, int flags) {
