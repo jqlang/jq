@@ -89,7 +89,6 @@ static int process(jq_state *jq, jv value, int flags) {
       if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
       if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
       if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
-      if (options & UNBUFFERED_OUTPUT) dumpopts |= JV_PRINT_UNBUFFERED;
       if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
         ret = 11;
       else
@@ -97,6 +96,8 @@ static int process(jq_state *jq, jv value, int flags) {
       jv_dump(result, dumpopts);
     }
     printf("\n");
+    if (options & UNBUFFERED_OUTPUT)
+      fflush(stdout);
   }
   jv_free(result);
   return ret;

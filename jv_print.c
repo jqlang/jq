@@ -265,9 +265,6 @@ void jv_dumpf(jv x, FILE *f, int flags) {
   jvp_dtoa_context_init(&C);
   jv_dump_term(&C, x, flags, 0, f, 0);
   jvp_dtoa_context_free(&C);
-  if (flags & JV_PRINT_UNBUFFERED) {
-    fflush(f);
-  }
 }
 
 void jv_dump(jv x, int flags) {
@@ -276,8 +273,9 @@ void jv_dump(jv x, int flags) {
 
 void jv_show(jv x, int flags) {
   if (flags == -1)
-    flags = JV_PRINT_PRETTY | JV_PRINT_COLOUR | JV_PRINT_UNBUFFERED;
+    flags = JV_PRINT_PRETTY | JV_PRINT_COLOUR;
   jv_dumpf(jv_copy(x), stderr, flags);
+  fflush(stderr);
 }
 
 jv jv_dump_string(jv x, int flags) {
