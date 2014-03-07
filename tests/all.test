@@ -409,17 +409,23 @@ null
 [2,4,4,4,5,5,7,9]
 2
 
-# Should write a test that calls the -lm function from C to check
-# that they match the corresponding jq functions.  However, there's so
-# little template code standing between that it suffices to test a
-# handful of these.  The results were checked by eye against bc(1).
-[.[]|cos]
-[.1,.2,.3,.4,.5,.6]
-[0.9950041652780258,0.9800665778412416,0.955336489125606,0.9210609940028851,0.8775825618903728,0.8253356149096783]
+# Should write a test that calls the -lm function from C (or bc(1)) to
+# check that they match the corresponding jq functions.  However,
+# there's so little template code standing between that it suffices to
+# test a handful of these.  The results were checked by eye against
+# bc(1).
+atan * 4 * 1000000|floor / 1000000
+1
+3.141592
 
-[.[]|sin]
-[.1,.2,.3,.4,.5,.6]
-[0.09983341664682815,0.19866933079506122,0.29552020666133955,0.3894183423086505,0.479425538604203,0.5646424733950354]
+[(3.141592 / 2) * (range(0;20) / 20)|cos * 1000000|floor / 1000000]
+null
+[1,0.996917,0.987688,0.972369,0.951056,0.923879,0.891006,0.85264,0.809017,0.760406,0.707106,0.649448,0.587785,0.522498,0.45399,0.382683,0.309017,0.233445,0.156434,0.078459]
+
+[(3.141592 / 2) * (range(0;20) / 20)|sin * 1000000|floor / 1000000]
+null
+[0,0.078459,0.156434,0.233445,0.309016,0.382683,0.45399,0.522498,0.587785,0.649447,0.707106,0.760405,0.809016,0.85264,0.891006,0.923879,0.951056,0.972369,0.987688,0.996917]
+
 
 def f(x): x | x; f([.], . + [42])
 [1,2,3]
