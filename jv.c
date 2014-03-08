@@ -1106,6 +1106,25 @@ jv jv_object_merge(jv a, jv b) {
   return a;
 }
 
+jv jv_object_merge_recursive(jv a, jv b) {
+  assert(jv_get_kind(a) == JV_KIND_OBJECT);
+  assert(jv_get_kind(b) == JV_KIND_OBJECT);
+
+  jv_object_foreach(b, k, v) {
+    jv elem = jv_object_get(jv_copy(a), jv_copy(k));
+    if (jv_is_valid(elem) &&
+        jv_get_kind(elem) == JV_KIND_OBJECT &&
+        jv_get_kind(v) == JV_KIND_OBJECT) {
+      a = jv_object_set(a, k, jv_object_merge_recursive(elem, v));
+    } else {
+      jv_free(elem);
+      a = jv_object_set(a, k, v);
+    }
+  }
+  jv_free(b);
+  return a;
+}
+
 int jv_object_contains(jv a, jv b) {
   assert(jv_get_kind(a) == JV_KIND_OBJECT);
   assert(jv_get_kind(b) == JV_KIND_OBJECT);

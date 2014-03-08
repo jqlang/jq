@@ -479,7 +479,8 @@ sections:
           - **Objects** are added by merging, that is, inserting all
               the key-value pairs from both objects into a single
               combined object. If both objects contain a value for the
-              same key, the object on the right of the `+` wins.
+              same key, the object on the right of the `+` wins. (For
+              recursive merge use the `*` operator.)
           
           `null` can be added to any value, and returns the other
           value unchanged.
@@ -527,6 +528,11 @@ sections:
           Dividing a string by another splits the first using the second
           as separators.
 
+          Multiplying two objects will merge them recursively: this works
+          like addition but if both objects contain a value for the
+          same key, and the values are objects, the two are merged with
+          the same strategy.
+
         examples:
           - program: '10 / . * 3'
             input: 5
@@ -534,6 +540,9 @@ sections:
           - program: '. / ", "'
             input: '"a, b,c,d, e"'
             output: ['["a","b,c,d","e"]']
+          - program: '{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}'
+            input: 'null'
+            output: ['{"k": {"a": 0, "b": 2, "c": 3}}']
 
       - title: `length`
         body: |
