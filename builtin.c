@@ -172,6 +172,8 @@ static jv f_multiply(jv input, jv a, jv b) {
       return jv_null();
     }
     return res;
+  } else if (jv_get_kind(a) == JV_KIND_OBJECT && jv_get_kind(b) == JV_KIND_OBJECT) {
+    return jv_object_merge_recursive(a, b);
   } else {
     return type_error2(a, b, "cannot be multiplied");
   }  

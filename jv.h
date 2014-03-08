@@ -104,6 +104,7 @@ jv jv_object_set(jv object, jv key, jv value);
 jv jv_object_delete(jv object, jv key);
 int jv_object_length(jv object);
 jv jv_object_merge(jv, jv);
+jv jv_object_merge_recursive(jv, jv);
 
 int jv_object_iter(jv);
 int jv_object_iter_next(jv, int);
