@@ -683,6 +683,14 @@ static const char* const jq_builtins[] = {
   "def leaf_paths: . as $dot|paths|select(. as $p|$dot|getpath($p)|type|. != \"array\" and . != \"object\");",
   "def any: reduce .[] as $i (false; . or $i);",
   "def all: reduce .[] as $i (true; . and $i);",
+  "def arrays: select(type == \"array\");",
+  "def objects: select(type == \"object\");",
+  "def iterables: arrays, objects;",
+  "def booleans: select(type == \"boolean\");",
+  "def numbers: select(type == \"number\");",
+  "def strings: select(type == \"string\");",
+  "def nulls: select(type == \"null\");",
+  "def values: arrays, objects, booleans, numbers, strings;",
 };
 #undef LIBM_DD
 
