@@ -691,6 +691,7 @@ static const char* const jq_builtins[] = {
   "def strings: select(type == \"string\");",
   "def nulls: select(type == \"null\");",
   "def values: arrays, objects, booleans, numbers, strings;",
+  "def scalars: select(. == null or . == true or . == false or type == \"number\" or type == \"string\");",
 };
 #undef LIBM_DD
 
