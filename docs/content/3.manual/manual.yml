@@ -647,6 +647,19 @@ sections:
             input: '[1,5,3,0,7]'
             output: ['[5,3,7]']
 
+
+      - title: `arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`
+        body: |
+          
+          These built-ins select only inputs that are arrays, objects,
+          iterables (arrays or objects), booleans, numbers, strings,
+          null, and any non-null values, respectively.
+
+        examples:
+          - program: '.[]|numbers'
+            input: '[[],{},1,"foo",null,true,false]'
+            output: ['1']
+
       - title: `empty`
         body: |
           
