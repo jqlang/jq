@@ -648,12 +648,12 @@ sections:
             output: ['[5,3,7]']
 
 
-      - title: `arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`
+      - title: `arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`, `scalars`
         body: |
           
           These built-ins select only inputs that are arrays, objects,
           iterables (arrays or objects), booleans, numbers, strings,
-          null, and any non-null values, respectively.
+          null, non-null values, and non-iterables, respectively.
 
         examples:
           - program: '.[]|numbers'
