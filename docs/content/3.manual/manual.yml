@@ -640,7 +640,7 @@ sections:
           otherwise.
 
           It's useful for filtering lists: `[1,2,3] | map(select(. >= 2))`
-          will give you `[3]`.
+          will give you `[2,3]`.
 
         examples:
           - program: 'map(select(. >= 2))'
