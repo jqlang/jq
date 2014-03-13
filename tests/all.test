@@ -797,3 +797,31 @@ map([1,2][0:.])
 {"a": {"b": 1}, "c": {"d": 2}, "e": 5} * .
 {"a": {"b": 2}, "c": {"d": 3, "f": 9}}
 {"a": {"b": 2}, "c": {"d": 3, "f": 9}, "e": 5}
+
+[.[]|arrays]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[[],[3,[]]]
+
+[.[]|objects]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[{}]
+
+[.[]|iterables]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[[],[3,[]],{}]
+
+[.[]|scalars]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[1,2,"foo",true,false,null]
+
+[.[]|values]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[1,2,"foo",[],[3,[]],{},true,false]
+
+[.[]|booleans]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[true,false]
+
+[.[]|nulls]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[null]
