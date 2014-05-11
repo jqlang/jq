@@ -664,6 +664,7 @@ static const char* const jq_builtins[] = {
   "def sort_by(f): _sort_by_impl(map([f]));",
   "def group_by(f): _group_by_impl(map([f]));",
   "def unique: group_by(.) | map(.[0]);",
+  "def unique_by(f): group_by(f) | map(.[0]);",
   "def max_by(f): _max_by_impl(map([f]));",
   "def min_by(f): _min_by_impl(map([f]));",
 #include "libm.h"
