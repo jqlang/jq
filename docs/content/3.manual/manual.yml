@@ -941,9 +941,12 @@ sections:
           `group_by`.
         
         examples:
-          - program: 'unique'
-            input: '[1,2,5,3,5,3,1,3]'
-            output: ['[1,2,3,5]']
+          - program: 'unique_by(.foo)'
+            input: '[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]'
+            output: ['[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]']
+          - program: 'unique_by(length)'
+            input: '["chunky", "bacon", "kitten", "cicada", "asparagus"]'
+            output: ['["chunky", "bacon", "asparagus"]']
 
 
       - title: `reverse`
