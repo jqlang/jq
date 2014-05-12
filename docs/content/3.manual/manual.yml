@@ -931,6 +931,24 @@ sections:
             input: '[1,2,5,3,5,3,1,3]'
             output: ['[1,2,3,5]']
 
+      - title: `unique_by`
+        body: |
+          
+          The `unique_by(.foo)` function takes as input an array and produces
+          an array of the same elements, in sorted order, with
+          elqements with a duplicate `.foo` field removed. Think of it as making
+          an array by taking one element out of every group produced by
+          `group_by`.
+        
+        examples:
+          - program: 'unique_by(.foo)'
+            input: '[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]'
+            output: ['[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]']
+          - program: 'unique_by(length)'
+            input: '["chunky", "bacon", "kitten", "cicada", "asparagus"]'
+            output: ['["chunky", "bacon", "asparagus"]']
+
+
       - title: `reverse`
         body: |
           
