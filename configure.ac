@@ -78,6 +78,32 @@ EOF
 ])
 
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
+
+AC_ARG_ENABLE([pthread-tls],
+              [AC_HELP_STRING([--enable-pthread-tls],
+                              [Enable use of pthread thread local storage])],
+              [],
+              [enable_pthread_tls=no])
+
+if test $enable_pthread_tls = yes; then
+    AC_FIND_FUNC([pthread_key_create], [pthread], [#include <pthread.h>], [NULL, NULL])
+    AC_FIND_FUNC([pthread_once], [pthread], [#include <pthread.h>], [NULL, NULL])
+    AC_FIND_FUNC([atexit], [pthread], [#include <stdlib.h>], [NULL])
+fi
+
+dnl Thread local storage
+have___thread=no
+AC_MSG_CHECKING(for thread-local storage)
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+static __thread int x ;
+int main () { x = 123; return x; }
+])], have___thread=yes)
+if test $have___thread = yes; then 
+   AC_DEFINE([HAVE___THREAD],1,[Define to 1 if the system supports __thread])
+fi
+AC_MSG_RESULT($have___thread)
+
+
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 AC_CONFIG_MACRO_DIR([config/m4])
