@@ -607,6 +607,20 @@ sections:
             input: '[[0,1], ["a","b","c"]]'
             output: ['[false, true]']
 
+      - title: `del`
+        body: |
+          
+          The builtin function `del` removes a key and its corresponding
+          value from an object.
+        
+        examples:
+          - program: 'del(.foo)'
+            input: '[{"foo": 42, "bar": 9001, "baz": 42}]'
+            output: ['{"bar": 9001, "baz": 42}']
+          - program: 'del(.[1, 2])'
+            input: '[["foo", "bar", "baz"]]'
+            output: ['["foo"]']
+
       - title: `to_entries`, `from_entries`, `with_entries`
         body: |
           
