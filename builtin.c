@@ -1111,6 +1111,7 @@ static const char* const jq_builtins[] = {
   "  | reduce range(0; $max) as $j"
   "      ([]; . + [reduce range(0;$length) as $i ([]; . + [ $in[$i][$j] ] )] )"
 	      "  end;",
+  "def in(xs): . as $x | xs | contains($x)",
 };
 #undef LIBM_DD
 

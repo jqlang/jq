@@ -1168,6 +1168,30 @@ sections:
             input: '"a,b, cd, efg, hijk"'
             output: ['12']
 
+      - title: `in`
+        body: |
+
+          The filter `in(b)` will produce true if the input is
+          completely contained within b. It is, essentially, an
+          inversed version of `contains`.
+
+        examples:
+          - program: 'in("foobar")'
+            input: '"bar"'
+            output: ['true']
+          - program: 'in(["foobar", "foobaz", "blarp"])'
+            input: '["baz", "bar"]'
+            output: ['true']
+          - program: 'in(["foobar", "foobaz", "blarp"])'
+            input: '["bazzzzz", "bar"]'
+            output: ['false']
+          - program: 'in({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
+            input: '{foo: 12, bar: [{barp: 12}]}'
+            output: ['true']
+          - program: 'in({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
+            input: '{foo: 12, bar: [{barp: 15}]}'
+            output: ['false']
+
       - title: "`startswith(str)`"
         body: |
 
