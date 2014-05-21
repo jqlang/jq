@@ -653,6 +653,22 @@ sections:
             input: '[[0,1], ["a","b","c"]]'
             output: ['[false, true]']
 
+      - title: `in`
+        body: |
+          
+          The builtin function `in` returns the input key is in the
+          given object, or the input index corresponds to an element
+          in the given array. It is, essentially, an inversed version
+          of `has`.
+      
+        examples:
+          - program: 'in({"foo": 42})'
+            input: '"foo", "bar"'
+            output: ['true', 'false']
+          - program: 'map(in([0,1]))'
+            input: '[2, 0]'
+            output: ['false', 'true']
+            
       - title: "`path(path_expression)`"
         body: |
 
@@ -1168,27 +1184,27 @@ sections:
             input: '"a,b, cd, efg, hijk"'
             output: ['12']
 
-      - title: `in`
+      - title: `inside`
         body: |
 
-          The filter `in(b)` will produce true if the input is
+          The filter `inside(b)` will produce true if the input is
           completely contained within b. It is, essentially, an
           inversed version of `contains`.
 
         examples:
-          - program: 'in("foobar")'
+          - program: 'inside("foobar")'
             input: '"bar"'
             output: ['true']
-          - program: 'in(["foobar", "foobaz", "blarp"])'
+          - program: 'inside(["foobar", "foobaz", "blarp"])'
             input: '["baz", "bar"]'
             output: ['true']
-          - program: 'in(["foobar", "foobaz", "blarp"])'
+          - program: 'inside(["foobar", "foobaz", "blarp"])'
             input: '["bazzzzz", "bar"]'
             output: ['false']
-          - program: 'in({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
+          - program: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
             input: '{foo: 12, bar: [{barp: 12}]}'
             output: ['true']
-          - program: 'in({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
+          - program: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
             input: '{foo: 12, bar: [{barp: 15}]}'
             output: ['false']
 
