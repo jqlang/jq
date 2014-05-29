@@ -1075,6 +1075,20 @@ sections:
             input: '"a, b,c,d, e"'
             output: ['["a","b,c,d","e"]']
 
+      - title: `join`
+        body: |
+        
+          Joins the array of elements given as input, using the
+          argument as separator. It is the inverse of `split`: that is,
+          running `split("foo") | join("foo")` over any input string
+          returns said input string.
+          
+        examples:
+          - program: 'join(", ")'
+            input: '["a","b,c,d","e"]'
+            output: ['"a, b,c,d, e"']
+
+
       - title: `recurse`
         body: |
           
