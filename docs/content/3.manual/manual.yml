@@ -1075,6 +1075,17 @@ sections:
             input: '"a, b,c,d, e"'
             output: ['["a","b,c,d","e"]']
 
+      - title: `parse`
+        body: |
+
+          Parses an input string (a query string of a URL) to build
+          an object from it (with the key/values pairs).
+
+        examples:
+          - program: 'parse'
+            input: '"foo=bar&bonsai=%E7%9B%86%E6%99%AF"'
+            output: ['{"foo":"bar","bonsai":"盆景"}']
+
       - title: `recurse`
         body: |
           
