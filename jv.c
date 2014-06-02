@@ -793,13 +793,17 @@ jv jv_string_vfmt(const char* fmt, va_list ap) {
     va_copy(ap2, ap);
     int n = vsnprintf(buf, size, fmt, ap2);
     va_end(ap2);
-    if (n < size) {
+    /*
+     * NOTE: here we support old vsnprintf()s that return -1 because the
+     * buffer is too small.
+     */
+    if (n >= 0 && n < size) {
       jv ret = jv_string_sized(buf, n);
       jv_mem_free(buf);
       return ret;
     } else {
       jv_mem_free(buf);
-      size = n * 2;
+      size = (n > 0) ? /* standard */ (n * 2) : /* not standard */ (size * 2);
     }
   }
 }
