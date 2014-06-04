@@ -280,7 +280,7 @@ int main(int argc, char* argv[]) {
         slurped = jv_array();
       }
     }
-    struct jv_parser* parser = jv_parser_new();
+    struct jv_parser* parser = jv_parser_new(0);
     char buf[4096];
     while (read_more(buf, sizeof(buf))) {
       if (options & RAW_INPUT) {
