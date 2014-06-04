@@ -13,6 +13,11 @@
 set -e
 cd `dirname "$0"`/../build
 
+jobs=-j4
+case "X$1" in
+X-j*) jobs=$1; shift;;
+esac
+
 plat="$1"
 [ -z "$plat" ] && exit 1
 shift
@@ -26,6 +31,7 @@ mkdir install_other
     --prefix="`pwd`/install_other" \
     --bindir="`pwd`/.." \
     "$@"
-make install-binaries
+make "$jobs" install-binaries
 cd ..
 rm -rf tmp
+

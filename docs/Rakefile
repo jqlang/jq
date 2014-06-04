@@ -75,7 +75,7 @@ $BINARIES = {
 
 $BINARIES.each do |name, args|
   file "../build/#{name}" do |t|
-    sh "MAKEFLAGS=-j4 ../scripts/crosscompile #{name} #{args}"
+    sh "../scripts/crosscompile -j4 #{name} #{args}"
   end
   task :binaries => ["../build/#{name}"]
 end
