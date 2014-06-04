@@ -17,7 +17,8 @@ bison installed. To build, run:
 
     autoreconf -i
     ./configure
-    make
+    make -j8
+    make check
 
 After make finishes, you'll be able to use `./jq`. You can also
 install it using:
@@ -27,3 +28,8 @@ install it using:
 If you're not using the latest git version but instead building a
 released tarball (available on the website), then you won't need to
 run `autoreconf` (and shouldn't), and you won't need flex or bison.
+
+To cross-compile for OS X and Windows, see docs/Rakefile's build task
+and scripts/crosscompile.  You'll need a cross-compilation environment,
+such as Mingw for cross-compiling for Windows.
+
