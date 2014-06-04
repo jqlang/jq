@@ -28,8 +28,6 @@ struct jv_parser {
   int stackpos;
   int stacklen;
   jv next;
-
-  jv_parser_flags flags;
   
   char* tokenbuf;
   int tokenpos;
@@ -47,8 +45,7 @@ struct jv_parser {
 };
 
 
-static void parser_init(struct jv_parser* p, jv_parser_flags flags) {
-  p->flags = flags;
+static void parser_init(struct jv_parser* p) {
   p->stack = 0;
   p->stacklen = p->stackpos = 0;
   p->next = jv_invalid();
@@ -113,9 +110,6 @@ static pfunc token(struct jv_parser* p, char ch) {
     break;
 
   case ',':
-    if (p->stackpos == 1 && (p->flags & JV_PARSE_EXPLODE_TOPLEVEL_ARRAY) &&
-        jv_get_kind(p->stack[0]) == JV_KIND_ARRAY)
-      return 0;
     if (!jv_is_valid(p->next))
       return "Expected value before ','";
     if (p->stackpos == 0)
@@ -139,22 +133,16 @@ static pfunc token(struct jv_parser* p, char ch) {
     if (p->stackpos == 0 || jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_ARRAY)
       return "Unmatched ']'";
     if (jv_is_valid(p->next)) {
-      if (p->stackpos != 1 || !(p->flags & JV_PARSE_EXPLODE_TOPLEVEL_ARRAY)) {
-        p->stack[p->stackpos-1] = jv_array_append(p->stack[p->stackpos-1], p->next);
-        p->next = jv_invalid();
-      }
+      p->stack[p->stackpos-1] = jv_array_append(p->stack[p->stackpos-1], p->next);
+      p->next = jv_invalid();
     } else {
       if (jv_array_length(jv_copy(p->stack[p->stackpos-1])) != 0) {
         // this case hits on input like [1,2,3,]
         return "Expected another array element";
       }
     }
-    if (p->stackpos == 1 && (p->flags & JV_PARSE_EXPLODE_TOPLEVEL_ARRAY)) {
-      jv_free(p->stack[--p->stackpos]);
-    } else {
-      jv_free(p->next);
-      p->next = p->stack[--p->stackpos];
-    }
+    jv_free(p->next);
+    p->next = p->stack[--p->stackpos];
     break;
 
   case '}':
@@ -327,9 +315,7 @@ static chclass classify(char c) {
 static const presult OK = "output produced";
 
 static int check_done(struct jv_parser* p, jv* out) {
-  if ((p->stackpos == 0 && jv_is_valid(p->next)) ||
-      (p->stackpos == 1 && (p->flags & JV_PARSE_EXPLODE_TOPLEVEL_ARRAY) &&
-       jv_get_kind(p->stack[0]) == JV_KIND_ARRAY && jv_is_valid(p->next))) {
+  if (p->stackpos == 0 && jv_is_valid(p->next)) {
     *out = p->next;
     p->next = jv_invalid();
     return 1;
@@ -384,9 +370,9 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   return answer;
 }
 
-struct jv_parser* jv_parser_new(jv_parser_flags flags) {
+struct jv_parser* jv_parser_new() {
   struct jv_parser* p = jv_mem_alloc(sizeof(struct jv_parser));
-  parser_init(p, flags);
+  parser_init(p);
   return p;
 }
 
@@ -458,7 +444,7 @@ jv jv_parser_next(struct jv_parser* p) {
 
 jv jv_parse_sized(const char* string, int length) {
   struct jv_parser parser;
-  parser_init(&parser, 0);
+  parser_init(&parser);
   jv_parser_set_buf(&parser, string, length, 0);
   jv value = jv_parser_next(&parser);
   if (jv_is_valid(value)) {

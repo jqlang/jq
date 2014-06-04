@@ -18,7 +18,7 @@ jv jv_load_file(const char* filename, int raw) {
     data = jv_string("");
   } else {
     data = jv_array();
-    parser = jv_parser_new(0);
+    parser = jv_parser_new();
   }
   while (!feof(file) && !ferror(file)) {
     char buf[4096];
