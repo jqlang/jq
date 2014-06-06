@@ -55,6 +55,7 @@ enum {
   COLOUR_OUTPUT = 64,
   NO_COLOUR_OUTPUT = 128,
   SORTED_OUTPUT = 256,
+  REPL = 1024,
   UNBUFFERED_OUTPUT = 4096,
 
   FROM_FILE = 512,
@@ -100,6 +101,123 @@ static int process(jq_state *jq, jv value, int flags) {
       fflush(stdout);
   }
   jv_free(result);
+  return ret;
+}
+
+#define INT_MAX 2147483647
+static int jv_InterruptOccurred(void) {
+    /* was PyOS_InterruptOccurred */
+    return 0;
+}
+
+
+static int jv_fgets(char *buf, int len, FILE *fp) {
+  /*
+   * based on my_fgets(char *buf, int len, FILE *fp) of Python3.3.2 Parser/myreadline.c
+   */
+  char *p;
+  int err;
+  while (1) {
+    errno = 0;
+    clearerr(fp);
+    p = fgets(buf, len, fp);
+    if (p != NULL)
+      return 0; /* No error */
+    err = errno;
+    if (feof(fp)) {
+      clearerr(fp);
+      return -1; /* EOF */
+    }
+    if (jv_InterruptOccurred()) {
+      return 1; /* Interrupt */
+    }
+    return -2; /* Error */
+  }
+  /* NOTREACHED */
+}
+
+
+char * jv_readline(FILE* sys_stdin, FILE* sys_stdout, char* prompt){
+  /* 
+   * small changed from PyOS_StdioReadline of myreadline.c
+   * may be placed in jv_file.c?
+   * all because GNU readline compatibility.
+   * see following for understading i/f
+   * - call_readline of Python-3.3.2/Modules/readline.c
+   * - PyOS_StdioReadline of Python-3.3.2/Parser/myreadline.c
+   */
+  size_t n;
+  char *p;
+  n = 100;
+  if ((p = (char *)jv_mem_alloc(n)) == NULL)
+      return NULL;
+  fflush(sys_stdout);
+  if (prompt)
+      fprintf(stderr, "%s", prompt);
+  fflush(stderr);
+  switch (jv_fgets(p, (int)n, sys_stdin)) {
+  case 0: /* Normal case */
+      break;
+  case 1: /* Interrupt */
+      jv_mem_free(p);
+      return NULL;
+  case -1: /* EOF */
+  case -2: /* Error */
+  default: /* Shouldn't happen */
+      *p = '\0';
+      break;
+  }
+  n = strlen(p);
+  while (n > 0 && p[n-1] != '\n') {
+    size_t incr = n+2;
+    p = (char *)jv_mem_realloc(p, n + incr);
+    if (p == NULL)
+      return NULL;
+    if (incr > INT_MAX) {
+      fprintf(stderr, "input line too long");
+      //PyErr_SetString(PyExc_OverflowError, "input line too long");
+    }
+    if (jv_fgets(p+n, (int)incr, sys_stdin) != 0)
+        break;
+    n += strlen(p+n);
+  }
+  return (char *)jv_mem_realloc(p, n+1);
+}
+
+
+static int repl(jq_state* jq, const char* line, int jq_flags) {
+  int ret;
+  if (jq_compile(jq, line)) {
+    jv result;
+    ret = 14; // No valid results && -e -> exit(4)
+    jq_start(jq, jv_null(), jq_flags);
+    while (jv_is_valid(result = jq_next(jq))) {
+      int dumpopts;
+      /* Disable colour by default on Windows builds as Windows
+         terminals tend not to display it correctly */
+#ifdef WIN32
+      dumpopts = 0;
+#else
+      dumpopts = isatty(fileno(stdout)) ? JV_PRINT_COLOUR : 0;
+#endif
+      if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
+      if (!(options & COMPACT_OUTPUT)) dumpopts |= JV_PRINT_PRETTY;
+      if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
+      if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
+      if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
+      if (options & UNBUFFERED_OUTPUT) dumpopts |= JV_PRINT_UNBUFFERED;
+      if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
+        ret = 11;
+      else
+        ret = 0;
+      jv_dump(result, dumpopts);
+      printf("\n");
+    }
+    jv_free(result);
+  } else {
+    fprintf(stderr, "compile error.\n");
+    ret = 3;
+  }
   return ret;
 }
 
@@ -179,6 +297,8 @@ int main(int argc, char* argv[]) {
       options |= NO_COLOUR_OUTPUT;
     } else if (isoption(argv[i], 'a', "ascii-output")) {
       options |= ASCII_OUTPUT;
+    } else if (isoption(argv[i], 'z', "REPL")) {
+      options |= REPL;
     } else if (isoption(argv[i], 0, "unbuffered")) {
       options |= UNBUFFERED_OUTPUT;
     } else if (isoption(argv[i], 'S', "sort-keys")) {
@@ -237,6 +357,16 @@ int main(int argc, char* argv[]) {
       die();
     }
   }
+  if (options & REPL) {
+    //assert(ninput_files == 0) ;
+    current_input = NULL; 
+    char* line;
+    while(line = jv_readline(stdin, stdout, "jq > ")){
+      repl(jq, line, jq_flags);
+      jv_mem_free(line);
+    }
+    goto out;
+  } 
   if (!program) usage();
   if (ninput_files == 0) current_input = stdin;
 
@@ -244,7 +374,7 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "%s: --null-input cannot be used with --raw-input or --slurp\n", progname);
     die();
   }
-  
+
   if (options & FROM_FILE) {
     jv data = jv_load_file(program, 1);
     if (!jv_is_valid(data)) {
