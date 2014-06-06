@@ -634,6 +634,75 @@ jv jv_string_indexes(jv j, jv k) {
   return a;
 }
 
+static int jvp_hex_next(const char* in, int len, char* codepoint_ret)
+{
+  unsigned int codepoint = 0;
+  int i = 0;
+  while (i < len) {
+    int c = in[i+1] | 0x20;
+    int val = (c >= '0' && c <= '9') ? (c - '0') :
+      ((c >= 'a' && c <= 'f') ? (c + 10 - 'a') : -1);
+    if (val == -1) break;
+    codepoint = codepoint * 16 + val;
+    if (++i == 2) break;
+  }
+  if (codepoint_ret) *codepoint_ret = codepoint;
+  return i;
+}
+
+jv jv_string_parse(jv j) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  jv a = jv_object();
+
+  int qlen = jv_string_length_bytes(jv_copy(j));
+  const char *qstr = jv_string_value(j);
+  enum { JV_PARSING_KEY, JV_PARSING_VALUE };
+  jv k = jvp_string_empty_new(qlen);
+  jv v = jv_null();
+  int gotAKey = 0;
+  int parsing = JV_PARSING_KEY;
+  for(int i = 0; i < qlen; i++) {
+    char c = qstr[i];
+    if (parsing == JV_PARSING_KEY) {
+      if (c == '&') {
+        if (gotAKey) jv_object_set(a, k, v);
+        else jv_free(k);
+        k = jvp_string_empty_new(qlen - i);
+        v = jv_null();
+        gotAKey = 0;
+      } else {
+        if (c == '=') {
+          parsing = JV_PARSING_VALUE;
+          v = jvp_string_empty_new(qlen - i);
+        } else if (c == '%') {
+          i += jvp_hex_next(&qstr[i], qlen - i, &c);
+          k = jvp_string_append(k, &c, 1);
+        } else {
+          k = jvp_string_append(k, c == '+' ? " " : &c, 1);
+        }
+        gotAKey = 1;
+      }
+    } else { /* parsing == JV_PARSING_VALUE */
+      if (c == '&') {
+        jv_object_set(a, k, v);
+        k = jvp_string_empty_new(qlen - i);
+        v = jv_null();
+        parsing = JV_PARSING_KEY;
+        gotAKey = 0;
+      } else if (c == '%') {
+        i += jvp_hex_next(&qstr[i], qlen - i, &c);
+        v = jvp_string_append(v, &c, 1);
+      } else {
+        v = jvp_string_append(v, c == '+' ? " " : &c, 1);
+      }
+    }
+  }
+  if (gotAKey) jv_object_set(a, k, v);
+  else jv_free(k);
+  jv_free(j);
+  return a;
+}
+
 jv jv_string_split(jv j, jv sep) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   assert(jv_get_kind(sep) == JV_KIND_STRING);

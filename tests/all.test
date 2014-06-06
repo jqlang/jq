@@ -676,6 +676,21 @@ def inc(x): x |= .+1; inc(.[].a)
 ["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
 [["a","bc","def","ghij","jklmn","a,b","c,d","e,f"],["a,b,c,d","e,f,g,h"]]
 
+parse
+"a=b&c=%64+%65&f=%E7%9B%86%E6%99%AF"
+{"a":"b","c":"d e","f":"盆景"}
+
+# rare or unexpected cases (and decisions taken to avoid errors)
+# missing equal sign ==> value is null
+# missing key ==> key is empty string
+# missing key, value and equal sign ==> empty reply
+# extra equals ==> incorporated in value
+# bad hexadecimal in %XY == %00XY when X is wrong; ==%0XY when Y is wrong
+
+[.[]|parse]
+["a&=b&c==d&error=%and+%recovery"]
+[{"a":null,"":"b","c":"=d","error":"\nnd \u0000recovery"}]
+
 [.[] * 3]
 ["a", "ab", "abc"]
 ["aaa", "ababab", "abcabcabc"]

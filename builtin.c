@@ -586,6 +586,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_ltrimstr, "ltrimstr", 2},
   {(cfunction_ptr)f_rtrimstr, "rtrimstr", 2},
   {(cfunction_ptr)jv_string_split, "split", 2},
+  {(cfunction_ptr)jv_string_parse, "parse", 1},
   {(cfunction_ptr)jv_string_explode, "explode", 1},
   {(cfunction_ptr)jv_string_implode, "implode", 1},
   {(cfunction_ptr)jv_setpath, "setpath", 3}, // FIXME typechecking
