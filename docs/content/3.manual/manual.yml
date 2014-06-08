@@ -725,10 +725,6 @@ sections:
           Outputs the paths to all the leaves (non-array, non-object
           elements) in its input.
 
-          `leaf_paths` is equivalent to 
-
-              def leaf_paths: . as $dot|paths|select(. as $p|$dot|getpath($p)|type|. != "array" and . != "object");
-
         examples:
           - program: '[leaf_paths]'
             input: '[1,[[],{"a":2}]]'
