@@ -998,6 +998,25 @@ sections:
             input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
             output: ['false']
 
+      - title: `indices(s)`
+        body: |
+
+          Outputs an array containing the indices in `.` where `s`
+          occurs.  The input may be an array, in which case if `s` is an
+          array then the indices output will be those where all elements
+          in `.` match those of `s`.
+
+        examples:
+          - program: 'indices(", ")'
+            input: '"a,b, cd, efg, hijk"'
+            output: ['[3,7,12]']
+          - program: 'indices(1)'
+            input: '[0,1,2,1,3,1,4]'
+            output: ['[1,3,5]']
+          - program: 'indices([1,2])'
+            input: '[0,1,2,3,1,4,2,5,1,2,6,7]'
+            output: ['[1,8]']
+
       - title: `index(s)`, `rindex(s)`
         body: |
 

@@ -71,6 +71,7 @@ jv jv_array_set(jv, int, jv);
 jv jv_array_append(jv, jv);
 jv jv_array_concat(jv, jv);
 jv jv_array_slice(jv, int, int);
+jv jv_array_indexes(jv, jv);
 #define jv_array_foreach(a, i, x) \
   for (int jv_len__ = jv_array_length(jv_copy(a)), i=0, jv_j__ = 1;     \
        jv_j__; jv_j__ = 0)                                              \

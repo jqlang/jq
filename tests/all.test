@@ -664,9 +664,21 @@ def inc(x): x |= .+1; inc(.[].a)
 "a,b,, c, d,ef, , ghi, jklmn, o"
 [4,7,13,15,20,27]
 
-[(index(","), rindex(","))]
+[(index(","), rindex(",")), indices(",")]
 "a,bc,def,ghij,klmno"
-[1,13]
+[1,13,[1,4,8,13]]
+
+indices(1)
+[0,1,1,2,3,4,1,5]
+[1,2,6]
+
+indices([1,2])
+[0,1,2,3,1,4,2,5,1,2,6,7]
+[1,8]
+
+indices(", ")
+"a,b, cd,e, fgh, ijkl"
+[3,9,14]
 
 [.[]|split(",")]
 ["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
