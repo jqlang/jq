@@ -156,23 +156,33 @@ static jv f_minus(jv input, jv a, jv b) {
 }
 
 static jv f_multiply(jv input, jv a, jv b) {
+  jv_kind ak = jv_get_kind(a);
+  jv_kind bk = jv_get_kind(b);
   jv_free(input);
-  if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+  if (ak == JV_KIND_NUMBER && bk == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) * jv_number_value(b));
-  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_NUMBER) {
+  } else if ((ak == JV_KIND_STRING && bk == JV_KIND_NUMBER) ||
+             (ak == JV_KIND_NUMBER && bk == JV_KIND_STRING)) {
+    jv str = a;
+    jv num = b;
+    if (ak == JV_KIND_NUMBER) {
+      str = b;
+      num = a;
+    }
     int n;
-    size_t alen = jv_string_length_bytes(jv_copy(a));
-    jv res = a;
+    size_t alen = jv_string_length_bytes(jv_copy(str));
+    jv res = str;
 
-    for (n = jv_number_value(b) - 1; n > 0; n--)
-      res = jv_string_append_buf(res, jv_string_value(a), alen);
+    for (n = jv_number_value(num) - 1; n > 0; n--)
+      res = jv_string_append_buf(res, jv_string_value(str), alen);
 
+    jv_free(num);
     if (n < 0) {
-      jv_free(a);
+      jv_free(str);
       return jv_null();
     }
     return res;
-  } else if (jv_get_kind(a) == JV_KIND_OBJECT && jv_get_kind(b) == JV_KIND_OBJECT) {
+  } else if (ak == JV_KIND_OBJECT && bk == JV_KIND_OBJECT) {
     return jv_object_merge_recursive(a, b);
   } else {
     return type_error2(a, b, "cannot be multiplied");
