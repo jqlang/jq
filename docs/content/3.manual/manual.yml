@@ -1005,9 +1005,12 @@ sections:
           occurrence of `s` in the input.
 
         examples:
-          - program: '[index(", "), rindex(", ")'
+          - program: 'index(", ")'
             input: '"a,b, cd, efg, hijk"'
-            output: ['[3,12]']
+            output: ['3']
+          - program: 'rindex(", ")]'
+            input: '"a,b, cd, efg, hijk"'
+            output: ['12']
 
       - title: `startswith`
         body: |
