@@ -1002,6 +1002,17 @@ sections:
             input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
             output: ['false']
 
+      - title: `index(s)`, `rindex(s)`
+        body: |
+
+          Outputs the index of the first (`index`) or last (`rindex`)
+          occurrence of `s` in the input.
+
+        examples:
+          - program: '[index(", "), rindex(", ")'
+            input: '"a,b, cd, efg, hijk"'
+            output: ['[3,12]']
+
       - title: `startswith`
         body: |
 
