@@ -544,7 +544,7 @@ sections:
             input: 'null'
             output: ['{"k": {"a": 0, "b": 2, "c": 3}}']
 
-      - title: `length`
+      - title: "`length`"
         body: |
 
           The builtin function `length` gets the length of various
@@ -565,7 +565,7 @@ sections:
             input: '[[1,2], "string", {"a":2}, null]'
             output: [2, 6, 1, 0]
 
-      - title: `keys`
+      - title: "`keys`"
         body: |
           
           The builtin function `keys`, when given an object, returns
@@ -588,7 +588,7 @@ sections:
             input: '[42,3,35]'
             output: ['[0,1,2]']
 
-      - title: `has`
+      - title: "`has`"
         body: |
           
           The builtin function `has` returns whether the input object
@@ -607,7 +607,7 @@ sections:
             input: '[[0,1], ["a","b","c"]]'
             output: ['[false, true]']
 
-      - title: `del`
+      - title: "`del`"
         body: |
           
           The builtin function `del` removes a key and its corresponding
@@ -621,7 +621,7 @@ sections:
             input: '[["foo", "bar", "baz"]]'
             output: ['["foo"]']
 
-      - title: `to_entries`, `from_entries`, `with_entries`
+      - title: "`to_entries`, `from_entries`, `with_entries`"
         body: |
           
           These functions convert between an object and an array of
@@ -646,7 +646,7 @@ sections:
             output: ['{"KEY_a": 1, "KEY_b": 2}']
 
 
-      - title: `select`
+      - title: "`select`"
         body: |
           
           The function `select(foo)` produces its input unchanged if
@@ -662,7 +662,7 @@ sections:
             output: ['[5,3,7]']
 
 
-      - title: `arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`, `scalars`
+      - title: "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`, `scalars`"
         body: |
           
           These built-ins select only inputs that are arrays, objects,
@@ -674,7 +674,7 @@ sections:
             input: '[[],{},1,"foo",null,true,false]'
             output: ['1']
 
-      - title: `empty`
+      - title: "`empty`"
         body: |
           
           `empty` returns no results. None at all. Not even `null`.
@@ -689,7 +689,7 @@ sections:
             input: 'null'
             output: ['[1,2,3]']
 
-      - title: `map(x)`
+      - title: "`map(x)`"
         body: |
 
           For any filter `x`, `map(x)` will run that filter for each
@@ -704,7 +704,7 @@ sections:
             input: '[1,2,3]'
             output: ['[2,3,4]']
 
-      - title: `paths`
+      - title: "`paths`"
         body: |
 
           Outputs the paths to all the elements in its input (except it
@@ -719,7 +719,7 @@ sections:
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1],[1,0],[1,1],[1,1,"a"]]']
 
-      - title: `leaf_paths`
+      - title: "`leaf_paths`"
         body: |
 
           Outputs the paths to all the leaves (non-array, non-object
@@ -730,7 +730,7 @@ sections:
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1,1,"a"]]']
 
-      - title: `add`
+      - title: "`add`"
         body: |
 
           The filter `add` takes as input an array, and produces as
@@ -752,7 +752,7 @@ sections:
             input: '[]'
             output: ["null"]
 
-      - title: `any`
+      - title: "`any`"
         body: |
       
           The filter `any` takes as input an array of boolean values,
@@ -772,7 +772,7 @@ sections:
             input: '[]'
             output: ["false"]
 
-      - title: `all`
+      - title: "`all`"
         body: |
       
           The filter `all` takes as input an array of boolean values,
@@ -792,7 +792,7 @@ sections:
             input: '[]'
             output: ["true"]
 
-      - title: `range`
+      - title: "`range`"
         body: |
           
           The `range` function produces a range of numbers. `range(4;10)`
@@ -808,7 +808,7 @@ sections:
             input: 'null'
             output: ['[2,3]']
             
-      - title: `floor`
+      - title: "`floor`"
         body: |
 
           The `floor` function returns the floor of its numeric input.
@@ -818,7 +818,7 @@ sections:
             input: '3.14159'
             output: ['3']
             
-      - title: `sqrt`
+      - title: "`sqrt`"
         body: |
 
           The `sqrt` function returns the square root of its numeric input.
@@ -828,7 +828,7 @@ sections:
             input: '9'
             output: ['3']
             
-      - title: `tonumber`
+      - title: "`tonumber`"
         body: |
 
           The `tonumber` function parses its input as a number. It
@@ -840,7 +840,7 @@ sections:
             input: '[1, "1"]'
             output: [1, 1]
 
-      - title: `tostring`
+      - title: "`tostring`"
         body: |
 
           The `tostring` function prints its input as a
@@ -852,7 +852,7 @@ sections:
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
 
-      - title: `type`
+      - title: "`type`"
         body: |
           
           The `type` function returns the type of its argument as a
@@ -864,7 +864,7 @@ sections:
             input: '[0, false, [], {}, null, "hello"]'
             output: ['["number", "boolean", "array", "object", "null", "string"]']
 
-      - title: `sort, sort_by`
+      - title: "`sort, sort_by`"
         body: |
           
           The `sort` functions sorts its input, which must be an
@@ -896,7 +896,7 @@ sections:
             input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]'
             output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]']
 
-      - title: `group_by`
+      - title: "`group_by`"
         body: |
           
           `group_by(.foo)` takes as input an array, groups the
@@ -913,7 +913,7 @@ sections:
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
             output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
 
-      - title: `min`, `max`, `min_by`, `max_by`
+      - title: "`min`, `max`, `min_by`, `max_by`"
         body: |
           
           Find the minimum or maximum element of the input array. The
@@ -929,7 +929,7 @@ sections:
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
 
-      - title: `unique`
+      - title: "`unique`"
         body: |
           
           The `unique` function takes as input an array and produces
@@ -941,7 +941,7 @@ sections:
             input: '[1,2,5,3,5,3,1,3]'
             output: ['[1,2,3,5]']
 
-      - title: `unique_by`
+      - title: "`unique_by`"
         body: |
           
           The `unique_by(.foo)` function takes as input an array and produces
@@ -959,7 +959,7 @@ sections:
             output: ['["chunky", "bacon", "asparagus"]']
 
 
-      - title: `reverse`
+      - title: "`reverse`"
         body: |
           
           This function reverses an array.
@@ -969,7 +969,7 @@ sections:
             input: '[1,2,3,4]'
             output: ['[4,3,2,1]']
 
-      - title: `contains`
+      - title: "`contains`"
         body: |
 
           The filter `contains(b)` will produce true if b is
@@ -998,7 +998,7 @@ sections:
             input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
             output: ['false']
 
-      - title: `indices(s)`
+      - title: "`indices(s)`"
         body: |
 
           Outputs an array containing the indices in `.` where `s`
@@ -1017,7 +1017,7 @@ sections:
             input: '[0,1,2,3,1,4,2,5,1,2,6,7]'
             output: ['[1,8]']
 
-      - title: `index(s)`, `rindex(s)`
+      - title: "`index(s)`, `rindex(s)`"
         body: |
 
           Outputs the index of the first (`index`) or last (`rindex`)
@@ -1031,7 +1031,7 @@ sections:
             input: '"a,b, cd, efg, hijk"'
             output: ['12']
 
-      - title: `startswith`
+      - title: "`startswith`"
         body: |
 
           Outputs `true` if . starts with the given string argument.
@@ -1041,7 +1041,7 @@ sections:
             input: '["fo", "foo", "barfoo", "foobar", "barfoob"]'
             output: ['[false, true, false, true, false]']
 
-      - title: `endswith`
+      - title: "`endswith`"
         body: |
 
           Outputs `true` if . ends with the given string argument.
@@ -1051,7 +1051,7 @@ sections:
             input: '["foobar", "barfoo"]'
             output: ['[false, true, true, false, false]']
 
-      - title: `ltrimstr`
+      - title: "`ltrimstr`"
         body: |
 
           Outputs its input with the given prefix string removed, if it
@@ -1062,7 +1062,7 @@ sections:
             input: '["fo", "foo", "barfoo", "foobar", "afoo"]'
             output: ['["fo","","barfoo","bar","afoo"]']
 
-      - title: `rtrimstr`
+      - title: "`rtrimstr`"
         body: |
 
           Outputs its input with the given suffix string removed, if it
@@ -1073,7 +1073,7 @@ sections:
             input: '["fo", "foo", "barfoo", "foobar", "foob"]'
             output: ['["fo","","bar","foobar","foob"]']
 
-      - title: `explode`
+      - title: "`explode`"
         body: |
 
           Converts an input string into an array of the string's
@@ -1084,7 +1084,7 @@ sections:
             input: '"foobar"'
             output: ['[102,111,111,98,97,114]']
 
-      - title: `implode`
+      - title: "`implode`"
         body: |
 
           The inverse of explode.
@@ -1094,7 +1094,7 @@ sections:
             input: '[65, 66, 67]'
             output: ['"ABC"']
 
-      - title: `split`
+      - title: "`split`"
         body: |
 
           Splits an input string on the separator argument.
@@ -1104,7 +1104,7 @@ sections:
             input: '"a, b,c,d, e"'
             output: ['["a","b,c,d","e"]']
 
-      - title: `join`
+      - title: "`join`"
         body: |
         
           Joins the array of elements given as input, using the
@@ -1118,7 +1118,7 @@ sections:
             output: ['"a, b,c,d, e"']
 
 
-      - title: `recurse`
+      - title: "`recurse`"
         body: |
           
           The `recurse` function allows you to search through a
@@ -1149,14 +1149,14 @@ sections:
               - '{"foo":[{"foo":[]}]}'
               - '{"foo":[]}'
 
-      - title: `recurse_down`
+      - title: "`recurse_down`"
         body: |
           
           A quieter version of `recurse(.[])`, equivalent to:
 
               def recurse_down: recurse(.[]?);
 
-      - title: `..`
+      - title: "`..`"
         body: |
           
           Short-hand for `recurse_down`.  This is intended to resemble
@@ -1168,7 +1168,7 @@ sections:
             input: '[[{"a":1}]]'
             output: ['1']
 
-      - title: "String interpolation - `\(foo)`"
+      - title: "String interpolation - `\\(foo)`"
         body: |
 
           Inside a string, you can put an expression inside parens
@@ -1273,7 +1273,7 @@ sections:
         
   - title: Conditionals and Comparisons
     entries:
-      - title: `==`, `!=`
+      - title: "`==`, `!=`"
         body: |
 
           The expression 'a == b' will produce 'true' if the result of a and b
@@ -1322,7 +1322,7 @@ sections:
             input: 2
             output: ['"many"']
       
-      - title: `>, >=, <=, <`
+      - title: "`>, >=, <=, <`"
         body: |
           
           The comparison operators `>`, `>=`, `<=`, `<` return whether
