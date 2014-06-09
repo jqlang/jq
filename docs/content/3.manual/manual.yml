@@ -55,6 +55,10 @@ manpage_intro: |
   meaning to jq are also shell meta-characters.  For example, `jq
   "foo"` will fail on most Unix shells because that will be the same
   as `jq foo`, which will generally fail because `foo is not defined`.
+  When using the Windows command shell (cmd.exe) it's best to use double
+  quotes around your jq program when given on the command-line (instead
+  of the `-f program-file` option), but then double-quotes in the jq
+  program need backslash escaping.
 
   ## FILTERS
 
