@@ -49,17 +49,6 @@ manpage_intro: |
   in the jq language and specifies how to transform the input
   document.
 
-  Note: it is important to mind the shell's quoting rules.  As a
-  general rule it's best to always quote (with single-quote
-  characters) the jq program, as too many characters with special
-  meaning to jq are also shell meta-characters.  For example, `jq
-  "foo"` will fail on most Unix shells because that will be the same
-  as `jq foo`, which will generally fail because `foo is not defined`.
-  When using the Windows command shell (cmd.exe) it's best to use double
-  quotes around your jq program when given on the command-line (instead
-  of the `-f program-file` option), but then double-quotes in the jq
-  program need backslash escaping.
-
   ## FILTERS
 
 manpage_epilogue: |
@@ -82,6 +71,17 @@ sections:
       are passed through the provided filter one at a time. The
       output(s) of the filter are written to standard out, again as a
       sequence of whitespace-separated JSON data.
+
+      Note: it is important to mind the shell's quoting rules.  As a
+      general rule it's best to always quote (with single-quote
+      characters) the jq program, as too many characters with special
+      meaning to jq are also shell meta-characters.  For example, `jq
+      "foo"` will fail on most Unix shells because that will be the same
+      as `jq foo`, which will generally fail because `foo is not
+      defined`.  When using the Windows command shell (cmd.exe) it's
+      best to use double quotes around your jq program when given on the
+      command-line (instead of the `-f program-file` option), but then
+      double-quotes in the jq program need backslash escaping.
 
       You can affect how jq reads and writes its input and output
       using some command-line options:
