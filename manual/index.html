@@ -293,6 +293,10 @@ simpler:</p>
               <h2>Invoking jq</h2>
               <p>jq filters run on a stream of JSON data. The input to jq is parsed as a sequence of whitespace-separated JSON values which are passed through the provided filter one at a time. The output(s) of the filter are written to standard out, again as a sequence of whitespace-separated JSON data.</p>
 
+<p>Note: it is important to mind the shell&#8217;s quoting rules. As a general rule it&#8217;s best to always quote (with single-quote characters) the jq program, as too many characters with special meaning to jq are also shell meta-characters. For example, <code>jq
+&quot;foo&quot;</code> will fail on most Unix shells because that will be the same as <code>jq foo</code>, which will generally fail because <code>foo is not
+defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best to use double quotes around your jq program when given on the command-line (instead of the <code>-f program-file</code> option), but then double-quotes in the jq program need backslash escaping.</p>
+
 <p>You can affect how jq reads and writes its input and output using some command-line options:</p>
 
 <ul>
