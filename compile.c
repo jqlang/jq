@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include "config.h"
 #include "compile.h"
 #include "bytecode.h"
 #include "locfile.h"

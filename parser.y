@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include "config.h"
 #include "compile.h"
 #include "jv_alloc.h"
 #define YYMALLOC jv_mem_alloc

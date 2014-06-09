@@ -14,7 +14,7 @@ LIBJQ_SRC = locfile.c bytecode.c compile.c execute.c builtin.c jv.c	\
 AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
   -Wno-unused-parameter -Wno-unused-function
 
-ACLOCAL_AMFLAGS = -I config/m4
+ACLOCAL_AMFLAGS = -I config/m4 -I cf
 
 ### Generating the lexer and parser
 

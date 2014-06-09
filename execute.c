@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "config.h"
 #include "exec_stack.h"
 #include "bytecode.h"
 

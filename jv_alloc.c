@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "config.h"
 #include "jv_alloc.h"
 
 struct nomem_handler {

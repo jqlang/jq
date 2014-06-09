@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "bytecode.h"
 #include "jv_alloc.h"
 

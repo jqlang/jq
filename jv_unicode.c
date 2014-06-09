@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include "config.h"
 #include "jv_unicode.h"
 #include "jv_utf8_tables.h"
 
