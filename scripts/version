@@ -2,4 +2,4 @@
 set -e
 cd `dirname "$0"`
 git rev-parse --verify -q jq-1.0 > /dev/null 2>&1
-git describe --always --match 'jq-*' --dirty | sed 's/^jq-//'
+git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//'
