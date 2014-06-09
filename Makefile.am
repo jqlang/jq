@@ -1,7 +1,7 @@
 ### C source files to be built and distributed.
 
 LIBJQ_INCS = jq_parser.h builtin.h bytecode.h compile.h exec_stack.h	\
-   jv_alloc.h jv_dtoa.h jv_unicode.h locfile.h		\
+   libm.h jv_alloc.h jv_dtoa.h jv_unicode.h locfile.h		 	\
    opcode_list.h parser.y jv_utf8_tables.h lexer.l
 
 LIBJQ_SRC = locfile.c bytecode.c compile.c execute.c builtin.c jv.c	\
