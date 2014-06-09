@@ -93,11 +93,15 @@
                   
                     "`.`" : "",
                   
-                    "`.foo`" : "foo",
+                    "`.foo`, `.foo.bar`" : "foofoobar",
                   
-                    "`.[foo]`, `.[2]`, `.[10:15]`" : "foo21015",
+                    "`.foo?`" : "foo",
+                  
+                    "`.[<string>]`, `.[2]`, `.[10:15]`" : "string21015",
                   
                     "`.[]`" : "",
+                  
+                    "`.[]?`" : "",
                   
                     "`,`" : "",
                   
@@ -127,15 +131,27 @@
                   
                     "`has`" : "has",
                   
+                    "`del`" : "del",
+                  
                     "`to_entries`, `from_entries`, `with_entries`" : "to_entriesfrom_entrieswith_entries",
                   
                     "`select`" : "select",
+                  
+                    "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`, `scalars`" : "arraysobjectsiterablesbooleansnumbersstringsnullsvaluesscalars",
                   
                     "`empty`" : "empty",
                   
                     "`map(x)`" : "mapx",
                   
+                    "`paths`" : "paths",
+                  
+                    "`leaf_paths`" : "leaf_paths",
+                  
                     "`add`" : "add",
+                  
+                    "`any`" : "any",
+                  
+                    "`all`" : "all",
                   
                     "`range`" : "range",
                   
@@ -157,9 +173,15 @@
                   
                     "`unique`" : "unique",
                   
+                    "`unique_by`" : "unique_by",
+                  
                     "`reverse`" : "reverse",
                   
                     "`contains`" : "contains",
+                  
+                    "`indices(s)`" : "indicess",
+                  
+                    "`index(s)`, `rindex(s)`" : "indexsrindexs",
                   
                     "`startswith`" : "startswith",
                   
@@ -175,7 +197,13 @@
                   
                     "`split`" : "split",
                   
+                    "`join`" : "join",
+                  
                     "`recurse`" : "recurse",
+                  
+                    "`recurse_down`" : "recurse_down",
+                  
+                    "`..`" : "",
                   
                     "String interpolation - `\\(foo)`" : "Stringinterpolationfoo",
                   
@@ -269,6 +297,12 @@ simpler:</p>
 
 <ul>
 <li>
+<p><code>--version</code>:</p>
+
+<p>Output the jq version and exit with zero.</p>
+</li>
+
+<li>
 <p><code>--slurp</code>/<code>-s</code>:</p>
 
 <p>Instead of running the filter for each JSON object in the input, read the entire input stream into a large array and run the filter just once.</p>
@@ -337,7 +371,7 @@ simpler:</p>
 <li>
 <p><code>-e</code> / <code>--exit-status</code>:</p>
 
-<p>Sets the exit status of jq to 10 if the last output values was <code>false</code>, 11 if the last output value was <code>null</code>, or 0 if the last output value was valid. Normally jq exits with 0, or 1 if there was any usage problem or other error.</p>
+<p>Sets the exit status of jq to 0 if the last output values was neither <code>false</code> nor <code>null</code>, 1 if the last output value was either <code>false</code> or <code>null</code>, or 4 if no valid result was ever produced. Normally jq exits with 2 if there was any usage problem or system error, 3 if there was a jq program compile error, or 0 if the jq program ran.</p>
 </li>
 
 <li>
@@ -398,14 +432,16 @@ simpler:</p>
                  
                  </section>
               
-                <section id="foo">
+                <section id="foofoobar">
                 <h3>
-                  <p><code>.foo</code></p>
+                  <p><code>.foo</code>, <code>.foo.bar</code></p>
                   
                 </h3>
                 <p>The simplest <em>useful</em> filter is <code>.foo</code>. When given a JSON object (aka dictionary or hash) as input, it produces the value at the key &#8220;foo&#8221;, or null if there&#8217;s none present.</p>
 
 <p>If the key contains special characters, you need to surround it with double quotes like this: <code>.&quot;foo$&quot;</code>.</p>
+
+<p>A filter of the form <code>.foo.bar</code> is equivalent to <code>.foo|.bar</code>.</p>
 
                 
                   <div>
@@ -448,7 +484,7 @@ simpler:</p>
                       </table>
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq '."foo"'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq '.["foo"]'</td></tr>
                         <tr><th>Input</th><td>{"foo": 42}</td></tr>
                         
                         
@@ -467,14 +503,12 @@ simpler:</p>
                  
                  </section>
               
-                <section id="foo21015">
+                <section id="foo">
                 <h3>
-                  <p><code>.[foo]</code>, <code>.[2]</code>, <code>.[10:15]</code></p>
+                  <p><code>.foo?</code></p>
                   
                 </h3>
-                <p>You can also look up fields of an object using syntax like <code>.[&quot;foo&quot;]</code> (.foo above is a shorthand version of this). This one works for arrays as well, if the key is an integer. Arrays are zero-based (like javascript), so <code>.[2]</code> returns the third element of the array.</p>
-
-<p>The <code>.[10:15]</code> syntax can be used to return a subarray of an array or substring of a string. The array returned by <code>.[10:15]</code> will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive). Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array).</p>
+                <p>Just like <code>.foo</code>, but does not output even an error when <code>.</code> is not an array or an object.</p>
 
                 
                   <div>
@@ -484,6 +518,92 @@ simpler:</p>
                       Examples
                     </a>
                     <div id="example3" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.foo?'</td></tr>
+                        <tr><th>Input</th><td>{"foo": 42, "bar": "less interesting data"}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>42</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.foo?'</td></tr>
+                        <tr><th>Input</th><td>{"notfoo": true, "alsonotfoo": false}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>null</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.["foo"]?'</td></tr>
+                        <tr><th>Input</th><td>{"foo": 42}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>42</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '[.foo?]'</td></tr>
+                        <tr><th>Input</th><td>[1,2]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="string21015">
+                <h3>
+                  <p><code>.[&lt;string&gt;]</code>, <code>.[2]</code>, <code>.[10:15]</code></p>
+                  
+                </h3>
+                <p>You can also look up fields of an object using syntax like <code>.[&quot;foo&quot;]</code> (.foo above is a shorthand version of this). This one works for arrays as well, if the key is an integer. Arrays are zero-based (like javascript), so <code>.[2]</code> returns the third element of the array.</p>
+
+<p>The <code>.[10:15]</code> syntax can be used to return a subarray of an array or substring of a string. The array returned by <code>.[10:15]</code> will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive). Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array).</p>
+
+<p>The <code>?</code> &#8220;operator&#8221; can also be used with the slice operator, as in <code>.[10:15]?</code>, which outputs values where the inputs are slice-able.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example4">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example4" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -586,18 +706,18 @@ simpler:</p>
                   <p><code>.[]</code></p>
                   
                 </h3>
-                <p>If you use the <code>.[foo]</code> syntax, but omit the index entirely, it will return <em>all</em> of the elements of an array. Running <code>.[]</code> with the input <code>[1,2,3]</code> will produce the numbers as three separate results, rather than as a single array.</p>
+                <p>If you use the <code>.[index]</code> syntax, but omit the index entirely, it will return <em>all</em> of the elements of an array. Running <code>.[]</code> with the input <code>[1,2,3]</code> will produce the numbers as three separate results, rather than as a single array.</p>
 
 <p>You can also use this on an object, and it will return all the values of the object.</p>
 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example4">
+                    <a data-toggle="collapse" href="#example5">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example4" class="collapse">
+                    <div id="example5" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -664,6 +784,16 @@ simpler:</p>
               
                 <section id="">
                 <h3>
+                  <p><code>.[]?</code></p>
+                  
+                </h3>
+                <p>Like <code>.[]</code>, but no errors will be output if . is not an array or object.</p>
+
+                
+                 </section>
+              
+                <section id="">
+                <h3>
                   <p><code>,</code></p>
                   
                 </h3>
@@ -672,11 +802,11 @@ simpler:</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example5">
+                    <a data-toggle="collapse" href="#example6">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example5" class="collapse">
+                    <div id="example6" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -769,11 +899,11 @@ simpler:</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example6">
+                    <a data-toggle="collapse" href="#example7">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example6" class="collapse">
+                    <div id="example7" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -825,11 +955,11 @@ simpler:</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example7">
+                    <a data-toggle="collapse" href="#example8">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example7" class="collapse">
+                    <div id="example8" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -893,11 +1023,11 @@ simpler:</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example8">
+                    <a data-toggle="collapse" href="#example9">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example8" class="collapse">
+                    <div id="example9" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -969,7 +1099,7 @@ simpler:</p>
 </li>
 
 <li>
-<p><strong>Objects</strong> are added by merging, that is, inserting all the key-value pairs from both objects into a single combined object. If both objects contain a value for the same key, the object on the right of the <code>+</code> wins.</p>
+<p><strong>Objects</strong> are added by merging, that is, inserting all the key-value pairs from both objects into a single combined object. If both objects contain a value for the same key, the object on the right of the <code>+</code> wins. (For recursive merge use the <code>*</code> operator.)</p>
 </li>
 </ul>
 
@@ -978,11 +1108,11 @@ simpler:</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example9">
+                    <a data-toggle="collapse" href="#example10">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example9" class="collapse">
+                    <div id="example10" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1075,11 +1205,11 @@ simpler:</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example10">
+                    <a data-toggle="collapse" href="#example11">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example10" class="collapse">
+                    <div id="example11" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1128,14 +1258,16 @@ simpler:</p>
 
 <p>Dividing a string by another splits the first using the second as separators.</p>
 
+<p>Multiplying two objects will merge them recursively: this works like addition but if both objects contain a value for the same key, and the values are objects, the two are merged with the same strategy.</p>
+
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example11">
+                    <a data-toggle="collapse" href="#example12">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example11" class="collapse">
+                    <div id="example12" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1163,6 +1295,21 @@ simpler:</p>
                               <th>Output</th>
                             
                             <td>["a","b,c,d","e"]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}'</td></tr>
+                        <tr><th>Input</th><td>null</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"k": {"a": 0, "b": 2, "c": 3}}</td>
                           </tr>
                         
                         
@@ -1201,11 +1348,11 @@ simpler:</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example12">
+                    <a data-toggle="collapse" href="#example13">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example12" class="collapse">
+                    <div id="example13" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1263,11 +1410,11 @@ simpler:</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example13">
+                    <a data-toggle="collapse" href="#example14">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example13" class="collapse">
+                    <div id="example14" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1317,11 +1464,11 @@ simpler:</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example14">
+                    <a data-toggle="collapse" href="#example15">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example14" class="collapse">
+                    <div id="example15" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1359,6 +1506,58 @@ simpler:</p>
                  
                  </section>
               
+                <section id="del">
+                <h3>
+                  <p><code>del</code></p>
+                  
+                </h3>
+                <p>The builtin function <code>del</code> removes a key and its corresponding value from an object.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example16">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example16" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'del(.foo)'</td></tr>
+                        <tr><th>Input</th><td>[{"foo": 42, "bar": 9001, "baz": 42}]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"bar": 9001, "baz": 42}</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'del(.[1, 2])'</td></tr>
+                        <tr><th>Input</th><td>[["foo", "bar", "baz"]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>["foo"]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="to_entriesfrom_entrieswith_entries">
                 <h3>
                   <p><code>to_entries</code>, <code>from_entries</code>, <code>with_entries</code></p>
@@ -1372,11 +1571,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example15">
+                    <a data-toggle="collapse" href="#example17">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example15" class="collapse">
+                    <div id="example17" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1441,11 +1640,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example16">
+                    <a data-toggle="collapse" href="#example18">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example16" class="collapse">
+                    <div id="example18" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1468,6 +1667,43 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
+                <section id="arraysobjectsiterablesbooleansnumbersstringsnullsvaluesscalars">
+                <h3>
+                  <p><code>arrays</code>, <code>objects</code>, <code>iterables</code>, <code>booleans</code>, <code>numbers</code>, <code>strings</code>, <code>nulls</code>, <code>values</code>, <code>scalars</code></p>
+                  
+                </h3>
+                <p>These built-ins select only inputs that are arrays, objects, iterables (arrays or objects), booleans, numbers, strings, null, non-null values, and non-iterables, respectively.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example19">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example19" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '.[]|numbers'</td></tr>
+                        <tr><th>Input</th><td>[[],{},1,"foo",null,true,false]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>1</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="empty">
                 <h3>
                   <p><code>empty</code></p>
@@ -1480,11 +1716,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example17">
+                    <a data-toggle="collapse" href="#example20">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example17" class="collapse">
+                    <div id="example20" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1541,11 +1777,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example18">
+                    <a data-toggle="collapse" href="#example21">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example18" class="collapse">
+                    <div id="example21" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1568,6 +1804,84 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
+                <section id="paths">
+                <h3>
+                  <p><code>paths</code></p>
+                  
+                </h3>
+                <p>Outputs the paths to all the elements in its input (except it does not output the empty list, representing . itself).</p>
+
+<p><code>paths</code> is equivalent to</p>
+
+<pre><code>def paths: path(recurse(if (type|. == &quot;array&quot; or . == &quot;object&quot;) then .[] else empty end))|select(length &gt; 0);</code></pre>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example22">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example22" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '[paths]'</td></tr>
+                        <tr><th>Input</th><td>[1,[[],{"a":2}]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[[0],[1],[1,0],[1,1],[1,1,"a"]]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="leaf_paths">
+                <h3>
+                  <p><code>leaf_paths</code></p>
+                  
+                </h3>
+                <p>Outputs the paths to all the leaves (non-array, non-object elements) in its input.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example23">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example23" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '[leaf_paths]'</td></tr>
+                        <tr><th>Input</th><td>[1,[[],{"a":2}]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[[0],[1,1,"a"]]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="add">
                 <h3>
                   <p><code>add</code></p>
@@ -1580,11 +1894,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example19">
+                    <a data-toggle="collapse" href="#example24">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example19" class="collapse">
+                    <div id="example24" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1637,6 +1951,144 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
+                <section id="any">
+                <h3>
+                  <p><code>any</code></p>
+                  
+                </h3>
+                <p>The filter <code>any</code> takes as input an array of boolean values, and produces <code>true</code> as output if any of the the elements of the array is <code>true</code>.</p>
+
+<p>If the input is an empty array, <code>any</code> returns <code>false</code>.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example25">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example25" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'any'</td></tr>
+                        <tr><th>Input</th><td>[true, false]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'any'</td></tr>
+                        <tr><th>Input</th><td>[false, false]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>false</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'any'</td></tr>
+                        <tr><th>Input</th><td>[]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>false</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="all">
+                <h3>
+                  <p><code>all</code></p>
+                  
+                </h3>
+                <p>The filter <code>all</code> takes as input an array of boolean values, and produces <code>true</code> as output if all of the the elements of the array are <code>true</code>.</p>
+
+<p>If the input is an empty array, <code>all</code> returns <code>true</code>.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example26">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example26" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'all'</td></tr>
+                        <tr><th>Input</th><td>[true, false]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>false</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'all'</td></tr>
+                        <tr><th>Input</th><td>[true, true]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'all'</td></tr>
+                        <tr><th>Input</th><td>[]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="range">
                 <h3>
                   <p><code>range</code></p>
@@ -1647,11 +2099,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example20">
+                    <a data-toggle="collapse" href="#example27">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example20" class="collapse">
+                    <div id="example27" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1706,11 +2158,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example21">
+                    <a data-toggle="collapse" href="#example28">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example21" class="collapse">
+                    <div id="example28" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1743,11 +2195,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example22">
+                    <a data-toggle="collapse" href="#example29">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example22" class="collapse">
+                    <div id="example29" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1780,11 +2232,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example23">
+                    <a data-toggle="collapse" href="#example30">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example23" class="collapse">
+                    <div id="example30" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1824,11 +2276,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example24">
+                    <a data-toggle="collapse" href="#example31">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example24" class="collapse">
+                    <div id="example31" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1875,11 +2327,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example25">
+                    <a data-toggle="collapse" href="#example32">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example25" class="collapse">
+                    <div id="example32" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1932,11 +2384,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example26">
+                    <a data-toggle="collapse" href="#example33">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example26" class="collapse">
+                    <div id="example33" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1986,11 +2438,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example27">
+                    <a data-toggle="collapse" href="#example34">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example27" class="collapse">
+                    <div id="example34" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2023,11 +2475,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example28">
+                    <a data-toggle="collapse" href="#example35">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example28" class="collapse">
+                    <div id="example35" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2075,11 +2527,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example29">
+                    <a data-toggle="collapse" href="#example36">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example29" class="collapse">
+                    <div id="example36" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2102,6 +2554,58 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
+                <section id="unique_by">
+                <h3>
+                  <p><code>unique_by</code></p>
+                  
+                </h3>
+                <p>The <code>unique_by(.foo)</code> function takes as input an array and produces an array of the same elements, in sorted order, with elqements with a duplicate <code>.foo</code> field removed. Think of it as making an array by taking one element out of every group produced by <code>group_by</code>.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example37">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example37" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'unique_by(.foo)'</td></tr>
+                        <tr><th>Input</th><td>[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'unique_by(length)'</td></tr>
+                        <tr><th>Input</th><td>["chunky", "bacon", "kitten", "cicada", "asparagus"]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>["chunky", "bacon", "asparagus"]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="reverse">
                 <h3>
                   <p><code>reverse</code></p>
@@ -2112,11 +2616,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example30">
+                    <a data-toggle="collapse" href="#example38">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example30" class="collapse">
+                    <div id="example38" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2149,11 +2653,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example31">
+                    <a data-toggle="collapse" href="#example39">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example31" class="collapse">
+                    <div id="example39" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2236,6 +2740,125 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
+                <section id="indicess">
+                <h3>
+                  <p><code>indices(s)</code></p>
+                  
+                </h3>
+                <p>Outputs an array containing the indices in <code>.</code> where <code>s</code> occurs. The input may be an array, in which case if <code>s</code> is an array then the indices output will be those where all elements in <code>.</code> match those of <code>s</code>.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example40">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example40" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'indices(", ")'</td></tr>
+                        <tr><th>Input</th><td>"a,b, cd, efg, hijk"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[3,7,12]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'indices(1)'</td></tr>
+                        <tr><th>Input</th><td>[0,1,2,1,3,1,4]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[1,3,5]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'indices([1,2])'</td></tr>
+                        <tr><th>Input</th><td>[0,1,2,3,1,4,2,5,1,2,6,7]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[1,8]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="indexsrindexs">
+                <h3>
+                  <p><code>index(s)</code>, <code>rindex(s)</code></p>
+                  
+                </h3>
+                <p>Outputs the index of the first (<code>index</code>) or last (<code>rindex</code>) occurrence of <code>s</code> in the input.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example41">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example41" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'index(", ")'</td></tr>
+                        <tr><th>Input</th><td>"a,b, cd, efg, hijk"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>3</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'rindex(", ")]'</td></tr>
+                        <tr><th>Input</th><td>"a,b, cd, efg, hijk"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>12</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="startswith">
                 <h3>
                   <p><code>startswith</code></p>
@@ -2246,11 +2869,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example32">
+                    <a data-toggle="collapse" href="#example42">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example32" class="collapse">
+                    <div id="example42" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2283,11 +2906,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example33">
+                    <a data-toggle="collapse" href="#example43">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example33" class="collapse">
+                    <div id="example43" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2320,11 +2943,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example34">
+                    <a data-toggle="collapse" href="#example44">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example34" class="collapse">
+                    <div id="example44" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2357,11 +2980,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example35">
+                    <a data-toggle="collapse" href="#example45">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example35" class="collapse">
+                    <div id="example45" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2394,11 +3017,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example36">
+                    <a data-toggle="collapse" href="#example46">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example36" class="collapse">
+                    <div id="example46" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2431,11 +3054,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example37">
+                    <a data-toggle="collapse" href="#example47">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example37" class="collapse">
+                    <div id="example47" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2468,11 +3091,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example38">
+                    <a data-toggle="collapse" href="#example48">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example38" class="collapse">
+                    <div id="example48" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2485,6 +3108,43 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                               <th>Output</th>
                             
                             <td>["a","b,c,d","e"]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="join">
+                <h3>
+                  <p><code>join</code></p>
+                  
+                </h3>
+                <p>Joins the array of elements given as input, using the argument as separator. It is the inverse of <code>split</code>: that is, running <code>split(&quot;foo&quot;) | join(&quot;foo&quot;)</code> over any input string returns said input string.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example49">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example49" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'join(", ")'</td></tr>
+                        <tr><th>Input</th><td>["a","b,c,d","e"]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>"a, b,c,d, e"</td>
                           </tr>
                         
                         
@@ -2517,11 +3177,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example39">
+                    <a data-toggle="collapse" href="#example50">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example39" class="collapse">
+                    <div id="example50" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2565,6 +3225,55 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
+                <section id="recurse_down">
+                <h3>
+                  <p><code>recurse_down</code></p>
+                  
+                </h3>
+                <p>A quieter version of <code>recurse(.[])</code>, equivalent to:</p>
+
+<pre><code>def recurse_down: recurse(.[]?);</code></pre>
+
+                
+                 </section>
+              
+                <section id="">
+                <h3>
+                  <p><code>..</code></p>
+                  
+                </h3>
+                <p>Short-hand for <code>recurse_down</code>. This is intended to resemble the XPath <code>//</code> operator. Note that <code>..a</code> does not work; use <code>..|a</code> instead.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example51">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example51" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '..|.a?'</td></tr>
+                        <tr><th>Input</th><td>[[{"a":1}]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>1</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="Stringinterpolationfoo">
                 <h3>
                   <p>String interpolation - <code>\(foo)</code></p>
@@ -2575,11 +3284,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example40">
+                    <a data-toggle="collapse" href="#example52">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example40" class="collapse">
+                    <div id="example52" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2612,11 +3321,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example41">
+                    <a data-toggle="collapse" href="#example53">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example41" class="collapse">
+                    <div id="example53" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2724,20 +3433,20 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
 
 <pre><code>@uri &quot;http://www.google.com/search?q=\(.search)&quot;</code></pre>
 
-<p>will produce the following output for the input <code>{&quot;search&quot;:&quot;jq!&quot;}</code>:</p>
+<p>will produce the following output for the input <code>{&quot;search&quot;:&quot;what is jq?&quot;}</code>:</p>
 
-<pre><code>http://www.google.com/search?q=jq%21</code></pre>
+<pre><code>&quot;http://www.google.com/search?q=what%20is%20jq%3f&quot;</code></pre>
 
 <p>Note that the slashes, question mark, etc. in the URL are not escaped, as they were part of the string literal.</p>
 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example42">
+                    <a data-toggle="collapse" href="#example54">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example42" class="collapse">
+                    <div id="example54" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2793,11 +3502,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example43">
+                    <a data-toggle="collapse" href="#example55">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example43" class="collapse">
+                    <div id="example55" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2858,11 +3567,11 @@ B end</code> instead.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example44">
+                    <a data-toggle="collapse" href="#example56">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example44" class="collapse">
+                    <div id="example56" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2903,11 +3612,11 @@ end'</td></tr>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example45">
+                    <a data-toggle="collapse" href="#example57">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example45" class="collapse">
+                    <div id="example57" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2947,11 +3656,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example46">
+                    <a data-toggle="collapse" href="#example58">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example46" class="collapse">
+                    <div id="example58" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3059,11 +3768,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example47">
+                    <a data-toggle="collapse" href="#example59">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example47" class="collapse">
+                    <div id="example59" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3159,11 +3868,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example48">
+                    <a data-toggle="collapse" href="#example60">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example48" class="collapse">
+                    <div id="example60" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3210,11 +3919,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example49">
+                    <a data-toggle="collapse" href="#example61">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example49" class="collapse">
+                    <div id="example61" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3270,11 +3979,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example50">
+                    <a data-toggle="collapse" href="#example62">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example50" class="collapse">
+                    <div id="example62" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3349,11 +4058,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example51">
+                    <a data-toggle="collapse" href="#example63">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example51" class="collapse">
+                    <div id="example63" class="collapse">
                       
                     
                       <table class="manual-example">

@@ -53,7 +53,7 @@
         <h1>Tutorial</h1>
         
           
-            <p>Twitter has a JSON API, so let&#8217;s play with that. This URL gets us the last 5 tweets about JSON:</p>
+            <p>GitHub has a JSON API, so let&#8217;s play with that. This URL gets us the last 5 commits from the jq repo:</p>
           
         
           
@@ -66,16 +66,43 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true'</pre>
+                <pre>curl 'https://api.github.com/repos/stedolan/jq/commits?per_page=5'</pre>
                 <a data-toggle="collapse" href="#result1">Show result</a>
               </div>
-              <div id="result1" class="accordion-body collapse"><pre>{"completed_in":0.108,"max_id":247677287108067328,"max_id_str":"247677287108067328","next_page":"?page=2&max_id=247677287108067328&q=json&rpp=5&include_entities=1","page":1,"query":"json","refresh_url":"?since_id=247677287108067328&q=json&include_entities=1","results":[{"created_at":"Mon, 17 Sep 2012 12:44:01 +0000","entities":{"hashtags":[],"urls":[{"url":"http:\/\/t.co\/XRvh1ZVw","expanded_url":"http:\/\/jase.im\/Ri7I0M","display_url":"jase.im\/Ri7I0M","indices":[112,132]}],"user_mentions":[{"screen_name":"imagemechanics","name":"Jason Cotterell","id":57271393,"id_str":"57271393","indices":[3,18]}]},"from_user":"_AaronNg","from_user_id":79771704,"from_user_id_str":"79771704","from_user_name":"NgChenChong","geo":null,"id":247677287108067328,"id_str":"247677287108067328","iso_language_code":"en","metadata":{"result_type":"recent"},"profile_image_url":"http:\/\/a0.twimg.com\/profile_images\/2523558403\/ek8mo4j4beq84iw28gjl_normal.jpeg","profile_image_url_https":"https:\/\/si0.twimg.com\/profile_images\/2523558403\/ek8mo4j4beq84iw28gjl_normal.jpeg","source":"&lt;a href=&quot;http:\/\/twitter.com\/&quot;&gt;web&lt;\/a&gt;","text":"RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp:\/\/t.co\/XRvh1ZVw","to_user":null,"to_user_id":0,"to_user_id_str":"0","to_user_name":null}, ...
+              <div id="result1" class="accordion-body collapse"><pre>[
+  {
+    "sha": "d25341478381063d1c76e81b3a52e0592a7c997f",
+    "commit": {
+      "author": {
+        "name": "Stephen Dolan",
+        "email": "mu@netsoc.tcd.ie",
+        "date": "2013-06-22T16:30:59Z"
+      },
+      "committer": {
+        "name": "Stephen Dolan",
+        "email": "mu@netsoc.tcd.ie",
+        "date": "2013-06-22T16:30:59Z"
+      },
+      "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+      "tree": {
+        "sha": "6ab697a8dfb5a96e124666bf6d6213822599fb40",
+        "url": "https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40"
+      },
+      "url": "https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
+      "comment_count": 0
+    },
+    "url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
+    "html_url": "https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f",
+    "comments_url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments",
+    "author": {
+      "login": "stedolan",
+    ...
 </pre></div>
             </div>
           
         
           
-            <p>There&#8217;s lots of info and no whitespace, so to make it a bit more legible we pipe it through jq, telling jq to just spit the input back at us using the expression <code>.</code>:</p>
+            <p>Github returns a ton of info here, and it&#8217;s relatively hard to read as it is. To syntax highlight it and order the attributes we pipe it through jq, telling jq to just spit the input back at us using the expression <code>.</code>:</p>
           
         
           
@@ -88,41 +115,36 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true' | jq '.'</pre>
+                <pre>curl 'https://api.github.com/repos/stedolan/jq/commits?per_page=5' | jq '.'</pre>
                 <a data-toggle="collapse" href="#result2">Show result</a>
               </div>
-              <div id="result2" class="accordion-body collapse"><pre>
-{
-  "since_id_str": "0",
-  "since_id": 0,
-  "results_per_page": 5,
-  "completed_in": 0.108,
-  "max_id": 247677287108067330,
-  "max_id_str": "247677287108067328",
-  "next_page": "?page=2&max_id=247677287108067328&q=json&rpp=5&include_entities=1",
-  "page": 1,
-  "query": "json",
-  "refresh_url": "?since_id=247677287108067328&q=json&include_entities=1",
-  "results": [
-    {
-      "from_user_name": "NgChenChong",
-      "from_user_id_str": "79771704",
-      "from_user_id": 79771704,
-      "from_user": "_AaronNg",
-      "iso_language_code": "en",
-      "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
-      "to_user": null
-      /* lots more fields... */
-    },
-    /* lots more results... */
-  ]
-}
+              <div id="result2" class="accordion-body collapse"><pre>[
+  {
+    "parents": [
+      {
+        "html_url": "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
+        "url": "https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
+        "sha": "54b9c9bdb225af5d886466d72f47eafc51acb4f7"
+      },
+      {
+        "html_url": "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
+        "url": "https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
+        "sha": "8b1b503609c161fea4b003a7179b3fbb2dd4345a"
+      }
+    ],
+    "committer": {
+      "type": "User",
+      "received_events_url": "https://api.github.com/users/stedolan/received_events",
+      "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
+      "repos_url": "https://api.github.com/users/stedolan/repos",
+      "organizations_url": "https://api.github.com/users/stedolan/orgs",
+...
 </pre></div>
             </div>
           
         
           
-            <p>Let&#8217;s pull out the first tweet:</p>
+            <p>There&#8217;s still far too much info for our purposes, so we can try just grab the first commit:</p>
           
         
           
@@ -135,19 +157,82 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>curl 'http://search.twitter.com/search.json?q=json&rpp=5&include_entities=true' | jq '.results[0]'</pre>
+                <pre>curl 'https://api.github.com/repos/stedolan/jq/commits?per_page=5' | jq '.[0]'</pre>
                 <a data-toggle="collapse" href="#result3">Show result</a>
               </div>
               <div id="result3" class="accordion-body collapse"><pre>{
-  "from_user_name": "NgChenChong",
-  "from_user_id_str": "79771704",
-  "from_user_id": 79771704,
-  "from_user": "_AaronNg",
-  "iso_language_code": "en",
-  "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
-  "to_user": null
-  /* lots more fields... */
-},
+  "parents": [
+    {
+      "html_url": "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
+      "url": "https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
+      "sha": "54b9c9bdb225af5d886466d72f47eafc51acb4f7"
+    },
+    {
+      "html_url": "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
+      "url": "https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
+      "sha": "8b1b503609c161fea4b003a7179b3fbb2dd4345a"
+    }
+  ],
+  "committer": {
+    "type": "User",
+    "received_events_url": "https://api.github.com/users/stedolan/received_events",
+    "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
+    "repos_url": "https://api.github.com/users/stedolan/repos",
+    "organizations_url": "https://api.github.com/users/stedolan/orgs",
+    "subscriptions_url": "https://api.github.com/users/stedolan/subscriptions",
+    "starred_url": "https://api.github.com/users/stedolan/starred{/owner}{/repo}",
+    "gists_url": "https://api.github.com/users/stedolan/gists{/gist_id}",
+    "login": "stedolan",
+    "id": 79765,
+    "avatar_url": "https://1.gravatar.com/avatar/31de909d8e55dd07ed782d92ece59842?d=https%3A%2F%2Fidenticons.github.com%2Ffc5b6765b1c9cfaecea48ae71df4d279.png",
+    "gravatar_id": "31de909d8e55dd07ed782d92ece59842",
+    "url": "https://api.github.com/users/stedolan",
+    "html_url": "https://github.com/stedolan",
+    "followers_url": "https://api.github.com/users/stedolan/followers",
+    "following_url": "https://api.github.com/users/stedolan/following{/other_user}"
+  },
+  "author": {
+    "type": "User",
+    "received_events_url": "https://api.github.com/users/stedolan/received_events",
+    "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
+    "repos_url": "https://api.github.com/users/stedolan/repos",
+    "organizations_url": "https://api.github.com/users/stedolan/orgs",
+    "subscriptions_url": "https://api.github.com/users/stedolan/subscriptions",
+    "starred_url": "https://api.github.com/users/stedolan/starred{/owner}{/repo}",
+    "gists_url": "https://api.github.com/users/stedolan/gists{/gist_id}",
+    "login": "stedolan",
+    "id": 79765,
+    "avatar_url": "https://1.gravatar.com/avatar/31de909d8e55dd07ed782d92ece59842?d=https%3A%2F%2Fidenticons.github.com%2Ffc5b6765b1c9cfaecea48ae71df4d279.png",
+    "gravatar_id": "31de909d8e55dd07ed782d92ece59842",
+    "url": "https://api.github.com/users/stedolan",
+    "html_url": "https://github.com/stedolan",
+    "followers_url": "https://api.github.com/users/stedolan/followers",
+    "following_url": "https://api.github.com/users/stedolan/following{/other_user}"
+  },
+  "comments_url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments",
+  "html_url": "https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f",
+  "url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
+  "commit": {
+    "comment_count": 0,
+    "url": "https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
+    "tree": {
+      "url": "https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40",
+      "sha": "6ab697a8dfb5a96e124666bf6d6213822599fb40"
+    },
+    "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+    "committer": {
+      "date": "2013-06-22T16:30:59Z",
+      "email": "mu@netsoc.tcd.ie",
+      "name": "Stephen Dolan"
+    },
+    "author": {
+      "date": "2013-06-22T16:30:59Z",
+      "email": "mu@netsoc.tcd.ie",
+      "name": "Stephen Dolan"
+    }
+  },
+  "sha": "d25341478381063d1c76e81b3a52e0592a7c997f"
+}
 </pre></div>
             </div>
           
@@ -168,21 +253,21 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>jq '.results[0] | {from_user, text}'</pre>
+                <pre>jq '.[0] | {message: .commit.message, name: .commit.committer.name}'</pre>
                 <a data-toggle="collapse" href="#result4">Show result</a>
               </div>
               <div id="result4" class="accordion-body collapse"><pre>{
-  "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
-  "from_user": "_AaronNg"
+  "name": "Stephen Dolan",
+  "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161"
 }
 </pre></div>
             </div>
           
         
           
-            <p>The <code>|</code> operator in jq feeds the output of one filter (<code>.results[0]</code> which gets the first element of the results array) into the input of another (<code>{from_user, text}</code> which builds an object of those two fields).</p>
+            <p>The <code>|</code> operator in jq feeds the output of one filter (<code>.[0]</code> which gets the first element of the array in the response) into the input of another (<code>{...}</code> which builds an object out of those fields). You can access nested attributes, such as <code>.commit.message</code>:</p>
 
-<p>Now let&#8217;s get the rest of the tweets:</p>
+<p>Now let&#8217;s get the rest of the commits:</p>
           
         
           
@@ -195,35 +280,35 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>jq '.results[] | {from_user, text}'</pre>
+                <pre>jq '.[] | {message: .commit.message, name: .commit.committer.name}'</pre>
                 <a data-toggle="collapse" href="#result5">Show result</a>
               </div>
               <div id="result5" class="accordion-body collapse"><pre>{
-  "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
-  "from_user": "_AaronNg"
+  "name": "Stephen Dolan",
+  "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161"
 }
 {
-  "text": "RT @_kud: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt; -- http://t.co/Lhp92IqD",
-  "from_user": "blouerat"
+  "name": "Stephen Dolan",
+  "message": "Reject all overlong UTF8 sequences."
 }
 {
-  "text": "Dynamic Forms Mobile App by pmadiset: Few Forms details are hosted on our server in the form of JSON. This JSON ... http://t.co/7KALdWaX",
-  "from_user": "cebu_iphone"
+  "name": "Stephen Dolan",
+  "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences."
 }
 {
-  "text": "iPhone 5 website insanity - Video compressing using JPEG, JSON, and &lt;canvas&gt; http://t.co/28Jesbio (Oh #Apple, U So #Awesome...)",
-  "from_user": "dieswaytoofast"
+  "name": "Stephen Dolan",
+  "message": "Fix example in manual for `floor`. See #155."
 }
 {
-  "text": "RT @umutm: A very nice web-based JSON editor - http://t.co/M70snaIf",
-  "from_user": "Leolik"
+  "name": "Nicolas Williams",
+  "message": "Document floor"
 }
 </pre></div>
             </div>
           
         
           
-            <p><code>.results[]</code> returns each element of the results array, one at a time, which are all fed into <code>{from_user, text}</code>.</p>
+            <p><code>.[]</code> returns each element of the array returned in the response, one at a time, which are all fed into <code>{message: .commit.message, name: .commit.committer.name}</code>.</p>
 
 <p>Data in jq is represented as streams of JSON values - every jq expression runs for each value in its input stream, and can produce any number of values to its output stream.</p>
 
@@ -242,29 +327,29 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>jq '[.results[] | {from_user, text}]'</pre>
+                <pre>jq '[.[] | {message: .commit.message, name: .commit.committer.name}]'</pre>
                 <a data-toggle="collapse" href="#result6">Show result</a>
               </div>
               <div id="result6" class="accordion-body collapse"><pre>[
   {
-    "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
-    "from_user": "_AaronNg"
+    "name": "Stephen Dolan",
+    "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161"
   },
   {
-    "text": "RT @_kud: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt; -- http://t.co/Lhp92IqD",
-    "from_user": "blouerat"
+    "name": "Stephen Dolan",
+    "message": "Reject all overlong UTF8 sequences."
   },
   {
-    "text": "Dynamic Forms Mobile App by pmadiset: Few Forms details are hosted on our server in the form of JSON. This JSON ... http://t.co/7KALdWaX",
-    "from_user": "cebu_iphone"
+    "name": "Stephen Dolan",
+    "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences."
   },
   {
-    "text": "iPhone 5 website insanity - Video compressing using JPEG, JSON, and &lt;canvas&gt; http://t.co/28Jesbio (Oh #Apple, U So #Awesome...)",
-    "from_user": "dieswaytoofast"
+    "name": "Stephen Dolan",
+    "message": "Fix example in manual for `floor`. See #155."
   },
   {
-    "text": "RT @umutm: A very nice web-based JSON editor - http://t.co/M70snaIf",
-    "from_user": "Leolik"
+    "name": "Nicolas Williams",
+    "message": "Document floor"
   }
 ]
 </pre></div>
@@ -273,23 +358,22 @@
         
           
             <hr />
-<p>Next, let&#8217;s try getting the URLs out of those API results as well. In each tweet, the Twitter API includes a field called &#8220;entities&#8221; which looks like this:</p>
+<p>Next, let&#8217;s try getting the URLs of the parrent commits out of the API results as well. In each commit, the GitHub API includes information about &#8220;parent&#8221; commits. There can be one or many.</p>
 
-<pre><code>{
-  &quot;user_mentions&quot;: [],
-  &quot;urls&quot;: [{
-      &quot;indices&quot;: [83, 103],
-      &quot;display_url&quot;: &quot;bit.ly/StniqT&quot;,
-      &quot;expanded_url&quot;: &quot;http://bit.ly/StniqT&quot;,
-      &quot;url&quot;: &quot;http://t.co/28Jesbio&quot;
-  }],
-  &quot;hashtags&quot;: [
-    {&quot;indices&quot;: [108, 114], &quot;text&quot;: &quot;Apple&quot; },
-    {&quot;indices&quot;: [121, 129], &quot;text&quot;: &quot;Awesome&quot;}
-  ]
-}</code></pre>
+<pre><code>&quot;parents&quot;: [
+  {
+    &quot;html_url&quot;: &quot;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;,
+    &quot;url&quot;: &quot;https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;,
+    &quot;sha&quot;: &quot;54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;
+  },
+  {
+    &quot;html_url&quot;: &quot;https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;,
+    &quot;url&quot;: &quot;https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;,
+    &quot;sha&quot;: &quot;8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;
+  }
+]</code></pre>
 
-<p>We want to pull out all of the &#8220;url&#8221; fields inside that array of url objects, and make a simple list of strings to go along with the &#8220;from_user&#8221; and &#8220;text&#8221; fields we already have.</p>
+<p>We want to pull out all of the &#8220;html_url&#8221; fields inside that array of parent commits and make a simple list of strings to go along with the &#8220;message&#8221; and &#8220;author&#8221; fields we already have.</p>
           
         
           
@@ -302,50 +386,53 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>jq '.results[] | {from_user, text, urls: [.entities.urls[].url]}'</pre>
+                <pre>jq '[.[] | {message: .commit.message, name: .commit.committer.name, parents: [.parents[].html_url]}]'</pre>
                 <a data-toggle="collapse" href="#result7">Show result</a>
               </div>
-              <div id="result7" class="accordion-body collapse"><pre>{
- "urls": [
-   "http://t.co/XRvh1ZVw"
- ],
- "text": "RT @imagemechanics: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt;.\nhttp://t.co/XRvh1ZVw",
-  "from_user": "_AaronNg"
-}
-{
-  "urls": [
-    "http://t.co/Lhp92IqD"
-  ],
-  "text": "RT @_kud: iPhone 5 website teardown: How Apple compresses video using JPEG, JSON, and &lt;canvas&gt; -- http://t.co/Lhp92IqD",
-  "from_user": "blouerat"
-}
-{
-  "urls": [
-    "http://t.co/7KALdWaX"
-  ],
-  "text": "Dynamic Forms Mobile App by pmadiset: Few Forms details are hosted on our server in the form of JSON. This JSON ... http://t.co/7KALdWaX",
-  "from_user": "cebu_iphone"
-}
-{
-  "urls": [
-    "http://t.co/28Jesbio"
-  ],
-  "text": "iPhone 5 website insanity - Video compressing using JPEG, JSON, and &lt;canvas&gt; http://t.co/28Jesbio (Oh #Apple, U So #Awesome...)",
-  "from_user": "dieswaytoofast"
-}
-{
-  "urls": [
-    "http://t.co/M70snaIf"
-  ],
-  "text": "RT @umutm: A very nice web-based JSON editor - http://t.co/M70snaIf",
-  "from_user": "Leolik"
-}
+              <div id="result7" class="accordion-body collapse"><pre>[
+  {
+    "parents": [
+      "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
+      "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a"
+    ],
+    "name": "Stephen Dolan",
+    "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161"
+  },
+  {
+    "parents": [
+      "https://github.com/stedolan/jq/commit/ff48bd6ec538b01d1057be8e93b94eef6914e9ef"
+    ],
+    "name": "Stephen Dolan",
+    "message": "Reject all overlong UTF8 sequences."
+  },
+  {
+    "parents": [
+      "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7"
+    ],
+    "name": "Stephen Dolan",
+    "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences."
+  },
+  {
+    "parents": [
+      "https://github.com/stedolan/jq/commit/3dcdc582ea993afea3f5503a78a77675967ecdfa"
+    ],
+    "name": "Stephen Dolan",
+    "message": "Fix example in manual for `floor`. See #155."
+  },
+  {
+    "parents": [
+      "https://github.com/stedolan/jq/commit/7c4171d414f647ab08bcd20c76a4d8ed68d9c602"
+    ],
+    "name": "Nicolas Williams",
+    "message": "Document floor"
+  }
+]
 </pre></div>
             </div>
           
         
           
-            <p>Here we&#8217;re making an object as before, but this time the urls field is being set to <code>[.entities.urls[].url]</code>, which collects all of the URLs defined in the entities object.</p>
+            <p>Here we&#8217;re making an object as before, but this time the <code>parents</code> field is being set to <code>[.parents[].html_url]}]</code>, which collects all of the parent commit urls defined in the parents object.</p>
           
         
           
