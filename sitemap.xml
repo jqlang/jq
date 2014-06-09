@@ -2,22 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>http://stedolan.github.io/jq</loc>
-    <lastmod>2013-05-19</lastmod>
+    <lastmod>2013-12-06</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>http://stedolan.github.io/jq/tutorial/</loc>
-    <lastmod>2013-05-19</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>http://stedolan.github.io/jq/manual/</loc>
-    <lastmod>2013-05-19</lastmod>
+    <lastmod>2014-06-08</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>http://stedolan.github.io/jq/download/</loc>
-    <lastmod>2013-05-20</lastmod>
+    <lastmod>2014-06-08</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>http://stedolan.github.io/jq/manual/</loc>
+    <lastmod>2014-06-08</lastmod>
     <changefreq>monthly</changefreq>
   </url>
 </urlset>
