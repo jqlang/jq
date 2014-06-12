@@ -63,7 +63,11 @@
 
 <ul>
 <li>
-<p>Binaries for <a href='linux64/jq'>64-bit</a> or <a href='linux32/jq'>32-bit</a> systems.</p>
+<p>jq 1.4 binaries for <a href='linux64/jq'>64-bit</a> or <a href='linux32/jq'>32-bit</a> systems.</p>
+</li>
+
+<li>
+<p>jq 1.3 binaries for <a href='linux64/jq-1.3/jq'>64-bit</a> or <a href='linux32/jq-1.3/jq'>32-bit</a> systems.</p>
 </li>
 
 <li>
@@ -71,7 +75,7 @@
 </li>
 
 <li>
-<p>jq 1.2 is <a href='http://packages.debian.org/jq'>in Debian</a></p>
+<p>jq 1.3 is <a href='http://packages.debian.org/jq'>in Debian</a> (a request to update to 1.4 has been filed)</p>
 </li>
 </ul>
 
@@ -83,17 +87,23 @@
 </li>
 
 <li>
-<p>Or, grab prebuilt <a href='osx64/jq'>64-bit binaries</a> or <a href='osx32/jq'>32-bit binaries</a></p>
+<p>Or, grab prebuilt jq 1.4 <a href='osx64/jq'>64-bit binaries</a> or <a href='osx32/jq'>32-bit binaries</a></p>
+</li>
+
+<li>
+<p>Or, grab prebuilt jq 1.3 <a href='osx64/jq-1.3/jq'>64-bit binaries</a> or <a href='osx32/jq-1.3/jq'>32-bit binaries</a></p>
 </li>
 </ul>
 
 <h3 id='windows'>Windows</h3>
 
 <ul>
-<li>Executables for <a href='win64/jq.exe'>64-bit</a> or <a href='win32/jq.exe'>32-bit</a></li>
+<li>jq 1.4 executables for <a href='win64/jq.exe'>64-bit</a> or <a href='win32/jq.exe'>32-bit</a></li>
+
+<li>jq 1.3 executables for <a href='win64/jq-1.3/jq.exe'>64-bit</a> or <a href='win32/jq-1.3/jq.exe'>32-bit</a></li>
 </ul>
 
-<h3 id='from_source_on_linux_or_os_x'>From source on Linux or OS X</h3>
+<h3 id='from_source_on_linux_os_x_cygwin_and_other_posixlike_operating_systems'>From source on Linux, OS X, Cygwin, and other POSIX-like operating systems</h3>
 
 <ul>
 <li><a href='source/jq-1.4.tar.gz'>Source tarball for jq 1.4</a></li>
@@ -133,7 +143,9 @@ sudo make install</code></pre>
 
 <h4 id='building_the_documentation'>Building the documentation</h4>
 
-<p>jq&#8217;s documentation is compiled into static HTML using <a href='http://www.tinytree.info'>Bonsai</a>. To view the documentation locally, run <code>rake serve</code> from the docs/ subdirectory. You&#8217;ll need a few Ruby dependencies, which can be installed by following the instructions in <code>docs/README.md</code>.</p>
+<p>jq&#8217;s documentation is compiled into static HTML using <a href='http://www.tinytree.info'>Bonsai</a>. To view the documentation locally, run <code>rake serve</code> (or <code>bundle exec rake serve</code>) from the docs/ subdirectory. To build the docs just <code>rake build</code> from the docs subdirectory. You&#8217;ll need a few Ruby dependencies, which can be installed by following the instructions in <code>docs/README.md</code>.</p>
+
+<p>The man page is built by <code>make jq.1</code>, or just <code>make</code>, also from the YAML docs, and you&#8217;ll still need the Ruby dependencies to build the manpage.</p>
           
         
           
