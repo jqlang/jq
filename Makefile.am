@@ -81,12 +81,13 @@ real_docs: jq.1
 	  rm -f jq.1; $(MAKE) $(AM_MAKEFLAGS) jq.1;\
 	fi
 else
-jq.1: $(srcdir)/jq.1.default
+jq.1: $(srcdir)/jq.1.prebuilt
 	$(AM_V_GEN) cp $^ $@
 real_docs:
 	@echo "Ruby dependencies not found, cannot build manpage." > /dev/stderr
 	@echo "Follow the instructions in docs/README.md to install them" > /dev/stderr
 	@echo "and then rerun ./configure" > /dev/stderr
+	@echo "A pre-built, possibly out-of-date manpage used." > /dev/stderr
 	false
 endif
 
