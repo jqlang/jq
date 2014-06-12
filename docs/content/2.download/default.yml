@@ -16,7 +16,8 @@ body:
 
       ### Linux
       
-       * Binaries for [64-bit](linux64/jq) or [32-bit](linux32/jq) systems.
+       * jq 1.4 binaries for [64-bit](linux64/jq) or [32-bit](linux32/jq) systems.
+       * jq 1.3 binaries for [64-bit](linux64/jq-1.3/jq) or [32-bit](linux32/jq-1.3/jq) systems.
 
        * For Arch users, a PKGBUILD for jq-1.1 is in the
          [AUR](https://aur.archlinux.org/packages.php?ID=63849), as
@@ -27,20 +28,24 @@ body:
          manually by following instructions on [Arch Linux's
          Wiki](https://wiki.archlinux.org/index.php/Arch_UseRepository).
 
-       * jq 1.2 is [in Debian](http://packages.debian.org/jq)
+       * jq 1.3 is [in Debian](http://packages.debian.org/jq) (a request to update to 1.4 has been filed)
 
       ### OS X
 
        * `brew install jq` using [homebrew](http://mxcl.github.com/homebrew/)
 
-       * Or, grab prebuilt [64-bit binaries](osx64/jq) or [32-bit
+       * Or, grab prebuilt jq 1.4 [64-bit binaries](osx64/jq) or [32-bit
          binaries](osx32/jq)
+
+       * Or, grab prebuilt jq 1.3 [64-bit binaries](osx64/jq-1.3/jq) or [32-bit
+         binaries](osx32/jq-1.3/jq)
 
       ### Windows
 
-       * Executables for [64-bit](win64/jq.exe) or [32-bit](win32/jq.exe)
+       * jq 1.4 executables for [64-bit](win64/jq.exe) or [32-bit](win32/jq.exe)
+       * jq 1.3 executables for [64-bit](win64/jq-1.3/jq.exe) or [32-bit](win32/jq-1.3/jq.exe)
 
-      ### From source on Linux or OS X
+      ### From source on Linux, OS X, Cygwin, and other POSIX-like operating systems
 
        * [Source tarball for jq $JQ_VERSION](source/jq-$JQ_VERSION.tar.gz)
 
@@ -82,9 +87,14 @@ body:
       #### Building the documentation
 
       jq's documentation is compiled into static HTML using
-      [Bonsai](http://www.tinytree.info). To view the documentation
-      locally, run `rake serve` from the docs/ subdirectory. You'll
-      need a few Ruby dependencies, which can be installed by
-      following the instructions in `docs/README.md`.
+      [Bonsai](http://www.tinytree.info).  To view the documentation
+      locally, run `rake serve` (or `bundle exec rake serve`) from the
+      docs/ subdirectory.  To build the docs just `rake build` from the
+      docs subdirectory.  You'll need a few Ruby dependencies, which can
+      be installed by following the instructions in `docs/README.md`.
+
+      The man page is built by `make jq.1`, or just `make`, also from
+      the YAML docs, and you'll still need the Ruby dependencies to
+      build the manpage.
 
 
