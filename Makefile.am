@@ -74,10 +74,12 @@ man_MANS = jq.1
 if ENABLE_DOCS
 jq.1: $(srcdir)/docs/content/3.manual/manual.yml
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage ) > $@ || { rm -f $@; false; }
+jq.1.prebuilt: jq.1
+	$(AM_V_GEN) cp $^ $@ || { rm -f $@; false; }
 jq.1.default: $(srcdir)/docs/default_manpage.md
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage_default ) > $@ || { rm -f $@; false; }
-real_docs: jq.1
-	if cmp jq.1 $(srcdir)/jq.1.default > /dev/null; then\
+real_docs: jq.1 jq.1.prebuilt
+	@if cmp jq.1 $(srcdir)/jq.1.default > /dev/null; then\
 	  rm -f jq.1; $(MAKE) $(AM_MAKEFLAGS) jq.1;\
 	fi
 else
