@@ -40,6 +40,10 @@ body:
        * Or, grab prebuilt jq 1.3 [64-bit binaries](osx64/jq-1.3/jq) or [32-bit
          binaries](osx32/jq-1.3/jq)
 
+      ### Solaris 11
+
+       * jq 1.4 executables for [64-bit](solaris11-64/jq.exe) or [32-bit](solaris11-32/jq.exe)
+
       ### Windows
 
        * jq 1.4 executables for [64-bit](win64/jq.exe) or [32-bit](win32/jq.exe)
