@@ -1488,10 +1488,19 @@ sections:
           
           won't.
 
+          For programming language theorists, it's more accurate to
+          say that jq variables are lexically-scoped bindings.  In
+          particular there's no way to change the value of a binding;
+          one can only setup a new binding with the same name, but which
+          will not be visible where the old one was.
+
         examples:
           - program: '.bar as $x | .foo | . + $x'
             input: '{"foo":10, "bar":200}'
             output: ['210']
+          - program: '. as $i|[(.*2|. as $i| $i), $i]'
+            input: '5'
+            output: ['[10,5]']
 
       - title: 'Defining Functions'
         body: |
@@ -1510,7 +1519,17 @@ sections:
           same argument may be referenced multiple times with
           different inputs (here `f` is run for each element of the
           input array). Arguments to a function work more like
-          callbacks than like value arguments.
+          callbacks than like value arguments.  This is important to
+          understand.  Consider:
+
+              def foo(f): f|f;
+              5|foo(.*2)
+
+          The result will be 20 because `f` is `.*2`, and during the
+          first invocation of `f` `.` will be 5, and the second time it
+          will be 10 (5 * 2), so the result will be 20.  Function
+          arguments are filters, and filters expect an input when
+          invoked.
 
           If you want the value-argument behaviour for defining simple
           functions, you can just use a variable:
