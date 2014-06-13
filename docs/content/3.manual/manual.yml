@@ -1172,6 +1172,16 @@ sections:
             input: '[[{"a":1}]]'
             output: ['1']
 
+      - title: "`env`"
+        body: |
+          
+          Outputs an object representing jq's environment.
+
+        examples:
+          - program: 'env.PAGER'
+            input: 'null'
+            output: ['"less"']
+
       - title: "String interpolation - `\\(foo)`"
         body: |
 

@@ -1,7 +1,8 @@
+#include <assert.h>
+#include <limits.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include "builtin.h"
 #include "compile.h"
 #include "jq_parser.h"
@@ -575,6 +576,23 @@ static jv f_error(jv input, jv msg) {
   return jv_invalid_with_msg(msg);
 }
 
+extern const char **environ;
+
+static jv f_env(jv input) {
+  jv_free(input);
+  jv env = jv_object();
+  const char *var, *val;
+  for (const char **e = environ; *e != NULL; e++) {
+    var = e[0];
+    val = strchr(e[0], '=');
+    if (val == NULL)
+      env = jv_object_set(env, jv_string(var), jv_null());
+    else if (var - val < INT_MAX)
+      env = jv_object_set(env, jv_string_sized(var, val - var), jv_string(val + 1));
+  }
+  return env;
+}
+
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 1},
    
@@ -620,6 +638,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
+  {(cfunction_ptr)f_env, "env", 1},
 };
 #undef LIBM_DD
 
