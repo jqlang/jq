@@ -434,6 +434,11 @@ def f(x): x | x; f([.], . + [42])
 [[1,2,3,42]]
 [1,2,3,42,42]
 
+# test multiple function arities
+def f: .+1; def g: f; def f(a):a+.+11; [(g|f(20)), f]
+1
+[33,2]
+
 # test closures and lexical scoping
 def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x | f($x,$x+x); g($x)
 "more testing"
