@@ -49,6 +49,9 @@ struct inst {
   struct inst* bound_by;
   char* symbol;
 
+  int nformals;
+  int nactuals;
+
   block subfn;   // used by CLOSURE_CREATE (body of function)
   block arglist; // used by CLOSURE_CREATE (formals) and CALL_JQ (arguments)
 
@@ -66,6 +69,8 @@ static inst* inst_new(opcode op) {
   i->bytecode_pos = -1;
   i->bound_by = 0;
   i->symbol = 0;
+  i->nformals = -1;
+  i->nactuals = -1;
   i->subfn = gen_noop();
   i->arglist = gen_noop();
   i->source = UNKNOWN_LOCATION;
@@ -210,6 +215,34 @@ int block_has_only_binders(block binders, int bindflags) {
   return 1;
 }
 
+// Count a binder's (function) formal params
+static int block_count_formals(block b) {
+  int args = 0;
+  if (b.first->op == CLOSURE_CREATE_C)
+    return b.first->imm.cfunc->nargs - 1;
+  for (inst* i = b.first->arglist.first; i; i = i->next) {
+    assert(i->op == CLOSURE_PARAM);
+    args++;
+  }
+  return args;
+}
+
+// Count a call site's actual params
+static int block_count_actuals(block b) {
+  int args = 0;
+  for (inst* i = b.first; i; i = i->next) {
+    switch (i->op) {
+    default: assert(0 && "Unknown function type"); break;
+    case CLOSURE_CREATE: 
+    case CLOSURE_PARAM:
+    case CLOSURE_CREATE_C:
+      args++;
+      break;
+    }
+  }
+  return args;
+}
+
 static int block_bind_subblock(block binder, block body, int bindflags) {
   assert(block_is_single(binder));
   assert((opcode_describe(binder.first->op)->flags & bindflags) == bindflags);
@@ -217,6 +250,8 @@ static int block_bind_subblock(block binder, block body, int bindflags) {
   assert(binder.first->bound_by == 0 || binder.first->bound_by == binder.first);
 
   binder.first->bound_by = binder.first;
+  if (binder.first->nformals == -1)
+    binder.first->nformals = block_count_formals(binder);
   int nrefs = 0;
   for (inst* i = body.first; i; i = i->next) {
     int flags = opcode_describe(i->op)->flags;
@@ -224,8 +259,12 @@ static int block_bind_subblock(block binder, block body, int bindflags) {
         i->bound_by == 0 &&
         !strcmp(i->symbol, binder.first->symbol)) {
       // bind this instruction
-      i->bound_by = binder.first;
-      nrefs++;
+      if (i->op == CALL_JQ && i->nactuals == -1)
+        i->nactuals = block_count_actuals(i->arglist);
+      if (i->nactuals == -1 || i->nactuals == binder.first->nformals) {
+        i->bound_by = binder.first;
+        nrefs++;
+      }
     }
     // binding recurses into closures
     nrefs += block_bind_subblock(binder, i->subfn, bindflags);

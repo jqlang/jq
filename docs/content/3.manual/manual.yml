@@ -1549,6 +1549,11 @@ sections:
           With that definition, `addvalue(.foo)` will add the current
           input's `.foo` field to each element of the array.
 
+          Multiple definitions using the same function name are allowed.
+          Each re-definition replaces the previous one for the same
+          number of function arguments, but only for references from
+          functions (or main program) subsequent to the re-definition.
+
         examples:
           - program: 'def addvalue(f): . + [f]; map(addvalue(.[0]))'
             input: '[[1,2],[10,20]]'
