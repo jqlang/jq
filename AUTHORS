@@ -4,8 +4,28 @@ Stephen Dolan        <mu@netsoc.tcd.ie>
 Maintained by:
 Nicolas Williams     <nico@cryptonector.com>
 
-Contributions by
-Anthony Shortland    <anthony.shortland@me.com>      - rpmbuild target
-Lee Thompson         <stagr.lee@gmail.com>           - autoconf stuff
-Santiago Lapresta    <santiago.lapresta@gmail.com>   - join, arrays, all, any, other filters
-Nicolas Williams     <nico@cryptonector.com>         - library-fication, autoconf stuff, misc
+Contributions by:
+Anthony Shortland    <anthony.shortland@me.com>       - rpmbuild target
+Lee Thompson         <stagr.lee@gmail.com>            - autoconf stuff
+Santiago Lapresta    <santiago.lapresta@gmail.com>    - join, arrays, all, any, other filters
+Nicolas Williams     <nico@cryptonector.com>          - library-fication, autoconf stuff, various
+Jingwen Owen Ou      <jingweno@gmail.com>             - jqplay.org and link to it
+Andrew Rodland       <andrew@cleverdomain.org>        - bug fixes
+Ankur                <ankz.kothari@gmail.com>         - bug fixes
+Brendan Macmillan    <melbourne.research@gmail.com>   - bug fixes, load library from ~/.jq
+David R. MacIver     <david@drmaciver.com>            - bug fixes
+Filippo Giunchedi    <fgiunchedi@gmail.com>           - bug fixes
+Filippo Valsorda     <filippo.valsorda@gmail.com>     - recursive object merge (`*`)
+Jack Pearkes         <jackpearkes@gmail.com>          - update tutorial
+Joe Littlejohn       <joe.littlejohn@nokia.com>       - bug fixes
+Juan Guerrero        <juan.guerrero.lozano@gmail.com> - bug fixes  
+Kenny Shen           <kenny.shen@zalora.com>          - doc fixes
+Markus Lanthaler     <mark_lanthaler@gmx.net>         - doc fixes
+Michael Daines       <michael@mdaines.com>            - add sqrt; doc fixes
+Mike McCabe          <mccabe@archive.org>             - math (libm) functions
+Nicolas Pouillard    <nicolas.pouillard@gmail.com>    - add tests
+Peter van Dijk       <peter@7bits.nl>                 - doc fixes
+Philipp Hagemeister  <phihag@phihag.de>               - doc fixes
+polyester            <paul@cleanclothes.org>          - automake version update
+Rémy Léone           <remy.leone@gmail.com>           - add .travis.yml
+Ryoichi KATO         <ryo1kato@gmail.com>             - doc fixes
