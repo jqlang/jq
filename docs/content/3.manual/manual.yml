@@ -796,6 +796,28 @@ sections:
             input: '[]'
             output: ["true"]
 
+      - title: "`flatten`"
+        body: |
+        
+          The filter `flatten` takes as input an array of nested arrays,
+          and produces a flat array in which all arrays inside the original
+          array have been recursively replaced by their values. You can pass
+          an argument to it to specify how many levels of nesting to flatten.
+                  
+        examples:
+          - program: flatten
+            input: '[1, [2], [[3]]]'
+            output: ["[1, 2, 3]"]
+          - program: flatten(1)
+            input: '[1, [2], [[3]]]'
+            output: ["[1, 2, [3]]"]
+          - program: flatten
+            input: '[[]]'
+            output: ["[]"]
+          - program: flatten
+            input: '[{"foo": "bar"}, [{"foo": "baz"}]]'
+            output: ['[{"foo": "bar"}, {"foo": "baz"}]']
+
       - title: "`range`"
         body: |
           
