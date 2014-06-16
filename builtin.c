@@ -724,6 +724,8 @@ static const char* const jq_builtins[] = {
   "def values: arrays, objects, booleans, numbers, strings;",
   "def scalars: select(. == null or . == true or . == false or type == \"number\" or type == \"string\");",
   "def join(x): reduce .[] as $i (\"\"; . + (if . == \"\" then $i else x + $i end));",
+  "def flatten: reduce .[] as $i ([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end);",
+  "def flatten(x): reduce .[] as $i ([]; if $i | type == \"array\" and x > 0 then . + ($i | flatten(x-1)) else . + [$i] end);",
 };
 #undef LIBM_DD
 
