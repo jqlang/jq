@@ -1,7 +1,11 @@
 Created By:
 Stephen Dolan        <mu@netsoc.tcd.ie>
 
+Maintained by:
+Nicolas Williams     <nico@cryptonector.com>
+
 Contributions by
 Anthony Shortland    <anthony.shortland@me.com>      - rpmbuild target
 Lee Thompson         <stagr.lee@gmail.com>           - autoconf stuff
+Santiago Lapresta    <santiago.lapresta@gmail.com>   - join, arrays, all, any, other filters
 Nicolas Williams     <nico@cryptonector.com>         - library-fication, autoconf stuff, misc

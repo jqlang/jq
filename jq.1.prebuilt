@@ -1339,6 +1339,21 @@ jq \'\.\.|\.a?\'
 .
 .IP "" 0
 .
+.SS "env"
+Outputs an object representing jq\'s environment\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'env\.PAGER\'
+   null
+=> "less"
+.
+.fi
+.
+.IP "" 0
+.
 .SS "String interpolation \- \e(foo)"
 Inside a string, you can put an expression inside parens after a backslash\. Whatever the expression returns will be interpolated into the string\.
 .
@@ -1708,6 +1723,9 @@ will work, but
 .P
 won\'t\.
 .
+.P
+For programming language theorists, it\'s more accurate to say that jq variables are lexically\-scoped bindings\. In particular there\'s no way to change the value of a binding; one can only setup a new binding with the same name, but which will not be visible where the old one was\.
+.
 .IP "" 4
 .
 .nf
@@ -1715,6 +1733,10 @@ won\'t\.
 jq \'\.bar as $x | \.foo | \. + $x\'
    {"foo":10, "bar":200}
 => 210
+
+jq \'\. as $i|[(\.*2|\. as $i| $i), $i]\'
+   5
+=> [10,5]
 .
 .fi
 .
@@ -1747,7 +1769,21 @@ def map(f): [\.[] | f];
 .IP "" 0
 .
 .P
-Arguments are passed as filters, not as values\. The same argument may be referenced multiple times with different inputs (here \fBf\fR is run for each element of the input array)\. Arguments to a function work more like callbacks than like value arguments\.
+Arguments are passed as filters, not as values\. The same argument may be referenced multiple times with different inputs (here \fBf\fR is run for each element of the input array)\. Arguments to a function work more like callbacks than like value arguments\. This is important to understand\. Consider:
+.
+.IP "" 4
+.
+.nf
+
+def foo(f): f|f;
+5|foo(\.*2)
+.
+.fi
+.
+.IP "" 0
+.
+.P
+The result will be 20 because \fBf\fR is \fB\.*2\fR, and during the first invocation of \fBf\fR \fB\.\fR will be 5, and the second time it will be 10 (5 * 2), so the result will be 20\. Function arguments are filters, and filters expect an input when invoked\.
 .
 .P
 If you want the value\-argument behaviour for defining simple functions, you can just use a variable:
@@ -1764,6 +1800,9 @@ def addvalue(f): f as $value | map(\. + $value);
 .
 .P
 With that definition, \fBaddvalue(\.foo)\fR will add the current input\'s \fB\.foo\fR field to each element of the array\.
+.
+.P
+Multiple definitions using the same function name are allowed\. Each re\-definition replaces the previous one for the same number of function arguments, but only for references from functions (or main program) subsequent to the re\-definition\.
 .
 .IP "" 4
 .
