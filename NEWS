@@ -1,0 +1,64 @@
+
+Release history
+
+ * jq version 1.0 was released on Sun Oct 21 2012
+ * jq version 1.1 was released on Sun Oct 21 2012
+ * jq version 1.2 was released on Thu Dec 20 2012
+ * jq version 1.3 was released on Sun May 19 2013
+ * jq version 1.4 was released on Mon Jun 9 2014
+
+As yet unreleased features in master branch, since 1.4:
+
+ - semantics
+
+    - multiple function argument numbers for any one function name,
+      dispatching on number of arguments in function calls
+
+ - misc
+
+    - env builting (to access the environment)
+    - prebuilt jq.1 man page
+
+New features in 1.4 since 1.3:
+
+ - command-line arguments
+
+    - jq --arg-file variable file
+    - jq --unbuffered
+    - jq -e / --exit-status (set exit status based on outputs)
+    - jq -S / --sort-keys (now jq no longer sorts object keys by
+      default
+
+ - syntax
+
+    - .. -> like // in XPath (recursive traversal)
+    - question mark (e.g., .a?) to suppress errors
+    - ."foo" syntax (equivalent to .["foo"])
+    - better error handling for .foo
+    - added % operator (modulo)
+    - allow negation without requiring extra parenthesis
+    - more function arguments (up to six)
+
+ - filters:
+
+    - any, all
+    - iterables, arrays, objects, scalars, nulls, booleans, numbers,
+      strings, values
+
+ - string built-ins:
+
+    - split
+    - join (join an array of strings with a given separator string)
+    - ltrimstr, rtrimstr
+    - startswith, endswith
+    - explode, implode
+    - fromjson, tojson
+    - index, rindex, indices
+
+ - math functions
+
+    - floor, sqrt, cbrt, etetera (depends on what's available from libm)
+
+ - libjq -- a C API interface to jq's JSON representation and for
+   running jq programs from C applications
+
