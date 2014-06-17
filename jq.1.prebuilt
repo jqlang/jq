@@ -601,7 +601,7 @@ jq \'keys\'
 .
 .IP "" 0
 .
-.SS "has"
+.SS "has(key)"
 The builtin function \fBhas\fR returns whether the input object has the given key, or the input array has an element at the given index\.
 .
 .P
@@ -623,7 +623,7 @@ jq \'map(has(2))\'
 .
 .IP "" 0
 .
-.SS "del"
+.SS "del(path_expression)"
 The builtin function \fBdel\fR removes a key and its corresponding value from an object\.
 .
 .IP "" 4
@@ -668,7 +668,7 @@ jq \'with_entries(\.key |= "KEY_" + \.)\'
 .
 .IP "" 0
 .
-.SS "select"
+.SS "select(boolean_expression)"
 The function \fBselect(foo)\fR produces its input unchanged if \fBfoo\fR returns true for that input, and produces no output otherwise\.
 .
 .P
@@ -741,34 +741,24 @@ jq \'map(\.+1)\'
 .
 .IP "" 0
 .
-.SS "paths"
-Outputs the paths to all the elements in its input (except it does not output the empty list, representing \. itself)\.
+.SS "paths, paths(node_filter), leaf_paths"
+\fBpaths\fR outputs the paths to all the elements in its input (except it does not output the empty list, representing \. itself)\.
 .
 .P
-\fBpaths\fR is equivalent to
+\fBpaths(f)\fR outputs the paths to any values for which \fBf\fR is true\. That is, \fBpaths(numbers)\fR outputs the paths to all numeric values\.
+.
+.P
+\fBleaf_paths\fR is an alias of \fBpaths(scalars)\fR; \fBleaf_paths\fR is \fIdeprecated\fR and will be removed in the next major release\.
 .
 .IP "" 4
 .
 .nf
-
-def paths: path(recurse(if (type|\. == "array" or \. == "object") then \.[] else empty end))|select(length > 0);
 
 jq \'[paths]\'
    [1,[[],{"a":2}]]
 => [[0],[1],[1,0],[1,1],[1,1,"a"]]
-.
-.fi
-.
-.IP "" 0
-.
-.SS "leaf_paths"
-Outputs the paths to all the leaves (non\-array, non\-object elements) in its input\.
-.
-.IP "" 4
-.
-.nf
 
-jq \'[leaf_paths]\'
+jq \'[paths(scalars)]\'
    [1,[[],{"a":2}]]
 => [[0],[1,1,"a"]]
 .
@@ -854,8 +844,41 @@ jq \'all\'
 .
 .IP "" 0
 .
-.SS "range"
+.SS "flatten, flatten(depth)"
+The filter \fBflatten\fR takes as input an array of nested arrays, and produces a flat array in which all arrays inside the original array have been recursively replaced by their values\. You can pass an argument to it to specify how many levels of nesting to flatten\.
+.
+.P
+\fBflatten(2)\fR is like \fBflatten\fR, but going only up to two levels deep\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'flatten\'
+   [1, [2], [[3]]]
+=> [1, 2, 3]
+
+jq \'flatten(1)\'
+   [1, [2], [[3]]]
+=> [1, 2, [3]]
+
+jq \'flatten\'
+   [[]]
+=> []
+
+jq \'flatten\'
+   [{"foo": "bar"}, [{"foo": "baz"}]]
+=> [{"foo": "bar"}, {"foo": "baz"}]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "range(upto),range(from;upto)`"
 The \fBrange\fR function produces a range of numbers\. \fBrange(4;10)\fR produces 6 numbers, from 4 (inclusive) to 10 (exclusive)\. The numbers are produced as separate outputs\. Use \fB[range(4;10)]\fR to get a range as an array\.
+.
+.P
+Its first argument can be omitted; it defaults to zero\.
 .
 .IP "" 4
 .
@@ -868,6 +891,10 @@ jq \'range(2;4)\'
 jq \'[range(2;4)]\'
    null
 => [2,3]
+
+jq \'[range(4)]\'
+   null
+=> [0,1,2,3]
 .
 .fi
 .
@@ -948,7 +975,7 @@ jq \'map(type)\'
 .
 .IP "" 0
 .
-.SS "sort, sort_by"
+.SS "sort, sort(path_expression), sort_by(path_expression)"
 The \fBsort\fR functions sorts its input, which must be an array\. Values are sorted in the following order:
 .
 .IP "\(bu" 4
@@ -978,7 +1005,13 @@ objects
 The ordering for objects is a little complex: first they\'re compared by comparing their sets of keys (as arrays in sorted order), and if their keys are equal then the values are compared key by key\.
 .
 .P
-\fBsort_by\fR may be used to sort by a particular field of an object, or by applying any jq filter\. \fBsort_by(foo)\fR compares two elements by comparing the result of \fBfoo\fR on each element\.
+\fBsort\fR may be used to sort by a particular field of an object, or by applying any jq filter\.
+.
+.P
+\fBsort(foo)\fR compares two elements by comparing the result of \fBfoo\fR on each element\.
+.
+.P
+\fBsort_by(foo)\fR is an alias of \fBsort(foo)\fR; \fBsort_by()\fR is \fIdeprecated\fR and will be removed in the next major release\.
 .
 .IP "" 4
 .
@@ -988,7 +1021,7 @@ jq \'sort\'
    [8,3,null,6]
 => [null,3,6,8]
 
-jq \'sort_by(\.foo)\'
+jq \'sort(\.foo)\'
    [{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]
 => [{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]
 .
@@ -996,17 +1029,20 @@ jq \'sort_by(\.foo)\'
 .
 .IP "" 0
 .
-.SS "group_by"
-\fBgroup_by(\.foo)\fR takes as input an array, groups the elements having the same \fB\.foo\fR field into separate arrays, and produces all of these arrays as elements of a larger array, sorted by the value of the \fB\.foo\fR field\.
+.SS "group(path_expression), group_by(path_expression)"
+\fBgroup(\.foo)\fR takes as input an array, groups the elements having the same \fB\.foo\fR field into separate arrays, and produces all of these arrays as elements of a larger array, sorted by the value of the \fB\.foo\fR field\.
 .
 .P
 Any jq expression, not just a field access, may be used in place of \fB\.foo\fR\. The sorting order is the same as described in the \fBsort\fR function above\.
+.
+.P
+\fBgroup_by(foo)\fR is an alias of \fBgroup(foo)\fR; \fBgroup_by()\fR is \fIdeprecated\fR and will be removed in the next major release\.
 .
 .IP "" 4
 .
 .nf
 
-jq \'group_by(\.foo)\'
+jq \'group(\.foo)\'
    [{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]
 => [[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]
 .
@@ -1014,8 +1050,11 @@ jq \'group_by(\.foo)\'
 .
 .IP "" 0
 .
-.SS "min, max, min_by, max_by"
-Find the minimum or maximum element of the input array\. The \fB_by\fR versions allow you to specify a particular field or property to examine, e\.g\. \fBmin_by(\.foo)\fR finds the object with the smallest \fBfoo\fR field\.
+.SS "min, max, min(path_exp), max(path_exp), min_by(path_exp), max_by(path_exp)"
+Find the minimum or maximum element of the input array\. This filter accepts an optional argument that allows you to specify a particular field or property to examine, e\.g\. \fBmin(\.foo)\fR finds the object with the smallest \fBfoo\fR field\.
+.
+.P
+For legacy reasons, \fBmin_by(\.foo)\fR and \fBmax_by(\.foo)\fR exist as aliases for \fBmin(\.foo)\fR and \fBmax(\.foo)\fR\. These aliases are considered \fIdeprecated\fR and will be removed in the next major release\.
 .
 .IP "" 4
 .
@@ -1025,7 +1064,7 @@ jq \'min\'
    [5,4,2,7]
 => 2
 
-jq \'max_by(\.foo)\'
+jq \'max(\.foo)\'
    [{"foo":1, "bar":14}, {"foo":2, "bar":3}]
 => {"foo":2, "bar":3}
 .
@@ -1033,8 +1072,11 @@ jq \'max_by(\.foo)\'
 .
 .IP "" 0
 .
-.SS "unique"
-The \fBunique\fR function takes as input an array and produces an array of the same elements, in sorted order, with duplicates removed\.
+.SS "unique, unique(path_exp), unique_by(path_exp)"
+The \fBunique\fR function takes as input an array and produces an array of the same elements, in sorted order, with duplicates removed\. If an optional argument is passed, it will keep only one element for each value obtained by applying the argument\. Think of it as making an array by taking one element out of every group produced by \fBgroup\fR\.
+.
+.P
+For legacy reasons, \fBunique_by(\.foo)\fR exists as an alias for \fBunique(\.foo)\fR\. This alias is considered \fIdeprecated\fR and will be removed in the next major release\.
 .
 .IP "" 4
 .
@@ -1043,23 +1085,12 @@ The \fBunique\fR function takes as input an array and produces an array of the s
 jq \'unique\'
    [1,2,5,3,5,3,1,3]
 => [1,2,3,5]
-.
-.fi
-.
-.IP "" 0
-.
-.SS "unique_by"
-The \fBunique_by(\.foo)\fR function takes as input an array and produces an array of the same elements, in sorted order, with elqements with a duplicate \fB\.foo\fR field removed\. Think of it as making an array by taking one element out of every group produced by \fBgroup_by\fR\.
-.
-.IP "" 4
-.
-.nf
 
-jq \'unique_by(\.foo)\'
+jq \'unique(\.foo)\'
    [{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]
 => [{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]
 
-jq \'unique_by(length)\'
+jq \'unique(length)\'
    ["chunky", "bacon", "kitten", "cicada", "asparagus"]
 => ["chunky", "bacon", "asparagus"]
 .
@@ -1082,7 +1113,7 @@ jq \'reverse\'
 .
 .IP "" 0
 .
-.SS "contains"
+.SS "contains(element)"
 The filter \fBcontains(b)\fR will produce true if b is completely contained within the input\. A string B is contained in a string A if B is a substring of A\. An array B is contained in an array A is all elements in B are contained in any element in A\. An object B is contained in object A if all of the values in B are contained in the value in A with the same key\. All other types are assumed to be contained in each other if they are equal\.
 .
 .IP "" 4
@@ -1155,7 +1186,7 @@ jq \'rindex(", ")]\'
 .
 .IP "" 0
 .
-.SS "startswith"
+.SS "startswith(str)"
 Outputs \fBtrue\fR if \. starts with the given string argument\.
 .
 .IP "" 4
@@ -1170,7 +1201,7 @@ jq \'[\.[]|startswith("foo")]\'
 .
 .IP "" 0
 .
-.SS "endswith"
+.SS "endswith(str)"
 Outputs \fBtrue\fR if \. ends with the given string argument\.
 .
 .IP "" 4
@@ -1185,7 +1216,7 @@ jq \'[\.[]|endswith("foo")]\'
 .
 .IP "" 0
 .
-.SS "ltrimstr"
+.SS "ltrimstr(str)"
 Outputs its input with the given prefix string removed, if it starts with it\.
 .
 .IP "" 4
@@ -1200,7 +1231,7 @@ jq \'[\.[]|ltrimstr("foo")]\'
 .
 .IP "" 0
 .
-.SS "rtrimstr"
+.SS "rtrimstr(str)"
 Outputs its input with the given suffix string removed, if it starts with it\.
 .
 .IP "" 4
@@ -1260,7 +1291,7 @@ jq \'split(", ")\'
 .
 .IP "" 0
 .
-.SS "join"
+.SS "join(str)"
 Joins the array of elements given as input, using the argument as separator\. It is the inverse of \fBsplit\fR: that is, running \fBsplit("foo") | join("foo")\fR over any input string returns said input string\.
 .
 .IP "" 4
@@ -1275,8 +1306,8 @@ jq \'join(", ")\'
 .
 .IP "" 0
 .
-.SS "recurse"
-The \fBrecurse\fR function allows you to search through a recursive structure, and extract interesting data from all levels\. Suppose your input represents a filesystem:
+.SS "recurse(f), recurse, recurse_down"
+The \fBrecurse(f)\fR function allows you to search through a recursive structure, and extract interesting data from all levels\. Suppose your input represents a filesystem:
 .
 .IP "" 4
 .
@@ -1302,30 +1333,35 @@ Now suppose you want to extract all of the filenames present\. You need to retri
 .nf
 
 recurse(\.children[]) | \.name
-
-jq \'recurse(\.foo[])\'
-   {"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}
-=> {"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}, {"foo":[]}, {"foo":[{"foo":[]}]}, {"foo":[]}
 .
 .fi
 .
 .IP "" 0
 .
-.SS "recurse_down"
-A quieter version of \fBrecurse(\.[])\fR, equivalent to:
+.P
+When called without an argument, \fBrecurse\fR is equivalent to \fBrecurse(\.[]?)\fR\.
+.
+.P
+For legacy reasons, \fBrecurse_down\fR exists as an alias to calling \fBrecurse\fR without arguments\. This alias is considered \fIdeprecated\fR and will be removed in the next major release\.
 .
 .IP "" 4
 .
 .nf
 
-def recurse_down: recurse(\.[]?);
+jq \'recurse(\.foo[])\'
+   {"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}
+=> {"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}, {"foo":[]}, {"foo":[{"foo":[]}]}, {"foo":[]}
+
+jq \'recurse\'
+   {"a":0,"b":[1]}
+=> 0, [1], 1
 .
 .fi
 .
 .IP "" 0
 .
 .SS "\.\."
-Short\-hand for \fBrecurse_down\fR\. This is intended to resemble the XPath \fB//\fR operator\. Note that \fB\.\.a\fR does not work; use \fB\.\.|a\fR instead\.
+Short\-hand for \fBrecurse\fR without arguments\. This is intended to resemble the XPath \fB//\fR operator\. Note that \fB\.\.a\fR does not work; use \fB\.\.|a\fR instead\. In the example below we use \fB\.\.|\.a?\fR to find all the values of object keys "a" in any object found "below" \fB\.\fR\.
 .
 .IP "" 4
 .
