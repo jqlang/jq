@@ -707,7 +707,7 @@ static const char* const jq_builtins[] = {
   "def recurse(f): ., (f | select(. != null) | recurse(f));",
   "def recurse_down: recurse(.[]?);",
   "def to_entries: [keys[] as $k | {key: $k, value: .[$k]}];",
-  "def from_entries: map({(.key): .value}) | add;",
+  "def from_entries: map({(.key): .value}) | add | .//={};",
   "def with_entries(f): to_entries | map(f) | from_entries;",
   "def reverse: [.[length - 1 - range(0;length)]];",
   "def indices(i): if type == \"array\" and (i|type) == \"array\" then .[i] elif type == \"array\" then .[[i]] else .[i] end;",
