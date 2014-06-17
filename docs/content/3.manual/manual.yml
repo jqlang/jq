@@ -9,7 +9,7 @@ body: |
   Filters can be combined in various ways - you can pipe the output of
   one filter into another filter, or collect the output of a filter
   into an array.
-  
+
   Some filters produce multiple results, for instance there's one that
   produces all the elements of its input array. Piping that filter
   into a second runs the second filter for each element of the
@@ -43,7 +43,7 @@ manpage_intro: |
   By default, `jq` reads a stream of JSON objects (whitespace
   separated) from `stdin`. One or more <files> may be specified, in
   which case `jq` will read input from those instead.
-  
+
   The <options> are described in the [INVOKING JQ] section, they
   mostly concern input and output formatting. The <filter> is written
   in the jq language and specifies how to transform the input
@@ -61,11 +61,11 @@ manpage_epilogue: |
   ## AUTHOR
 
   Stephen Dolan `<mu@netsoc.tcd.ie>`
-  
+
 sections:
   - title: Invoking jq
     body: |
-      
+
       jq filters run on a stream of JSON data. The input to jq is
       parsed as a sequence of whitespace-separated JSON values which
       are passed through the provided filter one at a time. The
@@ -91,44 +91,44 @@ sections:
         Output the jq version and exit with zero.
 
       * `--slurp`/`-s`:
-  
+
         Instead of running the filter for each JSON object in the
         input, read the entire input stream into a large array and run
         the filter just once.
 
       * `--online-input`/`-I`:
-  
+
         When the top-level input value is an array produce its elements
         instead of the array.  This allows on-line processing of
         potentially very large top-level arrays' elements.
-      
+
       * `--raw-input`/`-R`:
-      
+
         Don't parse the input as JSON. Instead, each line of text is
         passed to the filter as a string. If combined with `--slurp`,
         then the entire input is passed to the filter as a single long
         string.
-  
+
       * `--null-input`/`-n`:
-  
+
         Don't read any input at all! Instead, the filter is run once
         using `null` as the input. This is useful when using jq as a
         simple calculator or to construct JSON data from scratch.
-  
+
       * `--compact-output` / `-c`:
-  
+
         By default, jq pretty-prints JSON output. Using this option
         will result in more compact output by instead putting each
         JSON object on a single line.
-  
+
       * `--colour-output` / `-C` and `--monochrome-output` / `-M`:
-      
+
         By default, jq outputs colored JSON if writing to a
         terminal. You can force it to produce color even if writing to
         a pipe or a file using `-C`, and disable color with `-M`.
-  
+
       * `--ascii-output` / `-a`:
-  
+
         jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
         if the input specified them as escape sequences (like
         "\u03bc"). Using this option, you can force jq to produce pure
@@ -142,11 +142,11 @@ sections:
         output elsewhere).
 
       * `--sort-keys` / `-S`:
-        
+
         Output the fields of each object with the keys in sorted order.
 
       * `--raw-output` / `-r`:
-  
+
         With this option, if the filter's result is a string then it
         will be written directly to standard output rather than being
         formatted as a JSON string with quotes. This can be useful for
@@ -184,7 +184,7 @@ sections:
     entries:
       - title: "`.`"
         body: |
-          
+
           The absolute simplest (and least interesting) filter
           is `.`. This is a filter that takes its input and
           produces it unchanged as output.
@@ -200,7 +200,7 @@ sections:
 
       - title: "`.foo`, `.foo.bar`"
         body: |
-          
+
           The simplest *useful* filter is `.foo`. When given a
           JSON object (aka dictionary or hash) as input, it produces
           the value at the key "foo", or null if there's none present.
@@ -209,7 +209,7 @@ sections:
           it with double quotes like this: `."foo$"`.
 
           A filter of the form `.foo.bar` is equivalent to `.foo|.bar`.
-          
+
         examples:
           - program: '.foo'
             input: '{"foo": 42, "bar": "less interesting data"}'
@@ -223,7 +223,7 @@ sections:
 
       - title: "`.foo?`"
         body: |
-          
+
           Just like `.foo`, but does not output even an error when `.`
           is not an array or an object.
 
@@ -243,7 +243,7 @@ sections:
 
       - title: "`.[<string>]`, `.[2]`, `.[10:15]`"
         body: |
-          
+
           You can also look up fields of an object using syntax like
           `.["foo"]` (.foo above is a shorthand version of this). This
           one works for arrays as well, if the key is an
@@ -278,7 +278,7 @@ sections:
           - program: '.[2:4]'
             input: '"abcdefghi"'
             output: ['"cd"']
-          
+
           - program: '.[:3]'
             input: '["a","b","c","d","e"]'
             output: ['["a", "b", "c"]']
@@ -289,7 +289,7 @@ sections:
 
       - title: "`.[]`"
         body: |
-          
+
           If you use the `.[index]` syntax, but omit the index
           entirely, it will return *all* of the elements of an
           array. Running `.[]` with the input `[1,2,3]` will produce the
@@ -316,13 +316,13 @@ sections:
 
       - title: "`.[]?`"
         body: |
-          
+
           Like `.[]`, but no errors will be output if . is not an array
           or object.
 
       - title: "`,`"
         body: |
-          
+
           If two filters are separated by a comma, then the
           input will be fed into both and there will be multiple
           outputs: first, all of the outputs produced by the left
@@ -337,18 +337,18 @@ sections:
 
           - program: ".user, .projects[]"
             input: '{"user":"stedolan", "projects": ["jq", "wikiflow"]}'
-            output: ['"stedolan"', '"jq"', '"wikiflow"']            
-            
+            output: ['"stedolan"', '"jq"', '"wikiflow"']
+
           - program: '.[4,2]'
             input: '["a","b","c","d","e"]'
             output: ['"e"', '"c"']
-          
+
       - title: "`|`"
         body: |
           The | operator combines two filters by feeding the output(s) of
           the one on the left into the input of the one on the right. It's
           pretty much the same as the Unix shell's pipe, if you're used to
-          that. 
+          that.
 
           If the one on the left produces multiple results, the one on
           the right will be run for each of those results. So, the
@@ -362,7 +362,7 @@ sections:
 
   - title: Types and Values
     body: |
-      
+
       jq supports the same set of datatypes as JSON - numbers,
       strings, booleans, arrays, objects (which in JSON-speak are
       hashes with only string keys), and "null".
@@ -376,7 +376,7 @@ sections:
     entries:
       - title: Array construction - `[]`
         body: |
-        
+
           As in JSON, `[]` is used to construct arrays, as in
           `[1,2,3]`. The elements of the arrays can be any jq
           expression. All of the results produced by all of the
@@ -384,7 +384,7 @@ sections:
           to construct an array out of a known quantity of values (as
           in `[.foo, .bar, .baz]`) or to "collect" all the results of a
           filter into an array (as in `[.items[].name]`)
-        
+
           Once you understand the "," operator, you can look at jq's array
           syntax in a different light: the expression `[1,2,3]` is not using a
           built-in syntax for comma-separated arrays, but is instead applying
@@ -404,49 +404,49 @@ sections:
 
           Like JSON, `{}` is for constructing objects (aka
           dictionaries or hashes), as in: `{"a": 42, "b": 17}`.
-          
+
           If the keys are "sensible" (all alphabetic characters), then
           the quotes can be left off. The value can be any expression
           (although you may need to wrap it in parentheses if it's a
           complicated one), which gets applied to the {} expression's
           input (remember, all filters have an input and an
           output).
-          
+
               {foo: .bar}
-          
+
           will produce the JSON object `{"foo": 42}` if given the JSON
           object `{"bar":42, "baz":43}`. You can use this to select
           particular fields of an object: if the input is an object
           with "user", "title", "id", and "content" fields and you
           just want "user" and "title", you can write
-          
+
               {user: .user, title: .title}
-          
+
           Because that's so common, there's a shortcut syntax: `{user, title}`.
-          
+
           If one of the expressions produces multiple results,
           multiple dictionaries will be produced. If the input's
-          
+
               {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
-          
+
           then the expression
-          
+
               {user, title: .titles[]}
-          
-          will produce two outputs: 
-          
+
+          will produce two outputs:
+
               {"user":"stedolan", "title": "JQ Primer"}
               {"user":"stedolan", "title": "More JQ"}
-          
+
           Putting parentheses around the key means it will be evaluated as an
           expression. With the same input as above,
-          
+
               {(.user): .titles}
-          
+
           produces
-          
+
               {"stedolan": ["JQ Primer", "More JQ"]}
-              
+
         examples:
           - program: '{user, title: .titles[]}'
             input: '{"user":"stedolan","titles":["JQ Primer", "More JQ"]}'
@@ -465,7 +465,7 @@ sections:
       etc.). However, jq never does implicit type conversions. If you
       try to add a string to an object you'll get an error message and
       no result.
-      
+
     entries:
       - title: Addition - `+`
         body: |
@@ -479,13 +479,13 @@ sections:
           - **Arrays** are added by being concatenated into a larger array.
 
           - **Strings** are added by being joined into a larger string.
-          
+
           - **Objects** are added by merging, that is, inserting all
               the key-value pairs from both objects into a single
               combined object. If both objects contain a value for the
               same key, the object on the right of the `+` wins. (For
               recursive merge use the `*` operator.)
-          
+
           `null` can be added to any value, and returns the other
           value unchanged.
 
@@ -571,7 +571,7 @@ sections:
 
       - title: "`keys`"
         body: |
-          
+
           The builtin function `keys`, when given an object, returns
           its keys in an array.
 
@@ -627,11 +627,11 @@ sections:
 
       - title: "`to_entries`, `from_entries`, `with_entries`"
         body: |
-          
+
           These functions convert between an object and an array of
           key-value pairs. If `to_entries` is passed an object, then
           for each `k: v` entry in the input, the output array
-          includes `{"key": k, "value": v}`. 
+          includes `{"key": k, "value": v}`.
 
           `from_entries` does the opposite conversion, and
           `with_entries(foo)` is a shorthand for `to_entries |
@@ -668,7 +668,7 @@ sections:
 
       - title: "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`, `scalars`"
         body: |
-          
+
           These built-ins select only inputs that are arrays, objects,
           iterables (arrays or objects), booleans, numbers, strings,
           null, non-null values, and non-iterables, respectively.
@@ -680,7 +680,7 @@ sections:
 
       - title: "`empty`"
         body: |
-          
+
           `empty` returns no results. None at all. Not even `null`.
 
           It's useful on occasion. You'll know if you need it :)
@@ -714,14 +714,14 @@ sections:
           `paths` outputs the paths to all the elements in its input
           (except it does not output the empty list, representing .
           itself).
-          
+
           `paths(f)` outputs the paths to any values for which `f` is true.
           That is, `paths(numbers)` outputs the paths to all numeric
           values.
 
           `leaf_paths` is an alias of `paths(scalars)`; `leaf_paths` is
           *deprecated* and will be removed in the next major release.
-          
+
         examples:
           - program: '[paths]'
             input: '[1,[[],{"a":2}]]'
@@ -754,13 +754,13 @@ sections:
 
       - title: "`any`"
         body: |
-      
+
           The filter `any` takes as input an array of boolean values,
           and produces `true` as output if any of the the elements of
           the array is `true`.
-        
+
           If the input is an empty array, `any` returns `false`.
-        
+
         examples:
           - program: any
             input: '[true, false]'
@@ -774,13 +774,13 @@ sections:
 
       - title: "`all`"
         body: |
-      
+
           The filter `all` takes as input an array of boolean values,
           and produces `true` as output if all of the the elements of
           the array are `true`.
-        
+
           If the input is an empty array, `all` returns `true`.
-        
+
         examples:
           - program: all
             input: '[true, false]'
@@ -819,12 +819,12 @@ sections:
 
       - title: "`range(upto), `range(from;upto)`"
         body: |
-          
+
           The `range` function produces a range of numbers. `range(4;10)`
           produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers
-          are produced as separate outputs. Use `[range(4;10)]` to get a range as 
+          are produced as separate outputs. Use `[range(4;10)]` to get a range as
           an array.
-          
+
           Its first argument can be omitted; it defaults to zero.
 
         examples:
@@ -837,7 +837,7 @@ sections:
           - program: '[range(4)]'
             input: 'null'
             output: ['[0,1,2,3]']
-            
+
       - title: "`floor`"
         body: |
 
@@ -847,7 +847,7 @@ sections:
           - program: 'floor'
             input: '3.14159'
             output: ['3']
-            
+
       - title: "`sqrt`"
         body: |
 
@@ -857,7 +857,7 @@ sections:
           - program: 'sqrt'
             input: '9'
             output: ['3']
-            
+
       - title: "`tonumber`"
         body: |
 
@@ -884,7 +884,7 @@ sections:
 
       - title: "`type`"
         body: |
-          
+
           The `type` function returns the type of its argument as a
           string, which is one of null, boolean, number, string, array
           or object.
@@ -896,7 +896,7 @@ sections:
 
       - title: "`sort, sort(path_expression), sort_by(path_expression)`"
         body: |
-          
+
           The `sort` functions sorts its input, which must be an
           array. Values are sorted in the following order:
 
@@ -918,7 +918,7 @@ sections:
 
           `sort(foo)` compares two elements by comparing the result of
           `foo` on each element.
-          
+
           `sort_by(foo)` is an alias of `sort(foo)`; `sort_by()` is
           *deprecated* and will be removed in the next major release.
 
@@ -932,7 +932,7 @@ sections:
 
       - title: "`group(path_expression)`, `group_by(path_expression)`"
         body: |
-          
+
           `group(.foo)` takes as input an array, groups the
           elements having the same `.foo` field into separate arrays,
           and produces all of these arrays as elements of a larger
@@ -941,10 +941,10 @@ sections:
           Any jq expression, not just a field access, may be used in
           place of `.foo`. The sorting order is the same as described
           in the `sort` function above.
-          
+
           `group_by(foo)` is an alias of `group(foo)`; `group_by()` is
           *deprecated* and will be removed in the next major release.
-          
+
         examples:
           - program: 'group(.foo)'
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
@@ -952,13 +952,13 @@ sections:
 
       - title: "`min`, `max`, `min(path_exp)`, `max(path_exp)`, `min_by(path_exp)`, `max_by(path_exp)`"
         body: |
-          
+
           Find the minimum or maximum element of the input array.
           This filter accepts an optional argument that
           allows you to specify a particular field or
           property to examine, e.g. `min(.foo)` finds the object
           with the smallest `foo` field.
-          
+
           For legacy reasons, `min_by(.foo)` and `max_by(.foo)` exist as
           aliases for `min(.foo)` and `max(.foo)`. These aliases are
           considered *deprecated* and will be removed in the next major
@@ -974,14 +974,14 @@ sections:
 
       - title: "`unique`, `unique(path_exp)`, `unique_by(path_exp)`"
         body: |
-          
+
           The `unique` function takes as input an array and produces
           an array of the same elements, in sorted order, with
           duplicates removed. If an optional argument is passed, it
           will keep only one element for each value obtained by applying
           the argument. Think of it as making an array by taking one
           element out of every group produced by `group`.
-          
+
           For legacy reasons, `unique_by(.foo)` exists as an alias for
           `unique(.foo)`. This alias is considered *deprecated* and will
           be removed in the next major release.
@@ -999,7 +999,7 @@ sections:
 
       - title: "`reverse`"
         body: |
-          
+
           This function reverses an array.
 
         examples:
@@ -1158,7 +1158,7 @@ sections:
 
       - title: "`recurse(f)`, `recurse`, `recurse_down`"
         body: |
-          
+
           The `recurse(f)` function allows you to search through a
           recursive structure, and extract interesting data from all
           levels. Suppose your input represents a filesystem:
@@ -1170,17 +1170,17 @@ sections:
                 {"name": "/home", "children": [
                   {"name": "/home/stephen", "children": [
                     {"name": "/home/stephen/jq", "children": []}]}]}]}
-          
+
           Now suppose you want to extract all of the filenames
           present. You need to retrieve `.name`, `.children[].name`,
           `.children[].children[].name`, and so on. You can do this
           with:
 
               recurse(.children[]) | .name
-          
+
           When called without an argument, `recurse` is equivalent to
           `recurse(.[]?)`.
-          
+
           For legacy reasons, `recurse_down` exists as an alias to
           calling `recurse` without arguments. This alias is considered
           *deprecated* and will be removed in the next major release.
@@ -1188,21 +1188,21 @@ sections:
         examples:
           - program: 'recurse(.foo[])'
             input: '{"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}'
-            output: 
+            output:
               - '{"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}'
               - '{"foo":[]}'
               - '{"foo":[{"foo":[]}]}'
               - '{"foo":[]}'
           - program: 'recurse'
             input: '{"a":0,"b":[1]}'
-            output: 
+            output:
               - '0'
               - '[1]'
               - '1'
 
       - title: "`..`"
         body: |
-          
+
           Short-hand for `recurse` without arguments.  This is intended
           to resemble the XPath `//` operator.  Note that `..a` does not
           work; use `..|a` instead.  In the example below we use
@@ -1216,7 +1216,7 @@ sections:
 
       - title: "`env`"
         body: |
-          
+
           Outputs an object representing jq's environment.
 
         examples:
@@ -1235,7 +1235,7 @@ sections:
           - program: '"The input was \(.), which is one less than \(.+1)"'
             input: '42'
             output: ['"The input was 42, which is one less than 43"']
-          
+
       - title: "Convert to/from JSON"
         body: |
 
@@ -1283,17 +1283,17 @@ sections:
             characters to a `%xx` sequence.
 
           * `@csv`:
-            
+
             The input must be an array, and it is rendered as CSV
             with double quotes for strings, and quotes escaped by
             repetition.
 
           * `@sh`:
-            
+
             The input is escaped suitable for use in a command-line
             for a POSIX shell. If the input is an array, the output
             will be a series of space-separated strings.
-            
+
           * `@base64`:
 
             The input is converted to base64 as specified by RFC 4648.
@@ -1326,7 +1326,7 @@ sections:
           - program: '@sh "echo \(.)"'
             input: "\"O'Hara's Ale\""
             output: ["\"echo 'O'\\\\''Hara'\\\\''s Ale'\""]
-        
+
   - title: Conditionals and Comparisons
     entries:
       - title: "`==`, `!=`"
@@ -1338,7 +1338,7 @@ sections:
           to numbers. If you're coming from Javascript, jq's == is like
           Javascript's === - considering values equal only when they have the
           same type as well as the same value.
-          
+
           != is "not equal", and 'a != b' returns the opposite value of 'a == b'
 
         examples:
@@ -1351,7 +1351,7 @@ sections:
           `if A then B else C end` will act the same as `B` if `A`
           produces a value other than false or null, but act the same
           as `C` otherwise.
-          
+
           Checking for false or null is a simpler notion of
           "truthiness" than is found in Javascript or Python, but it
           means that you'll sometimes have to be more explicit about
@@ -1359,11 +1359,11 @@ sections:
           string is empty using `if .name then A else B end`, you'll
           need something more like `if (.name | length) > 0 then A else
           B end` instead.
-          
+
           If the condition A produces multiple results, it is
           considered "true" if any of those results is not false or
           null. If it produces zero results, it's considered false.
-          
+
           More cases can be added to an if using `elif A then B` syntax.
 
         examples:
@@ -1377,10 +1377,10 @@ sections:
               end
             input: 2
             output: ['"many"']
-      
+
       - title: "`>, >=, <=, <`"
         body: |
-          
+
           The comparison operators `>`, `>=`, `<=`, `<` return whether
           their left argument is greater than, greater than or equal
           to, less than or equal to or less than their right argument
@@ -1407,14 +1407,14 @@ sections:
           so it is called as a filter to which things can be piped
           rather than with special syntax, as in `.foo and .bar |
           not`.
-          
+
           These three only produce the values "true" and "false", and
           so are only useful for genuine Boolean operations, rather
           than the common Perl/Python/Ruby idiom of
           "value_that_may_be_null or default". If you want to use this
           form of "or", picking between two values rather than
           evaluating a condition, see the "//" operator below.
-          
+
         examples:
           - program: '42 and "a string"'
             input: 'null'
@@ -1452,7 +1452,7 @@ sections:
           - program: '.foo // 42'
             input: '{}'
             output: [42]
-          
+
   - title: Advanced features
     body: |
       Variables are an absolute necessity in most programming languages, but
@@ -1477,67 +1477,67 @@ sections:
     entries:
       - title: Variables
         body: |
-          
+
           In jq, all filters have an input and an output, so manual
           plumbing is not necessary to pass a value from one part of a program
           to the next. Many expressions, for instance `a + b`, pass their input
           to two distinct subexpressions (here `a` and `b` are both passed the
           same input), so variables aren't usually necessary in order to use a
           value twice.
-          
+
           For instance, calculating the average value of an array of numbers
           requires a few variables in most languages - at least one to hold the
           array, perhaps one for each element or for a loop counter. In jq, it's
           simply `add / length` - the `add` expression is given the array and
           produces its sum, and the `length` expression is given the array and
           produces its length.
-          
+
           So, there's generally a cleaner way to solve most problems in jq than
           defining variables. Still, sometimes they do make things easier, so jq
           lets you define variables using `expression as $variable`. All
           variable names start with `$`. Here's a slightly uglier version of the
           array-averaging example:
-          
+
               length as $array_length | add / $array_length
-          
+
           We'll need a more complicated problem to find a situation where using
           variables actually makes our lives easier.
-          
-          
+
+
           Suppose we have an array of blog posts, with "author" and "title"
           fields, and another object which is used to map author usernames to
           real names. Our input looks like:
-          
+
               {"posts": [{"title": "Frist psot", "author": "anon"},
                          {"title": "A well-written article", "author": "person1"}],
                "realnames": {"anon": "Anonymous Coward",
                              "person1": "Person McPherson"}}
-          
+
           We want to produce the posts with the author field containing a real
           name, as in:
-          
+
               {"title": "Frist psot", "author": "Anonymous Coward"}
               {"title": "A well-written article", "author": "Person McPherson"}
-          
+
           We use a variable, $names, to store the realnames object, so that we
           can refer to it later when looking up author usernames:
-          
+
               .realnames as $names | .posts[] | {title, author: $names[.author]}
-          
+
           The expression `exp as $x | ...` means: for each value of expression
           `exp`, run the rest of the pipeline with the entire original input, and
-          with `$x` set to that value.  Thus `as` functions as something of a 
+          with `$x` set to that value.  Thus `as` functions as something of a
           foreach loop.
 
           Variables are scoped over the rest of the expression that defines
-          them, so 
-          
+          them, so
+
               .realnames as $names | (.posts[] | {title, author: $names[.author]})
-          
-          will work, but 
-          
+
+          will work, but
+
               (.realnames as $names | .posts[]) | {title, author: $names[.author]}
-          
+
           won't.
 
           For programming language theorists, it's more accurate to
@@ -1556,11 +1556,11 @@ sections:
 
       - title: 'Defining Functions'
         body: |
-          
+
           You can give a filter a name using "def" syntax:
 
               def increment: . + 1;
-          
+
           From then on, `increment` is usable as a filter just like a
           builtin function (in fact, this is how some of the builtins
           are defined). A function may take arguments:
@@ -1606,19 +1606,19 @@ sections:
 
       - title: Reduce
         body: |
-        
+
           The `reduce` syntax in jq allows you to combine all of the
           results of an expression by accumulating them into a single
           answer. As an example, we'll pass `[3,2,1]` to this expression:
 
               reduce .[] as $item (0; . + $item)
-          
+
           For each result that `.[]` produces, `. + $item` is run to
           accumulate a running total, starting from 0. In this
           example, `.[]` produces the results 3, 2, and 1, so the
           effect is similar to running something like this:
 
-              0 | (3 as $item | . + $item) | 
+              0 | (3 as $item | . + $item) |
                   (2 as $item | . + $item) |
                   (1 as $item | . + $item)
 
@@ -1626,7 +1626,7 @@ sections:
           - program: 'reduce .[] as $item (0; . + $item)'
             input: '[10,2,5,3]'
             output: ['20']
-      
+
 
   - title: Assignment
     body: |
@@ -1648,14 +1648,14 @@ sections:
     entries:
       - title: "`=`"
         body: |
-          
+
           The filter `.foo = 1` will take as input an object
           and produce as output an object with the "foo" field set to
           1. There is no notion of "modifying" or "changing" something
           in jq - all jq values are immutable. For instance,
-          
+
            .foo = .bar | .foo.baz = 1
-          
+
           will not have the side-effect of setting .bar.baz to be set
           to 1, as the similar-looking program in Javascript, Python,
           Ruby or other languages would. Unlike these languages (but
@@ -1664,7 +1664,7 @@ sections:
           "the same object". They can be equal, or not equal, but if
           we change one of them in no circumstances will the other
           change behind our backs.
-          
+
           This means that it's impossible to build circular values in
           jq (such as an array whose first element is itself). This is
           quite intentional, and ensures that anything a jq program
@@ -1677,14 +1677,14 @@ sections:
           works out the new value for the property being assigned to by running
           the old value through this expression. For instance, .foo |= .+1 will
           build an object with the "foo" field set to the input's "foo" plus 1.
-          
+
           This example should show the difference between '=' and '|=':
-          
+
           Provide input '{"a": {"b": 10}, "b": 20}' to the programs:
-          
+
           .a = .b
           .a |= .b
-          
+
           The former will set the "a" field of the input to the "b" field of the
           input, and produce the output {"a": 20}. The latter will set the "a"
           field of the input to the "a" field's "b" field, producing {"a": 10}.
@@ -1699,43 +1699,43 @@ sections:
           - program: .foo += 1
             input: '{"foo": 42}'
             output: ['{"foo": 43}']
-        
+
       - title: Complex assignments
         body: |
           Lots more things are allowed on the left-hand side of a jq assignment
           than in most langauges. We've already seen simple field accesses on
           the left hand side, and it's no surprise that array accesses work just
           as well:
-          
+
               .posts[0].title = "JQ Manual"
-          
+
           What may come as a surprise is that the expression on the left may
           produce multiple results, referring to different points in the input
           document:
-          
+
               .posts[].comments |= . + ["this is great"]
-          
+
           That example appends the string "this is great" to the "comments"
           array of each post in the input (where the input is an object with a
           field "posts" which is an array of posts).
-          
+
           When jq encounters an assignment like 'a = b', it records the "path"
           taken to select a part of the input document while executing a. This
           path is then used to find which part of the input to change while
           executing the assignment. Any filter may be used on the
           left-hand side of an equals - whichever paths it selects from the
           input will be where the assignment is performed.
-          
+
           This is a very powerful operation. Suppose we wanted to add a comment
           to blog posts, using the same "blog" input above. This time, we only
           want to comment on the posts written by "stedolan". We can find those
           posts using the "select" function described earlier:
-          
+
               .posts[] | select(.author == "stedolan")
-          
+
           The paths provided by this operation point to each of the posts that
           "stedolan" wrote, and we can comment on each of them in the same way
           that we did before:
-          
+
               (.posts[] | select(.author == "stedolan") | .comments) |=
                   . + ["terrible."]
