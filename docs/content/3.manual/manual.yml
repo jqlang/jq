@@ -592,9 +592,9 @@ sections:
             input: '[42,3,35]'
             output: ['[0,1,2]']
 
-      - title: "`has`"
+      - title: "`has(key)`"
         body: |
-          
+
           The builtin function `has` returns whether the input object
           has the given key, or the input array has an element at the
           given index.
@@ -611,12 +611,12 @@ sections:
             input: '[[0,1], ["a","b","c"]]'
             output: ['[false, true]']
 
-      - title: "`del`"
+      - title: "`del(path_expression)`"
         body: |
-          
+
           The builtin function `del` removes a key and its corresponding
           value from an object.
-        
+
         examples:
           - program: 'del(.foo)'
             input: '[{"foo": 42, "bar": 9001, "baz": 42}]'
@@ -650,9 +650,9 @@ sections:
             output: ['{"KEY_a": 1, "KEY_b": 2}']
 
 
-      - title: "`select`"
+      - title: "`select(boolean_expression)`"
         body: |
-          
+
           The function `select(foo)` produces its input unchanged if
           `foo` returns true for that input, and produces no output
           otherwise.
@@ -792,14 +792,17 @@ sections:
             input: '[]'
             output: ["true"]
 
-      - title: "`flatten`"
+      - title: "`flatten`, `flatten(depth)`"
         body: |
-        
+
           The filter `flatten` takes as input an array of nested arrays,
           and produces a flat array in which all arrays inside the original
           array have been recursively replaced by their values. You can pass
           an argument to it to specify how many levels of nesting to flatten.
-                  
+
+          `flatten(2)` is like `flatten`, but going only up to two
+          levels deep.
+
         examples:
           - program: flatten
             input: '[1, [2], [[3]]]'
@@ -1004,7 +1007,7 @@ sections:
             input: '[1,2,3,4]'
             output: ['[4,3,2,1]']
 
-      - title: "`contains`"
+      - title: "`contains(element)`"
         body: |
 
           The filter `contains(b)` will produce true if b is
@@ -1066,7 +1069,7 @@ sections:
             input: '"a,b, cd, efg, hijk"'
             output: ['12']
 
-      - title: "`startswith`"
+      - title: "`startswith(str)`"
         body: |
 
           Outputs `true` if . starts with the given string argument.
@@ -1076,7 +1079,7 @@ sections:
             input: '["fo", "foo", "barfoo", "foobar", "barfoob"]'
             output: ['[false, true, false, true, false]']
 
-      - title: "`endswith`"
+      - title: "`endswith(str)`"
         body: |
 
           Outputs `true` if . ends with the given string argument.
@@ -1086,7 +1089,7 @@ sections:
             input: '["foobar", "barfoo"]'
             output: ['[false, true, true, false, false]']
 
-      - title: "`ltrimstr`"
+      - title: "`ltrimstr(str)`"
         body: |
 
           Outputs its input with the given prefix string removed, if it
@@ -1097,7 +1100,7 @@ sections:
             input: '["fo", "foo", "barfoo", "foobar", "afoo"]'
             output: ['["fo","","barfoo","bar","afoo"]']
 
-      - title: "`rtrimstr`"
+      - title: "`rtrimstr(str)`"
         body: |
 
           Outputs its input with the given suffix string removed, if it
@@ -1139,14 +1142,14 @@ sections:
             input: '"a, b,c,d, e"'
             output: ['["a","b,c,d","e"]']
 
-      - title: "`join`"
+      - title: "`join(str)`"
         body: |
-        
+
           Joins the array of elements given as input, using the
           argument as separator. It is the inverse of `split`: that is,
           running `split("foo") | join("foo")` over any input string
           returns said input string.
-          
+
         examples:
           - program: 'join(", ")'
             input: '["a","b,c,d","e"]'
