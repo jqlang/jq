@@ -109,6 +109,12 @@ Output the fields of each object with the keys in sorted order\.
 With this option, if the filter\'s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes\. This can be useful for making jq filters talk to non\-JSON\-based systems\.
 .
 .IP "\(bu" 4
+\fB\-\-join\-output\fR / \fB\-j\fR:
+.
+.IP
+Like \fB\-r\fR but jq won\'t print a newline after each output\.
+.
+.IP "\(bu" 4
 \fB\-f filename\fR / \fB\-\-from\-file filename\fR:
 .
 .IP
@@ -1937,7 +1943,7 @@ jq \'\.foo += 1\'
 .IP "" 0
 .
 .SS "Complex assignments"
-Lots more things are allowed on the left\-hand side of a jq assignment than in most langauges\. We\'ve already seen simple field accesses on the left hand side, and it\'s no surprise that array accesses work just as well:
+Lots more things are allowed on the left\-hand side of a jq assignment than in most languages\. We\'ve already seen simple field accesses on the left hand side, and it\'s no surprise that array accesses work just as well:
 .
 .IP "" 4
 .

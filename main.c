@@ -75,6 +75,8 @@ enum {
 
   FROM_FILE = 512,
 
+  RAW_NO_LF = 1024,
+
   EXIT_STATUS = 8192,
 
   /* debugging only */
@@ -111,7 +113,8 @@ static int process(jq_state *jq, jv value, int flags) {
         ret = 0;
       jv_dump(result, dumpopts);
     }
-    printf("\n");
+    if (!(options & RAW_NO_LF))
+        printf("\n");
     if (options & UNBUFFERED_OUTPUT)
       fflush(stdout);
   }
@@ -205,6 +208,8 @@ int main(int argc, char* argv[]) {
       options |= PROVIDE_NULL;
     } else if (isoption(argv[i], 'f', "from-file")) {
       options |= FROM_FILE;
+    } else if (isoption(argv[i], 'j', "join-output")) {
+      options |= RAW_OUTPUT | RAW_NO_LF;
     } else if (isoption(argv[i], 'e', "exit-status")) {
       options |= EXIT_STATUS;
     } else if (isoption(argv[i], 0, "arg")) {

@@ -152,6 +152,10 @@ sections:
         formatted as a JSON string with quotes. This can be useful for
         making jq filters talk to non-JSON-based systems.
 
+      * `--join-output` / `-j`:
+
+        Like `-r` but jq won't print a newline after each output.
+
       * `-f filename` / `--from-file filename`:
 
         Read filter from the file rather than from a command line, like
