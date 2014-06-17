@@ -237,6 +237,18 @@ int main(int argc, char* argv[]) {
       die();
     }
   }
+
+#if (!defined(WIN32) && defined(HAVE_ISATTY)) || defined(HAVE__ISATTY)
+
+#if defined(HAVE__ISATTY) && defined(isatty)
+#undef isatty
+#define isatty _isatty
+#endif
+
+  if (!program && isatty(STDOUT_FILENO) && !isatty(STDIN_FILENO))
+    program = ".";
+#endif
+
   if (!program) usage();
   if (ninput_files == 0) current_input = stdin;
 
