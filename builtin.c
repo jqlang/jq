@@ -576,7 +576,10 @@ static jv f_error(jv input, jv msg) {
   return jv_invalid_with_msg(msg);
 }
 
+// FIXME Should autoconf check for this!
+#ifndef WIN32
 extern const char **environ;
+#endif
 
 static jv f_env(jv input) {
   jv_free(input);
