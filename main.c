@@ -14,19 +14,35 @@ int jq_testsuite(int argc, char* argv[]);
 
 static const char* progname;
 
-static void usage() {
+/*
+ * For a longer help message we could use a better option parsing
+ * strategy, one that lets stack options.
+ */
+static void usage(int code) {
   fprintf(stderr, "\njq - commandline JSON processor [version %s]\n", JQ_VERSION);
   fprintf(stderr, "Usage: %s [options] <jq filter> [file...]\n\n", progname);
-  fprintf(stderr, "For a description of the command line options and\n");
-  fprintf(stderr, "how to write jq filters (and why you might want to)\n");
-  fprintf(stderr, "see the jq manpage, or the online documentation at\n");
-  fprintf(stderr, "http://stedolan.github.com/jq\n\n");
-  exit(2);
+  fprintf(stderr, "\tjq is a tool for processing JSON inputs, applying the\n");
+  fprintf(stderr, "\tgiven filter to its JSON text inputs and producing the\n");
+  fprintf(stderr, "\tfilter's results as JSON on standard output.\n");
+  fprintf(stderr, "\tThe simplest filter is ., which is the identity filter,\n");
+  fprintf(stderr, "\tcopying jq's input to its output.\n");
+  fprintf(stderr, "\tFor more advanced filters see the jq(1) manpage (\"man jq\")\n");
+  fprintf(stderr, "\tand/or http://stedolan.github.com/jq\n\n");
+  fprintf(stderr, "\tSome of the options include:\n");
+  fprintf(stderr, "\t -h\t\tthis message;\n");
+  fprintf(stderr, "\t -c\t\tcompact instead of pretty-printed output;\n");
+  fprintf(stderr, "\t -s\t\tread all inputs into an array; apply filter to it;\n");
+  fprintf(stderr, "\t -r\t\toutput raw strings, not JSON texts;\n");
+  fprintf(stderr, "\t -R\t\tread raw strings, not JSON texts;\n");
+  fprintf(stderr, "\t -arg a v\tset variable $a to value <v>;\n");
+  fprintf(stderr, "\t -argfile a f\tset variable $a to JSON texts read from <f>;\n");
+  fprintf(stderr, "\tSee the manpage for more options.\n");
+  exit(code);
 }
 
 static void die() {
   fprintf(stderr, "Use %s --help for help with command-line options,\n", progname);
-  fprintf(stderr, "or see the jq documentation at http://stedolan.github.com/jq\n");
+  fprintf(stderr, "or see the jq manpage, or online docs  at http://stedolan.github.com/jq\n");
   exit(2);
 }
 
@@ -159,7 +175,7 @@ int main(int argc, char* argv[]) {
     if (further_args_are_files) {
       input_filenames[ninput_files++] = argv[i];
     } else if (!strcmp(argv[i], "--")) {
-      if (!program) usage();
+      if (!program) usage(2);
       further_args_are_files = 1;
     } else if (!isoptish(argv[i])) {
       if (program) {
@@ -227,7 +243,7 @@ int main(int argc, char* argv[]) {
     } else if (isoption(argv[i],  0,  "debug-trace")) {
       jq_flags |= JQ_DEBUG_TRACE;
     } else if (isoption(argv[i], 'h', "help")) {
-      usage();
+      usage(0);
     } else if (isoption(argv[i], 'V', "version")) {
       printf("jq-%s\n", JQ_VERSION);
       ret = 0;
@@ -249,7 +265,7 @@ int main(int argc, char* argv[]) {
     program = ".";
 #endif
 
-  if (!program) usage();
+  if (!program) usage(2);
   if (ninput_files == 0) current_input = stdin;
 
   if ((options & PROVIDE_NULL) && (options & (RAW_INPUT | SLURP))) {
