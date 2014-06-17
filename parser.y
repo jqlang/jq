@@ -477,7 +477,7 @@ Term:
   $$ = gen_noop(); 
 } |
 REC {
-  $$ = gen_call("recurse_down", gen_noop());
+  $$ = gen_call("recurse", gen_noop());
 } |
 Term FIELD '?' {
   $$ = gen_index_opt($1, gen_const($2));

@@ -708,29 +708,25 @@ sections:
             input: '[1,2,3]'
             output: ['[2,3,4]']
 
-      - title: "`paths`"
+      - title: "`paths`, `paths(node_filter)`, `leaf_paths`"
         body: |
 
-          Outputs the paths to all the elements in its input (except it
-          does not output the empty list, representing . itself).
+          `paths` outputs the paths to all the elements in its input
+          (except it does not output the empty list, representing .
+          itself).
+          
+          `paths(f)` outputs the paths to any values for which `f` is true.
+          That is, `paths(numbers)` outputs the paths to all numeric
+          values.
 
-          `paths` is equivalent to 
-
-              def paths: path(recurse(if (type|. == "array" or . == "object") then .[] else empty end))|select(length > 0);
-
+          `leaf_paths` is an alias of `paths(scalars)`; `leaf_paths` is
+          *deprecated* and will be removed in the next major release.
+          
         examples:
           - program: '[paths]'
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1],[1,0],[1,1],[1,1,"a"]]']
-
-      - title: "`leaf_paths`"
-        body: |
-
-          Outputs the paths to all the leaves (non-array, non-object
-          elements) in its input.
-
-        examples:
-          - program: '[leaf_paths]'
+          - program: '[paths(scalars)]'
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1,1,"a"]]']
 
@@ -818,13 +814,15 @@ sections:
             input: '[{"foo": "bar"}, [{"foo": "baz"}]]'
             output: ['[{"foo": "bar"}, {"foo": "baz"}]']
 
-      - title: "`range`"
+      - title: "`range(upto), `range(from;upto)`"
         body: |
           
           The `range` function produces a range of numbers. `range(4;10)`
           produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers
           are produced as separate outputs. Use `[range(4;10)]` to get a range as 
           an array.
+          
+          Its first argument can be omitted; it defaults to zero.
 
         examples:
           - program: 'range(2;4)'
@@ -833,6 +831,9 @@ sections:
           - program: '[range(2;4)]'
             input: 'null'
             output: ['[2,3]']
+          - program: '[range(4)]'
+            input: 'null'
+            output: ['[0,1,2,3]']
             
       - title: "`floor`"
         body: |
@@ -890,7 +891,7 @@ sections:
             input: '[0, false, [], {}, null, "hello"]'
             output: ['["number", "boolean", "array", "object", "null", "string"]']
 
-      - title: "`sort, sort_by`"
+      - title: "`sort, sort(path_expression), sort_by(path_expression)`"
         body: |
           
           The `sort` functions sorts its input, which must be an
@@ -909,23 +910,27 @@ sections:
           sorted order), and if their keys are equal then the values
           are compared key by key.
 
-          `sort_by` may be used to sort by a particular field of an
-          object, or by applying any jq filter. `sort_by(foo)`
-          compares two elements by comparing the result of `foo` on
-          each element.
+          `sort` may be used to sort by a particular field of an
+          object, or by applying any jq filter.
+
+          `sort(foo)` compares two elements by comparing the result of
+          `foo` on each element.
+          
+          `sort_by(foo)` is an alias of `sort(foo)`; `sort_by()` is
+          *deprecated* and will be removed in the next major release.
 
         examples:
           - program: 'sort'
             input: '[8,3,null,6]'
             output: ['[null,3,6,8]']
-          - program: 'sort_by(.foo)'
+          - program: 'sort(.foo)'
             input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]'
             output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]']
 
-      - title: "`group_by`"
+      - title: "`group(path_expression)`, `group_by(path_expression)`"
         body: |
           
-          `group_by(.foo)` takes as input an array, groups the
+          `group(.foo)` takes as input an array, groups the
           elements having the same `.foo` field into separate arrays,
           and produces all of these arrays as elements of a larger
           array, sorted by the value of the `.foo` field.
@@ -933,57 +938,61 @@ sections:
           Any jq expression, not just a field access, may be used in
           place of `.foo`. The sorting order is the same as described
           in the `sort` function above.
-
+          
+          `group_by(foo)` is an alias of `group(foo)`; `group_by()` is
+          *deprecated* and will be removed in the next major release.
+          
         examples:
-          - program: 'group_by(.foo)'
+          - program: 'group(.foo)'
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
             output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
 
-      - title: "`min`, `max`, `min_by`, `max_by`"
+      - title: "`min`, `max`, `min(path_exp)`, `max(path_exp)`, `min_by(path_exp)`, `max_by(path_exp)`"
         body: |
           
-          Find the minimum or maximum element of the input array. The
-          `_by` versions allow you to specify a particular field or
-          property to examine, e.g. `min_by(.foo)` finds the object
+          Find the minimum or maximum element of the input array.
+          This filter accepts an optional argument that
+          allows you to specify a particular field or
+          property to examine, e.g. `min(.foo)` finds the object
           with the smallest `foo` field.
+          
+          For legacy reasons, `min_by(.foo)` and `max_by(.foo)` exist as
+          aliases for `min(.foo)` and `max(.foo)`. These aliases are
+          considered *deprecated* and will be removed in the next major
+          release.
 
         examples:
           - program: 'min'
             input: '[5,4,2,7]'
             output: ['2']
-          - program: 'max_by(.foo)'
+          - program: 'max(.foo)'
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
 
-      - title: "`unique`"
+      - title: "`unique`, `unique(path_exp)`, `unique_by(path_exp)`"
         body: |
           
           The `unique` function takes as input an array and produces
           an array of the same elements, in sorted order, with
-          duplicates removed.
+          duplicates removed. If an optional argument is passed, it
+          will keep only one element for each value obtained by applying
+          the argument. Think of it as making an array by taking one
+          element out of every group produced by `group`.
+          
+          For legacy reasons, `unique_by(.foo)` exists as an alias for
+          `unique(.foo)`. This alias is considered *deprecated* and will
+          be removed in the next major release.
 
         examples:
           - program: 'unique'
             input: '[1,2,5,3,5,3,1,3]'
             output: ['[1,2,3,5]']
-
-      - title: "`unique_by`"
-        body: |
-          
-          The `unique_by(.foo)` function takes as input an array and produces
-          an array of the same elements, in sorted order, with
-          elqements with a duplicate `.foo` field removed. Think of it as making
-          an array by taking one element out of every group produced by
-          `group_by`.
-        
-        examples:
-          - program: 'unique_by(.foo)'
+          - program: 'unique(.foo)'
             input: '[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]'
             output: ['[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]']
-          - program: 'unique_by(length)'
+          - program: 'unique(length)'
             input: '["chunky", "bacon", "kitten", "cicada", "asparagus"]'
             output: ['["chunky", "bacon", "asparagus"]']
-
 
       - title: "`reverse`"
         body: |
@@ -1144,10 +1153,10 @@ sections:
             output: ['"a, b,c,d, e"']
 
 
-      - title: "`recurse`"
+      - title: "`recurse(f)`, `recurse`, `recurse_down`"
         body: |
           
-          The `recurse` function allows you to search through a
+          The `recurse(f)` function allows you to search through a
           recursive structure, and extract interesting data from all
           levels. Suppose your input represents a filesystem:
 
@@ -1165,6 +1174,13 @@ sections:
           with:
 
               recurse(.children[]) | .name
+          
+          When called without an argument, `recurse` is equivalent to
+          `recurse(.[]?)`.
+          
+          For legacy reasons, `recurse_down` exists as an alias to
+          calling `recurse` without arguments. This alias is considered
+          *deprecated* and will be removed in the next major release.
 
         examples:
           - program: 'recurse(.foo[])'
@@ -1174,20 +1190,21 @@ sections:
               - '{"foo":[]}'
               - '{"foo":[{"foo":[]}]}'
               - '{"foo":[]}'
-
-      - title: "`recurse_down`"
-        body: |
-          
-          A quieter version of `recurse(.[])`, equivalent to:
-
-              def recurse_down: recurse(.[]?);
+          - program: 'recurse'
+            input: '{"a":0,"b":[1]}'
+            output: 
+              - '0'
+              - '[1]'
+              - '1'
 
       - title: "`..`"
         body: |
           
-          Short-hand for `recurse_down`.  This is intended to resemble
-          the XPath `//` operator.  Note that `..a` does not work; use
-          `..|a` instead.
+          Short-hand for `recurse` without arguments.  This is intended
+          to resemble the XPath `//` operator.  Note that `..a` does not
+          work; use `..|a` instead.  In the example below we use
+          `..|.a?` to find all the values of object keys "a" in any
+          object found "below" `.`.
 
         examples:
           - program: '..|.a?'
