@@ -42,6 +42,63 @@ if test "x$LEX" != xflex; then
 fi
 
 
+##########################################################################
+# check for ONIGURUMA library
+##########################################################################
+
+AC_ARG_WITH([oniguruma],
+    [AS_HELP_STRING([--with-oniguruma=prefix],
+        [try this for a non-standard install prefix of the oniguruma library])],
+    [ONIGURUMAPATHSET=1],
+    [ONIGURUMAPATHSET=0])
+
+if test $ONIGURUMAPATHSET == 1; then
+  CFLAGS="$CFLAGS -I${with_oniguruma}/include"
+  LDFLAGS="$LDFLAGS -L${with_oniguruma}/lib"
+fi
+
+# store current *FLAGS and merge with AM_*FLAGS for compilation and linker check   
+OLD_CFLAGS=$CFLAGS;
+OLD_LDFLAGS=$LDFLAGS;
+CFLAGS="$AM_CFLAGS $CFLAGS"
+LDFLAGS="$AM_LDFLAGS $LDFLAGS"
+
+# ensure the library to check for is covered by the LIBS variable
+OLD_LIBS=$LIBS
+LIBS="$LIBS -lonig"
+
+# check for ONIGURUMA library headers   
+AC_MSG_CHECKING([for oniguruma.h])
+# try to compile a file that includes a header of the library oniguruma
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([ #include <oniguruma.h> ])],
+    [AC_MSG_RESULT([yes])
+        # try to link the function 'onig_free' out of library oniguruma
+        AC_MSG_CHECKING([for oniguruma usability])
+        AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([[#include <oniguruma.h>]],
+                [[onig_free(0);]])],
+            [AC_MSG_RESULT([yes])
+                FOUND_ONIGURUMA=1;],
+            [AC_MSG_RESULT([no])
+                LIBS=$OLD_LIBS; dnl reset to old value since oniguruma was not found
+                FOUND_ONIGURUMA=0;])],
+    [AC_MSG_RESULT([not found])
+        FOUND_ONIGURUMA=0;])
+
+# reset original *FLAGS
+CFLAGS=$OLD_CFLAGS
+LDFLAGS=$OLD_LDFLAGS
+
+# handle check results
+if test $FOUND_ONIGURUMA != 1; then
+    AC_MSG_NOTICE([Oniguruma was not found.])
+    AC_MSG_NOTICE([ Try setting the location using '--with-oniguruma=PREFIX' ])
+    AC_MSG_ERROR([ oniguruma is required to build jq.])
+fi
+
+
+
+
 dnl Check for valgrind
 AC_CHECK_PROGS(valgrind_cmd, valgrind)
 if test "x$valgrind_cmd" = "x" ; then
