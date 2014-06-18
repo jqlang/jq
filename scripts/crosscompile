@@ -22,16 +22,21 @@ plat="$1"
 [ -z "$plat" ] && exit 1
 shift
 
+case "$plat" in
+*/*) echo "platform name must not be a path"; exit 1;;
+*..*) echo "platform name must not be a path"; exit 1;;
+*) plat=$PWD/$plat;;
+esac
+
 [ -d "$plat" ] || mkdir "$plat"
 rm -rf "$plat/tmp"
 mkdir "$plat/tmp"
 cd "$plat/tmp"
-mkdir install_other
-../../../configure \
-    --prefix="`pwd`/install_other" \
-    --bindir="`pwd`/.." \
-    "$@"
-make "$jobs" install-binaries
-cd ..
+../../../configure "$@"
+make "$jobs" DESTDIR=$plat install
+set -x
+for jq in `find . -type f \( -name jq -o -name jq.exe \) -print`; do
+    cp "$jq" ..
+done
 rm -rf tmp
 
