@@ -55,12 +55,6 @@ Output the jq version and exit with zero\.
 Instead of running the filter for each JSON object in the input, read the entire input stream into a large array and run the filter just once\.
 .
 .IP "\(bu" 4
-\fB\-\-online\-input\fR/\fB\-I\fR:
-.
-.IP
-When the top\-level input value is an array produce its elements instead of the array\. This allows on\-line processing of potentially very large top\-level arrays\' elements\.
-.
-.IP "\(bu" 4
 \fB\-\-raw\-input\fR/\fB\-R\fR:
 .
 .IP

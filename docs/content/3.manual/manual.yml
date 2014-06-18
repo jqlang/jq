@@ -96,12 +96,6 @@ sections:
         input, read the entire input stream into a large array and run
         the filter just once.
 
-      * `--online-input`/`-I`:
-
-        When the top-level input value is an array produce its elements
-        instead of the array.  This allows on-line processing of
-        potentially very large top-level arrays' elements.
-
       * `--raw-input`/`-R`:
 
         Don't parse the input as JSON. Instead, each line of text is

@@ -318,10 +318,6 @@
 
 	Add ltrimstr and rtrimstr functions
 
-	Document -u / --unslurp option
-
-	Add -I / --online-input for huge top-level arrays
-
 	Document -e / --exit-status argument
 
 	Add -e | --exit-status CLI option
