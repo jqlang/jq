@@ -693,6 +693,7 @@ static block bind_bytecoded_builtins(block b) {
 static const char* const jq_builtins[] = {
   "def map(f): [.[] | f];",
   "def select(f): if f then . else empty end;",
+  "def filter(f): map(select(f));",
   "def sort(f): _sort_by_impl(map([f]));",
   "def sort_by(f): sort(f);",
   "def group(f): _group_by_impl(map([f]));",
