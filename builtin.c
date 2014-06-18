@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <math.h>
+#include <oniguruma.h>
 #include <stdlib.h>
 #include <string.h>
 #include "builtin.h"
@@ -514,6 +515,211 @@ static jv f_group_by_impl(jv input, jv keys) {
   }
 }
 
+static int f_match_name_iter(const UChar* name, const UChar *name_end, int ngroups,
+    int *groups, regex_t *reg, void *arg) {
+  jv captures = *(jv*)arg;
+  for (int i = 0; i < ngroups; ++i) {
+    jv cap = jv_array_get(jv_copy(captures),groups[i]-1);
+    if (jv_get_kind(cap) == JV_KIND_OBJECT) {
+      cap = jv_object_set(cap, jv_string("name"), jv_string_sized((const char*)name, name_end-name));
+      captures = jv_array_set(captures,groups[i]-1,cap);
+    } else {
+      jv_free(cap);
+    }
+  }
+  *(jv *)arg = captures;
+  return 0;
+}
+
+
+static jv f_match(jv input, jv regex, jv modifiers, jv testmode) {
+  int test = jv_equal(testmode, jv_true());
+  jv result;
+  int onigret;
+  int global = 0;
+  regex_t *reg;
+  OnigErrorInfo einfo;
+  OnigRegion* region;
+  if (jv_get_kind(input) == JV_KIND_STRING) {
+    if (jv_get_kind(regex) != JV_KIND_STRING) {
+      jv_free(input);
+      jv_free(modifiers);
+      return type_error(regex, "is not a string");
+    }
+
+    OnigOptionType options = ONIG_OPTION_CAPTURE_GROUP;
+
+    if (jv_get_kind(modifiers) == JV_KIND_STRING) {
+      jv modarray = jv_string_explode(jv_copy(modifiers));
+      jv_array_foreach(modarray, i, mod) {
+        switch ((int)jv_number_value(mod)) {
+          case 'g':
+            global = 1;
+            break;
+          case 'i':
+            options |= ONIG_OPTION_IGNORECASE;
+            break;
+          case 'x':
+            options |= ONIG_OPTION_EXTEND;
+            break;
+          case 'm':
+            options |= ONIG_OPTION_MULTILINE;
+            break;
+          case 's':
+            options |= ONIG_OPTION_SINGLELINE;
+            break;
+          case 'p':
+            options |= ONIG_OPTION_MULTILINE | ONIG_OPTION_SINGLELINE;
+            break;
+          case 'l':
+            options |= ONIG_OPTION_FIND_LONGEST;
+            break;
+          case 'n':
+            options |= ONIG_OPTION_FIND_NOT_EMPTY;
+            break;
+          default:
+            jv_free(input);
+            jv_free(regex);
+            jv_free(modarray);
+            return jv_invalid_with_msg(jv_string_concat(modifiers,
+                  jv_string(" is not a valid modifier string")));
+        }
+      }
+      jv_free(modarray);
+    } else if (jv_get_kind(modifiers) != JV_KIND_NULL) { 
+      // If it isn't a string or null, then it is the wrong type...
+      jv_free(input);
+      jv_free(regex);
+      return type_error(modifiers, "is not a string");
+    }
+    onigret = onig_new(&reg, (const UChar*)jv_string_value(regex),
+        (const UChar*)(jv_string_value(regex) + jv_string_length_bytes(jv_copy(regex))),
+        options, ONIG_ENCODING_UTF8, ONIG_SYNTAX_PERL_NG, &einfo);
+    if (onigret != ONIG_NORMAL) {
+      UChar ebuf[ONIG_MAX_ERROR_MESSAGE_LEN];
+      onig_error_code_to_str(ebuf, onigret, einfo);
+      jv_free(input);
+      jv_free(regex);
+      jv_free(modifiers);
+      return jv_invalid_with_msg(jv_string_concat(jv_string("Regex failure: "),
+            jv_string((char*)ebuf)));
+    }
+    if (!test)
+      result = jv_array();
+    const char *input_string = jv_string_value(input);
+    const UChar* start = (const UChar*)jv_string_value(input);
+    const unsigned long length = jv_string_length_bytes(jv_copy(input));
+    const UChar* end = start + length;
+    region = onig_region_new();
+    do {
+      onigret = onig_search(reg, 
+          (const UChar*)jv_string_value(input), end, /* string boundaries */
+          start, end, /* search boundaries */
+          region, ONIG_OPTION_NONE);
+      if (onigret >= 0) {
+        if (test) {
+          result = jv_true();
+          break;
+        }
+
+        // Zero-width match
+        if (region->end[0] == region->beg[0]) {
+          unsigned long idx;
+          const char *fr = (const char*)input_string;
+          for (idx = 0; fr != input_string+region->beg[0]; idx++) {
+            fr += jvp_utf8_decode_length(*fr);
+          }
+          jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
+          match = jv_object_set(match, jv_string("length"), jv_number(0));
+          match = jv_object_set(match, jv_string("string"), jv_string(""));
+          match = jv_object_set(match, jv_string("captures"), jv_array());
+          result = jv_array_append(result, match);
+          start += 1;
+          continue;
+        }
+
+        unsigned long idx;
+        unsigned long len;
+        const char *fr = (const char*)input_string;
+
+        for (idx = len = 0; fr != input_string+region->end[0]; len++) {
+          if (fr == input_string+region->beg[0]) idx = len, len=0;
+          fr += jvp_utf8_decode_length(*fr);
+        }
+
+        jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
+
+        unsigned long blen = region->end[0]-region->beg[0];
+        match = jv_object_set(match, jv_string("length"), jv_number(len));
+        match = jv_object_set(match, jv_string("string"), jv_string_sized(input_string+region->beg[0],blen));
+        jv captures = jv_array();
+        for (int i = 1; i < region->num_regs; ++i) {
+          // Empty capture.
+          if (region->beg[i] == region->end[i]) {
+            // Didn't match.
+            jv cap;
+            if (region->beg[i] == -1) {
+              cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(-1));
+              cap = jv_object_set(cap, jv_string("string"), jv_null());
+            } else {
+              fr = input_string;
+              for (idx = 0; fr != input_string+region->beg[i]; idx++) {
+                fr += jvp_utf8_decode_length(*fr);
+              }
+              cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
+              cap = jv_object_set(cap, jv_string("string"), jv_string(""));
+            }
+            cap = jv_object_set(cap, jv_string("length"), jv_number(0));
+            cap = jv_object_set(cap, jv_string("name"), jv_null());
+            captures = jv_array_append(captures, cap);
+            continue;
+          }
+          fr = input_string;
+          for (idx = len = 0; fr != input_string+region->end[i]; len++) {
+            if (fr == input_string+region->beg[i]) idx = len, len=0;
+            fr += jvp_utf8_decode_length(*fr);
+          }
+
+          blen = region->end[i]-region->beg[i];
+          jv cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
+          cap = jv_object_set(cap, jv_string("length"), jv_number(len));
+          cap = jv_object_set(cap, jv_string("string"), jv_string_sized(input_string+region->beg[i],blen));
+          cap = jv_object_set(cap, jv_string("name"), jv_null());
+          captures = jv_array_append(captures,cap);
+        }
+        onig_foreach_name(reg,f_match_name_iter,&captures);
+        match = jv_object_set(match, jv_string("captures"), captures);
+        result = jv_array_append(result, match);
+        start = (const UChar*)(input_string+region->end[0]);
+        onig_region_free(region,0);
+      } else if (onigret == ONIG_MISMATCH) {
+        if (test)
+          result = jv_false();
+        break;
+      } else { /* Error */
+        UChar ebuf[ONIG_MAX_ERROR_MESSAGE_LEN];
+        onig_error_code_to_str(ebuf, onigret, einfo);
+        jv_free(result);
+        result = jv_invalid_with_msg(jv_string_concat(jv_string("Regex failure: "),
+              jv_string((char*)ebuf)));
+        break;
+      }
+    } while (global && start != end);
+    onig_region_free(region,1);
+    region = NULL;
+    jv_free(input);
+    jv_free(regex);
+    jv_free(modifiers);
+    if (region)
+      onig_region_free(region,1);
+    onig_free(reg);
+	 //onig_end();
+    return result;
+  } else {
+    return type_error(input, "cannot be matched, as it is not a string");
+  }
+}
+
 static jv minmax_by(jv values, jv keys, int is_min) {
   if (jv_get_kind(values) != JV_KIND_ARRAY)
     return type_error2(values, keys, "cannot be iterated over");
@@ -642,6 +848,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_env, "env", 1},
+  {(cfunction_ptr)f_match, "_match_impl", 4},
 };
 #undef LIBM_DD
 
@@ -737,6 +944,12 @@ static const char* const jq_builtins[] = {
   "def flatten: reduce .[] as $i ([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end);",
   "def flatten(x): reduce .[] as $i ([]; if $i | type == \"array\" and x > 0 then . + ($i | flatten(x-1)) else . + [$i] end);",
   "def range(x): range(0;x);",
+  "def match(re; mode): _match_impl(re; mode; false)|.[];",
+  "def match(val): if val | type == \"string\" then match(val; null) elif val | type == \"array\" and (val | length) > 1 then match(val[0]; val[1]) elif val | type == \"array\" and (val | length > 0) then match(val[0]; null) else error((val | type) + \" not a string or array\") end;",
+  "def test(re; mode): _match_impl(re; mode; true);",
+  "def test(val): if val |type == \"string\" then test(val; null) elif val | type == \"array\" and (val | length) > 1 then test(val[0]; val[1]) elif val | type == \"array\" and (val | length > 0) then test(val[0]; null) else error((val | type) + \" not a string or array\") end;",
+//  "def test(re): _match(re; null; 1);",
+  
 };
 #undef LIBM_DD
 
