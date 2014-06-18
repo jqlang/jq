@@ -723,6 +723,8 @@ static const char* const jq_builtins[] = {
   "def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|select(node_filter));",
   "def any: reduce .[] as $i (false; . or $i);",
   "def all: reduce .[] as $i (true; . and $i);",
+  "def any(f): map(f) | any;",
+  "def all(f): map(f) | all;",
   "def arrays: type == \"array\";",
   "def objects: type == \"object\";",
   "def iterables: arrays or objects;",
