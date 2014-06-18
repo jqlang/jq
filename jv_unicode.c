@@ -59,6 +59,13 @@ int jvp_utf8_is_valid(const char* in, const char* end) {
   return 1;
 }
 
+int jvp_utf8_decode_length(char startchar) {
+	if ((startchar & 0x80) == 0) return 1;
+	else if ((startchar & 0xC0) == 0xC0) return 2;
+	else if ((startchar & 0xE0) == 0xE0) return 3;
+	else return 4;
+}
+
 int jvp_utf8_encode_length(int codepoint) {
   if (codepoint <= 0x7F) return 1;
   else if (codepoint <= 0x7FF) return 2;
