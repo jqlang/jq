@@ -61,26 +61,21 @@ static int isoption(const char* text, char shortopt, const char* longopt) {
 }
 
 enum {
-  SLURP = 1,
-  RAW_INPUT = 2,
-  PROVIDE_NULL = 4,
-
-  RAW_OUTPUT = 8,
-  COMPACT_OUTPUT = 16,
-  ASCII_OUTPUT = 32,
-  COLOUR_OUTPUT = 64,
-  NO_COLOUR_OUTPUT = 128,
-  SORTED_OUTPUT = 256,
-  UNBUFFERED_OUTPUT = 4096,
-
-  FROM_FILE = 512,
-
-  RAW_NO_LF = 1024,
-
-  EXIT_STATUS = 8192,
-
+  SLURP                 = 1,
+  RAW_INPUT             = 2,
+  PROVIDE_NULL          = 4,
+  RAW_OUTPUT            = 8,
+  COMPACT_OUTPUT        = 16,
+  ASCII_OUTPUT          = 32,
+  COLOUR_OUTPUT         = 64,
+  NO_COLOUR_OUTPUT      = 128,
+  SORTED_OUTPUT         = 256,
+  FROM_FILE             = 512,
+  RAW_NO_LF             = 1024,
+  UNBUFFERED_OUTPUT     = 2048,
+  EXIT_STATUS           = 4096,
   /* debugging only */
-  DUMP_DISASM = 2048,
+  DUMP_DISASM           = 8192,
 };
 static int options = 0;
 
