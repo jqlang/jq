@@ -541,7 +541,6 @@ static jv f_match(jv input, jv regex, jv modifiers, jv testmode) {
   OnigErrorInfo einfo;
   OnigRegion* region;
 
-  jv_free(testmode);
   if (jv_get_kind(input) != JV_KIND_STRING) {
     jv_free(regex);
     jv_free(modifiers);
