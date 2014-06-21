@@ -60,7 +60,6 @@ static int isoption(const char* text, char shortopt, const char* longopt, size_t
   if (text[1] == '-' && !strcmp(text+2, longopt)) return 1;
   if (!shortopt) return 0;
   if (strchr(text, shortopt) != NULL) {
-    fprintf(stderr, "OPTION: %c\n", shortopt);
     (*short_opts)++;
     return 1;
   }
