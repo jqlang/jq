@@ -53,10 +53,17 @@ static int isoptish(const char* text) {
   return text[0] == '-' && (text[1] == '-' || isalpha(text[1]));
 }
 
-static int isoption(const char* text, char shortopt, const char* longopt) {
+static int isoption(const char* text, char shortopt, const char* longopt, size_t *short_opts) {
+  if (text[0] != '-' || text[1] == '-')
+    *short_opts = 0;
   if (text[0] != '-') return 0;
-  if (strlen(text) == 2 && text[1] == shortopt) return 1;
   if (text[1] == '-' && !strcmp(text+2, longopt)) return 1;
+  if (!shortopt) return 0;
+  if (strchr(text, shortopt) != NULL) {
+    fprintf(stderr, "OPTION: %c\n", shortopt);
+    (*short_opts)++;
+    return 1;
+  }
   return 0;
 }
 
@@ -168,8 +175,9 @@ int main(int argc, char* argv[]) {
   ninput_files = 0;
   int further_args_are_files = 0;
   int jq_flags = 0;
+  size_t short_opts = 0;
   jv program_arguments = jv_array();
-  for (int i=1; i<argc; i++) {
+  for (int i=1; i<argc; i++, short_opts = 0) {
     if (further_args_are_files) {
       input_filenames[ninput_files++] = argv[i];
     } else if (!strcmp(argv[i], "--")) {
@@ -181,76 +189,115 @@ int main(int argc, char* argv[]) {
       } else {
         program = argv[i];
       }
-    } else if (isoption(argv[i], 's', "slurp")) {
-      options |= SLURP;
-    } else if (isoption(argv[i], 'r', "raw-output")) {
-      options |= RAW_OUTPUT;
-    } else if (isoption(argv[i], 'c', "compact-output")) {
-      options |= COMPACT_OUTPUT;
-    } else if (isoption(argv[i], 'C', "color-output")) {
-      options |= COLOUR_OUTPUT;
-    } else if (isoption(argv[i], 'M', "monochrome-output")) {
-      options |= NO_COLOUR_OUTPUT;
-    } else if (isoption(argv[i], 'a', "ascii-output")) {
-      options |= ASCII_OUTPUT;
-    } else if (isoption(argv[i], 0, "unbuffered")) {
-      options |= UNBUFFERED_OUTPUT;
-    } else if (isoption(argv[i], 'S', "sort-keys")) {
-      options |= SORTED_OUTPUT;
-    } else if (isoption(argv[i], 'R', "raw-input")) {
-      options |= RAW_INPUT;
-    } else if (isoption(argv[i], 'n', "null-input")) {
-      options |= PROVIDE_NULL;
-    } else if (isoption(argv[i], 'f', "from-file")) {
-      options |= FROM_FILE;
-    } else if (isoption(argv[i], 'j', "join-output")) {
-      options |= RAW_OUTPUT | RAW_NO_LF;
-    } else if (isoption(argv[i], 'e', "exit-status")) {
-      options |= EXIT_STATUS;
-    } else if (isoption(argv[i], 0, "arg")) {
-      if (i >= argc - 2) {
-        fprintf(stderr, "%s: --arg takes two parameters (e.g. -a varname value)\n", progname);
-        die();
+    } else {
+      if (isoption(argv[i], 's', "slurp", &short_opts)) {
+        options |= SLURP;
+        if (!short_opts) continue;
       }
-      jv arg = jv_object();
-      arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
-      arg = jv_object_set(arg, jv_string("value"), jv_string(argv[i+2]));
-      program_arguments = jv_array_append(program_arguments, arg);
-      i += 2; // skip the next two arguments
-    } else if (isoption(argv[i], 0, "argfile")) {
-      if (i >= argc - 2) {
-        fprintf(stderr, "%s: --argfile takes two parameters (e.g. -a varname filename)\n", progname);
-        die();
+      if (isoption(argv[i], 'r', "raw-output", &short_opts)) {
+        options |= RAW_OUTPUT;
+        if (!short_opts) continue;
       }
-      jv arg = jv_object();
-      arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
-      jv data = jv_load_file(argv[i+2], 0);
-      if (!jv_is_valid(data)) {
-        data = jv_invalid_get_msg(data);
-        fprintf(stderr, "%s: Bad JSON in --argfile %s %s: %s\n", progname,
-                argv[i+1], argv[i+2], jv_string_value(data));
-        jv_free(data);
-        ret = 2;
+      if (isoption(argv[i], 'c', "compact-output", &short_opts)) {
+        options |= COMPACT_OUTPUT;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'C', "color-output", &short_opts)) {
+        options |= COLOUR_OUTPUT;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'M', "monochrome-output", &short_opts)) {
+        options |= NO_COLOUR_OUTPUT;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'a', "ascii-output", &short_opts)) {
+        options |= ASCII_OUTPUT;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 0, "unbuffered", &short_opts)) {
+        options |= UNBUFFERED_OUTPUT;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'S', "sort-keys", &short_opts)) {
+        options |= SORTED_OUTPUT;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'R', "raw-input", &short_opts)) {
+        options |= RAW_INPUT;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'n', "null-input", &short_opts)) {
+        options |= PROVIDE_NULL;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'f', "from-file", &short_opts)) {
+        options |= FROM_FILE;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'j', "join-output", &short_opts)) {
+        options |= RAW_OUTPUT | RAW_NO_LF;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'e', "exit-status", &short_opts)) {
+        options |= EXIT_STATUS;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 0, "arg", &short_opts)) {
+        if (i >= argc - 2) {
+          fprintf(stderr, "%s: --arg takes two parameters (e.g. -a varname value)\n", progname);
+          die();
+        }
+        jv arg = jv_object();
+        arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
+        arg = jv_object_set(arg, jv_string("value"), jv_string(argv[i+2]));
+        program_arguments = jv_array_append(program_arguments, arg);
+        i += 2; // skip the next two arguments
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 0, "argfile", &short_opts)) {
+        if (i >= argc - 2) {
+          fprintf(stderr, "%s: --argfile takes two parameters (e.g. -a varname filename)\n", progname);
+          die();
+        }
+        jv arg = jv_object();
+        arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
+        jv data = jv_load_file(argv[i+2], 0);
+        if (!jv_is_valid(data)) {
+          data = jv_invalid_get_msg(data);
+          fprintf(stderr, "%s: Bad JSON in --argfile %s %s: %s\n", progname,
+                  argv[i+1], argv[i+2], jv_string_value(data));
+          jv_free(data);
+          ret = 2;
+          goto out;
+        }
+        if (jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
+            data = jv_array_get(data, 0);
+        arg = jv_object_set(arg, jv_string("value"), data);
+        program_arguments = jv_array_append(program_arguments, arg);
+        i += 2; // skip the next two arguments
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i],  0,  "debug-dump-disasm", &short_opts)) {
+        options |= DUMP_DISASM;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i],  0,  "debug-trace", &short_opts)) {
+        jq_flags |= JQ_DEBUG_TRACE;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'h', "help", &short_opts)) {
+        usage(0);
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'V', "version", &short_opts)) {
+        printf("jq-%s\n", JQ_VERSION);
+        ret = 0;
         goto out;
       }
-      if (jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
-          data = jv_array_get(data, 0);
-      arg = jv_object_set(arg, jv_string("value"), data);
-      program_arguments = jv_array_append(program_arguments, arg);
-      i += 2; // skip the next two arguments
-    } else if (isoption(argv[i],  0,  "debug-dump-disasm")) {
-      options |= DUMP_DISASM;
-    } else if (isoption(argv[i],  0,  "debug-trace")) {
-      jq_flags |= JQ_DEBUG_TRACE;
-    } else if (isoption(argv[i], 'h', "help")) {
-      usage(0);
-    } else if (isoption(argv[i], 'V', "version")) {
-      printf("jq-%s\n", JQ_VERSION);
-      ret = 0;
-      goto out;
-    } else {
-      fprintf(stderr, "%s: Unknown option %s\n", progname, argv[i]);
-      die();
+      if (strlen(argv[i]) != short_opts + 1) {
+        fprintf(stderr, "%s: Unknown option %s\n", progname, argv[i]);
+        die();
+      }
     }
   }
 
