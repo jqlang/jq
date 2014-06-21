@@ -57,10 +57,15 @@ static int isoption(const char* text, char shortopt, const char* longopt, size_t
   if (text[0] != '-' || text[1] == '-')
     *short_opts = 0;
   if (text[0] != '-') return 0;
+
+  // check long option
   if (text[1] == '-' && !strcmp(text+2, longopt)) return 1;
+  else if (text[1] == '-') return 0;
+
+  // must be short option; check it and...
   if (!shortopt) return 0;
   if (strchr(text, shortopt) != NULL) {
-    (*short_opts)++;
+    (*short_opts)++; // ...count it (for option stacking)
     return 1;
   }
   return 0;
@@ -293,6 +298,7 @@ int main(int argc, char* argv[]) {
         ret = 0;
         goto out;
       }
+      // check for unknown options... if this argument was a short option
       if (strlen(argv[i]) != short_opts + 1) {
         fprintf(stderr, "%s: Unknown option %s\n", progname, argv[i]);
         die();
