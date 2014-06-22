@@ -654,10 +654,21 @@ jv jq_next(jq_state *jq) {
     case CALL_JQ: {
       jv input = stack_pop(jq);
       uint16_t nclosures = *pc++;
-      uint16_t* retaddr = pc + 2 + nclosures*2;
-      struct frame* new_frame = frame_push(jq, make_closure(jq, pc),
-                                           pc + 2, nclosures);
-      new_frame->retdata = jq->stk_top;
+      uint16_t* retaddr;
+      struct frame* new_frame;
+      struct closure cl = make_closure(jq, pc);
+      if (nclosures == 0 && *(pc + 2) == RET && frame_current(jq)->bc == cl.bc) {
+        // TCO
+        retaddr = frame_current(jq)->retaddr;
+        stack_ptr retdata = frame_current(jq)->retdata;
+        frame_pop(jq);
+        new_frame = frame_push(jq, cl, pc + 2, 0);
+        new_frame->retdata = retdata;
+      } else {
+        retaddr = pc + 2 + nclosures*2;
+        new_frame = frame_push(jq, cl, pc + 2, nclosures);
+        new_frame->retdata = jq->stk_top;
+      }
       new_frame->retaddr = retaddr;
       pc = new_frame->bc->code;
       stack_push(jq, input);
