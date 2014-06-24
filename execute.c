@@ -657,7 +657,7 @@ jv jq_next(jq_state *jq) {
       uint16_t* retaddr;
       struct frame* new_frame;
       struct closure cl = make_closure(jq, pc);
-      if (nclosures == 0 && *(pc + 2) == RET && frame_current(jq)->bc == cl.bc) {
+      if (nclosures == 0 && *(pc + 2) == RET && *pc == 1) {
         // TCO
         retaddr = frame_current(jq)->retaddr;
         stack_ptr retdata = frame_current(jq)->retdata;
