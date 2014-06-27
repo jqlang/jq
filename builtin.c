@@ -914,6 +914,7 @@ static const char* const jq_builtins[] = {
   "def min(f): _min_by_impl(map([f]));",
   "def max_by(f): max(f);",
   "def min_by(f): min(f);",
+  "def reduce_keys(f): reduce .[] as $item ({}; .[($item|keys[])] += $item[] );",
 #include "libm.h"
   "def add: reduce .[] as $x (null; . + $x);",
   "def del(f): delpaths([path(f)]);",
