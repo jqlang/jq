@@ -413,7 +413,7 @@ static jv f_format(jv input, jv fmt) {
       if (ch < 128 && unreserved[ch]) {
         line = jv_string_append_buf(line, s, 1);
       } else {
-        line = jv_string_concat(line, jv_string_fmt("%%%02x", ch));
+        line = jv_string_concat(line, jv_string_fmt("%%%02X", ch));
       }
       s++;
     }

@@ -1350,7 +1350,7 @@ sections:
           * `@uri`:
 
             Applies percent-encoding, by mapping all reserved URI
-            characters to a `%xx` sequence.
+            characters to a `%XX` sequence.
 
           * `@csv`:
 
@@ -1379,7 +1379,7 @@ sections:
           will produce the following output for the input
           `{"search":"what is jq?"}`:
 
-              "http://www.google.com/search?q=what%20is%20jq%3f"
+              "http://www.google.com/search?q=what%20is%20jq%3F"
 
           Note that the slashes, question mark, etc. in the URL are
           not escaped, as they were part of the string literal.
