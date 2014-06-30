@@ -67,13 +67,13 @@ null
 "\"<>&'\\\"\""
 "1,\"<>&'\"\"\""
 "&lt;&gt;&amp;&apos;&quot;"
-"%3c%3e%26'%22"
+"%3C%3E%26'%22"
 "'<>&'\\''\"'"
 "PD4mJyI="
 
 @uri
 "\u03bc"
-"%ce%bc"
+"%CE%BC"
 
 @html "<b>\(.)</b>"
 "<script>hax</script>"
