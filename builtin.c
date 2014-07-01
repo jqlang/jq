@@ -454,7 +454,7 @@ static jv f_format(jv input, jv fmt) {
     input = f_tostring(input);
     jv line = jv_string("");
     const char b64[64 + 1] = CHARS_ALPHANUM "+/";
-    const char* data = jv_string_value(input);
+    const unsigned char* data = (const unsigned char*)jv_string_value(input);
     int len = jv_string_length_bytes(jv_copy(input));
     for (int i=0; i<len; i+=3) {
       uint32_t code = 0;

@@ -71,6 +71,11 @@ null
 "'<>&'\\''\"'"
 "PD4mJyI="
 
+# regression test for #436
+@base64
+"foóbar\n"
+"Zm/Ds2Jhcgo="
+
 @uri
 "\u03bc"
 "%CE%BC"
