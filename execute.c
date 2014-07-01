@@ -36,22 +36,23 @@ struct jq_state {
 };
 
 struct closure {
-  struct bytecode* bc;
-  stack_ptr env;
+  struct bytecode* bc;  // jq bytecode
+  stack_ptr env;        // jq stack address of closed frame
 };
 
+// locals for any function called: either a closure or a local variable
 union frame_entry {
   struct closure closure;
   jv localvar;
 };
 
+// jq function call frame
 struct frame {
-  struct bytecode* bc;
-  stack_ptr env;
-  stack_ptr retdata;
-  uint16_t* retaddr;
-  /* bc->nclosures closures followed by bc->nlocals local variables */
-  union frame_entry entries[0]; 
+  struct bytecode* bc;      // jq bytecode for callee
+  stack_ptr env;            // jq stack address of frame to return to
+  stack_ptr retdata;        // jq stack address to unwind to on RET
+  uint16_t* retaddr;        // jq bytecode return address
+  union frame_entry entries[0]; // nclosures + nlocals
 };
 
 static int frame_size(struct bytecode* bc) {
@@ -652,23 +653,59 @@ jv jq_next(jq_state *jq) {
     }
 
     case CALL_JQ: {
+      /*
+       * Bytecode layout here:
+       *
+       *  CALL_JQ
+       *  <nclosures>                       (i.e., number of call arguments)
+       *  <callee closure>                  (what we're calling)
+       *  <nclosures' worth of closures>    (frame reference + code pointer)
+       *
+       *  <next instruction (to return to)>
+       *
+       * Each closure consists of two uint16_t values: a "level"
+       * identifying the frame to be closed over, and an index.
+       *
+       * The level is a relative number of call frames reachable from
+       * the currently one; 0 -> current frame, 1 -> previous frame, and
+       * so on.
+       *
+       * The index is either an index of the closed frame's subfunctions
+       * or of the closed frame's parameter closures.  If the latter,
+       * that closure will be passed, else the closed frame's pointer
+       * and the subfunction's code will form the closure to be passed.
+       *
+       * See make_closure() for more information.
+       */
       jv input = stack_pop(jq);
       uint16_t nclosures = *pc++;
-      uint16_t* retaddr;
+      uint16_t* retaddr = pc + 2 + nclosures*2;
+      stack_ptr retdata = jq->stk_top;
       struct frame* new_frame;
       struct closure cl = make_closure(jq, pc);
-      if (nclosures == 0 && *(pc + 2) == RET && *pc == 1) {
-        // TCO
+      if (nclosures == 0 && *(pc + 2) == RET && *pc >= 1) {
+        /*
+         * TCO: Tail call with no references left to the current frame.
+         *
+         * The *pc >= 1 portion of the conditional checks that the
+         * callee does not close over this frame.  The nclosures == 0
+         * potion checks that there are no arguments (which could close
+         * over this frame).
+         *
+         * TODO: nclosures > 0 can still allow TCO if none of those
+         * closures refers to the current frame.
+         *
+         * TODO: chase JUMP chains to see if they end in RET.
+         *
+         * These additions will make us want to memoize here or in an
+         * optimizer pass preceding interpretation.
+         */
         retaddr = frame_current(jq)->retaddr;
-        stack_ptr retdata = frame_current(jq)->retdata;
+        retdata = frame_current(jq)->retdata;
         frame_pop(jq);
-        new_frame = frame_push(jq, cl, pc + 2, 0);
-        new_frame->retdata = retdata;
-      } else {
-        retaddr = pc + 2 + nclosures*2;
-        new_frame = frame_push(jq, cl, pc + 2, nclosures);
-        new_frame->retdata = jq->stk_top;
       }
+      new_frame = frame_push(jq, cl, pc + 2, nclosures);
+      new_frame->retdata = retdata;
       new_frame->retaddr = retaddr;
       pc = new_frame->bc->code;
       stack_push(jq, input);
