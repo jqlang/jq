@@ -36,7 +36,7 @@ const struct opcode_description* opcode_describe(opcode op) {
 }
 
 
-static int bytecode_operation_length(uint16_t* codeptr) {
+int bytecode_operation_length(uint16_t* codeptr) {
   int length = opcode_describe(*codeptr)->length;
   if (*codeptr == CALL_JQ) {
     length += codeptr[1] * 2;
