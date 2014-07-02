@@ -38,7 +38,7 @@ const struct opcode_description* opcode_describe(opcode op) {
 
 int bytecode_operation_length(uint16_t* codeptr) {
   int length = opcode_describe(*codeptr)->length;
-  if (*codeptr == CALL_JQ) {
+  if (*codeptr == CALL_JQ || *codeptr == TAIL_CALL_JQ) {
     length += codeptr[1] * 2;
   }
   return length;
@@ -98,7 +98,7 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
   printf("%s", op->name);
   if (op->length > 1) {
     uint16_t imm = bc->code[pc++];
-    if (op->op == CALL_JQ) {
+    if (op->op == CALL_JQ || op->op == TAIL_CALL_JQ) {
       for (int i=0; i<imm+1; i++) {
         uint16_t level = bc->code[pc++];
         uint16_t idx = bc->code[pc++];
