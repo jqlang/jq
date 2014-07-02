@@ -815,7 +815,7 @@ sections:
             input: '[{"foo": "bar"}, [{"foo": "baz"}]]'
             output: ['[{"foo": "bar"}, {"foo": "baz"}]']
 
-      - title: "`range(upto), `range(from;upto)`"
+      - title: "`range(upto)`, `range(from;upto)`"
         body: |
 
           The `range` function produces a range of numbers. `range(4;10)`
