@@ -481,7 +481,7 @@ static int expand_call_arglist(struct locfile* locations, block* b) {
   for (inst* curr; (curr = block_take(b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_BINDING) {
       if (!curr->bound_by) {
-        locfile_locate(locations, curr->source, "error: %s is not defined", curr->symbol);
+        locfile_locate(locations, curr->source, "error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
         errors++;
         // don't process this instruction if it's not well-defined
         ret = BLOCK(ret, inst_block(curr));
@@ -546,14 +546,7 @@ static int expand_call_arglist(struct locfile* locations, block* b) {
       }
       }
 
-      if (actual_args != desired_args) {
-        locfile_locate(locations, curr->source, 
-                       "error: %s arguments to %s (expected %d but got %d)",
-                       actual_args > desired_args ? "too many" : "too few",
-                       curr->symbol, desired_args, actual_args);
-        errors++;
-      }
-
+      assert(actual_args == desired_args); // because now handle this above
     }
     ret = BLOCK(ret, prelude, inst_block(curr));
   }
