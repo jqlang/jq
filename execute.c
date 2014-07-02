@@ -796,76 +796,6 @@ void jq_teardown(jq_state **jq) {
   jv_mem_free(old_jq);
 }
 
-static int ret_follows(uint16_t *pc) {
-  if (*pc == RET)
-    return 1;
-  if (*pc++ != JUMP)
-    return 0;
-  return ret_follows(pc + *pc + 1); // FIXME, might be ironic
-}
-
-/*
- * Look for tail calls that can be optimized: tail calls with no
- * references left to the current frame.
- *
- * We're staring at this bytecode layout:
- *
- *   CALL_JQ
- *   <nclosures>
- *   <callee closure>       (2 units)
- *   <nclosures closures>   (2 units each)
- *   <next instruction>
- *
- * A closure is:
- *
- *   <level>    (a relative frame count chased via the current frame's env)
- *   <index>    (an index of a subfunction or closure in that frame)
- *
- * We're looking for:
- *
- * a) the next instruction is a RET or a chain of unconditional JUMPs
- * that ends in a RET, and
- *
- * b) none of the closures -callee included- have level == 0.
- */
-static uint16_t tail_call_analyze(uint16_t *pc) {
-  assert(*pc == CALL_JQ);
-  pc++;
-  // + 1 for the callee closure
-  for (uint16_t nclosures = *pc++ + 1; nclosures > 0; pc++, nclosures--) {
-    if (*pc++ == 0)
-      return CALL_JQ;
-  }
-  if (ret_follows(pc))
-    return TAIL_CALL_JQ;
-  return CALL_JQ;
-}
-
-static struct bytecode *optimize_code(struct bytecode *bc) {
-  uint16_t *pc = bc->code;
-  // FIXME: Don't mutate bc->code...
-  while (pc < bc->code + bc->codelen) {
-    switch (*pc) {
-    case CALL_JQ:
-      *pc = tail_call_analyze(pc);
-      break;
-
-    // Other bytecode optimizations here.  A peephole optimizer would
-    // fit right in.
-    default: break;
-    }
-    pc += bytecode_operation_length(pc);
-  }
-  return bc;
-}
-
-static struct bytecode *optimize(struct bytecode *bc) {
-  for (int i=0; i<bc->nsubfunctions; i++) {
-    bc->subfunctions[i] = optimize(bc->subfunctions[i]);
-  }
-  return optimize_code(bc);
-}
-
 int jq_compile_args(jq_state *jq, const char* str, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   assert(jv_get_kind(args) == JV_KIND_ARRAY);
@@ -903,8 +833,6 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
       fprintf(stderr, "%s\n", jv_string_value(s));
     jv_free(s);
   }
-  if (jq->bc)
-    jq->bc = optimize(jq->bc);
   locfile_free(&locations);
   return jq->bc != NULL;
 }

@@ -74,6 +74,7 @@ static inst* inst_new(opcode op) {
   i->subfn = gen_noop();
   i->arglist = gen_noop();
   i->source = UNKNOWN_LOCATION;
+  i->compiled = 0;
   return i;
 }
 
@@ -474,6 +475,12 @@ static int count_cfunctions(block b) {
 }
 
 
+static int returns_immediately(inst* i) {
+  while (i->op == JUMP)
+    i = i->imm.target;
+  return i->op == RET;
+}
+
 // Expands call instructions into a calling sequence
 static int expand_call_arglist(struct locfile* locations, block* b) {
   int errors = 0;
@@ -498,6 +505,12 @@ static int expand_call_arglist(struct locfile* locations, block* b) {
       case CLOSURE_CREATE: 
       case CLOSURE_PARAM: {
         block callargs = gen_noop();
+        /* A call is a tail call if:
+           a) the next instruction is a RET or a chain of unconditional JUMPs
+              that ends in a RET, and
+           b) none of the closures -callee included- are in the current bytecode block. */
+        int is_tail_call = b->first && returns_immediately(b->first);
+        if (!curr->bound_by->compiled) is_tail_call = 0;
         for (inst* i; (i = block_take(&curr->arglist));) {
           assert(opcode_describe(i->op)->flags & OP_IS_CALL_PSEUDO);
           block b = inst_block(i);
@@ -511,10 +524,12 @@ static int expand_call_arglist(struct locfile* locations, block* b) {
             block_append(&callargs, gen_op_bound(CLOSURE_REF, b));
             break;
           }
+          if (!i->bound_by->compiled) is_tail_call = 0;
           actual_args++;
         }
         curr->imm.intval = actual_args;
         curr->arglist = callargs;
+        if (is_tail_call) curr->op = TAIL_CALL_JQ;
 
         if (curr->bound_by->op == CLOSURE_CREATE) {
           for (inst* i = curr->bound_by->arglist.first; i; i = i->next) {
@@ -559,13 +574,13 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
   int pos = 0;
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
-  errors += expand_call_arglist(locations, &b);
   b = BLOCK(b, gen_op_simple(RET));
+  errors += expand_call_arglist(locations, &b);
   jv localnames = jv_array();
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
     int length = opcode_describe(curr->op)->length;
-    if (curr->op == CALL_JQ) {
+    if (curr->op == CALL_JQ || curr->op == TAIL_CALL_JQ) {
       for (inst* arg = curr->arglist.first; arg; arg = arg->next) {
         length += 2;
       }
@@ -639,7 +654,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
       assert(!curr->arglist.first);
       code[pos++] = (uint16_t)curr->imm.intval;
       code[pos++] = curr->bound_by->imm.intval;
-    } else if (curr->op == CALL_JQ) {
+    } else if (curr->op == CALL_JQ || curr->op == TAIL_CALL_JQ) {
       assert(curr->bound_by->op == CLOSURE_CREATE ||
              curr->bound_by->op == CLOSURE_PARAM);
       code[pos++] = (uint16_t)curr->imm.intval;
