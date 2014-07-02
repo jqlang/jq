@@ -801,7 +801,7 @@ static int ret_follows(uint16_t *pc) {
     return 1;
   if (*pc++ != JUMP)
     return 0;
-  return ret_follows(pc + *pc); // FIXME, might be ironic
+  return ret_follows(pc + *pc + 1); // FIXME, might be ironic
 }
 
 /*
