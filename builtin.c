@@ -958,6 +958,11 @@ static const char* const jq_builtins[] = {
   "     def _range: "
   "         if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; "
   "     if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto));",
+  // generic iterator/generator
+  "def while(cond; update): "
+  "     def _while: "
+  "         if cond then ., (update | _while) else empty end; "
+  "     _while;",
 };
 #undef LIBM_DD
 

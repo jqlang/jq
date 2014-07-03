@@ -1241,6 +1241,21 @@ sections:
             input: '["a","b,c,d","e"]'
             output: ['"a, b,c,d, e"']
 
+      - title: "`while(cond; update)`"
+        body: |
+
+          The `while(cond; update)` function allows you to repeatedly
+          apply an update to `.` until `cond` is false.
+
+          Note that `while(cond; update)` is internally defined as a jq
+          function written in jq, using only functional constructs.  See
+          advanced topics below.
+
+        examples:
+          - program: '[while(.<100; .*2)]'
+            input: '1'
+            output: ['[1,2,4,8,16,32,64]']
+
 
       - title: "`recurse(f)`, `recurse`, `recurse_down`"
         body: |
@@ -1759,6 +1774,13 @@ sections:
                 range(0; 10; 3)'
             input: 'null'
             output: ['0,3,6,9']
+          - program: 'def while(cond; update):
+                    def _while:
+                        if cond then ., (update | _while) else empty end;
+                    _while;
+                [while(.<100; .*2)]'
+            input: '1'
+            output: ['[1,2,4,8,16,32,64]']
 
   - title: Assignment
     body: |
