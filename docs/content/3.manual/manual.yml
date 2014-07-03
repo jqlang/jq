@@ -815,7 +815,7 @@ sections:
             input: '[{"foo": "bar"}, [{"foo": "baz"}]]'
             output: ['[{"foo": "bar"}, {"foo": "baz"}]']
 
-      - title: "`range(upto)`, `range(from;upto)`"
+      - title: "`range(upto)`, `range(from;upto)` `range(from;upto;by)`"
         body: |
 
           The `range` function produces a range of numbers. `range(4;10)`
@@ -823,7 +823,14 @@ sections:
           are produced as separate outputs. Use `[range(4;10)]` to get a range as
           an array.
 
-          Its first argument can be omitted; it defaults to zero.
+          The one argument form generates numbers from 0 to the given
+          number, with an increment of 1.
+
+          The two argument form generates numbers from `from` to `upto`
+          with an increment of 1.
+
+          The three argument form generates numbers `from` to `upto`
+          with an increment of `by`.
 
         examples:
           - program: 'range(2;4)'
@@ -835,6 +842,15 @@ sections:
           - program: '[range(4)]'
             input: 'null'
             output: ['[0,1,2,3]']
+          - program: '[range(0;10;3)]'
+            input: 'null'
+            output: ['[0,3,6,9]']
+          - program: '[range(0;10;-1)]'
+            input: 'null'
+            output: ['[]']
+          - program: '[range(0;-5;-1)]'
+            input: 'null'
+            output: ['[0,-1,-2,-3,-4]']
 
       - title: "`floor`"
         body: |
@@ -1739,7 +1755,7 @@ sections:
                         then ., ((.+by)|_range)
                         else . end;
                     if by == 0 then init else init|_range end |
-                    select(. < upto);
+                    select((by > 0 and . < upto) or (by < 0 and . > upto));
                 range(0; 10; 3)'
             input: 'null'
             output: ['0,3,6,9']

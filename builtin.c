@@ -885,6 +885,7 @@ static block bind_bytecoded_builtins(block b) {
     }
   }
   {
+    // Note that we can now define `range` as a jq-coded function
     block rangevar = gen_op_var_fresh(STOREV, "rangevar");
     block init = BLOCK(gen_op_simple(DUP), gen_call("start", gen_noop()), rangevar);
     block range = BLOCK(init, 
@@ -952,7 +953,11 @@ static const char* const jq_builtins[] = {
   "def test(re; mode): _match_impl(re; mode; true);",
   "def test(val): if val |type == \"string\" then test(val; null) elif val | type == \"array\" and (val | length) > 1 then test(val[0]; val[1]) elif val | type == \"array\" and (val | length > 0) then test(val[0]; null) else error((val | type) + \" not a string or array\") end;",
 //  "def test(re): _match(re; null; 1);",
-  
+  // range/3, with a `by` expression argument
+  "def range(init; upto; by): "
+  "     def _range: "
+  "         if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; "
+  "     if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto));",
 };
 #undef LIBM_DD
 
