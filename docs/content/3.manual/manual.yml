@@ -256,6 +256,11 @@ sections:
           the array), or omitted (in which case it refers to the start
           or end of the array).
 
+          The `.[2]` syntax can be used to return the element at the
+          given index.  Negative indices are allowed, with -1 referring
+          to the last element, -2 referring to the next to last element,
+          and so on.
+
           The `?` "operator" can also be used with the slice operator,
           as in `.[10:15]?`, which outputs values where the inputs are
           slice-able.
@@ -284,6 +289,10 @@ sections:
           - program: '.[-2:]'
             input: '["a","b","c","d","e"]'
             output: ['["d", "e"]']
+
+          - program: '.[-2]'
+            input: '[1,2,3]'
+            output: ['2']
 
       - title: "`.[]`"
         body: |
