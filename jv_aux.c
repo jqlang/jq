@@ -57,7 +57,10 @@ jv jv_get(jv t, jv k) {
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
     if(jv_is_integer(k)){
-      v = jv_array_get(t, (int)jv_number_value(k));
+      int idx = (int)jv_number_value(k);
+      if (idx < 0)
+        idx += jv_array_length(jv_copy(t));
+      v = jv_array_get(t, idx);
       if (!jv_is_valid(v)) {
         jv_free(v);
         v = jv_null();

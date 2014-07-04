@@ -285,6 +285,10 @@ sections:
             input: '["a","b","c","d","e"]'
             output: ['["d", "e"]']
 
+          - program: '.[-2]'
+            input: '[1,2,3]'
+            output: ['2']
+
       - title: "`.[]`"
         body: |
 
