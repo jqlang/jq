@@ -1777,6 +1777,42 @@ sections:
             input: '[10,2,5,3]'
             output: ['20']
 
+      - title: `limit(n; exp)`
+        body: |
+
+          The `limit` function extracts up to `n` outputs from `exp`.
+
+        examples:
+          - program: '[limit(3;.[])]'
+            input: '[0,1,2,3,4,5,6,7,8,9]'
+            output: ['[0,1,2]']
+
+      - title: `foreach`
+        body: |
+
+          The `foreach` syntax is similar to `reduce`, but intended to
+          allow the construction of `limit` and reducers that produce
+          intermediate results (see example).
+
+          The form is `foreach EXP as $var (INIT; UPDATE; EXTRACT)`.
+          Like `reduce`, `INIT` is evaluated once to produce a state
+          value, then each output of `EXP` is bound to `$var`, `UPDATE`
+          is evaluated for each output of `EXP` with the current state
+          and with `$var` visible.  Each value output by `UPDATE`
+          replaces the previous state.  Finally, `EXTRACT` is evaluated
+          for each new state to extract an output of `foreach`.
+
+          This is mostly useful only for constructing `reduce`- and
+          `limit`-like functions.
+
+        examples:
+          - program: '[foreach .[] as $item
+                        ([[],[]];
+                        if $item == null then [[],.[0]] else [(.[0] + [$item]),[]] end;
+                        if $item == null then .[1] else empty end)]'
+            input: '[1,2,3,4,null,"a","b",null]'
+            output: ['[[1,2,3,4],["a","b"]]']
+
       - title: Recursion
         body: |
 
