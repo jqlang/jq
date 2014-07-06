@@ -670,6 +670,14 @@ def inc(x): x |= .+1; inc(.[].a)
 [0,1,2,3]
 ["foo","Cannot index number with string \"a\"",3]
 
+[.[]|(.a, .a)?]
+[null,true,{"a":1}]
+[null,null,1,1]
+
+[[.[]|[.a,.a]]?]
+[null,true,{"a":1}]
+[]
+
 # string operations
 [.[]|startswith("foo")]
 ["fo", "foo", "barfoo", "foobar", "barfoob"]

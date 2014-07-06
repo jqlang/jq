@@ -1584,6 +1584,16 @@ sections:
             input: 'true'
             output: ['"some exception"']
 
+      - title: `?` operator
+        body: |
+
+          The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
+
+        examples:
+          - program: '[.[]|(.a)?]'
+            input: '[{}, true, {"a":1}'
+            output: ['[null, 1]']
+
   - title: Advanced features
     body: |
       Variables are an absolute necessity in most programming languages, but

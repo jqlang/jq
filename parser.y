@@ -255,6 +255,10 @@ Term "as" '$' IDENT '|' Exp {
   $$ = $2;
 } |
 
+Exp '?' {
+  $$ = gen_try($1, gen_op_simple(BACKTRACK));
+} |
+
 
 Exp '=' Exp {
   $$ = gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3)));
