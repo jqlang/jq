@@ -23,6 +23,7 @@ struct jq_state {
 
   jq_err_cb err_cb;
   void *err_cb_data;
+  jv error;
 
   struct stack stk;
   stack_ptr curr_frame;
@@ -241,6 +242,8 @@ static void jq_reset(jq_state *jq) {
   assert(jq->fork_top == 0);
   assert(jq->curr_frame == 0);
   stack_reset(&jq->stk);
+  jv_free(jq->error);
+  jq->error = jv_null();
 
   if (jv_get_kind(jq->path) != JV_KIND_INVALID)
     jv_free(jq->path);
@@ -250,21 +253,12 @@ static void jq_reset(jq_state *jq) {
 
 static void print_error(jq_state *jq, jv value) {
   assert(!jv_is_valid(value));
-  jv msg = jv_invalid_get_msg(value);
-  jv msg2;
-  if (jv_get_kind(msg) == JV_KIND_STRING)
-    msg2 = jv_string_fmt("jq: error: %s", jv_string_value(msg));
-  else
-    msg2 = jv_string_fmt("jq: error: <unknown>");
-  jv_free(msg);
-
-  if (jq->err_cb)
-    jq->err_cb(jq->err_cb_data, msg2);
-  else if (jv_get_kind(msg2) == JV_KIND_STRING)
-    fprintf(stderr, "%s\n", jv_string_value(msg2));
-  else
-    fprintf(stderr, "jq: error: %s\n", strerror(ENOMEM));
-  jv_free(msg2);
+  if (jq->err_cb) {
+    // callback must jv_free() its jv argument
+    jq->err_cb(jq->err_cb_data, jv_invalid_get_msg(jv_copy(value)));
+  }
+  jv_free(jq->error);
+  jq->error = value;
 }
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
@@ -278,6 +272,7 @@ jv jq_next(jq_state *jq) {
 
   int backtracking = !jq->initial_execution;
   jq->initial_execution = 0;
+  assert(jv_get_kind(jq->error) == JV_KIND_NULL);
   while (1) {
     uint16_t opcode = *pc;
 
@@ -312,6 +307,8 @@ jv jq_next(jq_state *jq) {
     if (backtracking) {
       opcode = ON_BACKTRACK(opcode);
       backtracking = 0;
+      if (!jv_is_valid(jq->error) && opcode != ON_BACKTRACK(FORK_OPT))
+        goto do_backtrack;
     }
     pc++;
 
@@ -606,18 +603,36 @@ jv jq_next(jq_state *jq) {
     case BACKTRACK: {
       pc = stack_restore(jq);
       if (!pc) {
+        if (!jv_is_valid(jq->error)) {
+          jv error = jq->error;
+          jq->error = jv_null();
+          return error;
+        }
         return jv_invalid();
       }
       backtracking = 1;
       break;
     }
 
+    case FORK_OPT:
     case FORK: {
       stack_save(jq, pc - 1, stack_get_pos(jq));
       pc++; // skip offset this time
       break;
     }
 
+    case ON_BACKTRACK(FORK_OPT): {
+      if (jv_is_valid(jq->error)) {
+        // `try EXP ...` backtracked here (no value, `empty`), so we backtrack more
+        jv_free(stack_pop(jq));
+        goto do_backtrack;
+      }
+      // `try EXP ...` exception caught in EXP
+      jv_free(stack_pop(jq)); // free the input
+      stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
+      jq->error = jv_null();
+      /* fallthru */
+    }
     case ON_BACKTRACK(FORK): {
       uint16_t offset = *pc++;
       pc += offset;
@@ -644,6 +659,8 @@ jv jq_next(jq_state *jq) {
       case 3: top = ((func_3)function->fptr)(in[0], in[1], in[2]); break;
       case 4: top = ((func_4)function->fptr)(in[0], in[1], in[2], in[3]); break;
       case 5: top = ((func_5)function->fptr)(in[0], in[1], in[2], in[3], in[4]); break;
+      // FIXME: a) up to 7 arguments (input + 6), b) should assert
+      // because the compiler should not generate this error.
       default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
       }
       
@@ -739,6 +756,7 @@ jq_state *jq_init(void) {
   jq->stk_top = 0;
   jq->fork_top = 0;
   jq->curr_frame = 0;
+  jq->error = jv_null();
 
   jq->err_cb = NULL;
   jq->err_cb_data = NULL;

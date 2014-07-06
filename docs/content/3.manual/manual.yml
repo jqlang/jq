@@ -1453,6 +1453,7 @@ sections:
           - program: '.[] == 1'
             input: '[1, 1.0, "1", "banana"]'
             output: ['true', 'true', 'false', 'false']
+
       - title: if-then-else
         body: |
 
@@ -1560,6 +1561,28 @@ sections:
           - program: '.foo // 42'
             input: '{}'
             output: [42]
+
+      - title: try-catch
+        body: |
+
+          Errors can be caught by using `try EXP catch EXP`.  The first
+          expression is executed, and if it fails then the second is
+          executed with the error message.  The output of the handler,
+          if any, is output as if it had been the output of the
+          expression to try.
+
+          The `try EXP` form uses `empty` as the exception handler.
+
+        examples:
+          - program: 'try .a catch ". is not an object"'
+            input: 'true'
+            output: [". is not an object"]
+          - program: '[.[]|try .a]'
+            input: '[{}, true, {"a":1}'
+            output: ['[null, 1]']
+          - program: 'try error("some exception") catch .'
+            input: 'true'
+            output: ['"some exception"']
 
   - title: Advanced features
     body: |

@@ -66,6 +66,8 @@ struct lexer_param;
 %token END "end"
 %token AND "and"
 %token OR "or"
+%token TRY "try"
+%token CATCH "catch"
 %token SETPIPE "|="
 %token SETPLUS "+="
 %token SETMINUS "-="
@@ -239,6 +241,20 @@ Term "as" '$' IDENT '|' Exp {
   FAIL(@$, "Possibly unterminated 'if' statement");
   $$ = $2;
 } |
+
+"try" Exp "catch" Exp {
+  //$$ = BLOCK(gen_op_target(FORK_OPT, $2), $2, $4);
+  $$ = gen_try($2, $4);
+} |
+"try" Exp {
+  //$$ = BLOCK(gen_op_target(FORK_OPT, $2), $2, gen_op_simple(BACKTRACK));
+  $$ = gen_try($2, gen_op_simple(BACKTRACK));
+} |
+"try" Exp "catch" error {
+  FAIL(@$, "Possibly unterminated 'try' statement");
+  $$ = $2;
+} |
+
 
 Exp '=' Exp {
   $$ = gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3)));

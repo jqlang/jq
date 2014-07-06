@@ -124,6 +124,12 @@ static int process(jq_state *jq, jv value, int flags) {
     if (options & UNBUFFERED_OUTPUT)
       fflush(stdout);
   }
+  if (jv_invalid_has_msg(jv_copy(result))) {
+    // Uncaught jq exception
+    jv msg = jv_invalid_get_msg(jv_copy(result));
+    fprintf(stderr, "jq: error: %s\n", jv_string_value(msg));
+    jv_free(msg);
+  }
   jv_free(result);
   return ret;
 }

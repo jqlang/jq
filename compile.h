@@ -40,6 +40,7 @@ block gen_or(block a, block b);
 block gen_var_binding(block var, const char* name, block body);
 
 block gen_cond(block cond, block iftrue, block iffalse);
+block gen_try(block exp, block handler);
 
 block gen_cbinding(const struct cfunction* functions, int nfunctions, block b);
 

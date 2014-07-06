@@ -665,6 +665,11 @@ def inc(x): x |= .+1; inc(.[].a)
 {}
 [true, true, false]
 
+# Try/catch and general `?` operator
+[.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]
+[0,1,2,3]
+["foo","Cannot index number with string \"a\"",3]
+
 # string operations
 [.[]|startswith("foo")]
 ["fo", "foo", "barfoo", "foobar", "barfoob"]

@@ -443,6 +443,27 @@ block gen_cond(block cond, block iftrue, block iffalse) {
                               BLOCK(gen_op_simple(POP), iffalse)));
 }
 
+block gen_try(block exp, block handler) {
+  /*
+   * Produce:
+   *  FORK_OPT <address of handler>
+   *  <exp>
+   *  JUMP <end of handler>
+   *  <handler>
+   *
+   * The handler will only execute if we backtrack to the FORK_OPT with
+   * an error (exception).  If <exp> produces no value then FORK_OPT
+   * will backtrack (propagate the `empty`, as it were.  If <exp>
+   * produces a value then we'll execute whatever bytecode follows this
+   * sequence.
+   */
+  if (!handler.first && !handler.last)
+    // A hack to deal with `.` as the handler; we could use a real NOOP here
+    handler = BLOCK(gen_op_simple(DUP), gen_op_simple(POP), handler);
+  exp = BLOCK(exp, gen_op_target(JUMP, handler));
+  return BLOCK(gen_op_target(FORK_OPT, exp), exp, handler);
+}
+
 block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block code) {
   for (int cfunc=0; cfunc<ncfunctions; cfunc++) {
     inst* i = inst_new(CLOSURE_CREATE_C);
