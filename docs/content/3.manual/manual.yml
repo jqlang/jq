@@ -1777,6 +1777,28 @@ sections:
             input: '[10,2,5,3]'
             output: ['20']
 
+      - title: Foreach
+        body: |
+
+          The `foreach` syntax is similar to `reduce`, but intended to
+          allow the construction of `limit` (see below).
+
+          The form is `foreach EXP as $var (INIT; UPDATE; EXTRACT)`.
+          Like `reduce`, `INIT` is evaluated once to produce a state
+          value, then each output of `EXP` is bound to `$var`, `UPDATE`
+          is evaluated for each output of `EXP` with the current state
+          and with `$var` visible.  Each value output by `UPDATE`
+          replaces the previous state.  Finally, `EXTRACT` is evaluated
+          for each new state to extract an output of `foreach`.
+
+          This is mostly useful only for constructing `reduce`- and
+          `limit`-like functions.
+
+      - title: `limit(n; exp)`
+        body: |
+
+          The `limit` function extracts up to `n` outputs from `exp`.
+
       - title: Recursion
         body: |
 

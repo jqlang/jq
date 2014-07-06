@@ -63,6 +63,7 @@ struct lexer_param;
 %token ELSE "else"
 %token ELSE_IF "elif"
 %token REDUCE "reduce"
+%token FOREACH "foreach"
 %token END "end"
 %token AND "and"
 %token OR "or"
@@ -231,6 +232,11 @@ Term "as" '$' IDENT '|' Exp {
 
 "reduce" Term "as" '$' IDENT '(' Exp ';' Exp ')' {
   $$ = gen_reduce(jv_string_value($5), $2, $7, $9);
+  jv_free($5);
+} |
+
+"foreach" Term "as" '$' IDENT '(' Exp ';' Exp ';' Exp ')' {
+  $$ = gen_foreach(jv_string_value($5), $2, $7, $9, $11);
   jv_free($5);
 } |
 
