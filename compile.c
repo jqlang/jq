@@ -374,6 +374,41 @@ block gen_reduce(const char* varname, block source, block init, block body) {
                gen_op_bound(LOADVN, res_var));
 }
 
+block gen_foreach(const char* varname, block source, block init, block update, block extract) {
+  block output = gen_op_targetlater(JUMP);
+  block state_var = gen_op_var_fresh(STOREV, "foreach");
+  block loop = BLOCK(gen_op_simple(DUP),
+                     // get a value from the source expression:
+                     source,
+                     // bind the $varname to that value for all the code in
+                     // this block_bind() to see:
+                     block_bind(gen_op_unbound(STOREV, varname),
+                                // load the loop state variable
+                                BLOCK(gen_op_bound(LOADVN, state_var),
+                                      // generate updated state
+                                      update,
+                                      // save the updated state for value extraction
+                                      gen_op_simple(DUP),
+                                      // save new state
+                                      gen_op_bound(STOREV, state_var),
+                                      // extract an output...
+                                      extract,
+                                      // ...and output it
+                                      output),
+                                OP_HAS_VARIABLE));
+  block foreach = BLOCK(gen_op_simple(DUP),
+                        init,
+                        state_var,
+                        gen_op_target(FORK, loop),
+                        loop,
+                        // At this point `foreach`'s input will be on
+                        // top of the stack, and we don't want to output
+                        // it, so we backtrack.
+                        gen_op_simple(BACKTRACK));
+  inst_set_target(output, foreach);
+  return foreach;
+}
+
 block gen_definedor(block a, block b) {
   // var found := false
   block found_var = gen_op_var_fresh(STOREV, "found");

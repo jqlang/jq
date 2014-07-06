@@ -963,6 +963,7 @@ static const char* const jq_builtins[] = {
   "     def _while: "
   "         if cond then ., (update | _while) else empty end; "
   "     _while;",
+  "def limit(n; exp): if n < 0 then exp else foreach exp as $item ([n, null]; if .[0] < 1 then empty else [.[0] -1, $item] end; .[1]) end;",
 };
 #undef LIBM_DD
 
