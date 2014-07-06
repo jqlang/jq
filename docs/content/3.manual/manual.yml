@@ -691,6 +691,13 @@ sections:
             input: 'null'
             output: ['[1,2,3]']
 
+      - title: "`error(message)`"
+        body: |
+
+          Produces an error, just like `.a` applied to values other than
+          null and objects would, but with the given message as the
+          error's value.
+
       - title: "`map(x)`"
         body: |
 
