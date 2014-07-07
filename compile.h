@@ -48,6 +48,8 @@ block gen_cbinding(const struct cfunction* functions, int nfunctions, block b);
 void block_append(block* b, block b2);
 block block_join(block a, block b);
 int block_has_only_binders(block, int bindflags);
+int block_has_main(block);
+int block_is_funcdef(block b);
 block block_bind(block binder, block body, int bindflags);
 block block_bind_referenced(block binder, block body, int bindflags);
 

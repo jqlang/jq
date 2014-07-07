@@ -441,6 +441,16 @@ block gen_definedor(block a, block b) {
                tail);
 }
 
+int block_has_main(block top) {
+  return top.first && top.first->op == TOP;
+}
+
+int block_is_funcdef(block b) {
+  if (b.first != NULL && b.first->op == CLOSURE_CREATE)
+    return 1;
+  return 0;
+}
+
 block gen_condbranch(block iftrue, block iffalse) {
   iftrue = BLOCK(iftrue, gen_op_target(JUMP, iffalse));
   return BLOCK(gen_op_target(JUMP_F, iftrue), iftrue, iffalse);
