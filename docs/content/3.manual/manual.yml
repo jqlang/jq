@@ -766,7 +766,7 @@ sections:
             input: '[]'
             output: ["null"]
 
-      - title: "`any`, `any(condition), `any(generator; condition)`"
+      - title: "`any`, `any(condition)`, `any(generator; condition)`"
         body: |
 
           The filter `any` takes as input an array of boolean values,
@@ -792,7 +792,7 @@ sections:
             input: '[]'
             output: ["false"]
 
-      - title: "`all`, `all(condition), `all(generator; condition)`"
+      - title: "`all`, `all(condition)`, `all(generator; condition)`"
         body: |
 
           The filter `all` takes as input an array of boolean values,
