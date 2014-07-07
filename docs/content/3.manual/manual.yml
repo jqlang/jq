@@ -1842,7 +1842,10 @@ sections:
           for each new state to extract an output of `foreach`.
 
           This is mostly useful only for constructing `reduce`- and
-          `limit`-like functions.
+          `limit`-like functions.  But it is much more general, as it
+          allows for partial reductions (see the example below), as well
+          as breaking out of the "loop" with `empty`, or even `error(x)`
+          if there's a try/catch around the foreach.
 
         examples:
           - program: '[foreach .[] as $item
