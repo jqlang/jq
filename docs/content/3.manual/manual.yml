@@ -766,7 +766,7 @@ sections:
             input: '[]'
             output: ["null"]
 
-      - title: "`any`"
+      - title: "`any`, `any(condition), `any(generator; condition)`"
         body: |
 
           The filter `any` takes as input an array of boolean values,
@@ -774,6 +774,12 @@ sections:
           the array is `true`.
 
           If the input is an empty array, `any` returns `false`.
+
+          The `any(condition)` form applies the given condition to the
+          elements of the input array.
+
+          The `any(generator; condition)` form applies the given
+          condition to all the outputs of the given generator.
 
         examples:
           - program: any
@@ -786,12 +792,18 @@ sections:
             input: '[]'
             output: ["false"]
 
-      - title: "`all`"
+      - title: "`all`, `all(condition), `all(generator; condition)`"
         body: |
 
           The filter `all` takes as input an array of boolean values,
           and produces `true` as output if all of the the elements of
           the array are `true`.
+
+          The `all(condition)` form applies the given condition to the
+          elements of the input array.
+
+          The `all(generator; condition)` form applies the given
+          condition to all the outputs of the given generator.
 
           If the input is an empty array, `all` returns `true`.
 
