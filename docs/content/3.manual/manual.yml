@@ -1921,13 +1921,18 @@ sections:
           quite intentional, and ensures that anything a jq program
           can produce can be represented in JSON.
 
+          Note that the left-hand side of '=' refers to a value in `.`.
+          Thus `$var.foo = 1` won't work as expected; use `$var | .foo =
+          1` instead.
+
       - title: "`|=`"
         body: |
           As well as the assignment operator '=', jq provides the "update"
           operator '|=', which takes a filter on the right-hand side and
-          works out the new value for the property being assigned to by running
-          the old value through this expression. For instance, .foo |= .+1 will
-          build an object with the "foo" field set to the input's "foo" plus 1.
+          works out the new value for the property of `.` being assigned
+          to by running the old value through this expression. For
+          instance, .foo |= .+1 will build an object with the "foo"
+          field set to the input's "foo" plus 1.
 
           This example should show the difference between '=' and '|=':
 
@@ -1939,6 +1944,10 @@ sections:
           The former will set the "a" field of the input to the "b" field of the
           input, and produce the output {"a": 20}. The latter will set the "a"
           field of the input to the "a" field's "b" field, producing {"a": 10}.
+
+          Note that the left-hand side of '|=' refers to a value in `.`.
+          Thus `$var.foo |= . + 1` won't work as expected; use `$var |
+          .foo |= . + 1` instead.
 
       - title: "`+=`, `-=`, `*=`, `/=`, `%=`, `//=`"
         body: |
