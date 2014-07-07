@@ -902,6 +902,7 @@ static block bind_bytecoded_builtins(block b) {
 #define LIBM_DD(name) "def " #name ": _" #name ";",
 
 static const char* const jq_builtins[] = {
+  "def break: error(\"break\");",
   "def map(f): [.[] | f];",
   "def select(f): if f then . else empty end;",
   "def sort(f): _sort_by_impl(map([f]));",

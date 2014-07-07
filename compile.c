@@ -406,7 +406,10 @@ block gen_foreach(const char* varname, block source, block init, block update, b
                         // it, so we backtrack.
                         gen_op_simple(BACKTRACK));
   inst_set_target(output, foreach);
-  return foreach;
+  block handler = gen_cond(gen_call("_equal", BLOCK(gen_lambda(gen_const(jv_string("break"))), gen_lambda(gen_noop()))),
+                           gen_op_simple(BACKTRACK),
+                           gen_call("break", gen_noop()));
+  return gen_try(foreach, handler);
 }
 
 block gen_definedor(block a, block b) {
