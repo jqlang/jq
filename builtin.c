@@ -936,9 +936,19 @@ static const char* const jq_builtins[] = {
   "def any: reduce .[] as $i (false; . or $i);",
   "def all: reduce .[] as $i (true; . and $i);",
   "def any(condition): reduce .[] as $i (false; . or ($i|condition));",
+  "def any(generator; condition):"
+  "         [false,"
+  "         foreach generator as $i"
+  "                 (false;"
+  "                  if . then break elif $i | condition then true else . end;"
+  "                  if . then . else empty end)] | any;",
   "def all(condition): reduce .[] as $i (true; . and ($i|condition));",
-  "def any(generator; condition): reduce generator as $i (false; . or ($i|condition));",
-  "def all(generator; condition): reduce generator as $i (true; . and ($i|condition));",
+  "def all(generator; condition): "
+  "         [true,"
+  "         foreach generator as $i"
+  "                 (true;"
+  "                  if .|not then break elif $i | condition then . else false end;"
+  "                  if .|not then . else empty end)]|all;",
   "def arrays: select(type == \"array\");",
   "def objects: select(type == \"object\");",
   "def iterables: arrays, objects;",

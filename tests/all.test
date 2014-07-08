@@ -502,6 +502,22 @@ reduce .[] as $x (0; . + $x)
 [1,2,4]
 7
 
+. as $dot|any($dot[];not)
+[1,2,3,4,true,false,1,2,3,4,5]
+true
+
+. as $dot|any($dot[];not)
+[1,2,3,4,true]
+false
+
+. as $dot|all($dot[];.)
+[1,2,3,4,true,false,1,2,3,4,5]
+false
+
+. as $dot|all($dot[];.)
+[1,2,3,4,true]
+true
+
 #
 # Paths
 #
