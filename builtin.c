@@ -781,7 +781,6 @@ static jv f_type(jv input) {
 
 static jv f_error(jv input, jv msg) {
   jv_free(input);
-  msg = f_tostring(msg);
   return jv_invalid_with_msg(msg);
 }
 
