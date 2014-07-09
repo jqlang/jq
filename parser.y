@@ -243,6 +243,11 @@ Term "as" '$' IDENT '|' Exp {
   jv_free($5);
 } |
 
+"foreach" Term "as" '$' IDENT '(' Exp ';' Exp ')' {
+  $$ = gen_foreach(jv_string_value($5), $2, $7, $9, gen_noop());
+  jv_free($5);
+} |
+
 "if" Exp "then" Exp ElseBody {
   $$ = gen_cond($2, $4, $5);
 } |
