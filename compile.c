@@ -8,6 +8,7 @@
 #include "bytecode.h"
 #include "locfile.h"
 #include "jv_alloc.h"
+#include "linker.h"
 
 /*
   The intermediate representation for jq filters is as a sequence of
@@ -34,6 +35,7 @@ struct inst {
     const struct cfunction* cfunc;
   } imm;
 
+  struct locfile* locfile;
   location source;
 
   // Binding
@@ -74,6 +76,7 @@ static inst* inst_new(opcode op) {
   i->subfn = gen_noop();
   i->arglist = gen_noop();
   i->source = UNKNOWN_LOCATION;
+  i->locfile = 0;
   return i;
 }
 
@@ -81,6 +84,8 @@ static void inst_free(struct inst* i) {
   jv_mem_free(i->symbol);
   block_free(i->subfn);
   block_free(i->arglist);
+  if (i->locfile)
+    locfile_free(i->locfile);
   if (opcode_describe(i->op)->flags & OP_HAS_CONSTANT) {
     jv_free(i->imm.constant);
   }
@@ -110,11 +115,12 @@ static inst* block_take(block* b) {
   return i;
 }
 
-block gen_location(location loc, block b) {
+block gen_location(location loc, struct locfile* l, block b) {
   for (inst* i = b.first; i; i = i->next) {
     if (i->source.start == UNKNOWN_LOCATION.start &&
         i->source.end == UNKNOWN_LOCATION.end) {
       i->source = loc;
+      i->locfile = locfile_retain(l);
     }
   }
   return b;
@@ -203,6 +209,16 @@ block block_join(block a, block b) {
   block c = a;
   block_append(&c, b);
   return c;
+}
+
+int block_has_only_binders_and_imports(block binders, int bindflags) {
+  bindflags |= OP_HAS_BINDING;
+  for (inst* curr = binders.first; curr; curr = curr->next) {
+    if ((opcode_describe(curr->op)->flags & bindflags) != bindflags && curr->op != DEPS) {
+      return 0;
+    }
+  }
+  return 1;
 }
 
 int block_has_only_binders(block binders, int bindflags) {
@@ -303,6 +319,28 @@ block block_bind(block binder, block body, int bindflags) {
   return block_join(binder, body);
 }
 
+block block_bind_library(block binder, block body, int bindflags, const char* libname) {
+  assert(block_has_only_binders(binder, bindflags));
+  bindflags |= OP_HAS_BINDING;
+  int nrefs = 0;
+  int matchlen = strlen(libname)+2;
+  char* matchname = malloc(matchlen+1);
+  strcpy(matchname,libname);
+  strcpy(matchname+matchlen-2,"::");
+  for (inst *curr = binder.first; curr; curr = curr->next) {
+    char* cname = curr->symbol;
+    char* tname = malloc(strlen(curr->symbol)+matchlen+1);
+    strcpy(tname, matchname);
+    strcpy(tname+matchlen,cname);
+    curr->symbol = tname;
+    nrefs += block_bind_subblock(inst_block(curr), body, bindflags);
+    curr->symbol = cname;
+    free(tname);
+  }
+  free(matchname);
+  return body; // We don't return a join because we don't want those sticking around...
+}
+
 // Bind binder to body and throw away any defs in binder not referenced
 // (directly or indirectly) from body.
 block block_bind_referenced(block binder, block body, int bindflags) {
@@ -318,6 +356,7 @@ block block_bind_referenced(block binder, block body, int bindflags) {
       // Check if this binder is referenced from any of the ones we
       // already know are referenced by body.
       nrefs += block_count_refs(b, refd);
+      nrefs += block_count_refs(b, body);
       if (nrefs) {
         refd = BLOCK(refd, b);
         kept++;
@@ -333,6 +372,64 @@ block block_bind_referenced(block binder, block body, int bindflags) {
   }
   block_free(unrefd);
   return block_join(refd, body);
+}
+
+block block_drop_unreferenced(block body) {
+  inst* curr;
+  block refd = gen_noop();
+  block unrefd = gen_noop();
+  int drop;
+  do {
+    drop = 0;
+    while((curr = block_take(&body)) && curr->op != TOP) {
+      block b = inst_block(curr);
+      if (block_count_refs(b,refd) + block_count_refs(b,body) == 0) {
+        unrefd = BLOCK(unrefd, b);
+        drop++;
+      } else {
+        refd = BLOCK(refd, b);
+      }
+    }
+    if (curr && curr->op == TOP) {
+      body = BLOCK(inst_block(curr),body);
+    }
+    body = BLOCK(refd, body);
+    refd = gen_noop();
+  } while (drop != 0);
+  block_free(unrefd);
+  return body;
+}
+
+jv block_take_imports(block* body) {
+  jv imports = jv_array();
+  
+  inst* top = NULL;
+  if (body->first->op == TOP) {
+    top = block_take(body);
+  }
+  while (body->first && body->first->op == DEPS) {
+    inst* dep = block_take(body);
+    jv opts = jv_copy(dep->imm.constant);
+    opts = jv_object_set(opts,jv_string("name"),jv_string(dep->symbol));
+    imports = jv_array_append(imports, opts);
+    inst_free(dep);
+  }
+  if (top) {
+    *body = block_join(inst_block(top),*body);
+  }
+  return imports;
+}
+
+block gen_import(const char* name, const char* as, const char* search) {
+  inst* i = inst_new(DEPS);
+  i->symbol = strdup(name);
+  jv opts = jv_object();
+  if (as)
+	  opts = jv_object_set(opts, jv_string("as"), jv_string(as));
+  if (search)
+	  opts = jv_object_set(opts, jv_string("search"), jv_string(search));
+  i->imm.constant = opts;
+  return inst_block(i);
 }
 
 block gen_function(const char* name, block formals, block body) {
@@ -577,13 +674,13 @@ static int count_cfunctions(block b) {
 
 
 // Expands call instructions into a calling sequence
-static int expand_call_arglist(struct locfile* locations, block* b) {
+static int expand_call_arglist(block* b) {
   int errors = 0;
   block ret = gen_noop();
   for (inst* curr; (curr = block_take(b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_BINDING) {
       if (!curr->bound_by) {
-        locfile_locate(locations, curr->source, "error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
+        locfile_locate(curr->locfile, curr->source, "error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
         errors++;
         // don't process this instruction if it's not well-defined
         ret = BLOCK(ret, inst_block(curr));
@@ -634,7 +731,7 @@ static int expand_call_arglist(struct locfile* locations, block* b) {
           i->subfn = gen_noop();
           inst_free(i);
           // arguments should be pushed in reverse order, prepend them to prelude
-          errors += expand_call_arglist(locations, &body);
+          errors += expand_call_arglist(&body);
           prelude = BLOCK(gen_subexp(body), prelude);
           actual_args++;
         }
@@ -656,12 +753,12 @@ static int expand_call_arglist(struct locfile* locations, block* b) {
   return errors;
 }
 
-static int compile(struct locfile* locations, struct bytecode* bc, block b) {
+static int compile(struct bytecode* bc, block b) {
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
-  errors += expand_call_arglist(locations, &b);
+  errors += expand_call_arglist(&b);
   b = BLOCK(b, gen_op_simple(RET));
   jv localnames = jv_array();
   for (inst* curr = b.first; curr; curr = curr->next) {
@@ -717,7 +814,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
-        errors += compile(locations, subfn, curr->subfn);
+        errors += compile(subfn, curr->subfn);
         curr->subfn = gen_noop();
       }
     }
@@ -776,7 +873,7 @@ static int compile(struct locfile* locations, struct bytecode* bc, block b) {
   return errors;
 }
 
-int block_compile(block b, struct locfile* locations, struct bytecode** out) {
+int block_compile(block b, struct bytecode** out) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
@@ -786,7 +883,7 @@ int block_compile(block b, struct locfile* locations, struct bytecode** out) {
   bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
-  int nerrors = compile(locations, bc, b);
+  int nerrors = compile(bc, b);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {
     bytecode_free(bc);

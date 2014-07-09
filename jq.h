@@ -20,4 +20,10 @@ void jq_start(jq_state *, jv value, int flags);
 jv jq_next(jq_state *);
 void jq_teardown(jq_state **);
 
+void jq_set_lib_origin(jq_state *, jv origin);
+jv jq_get_lib_origin(jq_state *);
+void jq_set_lib_dirs(jq_state *, jv dirs);
+jv jq_get_lib_dirs(jq_state *);
+void jq_set_attr(jq_state *, jv attr, jv val);
+jv jq_get_attr(jq_state *, jv attr);
 #endif /* !_JQ_H_ */

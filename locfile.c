@@ -9,11 +9,14 @@
 #include "locfile.h"
 
 
-void locfile_init(struct locfile* l, jq_state *jq, const char* data, int length) {
+struct locfile* locfile_init(jq_state *jq, const char* data, int length) {
+  struct locfile* l = jv_mem_alloc(sizeof(struct locfile));
   l->jq = jq;
-  l->data = data;
+  l->data = jv_mem_alloc(length);
+  memcpy((char*)l->data,data,length);
   l->length = length;
   l->nlines = 1;
+  l->refct = 1;
   for (int i=0; i<length; i++) {
     if (data[i] == '\n') l->nlines++;
   }
@@ -27,10 +30,19 @@ void locfile_init(struct locfile* l, jq_state *jq, const char* data, int length)
     }
   }
   l->linemap[l->nlines] = length+1;   // virtual last \n
+  return l;
 }
 
+struct locfile* locfile_retain(struct locfile* l) {
+  l->refct++;
+  return l;
+}
 void locfile_free(struct locfile* l) {
-  jv_mem_free(l->linemap);
+  if (--(l->refct) == 0) {
+    jv_mem_free(l->linemap);
+    jv_mem_free((char*)l->data);
+    jv_mem_free(l);
+  }
 }
 
 static int locfile_get_line(struct locfile* l, int pos) {

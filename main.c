@@ -1,9 +1,10 @@
 #include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
 #include "compile.h"
 #include "jv.h"
@@ -197,6 +198,7 @@ int main(int argc, char* argv[]) {
   int jq_flags = 0;
   size_t short_opts = 0;
   jv program_arguments = jv_array();
+  jv lib_search_paths = jv_array();
   for (int i=1; i<argc; i++, short_opts = 0) {
     if (further_args_are_files) {
       input_filenames[ninput_files++] = argv[i];
@@ -210,6 +212,19 @@ int main(int argc, char* argv[]) {
         program = argv[i];
       }
     } else {
+      if (argv[i][1] == 'L') {
+        if (argv[i][2] != 0) { // -Lname (faster check than strlen)
+            lib_search_paths = jv_array_append(lib_search_paths, jv_string(argv[i]+2));
+        } else if (i >= argc - 1) {
+          fprintf(stderr, "-L takes a parameter: (e.g. -L /search/path or -L/search/path)\n");
+          die();
+        } else {
+          lib_search_paths = jv_array_append(lib_search_paths, jv_string(argv[i+1]));
+          i++;
+        }
+        continue;
+      }
+
       if (isoption(argv[i], 's', "slurp", &short_opts)) {
         options |= SLURP;
         if (!short_opts) continue;
@@ -318,6 +333,7 @@ int main(int argc, char* argv[]) {
         ret = 0;
         goto out;
       }
+
       // check for unknown options... if this argument was a short option
       if (strlen(argv[i]) != short_opts + 1) {
         fprintf(stderr, "%s: Unknown option %s\n", progname, argv[i]);
@@ -325,6 +341,26 @@ int main(int argc, char* argv[]) {
       }
     }
   }
+
+  char *penv = getenv("JQ_LIBRARY_PATH");
+  if (penv) {
+#ifdef WIN32
+#define PATH_ENV_SEPARATOR ";"
+#else
+#define PATH_ENV_SEPARATOR ":"
+#endif
+    lib_search_paths = jv_array_concat(lib_search_paths,jv_string_split(jv_string(penv),jv_string(PATH_ENV_SEPARATOR)));
+#undef PATH_ENV_SEPARATOR
+  }
+  jq_set_lib_dirs(jq,lib_search_paths);
+
+  char *origin = strdup(argv[0]);
+  if (origin == NULL) {
+    fprintf(stderr, "Error: out of memory\n");
+    exit(1);
+  }
+  jq_set_lib_origin(jq,jv_string(dirname(origin)));
+  free(origin);
 
 #if (!defined(WIN32) && defined(HAVE_ISATTY)) || defined(HAVE__ISATTY)
 

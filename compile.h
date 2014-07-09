@@ -14,7 +14,7 @@ typedef struct block {
   inst* last;
 } block;
 
-block gen_location(location, block);
+block gen_location(location, struct locfile*, block);
 
 block gen_noop();
 block gen_op_simple(opcode op);
@@ -24,6 +24,7 @@ block gen_op_unbound(opcode op, const char* name);
 block gen_op_bound(opcode op, block binder);
 block gen_op_var_fresh(opcode op, const char* name);
 
+block gen_import(const char* name, const char *as, const char *search);
 block gen_function(const char* name, block formals, block body);
 block gen_param(const char* name);
 block gen_lambda(block body);
@@ -47,13 +48,18 @@ block gen_cbinding(const struct cfunction* functions, int nfunctions, block b);
 
 void block_append(block* b, block b2);
 block block_join(block a, block b);
+int block_has_only_binders_and_imports(block, int bindflags);
 int block_has_only_binders(block, int bindflags);
 int block_has_main(block);
 int block_is_funcdef(block b);
 block block_bind(block binder, block body, int bindflags);
+block block_bind_library(block binder, block body, int bindflags, const char* libname);
 block block_bind_referenced(block binder, block body, int bindflags);
+block block_drop_unreferenced(block body);
 
-int block_compile(block, struct locfile*, struct bytecode**);
+jv block_take_imports(block* body);
+
+int block_compile(block, struct bytecode**);
 
 void block_free(block);
 

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <sys/stat.h>
 
 #include "exec_stack.h"
 #include "bytecode.h"
@@ -15,6 +16,8 @@
 #include "jq.h"
 #include "parser.h"
 #include "builtin.h"
+#include "util.h"
+#include "linker.h"
 
 struct jq_state {
   void (*nomem_handler)(void *);
@@ -34,6 +37,8 @@ struct jq_state {
   int subexp_nest;
   int debug_trace_enabled;
   int initial_execution;
+
+  jv attrs;
 };
 
 struct closure {
@@ -770,6 +775,7 @@ jq_state *jq_init(void) {
   jq->err_cb = NULL;
   jq->err_cb_data = NULL;
 
+  jq->attrs = jv_object();
   jq->path = jv_null();
   return jq;
 }
@@ -819,6 +825,7 @@ void jq_teardown(jq_state **jq) {
   jq_reset(old_jq);
   bytecode_free(old_jq->bc);
   old_jq->bc = 0;
+  jv_free(old_jq->attrs);
 
   jv_mem_free(old_jq);
 }
@@ -896,29 +903,28 @@ static struct bytecode *optimize(struct bytecode *bc) {
 int jq_compile_args(jq_state *jq, const char* str, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   assert(jv_get_kind(args) == JV_KIND_ARRAY);
-  struct locfile locations;
-  locfile_init(&locations, jq, str, strlen(str));
+  struct locfile* locations;
+  locations = locfile_init(jq, str, strlen(str));
   block program;
   jq_reset(jq);
   if (jq->bc) {
     bytecode_free(jq->bc);
     jq->bc = 0;
   }
-  int nerrors = jq_parse(&locations, &program);
+  int nerrors = load_program(jq, locations, &program);
   if (nerrors == 0) {
-    for (int i=0; i<jv_array_length(jv_copy(args)); i++) {
-      jv arg = jv_array_get(jv_copy(args), i);
+    jv_array_foreach(args, i, arg) {
       jv name = jv_object_get(jv_copy(arg), jv_string("name"));
       jv value = jv_object_get(arg, jv_string("value"));
       program = gen_var_binding(gen_const(value), jv_string_value(name), program);
       jv_free(name);
     }
+
     nerrors = builtins_bind(jq, &program);
     if (nerrors == 0) {
-      nerrors = block_compile(program, &locations, &jq->bc);
+      nerrors = block_compile(program, &jq->bc);
     }
   }
-  jv_free(args);
   if (nerrors) {
     jv s = jv_string_fmt("%d compile %s", nerrors,
                          nerrors > 1 ? "errors" : "error");
@@ -932,7 +938,8 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   }
   if (jq->bc)
     jq->bc = optimize(jq->bc);
-  locfile_free(&locations);
+  jv_free(args);
+  locfile_free(locations);
   return jq->bc != NULL;
 }
 
@@ -940,6 +947,38 @@ int jq_compile(jq_state *jq, const char* str) {
   return jq_compile_args(jq, str, jv_array());
 }
 
+void jq_set_lib_origin(jq_state *jq, jv origin) {
+	assert(jq);
+	assert(jv_get_kind(origin) == JV_KIND_STRING);
+	jq_set_attr(jq, jv_string("ORIGIN"), origin);
+}
+jv jq_get_lib_origin(jq_state *jq) {
+	assert(jq);
+	return jq_get_attr(jq, jv_string("ORIGIN"));
+}
+
+void jq_set_lib_dirs(jq_state *jq, jv dirs) {
+	assert(jq);
+	assert(jv_get_kind(dirs) == JV_KIND_ARRAY);
+	jq_set_attr(jq, jv_string("LIB_DIRS"), dirs);
+}
+jv jq_get_lib_dirs(jq_state *jq) {
+	assert(jq);
+	return jq_get_attr(jq, jv_string("LIB_DIRS"));
+}
+
+void jq_set_attr(jq_state *jq, jv attr, jv val) {
+	assert(jq);
+	assert(jv_get_kind(attr) == JV_KIND_STRING);
+	assert(jv_is_valid(val));
+	jq->attrs = jv_object_set(jq->attrs, attr, val);
+}
+
+jv jq_get_attr(jq_state *jq, jv attr) {
+	assert(jq);
+	assert(jv_get_kind(attr) == JV_KIND_STRING);
+	return jv_object_get(jv_copy(jq->attrs), attr);
+}
 void jq_dump_disassembly(jq_state *jq, int indent) {
   dump_disassembly(indent, jq->bc);
 }

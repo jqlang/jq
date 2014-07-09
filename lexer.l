@@ -42,6 +42,8 @@ struct lexer_param;
 "!=" { return NEQ; }
 "==" { return EQ; }
 "as" { return AS; }
+"search" { return SEARCH; }
+"import" { return IMPORT; }
 "def" { return DEF; }
 "if" { return IF; }
 "then" { return THEN; }
@@ -114,6 +116,7 @@ struct lexer_param;
   
 
 [a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext); return IDENT;}
+[a-zA-Z_][a-zA-Z_0-9]*::[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext); return IDENT;}
 \.[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return FIELD;}
 
 [ \n\t]+  {}

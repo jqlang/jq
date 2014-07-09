@@ -2,11 +2,11 @@
 
 LIBJQ_INCS = jq_parser.h builtin.h bytecode.h compile.h exec_stack.h	\
    libm.h jv_alloc.h jv_dtoa.h jv_unicode.h locfile.h		 	\
-   opcode_list.h parser.y jv_utf8_tables.h lexer.l
+   opcode_list.h parser.y jv_utf8_tables.h lexer.l util.h linker.h
 
 LIBJQ_SRC = locfile.c bytecode.c compile.c execute.c builtin.c jv.c	\
   jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_file.c	\
-  jv_alloc.c jq_test.c ${LIBJQ_INCS}
+  jv_alloc.c jq_test.c util.c linker.c ${LIBJQ_INCS}
 
 
 ### C build options

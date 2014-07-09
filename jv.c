@@ -10,6 +10,7 @@
 #include "jv_alloc.h"
 #include "jv.h"
 #include "jv_unicode.h"
+#include "util.h"
 
 /*
  * Internal refcounting helpers
@@ -614,34 +615,6 @@ int jv_string_length_codepoints(jv j) {
   return len;
 }
 
-#ifndef HAVE_MEMMEM
-#ifdef memmem
-#undef memmem
-#endif
-#define memmem my_memmem
-static const void *memmem(const void *haystack, size_t haystacklen,
-                          const void *needle, size_t needlelen)
-{
-  const char *h = haystack;
-  const char *n = needle;
-  size_t hi, hi2, ni;
-
-  if (haystacklen < needlelen || haystacklen == 0)
-    return NULL;
-  for (hi = 0; hi < (haystacklen - needlelen + 1); hi++) {
-    for (ni = 0, hi2 = hi; ni < needlelen; ni++, hi2++) {
-      if (h[hi2] != n[ni])
-        goto not_this;
-    }
-
-    return &h[hi];
-
-not_this:
-    continue;
-  }
-  return NULL;
-}
-#endif /* HAVE_MEMMEM */
 
 jv jv_string_indexes(jv j, jv k) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
@@ -654,7 +627,7 @@ jv jv_string_indexes(jv j, jv k) {
   jv a = jv_array();
 
   p = jstr;
-  while ((p = memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
+  while ((p = jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
     a = jv_array_append(a, jv_number(p - jstr));
     p += idxlen;
   }
@@ -676,7 +649,7 @@ jv jv_string_split(jv j, jv sep) {
   assert(jv_get_refcnt(a) == 1);
 
   for (p = jstr; p < jstr + jlen; p = s + seplen) {
-    s = memmem(p, (jstr + jlen) - p, sepstr, seplen);
+    s = jq_memmem(p, (jstr + jlen) - p, sepstr, seplen);
     if (s == NULL)
       s = jstr + jlen;
     a = jv_array_append(a, jv_string_sized(p, s - p));

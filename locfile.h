@@ -16,9 +16,11 @@ struct locfile {
   int nlines;
   char *error;
   jq_state *jq;
+  int refct;
 };
 
-void locfile_init(struct locfile* l, jq_state *jq, const char* data, int length);
+struct locfile* locfile_init(jq_state *jq, const char* data, int length);
+struct locfile* locfile_retain(struct locfile* l);
 
 void locfile_free(struct locfile* l);
 
