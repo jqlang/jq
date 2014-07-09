@@ -1637,7 +1637,7 @@ sections:
             input: 'true'
             output: ['"some exception"']
 
-      - title: `?` operator
+      - title: "`?` operator"
         body: |
 
           The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
@@ -1821,7 +1821,7 @@ sections:
             input: '[10,2,5,3]'
             output: ['20']
 
-      - title: `limit(n; exp)`
+      - title: "`limit(n; exp)`"
         body: |
 
           The `limit` function extracts up to `n` outputs from `exp`.
@@ -1831,7 +1831,7 @@ sections:
             input: '[0,1,2,3,4,5,6,7,8,9]'
             output: ['[0,1,2]']
 
-      - title: `foreach`
+      - title: "`foreach`"
         body: |
 
           The `foreach` syntax is similar to `reduce`, but intended to
