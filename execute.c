@@ -270,11 +270,13 @@ jv jq_next(jq_state *jq) {
   uint16_t* pc = stack_restore(jq);
   assert(pc);
 
+  int raising;
   int backtracking = !jq->initial_execution;
   jq->initial_execution = 0;
   assert(jv_get_kind(jq->error) == JV_KIND_NULL);
   while (1) {
     uint16_t opcode = *pc;
+    raising = 0;
 
     if (jq->debug_trace_enabled) {
       dump_operation(frame_current(jq)->bc, pc);
@@ -307,8 +309,7 @@ jv jq_next(jq_state *jq) {
     if (backtracking) {
       opcode = ON_BACKTRACK(opcode);
       backtracking = 0;
-      if (!jv_is_valid(jq->error) && opcode != ON_BACKTRACK(FORK_OPT))
-        goto do_backtrack;
+      raising = !jv_is_valid(jq->error);
     }
     pc++;
 
@@ -401,6 +402,7 @@ jv jq_next(jq_state *jq) {
       uint16_t v = *pc++;
       jv* var = frame_local_var(jq, v, level);
       jv max = stack_pop(jq);
+      if (raising) goto do_backtrack;
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
           jv_get_kind(max) != JV_KIND_NUMBER) {
         print_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
@@ -582,7 +584,9 @@ jv jq_next(jq_state *jq) {
         keep_going = 0;
       }
 
-      if (!keep_going) {
+      if (!keep_going || raising) {
+        if (keep_going)
+          jv_free(value);
         jv_free(container);
         goto do_backtrack;
       } else if (is_last) {
@@ -633,9 +637,12 @@ jv jq_next(jq_state *jq) {
       jv_free(stack_pop(jq)); // free the input
       stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
       jq->error = jv_null();
-      /* fallthru */
+      uint16_t offset = *pc++;
+      pc += offset;
+      break;
     }
     case ON_BACKTRACK(FORK): {
+      if (raising) goto do_backtrack;
       uint16_t offset = *pc++;
       pc += offset;
       break;
