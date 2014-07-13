@@ -1161,7 +1161,7 @@ sections:
         examples:
           - program: '[.[]|endswith("foo")]'
             input: '["foobar", "barfoo"]'
-            output: ['[false, true, true, false, false]']
+            output: ['[false, true]']
 
       - title: "`match(val)`, `match(regex; modifiers)`"
         body: |
