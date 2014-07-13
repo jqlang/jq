@@ -290,30 +290,16 @@ block block_bind(block binder, block body, int bindflags) {
 block block_bind_referenced(block binder, block body, int bindflags) {
   assert(block_has_only_binders(binder, bindflags));
   bindflags |= OP_HAS_BINDING;
-
-  // Repeatedly bind until there's no remaining references to any of the
-  // binders in binder.
-  block unrefd = gen_noop();
-  int unref_count = 0, last = -1;
-loop:
+  block refd = gen_noop();
   for (inst* curr; (curr = block_take(&binder));) {
     block b = inst_block(curr);
     if (block_bind_subblock(b, body, bindflags)) {
-      body = BLOCK(b, body);
+      refd = BLOCK(refd, b);
     } else {
-      unrefd = BLOCK(unrefd, b);
-      unref_count++;
+      block_free(b);
     }
   }
-  if (unref_count == 0 || unref_count == last) {
-    block_free(unrefd);
-    return body;
-  }
-  last = unref_count;
-  unref_count = 0;
-  binder = unrefd;
-  unrefd = gen_noop();
-  goto loop;
+  return block_join(refd, body);
 }
 
 block gen_function(const char* name, block formals, block body) {
