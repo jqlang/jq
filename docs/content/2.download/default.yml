@@ -28,7 +28,7 @@ body:
          manually by following instructions on [Arch Linux's
          Wiki](https://wiki.archlinux.org/index.php/Arch_UseRepository).
 
-       * jq 1.3 is [in Debian](http://packages.debian.org/jq) (a request to update to 1.4 has been filed)
+       * jq 1.4 is [in Debian](http://packages.debian.org/jq)
 
       ### OS X
 
