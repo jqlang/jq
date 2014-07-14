@@ -50,7 +50,6 @@ struct lexer_param;
 %token <literal> FIELD
 %token <literal> LITERAL
 %token <literal> FORMAT
-%token Q "?"
 %token REC ".."
 %token SETMOD "%="
 %token EQ "=="
@@ -84,6 +83,9 @@ struct lexer_param;
 %token QQSTRING_INTERP_END
 %token QQSTRING_END
 
+/* see Exp '?' rule */
+%expect 9
+
  /* revolting hack */
 %left ';'
 %right '|'
@@ -95,6 +97,9 @@ struct lexer_param;
 %nonassoc NEQ EQ '<' '>' LESSEQ GREATEREQ
 %left '+' '-'
 %left '*' '/' '%'
+%precedence '?'
+%precedence "try"
+%precedence "catch"
 
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs String
@@ -269,10 +274,14 @@ Term "as" '$' IDENT '|' Exp {
   $$ = $2;
 } |
 
+// This rule conflicts with all the other rules using the '?' operator.
+// It doesn't matter which bison prefers: all of them result in the same
+// syntax and semantics, but the more specific rules optimize better
+// because they use opcodes specifically made for the purpose.  We
+// expect 9 such conflicts.
 Exp '?' {
   $$ = gen_try($1, gen_op_simple(BACKTRACK));
 } |
-
 
 Exp '=' Exp {
   $$ = gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3)));
