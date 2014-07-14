@@ -218,7 +218,7 @@ FuncDefs {
 } 
 
 FuncDefs:
-/* empty */ {
+%empty {
   $$ = gen_noop();
 } |
 FuncDef FuncDefs {
@@ -484,7 +484,7 @@ FORMAT QQSTRING_START { $<literal>$ = $1; } QQString QQSTRING_END {
 
 
 QQString:
-/* empty */ {
+%empty {
   $$ = gen_const(jv_string(""));
 } |
 QQString QQSTRING_TEXT {
@@ -651,7 +651,7 @@ Term '[' error ']' { $$ = $1; } |
 '{' error '}' { $$ = gen_noop(); }
 
 MkDict:
-{ 
+%empty { 
   $$=gen_noop(); 
 } |
  MkDictPair { $$ = $1; }
