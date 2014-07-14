@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 if which valgrind > /dev/null; then
     VALGRIND='valgrind --error-exitcode=1 -q --leak-check=full --suppressions=tests/onig.supp'
 else
@@ -7,3 +9,30 @@ else
 fi
 
 cat $@ | $VALGRIND ./jq --run-tests
+
+d=
+trap '[ -n "$d" ] && rm -rf "$d"' EXIT
+d=`mktemp -d -t || true`
+if [ -z "$d" ]; then
+    echo "Your OS does not support mktemp(1) -d" 1>&2
+    exit 0
+fi
+
+cat > "$d/.jq" <<EOF
+def foo: "baz";
+def f: "wat";
+def f: "foo";
+def g: "bar";
+def fg: f+g;
+EOF
+
+if [ "`HOME=$d $VALGRIND ./jq -nr fg`" != foobar ]; then
+    echo "Bug #479 appears to be back" 1>&2
+    exit 1
+fi
+
+if [ `HOME=$d $VALGRIND ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
+    echo "Binding too many defs into program" 1>&2
+    exit 1
+fi
+
