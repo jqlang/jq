@@ -555,6 +555,66 @@ sections:
             input: 'null'
             output: ['{"k": {"a": 0, "b": 2, "c": 3}}']
 
+
+      - title: Regular expressions - "`test`", "`match`", and "`capture`"
+        body: |
+
+          jq uses the Oniguruma regular expression library, as do php, ruby,
+          TextMate, Sublime Text, etc, so the description here will focus on jq specifics.
+
+          The Oniguruma documentation is at http://www.geocities.jp/kosako3/oniguruma 
+          and the description of Oniguruma regex syntax is
+          at http://www.geocities.jp/kosako3/oniguruma/doc/RE.txt
+
+          The jq regex filters are defined so that they can be used using
+          one of these patterns:
+
+              STRING | FILTER( REGEX )
+              STRING | FILTER( REGEX; FLAGS )
+
+          where both REGEX and FLAGS are jq strings and are
+          therefore subject to jq string interpolation.
+
+          FLAGS is a string consisting of one of more of the supported flags,
+          which include:
+
+          i - Ignore case
+          m - Treat a newline as a character matched by period (.)
+          x - Ignore whitespace and comments in the pattern
+
+          To match whitespace in an x pattern use an escape such as \s, e.g.
+          test( "a\\sb", "x" ).
+
+        examples:
+          - program: 'test("abc")'
+            input: '"xabcd" "ABC"'
+            output: true
+                    false
+          - program: 'test("a b c"; "ix")'
+            input: '"xabcd" "ABC"'
+            output: true
+                    true
+          - program: 'match( "(?<x>abc)"; "i")'
+            input: 'XAbcd"
+            output: 
+               {
+                 "offset": 1,
+                 "length": 3,
+                 "string": "Abc",
+                 "captures": [
+                   {
+                     "offset": 1,
+                     "length": 3,
+                     "string": "Abc",
+                     "name": "x"
+                   }
+                 ]
+               }
+          - program: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
+            input: '"xyzzy-14"'
+            output: { "a": "xyzzy", "n": "14" }
+
+
       - title: "`length`"
         body: |
 
