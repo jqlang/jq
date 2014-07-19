@@ -578,42 +578,54 @@ sections:
           FLAGS is a string consisting of one of more of the supported flags,
           which include:
 
+          g - Global search
           i - Ignore case
+          l - Longest match
           m - Treat a newline as a character matched by period (.)
+          n - Disallow empty matches
           x - Ignore whitespace and comments in the pattern
 
           To match whitespace in an x pattern use an escape such as \s, e.g.
           test( "a\\sb", "x" ).
+
+          Note that certain flags may also be specified within REGEX, e.g.
+
+          jq -n '("test", "TEst", "teST", "TEST") | test( "(?i)te(?-i)st" )'
+
+          evaluates to: true, true, false, false.
 
         examples:
           - program: 'test("abc")'
             input: '"xabcd" "ABC"'
             output: true
                     false
-          - program: 'test("a b c"; "ix")'
+          - program: 'test("a b c # spaces are ignored"; "ix")'
             input: '"xabcd" "ABC"'
             output: true
                     true
           - program: 'match( "(?<x>abc)"; "i")'
-            input: 'XAbcd"
+            input: '"XAbcd"'
             output: 
                {
-                 "offset": 1,
-                 "length": 3,
-                 "string": "Abc",
-                 "captures": [
+                 '"offset"': 1,
+                 '"length"': 3,
+                 '"string"': '"Abc"',
+                 '"captures"': [
                    {
-                     "offset": 1,
-                     "length": 3,
-                     "string": "Abc",
-                     "name": "x"
+                     '"offset"': 1,
+                     '"length"': 3,
+                     '"string"': '"Abc"',
+                     '"name"': '"x"''
                    }
                  ]
                }
           - program: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
             input: '"xyzzy-14"'
-            output: { "a": "xyzzy", "n": "14" }
+            output: '{ "a": "xyzzy", "n": "14" }''
 
+          - program: '[ match("."; "g")] | length'
+            input: '"abc"'
+            output: 3
 
       - title: "`length`"
         body: |
