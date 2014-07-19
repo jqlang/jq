@@ -2,7 +2,8 @@ headline: jq
 
 blurb: |
   
-  jq is a lightweight and flexible command-line JSON processor.
+  jq is a lightweight and flexible command-line JSON processor with 
+  support for regular expressions.
   
 body1: |
 
@@ -14,7 +15,7 @@ body2: |
 
   jq is written in portable C, and it has zero runtime
   dependencies. You can download a single binary, `scp` it to a far away
-  machine, and expect it to work.
+  machine of the same type, and expect it to work.
 
 body3: |
 

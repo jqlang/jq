@@ -970,11 +970,23 @@ static const char* const jq_builtins[] = {
   "def flatten: reduce .[] as $i ([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end);",
   "def flatten(x): reduce .[] as $i ([]; if $i | type == \"array\" and x > 0 then . + ($i | flatten(x-1)) else . + [$i] end);",
   "def range(x): range(0;x);",
+  // regular expressions:
   "def match(re; mode): _match_impl(re; mode; false)|.[];",
-  "def match(val): if val | type == \"string\" then match(val; null) elif val | type == \"array\" and (val | length) > 1 then match(val[0]; val[1]) elif val | type == \"array\" and (val | length > 0) then match(val[0]; null) else error((val | type) + \" not a string or array\") end;",
+  "def match(val): (val|type) as $vt | if $vt == \"string\" then match(val; null)"
+   "  elif $vt == \"array\" and (val | length) > 1 then match(val[0]; val[1])"
+   "  elif $vt == \"array\" and (val | length) > 0 then match(val[0]; null)"
+   "  else error( $vt + \" not a string or array\") end;",
   "def test(re; mode): _match_impl(re; mode; true);",
-  "def test(val): if val |type == \"string\" then test(val; null) elif val | type == \"array\" and (val | length) > 1 then test(val[0]; val[1]) elif val | type == \"array\" and (val | length > 0) then test(val[0]; null) else error((val | type) + \" not a string or array\") end;",
-//  "def test(re): _match(re; null; 1);",
+  "def test(val): (val|type) as $vt | if $vt == \"string\" then test(val; null)"
+   "  elif $vt == \"array\" and (val | length) > 1 then test(val[0]; val[1])"
+   "  elif $vt == \"array\" and (val | length) > 0 then test(val[0]; null)"
+   "  else error( $vt + \" not a string or array\") end;",
+  // Ex.: "a1" | capture( "(?<x>[a-z*])" ).x => "a"
+  "def capture(re; mods): match(re; mods) | reduce ( .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair ({}; . + $pair);",
+  "def capture(val): (val|type) as $vt | if $vt == \"string\" then capture(val; null)"
+   "  elif $vt == \"array\" and (val | length) > 1 then capture(val[0]; val[1])"
+   "  elif $vt == \"array\" and (val | length) > 0 then capture(val[0]; null)"
+   "  else error( $vt + \" not a string or array\") end;",
   // range/3, with a `by` expression argument
   "def range(init; upto; by): "
   "     def _range: "

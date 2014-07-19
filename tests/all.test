@@ -771,6 +771,10 @@ def inc(x): x |= .+1; inc(.[].a)
 "ā"
 [true]
 
+capture("(?<a>[a-z]+)-(?<n>[0-9]+)")
+"xyzzy-14"
+{"a":"xyzzy","n":"14"}
+
 [.[]|ltrimstr("foo")]
 ["fo", "foo", "barfoo", "foobar", "afoo"]
 ["fo","","barfoo","bar","afoo"]
