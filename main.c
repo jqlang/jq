@@ -31,11 +31,12 @@ static void usage(int code) {
   fprintf(stderr, "\tSome of the options include:\n");
   fprintf(stderr, "\t -h\t\tthis message;\n");
   fprintf(stderr, "\t -c\t\tcompact instead of pretty-printed output;\n");
-  fprintf(stderr, "\t -s\t\tread all inputs into an array; apply filter to it;\n");
+  fprintf(stderr, "\t -n\t\tuse `null` as the single input value;\n");
+  fprintf(stderr, "\t -s\t\tread (slurp) all inputs into an array; apply filter to it;\n");
   fprintf(stderr, "\t -r\t\toutput raw strings, not JSON texts;\n");
   fprintf(stderr, "\t -R\t\tread raw strings, not JSON texts;\n");
-  fprintf(stderr, "\t -arg a v\tset variable $a to value <v>;\n");
-  fprintf(stderr, "\t -argfile a f\tset variable $a to JSON texts read from <f>;\n");
+  fprintf(stderr, "\t --arg a v\tset variable $a to value <v>;\n");
+  fprintf(stderr, "\t --argfile a f\tset variable $a to JSON texts read from <f>;\n");
   fprintf(stderr, "\tSee the manpage for more options.\n");
   exit(code);
 }
