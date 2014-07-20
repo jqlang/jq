@@ -150,6 +150,10 @@ sections:
 
         Like `-r` but jq won't print a newline after each output.
 
+      * `--in-place` / `-i`:
+
+        Edit the (first) file in-place.
+
       * `-f filename` / `--from-file filename`:
 
         Read filter from the file rather than from a command line, like

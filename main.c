@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -32,6 +33,7 @@ static void usage(int code) {
   fprintf(stderr, "\t -h\t\tthis message;\n");
   fprintf(stderr, "\t -c\t\tcompact instead of pretty-printed output;\n");
   fprintf(stderr, "\t -n\t\tuse `null` as the single input value;\n");
+  fprintf(stderr, "\t -i\t\tedit the [first] file in-place;\n");
   fprintf(stderr, "\t -s\t\tread (slurp) all inputs into an array; apply filter to it;\n");
   fprintf(stderr, "\t -r\t\toutput raw strings, not JSON texts;\n");
   fprintf(stderr, "\t -R\t\tread raw strings, not JSON texts;\n");
@@ -86,8 +88,9 @@ enum {
   RAW_NO_LF             = 1024,
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
+  IN_PLACE              = 8192,
   /* debugging only */
-  DUMP_DISASM           = 8192,
+  DUMP_DISASM           = 16384,
 };
 static int options = 0;
 
@@ -172,6 +175,7 @@ int main(int argc, char* argv[]) {
   jq_state *jq = NULL;
   int ret = 0;
   int compiled = 0;
+  char *t = NULL;
 
   if (argc) progname = argv[0];
 
@@ -254,6 +258,10 @@ int main(int argc, char* argv[]) {
         options |= RAW_OUTPUT | RAW_NO_LF;
         if (!short_opts) continue;
       }
+      if (isoption(argv[i], 'i', "in-place", &short_opts)) {
+        options |= IN_PLACE;
+        if (!short_opts) continue;
+      }
       if (isoption(argv[i], 'e', "exit-status", &short_opts)) {
         options |= EXIT_STATUS;
         if (!short_opts) continue;
@@ -330,6 +338,22 @@ int main(int argc, char* argv[]) {
 #endif
 
   if (!program) usage(2);
+  if ((options & IN_PLACE)) {
+    if (ninput_files == 0) usage(2);
+    if (strcmp(input_filenames[0], "-") == 0) usage(2);
+    size_t tlen = strlen(input_filenames[0]) + 7;
+    t = jv_mem_alloc(tlen);
+    int n = snprintf(t, tlen,"%sXXXXXX", input_filenames[0]);
+    assert(n > 0 && (size_t)n < tlen);
+    if (mkstemp(t) == -1) {
+      fprintf(stderr, "Error: %s creating temporary file", strerror(errno));
+      exit(3);
+    }
+    if (freopen(t, "w", stdout) == NULL) {
+      fprintf(stderr, "Error: %s redirecting stdout to temporary file", strerror(errno));
+      exit(3);
+    }
+  }
   if (ninput_files == 0) current_input = stdin;
 
   if ((options & PROVIDE_NULL) && (options & (RAW_INPUT | SLURP))) {
@@ -412,6 +436,18 @@ int main(int argc, char* argv[]) {
     if (options & SLURP) {
       ret = process(jq, slurped, jq_flags);
     }
+  }
+  if ((options & IN_PLACE)) {
+#ifdef WIN32
+    (void) freopen("NUL", "w+", stdout);
+#else
+    (void) freopen("/dev/null", "w+", stdout);
+#endif
+    if (rename(t, input_filenames[0]) == -1) {
+      fprintf(stderr, "Error: %s renaming temporary file", strerror(errno));
+      exit(3);
+    }
+    jv_mem_free(t);
   }
 out:
   jv_mem_free(input_filenames);
