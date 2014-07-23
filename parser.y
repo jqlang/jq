@@ -86,10 +86,8 @@ struct lexer_param;
 %token QQSTRING_END
 
 /* see Exp '?' rule */
-%expect 9
+%expect 34
 
- /* revolting hack */
-%left ';'
 %right '|'
 %left ','
 %right "//"
