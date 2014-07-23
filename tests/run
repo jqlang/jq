@@ -7,6 +7,7 @@ if which valgrind > /dev/null; then
     VALGRINDQ=$VALGRIND' -q'
 else
     VALGRIND=
+    VALGRINDQ=
 fi
 
 cat $@ | $VALGRINDQ ./jq --run-tests
