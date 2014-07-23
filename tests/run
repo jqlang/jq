@@ -4,11 +4,12 @@ set -e
 
 if which valgrind > /dev/null; then
     VALGRIND='valgrind --error-exitcode=1 --leak-check=full --suppressions=tests/onig.supp'
+    VALGRINDQ=$VALGRIND' -q'
 else
     VALGRIND=
 fi
 
-cat $@ | $VALGRIND -q ./jq --run-tests
+cat $@ | $VALGRINDQ ./jq --run-tests
 
 d=
 trap '[ -n "$d" ] && rm -rf "$d"' EXIT
@@ -45,22 +46,22 @@ cat > "$d/syntaxerror.jq" <<EOF
 wat;
 EOF
 
-if [ "`HOME=$d $VALGRIND -q ./jq -nr fg`" != foobar ]; then
+if [ "`HOME=$d $VALGRINDQ ./jq -nr fg`" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
 fi
 
-if [ `HOME=$d $VALGRIND -q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
+if [ `HOME=$d $VALGRINDQ ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
     echo "Binding too many defs into program" 1>&2
     exit 1
 fi
 
-if ! $VALGRIND -q ./jq -ner -L $d 'import a as foo; import b as bar; import a as foobar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a, foobar::a] | . == ["a","b","c","a","a"]' > /dev/null; then
+if ! $VALGRINDQ ./jq -ner -L $d 'import a as foo; import b as bar; import a as foobar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a, foobar::a] | . == ["a","b","c","a","a"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
 
-if ! $VALGRIND -q ./jq -ner -L $d 'import c as foo; [foo::a, foo::c] | . == [0,"ac"]' > /dev/null; then
+if ! $VALGRINDQ ./jq -ner -L $d 'import c as foo; [foo::a, foo::c] | . == [0,"ac"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
