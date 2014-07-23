@@ -627,7 +627,7 @@ jv jv_string_indexes(jv j, jv k) {
   jv a = jv_array();
 
   p = jstr;
-  while ((p = jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
+  while ((p = _jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
     a = jv_array_append(a, jv_number(p - jstr));
     p += idxlen;
   }
@@ -649,7 +649,7 @@ jv jv_string_split(jv j, jv sep) {
   assert(jv_get_refcnt(a) == 1);
 
   for (p = jstr; p < jstr + jlen; p = s + seplen) {
-    s = jq_memmem(p, (jstr + jlen) - p, sepstr, seplen);
+    s = _jq_memmem(p, (jstr + jlen) - p, sepstr, seplen);
     if (s == NULL)
       s = jstr + jlen;
     a = jv_array_append(a, jv_string_sized(p, s - p));

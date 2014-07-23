@@ -92,8 +92,8 @@ jv jq_realpath(jv path) {
   return path;
 }
 
-const void *jq_memmem(const void *haystack, size_t haystacklen,
-                      const void *needle, size_t needlelen) {
+const void *_jq_memmem(const void *haystack, size_t haystacklen,
+                       const void *needle, size_t needlelen) {
 #ifdef HAVE_MEMMEM
   return (const void*)memmem(haystack, haystacklen, needle, needlelen);
 #else
