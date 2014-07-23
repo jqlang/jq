@@ -128,8 +128,6 @@ static int process_dependencies(jq_state *jq, jv lib_origin, block *src_block, s
       nerrors += load_library(jq, lib_path, &dep_def_block, lib_state);
       if (nerrors == 0)
         bk = block_bind_library(dep_def_block, bk, OP_IS_CALL_PSEUDO, jv_string_value(as));
-      else
-        block_free(dep_def_block);
     }
     jv_free(as);
   }
