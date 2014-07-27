@@ -162,7 +162,50 @@ static block gen_slice_index(block obj, block start, block end, opcode idx_op) {
   return BLOCK(key, obj, gen_op_simple(idx_op));
 }
 
+static block constant_fold(block a, block b, int op) {
+  if (!block_is_single(a) || !block_is_const(a) ||
+      !block_is_single(b) || !block_is_const(b))
+    return gen_noop();
+  if (block_const_kind(a) != block_const_kind(b))
+    return gen_noop();
+
+  jv res = jv_invalid();
+
+  if (block_const_kind(a) == JV_KIND_NUMBER) {
+    double na = jv_number_value(block_const(a));
+    double nb = jv_number_value(block_const(b));
+    switch (op) {
+    case '+': res = jv_number(na + nb); break;
+    case '-': res = jv_number(na - nb); break;
+    case '*': res = jv_number(na * nb); break;
+    case '/': res = jv_number(na / nb); break;
+    case EQ:  res = (na == nb ? jv_true() : jv_false()); break;
+    case NEQ: res = (na != nb ? jv_true() : jv_false()); break;
+    case '<': res = (na < nb ? jv_true() : jv_false()); break;
+    case '>': res = (na > nb ? jv_true() : jv_false()); break;
+    case LESSEQ: res = (na <= nb ? jv_true() : jv_false()); break;
+    case GREATEREQ: res = (na >= nb ? jv_true() : jv_false()); break;
+    default: break;
+    }
+  } else if (op == '+' && block_const_kind(a) == JV_KIND_STRING) {
+    res = jv_string_concat(block_const(a),  block_const(b));
+  } else {
+    return gen_noop();
+  }
+
+  if (jv_get_kind(res) == JV_KIND_INVALID)
+    return gen_noop();
+
+  block_free(a);
+  block_free(b);
+  return gen_const(res);
+}
+
 static block gen_binop(block a, block b, int op) {
+  block folded = constant_fold(a, b, op);
+  if (!block_is_noop(folded))
+    return folded;
+
   const char* funcname = 0;
   switch (op) {
   case '+': funcname = "_plus"; break;

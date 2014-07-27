@@ -17,8 +17,12 @@ typedef struct block {
 block gen_location(location, struct locfile*, block);
 
 block gen_noop();
+int block_is_noop(block b);
 block gen_op_simple(opcode op);
 block gen_const(jv constant);
+int block_is_const(block b);
+jv_kind block_const_kind(block b);
+jv block_const(block b);
 block gen_op_target(opcode op, block target);
 block gen_op_unbound(opcode op, const char* name);
 block gen_op_bound(opcode op, block binder);
@@ -52,6 +56,7 @@ int block_has_only_binders_and_imports(block, int bindflags);
 int block_has_only_binders(block, int bindflags);
 int block_has_main(block);
 int block_is_funcdef(block b);
+int block_is_single(block b);
 block block_bind(block binder, block body, int bindflags);
 block block_bind_library(block binder, block body, int bindflags, const char* libname);
 block block_bind_referenced(block binder, block body, int bindflags);

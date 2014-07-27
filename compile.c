@@ -97,7 +97,7 @@ static block inst_block(inst* i) {
   return b;
 }
 
-static int block_is_single(block b) {
+int block_is_single(block b) {
   return b.first && b.first == b.last;
 }
 
@@ -131,6 +131,10 @@ block gen_noop() {
   return b;
 }
 
+int block_is_noop(block b) {
+  return (b.first == 0 && b.last == 0);
+}
+
 block gen_op_simple(opcode op) {
   assert(opcode_describe(op)->length == 1);
   return inst_block(inst_new(op));
@@ -142,6 +146,20 @@ block gen_const(jv constant) {
   inst* i = inst_new(LOADK);
   i->imm.constant = constant;
   return inst_block(i);
+}
+
+int block_is_const(block b) {
+  return (block_is_single(b) && b.first->op == LOADK);
+}
+
+jv_kind block_const_kind(block b) {
+  assert(block_is_const(b));
+  return jv_get_kind(b.first->imm.constant);
+}
+
+jv block_const(block b) {
+  assert(block_is_const(b));
+  return jv_copy(b.first->imm.constant);
 }
 
 block gen_op_target(opcode op, block target) {

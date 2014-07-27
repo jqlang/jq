@@ -20,6 +20,59 @@ if [ -z "$d" ]; then
     exit 0
 fi
 
+## Test constant folding
+
+# String constant folding (addition only)
+n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '"foo"' | wc -l`
+if [ $n -ne 5 ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+
+# Numeric constant folding (not all ops yet)
+n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '1+1' | wc -l`
+if [ $n -ne 5 ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '1-1' | wc -l`
+if [ $n -ne 5 ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '2*3' | wc -l`
+if [ $n -ne 5 ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9/3' | wc -l`
+if [ $n -ne 5 ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9==3' | wc -l`
+if [ $n -ne 5 ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9!=3' | wc -l`
+if [ $n -ne 5 ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9<=3' | wc -l`
+if [ $n -ne 5 ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9>=3' | wc -l`
+if [ $n -ne 5 ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+
+## Test library/module system
+
 cat > "$d/.jq" <<EOF
 def foo: "baz";
 def f: "wat";
