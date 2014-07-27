@@ -4,11 +4,13 @@ set -e
 
 if which valgrind > /dev/null; then
     VALGRIND='valgrind --error-exitcode=1 --leak-check=full --suppressions=tests/onig.supp'
+    Q=-q
 else
     VALGRIND=
+    Q=
 fi
 
-cat $@ | $VALGRIND -q ./jq --run-tests
+cat $@ | $VALGRIND $Q ./jq --run-tests
 
 d=
 trap '[ -n "$d" ] && rm -rf "$d"' EXIT
@@ -45,22 +47,22 @@ cat > "$d/syntaxerror.jq" <<EOF
 wat;
 EOF
 
-if [ "`HOME=$d $VALGRIND -q ./jq -nr fg`" != foobar ]; then
+if [ "`HOME=$d $VALGRIND $Q ./jq -nr fg`" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
 fi
 
-if [ `HOME=$d $VALGRIND -q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
+if [ `HOME=$d $VALGRIND $Q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
     echo "Binding too many defs into program" 1>&2
     exit 1
 fi
 
-if ! $VALGRIND -q ./jq -ner -L $d 'import a as foo; import b as bar; import a as foobar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a, foobar::a] | . == ["a","b","c","a","a"]' > /dev/null; then
+if ! $VALGRIND $Q ./jq -ner -L $d 'import a as foo; import b as bar; import a as foobar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a, foobar::a] | . == ["a","b","c","a","a"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
 
-if ! $VALGRIND -q ./jq -ner -L $d 'import c as foo; [foo::a, foo::c] | . == [0,"ac"]' > /dev/null; then
+if ! $VALGRIND $Q ./jq -ner -L $d 'import c as foo; [foo::a, foo::c] | . == [0,"ac"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
@@ -69,7 +71,7 @@ if $VALGRIND ./jq -ner -L $d 'import syntaxerror; .' > $d/out 2>&1; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
-if ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out > /dev/null; then
+if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out > /dev/null; then
     echo "Module system has memory errors when modules have syntax errors" 1>&2
     cat $d/out
     exit 1
@@ -84,7 +86,7 @@ if $VALGRIND ./jq -ner -L $d '%::wat' > $d/out 2>&1 ||
     echo "Syntax errors not detected?" 1>&2
     exit 1
 fi
-if ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out > /dev/null; then
+if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out > /dev/null; then
     echo "Memory errors when programs have syntax errors" 1>&2
     cat $d/out
     exit 1
