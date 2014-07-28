@@ -986,6 +986,12 @@ static const char* const jq_builtins[] = {
   "         if cond then ., (update | _while) else empty end; "
   "     try _while catch if .==\"break\" then empty else . end;",
   "def limit(n; exp): if n < 0 then exp else foreach exp as $item ([n, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1]) end;",
+  "def first(g): foreach g as $item ([false, null]; if .[0]==true then break else [true, $item] end; .[1]);",
+  "def last(g): reduce g as $item (null; $item);",
+  "def nth(n; g): if n < 0 then error(\"nth doesn't support negative indices\") else last(limit(n + 1; g)) end;",
+  "def first: .[0];",
+  "def last: .[-1];",
+  "def nth(n): .[n];",
 };
 #undef LIBM_DD
 

@@ -1835,6 +1835,35 @@ sections:
             input: '[0,1,2,3,4,5,6,7,8,9]'
             output: ['[0,1,2]']
 
+      - title: "`first(expr)`, `last(expr)`, `nth(n; expr)`"
+        body: |
+
+          The `first(expr)` and `last(expr)` functions extract the first
+          and last values from `expr`, respectively.
+
+          The `nth(n; expr)` function extracts the nth value output by
+          `expr`.  This can be defined as `def nth(n; expr):
+          last(limit(n + 1; expr));`.  Note that `nth(n; expr)` doesn't
+          support negative values of `n`.
+
+        examples:
+          - program: '[first(range(.)), last(range(.)), nth(./2; range(.))]'
+            input: '10'
+            output: ['[0,9,4]']
+
+      - title: "`first`, `last`, `nth(n)`"
+        body: |
+
+          The `first` and `last` functions extract the first
+          and last values from any array at `.`.
+
+          The `nth(n)` function extracts the nth value of any array at `.`.
+
+        examples:
+          - program: '[range(.)]|[first, last, nth(5)]'
+            input: '10'
+            output: ['[0,9,5]']
+
       - title: "`foreach`"
         body: |
 
