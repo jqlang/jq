@@ -13,7 +13,7 @@ Jingwen Owen Ou      <jingweno@gmail.com>             - jqplay.org and link to i
 Andrew Rodland       <andrew@cleverdomain.org>        - bug fixes
 Ankur                <ankz.kothari@gmail.com>         - bug fixes
 Brendan Macmillan    <melbourne.research@gmail.com>   - bug fixes, load library from ~/.jq
-William Langford     <wtlangford@gmail.com>           - module system, bug fixes
+William Langford     <wlangfor@gmail.com>             - module system, bug fixes
 David R. MacIver     <david@drmaciver.com>            - bug fixes
 Filippo Giunchedi    <fgiunchedi@gmail.com>           - bug fixes
 Filippo Valsorda     <filippo.valsorda@gmail.com>     - recursive object merge (`*`)
