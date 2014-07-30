@@ -8,11 +8,12 @@ Contributions by:
 Anthony Shortland    <anthony.shortland@me.com>       - rpmbuild target
 Lee Thompson         <stagr.lee@gmail.com>            - autoconf stuff
 Santiago Lapresta    <santiago.lapresta@gmail.com>    - join, arrays, all, any, other filters
-Nicolas Williams     <nico@cryptonector.com>          - library-fication, autoconf stuff, various
+Nicolas Williams     <nico@cryptonector.com>          - library-fication, autoconf stuff, exception handling, various
 Jingwen Owen Ou      <jingweno@gmail.com>             - jqplay.org and link to it
 Andrew Rodland       <andrew@cleverdomain.org>        - bug fixes
 Ankur                <ankz.kothari@gmail.com>         - bug fixes
 Brendan Macmillan    <melbourne.research@gmail.com>   - bug fixes, load library from ~/.jq
+William Langford     <wtlangford@gmail.com>           - module system, bug fixes
 David R. MacIver     <david@drmaciver.com>            - bug fixes
 Filippo Giunchedi    <fgiunchedi@gmail.com>           - bug fixes
 Filippo Valsorda     <filippo.valsorda@gmail.com>     - recursive object merge (`*`)
