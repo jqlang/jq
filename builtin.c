@@ -935,9 +935,9 @@ static const char* const jq_builtins[] = {
   "def from_entries: map({(.key): .value}) | add | .//={};",
   "def with_entries(f): to_entries | map(f) | from_entries;",
   "def reverse: [.[length - 1 - range(0;length)]];",
-  "def indices(i): if type == \"array\" and (i|type) == \"array\" then .[i] elif type == \"array\" then .[[i]] else .[i] end;",
-  "def index(i):   if type == \"array\" and (i|type) == \"array\" then .[i] elif type == \"array\" then .[[i]] else .[i] end | .[0];",
-  "def rindex(i):  if type == \"array\" and (i|type) == \"array\" then .[i] elif type == \"array\" then .[[i]] else .[i] end | .[-1:][0];",
+  "def indices(i): i as $i | if type == \"array\" and ($i|type) == \"array\" then .[$i] elif type == \"array\" then .[[$i]] else .[$i] end;",
+  "def index(i):   i as $i | if type == \"array\" and ($i|type) == \"array\" then .[$i] elif type == \"array\" then .[[$i]] else .[$i] end | .[0];",
+  "def rindex(i):  i as $i | if type == \"array\" and ($i|type) == \"array\" then .[$i] elif type == \"array\" then .[[$i]] else .[$i] end | .[-1:][0];",
   "def paths: path(recurse(if (type|. == \"array\" or . == \"object\") then .[] else empty end))|select(length > 0);",
   "def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_filter);",
   "def any: reduce .[] as $i (false; . or $i);",
@@ -966,10 +966,10 @@ static const char* const jq_builtins[] = {
   "def values: arrays, objects, booleans, numbers, strings;",
   "def scalars: select(. == null or . == true or . == false or type == \"number\" or type == \"string\");",
   "def leaf_paths: paths(scalars);",
-  "def join(x): reduce .[] as $i (\"\"; . + (if . == \"\" then $i else x + $i end));",
+  "def join(x): x as $x | reduce .[] as $i (\"\"; . + (if . == \"\" then $i else $x + $i end));",
   "def flatten: reduce .[] as $i ([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end);",
-  "def flatten(x): reduce .[] as $i ([]; if $i | type == \"array\" and x > 0 then . + ($i | flatten(x-1)) else . + [$i] end);",
-  "def range(x): range(0;x);",
+  "def flatten(x): x as $x | reduce .[] as $i ([]; if $i | type == \"array\" and $x > 0 then . + ($i | flatten($x-1)) else . + [$i] end);",
+  "def range(x): x as $x | range(0;$x);",
   // regular expressions:
   "def match(re; mode): _match_impl(re; mode; false)|.[];",
   "def match(val): (val|type) as $vt | if $vt == \"string\" then match(val; null)"
@@ -989,18 +989,21 @@ static const char* const jq_builtins[] = {
    "  else error( $vt + \" not a string or array\") end;",
   // range/3, with a `by` expression argument
   "def range(init; upto; by): "
-  "     def _range: "
-  "         if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; "
-  "     if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto));",
+  "    init as $init |"
+  "    upto as $upto |"
+  "    by as $by |"
+  "    def _range: "
+  "        if ($by > 0 and . < $upto) or ($by < 0 and . > $upto) then ., ((.+$by)|_range) else . end; "
+  "    if $by == 0 then $init else $init|_range end | select(($by > 0 and . < $upto) or ($by < 0 and . > $upto));",
   // generic iterator/generator
   "def while(cond; update): "
   "     def _while: "
   "         if cond then ., (update | _while) else empty end; "
   "     try _while catch if .==\"break\" then empty else . end;",
-  "def limit(n; exp): if n < 0 then exp else foreach exp as $item ([n, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1]) end;",
+  "def limit(n; exp): n as $n | if $n < 0 then exp else foreach exp as $item ([$n, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1]) end;",
   "def first(g): foreach g as $item ([false, null]; if .[0]==true then break else [true, $item] end; .[1]);",
   "def last(g): reduce g as $item (null; $item);",
-  "def nth(n; g): if n < 0 then error(\"nth doesn't support negative indices\") else last(limit(n + 1; g)) end;",
+  "def nth(n; g): n as $n | if $n < 0 then error(\"nth doesn't support negative indices\") else last(limit($n + 1; g)) end;",
   "def first: .[0];",
   "def last: .[-1];",
   "def nth(n): .[n];",
