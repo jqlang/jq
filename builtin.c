@@ -970,6 +970,7 @@ static const char* const jq_builtins[] = {
   "def flatten: reduce .[] as $i ([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end);",
   "def flatten(x): reduce .[] as $i ([]; if $i | type == \"array\" and x > 0 then . + ($i | flatten(x-1)) else . + [$i] end);",
   "def range(x): range(0;x);",
+  //#######################################################################
   // regular expressions:
   "def match(re; mode): _match_impl(re; mode; false)|.[];",
   "def match(val): (val|type) as $vt | if $vt == \"string\" then match(val; null)"
@@ -987,6 +988,74 @@ static const char* const jq_builtins[] = {
    "  elif $vt == \"array\" and (val | length) > 1 then capture(val[0]; val[1])"
    "  elif $vt == \"array\" and (val | length) > 0 then capture(val[0]; null)"
    "  else error( $vt + \" not a string or array\") end;",
+  //
+  // scan(REGEX)
+  // scan(REGEX; FLAGS)
+  // splits(REGEX)
+  // splits(REGEX; FLAGS)
+  // split(REGEX)            # emits an array
+  // split(REGEX; FLAGS)     # emits an array
+  // sub(REGEX, STRING)
+  // gsub(REGEX, STRING) 
+  //
+  // produce a stream:
+  "def scan(re):"
+  "  match(re; \"g\")"
+  "  |  if (.captures|length > 0)"
+  "      then [ .captures | .[] | .string ]"
+  "      else .string"
+  "      end ;",
+  //
+  // If input is an array, then emit a stream of successive subarrays of length n (or less),
+  // and similarly for strings.
+  "def nwise(a; n): if a|length <= n then a else a[0:n] , nwise(a[n:]; n) end;",
+  "def nwise(n): nwise(.; n);",
+  //
+  // splits/1 produces a stream; split/1 is retained for backward compatibility.
+  "def splits(re; flags): . as $s"
+     //  # multiple occurrences of "g" are acceptable
+  "  | [ match(re; \"g\" + flags) | (.offset, .offset + .length) ]"
+  "  | [0] + . +[$s|length]"
+  "  | nwise(2)"
+  "  | $s[.[0]:.[1] ] ;",
+  "def splits(re): splits(re; null);",
+  //
+  // split emits an array for backward compatibility
+  "def split(re; flags): [ splits(re; flags) ];",
+  "def split(re): [ splits(re; null) ];",
+  //
+  // If s contains capture variables, then create a capture object and pipe it to s
+  "def sub(re; s):"
+  "  . as $in"
+  "  | [match(re)]"
+  "  | .[0]"
+  "  | . as $r"
+     //  # create the \"capture\" object:
+  "  | reduce ( $r | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair"
+  "      ({}; . + $pair)"
+  "  | if . == {} then $in | .[0:$r.offset]+s+.[$r.offset+$r.length:]"
+  "    else (. | s)"
+  "    end ;",
+  //
+  // repeated substitution of re (which may contain named captures)
+  "def gsub(re; s):"
+  //   # _stredit(edits;s) - s is the \"to\" string, which might contain capture variables,
+  //   # so if an edit contains captures, then create the capture object and pipe it to s
+  "   def _stredit(edits; s):"
+  "     if (edits|length) == 0 then ."
+  "     else . as $in"
+  "       | (edits|length -1) as $l"
+  "       | (edits[$l]) as $edit"
+  //       # create the \"capture\" object:
+  "       | ($edit | reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair"
+  "         ({}; . + $pair) )"
+  "       | if . == {} then $in | .[0:$edit.offset]+s+.[$edit.offset+$edit.length:] | _stredit(edits[0:$l]; s)"
+  "         else (if $l == 0 then \"\" else ($in | _stredit(edits[0:$l]; s)) end) + (. | s)"
+  "         end"
+  "     end ;"
+  "  [match(re;\"g\")] as $edits | _stredit($edits; s) ;",
+
+  //#######################################################################
   // range/3, with a `by` expression argument
   "def range(init; upto; by): "
   "     def _range: "
