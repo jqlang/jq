@@ -820,6 +820,40 @@ capture("(?<a>[a-z]+)-(?<n>[0-9]+)")
 "xyzzy-14"
 {"a":"xyzzy","n":"14"}
 
+
+# jq-coded utilities built on match:
+#
+# The second element in these tests' inputs tests the case where the
+# fromstring matches both the head and tail of the string
+[.[] | sub(", "; ":")]
+["a,b, c, d, e,f", ", a,b, c, d, e,f, "]
+["a,b:c, d, e,f",":a,b, c, d, e,f, "]
+, #2 [", ",", ",", "],["a,b","c","d","e,f"]], #3 [[":a,b, c, d, e,f,"],[":a,b:c:d:e,f:"],[", ",", ",", ",", ",", "],["","a,b","c","d","e,f",""]]]
+
+[.[] | gsub(", "; ":")]
+["a,b, c, d, e,f",", a,b, c, d, e,f, "]
+["a,b:c:d:e,f",":a,b:c:d:e,f:"]
+
+[.[] | scan(", ")]
+["a,b, c, d, e,f",", a,b, c, d, e,f, "]
+
+[.[] | split(", ")]
+["a,b, c, d, e,f",", a,b, c, d, e,f, "]
+
+########################
+[.[]|[[sub(", *";":")], [gsub(", *";":")], [scan(", *")], split(", *")]]
+["a,b, c, d, e,f",", a,b, c, d, e,f, "]
+[[["a:b, c, d, e,f"],["a:b:c:d:e:f"],[",",", ",", ",", ",","],["a","b","c","d","e","f"]],[[":a,b, c, d, e,f, "],[":a:b:c:d:e:f:"],[", ",",",", ",", ",", ",",",", "],["","a","b","c","d","e","f",""]]]
+
+[.[]|[[sub(", +";":")], [gsub(", +";":")], [scan(", +")], split(", +")]]
+["a,b, c, d, e,f",", a,b, c, d, e,f, "]
+[[["a,b:c, d, e,f"],["a,b:c:d:e,f"],[", ",", ",", "],["a,b","c","d","e,f"]],[[":a,b, c, d, e,f, "],[":a,b:c:d:e,f:"],[", ",", ",", ",", ",", "],["","a,b","c","d","e,f",""]]]
+
+# reference to named captures
+gsub("(?<x>.)[^a]*"; "+\(.x)-")
+"Abcabc"
+"+A-+a-"
+
 [.[]|ltrimstr("foo")]
 ["fo", "foo", "barfoo", "foobar", "afoo"]
 ["fo","","barfoo","bar","afoo"]

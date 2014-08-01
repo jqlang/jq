@@ -1721,6 +1721,91 @@ sections:
             - program: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
               input: '"xyzzy-14"'
               output: '{ "a": "xyzzy", "n": "14" }''
+
+  - title: "`scan(regex)`, `scan(regex; flags)`"
+  body: |
+  
+  Emit a stream of the non-overlapping substrings of the input
+  that match the regex in accordance with the flags, if any
+  have been specified.  If there is no match, the stream is empty.
+  To capture all the matches for each input string, use the idiom
+  [ expr ], e.g. [ scan(regex) ].
+  
+  example:
+  - program: 'scan("c")'
+    input: '"abcdefabc"'
+    output: '"c"'
+            '"c"'
+  
+  - program: 'scan("b")'
+    input: ("", "")
+    output: '[]'
+            '[]"'
+  
+  - title: "`split(regex)`, split(regex; flags)`"
+  body: |
+  
+  For backwards compatibility, `split` emits an array of the strings
+  corresponding to the successive segments of the input string after it
+  has been split at the boundaries defined by the regex and any
+  specified flags.  The substrings corresponding to the boundaries
+  themselves are excluded.  If regex is the empty string, then the first
+  match will be the empty string.
+  
+  `split(regex)` can be thought of as a wrapper around `splits(regex)`,
+  and similarly for `split(regex; flags)`.
+  
+  example:
+  - program: 'split(", *")'
+    input: '"ab,cd, ef"`
+    output: '["ab","cd","ef"]'
+  
+  
+  - title: "`splits(regex)`, splits(regex; flags)`"
+  body: |
+  
+  These provide the same results as their `split` counterparts,
+  but as a stream instead of an array.
+  
+  example:
+  - program: 'splits(", *")'
+    input: '("ab,cd", "ef, gh")`
+    output:
+           '"ab"'
+           '"cd"'
+           '"ef"'
+           '"gh"'
+  
+  - title: "`sub(regex; tostring)`"
+  
+  body: |
+  
+  Emit the string obtained by replacing the first match of regex in the
+  input string with `tostring`, after interpolation.  `tostring` should
+  be a jq string, and may contain references to named captures. The
+  named captures are, in effect, presented as a JSON object (as
+  constructed by `capture`) to `tostring`, so a reference to a captured
+  variable named "x" would take the form: "\(.x)".
+  
+  example:
+  - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
+     input: '"123abc456"'
+     output: '"ZabcZabc"'
+  
+  
+  - title: "`gsub(regex; string)`"
+  
+  body: |
+  
+  `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
+  replaced by the string, after interpolation.
+  
+  example:
+  - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
+  
+    input: '"Abcabc"'
+    output: '"+A-+a-"'
+  
   
   - title: Advanced features
     body: |
