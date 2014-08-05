@@ -3,6 +3,9 @@ m4_define([jq_version], m4_esyscmd_s([git describe --tags --dirty --match 'jq-*'
 AC_INIT([jq], [jq_version], [mu@netsoc.tcd.ie],
              [jq], [http://stedolan.github.com/jq/])
 
+m4_include([m4/ax_compare_version.m4])
+m4_include([m4/ax_prog_bison_version.m4])
+
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.61])
 AC_CONFIG_AUX_DIR([config])
@@ -18,18 +21,25 @@ AC_EXEEXT
 LT_INIT([shared static win32-dll])
 AM_PROG_CC_C_O
 
+
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
 dnl AC_PROG_YACC macros...
 
 dnl check bison version
-AC_MSG_CHECKING([bison version])
+
 if test "$YACC" != "bison -y"; then
+  AC_MSG_CHECKING([bison version])
   AC_MSG_RESULT([not bison])
-elif $YACC --help | grep -- --warnings >/dev/null; then 
-  AC_MSG_RESULT([ok])
-else 
-  AC_MSG_RESULT([no])
-  AC_MSG_ERROR([You need bison version 2.5 or more recent.])
+else
+  AX_PROG_BISON_VERSION([3],
+    [],
+    [AC_MSG_ERROR([You need bison version 3.0 or greater.])])
+  dnl These gross square brackets keep autotools from eating the perl script...
+#  yacc_version=[$($YACC --version 2>1 | perl -pe '($_)=/([0-9]+([.][0-9]+)+)/')]
+#  AX_COMPARE_VERSION([$yacc_version], [gt], [3],
+#  [AC_MSG_RESULT([ok])],
+#  [AC_MSG_RESULT([no])
+#   AC_MSG_ERROR([You need bison version 3.0 or greater.])])
 fi
 
 dnl
@@ -57,46 +67,17 @@ if test $ONIGURUMAPATHSET == 1; then
   LDFLAGS="$LDFLAGS -L${with_oniguruma}/lib"
 fi
 
-# store current *FLAGS and merge with AM_*FLAGS for compilation and linker check   
-OLD_CFLAGS=$CFLAGS;
-OLD_LDFLAGS=$LDFLAGS;
-CFLAGS="$AM_CFLAGS $CFLAGS"
-LDFLAGS="$AM_LDFLAGS $LDFLAGS"
-
-# ensure the library to check for is covered by the LIBS variable
-OLD_LIBS=$LIBS
-LIBS="$LIBS -lonig"
-
-# check for ONIGURUMA library headers   
-AC_MSG_CHECKING([for oniguruma.h])
-# try to compile a file that includes a header of the library oniguruma
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([ #include <oniguruma.h> ])],
-    [AC_MSG_RESULT([yes])
-        # try to link the function 'onig_free' out of library oniguruma
-        AC_MSG_CHECKING([for oniguruma usability])
-        AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([[#include <oniguruma.h>]],
-                [[onig_free(0);]])],
-            [AC_MSG_RESULT([yes])
-                FOUND_ONIGURUMA=1;],
-            [AC_MSG_RESULT([no])
-                LIBS=$OLD_LIBS; dnl reset to old value since oniguruma was not found
-                FOUND_ONIGURUMA=0;])],
-    [AC_MSG_RESULT([not found])
-        FOUND_ONIGURUMA=0;])
-
-# reset original *FLAGS
-CFLAGS=$OLD_CFLAGS
-LDFLAGS=$OLD_LDFLAGS
+# check for ONIGURUMA library
+HAVE_ONIGURUMA=1
+AC_CHECK_HEADER("oniguruma.h",
+    AC_CHECK_LIB([onig],[onig_version],[LIBS="$LIBS -lonig"; HAVE_ONIGURUMA=1;]))
 
 # handle check results
-if test $FOUND_ONIGURUMA != 1; then
+if test $HAVE_ONIGURUMA != 1; then
     AC_MSG_NOTICE([Oniguruma was not found.])
     AC_MSG_NOTICE([ Try setting the location using '--with-oniguruma=PREFIX' ])
     AC_MSG_ERROR([ oniguruma is required to build jq.])
 fi
-
-
 
 
 dnl Check for valgrind
