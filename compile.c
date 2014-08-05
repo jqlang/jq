@@ -399,7 +399,7 @@ block block_drop_unreferenced(block body) {
   int drop;
   do {
     drop = 0;
-    while((curr = block_take(&body)) && curr->op != TOP) {
+    while ((curr = block_take(&body)) && curr->op != TOP) {
       block b = inst_block(curr);
       if (block_count_refs(b,refd) + block_count_refs(b,body) == 0) {
         unrefd = BLOCK(unrefd, b);
@@ -593,7 +593,11 @@ block gen_definedor(block a, block b) {
 }
 
 int block_has_main(block top) {
-  return top.first && top.first->op == TOP;
+  for (inst *c = top.first; c; c = c->next) {
+    if (c->op == TOP)
+      return 1;
+  }
+  return 0;
 }
 
 int block_is_funcdef(block b) {
