@@ -1255,7 +1255,7 @@ sections:
             output: ['[1,2,4,8,16,32,64]']
 
 
-      - title: "`recurse(f)`, `recurse`, `recurse(f; condition), `recurse_down`"
+      - title: "`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`"
         body: |
 
           The `recurse(f)` function allows you to search through a
@@ -1280,7 +1280,7 @@ sections:
           When called without an argument, `recurse` is equivalent to
           `recurse(.[]?)`.
 
-          `recurse(f) is identical to `recurse(f; . != null)` and can be
+          `recurse(f)` is identical to `recurse(f; . != null)` and can be
           used without concerns about recursion depth.
 
           `recurse(f; condition)` is a generator which begins by
