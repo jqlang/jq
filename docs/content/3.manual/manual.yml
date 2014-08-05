@@ -22,7 +22,7 @@ body: |
   combine two filters, like addition, generally feed the same input to
   both and combine the results. So, you can implement an averaging
   filter as `add / length` - feeding the input array both to the `add`
-  filter and the `length` filter and dividing the results.
+  filter and the `length` filter and then performing the division.
 
   But that's getting ahead of ourselves. :) Let's start with something
   simpler:
@@ -40,14 +40,16 @@ manpage_intro: |
   running the command `jq 'map(.price) | add'` will take an array of
   JSON objects as input and return the sum of their "price" fields.
 
-  By default, `jq` reads a stream of JSON objects (whitespace
-  separated) from `stdin`. One or more <files> may be specified, in
+  `jq` can accept text input as well, but by default, `jq` reads a
+  stream of JSON entities (including numbers and other literals) from
+  `stdin`. Whitespace is only needed to separate entities such as 1
+  and 2, and true and false.  One or more <files> may be specified, in
   which case `jq` will read input from those instead.
 
-  The <options> are described in the [INVOKING JQ] section, they
+  The <options> are described in the [INVOKING JQ] section; they
   mostly concern input and output formatting. The <filter> is written
   in the jq language and specifies how to transform the input
-  document.
+  file or document.
 
   ## FILTERS
 
@@ -1250,7 +1252,7 @@ sections:
             output: ['[1,2,4,8,16,32,64]']
 
 
-      - title: "`recurse(f)`, `recurse`, `recurse_down`"
+      - title: "`recurse(f)`, `recurse`, `recurse(f; condition), `recurse_down`"
         body: |
 
           The `recurse(f)` function allows you to search through a
@@ -1275,9 +1277,23 @@ sections:
           When called without an argument, `recurse` is equivalent to
           `recurse(.[]?)`.
 
+          `recurse(f) is identical to `recurse(f; . != null)` and can be
+          used without concerns about recursion depth.
+
+          `recurse(f; condition)` is a generator which begins by
+          emitting . and then emits in turn .|f, .|f|f, .|f|f|f, ...  so long
+          as the computed value satisfies the condition. For example,
+          to generate all the integers, at least in principle, one
+          could write `recurse(.+1; true)`.
+
           For legacy reasons, `recurse_down` exists as an alias to
           calling `recurse` without arguments. This alias is considered
           *deprecated* and will be removed in the next major release.
+
+          These `recurse` filters are all written to take advantage of
+          jq's optimizations of certain cases of tail recursion.  In
+          particular, there is no memory overhead due to the
+          recursion.
 
         examples:
           - program: 'recurse(.foo[])'
@@ -1287,12 +1303,20 @@ sections:
               - '{"foo":[]}'
               - '{"foo":[{"foo":[]}]}'
               - '{"foo":[]}'
+
           - program: 'recurse'
             input: '{"a":0,"b":[1]}'
             output:
               - '0'
               - '[1]'
               - '1'
+
+          - program: 'recurse(. * .; . < 20)'
+            input: 2
+            output:
+                - 2
+                - 4
+                - 16
 
       - title: "`..`"
         body: |
