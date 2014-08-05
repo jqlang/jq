@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "compile.h"
+#include "util.h"
 #include "jv.h"
 #include "jq.h"
 #include "jv_alloc.h"
@@ -381,7 +382,7 @@ int main(int argc, char* argv[]) {
     t = jv_mem_alloc(tlen);
     int n = snprintf(t, tlen,"%sXXXXXX", input_filenames[0]);
     assert(n > 0 && (size_t)n < tlen);
-    if (mkstemp(t) == -1) {
+    if (_jq_mkstemp(t) == -1) {
       fprintf(stderr, "Error: %s creating temporary file", strerror(errno));
       exit(3);
     }

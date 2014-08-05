@@ -4,9 +4,20 @@
 #include <string.h>
 #endif
 #include <assert.h>
+
+
 #ifndef WIN32
 #include <pwd.h>
 #endif
+
+
+// Things needed for mkstemp replacement
+#ifndef HAVE_MKSTEMP
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#endif
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
@@ -116,5 +127,16 @@ not_this:
   }
   return NULL;
 #endif /* !HAVE_MEMMEM */
+}
+
+int _jq_mkstemp(char *template) {
+#ifdef HAVE_MKSTEMP
+  return mkstemp(template);
+#else
+  char *filename = mktemp(template);
+  if (!filename)
+    return -1;
+  return open(filename, O_RDWR | O_CREAT, 0600);
+#endif /* !HAVE_MKSTEMP */
 }
 
