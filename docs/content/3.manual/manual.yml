@@ -1245,9 +1245,10 @@ sections:
           The `while(cond; update)` function allows you to repeatedly
           apply an update to `.` until `cond` is false.
 
-          Note that `while(cond; update)` is internally defined as a jq
-          function written in jq, using only functional constructs.  See
-          advanced topics below.
+          Note that `while(cond; update)` is internally defined as a
+          recursive jq function.  Recursive calls within `while` will
+          not consume additional memory if `update` produces at most one
+          output for each input.  See advanced topics below.
 
         examples:
           - program: '[while(.<100; .*2)]'
@@ -1293,10 +1294,9 @@ sections:
           calling `recurse` without arguments. This alias is considered
           *deprecated* and will be removed in the next major release.
 
-          These `recurse` filters are all written to take advantage of
-          jq's optimizations of certain cases of tail recursion.  In
-          particular, there is no memory overhead due to the
-          recursion.
+          The recursive calls in `recurse` will not consume additional
+          memory whenever `f` produces at most a single output for each
+          input.
 
         examples:
           - program: 'recurse(.foo[])'
@@ -1717,7 +1717,7 @@ sections:
              of each capture as the key, and the matched string as the
              corresponding value.
   
-            example:
+            examples:
             - program: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
               input: '"xyzzy-14"'
               output: '{ "a": "xyzzy", "n": "14" }''
@@ -1967,7 +1967,21 @@ sections:
         body: |
 
           As described above, `recurse` uses recursion, and any jq
-          function can be recursive.  Tail calls are optmized.
+          function can be recursive.  The `while` builtin is also
+          implemented in terms of recursion.
+
+          Tail calls are optmized whenever the expression to the left of
+          the recursive call outputs its last value.  In practice this
+          means that the expression to the left of the recursive call
+          should not produce more than one output for each input.
+
+          For example:
+
+              def recurse(f): def r: ., (f | select(. != null) | r); r;
+
+              def while(cond; update):
+                def w: if cond then ., (update | _while) else empty end;
+                try _while catch if . == "break" then empty else . end;
 
       - title: Generators and iterators
         body: |
