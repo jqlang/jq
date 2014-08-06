@@ -712,7 +712,7 @@ sections:
             output: ['[5,3,7]']
           - program: '.[] | select(.id == "second")'
             input: '[{"id": "first", "val": 1}, {"id": "second", "val": 2}]'
-            output: '{"id": "second", "val": 2}'
+            output: ['{"id": "second", "val": 2}']
 
 
       - title: "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`, `scalars`"
