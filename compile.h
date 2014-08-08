@@ -30,6 +30,7 @@ block gen_op_var_fresh(opcode op, const char* name);
 
 block gen_import(const char* name, const char *as, const char *search);
 block gen_function(const char* name, block formals, block body);
+block gen_param_regular(const char* name);
 block gen_param(const char* name);
 block gen_lambda(block body);
 block gen_call(const char* name, block body);

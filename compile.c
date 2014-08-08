@@ -451,14 +451,24 @@ block gen_import(const char* name, const char* as, const char* search) {
 }
 
 block gen_function(const char* name, block formals, block body) {
-  block_bind_each(formals, body, OP_IS_CALL_PSEUDO);
   inst* i = inst_new(CLOSURE_CREATE);
+  for (inst* i = formals.last; i; i = i->prev) {
+    if (i->op == CLOSURE_PARAM_REGULAR) {
+      i->op = CLOSURE_PARAM;
+      body = gen_var_binding(gen_call(i->symbol, gen_noop()), i->symbol, body);
+    }
+    block_bind_subblock(inst_block(i), body, OP_IS_CALL_PSEUDO | OP_HAS_BINDING);
+  }
   i->subfn = body;
   i->symbol = strdup(name);
   i->arglist = formals;
   block b = inst_block(i);
   block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING);
   return b;
+}
+
+block gen_param_regular(const char* name) {
+  return gen_op_unbound(CLOSURE_PARAM_REGULAR, name);
 }
 
 block gen_param(const char* name) {

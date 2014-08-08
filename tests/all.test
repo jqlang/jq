@@ -538,6 +538,11 @@ def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x
 "more testing"
 [1,100,2100.0,100,2100.0]
 
+# test def f($a) syntax
+def x(a;b): a as $a | b as $b | $a + $b; def y($a;$b): $a + $b; def check(a;b): [x(a;b)] == [y(a;b)]; check(.[];.[]*2)
+[1,2,3]
+true
+
 # test backtracking through function calls and returns
 # this test is *evil*
 [[20,10][1,0] as $x | def f: (100,200) as $y | def g: [$x + $y, .]; . + $x | g; f[0] | [f][0][1] | f]

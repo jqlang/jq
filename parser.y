@@ -102,7 +102,7 @@ struct lexer_param;
 %precedence "catch"
 
 
-%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs String Import Imports
+%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs String Import Imports Param Params
 %{
 #include "lexer.h"
 struct lexer_param {
@@ -471,82 +471,28 @@ FuncDef:
   jv_free($2);
 } |
 
-"def" IDENT '(' IDENT ')' ':' Exp ';' {
-  $$ = gen_function(jv_string_value($2), 
-                    gen_param(jv_string_value($4)), 
-                    $7);
+"def" IDENT '(' Params ')' ':' Exp ';' {
+  $$ = gen_function(jv_string_value($2), $4, $7);
   jv_free($2);
-  jv_free($4);
+}
+
+Params:
+Param {
+  $$ = $1;
+} |
+Params ';' Param {
+  $$ = BLOCK($1, $3);
+}
+
+Param:
+'$' IDENT {
+  $$ = gen_param_regular(jv_string_value($2));
+  jv_free($2);
 } |
 
-"def" IDENT '(' IDENT ';' IDENT ')' ':' Exp ';' {
-  $$ = gen_function(jv_string_value($2), 
-                    BLOCK(gen_param(jv_string_value($4)), 
-                          gen_param(jv_string_value($6))),
-                    $9);
-  jv_free($2);
-  jv_free($4);
-  jv_free($6);
-} |
-
-"def" IDENT '(' IDENT ';' IDENT ';' IDENT ')' ':' Exp ';' {
-  $$ = gen_function(jv_string_value($2), 
-                    BLOCK(gen_param(jv_string_value($4)), 
-                          gen_param(jv_string_value($6)),
-                          gen_param(jv_string_value($8))),
-                    $11);
-  jv_free($2);
-  jv_free($4);
-  jv_free($6);
-  jv_free($8);
-} |
-
-"def" IDENT '(' IDENT ';' IDENT ';' IDENT ';' IDENT ')' ':' Exp ';' {
-  $$ = gen_function(jv_string_value($2), 
-                    BLOCK(gen_param(jv_string_value($4)), 
-                          gen_param(jv_string_value($6)),
-                          gen_param(jv_string_value($8)),
-                          gen_param(jv_string_value($10))),
-                    $13);
-  jv_free($2);
-  jv_free($4);
-  jv_free($6);
-  jv_free($8);
-  jv_free($10);
-} |
-
-"def" IDENT '(' IDENT ';' IDENT ';' IDENT ';' IDENT ';' IDENT ')' ':' Exp ';' {
-  $$ = gen_function(jv_string_value($2), 
-                    BLOCK(gen_param(jv_string_value($4)), 
-                          gen_param(jv_string_value($6)),
-                          gen_param(jv_string_value($8)),
-                          gen_param(jv_string_value($10)),
-                          gen_param(jv_string_value($12))),
-                    $15);
-  jv_free($2);
-  jv_free($4);
-  jv_free($6);
-  jv_free($8);
-  jv_free($10);
-  jv_free($12);
-} |
-
-"def" IDENT '(' IDENT ';' IDENT ';' IDENT ';' IDENT ';' IDENT ';' IDENT ')' ':' Exp ';' {
-  $$ = gen_function(jv_string_value($2), 
-                    BLOCK(gen_param(jv_string_value($4)), 
-                          gen_param(jv_string_value($6)),
-                          gen_param(jv_string_value($8)),
-                          gen_param(jv_string_value($10)),
-                          gen_param(jv_string_value($12)),
-                          gen_param(jv_string_value($14))),
-                    $17);
-  jv_free($2);
-  jv_free($4);
-  jv_free($6);
-  jv_free($8);
-  jv_free($10);
-  jv_free($12);
-  jv_free($14);
+IDENT {
+  $$ = gen_param(jv_string_value($1));
+  jv_free($1);
 }
 
 
