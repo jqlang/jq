@@ -102,7 +102,9 @@ struct lexer_param;
 %precedence "catch"
 
 
-%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString FuncDef FuncDefs String Import Imports Param Params
+%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString
+%type <blk> FuncDef FuncDefs String Import Imports Param Params
+%type <blk> Arg Args
 %{
 #include "lexer.h"
 struct lexer_param {
@@ -639,33 +641,8 @@ IDENT {
   $$ = gen_location(@$, locations, gen_call(jv_string_value($1), gen_noop()));
   jv_free($1);
 } |
-IDENT '(' Exp ')' {
-  $$ = gen_call(jv_string_value($1), gen_lambda($3));
-  $$ = gen_location(@1, locations, $$);
-  jv_free($1);
-} |
-IDENT '(' Exp ';' Exp ')' {
-  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5)));
-  $$ = gen_location(@1, locations, $$);
-  jv_free($1);
-} |
-IDENT '(' Exp ';' Exp ';' Exp ')' {
-  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7)));
-  $$ = gen_location(@1, locations, $$);
-  jv_free($1);
-} |
-IDENT '(' Exp ';' Exp ';' Exp ';' Exp ')' {
-  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7), gen_lambda($9)));
-  $$ = gen_location(@1, locations, $$);
-  jv_free($1);
-} |
-IDENT '(' Exp ';' Exp ';' Exp ';' Exp ';' Exp ')' {
-  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7), gen_lambda($9), gen_lambda($11)));
-  $$ = gen_location(@1, locations, $$);
-  jv_free($1);
-} |
-IDENT '(' Exp ';' Exp ';' Exp ';' Exp ';' Exp ';' Exp ')' {
-  $$ = gen_call(jv_string_value($1), BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7), gen_lambda($9), gen_lambda($11), gen_lambda($13)));
+IDENT '(' Args ')' {
+  $$ = gen_call(jv_string_value($1), $3);
   $$ = gen_location(@1, locations, $$);
   jv_free($1);
 } |
@@ -673,6 +650,19 @@ IDENT '(' Exp ';' Exp ';' Exp ';' Exp ';' Exp ';' Exp ')' {
 '[' error ']' { $$ = gen_noop(); } |
 Term '[' error ']' { $$ = $1; } |
 '{' error '}' { $$ = gen_noop(); }
+
+Args:
+Arg {
+  $$ = $1;
+} |
+Args ';' Arg {
+  $$ = BLOCK($1, $3);
+}
+
+Arg:
+Exp {
+  $$ = gen_lambda($1);
+}
 
 MkDict:
 %empty { 
