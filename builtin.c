@@ -998,15 +998,15 @@ static const char* const jq_builtins[] = {
   //
   // If input is an array, then emit a stream of successive subarrays of length n (or less),
   // and similarly for strings.
-  "def nwise(a; $n): if a|length <= $n then a else a[0:$n] , nwise(a[$n:]; $n) end;",
-  "def nwise($n): nwise(.; $n);",
+  "def _nwise(a; $n): if a|length <= $n then a else a[0:$n] , _nwise(a[$n:]; $n) end;",
+  "def _nwise($n): _nwise(.; $n);",
   //
   // splits/1 produces a stream; split/1 is retained for backward compatibility.
   "def splits($re; flags): . as $s"
      //  # multiple occurrences of "g" are acceptable
   "  | [ match($re; \"g\" + flags) | (.offset, .offset + .length) ]"
   "  | [0] + . +[$s|length]"
-  "  | nwise(2)"
+  "  | _nwise(2)"
   "  | $s[.[0]:.[1] ] ;",
   "def splits($re): splits($re; null);",
   //
