@@ -230,8 +230,12 @@ static jv* jvp_array_read(jv a, int i) {
 }
 
 static jv* jvp_array_write(jv* a, int i) {
-  assert(i >= 0);
   jvp_array* array = jvp_array_ptr(*a);
+
+  if (i < 0)
+    i = array->length + i;
+  if (i < 0)
+    i = 0;
 
   int pos = i + jvp_array_offset(*a);
   if (pos < array->alloc_length && jvp_refcnt_unshared(a->u.ptr)) {

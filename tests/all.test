@@ -153,6 +153,26 @@ null
 [null,"bc",[],[2,3],[2]]
 
 #
+# Negative array indices
+#
+
+.foo[-1] = 0
+null
+{"foo":[0]}
+
+.foo[-2] = 0
+null
+{"foo":[0]}
+
+.[-1] = 5
+[0,1,2]
+[0,1,5]
+
+.[-2] = 5
+[0,1,2]
+[0,5,2]
+
+#
 # Multiple outputs, iteration
 #
 
