@@ -975,19 +975,19 @@ static const char* const jq_builtins[] = {
   "def flatten($x): reduce .[] as $i ([]; if $i | type == \"array\" and $x > 0 then . + ($i | flatten($x-1)) else . + [$i] end);",
   "def range($x): range(0;$x);",
   "def match(re; mode): _match_impl(re; mode; false)|.[];",
-  "def match(val): (val|type) as $vt | if $vt == \"string\" then match(val; null)"
-  "   elif $vt == \"array\" and (val | length) > 1 then match(val[0]; val[1])"
-  "   elif $vt == \"array\" and (val | length) > 0 then match(val[0]; null)"
+  "def match($val): ($val|type) as $vt | if $vt == \"string\" then match($val; null)"
+  "   elif $vt == \"array\" and ($val | length) > 1 then match($val[0]; $val[1])"
+  "   elif $vt == \"array\" and ($val | length) > 0 then match($val[0]; null)"
   "   else error( $vt + \" not a string or array\") end;",
   "def test(re; mode): _match_impl(re; mode; true);",
-  "def test(val): (val|type) as $vt | if $vt == \"string\" then test(val; null)"
-  "   elif $vt == \"array\" and (val | length) > 1 then test(val[0]; val[1])"
-  "   elif $vt == \"array\" and (val | length) > 0 then test(val[0]; null)"
+  "def test($val): ($val|type) as $vt | if $vt == \"string\" then test($val; null)"
+  "   elif $vt == \"array\" and ($val | length) > 1 then test($val[0]; $val[1])"
+  "   elif $vt == \"array\" and ($val | length) > 0 then test($val[0]; null)"
   "   else error( $vt + \" not a string or array\") end;",
   "def capture(re; mods): match(re; mods) | reduce ( .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair ({}; . + $pair);",
-  "def capture(val): (val|type) as $vt | if $vt == \"string\" then capture(val; null)"
-  "   elif $vt == \"array\" and (val | length) > 1 then capture(val[0]; val[1])"
-  "   elif $vt == \"array\" and (val | length) > 0 then capture(val[0]; null)"
+  "def capture($val): ($val|type) as $vt | if $vt == \"string\" then capture($val; null)"
+  "   elif $vt == \"array\" and ($val | length) > 1 then capture($val[0]; $val[1])"
+  "   elif $vt == \"array\" and ($val | length) > 0 then capture($val[0]; null)"
   "   else error( $vt + \" not a string or array\") end;",
   "def scan(re):"
   "  match(re; \"g\")"
@@ -998,26 +998,26 @@ static const char* const jq_builtins[] = {
   //
   // If input is an array, then emit a stream of successive subarrays of length n (or less),
   // and similarly for strings.
-  "def nwise(a; n): if a|length <= n then a else a[0:n] , nwise(a[n:]; n) end;",
-  "def nwise(n): nwise(.; n);",
+  "def nwise(a; $n): if a|length <= $n then a else a[0:$n] , nwise(a[$n:]; $n) end;",
+  "def nwise($n): nwise(.; $n);",
   //
   // splits/1 produces a stream; split/1 is retained for backward compatibility.
-  "def splits(re; flags): . as $s"
+  "def splits($re; flags): . as $s"
      //  # multiple occurrences of "g" are acceptable
-  "  | [ match(re; \"g\" + flags) | (.offset, .offset + .length) ]"
+  "  | [ match($re; \"g\" + flags) | (.offset, .offset + .length) ]"
   "  | [0] + . +[$s|length]"
   "  | nwise(2)"
   "  | $s[.[0]:.[1] ] ;",
-  "def splits(re): splits(re; null);",
+  "def splits($re): splits($re; null);",
   //
   // split emits an array for backward compatibility
-  "def split(re; flags): [ splits(re; flags) ];",
-  "def split(re): [ splits(re; null) ];",
+  "def split($re; flags): [ splits($re; flags) ];",
+  "def split($re): [ splits($re; null) ];",
   //
   // If s contains capture variables, then create a capture object and pipe it to s
-  "def sub(re; s):"
+  "def sub($re; s):"
   "  . as $in"
-  "  | [match(re)]"
+  "  | [match($re)]"
   "  | .[0]"
   "  | . as $r"
      //  # create the \"capture\" object:
@@ -1028,7 +1028,7 @@ static const char* const jq_builtins[] = {
   "    end ;",
   //
   // repeated substitution of re (which may contain named captures)
-  "def gsub(re; s):"
+  "def gsub($re; s):"
   //   # _stredit(edits;s) - s is the \"to\" string, which might contain capture variables,
   //   # so if an edit contains captures, then create the capture object and pipe it to s
   "   def _stredit(edits; s):"
@@ -1043,14 +1043,11 @@ static const char* const jq_builtins[] = {
   "         else (if $l == 0 then \"\" else ($in | _stredit(edits[0:$l]; s)) end) + (. | s)"
   "         end"
   "     end ;"
-  "  [match(re;\"g\")] as $edits | _stredit($edits; s) ;",
+  "  [match($re;\"g\")] as $edits | _stredit($edits; s) ;",
 
   //#######################################################################
   // range/3, with a `by` expression argument
-  "def range(init; upto; by): "
-  "    init as $init |"
-  "    upto as $upto |"
-  "    by as $by |"
+  "def range($init; $upto; $by): "
   "    def _range: "
   "        if ($by > 0 and . < $upto) or ($by < 0 and . > $upto) then ., ((.+$by)|_range) else . end; "
   "    if $by == 0 then $init else $init|_range end | select(($by > 0 and . < $upto) or ($by < 0 and . > $upto));",
