@@ -156,13 +156,13 @@ null
 # Negative array indices
 #
 
-.foo[-1] = 0
+try (.foo[-1] = 0) catch .
 null
-{"foo":[0]}
+"Out of bounds negative array index"
 
-.foo[-2] = 0
+try (.foo[-2] = 0) catch .
 null
-{"foo":[0]}
+"Out of bounds negative array index"
 
 .[-1] = 5
 [0,1,2]

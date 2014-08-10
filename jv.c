@@ -230,12 +230,8 @@ static jv* jvp_array_read(jv a, int i) {
 }
 
 static jv* jvp_array_write(jv* a, int i) {
+  assert(i >= 0);
   jvp_array* array = jvp_array_ptr(*a);
-
-  if (i < 0)
-    i = array->length + i;
-  if (i < 0)
-    i = 0;
 
   int pos = i + jvp_array_offset(*a);
   if (pos < array->alloc_length && jvp_refcnt_unshared(a->u.ptr)) {
@@ -325,6 +321,14 @@ jv jv_array_get(jv j, int idx) {
 
 jv jv_array_set(jv j, int idx, jv val) {
   assert(jv_get_kind(j) == JV_KIND_ARRAY);
+
+  if (idx < 0)
+    idx = jvp_array_length(j) + idx;
+  if (idx < 0) {
+    jv_free(j);
+    jv_free(val);
+    return jv_invalid_with_msg(jv_string("Out of bounds negative array index"));
+  }
   // copy/free of val,j coalesced
   jv* slot = jvp_array_write(&j, idx);
   jv_free(*slot);
