@@ -352,15 +352,20 @@ int main(int argc, char* argv[]) {
     lib_search_paths = jv_array_concat(lib_search_paths,jv_string_split(jv_string(penv),jv_string(PATH_ENV_SEPARATOR)));
 #undef PATH_ENV_SEPARATOR
   }
-  jq_set_lib_dirs(jq,lib_search_paths);
+  jq_set_attr(jq, jv_string("LIB_DIRS"), lib_search_paths);
 
   char *origin = strdup(argv[0]);
   if (origin == NULL) {
     fprintf(stderr, "Error: out of memory\n");
     exit(1);
   }
-  jq_set_lib_origin(jq,jv_string(dirname(origin)));
+  jq_set_attr(jq, jv_string("ORIGIN"), jv_string(dirname(origin)));
   free(origin);
+
+  if (strchr(JQ_VERSION, '-') == NULL)
+    jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string(JQ_VERSION));
+  else
+    jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string("next"));
 
 #if (!defined(WIN32) && defined(HAVE_ISATTY)) || defined(HAVE__ISATTY)
 

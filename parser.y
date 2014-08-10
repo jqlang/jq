@@ -56,8 +56,8 @@ struct lexer_param;
 %token NEQ "!="
 %token DEFINEDOR "//"
 %token AS "as"
-%token SEARCH "search"
 %token DEF "def"
+%token MODULE "module"
 %token IMPORT "import"
 %token IF "if"
 %token THEN "then"
@@ -104,7 +104,7 @@ struct lexer_param;
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString
 %type <blk> FuncDef FuncDefs String Import Imports Param Params
-%type <blk> Arg Args
+%type <blk> Arg Args Module
 %{
 #include "lexer.h"
 struct lexer_param {
@@ -263,12 +263,26 @@ static block gen_update(block object, block val, int optype) {
 
 %%
 TopLevel:
-Imports Exp {
-  *answer = BLOCK($1, gen_op_simple(TOP), $2);
+Module Imports Exp {
+  *answer = BLOCK($1, $2, gen_op_simple(TOP), $3);
 } |
-Imports FuncDefs {
-  *answer = BLOCK($1, $2);
+Module Imports FuncDefs {
+  *answer = BLOCK($1, $2, $3);
 } 
+
+Module:
+%empty {
+  $$ = gen_noop();
+} |
+"module" IDENT Exp ';' {
+  if (!block_is_const($3)) {
+    FAIL(@$, "Module metadata must be constant.");
+    $$ = gen_noop();
+  } else {
+    $$ = gen_module(jv_string_value($2), $3);
+  }
+  jv_free($2);
+}
 
 Imports:
 %empty {
@@ -447,24 +461,32 @@ Term {
 
 Import:
 "import" IDENT ';' {
-  $$ = gen_import(jv_string_value($2), NULL, NULL);
+  $$ = gen_import(jv_string_value($2), gen_noop(), NULL);
+  jv_free($2);
+} |
+"import" IDENT Exp ';' {
+  if (!block_is_const($3)) {
+    FAIL(@$, "Module metadata must be constant.");
+    $$ = gen_noop();
+  } else {
+    $$ = gen_import(jv_string_value($2), $3, NULL);
+  }
   jv_free($2);
 } |
 "import" IDENT "as" IDENT ';' {
-  $$ = gen_import(jv_string_value($2), jv_string_value($4), NULL);
+  $$ = gen_import(jv_string_value($2), gen_noop(), jv_string_value($4));
   jv_free($2);
   jv_free($4);
 } |
-"import" IDENT "as" IDENT "search" QQSTRING_START QQSTRING_TEXT QQSTRING_END ';' {
-  $$ = gen_import(jv_string_value($2), jv_string_value($4), jv_string_value($7));
+"import" IDENT "as" IDENT Exp ';' {
+  if (!block_is_const($5)) {
+    FAIL(@$, "Module metadata must be constant.");
+    $$ = gen_noop();
+  } else {
+    $$ = gen_import(jv_string_value($2), $5, jv_string_value($4));
+  }
   jv_free($2);
   jv_free($4);
-  jv_free($7);
-} |
-"import" IDENT "search" QQSTRING_START QQSTRING_TEXT QQSTRING_END ';' {
-  $$ = gen_import(jv_string_value($2), NULL, jv_string_value($5));
-  jv_free($2);
-  jv_free($5);
 }
 
 FuncDef:

@@ -232,7 +232,7 @@ block block_join(block a, block b) {
 int block_has_only_binders_and_imports(block binders, int bindflags) {
   bindflags |= OP_HAS_BINDING;
   for (inst* curr = binders.first; curr; curr = curr->next) {
-    if ((opcode_describe(curr->op)->flags & bindflags) != bindflags && curr->op != DEPS) {
+    if ((opcode_describe(curr->op)->flags & bindflags) != bindflags && curr->op != DEPS && curr->op != MODULEMETA) {
       return 0;
     }
   }
@@ -242,7 +242,7 @@ int block_has_only_binders_and_imports(block binders, int bindflags) {
 int block_has_only_binders(block binders, int bindflags) {
   bindflags |= OP_HAS_BINDING;
   for (inst* curr = binders.first; curr; curr = curr->next) {
-    if ((opcode_describe(curr->op)->flags & bindflags) != bindflags) {
+    if ((opcode_describe(curr->op)->flags & bindflags) != bindflags && curr->op != MODULEMETA) {
       return 0;
     }
   }
@@ -341,10 +341,13 @@ block block_bind_library(block binder, block body, int bindflags, const char* li
   assert(block_has_only_binders(binder, bindflags));
   bindflags |= OP_HAS_BINDING;
   int nrefs = 0;
-  int matchlen = strlen(libname)+2;
-  char* matchname = malloc(matchlen+1);
-  strcpy(matchname,libname);
-  strcpy(matchname+matchlen-2,"::");
+  int matchlen = strlen(libname);
+  char* matchname = calloc(1,matchlen+2+1);
+  if (libname[0] != '\0') {
+    strcpy(matchname,libname);
+    strcpy(matchname+matchlen,"::");
+    matchlen += 2;
+  }
   for (inst *curr = binder.first; curr; curr = curr->next) {
     char* cname = curr->symbol;
     char* tname = malloc(strlen(curr->symbol)+matchlen+1);
@@ -425,11 +428,13 @@ jv block_take_imports(block* body) {
   if (body->first->op == TOP) {
     top = block_take(body);
   }
-  while (body->first && body->first->op == DEPS) {
+  while (body->first && (body->first->op == MODULEMETA || body->first->op == DEPS)) {
     inst* dep = block_take(body);
-    jv opts = jv_copy(dep->imm.constant);
-    opts = jv_object_set(opts,jv_string("name"),jv_string(dep->symbol));
-    imports = jv_array_append(imports, opts);
+    if (dep->op == DEPS) {
+      jv opts = jv_copy(dep->imm.constant);
+      opts = jv_object_set(opts,jv_string("name"),jv_string(dep->symbol));
+      imports = jv_array_append(imports, opts);
+    }
     inst_free(dep);
   }
   if (top) {
@@ -438,15 +443,36 @@ jv block_take_imports(block* body) {
   return imports;
 }
 
-block gen_import(const char* name, const char* as, const char* search) {
+block gen_module(const char* name, block metadata) {
+  inst* i = inst_new(MODULEMETA);
+  i->symbol = strdup(name);
+  i->imm.constant = block_const(metadata);
+  if (jv_get_kind(i->imm.constant) != JV_KIND_OBJECT)
+    i->imm.constant = jv_object_set(jv_object(), jv_string("metadata"), i->imm.constant);
+  i->imm.constant = jv_object_set(i->imm.constant, jv_string("name"), jv_string(name));
+  block_free(metadata);
+  return inst_block(i);
+}
+
+jv block_module_meta(block b) {
+  if (b.first != NULL && b.first->op == MODULEMETA)
+    return jv_copy(b.first->imm.constant);
+  return jv_null();
+}
+
+block gen_import(const char* name, block metadata, const char* as) {
+  assert(metadata.first == NULL || block_is_const(metadata));
   inst* i = inst_new(DEPS);
   i->symbol = strdup(name);
-  jv opts = jv_object();
+  jv meta;
+  if (block_is_const(metadata))
+    meta = block_const(metadata);
+  else
+    meta = jv_object();
   if (as)
-	  opts = jv_object_set(opts, jv_string("as"), jv_string(as));
-  if (search)
-	  opts = jv_object_set(opts, jv_string("search"), jv_string(search));
-  i->imm.constant = opts;
+    meta = jv_object_set(meta, jv_string("as"), jv_string(as));
+  i->imm.constant = meta;
+  block_free(metadata);
   return inst_block(i);
 }
 

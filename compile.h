@@ -28,7 +28,9 @@ block gen_op_unbound(opcode op, const char* name);
 block gen_op_bound(opcode op, block binder);
 block gen_op_var_fresh(opcode op, const char* name);
 
-block gen_import(const char* name, const char *as, const char *search);
+block gen_module(const char* name, block metadata);
+jv block_module_meta(block b);
+block gen_import(const char* name, block metadata, const char *as);
 block gen_function(const char* name, block formals, block body);
 block gen_param_regular(const char* name);
 block gen_param(const char* name);

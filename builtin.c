@@ -8,6 +8,7 @@
 #include "compile.h"
 #include "jq_parser.h"
 #include "bytecode.h"
+#include "linker.h"
 #include "locfile.h"
 #include "jv_unicode.h"
 
@@ -812,6 +813,8 @@ static jv f_getpath(jq_state *jq, jv a, jv b) { return jv_getpath(a, b); }
 static jv f_delpaths(jq_state *jq, jv a, jv b) { return jv_delpaths(a, b); }
 static jv f_has(jq_state *jq, jv a, jv b) { return jv_has(a, b); }
 
+static jv f_modulemeta(jq_state *jq, jv a) { return load_module_meta(jq, a); }
+
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 1},
    
@@ -859,6 +862,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_env, "env", 1},
   {(cfunction_ptr)f_match, "_match_impl", 4},
+  {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
 };
 #undef LIBM_DD
 

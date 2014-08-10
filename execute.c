@@ -984,38 +984,34 @@ int jq_compile(jq_state *jq, const char* str) {
   return jq_compile_args(jq, str, jv_array());
 }
 
-void jq_set_lib_origin(jq_state *jq, jv origin) {
-	assert(jq);
-	assert(jv_get_kind(origin) == JV_KIND_STRING);
-	jq_set_attr(jq, jv_string("ORIGIN"), origin);
-}
 jv jq_get_lib_origin(jq_state *jq) {
-	assert(jq);
-	return jq_get_attr(jq, jv_string("ORIGIN"));
+  return jq_get_attr(jq, jv_string("ORIGIN"));
 }
 
-void jq_set_lib_dirs(jq_state *jq, jv dirs) {
-	assert(jq);
-	assert(jv_get_kind(dirs) == JV_KIND_ARRAY);
-	jq_set_attr(jq, jv_string("LIB_DIRS"), dirs);
-}
 jv jq_get_lib_dirs(jq_state *jq) {
-	assert(jq);
-	return jq_get_attr(jq, jv_string("LIB_DIRS"));
+  return jq_get_attr(jq, jv_string("LIB_DIRS"));
+}
+
+jv jq_get_version_dir(jq_state *jq) {
+  jv d = jq_get_attr(jq, jv_string("VERSION_DIR"));
+  assert(jv_is_valid(d));
+  return d;
+}
+
+void jq_set_attrs(jq_state *jq, jv attrs) {
+  assert(jv_get_kind(attrs) == JV_KIND_OBJECT);
+  jv_free(jq->attrs);
+  jq->attrs = attrs;
 }
 
 void jq_set_attr(jq_state *jq, jv attr, jv val) {
-	assert(jq);
-	assert(jv_get_kind(attr) == JV_KIND_STRING);
-	assert(jv_is_valid(val));
-	jq->attrs = jv_object_set(jq->attrs, attr, val);
+  jq->attrs = jv_object_set(jq->attrs, attr, val);
 }
 
 jv jq_get_attr(jq_state *jq, jv attr) {
-	assert(jq);
-	assert(jv_get_kind(attr) == JV_KIND_STRING);
-	return jv_object_get(jv_copy(jq->attrs), attr);
+  return jv_object_get(jv_copy(jq->attrs), attr);
 }
+
 void jq_dump_disassembly(jq_state *jq, int indent) {
   dump_disassembly(indent, jq->bc);
 }
