@@ -868,9 +868,6 @@ static block bind_bytecoded_builtins(block b) {
   {
     struct bytecoded_builtin builtin_defs[] = {
       {"empty", gen_op_simple(BACKTRACK)},
-      {"false", gen_const(jv_false())},
-      {"true", gen_const(jv_true())},
-      {"null", gen_const(jv_null())},
       {"not", gen_condbranch(gen_const(jv_false()),
                              gen_const(jv_true()))}
     };

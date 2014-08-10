@@ -638,7 +638,15 @@ FORMAT {
   jv_free($2);
 } | 
 IDENT {
-  $$ = gen_location(@$, locations, gen_call(jv_string_value($1), gen_noop()));
+  const char *s = jv_string_value($1);
+  if (strcmp(s, "false") == 0)
+    $$ = gen_const(jv_false());
+  else if (strcmp(s, "true") == 0)
+    $$ = gen_const(jv_true());
+  else if (strcmp(s, "null") == 0)
+    $$ = gen_const(jv_null());
+  else
+    $$ = gen_location(@$, locations, gen_call(s, gen_noop()));
   jv_free($1);
 } |
 IDENT '(' Args ')' {
