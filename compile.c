@@ -499,7 +499,51 @@ block gen_both(block a, block b) {
   return c;
 }
 
-block gen_const_array(block expr) {
+block gen_const_object(block expr) {
+  int is_const = 1;
+  jv o = jv_object();
+  jv k = jv_null();
+  jv v = jv_null();
+  for (inst *i = expr.first; i; i = i->next) {
+    if (i->op != SUBEXP_BEGIN ||
+        i->next == NULL ||
+        i->next->op != LOADK ||
+        i->next->next == NULL ||
+        i->next->next->op != SUBEXP_END) {
+      is_const = 0;
+      break;
+    }
+    k = jv_copy(i->next->imm.constant);
+    i = i->next->next->next;
+    if (i == NULL ||
+        i->op != SUBEXP_BEGIN ||
+        i->next == NULL ||
+        i->next->op != LOADK ||
+        i->next->next == NULL ||
+        i->next->next->op != SUBEXP_END) {
+      is_const = 0;
+      break;
+    }
+    v = jv_copy(i->next->imm.constant);
+    i = i->next->next->next;
+    if (i == NULL || i->op != INSERT) {
+      is_const = 0;
+      break;
+    }
+    o = jv_object_set(o, k, v);
+  }
+  if (!is_const) {
+    jv_free(o);
+    jv_free(k);
+    jv_free(v);
+    block b = {0,0};
+    return b;
+  }
+  block_free(expr);
+  return gen_const(o);
+}
+
+static block gen_const_array(block expr) {
   /*
    * An expr of all constant elements looks like this:
    *

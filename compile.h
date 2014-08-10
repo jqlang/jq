@@ -36,6 +36,7 @@ block gen_lambda(block body);
 block gen_call(const char* name, block body);
 block gen_subexp(block a);
 block gen_both(block a, block b);
+block gen_const_object(block expr);
 block gen_collect(block expr);
 block gen_reduce(const char* varname, block source, block init, block body);
 block gen_foreach(const char* varname, block source, block init, block update, block extract);

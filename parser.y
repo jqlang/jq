@@ -631,7 +631,11 @@ FORMAT {
   $$ = gen_const(jv_array()); 
 } |
 '{' MkDict '}' { 
-  $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
+  block o = gen_const_object($2);
+  if (o.first != NULL)
+    $$ = o;
+  else
+    $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
 } |
 '$' IDENT {
   $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));
