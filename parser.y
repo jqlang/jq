@@ -122,12 +122,12 @@ void yyerror(YYLTYPE* loc, block* answer, int* errors,
   (*errors)++;
   if (strstr(s, "unexpected")) {
 #ifdef WIN32
-      locfile_locate(locations, *loc, "error: %s (Windows cmd shell quoting issues?)", s);
+      locfile_locate(locations, *loc, "jq: error: %s (Windows cmd shell quoting issues?)", s);
 #else
-      locfile_locate(locations, *loc, "error: %s (Unix shell quoting issues?)", s);
+      locfile_locate(locations, *loc, "jq: error: %s (Unix shell quoting issues?)", s);
 #endif
   } else {
-      locfile_locate(locations, *loc, "error: %s", s);
+      locfile_locate(locations, *loc, "jq: error: %s", s);
   }
 }
 
@@ -726,7 +726,7 @@ int jq_parse_library(struct locfile* locations, block* answer) {
   int errs = jq_parse(locations, answer);
   if (errs) return errs;
   if (block_has_main(*answer)) {
-    locfile_locate(locations, UNKNOWN_LOCATION, "error: library should only have function definitions, not a main expression");
+    locfile_locate(locations, UNKNOWN_LOCATION, "jq: error: library should only have function definitions, not a main expression");
     return 1;
   }
   assert(block_has_only_binders_and_imports(*answer, OP_IS_CALL_PSEUDO));

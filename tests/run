@@ -129,13 +129,13 @@ if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out
     cat $d/out
     exit 1
 fi
-if ! grep '^error: syntax error,' $d/out > /dev/null; then
+if ! grep '^jq: error: syntax error,' $d/out > /dev/null; then
     echo "Module system not detecting syntax errors in modules correctly" 1>&2
     exit 1
 fi
 
 if $VALGRIND ./jq -ner -L $d '%::wat' > $d/out 2>&1 ||
-   ! grep '^error: syntax error,' $d/out > /dev/null; then
+   ! grep '^jq: error: syntax error,' $d/out > /dev/null; then
     echo "Syntax errors not detected?" 1>&2
     exit 1
 fi

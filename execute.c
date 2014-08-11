@@ -256,15 +256,18 @@ static void jq_reset(jq_state *jq) {
   jq->subexp_nest = 0;
 }
 
-static void print_error(jq_state *jq, jv value) {
-  assert(!jv_is_valid(value));
-  if (jq->err_cb) {
-    // callback must jv_free() its jv argument
-    jq->err_cb(jq->err_cb_data, jv_invalid_get_msg(jv_copy(value)));
-  }
+void jq_report_error(jq_state *jq, jv value) {
+  assert(jq->err_cb);
+  // callback must jv_free() its jv argument
+  jq->err_cb(jq->err_cb_data, value);
+}
+
+static void set_error(jq_state *jq, jv value) {
+  // Record so try/catch can find it.
   jv_free(jq->error);
   jq->error = value;
 }
+
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
 jv jq_next(jq_state *jq) {
@@ -390,8 +393,8 @@ jv jq_next(jq_state *jq) {
         stack_push(jq, jv_object_set(objv, k, v));
         stack_push(jq, stktop);
       } else {
-        print_error(jq, jv_invalid_with_msg(jv_string_fmt("Cannot use %s as object key",
-                                                          jv_kind_name(jv_get_kind(k)))));
+        set_error(jq, jv_invalid_with_msg(jv_string_fmt("Cannot use %s as object key",
+                                                        jv_kind_name(jv_get_kind(k)))));
         jv_free(stktop);
         jv_free(v);
         jv_free(k);
@@ -410,7 +413,7 @@ jv jq_next(jq_state *jq) {
       if (raising) goto do_backtrack;
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
           jv_get_kind(max) != JV_KIND_NUMBER) {
-        print_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
+        set_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
         jv_free(max);
         goto do_backtrack;
       } else if (jv_number_value(jv_copy(*var)) >= jv_number_value(jv_copy(max))) {
@@ -524,7 +527,7 @@ jv jq_next(jq_state *jq) {
         stack_push(jq, v);
       } else {
         if (opcode == INDEX)
-          print_error(jq, v);
+          set_error(jq, v);
         else
           jv_free(v);
         goto do_backtrack;
@@ -582,9 +585,9 @@ jv jq_next(jq_state *jq) {
       } else {
         assert(opcode == EACH || opcode == EACH_OPT);
         if (opcode == EACH) {
-          print_error(jq,
-                      jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s",
-                                                        jv_kind_name(jv_get_kind(container)))));
+          set_error(jq,
+                    jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s",
+                                                      jv_kind_name(jv_get_kind(container)))));
         }
         keep_going = 0;
       }
@@ -681,7 +684,7 @@ jv jq_next(jq_state *jq) {
       if (jv_is_valid(top)) {
         stack_push(jq, top);
       } else {
-        print_error(jq, top);
+        set_error(jq, top);
         goto do_backtrack;
       }
       break;
@@ -758,6 +761,48 @@ jv jq_next(jq_state *jq) {
   }
 }
 
+jv jq_format_error(jv msg) {
+  if (jv_get_kind(msg) == JV_KIND_NULL ||
+      (jv_get_kind(msg) == JV_KIND_INVALID && !jv_invalid_has_msg(jv_copy(msg)))) {
+    jv_free(msg);
+    fprintf(stderr, "jq: error: out of memory\n");
+    return jv_null();
+  }
+
+  if (jv_get_kind(msg) == JV_KIND_STRING)
+    return msg;                         // expected to already be formatted
+
+  if (jv_get_kind(msg) == JV_KIND_INVALID)
+    msg = jv_invalid_get_msg(msg);
+
+  if (jv_get_kind(msg) == JV_KIND_NULL)
+    return jq_format_error(msg);        // ENOMEM
+
+  // Invalid with msg; prefix with "jq: error: "
+
+  if (jv_get_kind(msg) != JV_KIND_INVALID) {
+    if (jv_get_kind(msg) == JV_KIND_STRING)
+      return jv_string_fmt("jq: error: %s", msg);
+
+    msg = jv_dump_string(msg, JV_PRINT_INVALID);
+    if (jv_get_kind(msg) == JV_KIND_STRING)
+      return jv_string_fmt("jq: error: %s", msg);
+    return jq_format_error(jv_null());  // ENOMEM
+  }
+
+  // An invalid inside an invalid!
+  return jq_format_error(jv_invalid_get_msg(msg));
+}
+
+// XXX Refactor into a utility function that returns a jv and one that
+// uses it and then prints that jv's string as the complete error
+// message.
+static void default_err_cb(void *data, jv msg) {
+  msg = jq_format_error(msg);
+  fprintf((FILE *)data, "%s\n", jv_string_value(msg));
+  jv_free(msg);
+}
+
 jq_state *jq_init(void) {
   jq_state *jq;
   jq = jv_mem_alloc_unguarded(sizeof(*jq));
@@ -772,8 +817,8 @@ jq_state *jq_init(void) {
   jq->curr_frame = 0;
   jq->error = jv_null();
 
-  jq->err_cb = NULL;
-  jq->err_cb_data = NULL;
+  jq->err_cb = default_err_cb;
+  jq->err_cb_data = stderr;
 
   jq->attrs = jv_object();
   jq->path = jv_null();
@@ -781,6 +826,7 @@ jq_state *jq_init(void) {
 }
 
 void jq_set_error_cb(jq_state *jq, jq_err_cb cb, void *data) {
+  assert(cb != NULL);
   jq->err_cb = cb;
   jq->err_cb_data = data;
 }
@@ -925,17 +971,8 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
       nerrors = block_compile(program, &jq->bc);
     }
   }
-  if (nerrors) {
-    jv s = jv_string_fmt("%d compile %s", nerrors,
-                         nerrors > 1 ? "errors" : "error");
-    if (jq->err_cb != NULL)
-      jq->err_cb(jq->err_cb_data, s);
-    else if (!jv_is_valid(s))
-      fprintf(stderr, "Error formatting jq compilation errors: %s\n", strerror(errno));
-    else
-      fprintf(stderr, "%s\n", jv_string_value(s));
-    jv_free(s);
-  }
+  if (nerrors)
+    jq_report_error(jq, jv_string_fmt("jq: %d compile %s", nerrors, nerrors > 1 ? "errors" : "error"));
   if (jq->bc)
     jq->bc = optimize(jq->bc);
   jv_free(args);

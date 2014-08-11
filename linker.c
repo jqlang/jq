@@ -46,7 +46,7 @@ jv build_lib_search_chain(jq_state *jq, jv lib_path) {
       out_paths = jv_array_append(out_paths, path);
     } else {
       jv emsg = jv_invalid_get_msg(path);
-      fprintf(stderr, "jq: warning: skipping search path: %s\n", jv_string_value(emsg));
+      jq_report_error(jq, jv_string_fmt("jq: warning: skipping search path: %s\n",jv_string_value(emsg)));
       jv_free(emsg);
     } 
   }
@@ -108,7 +108,7 @@ static int process_dependencies(jq_state *jq, jv lib_origin, block *src_block, s
     jv lib_path = find_lib(jq, name, search);
     if (!jv_is_valid(lib_path)) {
       jv emsg = jv_invalid_get_msg(lib_path);
-      fprintf(stderr, "jq: error: %s\n",jv_string_value(emsg));
+      jq_report_error(jq, jv_string_fmt("jq: error: %s\n",jv_string_value(emsg)));
       jv_free(emsg);
       jv_free(lib_origin);
       jv_free(as);

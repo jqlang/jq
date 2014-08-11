@@ -59,8 +59,6 @@ static int locfile_line_length(struct locfile* l, int line) {
 }
 
 void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
-  jq_err_cb cb;
-  void *cb_data;
   va_list fmtargs;
   va_start(fmtargs, fmt);
   int startline;
@@ -71,45 +69,20 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
     offset = l->linemap[startline];
   }
 
-  jq_get_error_cb(l->jq, &cb, &cb_data);
-
   jv m1 = jv_string_vfmt(fmt, fmtargs);
   if (!jv_is_valid(m1)) {
-    jv_free(m1);
-    goto enomem;
-  }
-  jv m2;
-  if (loc.start == -1) {
-    m2 = jv_string_fmt("%s\n<unknown location>", jv_string_value(m1));
-    if (cb)
-      cb(cb_data, m2);
-    else
-      fprintf(stderr, "%s", jv_string_value(m2));
-    jv_free(m1);
-    jv_free(m2);
+    jq_report_error(l->jq, m1);
     return;
   }
-  m2 = jv_string_fmt("%s\n%.*s%*s", jv_string_value(m1),
-                     locfile_line_length(l, startline), l->data + offset,
-                     loc.start - offset, "");
-  jv_free(m1);
-  if (!jv_is_valid(m2)) {
-    jv_free(m2);
-    goto enomem;
+  if (loc.start == -1) {
+    jq_report_error(l->jq, jv_string_fmt("jq: error: %s\n<unknown location>", jv_string_value(m1)));
+    jv_free(m1);
+    return;
   }
-  if (cb)
-    cb(cb_data, m2);
-  else
-    fprintf(stderr, "%s", jv_string_value(m2));
-  jv_free(m2);
-  return;
-
-enomem:
-  if (cb != NULL)
-    cb(cb_data, jv_invalid());
-  else if (errno == ENOMEM || errno == 0)
-    fprintf(stderr, "Error formatting jq compilation error: %s", strerror(errno ? errno : ENOMEM));
-  else
-    fprintf(stderr, "Error formatting jq compilation error: %s", strerror(errno));
+  jv m2 = jv_string_fmt("%s\n%.*s%*s", jv_string_value(m1),
+                        locfile_line_length(l, startline), l->data + offset,
+                        loc.start - offset, "");
+  jv_free(m1);
+  jq_report_error(l->jq, m2);
   return;
 }

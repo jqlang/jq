@@ -13,6 +13,8 @@ jq_state *jq_init(void);
 void jq_set_error_cb(jq_state *, jq_err_cb, void *);
 void jq_get_error_cb(jq_state *, jq_err_cb *, void **);
 void jq_set_nomem_handler(jq_state *, void (*)(void *), void *);
+jv jq_format_error(jv msg);
+void jq_report_error(jq_state *, jv);
 int jq_compile(jq_state *, const char* str);
 int jq_compile_args(jq_state *, const char* str, jv args);
 void jq_dump_disassembly(jq_state *, int);

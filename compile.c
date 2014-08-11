@@ -818,7 +818,7 @@ static int expand_call_arglist(block* b) {
   for (inst* curr; (curr = block_take(b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_BINDING) {
       if (!curr->bound_by) {
-        locfile_locate(curr->locfile, curr->source, "error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
+        locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
         errors++;
         // don't process this instruction if it's not well-defined
         ret = BLOCK(ret, inst_block(curr));
