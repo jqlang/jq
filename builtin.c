@@ -650,7 +650,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
       unsigned long len;
       const char *fr = (const char*)input_string;
 
-      for (idx = len = 0; fr != input_string+region->end[0]; len++) {
+      for (idx = len = 0; fr < input_string+region->end[0]; len++) {
         if (fr == input_string+region->beg[0]) idx = len, len=0;
         fr += jvp_utf8_decode_length(*fr);
       }
