@@ -48,7 +48,7 @@ AC_DEFUN([AX_PROG_BISON_VERSION],[
         changequote(<<,>>)
         bison_version=`$YACC --version 2>&1 \
           | $GREP bison \
-          | $SED -rn -e 's/bison .* ([0-9]+([.][0-9])+)+/\1/p'`
+          | $SED -e 's/^[^0-9]*//' -e 's/[^0-9]*$//'`
         changequote([,])
         AC_MSG_RESULT($bison_version)
 
