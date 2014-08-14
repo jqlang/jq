@@ -80,6 +80,18 @@ jv jv_array_indexes(jv, jv);
            (x = jv_array_get(jv_copy(a), i), 1) : 0;                    \
          i++)
 
+#define JV_ARRAY_1(e) (jv_array_append(jv_array(),e))
+#define JV_ARRAY_2(e1,e2) (jv_array_append(JV_ARRAY_1(e1),e2))
+#define JV_ARRAY_3(e1,e2,e3) (jv_array_append(JV_ARRAY_2(e1,e2),e3))
+#define JV_ARRAY_4(e1,e2,e3,e4) (jv_array_append(JV_ARRAY_3(e1,e2,e3),e4))
+#define JV_ARRAY_5(e1,e2,e3,e4,e5) (jv_array_append(JV_ARRAY_4(e1,e2,e3,e4),e5))
+#define JV_ARRAY_6(e1,e2,e3,e4,e5,e6) (jv_array_append(JV_ARRAY_5(e1,e2,e3,e4,e5),e6))
+#define JV_ARRAY_7(e1,e2,e3,e4,e5,e6,e7) (jv_array_append(JV_ARRAY_6(e1,e2,e3,e4,e5,e6),e7))
+#define JV_ARRAY_IDX(_1,_2,_3,_4,_5,_6,_7,NAME,...) NAME
+#define JV_ARRAY(...) \
+  JV_ARRAY_IDX(__VA_ARGS__, JV_ARRAY_7, JV_ARRAY_6, JV_ARRAY_5, JV_ARRAY_4, JV_ARRAY_3, JV_ARRAY_2, JV_ARRAY_1)(__VA_ARGS__)
+
+
 jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
 jv jv_string_empty(int len);
