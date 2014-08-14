@@ -133,6 +133,18 @@ jv jv_object_iter_value(jv, int);
             1)                                                          \
            : 0;                                                         \
          jv_i__ = jv_object_iter_next(t, jv_i__))                       \
+
+#define JV_OBJECT_1(k) (jv_object_set(jv_object(),(k),jv_null()))
+#define JV_OBJECT_2(k1,v1) (jv_object_set(jv_object(),(k1),(v1)))
+#define JV_OBJECT_3(k1,v1,k2) (jv_object_set(JV_OBJECT_2(k1,v1),k2,jv_null()))
+#define JV_OBJECT_4(k1,v1,k2,v2) (jv_object_set(JV_OBJECT_2(k1,v1),k2,v2))
+#define JV_OBJECT_5(k1,v1,k2,v2,k3) (jv_object_set(JV_OBJECT_4(k1,v1,k2,v2),k3,jv_null))
+#define JV_OBJECT_6(k1,v1,k2,v2,k3,v3) (jv_object_set(JV_OBJECT_4(k1,v1,k2,v2),k3,v3))
+#define JV_OBJECT_7(k1,v1,k2,v2,k3,v3,k4) (jv_object_set(JV_OBJECT_6(k1,v1,k2,v2,k3,v3),k4,jv_null()))
+#define JV_OBJECT_8(k1,v1,k2,v2,k3,v3,k4,v4) (jv_object_set(JV_OBJECT_6(k1,v1,k2,v2,k3,v3),k4,v4))
+#define JV_OBJECT_IDX(_1,_2,_3,_4,_5,_6,_7,_8,NAME,...) NAME
+#define JV_OBJECT(...) \
+  JV_OBJECT_IDX(__VA_ARGS__, JV_OBJECT_8, JV_OBJECT_7, JV_OBJECT_6, JV_OBJECT_5, JV_OBJECT_4, JV_OBJECT_3, JV_OBJECT_2, JV_OBJECT_1)(__VA_ARGS__)
  
 
 
