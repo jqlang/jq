@@ -131,13 +131,13 @@
                   
                     "`keys`" : "keys",
                   
-                    "`has`" : "has",
+                    "`has(key)`" : "haskey",
                   
-                    "`del`" : "del",
+                    "`del(path_expression)`" : "delpath_expression",
                   
                     "`to_entries`, `from_entries`, `with_entries`" : "to_entriesfrom_entrieswith_entries",
                   
-                    "`select`" : "select",
+                    "`select(boolean_expression)`" : "selectboolean_expression",
                   
                     "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`, `scalars`" : "arraysobjectsiterablesbooleansnumbersstringsnullsvaluesscalars",
                   
@@ -145,9 +145,7 @@
                   
                     "`map(x)`" : "mapx",
                   
-                    "`paths`" : "paths",
-                  
-                    "`leaf_paths`" : "leaf_paths",
+                    "`paths`, `paths(node_filter)`, `leaf_paths`" : "pathspathsnode_filterleaf_paths",
                   
                     "`add`" : "add",
                   
@@ -155,7 +153,9 @@
                   
                     "`all`" : "all",
                   
-                    "`range`" : "range",
+                    "`flatten`, `flatten(depth)`" : "flattenflattendepth",
+                  
+                    "`range(upto)`, `range(from;upto)`" : "rangeuptorangefromupto",
                   
                     "`floor`" : "floor",
                   
@@ -167,31 +167,37 @@
                   
                     "`type`" : "type",
                   
-                    "`sort, sort_by`" : "sortsort_by",
+                    "`sort, sort(path_expression), sort_by(path_expression)`" : "sortsortpath_expressionsort_bypath_expression",
                   
-                    "`group_by`" : "group_by",
+                    "`group(path_expression)`, `group_by(path_expression)`" : "grouppath_expressiongroup_bypath_expression",
                   
-                    "`min`, `max`, `min_by`, `max_by`" : "minmaxmin_bymax_by",
+                    "`min`, `max`, `min(path_exp)`, `max(path_exp)`, `min_by(path_exp)`, `max_by(path_exp)`" : "minmaxminpath_expmaxpath_expmin_bypath_expmax_bypath_exp",
                   
-                    "`unique`" : "unique",
-                  
-                    "`unique_by`" : "unique_by",
+                    "`unique`, `unique(path_exp)`, `unique_by(path_exp)`" : "uniqueuniquepath_expunique_bypath_exp",
                   
                     "`reverse`" : "reverse",
                   
-                    "`contains`" : "contains",
+                    "`contains(element)`" : "containselement",
                   
                     "`indices(s)`" : "indicess",
                   
                     "`index(s)`, `rindex(s)`" : "indexsrindexs",
                   
-                    "`startswith`" : "startswith",
+                    "`startswith(str)`" : "startswithstr",
                   
-                    "`endswith`" : "endswith",
+                    "`endswith(str)`" : "endswithstr",
                   
-                    "`ltrimstr`" : "ltrimstr",
+                    "`match(val)`, `match(regex; modifiers)`" : "matchvalmatchregexmodifiers",
                   
-                    "`rtrimstr`" : "rtrimstr",
+                    "`test(val)`, `test(regex)`, `test(regex; modifiers)`" : "testvaltestregextestregexmodifiers",
+                  
+                    "`sub(re; sub)`, `gsub(re; sub)`" : "subresubgsubresub",
+                  
+                    "`scan(re)`, `split2(re)`" : "scanresplit2re",
+                  
+                    "`ltrimstr(str)`" : "ltrimstrstr",
+                  
+                    "`rtrimstr(str)`" : "rtrimstrstr",
                   
                     "`explode`" : "explode",
                   
@@ -199,13 +205,13 @@
                   
                     "`split`" : "split",
                   
-                    "`join`" : "join",
+                    "`join(str)`" : "joinstr",
                   
-                    "`recurse`" : "recurse",
-                  
-                    "`recurse_down`" : "recurse_down",
+                    "`recurse(f)`, `recurse`, `recurse_down`" : "recursefrecurserecurse_down",
                   
                     "`..`" : "",
+                  
+                    "`env`" : "env",
                   
                     "String interpolation - `\\(foo)`" : "Stringinterpolationfoo",
                   
@@ -315,12 +321,6 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 </li>
 
 <li>
-<p><code>--online-input</code>/<code>-I</code>:</p>
-
-<p>When the top-level input value is an array produce its elements instead of the array. This allows on-line processing of potentially very large top-level arrays&#8217; elements.</p>
-</li>
-
-<li>
 <p><code>--raw-input</code>/<code>-R</code>:</p>
 
 <p>Don&#8217;t parse the input as JSON. Instead, each line of text is passed to the filter as a string. If combined with <code>--slurp</code>, then the entire input is passed to the filter as a single long string.</p>
@@ -366,6 +366,12 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 <p><code>--raw-output</code> / <code>-r</code>:</p>
 
 <p>With this option, if the filter&#8217;s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes. This can be useful for making jq filters talk to non-JSON-based systems.</p>
+</li>
+
+<li>
+<p><code>--join-output</code> / <code>-j</code>:</p>
+
+<p>Like <code>-r</code> but jq won&#8217;t print a newline after each output.</p>
 </li>
 
 <li>
@@ -1458,9 +1464,9 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                  
                  </section>
               
-                <section id="has">
+                <section id="haskey">
                 <h3>
-                  <p><code>has</code></p>
+                  <p><code>has(key)</code></p>
                   
                 </h3>
                 <p>The builtin function <code>has</code> returns whether the input object has the given key, or the input array has an element at the given index.</p>
@@ -1512,9 +1518,9 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                  
                  </section>
               
-                <section id="del">
+                <section id="delpath_expression">
                 <h3>
-                  <p><code>del</code></p>
+                  <p><code>del(path_expression)</code></p>
                   
                 </h3>
                 <p>The builtin function <code>del</code> removes a key and its corresponding value from an object.</p>
@@ -1634,9 +1640,9 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="select">
+                <section id="selectboolean_expression">
                 <h3>
-                  <p><code>select</code></p>
+                  <p><code>select(boolean_expression)</code></p>
                   
                 </h3>
                 <p>The function <code>select(foo)</code> produces its input unchanged if <code>foo</code> returns true for that input, and produces no output otherwise.</p>
@@ -1810,23 +1816,23 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="paths">
+                <section id="pathspathsnode_filterleaf_paths">
                 <h3>
-                  <p><code>paths</code></p>
+                  <p><code>paths</code>, <code>paths(node_filter)</code>, <code>leaf_paths</code></p>
                   
                 </h3>
-                <p>Outputs the paths to all the elements in its input (except it does not output the empty list, representing . itself).</p>
+                <p><code>paths</code> outputs the paths to all the elements in its input (except it does not output the empty list, representing . itself).</p>
 
-<p><code>paths</code> is equivalent to</p>
+<p><code>paths(f)</code> outputs the paths to any values for which <code>f</code> is true. That is, <code>paths(numbers)</code> outputs the paths to all numeric values.</p>
 
-<pre><code>def paths: path(recurse(if (type|. == &quot;array&quot; or . == &quot;object&quot;) then .[] else empty end))|select(length &gt; 0);</code></pre>
+<p><code>leaf_paths</code> is an alias of <code>paths(scalars)</code>; <code>leaf_paths</code> is <em>deprecated</em> and will be removed in the next major release.</p>
 
                 
                   <div>
                     
                     <a data-toggle="collapse" href="#example22">
                       <i class="icon-chevron-right"></i>
-                      Example
+                      Examples
                     </a>
                     <div id="example22" class="collapse">
                       
@@ -1846,30 +1852,8 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                         
                       </table>
                     
-                    </div>
-                  </div>
-                 
-                 </section>
-              
-                <section id="leaf_paths">
-                <h3>
-                  <p><code>leaf_paths</code></p>
-                  
-                </h3>
-                <p>Outputs the paths to all the leaves (non-array, non-object elements) in its input.</p>
-
-                
-                  <div>
-                    
-                    <a data-toggle="collapse" href="#example23">
-                      <i class="icon-chevron-right"></i>
-                      Example
-                    </a>
-                    <div id="example23" class="collapse">
-                      
-                    
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq '[leaf_paths]'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq '[paths(scalars)]'</td></tr>
                         <tr><th>Input</th><td>[1,[[],{"a":2}]]</td></tr>
                         
                         
@@ -1900,11 +1884,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example24">
+                    <a data-toggle="collapse" href="#example23">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example24" class="collapse">
+                    <div id="example23" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -1969,11 +1953,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example25">
+                    <a data-toggle="collapse" href="#example24">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example25" class="collapse">
+                    <div id="example24" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2038,11 +2022,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example26">
+                    <a data-toggle="collapse" href="#example25">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example26" class="collapse">
+                    <div id="example25" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2095,12 +2079,98 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="range">
+                <section id="flattenflattendepth">
                 <h3>
-                  <p><code>range</code></p>
+                  <p><code>flatten</code>, <code>flatten(depth)</code></p>
+                  
+                </h3>
+                <p>The filter <code>flatten</code> takes as input an array of nested arrays, and produces a flat array in which all arrays inside the original array have been recursively replaced by their values. You can pass an argument to it to specify how many levels of nesting to flatten.</p>
+
+<p><code>flatten(2)</code> is like <code>flatten</code>, but going only up to two levels deep.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example26">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example26" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'flatten'</td></tr>
+                        <tr><th>Input</th><td>[1, [2], [[3]]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[1, 2, 3]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'flatten(1)'</td></tr>
+                        <tr><th>Input</th><td>[1, [2], [[3]]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[1, 2, [3]]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'flatten'</td></tr>
+                        <tr><th>Input</th><td>[[]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'flatten'</td></tr>
+                        <tr><th>Input</th><td>[{"foo": "bar"}, [{"foo": "baz"}]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[{"foo": "bar"}, {"foo": "baz"}]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="rangeuptorangefromupto">
+                <h3>
+                  <p><code>range(upto)</code>, <code>range(from;upto)</code></p>
                   
                 </h3>
                 <p>The <code>range</code> function produces a range of numbers. <code>range(4;10)</code> produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers are produced as separate outputs. Use <code>[range(4;10)]</code> to get a range as an array.</p>
+
+<p>Its first argument can be omitted; it defaults to zero.</p>
 
                 
                   <div>
@@ -2144,6 +2214,21 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                               <th>Output</th>
                             
                             <td>[2,3]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '[range(4)]'</td></tr>
+                        <tr><th>Input</th><td>null</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[0,1,2,3]</td>
                           </tr>
                         
                         
@@ -2360,9 +2445,9 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="sortsort_by">
+                <section id="sortsortpath_expressionsort_bypath_expression">
                 <h3>
-                  <p><code>sort, sort_by</code></p>
+                  <p><code>sort, sort(path_expression), sort_by(path_expression)</code></p>
                   
                 </h3>
                 <p>The <code>sort</code> functions sorts its input, which must be an array. Values are sorted in the following order:</p>
@@ -2385,7 +2470,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
 
 <p>The ordering for objects is a little complex: first they&#8217;re compared by comparing their sets of keys (as arrays in sorted order), and if their keys are equal then the values are compared key by key.</p>
 
-<p><code>sort_by</code> may be used to sort by a particular field of an object, or by applying any jq filter. <code>sort_by(foo)</code> compares two elements by comparing the result of <code>foo</code> on each element.</p>
+<p><code>sort</code> may be used to sort by a particular field of an object, or by applying any jq filter.</p>
+
+<p><code>sort(foo)</code> compares two elements by comparing the result of <code>foo</code> on each element.</p>
+
+<p><code>sort_by(foo)</code> is an alias of <code>sort(foo)</code>; <code>sort_by()</code> is <em>deprecated</em> and will be removed in the next major release.</p>
 
                 
                   <div>
@@ -2413,7 +2502,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                       </table>
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq 'sort_by(.foo)'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq 'sort(.foo)'</td></tr>
                         <tr><th>Input</th><td>[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]</td></tr>
                         
                         
@@ -2432,14 +2521,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="group_by">
+                <section id="grouppath_expressiongroup_bypath_expression">
                 <h3>
-                  <p><code>group_by</code></p>
+                  <p><code>group(path_expression)</code>, <code>group_by(path_expression)</code></p>
                   
                 </h3>
-                <p><code>group_by(.foo)</code> takes as input an array, groups the elements having the same <code>.foo</code> field into separate arrays, and produces all of these arrays as elements of a larger array, sorted by the value of the <code>.foo</code> field.</p>
+                <p><code>group(.foo)</code> takes as input an array, groups the elements having the same <code>.foo</code> field into separate arrays, and produces all of these arrays as elements of a larger array, sorted by the value of the <code>.foo</code> field.</p>
 
 <p>Any jq expression, not just a field access, may be used in place of <code>.foo</code>. The sorting order is the same as described in the <code>sort</code> function above.</p>
+
+<p><code>group_by(foo)</code> is an alias of <code>group(foo)</code>; <code>group_by()</code> is <em>deprecated</em> and will be removed in the next major release.</p>
 
                 
                   <div>
@@ -2452,7 +2543,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                       
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq 'group_by(.foo)'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq 'group(.foo)'</td></tr>
                         <tr><th>Input</th><td>[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]</td></tr>
                         
                         
@@ -2471,12 +2562,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="minmaxmin_bymax_by">
+                <section id="minmaxminpath_expmaxpath_expmin_bypath_expmax_bypath_exp">
                 <h3>
-                  <p><code>min</code>, <code>max</code>, <code>min_by</code>, <code>max_by</code></p>
+                  <p><code>min</code>, <code>max</code>, <code>min(path_exp)</code>, <code>max(path_exp)</code>, <code>min_by(path_exp)</code>, <code>max_by(path_exp)</code></p>
                   
                 </h3>
-                <p>Find the minimum or maximum element of the input array. The <code>_by</code> versions allow you to specify a particular field or property to examine, e.g. <code>min_by(.foo)</code> finds the object with the smallest <code>foo</code> field.</p>
+                <p>Find the minimum or maximum element of the input array. This filter accepts an optional argument that allows you to specify a particular field or property to examine, e.g. <code>min(.foo)</code> finds the object with the smallest <code>foo</code> field.</p>
+
+<p>For legacy reasons, <code>min_by(.foo)</code> and <code>max_by(.foo)</code> exist as aliases for <code>min(.foo)</code> and <code>max(.foo)</code>. These aliases are considered <em>deprecated</em> and will be removed in the next major release.</p>
 
                 
                   <div>
@@ -2504,7 +2597,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                       </table>
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq 'max_by(.foo)'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq 'max(.foo)'</td></tr>
                         <tr><th>Input</th><td>[{"foo":1, "bar":14}, {"foo":2, "bar":3}]</td></tr>
                         
                         
@@ -2523,19 +2616,21 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="unique">
+                <section id="uniqueuniquepath_expunique_bypath_exp">
                 <h3>
-                  <p><code>unique</code></p>
+                  <p><code>unique</code>, <code>unique(path_exp)</code>, <code>unique_by(path_exp)</code></p>
                   
                 </h3>
-                <p>The <code>unique</code> function takes as input an array and produces an array of the same elements, in sorted order, with duplicates removed.</p>
+                <p>The <code>unique</code> function takes as input an array and produces an array of the same elements, in sorted order, with duplicates removed. If an optional argument is passed, it will keep only one element for each value obtained by applying the argument. Think of it as making an array by taking one element out of every group produced by <code>group</code>.</p>
+
+<p>For legacy reasons, <code>unique_by(.foo)</code> exists as an alias for <code>unique(.foo)</code>. This alias is considered <em>deprecated</em> and will be removed in the next major release.</p>
 
                 
                   <div>
                     
                     <a data-toggle="collapse" href="#example36">
                       <i class="icon-chevron-right"></i>
-                      Example
+                      Examples
                     </a>
                     <div id="example36" class="collapse">
                       
@@ -2555,30 +2650,8 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                         
                       </table>
                     
-                    </div>
-                  </div>
-                 
-                 </section>
-              
-                <section id="unique_by">
-                <h3>
-                  <p><code>unique_by</code></p>
-                  
-                </h3>
-                <p>The <code>unique_by(.foo)</code> function takes as input an array and produces an array of the same elements, in sorted order, with elqements with a duplicate <code>.foo</code> field removed. Think of it as making an array by taking one element out of every group produced by <code>group_by</code>.</p>
-
-                
-                  <div>
-                    
-                    <a data-toggle="collapse" href="#example37">
-                      <i class="icon-chevron-right"></i>
-                      Examples
-                    </a>
-                    <div id="example37" class="collapse">
-                      
-                    
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq 'unique_by(.foo)'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq 'unique(.foo)'</td></tr>
                         <tr><th>Input</th><td>[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]</td></tr>
                         
                         
@@ -2593,7 +2666,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                       </table>
                     
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq 'unique_by(length)'</td></tr>
+                        <tr><th></th><td class="jqprogram">jq 'unique(length)'</td></tr>
                         <tr><th>Input</th><td>["chunky", "bacon", "kitten", "cicada", "asparagus"]</td></tr>
                         
                         
@@ -2622,11 +2695,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example38">
+                    <a data-toggle="collapse" href="#example37">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example38" class="collapse">
+                    <div id="example37" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2649,9 +2722,9 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="contains">
+                <section id="containselement">
                 <h3>
-                  <p><code>contains</code></p>
+                  <p><code>contains(element)</code></p>
                   
                 </h3>
                 <p>The filter <code>contains(b)</code> will produce true if b is completely contained within the input. A string B is contained in a string A if B is a substring of A. An array B is contained in an array A is all elements in B are contained in any element in A. An object B is contained in object A if all of the values in B are contained in the value in A with the same key. All other types are assumed to be contained in each other if they are equal.</p>
@@ -2659,11 +2732,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example39">
+                    <a data-toggle="collapse" href="#example38">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example39" class="collapse">
+                    <div id="example38" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2756,11 +2829,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example40">
+                    <a data-toggle="collapse" href="#example39">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example40" class="collapse">
+                    <div id="example39" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2823,11 +2896,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example41">
+                    <a data-toggle="collapse" href="#example40">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example41" class="collapse">
+                    <div id="example40" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2865,9 +2938,9 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="startswith">
+                <section id="startswithstr">
                 <h3>
-                  <p><code>startswith</code></p>
+                  <p><code>startswith(str)</code></p>
                   
                 </h3>
                 <p>Outputs <code>true</code> if . starts with the given string argument.</p>
@@ -2875,11 +2948,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example42">
+                    <a data-toggle="collapse" href="#example41">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example42" class="collapse">
+                    <div id="example41" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2902,9 +2975,9 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="endswith">
+                <section id="endswithstr">
                 <h3>
-                  <p><code>endswith</code></p>
+                  <p><code>endswith(str)</code></p>
                   
                 </h3>
                 <p>Outputs <code>true</code> if . ends with the given string argument.</p>
@@ -2912,11 +2985,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example43">
+                    <a data-toggle="collapse" href="#example42">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example43" class="collapse">
+                    <div id="example42" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2939,9 +3012,245 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="ltrimstr">
+                <section id="matchvalmatchregexmodifiers">
                 <h3>
-                  <p><code>ltrimstr</code></p>
+                  <p><code>match(val)</code>, <code>match(regex; modifiers)</code></p>
+                  
+                </h3>
+                <p>The filter <code>match(val)</code> performs PCRE regex matching on its input. <code>val</code> can be either a string or an array. If it is an array, the first element is the regex specifier and the optional second element is the modifier flags. The accepted modifier flags are:</p>
+
+<ul>
+<li><code>g</code> - Global search (find all matches, not just the first)</li>
+
+<li><code>i</code> - Case insensitive search</li>
+
+<li><code>x</code> - Extended regex format (ignore whitespaces)</li>
+
+<li><code>m</code> - Multi line mode (&#8217;.&#8217; will match newlines)</li>
+
+<li><code>s</code> - Single line mode (&#8217;^&#8217; -&gt; &#8216;\A&#8217;, &#8217;$&#8217; -&gt; &#8216;\Z&#8217;)</li>
+
+<li><code>p</code> - Both s and m modes are enabled</li>
+
+<li><code>l</code> - Find longest possible matches</li>
+
+<li><code>n</code> - Ignore empty matches</li>
+</ul>
+
+<p>The filter outputs an object for each match it finds. Matches have the following fields:</p>
+
+<ul>
+<li><code>offset</code> - offset in UTF-8 codepoints from the beginning of the input</li>
+
+<li><code>length</code> - length in UTF-8 codepoints of the match</li>
+
+<li><code>string</code> - the string that it matched</li>
+
+<li><code>captures</code> - an array of objects representing capturing groups.</li>
+</ul>
+
+<p>Capturing group objects have the following fields:</p>
+
+<ul>
+<li><code>offset</code> - offset in UTF-8 codepoints from the beginning of the input</li>
+
+<li><code>length</code> - length in UTF-8 codepoints of this capturing group</li>
+
+<li><code>string</code> - the string that was captured</li>
+
+<li><code>name</code> - the name of the capturing group (or <code>null</code> if it was unnamed)</li>
+</ul>
+
+<p>Capturing groups that did not match anything return an offset of -1</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example43">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example43" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'match("(abc)+"; "g")'</td></tr>
+                        <tr><th>Input</th><td>"abc abc"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>{"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'match("foo")'</td></tr>
+                        <tr><th>Input</th><td>"foo bar foo"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"offset": 0, "length": 3, "string": "foo", "captures": []}</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'match(["foo", "ig"])'</td></tr>
+                        <tr><th>Input</th><td>"foo bar FOO"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"offset": 0, "length": 3, "string": "foo", "captures": []}</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>{"offset": 8, "length": 3, "string": "FOO", "captures": []}</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'match("foo (?<bar123>bar)? foo"; "ig")'</td></tr>
+                        <tr><th>Input</th><td>"foo bar foo foo  foo"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>{"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>{"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="testvaltestregextestregexmodifiers">
+                <h3>
+                  <p><code>test(val)</code>, <code>test(regex)</code>, <code>test(regex; modifiers)</code></p>
+                  
+                </h3>
+                <p>Like <code>match</code>, but does not return match objects, only <code>true</code> or <code>false</code> for whether or not the regex matches the input.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example44">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example44" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'test("foo")'</td></tr>
+                        <tr><th>Input</th><td>"foo"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'test("foo"; "i")'</td></tr>
+                        <tr><th>Input</th><td>"Foo"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>true</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'test("foo")'</td></tr>
+                        <tr><th>Input</th><td>"bar"</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>false</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
+                <section id="subresubgsubresub">
+                <h3>
+                  <p><code>sub(re; sub)</code>, <code>gsub(re; sub)</code></p>
+                  
+                </h3>
+                <p><code>sub(re; sub)</code> replaces with <code>sub</code> the first match of the given regexp <code>re</code> in its input. <code>gsub(re; sub)</code> replaces all matches.</p>
+
+                
+                 </section>
+              
+                <section id="scanresplit2re">
+                <h3>
+                  <p><code>scan(re)</code>, <code>split2(re)</code></p>
+                  
+                </h3>
+                <p><code>scan(re)</code> outputs the substrings of its input that match the given regexp <code>re</code>.</p>
+
+<p><code>split2(re)</code> outputs the substrings of its input that don&#8217;t match the given regexp <code>re</code>. (Compare to <code>split(sep)</code>, which outputs an array of substrings that don&#8217;t exactly match <code>sep</code>.)</p>
+
+                
+                 </section>
+              
+                <section id="ltrimstrstr">
+                <h3>
+                  <p><code>ltrimstr(str)</code></p>
                   
                 </h3>
                 <p>Outputs its input with the given prefix string removed, if it starts with it.</p>
@@ -2949,11 +3258,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example44">
+                    <a data-toggle="collapse" href="#example45">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example44" class="collapse">
+                    <div id="example45" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -2976,9 +3285,9 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="rtrimstr">
+                <section id="rtrimstrstr">
                 <h3>
-                  <p><code>rtrimstr</code></p>
+                  <p><code>rtrimstr(str)</code></p>
                   
                 </h3>
                 <p>Outputs its input with the given suffix string removed, if it starts with it.</p>
@@ -2986,11 +3295,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example45">
+                    <a data-toggle="collapse" href="#example46">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example45" class="collapse">
+                    <div id="example46" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3023,11 +3332,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example46">
+                    <a data-toggle="collapse" href="#example47">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example46" class="collapse">
+                    <div id="example47" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3060,11 +3369,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example47">
+                    <a data-toggle="collapse" href="#example48">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example47" class="collapse">
+                    <div id="example48" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3097,11 +3406,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example48">
+                    <a data-toggle="collapse" href="#example49">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example48" class="collapse">
+                    <div id="example49" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3124,9 +3433,9 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="join">
+                <section id="joinstr">
                 <h3>
-                  <p><code>join</code></p>
+                  <p><code>join(str)</code></p>
                   
                 </h3>
                 <p>Joins the array of elements given as input, using the argument as separator. It is the inverse of <code>split</code>: that is, running <code>split(&quot;foo&quot;) | join(&quot;foo&quot;)</code> over any input string returns said input string.</p>
@@ -3134,11 +3443,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example49">
+                    <a data-toggle="collapse" href="#example50">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example49" class="collapse">
+                    <div id="example50" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3161,12 +3470,12 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
-                <section id="recurse">
+                <section id="recursefrecurserecurse_down">
                 <h3>
-                  <p><code>recurse</code></p>
+                  <p><code>recurse(f)</code>, <code>recurse</code>, <code>recurse_down</code></p>
                   
                 </h3>
-                <p>The <code>recurse</code> function allows you to search through a recursive structure, and extract interesting data from all levels. Suppose your input represents a filesystem:</p>
+                <p>The <code>recurse(f)</code> function allows you to search through a recursive structure, and extract interesting data from all levels. Suppose your input represents a filesystem:</p>
 
 <pre><code>{&quot;name&quot;: &quot;/&quot;, &quot;children&quot;: [
   {&quot;name&quot;: &quot;/bin&quot;, &quot;children&quot;: [
@@ -3180,14 +3489,18 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
 
 <pre><code>recurse(.children[]) | .name</code></pre>
 
+<p>When called without an argument, <code>recurse</code> is equivalent to <code>recurse(.[]?)</code>.</p>
+
+<p>For legacy reasons, <code>recurse_down</code> exists as an alias to calling <code>recurse</code> without arguments. This alias is considered <em>deprecated</em> and will be removed in the next major release.</p>
+
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example50">
+                    <a data-toggle="collapse" href="#example51">
                       <i class="icon-chevron-right"></i>
-                      Example
+                      Examples
                     </a>
-                    <div id="example50" class="collapse">
+                    <div id="example51" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3226,21 +3539,38 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                         
                       </table>
                     
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'recurse'</td></tr>
+                        <tr><th>Input</th><td>{"a":0,"b":[1]}</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>0</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>[1]</td>
+                          </tr>
+                        
+                          <tr>
+                            
+                              <th></th>
+                            
+                            <td>1</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
                     </div>
                   </div>
                  
-                 </section>
-              
-                <section id="recurse_down">
-                <h3>
-                  <p><code>recurse_down</code></p>
-                  
-                </h3>
-                <p>A quieter version of <code>recurse(.[])</code>, equivalent to:</p>
-
-<pre><code>def recurse_down: recurse(.[]?);</code></pre>
-
-                
                  </section>
               
                 <section id="">
@@ -3248,16 +3578,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   <p><code>..</code></p>
                   
                 </h3>
-                <p>Short-hand for <code>recurse_down</code>. This is intended to resemble the XPath <code>//</code> operator. Note that <code>..a</code> does not work; use <code>..|a</code> instead.</p>
+                <p>Short-hand for <code>recurse</code> without arguments. This is intended to resemble the XPath <code>//</code> operator. Note that <code>..a</code> does not work; use <code>..|a</code> instead. In the example below we use <code>..|.a?</code> to find all the values of object keys &#8220;a&#8221; in any object found &#8220;below&#8221; <code>.</code>.</p>
 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example51">
+                    <a data-toggle="collapse" href="#example52">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example51" class="collapse">
+                    <div id="example52" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3280,6 +3610,43 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
+                <section id="env">
+                <h3>
+                  <p><code>env</code></p>
+                  
+                </h3>
+                <p>Outputs an object representing jq&#8217;s environment.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example53">
+                      <i class="icon-chevron-right"></i>
+                      Example
+                    </a>
+                    <div id="example53" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'env.PAGER'</td></tr>
+                        <tr><th>Input</th><td>null</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>"less"</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="Stringinterpolationfoo">
                 <h3>
                   <p>String interpolation - <code>\(foo)</code></p>
@@ -3290,11 +3657,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example52">
+                    <a data-toggle="collapse" href="#example54">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example52" class="collapse">
+                    <div id="example54" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3327,11 +3694,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example53">
+                    <a data-toggle="collapse" href="#example55">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example53" class="collapse">
+                    <div id="example55" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3448,11 +3815,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example54">
+                    <a data-toggle="collapse" href="#example56">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example54" class="collapse">
+                    <div id="example56" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3508,11 +3875,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example55">
+                    <a data-toggle="collapse" href="#example57">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example55" class="collapse">
+                    <div id="example57" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3573,11 +3940,11 @@ B end</code> instead.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example56">
+                    <a data-toggle="collapse" href="#example58">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example56" class="collapse">
+                    <div id="example58" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3618,11 +3985,11 @@ end'</td></tr>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example57">
+                    <a data-toggle="collapse" href="#example59">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example57" class="collapse">
+                    <div id="example59" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3662,11 +4029,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example58">
+                    <a data-toggle="collapse" href="#example60">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example58" class="collapse">
+                    <div id="example60" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3774,11 +4141,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example59">
+                    <a data-toggle="collapse" href="#example61">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example59" class="collapse">
+                    <div id="example61" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3871,14 +4238,16 @@ not</code>.</p>
 
 <p>won&#8217;t.</p>
 
+<p>For programming language theorists, it&#8217;s more accurate to say that jq variables are lexically-scoped bindings. In particular there&#8217;s no way to change the value of a binding; one can only setup a new binding with the same name, but which will not be visible where the old one was.</p>
+
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example60">
+                    <a data-toggle="collapse" href="#example62">
                       <i class="icon-chevron-right"></i>
-                      Example
+                      Examples
                     </a>
-                    <div id="example60" class="collapse">
+                    <div id="example62" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3891,6 +4260,21 @@ not</code>.</p>
                               <th>Output</th>
                             
                             <td>210</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq '. as $i|[(.*2|. as $i| $i), $i]'</td></tr>
+                        <tr><th>Input</th><td>5</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[10,5]</td>
                           </tr>
                         
                         
@@ -3914,7 +4298,12 @@ not</code>.</p>
 
 <pre><code>def map(f): [.[] | f];</code></pre>
 
-<p>Arguments are passed as filters, not as values. The same argument may be referenced multiple times with different inputs (here <code>f</code> is run for each element of the input array). Arguments to a function work more like callbacks than like value arguments.</p>
+<p>Arguments are passed as filters, not as values. The same argument may be referenced multiple times with different inputs (here <code>f</code> is run for each element of the input array). Arguments to a function work more like callbacks than like value arguments. This is important to understand. Consider:</p>
+
+<pre><code>def foo(f): f|f;
+5|foo(.*2)</code></pre>
+
+<p>The result will be 20 because <code>f</code> is <code>.*2</code>, and during the first invocation of <code>f</code> <code>.</code> will be 5, and the second time it will be 10 (5 * 2), so the result will be 20. Function arguments are filters, and filters expect an input when invoked.</p>
 
 <p>If you want the value-argument behaviour for defining simple functions, you can just use a variable:</p>
 
@@ -3922,14 +4311,16 @@ not</code>.</p>
 
 <p>With that definition, <code>addvalue(.foo)</code> will add the current input&#8217;s <code>.foo</code> field to each element of the array.</p>
 
+<p>Multiple definitions using the same function name are allowed. Each re-definition replaces the previous one for the same number of function arguments, but only for references from functions (or main program) subsequent to the re-definition.</p>
+
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example61">
+                    <a data-toggle="collapse" href="#example63">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example61" class="collapse">
+                    <div id="example63" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -3978,18 +4369,18 @@ not</code>.</p>
 
 <p>For each result that <code>.[]</code> produces, <code>. + $item</code> is run to accumulate a running total, starting from 0. In this example, <code>.[]</code> produces the results 3, 2, and 1, so the effect is similar to running something like this:</p>
 
-<pre><code>0 | (3 as $item | . + $item) | 
+<pre><code>0 | (3 as $item | . + $item) |
     (2 as $item | . + $item) |
     (1 as $item | . + $item)</code></pre>
 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example62">
+                    <a data-toggle="collapse" href="#example64">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example62" class="collapse">
+                    <div id="example64" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4064,11 +4455,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example63">
+                    <a data-toggle="collapse" href="#example65">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example63" class="collapse">
+                    <div id="example65" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4096,7 +4487,7 @@ not</code>.</p>
                   <p>Complex assignments</p>
                   
                 </h3>
-                <p>Lots more things are allowed on the left-hand side of a jq assignment than in most langauges. We&#8217;ve already seen simple field accesses on the left hand side, and it&#8217;s no surprise that array accesses work just as well:</p>
+                <p>Lots more things are allowed on the left-hand side of a jq assignment than in most languages. We&#8217;ve already seen simple field accesses on the left hand side, and it&#8217;s no surprise that array accesses work just as well:</p>
 
 <pre><code>.posts[0].title = &quot;JQ Manual&quot;</code></pre>
 
