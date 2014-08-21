@@ -479,13 +479,18 @@ int main(int argc, char* argv[]) {
     }
   }
   if ((options & IN_PLACE)) {
+    FILE *devnull;
 #ifdef WIN32
-    (void) freopen("NUL", "w+", stdout);
+    devnull = freopen("NUL", "w+", stdout);
 #else
-    (void) freopen("/dev/null", "w+", stdout);
+    devnull = freopen("/dev/null", "w+", stdout);
 #endif
+    if (devnull == NULL) {
+      fprintf(stderr, "Error: %s opening /dev/null\n", strerror(errno));
+      exit(3);
+    }
     if (rename(t, input_filenames[0]) == -1) {
-      fprintf(stderr, "Error: %s renaming temporary file", strerror(errno));
+      fprintf(stderr, "Error: %s renaming temporary file\n", strerror(errno));
       exit(3);
     }
     jv_mem_free(t);
