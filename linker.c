@@ -88,9 +88,9 @@ static jv find_lib(jq_state *jq, jv lib_name, jv lib_search_path, int use_vers_d
 
   jv version_dirs;
   if (use_vers_dir) {
-    version_dirs = JV_ARRAY(jv_string("any/"),
-                            jv_string_concat(jq_get_version_dir(jq),
-                                             jv_string("/")));
+    jv vdir = jq_get_version_dir(jq);
+    assert(strchr(jv_string_value(vdir), '.') != NULL);
+    version_dirs = JV_ARRAY(jv_string(""), jv_string_concat(vdir, jv_string("/")));
   } else {
     version_dirs = JV_ARRAY(jv_string(""));
   }

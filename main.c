@@ -365,7 +365,7 @@ int main(int argc, char* argv[]) {
   if (strchr(JQ_VERSION, '-') == NULL)
     jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string(JQ_VERSION));
   else
-    jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string("next"));
+    jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string_fmt("%.*s-master", strchr(JQ_VERSION, '-') - JQ_VERSION, JQ_VERSION));
 
 #if (!defined(WIN32) && defined(HAVE_ISATTY)) || defined(HAVE__ISATTY)
 
