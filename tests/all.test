@@ -1017,6 +1017,10 @@ with_entries(.key |= "KEY_" + .)
 {"a": 1, "b": 2}
 {"KEY_a": 1, "KEY_b": 2}
 
+map_values(.+1)
+{"a": 1, "b": 2}
+{"a": 2, "b": 3}
+
 map(has("foo"))
 [{"foo": 42}, {}]
 [true, false]

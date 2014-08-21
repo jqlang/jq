@@ -968,6 +968,7 @@ static const char* const jq_builtins[] = {
   "def to_entries: [keys[] as $k | {key: $k, value: .[$k]}];",
   "def from_entries: map({(.key): .value}) | add | .//={};",
   "def with_entries(f): to_entries | map(f) | from_entries;",
+  "def map_values(f): [keys[] as $k | {($k): .[$k] | f}] | add;",
   "def reverse: [.[length - 1 - range(0;length)]];",
   "def indices($i): if type == \"array\" and ($i|type) == \"array\" then .[$i] elif type == \"array\" then .[[$i]] else .[$i] end;",
   "def index($i):   if type == \"array\" and ($i|type) == \"array\" then .[$i] elif type == \"array\" then .[[$i]] else .[$i] end | .[0];",
