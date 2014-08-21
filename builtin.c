@@ -805,15 +805,44 @@ static jv f_env(jq_state *jq, jv input) {
   return env;
 }
 
-static jv f_string_split(jq_state *jq, jv a, jv b) { return jv_string_split(a, b); }
-static jv f_string_explode(jq_state *jq, jv a) { return jv_string_explode(a); }
-static jv f_string_implode(jq_state *jq, jv a) { return jv_string_implode(a); }
+static jv f_string_split(jq_state *jq, jv a, jv b) {
+  if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING) {
+    jv_free(a);
+    jv_free(b);
+    return jv_invalid_with_msg(jv_string("split input and separator must be strings"));
+  }
+  return jv_string_split(a, b);
+}
+
+static jv f_string_explode(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_STRING) {
+    jv_free(a);
+    return jv_invalid_with_msg(jv_string("explode input must be a string"));
+  }
+  return jv_string_explode(a);
+}
+
+static jv f_string_implode(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_ARRAY) {
+    jv_free(a);
+    return jv_invalid_with_msg(jv_string("implode input must be an array"));
+  }
+  return jv_string_implode(a);
+}
+
 static jv f_setpath(jq_state *jq, jv a, jv b, jv c) { return jv_setpath(a, b, c); }
 static jv f_getpath(jq_state *jq, jv a, jv b) { return jv_getpath(a, b); }
 static jv f_delpaths(jq_state *jq, jv a, jv b) { return jv_delpaths(a, b); }
 static jv f_has(jq_state *jq, jv a, jv b) { return jv_has(a, b); }
 
-static jv f_modulemeta(jq_state *jq, jv a) { return load_module_meta(jq, a); }
+static jv f_modulemeta(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_STRING) {
+    jv_free(a);
+    return jv_invalid_with_msg(jv_string("modulemeta input module name must be a string"));
+  }
+  return load_module_meta(jq, a);
+}
+
 
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 1},
