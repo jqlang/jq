@@ -148,7 +148,7 @@ FILE* current_input;
 const char** input_filenames = NULL;
 int ninput_files;
 int next_input_idx;
-static int read_more(char* buf, size_t size) {
+static int read_more(char* buf, size_t size, int* islast) {
   while (!current_input || feof(current_input)) {
     if (current_input) {
       fclose(current_input);
@@ -168,6 +168,7 @@ static int read_more(char* buf, size_t size) {
     next_input_idx++;
   }
 
+  if (next_input_idx == ninput_files) *islast = 1;
   if (!fgets(buf, size, current_input)) buf[0] = 0;
   return 1;
 }
@@ -439,7 +440,8 @@ int main(int argc, char* argv[]) {
     }
     struct jv_parser* parser = jv_parser_new(0);
     char buf[4096];
-    while (read_more(buf, sizeof(buf))) {
+    int is_last = 0;
+    while (read_more(buf, sizeof(buf), &is_last)) {
       if (options & RAW_INPUT) {
         int len = strlen(buf);
         if (len > 0) {
@@ -451,7 +453,7 @@ int main(int argc, char* argv[]) {
           }
         }
       } else {
-        jv_parser_set_buf(parser, buf, strlen(buf), !feof(stdin));
+        jv_parser_set_buf(parser, buf, strlen(buf), !(is_last || feof(stdin)));
         jv value;
         while (jv_is_valid((value = jv_parser_next(parser)))) {
           if (options & SLURP) {
