@@ -992,12 +992,6 @@ jv jq_get_lib_dirs(jq_state *jq) {
   return jq_get_attr(jq, jv_string("LIB_DIRS"));
 }
 
-jv jq_get_version_dir(jq_state *jq) {
-  jv d = jq_get_attr(jq, jv_string("VERSION_DIR"));
-  assert(jv_is_valid(d));
-  return d;
-}
-
 void jq_set_attrs(jq_state *jq, jv attrs) {
   assert(jv_get_kind(attrs) == JV_KIND_OBJECT);
   jv_free(jq->attrs);

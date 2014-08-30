@@ -76,7 +76,7 @@ static jv name2relpath(jv name) {
   return rp;
 }
 
-static jv find_lib(jq_state *jq, jv lib_name, jv lib_search_path, int use_vers_dir) {
+static jv find_lib(jq_state *jq, jv lib_name, jv lib_search_path) {
   assert(jv_get_kind(lib_search_path) == JV_KIND_STRING);
   assert(jv_get_kind(lib_name) == JV_KIND_STRING);
 
@@ -86,54 +86,35 @@ static jv find_lib(jq_state *jq, jv lib_name, jv lib_search_path, int use_vers_d
     return rel_path;
   }
 
-  jv version_dirs;
-  if (use_vers_dir) {
-    jv vdir = jq_get_version_dir(jq);
-    assert(strchr(jv_string_value(vdir), '.') != NULL);
-    version_dirs = JV_ARRAY(jv_string(""), jv_string_concat(vdir, jv_string("/")));
-  } else {
-    version_dirs = JV_ARRAY(jv_string(""));
-  }
-
   struct stat st;
   int ret;
 
   jv lib_search_paths = build_lib_search_chain(jq, expand_path(lib_search_path));
 
   jv_array_foreach(lib_search_paths, i, spath) {
-    jv vds = jv_copy(version_dirs);
-    jv_array_foreach(vds, k, vd) {
-      jv testpath = jq_realpath(jv_string_fmt("%s/%s%s.jq",
-                                              jv_string_value(spath),
-                                              jv_string_value(vd),
-                                              jv_string_value(rel_path)));
-      ret = stat(jv_string_value(testpath),&st);
-      if (ret == -1 && errno == ENOENT) {
-        jv_free(testpath);
-        testpath = jq_realpath(jv_string_fmt("%s/%s%s/%s.jq",
-                                             jv_string_value(spath),
-                                             jv_string_value(vd),
-                                             jv_string_value(rel_path),
-                                             jv_string_value(lib_name)));
-        ret = stat(jv_string_value(testpath),&st);
-      }
-      jv_free(vd);
-      if (ret == 0) {
-        jv_free(spath);
-        jv_free(vds);
-        jv_free(version_dirs);
-        jv_free(rel_path);
-        jv_free(lib_name);
-        jv_free(lib_search_paths);
-        return testpath;
-      }
+    jv testpath = jq_realpath(jv_string_fmt("%s/%s.jq",
+                                            jv_string_value(spath),
+                                            jv_string_value(rel_path)));
+    ret = stat(jv_string_value(testpath),&st);
+    if (ret == -1 && errno == ENOENT) {
       jv_free(testpath);
+      testpath = jq_realpath(jv_string_fmt("%s/%s/%s.jq",
+                                           jv_string_value(spath),
+                                           jv_string_value(rel_path),
+                                           jv_string_value(lib_name)));
+      ret = stat(jv_string_value(testpath),&st);
     }
-    jv_free(vds);
+    if (ret == 0) {
+      jv_free(spath);
+      jv_free(rel_path);
+      jv_free(lib_name);
+      jv_free(lib_search_paths);
+      return testpath;
+    }
+    jv_free(testpath);
     jv_free(spath);
   }
   jv output = jv_invalid_with_msg(jv_string_fmt("module not found: %s", jv_string_value(lib_name)));
-  jv_free(version_dirs);
   jv_free(rel_path);
   jv_free(lib_name);
   jv_free(lib_search_paths);
@@ -161,13 +142,14 @@ static int process_dependencies(jq_state *jq, jv lib_origin, block *src_block, s
       jv_free(search);
       search = jv_string("");
     }
-    int has_origin = (strncmp("$ORIGIN/",jv_string_value(search),8) == 0);
-    if (has_origin) {
-      jv tsearch = jv_string_fmt("%s/%s",jv_string_value(lib_origin),jv_string_value(search)+8);
+    if (strncmp("$ORIGIN/",jv_string_value(search),8) == 0) {
+      jv tsearch = jv_string_fmt("%s/%s",
+                                 jv_string_value(lib_origin),
+                                 jv_string_value(search) + sizeof ("$ORIGIN/") - 1);
       jv_free(search);
       search = tsearch;
     }
-    jv lib_path = find_lib(jq, name, search, !has_origin);
+    jv lib_path = find_lib(jq, name, search);
     if (!jv_is_valid(lib_path)) {
       jv emsg = jv_invalid_get_msg(lib_path);
       jq_report_error(jq, jv_string_fmt("jq: error: %s\n",jv_string_value(emsg)));
@@ -238,7 +220,7 @@ static int load_library(jq_state *jq, jv lib_path, block *out_block, struct lib_
 }
 
 jv load_module_meta(jq_state *jq, jv modname) {
-  jv lib_path = find_lib(jq, modname, jv_string(""), 1);
+  jv lib_path = find_lib(jq, modname, jv_string(""));
   jv meta = jv_null();
   jv data = jv_load_file(jv_string_value(lib_path), 1);
   if (jv_is_valid(data)) {

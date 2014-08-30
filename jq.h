@@ -26,7 +26,6 @@ void jq_set_attrs(jq_state *, jv);
 jv jq_get_attrs(jq_state *);
 jv jq_get_lib_origin(jq_state *);
 jv jq_get_lib_dirs(jq_state *);
-jv jq_get_version_dir(jq_state *);
 void jq_set_attr(jq_state *, jv, jv);
 jv jq_get_attr(jq_state *, jv);
 #endif /* !_JQ_H_ */
