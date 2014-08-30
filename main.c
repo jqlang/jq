@@ -155,8 +155,10 @@ static int read_more(char* buf, size_t size, int* islast) {
       current_input = 0;
     }
     if (next_input_idx == ninput_files) {
+      assert(*islast == 1);
       return 0;
     }
+    *islast = 0;
     if (!strcmp(input_filenames[next_input_idx], "-")) {
       current_input = stdin;
     } else {
@@ -168,8 +170,8 @@ static int read_more(char* buf, size_t size, int* islast) {
     next_input_idx++;
   }
 
-  if (next_input_idx == ninput_files) *islast = 1;
   if (!fgets(buf, size, current_input)) buf[0] = 0;
+  if (!current_input || feof(current_input)) *islast = 1;
   return 1;
 }
 
@@ -453,7 +455,7 @@ int main(int argc, char* argv[]) {
           }
         }
       } else {
-        jv_parser_set_buf(parser, buf, strlen(buf), !(is_last || feof(stdin)));
+        jv_parser_set_buf(parser, buf, strlen(buf), !is_last);
         jv value;
         while (jv_is_valid((value = jv_parser_next(parser)))) {
           if (options & SLURP) {
