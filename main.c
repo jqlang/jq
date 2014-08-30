@@ -151,7 +151,11 @@ int next_input_idx;
 static int read_more(char* buf, size_t size, int* islast) {
   while (!current_input || feof(current_input)) {
     if (current_input) {
-      fclose(current_input);
+      if (current_input == stdin) {
+        clearerr(stdin); // perhaps we can read again
+      } else {
+        fclose(current_input);
+      }
       current_input = 0;
     }
     if (next_input_idx == ninput_files) {
