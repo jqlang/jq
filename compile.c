@@ -557,6 +557,8 @@ block gen_const_object(block expr) {
       break;
     }
     o = jv_object_set(o, k, v);
+    k = jv_null();
+    v = jv_null();
   }
   if (!is_const) {
     jv_free(o);
