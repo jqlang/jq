@@ -1039,6 +1039,22 @@ sections:
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
             output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
 
+      - title: "`reduce_keys(.foo)`"
+        body: |
+
+          `reduce_keys(.foo)` takes as input an array of objects, and produces a single object with values of keys being the concatenation of each originial value of a same key
+
+        examples:
+          - program: 'jq 'reduce_keys(.)''
+            input: [{"test-a": 1}, {"test-a": 2},{"test-a": 3},{"test-b": 4},{"test-b": 5}]
+            output: {"test-a":6,"test-b":9}
+          - program: 'jq 'reduce_keys(.)''
+            input: [{"test-a": ["a"]}, {"test-a": ["b"]},{"test-a": ["c"]},{"test-b": ["x"]},{"test-b": ["y"]}]
+            output: {"test-a":["a","b","c"],"test-b":["x","y"]}
+          - program: 'jq 'reduce_keys(.)''
+            input: [{"test-a": "a"}, {"test-a": "b"},{"test-a": "c"},{"test-b": "x"},{"test-b": "y"}]
+            output: {"test-a":"abc","test-b":"xy"}
+
       - title: "`min`, `max`, `min(path_exp)`, `max(path_exp)`, `min_by(path_exp)`, `max_by(path_exp)`"
         body: |
 
