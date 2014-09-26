@@ -243,7 +243,7 @@ body:
 
       - - -
 
-      Next, let's try getting the URLs of the parrent commits out of the
+      Next, let's try getting the URLs of the parent commits out of the
       API results as well. In each commit, the GitHub API includes information
       about "parent" commits. There can be one or many.
 
