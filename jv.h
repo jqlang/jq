@@ -177,6 +177,7 @@ jv jv_setpath(jv, jv, jv);
 jv jv_getpath(jv, jv);
 jv jv_delpaths(jv, jv);
 jv jv_keys(jv /*object or array*/);
+jv jv_keys_unsorted(jv /*object or array*/);
 int jv_cmp(jv, jv);
 jv jv_group(jv, jv);
 jv jv_sort(jv, jv);

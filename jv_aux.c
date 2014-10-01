@@ -428,6 +428,18 @@ static int string_cmp(const void* pa, const void* pb){
   return r;
 }
 
+jv jv_keys_unsorted(jv x) {
+  if (jv_get_kind(x) != JV_KIND_OBJECT)
+    return jv_keys(x);
+  jv answer = jv_array_sized(jv_object_length(jv_copy(x)));
+  jv_object_foreach(x, key, value) {
+    answer = jv_array_append(answer, key);
+    jv_free(value);
+  }
+  jv_free(x);
+  return answer;
+}
+
 jv jv_keys(jv x) {
   if (jv_get_kind(x) == JV_KIND_OBJECT) {
     int nkeys = jv_object_length(jv_copy(x));

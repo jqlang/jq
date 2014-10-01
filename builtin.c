@@ -488,6 +488,14 @@ static jv f_keys(jq_state *jq, jv input) {
   }
 }
 
+static jv f_keys_unsorted(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_OBJECT || jv_get_kind(input) == JV_KIND_ARRAY) {
+    return jv_keys_unsorted(input);
+  } else {
+    return type_error(input, "has no keys");
+  }
+}
+
 static jv f_sort(jq_state *jq, jv input){
   if (jv_get_kind(input) == JV_KIND_ARRAY) {
     return jv_sort(input, jv_copy(input));
@@ -860,6 +868,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
   {(cfunction_ptr)f_keys, "keys", 1},
+  {(cfunction_ptr)f_keys_unsorted, "keys_unsorted", 1},
   {(cfunction_ptr)f_startswith, "startswith", 2},
   {(cfunction_ptr)f_endswith, "endswith", 2},
   {(cfunction_ptr)f_ltrimstr, "ltrimstr", 2},
@@ -965,7 +974,7 @@ static const char* const jq_builtins[] = {
   "def recurse: recurse(.[]?);",
   "def recurse_down: recurse;",
 
-  "def to_entries: [keys[] as $k | {key: $k, value: .[$k]}];",
+  "def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];",
   "def from_entries: map({(.key): .value}) | add | .//={};",
   "def with_entries(f): to_entries | map(f) | from_entries;",
   "def reverse: [.[length - 1 - range(0;length)]];",

@@ -588,7 +588,7 @@ sections:
             input: '[[1,2], "string", {"a":2}, null]'
             output: [2, 6, 1, 0]
 
-      - title: "`keys`"
+      - title: "`keys`, `keys_unsorted`"
         body: |
 
           The builtin function `keys`, when given an object, returns
@@ -602,6 +602,10 @@ sections:
 
           When `keys` is given an array, it returns the valid indices
           for that array: the integers from 0 to length-1.
+
+          The `keys_unsorted` function is just like `keys`, but if
+          the input is an object then the keys will not be sorted,
+          instead the keys will roughly be in insertion order.
 
         examples:
           - program: 'keys'
