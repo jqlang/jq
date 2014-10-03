@@ -987,7 +987,7 @@ sections:
             input: '[0, false, [], {}, null, "hello"]'
             output: ['["number", "boolean", "array", "object", "null", "string"]']
 
-      - title: "`sort, sort(path_expression), sort_by(path_expression)`"
+      - title: "`sort, sort_by(path_expression)`"
         body: |
 
           The `sort` functions sorts its input, which must be an
@@ -1009,24 +1009,21 @@ sections:
           `sort` may be used to sort by a particular field of an
           object, or by applying any jq filter.
 
-          `sort(foo)` compares two elements by comparing the result of
+          `sort_by(foo)` compares two elements by comparing the result of
           `foo` on each element.
-
-          `sort_by(foo)` is an alias of `sort(foo)`; `sort_by()` is
-          *deprecated* and will be removed in the next major release.
 
         examples:
           - program: 'sort'
             input: '[8,3,null,6]'
             output: ['[null,3,6,8]']
-          - program: 'sort(.foo)'
+          - program: 'sort_by(.foo)'
             input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]'
             output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]']
 
-      - title: "`group(path_expression)`, `group_by(path_expression)`"
+      - title: "`group_by(path_expression)`"
         body: |
 
-          `group(.foo)` takes as input an array, groups the
+          `group_by(.foo)` takes as input an array, groups the
           elements having the same `.foo` field into separate arrays,
           and produces all of these arrays as elements of a larger
           array, sorted by the value of the `.foo` field.
@@ -1035,58 +1032,48 @@ sections:
           place of `.foo`. The sorting order is the same as described
           in the `sort` function above.
 
-          `group_by(foo)` is an alias of `group(foo)`; `group_by()` is
-          *deprecated* and will be removed in the next major release.
-
         examples:
-          - program: 'group(.foo)'
+          - program: 'group_by(.foo)'
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
             output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
 
-      - title: "`min`, `max`, `min(path_exp)`, `max(path_exp)`, `min_by(path_exp)`, `max_by(path_exp)`"
+      - title: "`min`, `max`, `min_by(path_exp)`, `max_by(path_exp)`"
         body: |
 
           Find the minimum or maximum element of the input array.
-          This filter accepts an optional argument that
-          allows you to specify a particular field or
-          property to examine, e.g. `min(.foo)` finds the object
-          with the smallest `foo` field.
 
-          For legacy reasons, `min_by(.foo)` and `max_by(.foo)` exist as
-          aliases for `min(.foo)` and `max(.foo)`. These aliases are
-          considered *deprecated* and will be removed in the next major
-          release.
+          The `min_by(path_exp)` and `max_by(path_exp)` functions allow
+          you to specify a particular field or property to examine, e.g.
+          `min_by(.foo)` finds the object with the smallest `foo` field.
 
         examples:
           - program: 'min'
             input: '[5,4,2,7]'
             output: ['2']
-          - program: 'max(.foo)'
+          - program: 'max_by(.foo)'
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
 
-      - title: "`unique`, `unique(path_exp)`, `unique_by(path_exp)`"
+      - title: "`unique`, `unique_by(path_exp)`"
         body: |
 
           The `unique` function takes as input an array and produces
           an array of the same elements, in sorted order, with
-          duplicates removed. If an optional argument is passed, it
-          will keep only one element for each value obtained by applying
-          the argument. Think of it as making an array by taking one
-          element out of every group produced by `group`.
+          duplicates removed.
 
-          For legacy reasons, `unique_by(.foo)` exists as an alias for
-          `unique(.foo)`. This alias is considered *deprecated* and will
-          be removed in the next major release.
+          The `unique_by(path_exp)` function will keep only one element
+          for each value obtained by applying the argument. Think of it
+          as making an array by taking one element out of every group
+          produced by `group`.
 
         examples:
           - program: 'unique'
             input: '[1,2,5,3,5,3,1,3]'
             output: ['[1,2,3,5]']
-          - program: 'unique(.foo)'
+          - program: 'unique_by(.foo)'
             input: '[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]'
             output: ['[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]']
-          - program: 'unique(length)'
+          - program: 'unique_by(length)'
             input: '["chunky", "bacon", "kitten", "cicada", "asparagus"]'
             output: ['["chunky", "bacon", "asparagus"]']
 
