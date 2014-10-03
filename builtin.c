@@ -1046,7 +1046,6 @@ static const char* const jq_builtins[] = {
   //
   // split emits an array for backward compatibility
   "def split($re; flags): [ splits($re; flags) ];",
-  "def split($re): [ splits($re; null) ];",
   //
   // If s contains capture variables, then create a capture object and pipe it to s
   "def sub($re; s):"

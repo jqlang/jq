@@ -1736,7 +1736,7 @@ sections:
       input: ("", "")
       output: ['[]', '[]']
 
-  - title: "`split(regex)`, `split(regex; flags)`"
+  - title: "`split(regex; flags)`"
     body: |
 
       For backwards compatibility, `split` emits an array of the strings
@@ -1746,11 +1746,8 @@ sections:
       themselves are excluded.  If regex is the empty string, then the first
       match will be the empty string.
 
-      `split(regex)` can be thought of as a wrapper around `splits(regex)`,
-      and similarly for `split(regex; flags)`.
-
     example:
-    - program: 'split(", *")'
+    - program: 'split(", *"; null)'
       input: '"ab,cd, ef"'
       output: ['"ab","cd","ef"']
 
