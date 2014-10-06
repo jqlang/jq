@@ -1341,6 +1341,18 @@ sections:
             input: 'null'
             output: ['"less"']
 
+      - title: "`transpose`"
+        body: |
+
+          Transpose a possibly jagged matrix (an array of arrays). 
+          Rows are padded with nulls so the result is always rectangular.
+
+        examples:
+          - program: 'target'
+            input: '[[1], [2,3]]'
+            output: ['[1,2],[null,3]']
+
+
       - title: "String interpolation - `\\(foo)`"
         body: |
 
