@@ -1099,6 +1099,16 @@ static const char* const jq_builtins[] = {
   "def first: .[0];",
   "def last: .[-1];",
   "def nth($n): .[$n];",
+  // # transpose a possibly jagged matrix, quickly; 
+  // # rows are padded with nulls so the result is always rectangular.
+  "def transpose:"
+  "  if . == [] then []"
+  "  else . as $in"
+  "  | (map(length) | max) as $max"
+  "  | length as $length"
+  "  | reduce range(0; $max) as $j"
+  "      ([]; . + [reduce range(0;$length) as $i ([]; . + [ $in[$i][$j] ] )] )"
+	      "  end;",
 };
 #undef LIBM_DD
 
