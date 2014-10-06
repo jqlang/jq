@@ -1051,17 +1051,19 @@ static const char* const jq_builtins[] = {
   "def sub($re; s):"
   "  . as $in"
   "  | [match($re)]"
-  "  | .[0]"
-  "  | . as $r"
-     //  # create the \"capture\" object:
-  "  | reduce ( $r | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair"
-  "      ({}; . + $pair)"
-  "  | if . == {} then $in | .[0:$r.offset]+s+.[$r.offset+$r.length:]"
-  "    else (. | s)"
+  "  | if length == 0 then $in"
+  "    else .[0]"
+  "    | . as $r"
+       //  # create the \"capture\" object:
+  "    | reduce ( $r | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair"
+  "        ({}; . + $pair)"
+  "    | if . == {} then $in | .[0:$r.offset]+s+.[$r.offset+$r.length:]"
+  "      else (. | s)"
+  "      end"
   "    end ;",
   //
   // repeated substitution of re (which may contain named captures)
-  "def gsub($re; s):"
+  "def gsub($re; s; flags):"
   //   # _stredit(edits;s) - s is the \"to\" string, which might contain capture variables,
   //   # so if an edit contains captures, then create the capture object and pipe it to s
   "   def _stredit(edits; s):"
@@ -1076,7 +1078,8 @@ static const char* const jq_builtins[] = {
   "         else (if $l == 0 then \"\" else ($in | _stredit(edits[0:$l]; s)) end) + (. | s)"
   "         end"
   "     end ;"
-  "  [match($re;\"g\")] as $edits | _stredit($edits; s) ;",
+  "  [match($re; flags + \"g\")] as $edits | _stredit($edits; s) ;",
+  "def gsub($re; s): gsub($re; s; \"\");"
 
   //#######################################################################
   // range/3, with a `by` expression argument
