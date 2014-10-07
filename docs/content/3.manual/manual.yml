@@ -1350,7 +1350,7 @@ sections:
         examples:
           - program: 'target'
             input: '[[1], [2,3]]'
-            output: [[1,2],[null,3]]
+            output: ['[1,2],[null,3]']
 
 
       - title: "String interpolation - `\\(foo)`"
