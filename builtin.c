@@ -615,7 +615,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
       options, ONIG_ENCODING_UTF8, ONIG_SYNTAX_PERL_NG, &einfo);
   if (onigret != ONIG_NORMAL) {
     UChar ebuf[ONIG_MAX_ERROR_MESSAGE_LEN];
-    onig_error_code_to_str(ebuf, onigret, einfo);
+    onig_error_code_to_str(ebuf, onigret, &einfo);
     jv_free(input);
     jv_free(regex);
     return jv_invalid_with_msg(jv_string_concat(jv_string("Regex failure: "),
