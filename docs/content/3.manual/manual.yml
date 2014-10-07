@@ -1235,6 +1235,18 @@ sections:
             input: '["a","b,c,d","e"]'
             output: ['"a, b,c,d, e"']
 
+
+      - title: "`ascii_downcase`, `ascii_upcase`"
+        body: |
+
+          Emit a copy of the input string with its alphabetic characters (a-z and A-Z) 
+          converted to the specified case.
+
+        example:
+          - program: 'ascii_upcase'
+            input: '"useful but not for é"'
+            output: '"USEFUL BUT NOT FOR é"'
+
       - title: "`while(cond; update)`"
         body: |
 
