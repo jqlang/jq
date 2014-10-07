@@ -1365,6 +1365,29 @@ sections:
             output: ['[1,2],[null,3]']
 
 
+      - title: "`bsearch(x)`"
+        body: |
+
+          bsearch(x) conducts a binary search for x in the input
+          array.  If the input is sorted and contains x, then
+          bsearch(x) will return its index in the array; otherwise, if
+          the array is sorted, it will return (-1 - ix) where ix is an
+          insertion point such that the array would still be sorted
+          after the insertion of x at ix.  If the array is not sorted,
+          bsearch(x) will return an integer that is probably of no
+          interest.
+
+        examples:
+          - program: 'bsearch(0)'
+            input: '[0,1]
+            output: 0
+          - program: 'bsearch(0)'
+            input: '[1,2,3]
+            output: -1
+          - program: 'bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end'
+            input: '[1,2,3]'
+            output: '[1,2,3,4]'
+
       - title: "String interpolation - `\\(foo)`"
         body: |
 

@@ -1102,3 +1102,7 @@ transpose
 ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"
+
+bsearch(4)
+[1,2,3]
+-4
