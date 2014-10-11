@@ -24,6 +24,8 @@ struct jv_parser {
   int curr_buf_is_partial;
   unsigned bom_strip_position;
 
+  int flags;
+
   jv* stack;
   int stackpos;
   int stacklen;
@@ -40,12 +42,15 @@ struct jv_parser {
   enum {
     JV_PARSER_NORMAL,
     JV_PARSER_STRING,
-    JV_PARSER_STRING_ESCAPE
+    JV_PARSER_STRING_ESCAPE,
+    JV_PARSER_WAITING_FOR_RS // parse error, waiting for RS
   } st;
+  unsigned int last_ch_was_ws:1;
 };
 
 
 static void parser_init(struct jv_parser* p) {
+  p->flags = 0;
   p->stack = 0;
   p->stacklen = p->stackpos = 0;
   p->next = jv_invalid();
@@ -60,10 +65,18 @@ static void parser_init(struct jv_parser* p) {
   jvp_dtoa_context_init(&p->dtoa);
 }
 
-static void parser_free(struct jv_parser* p) {
+static void parser_reset(struct jv_parser* p) {
   jv_free(p->next);
+  p->next = jv_invalid();
   for (int i=0; i<p->stackpos; i++) 
     jv_free(p->stack[i]);
+  p->stackpos = 0;
+  p->tokenpos = 0;
+  p->st = JV_PARSER_NORMAL;
+}
+
+static void parser_free(struct jv_parser* p) {
+  parser_reset(p);
   jv_mem_free(p->stack);
   jv_mem_free(p->tokenbuf);
   jvp_dtoa_context_free(&p->dtoa);
@@ -330,9 +343,26 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
     p->line++;
     p->column = 0;
   }
+  if (ch == '\036' /* ASCII RS; see draft-ietf-json-sequence-07 */) {
+    TRY(check_literal(p));
+    if (p->st == JV_PARSER_NORMAL && check_done(p, out)) {
+      if ((p->flags & JV_PARSE_SEQ) && !p->last_ch_was_ws && jv_get_kind(*out) == JV_KIND_NUMBER) {
+        jv_free(*out);
+        *out = jv_invalid();
+        return "Potentially truncated top-level numeric value";
+      }
+      return OK;
+    }
+    parser_reset(p);
+    *out = jv_invalid();
+    return "Truncated value";
+  }
   presult answer = 0;
+  p->last_ch_was_ws = 0;
   if (p->st == JV_PARSER_NORMAL) {
     chclass cls = classify(ch);
+    if (cls == WHITESPACE)
+      p->last_ch_was_ws = 1;
     if (cls != LITERAL) {
       TRY(check_literal(p));
       if (check_done(p, out)) answer = OK;
@@ -373,6 +403,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
 struct jv_parser* jv_parser_new(int flags) {
   struct jv_parser* p = jv_mem_alloc(sizeof(struct jv_parser));
   parser_init(p);
+  p->flags = flags;
   return p;
 }
 
@@ -412,14 +443,22 @@ jv jv_parser_next(struct jv_parser* p) {
   assert(p->curr_buf && "a buffer must be provided");
   if (p->bom_strip_position == 0xff) return jv_invalid_with_msg(jv_string("Malformed BOM"));
   jv value;
+  char ch;
   presult msg = 0;
   while (!msg && p->curr_buf_pos < p->curr_buf_length) {
-    char ch = p->curr_buf[p->curr_buf_pos++];
+    ch = p->curr_buf[p->curr_buf_pos++];
+    if (ch != '\036' && p->st == JV_PARSER_WAITING_FOR_RS)
+      continue; // need to resync, wait for RS
     msg = scan(p, ch, &value);
   }
   if (msg == OK) {
     return value;
   } else if (msg) {
+    parser_reset(p);
+    if (ch != '\036' && (p->flags & JV_PARSE_SEQ)) {
+      p->st = JV_PARSER_WAITING_FOR_RS;
+      return jv_invalid_with_msg(jv_string_fmt("%s at line %d, column %d (need RS to resync)", msg, p->line, p->column));
+    }
     return jv_invalid_with_msg(jv_string_fmt("%s at line %d, column %d", msg, p->line, p->column));
   } else if (p->curr_buf_is_partial) {
     assert(p->curr_buf_pos == p->curr_buf_length);
@@ -428,16 +467,31 @@ jv jv_parser_next(struct jv_parser* p) {
   } else {
     assert(p->curr_buf_pos == p->curr_buf_length);
     // at EOF
-    if (p->st != JV_PARSER_NORMAL) 
-      return jv_invalid_with_msg(jv_string("Unfinished string"));
-    if ((msg = check_literal(p)))
-      return jv_invalid_with_msg(jv_string(msg));
-    if (p->stackpos != 0)
-      return jv_invalid_with_msg(jv_string("Unfinished JSON term"));
+    if (p->st != JV_PARSER_WAITING_FOR_RS) {
+      if (p->st != JV_PARSER_NORMAL) {
+        parser_reset(p);
+        p->st = JV_PARSER_WAITING_FOR_RS;
+        return jv_invalid_with_msg(jv_string("Unfinished string"));
+      }
+      if ((msg = check_literal(p))) {
+        parser_reset(p);
+        p->st = JV_PARSER_WAITING_FOR_RS;
+        return jv_invalid_with_msg(jv_string(msg));
+      }
+      if (p->stackpos != 0) {
+        parser_reset(p);
+        p->st = JV_PARSER_WAITING_FOR_RS;
+        return jv_invalid_with_msg(jv_string("Unfinished JSON term"));
+      }
+    }
     // p->next is either invalid (nothing here but no syntax error)
     // or valid (this is the value). either way it's the thing to return
     value = p->next;
     p->next = jv_invalid();
+    if ((p->flags & JV_PARSE_SEQ) && !p->last_ch_was_ws && jv_get_kind(value) == JV_KIND_NUMBER) {
+      jv_free(value);
+      return jv_invalid_with_msg(jv_string("Potentially truncated top-level numeric value"));
+    }
     return value;
   }
 }

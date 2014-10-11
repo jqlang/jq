@@ -156,6 +156,8 @@ void jv_dump(jv, int flags);
 void jv_show(jv, int flags);
 jv jv_dump_string(jv, int flags);
 
+#define JV_PARSE_SEQ 1
+
 jv jv_parse(const char* string);
 jv jv_parse_sized(const char* string, int length);
 

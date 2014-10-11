@@ -92,6 +92,17 @@ sections:
 
         Output the jq version and exit with zero.
 
+      * `--seq`:
+
+        Use the `application/json-seq` MIME type scheme for separating
+        JSON texts in jq's input and output.  This means that an ASCII
+        RS (record separator) character is printed before each value on
+        output and an ASCII LF (line feed) is printed after every
+        output.  Input JSON texts that fail to parse are ignored (but
+        warned about), discarding all subsequent input until the next
+        RS.  This more also parses the output of jq without the `--seq`
+        option.
+
       * `--slurp`/`-s`:
 
         Instead of running the filter for each JSON object in the

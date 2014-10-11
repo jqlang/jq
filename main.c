@@ -90,8 +90,9 @@ enum {
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
   IN_PLACE              = 8192,
+  SEQ                   = 16384,
   /* debugging only */
-  DUMP_DISASM           = 16384,
+  DUMP_DISASM           = 32768,
 };
 static int options = 0;
 
@@ -122,6 +123,8 @@ static int process(jq_state *jq, jv value, int flags) {
         ret = 11;
       else
         ret = 0;
+      if (options & SEQ)
+        fwrite("\036", 1, 1, stdout);
       jv_dump(result, dumpopts);
     }
     if (!(options & RAW_NO_LF))
@@ -284,6 +287,10 @@ int main(int argc, char* argv[]) {
         options |= IN_PLACE;
         if (!short_opts) continue;
       }
+      if (isoption(argv[i], 0, "seq", &short_opts)) {
+        options |= SEQ;
+        if (!short_opts) continue;
+      }
       if (isoption(argv[i], 'e', "exit-status", &short_opts)) {
         options |= EXIT_STATUS;
         if (!short_opts) continue;
@@ -444,7 +451,7 @@ int main(int argc, char* argv[]) {
         slurped = jv_array();
       }
     }
-    struct jv_parser* parser = jv_parser_new(0);
+    struct jv_parser* parser = jv_parser_new((options & SEQ) ? JV_PARSE_SEQ : 0);
     char buf[4096];
     int is_last = 0;
     while (read_more(buf, sizeof(buf), &is_last)) {
@@ -461,21 +468,27 @@ int main(int argc, char* argv[]) {
       } else {
         jv_parser_set_buf(parser, buf, strlen(buf), !is_last);
         jv value;
-        while (jv_is_valid((value = jv_parser_next(parser)))) {
+        while (jv_is_valid(value = jv_parser_next(parser)) || jv_invalid_has_msg(jv_copy(value))) {
+          if (!jv_is_valid(value)) {
+            jv msg = jv_invalid_get_msg(value);
+            if (!(options & SEQ)) {
+              // We used to treat parse errors as fatal...
+              ret = 4;
+              fprintf(stderr, "parse error: %s\n", jv_string_value(msg));
+              jv_free(msg);
+              break;
+            }
+            fprintf(stderr, "ignoring parse error: %s\n", jv_string_value(msg));
+            jv_free(msg);
+            // ...but with --seq we attempt to recover.
+            continue;
+          }
           if (options & SLURP) {
             slurped = jv_array_append(slurped, value);
           } else {
             ret = process(jq, value, jq_flags);
+            value = jv_invalid();
           }
-        }
-        if (jv_invalid_has_msg(jv_copy(value))) {
-          jv msg = jv_invalid_get_msg(value);
-          fprintf(stderr, "parse error: %s\n", jv_string_value(msg));
-          jv_free(msg);
-          ret = 4;
-          break;
-        } else {
-          jv_free(value);
         }
       }
     }
