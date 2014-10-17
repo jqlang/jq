@@ -55,7 +55,7 @@ body:
 
        * jq 1.4 executables for [64-bit](win64/jq.exe) or [32-bit](win32/jq.exe)
 
-       * jq 1.3 executables for [64-bit](win64/jq-1.3/jq.exe) or [32-bit](win32/jq-1.3/jq.exe)
+       * jq 1.3 executables for [64-bit](win64/jq-1.3/jq-1.3.exe) or [32-bit](win32/jq-1.3/jq-1.3.exe)
 
       ### From source on Linux, OS X, Cygwin, and other POSIX-like operating systems
 
