@@ -979,19 +979,17 @@ static const char* const jq_builtins[] = {
   "def paths: path(recurse(if (type|. == \"array\" or . == \"object\") then .[] else empty end))|select(length > 0);",
   "def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_filter);",
   "def any(generator; condition):"
-  "         [false,"
-  "         foreach generator as $i"
+  "        [foreach generator as $i"
   "                 (false;"
   "                  if . then break elif $i | condition then true else . end;"
-  "                  if . then . else empty end)] | any;",
+  "                  if . then . else empty end)] | length == 1;",
   "def any(condition): any(.[]; condition);",
   "def any: any(.);",
   "def all(generator; condition): "
-  "         [true,"
-  "         foreach generator as $i"
+  "        [foreach generator as $i"
   "                 (true;"
   "                  if .|not then break elif $i | condition then . else false end;"
-  "                  if .|not then . else empty end)] | all;",
+  "                  if .|not then . else empty end)] | length == 0;",
   "def all(condition): all(.[]; condition);",
   "def all: all(.);",
   "def arrays: select(type == \"array\");",
