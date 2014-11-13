@@ -1057,9 +1057,7 @@ static const char* const jq_builtins[] = {
        //  # create the \"capture\" object:
   "    | reduce ( $r | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair"
   "        ({}; . + $pair)"
-  "    | if . == {} then $in | .[0:$r.offset]+s+.[$r.offset+$r.length:]"
-  "      else (. | s)"
-  "      end"
+  "    | $in[0:$r.offset] + s + $in[$r.offset+$r.length:]"
   "    end ;",
   //
   // repeated substitution of re (which may contain named captures)
