@@ -420,13 +420,14 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     }
     jv_free(input);
     return line;
-  } else if (!strcmp(fmt_s, "sh")) {
+  } else if (!strcmp(fmt_s, "sh") || !strcmp(fmt_s, "sht")) {
+    char* sep = !strcmp(fmt_s, "sh") ? " " : "\t";
     jv_free(fmt);
     if (jv_get_kind(input) != JV_KIND_ARRAY)
       input = jv_array_set(jv_array(), 0, input);
     jv line = jv_string("");
     jv_array_foreach(input, i, x) {
-      if (i) line = jv_string_append_str(line, " ");
+      if (i) line = jv_string_append_str(line, sep);
       switch (jv_get_kind(x)) {
       case JV_KIND_NULL:
       case JV_KIND_TRUE:
