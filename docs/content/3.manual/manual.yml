@@ -1434,6 +1434,10 @@ sections:
             for a POSIX shell. If the input is an array, the output
             will be a series of space-separated strings.
 
+          * `@sht`:
+
+            As `@sh` but output is tab-separated.
+
           * `@base64`:
 
             The input is converted to base64 as specified by RFC 4648.
