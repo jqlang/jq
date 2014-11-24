@@ -1004,12 +1004,16 @@ int jq_compile(jq_state *jq, const char* str) {
   return jq_compile_args(jq, str, jv_array());
 }
 
-jv jq_get_lib_origin(jq_state *jq) {
-  return jq_get_attr(jq, jv_string("ORIGIN"));
+jv jq_get_jq_origin(jq_state *jq) {
+  return jq_get_attr(jq, jv_string("JQ_ORIGIN"));
+}
+
+jv jq_get_prog_origin(jq_state *jq) {
+  return jq_get_attr(jq, jv_string("PROGRAM_ORIGIN"));
 }
 
 jv jq_get_lib_dirs(jq_state *jq) {
-  return jq_get_attr(jq, jv_string("LIB_DIRS"));
+  return jq_get_attr(jq, jv_string("JQ_LIBRARY_PATH"));
 }
 
 void jq_set_attrs(jq_state *jq, jv attrs) {

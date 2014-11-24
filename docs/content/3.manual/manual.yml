@@ -2286,45 +2286,58 @@ sections:
     body: |
 
       jq has a library/module system.  Modules are files whose names end
-      in `.jq`.  Modules should start with a `module` directive.
-      Programs and modules must `import` their dependencies, if any.
+      in `.jq`.  Modules should (but don't have to) start with a
+      `module` directive.  Programs and modules must `import` their
+      dependencies, if any.
 
-      A search path is used to search for modules.  Each directory in
-      the search path is tested twice: once with a directory named "any"
-      added on the end, and once with the jq version number as a
-      directory added on the end.
+      Modules imported by a program are searched for in a default search
+      path (see below).  The `import` directive allows the importer to
+      alter this path.
+
+      Paths in the a search path are subject to various substitutions.
 
       For paths starting with "~/", the user's home directory is
       substituted for "~".
 
-      For paths starting with "$ORIGIN/", the path of the directory of
-      the dependent is used.  For main programs that's the path of the
-      jq executable's containing directory.
+      For paths starting with "$ORIGIN/", the path of the jq executable
+      is substituted for "$ORIGIN".
+
+      For paths starting with "./" or paths that are ".", the path of
+      the including file is substituted for ".".  For top-level programs
+      given on the command-line, the current directory is used.
+
+      Import directives can optionally specify a search path to which
+      the default is appended.
+
+      The default search path is the search path given to the `-L`
+      command-line option, else the "$JQ_LIBRARY_PATH", if set in the
+      environment, else `["~/.jq", "$ORIGIN/../lib/jq"]` (on Unix) or
+      `["~/.jq", "$ORIGIN/lib"]` (on Windows).
+
+      The `-L` argument's and "$JQ_LIBRARY_PATH" environment variable's
+      string values are split on ":" on Unix, or ";" on Windows.
+
+      Null and empty string path elements terminate search path
+      processing.
 
       Modules may be organized into a hierarchy, with name components
       separated by double-colons ("::").  For example: "foo::bar".  Each
       component in the name corresponds to a directory on the
-      filesystem.  Consecutive components with the same name are not
-      allowed to avoid ambiguities (e.g., "foo::foo").
+      filesystem.
 
-      For example, a module named "foo::bar" would be searched for in
-      "foo/bar.jq" and "foo/bar/bar.jq" in the given search path. This
-      is intended to allow modules to be placed in a directory along
-      with, for example, version control files, README files, and so on,
-      but also to allow for single-file modules.
+      A module named "foo::bar" would be searched for in "foo/bar.jq"
+      and "foo/bar/bar.jq" in the given search path. This is intended to
+      allow modules to be placed in a directory along with, for example,
+      version control files, README files, and so on, but also to allow
+      for single-file modules.
 
-      The search path used is as follows:
+      Consecutive components with the same name are not allowed to avoid
+      ambiguities (e.g., "foo::foo").
 
-      - the directory indicated in the search key of the `import`
-        directive metadata (see below)
-      - otherwise any directory(ies) listed in the `-L` command-line
-        argument
-      - otherwise any directory(ies) listed in the `$JQ_LIBRARY_PATH`
-        environment variable
+      For example, with `-L$HOME/.jq` a module `foo` can be found in
+      `$HOME/.jq/foo.jq` and `$HOME/.jq/foo/foo.jq`.
 
-      For example, with `-L$HOME/.jq` A module `foo` can be found in
-      `$HOME/.jq/any/foo.jq`, `$HOME/.jq/1.4/foo.jq`,
-      `$HOME/.jq/any/foo/foo.jq`, and in `$HOME/.jq/foo/foo.jq`.
+      If "$HOME/.jq" is a file, it is sourced into the main program.
 
     entries:
       - title: "`module NAME {<metadata>};`"
@@ -2349,7 +2362,8 @@ sections:
           an object with keys like "version", "repo", "URI", and so on.
           
           The "search" key in the metadata, if present, should have a
-          string value consisting of a single directory path to search.
+          string or array value (array of strings); this is the search
+          path to be prefixed to the top-level search path.
 
       - title: "`modulemeta`"
         body: |

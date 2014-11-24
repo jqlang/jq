@@ -10,6 +10,7 @@
 #include "jv.h"
 #include "jq.h"
 #include "jv_alloc.h"
+#include "util.h"
 #include "version.h"
 
 int jq_testsuite(int argc, char* argv[]);
@@ -210,7 +211,7 @@ int main(int argc, char* argv[]) {
   int jq_flags = 0;
   size_t short_opts = 0;
   jv program_arguments = jv_array();
-  jv lib_search_paths = jv_array();
+  jv lib_search_paths = jv_null();
   for (int i=1; i<argc; i++, short_opts = 0) {
     if (further_args_are_files) {
       input_filenames[ninput_files++] = argv[i];
@@ -225,6 +226,8 @@ int main(int argc, char* argv[]) {
       }
     } else {
       if (argv[i][1] == 'L') {
+        if (jv_get_kind(lib_search_paths) == JV_KIND_NULL)
+          lib_search_paths = jv_array();
         if (argv[i][2] != 0) { // -Lname (faster check than strlen)
             lib_search_paths = jv_array_append(lib_search_paths, jv_string(argv[i]+2));
         } else if (i >= argc - 1) {
@@ -376,7 +379,8 @@ int main(int argc, char* argv[]) {
   }
 
   char *penv = getenv("JQ_LIBRARY_PATH");
-  if (penv) {
+  if (penv && jv_get_kind(lib_search_paths) == JV_KIND_NULL) {
+    // Use $JQ_LIBRARY_PATH
 #ifdef WIN32
 #define PATH_ENV_SEPARATOR ";"
 #else
@@ -384,15 +388,22 @@ int main(int argc, char* argv[]) {
 #endif
     lib_search_paths = jv_array_concat(lib_search_paths,jv_string_split(jv_string(penv),jv_string(PATH_ENV_SEPARATOR)));
 #undef PATH_ENV_SEPARATOR
+  } else if (jv_get_kind(lib_search_paths) == JV_KIND_NULL) {
+    // Use compiled-in default JQ_LIBRARY_PATH
+#ifdef WIN32
+    lib_search_paths = JV_ARRAY(jv_string("~/.jq"), jv_string("$ORIGIN/lib"));
+#else
+    lib_search_paths = JV_ARRAY(jv_string("~/.jq"), jv_string("$ORIGIN/../lib/jq"));
+#endif
   }
-  jq_set_attr(jq, jv_string("LIB_DIRS"), lib_search_paths);
+  jq_set_attr(jq, jv_string("JQ_LIBRARY_PATH"), lib_search_paths);
 
   char *origin = strdup(argv[0]);
   if (origin == NULL) {
     fprintf(stderr, "Error: out of memory\n");
     exit(1);
   }
-  jq_set_attr(jq, jv_string("ORIGIN"), jv_string(dirname(origin)));
+  jq_set_attr(jq, jv_string("JQ_ORIGIN"), jv_string(dirname(origin)));
   free(origin);
 
   if (strchr(JQ_VERSION, '-') == NULL)
@@ -436,6 +447,12 @@ int main(int argc, char* argv[]) {
   }
   
   if (options & FROM_FILE) {
+    char *program_origin = strdup(program);
+    if (program_origin == NULL) {
+      perror("malloc");
+      exit(2);
+    }
+
     jv data = jv_load_file(program, 1);
     if (!jv_is_valid(data)) {
       data = jv_invalid_get_msg(data);
@@ -444,9 +461,12 @@ int main(int argc, char* argv[]) {
       ret = 2;
       goto out;
     }
+    jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string(dirname(program_origin))));
     compiled = jq_compile_args(jq, jv_string_value(data), program_arguments);
+    free(program_origin);
     jv_free(data);
   } else {
+    jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string("."))); // XXX is this good?
     compiled = jq_compile_args(jq, program, program_arguments);
   }
   if (!compiled){

@@ -10,6 +10,7 @@
 tags
 
 jq
+!tests/modules/lib/jq/
 jq.1
 
 # Something delightfully recursive happens otherwise
