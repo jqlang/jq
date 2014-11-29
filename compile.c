@@ -643,14 +643,14 @@ block gen_collect(block expr) {
 
   return BLOCK(c,
                gen_op_target(FORK, tail),
-               expr, 
+               expr,
                tail,
                gen_op_bound(LOADVN, array_var));
 }
 
 block gen_reduce(const char* varname, block source, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
-  block loop = BLOCK(gen_op_simple(DUP),
+  block loop = BLOCK(gen_op_simple(DUPN),
                      source,
                      block_bind(gen_op_unbound(STOREV, varname),
                                 BLOCK(gen_op_bound(LOADVN, res_var),
@@ -669,7 +669,7 @@ block gen_reduce(const char* varname, block source, block init, block body) {
 block gen_foreach(const char* varname, block source, block init, block update, block extract) {
   block output = gen_op_targetlater(JUMP);
   block state_var = gen_op_var_fresh(STOREV, "foreach");
-  block loop = BLOCK(gen_op_simple(DUP),
+  block loop = BLOCK(gen_op_simple(DUPN),
                      // get a value from the source expression:
                      source,
                      // bind the $varname to that value for all the code in

@@ -168,6 +168,19 @@ jv stack_pop(jq_state *jq) {
   return val;
 }
 
+// Like stack_pop(), but assert !stack_pop_will_free() and replace with
+// jv_null() on the stack.
+jv stack_popn(jq_state *jq) {
+  jv* sval = stack_block(&jq->stk, jq->stk_top);
+  jv val = *sval;
+  if (!stack_pop_will_free(&jq->stk, jq->stk_top)) {
+    *sval = jv_null();
+  }
+  jq->stk_top = stack_pop_block(&jq->stk, jq->stk_top, sizeof(jv));
+  assert(jv_is_valid(val));
+  return val;
+}
+
 
 struct forkpoint {
   stack_ptr saved_data_stack;
@@ -341,6 +354,13 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case DUPN: {
+      jv v = stack_popn(jq);
+      stack_push(jq, jv_copy(v));
+      stack_push(jq, v);
+      break;
+    }
+
     case DUP2: {
       jv keep = stack_pop(jq);
       jv v = stack_pop(jq);
@@ -457,7 +477,7 @@ jv jq_next(jq_state *jq) {
         jv_dump(jv_copy(*var), 0);
         printf(" (%d)\n", jv_get_refcnt(*var));
       }
-      jv_free(stack_pop(jq));
+      jv_free(stack_popn(jq));
       stack_push(jq, *var);
       *var = jv_null();
       break;
