@@ -302,7 +302,7 @@ jv jq_next(jq_state *jq) {
             param = *stack_block_next(&jq->stk, param);
           }
           if (!param) break;
-          jv_dump(jv_copy(*(jv*)stack_block(&jq->stk, param)), 0);
+          jv_dump(jv_copy(*(jv*)stack_block(&jq->stk, param)), JV_PRINT_REFCOUNT);
           //printf("<%d>", jv_get_refcnt(param->val));
           //printf(" -- ");
           //jv_dump(jv_copy(jq->path), 0);
