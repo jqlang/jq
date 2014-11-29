@@ -112,9 +112,18 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S) {
 
 enum { INDENT = 2 };
 
+static void put_refcnt(struct dtoa_context* C, int refcnt, FILE *F, jv* S){
+  char buf[JVP_DTOA_FMT_MAX_LEN];
+  put_char(' ', F, S);
+  put_char('(', F, S);
+  put_str(jvp_dtoa_fmt(C, buf, refcnt), F, S);
+  put_char(')', F, S);
+}
+
 static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FILE* F, jv* S) {
   char buf[JVP_DTOA_FMT_MAX_LEN];
   const char* colour = 0;
+  double refcnt = (flags & JV_PRINT_REFCOUNT) ? jv_get_refcnt(x) - 1 : -1;
   if (flags & JV_PRINT_COLOUR) {
     for (unsigned i=0; i<sizeof(colour_kinds)/sizeof(colour_kinds[0]); i++) {
       if (jv_get_kind(x) == colour_kinds[i]) {
@@ -164,6 +173,8 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   }
   case JV_KIND_STRING:
     jvp_dump_string(x, flags & JV_PRINT_ASCII, F, S);
+    if (flags & JV_PRINT_REFCOUNT)
+      put_refcnt(C, refcnt, F, S);
     break;
   case JV_KIND_ARRAY: {
     if (jv_array_length(jv_copy(x)) == 0) {
@@ -193,6 +204,8 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     }
     if (colour) put_str(colour, F, S);
     put_char(']', F, S);
+    if (flags & JV_PRINT_REFCOUNT)
+      put_refcnt(C, refcnt, F, S);
     break;
   }
   case JV_KIND_OBJECT: {
@@ -263,6 +276,8 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     }
     if (colour) put_str(colour, F, S);
     put_char('}', F, S);
+    if (flags & JV_PRINT_REFCOUNT)
+      put_refcnt(C, refcnt, F, S);
   }
   }
   jv_free(x);
