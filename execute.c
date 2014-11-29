@@ -440,7 +440,7 @@ jv jq_next(jq_state *jq) {
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
         jv_dump(jv_copy(*var), 0);
-        printf("\n");
+        printf(" (%d)\n", jv_get_refcnt(*var));
       }
       jv_free(stack_pop(jq));
       stack_push(jq, jv_copy(*var));
@@ -455,7 +455,7 @@ jv jq_next(jq_state *jq) {
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
         jv_dump(jv_copy(*var), 0);
-        printf("\n");
+        printf(" (%d)\n", jv_get_refcnt(*var));
       }
       jv_free(stack_pop(jq));
       stack_push(jq, *var);
@@ -471,7 +471,7 @@ jv jq_next(jq_state *jq) {
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
         jv_dump(jv_copy(val), 0);
-        printf("\n");
+        printf(" (%d)\n", jv_get_refcnt(val));
       }
       jv_free(*var);
       *var = val;
