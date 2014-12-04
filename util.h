@@ -9,6 +9,7 @@ jv jq_realpath(jv);
 
 const void *_jq_memmem(const void *haystack, size_t haystacklen,
                        const void *needle, size_t needlelen);
+int _jq_mkstemp(char *template);
 
 #ifndef MIN
 #define MIN(a,b) \
