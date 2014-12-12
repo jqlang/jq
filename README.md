@@ -12,8 +12,8 @@ If you want to hack on jq, feel free, but be warned that its internals
 are not well-documented at the moment. Bring a hard hat and a
 shovel. Also, read the wiki: http://github.com/stedolan/jq/wiki
 
-If you're building directly from the latest git, you'll need flex and
-bison installed. To build, run:
+If you're building directly from the latest git, you'll need flex,
+bison, libtool, make, autoconf and libonig installed. To build, run:
 
     autoreconf -i
     ./configure
