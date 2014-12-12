@@ -243,7 +243,7 @@ body:
 
       - - -
 
-      Next, let's try getting the URLs of the parrent commits out of the
+      Next, let's try getting the URLs of the parent commits out of the
       API results as well. In each commit, the GitHub API includes information
       about "parent" commits. There can be one or many.
 
@@ -311,7 +311,7 @@ body:
 
       Here we're making an object as before, but this time the `parents`
       field is being set to `[.parents[].html_url]}]`, which collects
-      all of the parent commit urls defined in the parents object.
+      all of the parent commit URLs defined in the parents object.
 
   - text: |
 
