@@ -1270,6 +1270,24 @@ sections:
             input: '1'
             output: ['[1,2,4,8,16,32,64]']
 
+      - title: "`until(cond; next)`"
+        body: |
+
+          The `until(cond; next)` function allows you to repeatedly
+          apply the expression `next`, initially to `.` then to its own
+          output, until `cond` is true.  For example, this can be used
+          to implement a factorial function (see below).
+
+          Note that `until(cond; next)` is internally defined as a
+          recursive jq function.  Recursive calls within `until()` will
+          not consume additional memory if `next` produces at most one
+          output for each input.  See advanced topics below.
+
+        examples:
+          - program: '[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]'
+            input: '4'
+            output: ['24']
+
 
       - title: "`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`"
         body: |

@@ -1090,6 +1090,10 @@ static const char* const jq_builtins[] = {
   "     def _while: "
   "         if cond then ., (update | _while) else empty end; "
   "     try _while catch if .==\"break\" then empty else . end;",
+  "def until(cond; next): "
+  "     def _until: "
+  "         if cond then . else (next|_until) end;"
+  "     _until;",
   "def limit($n; exp): if $n < 0 then exp else foreach exp as $item ([$n, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1]) end;",
   "def first(g): foreach g as $item ([false, null]; if .[0]==true then break else [true, $item] end; .[1]);",
   "def last(g): reduce g as $item (null; $item);",
