@@ -39,6 +39,7 @@ static void usage(int code) {
   fprintf(stderr, "\t -r\t\toutput raw strings, not JSON texts;\n");
   fprintf(stderr, "\t -R\t\tread raw strings, not JSON texts;\n");
   fprintf(stderr, "\t --arg a v\tset variable $a to value <v>;\n");
+  fprintf(stderr, "\t --argjson a v\tset variable $a to JSON value <v>;\n");
   fprintf(stderr, "\t --argfile a f\tset variable $a to JSON texts read from <f>;\n");
   fprintf(stderr, "\tSee the manpage for more options.\n");
   exit(code);
@@ -303,6 +304,23 @@ int main(int argc, char* argv[]) {
         jv arg = jv_object();
         arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
         arg = jv_object_set(arg, jv_string("value"), jv_string(argv[i+2]));
+        program_arguments = jv_array_append(program_arguments, arg);
+        i += 2; // skip the next two arguments
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 0, "argjson", &short_opts)) {
+        if (i >= argc - 2) {
+          fprintf(stderr, "%s: --argjson takes two parameters (e.g. -a varname text)\n", progname);
+          die();
+        }
+        jv v = jv_parse(argv[i+2]);
+        if (!jv_is_valid(v)) {
+          fprintf(stderr, "%s: invalid JSON text passed to --argjson\n", progname);
+          die();
+        }
+        jv arg = jv_object();
+        arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
+        arg = jv_object_set(arg, jv_string("value"), v);
         program_arguments = jv_array_append(program_arguments, arg);
         i += 2; // skip the next two arguments
         if (!short_opts) continue;
