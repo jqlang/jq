@@ -456,9 +456,15 @@ jv jv_parser_next(struct jv_parser* p) {
   } else if (msg) {
     parser_reset(p);
     if (ch != '\036' && (p->flags & JV_PARSE_SEQ)) {
+      // Skip to the next RS
       p->st = JV_PARSER_WAITING_FOR_RS;
       return jv_invalid_with_msg(jv_string_fmt("%s at line %d, column %d (need RS to resync)", msg, p->line, p->column));
     }
+    if (!(p->flags & JV_PARSE_SEQ)) {
+      // We're not parsing a JSON text sequence; throw this buffer away.
+      p->curr_buf = 0;
+      p->curr_buf_pos = 0;
+    } // Else ch must be RS; don't clear buf so we can start parsing again after this ch
     return jv_invalid_with_msg(jv_string_fmt("%s at line %d, column %d", msg, p->line, p->column));
   } else if (p->curr_buf_is_partial) {
     assert(p->curr_buf_pos == p->curr_buf_length);

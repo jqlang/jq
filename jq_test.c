@@ -101,6 +101,14 @@ static void run_jq_tests(FILE *testdata) {
 
 
 static void jv_test() {
+  /// JSON parser regression tests
+  {
+    jv v = jv_parse("{\"a':\"12\"}");
+    assert(jv_get_kind(v) == JV_KIND_INVALID);
+    v = jv_invalid_get_msg(v);
+    assert(strcmp(jv_string_value(v), "Expected separator between values at line 1, column 9 (while parsing '{\"a':\"12\"}')") == 0);
+    jv_free(v);
+  }
   /// Arrays and numbers
   {
     jv a = jv_array();
