@@ -1705,11 +1705,10 @@ sections:
         examples:
           - program: 'test("foo")'
             input: '"foo"'
-            output: 'true'
-          - program: 'test("a b c # spaces are ignored"; "ix")'
-            input: '"xabcd" "ABC"'
-            output: true
-                    true
+            output: ['true']
+          - program: '.[] | test("a b c # spaces are ignored"; "ix")'
+            input: '["xabcd", "ABC"]'
+            output: ['true', 'true']
 
       - title: "`match(val)`, `match(regex; flags)`"
         body: |
@@ -1753,7 +1752,7 @@ sections:
 
           - program: '[ match("."; "g")] | length'
             input: '"abc"'
-            output: 3
+            output: [3]
 
 
       - title: "`capture(val)`, `capture(regex; flags)`"
@@ -1802,7 +1801,7 @@ sections:
             output: ['"ab","cd","ef"']
 
 
-      - title: "`splits(regex)`, splits(regex; flags)`"
+      - title: "`splits(regex)`, `splits(regex; flags)`"
         body: |
 
           These provide the same results as their `split` counterparts,
