@@ -20,7 +20,6 @@ if [ -z "$d" ]; then
     exit 0
 fi
 
-
 ## Test constant folding
 
 # String constant folding (addition only)
@@ -101,14 +100,14 @@ cmp $d/out $d/expected
 # Note that here jq sees no inputs at all but it still succeeds because
 # --seq ignores parse errors
 cat > $d/expected <<EOF
-ignoring parse error: Unfinished string
+ignoring parse error: Unfinished string at EOF at line 1, column 4
 EOF
 printf '"foo'|./jq -ce --seq . > $d/out 2>&1
 cmp $d/out $d/expected
 
 # Numeric values truncated by EOF are ignored
 cat > $d/expected <<EOF
-ignoring parse error: Potentially truncated top-level numeric value
+ignoring parse error: Potentially truncated top-level numeric value at EOF at line 1, column 1
 EOF
 printf '1'|./jq -ce --seq . > $d/out 2>&1
 cmp $d/out $d/expected
@@ -117,6 +116,12 @@ cat > $d/expected <<EOF
 EOF
 printf '1\n'|./jq -ces --seq '. == [1]' >/dev/null 2> $d/out
 cmp $d/out $d/expected
+
+## Test streaming parser
+
+$VALGRIND $Q ./jq -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p,.]' < "$PWD/tests/torture/input0.json" > $d/out0
+$VALGRIND $Q ./jq --stream -c '.|select(length==2)' < "$PWD/tests/torture/input0.json" > $d/out1
+diff $d/out0 $d/out1
 
 ## Test library/module system
 
