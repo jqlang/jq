@@ -103,6 +103,17 @@ sections:
         RS.  This more also parses the output of jq without the `--seq`
         option.
 
+      * `--stream`:
+
+        Parse the input in streaming fashion, outputing arrays of path
+        and leaf values (scalars and empty arrays or empty objects).
+        For example, `"a"` becomes `[[],"a"]`, and `[[],"a",["b"]]`
+        becomes `[[0],[]]`, `[[1],"a"]`, and `[[1,0],"b"]`.
+
+        This is useful for processing very large inputs.  Use this in
+        conjunction with filtering and the `reduce` and `foreach` syntax
+        to reduce large inputs incrementally.
+
       * `--slurp`/`-s`:
 
         Instead of running the filter for each JSON object in the
@@ -2204,6 +2215,29 @@ sections:
                 [while(.<100; .*2)]'
             input: '1'
             output: ['[1,2,4,8,16,32,64]']
+
+  - title: 'I/O'
+    body: |
+
+      At this time jq has minimal support for I/O, mostly in the
+      form of control over when inputs are read.  Two builtins functions
+      are provided for this, `input` and `inputs`, that read from the
+      same sources (e.g., `stdin`, files named on the command-line) as
+      jq itself.  These two builtins, and jq's own reading actions, can
+      be interleaved with each other.
+
+      - title: "`input`"
+        body: |
+
+          Outputs one new input.
+
+      - title: "`inputs`"
+        body: |
+
+          Outputs all remaining inputs, one by one.
+
+          This is primarily useful for reductions over a program's
+          inputs.
 
   - title: Assignment
     body: |

@@ -39,6 +39,8 @@ struct jq_state {
   int initial_execution;
 
   jv attrs;
+  jq_input_cb input_cb;
+  void *input_cb_data;
 };
 
 struct closure {
@@ -1036,4 +1038,14 @@ jv jq_get_attr(jq_state *jq, jv attr) {
 
 void jq_dump_disassembly(jq_state *jq, int indent) {
   dump_disassembly(indent, jq->bc);
+}
+
+void jq_set_input_cb(jq_state *jq, jq_input_cb cb, void *data) {
+  jq->input_cb = cb;
+  jq->input_cb_data = data;
+}
+
+void jq_get_input_cb(jq_state *jq, jq_input_cb *cb, void **data) {
+  *cb = jq->input_cb;
+  *data = jq->input_cb_data;
 }

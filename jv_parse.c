@@ -17,6 +17,15 @@ typedef const char* presult;
 #define pfunc presult
 #endif
 
+enum last_seen {
+  JV_LAST_NONE = 0,
+  JV_LAST_OPEN_ARRAY = '[',
+  JV_LAST_OPEN_OBJECT = '{',
+  JV_LAST_COLON = ':',
+  JV_LAST_COMMA = ',',
+  JV_LAST_VALUE = 'V',
+};
+
 struct jv_parser {
   const char* curr_buf;
   int curr_buf_length;
@@ -26,10 +35,13 @@ struct jv_parser {
 
   int flags;
 
-  jv* stack;
-  int stackpos;
-  int stacklen;
-  jv next;
+  jv* stack;                   // parser
+  int stackpos;                // parser
+  int stacklen;                // both (optimization; it's really pathlen for streaming)
+  jv path;                     // streamer
+  enum last_seen last_seen;    // streamer
+  jv output;                   // streamer
+  jv next;                     // both
   
   char* tokenbuf;
   int tokenpos;
@@ -49,10 +61,18 @@ struct jv_parser {
 };
 
 
-static void parser_init(struct jv_parser* p) {
-  p->flags = 0;
+static void parser_init(struct jv_parser* p, int flags) {
+  p->flags = flags;
+  if ((p->flags & JV_PARSE_STREAMING)) {
+    p->path = jv_array();
+  } else {
+    p->path = jv_invalid();
+    p->flags &= ~(JV_PARSE_STREAM_ERRORS);
+  }
   p->stack = 0;
   p->stacklen = p->stackpos = 0;
+  p->last_seen = JV_LAST_NONE;
+  p->output = jv_invalid();
   p->next = jv_invalid();
   p->tokenbuf = 0;
   p->tokenlen = p->tokenpos = 0;
@@ -66,6 +86,13 @@ static void parser_init(struct jv_parser* p) {
 }
 
 static void parser_reset(struct jv_parser* p) {
+  if ((p->flags & JV_PARSE_STREAMING)) {
+    jv_free(p->path);
+    p->path = jv_array();
+  }
+  p->last_seen = JV_LAST_NONE;
+  jv_free(p->output);
+  p->output = jv_invalid();
   jv_free(p->next);
   p->next = jv_invalid();
   for (int i=0; i<p->stackpos; i++) 
@@ -77,13 +104,23 @@ static void parser_reset(struct jv_parser* p) {
 
 static void parser_free(struct jv_parser* p) {
   parser_reset(p);
+  jv_free(p->path);
   jv_mem_free(p->stack);
   jv_mem_free(p->tokenbuf);
   jvp_dtoa_context_free(&p->dtoa);
 }
 
 static pfunc value(struct jv_parser* p, jv val) {
-  if (jv_is_valid(p->next)) return "Expected separator between values";
+  if ((p->flags & JV_PARSE_STREAMING)) {
+    if (jv_is_valid(p->next) || p->last_seen == JV_LAST_VALUE)
+      return "Expected separator between values";
+    if (p->stacklen > 0)
+      p->last_seen = JV_LAST_VALUE;
+    else
+      p->last_seen = JV_LAST_NONE;
+  } else {
+    if (jv_is_valid(p->next)) return "Expected separator between values";
+  }
   jv_free(p->next);
   p->next = val;
   return 0;
@@ -99,7 +136,7 @@ static void push(struct jv_parser* p, jv v) {
   p->stack[p->stackpos++] = v;
 }
 
-static pfunc token(struct jv_parser* p, char ch) {
+static pfunc parse_token(struct jv_parser* p, char ch) {
   switch (ch) {
   case '[':
     if (jv_is_valid(p->next)) return "Expected separator between values";
@@ -182,6 +219,159 @@ static pfunc token(struct jv_parser* p, char ch) {
   return 0;
 }
 
+static pfunc stream_token(struct jv_parser* p, char ch) {
+  jv_kind k;
+  jv last;
+
+  switch (ch) {
+  case '[':
+    if (jv_is_valid(p->next))
+      return "Expected a separator between values";
+    p->path = jv_array_append(p->path, jv_number(0)); // push
+    p->last_seen = JV_LAST_OPEN_ARRAY;
+    p->stacklen++;
+    break;
+
+  case '{':
+    if (p->last_seen == JV_LAST_VALUE)
+      return "Expected a separator between values";
+    // Push object key: null, since we don't know it yet
+    p->path = jv_array_append(p->path, jv_null()); // push
+    p->last_seen = JV_LAST_OPEN_OBJECT;
+    p->stacklen++;
+    break;
+
+  case ':':
+    if (p->stacklen == 0 || jv_get_kind(jv_array_get(jv_copy(p->path), p->stacklen - 1)) == JV_KIND_NUMBER)
+      return "':' not as part of an object";
+    if (!jv_is_valid(p->next) || p->last_seen == JV_LAST_NONE)
+      return "Expected string key before ':'";
+    if (jv_get_kind(p->next) != JV_KIND_STRING)
+      return "Object keys must be strings";
+    if (p->last_seen != JV_LAST_VALUE)
+      return "':' should follow a key";
+    p->last_seen = JV_LAST_COLON;
+    p->path = jv_array_set(p->path, p->stacklen - 1, p->next);
+    p->next = jv_invalid();
+    break;
+
+  case ',':
+    if (p->last_seen != JV_LAST_VALUE)
+      return "Expected value before ','";
+    if (p->stacklen == 0)
+      return "',' not as part of an object or array";
+    last = jv_array_get(jv_copy(p->path), p->stacklen - 1);
+    k = jv_get_kind(last);
+    if (k == JV_KIND_NUMBER) {
+      int idx = jv_number_value(last);
+
+      if (jv_is_valid(p->next)) {
+        p->output = JV_ARRAY(jv_copy(p->path), p->next);
+        p->next = jv_invalid();
+      }
+      p->path = jv_array_set(p->path, p->stacklen - 1, jv_number(idx + 1));
+      p->last_seen = JV_LAST_COMMA;
+    } else if (k == JV_KIND_STRING) {
+      if (jv_is_valid(p->next)) {
+        p->output = JV_ARRAY(jv_copy(p->path), p->next);
+        p->next = jv_invalid();
+      }
+      p->path = jv_array_set(p->path, p->stacklen - 1, jv_true()); // ready for another name:value pair
+      p->last_seen = JV_LAST_COMMA;
+    } else {
+      assert(k == JV_KIND_NULL);
+      // this case hits on input like {,}
+      // make sure to handle input like {"a", "b"} and {"a":, ...}
+      jv_free(last);
+      return "Objects must consist of key:value pairs";
+    }
+    jv_free(last);
+    break;
+
+  case ']':
+    if (p->stacklen == 0)
+      return "Unmatched ']' at the top-level";
+    if (p->last_seen == JV_LAST_COMMA)
+      return "Expected another array element";
+    if (p->last_seen == JV_LAST_OPEN_ARRAY)
+      assert(!jv_is_valid(p->next));
+
+    last = jv_array_get(jv_copy(p->path), p->stacklen - 1);
+    k = jv_get_kind(last);
+    jv_free(last);
+
+    if (k != JV_KIND_NUMBER)
+      return "Unmatched ']' in the middle of an object";
+    if (jv_is_valid(p->next)) {
+      p->output = JV_ARRAY(jv_copy(p->path), p->next, jv_true());
+      p->next = jv_invalid();
+    } else if (p->last_seen != JV_LAST_OPEN_ARRAY) {
+      p->output = JV_ARRAY(jv_copy(p->path));
+    }
+
+    p->path = jv_array_slice(p->path, 0, --(p->stacklen)); // pop
+    //assert(!jv_is_valid(p->next));
+    jv_free(p->next);
+    p->next = jv_invalid();
+
+    if (p->last_seen == JV_LAST_OPEN_ARRAY)
+      p->output = JV_ARRAY(jv_copy(p->path), jv_array()); // Empty arrays are leaves
+
+    if (p->stacklen == 0)
+      p->last_seen = JV_LAST_NONE;
+    else
+      p->last_seen = JV_LAST_VALUE;
+    break;
+
+  case '}':
+    if (p->stacklen == 0)
+      return "Unmatched '}' at the top-level";
+    if (p->last_seen == JV_LAST_COMMA)
+      return "Expected another key:value pair";
+    if (p->last_seen == JV_LAST_OPEN_OBJECT)
+      assert(!jv_is_valid(p->next));
+
+    last = jv_array_get(jv_copy(p->path), p->stacklen - 1);
+    k = jv_get_kind(last);
+    jv_free(last);
+    if (k == JV_KIND_NUMBER)
+      return "Unmatched '}' in the middle of an array";
+
+    if (jv_is_valid(p->next)) {
+      if (k != JV_KIND_STRING)
+        return "Objects must consist of key:value pairs";
+      p->output = JV_ARRAY(jv_copy(p->path), p->next, jv_true());
+      p->next = jv_invalid();
+    } else {
+      // Perhaps {"a":[]}
+      if (p->last_seen == JV_LAST_COLON)
+        // Looks like {"a":}
+        return "Missing value in key:value pair";
+      if (p->last_seen == JV_LAST_COMMA)
+        // Looks like {"a":0,}
+        return "Expected another key-value pair";
+      if (p->last_seen == JV_LAST_OPEN_ARRAY)
+        return "Unmatched '}' in the middle of an array";
+      if (p->last_seen != JV_LAST_VALUE && p->last_seen != JV_LAST_OPEN_OBJECT)
+        return "Unmatched '}'";
+      if (p->last_seen != JV_LAST_OPEN_OBJECT)
+        p->output = JV_ARRAY(jv_copy(p->path));
+    }
+    p->path = jv_array_slice(p->path, 0, --(p->stacklen)); // pop
+    jv_free(p->next);
+    p->next = jv_invalid();
+
+    if (p->last_seen == JV_LAST_OPEN_OBJECT)
+      p->output = JV_ARRAY(jv_copy(p->path), jv_object()); // Empty arrays are leaves
+
+    if (p->stacklen == 0)
+      p->last_seen = JV_LAST_NONE;
+    else
+      p->last_seen = JV_LAST_VALUE;
+    break;
+  }
+  return 0;
+}
 
 static void tokenadd(struct jv_parser* p, char c) {
   assert(p->tokenpos <= p->tokenlen);
@@ -191,6 +381,7 @@ static void tokenadd(struct jv_parser* p, char c) {
   }
   assert(p->tokenpos < p->tokenlen);
   p->tokenbuf[p->tokenpos++] = c;
+  p->tokenbuf[p->tokenpos] = '\0'; // for debugging
 }
 
 static int unhex4(char* hex) {
@@ -329,7 +520,7 @@ static chclass classify(char c) {
 
 static const presult OK = "output produced";
 
-static int check_done(struct jv_parser* p, jv* out) {
+static int parse_check_done(struct jv_parser* p, jv* out) {
   if (p->stackpos == 0 && jv_is_valid(p->next)) {
     *out = p->next;
     p->next = jv_invalid();
@@ -338,6 +529,50 @@ static int check_done(struct jv_parser* p, jv* out) {
     return 0;
   }
 }
+
+static int stream_check_done(struct jv_parser* p, jv* out) {
+  if (p->stacklen == 0 && jv_is_valid(p->next)) {
+    *out = JV_ARRAY(jv_copy(p->path),p->next);
+    p->next = jv_invalid();
+    return 1;
+  } else if (jv_is_valid(p->output)) {
+    if (jv_array_length(jv_copy(p->output)) > 2) {
+      // At end of an array or object, necessitating one more output by
+      // which to indicate this
+      *out = jv_array_slice(jv_copy(p->output), 0, 2);
+      p->output = jv_array_slice(p->output, 0, 1);      // arrange one more output
+    } else {
+      // No further processing needed
+      *out = p->output;
+      p->output = jv_invalid();
+    }
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+static int parse_check_truncation(struct jv_parser* p, jv out) {
+  return ((p->flags & JV_PARSE_SEQ) && !p->last_ch_was_ws && jv_get_kind(out) == JV_KIND_NUMBER);
+}
+
+static int stream_check_truncation(struct jv_parser* p, jv out) {
+  if (!jv_is_valid(out))
+    return 0;
+  jv v = jv_array_get(jv_copy(out), 1);
+  jv_kind k = jv_get_kind(v);
+  jv_free(v);
+  return (k == JV_KIND_NUMBER || k == JV_KIND_TRUE || k == JV_KIND_FALSE || k == JV_KIND_NULL);
+}
+
+#define check_done(p, out) \
+   (((p)->flags & JV_PARSE_STREAMING) ? stream_check_done((p), (out)) : parse_check_done((p), (out)))
+
+#define token(p, ch) \
+   (((p)->flags & JV_PARSE_STREAMING) ? stream_token((p), (ch)) : parse_token((p), (ch)))
+
+#define check_truncation(p, o) \
+    (((p)->flags & JV_PARSE_STREAMING) ? stream_check_truncation((p), (o)) : parse_check_truncation((p), (o)))
 
 static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   p->column++;
@@ -348,7 +583,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   if (ch == '\036' /* ASCII RS; see draft-ietf-json-sequence-07 */) {
     TRY(check_literal(p));
     if (p->st == JV_PARSER_NORMAL && check_done(p, out)) {
-      if ((p->flags & JV_PARSE_SEQ) && !p->last_ch_was_ws && jv_get_kind(*out) == JV_KIND_NUMBER) {
+      if (check_truncation(p, *out)) {
         jv_free(*out);
         *out = jv_invalid();
         return "Potentially truncated top-level numeric value";
@@ -404,7 +639,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
 
 struct jv_parser* jv_parser_new(int flags) {
   struct jv_parser* p = jv_mem_alloc(sizeof(struct jv_parser));
-  parser_init(p);
+  parser_init(p, flags);
   p->flags = flags;
   return p;
 }
@@ -415,6 +650,12 @@ void jv_parser_free(struct jv_parser* p) {
 }
 
 static const unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
+
+int jv_parser_remaining(struct jv_parser* p) {
+  if (p->curr_buf == 0)
+    return 0;
+  return (p->curr_buf_length - p->curr_buf_pos);
+}
 
 void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial) {
   assert((p->curr_buf == 0 || p->curr_buf_pos == p->curr_buf_length)
@@ -441,10 +682,25 @@ void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_
   p->curr_buf_is_partial = is_partial;
 }
 
+static jv make_error(struct jv_parser*, const char *, ...) JV_PRINTF_LIKE(2, 3);
+
+static jv make_error(struct jv_parser* p, const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  jv e = jv_string_vfmt(fmt, ap);
+  va_end(ap);
+  if ((p->flags & JV_PARSE_STREAM_ERRORS))
+    return JV_ARRAY(e, jv_copy(p->path));
+  return jv_invalid_with_msg(e);
+}
+
 jv jv_parser_next(struct jv_parser* p) {
-  assert(p->curr_buf && "a buffer must be provided");
+  if (!p->curr_buf)
+    return jv_invalid(); // Need a buffer
   if (p->bom_strip_position == 0xff) return jv_invalid_with_msg(jv_string("Malformed BOM"));
-  jv value;
+  jv value = jv_invalid();
+  if ((p->flags & JV_PARSE_STREAMING) && stream_check_done(p, &value))
+    return value;
   char ch;
   presult msg = 0;
   while (!msg && p->curr_buf_pos < p->curr_buf_length) {
@@ -456,18 +712,21 @@ jv jv_parser_next(struct jv_parser* p) {
   if (msg == OK) {
     return value;
   } else if (msg) {
-    parser_reset(p);
     if (ch != '\036' && (p->flags & JV_PARSE_SEQ)) {
       // Skip to the next RS
       p->st = JV_PARSER_WAITING_FOR_RS;
-      return jv_invalid_with_msg(jv_string_fmt("%s at line %d, column %d (need RS to resync)", msg, p->line, p->column));
+      value = make_error(p, "%s at line %d, column %d (need RS to resync)", msg, p->line, p->column);
+      parser_reset(p);
+      return value;
     }
+    value = make_error(p, "%s at line %d, column %d", msg, p->line, p->column);
+    parser_reset(p);
     if (!(p->flags & JV_PARSE_SEQ)) {
       // We're not parsing a JSON text sequence; throw this buffer away.
       p->curr_buf = 0;
       p->curr_buf_pos = 0;
     } // Else ch must be RS; don't clear buf so we can start parsing again after this ch
-    return jv_invalid_with_msg(jv_string_fmt("%s at line %d, column %d", msg, p->line, p->column));
+    return value;
   } else if (p->curr_buf_is_partial) {
     assert(p->curr_buf_pos == p->curr_buf_length);
     // need another buffer
@@ -477,28 +736,36 @@ jv jv_parser_next(struct jv_parser* p) {
     // at EOF
     if (p->st != JV_PARSER_WAITING_FOR_RS) {
       if (p->st != JV_PARSER_NORMAL) {
+        value = make_error(p, "Unfinished string at EOF at line %d, column %d", p->line, p->column);
         parser_reset(p);
         p->st = JV_PARSER_WAITING_FOR_RS;
-        return jv_invalid_with_msg(jv_string("Unfinished string"));
+        return value;
       }
       if ((msg = check_literal(p))) {
+        value = make_error(p, "%s at EOF at line %d, column %d", msg, p->line, p->column);
         parser_reset(p);
         p->st = JV_PARSER_WAITING_FOR_RS;
-        return jv_invalid_with_msg(jv_string(msg));
+        return value;
       }
-      if (p->stackpos != 0) {
+      if (((p->flags & JV_PARSE_STREAMING) && p->stacklen != 0) ||
+          (!(p->flags & JV_PARSE_STREAMING) && p->stackpos != 0)) {
+        value = make_error(p, "Unfinished JSON term at EOF at line %d, column %d", p->line, p->column);
         parser_reset(p);
         p->st = JV_PARSER_WAITING_FOR_RS;
-        return jv_invalid_with_msg(jv_string("Unfinished JSON term"));
+        return value;
       }
     }
     // p->next is either invalid (nothing here but no syntax error)
     // or valid (this is the value). either way it's the thing to return
-    value = p->next;
+    if ((p->flags & JV_PARSE_STREAMING) && jv_is_valid(p->next)) {
+      value = JV_ARRAY(jv_copy(p->path), p->next); // except in streaming mode we've got to make it [path,value]
+    } else {
+      value = p->next;
+    }
     p->next = jv_invalid();
     if ((p->flags & JV_PARSE_SEQ) && !p->last_ch_was_ws && jv_get_kind(value) == JV_KIND_NUMBER) {
       jv_free(value);
-      return jv_invalid_with_msg(jv_string("Potentially truncated top-level numeric value"));
+      return make_error(p, "Potentially truncated top-level numeric value at EOF at line %d, column %d", p->line, p->column);
     }
     return value;
   }
@@ -506,7 +773,7 @@ jv jv_parser_next(struct jv_parser* p) {
 
 jv jv_parse_sized(const char* string, int length) {
   struct jv_parser parser;
-  parser_init(&parser);
+  parser_init(&parser, 0);
   jv_parser_set_buf(&parser, string, length, 0);
   jv value = jv_parser_next(&parser);
   if (jv_is_valid(value)) {

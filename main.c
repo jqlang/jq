@@ -149,6 +149,7 @@ static int process(jq_state *jq, jv value, int flags) {
   return ret;
 }
 
+// XXX Move all this into the next_input_state struct
 FILE* current_input;
 const char** input_filenames = NULL;
 int ninput_files;
@@ -175,6 +176,7 @@ static int read_more(char* buf, size_t size) {
     }
   }
 
+  buf[0] = 0;
   if (current_input) {
     if (!fgets(buf, size, current_input))
       buf[0] = 0;
@@ -182,10 +184,61 @@ static int read_more(char* buf, size_t size) {
   return next_input_idx == ninput_files && (!current_input || feof(current_input));
 }
 
+struct next_input_state {
+  struct jv_parser *parser;
+  jv slurped;
+  char buf[4096];
+};
+
+// Blocks to read one more input from stdin and/or given files
+// When slurping, it returns just one value
+static jv next_input(jq_state *jq, void *data) {
+  struct next_input_state *state = data;
+  int is_last = 0;
+  jv value = jv_invalid(); // need more input
+  do {
+    if (options & RAW_INPUT) {
+      is_last = read_more(state->buf, sizeof(state->buf));
+      if (state->buf[0] == '\0')
+        continue;
+      int len = strlen(state->buf); // Raw input doesn't support NULs
+      if (len > 0) {
+        if (options & SLURP) {
+          state->slurped = jv_string_concat(state->slurped, jv_string(state->buf));
+        } else if (jv_is_valid(value)) {
+          if (state->buf[len-1] == '\n') {
+            // whole line
+            state->buf[len-1] = 0;
+            return jv_string_concat(value, jv_string(state->buf));
+          }
+          value = jv_string_concat(value, jv_string(state->buf));
+        }
+      }
+    } else {
+      if (jv_parser_remaining(state->parser) == 0) {
+        is_last = read_more(state->buf, sizeof(state->buf));
+        jv_parser_set_buf(state->parser, state->buf, strlen(state->buf), !is_last); // NULs also not supported here
+      }
+      value = jv_parser_next(state->parser);
+      if (options & SLURP) {
+        if (jv_is_valid(value)) {
+          state->slurped = jv_array_append(state->slurped, value);
+          value = jv_invalid();
+        } else if (jv_invalid_has_msg(jv_copy(value)))
+          return value;
+      } else if (jv_is_valid(value) || jv_invalid_has_msg(jv_copy(value))) {
+        return value;
+      }
+    }
+  } while (!is_last);
+  return value;
+}
+
 int main(int argc, char* argv[]) {
   jq_state *jq = NULL;
   int ret = 0;
   int compiled = 0;
+  int parser_flags = 0;
   char *t = NULL;
 
   if (argc) progname = argv[0];
@@ -291,6 +344,14 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 0, "seq", &short_opts)) {
         options |= SEQ;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 0, "stream", &short_opts)) {
+        parser_flags |= JV_PARSE_STREAMING;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 0, "stream-errors", &short_opts)) {
+        parser_flags |= JV_PARSE_STREAM_ERRORS;
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'e', "exit-status", &short_opts)) {
@@ -476,66 +537,57 @@ int main(int argc, char* argv[]) {
     printf("\n");
   }
 
+  // XXX Refactor this and input_filenames[] and related setup into a
+  // function to setup struct next_input_state.
+  if ((options & SEQ))
+    parser_flags |= JV_PARSE_SEQ;
+
+  struct next_input_state input_state;
+  input_state.parser = jv_parser_new(parser_flags);
+  if ((options & RAW_INPUT) && (options & SLURP))
+    input_state.slurped = jv_string("");
+  else if ((options & SLURP))
+    input_state.slurped = jv_array();
+  else
+    input_state.slurped = jv_invalid();
+
+  // Let jq program read from inputs
+  jq_set_input_cb(jq, next_input, &input_state);
+
   if (options & PROVIDE_NULL) {
     ret = process(jq, jv_null(), jq_flags);
   } else {
-    jv slurped;
-    if (options & SLURP) {
-      if (options & RAW_INPUT) {
-        slurped = jv_string("");
-      } else {
-        slurped = jv_array();
+    jv value;
+    while (jv_is_valid((value = next_input(jq, &input_state))) || jv_invalid_has_msg(jv_copy(value))) {
+      if (jv_is_valid(value)) {
+        ret = process(jq, value, jq_flags);
+        continue;
       }
+
+      // Parse error
+      jv msg = jv_invalid_get_msg(value);
+      if (!(options & SEQ)) {
+        // --seq -> errors are not fatal
+        ret = 4;
+        fprintf(stderr, "parse error: %s\n", jv_string_value(msg));
+        jv_free(msg);
+        break;
+      }
+      fprintf(stderr, "ignoring parse error: %s\n", jv_string_value(msg));
+      jv_free(msg);
     }
-    struct jv_parser* parser = jv_parser_new((options & SEQ) ? JV_PARSE_SEQ : 0);
-    char buf[4096];
-    int is_last = 0;
-    do {
-      is_last = read_more(buf, sizeof(buf));
-      if (options & RAW_INPUT) {
-        int len = strlen(buf);
-        if (len > 0) {
-          if (options & SLURP) {
-            slurped = jv_string_concat(slurped, jv_string(buf));
-          } else {
-            if (buf[len-1] == '\n') buf[len-1] = 0;
-            ret = process(jq, jv_string(buf), jq_flags);
-          }
-        }
-      } else {
-        jv_parser_set_buf(parser, buf, strlen(buf), !is_last);
-        jv value;
-        while (jv_is_valid(value = jv_parser_next(parser)) || jv_invalid_has_msg(jv_copy(value))) {
-          if (!jv_is_valid(value)) {
-            jv msg = jv_invalid_get_msg(value);
-            if (!(options & SEQ)) {
-              // We used to treat parse errors as fatal...
-              ret = 4;
-              fprintf(stderr, "parse error: %s\n", jv_string_value(msg));
-              jv_free(msg);
-              break;
-            }
-            fprintf(stderr, "ignoring parse error: %s\n", jv_string_value(msg));
-            jv_free(msg);
-            // ...but with --seq we attempt to recover.
-            continue;
-          }
-          if (options & SLURP) {
-            slurped = jv_array_append(slurped, value);
-          } else {
-            ret = process(jq, value, jq_flags);
-            value = jv_invalid();
-          }
-        }
-      }
-    } while (!is_last);
-    jv_parser_free(parser);
-    if (ret != 0)
-      goto out;
     if (options & SLURP) {
-      ret = process(jq, slurped, jq_flags);
+      ret = process(jq, input_state.slurped, jq_flags);
+      input_state.slurped = jv_invalid();
     }
   }
+
+  jv_free(input_state.slurped);
+  jv_parser_free(input_state.parser);
+
+  if (ret != 0)
+    goto out;
+
   if ((options & IN_PLACE)) {
     FILE *devnull;
 #ifdef WIN32
