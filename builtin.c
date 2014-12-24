@@ -1001,7 +1001,7 @@ static const char* const jq_builtins[] = {
   "def numbers: select(type == \"number\");",
   "def strings: select(type == \"string\");",
   "def nulls: select(type == \"null\");",
-  "def values: arrays, objects, booleans, numbers, strings;",
+  "def values: select(. != null);",
   "def scalars: select(. == null or . == true or . == false or type == \"number\" or type == \"string\");",
   "def leaf_paths: paths(scalars);",
   "def join($x): reduce .[] as $i (\"\"; . + (if . == \"\" then $i else $x + $i end));",
