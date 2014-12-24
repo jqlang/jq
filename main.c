@@ -154,7 +154,7 @@ const char** input_filenames = NULL;
 int ninput_files;
 int next_input_idx;
 static int read_more(char* buf, size_t size) {
-  while (!current_input || feof(current_input)) {
+  if (!current_input || feof(current_input)) {
     if (current_input) {
       if (current_input == stdin) {
         clearerr(stdin); // perhaps we can read again; anyways, we don't fclose(stdin)
