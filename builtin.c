@@ -334,7 +334,7 @@ static jv escape_string(jv input, const char* escapings) {
   const char* cstart;
   int c = 0;
   while ((i = jvp_utf8_next((cstart = i), end, &c))) {
-    assert(c != -1);
+    assert(c > 0);
     if (c < 128 && lookup[c]) {
       ret = jv_string_append_str(ret, lookup[c]);
     } else {
@@ -358,13 +358,24 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
   } else if (!strcmp(fmt_s, "text")) {
     jv_free(fmt);
     return f_tostring(jq, input);
-  } else if (!strcmp(fmt_s, "csv")) {
+  } else if (!strcmp(fmt_s, "csv") || !strcmp(fmt_s, "tsv")) {
+    const char *quotes, *sep, *escapings;
+    if (!strcmp(fmt_s, "csv")) {
+      quotes = "\"";
+      sep = ",";
+      escapings = "\"\"\"\0";
+    } else {
+      assert(!strcmp(fmt_s, "tsv"));
+      quotes = "";
+      sep = "\t";
+      escapings = "\t\\t\0";
+    }
     jv_free(fmt);
     if (jv_get_kind(input) != JV_KIND_ARRAY)
       return type_error(input, "cannot be csv-formatted, only array");
     jv line = jv_string("");
     jv_array_foreach(input, i, x) {
-      if (i) line = jv_string_append_str(line, ",");
+      if (i) line = jv_string_append_str(line, sep);
       switch (jv_get_kind(x)) {
       case JV_KIND_NULL:
         /* null rendered as empty string */
@@ -383,9 +394,9 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
         }
         break;
       case JV_KIND_STRING: {
-        line = jv_string_append_str(line, "\"");
-        line = jv_string_concat(line, escape_string(x, "\"\"\"\0"));
-        line = jv_string_append_str(line, "\"");
+        line = jv_string_append_str(line, quotes);
+        line = jv_string_concat(line, escape_string(x, escapings));
+        line = jv_string_append_str(line, quotes);
         break;
       }
       default:

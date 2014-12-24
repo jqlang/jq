@@ -1454,6 +1454,11 @@ sections:
             with double quotes for strings, and quotes escaped by
             repetition.
 
+          * `@tsv`:
+
+            The input must be an array, and it is rendered as TSV
+            with tabs escaped as `\t`.
+
           * `@sh`:
 
             The input is escaped suitable for use in a command-line
