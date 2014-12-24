@@ -153,36 +153,33 @@ FILE* current_input;
 const char** input_filenames = NULL;
 int ninput_files;
 int next_input_idx;
-static int read_more(char* buf, size_t size, int* islast) {
+static int read_more(char* buf, size_t size) {
   while (!current_input || feof(current_input)) {
     if (current_input) {
       if (current_input == stdin) {
-        clearerr(stdin); // perhaps we can read again
+        clearerr(stdin); // perhaps we can read again; anyways, we don't fclose(stdin)
       } else {
         fclose(current_input);
       }
       current_input = 0;
     }
-    if (next_input_idx == ninput_files) {
-      assert(*islast == 1);
-      return 0;
+    if (next_input_idx < ninput_files) {
+      if (!strcmp(input_filenames[next_input_idx], "-")) {
+        current_input = stdin;
+      } else {
+        current_input = fopen(input_filenames[next_input_idx], "r");
+        if (!current_input)
+          fprintf(stderr, "%s: %s: %s\n", progname, input_filenames[next_input_idx], strerror(errno));
+      }
+      next_input_idx++;
     }
-    *islast = 0;
-    if (!strcmp(input_filenames[next_input_idx], "-")) {
-      current_input = stdin;
-    } else {
-      current_input = fopen(input_filenames[next_input_idx], "r");
-    }
-    if (!current_input) {
-      fprintf(stderr, "%s: %s: %s\n", progname, input_filenames[next_input_idx], strerror(errno));
-    }
-    next_input_idx++;
-    *islast = (next_input_idx == ninput_files);
   }
 
-  if (!fgets(buf, size, current_input)) buf[0] = 0;
-  if (!current_input || feof(current_input)) *islast = 1;
-  return 1;
+  if (current_input) {
+    if (!fgets(buf, size, current_input))
+      buf[0] = 0;
+  }
+  return next_input_idx == ninput_files && (!current_input || feof(current_input));
 }
 
 int main(int argc, char* argv[]) {
@@ -493,7 +490,8 @@ int main(int argc, char* argv[]) {
     struct jv_parser* parser = jv_parser_new((options & SEQ) ? JV_PARSE_SEQ : 0);
     char buf[4096];
     int is_last = 0;
-    while (read_more(buf, sizeof(buf), &is_last)) {
+    do {
+      is_last = read_more(buf, sizeof(buf));
       if (options & RAW_INPUT) {
         int len = strlen(buf);
         if (len > 0) {
@@ -530,7 +528,7 @@ int main(int argc, char* argv[]) {
           }
         }
       }
-    }
+    } while (!is_last);
     jv_parser_free(parser);
     if (ret != 0)
       goto out;
