@@ -396,6 +396,42 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     }
     jv_free(input);
     return line;
+  } else if (!strcmp(fmt_s, "tsv")) {
+    jv_free(fmt);
+    if (jv_get_kind(input) != JV_KIND_ARRAY)
+      return type_error(input, "cannot be tsv-formatted, only array");
+    jv line = jv_string("");
+    jv_array_foreach(input, i, x) {
+      if (i) line = jv_string_append_str(line, "\t");
+      switch (jv_get_kind(x)) {
+      case JV_KIND_NULL:
+        /* null rendered as empty string */
+        jv_free(x);
+        break;
+      case JV_KIND_TRUE:
+      case JV_KIND_FALSE:
+        line = jv_string_concat(line, jv_dump_string(x, 0));
+        break;
+      case JV_KIND_NUMBER:
+        if (jv_number_value(x) != jv_number_value(x)) {
+          /* NaN, render as empty string */
+          jv_free(x);
+        } else {
+          line = jv_string_concat(line, jv_dump_string(x, 0));
+        }
+        break;
+      case JV_KIND_STRING: {
+        line = jv_string_concat(line, x);
+        break;
+      }
+      default:
+        jv_free(input);
+        jv_free(line);
+        return type_error(x, "is not valid in a csv row");
+      }
+    }
+    jv_free(input);
+    return line;
   } else if (!strcmp(fmt_s, "html")) {
     jv_free(fmt);
     return escape_string(f_tostring(jq, input), "&&amp;\0<&lt;\0>&gt;\0'&apos;\0\"&quot;\0");
