@@ -257,7 +257,7 @@ static pfunc found_string(struct jv_parser* p) {
         return "Invalid escape";
       }
     } else {
-      if (c < 0x001f)
+      if (c > 0 && c < 0x001f)
         return "Invalid string: control characters from U+0000 through U+001F must be escaped";
       *out++ = c;
     }
