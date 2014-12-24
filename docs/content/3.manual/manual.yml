@@ -1094,7 +1094,7 @@ sections:
             output: ['[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]']
           - program: 'unique_by(length)'
             input: '["chunky", "bacon", "kitten", "cicada", "asparagus"]'
-            output: ['["chunky", "bacon", "asparagus"]']
+            output: ['["bacon", "chunky", "asparagus"]']
 
       - title: "`reverse`"
         body: |
@@ -1164,7 +1164,7 @@ sections:
           - program: 'index(", ")'
             input: '"a,b, cd, efg, hijk"'
             output: ['3']
-          - program: 'rindex(", ")]'
+          - program: 'rindex(", ")'
             input: '"a,b, cd, efg, hijk"'
             output: ['12']
 
@@ -1343,6 +1343,7 @@ sections:
           - program: 'recurse'
             input: '{"a":0,"b":[1]}'
             output:
+              - '{"a":0,"b":[1]}'
               - '0'
               - '[1]'
               - '1'
@@ -1668,181 +1669,180 @@ sections:
       The jq regex filters are defined so that they can be used using
       one of these patterns:
 
-              STRING | FILTER( REGEX )
-              STRING | FILTER( REGEX; FLAGS )
-              STRING | FILTER( [REGEX] )
-              STRING | FILTER( [REGEX, FLAGS] )
+          STRING | FILTER( REGEX )
+          STRING | FILTER( REGEX; FLAGS )
+          STRING | FILTER( [REGEX] )
+          STRING | FILTER( [REGEX, FLAGS] )
 
-          where:
-           * STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
-           * REGEX, after string interpolation, should be a valid PCRE regex;
-           * FILTER is one of `test`, `match`, or `capture`, as described below.
+      where:
+      * STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
+      * REGEX, after string interpolation, should be a valid PCRE regex;
+      * FILTER is one of `test`, `match`, or `capture`, as described below.
 
-          FLAGS is a string consisting of one of more of the supported flags:
+      FLAGS is a string consisting of one of more of the supported flags:
 
-          * `g` - Global search (find all matches, not just the first)
-          * `i` - Case insensitive search
-          * `m` - Multi line mode ('.' will match newlines)
-          * `n` - Ignore empty matches
-          * `p` - Both s and m modes are enabled
-          * `s` - Single line mode ('^' -> '\A', '$' -> '\Z')
-          * `l` - Find longest possible matches
-          * `x` - Extended regex format (ignore whitespace and comments)
+      * `g` - Global search (find all matches, not just the first)
+      * `i` - Case insensitive search
+      * `m` - Multi line mode ('.' will match newlines)
+      * `n` - Ignore empty matches
+      * `p` - Both s and m modes are enabled
+      * `s` - Single line mode ('^' -> '\A', '$' -> '\Z')
+      * `l` - Find longest possible matches
+      * `x` - Extended regex format (ignore whitespace and comments)
 
-          To match whitespace in an x pattern use an escape such as \s, e.g.
+      To match whitespace in an x pattern use an escape such as \s, e.g.
 
-          * test( "a\\sb", "x" ).
+      * test( "a\\sb", "x" ).
 
-          Note that certain flags may also be specified within REGEX, e.g.
+      Note that certain flags may also be specified within REGEX, e.g.
 
-          * jq -n '("test", "TEst", "teST", "TEST") | test( "(?i)te(?-i)st" )'
+      * jq -n '("test", "TEst", "teST", "TEST") | test( "(?i)te(?-i)st" )'
 
-          evaluates to: true, true, false, false.
+      evaluates to: true, true, false, false.
 
-      entries:
-        - title: "`test(val)`, `test(regex; flags)`"
-            body: |
+    entries:
+      - title: "`test(val)`, `test(regex; flags)`"
+        body: |
 
-             Like `match`, but does not return match objects, only `true` or `false`
-             for whether or not the regex matches the input.
+          Like `match`, but does not return match objects, only `true` or `false`
+          for whether or not the regex matches the input.
 
-            examples:
-            - program: 'test("foo")'
-              input: '"foo"'
-              output: 'true'
-            - program: 'test("a b c # spaces are ignored"; "ix")'
-              input: '"xabcd" "ABC"'
-              output: true
-                      true
+        examples:
+          - program: 'test("foo")'
+            input: '"foo"'
+            output: ['true']
+          - program: '.[] | test("a b c # spaces are ignored"; "ix")'
+            input: '["xabcd", "ABC"]'
+            output: ['true', 'true']
 
-          - title: "`match(val)`, `match(regex; flags)`"
-            body: |
+      - title: "`match(val)`, `match(regex; flags)`"
+        body: |
 
-            **match** outputs an object for each match it finds.  Matches have
-            the following fields:
+          **match** outputs an object for each match it finds.  Matches have
+          the following fields:
 
-            * `offset` - offset in UTF-8 codepoints from the beginning of the input
-            * `length` - length in UTF-8 codepoints of the match
-            * `string` - the string that it matched
-            * `captures` - an array of objects representing capturing groups.
+          * `offset` - offset in UTF-8 codepoints from the beginning of the input
+          * `length` - length in UTF-8 codepoints of the match
+          * `string` - the string that it matched
+          * `captures` - an array of objects representing capturing groups.
 
-            Capturing group objects have the following fields:
+          Capturing group objects have the following fields:
 
-            * `offset` - offset in UTF-8 codepoints from the beginning of the input
-            * `length` - length in UTF-8 codepoints of this capturing group
-            * `string` - the string that was captured
-            * `name` - the name of the capturing group (or `null` if it was unnamed)
+          * `offset` - offset in UTF-8 codepoints from the beginning of the input
+          * `length` - length in UTF-8 codepoints of this capturing group
+          * `string` - the string that was captured
+          * `name` - the name of the capturing group (or `null` if it was unnamed)
 
-            Capturing groups that did not match anything return an offset of -1
+          Capturing groups that did not match anything return an offset of -1
 
-            examples:
-            - program: 'match("(abc)+"; "g")'
-              input: '"abc abc"'
-              output:
-               - '{"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}'
-               - '{"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}'
-            - program: 'match("foo")'
-              input: '"foo bar foo"'
-              output: ['{"offset": 0, "length": 3, "string": "foo", "captures": []}']
-            - program: 'match(["foo", "ig"])'
-              input: '"foo bar FOO"'
-              output:
-               - '{"offset": 0, "length": 3, "string": "foo", "captures": []}'
-               - '{"offset": 8, "length": 3, "string": "FOO", "captures": []}'
-            - program: 'match("foo (?<bar123>bar)? foo"; "ig")'
-              input: '"foo bar foo foo  foo"'
-              output:
-               - '{"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}'
-               - '{"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}'
+        examples:
+          - program: 'match("(abc)+"; "g")'
+            input: '"abc abc"'
+            output:
+             - '{"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}'
+             - '{"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}'
+          - program: 'match("foo")'
+            input: '"foo bar foo"'
+            output: ['{"offset": 0, "length": 3, "string": "foo", "captures": []}']
+          - program: 'match(["foo", "ig"])'
+            input: '"foo bar FOO"'
+            output:
+             - '{"offset": 0, "length": 3, "string": "foo", "captures": []}'
+             - '{"offset": 8, "length": 3, "string": "FOO", "captures": []}'
+          - program: 'match("foo (?<bar123>bar)? foo"; "ig")'
+            input: '"foo bar foo foo  foo"'
+            output:
+             - '{"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}'
+             - '{"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}'
 
-            - program: '[ match("."; "g")] | length'
-              input: '"abc"'
-              output: 3
-
-
-          - title: "`capture(val)`, `capture(regex; flags)`"
-            body: |
-
-             Collects the named captures in a JSON object, with the name
-             of each capture as the key, and the matched string as the
-             corresponding value.
-
-            examples:
-            - program: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
-              input: '"xyzzy-14"'
-              output: ['{ "a": "xyzzy", "n": "14" }']
-
-  - title: "`scan(regex)`, `scan(regex; flags)`"
-    body: |
-
-      Emit a stream of the non-overlapping substrings of the input
-      that match the regex in accordance with the flags, if any
-      have been specified.  If there is no match, the stream is empty.
-      To capture all the matches for each input string, use the idiom
-      `[ expr ]`, e.g. `[ scan(regex) ]`.
-
-    example:
-    - program: 'scan("c")'
-      input: '"abcdefabc"'
-      output: ['"c"', '"c"']
-
-    - program: 'scan("b")'
-      input: ("", "")
-      output: ['[]', '[]']
-
-  - title: "`split(regex; flags)`"
-    body: |
-
-      For backwards compatibility, `split` emits an array of the strings
-      corresponding to the successive segments of the input string after it
-      has been split at the boundaries defined by the regex and any
-      specified flags.  The substrings corresponding to the boundaries
-      themselves are excluded.  If regex is the empty string, then the first
-      match will be the empty string.
-
-    example:
-    - program: 'split(", *"; null)'
-      input: '"ab,cd, ef"'
-      output: ['"ab","cd","ef"']
+          - program: '[ match("."; "g")] | length'
+            input: '"abc"'
+            output: [3]
 
 
-  - title: "`splits(regex)`, splits(regex; flags)`"
-    body: |
+      - title: "`capture(val)`, `capture(regex; flags)`"
+        body: |
 
-      These provide the same results as their `split` counterparts,
-      but as a stream instead of an array.
+         Collects the named captures in a JSON object, with the name
+         of each capture as the key, and the matched string as the
+         corresponding value.
 
-    example:
-    - program: 'splits(", *")'
-      input: '("ab,cd", "ef, gh")'
-      output: ['"ab"', '"cd"', '"ef"', '"gh"']
+        examples:
+          - program: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
+            input: '"xyzzy-14"'
+            output: ['{ "a": "xyzzy", "n": "14" }']
 
-  - title: "`sub(regex; tostring)`"
-    body: |
+      - title: "`scan(regex)`, `scan(regex; flags)`"
+        body: |
 
-      Emit the string obtained by replacing the first match of regex in the
-      input string with `tostring`, after interpolation.  `tostring` should
-      be a jq string, and may contain references to named captures. The
-      named captures are, in effect, presented as a JSON object (as
-      constructed by `capture`) to `tostring`, so a reference to a captured
-      variable named "x" would take the form: "\(.x)".
+          Emit a stream of the non-overlapping substrings of the input
+          that match the regex in accordance with the flags, if any
+          have been specified.  If there is no match, the stream is empty.
+          To capture all the matches for each input string, use the idiom
+          `[ expr ]`, e.g. `[ scan(regex) ]`.
 
-    example:
-    - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
-      input: '"123abc456"'
-      output: '"ZabcZabc"'
+        example:
+          - program: 'scan("c")'
+            input: '"abcdefabc"'
+            output: ['"c"', '"c"']
+
+          - program: 'scan("b")'
+            input: ("", "")
+            output: ['[]', '[]']
+
+      - title: "`split(regex; flags)`"
+        body: |
+
+          For backwards compatibility, `split` emits an array of the strings
+          corresponding to the successive segments of the input string after it
+          has been split at the boundaries defined by the regex and any
+          specified flags.  The substrings corresponding to the boundaries
+          themselves are excluded.  If regex is the empty string, then the first
+          match will be the empty string.
+
+        example:
+          - program: 'split(", *"; null)'
+            input: '"ab,cd, ef"'
+            output: ['"ab","cd","ef"']
 
 
-  - title: "`gsub(regex; string)`"
-    body: |
+      - title: "`splits(regex)`, `splits(regex; flags)`"
+        body: |
 
-      `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
-      replaced by the string, after interpolation.
+          These provide the same results as their `split` counterparts,
+          but as a stream instead of an array.
 
-    example:
-    - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
-      input: '"Abcabc"'
-      output: '"+A-+a-"'
+        example:
+          - program: 'splits(", *")'
+            input: '("ab,cd", "ef, gh")'
+            output: ['"ab"', '"cd"', '"ef"', '"gh"']
+
+      - title: "`sub(regex; tostring)`"
+        body: |
+
+          Emit the string obtained by replacing the first match of regex in the
+          input string with `tostring`, after interpolation.  `tostring` should
+          be a jq string, and may contain references to named captures. The
+          named captures are, in effect, presented as a JSON object (as
+          constructed by `capture`) to `tostring`, so a reference to a captured
+          variable named "x" would take the form: "\(.x)".
+
+        example:
+          - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
+            input: '"123abc456"'
+            output: '"ZabcZabc"'
+
+
+      - title: "`gsub(regex; string)`"
+        body: |
+
+          `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
+          replaced by the string, after interpolation.
+
+        example:
+          - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
+            input: '"Abcabc"'
+            output: '"+A-+a-"'
 
 
   - title: Advanced features

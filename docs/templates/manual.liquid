@@ -70,8 +70,8 @@
                       
                     {% for example in entry.examples %}
                       <table class="manual-example">
-                        <tr><th></th><td class="jqprogram">jq '{{example.program}}'</td></tr>
-                        <tr><th>Input</th><td>{{example.input}}</td></tr>
+                        <tr><th></th><td class="jqprogram">jq '{{example.program | escape}}'</td></tr>
+                        <tr><th>Input</th><td>{{example.input | escape}}</td></tr>
                         {% unless example.output[0] %}
                           <tr>
                             <th>Output</th>
@@ -85,7 +85,7 @@
                             {% else %}
                               <th></th>
                             {% endif %}
-                            <td>{{output}}</td>
+                            <td>{{output | escape}}</td>
                           </tr>
                         {% endfor %}
                         
