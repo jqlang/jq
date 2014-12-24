@@ -176,6 +176,7 @@ static int read_more(char* buf, size_t size, int* islast) {
       fprintf(stderr, "%s: %s: %s\n", progname, input_filenames[next_input_idx], strerror(errno));
     }
     next_input_idx++;
+    *islast = (next_input_idx == ninput_files);
   }
 
   if (!fgets(buf, size, current_input)) buf[0] = 0;
