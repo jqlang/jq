@@ -91,6 +91,13 @@ jv jv_array_indexes(jv, jv);
 #define JV_ARRAY(...) \
   JV_ARRAY_IDX(__VA_ARGS__, JV_ARRAY_7, JV_ARRAY_6, JV_ARRAY_5, JV_ARRAY_4, JV_ARRAY_3, JV_ARRAY_2, JV_ARRAY_1)(__VA_ARGS__)
 
+#ifdef __GNUC__
+#define JV_PRINTF_LIKE(fmt_arg_num, args_num) \
+  __attribute__ ((__format__( __printf__, fmt_arg_num, args_num)))
+#define JV_VPRINTF_LIKE(fmt_arg_num) \
+  __attribute__ ((__format__( __printf__, fmt_arg_num, 0)))
+#endif
+
 
 jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
@@ -102,8 +109,8 @@ const char* jv_string_value(jv);
 jv jv_string_indexes(jv j, jv k);
 jv jv_string_slice(jv j, int start, int end);
 jv jv_string_concat(jv, jv);
-jv jv_string_vfmt(const char*, va_list);
-jv jv_string_fmt(const char*, ...);
+jv jv_string_vfmt(const char*, va_list) JV_VPRINTF_LIKE(1);
+jv jv_string_fmt(const char*, ...) JV_PRINTF_LIKE(1, 2);
 jv jv_string_append_codepoint(jv a, uint32_t c);
 jv jv_string_append_buf(jv a, const char* buf, int len);
 jv jv_string_append_str(jv a, const char* str);

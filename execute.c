@@ -802,11 +802,11 @@ jv jq_format_error(jv msg) {
 
   if (jv_get_kind(msg) != JV_KIND_INVALID) {
     if (jv_get_kind(msg) == JV_KIND_STRING)
-      return jv_string_fmt("jq: error: %s", msg);
+      return jv_string_fmt("jq: error: %s", jv_string_value(msg));
 
     msg = jv_dump_string(msg, JV_PRINT_INVALID);
     if (jv_get_kind(msg) == JV_KIND_STRING)
-      return jv_string_fmt("jq: error: %s", msg);
+      return jv_string_fmt("jq: error: %s", jv_string_value(msg));
     return jq_format_error(jv_null());  // ENOMEM
   }
 
