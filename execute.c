@@ -703,8 +703,12 @@ jv jq_next(jq_state *jq) {
       
       if (jv_is_valid(top)) {
         stack_push(jq, top);
-      } else {
+      } else if (jv_invalid_has_msg(jv_copy(top))) {
         set_error(jq, top);
+        goto do_backtrack;
+      } else {
+        // C-coded function returns invalid w/o msg? -> backtrack, as if
+        // it had returned `empty`
         goto do_backtrack;
       }
       break;
