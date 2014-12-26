@@ -84,10 +84,11 @@ void block_free(block);
 #define BLOCK_5(b1,b2,b3,b4,b5) (block_join(BLOCK_4(b1,b2,b3,b4),(b5)))
 #define BLOCK_6(b1,b2,b3,b4,b5,b6) (block_join(BLOCK_5(b1,b2,b3,b4,b5),(b6)))
 #define BLOCK_7(b1,b2,b3,b4,b5,b6,b7) (block_join(BLOCK_6(b1,b2,b3,b4,b5,b6),(b7)))
+#define BLOCK_8(b1,b2,b3,b4,b5,b6,b7,b8) (block_join(BLOCK_7(b1,b2,b3,b4,b5,b6,b7),(b8)))
 
-#define BLOCK_IDX(_1,_2,_3,_4,_5,_6,_7,NAME,...) NAME
+#define BLOCK_IDX(_1,_2,_3,_4,_5,_6,_7,_8,NAME,...) NAME
 #define BLOCK(...) \
-  BLOCK_IDX(__VA_ARGS__, BLOCK_7, BLOCK_6, BLOCK_5, BLOCK_4, BLOCK_3, BLOCK_2, BLOCK_1)(__VA_ARGS__)
+  BLOCK_IDX(__VA_ARGS__, BLOCK_8, BLOCK_7, BLOCK_6, BLOCK_5, BLOCK_4, BLOCK_3, BLOCK_2, BLOCK_1)(__VA_ARGS__)
 
 
 #endif
