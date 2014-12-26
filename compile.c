@@ -685,7 +685,16 @@ block gen_foreach(const char* varname, block source, block init, block update, b
                                       gen_op_bound(STOREV, state_var),
                                       // extract an output...
                                       extract,
-                                      // ...and output it
+                                      // ...and output it by jumping
+                                      // past the BACKTRACK that comes
+                                      // right after the loop body,
+                                      // which in turn is there
+                                      // because...
+                                      //
+                                      // (Incidentally, extract can also
+                                      // backtrack, e.g., if it calls
+                                      // empty, in which case we don't
+                                      // get here.)
                                       output),
                                 OP_HAS_VARIABLE));
   block foreach = BLOCK(gen_op_simple(DUP),
@@ -693,14 +702,14 @@ block gen_foreach(const char* varname, block source, block init, block update, b
                         state_var,
                         gen_op_target(FORK, loop),
                         loop,
-                        // At this point `foreach`'s input will be on
-                        // top of the stack, and we don't want to output
-                        // it, so we backtrack.
+                        // ...at this point `foreach`'s original input
+                        // will be on top of the stack, and we don't
+                        // want to output it, so we backtrack.
                         gen_op_simple(BACKTRACK));
-  inst_set_target(output, foreach);
+  inst_set_target(output, foreach); // make that JUMP go bast the BACKTRACK at the end of the loop
   block handler = gen_cond(gen_call("_equal", BLOCK(gen_lambda(gen_const(jv_string("break"))), gen_lambda(gen_noop()))),
                            gen_op_simple(BACKTRACK),
-                           gen_call("break", gen_noop()));
+                           gen_call("error", gen_noop()));
   return gen_try(foreach, handler);
 }
 
