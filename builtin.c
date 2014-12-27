@@ -867,6 +867,8 @@ static jv f_input(jq_state *jq, jv input) {
   jq_input_cb cb;
   void *data;
   jq_get_input_cb(jq, &cb, &data);
+  if (cb == NULL)
+    return jv_invalid_with_msg(jv_string("break"));
   jv v = cb(jq, data);
   if (jv_is_valid(v) || jv_invalid_has_msg(jv_copy(v)))
     return v;
