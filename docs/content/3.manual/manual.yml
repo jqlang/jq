@@ -1250,7 +1250,7 @@ sections:
         body: |
 
           Outputs its input with the given suffix string removed, if it
-          starts with it.
+          ends with it.
 
         examples:
           - program: '[.[]|rtrimstr("foo")]'
