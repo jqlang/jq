@@ -419,7 +419,7 @@ static const unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
 void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial) {
   assert((p->curr_buf == 0 || p->curr_buf_pos == p->curr_buf_length)
          && "previous buffer not exhausted");
-  while (p->bom_strip_position < sizeof(UTF8_BOM)) {
+  while (length > 0 && p->bom_strip_position < sizeof(UTF8_BOM)) {
     if ((unsigned char)*buf == UTF8_BOM[p->bom_strip_position]) {
       // matched a BOM character
       buf++;
