@@ -123,6 +123,21 @@ $VALGRIND $Q ./jq -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p
 $VALGRIND $Q ./jq --stream -c '.|select(length==2)' < "$PWD/tests/torture/input0.json" > $d/out1
 diff $d/out0 $d/out1
 
+## Fuzz parser
+
+if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
+    # Have a /dev/urandom, good
+    set -x
+    $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
+    dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null
+    $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
+    dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null
+    $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
+fi
+
 ## Test library/module system
 
 mods=$PWD/tests/modules
