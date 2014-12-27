@@ -127,32 +127,32 @@ diff $d/out0 $d/out1
 
 mods=$PWD/tests/modules
 
-if [ "`HOME=$mods $VALGRIND $Q ./jq -nr fg`" != foobar ]; then
+if [ "`HOME="$mods" $VALGRIND $Q ./jq -nr fg`" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
 fi
 
-if [ `HOME=$mods $VALGRIND $Q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
+if [ `HOME="$mods" $VALGRIND $Q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
     echo "Binding too many defs into program" 1>&2
     exit 1
 fi
 
-if ! $VALGRIND $Q ./jq -ner -L $mods 'import a as foo; import b as bar; import a; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a, a] | . == ["a","b","c","a","a"]' > /dev/null; then
+if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import a as foo; import b as bar; import a; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a, a] | . == ["a","b","c","a","a"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
 
-if ! $VALGRIND $Q ./jq -ner -L $mods 'import c as foo; [foo::a, foo::c] | . == [0,"acmehbah"]' > /dev/null; then
+if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import c as foo; [foo::a, foo::c] | . == [0,"acmehbah"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
 
-if [ "`$VALGRIND $Q ./jq -cner -L $mods '\"c\" | modulemeta'`" != '{"whatever":null,"name":"c","deps":[{"as":"foo","name":"a"},{"search":"./","as":"d","name":"d"},{"search":"./","name":"d"},{"search":"./../lib/jq","as":"e","name":"e"},{"search":"./../lib/jq","as":"f","name":"f"}]}' ]; then
+if [ "`$VALGRIND $Q ./jq -cner -L "$mods" '\"c\" | modulemeta'`" != '{"whatever":null,"name":"c","deps":[{"as":"foo","name":"a"},{"search":"./","as":"d","name":"d"},{"search":"./","name":"d"},{"search":"./../lib/jq","as":"e","name":"e"},{"search":"./../lib/jq","as":"f","name":"f"}]}' ]; then
     echo "modulemeta builtin appears to be broken" 1>&2
     exit 1
 fi
     
-if $VALGRIND ./jq -ner -L $mods 'import syntaxerror; .' > $d/out 2>&1; then
+if $VALGRIND ./jq -ner -L "$mods" 'import syntaxerror; .' > $d/out 2>&1; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
@@ -166,7 +166,7 @@ if ! grep '^jq: error: syntax error,' $d/out > /dev/null; then
     exit 1
 fi
 
-if $VALGRIND ./jq -ner -L $mods '%::wat' > $d/out 2>&1 ||
+if $VALGRIND ./jq -ner -L "$mods" '%::wat' > $d/out 2>&1 ||
    ! grep '^jq: error: syntax error,' $d/out > /dev/null; then
     echo "Syntax errors not detected?" 1>&2
     exit 1
@@ -177,7 +177,7 @@ if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out
     exit 1
 fi
 
-if ! $VALGRIND ./jq -ner -L $mods -f $mods/test_bind_order.jq > $d/out 2>&1; then
+if ! $VALGRIND ./jq -ner -L "$mods" -f "$mods/test_bind_order.jq" > $d/out 2>&1; then
     echo "Import bind order is broken" 1>&2
     exit 1
 fi
