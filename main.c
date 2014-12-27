@@ -98,7 +98,7 @@ enum {
 };
 static int options = 0;
 
-static int process(jq_state *jq, jv value, int flags) {
+static int process(jq_state *jq, jv value, int flags, int dumpopts) {
   int ret = 14; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
   jv result;
@@ -108,19 +108,6 @@ static int process(jq_state *jq, jv value, int flags) {
       ret = 0;
       jv_free(result);
     } else {
-      int dumpopts;
-      /* Disable colour by default on Windows builds as Windows
-         terminals tend not to display it correctly */
-#ifdef WIN32
-      dumpopts = 0;
-#else
-      dumpopts = isatty(fileno(stdout)) ? JV_PRINT_COLOUR : 0;
-#endif
-      if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
-      if (!(options & COMPACT_OUTPUT)) dumpopts |= JV_PRINT_PRETTY;
-      if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
-      if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
-      if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
       if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
         ret = 11;
       else
@@ -232,6 +219,12 @@ static jv next_input(jq_state *jq, void *data) {
     }
   } while (!is_last);
   return value;
+}
+
+static void debug_cb(jq_state *jq, void *data, jv input) {
+  int dumpopts = *(int *)data;
+  jv_dumpf(JV_ARRAY(jv_string("DEBUG:"), input), stderr, dumpopts & ~(JV_PRINT_PRETTY));
+  fprintf(stderr, "\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -436,6 +429,20 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  int dumpopts;
+  /* Disable colour by default on Windows builds as Windows
+     terminals tend not to display it correctly */
+#ifdef WIN32
+  dumpopts = 0;
+#else
+  dumpopts = isatty(fileno(stdout)) ? JV_PRINT_COLOUR : 0;
+#endif
+  if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
+  if (!(options & COMPACT_OUTPUT)) dumpopts |= JV_PRINT_PRETTY;
+  if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
+  if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
+  if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
+
   char *penv = getenv("JQ_LIBRARY_PATH");
   if (penv && jv_get_kind(lib_search_paths) == JV_KIND_NULL) {
     // Use $JQ_LIBRARY_PATH
@@ -554,13 +561,15 @@ int main(int argc, char* argv[]) {
   // Let jq program read from inputs
   jq_set_input_cb(jq, next_input, &input_state);
 
+  jq_set_debug_cb(jq, debug_cb, &dumpopts);
+
   if (options & PROVIDE_NULL) {
-    ret = process(jq, jv_null(), jq_flags);
+    ret = process(jq, jv_null(), jq_flags, dumpopts);
   } else {
     jv value;
     while (jv_is_valid((value = next_input(jq, &input_state))) || jv_invalid_has_msg(jv_copy(value))) {
       if (jv_is_valid(value)) {
-        ret = process(jq, value, jq_flags);
+        ret = process(jq, value, jq_flags, dumpopts);
         continue;
       }
 
@@ -577,7 +586,7 @@ int main(int argc, char* argv[]) {
       jv_free(msg);
     }
     if (options & SLURP) {
-      ret = process(jq, input_state.slurped, jq_flags);
+      ret = process(jq, input_state.slurped, jq_flags, dumpopts);
       input_state.slurped = jv_invalid();
     }
   }

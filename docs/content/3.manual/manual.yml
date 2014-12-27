@@ -2226,6 +2226,12 @@ sections:
       jq itself.  These two builtins, and jq's own reading actions, can
       be interleaved with each other.
 
+      One builtin provides minimal output capabilities, `debug`.
+      (Recall that a jq program's output values are always output as
+      JSON texts on `stdout`.)  The `debug` builtin can have
+      application-specific behavior, such as for executables that use
+      the libjq C API but aren't the jq executable itself.
+
       - title: "`input`"
         body: |
 
@@ -2238,6 +2244,14 @@ sections:
 
           This is primarily useful for reductions over a program's
           inputs.
+
+      - title: "`debug`"
+        body: |
+
+          Causes a debug message based on the input value to be
+          produced.  The jq executable wraps the input value with
+          `["DEBUG:", <input-value>]` and prints that and a newline on
+          stderr, compactly.  This may change in the future.
 
   - title: Assignment
     body: |

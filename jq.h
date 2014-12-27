@@ -26,6 +26,10 @@ typedef jv (*jq_input_cb)(jq_state *, void *);
 void jq_set_input_cb(jq_state *, jq_input_cb, void *);
 void jq_get_input_cb(jq_state *, jq_input_cb *, void **);
 
+typedef void (*jq_debug_cb)(jq_state *, void *, jv);
+void jq_set_debug_cb(jq_state *, jq_debug_cb, void *);
+void jq_get_debug_cb(jq_state *, jq_debug_cb *, void **);
+
 void jq_set_attrs(jq_state *, jv);
 jv jq_get_attrs(jq_state *);
 jv jq_get_jq_origin(jq_state *);

@@ -41,6 +41,8 @@ struct jq_state {
   jv attrs;
   jq_input_cb input_cb;
   void *input_cb_data;
+  jq_debug_cb debug_cb;
+  void *debug_cb_data;
 };
 
 struct closure {
@@ -1048,4 +1050,14 @@ void jq_set_input_cb(jq_state *jq, jq_input_cb cb, void *data) {
 void jq_get_input_cb(jq_state *jq, jq_input_cb *cb, void **data) {
   *cb = jq->input_cb;
   *data = jq->input_cb_data;
+}
+
+void jq_set_debug_cb(jq_state *jq, jq_debug_cb cb, void *data) {
+  jq->debug_cb = cb;
+  jq->debug_cb_data = data;
+}
+
+void jq_get_debug_cb(jq_state *jq, jq_debug_cb *cb, void **data) {
+  *cb = jq->debug_cb;
+  *data = jq->debug_cb_data;
 }

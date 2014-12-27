@@ -875,6 +875,14 @@ static jv f_input(jq_state *jq, jv input) {
   return jv_invalid_with_msg(jv_string("break"));
 }
 
+static jv f_debug(jq_state *jq, jv input) {
+  jq_debug_cb cb;
+  void *data;
+  jq_get_debug_cb(jq, &cb, &data);
+  if (cb != NULL)
+    cb(jq, data, jv_copy(input));
+  return input;
+}
 
 
 #define LIBM_DD(name) \
@@ -927,6 +935,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_match, "_match_impl", 4},
   {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
   {(cfunction_ptr)f_input, "_input", 1},
+  {(cfunction_ptr)f_debug, "debug", 1},
 };
 #undef LIBM_DD
 
