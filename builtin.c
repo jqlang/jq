@@ -903,6 +903,12 @@ static jv f_debug(jq_state *jq, jv input) {
   return input;
 }
 
+static jv f_stderr(jq_state *jq, jv input) {
+  jv_dumpf(jv_copy(input), stderr, 0);
+  fprintf(stderr, "\n");
+  return input;
+}
+
 
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 1},
@@ -959,6 +965,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
   {(cfunction_ptr)f_input, "_input", 1},
   {(cfunction_ptr)f_debug, "debug", 1},
+  {(cfunction_ptr)f_stderr, "stderr", 1},
 };
 #undef LIBM_DD
 
