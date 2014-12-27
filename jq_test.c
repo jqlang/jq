@@ -33,6 +33,7 @@ static int skipline(const char* buf) {
 static void run_jq_tests(FILE *testdata) {
   char buf[4096];
   int tests = 0, passed = 0, invalid = 0;
+  unsigned int lineno = 0;
   jq_state *jq = NULL;
 
   jq = jq_init();
@@ -40,9 +41,10 @@ static void run_jq_tests(FILE *testdata) {
 
   while (1) {
     if (!fgets(buf, sizeof(buf), testdata)) break;
+    lineno++;
     if (skipline(buf)) continue;
     if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = 0;
-    printf("Testing %s\n", buf);
+    printf("Testing '%s' at line number %u\n", buf, lineno);
     int pass = 1;
     tests++;
     int compiled = jq_compile(jq, buf);
@@ -56,13 +58,14 @@ static void run_jq_tests(FILE *testdata) {
     jq_start(jq, input, JQ_DEBUG_TRACE);
 
     while (fgets(buf, sizeof(buf), testdata)) {
+      lineno++;
       if (skipline(buf)) break;
       jv expected = jv_parse(buf);
       if (!jv_is_valid(expected)){ invalid++; continue; }
       jv actual = jq_next(jq);
       if (!jv_is_valid(actual)) {
         jv_free(actual);
-        printf("*** Insufficient results\n");
+        printf("*** Insufficient results for test at line number %u\n", lineno);
         pass = 0;
         break;
       } else if (!jv_equal(jv_copy(expected), jv_copy(actual))) {
@@ -70,7 +73,7 @@ static void run_jq_tests(FILE *testdata) {
         jv_dump(jv_copy(expected), 0);
         printf(", but got ");
         jv_dump(jv_copy(actual), 0);
-        printf("\n");
+        printf(" for test at line number %u\n", lineno);
         pass = 0;
       }
       jv as_string = jv_dump_string(jv_copy(expected), rand() & ~(JV_PRINT_COLOUR|JV_PRINT_REFCOUNT));
@@ -86,7 +89,7 @@ static void run_jq_tests(FILE *testdata) {
       if (jv_is_valid(extra)) {
         printf("*** Superfluous result: ");
         jv_dump(extra, 0);
-        printf("\n");
+        printf(" for test at line number %u\n", lineno);
         pass = 0;
       } else {
         jv_free(extra);
