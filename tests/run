@@ -12,8 +12,20 @@ fi
 
 cat $@ | $VALGRIND $Q ./jq --run-tests
 
+set -x
+
+mods=$PWD/tests/modules
+
+clean=true
 d=
-trap '[ -n "$d" ] && rm -rf "$d"' EXIT
+clean () {
+    if ! $clean; then
+        echo "See temp files in $d!"
+    elif [ -n "$d" ]; then
+        rm -rf "$d"
+    fi
+}
+trap clean EXIT
 d=`mktemp -d -t || true`
 if [ -z "$d" ]; then
     echo "Your OS does not support mktemp(1) -d" 1>&2
@@ -123,11 +135,48 @@ $VALGRIND $Q ./jq -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p
 $VALGRIND $Q ./jq --stream -c '.|select(length==2)' < "$PWD/tests/torture/input0.json" > $d/out1
 diff $d/out0 $d/out1
 
+clean=false
+if which seq > /dev/null 2>&1; then
+    # XXX We should try every prefix of input0.json, but that makes this
+    # test very, very slow when run with valgrind, and the whole point
+    # is to run it with valgrind.
+    #
+    #len=`wc -c < "$PWD/tests/torture/input0.json"`
+    if [ -n "$VALGRIND" ]; then
+        start=1
+        end=`wc -c < "$PWD/tests/torture/input0.json"`
+    else
+        start=120
+        end=151
+    fi
+    for i in `seq $start $end`; do
+        dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
+            $VALGRIND ./jq -c . > $d/out0 2>$d/err || true
+        if [ -n "$VALGRIND" ]; then
+            grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
+        else
+            tail -1 $d/err | egrep -i 'assert|abort|core' && false
+        fi
+
+        dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
+            $VALGRIND ./jq -cn --stream -L "$mods" 'import streaming; tovalues(inputs)' > $d/out1 2>$d/err || true
+        if [ -n "$VALGRIND" ]; then
+            grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
+        else
+            tail -1 $d/err | egrep -i 'assert|abort|core' && false
+        fi
+
+        diff $d/out0 $d/out1
+    done
+else
+    echo "Not doing torture tests"
+fi
+
 ## Fuzz parser
 
+clean=false
 if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
     # Have a /dev/urandom, good
-    set -x
     $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
     $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
     dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null
@@ -137,10 +186,9 @@ if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
     $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
     $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
 fi
+clean=true
 
 ## Test library/module system
-
-mods=$PWD/tests/modules
 
 if [ "`HOME="$mods" $VALGRIND $Q ./jq -nr fg`" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
@@ -202,3 +250,5 @@ if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out
     cat $d/out
     exit 1
 fi
+
+exit 0
