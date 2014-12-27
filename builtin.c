@@ -1121,8 +1121,14 @@ static const char* const jq_builtins[] = {
   "  | reduce range(0; $max) as $j"
   "      ([]; . + [reduce range(0;$length) as $i ([]; . + [ $in[$i][$j] ] )] )"
 	      "  end;",
-  "def in(xs): . as $x | xs | has($x)",
-  "def inside(xs): . as $x | xs | contains($x)",
+  "def in(xs): . as $x | xs | has($x);",
+  "def inside(xs): . as $x | xs | contains($x);",
+  "def input: try _input catch if .==\"break\" then empty else . end;",
+  "def repeat(exp): "
+  "     def _repeat: "
+  "         exp, _repeat;"
+  "     try _repeat catch if .==\"break\" then empty else . end;",
+  "def inputs: repeat(_input);",
 };
 #undef LIBM_DD
 
