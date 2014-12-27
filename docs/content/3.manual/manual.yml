@@ -777,20 +777,27 @@ sections:
           null and objects would, but with the given message as the
           error's value.
 
-      - title: "`map(x)`"
+      - title: "`map(x)`, `map_values(x)`"
         body: |
 
           For any filter `x`, `map(x)` will run that filter for each
           element of the input array, and produce the outputs a new
           array. `map(.+1)` will increment each element of an array of numbers.
-
+          
+          Similarly, `map_values(x)` will run that filter for each element,
+          but it will return an object when an object is passed.
+          
           `map(x)` is equivalent to `[.[] | x]`. In fact, this is how
-          it's defined.
+          it's defined. Similarly, `map_values(x)` is defined as `.[] |= x`.
 
         examples:
           - program: 'map(.+1)'
             input: '[1,2,3]'
             output: ['[2,3,4]']
+          
+          - program: 'map_values(.+1)'
+            input: '{"a": 1, "b": 2, "c": 3}'
+            output: ['{"a": 2, "b": 3, "c": 4}']
 
       - title: "`paths`, `paths(node_filter)`, `leaf_paths`"
         body: |
