@@ -862,6 +862,18 @@ static jv f_modulemeta(jq_state *jq, jv a) {
   return load_module_meta(jq, a);
 }
 
+static jv f_input(jq_state *jq, jv input) {
+  jv_free(input);
+  jq_input_cb cb;
+  void *data;
+  jq_get_input_cb(jq, &cb, &data);
+  jv v = cb(jq, data);
+  if (jv_is_valid(v) || jv_invalid_has_msg(jv_copy(v)))
+    return v;
+  return jv_invalid_with_msg(jv_string("break"));
+}
+
+
 
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 1},
@@ -912,6 +924,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_env, "env", 1},
   {(cfunction_ptr)f_match, "_match_impl", 4},
   {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
+  {(cfunction_ptr)f_input, "_input", 1},
 };
 #undef LIBM_DD
 
@@ -959,6 +972,7 @@ static block bind_bytecoded_builtins(block b) {
 #define LIBM_DD(name) "def " #name ": _" #name ";",
 
 static const char* const jq_builtins[] = {
+  "def error: error(.);",
   "def break: error(\"break\");",
   "def map(f): [.[] | f];",
   "def map_values(f): .[] |= f;",
@@ -1013,6 +1027,7 @@ static const char* const jq_builtins[] = {
   "def nulls: select(type == \"null\");",
   "def values: select(. != null);",
   "def scalars: select(. == null or . == true or . == false or type == \"number\" or type == \"string\");",
+  "def scalars_or_empty: select(. == null or . == true or . == false or type == \"number\" or type == \"string\" or ((type==\"array\" or type==\"object\") and length==0));",
   "def leaf_paths: paths(scalars);",
   "def join($x): reduce .[] as $i (\"\"; . + (if . == \"\" then $i else $x + $i end));",
   "def flatten: reduce .[] as $i ([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end);",

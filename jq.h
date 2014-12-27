@@ -22,6 +22,10 @@ void jq_start(jq_state *, jv value, int);
 jv jq_next(jq_state *);
 void jq_teardown(jq_state **);
 
+typedef jv (*jq_input_cb)(jq_state *, void *);
+void jq_set_input_cb(jq_state *, jq_input_cb, void *);
+void jq_get_input_cb(jq_state *, jq_input_cb *, void **);
+
 void jq_set_attrs(jq_state *, jv);
 jv jq_get_attrs(jq_state *);
 jv jq_get_jq_origin(jq_state *);

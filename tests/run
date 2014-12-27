@@ -12,14 +12,25 @@ fi
 
 cat $@ | $VALGRIND $Q ./jq --run-tests
 
+set -x
+
+mods=$PWD/tests/modules
+
+clean=true
 d=
-trap '[ -n "$d" ] && rm -rf "$d"' EXIT
+clean () {
+    if ! $clean; then
+        echo "See temp files in $d!"
+    elif [ -n "$d" ]; then
+        rm -rf "$d"
+    fi
+}
+trap clean EXIT
 d=`mktemp -d -t || true`
 if [ -z "$d" ]; then
     echo "Your OS does not support mktemp(1) -d" 1>&2
     exit 0
 fi
-
 
 ## Test constant folding
 
@@ -101,14 +112,14 @@ cmp $d/out $d/expected
 # Note that here jq sees no inputs at all but it still succeeds because
 # --seq ignores parse errors
 cat > $d/expected <<EOF
-ignoring parse error: Unfinished string
+ignoring parse error: Unfinished string at EOF at line 1, column 4
 EOF
 printf '"foo'|./jq -ce --seq . > $d/out 2>&1
 cmp $d/out $d/expected
 
 # Numeric values truncated by EOF are ignored
 cat > $d/expected <<EOF
-ignoring parse error: Potentially truncated top-level numeric value
+ignoring parse error: Potentially truncated top-level numeric value at EOF at line 1, column 1
 EOF
 printf '1'|./jq -ce --seq . > $d/out 2>&1
 cmp $d/out $d/expected
@@ -118,36 +129,93 @@ EOF
 printf '1\n'|./jq -ces --seq '. == [1]' >/dev/null 2> $d/out
 cmp $d/out $d/expected
 
+## Test streaming parser
+
+$VALGRIND $Q ./jq -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p,.]' < "$PWD/tests/torture/input0.json" > $d/out0
+$VALGRIND $Q ./jq --stream -c '.|select(length==2)' < "$PWD/tests/torture/input0.json" > $d/out1
+diff $d/out0 $d/out1
+
+clean=false
+if which seq > /dev/null 2>&1; then
+    # XXX We should try every prefix of input0.json, but that makes this
+    # test very, very slow when run with valgrind, and the whole point
+    # is to run it with valgrind.
+    #
+    #len=`wc -c < "$PWD/tests/torture/input0.json"`
+    if [ -n "$VALGRIND" ]; then
+        start=1
+        end=`wc -c < "$PWD/tests/torture/input0.json"`
+    else
+        start=120
+        end=151
+    fi
+    for i in `seq $start $end`; do
+        dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
+            $VALGRIND ./jq -c . > $d/out0 2>$d/err || true
+        if [ -n "$VALGRIND" ]; then
+            grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
+        else
+            tail -1 $d/err | egrep -i 'assert|abort|core' && false
+        fi
+
+        dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
+            $VALGRIND ./jq -cn --stream -L "$mods" 'import streaming; tovalues(inputs)' > $d/out1 2>$d/err || true
+        if [ -n "$VALGRIND" ]; then
+            grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
+        else
+            tail -1 $d/err | egrep -i 'assert|abort|core' && false
+        fi
+
+        diff $d/out0 $d/out1
+    done
+else
+    echo "Not doing torture tests"
+fi
+
+## Fuzz parser
+
+clean=false
+if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
+    # Have a /dev/urandom, good
+    $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
+    dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null
+    $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
+    dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null
+    $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
+fi
+clean=true
+
 ## Test library/module system
 
-mods=$PWD/tests/modules
-
-if [ "`HOME=$mods $VALGRIND $Q ./jq -nr fg`" != foobar ]; then
+if [ "`HOME="$mods" $VALGRIND $Q ./jq -nr fg`" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
 fi
 
-if [ `HOME=$mods $VALGRIND $Q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
+if [ `HOME="$mods" $VALGRIND $Q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
     echo "Binding too many defs into program" 1>&2
     exit 1
 fi
 
-if ! $VALGRIND $Q ./jq -ner -L $mods 'import a as foo; import b as bar; import a; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a, a] | . == ["a","b","c","a","a"]' > /dev/null; then
+if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import a as foo; import b as bar; import a; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a, a] | . == ["a","b","c","a","a"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
 
-if ! $VALGRIND $Q ./jq -ner -L $mods 'import c as foo; [foo::a, foo::c] | . == [0,"acmehbah"]' > /dev/null; then
+if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import c as foo; [foo::a, foo::c] | . == [0,"acmehbah"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
 
-if [ "`$VALGRIND $Q ./jq -cner -L $mods '\"c\" | modulemeta'`" != '{"whatever":null,"name":"c","deps":[{"as":"foo","name":"a"},{"search":"./","as":"d","name":"d"},{"search":"./","name":"d"},{"search":"./../lib/jq","as":"e","name":"e"},{"search":"./../lib/jq","as":"f","name":"f"}]}' ]; then
+if [ "`$VALGRIND $Q ./jq -cner -L "$mods" '\"c\" | modulemeta'`" != '{"whatever":null,"name":"c","deps":[{"as":"foo","name":"a"},{"search":"./","as":"d","name":"d"},{"search":"./","name":"d"},{"search":"./../lib/jq","as":"e","name":"e"},{"search":"./../lib/jq","as":"f","name":"f"}]}' ]; then
     echo "modulemeta builtin appears to be broken" 1>&2
     exit 1
 fi
     
-if $VALGRIND ./jq -ner -L $mods 'import syntaxerror; .' > $d/out 2>&1; then
+if $VALGRIND ./jq -ner -L "$mods" 'import syntaxerror; .' > $d/out 2>&1; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
@@ -161,7 +229,7 @@ if ! grep '^jq: error: syntax error,' $d/out > /dev/null; then
     exit 1
 fi
 
-if $VALGRIND ./jq -ner -L $mods '%::wat' > $d/out 2>&1 ||
+if $VALGRIND ./jq -ner -L "$mods" '%::wat' > $d/out 2>&1 ||
    ! grep '^jq: error: syntax error,' $d/out > /dev/null; then
     echo "Syntax errors not detected?" 1>&2
     exit 1
@@ -172,7 +240,7 @@ if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out
     exit 1
 fi
 
-if ! $VALGRIND ./jq -ner -L $mods -f $mods/test_bind_order.jq > $d/out 2>&1; then
+if ! $VALGRIND ./jq -ner -L "$mods" -f "$mods/test_bind_order.jq" > $d/out 2>&1; then
     echo "Import bind order is broken" 1>&2
     exit 1
 fi
@@ -182,3 +250,5 @@ if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out
     cat $d/out
     exit 1
 fi
+
+exit 0
