@@ -1740,6 +1740,55 @@ sections:
             input: 'true'
             output: ['"some exception"']
 
+      - title: Breaking out of control structures
+        body: |
+
+          A convenient use of try/catch is to break out of control
+          structures like `reduce`, `foreach`, `while`, and so on.
+
+          For example:
+
+              # Repeat an expression until it raises "break" as an
+              # error, then stop repeating without re-raising the error.
+              # But if the error caught is not "break" then re-raise it.
+              try repeat(exp) catch .=="break" then empty else error;
+
+          jq has a syntax for lexical labels to "break" or "go (back) to":
+
+              label | ... break ...
+
+          The `break` builtin will cause the program to return to act as
+          though the nearest `label` (to the left) produced `empty`.
+
+          The `break2` builtin will return the program to the second
+          nearest `label`, then `empty`.
+
+          The `break3` builtin will return the program to the third
+          nearest `label`, then `empty`.
+
+          A variation on this is named labels:
+
+              label $name | ... break $name
+
+          The `break $name` form returns to the named label and produces
+          `empty`.
+
+          In all cases the relationship between the `break` and
+          corresponding `label` is lexical: the label has to be
+          "visible" from the break.
+
+          To break out of a `reduce`, for example:
+
+              label | reduce .[] as $item (null; if .==false then break else ... end)
+
+          The following jq program produces a syntax error:
+
+              break
+
+          because:
+
+              jq: error: break used outside labeled control structure
+
       - title: "`?` operator"
         body: |
 
@@ -2171,8 +2220,7 @@ sections:
 
           This is mostly useful only for constructing `reduce`- and
           `limit`-like functions.  But it is much more general, as it
-          allows for partial reductions (see the example below), as well
-          as breaking out of the "loop" with `break`.
+          allows for partial reductions (see the example below).
 
         examples:
           - program: '[foreach .[] as $item
@@ -2199,8 +2247,14 @@ sections:
               def recurse(f): def r: ., (f | select(. != null) | r); r;
 
               def while(cond; update):
-                def w: if cond then ., (update | _while) else empty end;
-                try _while catch if . == "break" then empty else . end;
+                def _while:
+                  if cond then ., (update | _while) else empty end;
+                _while;
+
+              def repeat(exp):
+                def _repeat:
+                  exp, _repeat;
+                _repeat;
 
       - title: Generators and iterators
         body: |

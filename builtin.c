@@ -989,7 +989,6 @@ static block bind_bytecoded_builtins(block b) {
 
 static const char* const jq_builtins[] = {
   "def error: error(.);",
-  "def break: error(\"break\");",
   "def map(f): [.[] | f];",
   "def map_values(f): .[] |= f;",
   "def select(f): if f then . else empty end;",
@@ -1024,14 +1023,14 @@ static const char* const jq_builtins[] = {
   "def paths: path(recurse(if (type|. == \"array\" or . == \"object\") then .[] else empty end))|select(length > 0);",
   "def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_filter);",
   "def any(generator; condition):"
-  "        [foreach generator as $i"
+  "        [label | foreach generator as $i"
   "                 (false;"
   "                  if . then break elif $i | condition then true else . end;"
   "                  if . then . else empty end)] | length == 1;",
   "def any(condition): any(.[]; condition);",
   "def any: any(.);",
   "def all(generator; condition): "
-  "        [foreach generator as $i"
+  "        [label | foreach generator as $i"
   "                 (true;"
   "                  if .|not then break elif $i | condition then . else false end;"
   "                  if .|not then . else empty end)] | length == 0;",
@@ -1133,13 +1132,13 @@ static const char* const jq_builtins[] = {
   "def while(cond; update): "
   "     def _while: "
   "         if cond then ., (update | _while) else empty end; "
-  "     try _while catch if .==\"break\" then empty else . end;",
+  "     _while;",
   "def until(cond; next): "
   "     def _until: "
   "         if cond then . else (next|_until) end;"
   "     _until;",
-  "def limit($n; exp): if $n < 0 then exp else foreach exp as $item ([$n, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1]) end;",
-  "def first(g): foreach g as $item ([false, null]; if .[0]==true then break else [true, $item] end; .[1]);",
+  "def limit($n; exp): if $n < 0 then exp else label | foreach exp as $item ([$n, null]; if .[0] < 1 then break else [.[0] -1, $item] end; .[1]) end;",
+  "def first(g): label | foreach g as $item ([false, null]; if .[0]==true then break else [true, $item] end; .[1]);",
   "def last(g): reduce g as $item (null; $item);",
   "def nth($n; g): if $n < 0 then error(\"nth doesn't support negative indices\") else last(limit($n + 1; g)) end;",
   "def first: .[0];",
@@ -1157,12 +1156,12 @@ static const char* const jq_builtins[] = {
 	      "  end;",
   "def in(xs): . as $x | xs | has($x);",
   "def inside(xs): . as $x | xs | contains($x);",
-  "def input: try _input catch if .==\"break\" then empty else . end;",
+  "def input: _input;",
   "def repeat(exp): "
   "     def _repeat: "
   "         exp, _repeat;"
-  "     try _repeat catch if .==\"break\" then empty else . end;",
-  "def inputs: repeat(_input);",
+  "     _repeat;",
+  "def inputs: try repeat(_input) catch if .==\"break\" then empty else .|error end;",
   // # like ruby's downcase - only characters A to Z are affected
   "def ascii_downcase:"
   "  explode | map( if 65 <= . and . <= 90 then . + 32  else . end) | implode;",

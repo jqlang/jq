@@ -241,6 +241,7 @@ int block_has_only_binders_and_imports(block binders, int bindflags) {
 
 int block_has_only_binders(block binders, int bindflags) {
   bindflags |= OP_HAS_BINDING;
+  bindflags &= ~OP_BIND_WILDCARD;
   for (inst* curr = binders.first; curr; curr = curr->next) {
     if ((opcode_describe(curr->op)->flags & bindflags) != bindflags && curr->op != MODULEMETA) {
       return 0;
@@ -291,11 +292,12 @@ static int block_count_refs(block binder, block body) {
   return nrefs;
 }
 
-static int block_bind_subblock(block binder, block body, int bindflags) {
+static int block_bind_subblock(block binder, block body, int bindflags, int break_distance) {
   assert(block_is_single(binder));
-  assert((opcode_describe(binder.first->op)->flags & bindflags) == bindflags);
+  assert((opcode_describe(binder.first->op)->flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD));
   assert(binder.first->symbol);
   assert(binder.first->bound_by == 0 || binder.first->bound_by == binder.first);
+  assert(break_distance >= 0);
 
   binder.first->bound_by = binder.first;
   if (binder.first->nformals == -1)
@@ -303,9 +305,16 @@ static int block_bind_subblock(block binder, block body, int bindflags) {
   int nrefs = 0;
   for (inst* i = body.first; i; i = i->next) {
     int flags = opcode_describe(i->op)->flags;
-    if ((flags & bindflags) == bindflags &&
-        i->bound_by == 0 &&
-        !strcmp(i->symbol, binder.first->symbol)) {
+    if ((flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD) && i->bound_by == 0 &&
+        (!strcmp(i->symbol, binder.first->symbol) ||
+         // Check for break/break2/break3; see parser.y
+         ((bindflags & OP_BIND_WILDCARD) && i->symbol[0] == '*' &&
+          break_distance <= 3 && (i->symbol[1] == '1' + break_distance) &&
+          i->symbol[2] == '\0'))) {
+      if (bindflags & OP_BIND_WILDCARD) {
+        jv_mem_free(i->symbol);
+        i->symbol = strdup(binder.first->symbol);
+      }
       // bind this instruction
       if (i->op == CALL_JQ && i->nactuals == -1)
         i->nactuals = block_count_actuals(i->arglist);
@@ -313,11 +322,17 @@ static int block_bind_subblock(block binder, block body, int bindflags) {
         i->bound_by = binder.first;
         nrefs++;
       }
+    } else if ((flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD) && i->bound_by != 0 &&
+               !strncmp(binder.first->symbol, "*anonlabel", sizeof("*anonlabel") - 1) &&
+               !strncmp(i->symbol, "*anonlabel", sizeof("*anonlabel") - 1)) {
+      // Increment the break distance required for this binder to match
+      // a break whenever we come across a STOREV of *anonlabel...
+      break_distance++;
     }
     // binding recurses into closures
-    nrefs += block_bind_subblock(binder, i->subfn, bindflags);
+    nrefs += block_bind_subblock(binder, i->subfn, bindflags, break_distance);
     // binding recurses into argument list
-    nrefs += block_bind_subblock(binder, i->arglist, bindflags);
+    nrefs += block_bind_subblock(binder, i->arglist, bindflags, break_distance);
   }
   return nrefs;
 }
@@ -327,7 +342,7 @@ static int block_bind_each(block binder, block body, int bindflags) {
   bindflags |= OP_HAS_BINDING;
   int nrefs = 0;
   for (inst* curr = binder.first; curr; curr = curr->next) {
-    nrefs += block_bind_subblock(inst_block(curr), body, bindflags);
+    nrefs += block_bind_subblock(inst_block(curr), body, bindflags, 0);
   }
   return nrefs;
 }
@@ -354,7 +369,7 @@ block block_bind_library(block binder, block body, int bindflags, const char* li
     strcpy(tname, matchname);
     strcpy(tname+matchlen,cname);
     curr->symbol = tname;
-    nrefs += block_bind_subblock(inst_block(curr), body, bindflags);
+    nrefs += block_bind_subblock(inst_block(curr), body, bindflags, 0);
     curr->symbol = cname;
     free(tname);
   }
@@ -483,13 +498,13 @@ block gen_function(const char* name, block formals, block body) {
       i->op = CLOSURE_PARAM;
       body = gen_var_binding(gen_call(i->symbol, gen_noop()), i->symbol, body);
     }
-    block_bind_subblock(inst_block(i), body, OP_IS_CALL_PSEUDO | OP_HAS_BINDING);
+    block_bind_subblock(inst_block(i), body, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
   }
   i->subfn = body;
   i->symbol = strdup(name);
   i->arglist = formals;
   block b = inst_block(i);
-  block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING);
+  block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
   return b;
 }
 
@@ -707,10 +722,7 @@ block gen_foreach(const char* varname, block source, block init, block update, b
                         // want to output it, so we backtrack.
                         gen_op_simple(BACKTRACK));
   inst_set_target(output, foreach); // make that JUMP go bast the BACKTRACK at the end of the loop
-  block handler = gen_cond(gen_call("_equal", BLOCK(gen_lambda(gen_const(jv_string("break"))), gen_lambda(gen_noop()))),
-                           gen_op_simple(BACKTRACK),
-                           gen_call("error", gen_noop()));
-  return gen_try(foreach, handler);
+  return foreach;
 }
 
 block gen_definedor(block a, block b) {
@@ -790,19 +802,44 @@ block gen_var_binding(block var, const char* name, block body) {
                           body, OP_HAS_VARIABLE));
 }
 
+// Like gen_var_binding(), but bind `break`'s wildcard unbound variable
+static block gen_wildvar_binding(block var, const char* name, block body) {
+  return BLOCK(gen_op_simple(DUP), var,
+               block_bind(gen_op_unbound(STOREV, name),
+                          body, OP_HAS_VARIABLE | OP_BIND_WILDCARD));
+}
+
 block gen_cond(block cond, block iftrue, block iffalse) {
   return BLOCK(gen_op_simple(DUP), cond, 
                gen_condbranch(BLOCK(gen_op_simple(POP), iftrue),
                               BLOCK(gen_op_simple(POP), iffalse)));
 }
 
+block gen_try_handler(block handler) {
+  // Quite a pain just to hide jq's internal errors.
+  return gen_cond(// `if type=="object" and .__jq
+                  gen_and(gen_call("_equal",
+                                   BLOCK(gen_lambda(gen_const(jv_string("object"))),
+                                         gen_lambda(gen_noop()))),
+                          BLOCK(gen_subexp(gen_const(jv_string("__jq"))),
+                                gen_noop(),
+                                gen_op_simple(INDEX))),
+                  // `then error`
+                  gen_call("error", gen_noop()),
+                  // `else HANDLER end`
+                  handler);
+}
+
 block gen_try(block exp, block handler) {
   /*
-   * Produce:
+   * Produce something like:
    *  FORK_OPT <address of handler>
    *  <exp>
    *  JUMP <end of handler>
    *  <handler>
+   *
+   * If this is not an internal try/catch, then catch and re-raise
+   * internal errors to prevent them from leaking.
    *
    * The handler will only execute if we backtrack to the FORK_OPT with
    * an error (exception).  If <exp> produces no value then FORK_OPT
@@ -815,6 +852,25 @@ block gen_try(block exp, block handler) {
     handler = BLOCK(gen_op_simple(DUP), gen_op_simple(POP), handler);
   exp = BLOCK(exp, gen_op_target(JUMP, handler));
   return BLOCK(gen_op_target(FORK_OPT, exp), exp, handler);
+}
+
+block gen_label(const char *label, block exp) {
+  block cond = gen_call("_equal",
+                        BLOCK(gen_lambda(gen_noop()),
+                              gen_lambda(gen_op_unbound(LOADV, label))));
+  return gen_wildvar_binding(gen_op_simple(GENLABEL), label,
+                             BLOCK(gen_op_simple(POP),
+                                   // try exp catch if . == $label
+                                   //               then empty
+                                   //               else error end
+                                   //
+                                   // Can't use gen_binop(), as that's firmly
+                                   // stuck in parser.y as it refers to things
+                                   // like EQ.
+                                   gen_try(exp,
+                                           gen_cond(cond,
+                                                    gen_op_simple(BACKTRACK),
+                                                    gen_call("error", gen_noop())))));
 }
 
 block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block code) {
@@ -855,7 +911,10 @@ static int expand_call_arglist(block* b) {
   for (inst* curr; (curr = block_take(b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_BINDING) {
       if (!curr->bound_by) {
-        locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
+        if (curr->symbol[0] == '*' && curr->symbol[1] >= '1' && curr->symbol[1] <= '3' && curr->symbol[2] == '\0')
+          locfile_locate(curr->locfile, curr->source, "jq: error: break used outside labeled control structure");
+        else
+          locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
         errors++;
         // don't process this instruction if it's not well-defined
         ret = BLOCK(ret, inst_block(curr));

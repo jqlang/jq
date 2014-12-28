@@ -37,6 +37,7 @@ struct jq_state {
   int subexp_nest;
   int debug_trace_enabled;
   int initial_execution;
+  unsigned next_label;
 
   jv attrs;
   jq_input_cb input_cb;
@@ -348,6 +349,11 @@ jv jq_next(jq_state *jq) {
       assert(jv_is_valid(v));
       jv_free(stack_pop(jq));
       stack_push(jq, v);
+      break;
+    }
+
+    case GENLABEL: {
+      stack_push(jq, JV_OBJECT(jv_string("__jq"), jv_number(jq->next_label++)));
       break;
     }
 
@@ -838,6 +844,7 @@ jq_state *jq_init(void) {
     return NULL;
 
   jq->bc = 0;
+  jq->next_label = 0;
 
   stack_init(&jq->stk);
   jq->stk_top = 0;
