@@ -80,6 +80,7 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->curr_buf = 0;
   p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
   p->bom_strip_position = 0;
+  p->last_ch_was_ws = 0;
   p->line = 1;
   p->column = 0;
   jvp_dtoa_context_init(&p->dtoa);
