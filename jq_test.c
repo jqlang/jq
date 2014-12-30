@@ -31,6 +31,7 @@ static int skipline(const char* buf) {
 }
 
 static void run_jq_tests(FILE *testdata) {
+  char prog[4096];
   char buf[4096];
   int tests = 0, passed = 0, invalid = 0;
   unsigned int lineno = 0;
@@ -40,14 +41,14 @@ static void run_jq_tests(FILE *testdata) {
   assert(jq);
 
   while (1) {
-    if (!fgets(buf, sizeof(buf), testdata)) break;
+    if (!fgets(prog, sizeof(prog), testdata)) break;
     lineno++;
-    if (skipline(buf)) continue;
-    if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = 0;
-    printf("Testing '%s' at line number %u\n", buf, lineno);
+    if (skipline(prog)) continue;
+    if (prog[strlen(prog)-1] == '\n') prog[strlen(prog)-1] = 0;
+    printf("Testing '%s' at line number %u\n", prog, lineno);
     int pass = 1;
     tests++;
-    int compiled = jq_compile(jq, buf);
+    int compiled = jq_compile(jq, prog);
     if (!compiled) {invalid++; continue;}
     printf("Disassembly:\n");
     jq_dump_disassembly(jq, 2);
@@ -65,7 +66,7 @@ static void run_jq_tests(FILE *testdata) {
       jv actual = jq_next(jq);
       if (!jv_is_valid(actual)) {
         jv_free(actual);
-        printf("*** Insufficient results for test at line number %u\n", lineno);
+        printf("*** Insufficient results for test at line number %u: %s\n", lineno, prog);
         pass = 0;
         break;
       } else if (!jv_equal(jv_copy(expected), jv_copy(actual))) {
@@ -73,7 +74,7 @@ static void run_jq_tests(FILE *testdata) {
         jv_dump(jv_copy(expected), 0);
         printf(", but got ");
         jv_dump(jv_copy(actual), 0);
-        printf(" for test at line number %u\n", lineno);
+        printf(" for test at line number %u: %s\n", lineno, prog);
         pass = 0;
       }
       jv as_string = jv_dump_string(jv_copy(expected), rand() & ~(JV_PRINT_COLOUR|JV_PRINT_REFCOUNT));
@@ -89,7 +90,7 @@ static void run_jq_tests(FILE *testdata) {
       if (jv_is_valid(extra)) {
         printf("*** Superfluous result: ");
         jv_dump(extra, 0);
-        printf(" for test at line number %u\n", lineno);
+        printf(" for test at line number %u, %s\n", lineno, prog);
         pass = 0;
       } else {
         jv_free(extra);
