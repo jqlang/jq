@@ -107,6 +107,7 @@ static void parser_reset(struct jv_parser* p) {
 static void parser_free(struct jv_parser* p) {
   parser_reset(p);
   jv_free(p->path);
+  jv_free(p->output);
   jv_mem_free(p->stack);
   jv_mem_free(p->tokenbuf);
   jvp_dtoa_context_free(&p->dtoa);
@@ -383,7 +384,6 @@ static void tokenadd(struct jv_parser* p, char c) {
   }
   assert(p->tokenpos < p->tokenlen);
   p->tokenbuf[p->tokenpos++] = c;
-  p->tokenbuf[p->tokenpos] = '\0'; // for debugging
 }
 
 static int unhex4(char* hex) {
@@ -593,6 +593,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
       return OK;
     }
     parser_reset(p);
+    jv_free(*out);
     *out = jv_invalid();
     return "Truncated value";
   }
@@ -714,6 +715,7 @@ jv jv_parser_next(struct jv_parser* p) {
   if (msg == OK) {
     return value;
   } else if (msg) {
+    jv_free(value);
     if (ch != '\036' && (p->flags & JV_PARSE_SEQ)) {
       // Skip to the next RS
       p->st = JV_PARSER_WAITING_FOR_RS;
@@ -734,8 +736,9 @@ jv jv_parser_next(struct jv_parser* p) {
     // need another buffer
     return jv_invalid();
   } else {
-    assert(p->curr_buf_pos == p->curr_buf_length);
     // at EOF
+    assert(p->curr_buf_pos == p->curr_buf_length);
+    jv_free(value);
     if (p->st != JV_PARSER_WAITING_FOR_RS) {
       if (p->st != JV_PARSER_NORMAL) {
         value = make_error(p, "Unfinished string at EOF at line %d, column %d", p->line, p->column);
