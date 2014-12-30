@@ -508,6 +508,25 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case STORE_GLOBAL: {
+      // Get the constant
+      jv val = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
+      assert(jv_is_valid(val));
+
+      // Store the var
+      uint16_t level = *pc++;
+      uint16_t v = *pc++;
+      jv* var = frame_local_var(jq, v, level);
+      if (jq->debug_trace_enabled) {
+        printf("V%d = ", v);
+        jv_dump(jv_copy(val), 0);
+        printf(" (%d)\n", jv_get_refcnt(val));
+      }
+      jv_free(*var);
+      *var = val;
+      break;
+    }
+
     case PATH_BEGIN: {
       jv v = stack_pop(jq);
       stack_push(jq, jq->path);

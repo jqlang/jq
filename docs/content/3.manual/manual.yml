@@ -185,8 +185,9 @@ sections:
 
       * `-Ldirectory` / `-L directory`:
 
-        Add `directory` to the search list for modules.  See the section
-        on modules below.
+        Prepend `directory` to the search list for modules.  If this
+        option is used then no builtin search list is used.  See the
+        section on modules below.
 
       * `-e` / `--exit-status`:
 
@@ -2474,9 +2475,7 @@ sections:
     body: |
 
       jq has a library/module system.  Modules are files whose names end
-      in `.jq`.  Modules should (but don't have to) start with a
-      `module` directive.  Programs and modules must `import` their
-      dependencies, if any.
+      in `.jq`.
 
       Modules imported by a program are searched for in a default search
       path (see below).  The `import` directive allows the importer to
@@ -2498,29 +2497,20 @@ sections:
       the default is appended.
 
       The default search path is the search path given to the `-L`
-      command-line option, else the "$JQ_LIBRARY_PATH", if set in the
-      environment, else `["~/.jq", "$ORIGIN/../lib/jq"]` (on Unix) or
-      `["~/.jq", "$ORIGIN/lib"]` (on Windows).
-
-      The `-L` argument's and "$JQ_LIBRARY_PATH" environment variable's
-      string values are split on ":" on Unix, or ";" on Windows.
+      command-line option, else `["~/.jq", "$ORIGIN/../lib/jq",
+      "$ORIGIN/../lib"]`.
 
       Null and empty string path elements terminate search path
       processing.
 
-      Modules may be organized into a hierarchy, with name components
-      separated by double-colons ("::").  For example: "foo::bar".  Each
-      component in the name corresponds to a directory on the
-      filesystem.
-
-      A module named "foo::bar" would be searched for in "foo/bar.jq"
-      and "foo/bar/bar.jq" in the given search path. This is intended to
-      allow modules to be placed in a directory along with, for example,
-      version control files, README files, and so on, but also to allow
-      for single-file modules.
+      A dependency with relative path "foo/bar" would be searched for in
+      "foo/bar.jq" and "foo/bar/bar.jq" in the given search path. This
+      is intended to allow modules to be placed in a directory along
+      with, for example, version control files, README files, and so on,
+      but also to allow for single-file modules.
 
       Consecutive components with the same name are not allowed to avoid
-      ambiguities (e.g., "foo::foo").
+      ambiguities (e.g., "foo/foo").
 
       For example, with `-L$HOME/.jq` a module `foo` can be found in
       `$HOME/.jq/foo.jq` and `$HOME/.jq/foo/foo.jq`.
@@ -2528,38 +2518,78 @@ sections:
       If "$HOME/.jq" is a file, it is sourced into the main program.
 
     entries:
-      - title: "`module NAME {<metadata>};`"
+      - title: "`import RelativePathString as NAME;`"
         body: |
 
-          Defines a module named `NAME` with the given metadata.  If
-          given it must be the first thing in the module.  Programs also
-          may use this directive.
+          Imports a module found at the given path relative to a
+          directory in a search path.  The module's symbols are prefixed
+          with "NAME::".  A ".jq" suffix will be added to the relative
+          path string.
 
-          The metadata must be a constant jq expression.  It should be
-          an object with keys like "version", "repo", "URI", and so on.
-          At this time jq doesn't use this metadata, but it is made
-          available to users via the `modulemeta` builtin.
-
-      - title: "`import NAME {<metadata>};` `import NAME {<metadata>} as NAME;`"
+      - title: "`import RelativePathString as NAME {<metadata>};`"
         body: |
 
-          Imports a module named `NAME`.  If the second form is used
-          then the module's symbols are prefixed with "NAME::".
+          Imports a module found at the given path relative to a
+          directory in a search path.  The module's symbols are prefixed
+          with "NAME::".  A ".jq" suffix will be added to the relative
+          path string.
 
           The metadata must be a constant jq expression.  It should be
-          an object with keys like "version", "repo", "URI", and so on.
+          an object with keys like "homepage" and so on.  At this time
+          jq only uses the "search" key/value of the metadate.  The
+          metadata is also made available to users via the `modulemeta`
+          builtin.
           
           The "search" key in the metadata, if present, should have a
           string or array value (array of strings); this is the search
           path to be prefixed to the top-level search path.
 
+      - title: "`import RelativePathString as NAME;`"
+        body: |
+
+          Imports a JSON file found at the given path relative to a
+          directory in a search path.  The file's data will be available
+          as `$NAME::NAME`.  A ".json" suffix will be added to the
+          relative path string.
+
+      - title: "`import RelativePathString as $NAME {<metadata>};`"
+        body: |
+
+          Imports a JSON file found at the given path relative to a
+          directory in a search path.  The file's data will be available
+          as `$NAME::NAME`.  A ".json" suffix will be added to the
+          relative path string.
+
+          The metadata must be a constant jq expression.  It should be
+          an object with keys like "homepage" and so on.  At this time
+          jq only uses the "search" key/value of the metadate.  The
+          metadata is also made available to users via the `modulemeta`
+          builtin.
+          
+          The "search" key in the metadata, if present, should have a
+          string or array value (array of strings); this is the search
+          path to be prefixed to the top-level search path.
+
+      - title: "`module {<metadata>};`"
+        body: |
+
+          This directive is entirely optional.  It's not required for
+          proper operation.  It serves only the purpose of providing
+          metadata that can be read with the `modulemeta` builtin.
+
+          The metadata must be a constant jq expression.  It should be
+          an object with keys like "homepage".  At this time jq doesn't
+          use this metadata, but it is made available to users via the
+          `modulemeta` builtin.
+
       - title: "`modulemeta`"
         body: |
 
-          Takes a module name as input and outputs the module's
-          metadata, with the module's imports (including metadata) as
-          the "deps" key.
+          Takes a module name as input and outputs the module's metadata
+          as an object, with the module's imports (including metadata)
+          as an array value for the "deps" key.
 
           Programs can use this to query a module's metadata, which they
           could then use to, for example, search for, download, and
           install missing dependencies.
+

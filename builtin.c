@@ -824,6 +824,21 @@ static jv f_env(jq_state *jq, jv input) {
   return env;
 }
 
+static jv f_get_search_list(jq_state *jq, jv input) {
+  jv_free(input);
+  return jq_get_lib_dirs(jq);
+}
+
+static jv f_get_prog_origin(jq_state *jq, jv input) {
+  jv_free(input);
+  return jq_get_prog_origin(jq);
+}
+
+static jv f_get_jq_origin(jq_state *jq, jv input) {
+  jv_free(input);
+  return jq_get_jq_origin(jq);
+}
+
 static jv f_string_split(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING) {
     jv_free(a);
@@ -937,6 +952,9 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_env, "env", 1},
+  {(cfunction_ptr)f_get_search_list, "get_search_list", 1},
+  {(cfunction_ptr)f_get_prog_origin, "get_prog_origin", 1},
+  {(cfunction_ptr)f_get_jq_origin, "get_jq_origin", 1},
   {(cfunction_ptr)f_match, "_match_impl", 4},
   {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
   {(cfunction_ptr)f_input, "_input", 1},

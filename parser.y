@@ -280,14 +280,13 @@ Module:
 %empty {
   $$ = gen_noop();
 } |
-"module" IDENT Exp ';' {
-  if (!block_is_const($3)) {
+"module" Exp ';' {
+  if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant.");
     $$ = gen_noop();
   } else {
-    $$ = gen_module(jv_string_value($2), $3);
+    $$ = gen_module($2);
   }
-  jv_free($2);
 }
 
 Imports:
@@ -479,33 +478,45 @@ Term {
 }
 
 Import:
-"import" IDENT ';' {
-  $$ = gen_import(jv_string_value($2), gen_noop(), NULL);
-  jv_free($2);
+"import" String "as" '$' IDENT ';' {
+  jv v = block_const($2);
+  // XXX Make gen_import take only blocks and the int is_data so we
+  // don't have to free so much stuff here
+  $$ = gen_import(jv_string_value(v), gen_noop(), jv_string_value($5), 1);
+  block_free($2);
+  jv_free($5);
+  jv_free(v);
 } |
-"import" IDENT Exp ';' {
-  if (!block_is_const($3)) {
-    FAIL(@$, "Module metadata must be constant.");
-    $$ = gen_noop();
-  } else {
-    $$ = gen_import(jv_string_value($2), $3, NULL);
-  }
-  jv_free($2);
-} |
-"import" IDENT "as" IDENT ';' {
-  $$ = gen_import(jv_string_value($2), gen_noop(), jv_string_value($4));
-  jv_free($2);
+"import" String "as" IDENT ';' {
+  jv v = block_const($2);
+  $$ = gen_import(jv_string_value(v), gen_noop(), jv_string_value($4), 0);
+  block_free($2);
   jv_free($4);
+  jv_free(v);
 } |
-"import" IDENT "as" IDENT Exp ';' {
+"import" String "as" IDENT Exp ';' {
   if (!block_is_const($5)) {
     FAIL(@$, "Module metadata must be constant.");
     $$ = gen_noop();
   } else {
-    $$ = gen_import(jv_string_value($2), $5, jv_string_value($4));
+    jv v = block_const($2);
+    $$ = gen_import(jv_string_value(v), $5, jv_string_value($4), 0);
+    jv_free(v);
   }
-  jv_free($2);
+  block_free($2);
   jv_free($4);
+} |
+"import" String "as" '$' IDENT Exp ';' {
+  if (!block_is_const($6)) {
+    FAIL(@$, "Module metadata must be constant.");
+    $$ = gen_noop();
+  } else {
+    jv v = block_const($2);
+    $$ = gen_import(jv_string_value(v), $6, jv_string_value($5), 1);
+    jv_free(v);
+  }
+  block_free($2);
+  jv_free($5);
 }
 
 FuncDef:

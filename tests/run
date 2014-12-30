@@ -159,7 +159,7 @@ if which seq > /dev/null 2>&1; then
         fi
 
         dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
-            $VALGRIND ./jq -cn --stream -L "$mods" 'import streaming; tovalues(inputs)' > $d/out1 2>$d/err || true
+            $VALGRIND ./jq -cn --stream -L "$mods" 'import "streaming" as streaming; streaming::tovalues(inputs)' > $d/out1 2>$d/err || true
         if [ -n "$VALGRIND" ]; then
             grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
         else
@@ -200,22 +200,22 @@ if [ `HOME="$mods" $VALGRIND $Q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' |
     exit 1
 fi
 
-if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import a as foo; import b as bar; import a; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a, a] | . == ["a","b","c","a","a"]' > /dev/null; then
+if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a] | . == ["a","b","c","a"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
 
-if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import c as foo; [foo::a, foo::c] | . == [0,"acmehbah"]' > /dev/null; then
+if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import "c" as foo; [foo::a, foo::c] | . == [0,"acmehbah"]' > /dev/null; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi
 
-if [ "`$VALGRIND $Q ./jq -cner -L "$mods" '\"c\" | modulemeta'`" != '{"whatever":null,"name":"c","deps":[{"as":"foo","name":"a"},{"search":"./","as":"d","name":"d"},{"search":"./","name":"d"},{"search":"./../lib/jq","as":"e","name":"e"},{"search":"./../lib/jq","as":"f","name":"f"}]}' ]; then
+if [ "`$VALGRIND $Q ./jq -cner -L "$mods" '\"c\" | modulemeta'`" != '{"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}' ]; then
     echo "modulemeta builtin appears to be broken" 1>&2
     exit 1
 fi
     
-if $VALGRIND ./jq -ner -L "$mods" 'import syntaxerror; .' > $d/out 2>&1; then
+if $VALGRIND ./jq -ner -L "$mods" 'import "syntaxerror" as e; .' > $d/out 2>&1; then
     echo "Module system appears to be broken" 1>&2
     exit 1
 fi

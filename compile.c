@@ -148,6 +148,15 @@ block gen_const(jv constant) {
   return inst_block(i);
 }
 
+block gen_const_global(jv constant, const char *name) {
+  assert((opcode_describe(STORE_GLOBAL)->flags & (OP_HAS_CONSTANT | OP_HAS_VARIABLE | OP_HAS_BINDING)) ==
+         (OP_HAS_CONSTANT | OP_HAS_VARIABLE | OP_HAS_BINDING));
+  inst* i = inst_new(STORE_GLOBAL);
+  i->imm.constant = constant;
+  i->symbol = strdup(name);
+  return inst_block(i);
+}
+
 int block_is_const(block b) {
   return (block_is_single(b) && b.first->op == LOADK);
 }
@@ -239,6 +248,10 @@ int block_has_only_binders_and_imports(block binders, int bindflags) {
   return 1;
 }
 
+static int inst_is_binder(inst *i, int bindflags) {
+  return !((opcode_describe(i->op)->flags & bindflags) != bindflags && i->op != MODULEMETA);
+}
+
 int block_has_only_binders(block binders, int bindflags) {
   bindflags |= OP_HAS_BINDING;
   bindflags &= ~OP_BIND_WILDCARD;
@@ -311,10 +324,6 @@ static int block_bind_subblock(block binder, block body, int bindflags, int brea
          ((bindflags & OP_BIND_WILDCARD) && i->symbol[0] == '*' &&
           break_distance <= 3 && (i->symbol[1] == '1' + break_distance) &&
           i->symbol[2] == '\0'))) {
-      if (bindflags & OP_BIND_WILDCARD) {
-        jv_mem_free(i->symbol);
-        i->symbol = strdup(binder.first->symbol);
-      }
       // bind this instruction
       if (i->op == CALL_JQ && i->nactuals == -1)
         i->nactuals = block_count_actuals(i->arglist);
@@ -353,7 +362,6 @@ block block_bind(block binder, block body, int bindflags) {
 }
 
 block block_bind_library(block binder, block body, int bindflags, const char* libname) {
-  assert(block_has_only_binders(binder, bindflags));
   bindflags |= OP_HAS_BINDING;
   int nrefs = 0;
   int matchlen = strlen(libname);
@@ -363,13 +371,21 @@ block block_bind_library(block binder, block body, int bindflags, const char* li
     strcpy(matchname+matchlen,"::");
     matchlen += 2;
   }
+  assert(block_has_only_binders(binder, bindflags));
   for (inst *curr = binder.first; curr; curr = curr->next) {
+    int bindflags2 = bindflags;
     char* cname = curr->symbol;
     char* tname = malloc(strlen(curr->symbol)+matchlen+1);
     strcpy(tname, matchname);
     strcpy(tname+matchlen,cname);
+
+    // Ew
+    if ((opcode_describe(curr->op)->flags & (OP_HAS_VARIABLE | OP_HAS_CONSTANT)))
+      bindflags2 = OP_HAS_VARIABLE | OP_HAS_BINDING;
+
+    // This mutation is ugly, even if we undo it
     curr->symbol = tname;
-    nrefs += block_bind_subblock(inst_block(curr), body, bindflags, 0);
+    nrefs += block_bind_subblock(inst_block(curr), body, bindflags2, 0);
     curr->symbol = cname;
     free(tname);
   }
@@ -440,15 +456,13 @@ jv block_take_imports(block* body) {
   jv imports = jv_array();
   
   inst* top = NULL;
-  if (body->first->op == TOP) {
+  if (body->first && body->first->op == TOP) {
     top = block_take(body);
   }
   while (body->first && (body->first->op == MODULEMETA || body->first->op == DEPS)) {
     inst* dep = block_take(body);
     if (dep->op == DEPS) {
-      jv opts = jv_copy(dep->imm.constant);
-      opts = jv_object_set(opts,jv_string("name"),jv_string(dep->symbol));
-      imports = jv_array_append(imports, opts);
+      imports = jv_array_append(imports, jv_copy(dep->imm.constant));
     }
     inst_free(dep);
   }
@@ -458,13 +472,11 @@ jv block_take_imports(block* body) {
   return imports;
 }
 
-block gen_module(const char* name, block metadata) {
+block gen_module(block metadata) {
   inst* i = inst_new(MODULEMETA);
-  i->symbol = strdup(name);
   i->imm.constant = block_const(metadata);
   if (jv_get_kind(i->imm.constant) != JV_KIND_OBJECT)
     i->imm.constant = jv_object_set(jv_object(), jv_string("metadata"), i->imm.constant);
-  i->imm.constant = jv_object_set(i->imm.constant, jv_string("name"), jv_string(name));
   block_free(metadata);
   return inst_block(i);
 }
@@ -475,17 +487,17 @@ jv block_module_meta(block b) {
   return jv_null();
 }
 
-block gen_import(const char* name, block metadata, const char* as) {
+block gen_import(const char* name, block metadata, const char* as, int is_data) {
   assert(metadata.first == NULL || block_is_const(metadata));
   inst* i = inst_new(DEPS);
-  i->symbol = strdup(name);
   jv meta;
   if (block_is_const(metadata))
     meta = block_const(metadata);
   else
     meta = jv_object();
-  if (as)
-    meta = jv_object_set(meta, jv_string("as"), jv_string(as));
+  meta = jv_object_set(meta, jv_string("as"), jv_string(as));
+  meta = jv_object_set(meta, jv_string("is_data"), is_data ? jv_true() : jv_false());
+  meta = jv_object_set(meta, jv_string("relpath"), jv_string(name));
   i->imm.constant = meta;
   block_free(metadata);
   return inst_block(i);
@@ -797,7 +809,11 @@ block gen_or(block a, block b) {
 }
 
 block gen_var_binding(block var, const char* name, block body) {
-  return BLOCK(gen_op_simple(DUP), var,
+  // var bindings can be added after coding the program; leave the TOP first.
+  block top = gen_noop();
+  if (body.first && body.first->op == TOP)
+    top = inst_block(block_take(&body));
+  return BLOCK(top, gen_op_simple(DUP), var,
                block_bind(gen_op_unbound(STOREV, name),
                           body, OP_HAS_VARIABLE));
 }
@@ -1084,6 +1100,13 @@ static int compile(struct bytecode* bc, block b) {
         code[pos++] = nesting_level(bc, arg->bound_by);
         code[pos++] = arg->bound_by->imm.intval | ARG_NEWCLOSURE;
       }
+    } else if ((op->flags & OP_HAS_CONSTANT) && (op->flags & OP_HAS_VARIABLE)) {
+      // STORE_GLOBAL: constant global, basically
+      code[pos++] = jv_array_length(jv_copy(constant_pool));
+      constant_pool = jv_array_append(constant_pool, jv_copy(curr->imm.constant));
+      code[pos++] = nesting_level(bc, curr->bound_by);
+      uint16_t var = (uint16_t)curr->bound_by->imm.intval;
+      code[pos++] = var;
     } else if (op->flags & OP_HAS_CONSTANT) {
       code[pos++] = jv_array_length(jv_copy(constant_pool));
       constant_pool = jv_array_append(constant_pool, jv_copy(curr->imm.constant));
