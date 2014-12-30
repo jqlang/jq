@@ -90,6 +90,7 @@ static void parser_reset(struct jv_parser* p) {
   if ((p->flags & JV_PARSE_STREAMING)) {
     jv_free(p->path);
     p->path = jv_array();
+    p->stacklen = 0;
   }
   p->last_seen = JV_LAST_NONE;
   jv_free(p->output);
