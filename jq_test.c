@@ -30,11 +30,32 @@ static int skipline(const char* buf) {
   return 0;
 }
 
+static int checkfail(const char* buf) {
+  return !strcmp(buf, "%%FAIL\n");
+}
+
+struct err_data {
+  char buf[4096];
+};
+
+static void test_err_cb(void *data, jv e) {
+  struct err_data *err_data = data;
+  if (jv_get_kind(e) != JV_KIND_STRING)
+    e = jv_dump_string(e, JV_PRINT_INVALID);
+  if (!strncmp(jv_string_value(e), "jq: error", sizeof("jq: error") - 1))
+    snprintf(err_data->buf, sizeof(err_data->buf), "%s", jv_string_value(e));
+  if (strchr(err_data->buf, '\n'))
+    *(strchr(err_data->buf, '\n')) = '\0';
+  jv_free(e);
+}
+
 static void run_jq_tests(FILE *testdata) {
   char prog[4096];
   char buf[4096];
+  struct err_data err_msg;
   int tests = 0, passed = 0, invalid = 0;
   unsigned int lineno = 0;
+  int must_fail = 0;
   jq_state *jq = NULL;
 
   jq = jq_init();
@@ -44,12 +65,45 @@ static void run_jq_tests(FILE *testdata) {
     if (!fgets(prog, sizeof(prog), testdata)) break;
     lineno++;
     if (skipline(prog)) continue;
+    if (checkfail(prog)) {
+      must_fail = 1;
+      jq_set_error_cb(jq, test_err_cb, &err_msg);
+      continue;
+    }
     if (prog[strlen(prog)-1] == '\n') prog[strlen(prog)-1] = 0;
     printf("Testing '%s' at line number %u\n", prog, lineno);
     int pass = 1;
     tests++;
     int compiled = jq_compile(jq, prog);
-    if (!compiled) {invalid++; continue;}
+
+    if (must_fail) {
+      jq_set_error_cb(jq, NULL, NULL);
+      must_fail = 0;
+      if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
+      if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = 0;
+      if (compiled) {
+        printf("*** Test program compiled that should not have at line %u: %s\n", lineno, prog);
+        invalid++; continue;
+      }
+      if (strcmp(buf, err_msg.buf)) {
+        printf("*** Erroneous test program failed with wrong message (%s) at line %u: %s\n", err_msg.buf, lineno, prog);
+        invalid++;
+      } else {
+        passed++;
+      }
+      continue;
+    }
+
+    if (!compiled) {
+      printf("*** Test program failed to compile at line %u: %s\n", lineno, prog);
+      invalid++;
+      // skip past test data
+      while (fgets(buf, sizeof(buf), testdata)) {
+        if (buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
+          break;
+      }
+      continue;
+    }
     printf("Disassembly:\n");
     jq_dump_disassembly(jq, 2);
     printf("\n");
