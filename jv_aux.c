@@ -86,8 +86,6 @@ jv jv_get(jv t, jv k) {
       v = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an string slice must be numbers"));
       jv_free(t);
     }
-  } else if (jv_get_kind(t) == JV_KIND_STRING && jv_get_kind(k) == JV_KIND_STRING) {
-    v = jv_string_indexes(t, k);
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_ARRAY) {
     v = jv_array_indexes(t, k);
   } else if (jv_get_kind(t) == JV_KIND_NULL && 

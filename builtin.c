@@ -841,6 +841,10 @@ static jv f_string_explode(jq_state *jq, jv a) {
   return jv_string_explode(a);
 }
 
+static jv f_string_indexes(jq_state *jq, jv a, jv b) {
+  return jv_string_indexes(a, b);
+}
+
 static jv f_string_implode(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY) {
     jv_free(a);
@@ -909,6 +913,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_string_split, "split", 2},
   {(cfunction_ptr)f_string_explode, "explode", 1},
   {(cfunction_ptr)f_string_implode, "implode", 1},
+  {(cfunction_ptr)f_string_indexes, "_strindices", 2},
   {(cfunction_ptr)f_setpath, "setpath", 3}, // FIXME typechecking
   {(cfunction_ptr)f_getpath, "getpath", 2},
   {(cfunction_ptr)f_delpaths, "delpaths", 2},
@@ -1010,9 +1015,12 @@ static const char* const jq_builtins[] = {
   "def from_entries: map({(.key // .Key): (.value // .Value)}) | add | .//={};",
   "def with_entries(f): to_entries | map(f) | from_entries;",
   "def reverse: [.[length - 1 - range(0;length)]];",
-  "def indices($i): if type == \"array\" and ($i|type) == \"array\" then .[$i] elif type == \"array\" then .[[$i]] else .[$i] end;",
-  "def index($i):   if type == \"array\" and ($i|type) == \"array\" then .[$i] elif type == \"array\" then .[[$i]] else .[$i] end | .[0];",
-  "def rindex($i):  if type == \"array\" and ($i|type) == \"array\" then .[$i] elif type == \"array\" then .[[$i]] else .[$i] end | .[-1:][0];",
+  "def indices($i): if type == \"array\" and ($i|type) == \"array\" then .[$i]"
+  "  elif type == \"array\" then .[[$i]]"
+  "  elif type == \"string\" and ($i|type) == \"string\" then _strindices($i)"
+  "  else .[$i] end;",
+  "def index($i):   indices($i) | .[0];",       // TODO: optimize
+  "def rindex($i):  indices($i) | .[-1:][0];",  // TODO: optimize
   "def paths: path(recurse(if (type|. == \"array\" or . == \"object\") then .[] else empty end))|select(length > 0);",
   "def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_filter);",
   "def any(generator; condition):"
