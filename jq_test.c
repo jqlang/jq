@@ -80,6 +80,7 @@ static void run_jq_tests(FILE *testdata) {
       jq_set_error_cb(jq, NULL, NULL);
       must_fail = 0;
       if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
+      lineno++;
       if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = 0;
       if (compiled) {
         printf("*** Test program compiled that should not have at line %u: %s\n", lineno, prog);
@@ -99,6 +100,7 @@ static void run_jq_tests(FILE *testdata) {
       invalid++;
       // skip past test data
       while (fgets(buf, sizeof(buf), testdata)) {
+        lineno++;
         if (buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
           break;
       }
@@ -108,6 +110,7 @@ static void run_jq_tests(FILE *testdata) {
     jq_dump_disassembly(jq, 2);
     printf("\n");
     if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
+    lineno++;
     jv input = jv_parse(buf);
     if (!jv_is_valid(input)){ invalid++; continue; }
     jq_start(jq, input, JQ_DEBUG_TRACE);
