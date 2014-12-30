@@ -854,9 +854,13 @@ jq_state *jq_init(void) {
 }
 
 void jq_set_error_cb(jq_state *jq, jq_err_cb cb, void *data) {
-  assert(cb != NULL);
-  jq->err_cb = cb;
-  jq->err_cb_data = data;
+  if (cb == NULL) {
+    jq->err_cb = default_err_cb;
+    jq->err_cb_data = stderr;
+  } else {
+    jq->err_cb = cb;
+    jq->err_cb_data = data;
+  }
 }
 
 void jq_get_error_cb(jq_state *jq, jq_err_cb *cb, void **data) {
