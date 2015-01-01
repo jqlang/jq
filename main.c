@@ -419,6 +419,7 @@ int main(int argc, char* argv[]) {
         goto out;
       }
       if (isoption(argv[i], 0, "run-tests", &short_opts)) {
+        jv_free(program_arguments);
         ret = jq_testsuite(lib_search_paths, argc - i, argv + i + 1);
         goto out;
       }
