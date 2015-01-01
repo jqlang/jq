@@ -15,10 +15,14 @@ shovel. Also, read the wiki: http://github.com/stedolan/jq/wiki
 If you're building directly from the latest git, you'll need flex,
 bison, libtool, make, autoconf and libonig installed. To build, run:
 
-    autoreconf -i
+    autoreconf -i   # if building from git
     ./configure
     make -j8
     make check
+
+To build a statically linked version of jq, run:
+
+    make LDFLAGS=-all-static
 
 After make finishes, you'll be able to use `./jq`. You can also
 install it using:
@@ -33,3 +37,13 @@ To cross-compile for OS X and Windows, see docs/Rakefile's build task
 and scripts/crosscompile.  You'll need a cross-compilation environment,
 such as Mingw for cross-compiling for Windows.
 
+Cross-compilation requires a clean workspace, then:
+
+    # git clean ...
+    autoreconf -i
+    ./configure
+    make distclean
+    scripts/crosscompile <name-of-build> <configure-options>
+
+Use the --host= and --target= ./configure options to select a
+cross-compilation environment.  See the wiki.
