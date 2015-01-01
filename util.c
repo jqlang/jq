@@ -1,9 +1,13 @@
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <assert.h>
+#include <fcntl.h>
+
 #ifdef HAVE_MEMMEM
 #define _GNU_SOURCE
 #include <string.h>
 #endif
-#include <assert.h>
 #ifndef WIN32
 #include <pwd.h>
 #endif
@@ -14,6 +18,27 @@
 
 #include "util.h"
 #include "jv.h"
+
+#ifndef HAVE_MKSTEMP
+int mkstemp(char *template) {
+  size_t len = strlen(template);
+  int tries=5;
+  int fd;
+
+  // mktemp() truncates template when it fails
+  char *s = alloca(len + 1);
+  assert(s != NULL);
+  strcpy(s, template);
+
+  do {
+    // Restore template
+    strcpy(template, s);
+    (void) mktemp(template);
+    fd = open(template, O_CREAT | O_EXCL | O_RDWR, 0600);
+  } while (fd == -1 && tries-- > 0);
+  return fd;
+}
+#endif
 
 jv expand_path(jv path) {
   assert(jv_get_kind(path) == JV_KIND_STRING);

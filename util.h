@@ -3,6 +3,10 @@
 
 #include "jv.h"
 
+#ifndef HAVE_MKSTEMP
+int mkstemp(char *template);
+#endif
+
 jv expand_path(jv);
 jv get_home(void);
 jv jq_realpath(jv);

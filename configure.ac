@@ -86,6 +86,7 @@ if test "x$valgrind_cmd" = "x" ; then
     AC_MSG_WARN([valgrind is required to test jq.])
 fi
 AC_CHECK_FUNCS(memmem)
+AC_CHECK_FUNCS(mkstemp)
 
 
 dnl Don't attempt to build docs if there's no Ruby lying around
