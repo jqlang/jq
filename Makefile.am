@@ -113,9 +113,19 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml	\
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute 
 # the developer setup script in the tarball.
-EXTRA_DIST = $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER) jq.spec	\
-	 $(DOC_FILES) scripts/version parser.h parser.c lexer.h	\
-	 lexer.c
+EXTRA_DIST = $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER) jq.spec		\
+	$(DOC_FILES) scripts/version parser.h parser.c lexer.h		\
+	lexer.c tests/onig.supp tests/torture/input0.json		\
+	tests/modules/.jq tests/modules/a.jq tests/modules/b/b.jq	\
+	tests/modules/c/c.jq tests/modules/c/d.jq			\
+	tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq		\
+	tests/modules/streaming.jq tests/modules/data.json		\
+	tests/modules/syntaxerror/syntaxerror.jq			\
+	tests/modules/test_bind_order.jq				\
+	tests/modules/test_bind_order0.jq				\
+	tests/modules/test_bind_order1.jq				\
+	tests/modules/test_bind_order2.jq
+
 
 # README.md is expected in Github projects, good stuff in it, so we'll 
 # distribute it and install it with the package in the doc directory.
