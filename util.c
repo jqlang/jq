@@ -1,19 +1,19 @@
 
+#ifdef HAVE_MEMMEM
+#define _GNU_SOURCE
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
 #include <fcntl.h>
-
-#ifdef HAVE_MEMMEM
-#define _GNU_SOURCE
+#include <limits.h>
 #include <string.h>
-#endif
+#include <stdlib.h>
+#include <unistd.h>
 #ifndef WIN32
 #include <pwd.h>
 #endif
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
 
 
 #include "util.h"
