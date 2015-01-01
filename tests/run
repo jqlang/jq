@@ -10,11 +10,11 @@ else
     Q=
 fi
 
-cat $@ | $VALGRIND $Q ./jq --run-tests
+mods=$PWD/tests/modules
+
+cat $@ | $VALGRIND $Q ./jq -L "$mods" --run-tests
 
 set -x
-
-mods=$PWD/tests/modules
 
 clean=true
 d=
@@ -190,6 +190,8 @@ clean=true
 
 ## Test library/module system
 
+# Check handling of ~/.jq; these can't move into jq_test.c yet because
+# they depend on $HOME
 if [ "`HOME="$mods" $VALGRIND $Q ./jq -nr fg`" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
@@ -197,57 +199,6 @@ fi
 
 if [ `HOME="$mods" $VALGRIND $Q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
     echo "Binding too many defs into program" 1>&2
-    exit 1
-fi
-
-if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a] | . == ["a","b","c","a"]' > /dev/null; then
-    echo "Module system appears to be broken" 1>&2
-    exit 1
-fi
-
-if ! $VALGRIND $Q ./jq -ner -L "$mods" 'import "c" as foo; [foo::a, foo::c] | . == [0,"acmehbah"]' > /dev/null; then
-    echo "Module system appears to be broken" 1>&2
-    exit 1
-fi
-
-if [ "`$VALGRIND $Q ./jq -cner -L "$mods" '\"c\" | modulemeta'`" != '{"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}' ]; then
-    echo "modulemeta builtin appears to be broken" 1>&2
-    exit 1
-fi
-    
-if $VALGRIND ./jq -ner -L "$mods" 'import "syntaxerror" as e; .' > $d/out 2>&1; then
-    echo "Module system appears to be broken" 1>&2
-    exit 1
-fi
-if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out > /dev/null; then
-    echo "Module system has memory errors when modules have syntax errors" 1>&2
-    cat $d/out
-    exit 1
-fi
-if ! grep '^jq: error: syntax error,' $d/out > /dev/null; then
-    echo "Module system not detecting syntax errors in modules correctly" 1>&2
-    exit 1
-fi
-
-if $VALGRIND ./jq -ner -L "$mods" '%::wat' > $d/out 2>&1 ||
-   ! grep '^jq: error: syntax error,' $d/out > /dev/null; then
-    echo "Syntax errors not detected?" 1>&2
-    exit 1
-fi
-if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out > /dev/null; then
-    echo "Memory errors when programs have syntax errors" 1>&2
-    cat $d/out
-    exit 1
-fi
-
-if ! $VALGRIND ./jq -ner -L "$mods" -f "$mods/test_bind_order.jq" > $d/out 2>&1; then
-    echo "Import bind order is broken" 1>&2
-    exit 1
-fi
-
-if [ -n "$VALGRIND" ] && ! grep 'ERROR SUMMARY: 0 errors from 0 contexts' $d/out > /dev/null; then
-    echo "Memory errors when programs have syntax errors" 1>&2
-    cat $d/out
     exit 1
 fi
 

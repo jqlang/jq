@@ -13,7 +13,7 @@
 #include "util.h"
 #include "version.h"
 
-int jq_testsuite(int argc, char* argv[]);
+int jq_testsuite(jv lib_dirs, int argc, char* argv[]);
 
 static const char* progname;
 
@@ -93,8 +93,9 @@ enum {
   EXIT_STATUS           = 4096,
   IN_PLACE              = 8192,
   SEQ                   = 16384,
+  RUN_TESTS             = 32768,
   /* debugging only */
-  DUMP_DISASM           = 32768,
+  DUMP_DISASM           = 65536,
 };
 static int options = 0;
 
@@ -235,10 +236,6 @@ int main(int argc, char* argv[]) {
   char *t = NULL;
 
   if (argc) progname = argv[0];
-
-  if (argc > 1 && !strcmp(argv[1], "--run-tests")) {
-    return jq_testsuite(argc, argv);
-  }
 
   jq = jq_init();
   if (jq == NULL) {
@@ -419,6 +416,10 @@ int main(int argc, char* argv[]) {
       if (isoption(argv[i], 'V', "version", &short_opts)) {
         printf("jq-%s\n", JQ_VERSION);
         ret = 0;
+        goto out;
+      }
+      if (isoption(argv[i], 0, "run-tests", &short_opts)) {
+        ret = jq_testsuite(lib_search_paths, argc - i, argv + i + 1);
         goto out;
       }
 

@@ -9,7 +9,7 @@ static void jv_test();
 static void run_jq_tests();
 
 
-int jq_testsuite(int argc, char* argv[]) {
+int jq_testsuite(jv libdirs, int argc, char* argv[]) {
   FILE *testdata = stdin;
   jv_test();
   if (argc > 2) {
@@ -19,7 +19,7 @@ int jq_testsuite(int argc, char* argv[]) {
       exit(1);
     }
   }
-  run_jq_tests(testdata);
+  run_jq_tests(libdirs, testdata);
   return 0;
 }
 
@@ -49,7 +49,7 @@ static void test_err_cb(void *data, jv e) {
   jv_free(e);
 }
 
-static void run_jq_tests(FILE *testdata) {
+static void run_jq_tests(jv lib_dirs, FILE *testdata) {
   char prog[4096];
   char buf[4096];
   struct err_data err_msg;
@@ -60,6 +60,9 @@ static void run_jq_tests(FILE *testdata) {
 
   jq = jq_init();
   assert(jq);
+  if (jv_get_kind(lib_dirs) == JV_KIND_NULL)
+    lib_dirs = jv_array();
+  jq_set_attr(jq, jv_string("JQ_LIBRARY_PATH"), lib_dirs);
 
   while (1) {
     if (!fgets(prog, sizeof(prog), testdata)) break;

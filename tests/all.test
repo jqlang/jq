@@ -1124,3 +1124,28 @@ bsearch(4)
 [1,2,3]
 -4
 
+# module system
+import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
+null
+["a","b","c","a"]
+
+import "c" as foo; [foo::a, foo::c]
+null
+[0,"acmehbah"]
+
+modulemeta
+"c"
+{"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}
+
+%%FAIL
+import "syntaxerror" as e; .
+jq: error: syntax error, unexpected ';', expecting $end (Unix shell quoting issues?)
+
+%%FAIL
+%::wat
+jq: error: syntax error, unexpected '%', expecting $end (Unix shell quoting issues?)
+
+import "test_bind_order" as check; check::check
+null
+true
+
