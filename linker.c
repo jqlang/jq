@@ -65,8 +65,9 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv jq_origin, jv 
   return expanded;
 }
 
-// Doesn't actually check that name not be an absolute path; we could
-// just always prepend "./"!
+// Doesn't actually check that name not be an absolute path, and we
+// don't have to: we always append relative paths to others (with a '/'
+// in between).
 static jv validate_relpath(jv name) {
   const char *s = jv_string_value(name);
   if (strchr(s, '\\')) {
@@ -138,7 +139,7 @@ static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv 
       jv_free(spath);
       continue; /* XXX report non-strings in search path?? */
     }
-    // Try .../module/last/component.jq
+    // Try ${search_dir}/${rel_path}.jq
     jv testpath = jq_realpath(jv_string_fmt("%s/%s%s",
                                             jv_string_value(spath),
                                             jv_string_value(rel_path),
@@ -146,7 +147,17 @@ static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv 
     ret = stat(jv_string_value(testpath),&st);
     if (ret == -1 && errno == ENOENT) {
       jv_free(testpath);
-      // Try .../module/last/component/component.jq
+      // Try ${search_dir}/$(dirname ${rel_path})/jq/main.jq
+      testpath = jq_realpath(jv_string_fmt("%s/%s/%s%s",
+                                           jv_string_value(spath),
+                                           jv_string_value(rel_path),
+                                           "jq/main",
+                                           suffix));
+      ret = stat(jv_string_value(testpath),&st);
+    }
+    if (ret == -1 && errno == ENOENT) {
+      jv_free(testpath);
+      // Try ${search_dir}/${rel_path}/$(basename ${rel_path}).jq
       testpath = jq_realpath(jv_string_fmt("%s/%s/%s%s",
                                            jv_string_value(spath),
                                            jv_string_value(rel_path),
