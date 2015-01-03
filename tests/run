@@ -83,12 +83,6 @@ if [ $n -ne 5 ]; then
     exit 1
 fi
 
-v=`scripts/version`
-case "$v" in
-*-*) v=`echo $v|sed -e 's/-.*$/-master/'`;;
-*) true;;
-esac
-
 ## Test JSON sequence support
 
 cat > $d/expected <<EOF
