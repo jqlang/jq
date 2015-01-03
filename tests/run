@@ -34,6 +34,9 @@ fi
 
 ## Test constant folding
 
+## XXX If we add a builtin to list the program's disassembly then we can
+## move all of these into tests/all.test
+
 # String constant folding (addition only)
 n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '"foo"' | wc -l`
 if [ $n -ne 5 ]; then
@@ -85,6 +88,9 @@ fi
 
 ## Test JSON sequence support
 
+## XXX If we add a `stream_fromjson` builtin then we can move these tests
+## into tests/all.test
+
 cat > $d/expected <<EOF
 ignoring parse error: Potentially truncated top-level numeric value at line 1, column 2
 ignoring parse error: Truncated value at line 2, column 5
@@ -125,10 +131,13 @@ cmp $d/out $d/expected
 
 ## Test streaming parser
 
+## If we add an option to stream to the `import ... as $symbol;` directive
+## then we can move these tests into tests/all.test.
 $VALGRIND $Q ./jq -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p,.]' < "$PWD/tests/torture/input0.json" > $d/out0
 $VALGRIND $Q ./jq --stream -c '.|select(length==2)' < "$PWD/tests/torture/input0.json" > $d/out1
 diff $d/out0 $d/out1
 
+## XXX This test can be moved to tests/all.test _now_
 clean=false
 if which seq > /dev/null 2>&1; then
     # XXX We should try every prefix of input0.json, but that makes this
@@ -168,6 +177,7 @@ fi
 
 ## Fuzz parser
 
+## XXX With a `urandom` builtin we could move this test into tests/all.test
 clean=false
 if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
     # Have a /dev/urandom, good
