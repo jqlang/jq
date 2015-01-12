@@ -1297,8 +1297,8 @@ sections:
 
         examples:
           - program: 'split(", ")'
-            input: '"a, b,c,d, e"'
-            output: ['["a","b,c,d","e"]']
+            input: '"a, b,c,d, e, "'
+            output: ['["a","b,c,d","e",""]']
 
       - title: "`join(str)`"
         body: |
@@ -1935,12 +1935,7 @@ sections:
       - title: "`split(regex; flags)`"
         body: |
 
-          For backwards compatibility, `split` emits an array of the strings
-          corresponding to the successive segments of the input string after it
-          has been split at the boundaries defined by the regex and any
-          specified flags.  The substrings corresponding to the boundaries
-          themselves are excluded.  If regex is the empty string, then the first
-          match will be the empty string.
+          For backwards compatibility, `split` splits on a string, not a regex.
 
         example:
           - program: 'split(", *"; null)'
