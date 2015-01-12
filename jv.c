@@ -648,19 +648,22 @@ jv jv_string_split(jv j, jv sep) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   assert(jv_get_kind(sep) == JV_KIND_STRING);
   const char *jstr = jv_string_value(j);
+  const char *jend = jstr + jv_string_length_bytes(jv_copy(j));
   const char *sepstr = jv_string_value(sep);
   const char *p, *s;
-  int jlen = jv_string_length_bytes(jv_copy(j));
   int seplen = jv_string_length_bytes(jv_copy(sep));
   jv a = jv_array();
 
   assert(jv_get_refcnt(a) == 1);
 
-  for (p = jstr; p < jstr + jlen; p = s + seplen) {
-    s = _jq_memmem(p, (jstr + jlen) - p, sepstr, seplen);
+  for (p = jstr; p < jend; p = s + seplen) {
+    s = _jq_memmem(p, jend - p, sepstr, seplen);
     if (s == NULL)
-      s = jstr + jlen;
+      s = jend;
     a = jv_array_append(a, jv_string_sized(p, s - p));
+    // Add an empty string to denote that j ends on a sep
+    if (s + seplen == jend)
+      a = jv_array_append(a, jv_string(""));
   }
   jv_free(j);
   jv_free(sep);
