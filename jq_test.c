@@ -12,8 +12,8 @@ static void run_jq_tests();
 int jq_testsuite(jv libdirs, int argc, char* argv[]) {
   FILE *testdata = stdin;
   jv_test();
-  if (argc > 2) {
-    testdata = fopen(argv[2], "r");
+  if (argc > 0) {
+    testdata = fopen(argv[0], "r");
     if (!testdata) {
       perror("fopen");
       exit(1);

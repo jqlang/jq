@@ -419,8 +419,11 @@ int main(int argc, char* argv[]) {
         goto out;
       }
       if (isoption(argv[i], 0, "run-tests", &short_opts)) {
+        i++;
+        // XXX Pass program_arguments, even a whole jq_state *, through;
+        // could be useful for testing
         jv_free(program_arguments);
-        ret = jq_testsuite(lib_search_paths, argc - i, argv + i + 1);
+        ret = jq_testsuite(lib_search_paths, argc - i, argv + i);
         goto out;
       }
 
