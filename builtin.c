@@ -1072,7 +1072,7 @@ static const char* const jq_builtins[] = {
   "def scalars: select(. == null or . == true or . == false or type == \"number\" or type == \"string\");",
   "def scalars_or_empty: select(. == null or . == true or . == false or type == \"number\" or type == \"string\" or ((type==\"array\" or type==\"object\") and length==0));",
   "def leaf_paths: paths(scalars);",
-  "def join($x): reduce .[] as $i (null; (.//\"\") + (if . == null then $i else $x + $i end));",
+  "def join($x): reduce .[] as $i (null; (.//\"\") + (if . == null then $i else $x + $i end))//\"\";",
   "def flatten: reduce .[] as $i ([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end);",
   "def flatten($x): reduce .[] as $i ([]; if $i | type == \"array\" and $x > 0 then . + ($i | flatten($x-1)) else . + [$i] end);",
   "def range($x): range(0;$x);",
