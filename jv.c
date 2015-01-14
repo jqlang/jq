@@ -656,14 +656,20 @@ jv jv_string_split(jv j, jv sep) {
 
   assert(jv_get_refcnt(a) == 1);
 
-  for (p = jstr; p < jend; p = s + seplen) {
-    s = _jq_memmem(p, jend - p, sepstr, seplen);
-    if (s == NULL)
-      s = jend;
-    a = jv_array_append(a, jv_string_sized(p, s - p));
-    // Add an empty string to denote that j ends on a sep
-    if (s + seplen == jend)
-      a = jv_array_append(a, jv_string(""));
+  if (seplen == 0) {
+    int c;
+    while ((jstr = jvp_utf8_next(jstr, jend, &c)))
+      a = jv_array_append(a, jv_string_append_codepoint(jv_string(""), c));
+  } else {
+    for (p = jstr; p < jend; p = s + seplen) {
+      s = _jq_memmem(p, jend - p, sepstr, seplen);
+      if (s == NULL)
+        s = jend;
+      a = jv_array_append(a, jv_string_sized(p, s - p));
+      // Add an empty string to denote that j ends on a sep
+      if (s + seplen == jend && seplen != 0)
+        a = jv_array_append(a, jv_string(""));
+    }
   }
   jv_free(j);
   jv_free(sep);
