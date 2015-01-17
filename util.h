@@ -19,6 +19,7 @@ int mkstemp(char *template);
 
 jv expand_path(jv);
 jv get_home(void);
+jv jq_find_package_root(jv);
 jv jq_realpath(jv);
 
 /*

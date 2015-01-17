@@ -1,0 +1,2 @@
+def tool:
+	"Howdy";

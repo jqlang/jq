@@ -46,6 +46,16 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv jq_origin, jv 
       expanded_elt = jv_string_fmt("%s/%s",
                                jv_string_value(jq_origin),
                                jv_string_value(path) + sizeof ("$ORIGIN/") - 1);
+    } else if (jv_get_kind(lib_origin) == JV_KIND_STRING &&
+               strncmp("$PACKAGEROOT/",jv_string_value(path),sizeof("$PACKAGEROOT/")-1) == 0) {
+      // Could also use non-string package_root values as error message output.
+      jv package_root = jq_find_package_root(jv_copy(lib_origin));
+      if (jv_get_kind(package_root) == JV_KIND_STRING) {
+        expanded_elt = jv_string_fmt("%s/%s",
+                                 jv_string_value(package_root),
+                                 jv_string_value(path) + sizeof ("$PACKAGEROOT/") - 1);
+      }
+      jv_free(package_root);
     } else {
       expanded_elt = expand_path(path);
       if (!jv_is_valid(expanded_elt)) {
