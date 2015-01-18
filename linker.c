@@ -25,6 +25,29 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw,
                         const char *as, block *out_block,
                         struct lib_loading_state *lib_state);
 
+static jv get_package_root_search_start(jq_state *jq, jv lib_origin) {
+  // PROGRAM_ORIGIN is $PWD if PROGRAM_ORIGIN_FILE is not a PROGRAM_FROM_ACTUAL_FILE.
+  // Use PROGRAM_ORIGIN when getting the package root for PROGRAM_ORIGIN_FILE instead
+  // of lib_origin, but only in that specific case.
+  // file (more specifically a file in the same directory as the PROGRAM_ORIGIN file).
+  // TODO: pass the full file path, not just the directory path "lib_origin" to this
+  // function, then use PROGRAM_ORIGIN_FILE for comparison.
+  jv ret;
+  jv from_file_p = jq_get_attr(jq, jv_string("PROGRAM_FROM_ACTUAL_FILE"));
+  jv program_origin = jq_get_attr(jq, jv_string("PROGRAM_ORIGIN"));
+  if (jv_get_kind(from_file_p) == JV_KIND_FALSE &&
+      strcmp(jv_string_value(program_origin), jv_string_value(lib_origin)) == 0) {
+    // It's a (named/anonymous) FIFO pipe; use PROGRAM_ORIGIN (which is $PWD) instead.
+    ret = jq_get_prog_origin(jq);
+  } else {
+    ret = jv_copy(lib_origin);
+  }
+  jv_free(program_origin);
+  jv_free(from_file_p);
+  jv_free(lib_origin);
+  return ret;
+}
+
 
 // Given a lib_path to search first, creates a chain of search paths
 // in the following order:
@@ -48,8 +71,9 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv jq_origin, jv 
                                jv_string_value(path) + sizeof ("$ORIGIN/") - 1);
     } else if (jv_get_kind(lib_origin) == JV_KIND_STRING &&
                strncmp("$PACKAGEROOT/",jv_string_value(path),sizeof("$PACKAGEROOT/")-1) == 0) {
+      jv package_root = jq_find_package_root(get_package_root_search_start(jq, jv_copy(lib_origin)));
+
       // Could also use non-string package_root values as error message output.
-      jv package_root = jq_find_package_root(jv_copy(lib_origin));
       if (jv_get_kind(package_root) == JV_KIND_STRING) {
         expanded_elt = jv_string_fmt("%s/%s",
                                  jv_string_value(package_root),
