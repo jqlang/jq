@@ -193,13 +193,16 @@ static jv next_input(jq_state *jq, void *data) {
       if (len > 0) {
         if (options & SLURP) {
           state->slurped = jv_string_concat(state->slurped, jv_string(state->buf));
-        } else if (jv_is_valid(value)) {
+        } else {
+          if (!jv_is_valid(value))
+            value = jv_string("");
           if (state->buf[len-1] == '\n') {
             // whole line
             state->buf[len-1] = 0;
             return jv_string_concat(value, jv_string(state->buf));
           }
           value = jv_string_concat(value, jv_string(state->buf));
+          state->buf[0] = '\0';
         }
       }
     } else {
