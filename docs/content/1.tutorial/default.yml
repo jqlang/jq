@@ -150,7 +150,7 @@ body:
 
   - text: |
 
-      For the rest of the examples, I'll leave out the `curl` command - it's not going to change.
+      For the rest of the examples, I'll leave out the `curl` command—it's not going to change.
 
       There's still a lot of info we don't care about there, so we'll
       restrict it down to the most interesting fields.
@@ -203,12 +203,12 @@ body:
       one at a time, which are all fed into `{message: .commit.message, name: .commit.committer.name}`.
 
 
-      Data in jq is represented as streams of JSON values - every jq
+      Data in jq is represented as streams of JSON values—every jq
       expression runs for each value in its input stream, and can
       produce any number of values to its output stream.
 
       Streams are serialised by just separating JSON values with
-      whitespace. This is a `cat`-friendly format - you can just join
+      whitespace. This is a `cat`-friendly format—you can just join
       two JSON streams together and get a valid JSON stream.
 
       If you want to get the output as a single array, you can tell jq to
