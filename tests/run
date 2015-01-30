@@ -104,7 +104,7 @@ cat > $d/expected <<EOF
 ignoring parse error: Potentially truncated top-level numeric value at line 1, column 2
 ignoring parse error: Truncated value at line 2, column 5
 ignoring parse error: Truncated value at line 2, column 25
-ignoring parse error: Invalid literal at line 3, column 1
+ignoring parse error: Truncated value at line 3, column 1
 EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q ./jq -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
 cmp $d/out $d/expected

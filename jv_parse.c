@@ -554,27 +554,34 @@ static int stream_check_done(struct jv_parser* p, jv* out) {
   }
 }
 
-static int parse_check_truncation(struct jv_parser* p, jv out) {
-  return ((p->flags & JV_PARSE_SEQ) && !p->last_ch_was_ws && jv_get_kind(out) == JV_KIND_NUMBER);
+static int parse_check_truncation(struct jv_parser* p) {
+  return ((p->flags & JV_PARSE_SEQ) && !p->last_ch_was_ws && (p->stackpos > 0 || p->tokenpos > 0 || jv_get_kind(p->next) == JV_KIND_NUMBER));
 }
 
-static int stream_check_truncation(struct jv_parser* p, jv out) {
-  if (!jv_is_valid(out))
-    return 0;
-  jv v = jv_array_get(jv_copy(out), 1);
-  jv_kind k = jv_get_kind(v);
-  jv_free(v);
-  return (k == JV_KIND_NUMBER || k == JV_KIND_TRUE || k == JV_KIND_FALSE || k == JV_KIND_NULL);
+static int stream_check_truncation(struct jv_parser* p) {
+  jv_kind k = jv_get_kind(p->next);
+  return (p->stacklen > 0 || k == JV_KIND_NUMBER || k == JV_KIND_TRUE || k == JV_KIND_FALSE || k == JV_KIND_NULL);
 }
 
-#define check_done(p, out) \
-   (((p)->flags & JV_PARSE_STREAMING) ? stream_check_done((p), (out)) : parse_check_done((p), (out)))
+static int parse_is_top_num(struct jv_parser* p) {
+  return (p->stackpos == 0 && jv_get_kind(p->next) == JV_KIND_NUMBER);
+}
+
+static int stream_is_top_num(struct jv_parser* p) {
+  return (p->stacklen == 0 && jv_get_kind(p->next) == JV_KIND_NUMBER);
+}
+
+#define check_done(p, o) \
+   (((p)->flags & JV_PARSE_STREAMING) ? stream_check_done((p), (o)) : parse_check_done((p), (o)))
 
 #define token(p, ch) \
    (((p)->flags & JV_PARSE_STREAMING) ? stream_token((p), (ch)) : parse_token((p), (ch)))
 
-#define check_truncation(p, o) \
-    (((p)->flags & JV_PARSE_STREAMING) ? stream_check_truncation((p), (o)) : parse_check_truncation((p), (o)))
+#define check_truncation(p) \
+   (((p)->flags & JV_PARSE_STREAMING) ? stream_check_truncation((p)) : parse_check_truncation((p)))
+
+#define is_top_num(p) \
+   (((p)->flags & JV_PARSE_STREAMING) ? stream_is_top_num((p)) : parse_is_top_num((p)))
 
 static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   p->column++;
@@ -583,19 +590,21 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
     p->column = 0;
   }
   if (ch == '\036' /* ASCII RS; see draft-ietf-json-sequence-07 */) {
-    TRY(check_literal(p));
-    if (p->st == JV_PARSER_NORMAL && check_done(p, out)) {
-      if (check_truncation(p, *out)) {
-        jv_free(*out);
-        *out = jv_invalid();
+    if (check_truncation(p)) {
+      if (check_literal(p) == 0 && is_top_num(p))
         return "Potentially truncated top-level numeric value";
-      }
-      return OK;
+      return "Truncated value";
     }
+    TRY(check_literal(p));
+    if (p->st == JV_PARSER_NORMAL && check_done(p, out))
+      return OK;
+    // shouldn't happen?
+    assert(!jv_is_valid(*out));
+    assert(!jv_is_valid(p->next));
     parser_reset(p);
     jv_free(*out);
     *out = jv_invalid();
-    return "Truncated value";
+    return OK;
   }
   presult answer = 0;
   p->last_ch_was_ws = 0;
