@@ -91,7 +91,7 @@ AC_CHECK_FUNCS(mkstemp)
 
 dnl Don't attempt to build docs if there's no Ruby lying around
 AC_ARG_ENABLE([docs],
-   AC_HELP_STRING([--disable-docs], [don't build docs]))
+   AC_HELP_STRING([--disable-docs], [do not build docs]))
 
 AS_IF([test "x$enable_docs" != "xno"],[
    AC_CHECK_PROGS(bundle_cmd, bundle)
@@ -105,7 +105,7 @@ AS_IF([test "x$enable_docs" != "xno"],[
 *****************************************************************
 *  Ruby dependencies for building jq documentation not found.   *
 *  You can still build, install and hack on jq, but the manpage *
-*  will not be rebuilt and some of the tests won't run.         *
+*  will not be rebuilt and some of the tests will not run.      *
 *  See docs/README.md for how to install the docs dependencies. *
 *****************************************************************
 EOF
