@@ -140,137 +140,6 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
   return ret;
 }
 
-// XXX Move this and related functions into libjq (with a better name), into util.[ch] say
-struct next_input_state {
-  FILE* current_input;
-  const char** input_filenames;
-  int alloced;
-  int ninput_files;
-  int next_input_idx;
-  int open_failures;
-  struct jv_parser *parser;
-  jv slurped;
-  char buf[4096];
-};
-typedef struct next_input_state *next_input_state;
-
-static void input_state_free(next_input_state *state) {
-  next_input_state old_state = *state;
-  *state = NULL;
-  if (old_state == NULL)
-    return;
-  if (old_state->parser != NULL)
-    jv_parser_free(old_state->parser);
-  jv_mem_free(old_state->input_filenames);
-  jv_free(old_state->slurped);
-  jv_mem_free(old_state);
-}
-
-static int input_state_init(next_input_state *state, int max_inputs) {
-  next_input_state new_state = jv_mem_alloc(sizeof(*new_state));
-  new_state->next_input_idx = 0;
-  new_state->open_failures = 0;
-  new_state->ninput_files = 0;
-  new_state->current_input = NULL;
-  new_state->parser = NULL;         // initialized when we know the flags
-  new_state->slurped = jv_invalid();
-  new_state->buf[0] = 0;
-
-  // XXX a jv_mem_calloc() would be nice
-  assert(max_inputs > 0 && (uintmax_t)max_inputs * sizeof(const char*) < SIZE_MAX);
-  new_state->input_filenames = jv_mem_alloc(sizeof(const char*) * max_inputs);
-  new_state->alloced = max_inputs;
-  for (; max_inputs > 0; max_inputs--) 
-    new_state->input_filenames[max_inputs - 1] = NULL;
-  *state = new_state;
-  return 0;
-}
-
-static void input_state_add_input(next_input_state state, const char *input) {
-  assert(state->ninput_files < state->alloced);
-  state->input_filenames[state->ninput_files++] = input;
-}
-
-static int input_state_read_more(next_input_state state) {
-  if (!state->current_input || feof(state->current_input)) {
-    if (state->current_input) {
-      if (state->current_input == stdin) {
-        clearerr(stdin); // perhaps we can read again; anyways, we don't fclose(stdin)
-      } else {
-        fclose(state->current_input);
-      }
-      state->current_input = NULL;
-    }
-    if (state->next_input_idx < state->ninput_files) {
-      if (!strcmp(state->input_filenames[state->next_input_idx], "-")) {
-        state->current_input = stdin;
-      } else {
-        state->current_input = fopen(state->input_filenames[state->next_input_idx], "r");
-        if (!state->current_input) {
-          fprintf(stderr, "%s: Error: could not open %s: %s\n", progname, state->input_filenames[state->next_input_idx], strerror(errno));
-          state->open_failures++;
-        }
-      }
-      state->next_input_idx++;
-    }
-  }
-
-  state->buf[0] = 0;
-  if (state->current_input) {
-    if (!fgets(state->buf, sizeof(state->buf), state->current_input))
-      state->buf[0] = 0;
-  }
-  return state->next_input_idx == state->ninput_files && (!state->current_input || feof(state->current_input));
-}
-
-// Blocks to read one more input from stdin and/or given files
-// When slurping, it returns just one value
-static jv input_state_next_input(jq_state *jq, void *data) {
-  next_input_state state = data;
-  int is_last = 0;
-  jv value = jv_invalid(); // need more input
-  do {
-    if (options & RAW_INPUT) {
-      is_last = input_state_read_more(state);
-      if (state->buf[0] == '\0')
-        continue;
-      int len = strlen(state->buf); // Raw input doesn't support NULs
-      if (len > 0) {
-        if (options & SLURP) {
-          state->slurped = jv_string_concat(state->slurped, jv_string(state->buf));
-        } else {
-          if (!jv_is_valid(value))
-            value = jv_string("");
-          if (state->buf[len-1] == '\n') {
-            // whole line
-            state->buf[len-1] = 0;
-            return jv_string_concat(value, jv_string(state->buf));
-          }
-          value = jv_string_concat(value, jv_string(state->buf));
-          state->buf[0] = '\0';
-        }
-      }
-    } else {
-      if (jv_parser_remaining(state->parser) == 0) {
-        is_last = input_state_read_more(state);
-        jv_parser_set_buf(state->parser, state->buf, strlen(state->buf), !is_last); // NULs also not supported here
-      }
-      value = jv_parser_next(state->parser);
-      if (options & SLURP) {
-        if (jv_is_valid(value)) {
-          state->slurped = jv_array_append(state->slurped, value);
-          value = jv_invalid();
-        } else if (jv_invalid_has_msg(jv_copy(value)))
-          return value;
-      } else if (jv_is_valid(value) || jv_invalid_has_msg(jv_copy(value))) {
-        return value;
-      }
-    }
-  } while (!is_last);
-  return value;
-}
-// XXX End of stuff to move into utils
-
 static void debug_cb(jq_state *jq, void *data, jv input) {
   int dumpopts = *(int *)data;
   jv_dumpf(JV_ARRAY(jv_string("DEBUG:"), input), stderr, dumpopts & ~(JV_PRINT_PRETTY));
@@ -295,23 +164,25 @@ int main(int argc, char* argv[]) {
 
   const char* program = 0;
 
-  next_input_state input_state;
-  input_state_init(&input_state, argc);
+  jq_util_input_state input_state = jq_util_input_init(NULL, NULL); // XXX add err_cb
 
   int further_args_are_files = 0;
   int jq_flags = 0;
   size_t short_opts = 0;
   jv program_arguments = jv_array();
   jv lib_search_paths = jv_null();
+  char *first_file = 0;
   for (int i=1; i<argc; i++, short_opts = 0) {
     if (further_args_are_files) {
-      input_state_add_input(input_state, argv[i]);
+      jq_util_input_add_input(input_state, jv_string(argv[i]));
+      first_file = first_file ? first_file : argv[i];
     } else if (!strcmp(argv[i], "--")) {
       if (!program) usage(2);
       further_args_are_files = 1;
     } else if (!isoptish(argv[i])) {
       if (program) {
-        input_state_add_input(input_state, argv[i]);
+        jq_util_input_add_input(input_state, jv_string(argv[i]));
+        first_file = first_file ? first_file : argv[i];
       } else {
         program = argv[i];
       }
@@ -534,11 +405,11 @@ int main(int argc, char* argv[]) {
 
   if (!program) usage(2);
   if ((options & IN_PLACE)) {
-    if (input_state->ninput_files == 0) usage(2);
-    if (strcmp(input_state->input_filenames[0], "-") == 0) usage(2);
-    size_t tlen = strlen(input_state->input_filenames[0]) + 7;
+    if (first_file == 0) usage(2);
+    if (strcmp(first_file, "-") == 0) usage(2);
+    size_t tlen = strlen(first_file) + 7;
     t = jv_mem_alloc(tlen);
-    int n = snprintf(t, tlen,"%sXXXXXX", input_state->input_filenames[0]);
+    int n = snprintf(t, tlen,"%sXXXXXX", first_file);
     assert(n > 0 && (size_t)n < tlen);
     if (mkstemp(t) == -1) {
       fprintf(stderr, "Error: %s creating temporary file", strerror(errno));
@@ -591,26 +462,23 @@ int main(int argc, char* argv[]) {
   if ((options & SEQ))
     parser_flags |= JV_PARSE_SEQ;
 
-  if (input_state->ninput_files == 0) input_state->current_input = stdin;
-  input_state->parser = jv_parser_new(parser_flags);
-  if ((options & RAW_INPUT) && (options & SLURP))
-    input_state->slurped = jv_string("");
-  else if ((options & SLURP))
-    input_state->slurped = jv_array();
-  else
-    input_state->slurped = jv_invalid();
+  if (!(options & RAW_INPUT))
+    jq_util_input_set_parser(input_state, jv_parser_new(parser_flags), (options & SLURP) ? 1 : 0);
 
   // Let jq program read from inputs
-  jq_set_input_cb(jq, input_state_next_input, input_state);
+  jq_set_input_cb(jq, jq_util_input_next_input_cb, input_state);
 
+  // Let jq program call `debug` builtin and have that go somewhere
   jq_set_debug_cb(jq, debug_cb, &dumpopts);
 
+  if (first_file == 0)
+    jq_util_input_add_input(input_state, jv_string("-"));
   if (options & PROVIDE_NULL) {
     ret = process(jq, jv_null(), jq_flags, dumpopts);
   } else {
     jv value;
-    while (input_state->open_failures == 0 &&
-           (jv_is_valid((value = input_state_next_input(jq, input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
+    while (jq_util_input_open_errors(input_state) == 0 &&
+           (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
         ret = process(jq, value, jq_flags, dumpopts);
         continue;
@@ -628,13 +496,9 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "ignoring parse error: %s\n", jv_string_value(msg));
       jv_free(msg);
     }
-    if (options & SLURP) {
-      ret = process(jq, input_state->slurped, jq_flags, dumpopts);
-      input_state->slurped = jv_invalid();
-    }
   }
 
-  if (ret == 0 && input_state->open_failures != 0)
+  if (jq_util_input_open_errors(input_state) != 0 && ret == 0 && (options & EXIT_STATUS))
     ret = 2;
 
   if (ret != 0)
@@ -651,15 +515,15 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "Error: %s opening /dev/null\n", strerror(errno));
       exit(3);
     }
-    assert(input_state->ninput_files > 0 && !strcmp(input_state->input_filenames[0], "-"));
-    if (rename(t, input_state->input_filenames[0]) == -1) {
+    assert(first_file != 0 && !strcmp(first_file, "-"));
+    if (rename(t, first_file) == -1) {
       fprintf(stderr, "Error: %s renaming temporary file\n", strerror(errno));
       exit(3);
     }
     jv_mem_free(t);
   }
 out:
-  input_state_free(&input_state);
+  jq_util_input_free(&input_state);
   jq_teardown(&jq);
   if (ret >= 10 && (options & EXIT_STATUS))
     return ret - 10;

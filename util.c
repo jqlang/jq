@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <string.h>
@@ -17,7 +18,8 @@
 
 
 #include "util.h"
-#include "jv.h"
+#include "jq.h"
+#include "jv_alloc.h"
 
 #ifndef HAVE_MKSTEMP
 int mkstemp(char *template) {
@@ -143,3 +145,167 @@ not_this:
 #endif /* !HAVE_MEMMEM */
 }
 
+struct jq_util_input_state {
+  jq_err_cb err_cb;
+  void *err_cb_data;
+  jv_parser *parser;
+  FILE* current_input;
+  jv files;
+  int open_failures;
+  jv slurped;
+  char buf[4096];
+};
+
+static void fprinter(void *data, jv fname) {
+  fprintf((FILE *)data, "jq: error: Could not open file %s: %s\n", jv_string_value(fname), strerror(errno));
+  jv_free(fname);
+}
+
+// If parser == NULL -> RAW
+jq_util_input_state jq_util_input_init(jq_err_cb err_cb, void *err_cb_data) {
+  if (err_cb == NULL) {
+    err_cb = fprinter;
+    err_cb_data = stderr;
+  }
+  jq_util_input_state new_state = jv_mem_alloc(sizeof(*new_state));
+  memset(new_state, 0, sizeof(*new_state));
+  new_state->err_cb = err_cb;
+  new_state->err_cb_data = err_cb_data;
+  new_state->parser = NULL;
+  new_state->current_input = NULL;
+  new_state->files = jv_array();
+  new_state->slurped = jv_invalid();
+  new_state->buf[0] = 0;
+
+  return new_state;
+}
+
+void jq_util_input_set_parser(jq_util_input_state state, jv_parser *parser, int slurp) {
+  assert(!jv_is_valid(state->slurped));
+  state->parser = parser;
+
+  if (parser == NULL && slurp)
+    state->slurped = jv_string("");
+  else if (slurp)
+    state->slurped = jv_array();
+  else
+    state->slurped = jv_invalid();
+}
+
+void jq_util_input_free(jq_util_input_state *state) {
+  jq_util_input_state old_state = *state;
+  *state = NULL;
+  if (old_state == NULL)
+    return;
+
+  if (old_state->parser != NULL)
+    jv_parser_free(old_state->parser);
+  jv_free(old_state->files);
+  jv_free(old_state->slurped);
+  jv_mem_free(old_state);
+}
+
+void jq_util_input_add_input(jq_util_input_state state, jv fname) {
+  state->files = jv_array_append(state->files, fname);
+}
+
+int jq_util_input_open_errors(jq_util_input_state state) {
+  return state->open_failures;
+}
+
+static jv next_file(jq_util_input_state state) {
+  jv next = jv_array_get(jv_copy(state->files), 0);
+  if (jv_array_length(jv_copy(state->files)) > 0)
+    state->files = jv_array_slice(state->files, 1, jv_array_length(jv_copy(state->files)));
+  return next;
+}
+
+int jq_util_input_read_more(jq_util_input_state state) {
+  if (!state->current_input || feof(state->current_input)) {
+    if (state->current_input) {
+      if (state->current_input == stdin) {
+        clearerr(stdin); // perhaps we can read again; anyways, we don't fclose(stdin)
+      } else {
+        fclose(state->current_input);
+      }
+      state->current_input = NULL;
+    }
+    jv f = next_file(state);
+    if (jv_is_valid(f)) {
+      if (!strcmp(jv_string_value(f), "-")) {
+        state->current_input = stdin;
+      } else {
+        state->current_input = fopen(jv_string_value(f), "r");
+        if (!state->current_input) {
+          state->err_cb(state->err_cb_data, jv_copy(f));
+          state->open_failures++;
+        }
+      }
+      jv_free(f);
+    }
+  }
+
+  state->buf[0] = 0;
+  if (state->current_input) {
+    if (!fgets(state->buf, sizeof(state->buf), state->current_input))
+      state->buf[0] = 0;
+  }
+  return jv_array_length(jv_copy(state->files)) == 0 && (!state->current_input || feof(state->current_input));
+}
+
+jv jq_util_input_next_input_cb(jq_state *jq, void *data) {
+  return jq_util_input_next_input((jq_util_input_state)data);
+}
+
+// Blocks to read one more input from stdin and/or given files
+// When slurping, it returns just one value
+jv jq_util_input_next_input(jq_util_input_state state) {
+  int is_last = 0;
+  jv value = jv_invalid(); // need more input
+  do {
+    if (state->parser == NULL) {
+      // Raw input
+      is_last = jq_util_input_read_more(state);
+      if (state->buf[0] == '\0')
+        continue;
+      int len = strlen(state->buf); // Raw input doesn't support NULs
+      if (len > 0) {
+        if (jv_is_valid(state->slurped)) {
+          // Slurped raw input
+          state->slurped = jv_string_concat(state->slurped, jv_string(state->buf));
+        } else {
+          if (!jv_is_valid(value))
+            value = jv_string("");
+          if (state->buf[len-1] == '\n') {
+            // whole line
+            state->buf[len-1] = 0;
+            return jv_string_concat(value, jv_string(state->buf));
+          }
+          value = jv_string_concat(value, jv_string(state->buf));
+          state->buf[0] = '\0';
+        }
+      }
+    } else {
+      if (jv_parser_remaining(state->parser) == 0) {
+        is_last = jq_util_input_read_more(state);
+        jv_parser_set_buf(state->parser, state->buf, strlen(state->buf), !is_last);
+      }
+      value = jv_parser_next(state->parser);
+      if (jv_is_valid(state->slurped)) {
+        if (jv_is_valid(value)) {
+          state->slurped = jv_array_append(state->slurped, value);
+          value = jv_invalid();
+        } else if (jv_invalid_has_msg(jv_copy(value)))
+          return value; // Not slurped parsed input
+      } else if (jv_is_valid(value) || jv_invalid_has_msg(jv_copy(value))) {
+        return value;
+      }
+    }
+  } while (!is_last);
+
+  if (jv_is_valid(state->slurped)) {
+    value = state->slurped;
+    state->slurped = jv_invalid();
+  }
+  return value;
+}
