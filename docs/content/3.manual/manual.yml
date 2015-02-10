@@ -738,7 +738,8 @@ sections:
           `from_entries` does the opposite conversion, and
           `with_entries(foo)` is a shorthand for `to_entries |
           map(foo) | from_entries`, useful for doing some operation to
-          all keys and values of an object.
+          all keys and values of an object. `from_entries` accepts key, Key,
+          Name, value and Value as keys.
 
         examples:
           - program: 'to_entries'
