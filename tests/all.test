@@ -1035,7 +1035,11 @@ to_entries
 [{"key":"a", "value":1}, {"key":"b", "value":2}]
 
 from_entries
-[{"key":"a", "value":1}, {"key":"b", "value":2}]
+[{"key":"a", "value":1}, {"Key":"b", "value":2}]
+{"a": 1, "b": 2}
+
+from_entries
+[{"key":"a", "Value":1}, {"Name":"b", "value":2}]
 {"a": 1, "b": 2}
 
 with_entries(.key |= "KEY_" + .)
