@@ -895,11 +895,11 @@ static jv f_input(jq_state *jq, jv input) {
 }
 
 static jv f_debug(jq_state *jq, jv input) {
-  jq_debug_cb cb;
+  jq_msg_cb cb;
   void *data;
   jq_get_debug_cb(jq, &cb, &data);
   if (cb != NULL)
-    cb(jq, data, jv_copy(input));
+    cb(data, jv_copy(input));
   return input;
 }
 

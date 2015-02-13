@@ -140,7 +140,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
   return ret;
 }
 
-static void debug_cb(jq_state *jq, void *data, jv input) {
+static void debug_cb(void *data, jv input) {
   int dumpopts = *(int *)data;
   jv_dumpf(JV_ARRAY(jv_string("DEBUG:"), input), stderr, dumpopts & ~(JV_PRINT_PRETTY));
   fprintf(stderr, "\n");

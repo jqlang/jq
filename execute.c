@@ -24,7 +24,7 @@ struct jq_state {
   void *nomem_handler_data;
   struct bytecode* bc;
 
-  jq_err_cb err_cb;
+  jq_msg_cb err_cb;
   void *err_cb_data;
   jv error;
 
@@ -42,7 +42,7 @@ struct jq_state {
   jv attrs;
   jq_input_cb input_cb;
   void *input_cb_data;
-  jq_debug_cb debug_cb;
+  jq_msg_cb debug_cb;
   void *debug_cb_data;
 };
 
@@ -879,7 +879,7 @@ jq_state *jq_init(void) {
   return jq;
 }
 
-void jq_set_error_cb(jq_state *jq, jq_err_cb cb, void *data) {
+void jq_set_error_cb(jq_state *jq, jq_msg_cb cb, void *data) {
   if (cb == NULL) {
     jq->err_cb = default_err_cb;
     jq->err_cb_data = stderr;
@@ -889,7 +889,7 @@ void jq_set_error_cb(jq_state *jq, jq_err_cb cb, void *data) {
   }
 }
 
-void jq_get_error_cb(jq_state *jq, jq_err_cb *cb, void **data) {
+void jq_get_error_cb(jq_state *jq, jq_msg_cb *cb, void **data) {
   *cb = jq->err_cb;
   *data = jq->err_cb_data;
 }
@@ -1082,12 +1082,12 @@ void jq_get_input_cb(jq_state *jq, jq_input_cb *cb, void **data) {
   *data = jq->input_cb_data;
 }
 
-void jq_set_debug_cb(jq_state *jq, jq_debug_cb cb, void *data) {
+void jq_set_debug_cb(jq_state *jq, jq_msg_cb cb, void *data) {
   jq->debug_cb = cb;
   jq->debug_cb_data = data;
 }
 
-void jq_get_debug_cb(jq_state *jq, jq_debug_cb *cb, void **data) {
+void jq_get_debug_cb(jq_state *jq, jq_msg_cb *cb, void **data) {
   *cb = jq->debug_cb;
   *data = jq->debug_cb_data;
 }

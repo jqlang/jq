@@ -146,7 +146,7 @@ not_this:
 }
 
 struct jq_util_input_state {
-  jq_err_cb err_cb;
+  jq_msg_cb err_cb;
   void *err_cb_data;
   jv_parser *parser;
   FILE* current_input;
@@ -162,7 +162,7 @@ static void fprinter(void *data, jv fname) {
 }
 
 // If parser == NULL -> RAW
-jq_util_input_state jq_util_input_init(jq_err_cb err_cb, void *err_cb_data) {
+jq_util_input_state jq_util_input_init(jq_msg_cb err_cb, void *err_cb_data) {
   if (err_cb == NULL) {
     err_cb = fprinter;
     err_cb_data = stderr;

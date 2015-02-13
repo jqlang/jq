@@ -7,11 +7,11 @@
 enum {JQ_DEBUG_TRACE = 1};
 
 typedef struct jq_state jq_state;
-typedef void (*jq_err_cb)(void *, jv);
+typedef void (*jq_msg_cb)(void *, jv);
 
 jq_state *jq_init(void);
-void jq_set_error_cb(jq_state *, jq_err_cb, void *);
-void jq_get_error_cb(jq_state *, jq_err_cb *, void **);
+void jq_set_error_cb(jq_state *, jq_msg_cb, void *);
+void jq_get_error_cb(jq_state *, jq_msg_cb *, void **);
 void jq_set_nomem_handler(jq_state *, void (*)(void *), void *);
 jv jq_format_error(jv msg);
 void jq_report_error(jq_state *, jv);
@@ -26,9 +26,8 @@ typedef jv (*jq_input_cb)(jq_state *, void *);
 void jq_set_input_cb(jq_state *, jq_input_cb, void *);
 void jq_get_input_cb(jq_state *, jq_input_cb *, void **);
 
-typedef void (*jq_debug_cb)(jq_state *, void *, jv);
-void jq_set_debug_cb(jq_state *, jq_debug_cb, void *);
-void jq_get_debug_cb(jq_state *, jq_debug_cb *, void **);
+void jq_set_debug_cb(jq_state *, jq_msg_cb, void *);
+void jq_get_debug_cb(jq_state *, jq_msg_cb *, void **);
 
 void jq_set_attrs(jq_state *, jv);
 jv jq_get_attrs(jq_state *);
@@ -40,7 +39,7 @@ jv jq_get_attr(jq_state *, jv);
 
 typedef struct jq_util_input_state *jq_util_input_state;
 
-jq_util_input_state jq_util_input_init(jq_err_cb, void *);
+jq_util_input_state jq_util_input_init(jq_msg_cb, void *);
 void jq_util_input_set_parser(jq_util_input_state, jv_parser *, int);
 void jq_util_input_free(jq_util_input_state *);
 void jq_util_input_add_input(jq_util_input_state, jv);
