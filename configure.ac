@@ -76,7 +76,8 @@ AC_CHECK_HEADER("oniguruma.h",
 if test $HAVE_ONIGURUMA != 1; then
     AC_MSG_NOTICE([Oniguruma was not found.])
     AC_MSG_NOTICE([ Try setting the location using '--with-oniguruma=PREFIX' ])
-    AC_MSG_ERROR([ oniguruma is required to build jq.])
+else
+    AC_DEFINE([HAVE_ONIGURUMA],1,[Define to 1 if Oniguruma is installed])
 fi
 
 
