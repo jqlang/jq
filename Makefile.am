@@ -20,10 +20,18 @@ ACLOCAL_AMFLAGS = -I config/m4
 
 # While there is some autoconf macro support for lex/flex, it doesn't support
 # header file creation so we'll use good old make
+if MAINTAINER_MODE
 BUILT_SOURCES = lexer.h lexer.c parser.h parser.c version.h
 lexer.c: lexer.l
 	$(AM_V_LEX) flex -o lexer.c --header-file=lexer.h $<
 lexer.h: lexer.c
+else
+BUILT_SOURCES = 
+.y.c:
+	$(AM_V_YACC) echo "NOT building parser.c!"
+.l.c:
+	$(AM_V_LEX) echo "NOT building lexer.c!"
+endif
 
 # Tell YACC (bison) autoconf macros that you want a header file created.
 # If the --warnings=all fails, you probably have an old version of bison

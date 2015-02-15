@@ -12,6 +12,7 @@ AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([parallel-tests foreign -Wall])
 AM_SILENT_RULES([yes])
 AM_PROG_AR
+AM_MAINTAINER_MODE([enable])
 AC_PROG_CC
 AC_PROG_CC_STDC
 AC_PROG_CPP_WERROR
@@ -27,28 +28,20 @@ dnl AC_PROG_YACC macros...
 
 dnl check bison version
 
-if test "$YACC" != "bison -y"; then
-  AC_MSG_CHECKING([bison version])
-  AC_MSG_RESULT([not bison])
-else
-  AX_PROG_BISON_VERSION([3],
-    [],
-    [AC_MSG_ERROR([You need bison version 3.0 or greater.])])
-  dnl These gross square brackets keep autotools from eating the perl script...
-#  yacc_version=[$($YACC --version 2>1 | perl -pe '($_)=/([0-9]+([.][0-9]+)+)/')]
-#  AX_COMPARE_VERSION([$yacc_version], [gt], [3],
-#  [AC_MSG_RESULT([ok])],
-#  [AC_MSG_RESULT([no])
-#   AC_MSG_ERROR([You need bison version 3.0 or greater.])])
-fi
+if test "$USE_MAINTAINER_MODE" = yes; then
+  if test "$YACC" != "bison -y"; then
+    AC_MSG_CHECKING([bison version])
+    AC_MSG_RESULT([not bison])
+  else
+    AX_PROG_BISON_VERSION([3],
+      [],
+      [AC_MSG_ERROR([You need bison version 3.0 or greater.])])
+  fi
 
-dnl
-dnl these program checks should probably be deleted
-dnl
-
-AC_PROG_LEX
-if test "x$LEX" != xflex; then
-  LEX="$SHELL $missing_dir/missing flex"
+  AC_PROG_LEX
+  if test "x$LEX" != xflex; then
+    LEX="$SHELL $missing_dir/missing flex"
+  fi
 fi
 
 

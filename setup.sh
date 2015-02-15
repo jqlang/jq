@@ -13,7 +13,7 @@ if [ "clean" == "$1" ]; then
   find config -name m4 -prune -o -type f -print | xargs rm -f
   rm -rf tmp autom4te.cache
   rm -f INSTALL Makefile.in aclocal.m4 configure config.h.in ChangeLog
-  rm -f jv_utf8_tables.gen.h lexer.c lexer.h parser.c parser.h
+  rm -f jv_utf8_tables.gen.h
 elif [ "superclean" == "$1" ]; then
   # if autoconf errors during distcheck, it leaves files that need chmod'ing
   ver=$(scripts/version|tr -d '\n')

@@ -12,13 +12,26 @@ If you want to hack on jq, feel free, but be warned that its internals
 are not well-documented at the moment. Bring a hard hat and a
 shovel. Also, read the wiki: http://github.com/stedolan/jq/wiki
 
+Source tarball and built executable releases can be found on the
+homepage and on the github release page, https://github.com/stedolan/jq/releases
+
 If you're building directly from the latest git, you'll need flex,
-bison, libtool, make, autoconf and libonig installed. To build, run:
+bison (3.0 or newer), libtool, make, and autoconf installed.  To get
+regexp support you'll also need to install Oniguruma (note that jq's
+tests require regexp support to pass).  To build, run:
 
     autoreconf -i   # if building from git
     ./configure
     make -j8
     make check
+
+To build without bison or flex, add `--disable-maintainer-mode` to the
+./configure invocation:
+
+    ./configure --disable-maintainer-mode
+
+(Developers must not use `--disable-maintainer-mode`, not when making
+changes to the jq parser and/or lexer.)
 
 To build a statically linked version of jq, run:
 
