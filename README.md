@@ -4,13 +4,13 @@ jq
 jq is a command-line JSON processor.
 
 If you want to learn to use jq, read the documentation at
-[http://stedolan.github.io/jq](http://stedolan.github.io/jq). This
+[http://stedolan.github.io/jq](http://stedolan.github.io/jq).  This
 documentation is generated from the docs/ folder of this repository.
 You can also try it online at [jqplay.org](http://jqplay.org).
 
 If you want to hack on jq, feel free, but be warned that its internals
 are not well-documented at the moment. Bring a hard hat and a
-shovel. Also, read the wiki: http://github.com/stedolan/jq/wiki
+shovel.  Also, read the wiki: http://github.com/stedolan/jq/wiki
 
 Source tarball and built executable releases can be found on the
 homepage and on the github release page, https://github.com/stedolan/jq/releases
@@ -37,7 +37,7 @@ To build a statically linked version of jq, run:
 
     make LDFLAGS=-all-static
 
-After make finishes, you'll be able to use `./jq`. You can also
+After make finishes, you'll be able to use `./jq`.  You can also
 install it using:
 
     sudo make install
@@ -59,4 +59,4 @@ Cross-compilation requires a clean workspace, then:
     scripts/crosscompile <name-of-build> <configure-options>
 
 Use the --host= and --target= ./configure options to select a
-cross-compilation environment.  See the wiki.
+cross-compilation environment.  See also the wiki.
