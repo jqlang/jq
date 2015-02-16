@@ -61,7 +61,7 @@ if test $ONIGURUMAPATHSET == 1; then
 fi
 
 # check for ONIGURUMA library
-HAVE_ONIGURUMA=1
+HAVE_ONIGURUMA=0
 AC_CHECK_HEADER("oniguruma.h",
     AC_CHECK_LIB([onig],[onig_version],[LIBS="$LIBS -lonig"; HAVE_ONIGURUMA=1;]))
 
