@@ -35,7 +35,7 @@ if test "$USE_MAINTAINER_MODE" = yes; then
   else
     AX_PROG_BISON_VERSION([3],
       [],
-      [AC_MSG_ERROR([You need bison version 3.0 or greater.])])
+      [AC_MSG_ERROR([You need bison version 3.0 or greater, or use --disable-maintainer-mode.])])
   fi
 
   AC_PROG_LEX
