@@ -1020,7 +1020,6 @@ static block bind_bytecoded_builtins(block b) {
 static const char* const jq_builtins[] = {
   "def error: error(.);",
   "def map(f): [.[] | f];",
-  "def map_values(f): .[] |= f;",
   "def select(f): if f then . else empty end;",
   "def sort_by(f): _sort_by_impl(map([f]));",
   "def group_by(f): _group_by_impl(map([f]));",
@@ -1033,6 +1032,7 @@ static const char* const jq_builtins[] = {
   "def del(f): delpaths([path(f)]);",
   "def _assign(paths; value): value as $v | reduce path(paths) as $p (.; setpath($p; $v));",
   "def _modify(paths; update): reduce path(paths) as $p (.; setpath($p; getpath($p) | update));",
+  "def map_values(f): .[] |= f;",
 
   // recurse
   "def recurse(f): def r: ., (f | select(. != null) | r); r;",
