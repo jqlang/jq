@@ -129,6 +129,11 @@ EOF
 printf '1\n'|./jq -ces --seq '. == [1]' >/dev/null 2> $d/out
 cmp $d/out $d/expected
 
+$VALGRIND $Q ./jq -n '0, 1, 2' > $d/a
+$VALGRIND $Q ./jq -n '3, 4, 5' > $d/b
+$VALGRIND $Q ./jq -i '.+1' $d/a $d/b
+$VALGRIND $Q ./jq -se '. == [1,2,3,4,5,6]' $d/a
+
 ## Test streaming parser
 
 ## If we add an option to stream to the `import ... as $symbol;` directive

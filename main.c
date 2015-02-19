@@ -515,7 +515,7 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "Error: %s opening /dev/null\n", strerror(errno));
       exit(3);
     }
-    assert(first_file != 0 && !strcmp(first_file, "-"));
+    assert(first_file != 0 && strcmp(first_file, "-") != 0);
     if (rename(t, first_file) == -1) {
       fprintf(stderr, "Error: %s renaming temporary file\n", strerror(errno));
       exit(3);
