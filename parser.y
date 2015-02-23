@@ -24,6 +24,7 @@ struct lexer_param;
   } while (0)
  }
 
+%require "3.0.0"
 %locations
 %error-verbose
 %define api.pure
