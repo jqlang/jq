@@ -519,6 +519,11 @@ int main(int argc, char* argv[]) {
       exit(3);
     }
     jv_mem_free(t);
+  } else {
+    if (fclose(stdout)!=0) {
+      fprintf(stderr,"Error: writing output failed: %s\n", strerror(errno));
+      exit(3);
+    }
   }
 out:
   jq_util_input_free(&input_state);
