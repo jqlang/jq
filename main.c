@@ -410,11 +410,11 @@ int main(int argc, char* argv[]) {
     int n = snprintf(t, tlen,"%sXXXXXX", first_file);
     assert(n > 0 && (size_t)n < tlen);
     if (mkstemp(t) == -1) {
-      fprintf(stderr, "Error: %s creating temporary file", strerror(errno));
+      fprintf(stderr, "Error: %s creating temporary file '%s'\n", strerror(errno), t);
       exit(3);
     }
     if (freopen(t, "w", stdout) == NULL) {
-      fprintf(stderr, "Error: %s redirecting stdout to temporary file", strerror(errno));
+      fprintf(stderr, "Error: %s redirecting stdout to temporary file '%s'\n", strerror(errno), t);
       exit(3);
     }
   }
