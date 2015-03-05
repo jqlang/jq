@@ -276,11 +276,28 @@ static int jvp_array_equal(jv a, jv b) {
   return 1;
 }
 
+static void jvp_clamp_slice_params(int len, int *pstart, int *pend)
+{
+  if (*pstart < 0) *pstart = len + *pstart;
+  if (*pend < 0) *pend = len + *pend;
+
+  if (*pstart < 0) *pstart = 0;
+  if (*pstart > len) *pstart = len;
+  if (*pend > len) *pend = len;
+  if (*pend < *pstart) *pend = *pstart;
+}
+
 static jv jvp_array_slice(jv a, int start, int end) {
   assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  int len = jvp_array_length(a);
+  jvp_clamp_slice_params(len, &start, &end);
+  assert(0 <= start && start <= end && end <= len);
+  
   // FIXME: maybe slice should reallocate if the slice is small enough
-  assert(0 <= start && start <= end);
-  assert(end <= jvp_array_length(a));
+  if (start == end) {
+    jv_free(a);
+    return jv_array();
+  }
   // FIXME FIXME FIXME large offsets
   a.offset += start;
   a.size = end - start;
@@ -728,15 +745,7 @@ jv jv_string_slice(jv j, int start, int end) {
   int c;
   jv res;
 
-  if (start < 0) start = len + start;
-  if (end < 0) end = len + end;
-
-  if (start < 0) start = 0;
-  if (start > len) start = len;
-  if (end > len) end = len;
-  if (end < start) end = start;
-  if (start < 0 || start > end || end > len)
-    return jv_invalid_with_msg(jv_string("Invalid string slice indices"));
+  jvp_clamp_slice_params(len, &start, &end);
   assert(0 <= start && start <= end && end <= len);
 
   /* Look for byte offset corresponding to start codepoints */
