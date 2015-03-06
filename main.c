@@ -132,6 +132,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
       msg = jv_dump_string(msg, 0);
       fprintf(stderr, "jq: error (not a string): %s\n", jv_string_value(msg));
     }
+    ret = 5;
     jv_free(msg);
   }
   jv_free(result);
