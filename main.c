@@ -38,7 +38,6 @@ static void usage(int code) {
   fprintf(f, "\t -h\t\tthis message;\n");
   fprintf(f, "\t -c\t\tcompact instead of pretty-printed output;\n");
   fprintf(f, "\t -n\t\tuse `null` as the single input value;\n");
-  fprintf(f, "\t -i\t\tedit the [first] file in-place;\n");
   fprintf(f, "\t -s\t\tread (slurp) all inputs into an array; apply filter to it;\n");
   fprintf(f, "\t -r\t\toutput raw strings, not JSON texts;\n");
   fprintf(f, "\t -R\t\tread raw strings, not JSON texts;\n");
@@ -94,11 +93,10 @@ enum {
   RAW_NO_LF             = 1024,
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
-  IN_PLACE              = 8192,
-  SEQ                   = 16384,
-  RUN_TESTS             = 32768,
+  SEQ                   = 8192,
+  RUN_TESTS             = 16384,
   /* debugging only */
-  DUMP_DISASM           = 65536,
+  DUMP_DISASM           = 32768,
 };
 static int options = 0;
 
@@ -151,7 +149,7 @@ int main(int argc, char* argv[]) {
   int ret = 0;
   int compiled = 0;
   int parser_flags = 0;
-  char *t = NULL;
+  int nfiles = 0;
 
   if (argc) progname = argv[0];
 
@@ -171,18 +169,17 @@ int main(int argc, char* argv[]) {
   size_t short_opts = 0;
   jv program_arguments = jv_array();
   jv lib_search_paths = jv_null();
-  char *first_file = 0;
   for (int i=1; i<argc; i++, short_opts = 0) {
     if (further_args_are_files) {
       jq_util_input_add_input(input_state, jv_string(argv[i]));
-      first_file = first_file ? first_file : argv[i];
+      nfiles++;
     } else if (!strcmp(argv[i], "--")) {
       if (!program) usage(2);
       further_args_are_files = 1;
     } else if (!isoptish(argv[i])) {
       if (program) {
         jq_util_input_add_input(input_state, jv_string(argv[i]));
-        first_file = first_file ? first_file : argv[i];
+        nfiles++;
       } else {
         program = argv[i];
       }
@@ -248,10 +245,6 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 'j', "join-output", &short_opts)) {
         options |= RAW_OUTPUT | RAW_NO_LF;
-        if (!short_opts) continue;
-      }
-      if (isoption(argv[i], 'i', "in-place", &short_opts)) {
-        options |= IN_PLACE;
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 0, "seq", &short_opts)) {
@@ -355,13 +348,12 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  int dumpopts;
+  int dumpopts = 0;
+#ifndef WIN32
   /* Disable colour by default on Windows builds as Windows
      terminals tend not to display it correctly */
-#ifdef WIN32
-  dumpopts = 0;
-#else
-  dumpopts = isatty(fileno(stdout)) ? JV_PRINT_COLOUR : 0;
+  if (isatty(fileno(stdout)))
+    dumpopts |= JV_PRINT_COLOUR;
 #endif
   if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
   if (!(options & COMPACT_OUTPUT)) dumpopts |= JV_PRINT_PRETTY;
@@ -402,22 +394,6 @@ int main(int argc, char* argv[]) {
 #endif
 
   if (!program) usage(2);
-  if ((options & IN_PLACE)) {
-    if (first_file == 0) usage(2);
-    if (strcmp(first_file, "-") == 0) usage(2);
-    size_t tlen = strlen(first_file) + 7;
-    t = jv_mem_alloc(tlen);
-    int n = snprintf(t, tlen,"%sXXXXXX", first_file);
-    assert(n > 0 && (size_t)n < tlen);
-    if (mkstemp(t) == -1) {
-      fprintf(stderr, "Error: %s creating temporary file", strerror(errno));
-      exit(3);
-    }
-    if (freopen(t, "w", stdout) == NULL) {
-      fprintf(stderr, "Error: %s redirecting stdout to temporary file", strerror(errno));
-      exit(3);
-    }
-  }
 
   if ((options & PROVIDE_NULL) && (options & (RAW_INPUT | SLURP))) {
     fprintf(stderr, "%s: --null-input cannot be used with --raw-input or --slurp\n", progname);
@@ -469,8 +445,9 @@ int main(int argc, char* argv[]) {
   // Let jq program call `debug` builtin and have that go somewhere
   jq_set_debug_cb(jq, debug_cb, &dumpopts);
 
-  if (first_file == 0)
+  if (nfiles == 0)
     jq_util_input_add_input(input_state, jv_string("-"));
+
   if (options & PROVIDE_NULL) {
     ret = process(jq, jv_null(), jq_flags, dumpopts);
   } else {
@@ -502,24 +479,6 @@ int main(int argc, char* argv[]) {
   if (ret != 0)
     goto out;
 
-  if ((options & IN_PLACE)) {
-    FILE *devnull;
-#ifdef WIN32
-    devnull = freopen("NUL", "w+", stdout);
-#else
-    devnull = freopen("/dev/null", "w+", stdout);
-#endif
-    if (devnull == NULL) {
-      fprintf(stderr, "Error: %s opening /dev/null\n", strerror(errno));
-      exit(3);
-    }
-    assert(first_file != 0 && strcmp(first_file, "-") != 0);
-    if (rename(t, first_file) == -1) {
-      fprintf(stderr, "Error: %s renaming temporary file\n", strerror(errno));
-      exit(3);
-    }
-    jv_mem_free(t);
-  }
 out:
   jq_util_input_free(&input_state);
   jq_teardown(&jq);
