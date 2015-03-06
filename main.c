@@ -477,6 +477,11 @@ int main(int argc, char* argv[]) {
   if (jq_util_input_open_errors(input_state) != 0)
     ret = 2;
 
+  if (fclose(stdout)!=0) {
+    fprintf(stderr,"Error: writing output failed: %s\n", strerror(errno));
+    ret = 2;
+  }
+
   if (ret != 0)
     goto out;
 
