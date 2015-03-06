@@ -80,6 +80,8 @@ static jv f_negate(jq_state *jq, jv input) {
 }
 
 static jv f_startswith(jq_state *jq, jv a, jv b) {
+  if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING)
+    return jv_invalid_with_msg(jv_string("startswith() requires string inputs"));
   int alen = jv_string_length_bytes(jv_copy(a));
   int blen = jv_string_length_bytes(jv_copy(b));
   jv ret;
@@ -94,6 +96,8 @@ static jv f_startswith(jq_state *jq, jv a, jv b) {
 }
 
 static jv f_endswith(jq_state *jq, jv a, jv b) {
+  if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING)
+    return jv_invalid_with_msg(jv_string("endswith() requires string inputs"));
   const char *astr = jv_string_value(a);
   const char *bstr = jv_string_value(b);
   size_t alen = jv_string_length_bytes(jv_copy(a));
