@@ -1591,6 +1591,28 @@ sections:
             input: "\"O'Hara's Ale\""
             output: ["\"echo 'O'\\\\''Hara'\\\\''s Ale'\""]
 
+      - title: "Dates"
+        body: |
+
+          The `strptime(fmt)` function parses input strings matching the
+          `fmt` argument.  The output is an array of eight numbers: the
+          year, the month, the day of the month, the hour of the day,
+          the minute of the hour, the second of the minute, the day of
+          the week, and the day of the year, all zero-based except for
+          the year and the month, which are one-based.
+
+          The `mktime` function consumes outputs from `strptime/1` and
+          produces the time in seconds since the Unix epoch.
+
+        examples:
+          - program: 'strptime'
+            input: '"2015-03-05 23:51:47Z"'
+            output: ['[2015,2,5,23,51,47,4,63]']
+
+          - program: 'strptime|mktime'
+            input: '"2015-03-05 23:51:47Z"'
+            output: ['1425621107']
+
   - title: Conditionals and Comparisons
     entries:
       - title: "`==`, `!=`"

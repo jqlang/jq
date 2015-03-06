@@ -87,9 +87,11 @@ jv jv_array_indexes(jv, jv);
 #define JV_ARRAY_5(e1,e2,e3,e4,e5) (jv_array_append(JV_ARRAY_4(e1,e2,e3,e4),e5))
 #define JV_ARRAY_6(e1,e2,e3,e4,e5,e6) (jv_array_append(JV_ARRAY_5(e1,e2,e3,e4,e5),e6))
 #define JV_ARRAY_7(e1,e2,e3,e4,e5,e6,e7) (jv_array_append(JV_ARRAY_6(e1,e2,e3,e4,e5,e6),e7))
-#define JV_ARRAY_IDX(_1,_2,_3,_4,_5,_6,_7,NAME,...) NAME
+#define JV_ARRAY_8(e1,e2,e3,e4,e5,e6,e7,e8) (jv_array_append(JV_ARRAY_7(e1,e2,e3,e4,e5,e6,e7),e8))
+#define JV_ARRAY_9(e1,e2,e3,e4,e5,e6,e7,e8,e9) (jv_array_append(JV_ARRAY_8(e1,e2,e3,e4,e5,e6,e7,e8),e9))
+#define JV_ARRAY_IDX(_1,_2,_3,_4,_5,_6,_7,_8,_9,NAME,...) NAME
 #define JV_ARRAY(...) \
-  JV_ARRAY_IDX(__VA_ARGS__, JV_ARRAY_7, JV_ARRAY_6, JV_ARRAY_5, JV_ARRAY_4, JV_ARRAY_3, JV_ARRAY_2, JV_ARRAY_1)(__VA_ARGS__)
+  JV_ARRAY_IDX(__VA_ARGS__, JV_ARRAY_9, JV_ARRAY_8, JV_ARRAY_7, JV_ARRAY_6, JV_ARRAY_5, JV_ARRAY_4, JV_ARRAY_3, JV_ARRAY_2, JV_ARRAY_1)(__VA_ARGS__)
 
 #ifdef __GNUC__
 #define JV_PRINTF_LIKE(fmt_arg_num, args_num) \

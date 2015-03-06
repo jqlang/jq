@@ -115,6 +115,7 @@ AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 
 AC_FIND_FUNC([isatty], [c], [#include <unistd.h>], [0])
 AC_FIND_FUNC([_isatty], [c], [#include <io.h>], [0])
+AC_FIND_FUNC([strptime], [c], [#include <time.h>], [0])
 
 AC_ARG_ENABLE([pthread-tls],
               [AC_HELP_STRING([--enable-pthread-tls],

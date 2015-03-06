@@ -1,4 +1,6 @@
+#define _XOPEN_SOURCE
 #include <assert.h>
+#include <ctype.h>
 #include <limits.h>
 #include <math.h>
 #ifdef HAVE_ONIGURUMA
@@ -6,6 +8,7 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "builtin.h"
 #include "compile.h"
 #include "jq_parser.h"
@@ -912,6 +915,74 @@ static jv f_stderr(jq_state *jq, jv input) {
   return input;
 }
 
+#ifdef HAVE_STRPTIME
+static jv f_strptime(jq_state *jq, jv a, jv b) {
+  if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING)
+    return jv_invalid_with_msg(jv_string("strptime/2 requires string inputs and arguments"));
+
+  struct tm tm;
+  const char *input = jv_string_value(a);
+  const char *fmt = jv_string_value(b);
+  const char *end = strptime(input, fmt, &tm);
+
+  if (end == NULL || (*end != '\0' && !isspace(*end))) {
+    jv e = jv_invalid_with_msg(jv_string_fmt("date \"%s\" does not match format \"%s\"", input, fmt));
+    jv_free(a);
+    jv_free(b);
+    return e;
+  }
+  jv_free(a);
+  jv_free(b);
+  jv r = JV_ARRAY(jv_number(tm.tm_year + 1900),
+                  jv_number(tm.tm_mon),
+                  jv_number(tm.tm_mday),
+                  jv_number(tm.tm_hour),
+                  jv_number(tm.tm_min),
+                  jv_number(tm.tm_sec),
+                  jv_number(tm.tm_wday),
+                  jv_number(tm.tm_yday));
+  if (*end != '\0')
+    r = jv_array_append(r, jv_string(end));
+  return r;
+}
+#else
+static jv f_strptime(jq_state *jq, jv a, jv b) {
+    return jv_invalid_with_msg(jv_string("strptime/2 not implemented on this platform"));
+}
+#endif
+
+#define TO_TM_FIELD(t, j, i, k)                 \
+    do {                                        \
+      jv n = jv_array_get(jv_copy(j), (i));     \
+      if (jv_get_kind(n) != (k))                \
+        return jv_invalid_with_msg(jv_string("mktime() requires a 'gmtime' input (an array inputs of 8 numeric values)")); \
+      t = jv_number_value(n);                   \
+      jv_free(n);                               \
+    } while (0)
+
+static jv f_mktime(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_ARRAY)
+    return jv_invalid_with_msg(jv_string("mktime() requires array inputs"));
+  if (jv_array_length(jv_copy(a)) < 6)
+    return jv_invalid_with_msg(jv_string("mktime() requires a 'gmtime' input (an array inputs of 8 numeric values)"));
+  struct tm tm;
+  memset(&tm, 0, sizeof(tm));
+  TO_TM_FIELD(tm.tm_year, a, 0, JV_KIND_NUMBER);
+  TO_TM_FIELD(tm.tm_mon,  a, 1, JV_KIND_NUMBER);
+  TO_TM_FIELD(tm.tm_mday, a, 2, JV_KIND_NUMBER);
+  TO_TM_FIELD(tm.tm_hour, a, 3, JV_KIND_NUMBER);
+  TO_TM_FIELD(tm.tm_min, a, 4, JV_KIND_NUMBER);
+  TO_TM_FIELD(tm.tm_sec, a, 5, JV_KIND_NUMBER);
+  tm.tm_year -= 1900;
+  jv_free(a);
+  time_t t = mktime(&tm);
+  if (t == (time_t)-1)
+    return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
+  return jv_number(t);
+}
+
+#undef TO_TM_FIELD
+
 
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 1},
@@ -971,6 +1042,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_input, "_input", 1},
   {(cfunction_ptr)f_debug, "debug", 1},
   {(cfunction_ptr)f_stderr, "stderr", 1},
+  {(cfunction_ptr)f_strptime, "strptime", 2},
+  {(cfunction_ptr)f_mktime, "mktime", 1},
 };
 #undef LIBM_DD
 
