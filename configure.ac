@@ -115,7 +115,16 @@ AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 
 AC_FIND_FUNC([isatty], [c], [#include <unistd.h>], [0])
 AC_FIND_FUNC([_isatty], [c], [#include <io.h>], [0])
-AC_FIND_FUNC([strptime], [c], [#include <time.h>], [0])
+AC_FIND_FUNC([strptime], [c], [#include <time.h>], [0, 0, 0])
+AC_FIND_FUNC([strftime], [c], [#include <time.h>], [0, 0, 0, 0])
+AC_FIND_FUNC([timegm], [c], [#include <time.h>], [0])
+AC_FIND_FUNC([gmtime_r], [c], [#include <time.h>], [0, 0])
+AC_FIND_FUNC([gmtime], [c], [#include <time.h>], [0])
+AC_FIND_FUNC([gettimeofday], [c], [#include <time.h>], [0, 0])
+AC_CHECK_MEMBER([struct tm.tm_gmtoff], [AC_DEFINE([HAVE_TM_TM_GMT_OFF],1,[Define to 1 if the system has the tm_gmt_off field in struct tm])],
+                [], [[#include <time.h>]])
+AC_CHECK_MEMBER([struct tm.__tm_gmtoff], [AC_DEFINE([HAVE_TM___TM_GMT_OFF],1,[Define to 1 if the system has the __tm_gmt_off field in struct tm])],
+                [], [[#include <time.h>]])
 
 AC_ARG_ENABLE([pthread-tls],
               [AC_HELP_STRING([--enable-pthread-tls],
