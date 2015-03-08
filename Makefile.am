@@ -60,7 +60,7 @@ version.h: .remake-version-h
 	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
 
 bin_PROGRAMS = jq
-jq_SOURCES = main.c
+jq_SOURCES = main.c version.h
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
 
