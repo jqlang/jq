@@ -474,7 +474,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (jq_util_input_open_errors(input_state) != 0 && ret == 0 && (options & EXIT_STATUS))
+  if (jq_util_input_open_errors(input_state) != 0)
     ret = 2;
 
   if (ret != 0)
