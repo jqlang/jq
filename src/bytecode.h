@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "jv.h"
+#include "jq.h"
 
 typedef enum {
 #define OP(name, imm, in, out) name,
@@ -50,6 +51,8 @@ struct cfunction {
   cfunction_ptr fptr;
   const char* name;
   int nargs;
+  int is_generator;
+  void (*cgen_reset)(jq_state *, void *);
 };
 
 struct symbol_table {

@@ -32,6 +32,7 @@ struct jq_state {
   stack_ptr curr_frame;
   stack_ptr stk_top;
   stack_ptr fork_top;
+  void *curr_c_gen_state;
 
   jv path;
   jv value_at_path;
@@ -194,6 +195,7 @@ struct forkpoint {
   int path_len, subexp_nest;
   jv value_at_path;
   uint16_t* return_address;
+  void *c_generator_statep;
 };
 
 struct stack_pos {
@@ -208,6 +210,7 @@ struct stack_pos stack_get_pos(jq_state* jq) {
 void stack_save(jq_state *jq, uint16_t* retaddr, struct stack_pos sp){
   jq->fork_top = stack_push_block(&jq->stk, jq->fork_top, sizeof(struct forkpoint));
   struct forkpoint* fork = stack_block(&jq->stk, jq->fork_top);
+  fork->c_generator_statep = jq->curr_c_gen_state;
   fork->saved_data_stack = jq->stk_top;
   fork->saved_curr_frame = jq->curr_frame;
   fork->path_len =
@@ -217,6 +220,7 @@ void stack_save(jq_state *jq, uint16_t* retaddr, struct stack_pos sp){
   fork->return_address = retaddr;
   jq->stk_top = sp.saved_data_stack;
   jq->curr_frame = sp.saved_curr_frame;
+  jq->curr_c_gen_state = 0;
 }
 
 static int path_intact(jq_state *jq, jv curr) {
@@ -243,6 +247,8 @@ static void path_append(jq_state* jq, jv component, jv value_at_path) {
 }
 
 uint16_t* stack_restore(jq_state *jq){
+  assert(jq->curr_c_gen_state == 0);
+
   while (!stack_pop_will_free(&jq->stk, jq->fork_top)) {
     if (stack_pop_will_free(&jq->stk, jq->stk_top)) {
       jv_free(stack_pop(jq));
@@ -261,6 +267,7 @@ uint16_t* stack_restore(jq_state *jq){
   uint16_t* retaddr = fork->return_address;
   jq->stk_top = fork->saved_data_stack;
   jq->curr_frame = fork->saved_curr_frame;
+  jq->curr_c_gen_state = fork->c_generator_statep;
   int path_len = fork->path_len;
   if (jv_get_kind(jq->path) == JV_KIND_ARRAY) {
     assert(path_len >= 0);
@@ -276,7 +283,21 @@ uint16_t* stack_restore(jq_state *jq){
 }
 
 static void jq_reset(jq_state *jq) {
-  while (stack_restore(jq)) {}
+  uint16_t *pc;
+  while ((pc = stack_restore(jq))) {
+    /*
+     * C-coded generators have state to free.  All other state on the
+     * stack (jv values, frames, fork points) gets released by
+     * stack_restore().
+     */
+    if (*pc++ != CALL_BUILTIN_GENERATOR)
+      continue;
+    pc++;
+    struct cfunction* function = &frame_current(jq)->bc->globals->cfunctions[*pc];
+    if (function->cgen_reset)
+      function->cgen_reset(jq, jq->curr_c_gen_state);
+    jq->curr_c_gen_state = 0;
+  }
 
   assert(jq->stk_top == 0);
   assert(jq->fork_top == 0);
@@ -311,6 +332,8 @@ jv jq_next(jq_state *jq) {
   jv cfunc_input[MAX_CFUNCTION_ARGS];
 
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
+
+  jq->curr_c_gen_state = 0;
 
   uint16_t* pc = stack_restore(jq);
   assert(pc);
@@ -804,6 +827,64 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case ON_BACKTRACK(CALL_BUILTIN_GENERATOR):
+    case CALL_BUILTIN_GENERATOR: {
+      int nargs = *pc++;
+      jv top;
+      jv* in = cfunc_input;
+
+      struct cfunction* function = &frame_current(jq)->bc->globals->cfunctions[*pc++];
+
+      if (raising) {
+        if (function->cgen_reset != 0)
+          function->cgen_reset(jq, jq->curr_c_gen_state);
+        jq->curr_c_gen_state = 0;
+        goto do_backtrack;
+      }
+
+      typedef jv (*gen_1)(jq_state*,void**,jv);
+      typedef jv (*gen_2)(jq_state*,void**,jv,jv);
+      typedef jv (*gen_3)(jq_state*,void**,jv,jv,jv);
+      typedef jv (*gen_4)(jq_state*,void**,jv,jv,jv,jv);
+      typedef jv (*gen_5)(jq_state*,void**,jv,jv,jv,jv,jv);
+
+      if (opcode == CALL_BUILTIN_GENERATOR) {
+        // Initial call is with inputs from stack
+        top = stack_pop(jq);
+        in[0] = top;
+        for (int i = 1; i < nargs; i++)
+          in[i] = stack_pop(jq);
+      } else {
+        // The generator is responsible for saving inputs it cares to
+        assert(jq->curr_c_gen_state != 0);
+        for (int i = 0; i < nargs; i++)
+          in[i] = jv_invalid();
+      }
+
+      switch (function->nargs) {
+      case 1: top = ((gen_1)function->fptr)(jq, &jq->curr_c_gen_state, in[0]); break;
+      case 2: top = ((gen_2)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1]); break;
+      case 3: top = ((gen_3)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1], in[2]); break;
+      case 4: top = ((gen_4)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1], in[2], in[3]); break;
+      case 5: top = ((gen_5)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1], in[2], in[3], in[4]); break;
+      // FIXME: a) up to 7 arguments (input + 6), b) should assert
+      // because the compiler should not generate this error.
+      default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
+      }
+    
+      if (jv_is_valid(top)) {
+        struct stack_pos spos = stack_get_pos(jq);
+        stack_save(jq, pc - 3, spos);   // create backtrack point
+        stack_push(jq, top);
+      } else {
+        assert(jq->curr_c_gen_state == 0);
+        if (jv_invalid_has_msg(jv_copy(top)))
+          set_error(jq, top);
+        goto do_backtrack;  // generator returns `empty`, backtracks
+      }
+      break;
+    }
+
     case TAIL_CALL_JQ:
     case CALL_JQ: {
       /*
@@ -930,6 +1011,7 @@ jq_state *jq_init(void) {
   jq->stk_top = 0;
   jq->fork_top = 0;
   jq->curr_frame = 0;
+  jq->curr_c_gen_state = 0;
   jq->error = jv_null();
 
   jq->err_cb = default_err_cb;

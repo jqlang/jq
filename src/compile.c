@@ -1136,6 +1136,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
   int maxvar = -1;
   if (!errors) for (inst* curr = b.first; curr; curr = curr->next) {
     const struct opcode_description* op = opcode_describe(curr->op);
+    int op_pos = pos;
     if (op->length == 0)
       continue;
     code[pos++] = curr->op;
@@ -1145,6 +1146,8 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
       assert(!curr->arglist.first);
       code[pos++] = (uint16_t)curr->imm.intval;
       code[pos++] = curr->bound_by->imm.intval;
+      if (curr->bound_by->imm.cfunc->is_generator)
+        code[op_pos] = CALL_BUILTIN_GENERATOR;
     } else if (curr->op == CALL_JQ) {
       assert(curr->bound_by->op == CLOSURE_CREATE ||
              curr->bound_by->op == CLOSURE_PARAM);
