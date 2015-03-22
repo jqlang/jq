@@ -995,11 +995,23 @@ static jv f_input(jq_state *jq, jv input) {
   void *data;
   jq_get_input_cb(jq, &cb, &data);
   if (cb == NULL)
-    return jv_invalid_with_msg(jv_string("break"));
-  jv v = cb(jq, data);
-  if (jv_is_valid(v) || jv_invalid_has_msg(jv_copy(v)))
-    return v;
-  return jv_invalid_with_msg(jv_string("break"));
+    return jv_invalid();
+  return cb(jq, data);
+}
+
+static jv f_inputs_step(jq_state *jq, cfunction_gen_state **state) {
+  jq_input_cb cb;
+  void *data;
+  jq_get_input_cb(jq, &cb, &data);
+  if (cb == NULL)
+    return jv_invalid();
+  return cb(jq, data);
+}
+
+static jv f_inputs(jq_state *jq, cfunction_gen_state **state, jv input) {
+  jv_free(input);
+  *state = NULL;
+  return f_inputs_step(jq, NULL);
 }
 
 static jv f_debug(jq_state *jq, jv input) {
@@ -1302,7 +1314,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_get_jq_origin, "get_jq_origin", 1},
   {(cfunction_ptr)f_match, "_match_impl", 4},
   {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
-  {(cfunction_ptr)f_input, "_input", 1},
+  {(cfunction_ptr)f_input, "input", 1},
+  {(cfunction_ptr)f_inputs, "inputs", 1, f_inputs_step},
   {(cfunction_ptr)f_debug, "debug", 1},
   {(cfunction_ptr)f_stderr, "stderr", 1},
   {(cfunction_ptr)f_strptime, "strptime", 2},
