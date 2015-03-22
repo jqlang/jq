@@ -22,6 +22,7 @@ void *alloca (size_t);
 #endif
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
 #include <math.h>
 #ifdef HAVE_ONIGURUMA
@@ -1014,6 +1015,64 @@ static jv f_inputs(jq_state *jq, cfunction_gen_state **state, jv input) {
   return f_inputs_step(jq, NULL);
 }
 
+static void f_readfile_reset(jq_state *jq, cfunction_gen_state *state) {
+  FILE *f = (void *)state;
+  if (f)
+    (void) fclose(f);
+}
+
+static jv f_readfile_step(jq_state *jq, cfunction_gen_state **state) {
+  FILE *f = *(void **)state;
+  jv out;
+
+  assert(f != NULL);
+  out = jv_string("");
+  char buf[1024];
+  if (!ferror(f) && !feof(f)) {
+    while (fgets(buf, sizeof(buf), f) != NULL) {
+      char *newline = strchr(buf, '\n'); // XXX On Windows look for \r\n
+      if (newline != NULL) {
+        *newline = '\0';
+        out = jv_string_append_str(out, buf);
+        break;
+      }
+      out = jv_string_append_str(out, buf);
+    }
+  }
+  if (jv_string_length_bytes(jv_copy(out)) > 0)
+    return out;
+  assert(ferror(f) || feof(f));
+  int err = ferror(f);
+  int ret = fclose(f);
+  *state = NULL;
+  jv_free(out);
+  if (err)
+    return jv_invalid_with_msg(jv_string("error reading from file"));
+  if (ret != 0)
+    return jv_invalid_with_msg(jv_string("error closing file"));
+  return jv_invalid(); // EOF, child did exit(0)
+}
+
+static jv f_readfile(jq_state *jq, cfunction_gen_state **state, jv input) {
+  FILE *f;
+  jv out;
+
+  if (jv_get_kind(input) != JV_KIND_STRING)
+    return type_error(input, "readfile inputs must be strings");
+  f = fopen(jv_string_value(input), "r");
+  if (f == NULL) {
+    if (errno == ENOENT)
+      out = jv_invalid_with_msg(jv_string_fmt("No such file: %s", jv_string_value(input)));
+    else
+      out = jv_invalid_with_msg(jv_string_fmt("Error opening file %s: %s", jv_string_value(input), strerror(errno)));
+    jv_free(input);
+    return out;
+  }
+  *state = (void *)f;
+  jv_free(input);
+  return f_readfile_step(jq, state);
+}
+
 static jv f_debug(jq_state *jq, jv input) {
   jq_msg_cb cb;
   void *data;
@@ -1316,6 +1375,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
   {(cfunction_ptr)f_input, "input", 1},
   {(cfunction_ptr)f_inputs, "inputs", 1, f_inputs_step},
+  {(cfunction_ptr)f_readfile, "readfile", 1, f_readfile_step, f_readfile_reset},
   {(cfunction_ptr)f_debug, "debug", 1},
   {(cfunction_ptr)f_stderr, "stderr", 1},
   {(cfunction_ptr)f_strptime, "strptime", 2},
