@@ -1820,41 +1820,26 @@ sections:
               # But if the error caught is not "break" then re-raise it.
               try repeat(exp) catch .=="break" then empty else error;
 
-          jq has a syntax for lexical labels to "break" or "go (back) to":
+          jq has a syntax for named lexical labels to "break" or "go (back) to":
 
-              label | ... break ...
+              label $out | ... break $out ...
 
-          The `break` builtin will cause the program to return to act as
-          though the nearest `label` (to the left) produced `empty`.
+          The `break $label_name` expression will cause the program to
+          to act as though the nearest (to the left) `label $label_name`
+          produced `empty`.
 
-          The `break2` builtin will return the program to the second
-          nearest `label`, then `empty`.
-
-          The `break3` builtin will return the program to the third
-          nearest `label`, then `empty`.
-
-          A variation on this is named labels:
-
-              label $name | ... break $name
-
-          The `break $name` form returns to the named label and produces
-          `empty`.
-
-          In all cases the relationship between the `break` and
-          corresponding `label` is lexical: the label has to be
-          "visible" from the break.
+          The relationship between the `break` and corresponding `label`
+          is lexical: the label has to be "visible" from the break.
 
           To break out of a `reduce`, for example:
 
-              label | reduce .[] as $item (null; if .==false then break else ... end)
+              label $out | reduce .[] as $item (null; if .==false then break $out else ... end)
 
           The following jq program produces a syntax error:
 
-              break
+              break $out
 
-          because:
-
-              jq: error: break used outside labeled control structure
+          because no label `$out` is visible.
 
       - title: "`?` operator"
         body: |

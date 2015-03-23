@@ -72,8 +72,6 @@ struct lexer_param;
 %token CATCH "catch"
 %token LABEL "label"
 %token BREAK "break"
-%token BREAK2 "break2"
-%token BREAK3 "break3"
 %token SETPIPE "|="
 %token SETPLUS "+="
 %token SETMINUS "-="
@@ -152,8 +150,6 @@ int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors,
   }
   return tok;
 }
-
-static unsigned int next_label = 0;
 
 static block gen_dictpair(block k, block v) {
   return BLOCK(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
@@ -349,12 +345,6 @@ Term "as" '$' IDENT '|' Exp {
 "try" Exp "catch" error {
   FAIL(@$, "Possibly unterminated 'try' statement");
   $$ = $2;
-} |
-
-"label" '|' Exp {
-  jv v = jv_string_fmt("*anonlabel%u", next_label++);
-  $$ = gen_location(@$, locations, gen_label(jv_string_value(v), $3));
-  jv_free(v);
 } |
 
 "label" '$' IDENT '|' Exp {
@@ -600,21 +590,6 @@ Term:
 REC {
   $$ = gen_call("recurse", gen_noop());
 } |
-BREAK {
-  $$ = gen_location(@$, locations,
-                    BLOCK(gen_op_unbound(LOADV, "*1"),  // impossible symbol
-                    gen_call("error", gen_noop())));
-} |
-BREAK2 {
-  $$ = gen_location(@$, locations,
-                    BLOCK(gen_op_unbound(LOADV, "*2"),  // impossible symbol
-                    gen_call("error", gen_noop())));
-} |
-BREAK3 {
-  $$ = gen_location(@$, locations,
-                    BLOCK(gen_op_unbound(LOADV, "*3"),  // impossible symbol
-                    gen_call("error", gen_noop())));
-} |
 BREAK '$' IDENT {
   jv v = jv_string_fmt("*label-%s", jv_string_value($3));     // impossible symbol
   $$ = gen_location(@$, locations,
@@ -622,6 +597,10 @@ BREAK '$' IDENT {
                     gen_call("error", gen_noop())));
   jv_free(v);
   jv_free($3);
+} |
+BREAK error {
+  FAIL(@$, "break requires a label to break to");
+  $$ = gen_noop();
 } |
 Term FIELD '?' {
   $$ = gen_index_opt($1, gen_const($2));

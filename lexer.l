@@ -59,8 +59,6 @@ struct lexer_param;
 "catch" { return CATCH; }
 "label" { return LABEL; }
 "break" { return BREAK; }
-"break2" { return BREAK2; }
-"break3" { return BREAK3; }
 "|=" { return SETPIPE; }
 "+=" { return SETPLUS; }
 "-=" { return SETMINUS; }

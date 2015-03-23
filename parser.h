@@ -92,21 +92,19 @@ struct lexer_param;
     CATCH = 282,
     LABEL = 283,
     BREAK = 284,
-    BREAK2 = 285,
-    BREAK3 = 286,
-    SETPIPE = 287,
-    SETPLUS = 288,
-    SETMINUS = 289,
-    SETMULT = 290,
-    SETDIV = 291,
-    SETDEFINEDOR = 292,
-    LESSEQ = 293,
-    GREATEREQ = 294,
-    QQSTRING_START = 295,
-    QQSTRING_TEXT = 296,
-    QQSTRING_INTERP_START = 297,
-    QQSTRING_INTERP_END = 298,
-    QQSTRING_END = 299
+    SETPIPE = 285,
+    SETPLUS = 286,
+    SETMINUS = 287,
+    SETMULT = 288,
+    SETDIV = 289,
+    SETDEFINEDOR = 290,
+    LESSEQ = 291,
+    GREATEREQ = 292,
+    QQSTRING_START = 293,
+    QQSTRING_TEXT = 294,
+    QQSTRING_INTERP_START = 295,
+    QQSTRING_INTERP_END = 296,
+    QQSTRING_END = 297
   };
 #endif
 /* Tokens.  */
@@ -137,21 +135,19 @@ struct lexer_param;
 #define CATCH 282
 #define LABEL 283
 #define BREAK 284
-#define BREAK2 285
-#define BREAK3 286
-#define SETPIPE 287
-#define SETPLUS 288
-#define SETMINUS 289
-#define SETMULT 290
-#define SETDIV 291
-#define SETDEFINEDOR 292
-#define LESSEQ 293
-#define GREATEREQ 294
-#define QQSTRING_START 295
-#define QQSTRING_TEXT 296
-#define QQSTRING_INTERP_START 297
-#define QQSTRING_INTERP_END 298
-#define QQSTRING_END 299
+#define SETPIPE 285
+#define SETPLUS 286
+#define SETMINUS 287
+#define SETMULT 288
+#define SETDIV 289
+#define SETDEFINEDOR 290
+#define LESSEQ 291
+#define GREATEREQ 292
+#define QQSTRING_START 293
+#define QQSTRING_TEXT 294
+#define QQSTRING_INTERP_START 295
+#define QQSTRING_INTERP_END 296
+#define QQSTRING_END 297
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -163,7 +159,7 @@ union YYSTYPE
   jv literal;
   block blk;
 
-#line 167 "parser.h" /* yacc.c:1909  */
+#line 163 "parser.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
