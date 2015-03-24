@@ -310,7 +310,7 @@ int main(int argc, char* argv[]) {
           ret = 2;
           goto out;
         }
-        arg = jv_object_set(arg, jv_string("value"), data);
+        arg = jv_object_set(arg, jv_string("value"), jv_array_get(data, 0));
         program_arguments = jv_array_append(program_arguments, arg);
         i += 2; // skip the next two arguments
         if (!short_opts) continue;
