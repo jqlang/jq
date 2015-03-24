@@ -218,6 +218,9 @@ static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
 static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+    if ((intmax_t)jv_number_value(b) == 0) {
+      return jv_invalid_with_msg(jv_string("Cannot mod by zero."));
+    }
     return jv_number((intmax_t)jv_number_value(a) % (intmax_t)jv_number_value(b));
   } else {
     return type_error2(a, b, "cannot be divided");
