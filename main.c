@@ -477,15 +477,13 @@ int main(int argc, char* argv[]) {
   if (jq_util_input_open_errors(input_state) != 0)
     ret = 2;
 
+out:
+  /* XXX We really should catch ENOSPC and such errors in jv_dumpf()! */
   if (fclose(stdout)!=0) {
     fprintf(stderr,"Error: writing output failed: %s\n", strerror(errno));
     ret = 2;
   }
 
-  if (ret != 0)
-    goto out;
-
-out:
   jq_util_input_free(&input_state);
   jq_teardown(&jq);
   if (ret >= 10 && (options & EXIT_STATUS))
