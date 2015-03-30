@@ -804,6 +804,18 @@ sections:
           null and objects would, but with the given message as the
           error's value.
 
+      - title: "`$__loc__`"
+        body: |
+
+          Produces an object with a "file" key and a "line" key, with
+          the filename and line number where `$__loc__` occurs, as
+          values.
+
+        examples:
+          - program: 'try error("\($__loc__)") catch .'
+            input: 'null'
+            output: ['"{\"file\":\"<top-level>\",\"line\":1}"']
+
       - title: "`map(x)`, `map_values(x)`"
         body: |
 

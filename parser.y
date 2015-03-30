@@ -72,6 +72,7 @@ struct lexer_param;
 %token CATCH "catch"
 %token LABEL "label"
 %token BREAK "break"
+%token LOC "__loc__"
 %token SETPIPE "|="
 %token SETPLUS "+="
 %token SETMINUS "-="
@@ -690,6 +691,10 @@ FORMAT {
     $$ = o;
   else
     $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
+} |
+'$' LOC {
+  $$ = gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
+                           jv_string("line"), jv_number(locfile_get_line(locations, @$.start) + 1)));
 } |
 '$' IDENT {
   $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));

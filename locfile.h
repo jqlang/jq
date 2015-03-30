@@ -22,6 +22,7 @@ struct locfile {
 
 struct locfile* locfile_init(jq_state *, const char *, const char *, int);
 struct locfile* locfile_retain(struct locfile *);
+int locfile_get_line(struct locfile *, int);
 void locfile_free(struct locfile *);
 void locfile_locate(struct locfile *, location, const char *, ...);
 

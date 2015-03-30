@@ -47,7 +47,7 @@ void locfile_free(struct locfile* l) {
   }
 }
 
-static int locfile_get_line(struct locfile* l, int pos) {
+int locfile_get_line(struct locfile* l, int pos) {
   assert(pos < l->length);
   int line = 1;
   while (l->linemap[line] <= pos) line++;   // == if pos at start (before, never ==, because pos never on \n)

@@ -814,6 +814,10 @@ def inc(x): x |= .+1; inc(.[].a)
 [null,true,{"a":1}]
 []
 
+try error("\($__loc__)") catch .
+null
+"{\"file\":\"<top-level>\",\"line\":1}"
+
 # string operations
 [.[]|startswith("foo")]
 ["fo", "foo", "barfoo", "foobar", "barfoob"]
