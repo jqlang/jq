@@ -1441,7 +1441,7 @@ static const char* const jq_builtins[] = {
 
 static int builtins_bind_one(jq_state *jq, block* bb, const char* code) {
   struct locfile* src;
-  src = locfile_init(jq, code, strlen(code));
+  src = locfile_init(jq, "<builtin>", code, strlen(code));
   block funcs;
   int nerrors = jq_parse_library(src, &funcs);
   if (nerrors == 0) {

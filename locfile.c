@@ -9,9 +9,10 @@
 #include "locfile.h"
 
 
-struct locfile* locfile_init(jq_state *jq, const char* data, int length) {
+struct locfile* locfile_init(jq_state *jq, const char *fname, const char* data, int length) {
   struct locfile* l = jv_mem_alloc(sizeof(struct locfile));
   l->jq = jq;
+  l->fname = jv_string(fname);
   l->data = jv_mem_alloc(length);
   memcpy((char*)l->data,data,length);
   l->length = length;
@@ -39,6 +40,7 @@ struct locfile* locfile_retain(struct locfile* l) {
 }
 void locfile_free(struct locfile* l) {
   if (--(l->refct) == 0) {
+    jv_free(l->fname);
     jv_mem_free(l->linemap);
     jv_mem_free((char*)l->data);
     jv_mem_free(l);
@@ -79,7 +81,8 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
     jv_free(m1);
     return;
   }
-  jv m2 = jv_string_fmt("%s\n%.*s%*s", jv_string_value(m1),
+  jv m2 = jv_string_fmt("%s at %s, line %d:\n%.*s%*s", jv_string_value(m1),
+                        jv_string_value(l->fname), startline + 1,
                         locfile_line_length(l, startline), l->data + offset,
                         loc.start - offset, "");
   jv_free(m1);

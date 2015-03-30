@@ -257,7 +257,7 @@ null
 
 %%FAIL
 . as $foo | break $foo
-jq: error: *label-foo/0 is not defined
+jq: error: *label-foo/0 is not defined at <top-level>, line 1:
 
 [.[]|[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]]
 [1,2,3,4,5]
@@ -1153,13 +1153,13 @@ modulemeta
 "c"
 {"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}
 
-%%FAIL
+%%FAIL IGNORE MSG
 import "syntaxerror" as e; .
-jq: error: syntax error, unexpected ';', expecting $end (Unix shell quoting issues?)
+jq: error: syntax error, unexpected ';', expecting $end (Unix shell quoting issues?) at /home/nico/ws/jq/tests/modules/syntaxerror/syntaxerror.jq, line 1:
 
 %%FAIL
 %::wat
-jq: error: syntax error, unexpected '%', expecting $end (Unix shell quoting issues?)
+jq: error: syntax error, unexpected '%', expecting $end (Unix shell quoting issues?) at <top-level>, line 1:
 
 import "test_bind_order" as check; check::check
 null

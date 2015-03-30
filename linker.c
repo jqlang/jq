@@ -276,7 +276,7 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, const c
     program = gen_const_global(jv_copy(data), as);
   } else {
     // import "foo" as bar;
-    src = locfile_init(jq, jv_string_value(data), jv_string_length_bytes(jv_copy(data)));
+    src = locfile_init(jq, jv_string_value(lib_path), jv_string_value(data), jv_string_length_bytes(jv_copy(data)));
     nerrors += jq_parse_library(src, &program);
     if (nerrors == 0) {
       char *lib_origin = strdup(jv_string_value(lib_path));
@@ -311,7 +311,7 @@ jv load_module_meta(jq_state *jq, jv mod_relpath) {
   jv data = jv_load_file(jv_string_value(lib_path), 1);
   if (jv_is_valid(data)) {
     block program;
-    struct locfile* src = locfile_init(jq, jv_string_value(data), jv_string_length_bytes(jv_copy(data)));
+    struct locfile* src = locfile_init(jq, jv_string_value(lib_path), jv_string_value(data), jv_string_length_bytes(jv_copy(data)));
     int nerrors = jq_parse_library(src, &program);
     if (nerrors == 0) {
       meta = block_module_meta(program);

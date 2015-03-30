@@ -30,8 +30,12 @@ static int skipline(const char* buf) {
   return 0;
 }
 
+static int checkerrormsg(const char* buf) {
+  return strcmp(buf, "%%FAIL\n") == 0;
+}
+
 static int checkfail(const char* buf) {
-  return !strcmp(buf, "%%FAIL\n");
+  return strcmp(buf, "%%FAIL\n") == 0 || strcmp(buf, "%%FAIL IGNORE MSG\n") == 0;
 }
 
 struct err_data {
@@ -56,6 +60,7 @@ static void run_jq_tests(jv lib_dirs, FILE *testdata) {
   int tests = 0, passed = 0, invalid = 0;
   unsigned int lineno = 0;
   int must_fail = 0;
+  int check_msg = 0;
   jq_state *jq = NULL;
 
   jq = jq_init();
@@ -70,6 +75,7 @@ static void run_jq_tests(jv lib_dirs, FILE *testdata) {
     if (skipline(prog)) continue;
     if (checkfail(prog)) {
       must_fail = 1;
+      check_msg = checkerrormsg(prog);
       jq_set_error_cb(jq, test_err_cb, &err_msg);
       continue;
     }
@@ -82,6 +88,7 @@ static void run_jq_tests(jv lib_dirs, FILE *testdata) {
     if (must_fail) {
       jq_set_error_cb(jq, NULL, NULL);
       must_fail = 0;
+      check_msg = 0;
       if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
       lineno++;
       if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = 0;
@@ -89,7 +96,7 @@ static void run_jq_tests(jv lib_dirs, FILE *testdata) {
         printf("*** Test program compiled that should not have at line %u: %s\n", lineno, prog);
         invalid++; continue;
       }
-      if (strcmp(buf, err_msg.buf)) {
+      if (check_msg && strcmp(buf, err_msg.buf) != 0) {
         printf("*** Erroneous test program failed with wrong message (%s) at line %u: %s\n", err_msg.buf, lineno, prog);
         invalid++;
       } else {

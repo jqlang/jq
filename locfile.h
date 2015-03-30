@@ -10,6 +10,7 @@ typedef struct {
 static const location UNKNOWN_LOCATION = {-1, -1};
 
 struct locfile {
+  jv fname;
   const char* data;
   int length;
   int* linemap;
@@ -19,11 +20,9 @@ struct locfile {
   int refct;
 };
 
-struct locfile* locfile_init(jq_state *jq, const char* data, int length);
-struct locfile* locfile_retain(struct locfile* l);
-
-void locfile_free(struct locfile* l);
-
-void locfile_locate(struct locfile* l, location loc, const char* fmt, ...);
+struct locfile* locfile_init(jq_state *, const char *, const char *, int);
+struct locfile* locfile_retain(struct locfile *);
+void locfile_free(struct locfile *);
+void locfile_locate(struct locfile *, location, const char *, ...);
 
 #endif
