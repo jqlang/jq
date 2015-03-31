@@ -936,6 +936,38 @@ static jv tm2jv(struct tm *tm) {
                   jv_number(tm->tm_yday));
 }
 
+/*
+ * mktime() has side-effects and anyways, returns time in the local
+ * timezone, not UTC.  We want timegm(), which isn't standard.
+ *
+ * To make things worse, mktime() tells you what the timezone
+ * adjustment is, but you have to #define _BSD_SOURCE to get this
+ * field of struct tm on some systems.
+ *
+ * This is all to blame on POSIX, of course.
+ *
+ * Our wrapper tries to use timegm() if available, or mktime() and
+ * correct for its side-effects if possible.
+ *
+ * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
+ */
+static time_t my_mktime(struct tm *tm) {
+#ifdef HAVE_TIMEGM
+  return timegm(tm);
+#else /* HAVE_TIMEGM */
+  time_t t = mktime(&tm);
+  if (t == (time_t)-1)
+    return t;
+#ifdef HAVE_TM_TM_GMT_OFF
+  return t + tm.tm_gmtoff;
+#elif defined(HAVE_TM_TM_GMT_OFF)
+  return t + tm.__tm_gmtoff;
+#else
+  return (time_t)-2; /* Not supported */
+#endif
+#endif /* !HAVE_TIMEGM */
+}
+
 #ifdef HAVE_STRPTIME
 static jv f_strptime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING)
@@ -955,6 +987,8 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   }
   jv_free(a);
   jv_free(b);
+  if (tm.tm_wday == 0 && tm.tm_yday == 0 && my_mktime(&tm) == (time_t)-2)
+    return jv_invalid_with_msg(jv_string("strptime/1 not supported on this platform"));
   jv r = tm2jv(&tm);
   if (*end != '\0')
     r = jv_array_append(r, jv_string(end));
@@ -996,35 +1030,16 @@ static jv f_mktime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY)
     return jv_invalid_with_msg(jv_string("mktime requires array inputs"));
   if (jv_array_length(jv_copy(a)) < 6)
-    return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs")); \
+    return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
   struct tm tm;
   if (!jv2tm(a, &tm))
-    return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs")); \
-  /*
-   * mktime() has side-effects and anyways, returns time in the local
-   * timezone, not UTC.  We want timegm(), which isn't standard.
-   *
-   * To make things worse, mktime() tells you what the timezone
-   * adjustment is, but you have to #define _BSD_SOURCE to get this
-   * field of struct tm on some systems.
-   *
-   * This is all to blame on POSIX, of course.
-   */
-#ifdef HAVE_TIMEGM
-  time_t t = timegm(&tm);
+    return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
+  time_t t = my_mktime(&tm);
   if (t == (time_t)-1)
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
+  if (t == (time_t)-2)
+    return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
   return jv_number(t);
-#else /* HAVE_TIMEGM */
-  time_t t = mktime(&tm);
-  if (t == (time_t)-1)
-    return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
-#ifdef HAVE_TM_TM_GMT_OFF
-  return jv_number(t + tm.tm_gmtoff);
-#elif defined(HAVE_TM_TM_GMT_OFF)
-  return jv_number(t + tm.__tm_gmtoff);
-#endif
-#endif /* HAVE_TIMEGM */
 }
 
 #ifdef HAVE_GMTIME_R
