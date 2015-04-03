@@ -301,6 +301,12 @@ sections:
           to the last element, -2 referring to the next to last element,
           and so on.
 
+          The `.foo` syntax only works for simply keys i.e. keys that
+          are all alphanumeric characters. `.[<string>]` works with
+          keys that contain special charactors such as colons and dots.
+          For example `.["foo::bar"]` and `.["foo.bar"]` work while
+          `.foo::bar` and `.foo.bar` would not.
+
           The `?` "operator" can also be used with the slice operator,
           as in `.[10:15]?`, which outputs values where the inputs are
           slice-able.
