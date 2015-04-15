@@ -383,7 +383,7 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
       assert(!strcmp(fmt_s, "tsv"));
       quotes = "";
       sep = "\t";
-      escapings = "\t\\t\0";
+      escapings = "\t\\t\0\r\\r\0\n\\n\0\\\\\\\0";
     }
     jv_free(fmt);
     if (jv_get_kind(input) != JV_KIND_ARRAY)
