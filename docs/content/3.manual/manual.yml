@@ -1562,7 +1562,12 @@ sections:
           * `@tsv`:
 
             The input must be an array, and it is rendered as TSV
-            with tabs escaped as `\t`.
+            (tab-separated values). Each input array will be printed as
+            a single line. Fields are separated by a single
+            tab (ascii `0x09`). Input characters line-feed (ascii `0x0a`),
+            carriage-return (ascii `0x0d`), tab (ascii `0x09`) and
+            backslash (ascii `0x5c`) will be output as escape sequences
+            `\n`, `\r`, `\t`, `\\` respectively.
 
           * `@sh`:
 
