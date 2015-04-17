@@ -341,6 +341,29 @@ jv jq_util_input_get_position(jq_state *jq) {
   return v;
 }
 
+jv jq_util_input_get_current_filename(jq_state* jq) {
+  jq_input_cb cb=NULL;
+  void *cb_data=NULL;
+  jq_get_input_cb(jq, &cb, &cb_data);
+  if (cb != jq_util_input_next_input_cb)
+    return jv_invalid_with_msg(jv_string("Unknown input filename"));
+  jq_util_input_state s = (jq_util_input_state)cb_data;
+  jv v = jv_copy(s->current_filename);
+  return v;
+}
+
+jv jq_util_input_get_current_line(jq_state* jq) {
+  jq_input_cb cb=NULL;
+  void *cb_data=NULL;
+  jq_get_input_cb(jq, &cb, &cb_data);
+  if (cb != jq_util_input_next_input_cb)
+    return jv_invalid_with_msg(jv_string("Unknown input line number"));
+  jq_util_input_state s = (jq_util_input_state)cb_data;
+  jv v = jv_number(s->current_line);
+  return v;
+}
+
+
 // Blocks to read one more input from stdin and/or given files
 // When slurping, it returns just one value
 jv jq_util_input_next_input(jq_util_input_state state) {

@@ -2413,6 +2413,17 @@ sections:
           `["DEBUG:", <input-value>]` and prints that and a newline on
           stderr, compactly.  This may change in the future.
 
+      - title: "`input_filename`"
+        body: |
+
+          Returns the name of the file whose input is currently being
+          filtered.
+
+      - title: "`input_line_number`"
+        body: |
+
+          Returns the line number of the input currently being filtered.
+
   - title: Assignment
     body: |
 

@@ -1173,3 +1173,12 @@ import "test_bind_order" as check; check::check
 null
 true
 
+try input_filename catch .
+null
+"Unknown input filename"
+
+try input_line_number catch .
+null
+"Unknown input line number"
+
+
