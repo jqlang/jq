@@ -313,3 +313,32 @@ jv jv_dump_string(jv x, int flags) {
   jvp_dtoa_context_free(&C);
   return s;
 }
+
+static inline void strncpyz(char *dest, const char*src, size_t n)
+{
+    strncpy(dest, src, n);
+    if (n>0)
+      dest[n-1] = 0;
+}
+
+//NOTE:
+//This function is special: it does NOT consume (decref) the input variable x.
+char* jv_dump_string_for_errmsg(jv x, char* outbuf, size_t bufsize) {
+  //NOTE:
+  // 'jv_dump_string' consumes (decref) the object -
+  // so make a copy (incref) before calling it.
+  jv s = jv_copy(x);
+  s = jv_dump_string(s,0);
+  const char* p = jv_string_value(s);
+  const size_t l = strlen(p);
+  strncpyz(outbuf,p,bufsize);
+  if ( (l>(bufsize-1)) && (bufsize>=4)) {
+    //The string representation of value 'X' is longer than the
+    //available buffer length - it's already truncated, indicate it with '...'
+    outbuf[bufsize-4]='.';
+    outbuf[bufsize-3]='.';
+    outbuf[bufsize-2]='.';
+  }
+  jv_free(s);
+  return outbuf;
+}
