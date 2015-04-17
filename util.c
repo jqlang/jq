@@ -154,6 +154,9 @@ struct jq_util_input_state {
   int open_failures;
   jv slurped;
   char buf[4096];
+  char current_filename[PATH_MAX]; //TODO: is PATH_MAX portable enough?
+  size_t current_line;
+  int  found_newline; //flag to help count current-line correctly
 };
 
 static void fprinter(void *data, jv fname) {
@@ -176,6 +179,9 @@ jq_util_input_state jq_util_input_init(jq_msg_cb err_cb, void *err_cb_data) {
   new_state->files = jv_array();
   new_state->slurped = jv_invalid();
   new_state->buf[0] = 0;
+  new_state->current_filename[0] = 0;
+  new_state->current_line = 0;
+  new_state->found_newline = 0;
 
   return new_state;
 }
@@ -220,6 +226,15 @@ static jv next_file(jq_util_input_state state) {
   return next;
 }
 
+//An ad-hoc safer version of strncpy,
+//which always adds a NULL (possibly truncating 'src')
+static inline void strncpyz(char *dest, const char*src, size_t n)
+{
+    //TODO: is there a safe/portable str{n,l}cpy?
+    strncpy(dest, src, n);
+    dest[n-1] = 0;
+}
+
 int jq_util_input_read_more(jq_util_input_state state) {
   if (!state->current_input || feof(state->current_input) || ferror(state->current_input)) {
     if (state->current_input && ferror(state->current_input)) {
@@ -235,26 +250,46 @@ int jq_util_input_read_more(jq_util_input_state state) {
         fclose(state->current_input);
       }
       state->current_input = NULL;
+      state->current_filename[0] = 0;
+      state->current_line = 0 ;
+      state->found_newline =  0;
     }
     jv f = next_file(state);
     if (jv_is_valid(f)) {
       if (!strcmp(jv_string_value(f), "-")) {
         state->current_input = stdin;
+        strncpyz(state->current_filename,"stdin",
+                 sizeof(state->current_filename));
       } else {
         state->current_input = fopen(jv_string_value(f), "r");
+        strncpyz(state->current_filename,jv_string_value(f),
+                 sizeof(state->current_filename));
         if (!state->current_input) {
           state->err_cb(state->err_cb_data, jv_copy(f));
           state->open_failures++;
         }
       }
+      state->current_line = 1;
+      state->found_newline = 0;
       jv_free(f);
     }
   }
 
   state->buf[0] = 0;
   if (state->current_input) {
-    if (!fgets(state->buf, sizeof(state->buf), state->current_input))
+    //The previous 'fgets' found a newline character,
+    //so this fgets will start a new text line from the input file.
+    if (state->found_newline)
+      state->current_line++;
+    state->found_newline = 0;
+    if (!fgets(state->buf, sizeof(state->buf), state->current_input)) {
       state->buf[0] = 0;
+    } else {
+      //Check if we've read a newline - flag it for later
+      const size_t len = strlen(state->buf);
+      //TODO: do we care about '\r' for Win/Mac?
+      state->found_newline = (len>=1 && state->buf[len-1]=='\n');
+    }
   }
   return jv_array_length(jv_copy(state->files)) == 0 && (!state->current_input || feof(state->current_input));
 }
@@ -262,6 +297,17 @@ int jq_util_input_read_more(jq_util_input_state state) {
 jv jq_util_input_next_input_cb(jq_state *jq, void *data) {
   return jq_util_input_next_input((jq_util_input_state)data);
 }
+
+// Return the current_filename:current_line as a JV_STRING
+jv jq_util_input_get_position(jq_state *jq) {
+  jq_input_cb cb=NULL;
+  void *cb_data=NULL;
+  jq_get_input_cb(jq, &cb, &cb_data);
+  jq_util_input_state s = (jq_util_input_state)cb_data;
+  jv v = jv_string_fmt("%s:%zu",s->current_filename,s->current_line);
+  return v;
+}
+
 
 // Blocks to read one more input from stdin and/or given files
 // When slurping, it returns just one value
