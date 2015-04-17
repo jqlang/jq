@@ -313,3 +313,19 @@ jv jv_dump_string(jv x, int flags) {
   jvp_dtoa_context_free(&C);
   return s;
 }
+
+char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize) {
+  x = jv_dump_string(x,0);
+  const char* p = jv_string_value(x);
+  const size_t len = strlen(p);
+  strncpy(outbuf, p, bufsize);
+  outbuf[bufsize - 1] = 0;
+  if (len > bufsize - 1 && bufsize >= 4) {
+    // Indicate truncation with '...'
+    outbuf[bufsize - 2]='.';
+    outbuf[bufsize - 3]='.';
+    outbuf[bufsize - 4]='.';
+  }
+  jv_free(x);
+  return outbuf;
+}

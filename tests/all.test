@@ -1173,3 +1173,15 @@ import "test_bind_order" as check; check::check
 null
 true
 
+try -. catch .
+"very-long-string"
+"string (\"very-long-...) cannot be negated"
+
+try join(",") catch .
+["1",2]
+"string (\",\") and number (2) cannot be added"
+
+try join(",") catch .
+["1","2",{"a":{"b":{"c":33}}}]
+"string (\",\") and object ({\"a\":{\"b\":{...) cannot be added"
+
