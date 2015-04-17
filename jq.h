@@ -46,5 +46,6 @@ void jq_util_input_add_input(jq_util_input_state, jv);
 int jq_util_input_errors(jq_util_input_state);
 jv jq_util_input_next_input(jq_util_input_state);
 jv jq_util_input_next_input_cb(jq_state *, void *);
+jv jq_util_input_get_position(jq_state*);
 
 #endif /* !JQ_H */

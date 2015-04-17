@@ -155,6 +155,8 @@ struct jq_util_input_state {
   jv slurped;
   char buf[4096];
   size_t buf_valid_len;
+  jv current_filename;
+  size_t current_line;
 };
 
 static void fprinter(void *data, jv fname) {
@@ -178,6 +180,8 @@ jq_util_input_state jq_util_input_init(jq_msg_cb err_cb, void *err_cb_data) {
   new_state->slurped = jv_invalid();
   new_state->buf[0] = 0;
   new_state->buf_valid_len = 0;
+  new_state->current_filename = jv_invalid();
+  new_state->current_line = 0;
 
   return new_state;
 }
@@ -204,6 +208,7 @@ void jq_util_input_free(jq_util_input_state *state) {
     jv_parser_free(old_state->parser);
   jv_free(old_state->files);
   jv_free(old_state->slurped);
+  jv_free(old_state->current_filename);
   jv_mem_free(old_state);
 }
 
@@ -237,18 +242,24 @@ static int jq_util_input_read_more(jq_util_input_state state) {
         fclose(state->current_input);
       }
       state->current_input = NULL;
+      jv_free(state->current_filename);
+      state->current_filename = jv_invalid();
+      state->current_line = 0 ;
     }
     jv f = next_file(state);
     if (jv_is_valid(f)) {
       if (!strcmp(jv_string_value(f), "-")) {
         state->current_input = stdin;
+        state->current_filename = jv_string("<stdin>");
       } else {
         state->current_input = fopen(jv_string_value(f), "r");
+        state->current_filename = jv_copy(f);
         if (!state->current_input) {
           state->err_cb(state->err_cb_data, jv_copy(f));
           state->failures++;
         }
       }
+      state->current_line = 0;
       jv_free(f);
     }
   }
@@ -268,6 +279,9 @@ static int jq_util_input_read_more(jq_util_input_state state) {
         state->failures++;
     } else {
       const char *p = memchr(state->buf, '\n', sizeof(state->buf));
+
+      if (p != NULL)
+        state->current_line++;
       
       if (p == NULL && state->parser != NULL) {
         /*
@@ -305,6 +319,26 @@ static int jq_util_input_read_more(jq_util_input_state state) {
 
 jv jq_util_input_next_input_cb(jq_state *jq, void *data) {
   return jq_util_input_next_input((jq_util_input_state)data);
+}
+
+// Return the current_filename:current_line
+jv jq_util_input_get_position(jq_state *jq) {
+  jq_input_cb cb = NULL;
+  void *cb_data = NULL;
+  jq_get_input_cb(jq, &cb, &cb_data);
+  assert(cb == jq_util_input_next_input_cb);
+  if (cb != jq_util_input_next_input_cb)
+    return jv_invalid_with_msg(jv_string("Invalid jq_util_input API usage"));
+  jq_util_input_state s = (jq_util_input_state)cb_data;
+
+  // We can't assert that current_filename is a string because if
+  // the error was a JSON parser error then we may not have set
+  // current_filename yet.
+  if (jv_get_kind(s->current_filename) != JV_KIND_STRING)
+    return jv_string("<unknown>");
+
+  jv v = jv_string_fmt("%s:%zu", jv_string_value(s->current_filename), s->current_line);
+  return v;
 }
 
 // Blocks to read one more input from stdin and/or given files
