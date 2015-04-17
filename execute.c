@@ -636,7 +636,7 @@ jv jq_next(jq_state *jq) {
         }
       } else {
         assert(opcode == EACH || opcode == EACH_OPT);
-        f (opcode == EACH) {
+        if (opcode == EACH) {
           char errbuf[15];
           set_error(jq,
                     jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s (%s)",
