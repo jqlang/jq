@@ -349,7 +349,8 @@ static jv escape_string(jv input, const char* escapings) {
   const char* cstart;
   int c = 0;
   while ((i = jvp_utf8_next((cstart = i), end, &c))) {
-    assert(c > 0);
+    if (c==0)
+      continue;
     if (c < 128 && lookup[c]) {
       ret = jv_string_append_str(ret, lookup[c]);
     } else {
