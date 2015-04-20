@@ -313,3 +313,41 @@ jv jv_dump_string(jv x, int flags) {
   jvp_dtoa_context_free(&C);
   return s;
 }
+
+/* A wrapper for fwrite, writing the content of the string
+   to a standard stream, EXCEPT escaping NUL as "\0".
+   other characters are printed as-is.
+
+   returns:
+   ZERO if all data was written successfully.
+   NON-ZERO if there was an I/O error with 'fwrite/fputc',
+            use ferror/errno to find the error.
+*/
+int jv_string_write_raw(jv v, FILE* stream)
+{
+  size_t len = jv_string_length_bytes(jv_copy(v));
+  const char* buf = jv_string_value(v);
+  void*  pnul = memchr(buf, 0, len);
+  while (pnul) {
+    /* null found, write around it */
+    const size_t print_len = pnul - (void*)buf;
+    if (fwrite(buf,1,print_len,stream) != print_len)
+      return -1;
+    //Write the NUL escape sequence.
+    //TODO: change this to 'N' to change the escape sequence to '\N'
+    if (fputc('\\',stream)==EOF)
+      return -1;
+    if (fputc('0',stream)==EOF)
+      return -1;
+    // find next null (if any)
+    buf += print_len + 1;
+    len -= print_len + 1;
+    pnul = memchr(buf, 0, len);
+  }
+  /* write the remaining string */
+  if (fwrite(buf,1,len,stream) != len)
+    return -1;
+
+  return 0;
+}
+

@@ -119,6 +119,7 @@ jv jv_string_append_str(jv a, const char* str);
 jv jv_string_split(jv j, jv sep);
 jv jv_string_explode(jv j);
 jv jv_string_implode(jv j);
+int jv_string_write_raw(jv v, FILE* stream);
 
 jv jv_object(void);
 jv jv_object_get(jv object, jv key);
