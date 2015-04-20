@@ -336,6 +336,7 @@ static jv escape_string(jv input, const char* escapings) {
   assert(jv_get_kind(input) == JV_KIND_STRING);
   const char* lookup[128] = {0};
   const char* p = escapings;
+  lookup[0] = "\\0";
   while (*p) {
     lookup[(int)*p] = p+1;
     p++;
@@ -349,7 +350,6 @@ static jv escape_string(jv input, const char* escapings) {
   const char* cstart;
   int c = 0;
   while ((i = jvp_utf8_next((cstart = i), end, &c))) {
-    assert(c > 0);
     if (c < 128 && lookup[c]) {
       ret = jv_string_append_str(ret, lookup[c]);
     } else {
