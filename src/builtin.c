@@ -37,6 +37,7 @@ void *alloca (size_t);
 #include "linker.h"
 #include "locfile.h"
 #include "jv_unicode.h"
+#include "jv_alloc.h"
 
 
 static jv type_error(jv bad, const char* msg) {
@@ -1015,6 +1016,49 @@ static jv f_inputs(jq_state *jq, cfunction_gen_state **state, jv input) {
   return f_inputs_step(jq, NULL);
 }
 
+struct f_explodes_state {
+  jv str;
+  const char *s;
+  const char *end;
+};
+
+static void f_explodes_reset(jq_state *jq, cfunction_gen_state *data) {
+  struct f_explodes_state *state = (void *)data;
+  if (state) {
+    jv_free(state->str);
+    free(state);
+  }
+}
+
+static jv f_explodes_step(jq_state *jq, cfunction_gen_state **data) {
+  struct f_explodes_state *state = *(void **)data;
+  assert(state != NULL);
+  if (state->s == state->end) {
+    f_explodes_reset(jq, *data);
+    *data = NULL;
+    return jv_invalid();
+  }
+
+  int c;
+  state->s = jvp_utf8_next(state->s, state->end, &c);
+  return jv_number(c);
+}
+
+static jv f_explodes(jq_state *jq, cfunction_gen_state **data, jv input) {
+  struct f_explodes_state *state;
+
+  if (jv_get_kind(input) != JV_KIND_STRING)
+    return type_error(input, "explodes inputs must be strings");
+
+  state = jv_mem_alloc(sizeof(*state));
+  state->str = jv_copy(input);
+  state->s = jv_string_value(input);
+  state->end = state->s + jv_string_length_bytes(jv_copy(input));
+  *data = (void *)state;
+  jv_free(input);
+  return f_explodes_step(jq, data);
+}
+
 static void f_readfile_reset(jq_state *jq, cfunction_gen_state *state) {
   FILE *f = (void *)state;
   if (f)
@@ -1376,6 +1420,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_input, "input", 1},
   {(cfunction_ptr)f_inputs, "inputs", 1, f_inputs_step},
   {(cfunction_ptr)f_readfile, "readfile", 1, f_readfile_step, f_readfile_reset},
+  {(cfunction_ptr)f_explodes, "explodes", 1, f_explodes_step, f_explodes_reset},
   {(cfunction_ptr)f_debug, "debug", 1},
   {(cfunction_ptr)f_stderr, "stderr", 1},
   {(cfunction_ptr)f_strptime, "strptime", 2},

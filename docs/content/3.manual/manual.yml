@@ -1418,6 +1418,17 @@ sections:
             input: '"foobar"'
             output: ['[102,111,111,98,97,114]']
 
+      - title: "`explodes`"
+        body: |
+
+          Converts an input string into a stream of the string's
+          codepoint numbers.
+
+        examples:
+          - program: '[explodes]'
+            input: '"foobar"'
+            output: ['[102,111,111,98,97,114]']
+
       - title: "`implode`"
         body: |
 
@@ -1425,6 +1436,16 @@ sections:
 
         examples:
           - program: 'implode'
+            input: '[65, 66, 67]'
+            output: ['"ABC"']
+
+      - title: "`implode(exp)`"
+        body: |
+
+          Implodes the stream output of the given expression.
+
+        examples:
+          - program: 'implode(.[])'
             input: '[65, 66, 67]'
             output: ['"ABC"']
 

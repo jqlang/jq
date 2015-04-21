@@ -19,6 +19,8 @@ def recurse(f; cond): def r: ., (f | select(cond) | r); r;
 def recurse: recurse(.[]?);
 def recurse_down: recurse;
 
+def implode(gen): [gen]|implode;
+
 def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];
 def from_entries: map({(.key // .Key // .name // .Name): (if has("value") then .value else .Value end)}) | add | .//={};
 def with_entries(f): to_entries | map(f) | from_entries;
