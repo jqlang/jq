@@ -1,3 +1,4 @@
+---
 headline: jq Manual
 body: |
 
@@ -669,7 +670,7 @@ sections:
             input: '[[0,1], ["a","b","c"]]'
             output: ['[false, true]']
 
-      - title: `in`
+      - title: "`in`"
         body: |
           
           The builtin function `in` returns the input key is in the
@@ -1220,7 +1221,7 @@ sections:
             input: '"a,b, cd, efg, hijk"'
             output: ['12']
 
-      - title: `inside`
+      - title: "`inside`"
         body: |
 
           The filter `inside(b)` will produce true if the input is
@@ -1339,8 +1340,8 @@ sections:
 
         example:
           - program: 'ascii_upcase'
-            input: '"useful but not for é"'
-            output: '"USEFUL BUT NOT FOR é"'
+            input: '"useful but not for Ã©"'
+            output: '"USEFUL BUT NOT FOR Ã©"'
 
       - title: "`while(cond; update)`"
         body: |

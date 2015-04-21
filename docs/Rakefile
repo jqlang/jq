@@ -87,7 +87,6 @@ task :binaries => ["output/download"] do
 end
 
 def load_manual
-  YAML::ENGINE.yamler = 'syck'
   YAML::load(File.open("content/3.manual/manual.yml"))
 end
 
