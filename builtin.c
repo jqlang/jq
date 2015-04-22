@@ -757,6 +757,10 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   jv_free(regex);
   return result;
 }
+#else /* ! HAVE_ONIGURUMA */
+static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
+  return jv_invalid_with_msg(jv_string("jq was compiled without ONIGURAMA regex libary. match/test/sub and related functions are not available."));
+}
 #endif /* HAVE_ONIGURUMA */
 
 static jv minmax_by(jv values, jv keys, int is_min) {
@@ -1174,9 +1178,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_get_search_list, "get_search_list", 1},
   {(cfunction_ptr)f_get_prog_origin, "get_prog_origin", 1},
   {(cfunction_ptr)f_get_jq_origin, "get_jq_origin", 1},
-#ifdef HAVE_ONIGURUMA
   {(cfunction_ptr)f_match, "_match_impl", 4},
-#endif
   {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
   {(cfunction_ptr)f_input, "_input", 1},
   {(cfunction_ptr)f_debug, "debug", 1},
@@ -1300,7 +1302,6 @@ static const char* const jq_builtins[] = {
   "def todateiso8601: strftime(\"%Y-%m-%dT%H:%M:%SZ\");",
   "def fromdate: fromdateiso8601;",
   "def todate: todateiso8601;",
-#ifdef HAVE_ONIGURUMA
   "def match(re; mode): _match_impl(re; mode; false)|.[];",
   "def match($val): ($val|type) as $vt | if $vt == \"string\" then match($val; null)"
   "   elif $vt == \"array\" and ($val | length) > 1 then match($val[0]; $val[1])"
@@ -1371,7 +1372,6 @@ static const char* const jq_builtins[] = {
   "     end ;"
   "  [match($re; flags + \"g\")] as $edits | _stredit($edits; s) ;",
   "def gsub($re; s): gsub($re; s; \"\");",
-#endif /* HAVE_ONIGURUMA */
 
   //#######################################################################
   // range/3, with a `by` expression argument
