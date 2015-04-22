@@ -126,13 +126,17 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
   if (jv_invalid_has_msg(jv_copy(result))) {
     // Uncaught jq exception
     jv msg = jv_invalid_get_msg(jv_copy(result));
+    jv input_pos = jq_util_input_get_position(jq);
     if (jv_get_kind(msg) == JV_KIND_STRING) {
-      fprintf(stderr, "jq: error: %s\n", jv_string_value(msg));
+      fprintf(stderr, "jq: error (at %s): %s\n",
+              jv_string_value(input_pos), jv_string_value(msg));
     } else {
       msg = jv_dump_string(msg, 0);
-      fprintf(stderr, "jq: error (not a string): %s\n", jv_string_value(msg));
+      fprintf(stderr, "jq: error (at %s) (not a string): %s\n",
+              jv_string_value(input_pos), jv_string_value(msg));
     }
     ret = 5;
+    jv_free(input_pos);
     jv_free(msg);
   }
   jv_free(result);
