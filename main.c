@@ -437,7 +437,9 @@ int main(int argc, char* argv[]) {
   if ((options & SEQ))
     parser_flags |= JV_PARSE_SEQ;
 
-  if (!(options & RAW_INPUT))
+  if ((options & RAW_INPUT))
+    jq_util_input_set_parser(input_state, NULL, (options & SLURP) ? 1 : 0);
+  else
     jq_util_input_set_parser(input_state, jv_parser_new(parser_flags), (options & SLURP) ? 1 : 0);
 
   // Let jq program read from inputs
