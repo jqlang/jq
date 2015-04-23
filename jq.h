@@ -47,5 +47,8 @@ int jq_util_input_open_errors(jq_util_input_state);
 int jq_util_input_read_more(jq_util_input_state);
 jv jq_util_input_next_input(jq_util_input_state);
 jv jq_util_input_next_input_cb(jq_state *, void *);
+jv jq_util_input_get_position(jq_state*);
+jv jq_util_input_get_current_filename(jq_state*);
+jv jq_util_input_get_current_line(jq_state*);
 
 #endif /* !_JQ_H_ */

@@ -1126,6 +1126,12 @@ static jv f_now(jq_state *jq, jv a) {
 }
 #endif
 
+static jv f_current_filename(jq_state *jq) {
+  return jq_util_input_get_current_filename(jq);
+}
+static jv f_current_line(jq_state *jq) {
+  return jq_util_input_get_current_line(jq);
+}
 
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 1},
@@ -1188,6 +1194,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_mktime, "mktime", 1},
   {(cfunction_ptr)f_gmtime, "gmtime", 1},
   {(cfunction_ptr)f_now, "now", 1},
+  {(cfunction_ptr)f_current_filename, "filename", 1},
+  {(cfunction_ptr)f_current_line, "line", 1},
 };
 #undef LIBM_DD
 
