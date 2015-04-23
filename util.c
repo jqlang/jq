@@ -154,6 +154,7 @@ struct jq_util_input_state {
   int open_failures;
   jv slurped;
   char buf[4096];
+  size_t buf_valid_len;
 };
 
 static void fprinter(void *data, jv fname) {
@@ -176,6 +177,7 @@ jq_util_input_state jq_util_input_init(jq_msg_cb err_cb, void *err_cb_data) {
   new_state->files = jv_array();
   new_state->slurped = jv_invalid();
   new_state->buf[0] = 0;
+  new_state->buf_valid_len = 0;
 
   return new_state;
 }
@@ -220,7 +222,7 @@ static jv next_file(jq_util_input_state state) {
   return next;
 }
 
-int jq_util_input_read_more(jq_util_input_state state) {
+static int jq_util_input_read_more(jq_util_input_state state) {
   if (!state->current_input || feof(state->current_input) || ferror(state->current_input)) {
     if (state->current_input && ferror(state->current_input)) {
       // System-level input error on the stream. It will be closed (below).
@@ -252,9 +254,41 @@ int jq_util_input_read_more(jq_util_input_state state) {
   }
 
   state->buf[0] = 0;
+  state->buf_valid_len = 0;
   if (state->current_input) {
-    if (!fgets(state->buf, sizeof(state->buf), state->current_input))
+    memset(state->buf, 0, sizeof(state->buf));
+    if (!fgets(state->buf, sizeof(state->buf), state->current_input)) {
       state->buf[0] = 0;
+    } else {
+      const char *p = memchr(state->buf, '\n', sizeof(state->buf));
+      
+      if (p == NULL && state->parser != NULL) {
+        /* There should be no NULs in JSON texts */
+        state->buf_valid_len = strlen(state->buf);
+      } else if (p == NULL && feof(state->current_input)) {
+        size_t i;
+
+        /*
+         * XXX We can't know how many bytes we've read!
+         *
+         * We can't use getline() because there need not be any newlines
+         * in the input.  The only entirely correct choices are: use
+         * fgetc() or read(), and of those the latter will be the
+         * best-performing.
+         *
+         * For now we guess how much fgets() read.
+         */
+        for (p = state->buf, i = 0; i < sizeof(state->buf); i++) {
+          if (state->buf[i] != '\0')
+            p = &state->buf[i];
+        }
+        state->buf_valid_len = p - state->buf + 1;
+      } else if (p == NULL) {
+        state->buf_valid_len = sizeof(state->buf);
+      } else {
+        state->buf_valid_len = (p - state->buf) + 1;
+      }
+    }
   }
   return jv_array_length(jv_copy(state->files)) == 0 && (!state->current_input || feof(state->current_input));
 }
@@ -272,29 +306,27 @@ jv jq_util_input_next_input(jq_util_input_state state) {
     if (state->parser == NULL) {
       // Raw input
       is_last = jq_util_input_read_more(state);
-      if (state->buf[0] == '\0')
+      if (state->buf_valid_len == 0)
         continue;
-      int len = strlen(state->buf); // Raw input doesn't support NULs
-      if (len > 0) {
-        if (jv_is_valid(state->slurped)) {
-          // Slurped raw input
-          state->slurped = jv_string_concat(state->slurped, jv_string(state->buf));
-        } else {
-          if (!jv_is_valid(value))
-            value = jv_string("");
-          if (state->buf[len-1] == '\n') {
-            // whole line
-            state->buf[len-1] = 0;
-            return jv_string_concat(value, jv_string(state->buf));
-          }
-          value = jv_string_concat(value, jv_string(state->buf));
-          state->buf[0] = '\0';
+      if (jv_is_valid(state->slurped)) {
+        // Slurped raw input
+        state->slurped = jv_string_concat(state->slurped, jv_string_sized(state->buf, state->buf_valid_len));
+      } else {
+        if (!jv_is_valid(value))
+          value = jv_string("");
+        if (state->buf[state->buf_valid_len-1] == '\n') {
+          // whole line
+          state->buf[state->buf_valid_len-1] = 0;
+          return jv_string_concat(value, jv_string_sized(state->buf, state->buf_valid_len-1));
         }
+        value = jv_string_concat(value, jv_string_sized(state->buf, state->buf_valid_len));
+        state->buf[0] = '\0';
+        state->buf_valid_len = 0;
       }
     } else {
       if (jv_parser_remaining(state->parser) == 0) {
         is_last = jq_util_input_read_more(state);
-        jv_parser_set_buf(state->parser, state->buf, strlen(state->buf), !is_last);
+        jv_parser_set_buf(state->parser, state->buf, state->buf_valid_len, !is_last);
       }
       value = jv_parser_next(state->parser);
       if (jv_is_valid(state->slurped)) {

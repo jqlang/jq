@@ -44,7 +44,6 @@ void jq_util_input_set_parser(jq_util_input_state, jv_parser *, int);
 void jq_util_input_free(jq_util_input_state *);
 void jq_util_input_add_input(jq_util_input_state, jv);
 int jq_util_input_open_errors(jq_util_input_state);
-int jq_util_input_read_more(jq_util_input_state);
 jv jq_util_input_next_input(jq_util_input_state);
 jv jq_util_input_next_input_cb(jq_state *, void *);
 

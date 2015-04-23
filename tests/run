@@ -12,9 +12,8 @@ fi
 
 mods=$PWD/tests/modules
 
+# jq-coded tests here:
 cat $@ | $VALGRIND $Q ./jq -L "$mods" --run-tests
-
-set -x
 
 clean=true
 d=
@@ -31,6 +30,10 @@ if [ -z "$d" ]; then
     echo "Your OS does not support mktemp(1) -d" 1>&2
     exit 0
 fi
+
+printf 'a\0b\nc\0d\ne' > $d/input
+$VALGRIND $Q ./jq -Rse '. == "a\u0000b\nc\u0000d\ne"' $d/input
+$VALGRIND $Q ./jq -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input
 
 ## Test constant folding
 
