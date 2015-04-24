@@ -396,11 +396,6 @@ int main(int argc, char* argv[]) {
 
   if (!program) usage(2);
 
-  if ((options & PROVIDE_NULL) && (options & (RAW_INPUT | SLURP))) {
-    fprintf(stderr, "%s: --null-input cannot be used with --raw-input or --slurp\n", progname);
-    die();
-  }
-  
   if (options & FROM_FILE) {
     char *program_origin = strdup(program);
     if (program_origin == NULL) {
