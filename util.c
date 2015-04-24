@@ -263,7 +263,10 @@ static int jq_util_input_read_more(jq_util_input_state state) {
       const char *p = memchr(state->buf, '\n', sizeof(state->buf));
       
       if (p == NULL && state->parser != NULL) {
-        /* There should be no NULs in JSON texts */
+        /*
+         * There should be no NULs in JSON texts (but JSON text
+         * sequences are another story).
+         */
         state->buf_valid_len = strlen(state->buf);
       } else if (p == NULL && feof(state->current_input)) {
         size_t i;
@@ -284,7 +287,7 @@ static int jq_util_input_read_more(jq_util_input_state state) {
         }
         state->buf_valid_len = p - state->buf + 1;
       } else if (p == NULL) {
-        state->buf_valid_len = sizeof(state->buf);
+        state->buf_valid_len = sizeof(state->buf) - 1;
       } else {
         state->buf_valid_len = (p - state->buf) + 1;
       }
