@@ -1,5 +1,5 @@
-#ifndef _LOCFILE_H
-#define _LOCFILE_H
+#ifndef LOCFILE_H
+#define LOCFILE_H
 
 #include "jq.h"
 

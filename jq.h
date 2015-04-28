@@ -1,5 +1,5 @@
-#ifndef _JQ_H_
-#define _JQ_H_
+#ifndef JQ_H
+#define JQ_H
 
 #include <stdio.h>
 #include <jv.h>
@@ -47,4 +47,4 @@ int jq_util_input_open_errors(jq_util_input_state);
 jv jq_util_input_next_input(jq_util_input_state);
 jv jq_util_input_next_input_cb(jq_state *, void *);
 
-#endif /* !_JQ_H_ */
+#endif /* !JQ_H */
