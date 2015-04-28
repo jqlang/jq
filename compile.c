@@ -365,19 +365,19 @@ block block_bind_library(block binder, block body, int bindflags, const char* li
   bindflags |= OP_HAS_BINDING;
   int nrefs = 0;
   int matchlen = strlen(libname);
-  char* matchname = calloc(1,matchlen+2+1);
+  char* matchname = jv_mem_alloc(matchlen+2+1);
   if (libname[0] != '\0') {
     strcpy(matchname,libname);
-    strcpy(matchname+matchlen,"::");
+    strcpy(matchname+matchlen, "::");
     matchlen += 2;
   }
   assert(block_has_only_binders(binder, bindflags));
   for (inst *curr = binder.first; curr; curr = curr->next) {
     int bindflags2 = bindflags;
     char* cname = curr->symbol;
-    char* tname = malloc(strlen(curr->symbol)+matchlen+1);
+    char* tname = jv_mem_alloc(strlen(curr->symbol)+matchlen+1);
     strcpy(tname, matchname);
-    strcpy(tname+matchlen,cname);
+    strcpy(tname+matchlen, curr->symbol);
 
     // Ew
     if ((opcode_describe(curr->op)->flags & (OP_HAS_VARIABLE | OP_HAS_CONSTANT)))
