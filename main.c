@@ -456,7 +456,7 @@ int main(int argc, char* argv[]) {
     ret = process(jq, jv_null(), jq_flags, dumpopts);
   } else {
     jv value;
-    while (jq_util_input_open_errors(input_state) == 0 &&
+    while (jq_util_input_errors(input_state) == 0 &&
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
         ret = process(jq, value, jq_flags, dumpopts);
@@ -477,7 +477,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (jq_util_input_open_errors(input_state) != 0)
+  if (jq_util_input_errors(input_state) != 0)
     ret = 2;
 
 out:

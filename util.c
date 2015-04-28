@@ -151,7 +151,7 @@ struct jq_util_input_state {
   jv_parser *parser;
   FILE* current_input;
   jv files;
-  int open_failures;
+  int failures;
   jv slurped;
   char buf[4096];
   size_t buf_valid_len;
@@ -211,8 +211,8 @@ void jq_util_input_add_input(jq_util_input_state state, jv fname) {
   state->files = jv_array_append(state->files, fname);
 }
 
-int jq_util_input_open_errors(jq_util_input_state state) {
-  return state->open_failures;
+int jq_util_input_errors(jq_util_input_state state) {
+  return state->failures;
 }
 
 static jv next_file(jq_util_input_state state) {
@@ -246,7 +246,7 @@ static int jq_util_input_read_more(jq_util_input_state state) {
         state->current_input = fopen(jv_string_value(f), "r");
         if (!state->current_input) {
           state->err_cb(state->err_cb_data, jv_copy(f));
-          state->open_failures++;
+          state->failures++;
         }
       }
       jv_free(f);
@@ -256,9 +256,16 @@ static int jq_util_input_read_more(jq_util_input_state state) {
   state->buf[0] = 0;
   state->buf_valid_len = 0;
   if (state->current_input) {
+    char *res;
     memset(state->buf, 0, sizeof(state->buf));
-    if (!fgets(state->buf, sizeof(state->buf), state->current_input)) {
+
+    while (!(res = fgets(state->buf, sizeof(state->buf), state->current_input)) &&
+           ferror(state->current_input) && errno == EINTR)
+      clearerr(state->current_input);
+    if (res == NULL) {
       state->buf[0] = 0;
+      if (ferror(state->current_input))
+        state->failures++;
     } else {
       const char *p = memchr(state->buf, '\n', sizeof(state->buf));
       
@@ -276,8 +283,8 @@ static int jq_util_input_read_more(jq_util_input_state state) {
          *
          * We can't use getline() because there need not be any newlines
          * in the input.  The only entirely correct choices are: use
-         * fgetc() or read(), and of those the latter will be the
-         * best-performing.
+         * fgetc() or fread().  Using fread() will complicate buffer
+         * management here.
          *
          * For now we guess how much fgets() read.
          */
