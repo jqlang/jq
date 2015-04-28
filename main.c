@@ -23,28 +23,34 @@ static const char* progname;
  */
 static void usage(int code) {
   FILE *f = stderr;
+
   if (code == 0)
     f = stdout;
-  fprintf(f, "\njq - commandline JSON processor [version %s]\n", JQ_VERSION);
-  fprintf(f, "Usage: %s [options] <jq filter> [file...]\n\n", progname);
-  fprintf(f, "\tjq is a tool for processing JSON inputs, applying the\n");
-  fprintf(f, "\tgiven filter to its JSON text inputs and producing the\n");
-  fprintf(f, "\tfilter's results as JSON on standard output.\n");
-  fprintf(f, "\tThe simplest filter is ., which is the identity filter,\n");
-  fprintf(f, "\tcopying jq's input to its output.\n");
-  fprintf(f, "\tFor more advanced filters see the jq(1) manpage (\"man jq\")\n");
-  fprintf(f, "\tand/or http://stedolan.github.com/jq\n\n");
-  fprintf(f, "\tSome of the options include:\n");
-  fprintf(f, "\t -h\t\tthis message;\n");
-  fprintf(f, "\t -c\t\tcompact instead of pretty-printed output;\n");
-  fprintf(f, "\t -n\t\tuse `null` as the single input value;\n");
-  fprintf(f, "\t -s\t\tread (slurp) all inputs into an array; apply filter to it;\n");
-  fprintf(f, "\t -r\t\toutput raw strings, not JSON texts;\n");
-  fprintf(f, "\t -R\t\tread raw strings, not JSON texts;\n");
-  fprintf(f, "\t --arg a v\tset variable $a to value <v>;\n");
-  fprintf(f, "\t --argjson a v\tset variable $a to JSON value <v>;\n");
-  fprintf(f, "\t --argfile a f\tset variable $a to JSON texts read from <f>;\n");
-  fprintf(f, "\tSee the manpage for more options.\n");
+
+#ifdef BAIL
+#undef BAIL
+#endif
+#define BAIL(expr) do { if ((expr) < 0 && code == 0) code = 2; } while (0)
+  BAIL(fprintf(f, "\njq - commandline JSON processor [version %s]\n", JQ_VERSION));
+  BAIL(fprintf(f, "Usage: %s [options] <jq filter> [file...]\n\n", progname));
+  BAIL(fprintf(f, "\tjq is a tool for processing JSON inputs, applying the\n"));
+  BAIL(fprintf(f, "\tgiven filter to its JSON text inputs and producing the\n"));
+  BAIL(fprintf(f, "\tfilter's results as JSON on standard output.\n"));
+  BAIL(fprintf(f, "\tThe simplest filter is ., which is the identity filter,\n"));
+  BAIL(fprintf(f, "\tcopying jq's input to its output.\n"));
+  BAIL(fprintf(f, "\tFor more advanced filters see the jq(1) manpage (\"man jq\")\n"));
+  BAIL(fprintf(f, "\tand/or http://stedolan.github.com/jq\n\n"));
+  BAIL(fprintf(f, "\tSome of the options include:\n"));
+  BAIL(fprintf(f, "\t -h\t\tthis message;\n"));
+  BAIL(fprintf(f, "\t -c\t\tcompact instead of pretty-printed output;\n"));
+  BAIL(fprintf(f, "\t -n\t\tuse `null` as the single input value;\n"));
+  BAIL(fprintf(f, "\t -s\t\tread (slurp) all inputs into an array; apply filter to it;\n"));
+  BAIL(fprintf(f, "\t -r\t\toutput raw strings, not JSON texts;\n"));
+  BAIL(fprintf(f, "\t -R\t\tread raw strings, not JSON texts;\n"));
+  BAIL(fprintf(f, "\t --arg a v\tset variable $a to value <v>;\n"));
+  BAIL(fprintf(f, "\t --argjson a v\tset variable $a to JSON value <v>;\n"));
+  BAIL(fprintf(f, "\t --argfile a f\tset variable $a to JSON texts read from <f>;\n"));
+  BAIL(fprintf(f, "\tSee the manpage for more options.\n"));
   exit(code);
 }
 
