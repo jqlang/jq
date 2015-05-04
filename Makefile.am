@@ -8,7 +8,6 @@ LIBJQ_SRC = locfile.c bytecode.c compile.c execute.c builtin.c jv.c	\
   jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_file.c	\
   jv_alloc.c jq_test.c util.c linker.c ${LIBJQ_INCS}
 
-
 ### C build options
 
 AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
@@ -47,6 +46,14 @@ libjq_la_LDFLAGS = -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
 include_HEADERS = jv.h jq.h
 
+### Error injection for testing
+
+if ENABLE_ERROR_INJECTION
+lib_LTLIBRARIES += libinject_errors.la
+libinject_errors_la_SOURCES = inject_errors.c
+libinject_errors_la_LIBADD = -ldl
+libinject_errors_la_LDFLAGS = -module
+endif
 
 ### Building the jq binary
 

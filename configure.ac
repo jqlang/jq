@@ -87,6 +87,10 @@ dnl Don't attempt to build docs if there's no Ruby lying around
 AC_ARG_ENABLE([docs],
    AC_HELP_STRING([--disable-docs], [don't build docs]))
 
+dnl Don't attempt to build the error injection object (if there is no LD_PRELOAD support)
+AC_ARG_ENABLE([error-injection],
+   AC_HELP_STRING([--enable-error-injection], [build and test with error injection]))
+
 AS_IF([test "x$enable_docs" != "xno"],[
    AC_CHECK_PROGS(bundle_cmd, bundle)
 
@@ -112,6 +116,7 @@ EOF
 ])
 
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
+AM_CONDITIONAL([ENABLE_ERROR_INJECTION], [test "x$enable_error_injection" = xyes])
 
 AC_FIND_FUNC([isatty], [c], [#include <unistd.h>], [0])
 AC_FIND_FUNC([_isatty], [c], [#include <io.h>], [0])
