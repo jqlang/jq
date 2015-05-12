@@ -1260,6 +1260,7 @@ static const char* const jq_builtins[] = {
   "def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];",
   "def from_entries: map({(.key // .Key // .Name): (if has(\"value\") then .value else .Value end)}) | add | .//={};",
   "def with_entries(f): to_entries | map(f) | from_entries;",
+  "def map_values(f): [keys[] as $k | {($k): .[$k] | f}] | add;",
   "def reverse: [.[length - 1 - range(0;length)]];",
   "def indices($i): if type == \"array\" and ($i|type) == \"array\" then .[$i]"
   "  elif type == \"array\" then .[[$i]]"
