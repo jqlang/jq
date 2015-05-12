@@ -600,7 +600,6 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
       return OK;
     // shouldn't happen?
     assert(!jv_is_valid(*out));
-    assert(!jv_is_valid(p->next));
     parser_reset(p);
     jv_free(*out);
     *out = jv_invalid();
