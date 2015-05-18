@@ -117,6 +117,7 @@ EOF
 
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 AM_CONDITIONAL([ENABLE_ERROR_INJECTION], [test "x$enable_error_injection" = xyes])
+AM_CONDITIONAL([ENABLE_ALL_STATIC], [test "x$enable_static" = xyes])
 
 AC_FIND_FUNC([isatty], [c], [#include <unistd.h>], [0])
 AC_FIND_FUNC([_isatty], [c], [#include <io.h>], [0])

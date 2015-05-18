@@ -1,3 +1,4 @@
+
 ### C source files to be built and distributed.
 
 LIBJQ_INCS = jq_parser.h builtin.h bytecode.h compile.h exec_stack.h	\
@@ -70,6 +71,10 @@ bin_PROGRAMS = jq
 jq_SOURCES = main.c version.h
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
+
+if ENABLE_ALL_STATIC
+jq_LDFLAGS += -all-static
+endif
 
 ### Tests (make check)
 
