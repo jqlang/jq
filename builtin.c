@@ -1354,24 +1354,33 @@ static const char* const jq_builtins[] = {
   "    | $in[0:$r.offset] + s + $in[$r.offset+$r.length:]"
   "    end ;",
   //
+  // If s contains capture variables, then create a capture object and pipe it to s
+  "def sub($re; s; flags):"
+  "  def subg: explode | select(. != 103) | implode;"
+  // # "fla" should be flags with all occurrences of g removed; gs should be non-nil if flags has a g
+  "  def sub1(fla; gs):"
+  "    def mysub:"
+  "      . as $in"
+  "      | [match($re; fla)]"
+  "      | if length == 0 then $in"
+  "        else .[0] as $edit"
+  "        | ($edit | .offset + .length) as $len"
+           //  # create the "capture" object:
+  "        | reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair"
+  "            ({}; . + $pair)"
+  "        | $in[0:$edit.offset]"
+  "          + s"
+  "          + ($in[$len:] | if gs then mysub else . end)"
+  "        end ;"
+  "    mysub ;"
+  "    (flags | index(\"g\")) as $gs"
+  "    | (flags | if $gs then subg else . end) as $fla"
+  "    | sub1($fla; $gs);",
+  //
+  "def sub($re; s): sub($re; s; \"\");",
   // repeated substitution of re (which may contain named captures)
-  "def gsub($re; s; flags):"
-  //   # _stredit(edits;s) - s is the \"to\" string, which might contain capture variables,
-  //   # so if an edit contains captures, then create the capture object and pipe it to s
-  "   def _stredit(edits; s):"
-  "     if (edits|length) == 0 then ."
-  "     else . as $in"
-  "       | (edits|length -1) as $l"
-  "       | (edits[$l]) as $edit"
-  //       # create the \"capture\" object:
-  "       | ($edit | reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair"
-  "         ({}; . + $pair) )"
-  "       | if . == {} then $in | .[0:$edit.offset]+s+.[$edit.offset+$edit.length:] | _stredit(edits[0:$l]; s)"
-  "         else (if $l == 0 then \"\" else ($in | _stredit(edits[0:$l]; s)) end) + (. | s)"
-  "         end"
-  "     end ;"
-  "  [match($re; flags + \"g\")] as $edits | _stredit($edits; s) ;",
-  "def gsub($re; s): gsub($re; s; \"\");",
+  "def gsub($re; s; flags): sub($re; s; flags + \"g\");",
+  "def gsub($re; s): sub($re; s; \"g\");",
 
   //#######################################################################
   // range/3, with a `by` expression argument

@@ -2045,7 +2045,7 @@ sections:
             output: '"ZabcZabc"'
 
 
-      - title: "`gsub(regex; string)`"
+      - title: "`gsub(regex; string)`, `gsub(regex; string; flags)`"
         body: |
 
           `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
