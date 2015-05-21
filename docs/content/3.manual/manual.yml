@@ -2391,6 +2391,7 @@ sections:
       application-specific behavior, such as for executables that use
       the libjq C API but aren't the jq executable itself.
 
+    entries:
       - title: "`input`"
         body: |
 
