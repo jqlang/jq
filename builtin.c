@@ -375,11 +375,14 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     return f_tostring(jq, input);
   } else if (!strcmp(fmt_s, "csv") || !strcmp(fmt_s, "tsv")) {
     const char *quotes, *sep, *escapings;
+    const char *msg;
     if (!strcmp(fmt_s, "csv")) {
+      msg = "cannot be csv-formatted, only array";
       quotes = "\"";
       sep = ",";
       escapings = "\"\"\"\0";
     } else {
+      msg = "cannot be tsv-formatted, only array";
       assert(!strcmp(fmt_s, "tsv"));
       quotes = "";
       sep = "\t";
@@ -387,7 +390,7 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     }
     jv_free(fmt);
     if (jv_get_kind(input) != JV_KIND_ARRAY)
-      return type_error(input, "cannot be csv-formatted, only array");
+      return type_error(input, msg);
     jv line = jv_string("");
     jv_array_foreach(input, i, x) {
       if (i) line = jv_string_append_str(line, sep);
