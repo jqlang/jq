@@ -22,18 +22,25 @@
 
 
 static jv type_error(jv bad, const char* msg) {
-  jv err = jv_invalid_with_msg(jv_string_fmt("%s %s",
+  char errbuf[15];
+  jv err = jv_invalid_with_msg(jv_string_fmt("%s (%s) %s",
                                              jv_kind_name(jv_get_kind(bad)),
-                                             msg));
+                                             jv_dump_string_for_errmsg(bad,errbuf,sizeof(errbuf)),
+                                             msg
+                                             ));
   jv_free(bad);
   return err;
 }
 
 static jv type_error2(jv bad1, jv bad2, const char* msg) {
-  jv err = jv_invalid_with_msg(jv_string_fmt("%s and %s %s",
+  char errbuf1[15],errbuf2[15];
+  jv err = jv_invalid_with_msg(jv_string_fmt("%s (%s) and %s (%s) %s",
                                              jv_kind_name(jv_get_kind(bad1)),
+                                             jv_dump_string_for_errmsg(bad1,errbuf1,sizeof(errbuf1)),
                                              jv_kind_name(jv_get_kind(bad2)),
-                                             msg));
+                                             jv_dump_string_for_errmsg(bad2,errbuf2,sizeof(errbuf2)),
+                                             msg
+                                             ));
   jv_free(bad1);
   jv_free(bad2);
   return err;

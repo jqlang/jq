@@ -423,8 +423,11 @@ jv jq_next(jq_state *jq) {
         stack_push(jq, jv_object_set(objv, k, v));
         stack_push(jq, stktop);
       } else {
-        set_error(jq, jv_invalid_with_msg(jv_string_fmt("Cannot use %s as object key",
-                                                        jv_kind_name(jv_get_kind(k)))));
+        char errbuf[15];
+        set_error(jq, jv_invalid_with_msg(jv_string_fmt("Cannot use %s (%s) as object key",
+                                                        jv_kind_name(jv_get_kind(k)),
+                                                        jv_dump_string_for_errmsg(k,errbuf,sizeof(errbuf))
+                                                        )));
         jv_free(stktop);
         jv_free(v);
         jv_free(k);
@@ -634,9 +637,12 @@ jv jq_next(jq_state *jq) {
       } else {
         assert(opcode == EACH || opcode == EACH_OPT);
         if (opcode == EACH) {
+          char errbuf[15];
           set_error(jq,
-                    jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s",
-                                                      jv_kind_name(jv_get_kind(container)))));
+                    jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s (%s)",
+                                                      jv_kind_name(jv_get_kind(container)),
+                                                      jv_dump_string_for_errmsg(container,errbuf,sizeof(errbuf))
+                                                      )));
         }
         keep_going = 0;
       }

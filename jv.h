@@ -171,6 +171,7 @@ void jv_dumpf(jv, FILE *f, int flags);
 void jv_dump(jv, int flags);
 void jv_show(jv, int flags);
 jv jv_dump_string(jv, int flags);
+char* jv_dump_string_for_errmsg(jv x, char* outbuf, size_t bufsize);
 
 enum {
   JV_PARSE_SEQ              = 1,
