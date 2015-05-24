@@ -1,7 +1,11 @@
 #define _BSD_SOURCE
 #define _XOPEN_SOURCE
 #include <sys/time.h>
-#include <alloca.h>
+#ifdef WIN32
+  #include <malloc.h>
+#else
+  #include <alloca.h>
+#endif
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
@@ -967,7 +971,7 @@ static time_t my_mktime(struct tm *tm) {
 #ifdef HAVE_TIMEGM
   return timegm(tm);
 #else /* HAVE_TIMEGM */
-  time_t t = mktime(&tm);
+  time_t t = mktime(tm);
   if (t == (time_t)-1)
     return t;
 #ifdef HAVE_TM_TM_GMT_OFF
@@ -1073,7 +1077,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
 static jv f_gmtime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_NUMBER)
     return jv_invalid_with_msg(jv_string("gmtime requires numeric inputs"));
-  struct tm *tmp;
+  struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
   time_t secs = fsecs;
