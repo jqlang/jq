@@ -337,7 +337,7 @@ jv jq_util_input_get_position(jq_state *jq) {
   if (jv_get_kind(s->current_filename) != JV_KIND_STRING)
     return jv_string("<unknown>");
 
-  jv v = jv_string_fmt("%s:%zu", jv_string_value(s->current_filename), s->current_line);
+  jv v = jv_string_fmt("%s:%lu", jv_string_value(s->current_filename), (unsigned long)s->current_line);
   return v;
 }
 
