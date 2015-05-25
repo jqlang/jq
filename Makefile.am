@@ -72,7 +72,7 @@ jq_SOURCES = main.c version.h
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
 
-if ENABLE_ALL_STATIC
+if ENABLE_STATIC
 jq_LDFLAGS += -all-static
 endif
 
