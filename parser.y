@@ -108,6 +108,7 @@ struct lexer_param;
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString
 %type <blk> FuncDef FuncDefs String Import Imports Param Params
 %type <blk> Arg Args Module
+%type <literal> Keyword
 %{
 #include "lexer.h"
 struct lexer_param {
@@ -735,6 +736,62 @@ Exp {
   $$ = gen_lambda($1);
 }
 
+Keyword:
+"as" {
+  $$ = jv_string("as");
+} |
+"def" {
+  $$ = jv_string("def");
+} |
+"module" {
+  $$ = jv_string("module");
+} |
+"import" {
+  $$ = jv_string("import");
+} |
+"if" {
+  $$ = jv_string("if");
+} |
+"then" {
+  $$ = jv_string("then");
+} |
+"else" {
+  $$ = jv_string("else");
+} |
+"elif" {
+  $$ = jv_string("elif");
+} |
+"reduce" {
+  $$ = jv_string("reduce");
+} |
+"foreach" {
+  $$ = jv_string("foreach");
+} |
+"end" {
+  $$ = jv_string("end");
+} |
+"and" {
+  $$ = jv_string("and");
+} |
+"or" {
+  $$ = jv_string("or");
+} |
+"try" {
+  $$ = jv_string("try");
+} |
+"catch" {
+  $$ = jv_string("catch");
+} |
+"label" {
+  $$ = jv_string("label");
+} |
+"break" {
+  $$ = jv_string("break");
+} |
+"__loc__" {
+  $$ = jv_string("__loc__");
+}
+
 MkDict:
 %empty { 
   $$=gen_noop(); 
@@ -743,10 +800,13 @@ MkDict:
 | MkDictPair ',' MkDict { $$=block_join($1, $3); }
 | error ',' MkDict { $$ = $3; }
 
-MkDictPair
-: IDENT ':' ExpD { 
+MkDictPair:
+IDENT ':' ExpD { 
   $$ = gen_dictpair(gen_const($1), $3);
  }
+| Keyword ':' ExpD {
+  $$ = gen_dictpair(gen_const($1), $3);
+  }
 | String ':' ExpD {
   $$ = gen_dictpair($1, $3);
   }
