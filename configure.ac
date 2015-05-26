@@ -91,6 +91,10 @@ dnl Don't attempt to build the error injection object (if there is no LD_PRELOAD
 AC_ARG_ENABLE([error-injection],
    AC_HELP_STRING([--enable-error-injection], [build and test with error injection]))
 
+dnl Enable building all static
+AC_ARG_ENABLE([all-static],
+   AC_HELP_STRING([--enable-all-static], [link jq with static libraries only]))
+
 AS_IF([test "x$enable_docs" != "xno"],[
    AC_CHECK_PROGS(bundle_cmd, bundle)
 
@@ -117,7 +121,7 @@ EOF
 
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 AM_CONDITIONAL([ENABLE_ERROR_INJECTION], [test "x$enable_error_injection" = xyes])
-AM_CONDITIONAL([ENABLE_STATIC], [test "x$enable_static" = xyes])
+AM_CONDITIONAL([ENABLE_ALL_STATIC], [test "x$enable_all_static" = xyes])
 
 AC_FIND_FUNC([isatty], [c], [#include <unistd.h>], [0])
 AC_FIND_FUNC([_isatty], [c], [#include <io.h>], [0])
