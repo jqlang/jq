@@ -219,8 +219,11 @@ sections:
 
       * `--argfile variable-name filename`:
 
-        Like `--slurpfile`, but uses just the first value in the given
-        file.
+        Do not use.  Use `--slurpfile` instead.
+
+        (This option is like `--slurpfile`, but when the file has just
+        one text, then that is used, else an array of texts is used as
+        in `--slurfile`.)
 
   - title: Basic filters
     entries:

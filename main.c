@@ -49,7 +49,7 @@ static void usage(int code) {
   BAIL(fprintf(f, "\t -R\t\tread raw strings, not JSON texts;\n"));
   BAIL(fprintf(f, "\t --arg a v\tset variable $a to value <v>;\n"));
   BAIL(fprintf(f, "\t --argjson a v\tset variable $a to JSON value <v>;\n"));
-  BAIL(fprintf(f, "\t --argfile a f\tset variable $a to JSON texts read from <f>;\n"));
+  BAIL(fprintf(f, "\t --slurpfile a f\tset variable $a to an array of JSON texts read from <f>;\n"));
   BAIL(fprintf(f, "\tSee the manpage for more options.\n"));
   exit(code);
 }
