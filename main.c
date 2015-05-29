@@ -161,6 +161,7 @@ int main(int argc, char* argv[]) {
   int compiled = 0;
   int parser_flags = 0;
   int nfiles = 0;
+  jv program_arguments = jv_array();
 
   if (argc) progname = argv[0];
 
@@ -178,7 +179,6 @@ int main(int argc, char* argv[]) {
   int further_args_are_files = 0;
   int jq_flags = 0;
   size_t short_opts = 0;
-  jv program_arguments = jv_array();
   jv lib_search_paths = jv_null();
   for (int i=1; i<argc; i++, short_opts = 0) {
     if (further_args_are_files) {
@@ -317,6 +317,7 @@ int main(int argc, char* argv[]) {
           fprintf(stderr, "%s: Bad JSON in --argfile %s %s: %s\n", progname,
                   argv[i+1], argv[i+2], jv_string_value(data));
           jv_free(data);
+          jv_free(arg);
           ret = 2;
           goto out;
         }
@@ -348,7 +349,6 @@ int main(int argc, char* argv[]) {
         i++;
         // XXX Pass program_arguments, even a whole jq_state *, through;
         // could be useful for testing
-        jv_free(program_arguments);
         ret = jq_testsuite(lib_search_paths, argc - i, argv + i);
         goto out;
       }
@@ -424,12 +424,12 @@ int main(int argc, char* argv[]) {
       goto out;
     }
     jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string(dirname(program_origin))));
-    compiled = jq_compile_args(jq, jv_string_value(data), program_arguments);
+    compiled = jq_compile_args(jq, jv_string_value(data), jv_copy(program_arguments));
     free(program_origin);
     jv_free(data);
   } else {
     jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string("."))); // XXX is this good?
-    compiled = jq_compile_args(jq, program, program_arguments);
+    compiled = jq_compile_args(jq, program, jv_copy(program_arguments));
   }
   if (!compiled){
     ret = 3;
@@ -493,6 +493,7 @@ out:
     ret = 2;
   }
 
+  jv_free(program_arguments);
   jq_util_input_free(&input_state);
   jq_teardown(&jq);
   if (ret >= 10 && (options & EXIT_STATUS))
