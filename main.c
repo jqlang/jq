@@ -305,9 +305,15 @@ int main(int argc, char* argv[]) {
         i += 2; // skip the next two arguments
         if (!short_opts) continue;
       }
-      if (isoption(argv[i], 0, "argfile", &short_opts)) {
+      if (isoption(argv[i], 0, "argfile", &short_opts) ||
+          isoption(argv[i], 0, "slurpfile", &short_opts)) {
+        const char *which;
+        if (isoption(argv[i], 0, "argfile", &short_opts))
+          which = "argfile";
+        else
+          which = "slurpfile";
         if (i >= argc - 2) {
-          fprintf(stderr, "%s: --argfile takes two parameters (e.g. -a varname filename)\n", progname);
+          fprintf(stderr, "%s: --%s takes two parameters (e.g. -a varname filename)\n", progname, which);
           die();
         }
         jv arg = jv_object();
@@ -315,14 +321,15 @@ int main(int argc, char* argv[]) {
         jv data = jv_load_file(argv[i+2], 0);
         if (!jv_is_valid(data)) {
           data = jv_invalid_get_msg(data);
-          fprintf(stderr, "%s: Bad JSON in --argfile %s %s: %s\n", progname,
+          fprintf(stderr, "%s: Bad JSON in --%s %s %s: %s\n", progname, which,
                   argv[i+1], argv[i+2], jv_string_value(data));
           jv_free(data);
           jv_free(arg);
           ret = 2;
           goto out;
         }
-        if (jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
+        if (isoption(argv[i], 0, "argfile", &short_opts) &&
+            jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
             data = jv_array_get(data, 0);
         arg = jv_object_set(arg, jv_string("value"), data);
         program_arguments = jv_array_append(program_arguments, arg);
