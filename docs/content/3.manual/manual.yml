@@ -215,9 +215,7 @@ sections:
         value to the jq program as a predefined variable. If you run jq
         with `--argfile foo bar`, then `$foo` is available in the
         program and has the value resulting from parsing the content of
-        the file named `bar`.  The file is slurped.  That means the
-        value loaded will be an array of the top-level JSON values found
-        in the file.
+        the file named `bar`.
 
   - title: Basic filters
     entries:

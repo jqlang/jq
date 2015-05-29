@@ -320,6 +320,8 @@ int main(int argc, char* argv[]) {
           ret = 2;
           goto out;
         }
+        if (jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
+            data = jv_array_get(data, 0);
         arg = jv_object_set(arg, jv_string("value"), data);
         program_arguments = jv_array_append(program_arguments, arg);
         i += 2; // skip the next two arguments
