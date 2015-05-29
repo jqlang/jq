@@ -27,31 +27,32 @@ static void usage(int code) {
   if (code == 0)
     f = stdout;
 
-#ifdef BAIL
-#undef BAIL
-#endif
-#define BAIL(expr) do { if ((expr) < 0 && code == 0) code = 2; } while (0)
-  BAIL(fprintf(f, "\njq - commandline JSON processor [version %s]\n", JQ_VERSION));
-  BAIL(fprintf(f, "Usage: %s [options] <jq filter> [file...]\n\n", progname));
-  BAIL(fprintf(f, "\tjq is a tool for processing JSON inputs, applying the\n"));
-  BAIL(fprintf(f, "\tgiven filter to its JSON text inputs and producing the\n"));
-  BAIL(fprintf(f, "\tfilter's results as JSON on standard output.\n"));
-  BAIL(fprintf(f, "\tThe simplest filter is ., which is the identity filter,\n"));
-  BAIL(fprintf(f, "\tcopying jq's input to its output.\n"));
-  BAIL(fprintf(f, "\tFor more advanced filters see the jq(1) manpage (\"man jq\")\n"));
-  BAIL(fprintf(f, "\tand/or http://stedolan.github.com/jq\n\n"));
-  BAIL(fprintf(f, "\tSome of the options include:\n"));
-  BAIL(fprintf(f, "\t -h\t\tthis message;\n"));
-  BAIL(fprintf(f, "\t -c\t\tcompact instead of pretty-printed output;\n"));
-  BAIL(fprintf(f, "\t -n\t\tuse `null` as the single input value;\n"));
-  BAIL(fprintf(f, "\t -s\t\tread (slurp) all inputs into an array; apply filter to it;\n"));
-  BAIL(fprintf(f, "\t -r\t\toutput raw strings, not JSON texts;\n"));
-  BAIL(fprintf(f, "\t -R\t\tread raw strings, not JSON texts;\n"));
-  BAIL(fprintf(f, "\t --arg a v\tset variable $a to value <v>;\n"));
-  BAIL(fprintf(f, "\t --argjson a v\tset variable $a to JSON value <v>;\n"));
-  BAIL(fprintf(f, "\t --slurpfile a f\tset variable $a to an array of JSON texts read from <f>;\n"));
-  BAIL(fprintf(f, "\tSee the manpage for more options.\n"));
-  exit(code);
+  int ret = fprintf(f,
+    "jq - commandline JSON processor [version %s]\n"
+    "Usage: %s [options] <jq filter> [file...]\n\n"
+    "\tjq is a tool for processing JSON inputs, applying the\n"
+    "\tgiven filter to its JSON text inputs and producing the\n"
+    "\tfilter's results as JSON on standard output.\n"
+    "\tThe simplest filter is ., which is the identity filter,\n"
+    "\tcopying jq's input to its output unmodified (except for\n"
+    "\tformatting).\n"
+    "\tFor more advanced filters see the jq(1) manpage (\"man jq\")\n"
+    "\tand/or http://stedolan.github.com/jq\n\n"
+    "\tSome of the options include:\n"
+    "\t -c\t\tcompact instead of pretty-printed output;\n"
+    "\t -n\t\tuse `null` as the single input value;\n"
+    "\t -e\t\tset the exit status code based on the output;\n"
+    "\t -s\t\tread (slurp) all inputs into an array; apply filter to it;\n"
+    "\t -r\t\toutput raw strings, not JSON texts;\n"
+    "\t -R\t\tread raw strings, not JSON texts;\n"
+    "\t -C\t\tcolorize JSON;\n"
+    "\t -M\t\tmonochrome (don't colorize JSON);\n"
+    "\t -S\t\tsort keys of objects on output;\n"
+    "\t --arg a v\tset variable $a to value <v>;\n"
+    "\t --argjson a v\tset variable $a to JSON value <v>;\n"
+    "\t --slurpfile a f\tset variable $a to an array of JSON texts read from <f>;\n"
+    "\tSee the manpage for more options.\n", JQ_VERSION, progname);
+  exit((ret < 0 && code == 0) ? 2 : code);
 }
 
 static void die() {
