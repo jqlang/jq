@@ -161,6 +161,7 @@ int main(int argc, char* argv[]) {
   int compiled = 0;
   int parser_flags = 0;
   int nfiles = 0;
+  int badwrite;
   jv program_arguments = jv_array();
 
   if (argc) progname = argv[0];
@@ -487,8 +488,8 @@ int main(int argc, char* argv[]) {
     ret = 2;
 
 out:
-  /* XXX We really should catch ENOSPC and such errors in jv_dumpf()! */
-  if (fclose(stdout)!=0) {
+  badwrite = ferror(stdout);
+  if (fclose(stdout)!=0 || badwrite) {
     fprintf(stderr,"Error: writing output failed: %s\n", strerror(errno));
     ret = 2;
   }
