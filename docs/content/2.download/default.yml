@@ -42,7 +42,7 @@ body:
 
       ### Solaris 11
 
-       * jq 1.4 executables for [64-bit](solaris11-64/jq.exe) or [32-bit](solaris11-32/jq.exe)
+       * jq 1.4 executables for [64-bit](solaris11-64/jq) or [32-bit](solaris11-32/jq)
 
       ### Windows
 
