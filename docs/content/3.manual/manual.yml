@@ -140,6 +140,14 @@ sections:
         will result in more compact output by instead putting each
         JSON object on a single line.
 
+      * `--tab`:
+
+        Use a tab for each indentation level instead of two spaces.
+
+      * `--indent n`:
+
+        Use the given number of spaces (no more than 8) for indentation.
+
       * `--colour-output` / `-C` and `--monochrome-output` / `-M`:
 
         By default, jq outputs colored JSON if writing to a

@@ -48,6 +48,7 @@ static void usage(int code) {
     "\t -C\t\tcolorize JSON;\n"
     "\t -M\t\tmonochrome (don't colorize JSON);\n"
     "\t -S\t\tsort keys of objects on output;\n"
+    "\t --tab\tuse tabs for indentation;\n"
     "\t --arg a v\tset variable $a to value <v>;\n"
     "\t --argjson a v\tset variable $a to JSON value <v>;\n"
     "\t --slurpfile a f\tset variable $a to an array of JSON texts read from <f>;\n"
@@ -91,7 +92,6 @@ enum {
   RAW_INPUT             = 2,
   PROVIDE_NULL          = 4,
   RAW_OUTPUT            = 8,
-  COMPACT_OUTPUT        = 16,
   ASCII_OUTPUT          = 32,
   COLOUR_OUTPUT         = 64,
   NO_COLOUR_OUTPUT      = 128,
@@ -174,6 +174,7 @@ int main(int argc, char* argv[]) {
     goto out;
   }
 
+  int dumpopts = JV_PRINT_INDENT_FLAGS(2);
   const char* program = 0;
 
   jq_util_input_state input_state = jq_util_input_init(NULL, NULL); // XXX add err_cb
@@ -221,7 +222,7 @@ int main(int argc, char* argv[]) {
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'c', "compact-output", &short_opts)) {
-        options |= COMPACT_OUTPUT;
+        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(7));
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'C', "color-output", &short_opts)) {
@@ -260,6 +261,26 @@ int main(int argc, char* argv[]) {
         options |= RAW_OUTPUT | RAW_NO_LF;
         if (!short_opts) continue;
       }
+      if (isoption(argv[i], 0, "tab", &short_opts)) {
+        dumpopts &= ~JV_PRINT_INDENT_FLAGS(7);
+        dumpopts |= JV_PRINT_TAB | JV_PRINT_PRETTY;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 0, "indent", &short_opts)) {
+        if (i >= argc - 1) {
+          fprintf(stderr, "%s: --indent takes one parameter\n", progname);
+          die();
+        }
+        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(7));
+        int indent = atoi(argv[i+1]);
+        if (indent < -1 || indent > 7) {
+          fprintf(stderr, "%s: --indent takes a number between -1 and 7\n", progname);
+          die();
+        }
+        dumpopts |= JV_PRINT_INDENT_FLAGS(indent);
+        i++;
+        if (!short_opts) continue;
+      }
       if (isoption(argv[i], 0, "seq", &short_opts)) {
         options |= SEQ;
         if (!short_opts) continue;
@@ -279,7 +300,7 @@ int main(int argc, char* argv[]) {
       // FIXME: For --arg* we should check that the varname is acceptable
       if (isoption(argv[i], 0, "arg", &short_opts)) {
         if (i >= argc - 2) {
-          fprintf(stderr, "%s: --arg takes two parameters (e.g. -a varname value)\n", progname);
+          fprintf(stderr, "%s: --arg takes two parameters (e.g. --arg varname value)\n", progname);
           die();
         }
         jv arg = jv_object();
@@ -291,7 +312,7 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 0, "argjson", &short_opts)) {
         if (i >= argc - 2) {
-          fprintf(stderr, "%s: --argjson takes two parameters (e.g. -a varname text)\n", progname);
+          fprintf(stderr, "%s: --argjson takes two parameters (e.g. --argjson varname text)\n", progname);
           die();
         }
         jv v = jv_parse(argv[i+2]);
@@ -314,7 +335,7 @@ int main(int argc, char* argv[]) {
         else
           which = "slurpfile";
         if (i >= argc - 2) {
-          fprintf(stderr, "%s: --%s takes two parameters (e.g. -a varname filename)\n", progname, which);
+          fprintf(stderr, "%s: --%s takes two parameters (e.g. --%s varname filename)\n", progname, which, which);
           die();
         }
         jv arg = jv_object();
@@ -370,7 +391,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  int dumpopts = 0;
 #ifndef WIN32
   /* Disable colour by default on Windows builds as Windows
      terminals tend not to display it correctly */
@@ -378,7 +398,6 @@ int main(int argc, char* argv[]) {
     dumpopts |= JV_PRINT_COLOUR;
 #endif
   if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
-  if (!(options & COMPACT_OUTPUT)) dumpopts |= JV_PRINT_PRETTY;
   if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
   if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
   if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;

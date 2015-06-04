@@ -37,9 +37,14 @@ static void put_str(const char* s, FILE* fout, jv* strout) {
   put_buf(s, strlen(s), fout, strout);
 }
 
-static void put_space(int n, FILE* fout, jv* strout) {
-  while (n--) {
-    put_char(' ', fout, strout);
+static void put_indent(int n, int flags, FILE* fout, jv* strout) {
+  if (flags & JV_PRINT_TAB) {
+    while (n--)
+      put_char('\t', fout, strout);
+  } else {
+    n *= ((flags & (JV_PRINT_SPACE0 | JV_PRINT_SPACE1 | JV_PRINT_SPACE2)) >> 8);
+    while (n--)
+      put_char(' ', fout, strout);
   }
 }
 
@@ -109,8 +114,6 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S) {
   assert(c != -1);
   put_char('"', F, S);
 }
-
-enum { INDENT = 2 };
 
 static void put_refcnt(struct dtoa_context* C, int refcnt, FILE *F, jv* S){
   char buf[JVP_DTOA_FMT_MAX_LEN];
@@ -184,23 +187,23 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     put_str("[", F, S);
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S);
-      put_space(indent+INDENT, F, S);
+      put_indent(indent + 1, flags, F, S);
     }
     jv_array_foreach(x, i, elem) {
       if (i!=0) {
         if (flags & JV_PRINT_PRETTY) {
           put_str(",\n", F, S);
-          put_space(indent+INDENT, F, S);
+          put_indent(indent + 1, flags, F, S);
         } else {
           put_str(",", F, S);
         }
       }
-      jv_dump_term(C, elem, flags, indent + INDENT, F, S);
+      jv_dump_term(C, elem, flags, indent + 1, F, S);
       if (colour) put_str(colour, F, S);
     }
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S);
-      put_space(indent, F, S);
+      put_indent(indent, flags, F, S);
     }
     if (colour) put_str(colour, F, S);
     put_char(']', F, S);
@@ -216,7 +219,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     put_char('{', F, S);
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S);
-      put_space(indent+INDENT, F, S);
+      put_indent(indent + 1, flags, F, S);
     }
     int first = 1;
     int i = 0;
@@ -250,7 +253,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       if (!first) {
         if (flags & JV_PRINT_PRETTY){
           put_str(",\n", F, S);
-          put_space(indent+INDENT, F, S);
+          put_indent(indent + 1, flags, F, S);
         } else {
           put_str(",", F, S);
         }
@@ -267,12 +270,12 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       put_str((flags & JV_PRINT_PRETTY) ? ": " : ":", F, S);
       if (colour) put_str(COLRESET, F, S);
       
-      jv_dump_term(C, value, flags, indent + INDENT, F, S);
+      jv_dump_term(C, value, flags, indent + 1, F, S);
       if (colour) put_str(colour, F, S);
     }
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S);
-      put_space(indent, F, S);
+      put_indent(indent, flags, F, S);
     }
     if (colour) put_str(colour, F, S);
     put_char('}', F, S);
@@ -300,7 +303,7 @@ void jv_dump(jv x, int flags) {
 /* This one is nice for use in debuggers */
 void jv_show(jv x, int flags) {
   if (flags == -1)
-    flags = JV_PRINT_PRETTY | JV_PRINT_COLOUR;
+    flags = JV_PRINT_PRETTY | JV_PRINT_COLOUR | JV_PRINT_INDENT_FLAGS(2);
   jv_dumpf(jv_copy(x), stderr, flags | JV_PRINT_INVALID);
   fflush(stderr);
 }
