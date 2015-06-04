@@ -1486,7 +1486,17 @@ static const char* const jq_builtins[] = {
   "def first: .[0];",
   "def last: .[-1];",
   "def nth($n): .[$n];",
-  // # transpose a possibly jagged matrix, quickly; 
+  "def combinations:"
+  "    if length == 0 then [] else"
+  "        .[0][] as $x"
+  "          | (.[1:] | combinations) as $y"
+  "          | [$x] + $y"
+  "    end;",
+  "def combinations(n):"
+  "    . as $dot"
+  "      | [range(n) | $dot]"
+  "      | combinations;",
+  // # transpose a possibly jagged matrix, quickly;
   // # rows are padded with nulls so the result is always rectangular.
   "def transpose:"
   "  if . == [] then []"
