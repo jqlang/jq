@@ -1424,7 +1424,18 @@ static const char* const jq_builtins[] = {
   "def first: .[0];",
   "def last: .[-1];",
   "def nth($n): .[$n];",
-  // # transpose a possibly jagged matrix, quickly; 
+  "def product:"
+  "    reverse |"
+  "    reduce .[] as $i ("
+  "         [];"
+  "         [{x: $i[], xs: (.[] // null)}]"
+  "    ) |"
+  "    map([recurse(.xs?).x?]);",
+  "def product(n):"
+  "    . as $dot |"
+  "    [range(n) | $dot] |"
+  "    product;",
+  // # transpose a possibly jagged matrix, quickly;
   // # rows are padded with nulls so the result is always rectangular.
   "def transpose:"
   "  if . == [] then []"
