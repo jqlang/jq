@@ -2147,6 +2147,11 @@ sections:
           with `$x` set to that value.  Thus `as` functions as something of a
           foreach loop.
 
+          Multiple variables may be declared using a single `as` expression by
+          providing a pattern that matches the structure of the input:
+
+              . as {realnames: $names, posts: [$first, $second]} | ...
+
           Variables are scoped over the rest of the expression that defines
           them, so
 
@@ -2171,6 +2176,9 @@ sections:
           - program: '. as $i|[(.*2|. as $i| $i), $i]'
             input: '5'
             output: ['[10,5]']
+          - program: '. as [$a, $b, {c: $c}] | $a + $b + $c'
+            input: '[2, 3, {c: 4, d: 5}]'
+            output: ['9']
 
       - title: 'Defining Functions'
         body: |

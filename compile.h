@@ -41,14 +41,17 @@ block gen_subexp(block a);
 block gen_both(block a, block b);
 block gen_const_object(block expr);
 block gen_collect(block expr);
-block gen_reduce(const char* varname, block source, block init, block body);
-block gen_foreach(const char* varname, block source, block init, block update, block extract);
+block gen_reduce(block source, block matcher, block init, block body);
+block gen_foreach(block source, block matcher, block init, block update, block extract);
 block gen_definedor(block a, block b);
 block gen_condbranch(block iftrue, block iffalse);
 block gen_and(block a, block b);
 block gen_or(block a, block b);
 
 block gen_var_binding(block var, const char* name, block body);
+block gen_array_matcher(block left, block curr);
+block gen_object_matcher(block name, block curr);
+block gen_destructure(block var, block matcher, block body);
 
 block gen_cond(block cond, block iftrue, block iffalse);
 block gen_try_handler(block handler);
