@@ -271,6 +271,14 @@ jq: error: *label-foo/0 is not defined at <top-level>, line 1:
 null
 [0,1,2,3,4]
 
+[foreach .[] as [$i, $j] (0; . + $i - $j)]
+[[2,1], [5,3], [6,4]]
+[1,3,5]
+
+[foreach .[] as {a:$a} (0; . + $a; -.)]
+[{"a":1}, {"b":2}, {"a":3, "b":4}]
+[-1, -1, -4]
+
 [limit(3; .[])]
 [11,22,33,44,55,66,77,88,99]
 [11,22,33]
@@ -372,6 +380,37 @@ null
 1 as $x | [$x,$x,$x as $x | $x]
 null
 [1,1,1]
+
+[1, {c:3, d:4}] as [$a, {c:$b, b:$c}] | $a, $b, $c
+null
+1
+3
+null
+
+. as {as: $kw, "str": $str, ("e"+"x"+"p"): $exp} | [$kw, $str, $exp]
+{"as": 1, "str": 2, "exp": 3}
+[1, 2, 3]
+
+.[] as [$a, $b] | [$b, $a]
+[[1], [1, 2, 3]]
+[null, 1]
+[2, 1]
+
+. as $i | . as [$i] | $i
+[0]
+0
+
+. as [$i] | . as $i | $i
+[0]
+[0]
+
+%%FAIL
+. as [] | null
+jq: error: syntax error, unexpected ']', expecting '$' or '[' or '{' (Unix shell quoting issues?) at <top-level>, line 1:
+
+%%FAIL
+. as {} | null
+jq: error: syntax error, unexpected '}' (Unix shell quoting issues?) at <top-level>, line 1:
 
 # [.,(.[] | {x:.},.),.,.[]]
 
@@ -609,6 +648,14 @@ def fac: if . == 1 then 1 else . * (. - 1 | fac) end; [.[] | fac]
 reduce .[] as $x (0; . + $x)
 [1,2,4]
 7
+
+reduce .[] as [$i, {j:$j}] (0; . + $i - $j)
+[[2,{"j":1}], [5,{"j":3}], [6,{"j":4}]]
+5
+
+reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)
+null
+14
 
 . as $dot|any($dot[];not)
 [1,2,3,4,true,false,1,2,3,4,5]
