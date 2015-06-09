@@ -107,7 +107,7 @@ struct lexer_param;
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString
 %type <blk> FuncDef FuncDefs String Import Imports Param Params
-%type <blk> Arg Args Module
+%type <blk> Arg Args Module Pattern ArrayPats ObjPats ObjPat
 %type <literal> Keyword
 %{
 #include "lexer.h"
@@ -308,24 +308,20 @@ FuncDef Exp %prec ';' {
   $$ = block_bind_referenced($1, $2, OP_IS_CALL_PSEUDO);
 } |
 
-Term "as" '$' IDENT '|' Exp {
-  $$ = gen_var_binding($1, jv_string_value($4), $6);
-  jv_free($4);
+Term "as" Pattern '|' Exp {
+  $$ = gen_destructure($1, $3, $5);
 } |
 
-"reduce" Term "as" '$' IDENT '(' Exp ';' Exp ')' {
-  $$ = gen_reduce(jv_string_value($5), $2, $7, $9);
-  jv_free($5);
+"reduce" Term "as" Pattern '(' Exp ';' Exp ')' {
+  $$ = gen_reduce($2, $4, $6, $8);
 } |
 
-"foreach" Term "as" '$' IDENT '(' Exp ';' Exp ';' Exp ')' {
-  $$ = gen_foreach(jv_string_value($5), $2, $7, $9, $11);
-  jv_free($5);
+"foreach" Term "as" Pattern '(' Exp ';' Exp ';' Exp ')' {
+  $$ = gen_foreach($2, $4, $6, $8, $10);
 } |
 
-"foreach" Term "as" '$' IDENT '(' Exp ';' Exp ')' {
-  $$ = gen_foreach(jv_string_value($5), $2, $7, $9, gen_noop());
-  jv_free($5);
+"foreach" Term "as" Pattern '(' Exp ';' Exp ')' {
+  $$ = gen_foreach($2, $4, $6, $8, gen_noop());
 } |
 
 "if" Exp "then" Exp ElseBody {
@@ -734,6 +730,48 @@ Args ';' Arg {
 Arg:
 Exp {
   $$ = gen_lambda($1);
+}
+
+Pattern:
+'$' IDENT {
+  $$ = gen_op_unbound(STOREV, jv_string_value($2));
+  jv_free($2);
+} |
+'[' ArrayPats ']' {
+  $$ = BLOCK($2, gen_op_simple(POP));
+} |
+'{' ObjPats '}' {
+  $$ = BLOCK($2, gen_op_simple(POP));
+}
+
+ArrayPats:
+Pattern {
+  $$ = gen_array_matcher(gen_noop(), $1);
+} |
+ArrayPats ',' Pattern {
+  $$ = gen_array_matcher($1, $3);
+}
+
+ObjPats:
+ObjPat {
+  $$ = $1;
+} |
+ObjPats ',' ObjPat {
+  $$ = BLOCK($1, $3);
+}
+
+ObjPat:
+IDENT ':' Pattern {
+  $$ = gen_object_matcher(gen_const($1), $3);
+} |
+Keyword ':' Pattern {
+  $$ = gen_object_matcher(gen_const($1), $3);
+} |
+String ':' Pattern {
+  $$ = gen_object_matcher($1, $3);
+} |
+'(' Exp ')' ':' Pattern {
+  $$ = gen_object_matcher($2, $5);
 }
 
 Keyword:

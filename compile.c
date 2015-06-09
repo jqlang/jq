@@ -675,15 +675,25 @@ block gen_collect(block expr) {
                gen_op_bound(LOADVN, array_var));
 }
 
-block gen_reduce(const char* varname, block source, block init, block body) {
+static block bind_matcher(block matcher, block body) {
+  // cannot call block_bind(matcher, body) because that requires
+  // block_has_only_binders(matcher), which is not true here as matchers
+  // may also contain code to extract the correct elements
+  for (inst* i = matcher.first; i; i = i->next) {
+    if (i->op == STOREV && !i->bound_by)
+      block_bind_subblock(inst_block(i), body, OP_HAS_VARIABLE, 0);
+  }
+  return BLOCK(matcher, body);
+}
+
+block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
   block loop = BLOCK(gen_op_simple(DUPN),
                      source,
-                     block_bind(gen_op_unbound(STOREV, varname),
-                                BLOCK(gen_op_bound(LOADVN, res_var),
-                                      body,
-                                      gen_op_bound(STOREV, res_var)),
-                                OP_HAS_VARIABLE),
+                     bind_matcher(matcher,
+                                  BLOCK(gen_op_bound(LOADVN, res_var),
+                                        body,
+                                        gen_op_bound(STOREV, res_var))),
                      gen_op_simple(BACKTRACK));
   return BLOCK(gen_op_simple(DUP),
                init,
@@ -693,37 +703,36 @@ block gen_reduce(const char* varname, block source, block init, block body) {
                gen_op_bound(LOADVN, res_var));
 }
 
-block gen_foreach(const char* varname, block source, block init, block update, block extract) {
+block gen_foreach(block source, block matcher, block init, block update, block extract) {
   block output = gen_op_targetlater(JUMP);
   block state_var = gen_op_var_fresh(STOREV, "foreach");
   block loop = BLOCK(gen_op_simple(DUPN),
                      // get a value from the source expression:
                      source,
-                     // bind the $varname to that value for all the code in
-                     // this block_bind() to see:
-                     block_bind(gen_op_unbound(STOREV, varname),
-                                // load the loop state variable
-                                BLOCK(gen_op_bound(LOADVN, state_var),
-                                      // generate updated state
-                                      update,
-                                      // save the updated state for value extraction
-                                      gen_op_simple(DUP),
-                                      // save new state
-                                      gen_op_bound(STOREV, state_var),
-                                      // extract an output...
-                                      extract,
-                                      // ...and output it by jumping
-                                      // past the BACKTRACK that comes
-                                      // right after the loop body,
-                                      // which in turn is there
-                                      // because...
-                                      //
-                                      // (Incidentally, extract can also
-                                      // backtrack, e.g., if it calls
-                                      // empty, in which case we don't
-                                      // get here.)
-                                      output),
-                                OP_HAS_VARIABLE));
+                     // destructure the value into variable(s) for all the code
+                     // in the body to see
+                     bind_matcher(matcher,
+                                  // load the loop state variable
+                                  BLOCK(gen_op_bound(LOADVN, state_var),
+                                        // generate updated state
+                                        update,
+                                        // save the updated state for value extraction
+                                        gen_op_simple(DUP),
+                                        // save new state
+                                        gen_op_bound(STOREV, state_var),
+                                        // extract an output...
+                                        extract,
+                                        // ...and output it by jumping
+                                        // past the BACKTRACK that comes
+                                        // right after the loop body,
+                                        // which in turn is there
+                                        // because...
+                                        //
+                                        // (Incidentally, extract can also
+                                        // backtrack, e.g., if it calls
+                                        // empty, in which case we don't
+                                        // get here.)
+                                        output)));
   block foreach = BLOCK(gen_op_simple(DUP),
                         init,
                         state_var,
@@ -809,13 +818,39 @@ block gen_or(block a, block b) {
 }
 
 block gen_var_binding(block var, const char* name, block body) {
+  return gen_destructure(var, gen_op_unbound(STOREV, name), body);
+}
+
+block gen_array_matcher(block left, block curr) {
+  int index;
+  if (block_is_noop(left))
+    index = 0;
+  else {
+    // `left` was returned by this function, so the third inst is the
+    // constant containing the previously used index
+    assert(left.first->op == DUP);
+    assert(left.first->next->op == SUBEXP_BEGIN);
+    assert(left.first->next->next->op == LOADK);
+    index = 1 + (int) jv_number_value(left.first->next->next->imm.constant);
+  }
+
+  // `left` goes at the end so that the const index is in a predictable place
+  return BLOCK(gen_op_simple(DUP), gen_subexp(gen_const(jv_number(index))),
+               gen_op_simple(INDEX), curr, left);
+}
+
+block gen_object_matcher(block name, block curr) {
+  return BLOCK(gen_op_simple(DUP), gen_subexp(name), gen_op_simple(INDEX),
+               curr);
+}
+
+block gen_destructure(block var, block matcher, block body) {
   // var bindings can be added after coding the program; leave the TOP first.
   block top = gen_noop();
   if (body.first && body.first->op == TOP)
     top = inst_block(block_take(&body));
-  return BLOCK(top, gen_op_simple(DUP), var,
-               block_bind(gen_op_unbound(STOREV, name),
-                          body, OP_HAS_VARIABLE));
+
+  return BLOCK(top, gen_op_simple(DUP), var, bind_matcher(matcher, body));
 }
 
 // Like gen_var_binding(), but bind `break`'s wildcard unbound variable
