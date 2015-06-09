@@ -66,6 +66,7 @@ generate_ver = ver="`{ $(srcdir)/scripts/version || echo '$(VERSION)' ; } | sed 
 	@ $(generate_ver); test "x`cat version.h 2>/dev/null`" = "x$$ver" || touch .remake-version-h
 version.h: .remake-version-h
 	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
+main.c: version.h
 
 bin_PROGRAMS = jq
 jq_SOURCES = main.c version.h
