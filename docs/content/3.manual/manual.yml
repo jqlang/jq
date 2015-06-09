@@ -2148,9 +2148,16 @@ sections:
           foreach loop.
 
           Multiple variables may be declared using a single `as` expression by
-          providing a pattern that matches the structure of the input:
+          providing a pattern that matches the structure of the input
+          (this is known as "destructuring"):
 
               . as {realnames: $names, posts: [$first, $second]} | ...
+
+          The variable declarations in array patterns (e.g., `. as
+          [$first, $second]`) bind to the elements of the array in from
+          the element at index zero on up, in order.  When there is no
+          value at the index for an array pattern element, `null` is
+          bound to that variable.
 
           Variables are scoped over the rest of the expression that defines
           them, so
@@ -2179,6 +2186,9 @@ sections:
           - program: '. as [$a, $b, {c: $c}] | $a + $b + $c'
             input: '[2, 3, {c: 4, d: 5}]'
             output: ['9']
+          - program: '.[] as [$a, $b] | {a: $a, b: $b}'
+            input: '[[0], [0, 1], [2, 1, 0]]'
+            output: ['[{"a":0,"b":null},{"a":0,"b":1},{"a":2,"b":1}]']
 
       - title: 'Defining Functions'
         body: |
