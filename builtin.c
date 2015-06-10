@@ -1425,12 +1425,14 @@ static const char* const jq_builtins[] = {
   "def last: .[-1];",
   "def nth($n): .[$n];",
   "def product:"
-  "    reverse |"
-  "    reduce .[] as $i ("
-  "         [];"
-  "         [{x: $i[], xs: (.[] // null)}]"
-  "    ) |"
-  "    map([recurse(.xs?).x?]);",
+  "    if any(length == 0) then [] else"
+  "        reverse |"
+  "        reduce .[] as $i ("
+  "            [];"
+  "            [{x: $i[], xs: (.[] // null)}]"
+  "        ) |"
+  "        map([recurse(.xs?).x?])"
+  "    end;",
   "def product(n):"
   "    . as $dot |"
   "    [range(n) | $dot] |"
