@@ -1426,11 +1426,9 @@ static const char* const jq_builtins[] = {
   "def nth($n): .[$n];",
   "def combinations:"
   "    if length == 0 then [] else"
-  "        if any(length == 0) then empty else"
-  "            .[0][] as $x"
-  "              | (.[1:] | combinations) as $y"
-  "              | [$x] + $y"
-  "        end"
+  "        .[0][] as $x"
+  "          | (.[1:] | combinations) as $y"
+  "          | [$x] + $y"
   "    end;",
   "def combinations(n):"
   "    . as $dot"
