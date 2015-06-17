@@ -77,7 +77,10 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->next = jv_invalid();
   p->tokenbuf = 0;
   p->tokenlen = p->tokenpos = 0;
-  p->st = JV_PARSER_NORMAL;
+  if ((p->flags & JV_PARSE_SEQ))
+    p->st = JV_PARSER_WAITING_FOR_RS;
+  else
+    p->st = JV_PARSER_NORMAL;
   p->eof = 0;
   p->curr_buf = 0;
   p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
@@ -720,8 +723,17 @@ jv jv_parser_next(struct jv_parser* p) {
   presult msg = 0;
   while (!msg && p->curr_buf_pos < p->curr_buf_length) {
     ch = p->curr_buf[p->curr_buf_pos++];
-    if (ch != '\036' && p->st == JV_PARSER_WAITING_FOR_RS)
+    if (p->st == JV_PARSER_WAITING_FOR_RS) {
+      if (ch == '\n') {
+        p->line++;
+        p->column = 0;
+      } else {
+        p->column++;
+      }
+      if (ch == '\036')
+        p->st = JV_PARSER_NORMAL;
       continue; // need to resync, wait for RS
+    }
     msg = scan(p, ch, &value);
   }
   if (msg == OK) {
@@ -752,26 +764,26 @@ jv jv_parser_next(struct jv_parser* p) {
     p->eof = 1;
     assert(p->curr_buf_pos == p->curr_buf_length);
     jv_free(value);
-    if (p->st != JV_PARSER_WAITING_FOR_RS) {
-      if (p->st != JV_PARSER_NORMAL) {
-        value = make_error(p, "Unfinished string at EOF at line %d, column %d", p->line, p->column);
-        parser_reset(p);
-        p->st = JV_PARSER_WAITING_FOR_RS;
-        return value;
-      }
-      if ((msg = check_literal(p))) {
-        value = make_error(p, "%s at EOF at line %d, column %d", msg, p->line, p->column);
-        parser_reset(p);
-        p->st = JV_PARSER_WAITING_FOR_RS;
-        return value;
-      }
-      if (((p->flags & JV_PARSE_STREAMING) && p->stacklen != 0) ||
-          (!(p->flags & JV_PARSE_STREAMING) && p->stackpos != 0)) {
-        value = make_error(p, "Unfinished JSON term at EOF at line %d, column %d", p->line, p->column);
-        parser_reset(p);
-        p->st = JV_PARSER_WAITING_FOR_RS;
-        return value;
-      }
+    if (p->st == JV_PARSER_WAITING_FOR_RS)
+      return make_error(p, "Unfinished abandoned text at EOF at line %d, column %d", p->line, p->column);
+    if (p->st != JV_PARSER_NORMAL) {
+      value = make_error(p, "Unfinished string at EOF at line %d, column %d", p->line, p->column);
+      parser_reset(p);
+      p->st = JV_PARSER_WAITING_FOR_RS;
+      return value;
+    }
+    if ((msg = check_literal(p))) {
+      value = make_error(p, "%s at EOF at line %d, column %d", msg, p->line, p->column);
+      parser_reset(p);
+      p->st = JV_PARSER_WAITING_FOR_RS;
+      return value;
+    }
+    if (((p->flags & JV_PARSE_STREAMING) && p->stacklen != 0) ||
+        (!(p->flags & JV_PARSE_STREAMING) && p->stackpos != 0)) {
+      value = make_error(p, "Unfinished JSON term at EOF at line %d, column %d", p->line, p->column);
+      parser_reset(p);
+      p->st = JV_PARSER_WAITING_FOR_RS;
+      return value;
     }
     // p->next is either invalid (nothing here, but no syntax error)
     // or valid (this is the value). either way it's the thing to return
