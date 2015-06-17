@@ -31,6 +31,7 @@ struct jv_parser {
   int curr_buf_length;
   int curr_buf_pos;
   int curr_buf_is_partial;
+  int eof;
   unsigned bom_strip_position;
 
   int flags;
@@ -77,6 +78,7 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->tokenbuf = 0;
   p->tokenlen = p->tokenpos = 0;
   p->st = JV_PARSER_NORMAL;
+  p->eof = 0;
   p->curr_buf = 0;
   p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
   p->bom_strip_position = 0;
@@ -706,6 +708,8 @@ static jv make_error(struct jv_parser* p, const char *fmt, ...) {
 }
 
 jv jv_parser_next(struct jv_parser* p) {
+  if (p->eof)
+    return jv_invalid();
   if (!p->curr_buf)
     return jv_invalid(); // Need a buffer
   if (p->bom_strip_position == 0xff) return jv_invalid_with_msg(jv_string("Malformed BOM"));
@@ -745,6 +749,7 @@ jv jv_parser_next(struct jv_parser* p) {
     return jv_invalid();
   } else {
     // at EOF
+    p->eof = 1;
     assert(p->curr_buf_pos == p->curr_buf_length);
     jv_free(value);
     if (p->st != JV_PARSER_WAITING_FOR_RS) {
@@ -768,7 +773,7 @@ jv jv_parser_next(struct jv_parser* p) {
         return value;
       }
     }
-    // p->next is either invalid (nothing here but no syntax error)
+    // p->next is either invalid (nothing here, but no syntax error)
     // or valid (this is the value). either way it's the thing to return
     if ((p->flags & JV_PARSE_STREAMING) && jv_is_valid(p->next)) {
       value = JV_ARRAY(jv_copy(p->path), p->next); // except in streaming mode we've got to make it [path,value]
