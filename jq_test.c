@@ -122,14 +122,22 @@ static void run_jq_tests(jv lib_dirs, FILE *testdata) {
     if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
     lineno++;
     jv input = jv_parse(buf);
-    if (!jv_is_valid(input)){ invalid++; continue; }
+    if (!jv_is_valid(input)) {
+      printf("*** Input is invalid on line %u: %s\n", lineno, buf);
+      invalid++;
+      continue;
+    }
     jq_start(jq, input, JQ_DEBUG_TRACE);
 
     while (fgets(buf, sizeof(buf), testdata)) {
       lineno++;
       if (skipline(buf)) break;
       jv expected = jv_parse(buf);
-      if (!jv_is_valid(expected)){ invalid++; continue; }
+      if (!jv_is_valid(expected)) {
+        printf("*** Expected result is invalid on line %u: %s\n", lineno, buf);
+        invalid++;
+        continue;
+      }
       jv actual = jq_next(jq);
       if (!jv_is_valid(actual)) {
         jv_free(actual);

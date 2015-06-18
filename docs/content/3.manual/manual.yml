@@ -696,12 +696,12 @@ sections:
           of `has`.
       
         examples:
-          - program: 'in({"foo": 42})'
-            input: '"foo", "bar"'
+          - program: '.[] | in({"foo": 42})'
+            input: '["foo", "bar"]'
             output: ['true', 'false']
           - program: 'map(in([0,1]))'
             input: '[2, 0]'
-            output: ['false', 'true']
+            output: ['[false, true]']
             
       - title: "`path(path_expression)`"
         body: |
@@ -1099,7 +1099,7 @@ sections:
             output: ['true', 'false']
           - program: 'infinite, nan | type'
             input: 'null'
-            output: ['"number"']
+            output: ['"number"', '"number"']
 
       - title: "`sort, sort_by(path_expression)`"
         body: |
@@ -1281,10 +1281,10 @@ sections:
             input: '["bazzzzz", "bar"]'
             output: ['false']
           - program: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
-            input: '{foo: 12, bar: [{barp: 12}]}'
+            input: '{"foo": 12, "bar": [{"barp": 12}]}'
             output: ['true']
           - program: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
-            input: '{foo: 12, bar: [{barp: 15}]}'
+            input: '{"foo": 12, "bar": [{"barp": 15}]}'
             output: ['false']
 
       - title: "`startswith(str)`"
@@ -1517,9 +1517,9 @@ sections:
           Rows are padded with nulls so the result is always rectangular.
 
         examples:
-          - program: 'target'
+          - program: 'transpose'
             input: '[[1], [2,3]]'
-            output: ['[1,2],[null,3]']
+            output: ['[[1,2],[null,3]]']
 
       - title: "`bsearch(x)`"
         body: |
@@ -1865,9 +1865,9 @@ sections:
         examples:
           - program: 'try .a catch ". is not an object"'
             input: 'true'
-            output: [". is not an object"]
+            output: ['". is not an object"']
           - program: '[.[]|try .a]'
-            input: '[{}, true, {"a":1}'
+            input: '[{}, true, {"a":1}]'
             output: ['[null, 1]']
           - program: 'try error("some exception") catch .'
             input: 'true'
@@ -1914,7 +1914,7 @@ sections:
 
         examples:
           - program: '[.[]|(.a)?]'
-            input: '[{}, true, {"a":1}'
+            input: '[{}, true, {"a":1}]'
             output: ['[null, 1]']
 
 
@@ -2212,11 +2212,11 @@ sections:
             input: '5'
             output: ['[10,5]']
           - program: '. as [$a, $b, {c: $c}] | $a + $b + $c'
-            input: '[2, 3, {c: 4, d: 5}]'
+            input: '[2, 3, {"c": 4, "d": 5}]'
             output: ['9']
           - program: '.[] as [$a, $b] | {a: $a, b: $b}'
             input: '[[0], [0, 1], [2, 1, 0]]'
-            output: ['[{"a":0,"b":null},{"a":0,"b":1},{"a":2,"b":1}]']
+            output: ['{"a":0,"b":null}', '{"a":0,"b":1}', '{"a":2,"b":1}']
 
       - title: 'Defining Functions'
         body: |
@@ -2319,7 +2319,7 @@ sections:
         examples:
           - program: '[first(range(.)), last(range(.)), nth(./2; range(.))]'
             input: '10'
-            output: ['[0,9,4]']
+            output: ['[0,9,5]']
 
       - title: "`first`, `last`, `nth(n)`"
         body: |
@@ -2426,7 +2426,7 @@ sections:
                     select((by > 0 and . < upto) or (by < 0 and . > upto));
                 range(0; 10; 3)'
             input: 'null'
-            output: ['0,3,6,9']
+            output: ['0', '3', '6', '9']
           - program: 'def while(cond; update):
                     def _while:
                         if cond then ., (update | _while) else empty end;
