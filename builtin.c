@@ -1359,7 +1359,7 @@ static const char* const jq_builtins[] = {
   "def booleans: select(type == \"boolean\");",
   "def numbers: select(type == \"number\");",
   "def normals: select(isnormal);",
-  "def finites: select(isinfinite|not);",
+  "def finites: select(isfinite);",
   "def strings: select(type == \"string\");",
   "def nulls: select(type == \"null\");",
   "def values: select(. != null);",
