@@ -1,10 +1,22 @@
 #define _BSD_SOURCE
 #define _XOPEN_SOURCE
 #include <sys/time.h>
-#ifdef WIN32
-  #include <malloc.h>
-#else
-  #include <alloca.h>
+#include <stdlib.h>
+#include <stddef.h>
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif !defined alloca
+# ifdef __GNUC__
+#  define alloca __builtin_alloca
+# elif defined _MSC_VER
+#  include <malloc.h>
+#  define alloca _alloca
+# elif !defined HAVE_ALLOCA
+#  ifdef  __cplusplus
+extern "C"
+#  endif
+void *alloca (size_t);
+# endif
 #endif
 #include <assert.h>
 #include <ctype.h>
@@ -13,7 +25,6 @@
 #ifdef HAVE_ONIGURUMA
 #include <oniguruma.h>
 #endif
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "builtin.h"

@@ -10,8 +10,24 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <string.h>
-#include <stdlib.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stddef.h>
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif !defined alloca
+# ifdef __GNUC__
+#  define alloca __builtin_alloca
+# elif defined _MSC_VER
+#  include <malloc.h>
+#  define alloca _alloca
+# elif !defined HAVE_ALLOCA
+#  ifdef  __cplusplus
+extern "C"
+#  endif
+void *alloca (size_t);
+# endif
+#endif
 #ifndef WIN32
 #include <pwd.h>
 #endif
