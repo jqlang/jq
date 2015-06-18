@@ -794,12 +794,13 @@ sections:
             output: ['{"id": "second", "val": 2}']
 
 
-      - title: "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `strings`, `nulls`, `values`, `scalars`"
+      - title: "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `normals`, `finites`, `strings`, `nulls`, `values`, `scalars`"
         body: |
 
           These built-ins select only inputs that are arrays, objects,
-          iterables (arrays or objects), booleans, numbers, strings,
-          null, non-null values, and non-iterables, respectively.
+          iterables (arrays or objects), booleans, numbers, normal
+          numbers, finite numbers, strings, null, non-null values, and
+          non-iterables, respectively.
 
         examples:
           - program: '.[]|numbers'
@@ -1076,22 +1077,27 @@ sections:
             input: '[0, false, [], {}, null, "hello"]'
             output: ['["number", "boolean", "array", "object", "null", "string"]']
 
-      - title: "`inf`, `nan`, `isinf`, `isnan`"
+      - title: "`infinite`, `nan`, `isinfinite`, `isnan`, `isfinite`, `isnormal`"
         body: |
 
           Some arithmetic operations can yield infinities and "not a
-          number" (NaN) values.  The `isinf` builtin returns `true` if
-          its input is infinite.  The `isnan` builtin returns `true` if
-          its input is a NaN.  The `inf` builtin returns a positive
-          infinite value.  The `nan` builtin returns a NaN.
+          number" (NaN) values.  The `isinfinite` builtin returns `true`
+          if its input is infinite.  The `isnan` builtin returns `true`
+          if its input is a NaN.  The `infinite` builtin returns a
+          positive infinite value.  The `nan` builtin returns a NaN.
+          The `isnormal` builtin returns true if its input is a normal
+          number.
 
           Note that division by zero raises an error.
 
+          Currently most arithmetic operations operating on infinities,
+          NaNs, and sub-normals do not raise errors.
+
         examples:
-          - program: '.[] | (inf * .) < 0'
+          - program: '.[] | (infinite * .) < 0'
             input: '[-1, 1]'
             output: ['true', 'false']
-          - program: 'inf, nan | type'
+          - program: 'infinite, nan | type'
             input: 'null'
             output: ['"number"']
 

@@ -832,7 +832,7 @@ static jv f_type(jq_state *jq, jv input) {
   return out;
 }
 
-static jv f_isinf(jq_state *jq, jv input) {
+static jv f_isinfinite(jq_state *jq, jv input) {
   jv_kind k = jv_get_kind(input);
   if (k != JV_KIND_NUMBER) {
     jv_free(input);
@@ -854,7 +854,18 @@ static jv f_isnan(jq_state *jq, jv input) {
   return isnan(n) ? jv_true() : jv_false();
 }
 
-static jv f_inf(jq_state *jq, jv input) {
+static jv f_isnormal(jq_state *jq, jv input) {
+  jv_kind k = jv_get_kind(input);
+  if (k != JV_KIND_NUMBER) {
+    jv_free(input);
+    return jv_false();
+  }
+  double n = jv_number_value(input);
+  jv_free(input);
+  return isnormal(n) ? jv_true() : jv_false();
+}
+
+static jv f_infinite(jq_state *jq, jv input) {
   jv_free(input);
   return jv_number(INFINITY);
 }
@@ -1216,9 +1227,10 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_contains, "contains", 2},
   {(cfunction_ptr)f_length, "length", 1},
   {(cfunction_ptr)f_type, "type", 1},
-  {(cfunction_ptr)f_isinf, "isinf", 1},
+  {(cfunction_ptr)f_isinfinite, "isinfinite", 1},
   {(cfunction_ptr)f_isnan, "isnan", 1},
-  {(cfunction_ptr)f_inf, "inf", 1},
+  {(cfunction_ptr)f_isnormal, "isnormal", 1},
+  {(cfunction_ptr)f_infinite, "infinite", 1},
   {(cfunction_ptr)f_nan, "nan", 1},
   {(cfunction_ptr)f_sort, "sort", 1},
   {(cfunction_ptr)f_sort_by_impl, "_sort_by_impl", 2},
@@ -1340,11 +1352,14 @@ static const char* const jq_builtins[] = {
   "                  if .|not then . else empty end)] | length == 0;",
   "def all(condition): all(.[]; condition);",
   "def all: all(.);",
+  "def isfinite: type == \"number\" and (isinfinite | not);",
   "def arrays: select(type == \"array\");",
   "def objects: select(type == \"object\");",
   "def iterables: arrays, objects;",
   "def booleans: select(type == \"boolean\");",
   "def numbers: select(type == \"number\");",
+  "def normals: select(isnormal);",
+  "def finites: select(isinfinite|not);",
   "def strings: select(type == \"string\");",
   "def nulls: select(type == \"null\");",
   "def values: select(. != null);",
