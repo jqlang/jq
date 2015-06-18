@@ -717,7 +717,10 @@ jv jv_string_implode(jv j) {
   for (i = 0; i < len; i++) {
     jv n = jv_array_get(jv_copy(j), i);
     assert(jv_get_kind(n) == JV_KIND_NUMBER);
-    s = jv_string_append_codepoint(s, jv_number_value(n));
+    int nv = jv_number_value(n);
+    if (nv > 0x10FFFF)
+      nv = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
+    s = jv_string_append_codepoint(s, nv);
   }
 
   jv_free(j);

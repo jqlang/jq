@@ -447,7 +447,8 @@ static pfunc found_string(struct jv_parser* p) {
           codepoint = 0x10000 + (((codepoint - 0xD800) << 10)
                                  |(surrogate - 0xDC00));
         }
-        // FIXME assert valid codepoint
+        if (codepoint > 0x10FFFF)
+          codepoint = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
         out += jvp_utf8_encode(codepoint, out);
         break;
 
