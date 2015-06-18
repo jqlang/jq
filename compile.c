@@ -2,6 +2,7 @@
 #define _GNU_SOURCE // for strdup
 #endif
 #include <assert.h>
+#include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include "compile.h"
@@ -159,6 +160,12 @@ block gen_const_global(jv constant, const char *name) {
 
 int block_is_const(block b) {
   return (block_is_single(b) && b.first->op == LOADK);
+}
+
+int block_is_const_inf(block b) {
+  return (block_is_single(b) && b.first->op == LOADK &&
+          jv_get_kind(b.first->imm.constant) == JV_KIND_NUMBER &&
+          isinf(jv_number_value(b.first->imm.constant)));
 }
 
 jv_kind block_const_kind(block b) {

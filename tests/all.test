@@ -1236,3 +1236,15 @@ try join(",") catch .
 null
 {"if":0,"and":1,"or":2,"then":3,"else":4,"elif":5,"end":6,"as":7,"def":8,"reduce":9,"foreach":10,"try":11,"catch":12,"label":13,"import":14,"module":15}
 
+try (1/.) catch .
+0
+"number (1) and number (0) cannot be divided because the divisor is zero"
+
+try (1%.) catch .
+0
+"number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
+
+%%FAIL
+1/0
+jq: error: Division by zero? at <top-level>, line 1:
+

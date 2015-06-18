@@ -1,7 +1,8 @@
 %{
+#include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 #include "compile.h"
 #include "jv_alloc.h"
 #define YYMALLOC jv_mem_alloc
@@ -423,10 +424,14 @@ Exp "*=" Exp {
 
 Exp '/' Exp {
   $$ = gen_binop($1, $3, '/');
+  if (block_is_const_inf($$))
+    FAIL(@$, "Division by zero?");
 } |
 
 Exp '%' Exp {
   $$ = gen_binop($1, $3, '%');
+  if (block_is_const_inf($$))
+    FAIL(@$, "Remainder by zero?");
 } |
 
 Exp "/=" Exp {

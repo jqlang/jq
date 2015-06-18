@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 10 "parser.y" /* yacc.c:1909  */
+#line 11 "parser.y" /* yacc.c:1909  */
 
 #include "locfile.h"
 struct lexer_param;
@@ -156,7 +156,7 @@ struct lexer_param;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 30 "parser.y" /* yacc.c:1909  */
+#line 31 "parser.y" /* yacc.c:1909  */
 
   jv literal;
   block blk;

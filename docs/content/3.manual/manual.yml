@@ -598,7 +598,7 @@ sections:
           that string that many times.
 
           Dividing a string by another splits the first using the second
-          as separators.
+          as separators.  Division by zero raises an error.
 
           Multiplying two objects will merge them recursively: this works
           like addition but if both objects contain a value for the
@@ -615,6 +615,9 @@ sections:
           - program: '{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}'
             input: 'null'
             output: ['{"k": {"a": 0, "b": 2, "c": 3}}']
+          - program: '.[] | (1 / .)?'
+            input: '[1,0,-1]'
+            output: ['1', '-1']
 
 
       - title: "`length`"
@@ -1072,6 +1075,25 @@ sections:
           - program: 'map(type)'
             input: '[0, false, [], {}, null, "hello"]'
             output: ['["number", "boolean", "array", "object", "null", "string"]']
+
+      - title: "`inf`, `nan`, `isinf`, `isnan`"
+        body: |
+
+          Some arithmetic operations can yield infinities and "not a
+          number" (NaN) values.  The `isinf` builtin returns `true` if
+          its input is infinite.  The `isnan` builtin returns `true` if
+          its input is a NaN.  The `inf` builtin returns a positive
+          infinite value.  The `nan` builtin returns a NaN.
+
+          Note that division by zero raises an error.
+
+        examples:
+          - program: '.[] | (inf * .) < 0'
+            input: '[-1, 1]'
+            output: ['true', 'false']
+          - program: 'inf, nan | type'
+            input: 'null'
+            output: ['"number"']
 
       - title: "`sort, sort_by(path_expression)`"
         body: |

@@ -216,6 +216,8 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
 static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
+    if (jv_number_value(b) == 0.0)
+      return type_error2(a, b, "cannot be divided because the divisor is zero");
     return jv_number(jv_number_value(a) / jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
     return jv_string_split(a, b);
@@ -227,12 +229,11 @@ static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
 static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    if ((intmax_t)jv_number_value(b) == 0) {
-      return jv_invalid_with_msg(jv_string("Cannot mod by zero."));
-    }
+    if ((intmax_t)jv_number_value(b) == 0)
+      return type_error2(a, b, "cannot be divided (remainder) because the divisor is zero");
     return jv_number((intmax_t)jv_number_value(a) % (intmax_t)jv_number_value(b));
   } else {
-    return type_error2(a, b, "cannot be divided");
+    return type_error2(a, b, "cannot be divided (remainder)");
   }  
 }
 
@@ -831,6 +832,38 @@ static jv f_type(jq_state *jq, jv input) {
   return out;
 }
 
+static jv f_isinf(jq_state *jq, jv input) {
+  jv_kind k = jv_get_kind(input);
+  if (k != JV_KIND_NUMBER) {
+    jv_free(input);
+    return jv_false();
+  }
+  double n = jv_number_value(input);
+  jv_free(input);
+  return isinf(n) ? jv_true() : jv_false();
+}
+
+static jv f_isnan(jq_state *jq, jv input) {
+  jv_kind k = jv_get_kind(input);
+  if (k != JV_KIND_NUMBER) {
+    jv_free(input);
+    return jv_false();
+  }
+  double n = jv_number_value(input);
+  jv_free(input);
+  return isnan(n) ? jv_true() : jv_false();
+}
+
+static jv f_inf(jq_state *jq, jv input) {
+  jv_free(input);
+  return jv_number(INFINITY);
+}
+
+static jv f_nan(jq_state *jq, jv input) {
+  jv_free(input);
+  return jv_number(NAN);
+}
+
 static jv f_error(jq_state *jq, jv input, jv msg) {
   jv_free(input);
   return jv_invalid_with_msg(msg);
@@ -1183,6 +1216,10 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_contains, "contains", 2},
   {(cfunction_ptr)f_length, "length", 1},
   {(cfunction_ptr)f_type, "type", 1},
+  {(cfunction_ptr)f_isinf, "isinf", 1},
+  {(cfunction_ptr)f_isnan, "isnan", 1},
+  {(cfunction_ptr)f_inf, "inf", 1},
+  {(cfunction_ptr)f_nan, "nan", 1},
   {(cfunction_ptr)f_sort, "sort", 1},
   {(cfunction_ptr)f_sort_by_impl, "_sort_by_impl", 2},
   {(cfunction_ptr)f_group_by_impl, "_group_by_impl", 2},
