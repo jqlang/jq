@@ -715,7 +715,12 @@ jv jv_parser_next(struct jv_parser* p) {
     return jv_invalid();
   if (!p->curr_buf)
     return jv_invalid(); // Need a buffer
-  if (p->bom_strip_position == 0xff) return jv_invalid_with_msg(jv_string("Malformed BOM"));
+  if (p->bom_strip_position == 0xff) {
+    if (!(p->flags & JV_PARSE_SEQ))
+      return jv_invalid_with_msg(jv_string("Malformed BOM"));
+    p->st =JV_PARSER_WAITING_FOR_RS;
+    parser_reset(p);
+  }
   jv value = jv_invalid();
   if ((p->flags & JV_PARSE_STREAMING) && stream_check_done(p, &value))
     return value;
@@ -751,6 +756,7 @@ jv jv_parser_next(struct jv_parser* p) {
     parser_reset(p);
     if (!(p->flags & JV_PARSE_SEQ)) {
       // We're not parsing a JSON text sequence; throw this buffer away.
+      // XXX We should fail permanently here.
       p->curr_buf = 0;
       p->curr_buf_pos = 0;
     } // Else ch must be RS; don't clear buf so we can start parsing again after this ch
