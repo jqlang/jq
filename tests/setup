@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -e
+
+JQTESTDIR=$(cd "$(dirname "$0")" && pwd)
+JQBASEDIR=$JQTESTDIR/..
+JQ=$JQBASEDIR/jq
+
+if which valgrind > /dev/null; then
+    VALGRIND="valgrind --error-exitcode=1 --leak-check=full \
+                       --suppressions=$JQTESTDIR/onig.supp"
+    Q=-q
+else
+    VALGRIND=
+    Q=
+fi
+
+mods=$JQTESTDIR/modules
+
+clean=true
+d=
+clean () {
+    if ! $clean; then
+        echo "See temp files in $d!"
+    elif [ -n "$d" ]; then
+        rm -rf "$d"
+    fi
+}
+trap clean EXIT
+d=`mktemp -d -t || true`
+if [ -z "$d" ]; then
+    echo "Your OS does not support mktemp(1) -d" 1>&2
+    exit 0
+fi
