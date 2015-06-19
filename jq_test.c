@@ -87,14 +87,15 @@ static void run_jq_tests(jv lib_dirs, FILE *testdata) {
 
     if (must_fail) {
       jq_set_error_cb(jq, NULL, NULL);
-      must_fail = 0;
-      check_msg = 0;
       if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
       lineno++;
       if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = 0;
       if (compiled) {
         printf("*** Test program compiled that should not have at line %u: %s\n", lineno, prog);
-        invalid++; continue;
+        must_fail = 0;
+        check_msg = 0;
+        invalid++;
+        continue;
       }
       if (check_msg && strcmp(buf, err_msg.buf) != 0) {
         printf("*** Erroneous test program failed with wrong message (%s) at line %u: %s\n", err_msg.buf, lineno, prog);
@@ -102,6 +103,8 @@ static void run_jq_tests(jv lib_dirs, FILE *testdata) {
       } else {
         passed++;
       }
+      must_fail = 0;
+      check_msg = 0;
       continue;
     }
 

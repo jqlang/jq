@@ -33,7 +33,6 @@ jv jv_load_file(const char* filename, int raw) {
       if (jv_invalid_has_msg(jv_copy(value))) {
         jv_free(data);
         data = value;
-        value = jv_invalid();
         break;
       }
     }

@@ -671,8 +671,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
     return jv_invalid_with_msg(jv_string_concat(jv_string("Regex failure: "),
           jv_string((char*)ebuf)));
   }
-  if (!test)
-    result = jv_array();
+  result = test ? jv_false() : jv_array();
   const char *input_string = jv_string_value(input);
   const UChar* start = (const UChar*)jv_string_value(input);
   const unsigned long length = jv_string_length_bytes(jv_copy(input));
@@ -760,8 +759,6 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
       start = (const UChar*)(input_string+region->end[0]);
       onig_region_free(region,0);
     } else if (onigret == ONIG_MISMATCH) {
-      if (test)
-        result = jv_false();
       break;
     } else { /* Error */
       UChar ebuf[ONIG_MAX_ERROR_MESSAGE_LEN];
