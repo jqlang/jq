@@ -1,55 +1,25 @@
 #!/bin/sh
 
-set -e
+. "${0%/*}/setup"
 
-if which valgrind > /dev/null; then
-    VALGRIND='valgrind --error-exitcode=1 --leak-check=full --suppressions=tests/onig.supp'
-    Q=-q
-else
-    VALGRIND=
-    Q=
-fi
-
-mods=$PWD/tests/modules
-
-# jq-coded tests here:
-cat $@ | $VALGRIND $Q ./jq -L "$mods" --run-tests
-
-clean=true
-d=
-clean () {
-    if ! $clean; then
-        echo "See temp files in $d!"
-    elif [ -n "$d" ]; then
-        rm -rf "$d"
-    fi
-}
-trap clean EXIT
-d=`mktemp -d -t || true`
-if [ -z "$d" ]; then
-    echo "Your OS does not support mktemp(1) -d" 1>&2
-    exit 0
-fi
-
-if [ -f $PWD/.libs/libinject_errors.so ]; then
+if [ -f "$JQBASEDIR/.libs/libinject_errors.so" ]; then
   # Do some simple error injection tests to check that we're handling
   # I/O errors correctly.
   (
-  jq=$PWD/jq
-  libinject=$PWD/.libs/libinject_errors.so
+  libinject=$JQBASEDIR/.libs/libinject_errors.so
   cd $d
-  LD_PRELOAD=$libinject $jq . /dev/null
+  LD_PRELOAD=$libinject $JQ . /dev/null
   touch fail_read
-  LD_PRELOAD=$libinject $jq . fail_read && exit 2
+  LD_PRELOAD=$libinject $JQ . fail_read && exit 2
   touch fail_close
-  LD_PRELOAD=$libinject $jq . fail_close && exit 2
+  LD_PRELOAD=$libinject $JQ . fail_close && exit 2
   true
   )
 fi
 
 printf 'a\0b\nc\0d\ne' > $d/input
-$VALGRIND $Q ./jq -Rse '. == "a\u0000b\nc\u0000d\ne"' $d/input
-$VALGRIND $Q ./jq -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input
+$VALGRIND $Q $JQ -Rse '. == "a\u0000b\nc\u0000d\ne"' $d/input
+$VALGRIND $Q $JQ -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input
 
 ## Test constant folding
 
@@ -57,49 +27,49 @@ $VALGRIND $Q ./jq -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input
 ## move all of these into tests/all.test
 
 # String constant folding (addition only)
-n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '"foo"' | wc -l`
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '"foo"' | wc -l`
 if [ $n -ne 5 ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
 
 # Numeric constant folding (not all ops yet)
-n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '1+1' | wc -l`
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '1+1' | wc -l`
 if [ $n -ne 5 ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '1-1' | wc -l`
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '1-1' | wc -l`
 if [ $n -ne 5 ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '2*3' | wc -l`
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '2*3' | wc -l`
 if [ $n -ne 5 ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9/3' | wc -l`
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9/3' | wc -l`
 if [ $n -ne 5 ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9==3' | wc -l`
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9==3' | wc -l`
 if [ $n -ne 5 ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9!=3' | wc -l`
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9!=3' | wc -l`
 if [ $n -ne 5 ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9<=3' | wc -l`
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9<=3' | wc -l`
 if [ $n -ne 5 ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q ./jq -n --debug-dump-disasm '9>=3' | wc -l`
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9>=3' | wc -l`
 if [ $n -ne 5 ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
@@ -115,7 +85,7 @@ ignoring parse error: Truncated value at line 2, column 5
 ignoring parse error: Truncated value at line 2, column 25
 ignoring parse error: Truncated value at line 2, column 41
 EOF
-printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"\036false\n'|$VALGRIND $Q ./jq -ces --seq '. == [2,3,[4,5],true,"ab",{},false]' > /dev/null 2> $d/out
+printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"\036false\n'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},false]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
 
 cat > $d/expected <<EOF
@@ -123,7 +93,7 @@ ignoring parse error: Truncated value at line 2, column 5
 ignoring parse error: Truncated value at line 2, column 25
 ignoring parse error: Truncated value at line 3, column 1
 EOF
-printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q ./jq -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
+printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
 
 # Note that here jq sees no inputs at all but it still succeeds because
@@ -131,27 +101,27 @@ cmp $d/out $d/expected
 cat > $d/expected <<EOF
 ignoring parse error: Unfinished abandoned text at EOF at line 1, column 4
 EOF
-printf '"foo'|./jq -ce --seq . > $d/out 2>&1
+printf '"foo' | $JQ -ce --seq . > $d/out 2>&1
 cmp $d/out $d/expected
 
 # Numeric values truncated by EOF are ignored
 cat > $d/expected <<EOF
 ignoring parse error: Unfinished abandoned text at EOF at line 1, column 1
 EOF
-printf '1'|./jq -ce --seq . > $d/out 2>&1
+printf '1' | $JQ -ce --seq . > $d/out 2>&1
 cmp $d/out $d/expected
 
 cat > $d/expected <<EOF
 EOF
-printf '1\n'|./jq -cen --seq '[inputs] == []' >/dev/null 2> $d/out
+printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out
 cmp $d/out $d/expected
 
 ## Test streaming parser
 
 ## If we add an option to stream to the `import ... as $symbol;` directive
 ## then we can move these tests into tests/all.test.
-$VALGRIND $Q ./jq -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p,.]' < "$PWD/tests/torture/input0.json" > $d/out0
-$VALGRIND $Q ./jq --stream -c '.|select(length==2)' < "$PWD/tests/torture/input0.json" > $d/out1
+$VALGRIND $Q $JQ -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p,.]' < "$JQTESTDIR/torture/input0.json" > $d/out0
+$VALGRIND $Q $JQ --stream -c '.|select(length==2)' < "$JQTESTDIR/torture/input0.json" > $d/out1
 diff $d/out0 $d/out1
 
 ## XXX This test can be moved to tests/all.test _now_
@@ -161,17 +131,17 @@ if which seq > /dev/null 2>&1; then
     # test very, very slow when run with valgrind, and the whole point
     # is to run it with valgrind.
     #
-    #len=`wc -c < "$PWD/tests/torture/input0.json"`
+    #len=`wc -c < "$JQTESTDIR/torture/input0.json"`
     if [ -z "$VALGRIND" ]; then
         start=1
-        end=`wc -c < "$PWD/tests/torture/input0.json"`
+        end=`wc -c < "$JQTESTDIR/torture/input0.json"`
     else
         start=120
         end=151
     fi
     for i in `seq $start $end`; do
         dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
-            $VALGRIND ./jq -c . > $d/out0 2>$d/err || true
+            $VALGRIND $JQ -c . > $d/out0 2>$d/err || true
         if [ -n "$VALGRIND" ]; then
             grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
         else
@@ -179,7 +149,7 @@ if which seq > /dev/null 2>&1; then
         fi
 
         dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
-            $VALGRIND ./jq -cn --stream -L "$mods" 'import "streaming" as streaming; streaming::tovalues(inputs)' > $d/out1 2>$d/err || true
+            $VALGRIND $JQ -cn --stream -L "$mods" 'import "streaming" as streaming; streaming::tovalues(inputs)' > $d/out1 2>$d/err || true
         if [ -n "$VALGRIND" ]; then
             grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
         else
@@ -198,14 +168,14 @@ fi
 clean=false
 if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
     # Have a /dev/urandom, good
-    $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
-    $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q $JQ --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q $JQ --seq --stream . $d/rand >/dev/null 2>&1
     dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null
-    $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
-    $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q $JQ --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q $JQ --seq --stream . $d/rand >/dev/null 2>&1
     dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null
-    $VALGRIND $Q ./jq --seq . $d/rand >/dev/null 2>&1
-    $VALGRIND $Q ./jq --seq --stream . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q $JQ --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q $JQ --seq --stream . $d/rand >/dev/null 2>&1
 fi
 clean=true
 
@@ -213,12 +183,12 @@ clean=true
 
 # Check handling of ~/.jq; these can't move into jq_test.c yet because
 # they depend on $HOME
-if [ "`HOME="$mods" $VALGRIND $Q ./jq -nr fg`" != foobar ]; then
+if [ "`HOME="$mods" $VALGRIND $Q $JQ -nr fg`" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
 fi
 
-if [ `HOME="$mods" $VALGRIND $Q ./jq --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
+if [ `HOME="$mods" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
     echo "Binding too many defs into program" 1>&2
     exit 1
 fi

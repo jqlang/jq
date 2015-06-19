@@ -1,0 +1,5 @@
+#!/bin/sh
+
+. "${0%/*}/setup"
+
+(cd $JQBASEDIR/docs && rake mantests) | $VALGRIND $Q $JQ -L "$mods" --run-tests

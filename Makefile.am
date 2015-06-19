@@ -79,8 +79,7 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/all.test
-TEST_LOG_COMPILER = ${srcdir}/tests/run
+TESTS = tests/mantest tests/jqtest tests/onigtest tests/shtest
 
 
 ### Building the manpage
