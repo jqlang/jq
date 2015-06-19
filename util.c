@@ -162,11 +162,13 @@ not_this:
 }
 
 struct jq_util_input_state {
-  jq_msg_cb err_cb;
+  jq_util_msg_cb err_cb;
   void *err_cb_data;
   jv_parser *parser;
   FILE* current_input;
-  jv files;
+  char **files;
+  int nfiles;
+  int curr_file;
   int failures;
   jv slurped;
   char buf[4096];
@@ -175,13 +177,12 @@ struct jq_util_input_state {
   size_t current_line;
 };
 
-static void fprinter(void *data, jv fname) {
-  fprintf((FILE *)data, "jq: error: Could not open file %s: %s\n", jv_string_value(fname), strerror(errno));
-  jv_free(fname);
+static void fprinter(void *data, const char *fname) {
+  fprintf((FILE *)data, "jq: error: Could not open file %s: %s\n", fname, strerror(errno));
 }
 
 // If parser == NULL -> RAW
-jq_util_input_state jq_util_input_init(jq_msg_cb err_cb, void *err_cb_data) {
+jq_util_input_state jq_util_input_init(jq_util_msg_cb err_cb, void *err_cb_data) {
   if (err_cb == NULL) {
     err_cb = fprinter;
     err_cb_data = stderr;
@@ -192,7 +193,9 @@ jq_util_input_state jq_util_input_init(jq_msg_cb err_cb, void *err_cb_data) {
   new_state->err_cb_data = err_cb_data;
   new_state->parser = NULL;
   new_state->current_input = NULL;
-  new_state->files = jv_array();
+  new_state->files = NULL;
+  new_state->nfiles = 0;
+  new_state->curr_file = 0;
   new_state->slurped = jv_invalid();
   new_state->buf[0] = 0;
   new_state->buf_valid_len = 0;
@@ -222,25 +225,27 @@ void jq_util_input_free(jq_util_input_state *state) {
 
   if (old_state->parser != NULL)
     jv_parser_free(old_state->parser);
-  jv_free(old_state->files);
+  for (int i = 0; i < old_state->nfiles; i++)
+    free(old_state->files[i]);
+  free(old_state->files);
   jv_free(old_state->slurped);
   jv_free(old_state->current_filename);
   jv_mem_free(old_state);
 }
 
-void jq_util_input_add_input(jq_util_input_state state, jv fname) {
-  state->files = jv_array_append(state->files, fname);
+void jq_util_input_add_input(jq_util_input_state state, const char *fname) {
+  state->files = jv_mem_realloc(state->files, (state->nfiles + 1) * sizeof(state->files[0]));
+  state->files[state->nfiles++] = jv_mem_strdup(fname);
 }
 
 int jq_util_input_errors(jq_util_input_state state) {
   return state->failures;
 }
 
-static jv next_file(jq_util_input_state state) {
-  jv next = jv_array_get(jv_copy(state->files), 0);
-  if (jv_array_length(jv_copy(state->files)) > 0)
-    state->files = jv_array_slice(state->files, 1, jv_array_length(jv_copy(state->files)));
-  return next;
+static const char *next_file(jq_util_input_state state) {
+  if (state->curr_file < state->nfiles)
+    return state->files[state->curr_file++];
+  return NULL;
 }
 
 static int jq_util_input_read_more(jq_util_input_state state) {
@@ -262,21 +267,20 @@ static int jq_util_input_read_more(jq_util_input_state state) {
       state->current_filename = jv_invalid();
       state->current_line = 0 ;
     }
-    jv f = next_file(state);
-    if (jv_is_valid(f)) {
-      if (!strcmp(jv_string_value(f), "-")) {
+    const char *f = next_file(state);
+    if (f != NULL) {
+      if (!strcmp(f, "-")) {
         state->current_input = stdin;
         state->current_filename = jv_string("<stdin>");
       } else {
-        state->current_input = fopen(jv_string_value(f), "r");
-        state->current_filename = jv_copy(f);
+        state->current_input = fopen(f, "r");
+        state->current_filename = jv_string(f);
         if (!state->current_input) {
-          state->err_cb(state->err_cb_data, jv_copy(f));
+          state->err_cb(state->err_cb_data, f);
           state->failures++;
         }
       }
       state->current_line = 0;
-      jv_free(f);
     }
   }
 
@@ -330,7 +334,8 @@ static int jq_util_input_read_more(jq_util_input_state state) {
       }
     }
   }
-  return jv_array_length(jv_copy(state->files)) == 0 && (!state->current_input || feof(state->current_input));
+  return state->curr_file == state->nfiles &&
+      (!state->current_input || feof(state->current_input) || ferror(state->current_input));
 }
 
 jv jq_util_input_next_input_cb(jq_state *jq, void *data) {

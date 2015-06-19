@@ -37,12 +37,19 @@ jv jq_get_lib_dirs(jq_state *);
 void jq_set_attr(jq_state *, jv, jv);
 jv jq_get_attr(jq_state *, jv);
 
+/*
+ * We use char * instead of jf for filenames here because filenames
+ * should be in the process' locale's codeset, which may not be UTF-8,
+ * whereas jv string values must be in UTF-8.  This way the caller
+ * doesn't have to perform any codeset conversions.
+ */
 typedef struct jq_util_input_state *jq_util_input_state;
+typedef void (*jq_util_msg_cb)(void *, const char *);
 
-jq_util_input_state jq_util_input_init(jq_msg_cb, void *);
+jq_util_input_state jq_util_input_init(jq_util_msg_cb, void *);
 void jq_util_input_set_parser(jq_util_input_state, jv_parser *, int);
 void jq_util_input_free(jq_util_input_state *);
-void jq_util_input_add_input(jq_util_input_state, jv);
+void jq_util_input_add_input(jq_util_input_state, const char *);
 int jq_util_input_errors(jq_util_input_state);
 jv jq_util_input_next_input(jq_util_input_state);
 jv jq_util_input_next_input_cb(jq_state *, void *);

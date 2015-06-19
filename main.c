@@ -185,14 +185,14 @@ int main(int argc, char* argv[]) {
   jv lib_search_paths = jv_null();
   for (int i=1; i<argc; i++, short_opts = 0) {
     if (further_args_are_files) {
-      jq_util_input_add_input(input_state, jv_string(argv[i]));
+      jq_util_input_add_input(input_state, argv[i]);
       nfiles++;
     } else if (!strcmp(argv[i], "--")) {
       if (!program) usage(2);
       further_args_are_files = 1;
     } else if (!isoptish(argv[i])) {
       if (program) {
-        jq_util_input_add_input(input_state, jv_string(argv[i]));
+        jq_util_input_add_input(input_state, argv[i]);
         nfiles++;
       } else {
         program = argv[i];
@@ -484,7 +484,7 @@ int main(int argc, char* argv[]) {
   jq_set_debug_cb(jq, debug_cb, &dumpopts);
 
   if (nfiles == 0)
-    jq_util_input_add_input(input_state, jv_string("-"));
+    jq_util_input_add_input(input_state, "-");
 
   if (options & PROVIDE_NULL) {
     ret = process(jq, jv_null(), jq_flags, dumpopts);
