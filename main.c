@@ -6,6 +6,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef WIN32
+#include <windows.h>
+#include <processenv.h>
+#include <shellapi.h>
+#include <wchar.h>
+#include <wtypes.h>
+#endif
+
 #include "compile.h"
 #include "jv.h"
 #include "jq.h"
@@ -164,6 +173,20 @@ int main(int argc, char* argv[]) {
   int nfiles = 0;
   int badwrite;
   jv program_arguments = jv_array();
+
+#ifdef WIN32
+  int wargc;
+  wchar_t **wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+  assert(wargc == argc);
+  size_t arg_sz;
+  for (int i = 0; i < argc; i++) {
+    argv[i] = alloca((arg_sz = WideCharToMultiByte(CP_UTF8,
+                                                   0,
+                                                   wargv[i],
+                                                   -1, 0, 0, 0, 0)));
+    WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, argv[i], arg_sz, 0, 0);
+  }
+#endif
 
   if (argc) progname = argv[0];
 

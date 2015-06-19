@@ -32,10 +32,31 @@ void *alloca (size_t);
 #include <pwd.h>
 #endif
 
+#ifdef WIN32
+#include <windows.h>
+#include <processenv.h>
+#include <shellapi.h>
+#include <wchar.h>
+#include <wtypes.h>
+#endif
+
 
 #include "util.h"
 #include "jq.h"
 #include "jv_alloc.h"
+
+#ifdef WIN32
+FILE *fopen(const char *fname, const char *mode) {
+  size_t sz = MultiByteToWideChar(CP_UTF8, 0, fname, -1, NULL, 0);
+  wchar_t *wfname = alloca(sz);
+  MultiByteToWideChar(CP_UTF8, 0, fname, -1, wfname, sz);
+
+  sz = MultiByteToWideChar(CP_UTF8, 0, mode, -1, NULL, 0);
+  wchar_t *wmode = alloca(sz);
+  MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, sz);
+  return _wfopen(wfname, wmode);
+}
+#endif
 
 #ifndef HAVE_MKSTEMP
 int mkstemp(char *template) {
