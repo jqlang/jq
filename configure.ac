@@ -174,5 +174,6 @@ AC_SUBST([BUNDLER], ["$bundle_cmd"])
 AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
+AC_FUNC_ALLOCA
 
 
