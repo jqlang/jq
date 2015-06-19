@@ -1056,13 +1056,15 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
     jv_free(b);
     return e;
   }
-  jv_free(a);
   jv_free(b);
-  if (tm.tm_wday == 0 && tm.tm_yday == 0 && my_mktime(&tm) == (time_t)-2)
+  if (tm.tm_wday == 0 && tm.tm_yday == 0 && my_mktime(&tm) == (time_t)-2) {
+    jv_free(a);
     return jv_invalid_with_msg(jv_string("strptime/1 not supported on this platform"));
+  }
   jv r = tm2jv(&tm);
   if (*end != '\0')
     r = jv_array_append(r, jv_string(end));
+  jv_free(a); // must come after `*end` because `end` is a pointer into `a`'s string
   return r;
 }
 #else
