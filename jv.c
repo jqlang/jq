@@ -473,6 +473,7 @@ static jv jvp_string_copy_replace_bad(const char* data, uint32_t length) {
 
 /* Assumes valid UTF8 */
 static jv jvp_string_new(const char* data, uint32_t length) {
+  assert(data);
   jvp_string* s = jvp_string_alloc(length);
   s->length_hashed = length << 1;
   memcpy(s->data, data, length);

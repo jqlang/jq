@@ -169,8 +169,11 @@ void* jv_mem_realloc(void* p, size_t sz) {
 #ifndef NDEBUG
 volatile char jv_mem_uninitialised;
 __attribute__((constructor)) void jv_mem_uninit_setup(){
+  // ignore warning that this reads uninitialized memory - that's the point!
+#ifndef __clang_analyzer__
   char* p = malloc(1);
   jv_mem_uninitialised = *p;
   free(p);
+#endif
 }
 #endif

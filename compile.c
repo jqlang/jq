@@ -943,7 +943,7 @@ block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block co
 
 static uint16_t nesting_level(struct bytecode* bc, inst* target) {
   uint16_t level = 0;
-  assert(bc && target->compiled);
+  assert(bc && target && target->compiled);
   while (bc && target->compiled != bc) {
     level++;
     bc = bc->parent;
