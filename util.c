@@ -21,6 +21,64 @@
 #include "jq.h"
 #include "jv_alloc.h"
 
+
+static const uint32_t HASH_SEED = 0x432A9843;
+
+static uint32_t rotl32 (uint32_t x, int8_t r){
+  return (x << r) | (x >> (32 - r));
+}
+
+uint32_t compute_hash(const char* data, uint32_t len) {
+  /* The following is based on MurmurHash3.
+     MurmurHash3 was written by Austin Appleby, and is placed
+     in the public domain. */
+
+  const uint8_t* thedata = (const uint8_t*) data;
+  const int thelen = (int) len;
+
+  const int nblocks = thelen / 4;
+
+  uint32_t h1 = HASH_SEED;
+
+  const uint32_t c1 = 0xcc9e2d51;
+  const uint32_t c2 = 0x1b873593;
+  const uint32_t* blocks = (const uint32_t *)(thedata + nblocks*4);
+
+  for(int i = -nblocks; i; i++) {
+    uint32_t k1 = blocks[i]; //FIXME: endianness/alignment
+
+    k1 *= c1;
+    k1 = rotl32(k1,15);
+    k1 *= c2;
+
+    h1 ^= k1;
+    h1 = rotl32(h1,13);
+    h1 = h1*5+0xe6546b64;
+  }
+
+  const uint8_t* tail = (const uint8_t*)(thedata + nblocks*4);
+
+  uint32_t k1 = 0;
+
+  switch(thelen & 3) {
+  case 3: k1 ^= tail[2] << 16;
+  case 2: k1 ^= tail[1] << 8;
+  case 1: k1 ^= tail[0];
+          k1 *= c1; k1 = rotl32(k1,15); k1 *= c2; h1 ^= k1;
+  }
+
+  h1 ^= thelen;
+
+  h1 ^= h1 >> 16;
+  h1 *= 0x85ebca6b;
+  h1 ^= h1 >> 13;
+  h1 *= 0xc2b2ae35;
+  h1 ^= h1 >> 16;
+
+  return h1;
+}
+
+
 #ifndef HAVE_MKSTEMP
 int mkstemp(char *template) {
   size_t len = strlen(template);

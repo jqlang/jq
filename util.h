@@ -3,6 +3,8 @@
 
 #include "jv.h"
 
+uint32_t compute_hash(const char* data, uint32_t len);
+
 #ifndef HAVE_MKSTEMP
 int mkstemp(char *template);
 #endif

@@ -443,17 +443,21 @@ typedef struct {
   char data[];
 } jvp_string;
 
-// -2 for kind_flags and null terminator
-#define JV_STRING_INLINE_MAX (sizeof(jv)-2)
+// uint32_t for hash, -2 for kind_flags and null terminator
+#define JV_STRING_INLINE_MAX (sizeof(jv) - sizeof(uint32_t) - 2)
+
+typedef struct {
+  unsigned char kind_flags;
+  char data[JV_STRING_INLINE_MAX + 1];
+  uint32_t hash;
+} jvp_inline_string;
+
+// view a jv as an inline string
+#define JVP_INLINE_STRING(jv) (*(jvp_inline_string*) &jv)
 
 static int jvp_string_is_inline(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
   return jvp_get_flags(j) != 0;
-}
-
-static const char* jvp_inline_string_ptr(const jv* j) {
-  assert(jvp_string_is_inline(*j));
-  return 1 + (const char*) j;
 }
 
 static uint32_t jvp_inline_string_length(jv j) {
@@ -469,7 +473,7 @@ static jvp_string* jvp_string_ptr(jv a) {
 static char* jvp_string_value_mut(jv* j) {
   assert(jv_get_kind(*j) == JV_KIND_STRING);
   if (jvp_string_is_inline(*j))
-    return (char*) jvp_inline_string_ptr(j);
+    return JVP_INLINE_STRING(*j).data;
   else
     return jvp_string_ptr(*j)->data;
 }
@@ -511,8 +515,9 @@ static jv jvp_string_new(const char* data, uint32_t length) {
   if (length <= JV_STRING_INLINE_MAX) {
     jv r;
     r.kind_flags = JV_KIND_STRING | ((length + 1) << 4);
-    memcpy(jvp_string_value_mut(&r), data, length);
-    jvp_string_value_mut(&r)[length] = 0;
+    memcpy(JVP_INLINE_STRING(r).data, data, length);
+    JVP_INLINE_STRING(r).data[length] = 0;
+    JVP_INLINE_STRING(r).hash = compute_hash(data, length);
     assert(jvp_string_is_inline(r));
     return r;
   } else {
@@ -569,10 +574,12 @@ static jv jvp_string_append(jv string, const char* data, uint32_t len) {
     // the next string fits at the end of this one
     memcpy(currdata + currlen, data, len);
     currdata[newlen] = 0;
-    if (jvp_string_is_inline(string))
+    if (jvp_string_is_inline(string)) {
       string.kind_flags = JV_KIND_STRING | ((newlen + 1) << 4);
-    else
+      JVP_INLINE_STRING(string).hash = compute_hash(currdata, newlen);
+    } else {
       jvp_string_ptr(string)->length_hashed = newlen << 1;
+    }
     return string;
   } else {
     // allocate a bigger buffer and copy
@@ -589,73 +596,21 @@ static jv jvp_string_append(jv string, const char* data, uint32_t len) {
   }
 }
 
-static const uint32_t HASH_SEED = 0x432A9843;
-
-static uint32_t rotl32 (uint32_t x, int8_t r){
-  return (x << r) | (x >> (32 - r));
-}
-
 static uint32_t jvp_string_hash(jv jstr) {
-  jvp_string* str;
-  if (jvp_string_is_inline(jstr))
-    str = NULL;
-  else {
-    str = jvp_string_ptr(jstr);
+  if (jvp_string_is_inline(jstr)) {
+    return JVP_INLINE_STRING(jstr).hash;
+  } else {
+    jvp_string* str = jvp_string_ptr(jstr);
     if (str->length_hashed & 1)
       return str->hash;
-  }
 
-  /* The following is based on MurmurHash3.
-     MurmurHash3 was written by Austin Appleby, and is placed
-     in the public domain. */
-
-  const uint8_t* data = (const uint8_t*)jv_string_value(jstr);
-  int len = (int)jv_string_length_bytes(jv_copy(jstr));
-  const int nblocks = len / 4;
-
-  uint32_t h1 = HASH_SEED;
-
-  const uint32_t c1 = 0xcc9e2d51;
-  const uint32_t c2 = 0x1b873593;
-  const uint32_t* blocks = (const uint32_t *)(data + nblocks*4);
-
-  for(int i = -nblocks; i; i++) {
-    uint32_t k1 = blocks[i]; //FIXME: endianness/alignment
-    
-    k1 *= c1;
-    k1 = rotl32(k1,15);
-    k1 *= c2;
-    
-    h1 ^= k1;
-    h1 = rotl32(h1,13); 
-    h1 = h1*5+0xe6546b64;
-  }
-
-  const uint8_t* tail = (const uint8_t*)(data + nblocks*4);
-
-  uint32_t k1 = 0;
-
-  switch(len & 3) {
-  case 3: k1 ^= tail[2] << 16;
-  case 2: k1 ^= tail[1] << 8;
-  case 1: k1 ^= tail[0];
-          k1 *= c1; k1 = rotl32(k1,15); k1 *= c2; h1 ^= k1;
-  }
-
-  h1 ^= len;
-
-  h1 ^= h1 >> 16;
-  h1 *= 0x85ebca6b;
-  h1 ^= h1 >> 13;
-  h1 *= 0xc2b2ae35;
-  h1 ^= h1 >> 16;
-
-  if (str) {
+    const char* data = jv_string_value(jstr);
+    uint32_t len = jv_string_length_bytes(jv_copy(jstr));
+    uint32_t result = compute_hash(data, len);
+    str->hash = result;
     str->length_hashed |= 1;
-    str->hash = h1;
+    return result;
   }
-
-  return h1;
 }
 
 static int jvp_string_equal(jv a, jv b) {
@@ -801,7 +756,7 @@ unsigned long jv_string_hash(jv j) {
 const char* jv_string_value_impl(const jv* j) {
   assert(jv_get_kind(*j) == JV_KIND_STRING);
   if (jvp_string_is_inline(*j))
-    return jvp_inline_string_ptr(j);
+    return JVP_INLINE_STRING(*j).data;
   else
     return jvp_string_ptr(*j)->data;
 }
