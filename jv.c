@@ -37,10 +37,11 @@ static int jvp_refcnt_unshared(jv_refcnt* c) {
 }
 
 /*
- * Simple values (true, false, null)
+ * Kinds and flags
  */
 
-#define KIND_MASK 0xf
+#define KIND_MASK  0x0f
+#define FLAGS_MASK 0xf0
 
 jv_kind jv_get_kind(jv x) {
   return x.kind_flags & KIND_MASK;
@@ -60,6 +61,14 @@ const char* jv_kind_name(jv_kind k) {
   assert(0 && "invalid kind");
   return "<unknown>";
 }
+
+static uint8_t jvp_get_flags(jv x) {
+  return x.kind_flags & FLAGS_MASK;
+}
+
+/*
+ * Simple values (true, false, null)
+ */
 
 static const jv JV_NULL = {JV_KIND_NULL, 0, 0, 0, {0}};
 static const jv JV_INVALID = {JV_KIND_INVALID, 0, 0, 0, {0}};
@@ -434,9 +443,35 @@ typedef struct {
   char data[];
 } jvp_string;
 
+// -2 for kind_flags and null terminator
+#define JV_STRING_INLINE_MAX (sizeof(jv)-2)
+
+static int jvp_string_is_inline(jv j) {
+  assert(jv_get_kind(j) == JV_KIND_STRING);
+  return jvp_get_flags(j) != 0;
+}
+
+static const char* jvp_inline_string_ptr(const jv* j) {
+  assert(jvp_string_is_inline(*j));
+  return 1 + (const char*) j;
+}
+
+static uint32_t jvp_inline_string_length(jv j) {
+  assert(jvp_string_is_inline(j));
+  return (jvp_get_flags(j) >> 4) - 1;
+}
+
 static jvp_string* jvp_string_ptr(jv a) {
-  assert(jv_get_kind(a) == JV_KIND_STRING);
+  assert(!jvp_string_is_inline(a));
   return (jvp_string*)a.u.ptr;
+}
+
+static char* jvp_string_value_mut(jv* j) {
+  assert(jv_get_kind(*j) == JV_KIND_STRING);
+  if (jvp_string_is_inline(*j))
+    return (char*) jvp_inline_string_ptr(j);
+  else
+    return jvp_string_ptr(*j)->data;
 }
 
 static jvp_string* jvp_string_alloc(uint32_t size) {
@@ -473,12 +508,22 @@ static jv jvp_string_copy_replace_bad(const char* data, uint32_t length) {
 
 /* Assumes valid UTF8 */
 static jv jvp_string_new(const char* data, uint32_t length) {
-  jvp_string* s = jvp_string_alloc(length);
-  s->length_hashed = length << 1;
-  memcpy(s->data, data, length);
-  s->data[length] = 0;
-  jv r = {JV_KIND_STRING, 0, 0, 0, {&s->refcnt}};
-  return r;
+  if (length <= JV_STRING_INLINE_MAX) {
+    jv r;
+    r.kind_flags = JV_KIND_STRING | ((length + 1) << 4);
+    memcpy(jvp_string_value_mut(&r), data, length);
+    jvp_string_value_mut(&r)[length] = 0;
+    assert(jvp_string_is_inline(r));
+    return r;
+  } else {
+    jvp_string* s = jvp_string_alloc(length);
+    s->length_hashed = length << 1;
+    memcpy(s->data, data, length);
+    s->data[length] = 0;
+    jv r = {JV_KIND_STRING, 0, 0, 0, {&s->refcnt}};
+    assert(!jvp_string_is_inline(r));
+    return r;
+  }
 }
 
 static jv jvp_string_empty_new(uint32_t length) {
@@ -491,9 +536,10 @@ static jv jvp_string_empty_new(uint32_t length) {
 
 
 static void jvp_string_free(jv js) {
-  jvp_string* s = jvp_string_ptr(js);
-  if (jvp_refcnt_dec(&s->refcnt)) {
-    jv_mem_free(s);
+  if (!jvp_string_is_inline(js)) {
+    jvp_string* s = jvp_string_ptr(js);
+    if (jvp_refcnt_dec(&s->refcnt))
+      jv_mem_free(s);
   }
 }
 
@@ -501,32 +547,42 @@ static uint32_t jvp_string_length(jvp_string* s) {
   return s->length_hashed >> 1;
 }
 
-static uint32_t jvp_string_remaining_space(jvp_string* s) {
-  assert(s->alloc_length >= jvp_string_length(s));
-  uint32_t r = s->alloc_length - jvp_string_length(s);
-  return r;
+static uint32_t jvp_string_remaining_space(jv j) {
+  if (jvp_string_is_inline(j)) {
+    uint32_t r = JV_STRING_INLINE_MAX - jvp_inline_string_length(j);
+    return r;
+  } else {
+    jvp_string* s = jvp_string_ptr(j);
+    assert(s->alloc_length >= jvp_string_length(s));
+    uint32_t r = s->alloc_length - jvp_string_length(s);
+    return r;
+  }
 }
 
 static jv jvp_string_append(jv string, const char* data, uint32_t len) {
-  jvp_string* s = jvp_string_ptr(string);
-  uint32_t currlen = jvp_string_length(s);
+  char* currdata = jvp_string_value_mut(&string);
+  uint32_t currlen = jv_string_length_bytes(jv_copy(string));
+  uint32_t newlen = currlen + len;
     
-  if (jvp_refcnt_unshared(string.u.ptr) &&
-      jvp_string_remaining_space(s) >= len) {
-    // the next string fits at the end of a
-    memcpy(s->data + currlen, data, len);
-    s->data[currlen + len] = 0;
-    s->length_hashed = (currlen + len) << 1;
+  if ((jvp_string_is_inline(string) || jvp_refcnt_unshared(string.u.ptr)) &&
+      jvp_string_remaining_space(string) >= len) {
+    // the next string fits at the end of this one
+    memcpy(currdata + currlen, data, len);
+    currdata[newlen] = 0;
+    if (jvp_string_is_inline(string))
+      string.kind_flags = JV_KIND_STRING | ((newlen + 1) << 4);
+    else
+      jvp_string_ptr(string)->length_hashed = newlen << 1;
     return string;
   } else {
     // allocate a bigger buffer and copy
-    uint32_t allocsz = (currlen + len) * 2;
+    uint32_t allocsz = newlen * 2;
     if (allocsz < 32) allocsz = 32;
     jvp_string* news = jvp_string_alloc(allocsz);
-    news->length_hashed = (currlen + len) << 1;
-    memcpy(news->data, s->data, currlen);
+    news->length_hashed = newlen << 1;
+    memcpy(news->data, currdata, currlen);
     memcpy(news->data + currlen, data, len);
-    news->data[currlen + len] = 0;
+    news->data[newlen] = 0;
     jvp_string_free(string);
     jv r = {JV_KIND_STRING, 0, 0, 0, {&news->refcnt}};
     return r;
@@ -540,16 +596,21 @@ static uint32_t rotl32 (uint32_t x, int8_t r){
 }
 
 static uint32_t jvp_string_hash(jv jstr) {
-  jvp_string* str = jvp_string_ptr(jstr);
-  if (str->length_hashed & 1) 
-    return str->hash;
+  jvp_string* str;
+  if (jvp_string_is_inline(jstr))
+    str = NULL;
+  else {
+    str = jvp_string_ptr(jstr);
+    if (str->length_hashed & 1)
+      return str->hash;
+  }
 
   /* The following is based on MurmurHash3.
      MurmurHash3 was written by Austin Appleby, and is placed
      in the public domain. */
 
-  const uint8_t* data = (const uint8_t*)str->data;
-  int len = (int)jvp_string_length(str);
+  const uint8_t* data = (const uint8_t*)jv_string_value(jstr);
+  int len = (int)jv_string_length_bytes(jv_copy(jstr));
   const int nblocks = len / 4;
 
   uint32_t h1 = HASH_SEED;
@@ -589,8 +650,10 @@ static uint32_t jvp_string_hash(jv jstr) {
   h1 *= 0xc2b2ae35;
   h1 ^= h1 >> 16;
 
-  str->length_hashed |= 1;
-  str->hash = h1;
+  if (str) {
+    str->length_hashed |= 1;
+    str->hash = h1;
+  }
 
   return h1;
 }
@@ -598,10 +661,10 @@ static uint32_t jvp_string_hash(jv jstr) {
 static int jvp_string_equal(jv a, jv b) {
   assert(jv_get_kind(a) == JV_KIND_STRING);
   assert(jv_get_kind(b) == JV_KIND_STRING);
-  jvp_string* stra = jvp_string_ptr(a);
-  jvp_string* strb = jvp_string_ptr(b);
-  if (jvp_string_length(stra) != jvp_string_length(strb)) return 0;
-  return memcmp(stra->data, strb->data, jvp_string_length(stra)) == 0;
+  uint32_t lena = jv_string_length_bytes(jv_copy(a));
+  uint32_t lenb = jv_string_length_bytes(jv_copy(b));
+  if (lena != lenb) return 0;
+  return memcmp(jv_string_value(a), jv_string_value(b), lena) == 0;
 }
 
 /*
@@ -625,7 +688,11 @@ jv jv_string(const char* str) {
 
 int jv_string_length_bytes(jv j) {
   assert(jv_get_kind(j) == JV_KIND_STRING);
-  int r = jvp_string_length(jvp_string_ptr(j));
+  int r;
+  if (jvp_string_is_inline(j))
+    r = jvp_inline_string_length(j);
+  else
+    r = jvp_string_length(jvp_string_ptr(j));
   jv_free(j);
   return r;
 }
@@ -734,9 +801,12 @@ unsigned long jv_string_hash(jv j) {
   return hash;
 }
 
-const char* jv_string_value(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_STRING);
-  return jvp_string_ptr(j)->data;
+const char* jv_string_value_impl(const jv* j) {
+  assert(jv_get_kind(*j) == JV_KIND_STRING);
+  if (jvp_string_is_inline(*j))
+    return jvp_inline_string_ptr(j);
+  else
+    return jvp_string_ptr(*j)->data;
 }
 
 jv jv_string_slice(jv j, int start, int end) {
@@ -790,7 +860,7 @@ jv jv_string_slice(jv j, int start, int end) {
 
 jv jv_string_concat(jv a, jv b) {
   a = jvp_string_append(a, jv_string_value(b), 
-                        jvp_string_length(jvp_string_ptr(b)));
+                        jv_string_length_bytes(jv_copy(b)));
   jv_free(b);
   return a;
 }
@@ -1223,8 +1293,8 @@ jv jv_object_iter_value(jv object, int iter) {
  * Memory management
  */
 jv jv_copy(jv j) {
-  if (jv_get_kind(j) == JV_KIND_ARRAY || 
-      jv_get_kind(j) == JV_KIND_STRING || 
+  if (jv_get_kind(j) == JV_KIND_ARRAY ||
+      (jv_get_kind(j) == JV_KIND_STRING && !jvp_string_is_inline(j)) ||
       jv_get_kind(j) == JV_KIND_OBJECT ||
       (jv_get_kind(j) == JV_KIND_INVALID && j.u.ptr != 0)) {
     jvp_refcnt_inc(j.u.ptr);
@@ -1246,8 +1316,11 @@ void jv_free(jv j) {
 
 int jv_get_refcnt(jv j) {
   switch (jv_get_kind(j)) {
-  case JV_KIND_ARRAY:
   case JV_KIND_STRING:
+    if (jvp_string_is_inline(j))
+      return 1;
+    // fall through
+  case JV_KIND_ARRAY:
   case JV_KIND_OBJECT:
     return j.u.ptr->count;
   default:
@@ -1265,6 +1338,8 @@ int jv_equal(jv a, jv b) {
     r = 0;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER) {
     r = jv_number_value(a) == jv_number_value(b);
+  } else if (jv_get_kind(a) == JV_KIND_STRING) {
+    r = jvp_string_equal(a, b);
   } else if (a.kind_flags == b.kind_flags &&
              a.size == b.size &&
              a.u.ptr == b.u.ptr) {
@@ -1273,9 +1348,6 @@ int jv_equal(jv a, jv b) {
     switch (jv_get_kind(a)) {
     case JV_KIND_ARRAY:
       r = jvp_array_equal(a, b);
-      break;
-    case JV_KIND_STRING:
-      r = jvp_string_equal(a, b);
       break;
     case JV_KIND_OBJECT:
       r = jvp_object_equal(a, b);
