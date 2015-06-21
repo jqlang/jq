@@ -2,14 +2,44 @@ sudo: false
 
 language: c
 
-before_script:
-    - sudo apt-get install -qq valgrind
+addons:
+    apt:
+        packages:
+            - libonig-dev
+            - valgrind
+
+before_install:
+    - rm lexer.h lexer.c parser.h parser.c
+
+install:
     - bundle install --gemfile=docs/Gemfile
+
+    - wget http://ftp.debian.org/debian/pool/main/b/bison/bison_3.0.2.dfsg-2_amd64.deb
+    - ar p bison_3.0.2.dfsg-2_amd64.deb data.tar.xz | tar xJ
+
+    - wget http://ftp.debian.org/debian/pool/main/libo/libonig/libonig-dev_5.9.6-1_amd64.deb
+    - ar p libonig-dev_5.9.6-1_amd64.deb data.tar.xz | tar xJ
+    - wget http://ftp.debian.org/debian/pool/main/libo/libonig/libonig2_5.9.6-1_amd64.deb
+    - ar p libonig2_5.9.6-1_amd64.deb data.tar.xz | tar xJ
+    - mv usr/lib/x86_64-linux-gnu/libonig.so* usr/lib
+
+    - valgrind --version
+
+before_script:
     - autoreconf -i
+    - ./configure
+        --with-oniguruma=usr
+        YACC="usr/bin/bison -y"
 
 script:
-    - ./setup.sh
-    - ./configure && make
+    - make -j4
+        LDFLAGS="-Lusr/lib -R$(pwd)/usr/lib"
+        BISON_PKGDATADIR=$(pwd)/usr/share/bison
+    - make check -j4
+
+after_failure:
+    - cat test-suite.log
+    - cat tests/*.log
 
 compiler:
     - gcc
