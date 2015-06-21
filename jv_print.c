@@ -3,6 +3,9 @@
 #include <float.h>
 #include <string.h>
 #include <assert.h>
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
@@ -25,7 +28,12 @@ static void put_buf(const char* s, int len, FILE* fout, jv* strout) {
   if (strout) {
     *strout = jv_string_append_buf(*strout, s, len);
   } else {
+#ifdef WIN32
+    DWORD written;
+    WriteFile(fout, s, len, &written, 0);
+#else
     fwrite(s, 1, len, fout);
+#endif
   }
 }
 
@@ -297,7 +305,11 @@ void jv_dumpf(jv x, FILE *f, int flags) {
 }
 
 void jv_dump(jv x, int flags) {
+#ifdef WIN32
+  jv_dumpf(x, GetStdHandle(STD_OUTPUT_HANDLE), flags);
+#else
   jv_dumpf(x, stdout, flags);
+#endif
 }
 
 /* This one is nice for use in debuggers */
