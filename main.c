@@ -9,6 +9,8 @@
 
 #ifdef WIN32
 #include <windows.h>
+#include <io.h>
+#include <fcntl.h>
 #include <processenv.h>
 #include <shellapi.h>
 #include <wchar.h>
@@ -131,11 +133,11 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
       else
         ret = 0;
       if (options & SEQ)
-        fwrite("\036", 1, 1, stdout);
+        priv_fwrite("\036", 1, stdout, dumpopts & JV_PRINT_ISATTY);
       jv_dump(result, dumpopts);
     }
     if (!(options & RAW_NO_LF))
-        printf("\n");
+      priv_fwrite("\n", 1, stdout, dumpopts & JV_PRINT_ISATTY);
     if (options & UNBUFFERED_OUTPUT)
       fflush(stdout);
   }
@@ -175,6 +177,11 @@ int main(int argc, char* argv[]) {
   jv program_arguments = jv_array();
 
 #ifdef WIN32
+  SetConsoleOutputCP(CP_UTF8);
+  fflush(stdout);
+  fflush(stderr);
+  _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
+  _setmode(fileno(stderr), _O_TEXT | _O_U8TEXT);
   int wargc;
   wchar_t **wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
   assert(wargc == argc);
@@ -414,12 +421,14 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  if (isatty(fileno(stdout))) {
+    dumpopts |= JV_PRINT_ISATTY;
 #ifndef WIN32
   /* Disable colour by default on Windows builds as Windows
      terminals tend not to display it correctly */
-  if (isatty(fileno(stdout)))
     dumpopts |= JV_PRINT_COLOUR;
 #endif
+  }
   if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
   if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
   if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;

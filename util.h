@@ -11,6 +11,8 @@ jv expand_path(jv);
 jv get_home(void);
 jv jq_realpath(jv);
 
+void priv_fwrite(const char *, size_t, FILE *, int);
+
 const void *_jq_memmem(const void *haystack, size_t haystacklen,
                        const void *needle, size_t needlelen);
 

@@ -167,6 +167,7 @@ enum jv_print_flags {
   JV_PRINT_INVALID  = 16,
   JV_PRINT_REFCOUNT = 32,
   JV_PRINT_TAB      = 64,
+  JV_PRINT_ISATTY   = 128,
   JV_PRINT_SPACE0   = 256,
   JV_PRINT_SPACE1   = 512,
   JV_PRINT_SPACE2   = 1024,
