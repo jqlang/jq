@@ -1279,6 +1279,21 @@ sections:
             input: '["foobar", "barfoo"]'
             output: ['[false, true]']
 
+      - title: "`combinations`, `combinations(n)`"
+        body: |
+
+          Outputs all combinations of the elements of the arrays in the
+          input array. If given an argument `n`, it outputs all combinations
+          of `n` repetitions of the input array.
+
+        examples:
+          - program: 'combinations'
+            input: '[[1,2], [3, 4]]'
+            output: ['[1, 3]', '[1, 4]', '[2, 3]', '[2, 4]']
+          - program: 'combinations(2)'
+            input: '[0, 1]'
+            output: ['[0, 0]', '[0, 1]', '[1, 0]', '[1, 1]']
+
       - title: "`ltrimstr(str)`"
         body: |
 
