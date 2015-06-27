@@ -27,35 +27,12 @@ static const char* const colours[] =
    COL("0;32"),      COL("1;39"),     COL("1;39")};
 #define FIELD_COLOUR COL("34;1")
 
-/*
- * The Windows CRT and console are something else.  In order for the
- * console to get UTF-8 written to it correctly we have to bypass stdio
- * completely.  No amount of fflush()ing helps.  If the first byte of a
- * buffer being written with fwrite() is non-ASCII UTF-8 then the
- * console misinterprets the byte sequence.  But one must not
- * WriteFile() if stdout is a file!1!!
- *
- * We carry knowledge of whether the FILE * is a tty everywhere we
- * output to it just so we can write with WriteFile() if stdout is a
- * console on WIN32.
- */
-
-void priv_fwrite(const char *s, size_t len, FILE *fout, int is_tty) {
-#ifdef WIN32
-  if (is_tty)
-    WriteFile((HANDLE)_get_osfhandle(fileno(fout)), s, len, NULL, NULL);
-  else
-    fwrite(s, 1, len, fout);
-#else
-  fwrite(s, 1, len, fout);
-#endif
-}
-
 static void put_buf(const char *s, int len, FILE *fout, jv *strout, int is_tty) {
   if (strout) {
     *strout = jv_string_append_buf(*strout, s, len);
   } else {
 #ifdef WIN32
+  /* See util.h */
   if (is_tty)
     WriteFile((HANDLE)_get_osfhandle(fileno(fout)), s, len, NULL, NULL);
   else

@@ -11,7 +11,29 @@ jv expand_path(jv);
 jv get_home(void);
 jv jq_realpath(jv);
 
-void priv_fwrite(const char *, size_t, FILE *, int);
+/*
+ * The Windows CRT and console are something else.  In order for the
+ * console to get UTF-8 written to it correctly we have to bypass stdio
+ * completely.  No amount of fflush()ing helps.  If the first byte of a
+ * buffer being written with fwrite() is non-ASCII UTF-8 then the
+ * console misinterprets the byte sequence.  But one must not
+ * WriteFile() if stdout is a file!1!!
+ *
+ * We carry knowledge of whether the FILE * is a tty everywhere we
+ * output to it just so we can write with WriteFile() if stdout is a
+ * console on WIN32.
+ */
+
+static void priv_fwrite(const char *s, size_t len, FILE *fout, int is_tty) {
+#ifdef WIN32
+  if (is_tty)
+    WriteFile((HANDLE)_get_osfhandle(fileno(fout)), s, len, NULL, NULL);
+  else
+    fwrite(s, 1, len, fout);
+#else
+  fwrite(s, 1, len, fout);
+#endif
+}
 
 const void *_jq_memmem(const void *haystack, size_t haystacklen,
                        const void *needle, size_t needlelen);
