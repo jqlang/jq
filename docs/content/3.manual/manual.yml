@@ -2190,6 +2190,9 @@ sections:
           with `$x` set to that value.  Thus `as` functions as something of a
           foreach loop.
 
+          Just as `{foo}` is a handy way of writing `{foo: .foo}`, so
+          `{$foo}` is a handy way of writing `{foo:$foo}`.
+
           Multiple variables may be declared using a single `as` expression by
           providing a pattern that matches the structure of the input
           (this is known as "destructuring"):
