@@ -2749,17 +2749,18 @@ sections:
         body: |
 
           Imports a module found at the given path relative to a
-          directory in a search path.  The module's symbols are prefixed
-          with "NAME::".  A ".jq" suffix will be added to the relative
-          path string.
+          directory in a search path.  A ".jq" suffix will be added to
+          the relative path string.  The module's symbols are prefixed
+          with "NAME::".
 
-      - title: "`import RelativePathString as NAME {<metadata>};`"
+
+      - title: "`import RelativePathString as NAME <metadata>;`"
         body: |
 
           Imports a module found at the given path relative to a
-          directory in a search path.  The module's symbols are prefixed
-          with "NAME::".  A ".jq" suffix will be added to the relative
-          path string.
+          directory in a search path.  A ".jq" suffix will be added to
+          the relative path string.  The module's symbols are prefixed
+          with "NAME::".
 
           The metadata must be a constant jq expression.  It should be
           an object with keys like "homepage" and so on.  At this time
@@ -2771,21 +2772,21 @@ sections:
           string or array value (array of strings); this is the search
           path to be prefixed to the top-level search path.
 
-      - title: "`import RelativePathString as NAME;`"
+      - title: "`import RelativePathString as $NAME;`"
         body: |
 
           Imports a JSON file found at the given path relative to a
-          directory in a search path.  The file's data will be available
-          as `$NAME::NAME`.  A ".json" suffix will be added to the
-          relative path string.
+          directory in a search path.  A ".json" suffix will be added to
+          the relative path string.  The file's data will be available
+          as `$NAME::NAME`.
 
-      - title: "`import RelativePathString as $NAME {<metadata>};`"
+      - title: "`import RelativePathString as $NAME <metadata>;`"
         body: |
 
           Imports a JSON file found at the given path relative to a
-          directory in a search path.  The file's data will be available
-          as `$NAME::NAME`.  A ".json" suffix will be added to the
-          relative path string.
+          directory in a search path.  A ".json" suffix will be added to
+          the relative path string.  The file's data will be available
+          as `$NAME::NAME`.
 
           The metadata must be a constant jq expression.  It should be
           an object with keys like "homepage" and so on.  At this time
@@ -2797,7 +2798,7 @@ sections:
           string or array value (array of strings); this is the search
           path to be prefixed to the top-level search path.
 
-      - title: "`module {<metadata>};`"
+      - title: "`module <metadata>;`"
         body: |
 
           This directive is entirely optional.  It's not required for
