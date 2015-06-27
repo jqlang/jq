@@ -77,9 +77,6 @@ fi
 
 ## Test JSON sequence support
 
-## XXX If we add a `stream_fromjson` builtin then we can move these tests
-## into tests/all.test
-
 cat > $d/expected <<EOF
 ignoring parse error: Truncated value at line 2, column 5
 ignoring parse error: Truncated value at line 2, column 25
@@ -149,7 +146,7 @@ if which seq > /dev/null 2>&1; then
         fi
 
         dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
-            $VALGRIND $JQ -cn --stream -L "$mods" 'import "streaming" as streaming; streaming::tovalues(inputs)' > $d/out1 2>$d/err || true
+            $VALGRIND $JQ -cn --stream 'fromstream(inputs)' > $d/out1 2>$d/err || true
         if [ -n "$VALGRIND" ]; then
             grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
         else

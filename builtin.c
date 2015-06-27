@@ -1521,6 +1521,45 @@ static const char* const jq_builtins[] = {
   "def ascii_upcase:"
   "  explode | map( if 97 <= . and . <= 122 then . - 32  else . end) | implode;",
 
+  // Streaming utilities
+  "def truncate_stream(stream):"
+  "  . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][1:]) else empty end;",
+  "def fromstream(i):"
+  "  foreach i as $item ("
+  "    [null,false,null,false];"
+  "    if ($item[0]|length) == 0 then [null,false,.[2],.[3]]"
+  "    elif ($item|length) == 1 and ($item[0]|length) < 2 then [null,false,.[0],.[1]]"
+  "    else . end |"
+  "    . as $state |"
+  "    if ($item|length) > 1 and ($item[0]|length) > 0 then"
+  "      [.[0]|setpath(($item|.[0]); ($item|.[1])),    "
+  "      true,                                         "
+  "      $state[2],                                    "
+  "      $state[3]]                                    "
+  "    else ."
+  "    end;"
+  "    if ($item[0]|length) == 1 and ($item|length == 1) and .[3] then .[2] else empty end,"
+  "    if ($item[0]|length) == 0 then $item[1] else empty end"
+  "    );",
+  "def tostream:\n"
+  "  {string:true,number:true,boolean:true,null:true} as $leaf_types |\n"
+  "  . as $dot |\n"
+  "  if $leaf_types[$dot|type] or length==0 then [[],$dot]\n"
+  "  else\n"
+  "    # We really need a _streaming_ form of `keys`.\n"
+  "    # We can use `range` for arrays, but not for objects.\n"
+  "    keys as $keys |\n"
+  "    $keys[-1] as $last|\n"
+  "    ((# for each key\n"
+  "      $keys[] | . as $key |\n"
+  "      $dot[$key] | . as $dot |\n"
+  "      # recurse on each key/value\n"
+  "      tostream|.[0]|=[$key]+.),\n"
+  "     # then add the closing marker\n"
+  "     [[$last]])\n"
+  "  end;",
+
+
   // # Assuming the input array is sorted, bsearch/1 returns
   // # the index of the target if the target is in the input array; and otherwise
   // #  (-1 - ix), where ix is the insertion point that would leave the array sorted.
