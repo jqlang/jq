@@ -8,7 +8,7 @@ JQTESTDIR=$(cd "$(dirname "$0")" && pwd)
 JQBASEDIR=$JQTESTDIR/..
 JQ=$JQBASEDIR/jq
 
-if which valgrind > /dev/null; then
+if [ -z "${NO_VALGRIND-}" ] && which valgrind > /dev/null; then
     VALGRIND="valgrind --error-exitcode=1 --leak-check=full \
                        --suppressions=$JQTESTDIR/onig.supp"
     Q=-q

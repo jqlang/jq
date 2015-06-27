@@ -47,6 +47,14 @@ libjq_la_LDFLAGS = -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
 include_HEADERS = jv.h jq.h
 
+### Running tests under Valgrind
+
+if ENABLE_VALGRIND
+NO_VALGRIND =
+else
+NO_VALGRIND = 1
+endif
+
 ### Error injection for testing
 
 if ENABLE_ERROR_INJECTION
@@ -80,6 +88,7 @@ endif
 ### Tests (make check)
 
 TESTS = tests/mantest tests/jqtest tests/onigtest tests/shtest
+TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
 
 ### Building the manpage
