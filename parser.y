@@ -766,6 +766,9 @@ ObjPats ',' ObjPat {
 }
 
 ObjPat:
+'$' IDENT {
+  $$ = gen_object_matcher(gen_const($2), gen_op_unbound(STOREV, jv_string_value($2)));
+} |
 IDENT ':' Pattern {
   $$ = gen_object_matcher(gen_const($1), $3);
 } |
@@ -856,6 +859,10 @@ IDENT ':' ExpD {
 | String {
   $$ = gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
                               gen_op_simple(DUP2), gen_op_simple(INDEX)));
+  }
+| '$' IDENT {
+  $$ = gen_dictpair(gen_const($2),
+                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))));
   }
 | IDENT {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
