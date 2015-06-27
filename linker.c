@@ -198,6 +198,7 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
   jv deps = block_take_imports(src_block);
   block bk = *src_block;
   int nerrors = 0;
+  const char *as_str = NULL;
 
   jv_array_foreach(deps, i, dep) {
     int is_data = jv_get_kind(jv_object_get(jv_copy(dep), jv_string("is_data"))) == JV_KIND_TRUE;
@@ -208,7 +209,9 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
     jv_free(v);
     jv relpath = validate_relpath(jv_object_get(jv_copy(dep), jv_string("relpath")));
     jv as = jv_object_get(jv_copy(dep), jv_string("as"));
-    assert(jv_is_valid(as) && jv_get_kind(as) == JV_KIND_STRING);
+    assert(!jv_is_valid(as) || jv_get_kind(as) == JV_KIND_STRING);
+    if (jv_get_kind(as) == JV_KIND_STRING)
+      as_str = jv_string_value(as);
     jv search = default_search(jq, jv_object_get(dep, jv_string("search")));
     // dep is now freed; do not reuse
 
@@ -233,14 +236,14 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
     if (state_idx < lib_state->ct) { // Found
       jv_free(resolved);
       // Bind the library to the program
-      bk = block_bind_library(lib_state->defs[state_idx], bk, OP_IS_CALL_PSEUDO, jv_string_value(as));
+      bk = block_bind_library(lib_state->defs[state_idx], bk, OP_IS_CALL_PSEUDO, as_str);
     } else { // Not found.   Add it to the table before binding.
       block dep_def_block = gen_noop();
-      nerrors += load_library(jq, resolved, is_data, raw, jv_string_value(as), &dep_def_block, lib_state);
+      nerrors += load_library(jq, resolved, is_data, raw, as_str, &dep_def_block, lib_state);
       // resolved has been freed
       if (nerrors == 0) {
         // Bind the library to the program
-        bk = block_bind_library(dep_def_block, bk, OP_IS_CALL_PSEUDO, jv_string_value(as));
+        bk = block_bind_library(dep_def_block, bk, OP_IS_CALL_PSEUDO, as_str);
       }
     }
     jv_free(as);

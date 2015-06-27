@@ -487,6 +487,12 @@ Import:
   jv_free($4);
   jv_free(v);
 } |
+"import" String ';' {
+  jv v = block_const($2);
+  $$ = gen_import(jv_string_value(v), gen_noop(), NULL, 0);
+  block_free($2);
+  jv_free(v);
+} |
 "import" String "as" IDENT Exp ';' {
   if (!block_is_const($5)) {
     FAIL(@$, "Module metadata must be constant.");
@@ -498,6 +504,17 @@ Import:
   }
   block_free($2);
   jv_free($4);
+} |
+"import" String Exp ';' {
+  if (!block_is_const($3)) {
+    FAIL(@$, "Module metadata must be constant.");
+    $$ = gen_noop();
+  } else {
+    jv v = block_const($2);
+    $$ = gen_import(jv_string_value(v), $3, NULL, 0);
+    jv_free(v);
+  }
+  block_free($2);
 } |
 "import" String "as" '$' IDENT Exp ';' {
   if (!block_is_const($6)) {

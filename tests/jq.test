@@ -1117,6 +1117,10 @@ import "c" as foo; [foo::a, foo::c]
 null
 [0,"acmehbah"]
 
+import "c"; [a, c]
+null
+[0,"acmehbah"]
+
 modulemeta
 "c"
 {"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}

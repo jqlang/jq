@@ -2753,6 +2753,14 @@ sections:
           the relative path string.  The module's symbols are prefixed
           with "NAME::".
 
+      - title: "`import RelativePathString;`"
+        body: |
+
+          Imports a module found at the given path relative to a
+          directory in a search path.  A ".jq" suffix will be added to
+          the relative path string.  The module's symbols are imported
+          into the caller's namespace as if the module's content had
+          been included directly.
 
       - title: "`import RelativePathString as NAME <metadata>;`"
         body: |

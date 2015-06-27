@@ -368,12 +368,13 @@ block block_bind(block binder, block body, int bindflags) {
   return block_join(binder, body);
 }
 
-block block_bind_library(block binder, block body, int bindflags, const char* libname) {
+block block_bind_library(block binder, block body, int bindflags, const char *libname) {
   bindflags |= OP_HAS_BINDING;
   int nrefs = 0;
-  int matchlen = strlen(libname);
-  char* matchname = jv_mem_alloc(matchlen+2+1);
-  if (libname[0] != '\0') {
+  int matchlen = (libname == NULL) ? 0 : strlen(libname);
+  char *matchname = jv_mem_alloc(matchlen+2+1);
+  matchname[0] = '\0';
+  if (libname != NULL && libname[0] != '\0') {
     strcpy(matchname,libname);
     strcpy(matchname+matchlen, "::");
     matchlen += 2;
@@ -502,7 +503,8 @@ block gen_import(const char* name, block metadata, const char* as, int is_data) 
     meta = block_const(metadata);
   else
     meta = jv_object();
-  meta = jv_object_set(meta, jv_string("as"), jv_string(as));
+  if (as != NULL)
+    meta = jv_object_set(meta, jv_string("as"), jv_string(as));
   meta = jv_object_set(meta, jv_string("is_data"), is_data ? jv_true() : jv_false());
   meta = jv_object_set(meta, jv_string("relpath"), jv_string(name));
   i->imm.constant = meta;
