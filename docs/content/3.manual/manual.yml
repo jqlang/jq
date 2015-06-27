@@ -2131,9 +2131,18 @@ sections:
       (many jq functions such as `map` and `find` are in fact written
       in jq).
 
-      Finally, jq has a `reduce` operation, which is very powerful but a
-      bit tricky. Again, it's mostly used internally, to define some
+      jq has reduction operators, which are very powerful but a bit
+      tricky.  Again, these are mostly used internally, to define some
       useful bits of jq's standard library.
+
+      It may not be obvious at first, but jq is all about generators
+      (yes, as often found in other languages).  Some utilities are
+      provided to help deal with generators.
+
+      Some minimal I/O support (besides reading JSON from standard
+      input, and writing JSON to standard output) is available.
+
+      Finally, there is a module/library system.
 
     entries:
       - title: Variables
