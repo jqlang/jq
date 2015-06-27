@@ -2,6 +2,15 @@ sudo: false
 
 language: c
 
+compiler:
+    - gcc
+    - clang
+
+matrix:
+    include:
+        - compiler: gcc
+          env: COVERAGE="--disable-valgrind --enable-gcov"
+
 addons:
     apt:
         packages:
@@ -23,13 +32,14 @@ install:
     - ar p libonig2_5.9.6-1_amd64.deb data.tar.xz | tar xJ
     - mv usr/lib/x86_64-linux-gnu/libonig.so* usr/lib
 
-    - valgrind --version
+    - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
 
 before_script:
     - autoreconf -i
     - ./configure
         --with-oniguruma=usr
         YACC="usr/bin/bison -y"
+        $COVERAGE
 
 script:
     - make -j4
@@ -37,13 +47,13 @@ script:
         BISON_PKGDATADIR=$(pwd)/usr/share/bison
     - make check -j4
 
+after_script:
+    - rm -rf .libs # don't care about coverage for libjq
+    - if [ -n "$COVERAGE" ]; then coveralls --gcov-options '\-lp'; fi
+
 after_failure:
     - cat test-suite.log
     - cat tests/*.log
-
-compiler:
-    - gcc
-    - clang
 
 notifications:
     email: false

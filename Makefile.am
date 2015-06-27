@@ -55,6 +55,12 @@ else
 NO_VALGRIND = 1
 endif
 
+### Code coverage with gcov
+
+if ENABLE_GCOV
+AM_CFLAGS += --coverage --no-inline
+endif
+
 ### Error injection for testing
 
 if ENABLE_ERROR_INJECTION
@@ -176,11 +182,15 @@ dist-clean-local:
 # Not sure why this doesn't get cleaned up automatically, guess
 # automake used to man pages which are hand coded?
 # 'make clean' doesn't delete the manpage if it can't be rebuilt
-.PHONY: clean-local-docs
 clean-local-docs:
 if ENABLE_DOCS
 	rm -f jq.1
 endif 
 
-clean-local: clean-local-docs
+clean-local-gcov:
+	rm -f *.gcno *.gcda *.gcov
+
+clean-local: clean-local-docs clean-local-gcov
 	rm -f version.h .remake-version-h
+
+.PHONY: clean-local-docs clean-local-gcov

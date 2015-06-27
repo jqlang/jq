@@ -89,6 +89,10 @@ dnl fix leaks.
 AC_ARG_ENABLE([valgrind],
    AC_HELP_STRING([--disable-valgrind], [do not run tests under Valgrind]))
 
+dnl Code coverage
+AC_ARG_ENABLE([gcov],
+   AC_HELP_STRING([--enable-gcov], [enable gcov code coverage tool]))
+
 dnl Don't attempt to build docs if there's no Ruby lying around
 AC_ARG_ENABLE([docs],
    AC_HELP_STRING([--disable-docs], [don't build docs]))
@@ -126,6 +130,7 @@ EOF
 ])
 
 AM_CONDITIONAL([ENABLE_VALGRIND], [test "x$enable_valgrind" != xno])
+AM_CONDITIONAL([ENABLE_GCOV], [test "x$enable_gcov" = xyes])
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 AM_CONDITIONAL([ENABLE_ERROR_INJECTION], [test "x$enable_error_injection" = xyes])
 AM_CONDITIONAL([ENABLE_ALL_STATIC], [test "x$enable_all_static" = xyes])
