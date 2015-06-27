@@ -1,6 +1,8 @@
 #!/bin/sh
 
-set -e
+# This is meant to be included by each test's shell script driver.
+
+set -eu
 
 JQTESTDIR=$(cd "$(dirname "$0")" && pwd)
 JQBASEDIR=$JQTESTDIR/..
