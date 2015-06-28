@@ -6,10 +6,10 @@
 #include "jq.h"
 
 static void jv_test();
-static void run_jq_tests();
+static void run_jq_tests(jv, int, FILE *);
 
 
-int jq_testsuite(jv libdirs, int argc, char* argv[]) {
+int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
   FILE *testdata = stdin;
   jv_test();
   if (argc > 0) {
@@ -19,7 +19,7 @@ int jq_testsuite(jv libdirs, int argc, char* argv[]) {
       exit(1);
     }
   }
-  run_jq_tests(libdirs, testdata);
+  run_jq_tests(libdirs, verbose, testdata);
   return 0;
 }
 
@@ -53,7 +53,7 @@ static void test_err_cb(void *data, jv e) {
   jv_free(e);
 }
 
-static void run_jq_tests(jv lib_dirs, FILE *testdata) {
+static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata) {
   char prog[4096];
   char buf[4096];
   struct err_data err_msg;
@@ -119,9 +119,11 @@ static void run_jq_tests(jv lib_dirs, FILE *testdata) {
       }
       continue;
     }
-    printf("Disassembly:\n");
-    jq_dump_disassembly(jq, 2);
-    printf("\n");
+    if (verbose) {
+      printf("Disassembly:\n");
+      jq_dump_disassembly(jq, 2);
+      printf("\n");
+    }
     if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
     lineno++;
     jv input = jv_parse(buf);
@@ -130,7 +132,7 @@ static void run_jq_tests(jv lib_dirs, FILE *testdata) {
       invalid++;
       continue;
     }
-    jq_start(jq, input, JQ_DEBUG_TRACE);
+    jq_start(jq, input, verbose ? JQ_DEBUG_TRACE : 0);
 
     while (fgets(buf, sizeof(buf), testdata)) {
       lineno++;

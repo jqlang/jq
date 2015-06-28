@@ -24,7 +24,7 @@
 #include "util.h"
 #include "version.h"
 
-int jq_testsuite(jv lib_dirs, int argc, char* argv[]);
+int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
 
 static const char* progname;
 
@@ -409,7 +409,9 @@ int main(int argc, char* argv[]) {
         i++;
         // XXX Pass program_arguments, even a whole jq_state *, through;
         // could be useful for testing
-        ret = jq_testsuite(lib_search_paths, argc - i, argv + i);
+        ret = jq_testsuite(lib_search_paths,
+                           (options & DUMP_DISASM) || (jq_flags & JQ_DEBUG_TRACE),
+                           argc - i, argv + i);
         goto out;
       }
 
