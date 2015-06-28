@@ -162,6 +162,38 @@ if test $enable_pthread_tls = yes; then
     AC_FIND_FUNC([atexit], [pthread], [#include <stdlib.h>], [NULL])
 fi
 
+dnl libm math.h functions
+AC_CHECK_MATH_FUNC(acos, [.5])
+AC_CHECK_MATH_FUNC(acosh, [.5])
+AC_CHECK_MATH_FUNC(asin, [.5])
+AC_CHECK_MATH_FUNC(asinh, [.5])
+AC_CHECK_MATH_FUNC(atan, [.5])
+AC_CHECK_MATH_FUNC(atanh, [.5])
+AC_CHECK_MATH_FUNC(cbrt, [.5])
+AC_CHECK_MATH_FUNC(cos, [.5])
+AC_CHECK_MATH_FUNC(cosh, [.5])
+AC_CHECK_MATH_FUNC(exp2, [.5])
+AC_CHECK_MATH_FUNC(exp, [.5])
+AC_CHECK_MATH_FUNC(floor, [.5])
+AC_CHECK_MATH_FUNC(j0, [.5])
+AC_CHECK_MATH_FUNC(j1, [.5])
+AC_CHECK_MATH_FUNC(log10, [.5])
+AC_CHECK_MATH_FUNC(log2, [.5])
+AC_CHECK_MATH_FUNC(log, [.5])
+AC_CHECK_MATH_FUNC(sin, [.5])
+AC_CHECK_MATH_FUNC(sinh, [.5])
+AC_CHECK_MATH_FUNC(sqrt, [.5])
+AC_CHECK_MATH_FUNC(tan, [.5])
+AC_CHECK_MATH_FUNC(tanh, [.5])
+AC_CHECK_MATH_FUNC(tgamma, [.5])
+AC_CHECK_MATH_FUNC(y0, [.5])
+AC_CHECK_MATH_FUNC(y1, [.5])
+AC_CHECK_MATH_FUNC(pow, [2,2])
+AC_CHECK_MATH_FUNC(pow10, [2])
+AC_CHECK_MATH_FUNC(atan2, [.5,.5])
+AC_CHECK_MATH_FUNC(hypot, [.5,.5])
+AC_CHECK_MATH_FUNC(remainder, [3,2])
+
 dnl Thread local storage
 have___thread=no
 AC_MSG_CHECKING(for thread-local storage)

@@ -1,4 +1,5 @@
 #define _BSD_SOURCE
+#define _GNU_SOURCE
 #define _XOPEN_SOURCE
 #include <sys/time.h>
 #include <stdlib.h>
@@ -90,7 +91,23 @@ static jv f_ ## name(jq_state *jq, jv input) { \
   jv_free(input); \
   return ret; \
 }
+#define LIBM_DD_NO(name)
+
+#define LIBM_DDD(name) \
+static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
+  if (jv_get_kind(a) != JV_KIND_NUMBER || jv_get_kind(b) != JV_KIND_NUMBER) \
+    return type_error(input, "number required"); \
+  jv_free(input); \
+  jv ret = jv_number(name(jv_number_value(a), jv_number_value(b))); \
+  jv_free(a); \
+  jv_free(b); \
+  return ret; \
+}
+#define LIBM_DDD_NO(name)
 #include "libm.h"
+#undef LIBM_DDD_NO
+#undef LIBM_DD_NO
+#undef LIBM_DDD
 #undef LIBM_DD
 
 static jv f_negate(jq_state *jq, jv input) {
@@ -1201,6 +1218,11 @@ static jv f_current_line(jq_state *jq) {
 
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 1},
+#define LIBM_DD_NO(name)
+
+#define LIBM_DDD(name) \
+  {(cfunction_ptr)f_ ## name, "_" #name, 3},
+#define LIBM_DD_NO(name)
    
 static const struct cfunction function_list[] = {
 #include "libm.h"
@@ -1268,6 +1290,9 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_current_filename, "input_filename", 1},
   {(cfunction_ptr)f_current_line, "input_line_number", 1},
 };
+#undef LIBM_DDD_NO
+#undef LIBM_DD_NO
+#undef LIBM_DDD
 #undef LIBM_DD
 
 struct bytecoded_builtin { const char* name; block code; };
@@ -1312,6 +1337,9 @@ static block bind_bytecoded_builtins(block b) {
 }
 
 #define LIBM_DD(name) "def " #name ": _" #name ";",
+#define LIBM_DDD(name) "def " #name "(a;b): _" #name "(a;b);",
+#define LIBM_DD_NO(name) "def " #name ": \"Error: " #name "() not found at build time\"|error;",
+#define LIBM_DDD_NO(name) "def " #name "(a;b): \"Error: " #name "() not found at build time\"|error;",
 
 static const char* const jq_builtins[] = {
   "def error: error(.);",
@@ -1591,6 +1619,9 @@ static const char* const jq_builtins[] = {
   "      end"
   "  end;",
 };
+#undef LIBM_DDD_NO
+#undef LIBM_DD_NO
+#undef LIBM_DDD
 #undef LIBM_DD
 
 
