@@ -285,7 +285,7 @@ static void jv_test() {
     assert(jv_array_length(jv_array_get(jv_copy(a), 1)) == 1);
 
 
-    jv_dump(jv_copy(a), 0); printf("\n");
+    //jv_dump(jv_copy(a), 0); printf("\n");
     jv_free(a);
   }
 
@@ -340,15 +340,7 @@ static void jv_test() {
     jv_free(o1);
     assert(jv_number_value(jv_object_get(jv_copy(o2), jv_string("bar"))) == 240);
 
-    jv_dump(jv_copy(o2), 0); printf("\n");
-
+    //jv_dump(jv_copy(o2), 0); printf("\n");
     jv_free(o2);
-  }
-
-  /// Compile errors
-  {
-    jq_state *jq = jq_init();
-    jq_compile_args(jq, "}", jv_array());
-    jq_teardown(&jq);
   }
 }
