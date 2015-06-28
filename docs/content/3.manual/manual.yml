@@ -233,6 +233,20 @@ sections:
         one text, then that is used, else an array of texts is used as
         in `--slurfile`.)
 
+      * `--run-tests [filename]`:
+
+        Runs the tests in the given file or standard input.  This must
+        be the last option given and does not honor all preceding
+        options.  The input consts of comment lines, empty lines, and
+        program lines followed by one input line, as many lines of
+        output as are expected (one per output), and a terminating empty
+        line.  Compilation failure tests start with a line containing
+        only "%%FAIL", then a line containing the program to compile,
+        then a line containing an error message to compare to the
+        actual.
+
+        Be warned that this option can change backwards-incompatibly.
+
   - title: Basic filters
     entries:
       - title: "`.`"
