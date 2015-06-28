@@ -1165,3 +1165,12 @@ try (1%.) catch .
 1/0
 jq: error: Division by zero? at <top-level>, line 1:
 
+# Basic numbers tests: integers, powers of two
+[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers
+null
+true
+
+[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)
+null
+
+
