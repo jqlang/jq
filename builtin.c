@@ -1101,13 +1101,24 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
 static int jv2tm(jv a, struct tm *tm) {
   memset(tm, 0, sizeof(*tm));
   TO_TM_FIELD(tm->tm_year, a, 0);
+  tm->tm_year -= 1900;
   TO_TM_FIELD(tm->tm_mon,  a, 1);
   TO_TM_FIELD(tm->tm_mday, a, 2);
   TO_TM_FIELD(tm->tm_hour, a, 3);
   TO_TM_FIELD(tm->tm_min,  a, 4);
   TO_TM_FIELD(tm->tm_sec,  a, 5);
-  tm->tm_year -= 1900;
+  TO_TM_FIELD(tm->tm_wday, a, 6);
+  TO_TM_FIELD(tm->tm_yday, a, 7);
   jv_free(a);
+
+  // We use UTC everywhere (gettimeofday, gmtime) and UTC does not do DST.
+  // Setting tm_isdst to 0 is done by the memset.
+  // tm->tm_isdst = 0;
+
+  // The standard permits the tm structure to contain additional members. We
+  // hope it is okay to initialize them to zero, because the standard does not
+  // provide an alternative.
+
   return 1;
 }
 
