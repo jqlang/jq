@@ -89,6 +89,7 @@ jq_LDADD = libjq.la -lm
 
 if ENABLE_ALL_STATIC
 jq_LDFLAGS += -all-static
+DEFS += -DJQ_ALL_STATIC=1
 endif
 
 ### Tests (make check)

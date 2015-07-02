@@ -1099,7 +1099,14 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
     } while (0)
 
 static int jv2tm(jv a, struct tm *tm) {
+#ifndef JQ_ALL_STATIC
+  // Zero the entire struct if dynamically linked.
   memset(tm, 0, sizeof(*tm));
+#else
+  // We use UTC everywhere (gettimeofday, gmtime) and UTC does not do DST.
+  tm->tm_isdst = 0;
+#endif
+
   TO_TM_FIELD(tm->tm_year, a, 0);
   tm->tm_year -= 1900;
   TO_TM_FIELD(tm->tm_mon,  a, 1);
@@ -1110,10 +1117,6 @@ static int jv2tm(jv a, struct tm *tm) {
   TO_TM_FIELD(tm->tm_wday, a, 6);
   TO_TM_FIELD(tm->tm_yday, a, 7);
   jv_free(a);
-
-  // We use UTC everywhere (gettimeofday, gmtime) and UTC does not do DST.
-  // Setting tm_isdst to 0 is done by the memset.
-  // tm->tm_isdst = 0;
 
   // The standard permits the tm structure to contain additional members. We
   // hope it is okay to initialize them to zero, because the standard does not

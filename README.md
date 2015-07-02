@@ -33,9 +33,9 @@ To build without bison or flex, add `--disable-maintainer-mode` to the
 (Developers must not use `--disable-maintainer-mode`, not when making
 changes to the jq parser and/or lexer.)
 
-To build a statically linked version of jq, run:
+To build a statically linked version of jq, use:
 
-    make LDFLAGS=-all-static
+    ./configure --enable-all-static
 
 After make finishes, you'll be able to use `./jq`.  You can also
 install it using:
