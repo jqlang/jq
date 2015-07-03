@@ -6,6 +6,35 @@
 #include <string.h>
 #include "jv_alloc.h"
 
+/*
+ * The stack is a directed forest of variably sized blocks. Each block has a
+ * "next" block which is at a higher memory address, or 0 if the block has no
+ * "next" block. More than one block may have no "next" block. A block may be
+ * the "next" block of more than one other block. Pushed blocks are added at
+ * the low-address end of the stack.
+ *
+ * Stack pointers are negative integers that are offsets relative to "mem_end",
+ * the end of the allocated region. The stack "bound" is the stack pointer of
+ * the last block that would be able to fit in the currently allocated region.
+ * The stack "limit" is the stack pointer of the last block currently in the
+ * stack. The stack pointer of the "next" block is stored directly below each
+ * block.
+ *
+ *                      <- mem_end = 0x100
+ * 0xF8  +------------+
+ * 0xF0  |            |
+ * 0xE8  +------------+ <- stack_ptr1 = -0x18
+ * 0xE0  next = 0
+ * 0xD8  +------------+
+ * 0xD0  |            |
+ * 0xC8  |            |
+ * 0xC0  +------------+ <- stack_ptr2 = limit = -0x40
+ * 0xB8  next = -0x18
+ * 0xB0
+ * 0xA8                 <- bound = -0x58
+ * 0xA0
+ */
+
 struct determine_alignment {
   char x;
   union { int i; double d; uint64_t u64; size_t sz; void* ptr; } u;
