@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
   int dumpopts = JV_PRINT_INDENT_FLAGS(2);
   const char* program = 0;
 
-  jq_util_input_state input_state = jq_util_input_init(NULL, NULL); // XXX add err_cb
+  jq_util_input_state *input_state = jq_util_input_init(NULL, NULL); // XXX add err_cb
 
   int further_args_are_files = 0;
   int jq_flags = 0;

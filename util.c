@@ -203,12 +203,12 @@ static void fprinter(void *data, const char *fname) {
 }
 
 // If parser == NULL -> RAW
-jq_util_input_state jq_util_input_init(jq_util_msg_cb err_cb, void *err_cb_data) {
+jq_util_input_state *jq_util_input_init(jq_util_msg_cb err_cb, void *err_cb_data) {
   if (err_cb == NULL) {
     err_cb = fprinter;
     err_cb_data = stderr;
   }
-  jq_util_input_state new_state = jv_mem_alloc(sizeof(*new_state));
+  jq_util_input_state *new_state = jv_mem_alloc(sizeof(*new_state));
   memset(new_state, 0, sizeof(*new_state));
   new_state->err_cb = err_cb;
   new_state->err_cb_data = err_cb_data;
@@ -226,7 +226,7 @@ jq_util_input_state jq_util_input_init(jq_util_msg_cb err_cb, void *err_cb_data)
   return new_state;
 }
 
-void jq_util_input_set_parser(jq_util_input_state state, jv_parser *parser, int slurp) {
+void jq_util_input_set_parser(jq_util_input_state *state, jv_parser *parser, int slurp) {
   assert(!jv_is_valid(state->slurped));
   state->parser = parser;
 
@@ -238,8 +238,8 @@ void jq_util_input_set_parser(jq_util_input_state state, jv_parser *parser, int 
     state->slurped = jv_invalid();
 }
 
-void jq_util_input_free(jq_util_input_state *state) {
-  jq_util_input_state old_state = *state;
+void jq_util_input_free(jq_util_input_state **state) {
+  jq_util_input_state *old_state = *state;
   *state = NULL;
   if (old_state == NULL)
     return;
@@ -254,22 +254,22 @@ void jq_util_input_free(jq_util_input_state *state) {
   jv_mem_free(old_state);
 }
 
-void jq_util_input_add_input(jq_util_input_state state, const char *fname) {
+void jq_util_input_add_input(jq_util_input_state *state, const char *fname) {
   state->files = jv_mem_realloc(state->files, (state->nfiles + 1) * sizeof(state->files[0]));
   state->files[state->nfiles++] = jv_mem_strdup(fname);
 }
 
-int jq_util_input_errors(jq_util_input_state state) {
+int jq_util_input_errors(jq_util_input_state *state) {
   return state->failures;
 }
 
-static const char *next_file(jq_util_input_state state) {
+static const char *next_file(jq_util_input_state *state) {
   if (state->curr_file < state->nfiles)
     return state->files[state->curr_file++];
   return NULL;
 }
 
-static int jq_util_input_read_more(jq_util_input_state state) {
+static int jq_util_input_read_more(jq_util_input_state *state) {
   if (!state->current_input || feof(state->current_input) || ferror(state->current_input)) {
     if (state->current_input && ferror(state->current_input)) {
       // System-level input error on the stream. It will be closed (below).
@@ -360,7 +360,7 @@ static int jq_util_input_read_more(jq_util_input_state state) {
 }
 
 jv jq_util_input_next_input_cb(jq_state *jq, void *data) {
-  return jq_util_input_next_input((jq_util_input_state)data);
+  return jq_util_input_next_input((jq_util_input_state *)data);
 }
 
 // Return the current_filename:current_line
@@ -371,7 +371,7 @@ jv jq_util_input_get_position(jq_state *jq) {
   assert(cb == jq_util_input_next_input_cb);
   if (cb != jq_util_input_next_input_cb)
     return jv_invalid_with_msg(jv_string("Invalid jq_util_input API usage"));
-  jq_util_input_state s = (jq_util_input_state)cb_data;
+  jq_util_input_state *s = (jq_util_input_state *)cb_data;
 
   // We can't assert that current_filename is a string because if
   // the error was a JSON parser error then we may not have set
@@ -389,7 +389,7 @@ jv jq_util_input_get_current_filename(jq_state* jq) {
   jq_get_input_cb(jq, &cb, &cb_data);
   if (cb != jq_util_input_next_input_cb)
     return jv_invalid_with_msg(jv_string("Unknown input filename"));
-  jq_util_input_state s = (jq_util_input_state)cb_data;
+  jq_util_input_state *s = (jq_util_input_state *)cb_data;
   jv v = jv_copy(s->current_filename);
   return v;
 }
@@ -400,7 +400,7 @@ jv jq_util_input_get_current_line(jq_state* jq) {
   jq_get_input_cb(jq, &cb, &cb_data);
   if (cb != jq_util_input_next_input_cb)
     return jv_invalid_with_msg(jv_string("Unknown input line number"));
-  jq_util_input_state s = (jq_util_input_state)cb_data;
+  jq_util_input_state *s = (jq_util_input_state *)cb_data;
   jv v = jv_number(s->current_line);
   return v;
 }
@@ -408,7 +408,7 @@ jv jq_util_input_get_current_line(jq_state* jq) {
 
 // Blocks to read one more input from stdin and/or given files
 // When slurping, it returns just one value
-jv jq_util_input_next_input(jq_util_input_state state) {
+jv jq_util_input_next_input(jq_util_input_state *state) {
   int is_last = 0;
   jv value = jv_invalid(); // need more input
   do {
