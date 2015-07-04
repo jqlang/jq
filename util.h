@@ -1,6 +1,16 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#ifdef WIN32
+/* For WriteFile() below */
+#include <windows.h>
+#include <io.h>
+#include <processenv.h>
+#include <shellapi.h>
+#include <wchar.h>
+#include <wtypes.h>
+#endif
+
 #include "jv.h"
 
 #ifndef HAVE_MKSTEMP
