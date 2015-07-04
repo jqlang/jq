@@ -128,11 +128,6 @@ LIBM_DDD(pow)
 #else
 LIBM_DDD_NO(pow)
 #endif
-#ifdef HAVE_POW10
-LIBM_DD(pow10)
-#else
-LIBM_DD_NO(pow10)
-#endif
 #ifdef HAVE_JN
 LIBM_DID(jn)
 #endif
