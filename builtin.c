@@ -1233,7 +1233,7 @@ static jv f_current_line(jq_state *jq) {
 
 #define LIBM_DDD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 3},
-#define LIBM_DD_NO(name)
+#define LIBM_DDD_NO(name)
    
 static const struct cfunction function_list[] = {
 #include "libm.h"
