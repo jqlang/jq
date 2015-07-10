@@ -3,30 +3,71 @@ Stephen Dolan        <mu@netsoc.tcd.ie>
 
 Maintained by:
 Nicolas Williams     <nico@cryptonector.com>
+William Langford     <wlangfor@gmail.com>
+David Tolnay         <dtolnay@gmail.com>
 
 Contributions by:
-Anthony Shortland    <anthony.shortland@me.com>       - rpmbuild target
-Lee Thompson         <stagr.lee@gmail.com>            - autoconf stuff
-Santiago Lapresta    <santiago.lapresta@gmail.com>    - join, arrays, all, any, other filters
-Nicolas Williams     <nico@cryptonector.com>          - library-fication, autoconf stuff, exception handling, various
-Jingwen Owen Ou      <jingweno@gmail.com>             - jqplay.org and link to it
 Andrew Rodland       <andrew@cleverdomain.org>        - bug fixes
 Ankur                <ankz.kothari@gmail.com>         - bug fixes
+Anthony Shortland    <anthony.shortland@me.com>       - rpmbuild target
 Brendan Macmillan    <melbourne.research@gmail.com>   - bug fixes, load library from ~/.jq
-William Langford     <wlangfor@gmail.com>             - module system, bug fixes
 David R. MacIver     <david@drmaciver.com>            - bug fixes
+David Tolnay         <dtolnay@gmail.com>              - destructuring, build improvements
 Filippo Giunchedi    <fgiunchedi@gmail.com>           - bug fixes
 Filippo Valsorda     <filippo.valsorda@gmail.com>     - recursive object merge (`*`)
 Jack Pearkes         <jackpearkes@gmail.com>          - update tutorial
+Jingwen Owen Ou      <jingweno@gmail.com>             - jqplay.org and link to it
 Joe Littlejohn       <joe.littlejohn@nokia.com>       - bug fixes
 Juan Guerrero        <juan.guerrero.lozano@gmail.com> - bug fixes  
 Kenny Shen           <kenny.shen@zalora.com>          - doc fixes
+Lee Thompson         <stagr.lee@gmail.com>            - autoconf stuff
 Markus Lanthaler     <mark_lanthaler@gmx.net>         - doc fixes
 Michael Daines       <michael@mdaines.com>            - add sqrt; doc fixes
 Mike McCabe          <mccabe@archive.org>             - math (libm) functions
 Nicolas Pouillard    <nicolas.pouillard@gmail.com>    - add tests
+Nicolas Williams     <nico@cryptonector.com>          - library-fication, autoconf stuff, exception handling, various
 Peter van Dijk       <peter@7bits.nl>                 - doc fixes
 Philipp Hagemeister  <phihag@phihag.de>               - doc fixes
 polyester            <paul@cleanclothes.org>          - automake version update
 Rémy Léone           <remy.leone@gmail.com>           - add .travis.yml
 Ryoichi KATO         <ryo1kato@gmail.com>             - doc fixes
+Santiago Lapresta    <santiago.lapresta@gmail.com>    - join, arrays, all, any, other filters
+pkoppstein           <pkoppstein@gmail.com>           - various builtins, improvements
+13ren                <melbourne.research@gmail.com>
+Aaron Peschel        <apeschel@zendesk.com>
+Adam Lindberg        <hello@alind.io>
+Alex Chamberlain     <alex@alexchamberlain.co.uk>
+Andrew O'Brien       <obrien.andrew@gmail.com>        - docs build
+Assaf Gordon         <assafgordon@gmail.com>          - error handling
+cdnbacon             <mike@busbud.com>
+Charles Merriam      <charles.merriam@gmail.com>
+Colin von Heuring    <colin@janrain.com>
+Damian Gryski        <damian@gryski.com>
+David Haguenauer     <ml@kurokatta.org>
+Doug Luce            <doug@github.con.com>            - build
+Eiichi Sato          <sato.eiichi@gmail.com>
+Hanfei Shen          <qqshfox@gmail.com>
+Ian Miell            <ian.miell@gmail.com>
+i                    <isomorphisms@sdf.org>
+James Andariese      <james.andariese@locationlabs.com> - Dockerfile
+jkleint              <jkleint@gmail.com>
+Joel Purra           <code+github@joelpurra.com>
+Kim De Mey           <kim.demey@gmail.com>            - build
+Kim Toms             <kim.toms@bplglobal.net>
+LCD 47               <lcd047@gmail.com>
+Lee Thompson         <thompson@dtosolutions.com>      - rpm
+Marc Abramowitz      <marc@marc-abramowitz.com>
+Marc Bruggmann       <marcbr@spotify.com>
+Maxime Biais         <maxime.biais@gmail.com>         - build
+Mike Fletcher        <john.m.fletcher@bankofamerica.com>
+Sebastian Freundt    <freundt@ga-group.nl>            - build
+Shay Elkin           <shay@everything.me>
+Simon Elsbrock       <simon@iodev.org>                - Debian
+Stefan Seemayer      <stefan@seemayer.de>
+Stephen Roantree     <stroantree@gmail.com>
+Stephen Shaw         <stesh@netsoc.tcd.ie>
+Steven Maude         <StevenMaude@users.noreply.github.com>
+Steven Penny         <svnpenn@gmail.com>              - Windows bug fixes
+tal@whatexit.org     <tal@whatexit.org>
+Travis Gockel        <travis@gockelhut.com>
+Zhiming Wang         <zmwangx@gmail.com>
