@@ -43,6 +43,7 @@ struct lexer_param;
 "==" { return EQ; }
 "as" { return AS; }
 "import" { return IMPORT; }
+"include" { return INCLUDE; }
 "module" { return MODULE; }
 "def" { return DEF; }
 "if" { return IF; }

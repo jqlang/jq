@@ -1121,7 +1121,7 @@ import "c" as foo; [foo::a, foo::c]
 null
 [0,"acmehbah"]
 
-import "c"; [a, c]
+include "c"; [a, c]
 null
 [0,"acmehbah"]
 
@@ -1153,9 +1153,9 @@ try join(",") catch .
 ["1","2",{"a":{"b":{"c":33}}}]
 "string (\",\") and object ({\"a\":{\"b\":{...) cannot be added"
 
-{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,module:15}
+{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}
 null
-{"if":0,"and":1,"or":2,"then":3,"else":4,"elif":5,"end":6,"as":7,"def":8,"reduce":9,"foreach":10,"try":11,"catch":12,"label":13,"import":14,"module":15}
+{"if":0,"and":1,"or":2,"then":3,"else":4,"elif":5,"end":6,"as":7,"def":8,"reduce":9,"foreach":10,"try":11,"catch":12,"label":13,"import":14,"include":15,"module":16}
 
 try (1/.) catch .
 0

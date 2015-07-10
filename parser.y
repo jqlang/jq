@@ -60,6 +60,7 @@ struct lexer_param;
 %token DEF "def"
 %token MODULE "module"
 %token IMPORT "import"
+%token INCLUDE "include"
 %token IF "if"
 %token THEN "then"
 %token ELSE "else"
@@ -487,7 +488,7 @@ Import:
   jv_free($4);
   jv_free(v);
 } |
-"import" String ';' {
+"include" String ';' {
   jv v = block_const($2);
   $$ = gen_import(jv_string_value(v), gen_noop(), NULL, 0);
   block_free($2);
@@ -505,7 +506,7 @@ Import:
   block_free($2);
   jv_free($4);
 } |
-"import" String Exp ';' {
+"include" String Exp ';' {
   if (!block_is_const($3)) {
     FAIL(@$, "Module metadata must be constant.");
     $$ = gen_noop();
@@ -811,6 +812,9 @@ Keyword:
 } |
 "import" {
   $$ = jv_string("import");
+} |
+"include" {
+  $$ = jv_string("include");
 } |
 "if" {
   $$ = jv_string("if");

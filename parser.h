@@ -79,33 +79,34 @@ struct lexer_param;
     DEF = 269,
     MODULE = 270,
     IMPORT = 271,
-    IF = 272,
-    THEN = 273,
-    ELSE = 274,
-    ELSE_IF = 275,
-    REDUCE = 276,
-    FOREACH = 277,
-    END = 278,
-    AND = 279,
-    OR = 280,
-    TRY = 281,
-    CATCH = 282,
-    LABEL = 283,
-    BREAK = 284,
-    LOC = 285,
-    SETPIPE = 286,
-    SETPLUS = 287,
-    SETMINUS = 288,
-    SETMULT = 289,
-    SETDIV = 290,
-    SETDEFINEDOR = 291,
-    LESSEQ = 292,
-    GREATEREQ = 293,
-    QQSTRING_START = 294,
-    QQSTRING_TEXT = 295,
-    QQSTRING_INTERP_START = 296,
-    QQSTRING_INTERP_END = 297,
-    QQSTRING_END = 298
+    INCLUDE = 272,
+    IF = 273,
+    THEN = 274,
+    ELSE = 275,
+    ELSE_IF = 276,
+    REDUCE = 277,
+    FOREACH = 278,
+    END = 279,
+    AND = 280,
+    OR = 281,
+    TRY = 282,
+    CATCH = 283,
+    LABEL = 284,
+    BREAK = 285,
+    LOC = 286,
+    SETPIPE = 287,
+    SETPLUS = 288,
+    SETMINUS = 289,
+    SETMULT = 290,
+    SETDIV = 291,
+    SETDEFINEDOR = 292,
+    LESSEQ = 293,
+    GREATEREQ = 294,
+    QQSTRING_START = 295,
+    QQSTRING_TEXT = 296,
+    QQSTRING_INTERP_START = 297,
+    QQSTRING_INTERP_END = 298,
+    QQSTRING_END = 299
   };
 #endif
 /* Tokens.  */
@@ -123,33 +124,34 @@ struct lexer_param;
 #define DEF 269
 #define MODULE 270
 #define IMPORT 271
-#define IF 272
-#define THEN 273
-#define ELSE 274
-#define ELSE_IF 275
-#define REDUCE 276
-#define FOREACH 277
-#define END 278
-#define AND 279
-#define OR 280
-#define TRY 281
-#define CATCH 282
-#define LABEL 283
-#define BREAK 284
-#define LOC 285
-#define SETPIPE 286
-#define SETPLUS 287
-#define SETMINUS 288
-#define SETMULT 289
-#define SETDIV 290
-#define SETDEFINEDOR 291
-#define LESSEQ 292
-#define GREATEREQ 293
-#define QQSTRING_START 294
-#define QQSTRING_TEXT 295
-#define QQSTRING_INTERP_START 296
-#define QQSTRING_INTERP_END 297
-#define QQSTRING_END 298
+#define INCLUDE 272
+#define IF 273
+#define THEN 274
+#define ELSE 275
+#define ELSE_IF 276
+#define REDUCE 277
+#define FOREACH 278
+#define END 279
+#define AND 280
+#define OR 281
+#define TRY 282
+#define CATCH 283
+#define LABEL 284
+#define BREAK 285
+#define LOC 286
+#define SETPIPE 287
+#define SETPLUS 288
+#define SETMINUS 289
+#define SETMULT 290
+#define SETDIV 291
+#define SETDEFINEDOR 292
+#define LESSEQ 293
+#define GREATEREQ 294
+#define QQSTRING_START 295
+#define QQSTRING_TEXT 296
+#define QQSTRING_INTERP_START 297
+#define QQSTRING_INTERP_END 298
+#define QQSTRING_END 299
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -161,7 +163,7 @@ union YYSTYPE
   jv literal;
   block blk;
 
-#line 165 "parser.h" /* yacc.c:1909  */
+#line 167 "parser.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

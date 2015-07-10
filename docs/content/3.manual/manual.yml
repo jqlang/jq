@@ -2737,8 +2737,8 @@ sections:
       in `.jq`.
 
       Modules imported by a program are searched for in a default search
-      path (see below).  The `import` directive allows the importer to
-      alter this path.
+      path (see below).  The `import` and `include` directives allow the
+      importer to alter this path.
 
       Paths in the a search path are subject to various substitutions.
 
@@ -2795,7 +2795,7 @@ sections:
           string or array value (array of strings); this is the search
           path to be prefixed to the top-level search path.
 
-      - title: "`import RelativePathString [<metadata>];`"
+      - title: "`include RelativePathString [<metadata>];`"
         body: |
 
           Imports a module found at the given path relative to a
