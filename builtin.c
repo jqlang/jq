@@ -1221,7 +1221,11 @@ static jv f_now(jq_state *jq, jv a) {
 #endif
 
 static jv f_current_filename(jq_state *jq) {
-  return jq_util_input_get_current_filename(jq);
+  jv r = jq_util_input_get_current_filename(jq);
+  if (jv_is_valid(r))
+    return r;
+  jv_free(r);
+  return jv_null();
 }
 static jv f_current_line(jq_state *jq) {
   return jq_util_input_get_current_line(jq);
