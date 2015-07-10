@@ -26,31 +26,22 @@ install:
     - wget http://ftp.debian.org/debian/pool/main/b/bison/bison_3.0.2.dfsg-2_amd64.deb
     - ar p bison_3.0.2.dfsg-2_amd64.deb data.tar.xz | tar xJ
 
-    - wget http://ftp.debian.org/debian/pool/main/libo/libonig/libonig-dev_5.9.6-1_amd64.deb
-    - ar p libonig-dev_5.9.6-1_amd64.deb data.tar.xz | tar xJ
-    - wget http://ftp.debian.org/debian/pool/main/libo/libonig/libonig2_5.9.6-1_amd64.deb
-    - ar p libonig2_5.9.6-1_amd64.deb data.tar.xz | tar xJ
-    - mv usr/lib/x86_64-linux-gnu/libonig.so* usr/lib
-
     - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
 
 before_script:
     - autoreconf -i
     - ./configure
-        --with-oniguruma=usr
         YACC="usr/bin/bison -y"
         $COVERAGE
 
 script:
-    - make -j4
-        LDFLAGS="-Lusr/lib -R$(pwd)/usr/lib"
-        BISON_PKGDATADIR=$(pwd)/usr/share/bison
+    - make -j4 BISON_PKGDATADIR=$(pwd)/usr/share/bison
     - make check -j4
 
 after_script:
     - |
         if [ -n "$COVERAGE" ]; then
-            rm -rf .libs usr # don't care about coverage for libjq, bison, libonig
+            rm -rf .libs usr # don't care about coverage for libjq and bison
             coveralls -e lexer.c -e parser.c -e jv_dtoa.c --gcov-options '\-lp'
         fi
 
