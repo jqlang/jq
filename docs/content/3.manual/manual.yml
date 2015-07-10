@@ -2777,7 +2777,6 @@ sections:
       If "$HOME/.jq" is a file, it is sourced into the main program.
 
     entries:
-      - title: "`import RelativePathString as NAME;`"
         body: |
 
           Imports a module found at the given path relative to a
@@ -2804,7 +2803,7 @@ sections:
 
           The metadata must be a constant jq expression.  It should be
           an object with keys like "homepage" and so on.  At this time
-          jq only uses the "search" key/value of the metadate.  The
+          jq only uses the "search" key/value of the metadata.  The
           metadata is also made available to users via the `modulemeta`
           builtin.
           
@@ -2830,7 +2829,7 @@ sections:
 
           The metadata must be a constant jq expression.  It should be
           an object with keys like "homepage" and so on.  At this time
-          jq only uses the "search" key/value of the metadate.  The
+          jq only uses the "search" key/value of the metadata.  The
           metadata is also made available to users via the `modulemeta`
           builtin.
           
