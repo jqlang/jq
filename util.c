@@ -104,7 +104,7 @@ jv get_home() {
   if (!home) {
 #ifndef WIN32
     struct passwd* pwd = getpwuid(getuid());
-    if (pwd) 
+    if (pwd)
       ret = jv_string(pwd->pw_dir);
     else
       ret = jv_invalid_with_msg(jv_string("Could not find home directory."));
@@ -323,7 +323,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
 
       if (p != NULL)
         state->current_line++;
-      
+
       if (p == NULL && state->parser != NULL) {
         /*
          * There should be no NULs in JSON texts (but JSON text

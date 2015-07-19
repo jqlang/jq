@@ -81,7 +81,7 @@ static stack_ptr* stack_block_next(struct stack* s, stack_ptr p) {
 static void stack_reallocate(struct stack* s, size_t sz) {
   int old_mem_length = -(s->bound) + ALIGNMENT;
   char* old_mem_start = s->mem_end - old_mem_length;
-  
+
   int new_mem_length = align_round_up((old_mem_length + sz + 256) * 2);
   char* new_mem_start = jv_mem_realloc(old_mem_start, new_mem_length);
   memmove(new_mem_start + (new_mem_length - old_mem_length),

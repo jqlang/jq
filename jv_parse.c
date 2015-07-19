@@ -43,13 +43,13 @@ struct jv_parser {
   enum last_seen last_seen;    // streamer
   jv output;                   // streamer
   jv next;                     // both
-  
+
   char* tokenbuf;
   int tokenpos;
   int tokenlen;
 
   int line, column;
-  
+
   struct dtoa_context dtoa;
 
   enum {
@@ -102,7 +102,7 @@ static void parser_reset(struct jv_parser* p) {
   p->output = jv_invalid();
   jv_free(p->next);
   p->next = jv_invalid();
-  for (int i=0; i<p->stackpos; i++) 
+  for (int i=0; i<p->stackpos; i++)
     jv_free(p->stack[i]);
   p->stackpos = 0;
   p->tokenpos = 0;
@@ -157,7 +157,7 @@ static pfunc parse_token(struct jv_parser* p, char ch) {
     break;
 
   case ':':
-    if (!jv_is_valid(p->next)) 
+    if (!jv_is_valid(p->next))
       return "Expected string key before ':'";
     if (p->stackpos == 0 || jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_OBJECT)
       return "':' not as part of an object";
@@ -177,7 +177,7 @@ static pfunc parse_token(struct jv_parser* p, char ch) {
       p->next = jv_invalid();
     } else if (jv_get_kind(p->stack[p->stackpos-1]) == JV_KIND_STRING) {
       assert(p->stackpos > 1 && jv_get_kind(p->stack[p->stackpos-2]) == JV_KIND_OBJECT);
-      p->stack[p->stackpos-2] = jv_object_set(p->stack[p->stackpos-2], 
+      p->stack[p->stackpos-2] = jv_object_set(p->stack[p->stackpos-2],
                                               p->stack[p->stackpos-1], p->next);
       p->stackpos--;
       p->next = jv_invalid();
@@ -210,7 +210,7 @@ static pfunc parse_token(struct jv_parser* p, char ch) {
       if (jv_get_kind(p->stack[p->stackpos-1]) != JV_KIND_STRING)
         return "Objects must consist of key:value pairs";
       assert(p->stackpos > 1 && jv_get_kind(p->stack[p->stackpos-2]) == JV_KIND_OBJECT);
-      p->stack[p->stackpos-2] = jv_object_set(p->stack[p->stackpos-2], 
+      p->stack[p->stackpos-2] = jv_object_set(p->stack[p->stackpos-2],
                                               p->stack[p->stackpos-1], p->next);
       p->stackpos--;
       p->next = jv_invalid();
@@ -410,7 +410,7 @@ static pfunc found_string(struct jv_parser* p) {
   char* in = p->tokenbuf;
   char* out = p->tokenbuf;
   char* end = p->tokenbuf + p->tokenpos;
-  
+
   while (in < end) {
     char c = *in++;
     if (c == '\\') {
@@ -479,7 +479,7 @@ static pfunc check_literal(struct jv_parser* p) {
   }
   if (pattern) {
     if (p->tokenpos != plen) return "Invalid literal";
-    for (int i=0; i<plen; i++) 
+    for (int i=0; i<plen; i++)
       if (p->tokenbuf[i] != pattern[i])
         return "Invalid literal";
     TRY(value(p, v));

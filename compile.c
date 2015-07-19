@@ -14,7 +14,7 @@
 /*
   The intermediate representation for jq filters is as a sequence of
   struct inst, which form a doubly-linked list via the next and prev
-  pointers. 
+  pointers.
 
   A "block" represents a sequence of "struct inst", which may be
   empty.
@@ -28,7 +28,7 @@ struct inst {
   struct inst* prev;
 
   opcode op;
-  
+
   struct {
     uint16_t intval;
     struct inst* target;
@@ -45,7 +45,7 @@ struct inst {
   //   inst->bound_by = NULL  - Unbound free variable
   //   inst->bound_by = inst  - This instruction binds a variable
   //   inst->bound_by = other - Uses variable bound by other instruction
-  // Unbound instructions (references to other things that may or may not 
+  // Unbound instructions (references to other things that may or may not
   // exist) are created by "gen_foo_unbound", and bindings are created by
   // block_bind(definition, body), which binds all instructions in
   // body which are unboudn and refer to "definition" by name.
@@ -288,7 +288,7 @@ static int block_count_actuals(block b) {
   for (inst* i = b.first; i; i = i->next) {
     switch (i->op) {
     default: assert(0 && "Unknown function type"); break;
-    case CLOSURE_CREATE: 
+    case CLOSURE_CREATE:
     case CLOSURE_PARAM:
     case CLOSURE_CREATE_C:
       args++;
@@ -462,7 +462,7 @@ block block_drop_unreferenced(block body) {
 
 jv block_take_imports(block* body) {
   jv imports = jv_array();
-  
+
   inst* top = NULL;
   if (body->first && body->first->op == TOP) {
     top = block_take(body);
@@ -808,7 +808,7 @@ block gen_condbranch(block iftrue, block iffalse) {
 
 block gen_and(block a, block b) {
   // a and b = if a then (if b then true else false) else false
-  return BLOCK(gen_op_simple(DUP), a, 
+  return BLOCK(gen_op_simple(DUP), a,
                gen_condbranch(BLOCK(gen_op_simple(POP),
                                     b,
                                     gen_condbranch(gen_const(jv_true()),
@@ -870,7 +870,7 @@ static block gen_wildvar_binding(block var, const char* name, block body) {
 }
 
 block gen_cond(block cond, block iftrue, block iffalse) {
-  return BLOCK(gen_op_simple(DUP), cond, 
+  return BLOCK(gen_op_simple(DUP), cond,
                gen_condbranch(BLOCK(gen_op_simple(POP), iftrue),
                               BLOCK(gen_op_simple(POP), iffalse)));
 }
@@ -988,7 +988,7 @@ static int expand_call_arglist(block* b) {
       // We expand the argument list as a series of instructions
       switch (curr->bound_by->op) {
       default: assert(0 && "Unknown function type"); break;
-      case CLOSURE_CREATE: 
+      case CLOSURE_CREATE:
       case CLOSURE_PARAM: {
         block callargs = gen_noop();
         for (inst* i; (i = block_take(&curr->arglist));) {
@@ -1137,7 +1137,7 @@ static int compile(struct bytecode* bc, block b) {
              curr->bound_by->op == CLOSURE_PARAM);
       code[pos++] = (uint16_t)curr->imm.intval;
       code[pos++] = nesting_level(bc, curr->bound_by);
-      code[pos++] = curr->bound_by->imm.intval | 
+      code[pos++] = curr->bound_by->imm.intval |
         (curr->bound_by->op == CLOSURE_CREATE ? ARG_NEWCLOSURE : 0);
       for (inst* arg = curr->arglist.first; arg; arg = arg->next) {
         assert(arg->op == CLOSURE_REF && arg->bound_by->op == CLOSURE_CREATE);

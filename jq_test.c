@@ -199,7 +199,7 @@ static void jv_test() {
     assert(jv_get_kind(a) == JV_KIND_ARRAY);
     assert(jv_array_length(jv_copy(a)) == 0);
     assert(jv_array_length(jv_copy(a)) == 0);
-  
+
     a = jv_array_append(a, jv_number(42));
     assert(jv_array_length(jv_copy(a)) == 1);
     assert(jv_number_value(jv_array_get(jv_copy(a), 0)) == 42);
@@ -300,13 +300,13 @@ static void jv_test() {
     jv_free(shortstr);
     jv_free(longstr);
 
-  
+
     char a1s[] = "hello", a2s[] = "hello", bs[] = "goodbye";
     jv a1 = jv_string(a1s), a2 = jv_string(a2s), b = jv_string(bs);
     assert(jv_equal(jv_copy(a1), jv_copy(a2)));
     assert(jv_equal(jv_copy(a2), jv_copy(a1)));
     assert(!jv_equal(jv_copy(a1), jv_copy(b)));
-    
+
     assert(jv_string_hash(jv_copy(a1)) == jv_string_hash(jv_copy(a1)));
     assert(jv_string_hash(jv_copy(a1)) == jv_string_hash(jv_copy(a2)));
     assert(jv_string_hash(jv_copy(b)) != jv_string_hash(jv_copy(a1)));

@@ -88,9 +88,9 @@ jv jv_get(jv t, jv k) {
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_ARRAY) {
     v = jv_array_indexes(t, k);
-  } else if (jv_get_kind(t) == JV_KIND_NULL && 
-             (jv_get_kind(k) == JV_KIND_STRING || 
-              jv_get_kind(k) == JV_KIND_NUMBER || 
+  } else if (jv_get_kind(t) == JV_KIND_NULL &&
+             (jv_get_kind(k) == JV_KIND_STRING ||
+              jv_get_kind(k) == JV_KIND_NUMBER ||
               jv_get_kind(k) == JV_KIND_OBJECT)) {
     jv_free(t);
     jv_free(k);
@@ -123,7 +123,7 @@ jv jv_set(jv t, jv k, jv v) {
     return v;
   }
   int isnull = jv_get_kind(t) == JV_KIND_NULL;
-  if (jv_get_kind(k) == JV_KIND_STRING && 
+  if (jv_get_kind(k) == JV_KIND_STRING &&
       (jv_get_kind(t) == JV_KIND_OBJECT || isnull)) {
     if (isnull) t = jv_object();
     t = jv_object_set(t, k, v);
@@ -214,7 +214,7 @@ jv jv_has(jv t, jv k) {
 jv jv_dels(jv t, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_is_valid(t));
-  
+
   if (jv_get_kind(t) == JV_KIND_NULL || jv_array_length(jv_copy(keys)) == 0) {
     // no change
   } else if (jv_get_kind(t) == JV_KIND_ARRAY) {
@@ -285,7 +285,7 @@ jv jv_dels(jv t, jv keys) {
         jv_free(k);
         break;
       }
-      t = jv_object_delete(t, k);      
+      t = jv_object_delete(t, k);
     }
   } else {
     jv err = jv_invalid_with_msg(jv_string_fmt("Cannot delete fields from %s",
@@ -316,7 +316,7 @@ jv jv_setpath(jv root, jv path, jv value) {
   }
   jv pathcurr = jv_array_get(jv_copy(path), 0);
   jv pathrest = jv_array_slice(path, 1, jv_array_length(jv_copy(path)));
-  return jv_set(root, pathcurr, 
+  return jv_set(root, pathcurr,
                 jv_setpath(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest, value));
 }
 
@@ -382,7 +382,7 @@ static jv delpaths_sorted(jv object, jv paths, int start) {
   jv_free(paths);
   if (jv_is_valid(object))
     object = jv_dels(object, delkeys);
-  else 
+  else
     jv_free(delkeys);
   return object;
 }
@@ -488,7 +488,7 @@ int jv_cmp(jv a, jv b) {
 
   case JV_KIND_NUMBER: {
     double da = jv_number_value(a), db = jv_number_value(b);
-    
+
     // handle NaN as though it were null
     if (da != da) r = jv_cmp(jv_null(), jv_number(db));
     else if (db != db) r = jv_cmp(jv_number(da), jv_null());

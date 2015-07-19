@@ -525,7 +525,7 @@ void jvp_dtoa_context_init(struct dtoa_context* C) {
   }
   C->p5s = 0;
 }
-  
+
  static Bigint *
  Balloc(struct dtoa_context* C, int k)
 {

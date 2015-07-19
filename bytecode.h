@@ -11,7 +11,7 @@ typedef enum {
 } opcode;
 
 enum {
-  NUM_OPCODES = 
+  NUM_OPCODES =
 #define OP(name, imm, in, out) +1
 #include "opcode_list.h"
 #undef OP

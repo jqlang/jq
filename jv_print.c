@@ -19,7 +19,7 @@
 
 // Colour table. See http://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 // for how to choose these.
-static const jv_kind colour_kinds[] = 
+static const jv_kind colour_kinds[] =
   {JV_KIND_NULL,   JV_KIND_FALSE, JV_KIND_TRUE, JV_KIND_NUMBER,
    JV_KIND_STRING, JV_KIND_ARRAY, JV_KIND_OBJECT};
 static const char* const colours[] =
@@ -118,7 +118,7 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
         sprintf(buf, "\\u%04x", c);
       } else {
         c -= 0x10000;
-        sprintf(buf, "\\u%04x\\u%04x", 
+        sprintf(buf, "\\u%04x\\u%04x",
                 0xD800 | ((c & 0xffc00) >> 10),
                 0xDC00 | (c & 0x003ff));
       }
@@ -283,7 +283,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       if (colour) put_str(colour, F, S, flags & JV_PRINT_ISATTY);
       put_str((flags & JV_PRINT_PRETTY) ? ": " : ":", F, S, flags & JV_PRINT_ISATTY);
       if (colour) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
-      
+
       jv_dump_term(C, value, flags, indent + 1, F, S);
       if (colour) put_str(colour, F, S, flags & JV_PRINT_ISATTY);
     }

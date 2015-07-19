@@ -106,10 +106,10 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
         jv name;
         if (idx & ARG_NEWCLOSURE) {
           idx &= ~ARG_NEWCLOSURE;
-          name = jv_object_get(jv_copy(getlevel(bc,level)->subfunctions[idx]->debuginfo), 
+          name = jv_object_get(jv_copy(getlevel(bc,level)->subfunctions[idx]->debuginfo),
                                jv_string("name"));
         } else {
-          name = jv_array_get(jv_object_get(jv_copy(getlevel(bc,level)->debuginfo), 
+          name = jv_array_get(jv_object_get(jv_copy(getlevel(bc,level)->debuginfo),
                                             jv_string("params")), idx);
         }
         printf(" %s:%d",
@@ -133,8 +133,8 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
     } else if (op->flags & OP_HAS_VARIABLE) {
       uint16_t v = bc->code[pc++];
       jv name = jv_array_get(jv_object_get(jv_copy(getlevel(bc,imm)->debuginfo), jv_string("locals")), v);
-      printf(" $%s:%d", 
-             jv_string_value(name), 
+      printf(" $%s:%d",
+             jv_string_value(name),
              v);
       jv_free(name);
       if (imm) {
@@ -143,7 +143,7 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
     } else {
       printf(" %d", imm);
     }
-  }  
+  }
 }
 
 void bytecode_free(struct bytecode* bc) {

@@ -154,7 +154,7 @@ jv jv_object_iter_value(jv, int);
 #define JV_OBJECT_IDX(_1,_2,_3,_4,_5,_6,_7,_8,NAME,...) NAME
 #define JV_OBJECT(...) \
   JV_OBJECT_IDX(__VA_ARGS__, JV_OBJECT_8, JV_OBJECT_7, JV_OBJECT_6, JV_OBJECT_5, JV_OBJECT_4, JV_OBJECT_3, JV_OBJECT_2, JV_OBJECT_1)(__VA_ARGS__)
- 
+
 
 
 int jv_get_refcnt(jv);

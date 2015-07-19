@@ -84,7 +84,7 @@ jv jv_bool(int x) {
 
 /*
  * Invalid objects, with optional error messages
- */ 
+ */
 
 typedef struct {
   jv_refcnt refcnt;
@@ -248,7 +248,7 @@ static jv* jvp_array_write(jv* a, int i) {
     jvp_array* new_array = jvp_array_alloc(ARRAY_SIZE_ROUND_UP(new_length));
     int j;
     for (j = 0; j < jvp_array_length(*a); j++) {
-      new_array->elements[j] = 
+      new_array->elements[j] =
         jv_copy(array->elements[j + jvp_array_offset(*a)]);
     }
     for (; j < new_length; j++) {
@@ -263,13 +263,13 @@ static jv* jvp_array_write(jv* a, int i) {
 }
 
 static int jvp_array_equal(jv a, jv b) {
-  if (jvp_array_length(a) != jvp_array_length(b)) 
+  if (jvp_array_length(a) != jvp_array_length(b))
     return 0;
   if (jvp_array_ptr(a) == jvp_array_ptr(b) &&
-      jvp_array_offset(a) == jvp_array_offset(b)) 
+      jvp_array_offset(a) == jvp_array_offset(b))
     return 1;
   for (int i=0; i<jvp_array_length(a); i++) {
-    if (!jv_equal(jv_copy(*jvp_array_read(a, i)), 
+    if (!jv_equal(jv_copy(*jvp_array_read(a, i)),
                   jv_copy(*jvp_array_read(b, i))))
       return 0;
   }
@@ -292,7 +292,7 @@ static jv jvp_array_slice(jv a, int start, int end) {
   int len = jvp_array_length(a);
   jvp_clamp_slice_params(len, &start, &end);
   assert(0 <= start && start <= end && end <= len);
-  
+
   // FIXME: maybe slice should reallocate if the slice is small enough
   if (start == end) {
     jv_free(a);
@@ -427,7 +427,7 @@ jv jv_array_indexes(jv a, jv b) {
 typedef struct {
   jv_refcnt refcnt;
   uint32_t hash;
-  // high 31 bits are length, low bit is a flag 
+  // high 31 bits are length, low bit is a flag
   // indicating whether hash has been computed.
   uint32_t length_hashed;
   uint32_t alloc_length;
@@ -511,7 +511,7 @@ static uint32_t jvp_string_remaining_space(jvp_string* s) {
 static jv jvp_string_append(jv string, const char* data, uint32_t len) {
   jvp_string* s = jvp_string_ptr(string);
   uint32_t currlen = jvp_string_length(s);
-    
+
   if (jvp_refcnt_unshared(string.u.ptr) &&
       jvp_string_remaining_space(s) >= len) {
     // the next string fits at the end of a
@@ -542,7 +542,7 @@ static uint32_t rotl32 (uint32_t x, int8_t r){
 
 static uint32_t jvp_string_hash(jv jstr) {
   jvp_string* str = jvp_string_ptr(jstr);
-  if (str->length_hashed & 1) 
+  if (str->length_hashed & 1)
     return str->hash;
 
   /* The following is based on MurmurHash3.
@@ -561,13 +561,13 @@ static uint32_t jvp_string_hash(jv jstr) {
 
   for(int i = -nblocks; i; i++) {
     uint32_t k1 = blocks[i]; //FIXME: endianness/alignment
-    
+
     k1 *= c1;
     k1 = rotl32(k1,15);
     k1 *= c2;
-    
+
     h1 ^= k1;
-    h1 = rotl32(h1,13); 
+    h1 = rotl32(h1,13);
     h1 = h1*5+0xe6546b64;
   }
 
@@ -611,7 +611,7 @@ static int jvp_string_equal(jv a, jv b) {
 
 jv jv_string_sized(const char* str, int len) {
   return
-    jvp_utf8_is_valid(str, str+len) ? 
+    jvp_utf8_is_valid(str, str+len) ?
     jvp_string_new(str, len) :
     jvp_string_copy_replace_bad(str, len);
 }
@@ -790,7 +790,7 @@ jv jv_string_slice(jv j, int start, int end) {
 }
 
 jv jv_string_concat(jv a, jv b) {
-  a = jvp_string_append(a, jv_string_value(b), 
+  a = jvp_string_append(a, jv_string_value(b),
                         jvp_string_length(jvp_string_ptr(b)));
   jv_free(b);
   return a;
@@ -873,7 +873,7 @@ static jv jvp_object_new(int size) {
   // size must be a power of two
   assert(size > 0 && (size & (size - 1)) == 0);
 
-  jvp_object* obj = jv_mem_alloc(sizeof(jvp_object) + 
+  jvp_object* obj = jv_mem_alloc(sizeof(jvp_object) +
                                  sizeof(struct object_slot) * size +
                                  sizeof(int) * (size * 2));
   obj->refcnt.count = 1;
@@ -927,8 +927,8 @@ static struct object_slot* jvp_object_next_slot(jv object, struct object_slot* s
 
 static struct object_slot* jvp_object_find_slot(jv object, jv keystr, int* bucket) {
   uint32_t hash = jvp_string_hash(keystr);
-  for (struct object_slot* curr = jvp_object_get_slot(object, *bucket); 
-       curr; 
+  for (struct object_slot* curr = jvp_object_get_slot(object, *bucket);
+       curr;
        curr = jvp_object_next_slot(object, curr)) {
     if (curr->hash == hash && jvp_string_equal(keystr, curr->string)) {
       return curr;
@@ -1046,8 +1046,8 @@ static int jvp_object_delete(jv* object, jv key) {
   int* bucket = jvp_object_find_bucket(*object, key);
   int* prev_ptr = bucket;
   uint32_t hash = jvp_string_hash(key);
-  for (struct object_slot* curr = jvp_object_get_slot(*object, *bucket); 
-       curr; 
+  for (struct object_slot* curr = jvp_object_get_slot(*object, *bucket);
+       curr;
        curr = jvp_object_next_slot(*object, curr)) {
     if (hash == curr->hash && jvp_string_equal(key, curr->string)) {
       *prev_ptr = curr->next;
@@ -1201,7 +1201,7 @@ int jv_object_iter_next(jv object, int iter) {
   struct object_slot* slot;
   do {
     iter++;
-    if (iter >= jvp_object_size(object)) 
+    if (iter >= jvp_object_size(object))
       return ITER_FINISHED;
     slot = jvp_object_get_slot(object, iter);
   } while (jv_get_kind(slot->string) == JV_KIND_NULL);
@@ -1224,8 +1224,8 @@ jv jv_object_iter_value(jv object, int iter) {
  * Memory management
  */
 jv jv_copy(jv j) {
-  if (jv_get_kind(j) == JV_KIND_ARRAY || 
-      jv_get_kind(j) == JV_KIND_STRING || 
+  if (jv_get_kind(j) == JV_KIND_ARRAY ||
+      jv_get_kind(j) == JV_KIND_STRING ||
       jv_get_kind(j) == JV_KIND_OBJECT ||
       (jv_get_kind(j) == JV_KIND_INVALID && j.u.ptr != 0)) {
     jvp_refcnt_inc(j.u.ptr);

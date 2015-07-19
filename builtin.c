@@ -69,7 +69,7 @@ static jv f_plus(jq_state *jq, jv input, jv a, jv b) {
     jv_free(b);
     return a;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    return jv_number(jv_number_value(a) + 
+    return jv_number(jv_number_value(a) +
                      jv_number_value(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
     return jv_string_concat(a, b);
@@ -238,7 +238,7 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
     return jv_object_merge_recursive(a, b);
   } else {
     return type_error2(a, b, "cannot be multiplied");
-  }  
+  }
 }
 
 static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
@@ -251,7 +251,7 @@ static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
     return jv_string_split(a, b);
   } else {
     return type_error2(a, b, "cannot be divided");
-  }  
+  }
 }
 
 static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
@@ -262,7 +262,7 @@ static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
     return jv_number((intmax_t)jv_number_value(a) % (intmax_t)jv_number_value(b));
   } else {
     return type_error2(a, b, "cannot be divided (remainder)");
-  }  
+  }
 }
 
 static jv f_equal(jq_state *jq, jv input, jv a, jv b) {
@@ -572,7 +572,7 @@ static jv f_sort(jq_state *jq, jv input){
 }
 
 static jv f_sort_by_impl(jq_state *jq, jv input, jv keys) {
-  if (jv_get_kind(input) == JV_KIND_ARRAY && 
+  if (jv_get_kind(input) == JV_KIND_ARRAY &&
       jv_get_kind(keys) == JV_KIND_ARRAY &&
       jv_array_length(jv_copy(input)) == jv_array_length(jv_copy(keys))) {
     return jv_sort(input, keys);
@@ -582,7 +582,7 @@ static jv f_sort_by_impl(jq_state *jq, jv input, jv keys) {
 }
 
 static jv f_group_by_impl(jq_state *jq, jv input, jv keys) {
-  if (jv_get_kind(input) == JV_KIND_ARRAY && 
+  if (jv_get_kind(input) == JV_KIND_ARRAY &&
       jv_get_kind(keys) == JV_KIND_ARRAY &&
       jv_array_length(jv_copy(input)) == jv_array_length(jv_copy(keys))) {
     return jv_group(input, keys);
@@ -668,7 +668,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
       }
     }
     jv_free(modarray);
-  } else if (jv_get_kind(modifiers) != JV_KIND_NULL) { 
+  } else if (jv_get_kind(modifiers) != JV_KIND_NULL) {
     // If it isn't a string or null, then it is the wrong type...
     jv_free(input);
     jv_free(regex);
@@ -695,7 +695,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   const UChar* end = start + length;
   region = onig_region_new();
   do {
-    onigret = onig_search(reg, 
+    onigret = onig_search(reg,
         (const UChar*)jv_string_value(input), end, /* string boundaries */
         start, end, /* search boundaries */
         region, ONIG_OPTION_NONE);
@@ -1238,7 +1238,7 @@ static jv f_current_line(jq_state *jq) {
 #define LIBM_DDD(name) \
   {(cfunction_ptr)f_ ## name, "_" #name, 3},
 #define LIBM_DDD_NO(name)
-   
+
 static const struct cfunction function_list[] = {
 #include "libm.h"
   {(cfunction_ptr)f_plus, "_plus", 3},
@@ -1326,7 +1326,7 @@ static block bind_bytecoded_builtins(block b) {
   }
   {
     struct bytecoded_builtin builtin_def_1arg[] = {
-      {"path", BLOCK(gen_op_simple(PATH_BEGIN), 
+      {"path", BLOCK(gen_op_simple(PATH_BEGIN),
                      gen_call("arg", gen_noop()),
                      gen_op_simple(PATH_END))},
     };
@@ -1340,14 +1340,14 @@ static block bind_bytecoded_builtins(block b) {
     // Note that we can now define `range` as a jq-coded function
     block rangevar = gen_op_var_fresh(STOREV, "rangevar");
     block init = BLOCK(gen_op_simple(DUP), gen_call("start", gen_noop()), rangevar);
-    block range = BLOCK(init, 
+    block range = BLOCK(init,
                         gen_call("end", gen_noop()),
                         gen_op_bound(RANGE, rangevar));
     builtins = BLOCK(builtins, gen_function("range",
                                             BLOCK(gen_param("start"), gen_param("end")),
                                             range));
   }
-  
+
   return block_bind_referenced(builtins, b, OP_IS_CALL_PSEUDO);
 }
 

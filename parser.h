@@ -56,9 +56,8 @@ struct lexer_param;
       (Loc).end = YYRHSLOC(Rhs, 0).end;         \
     }                                           \
   } while (0)
- 
 
-#line 62 "parser.h" /* yacc.c:1909  */
+#line 61 "parser.h" /* yacc.c:1909  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -163,7 +162,7 @@ union YYSTYPE
   jv literal;
   block blk;
 
-#line 167 "parser.h" /* yacc.c:1909  */
+#line 166 "parser.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
