@@ -90,8 +90,9 @@ struct lexer_param;
 %token QQSTRING_INTERP_END
 %token QQSTRING_END
 
-/* see Exp '?' rule */
-%expect 9
+/* Instead of raising this, find a way to use precedence to resolve
+ * shift-reduce conflicts. */
+%expect 0
 
 %precedence FUNCDEF
 %right '|'
@@ -103,6 +104,8 @@ struct lexer_param;
 %nonassoc NEQ EQ '<' '>' LESSEQ GREATEREQ
 %left '+' '-'
 %left '*' '/' '%'
+%precedence NONOPT /* non-optional; rules for which a specialized
+                      '?' rule should be preferred over Exp '?' */
 %precedence '?'
 %precedence "try"
 %precedence "catch"
@@ -355,11 +358,6 @@ Term "as" Pattern '|' Exp {
   jv_free(v);
 } |
 
-// This rule conflicts with all the other rules using the '?' operator.
-// It doesn't matter which bison prefers: all of them result in the same
-// syntax and semantics, but the more specific rules optimize better
-// because they use opcodes specifically made for the purpose.  We
-// expect 9 such conflicts.
 Exp '?' {
   $$ = gen_try($1, gen_op_simple(BACKTRACK));
 } |
@@ -636,16 +634,16 @@ Term '.' String '?' {
 '.' String '?' {
   $$ = gen_index_opt(gen_noop(), $2);
 } |
-Term FIELD {
+Term FIELD %prec NONOPT {
   $$ = gen_index($1, gen_const($2));
 } |
-FIELD {
+FIELD %prec NONOPT {
   $$ = gen_index(gen_noop(), gen_const($1));
 } |
-Term '.' String {
+Term '.' String %prec NONOPT {
   $$ = gen_index($1, $3);
 } |
-'.' String {
+'.' String %prec NONOPT {
   $$ = gen_index(gen_noop(), $2);
 } |
 '.' error {
@@ -661,13 +659,13 @@ Term '.' String {
 Term '[' Exp ']' '?' {
   $$ = gen_index_opt($1, $3);
 } |
-Term '[' Exp ']' {
+Term '[' Exp ']' %prec NONOPT {
   $$ = gen_index($1, $3);
 } |
 Term '[' ']' '?' {
   $$ = block_join($1, gen_op_simple(EACH_OPT));
 } |
-Term '[' ']' {
+Term '[' ']' %prec NONOPT {
   $$ = block_join($1, gen_op_simple(EACH));
 } |
 Term '[' Exp ':' Exp ']' '?' {
@@ -679,13 +677,13 @@ Term '[' Exp ':' ']' '?' {
 Term '[' ':' Exp ']' '?' {
   $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX_OPT);
 } |
-Term '[' Exp ':' Exp ']' {
+Term '[' Exp ':' Exp ']' %prec NONOPT {
   $$ = gen_slice_index($1, $3, $5, INDEX);
 } |
-Term '[' Exp ':' ']' {
+Term '[' Exp ':' ']' %prec NONOPT {
   $$ = gen_slice_index($1, $3, gen_const(jv_null()), INDEX);
 } |
-Term '[' ':' Exp ']' {
+Term '[' ':' Exp ']' %prec NONOPT {
   $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX);
 } |
 LITERAL {
