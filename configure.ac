@@ -55,7 +55,7 @@ AC_ARG_WITH([oniguruma],
     [ONIGURUMAPATHSET=1],
     [ONIGURUMAPATHSET=0])
 
-if test $ONIGURUMAPATHSET == 1; then
+if test $ONIGURUMAPATHSET = 1; then
   CFLAGS="$CFLAGS -I${with_oniguruma}/include"
   LDFLAGS="$LDFLAGS -L${with_oniguruma}/lib"
 fi
