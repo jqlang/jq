@@ -91,8 +91,9 @@ struct lexer_param;
 %token QQSTRING_END
 
 /* see Exp '?' rule */
-%expect 34
+%expect 9
 
+%precedence FUNCDEF
 %right '|'
 %left ','
 %right "//"
@@ -306,7 +307,7 @@ FuncDef FuncDefs {
 }
 
 Exp:
-FuncDef Exp %prec ';' {
+FuncDef Exp %prec FUNCDEF {
   $$ = block_bind_referenced($1, $2, OP_IS_CALL_PSEUDO);
 } |
 

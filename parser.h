@@ -105,7 +105,8 @@ struct lexer_param;
     QQSTRING_TEXT = 296,
     QQSTRING_INTERP_START = 297,
     QQSTRING_INTERP_END = 298,
-    QQSTRING_END = 299
+    QQSTRING_END = 299,
+    FUNCDEF = 300
   };
 #endif
 /* Tokens.  */
@@ -151,6 +152,7 @@ struct lexer_param;
 #define QQSTRING_INTERP_START 297
 #define QQSTRING_INTERP_END 298
 #define QQSTRING_END 299
+#define FUNCDEF 300
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -162,7 +164,7 @@ union YYSTYPE
   jv literal;
   block blk;
 
-#line 166 "parser.h" /* yacc.c:1909  */
+#line 168 "parser.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
