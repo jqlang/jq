@@ -46,6 +46,7 @@ void jv_free(jv);
 int jv_get_refcnt(jv);
 
 int jv_equal(jv, jv);
+int jv_identical(jv, jv);
 int jv_contains(jv, jv);
 
 jv jv_invalid(void);

@@ -137,10 +137,7 @@ static void jvp_invalid_free(jv x) {
  */
 
 jv jv_number(double x) {
-  jv j;
-  j.kind_flags = JV_KIND_NUMBER;
-  j.size = 0;
-  j.u.number = x;
+  jv j = {JV_KIND_NUMBER, 0, 0, 0, {.number = x}};
   return j;
 }
 
@@ -1280,6 +1277,32 @@ int jv_equal(jv a, jv b) {
       break;
     case JV_KIND_OBJECT:
       r = jvp_object_equal(a, b);
+      break;
+    default:
+      r = 1;
+      break;
+    }
+  }
+  jv_free(a);
+  jv_free(b);
+  return r;
+}
+
+int jv_identical(jv a, jv b) {
+  int r;
+  if (a.kind_flags != b.kind_flags
+      || a.offset != b.offset
+      || a.size != b.size) {
+    r = 0;
+  } else {
+    switch (jv_get_kind(a)) {
+    case JV_KIND_ARRAY:
+    case JV_KIND_STRING:
+    case JV_KIND_OBJECT:
+      r = a.u.ptr == b.u.ptr;
+      break;
+    case JV_KIND_NUMBER:
+      r = a.u.number == b.u.number;
       break;
     default:
       r = 1;
