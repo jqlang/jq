@@ -555,12 +555,11 @@ jv jq_next(jq_state *jq) {
       stack_save(jq, pc - 1, stack_get_pos(jq));
 
       stack_push(jq, jv_number(jq->subexp_nest));
-      stack_push(jq, jv_copy(jq->value_at_path));
-      stack_push(jq, v);
+      stack_push(jq, jq->value_at_path);
+      stack_push(jq, jv_copy(v));
 
       jq->path = jv_array();
-      jv_free(jq->value_at_path);
-      jq->value_at_path = jv_copy(v);
+      jq->value_at_path = v; // next INDEX operation must index into v
       jq->subexp_nest = 0;
       break;
     }
