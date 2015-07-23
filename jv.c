@@ -137,10 +137,7 @@ static void jvp_invalid_free(jv x) {
  */
 
 jv jv_number(double x) {
-  jv j;
-  j.kind_flags = JV_KIND_NUMBER;
-  j.size = 0;
-  j.u.number = x;
+  jv j = {JV_KIND_NUMBER, 0, 0, 0, {.number = x}};
   return j;
 }
 
