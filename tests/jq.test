@@ -695,6 +695,26 @@ path(.)
 42
 []
 
+try path(.a | map(select(.b == 0))) catch .
+{"a":[{"b":0}]}
+"Invalid path expression with result [{\"b\":0}]"
+
+try path(.a | map(select(.b == 0)) | .[0]) catch .
+{"a":[{"b":0}]}
+"Invalid path expression near attempt to access element 0 of [{\"b\":0}]"
+
+try path(.a | map(select(.b == 0)) | .c) catch .
+{"a":[{"b":0}]}
+"Invalid path expression near attempt to access element \"c\" of [{\"b\":0}]"
+
+try path(.a | map(select(.b == 0)) | .[]) catch .
+{"a":[{"b":0}]}
+"Invalid path expression near attempt to iterate through [{\"b\":0}]"
+
+path(.a[path(.b)[0]])
+{"a":{"b":0}}
+["a","b"]
+
 [paths]
 [1,[[],{"a":2}]]
 [[0],[1],[1,0],[1,1],[1,1,"a"]]
@@ -782,6 +802,22 @@ def inc(x): x |= .+1; inc(.[].a)
 .foo[2].bar = 1
 {"foo":[11], "bar":42}
 {"foo":[11,null,{"bar":1}], "bar":42}
+
+try ((map(select(.a == 1))[].b) = 10) catch .
+[{"a":0},{"a":1}]
+"Invalid path expression near attempt to iterate through [{\"a\":1}]"
+
+try ((map(select(.a == 1))[].a) |= .+1) catch .
+[{"a":0},{"a":1}]
+"Invalid path expression near attempt to iterate through [{\"a\":1}]"
+
+def x: .[1,2]; x=10
+[0,1,2]
+[0,10,10]
+
+try (def x: reverse; x=10) catch .
+[0,1,2]
+"Invalid path expression with result [2,1,0]"
 
 #
 # Conditionals

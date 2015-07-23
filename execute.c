@@ -34,6 +34,7 @@ struct jq_state {
   stack_ptr fork_top;
 
   jv path;
+  jv value_at_path;
   int subexp_nest;
   int debug_trace_enabled;
   int initial_execution;
@@ -191,6 +192,7 @@ struct forkpoint {
   stack_ptr saved_data_stack;
   stack_ptr saved_curr_frame;
   int path_len, subexp_nest;
+  jv value_at_path;
   uint16_t* return_address;
 };
 
@@ -210,20 +212,33 @@ void stack_save(jq_state *jq, uint16_t* retaddr, struct stack_pos sp){
   fork->saved_curr_frame = jq->curr_frame;
   fork->path_len =
     jv_get_kind(jq->path) == JV_KIND_ARRAY ? jv_array_length(jv_copy(jq->path)) : 0;
+  fork->value_at_path = jv_copy(jq->value_at_path);
   fork->subexp_nest = jq->subexp_nest;
   fork->return_address = retaddr;
   jq->stk_top = sp.saved_data_stack;
   jq->curr_frame = sp.saved_curr_frame;
 }
 
-void path_append(jq_state* jq, jv component) {
+static int path_intact(jq_state *jq, jv curr) {
+  if (jq->subexp_nest == 0 && jv_get_kind(jq->path) == JV_KIND_ARRAY) {
+    return jv_identical(curr, jv_copy(jq->value_at_path));
+  } else {
+    jv_free(curr);
+    return 1;
+  }
+}
+
+static void path_append(jq_state* jq, jv component, jv value_at_path) {
   if (jq->subexp_nest == 0 && jv_get_kind(jq->path) == JV_KIND_ARRAY) {
     int n1 = jv_array_length(jv_copy(jq->path));
     jq->path = jv_array_append(jq->path, component);
     int n2 = jv_array_length(jv_copy(jq->path));
     assert(n2 == n1 + 1);
+    jv_free(jq->value_at_path);
+    jq->value_at_path = value_at_path;
   } else {
     jv_free(component);
+    jv_free(value_at_path);
   }
 }
 
@@ -253,6 +268,8 @@ uint16_t* stack_restore(jq_state *jq){
   } else {
     assert(path_len == 0);
   }
+  jv_free(jq->value_at_path);
+  jq->value_at_path = fork->value_at_path;
   jq->subexp_nest = fork->subexp_nest;
   jq->fork_top = stack_pop_block(&jq->stk, jq->fork_top, sizeof(struct forkpoint));
   return retaddr;
@@ -271,6 +288,8 @@ static void jq_reset(jq_state *jq) {
   if (jv_get_kind(jq->path) != JV_KIND_INVALID)
     jv_free(jq->path);
   jq->path = jv_null();
+  jv_free(jq->value_at_path);
+  jq->value_at_path = jv_null();
   jq->subexp_nest = 0;
 }
 
@@ -536,17 +555,30 @@ jv jq_next(jq_state *jq) {
       stack_save(jq, pc - 1, stack_get_pos(jq));
 
       stack_push(jq, jv_number(jq->subexp_nest));
+      stack_push(jq, jv_copy(jq->value_at_path));
       stack_push(jq, v);
 
       jq->path = jv_array();
+      jv_free(jq->value_at_path);
+      jq->value_at_path = jv_copy(v);
       jq->subexp_nest = 0;
       break;
     }
 
     case PATH_END: {
       jv v = stack_pop(jq);
+      // detect invalid path expression like path(.a | reverse)
+      if (!path_intact(jq, jv_copy(v))) {
+        char errbuf[30];
+        jv msg = jv_string_fmt(
+            "Invalid path expression with result %s",
+            jv_dump_string_trunc(v, errbuf, sizeof(errbuf)));
+        set_error(jq, jv_invalid_with_msg(msg));
+        goto do_backtrack;
+      }
       jv_free(v); // discard value, only keep path
 
+      jv old_value_at_path = stack_pop(jq);
       int old_subexp_nest = (int)jv_number_value(stack_pop(jq));
 
       jv path = jq->path;
@@ -558,6 +590,8 @@ jv jq_next(jq_state *jq) {
 
       stack_push(jq, path);
       jq->subexp_nest = old_subexp_nest;
+      jv_free(jq->value_at_path);
+      jq->value_at_path = old_value_at_path;
       break;
     }
 
@@ -572,11 +606,23 @@ jv jq_next(jq_state *jq) {
     case INDEX_OPT: {
       jv t = stack_pop(jq);
       jv k = stack_pop(jq);
-      path_append(jq, jv_copy(k));
-      jv v = jv_get(t, k);
+      // detect invalid path expression like path(reverse | .a)
+      if (!path_intact(jq, jv_copy(t))) {
+        char keybuf[15];
+        char objbuf[30];
+        jv msg = jv_string_fmt(
+            "Invalid path expression near attempt to access element %s of %s",
+            jv_dump_string_trunc(k, keybuf, sizeof(keybuf)),
+            jv_dump_string_trunc(t, objbuf, sizeof(objbuf)));
+        set_error(jq, jv_invalid_with_msg(msg));
+        goto do_backtrack;
+      }
+      jv v = jv_get(t, jv_copy(k));
       if (jv_is_valid(v)) {
+        path_append(jq, k, jv_copy(v));
         stack_push(jq, v);
       } else {
+        jv_free(k);
         if (opcode == INDEX)
           set_error(jq, v);
         else
@@ -605,9 +651,21 @@ jv jq_next(jq_state *jq) {
     }
 
     case EACH:
-    case EACH_OPT:
+    case EACH_OPT: {
+      jv container = stack_pop(jq);
+      // detect invalid path expression like path(reverse | .[])
+      if (!path_intact(jq, jv_copy(container))) {
+        char errbuf[30];
+        jv msg = jv_string_fmt(
+            "Invalid path expression near attempt to iterate through %s",
+            jv_dump_string_trunc(container, errbuf, sizeof(errbuf)));
+        set_error(jq, jv_invalid_with_msg(msg));
+        goto do_backtrack;
+      }
+      stack_push(jq, container);
       stack_push(jq, jv_number(-1));
       // fallthrough
+    }
     case ON_BACKTRACK(EACH):
     case ON_BACKTRACK(EACH_OPT): {
       int idx = jv_number_value(stack_pop(jq));
@@ -653,14 +711,14 @@ jv jq_next(jq_state *jq) {
       } else if (is_last) {
         // we don't need to make a backtrack point
         jv_free(container);
-        path_append(jq, key);
+        path_append(jq, key, jv_copy(value));
         stack_push(jq, value);
       } else {
         struct stack_pos spos = stack_get_pos(jq);
         stack_push(jq, container);
         stack_push(jq, jv_number(idx));
         stack_save(jq, pc - 1, spos);
-        path_append(jq, key);
+        path_append(jq, key, jv_copy(value));
         stack_push(jq, value);
       }
       break;
@@ -880,6 +938,7 @@ jq_state *jq_init(void) {
 
   jq->attrs = jv_object();
   jq->path = jv_null();
+  jq->value_at_path = jv_null();
   return jq;
 }
 

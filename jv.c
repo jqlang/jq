@@ -1291,6 +1291,32 @@ int jv_equal(jv a, jv b) {
   return r;
 }
 
+int jv_identical(jv a, jv b) {
+  int r;
+  if (a.kind_flags != b.kind_flags
+      || a.offset != b.offset
+      || a.size != b.size) {
+    r = 0;
+  } else {
+    switch (jv_get_kind(a)) {
+    case JV_KIND_ARRAY:
+    case JV_KIND_STRING:
+    case JV_KIND_OBJECT:
+      r = a.u.ptr == b.u.ptr;
+      break;
+    case JV_KIND_NUMBER:
+      r = a.u.number == b.u.number;
+      break;
+    default:
+      r = 1;
+      break;
+    }
+  }
+  jv_free(a);
+  jv_free(b);
+  return r;
+}
+
 int jv_contains(jv a, jv b) {
   int r = 1;
   if (jv_get_kind(a) != jv_get_kind(b)) {
