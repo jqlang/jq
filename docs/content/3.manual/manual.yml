@@ -973,7 +973,7 @@ sections:
             input: '[]'
             output: ["true"]
 
-      - title: "`flatten`, `flatten(depth)`"
+      - title: "\\[Requires 1.5\\] `flatten`, `flatten(depth)`"
         body: |
 
           The filter `flatten` takes as input an array of nested arrays,
@@ -1989,7 +1989,7 @@ sections:
       evaluates to: true, true, false, false.
 
     entries:
-      - title: "`test(val)`, `test(regex; flags)`"
+      - title: "\\[Requires 1.5\\] `test(val)`, `test(regex; flags)`"
         body: |
 
           Like `match`, but does not return match objects, only `true` or `false`
@@ -2003,7 +2003,7 @@ sections:
             input: '["xabcd", "ABC"]'
             output: ['true', 'true']
 
-      - title: "`match(val)`, `match(regex; flags)`"
+      - title: "\\[Requires 1.5\\] `match(val)`, `match(regex; flags)`"
         body: |
 
           **match** outputs an object for each match it finds.  Matches have
@@ -2048,7 +2048,7 @@ sections:
             output: [3]
 
 
-      - title: "`capture(val)`, `capture(regex; flags)`"
+      - title: "\\[Requires 1.5\\] `capture(val)`, `capture(regex; flags)`"
         body: |
 
          Collects the named captures in a JSON object, with the name
@@ -2060,7 +2060,7 @@ sections:
             input: '"xyzzy-14"'
             output: ['{ "a": "xyzzy", "n": "14" }']
 
-      - title: "`scan(regex)`, `scan(regex; flags)`"
+      - title: "\\[Requires 1.5\\] `scan(regex)`, `scan(regex; flags)`"
         body: |
 
           Emit a stream of the non-overlapping substrings of the input
@@ -2089,7 +2089,7 @@ sections:
             output: ['"ab","cd","ef"']
 
 
-      - title: "`splits(regex)`, `splits(regex; flags)`"
+      - title: "\\[Requires 1.5\\] `splits(regex)`, `splits(regex; flags)`"
         body: |
 
           These provide the same results as their `split` counterparts,
@@ -2100,7 +2100,7 @@ sections:
             input: '("ab,cd", "ef, gh")'
             output: ['"ab"', '"cd"', '"ef"', '"gh"']
 
-      - title: "`sub(regex; tostring)` `sub(regex; string; flags)`"
+      - title: "\\[Requires 1.5\\] `sub(regex; tostring)` `sub(regex; string; flags)`"
         body: |
 
           Emit the string obtained by replacing the first match of regex in the
@@ -2116,7 +2116,7 @@ sections:
             output: '"ZabcZabc"'
 
 
-      - title: "`gsub(regex; string)`, `gsub(regex; string; flags)`"
+      - title: "\\[Requires 1.5\\] `gsub(regex; string)`, `gsub(regex; string; flags)`"
         body: |
 
           `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
