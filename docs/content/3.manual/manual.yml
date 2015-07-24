@@ -148,7 +148,7 @@ sections:
 
         Use the given number of spaces (no more than 8) for indentation.
 
-      * `--colour-output` / `-C` and `--monochrome-output` / `-M`:
+      * `--color-output` / `-C` and `--monochrome-output` / `-M`:
 
         By default, jq outputs colored JSON if writing to a
         terminal. You can force it to produce color even if writing to

@@ -73,7 +73,7 @@ Don\'t read any input at all! Instead, the filter is run once using \fBnull\fR a
 By default, jq pretty\-prints JSON output\. Using this option will result in more compact output by instead putting each JSON object on a single line\.
 .
 .IP "\(bu" 4
-\fB\-\-colour\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
+\fB\-\-color\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
 .
 .IP
 By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\.
