@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "JQ" "1" "June 2014" "" ""
+.TH "JQ" "1" "July 2015" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -13,10 +13,10 @@
 \fBjq\fR can transform JSON in various ways, by selecting, iterating, reducing and otherwise mangling JSON documents\. For instance, running the command \fBjq \'map(\.price) | add\'\fR will take an array of JSON objects as input and return the sum of their "price" fields\.
 .
 .P
-By default, \fBjq\fR reads a stream of JSON objects (whitespace separated) from \fBstdin\fR\. One or more \fIfiles\fR may be specified, in which case \fBjq\fR will read input from those instead\.
+\fBjq\fR can accept text input as well, but by default, \fBjq\fR reads a stream of JSON entities (including numbers and other literals) from \fBstdin\fR\. Whitespace is only needed to separate entities such as 1 and 2, and true and false\. One or more \fIfiles\fR may be specified, in which case \fBjq\fR will read input from those instead\.
 .
 .P
-The \fIoptions\fR are described in the \fIINVOKING JQ\fR section, they mostly concern input and output formatting\. The \fIfilter\fR is written in the jq language and specifies how to transform the input document\.
+The \fIoptions\fR are described in the \fIINVOKING JQ\fR section; they mostly concern input and output formatting\. The \fIfilter\fR is written in the jq language and specifies how to transform the input file or document\.
 .
 .SH "FILTERS"
 A jq program is a "filter": it takes an input, and produces an output\. There are a lot of builtin filters for extracting a particular field of an object, or converting a number to a string, or various other standard tasks\.
@@ -28,7 +28,7 @@ Filters can be combined in various ways \- you can pipe the output of one filter
 Some filters produce multiple results, for instance there\'s one that produces all the elements of its input array\. Piping that filter into a second runs the second filter for each element of the array\. Generally, things that would be done with loops and iteration in other languages are just done by gluing filters together in jq\.
 .
 .P
-It\'s important to remember that every filter has an input and an output\. Even literals like "hello" or 42 are filters \- they take an input but always produce the same literal as output\. Operations that combine two filters, like addition, generally feed the same input to both and combine the results\. So, you can implement an averaging filter as \fBadd / length\fR \- feeding the input array both to the \fBadd\fR filter and the \fBlength\fR filter and dividing the results\.
+It\'s important to remember that every filter has an input and an output\. Even literals like "hello" or 42 are filters \- they take an input but always produce the same literal as output\. Operations that combine two filters, like addition, generally feed the same input to both and combine the results\. So, you can implement an averaging filter as \fBadd / length\fR \- feeding the input array both to the \fBadd\fR filter and the \fBlength\fR filter and then performing the division\.
 .
 .P
 But that\'s getting ahead of ourselves\. :) Let\'s start with something simpler:
@@ -47,6 +47,21 @@ You can affect how jq reads and writes its input and output using some command\-
 .
 .IP
 Output the jq version and exit with zero\.
+.
+.IP "\(bu" 4
+\fB\-\-seq\fR:
+.
+.IP
+Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts in jq\'s input and output\. This means that an ASCII RS (record separator) character is printed before each value on output and an ASCII LF (line feed) is printed after every output\. Input JSON texts that fail to parse are ignored (but warned about), discarding all subsequent input until the next RS\. This more also parses the output of jq without the \fB\-\-seq\fR option\.
+.
+.IP "\(bu" 4
+\fB\-\-stream\fR:
+.
+.IP
+Parse the input in streaming fashion, outputing arrays of path and leaf values (scalars and empty arrays or empty objects)\. For example, \fB"a"\fR becomes \fB[[],"a"]\fR, and \fB[[],"a",["b"]]\fR becomes \fB[[0],[]]\fR, \fB[[1],"a"]\fR, and \fB[[1,0],"b"]\fR\.
+.
+.IP
+This is useful for processing very large inputs\. Use this in conjunction with filtering and the \fBreduce\fR and \fBforeach\fR syntax to reduce large inputs incrementally\.
 .
 .IP "\(bu" 4
 \fB\-\-slurp\fR/\fB\-s\fR:
@@ -71,6 +86,18 @@ Don\'t read any input at all! Instead, the filter is run once using \fBnull\fR a
 .
 .IP
 By default, jq pretty\-prints JSON output\. Using this option will result in more compact output by instead putting each JSON object on a single line\.
+.
+.IP "\(bu" 4
+\fB\-\-tab\fR:
+.
+.IP
+Use a tab for each indentation level instead of two spaces\.
+.
+.IP "\(bu" 4
+\fB\-\-indent n\fR:
+.
+.IP
+Use the given number of spaces (no more than 8) for indentation\.
 .
 .IP "\(bu" 4
 \fB\-\-color\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
@@ -115,6 +142,12 @@ Like \fB\-r\fR but jq won\'t print a newline after each output\.
 Read filter from the file rather than from a command line, like awk\'s \-f option\. You can also use \'#\' to make comments\.
 .
 .IP "\(bu" 4
+\fB\-Ldirectory\fR / \fB\-L directory\fR:
+.
+.IP
+Prepend \fBdirectory\fR to the search list for modules\. If this option is used then no builtin search list is used\. See the section on modules below\.
+.
+.IP "\(bu" 4
 \fB\-e\fR / \fB\-\-exit\-status\fR:
 .
 .IP
@@ -124,13 +157,37 @@ Sets the exit status of jq to 0 if the last output values was neither \fBfalse\f
 \fB\-\-arg name value\fR:
 .
 .IP
-This option passes a value to the jq program as a predefined variable\. If you run jq with \fB\-\-arg foo bar\fR, then \fB$foo\fR is available in the program and has the value \fB"bar"\fR\.
+This option passes a value to the jq program as a predefined variable\. If you run jq with \fB\-\-arg foo bar\fR, then \fB$foo\fR is available in the program and has the value \fB"bar"\fR\. Note that \fBvalue\fR will be treated as a string, so \fB\-\-arg foo 123\fR will bind \fB$foo\fR to \fB"123"\fR\.
 .
 .IP "\(bu" 4
-\fB\-\-argfile name filename\fR:
+\fB\-\-argjson name JSON\-text\fR:
 .
 .IP
-This option passes the first value from the named file as a value to the jq program as a predefined variable\. If you run jq with \fB\-\-argfile foo bar\fR, then \fB$foo\fR is available in the program and has the value resulting from parsing the content of the file named \fBbar\fR\.
+This option passes a JSON\-encoded value to the jq program as a predefined variable\. If you run jq with \fB\-\-argjson foo 123\fR, then \fB$foo\fR is available in the program and has the value \fB123\fR\.
+.
+.IP "\(bu" 4
+\fB\-\-slurpfile variable\-name filename\fR:
+.
+.IP
+This option reads all the JSON texts in the named file and binds an array of the parsed JSON values to the given global variable\. If you run jq with \fB\-\-argfile foo bar\fR, then \fB$foo\fR is available in the program and has an array whose elements correspond to the texts in the file named \fBbar\fR\.
+.
+.IP "\(bu" 4
+\fB\-\-argfile variable\-name filename\fR:
+.
+.IP
+Do not use\. Use \fB\-\-slurpfile\fR instead\.
+.
+.IP
+(This option is like \fB\-\-slurpfile\fR, but when the file has just one text, then that is used, else an array of texts is used as in \fB\-\-slurfile\fR\.)
+.
+.IP "\(bu" 4
+\fB\-\-run\-tests [filename]\fR:
+.
+.IP
+Runs the tests in the given file or standard input\. This must be the last option given and does not honor all preceding options\. The input consts of comment lines, empty lines, and program lines followed by one input line, as many lines of output as are expected (one per output), and a terminating empty line\. Compilation failure tests start with a line containing only "%%FAIL", then a line containing the program to compile, then a line containing an error message to compare to the actual\.
+.
+.IP
+Be warned that this option can change backwards\-incompatibly\.
 .
 .IP "" 0
 .
@@ -217,6 +274,12 @@ You can also look up fields of an object using syntax like \fB\.["foo"]\fR (\.fo
 The \fB\.[10:15]\fR syntax can be used to return a subarray of an array or substring of a string\. The array returned by \fB\.[10:15]\fR will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive)\. Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array)\.
 .
 .P
+The \fB\.[2]\fR syntax can be used to return the element at the given index\. Negative indices are allowed, with \-1 referring to the last element, \-2 referring to the next to last element, and so on\.
+.
+.P
+The \fB\.foo\fR syntax only works for simply keys i\.e\. keys that are all alphanumeric characters\. \fB\.[<string>]\fR works with keys that contain special charactors such as colons and dots\. For example \fB\.["foo::bar"]\fR and \fB\.["foo\.bar"]\fR work while \fB\.foo::bar\fR and \fB\.foo\.bar\fR would not\.
+.
+.P
 The \fB?\fR "operator" can also be used with the slice operator, as in \fB\.[10:15]?\fR, which outputs values where the inputs are slice\-able\.
 .
 .IP "" 4
@@ -246,6 +309,10 @@ jq \'\.[:3]\'
 jq \'\.[\-2:]\'
    ["a","b","c","d","e"]
 => ["d", "e"]
+
+jq \'\.[\-2]\'
+   [1,2,3]
+=> 2
 .
 .fi
 .
@@ -531,7 +598,7 @@ These operators only work on numbers, and do the expected\.
 Multiplying a string by a number produces the concatenation of that string that many times\.
 .
 .P
-Dividing a string by another splits the first using the second as separators\.
+Dividing a string by another splits the first using the second as separators\. Division by zero raises an error\.
 .
 .P
 Multiplying two objects will merge them recursively: this works like addition but if both objects contain a value for the same key, and the values are objects, the two are merged with the same strategy\.
@@ -551,6 +618,10 @@ jq \'\. / ", "\'
 jq \'{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}\'
    null
 => {"k": {"a": 0, "b": 2, "c": 3}}
+
+jq \'\.[] | (1 / \.)?\'
+   [1,0,\-1]
+=> 1, \-1
 .
 .fi
 .
@@ -576,7 +647,7 @@ jq \'\.[] | length\' [[1,2], "string", {"a":2}, null] => 2, 6, 1, 0
 .
 .IP "" 0
 .
-.SS "keys"
+.SS "keys, keys_unsorted"
 The builtin function \fBkeys\fR, when given an object, returns its keys in an array\.
 .
 .P
@@ -584,6 +655,9 @@ The keys are sorted "alphabetically", by unicode codepoint order\. This is not a
 .
 .P
 When \fBkeys\fR is given an array, it returns the valid indices for that array: the integers from 0 to length\-1\.
+.
+.P
+The \fBkeys_unsorted\fR function is just like \fBkeys\fR, but if the input is an object then the keys will not be sorted, instead the keys will roughly be in insertion order\.
 .
 .IP "" 4
 .
@@ -623,6 +697,56 @@ jq \'map(has(2))\'
 .
 .IP "" 0
 .
+.SS "in"
+The builtin function \fBin\fR returns the input key is in the given object, or the input index corresponds to an element in the given array\. It is, essentially, an inversed version of \fBhas\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'\.[] | in({"foo": 42})\'
+   ["foo", "bar"]
+=> true, false
+
+jq \'map(in([0,1]))\'
+   [2, 0]
+=> [false, true]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "path(path_expression)"
+Outputs array representations of the given path expression in \fB\.\fR\. The outputs are arrays of strings (keys in objects0 and/or numbers (array indices\.
+.
+.P
+Path expressions are jq expressions like \fB\.a\fR, but also \fB\.[]\fR\. There are two types of path expressions: ones that can match exactly, and ones that cannot\. For example, \fB\.a\.b\.c\fR is an exact match path expression, while \fB\.a[]\.b\fR is not\.
+.
+.P
+\fBpath(exact_path_expression)\fR will produce the array representation of the path expression even if it does not exist in \fB\.\fR, if \fB\.\fR is \fBnull\fR or an array or an object\.
+.
+.P
+\fBpath(pattern)\fR will produce array representations of the paths matching \fBpattern\fR if the paths exist in \fB\.\fR\.
+.
+.P
+Note that the path expressions are not different from normal expressions\. The expression \fBpath(\.\.|select(type=="boolean"))\fR outputs all the paths to boolean values in \fB\.\fR, and only those paths\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'path(\.a[0]\.b)\'
+   null
+=> ["a",0,"b"]
+
+jq \'[path(\.\.)]\'
+   {"a":[{"b":1}]}
+=> [[],["a"],["a",0],["a",0,"b"]]
+.
+.fi
+.
+.IP "" 0
+.
 .SS "del(path_expression)"
 The builtin function \fBdel\fR removes a key and its corresponding value from an object\.
 .
@@ -631,11 +755,11 @@ The builtin function \fBdel\fR removes a key and its corresponding value from an
 .nf
 
 jq \'del(\.foo)\'
-   [{"foo": 42, "bar": 9001, "baz": 42}]
+   {"foo": 42, "bar": 9001, "baz": 42}
 => {"bar": 9001, "baz": 42}
 
 jq \'del(\.[1, 2])\'
-   [["foo", "bar", "baz"]]
+   ["foo", "bar", "baz"]
 => ["foo"]
 .
 .fi
@@ -646,7 +770,7 @@ jq \'del(\.[1, 2])\'
 These functions convert between an object and an array of key\-value pairs\. If \fBto_entries\fR is passed an object, then for each \fBk: v\fR entry in the input, the output array includes \fB{"key": k, "value": v}\fR\.
 .
 .P
-\fBfrom_entries\fR does the opposite conversion, and \fBwith_entries(foo)\fR is a shorthand for \fBto_entries | map(foo) | from_entries\fR, useful for doing some operation to all keys and values of an object\.
+\fBfrom_entries\fR does the opposite conversion, and \fBwith_entries(foo)\fR is a shorthand for \fBto_entries | map(foo) | from_entries\fR, useful for doing some operation to all keys and values of an object\. \fBfrom_entries\fR accepts key, Key, Name, value and Value as keys\.
 .
 .IP "" 4
 .
@@ -681,13 +805,17 @@ It\'s useful for filtering lists: \fB[1,2,3] | map(select(\. >= 2))\fR will give
 jq \'map(select(\. >= 2))\'
    [1,5,3,0,7]
 => [5,3,7]
+
+jq \'\.[] | select(\.id == "second")\'
+   [{"id": "first", "val": 1}, {"id": "second", "val": 2}]
+=> {"id": "second", "val": 2}
 .
 .fi
 .
 .IP "" 0
 .
-.SS "arrays, objects, iterables, booleans, numbers, strings, nulls, values, scalars"
-These built\-ins select only inputs that are arrays, objects, iterables (arrays or objects), booleans, numbers, strings, null, non\-null values, and non\-iterables, respectively\.
+.SS "arrays, objects, iterables, booleans, numbers, normals, finites, strings, nulls, values, scalars"
+These built\-ins select only inputs that are arrays, objects, iterables (arrays or objects), booleans, numbers, normal numbers, finite numbers, strings, null, non\-null values, and non\-iterables, respectively\.
 .
 .IP "" 4
 .
@@ -723,11 +851,32 @@ jq \'[1,2,empty,3]\'
 .
 .IP "" 0
 .
-.SS "map(x)"
+.SS "error(message)"
+Produces an error, just like \fB\.a\fR applied to values other than null and objects would, but with the given message as the error\'s value\.
+.
+.SS "$__loc__"
+Produces an object with a "file" key and a "line" key, with the filename and line number where \fB$__loc__\fR occurs, as values\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'try error("\e($__loc__)") catch \.\'
+   null
+=> "{\e"file\e":\e"<top\-level>\e",\e"line\e":1}"
+.
+.fi
+.
+.IP "" 0
+.
+.SS "map(x), map_values(x)"
 For any filter \fBx\fR, \fBmap(x)\fR will run that filter for each element of the input array, and produce the outputs a new array\. \fBmap(\.+1)\fR will increment each element of an array of numbers\.
 .
 .P
-\fBmap(x)\fR is equivalent to \fB[\.[] | x]\fR\. In fact, this is how it\'s defined\.
+Similarly, \fBmap_values(x)\fR will run that filter for each element, but it will return an object when an object is passed\.
+.
+.P
+\fBmap(x)\fR is equivalent to \fB[\.[] | x]\fR\. In fact, this is how it\'s defined\. Similarly, \fBmap_values(x)\fR is defined as \fB\.[] |= x\fR\.
 .
 .IP "" 4
 .
@@ -736,6 +885,10 @@ For any filter \fBx\fR, \fBmap(x)\fR will run that filter for each element of th
 jq \'map(\.+1)\'
    [1,2,3]
 => [2,3,4]
+
+jq \'map_values(\.+1)\'
+   {"a": 1, "b": 2, "c": 3}
+=> {"a": 2, "b": 3, "c": 4}
 .
 .fi
 .
@@ -792,11 +945,17 @@ jq \'add\'
 .
 .IP "" 0
 .
-.SS "any"
+.SS "any, any(condition), any(generator; condition)"
 The filter \fBany\fR takes as input an array of boolean values, and produces \fBtrue\fR as output if any of the the elements of the array is \fBtrue\fR\.
 .
 .P
 If the input is an empty array, \fBany\fR returns \fBfalse\fR\.
+.
+.P
+The \fBany(condition)\fR form applies the given condition to the elements of the input array\.
+.
+.P
+The \fBany(generator; condition)\fR form applies the given condition to all the outputs of the given generator\.
 .
 .IP "" 4
 .
@@ -818,8 +977,14 @@ jq \'any\'
 .
 .IP "" 0
 .
-.SS "all"
+.SS "all, all(condition), all(generator; condition)"
 The filter \fBall\fR takes as input an array of boolean values, and produces \fBtrue\fR as output if all of the the elements of the array are \fBtrue\fR\.
+.
+.P
+The \fBall(condition)\fR form applies the given condition to the elements of the input array\.
+.
+.P
+The \fBall(generator; condition)\fR form applies the given condition to all the outputs of the given generator\.
 .
 .P
 If the input is an empty array, \fBall\fR returns \fBtrue\fR\.
@@ -844,7 +1009,7 @@ jq \'all\'
 .
 .IP "" 0
 .
-.SS "flatten, flatten(depth)"
+.SS "[Requires 1\.5] flatten, flatten(depth)"
 The filter \fBflatten\fR takes as input an array of nested arrays, and produces a flat array in which all arrays inside the original array have been recursively replaced by their values\. You can pass an argument to it to specify how many levels of nesting to flatten\.
 .
 .P
@@ -874,11 +1039,17 @@ jq \'flatten\'
 .
 .IP "" 0
 .
-.SS "range(upto),range(from;upto)`"
+.SS "range(upto), range(from;upto) range(from;upto;by)"
 The \fBrange\fR function produces a range of numbers\. \fBrange(4;10)\fR produces 6 numbers, from 4 (inclusive) to 10 (exclusive)\. The numbers are produced as separate outputs\. Use \fB[range(4;10)]\fR to get a range as an array\.
 .
 .P
-Its first argument can be omitted; it defaults to zero\.
+The one argument form generates numbers from 0 to the given number, with an increment of 1\.
+.
+.P
+The two argument form generates numbers from \fBfrom\fR to \fBupto\fR with an increment of 1\.
+.
+.P
+The three argument form generates numbers \fBfrom\fR to \fBupto\fR with an increment of \fBby\fR\.
 .
 .IP "" 4
 .
@@ -895,6 +1066,18 @@ jq \'[range(2;4)]\'
 jq \'[range(4)]\'
    null
 => [0,1,2,3]
+
+jq \'[range(0;10;3)]\'
+   null
+=> [0,3,6,9]
+
+jq \'[range(0;10;\-1)]\'
+   null
+=> []
+
+jq \'[range(0;\-5;\-1)]\'
+   null
+=> [0,\-1,\-2,\-3,\-4]
 .
 .fi
 .
@@ -975,7 +1158,32 @@ jq \'map(type)\'
 .
 .IP "" 0
 .
-.SS "sort, sort(path_expression), sort_by(path_expression)"
+.SS "infinite, nan, isinfinite, isnan, isfinite, isnormal"
+Some arithmetic operations can yield infinities and "not a number" (NaN) values\. The \fBisinfinite\fR builtin returns \fBtrue\fR if its input is infinite\. The \fBisnan\fR builtin returns \fBtrue\fR if its input is a NaN\. The \fBinfinite\fR builtin returns a positive infinite value\. The \fBnan\fR builtin returns a NaN\. The \fBisnormal\fR builtin returns true if its input is a normal number\.
+.
+.P
+Note that division by zero raises an error\.
+.
+.P
+Currently most arithmetic operations operating on infinities, NaNs, and sub\-normals do not raise errors\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'\.[] | (infinite * \.) < 0\'
+   [\-1, 1]
+=> true, false
+
+jq \'infinite, nan | type\'
+   null
+=> "number", "number"
+.
+.fi
+.
+.IP "" 0
+.
+.SS "sort, sort_by(path_expression)"
 The \fBsort\fR functions sorts its input, which must be an array\. Values are sorted in the following order:
 .
 .IP "\(bu" 4
@@ -1008,10 +1216,7 @@ The ordering for objects is a little complex: first they\'re compared by compari
 \fBsort\fR may be used to sort by a particular field of an object, or by applying any jq filter\.
 .
 .P
-\fBsort(foo)\fR compares two elements by comparing the result of \fBfoo\fR on each element\.
-.
-.P
-\fBsort_by(foo)\fR is an alias of \fBsort(foo)\fR; \fBsort_by()\fR is \fIdeprecated\fR and will be removed in the next major release\.
+\fBsort_by(foo)\fR compares two elements by comparing the result of \fBfoo\fR on each element\.
 .
 .IP "" 4
 .
@@ -1021,7 +1226,7 @@ jq \'sort\'
    [8,3,null,6]
 => [null,3,6,8]
 
-jq \'sort(\.foo)\'
+jq \'sort_by(\.foo)\'
    [{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]
 => [{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]
 .
@@ -1029,20 +1234,17 @@ jq \'sort(\.foo)\'
 .
 .IP "" 0
 .
-.SS "group(path_expression), group_by(path_expression)"
-\fBgroup(\.foo)\fR takes as input an array, groups the elements having the same \fB\.foo\fR field into separate arrays, and produces all of these arrays as elements of a larger array, sorted by the value of the \fB\.foo\fR field\.
+.SS "group_by(path_expression)"
+\fBgroup_by(\.foo)\fR takes as input an array, groups the elements having the same \fB\.foo\fR field into separate arrays, and produces all of these arrays as elements of a larger array, sorted by the value of the \fB\.foo\fR field\.
 .
 .P
 Any jq expression, not just a field access, may be used in place of \fB\.foo\fR\. The sorting order is the same as described in the \fBsort\fR function above\.
-.
-.P
-\fBgroup_by(foo)\fR is an alias of \fBgroup(foo)\fR; \fBgroup_by()\fR is \fIdeprecated\fR and will be removed in the next major release\.
 .
 .IP "" 4
 .
 .nf
 
-jq \'group(\.foo)\'
+jq \'group_by(\.foo)\'
    [{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]
 => [[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]
 .
@@ -1050,11 +1252,11 @@ jq \'group(\.foo)\'
 .
 .IP "" 0
 .
-.SS "min, max, min(path_exp), max(path_exp), min_by(path_exp), max_by(path_exp)"
-Find the minimum or maximum element of the input array\. This filter accepts an optional argument that allows you to specify a particular field or property to examine, e\.g\. \fBmin(\.foo)\fR finds the object with the smallest \fBfoo\fR field\.
+.SS "min, max, min_by(path_exp), max_by(path_exp)"
+Find the minimum or maximum element of the input array\.
 .
 .P
-For legacy reasons, \fBmin_by(\.foo)\fR and \fBmax_by(\.foo)\fR exist as aliases for \fBmin(\.foo)\fR and \fBmax(\.foo)\fR\. These aliases are considered \fIdeprecated\fR and will be removed in the next major release\.
+The \fBmin_by(path_exp)\fR and \fBmax_by(path_exp)\fR functions allow you to specify a particular field or property to examine, e\.g\. \fBmin_by(\.foo)\fR finds the object with the smallest \fBfoo\fR field\.
 .
 .IP "" 4
 .
@@ -1064,7 +1266,7 @@ jq \'min\'
    [5,4,2,7]
 => 2
 
-jq \'max(\.foo)\'
+jq \'max_by(\.foo)\'
    [{"foo":1, "bar":14}, {"foo":2, "bar":3}]
 => {"foo":2, "bar":3}
 .
@@ -1072,11 +1274,11 @@ jq \'max(\.foo)\'
 .
 .IP "" 0
 .
-.SS "unique, unique(path_exp), unique_by(path_exp)"
-The \fBunique\fR function takes as input an array and produces an array of the same elements, in sorted order, with duplicates removed\. If an optional argument is passed, it will keep only one element for each value obtained by applying the argument\. Think of it as making an array by taking one element out of every group produced by \fBgroup\fR\.
+.SS "unique, unique_by(path_exp)"
+The \fBunique\fR function takes as input an array and produces an array of the same elements, in sorted order, with duplicates removed\.
 .
 .P
-For legacy reasons, \fBunique_by(\.foo)\fR exists as an alias for \fBunique(\.foo)\fR\. This alias is considered \fIdeprecated\fR and will be removed in the next major release\.
+The \fBunique_by(path_exp)\fR function will keep only one element for each value obtained by applying the argument\. Think of it as making an array by taking one element out of every group produced by \fBgroup\fR\.
 .
 .IP "" 4
 .
@@ -1086,13 +1288,13 @@ jq \'unique\'
    [1,2,5,3,5,3,1,3]
 => [1,2,3,5]
 
-jq \'unique(\.foo)\'
+jq \'unique_by(\.foo)\'
    [{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]
 => [{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]
 
-jq \'unique(length)\'
+jq \'unique_by(length)\'
    ["chunky", "bacon", "kitten", "cicada", "asparagus"]
-=> ["chunky", "bacon", "asparagus"]
+=> ["bacon", "chunky", "asparagus"]
 .
 .fi
 .
@@ -1114,7 +1316,7 @@ jq \'reverse\'
 .IP "" 0
 .
 .SS "contains(element)"
-The filter \fBcontains(b)\fR will produce true if b is completely contained within the input\. A string B is contained in a string A if B is a substring of A\. An array B is contained in an array A is all elements in B are contained in any element in A\. An object B is contained in object A if all of the values in B are contained in the value in A with the same key\. All other types are assumed to be contained in each other if they are equal\.
+The filter \fBcontains(b)\fR will produce true if b is completely contained within the input\. A string B is contained in a string A if B is a substring of A\. An array B is contained in an array A if all elements in B are contained in any element in A\. An object B is contained in object A if all of the values in B are contained in the value in A with the same key\. All other types are assumed to be contained in each other if they are equal\.
 .
 .IP "" 4
 .
@@ -1178,9 +1380,40 @@ jq \'index(", ")\'
    "a,b, cd, efg, hijk"
 => 3
 
-jq \'rindex(", ")]\'
+jq \'rindex(", ")\'
    "a,b, cd, efg, hijk"
 => 12
+.
+.fi
+.
+.IP "" 0
+.
+.SS "inside"
+The filter \fBinside(b)\fR will produce true if the input is completely contained within b\. It is, essentially, an inversed version of \fBcontains\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'inside("foobar")\'
+   "bar"
+=> true
+
+jq \'inside(["foobar", "foobaz", "blarp"])\'
+   ["baz", "bar"]
+=> true
+
+jq \'inside(["foobar", "foobaz", "blarp"])\'
+   ["bazzzzz", "bar"]
+=> false
+
+jq \'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})\'
+   {"foo": 12, "bar": [{"barp": 12}]}
+=> true
+
+jq \'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})\'
+   {"foo": 12, "bar": [{"barp": 15}]}
+=> false
 .
 .fi
 .
@@ -1210,7 +1443,26 @@ Outputs \fBtrue\fR if \. ends with the given string argument\.
 
 jq \'[\.[]|endswith("foo")]\'
    ["foobar", "barfoo"]
-=> [false, true, true, false, false]
+=> [false, true]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "combinations, combinations(n)"
+Outputs all combinations of the elements of the arrays in the input array\. If given an argument \fBn\fR, it outputs all combinations of \fBn\fR repetitions of the input array\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'combinations\'
+   [[1,2], [3, 4]]
+=> [1, 3], [1, 4], [2, 3], [2, 4]
+
+jq \'combinations(2)\'
+   [0, 1]
+=> [0, 0], [0, 1], [1, 0], [1, 1]
 .
 .fi
 .
@@ -1232,7 +1484,7 @@ jq \'[\.[]|ltrimstr("foo")]\'
 .IP "" 0
 .
 .SS "rtrimstr(str)"
-Outputs its input with the given suffix string removed, if it starts with it\.
+Outputs its input with the given suffix string removed, if it ends with it\.
 .
 .IP "" 4
 .
@@ -1284,8 +1536,8 @@ Splits an input string on the separator argument\.
 .nf
 
 jq \'split(", ")\'
-   "a, b,c,d, e"
-=> ["a","b,c,d","e"]
+   "a, b,c,d, e, "
+=> ["a","b,c,d","e",""]
 .
 .fi
 .
@@ -1306,7 +1558,46 @@ jq \'join(", ")\'
 .
 .IP "" 0
 .
-.SS "recurse(f), recurse, recurse_down"
+.SS "ascii_downcase, ascii_upcase"
+Emit a copy of the input string with its alphabetic characters (a\-z and A\-Z) converted to the specified case\.
+.
+.SS "while(cond; update)"
+The \fBwhile(cond; update)\fR function allows you to repeatedly apply an update to \fB\.\fR until \fBcond\fR is false\.
+.
+.P
+Note that \fBwhile(cond; update)\fR is internally defined as a recursive jq function\. Recursive calls within \fBwhile\fR will not consume additional memory if \fBupdate\fR produces at most one output for each input\. See advanced topics below\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[while(\.<100; \.*2)]\'
+   1
+=> [1,2,4,8,16,32,64]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "until(cond; next)"
+The \fBuntil(cond; next)\fR function allows you to repeatedly apply the expression \fBnext\fR, initially to \fB\.\fR then to its own output, until \fBcond\fR is true\. For example, this can be used to implement a factorial function (see below)\.
+.
+.P
+Note that \fBuntil(cond; next)\fR is internally defined as a recursive jq function\. Recursive calls within \fBuntil()\fR will not consume additional memory if \fBnext\fR produces at most one output for each input\. See advanced topics below\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[\.,1]|until(\.[0] < 1; [\.[0] \- 1, \.[1] * \.[0]])|\.[1]\'
+   4
+=> 24
+.
+.fi
+.
+.IP "" 0
+.
+.SS "recurse(f), recurse, recurse(f; condition), recurse_down"
 The \fBrecurse(f)\fR function allows you to search through a recursive structure, and extract interesting data from all levels\. Suppose your input represents a filesystem:
 .
 .IP "" 4
@@ -1342,7 +1633,16 @@ recurse(\.children[]) | \.name
 When called without an argument, \fBrecurse\fR is equivalent to \fBrecurse(\.[]?)\fR\.
 .
 .P
+\fBrecurse(f)\fR is identical to \fBrecurse(f; \. != null)\fR and can be used without concerns about recursion depth\.
+.
+.P
+\fBrecurse(f; condition)\fR is a generator which begins by emitting \. and then emits in turn \.|f, \.|f|f, \.|f|f|f, \.\.\. so long as the computed value satisfies the condition\. For example, to generate all the integers, at least in principle, one could write \fBrecurse(\.+1; true)\fR\.
+.
+.P
 For legacy reasons, \fBrecurse_down\fR exists as an alias to calling \fBrecurse\fR without arguments\. This alias is considered \fIdeprecated\fR and will be removed in the next major release\.
+.
+.P
+The recursive calls in \fBrecurse\fR will not consume additional memory whenever \fBf\fR produces at most a single output for each input\.
 .
 .IP "" 4
 .
@@ -1354,7 +1654,11 @@ jq \'recurse(\.foo[])\'
 
 jq \'recurse\'
    {"a":0,"b":[1]}
-=> 0, [1], 1
+=> {"a":0,"b":[1]}, 0, [1], 1
+
+jq \'recurse(\. * \.; \. < 20)\'
+   2
+=> 2, 4, 16
 .
 .fi
 .
@@ -1385,6 +1689,44 @@ Outputs an object representing jq\'s environment\.
 jq \'env\.PAGER\'
    null
 => "less"
+.
+.fi
+.
+.IP "" 0
+.
+.SS "transpose"
+Transpose a possibly jagged matrix (an array of arrays)\. Rows are padded with nulls so the result is always rectangular\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'transpose\'
+   [[1], [2,3]]
+=> [[1,2],[null,3]]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "bsearch(x)"
+bsearch(x) conducts a binary search for x in the input array\. If the input is sorted and contains x, then bsearch(x) will return its index in the array; otherwise, if the array is sorted, it will return (\-1 \- ix) where ix is an insertion point such that the array would still be sorted after the insertion of x at ix\. If the array is not sorted, bsearch(x) will return an integer that is probably of no interest\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'bsearch(0)\'
+   [0,1]
+=> 0
+
+jq \'bsearch(0)\'
+   [1,2,3]
+=> \-1
+
+jq \'bsearch(4) as $ix | if $ix < 0 then \.[\-(1+$ix)] = 4 else \. end\'
+   [1,2,3]
+=> [1,2,3,4]
 .
 .fi
 .
@@ -1453,13 +1795,19 @@ Applies HTML/XML escaping, by mapping the characters \fB<>&\'"\fR to their entit
 \fB@uri\fR:
 .
 .IP
-Applies percent\-encoding, by mapping all reserved URI characters to a \fB%xx\fR sequence\.
+Applies percent\-encoding, by mapping all reserved URI characters to a \fB%XX\fR sequence\.
 .
 .TP
 \fB@csv\fR:
 .
 .IP
 The input must be an array, and it is rendered as CSV with double quotes for strings, and quotes escaped by repetition\.
+.
+.TP
+\fB@tsv\fR:
+.
+.IP
+The input must be an array, and it is rendered as TSV (tab\-separated values)\. Each input array will be printed as a single line\. Fields are separated by a single tab (ascii \fB0x09\fR)\. Input characters line\-feed (ascii \fB0x0a\fR), carriage\-return (ascii \fB0x0d\fR), tab (ascii \fB0x09\fR) and backslash (ascii \fB0x5c\fR) will be output as escape sequences \fB\en\fR, \fB\er\fR, \fB\et\fR, \fB\e\e\fR respectively\.
 .
 .TP
 \fB@sh\fR:
@@ -1493,7 +1841,7 @@ will produce the following output for the input \fB{"search":"what is jq?"}\fR:
 .
 .nf
 
-"http://www\.google\.com/search?q=what%20is%20jq%3f"
+"http://www\.google\.com/search?q=what%20is%20jq%3F"
 .
 .fi
 .
@@ -1513,6 +1861,62 @@ jq \'@html\'
 jq \'@sh "echo \e(\.)"\'
    "O\'Hara\'s Ale"
 => "echo \'O\'\e\e\'\'Hara\'\e\e\'\'s Ale\'"
+.
+.fi
+.
+.IP "" 0
+.
+.SS "Dates"
+jq provides some basic date handling functionality, with some high\-level and low\-level builtins\. In all cases these builtins deal exclusively with time in UTC\.
+.
+.P
+The \fBfromdateiso8601\fR builtin parses datetimes in the ISO 8601 format to a number of seconds since the Unix epoch (1970\-01\-01T00:00:00Z)\. The \fBtodateiso8601\fR builtin does the inverse\.
+.
+.P
+The \fBfromdate\fR builtin parses datetime strings\. Currently \fBfromdate\fR only supports ISO 8601 datetime strings, but in the future it will attempt to parse datetime strings in more formats\.
+.
+.P
+The \fBtodate\fR builtin is an alias for \fBtodateiso8601\fR\.
+.
+.P
+The \fBnow\fR builtin outputs the current time, in seconds since the Unix epoch\.
+.
+.P
+Low\-level jq interfaces to the C\-library time functions are also provided: \fBstrptime\fR, \fBstrftime\fR, \fBmktime\fR, and \fBgmtime\fR\. Refer to your host operating system\'s documentation for the format strings used by \fBstrptime\fR and \fBstrftime\fR\. Note: these are not necessarily stable interfaces in jq, particularly as to their localization functionality\.
+.
+.P
+The \fBgmtime\fR builtin consumes a number of seconds since the Unix epoch and outputs a "broken down time" representation of time as an array of numbers representing (in this order): the year, the month (zero\-based), the day of the month, the hour of the day, the minute of the hour, the second of the minute, the day of the week, and the day of the year \-\- all one\-based unless otherwise stated\.
+.
+.P
+The \fBmktime\fR builtin consumes "broken down time" representations of time output by \fBgmtime\fR and \fBstrptime\fR\.
+.
+.P
+The \fBstrptime(fmt)\fR builtin parses input strings matching the \fBfmt\fR argument\. The output is in the "broken down time" representation consumed by \fBgmtime\fR and output by \fBmktime\fR\.
+.
+.P
+The \fBstrftime(fmt)\fR builtin formats a time with the given format\.
+.
+.P
+The format strings for \fBstrptime\fR and \fBstrftime\fR are described in typical C library documentation\. The format string for ISO 8601 datetime is \fB"%Y\-%m\-%dT%H:%M:%SZ"\fR\.
+.
+.P
+jq may not support some or all of this date functionality on some systems\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'fromdate\'
+   "2015\-03\-05T23:51:47Z"
+=> 1425599507
+
+jq \'strptime("%Y\-%m\-%dT%H:%M:%SZ")\'
+   "2015\-03\-05T23:51:47Z"
+=> [2015,2,5,23,51,47,4,63]
+
+jq \'strptime("%Y\-%m\-%dT%H:%M:%SZ")|mktime\'
+   "2015\-03\-05T23:51:47Z"
+=> 1425599507
 .
 .fi
 .
@@ -1650,6 +2054,298 @@ jq \'\.foo // 42\'
 .
 .IP "" 0
 .
+.SS "try\-catch"
+Errors can be caught by using \fBtry EXP catch EXP\fR\. The first expression is executed, and if it fails then the second is executed with the error message\. The output of the handler, if any, is output as if it had been the output of the expression to try\.
+.
+.P
+The \fBtry EXP\fR form uses \fBempty\fR as the exception handler\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'try \.a catch "\. is not an object"\'
+   true
+=> "\. is not an object"
+
+jq \'[\.[]|try \.a]\'
+   [{}, true, {"a":1}]
+=> [null, 1]
+
+jq \'try error("some exception") catch \.\'
+   true
+=> "some exception"
+.
+.fi
+.
+.IP "" 0
+.
+.SS "Breaking out of control structures"
+A convenient use of try/catch is to break out of control structures like \fBreduce\fR, \fBforeach\fR, \fBwhile\fR, and so on\.
+.
+.P
+For example:
+.
+.IP "" 4
+.
+.nf
+
+# Repeat an expression until it raises "break" as an
+# error, then stop repeating without re\-raising the error\.
+# But if the error caught is not "break" then re\-raise it\.
+try repeat(exp) catch \.=="break" then empty else error;
+.
+.fi
+.
+.IP "" 0
+.
+.P
+jq has a syntax for named lexical labels to "break" or "go (back) to":
+.
+.IP "" 4
+.
+.nf
+
+label $out | \.\.\. break $out \.\.\.
+.
+.fi
+.
+.IP "" 0
+.
+.P
+The \fBbreak $label_name\fR expression will cause the program to to act as though the nearest (to the left) \fBlabel $label_name\fR produced \fBempty\fR\.
+.
+.P
+The relationship between the \fBbreak\fR and corresponding \fBlabel\fR is lexical: the label has to be "visible" from the break\.
+.
+.P
+To break out of a \fBreduce\fR, for example:
+.
+.IP "" 4
+.
+.nf
+
+label $out | reduce \.[] as $item (null; if \.==false then break $out else \.\.\. end)
+.
+.fi
+.
+.IP "" 0
+.
+.P
+The following jq program produces a syntax error:
+.
+.IP "" 4
+.
+.nf
+
+break $out
+.
+.fi
+.
+.IP "" 0
+.
+.P
+because no label \fB$out\fR is visible\.
+.
+.SS "? operator"
+The \fB?\fR operator, used as \fBEXP?\fR, is shorthand for \fBtry EXP\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[\.[]|(\.a)?]\'
+   [{}, true, {"a":1}]
+=> [null, 1]
+.
+.fi
+.
+.IP "" 0
+.
+.SH "REGULAR EXPRESSIONS (PCRE)"
+jq uses the Oniguruma regular expression library, as do php, ruby, TextMate, Sublime Text, etc, so the description here will focus on jq specifics\.
+.
+.P
+The jq regex filters are defined so that they can be used using one of these patterns:
+.
+.IP "" 4
+.
+.nf
+
+STRING | FILTER( REGEX )
+STRING | FILTER( REGEX; FLAGS )
+STRING | FILTER( [REGEX] )
+STRING | FILTER( [REGEX, FLAGS] )
+.
+.fi
+.
+.IP "" 0
+.
+.P
+where: * STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation; * REGEX, after string interpolation, should be a valid PCRE regex; * FILTER is one of \fBtest\fR, \fBmatch\fR, or \fBcapture\fR, as described below\.
+.
+.P
+FLAGS is a string consisting of one of more of the supported flags:
+.
+.IP "\(bu" 4
+\fBg\fR \- Global search (find all matches, not just the first)
+.
+.IP "\(bu" 4
+\fBi\fR \- Case insensitive search
+.
+.IP "\(bu" 4
+\fBm\fR \- Multi line mode (\'\.\' will match newlines)
+.
+.IP "\(bu" 4
+\fBn\fR \- Ignore empty matches
+.
+.IP "\(bu" 4
+\fBp\fR \- Both s and m modes are enabled
+.
+.IP "\(bu" 4
+\fBs\fR \- Single line mode (\'^\' \-> \'\eA\', \'$\' \-> \'\eZ\')
+.
+.IP "\(bu" 4
+\fBl\fR \- Find longest possible matches
+.
+.IP "\(bu" 4
+\fBx\fR \- Extended regex format (ignore whitespace and comments)
+.
+.IP "" 0
+.
+.P
+To match whitespace in an x pattern use an escape such as \es, e\.g\.
+.
+.IP "\(bu" 4
+test( "a\esb", "x" )\.
+.
+.IP "" 0
+.
+.P
+Note that certain flags may also be specified within REGEX, e\.g\.
+.
+.IP "\(bu" 4
+jq \-n \'("test", "TEst", "teST", "TEST") | test( "(?i)te(?\-i)st" )\'
+.
+.IP "" 0
+.
+.P
+evaluates to: true, true, false, false\.
+.
+.SS "[Requires 1\.5] test(val), test(regex; flags)"
+Like \fBmatch\fR, but does not return match objects, only \fBtrue\fR or \fBfalse\fR for whether or not the regex matches the input\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'test("foo")\'
+   "foo"
+=> true
+
+jq \'\.[] | test("a b c # spaces are ignored"; "ix")\'
+   ["xabcd", "ABC"]
+=> true, true
+.
+.fi
+.
+.IP "" 0
+.
+.SS "[Requires 1\.5] match(val), match(regex; flags)"
+\fBmatch\fR outputs an object for each match it finds\. Matches have the following fields:
+.
+.IP "\(bu" 4
+\fBoffset\fR \- offset in UTF\-8 codepoints from the beginning of the input
+.
+.IP "\(bu" 4
+\fBlength\fR \- length in UTF\-8 codepoints of the match
+.
+.IP "\(bu" 4
+\fBstring\fR \- the string that it matched
+.
+.IP "\(bu" 4
+\fBcaptures\fR \- an array of objects representing capturing groups\.
+.
+.IP "" 0
+.
+.P
+Capturing group objects have the following fields:
+.
+.IP "\(bu" 4
+\fBoffset\fR \- offset in UTF\-8 codepoints from the beginning of the input
+.
+.IP "\(bu" 4
+\fBlength\fR \- length in UTF\-8 codepoints of this capturing group
+.
+.IP "\(bu" 4
+\fBstring\fR \- the string that was captured
+.
+.IP "\(bu" 4
+\fBname\fR \- the name of the capturing group (or \fBnull\fR if it was unnamed)
+.
+.IP "" 0
+.
+.P
+Capturing groups that did not match anything return an offset of \-1
+.
+.IP "" 4
+.
+.nf
+
+jq \'match("(abc)+"; "g")\'
+   "abc abc"
+=> {"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}, {"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
+
+jq \'match("foo")\'
+   "foo bar foo"
+=> {"offset": 0, "length": 3, "string": "foo", "captures": []}
+
+jq \'match(["foo", "ig"])\'
+   "foo bar FOO"
+=> {"offset": 0, "length": 3, "string": "foo", "captures": []}, {"offset": 8, "length": 3, "string": "FOO", "captures": []}
+
+jq \'match("foo (?<bar123>bar)? foo"; "ig")\'
+   "foo bar foo foo  foo"
+=> {"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}, {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": \-1, "length": 0, "string": null, "name": "bar123"}]}
+
+jq \'[ match("\."; "g")] | length\'
+   "abc"
+=> 3
+.
+.fi
+.
+.IP "" 0
+.
+.SS "[Requires 1\.5] capture(val), capture(regex; flags)"
+Collects the named captures in a JSON object, with the name of each capture as the key, and the matched string as the corresponding value\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'capture("(?<a>[a\-z]+)\-(?<n>[0\-9]+)")\'
+   "xyzzy\-14"
+=> { "a": "xyzzy", "n": "14" }
+.
+.fi
+.
+.IP "" 0
+.
+.SS "[Requires 1\.5] scan(regex), scan(regex; flags)"
+Emit a stream of the non\-overlapping substrings of the input that match the regex in accordance with the flags, if any have been specified\. If there is no match, the stream is empty\. To capture all the matches for each input string, use the idiom \fB[ expr ]\fR, e\.g\. \fB[ scan(regex) ]\fR\.
+.
+.SS "split(regex; flags)"
+For backwards compatibility, \fBsplit\fR splits on a string, not a regex\.
+.
+.SS "[Requires 1\.5] splits(regex), splits(regex; flags)"
+These provide the same results as their \fBsplit\fR counterparts, but as a stream instead of an array\.
+.
+.SS "[Requires 1\.5] sub(regex; tostring) sub(regex; string; flags)"
+Emit the string obtained by replacing the first match of regex in the input string with \fBtostring\fR, after interpolation\. \fBtostring\fR should be a jq string, and may contain references to named captures\. The named captures are, in effect, presented as a JSON object (as constructed by \fBcapture\fR) to \fBtostring\fR, so a reference to a captured variable named "x" would take the form: "(\.x)"\.
+.
+.SS "[Requires 1\.5] gsub(regex; string), gsub(regex; string; flags)"
+\fBgsub\fR is like \fBsub\fR but all the non\-overlapping occurrences of the regex are replaced by the string, after interpolation\.
+.
 .SH "ADVANCED FEATURES"
 Variables are an absolute necessity in most programming languages, but they\'re relegated to an "advanced feature" in jq\.
 .
@@ -1660,7 +2356,16 @@ In most languages, variables are the only means of passing around data\. If you 
 It is also possible to define functions in jq, although this is is a feature whose biggest use is defining jq\'s standard library (many jq functions such as \fBmap\fR and \fBfind\fR are in fact written in jq)\.
 .
 .P
-Finally, jq has a \fBreduce\fR operation, which is very powerful but a bit tricky\. Again, it\'s mostly used internally, to define some useful bits of jq\'s standard library\.
+jq has reduction operators, which are very powerful but a bit tricky\. Again, these are mostly used internally, to define some useful bits of jq\'s standard library\.
+.
+.P
+It may not be obvious at first, but jq is all about generators (yes, as often found in other languages)\. Some utilities are provided to help deal with generators\.
+.
+.P
+Some minimal I/O support (besides reading JSON from standard input, and writing JSON to standard output) is available\.
+.
+.P
+Finally, there is a module/library system\.
 .
 .SS "Variables"
 In jq, all filters have an input and an output, so manual plumbing is not necessary to pass a value from one part of a program to the next\. Many expressions, for instance \fBa + b\fR, pass their input to two distinct subexpressions (here \fBa\fR and \fBb\fR are both passed the same input), so variables aren\'t usually necessary in order to use a value twice\.
@@ -1731,6 +2436,25 @@ We use a variable, $names, to store the realnames object, so that we can refer t
 The expression \fBexp as $x | \.\.\.\fR means: for each value of expression \fBexp\fR, run the rest of the pipeline with the entire original input, and with \fB$x\fR set to that value\. Thus \fBas\fR functions as something of a foreach loop\.
 .
 .P
+Just as \fB{foo}\fR is a handy way of writing \fB{foo: \.foo}\fR, so \fB{$foo}\fR is a handy way of writing \fB{foo:$foo}\fR\.
+.
+.P
+Multiple variables may be declared using a single \fBas\fR expression by providing a pattern that matches the structure of the input (this is known as "destructuring"):
+.
+.IP "" 4
+.
+.nf
+
+\&\. as {realnames: $names, posts: [$first, $second]} | \.\.\.
+.
+.fi
+.
+.IP "" 0
+.
+.P
+The variable declarations in array patterns (e\.g\., \fB\. as [$first, $second]\fR) bind to the elements of the array in from the element at index zero on up, in order\. When there is no value at the index for an array pattern element, \fBnull\fR is bound to that variable\.
+.
+.P
 Variables are scoped over the rest of the expression that defines them, so
 .
 .IP "" 4
@@ -1773,6 +2497,14 @@ jq \'\.bar as $x | \.foo | \. + $x\'
 jq \'\. as $i|[(\.*2|\. as $i| $i), $i]\'
    5
 => [10,5]
+
+jq \'\. as [$a, $b, {c: $c}] | $a + $b + $c\'
+   [2, 3, {"c": 4, "d": 5}]
+=> 9
+
+jq \'\.[] as [$a, $b] | {a: $a, b: $b}\'
+   [[0], [0, 1], [2, 1, 0]]
+=> {"a":0,"b":null}, {"a":0,"b":1}, {"a":2,"b":1}
 .
 .fi
 .
@@ -1828,14 +2560,27 @@ If you want the value\-argument behaviour for defining simple functions, you can
 .
 .nf
 
-def addvalue(f): f as $value | map(\. + $value);
+def addvalue(f): f as $f | map(\. + $f);
 .
 .fi
 .
 .IP "" 0
 .
 .P
-With that definition, \fBaddvalue(\.foo)\fR will add the current input\'s \fB\.foo\fR field to each element of the array\.
+Or use the short\-hand:
+.
+.IP "" 4
+.
+.nf
+
+def addvalue($f): \.\.\.;
+.
+.fi
+.
+.IP "" 0
+.
+.P
+With either definition, \fBaddvalue(\.foo)\fR will add the current input\'s \fB\.foo\fR field to each element of the array\.
 .
 .P
 Multiple definitions using the same function name are allowed\. Each re\-definition replaces the previous one for the same number of function arguments, but only for references from functions (or main program) subsequent to the re\-definition\.
@@ -1888,6 +2633,228 @@ jq \'reduce \.[] as $item (0; \. + $item)\'
 .
 .IP "" 0
 .
+.SS "limit(n; exp)"
+The \fBlimit\fR function extracts up to \fBn\fR outputs from \fBexp\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[limit(3;\.[])]\'
+   [0,1,2,3,4,5,6,7,8,9]
+=> [0,1,2]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "first(expr), last(expr), nth(n; expr)"
+The \fBfirst(expr)\fR and \fBlast(expr)\fR functions extract the first and last values from \fBexpr\fR, respectively\.
+.
+.P
+The \fBnth(n; expr)\fR function extracts the nth value output by \fBexpr\fR\. This can be defined as \fBdef nth(n; expr): last(limit(n + 1; expr));\fR\. Note that \fBnth(n; expr)\fR doesn\'t support negative values of \fBn\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[first(range(\.)), last(range(\.)), nth(\./2; range(\.))]\'
+   10
+=> [0,9,5]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "first, last, nth(n)"
+The \fBfirst\fR and \fBlast\fR functions extract the first and last values from any array at \fB\.\fR\.
+.
+.P
+The \fBnth(n)\fR function extracts the nth value of any array at \fB\.\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[range(\.)]|[first, last, nth(5)]\'
+   10
+=> [0,9,5]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "foreach"
+The \fBforeach\fR syntax is similar to \fBreduce\fR, but intended to allow the construction of \fBlimit\fR and reducers that produce intermediate results (see example)\.
+.
+.P
+The form is \fBforeach EXP as $var (INIT; UPDATE; EXTRACT)\fR\. Like \fBreduce\fR, \fBINIT\fR is evaluated once to produce a state value, then each output of \fBEXP\fR is bound to \fB$var\fR, \fBUPDATE\fR is evaluated for each output of \fBEXP\fR with the current state and with \fB$var\fR visible\. Each value output by \fBUPDATE\fR replaces the previous state\. Finally, \fBEXTRACT\fR is evaluated for each new state to extract an output of \fBforeach\fR\.
+.
+.P
+This is mostly useful only for constructing \fBreduce\fR\- and \fBlimit\fR\-like functions\. But it is much more general, as it allows for partial reductions (see the example below)\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[foreach \.[] as $item ([[],[]]; if $item == null then [[],\.[0]] else [(\.[0] + [$item]),[]] end; if $item == null then \.[1] else empty end)]\'
+   [1,2,3,4,null,"a","b",null]
+=> [[1,2,3,4],["a","b"]]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "Recursion"
+As described above, \fBrecurse\fR uses recursion, and any jq function can be recursive\. The \fBwhile\fR builtin is also implemented in terms of recursion\.
+.
+.P
+Tail calls are optmized whenever the expression to the left of the recursive call outputs its last value\. In practice this means that the expression to the left of the recursive call should not produce more than one output for each input\.
+.
+.P
+For example:
+.
+.IP "" 4
+.
+.nf
+
+def recurse(f): def r: \., (f | select(\. != null) | r); r;
+
+def while(cond; update):
+  def _while:
+    if cond then \., (update | _while) else empty end;
+  _while;
+
+def repeat(exp):
+  def _repeat:
+    exp, _repeat;
+  _repeat;
+.
+.fi
+.
+.IP "" 0
+.
+.SS "Generators and iterators"
+Some jq operators and functions are actually generators in that they can produce zero, one, or more values for each input, just as one might expect in other programming languages that have generators\. For example, \fB\.[]\fR generates all the values in its input (which must be an array or an object), \fBrange(0; 10)\fR generates the integers between 0 and 10, and so on\.
+.
+.P
+Even the comma operator is a generator, generating first the values generated by the expression to the left of the comma, then for each of those, the values generate by the expression on the right of the comma\.
+.
+.P
+The \fBempty\fR builtin is the generator that produces zero outputs\. The \fBempty\fR builtin backtracks to the preceding generator expression\.
+.
+.P
+All jq functions can be generators just by using builtin generators\. It is also possible to define new generators using only recursion and the comma operator\. If the recursive call(s) is(are) "in tail position" then the generator will be efficient\. In the example below the recursive call by \fB_range\fR to itself is in tail position\. The example shows off three advanced topics: tail recursion, generator construction, and sub\-functions\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'def range(init; upto; by): def _range: if (by > 0 and \. < upto) or (by < 0 and \. > upto) then \., ((\.+by)|_range) else \. end; if by == 0 then init else init|_range end | select((by > 0 and \. < upto) or (by < 0 and \. > upto)); range(0; 10; 3)\'
+   null
+=> 0, 3, 6, 9
+
+jq \'def while(cond; update): def _while: if cond then \., (update | _while) else empty end; _while; [while(\.<100; \.*2)]\'
+   1
+=> [1,2,4,8,16,32,64]
+.
+.fi
+.
+.IP "" 0
+.
+.SH "MATH"
+jq currently only has IEEE754 double\-precision (64\-bit) floating point number support\.
+.
+.P
+Besides simple arithmetic operators such as \fB+\fR, jq also has most standard math functions from the C math library\. C math functions that take a single input argument (e\.g\., \fBsin()\fR) are available as zero\-argument jq functions\. C math functions that take two input arguments (e\.g\., \fBpow()\fR) are available as two\-argument jq functions that ignore \fB\.\fR\.
+.
+.P
+Availability of standard math functions depends on the availability of the corresponding math functions in your operating system and C math library\. Unavailable math functions will be defined but will raise an error\.
+.
+.SH "I/O"
+At this time jq has minimal support for I/O, mostly in the form of control over when inputs are read\. Two builtins functions are provided for this, \fBinput\fR and \fBinputs\fR, that read from the same sources (e\.g\., \fBstdin\fR, files named on the command\-line) as jq itself\. These two builtins, and jq\'s own reading actions, can be interleaved with each other\.
+.
+.P
+One builtin provides minimal output capabilities, \fBdebug\fR\. (Recall that a jq program\'s output values are always output as JSON texts on \fBstdout\fR\.) The \fBdebug\fR builtin can have application\-specific behavior, such as for executables that use the libjq C API but aren\'t the jq executable itself\.
+.
+.SS "input"
+Outputs one new input\.
+.
+.SS "inputs"
+Outputs all remaining inputs, one by one\.
+.
+.P
+This is primarily useful for reductions over a program\'s inputs\.
+.
+.SS "debug"
+Causes a debug message based on the input value to be produced\. The jq executable wraps the input value with \fB["DEBUG:", <input\-value>]\fR and prints that and a newline on stderr, compactly\. This may change in the future\.
+.
+.SS "input_filename"
+Returns the name of the file whose input is currently being filtered\. Note that this will not work well unless jq is running in a UTF\-8 locale\.
+.
+.SS "input_line_number"
+Returns the line number of the input currently being filtered\.
+.
+.SH "STREAMING"
+With the \fB\-\-stream\fR option jq can parse input texts in a streaming fashion, allowing jq programs to start processing large JSON texts immediately rather than after the parse completes\. If you have a single JSON text that is 1GB in size, streaming it will allow you to process it much more quickly\.
+.
+.P
+However, streaming isn\'t easy to deal with as the jq program will have \fB[<path>, <leaf\-value>]\fR (and a few other forms) as inputs\.
+.
+.P
+Several builtins are provided to make handling streams easier\.
+.
+.P
+The examples below use the the streamed form of \fB[0,[1]]\fR, which is \fB[[0],1],[[1,0],2],[[1,0]],[[1]])]\fR\.
+.
+.P
+Streaming forms include \fB[<path>, <leaf\-value>]\fR (to indicate any scalar value, empty array, or empty object), and \fB[<path>]\fR (to indicate the end of an array or object)\. Future versions of jq run with \fB\-\-stream\fR and \fB\-seq\fR may output additional forms such as \fB["error message"]\fR when an input text fails to parse\.
+.
+.SS "truncate_stream(stream_expression)"
+Consumes a number as input and truncates the corresponding number of path elements from the left of the outputs of the given streaming expression\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]\'
+   1
+=> [[[0],2],[[0]]]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "fromstream(stream_expression)"
+Outputs values corresponding to the stream expression\'s outputs\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))\'
+   null
+=> [2]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "tostream"
+The \fBtostream\fR builtin outputs the streamed form of its input\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'\. as $dot|fromstream($dot|tostream)|\.==$dot\'
+   [0,[1,{"a":1},{"b":2}]]
+=> true
+.
+.fi
+.
+.IP "" 0
+.
 .SH "ASSIGNMENT"
 Assignment works a little differently in jq than in most programming languages\. jq doesn\'t distinguish between references to and copies of something \- two objects or arrays are either equal or not equal, without any further notion of being "the same object" or "not the same object"\.
 .
@@ -1906,8 +2873,11 @@ will not have the side\-effect of setting \.bar\.baz to be set to 1, as the simi
 .P
 This means that it\'s impossible to build circular values in jq (such as an array whose first element is itself)\. This is quite intentional, and ensures that anything a jq program can produce can be represented in JSON\.
 .
+.P
+Note that the left\-hand side of \'=\' refers to a value in \fB\.\fR\. Thus \fB$var\.foo = 1\fR won\'t work as expected; use \fB$var | \.foo = 1\fR instead\.
+.
 .SS "|="
-As well as the assignment operator \'=\', jq provides the "update" operator \'|=\', which takes a filter on the right\-hand side and works out the new value for the property being assigned to by running the old value through this expression\. For instance, \.foo |= \.+1 will build an object with the "foo" field set to the input\'s "foo" plus 1\.
+As well as the assignment operator \'=\', jq provides the "update" operator \'|=\', which takes a filter on the right\-hand side and works out the new value for the property of \fB\.\fR being assigned to by running the old value through this expression\. For instance, \.foo |= \.+1 will build an object with the "foo" field set to the input\'s "foo" plus 1\.
 .
 .P
 This example should show the difference between \'=\' and \'|=\':
@@ -1920,6 +2890,24 @@ Provide input \'{"a": {"b": 10}, "b": 20}\' to the programs:
 .
 .P
 The former will set the "a" field of the input to the "b" field of the input, and produce the output {"a": 20}\. The latter will set the "a" field of the input to the "a" field\'s "b" field, producing {"a": 10}\.
+.
+.P
+The left\-hand side can be any general path expression; see \fBpath()\fR\.
+.
+.P
+Note that the left\-hand side of \'|=\' refers to a value in \fB\.\fR\. Thus \fB$var\.foo |= \. + 1\fR won\'t work as expected; use \fB$var | \.foo |= \. + 1\fR instead\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'(\.\.|select(type=="boolean")) |= if \. then 1 else 0 end\'
+   [true,false,[5,true,[true,[false]],false]]
+=> [1,0,[5,1,[1,[0]],0]]
+.
+.fi
+.
+.IP "" 0
 .
 .SS "+=, \-=, *=, /=, %=, //="
 jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \fBa |= \. op b\fR\. So, \fB+= 1\fR can be used to increment values\.
@@ -1994,6 +2982,81 @@ The paths provided by this operation point to each of the posts that "stedolan" 
 .fi
 .
 .IP "" 0
+.
+.SH "MODULES"
+jq has a library/module system\. Modules are files whose names end in \fB\.jq\fR\.
+.
+.P
+Modules imported by a program are searched for in a default search path (see below)\. The \fBimport\fR and \fBinclude\fR directives allow the importer to alter this path\.
+.
+.P
+Paths in the a search path are subject to various substitutions\.
+.
+.P
+For paths starting with "~/", the user\'s home directory is substituted for "~"\.
+.
+.P
+For paths starting with "$ORIGIN/", the path of the jq executable is substituted for "$ORIGIN"\.
+.
+.P
+For paths starting with "\./" or paths that are "\.", the path of the including file is substituted for "\."\. For top\-level programs given on the command\-line, the current directory is used\.
+.
+.P
+Import directives can optionally specify a search path to which the default is appended\.
+.
+.P
+The default search path is the search path given to the \fB\-L\fR command\-line option, else \fB["~/\.jq", "$ORIGIN/\.\./lib/jq", "$ORIGIN/\.\./lib"]\fR\.
+.
+.P
+Null and empty string path elements terminate search path processing\.
+.
+.P
+A dependency with relative path "foo/bar" would be searched for in "foo/bar\.jq" and "foo/bar/bar\.jq" in the given search path\. This is intended to allow modules to be placed in a directory along with, for example, version control files, README files, and so on, but also to allow for single\-file modules\.
+.
+.P
+Consecutive components with the same name are not allowed to avoid ambiguities (e\.g\., "foo/foo")\.
+.
+.P
+For example, with \fB\-L$HOME/\.jq\fR a module \fBfoo\fR can be found in \fB$HOME/\.jq/foo\.jq\fR and \fB$HOME/\.jq/foo/foo\.jq\fR\.
+.
+.P
+If "$HOME/\.jq" is a file, it is sourced into the main program\.
+.
+.SS "import RelativePathString as NAME [<metadata>];"
+Imports a module found at the given path relative to a directory in a search path\. A "\.jq" suffix will be added to the relative path string\. The module\'s symbols are prefixed with "NAME::"\.
+.
+.P
+The optional metadata must be a constant jq expression\. It should be an object with keys like "homepage" and so on\. At this time jq only uses the "search" key/value of the metadata\. The metadata is also made available to users via the \fBmodulemeta\fR builtin\.
+.
+.P
+The "search" key in the metadata, if present, should have a string or array value (array of strings); this is the search path to be prefixed to the top\-level search path\.
+.
+.SS "include RelativePathString [<metadata>];"
+Imports a module found at the given path relative to a directory in a search path as if it were included in place\. A "\.jq" suffix will be added to the relative path string\. The module\'s symbols are imported into the caller\'s namespace as if the module\'s content had been included directly\.
+.
+.P
+The optional metadata must be a constant jq expression\. It should be an object with keys like "homepage" and so on\. At this time jq only uses the "search" key/value of the metadata\. The metadata is also made available to users via the \fBmodulemeta\fR builtin\.
+.
+.SS "import RelativePathString as $NAME [<metadata>];"
+Imports a JSON file found at the given path relative to a directory in a search path\. A "\.json" suffix will be added to the relative path string\. The file\'s data will be available as \fB$NAME::NAME\fR\.
+.
+.P
+The optional metadata must be a constant jq expression\. It should be an object with keys like "homepage" and so on\. At this time jq only uses the "search" key/value of the metadata\. The metadata is also made available to users via the \fBmodulemeta\fR builtin\.
+.
+.P
+The "search" key in the metadata, if present, should have a string or array value (array of strings); this is the search path to be prefixed to the top\-level search path\.
+.
+.SS "module <metadata>;"
+This directive is entirely optional\. It\'s not required for proper operation\. It serves only the purpose of providing metadata that can be read with the \fBmodulemeta\fR builtin\.
+.
+.P
+The metadata must be a constant jq expression\. It should be an object with keys like "homepage"\. At this time jq doesn\'t use this metadata, but it is made available to users via the \fBmodulemeta\fR builtin\.
+.
+.SS "modulemeta"
+Takes a module name as input and outputs the module\'s metadata as an object, with the module\'s imports (including metadata) as an array value for the "deps" key\.
+.
+.P
+Programs can use this to query a module\'s metadata, which they could then use to, for example, search for, download, and install missing dependencies\.
 .
 .SH "BUGS"
 Presumably\. Report them or discuss them at:
