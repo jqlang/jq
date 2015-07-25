@@ -10,10 +10,11 @@
 if [ "clean" == "$1" ]; then
   make distclean || echo "continuing..."
   find config/m4 -type f \( -name libtool\* -o -name lt\* \) | xargs rm -f
-  find config -name m4 -prune -o -type f -print | xargs rm -f
-  rm -rf tmp autom4te.cache
-  rm -f INSTALL Makefile.in aclocal.m4 configure config.h.in ChangeLog
-  rm -f jv_utf8_tables.gen.h
+  find config -name m4 -prune \
+      -o -name .gitignore -prune \
+      -o -type f -print | xargs rm -f
+  rm -rf autom4te.cache
+  rm -f Makefile.in aclocal.m4 configure
 elif [ "superclean" == "$1" ]; then
   # if autoconf errors during distcheck, it leaves files that need chmod'ing
   ver=$(scripts/version|tr -d '\n')
@@ -26,10 +27,7 @@ elif [ "superclean" == "$1" ]; then
   fi
 else
   autoreconf --install
-  ./configure --prefix=/opt/junk
-  make check
-  [ -d tmp ] && mv tmp tmp-
-  mkdir tmp
-  make DESTDIR=./tmp install
-  make distcheck
+  ./configure --disable-valgrind
+  make -j8
+  make check -j4
 fi
