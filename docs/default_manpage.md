@@ -9,7 +9,7 @@ reducing and otherwise mangling JSON documents.
 This version of `jq` was built without a manual, so this manpage is a
 stub. For full documentation of the `jq` language, see:
 
-    http://stedolan.github.com/jq
+    http://stedolan.github.io/jq
     
 ## BUGS
 
