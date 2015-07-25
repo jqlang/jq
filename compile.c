@@ -1047,7 +1047,7 @@ static int expand_call_arglist(block* b) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block b) {
+static int compile(struct bytecode* bc, block b, struct locfile* lf) {
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
@@ -1088,6 +1088,13 @@ static int compile(struct bytecode* bc, block b) {
       curr->imm.intval = idx;
     }
   }
+  if (pos > 0xFFFF) {
+    // too long for program counter to fit in uint16_t
+    locfile_locate(lf, UNKNOWN_LOCATION,
+        "function compiled to %d bytes which is too long", pos);
+    errors++;
+  }
+  bc->codelen = pos;
   bc->debuginfo = jv_object_set(bc->debuginfo, jv_string("locals"), localnames);
   if (bc->nsubfunctions) {
     bc->subfunctions = jv_mem_alloc(sizeof(struct bytecode*) * bc->nsubfunctions);
@@ -1108,14 +1115,13 @@ static int compile(struct bytecode* bc, block b) {
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
-        errors += compile(subfn, curr->subfn);
+        errors += compile(subfn, curr->subfn, lf);
         curr->subfn = gen_noop();
       }
     }
   } else {
     bc->subfunctions = 0;
   }
-  bc->codelen = pos;
   uint16_t* code = jv_mem_alloc(sizeof(uint16_t) * bc->codelen);
   bc->code = code;
   pos = 0;
@@ -1174,7 +1180,7 @@ static int compile(struct bytecode* bc, block b) {
   return errors;
 }
 
-int block_compile(block b, struct bytecode** out) {
+int block_compile(block b, struct bytecode** out, struct locfile* lf) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
@@ -1184,7 +1190,7 @@ int block_compile(block b, struct bytecode** out) {
   bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
-  int nerrors = compile(bc, b);
+  int nerrors = compile(bc, b, lf);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {
     bytecode_free(bc);

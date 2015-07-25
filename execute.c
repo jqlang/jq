@@ -1088,7 +1088,7 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
 
     nerrors = builtins_bind(jq, &program);
     if (nerrors == 0) {
-      nerrors = block_compile(program, &jq->bc);
+      nerrors = block_compile(program, &jq->bc, locations);
     }
   }
   if (nerrors)
