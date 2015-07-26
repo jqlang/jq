@@ -57,6 +57,7 @@
         </div>
         <div class="span9">
           <h1>{{headline}}</h1>
+          {{ history | markdownify }}
           {{ body | markdownify }}
           {% for section in sections %}
             <section id="{{section.title | sanitize}}">
