@@ -165,7 +165,8 @@ sudo make install</code></pre>
 
 <p>On OS X, these are all included in Apple&#8217;s command line tools, which can be installed from <a href='http://developer.apple.com/technologies/tools/'>Xcode</a>. However, you may find that you need a newer version of Bison than the one provided by Apple. This can be found in <a href='http://mxcl.github.com/homebrew/'>Homebrew</a> or <a href='http://macports.org/'>MacPorts</a>.</p>
 
-<p><code>flex</code> and <code>bison</code> are used to generate the lexer and parser for jq, and some python scripts generate the UTF8 encoding tables needed for JSON parsing.</p>
+<p><code>flex</code> and <code>bison</code> are used to generate the lexer and parser for jq. For jq 1.5+, neither is required if you use <code>./configure
+--disable-maintainer-mode</code> instead of <code>./configure</code>. This flag says to use the pre-generated lexer and parser that come with the code.</p>
 
 <h4 id='building_the_documentation'>Building the documentation</h4>
 
