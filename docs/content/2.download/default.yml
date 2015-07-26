@@ -93,8 +93,9 @@ body:
       or [MacPorts](http://macports.org/).
 
       `flex` and `bison` are used to generate the lexer and parser for
-      jq, and some python scripts generate the UTF8 encoding tables
-      needed for JSON parsing.
+      jq. For jq 1.5+, neither is required if you use `./configure
+      --disable-maintainer-mode` instead of `./configure`. This flag says to use
+      the pre-generated lexer and parser that come with the code.
    
       #### Building the documentation
 
