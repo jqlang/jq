@@ -154,7 +154,7 @@ EXTRA_DIST = $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER) jq.spec		\
 	tests/modules/.jq tests/modules/a.jq tests/modules/b/b.jq	\
 	tests/modules/c/c.jq tests/modules/c/d.jq			\
 	tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq		\
-	tests/modules/streaming.jq tests/modules/data.json		\
+	tests/modules/data.json						\
 	tests/modules/syntaxerror/syntaxerror.jq			\
 	tests/modules/test_bind_order.jq				\
 	tests/modules/test_bind_order0.jq				\
