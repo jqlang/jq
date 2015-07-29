@@ -1369,8 +1369,8 @@ static const char* const jq_builtins[] = {
 #include "libm.h"
   "def add: reduce .[] as $x (null; . + $x);",
   "def del(f): delpaths([path(f)]);",
-  "def _assign(paths; value): value as $v | reduce path(paths) as $p (.; setpath($p; $v));",
-  "def _modify(paths; update): reduce path(paths) as $p (.; setpath($p; getpath($p) | update));",
+  "def _assign(paths; value): (value as $v | reduce path(paths) as $p (.; setpath($p; $v)))//.;",
+  "def _modify(paths; update): reduce path(paths) as $p (.; setpath($p; getpath($p) | update) // .);",
   "def map_values(f): .[] |= f;",
 
   // recurse
