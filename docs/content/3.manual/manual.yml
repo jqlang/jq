@@ -612,13 +612,14 @@ sections:
       - title: Multiplication, division, modulo - `*`, `/`, and `%`
         body: |
 
-          These operators only work on numbers, and do the expected.
+          These infix operators behave as expected when given two numbers.
+          Division by zero raises an error. `x % y` computes x modulo y.
 
           Multiplying a string by a number produces the concatenation of
-          that string that many times.
+          that string that many times. `"x" * 0` produces **null**.
 
           Dividing a string by another splits the first using the second
-          as separators.  Division by zero raises an error.
+          as separators.  
 
           Multiplying two objects will merge them recursively: this works
           like addition but if both objects contain a value for the
