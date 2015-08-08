@@ -13,9 +13,6 @@ jq
 !tests/modules/lib/jq/
 jq.1
 
-# Something delightfully recursive happens otherwise
-docs/content/2.download/source/*
-
 # Autotools junk
 .libs
 .deps
