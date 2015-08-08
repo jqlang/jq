@@ -81,6 +81,12 @@ body:
          or
          [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.3/jq-win32.exe).
 
+      ### Checksums
+
+      See
+      [sha1sum.txt](https://raw.githubusercontent.com/stedolan/jq/master/sha1sum.txt)
+      for SHA-1 checksums of the binaries linked above.
+
       ### From source on Linux, OS X, Cygwin, and other POSIX-like operating systems
 
        * [Source tarball for jq 1.4](https://github.com/stedolan/jq/archive/jq-1.4.tar.gz)
