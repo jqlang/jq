@@ -1468,11 +1468,11 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   <p>Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</code></p>
                   
                 </h3>
-                <p>These operators only work on numbers, and do the expected.</p>
+                <p>These infix operators behave as expected when given two numbers. Division by zero raises an error. <code>x % y</code> computes x modulo y.</p>
 
-<p>Multiplying a string by a number produces the concatenation of that string that many times.</p>
+<p>Multiplying a string by a number produces the concatenation of that string that many times. <code>&quot;x&quot; * 0</code> produces <strong>null</strong>.</p>
 
-<p>Dividing a string by another splits the first using the second as separators. Division by zero raises an error.</p>
+<p>Dividing a string by another splits the first using the second as separators.</p>
 
 <p>Multiplying two objects will merge them recursively: this works like addition but if both objects contain a value for the same key, and the values are objects, the two are merged with the same strategy.</p>
 
