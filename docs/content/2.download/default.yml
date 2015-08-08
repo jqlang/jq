@@ -83,7 +83,7 @@ body:
 
       ### From source on Linux, OS X, Cygwin, and other POSIX-like operating systems
 
-       * [Source tarball for jq 1.4](source/jq-1.4.tar.gz)
+       * [Source tarball for jq 1.4](https://github.com/stedolan/jq/archive/jq-1.4.tar.gz)
 
       You can build it using the usual `./configure && make && sudo
       make install` rigmarole.
