@@ -30,10 +30,15 @@ body:
          [ArchWiki](https://wiki.archlinux.org/index.php/Arch_User_Repository)
          for how to install from AUR.
 
-       * jq 1.4 binaries for [64-bit](linux64/jq) or [32-bit](linux32/jq).
+       * jq 1.4 binaries for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-linux-x86_64)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-linux-x86).
 
-       * jq 1.3 binaries for [64-bit](linux64/jq-1.3/jq) or
-         [32-bit](linux32/jq-1.3/jq).
+       * jq 1.3 binaries for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.3/jq-linux-x86_64)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.3/jq-linux-x86).
 
       ### OS X
 
@@ -41,29 +46,40 @@ body:
          `brew install jq`. You can also install 1.5rc2 with
          `brew install --devel jq`.
 
-       * jq 1.4 binaries for [64-bit](osx64/jq) or [32-bit](osx32/jq).
+       * jq 1.4 binaries for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-osx-x86_64)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-osx-x86).
 
-       * jq 1.3 binaries for [64-bit](osx64/jq-1.3/jq) or
-         [32-bit](osx32/jq-1.3/jq).
+       * jq 1.3 binaries for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.3/jq-osx-x86_64)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.3/jq-osx-x86).
 
       ### Solaris
 
        * `pkgutil -i jq` in [OpenCSW](http://www.opencsw.org/p/jq) for Solaris
          10+, Sparc and x86.
 
-       * jq 1.4 binaries for Solaris 11 [64-bit](solaris11-64/jq) or
-         [32-bit](solaris11-32/jq).
+       * jq 1.4 binaries for Solaris 11
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-solaris11-64)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-solaris11-32).
 
       ### Windows
 
        * Use [Chocolatey NuGet](https://chocolatey.org/) to install jq 1.4 with
          `chocolatey install jq`.
 
-       * jq 1.4 executables for [64-bit](win64/jq.exe) or
-         [32-bit](win32/jq.exe).
+       * jq 1.4 executables for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-win64.exe)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-win32.exe).
 
-       * jq 1.3 executables for [64-bit](win64/jq-1.3/jq-1.3.exe) or
-         [32-bit](win32/jq-1.3/jq-1.3.exe).
+       * jq 1.3 executables for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.3/jq-win64.exe)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.3/jq-win32.exe).
 
       ### From source on Linux, OS X, Cygwin, and other POSIX-like operating systems
 
