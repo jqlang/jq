@@ -33,10 +33,16 @@ tail: |
   [Freenode](https://webchat.freenode.net/).
 
 news:
+  - date: 2015-07-26
+    body: |
+
+      jq 1.5rc2 is available. Get it on the
+      [releases](https://github.com/stedolan/jq/releases) page.
+
   - date: 2015-01-01
     body: |
 
-      jq 1.5rc1 Get it on the
+      jq 1.5rc1 is available. Get it on the
       [releases](https://github.com/stedolan/jq/releases) page.
 
   - date: 2014-06-08
