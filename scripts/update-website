@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# This script builds the website from the docs directory of
+# the current branch and copies it over to the gh-pages
+# branch. WARNING: this script runs 'git clean -fd' after
+# checking out the gh-pages branch in order to remove files
+# that are gitignore'd on master but not gh-pages. If your
+# repo contains untracked files they will be lost.
+
+set -eu
+set -o xtrace
+
+# build website
+scriptdir=`dirname "$0"`
+cd "$scriptdir"/../docs
+rm -rf output
+rake build
+cd ..
+
+# copy to /tmp
+tmpdir=$(mktemp -d -t jq.website.XXXXXXXXXX)
+cp -r docs/output/* "$tmpdir"
+
+# copy to gh-pages
+git checkout gh-pages
+git clean -fd
+cp -r "$tmpdir"/* .
+
+# clean up
+rm -rf "$tmpdir"
+echo SUCCESS
