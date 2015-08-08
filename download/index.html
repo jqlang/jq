@@ -65,23 +65,23 @@
 
 <ul>
 <li>
-<p>jq 1.4 binaries for <a href='linux64/jq'>64-bit</a> or <a href='linux32/jq'>32-bit</a> systems.</p>
+<p>jq 1.4 is in the official <a href='http://packages.debian.org/jq'>Debian</a> and <a href='http://packages.ubuntu.com/jq'>Ubuntu</a> repositories. Install using <code>sudo apt-get install jq</code>.</p>
 </li>
 
 <li>
-<p>jq 1.3 binaries for <a href='linux64/jq-1.3/jq'>64-bit</a> or <a href='linux32/jq-1.3/jq'>32-bit</a> systems.</p>
+<p>jq 1.3 is in the official <a href='http://pkgs.fedoraproject.org/cgit/jq.git/'>Fedora</a> repository. Install using <code>sudo yum install jq</code>.</p>
 </li>
 
 <li>
-<p>For Arch users, a PKGBUILD for jq-1.1 is in the <a href='https://aur.archlinux.org/packages.php?ID=63849'>AUR</a>, as well as a PKGBUILD for the HEAD of master (<a href='https://aur.archlinux.org/packages.php?ID=63850'>jq-git</a>). You can install them using <a href='https://wiki.archlinux.org/index.php/Yaourt'>Yaourt</a> or manually by following instructions on <a href='https://wiki.archlinux.org/index.php/Arch_UseRepository'>Arch Linux&#8217;s Wiki</a>.</p>
+<p>For Arch users, a PKGBUILD is in the <a href='https://aur.archlinux.org/packages/jq-git/'>AUR</a>. Refer to the <a href='https://wiki.archlinux.org/index.php/Arch_User_Repository'>ArchWiki</a> for how to install from AUR.</p>
 </li>
 
 <li>
-<p>jq 1.4 is <a href='http://packages.debian.org/jq'>in Debian</a></p>
+<p>jq 1.4 binaries for <a href='linux64/jq'>64-bit</a> or <a href='linux32/jq'>32-bit</a>.</p>
 </li>
 
 <li>
-<p>jq 1.3.2 is in the official Fedora repository. You can install using <code>sudo yum install jq</code>.</p>
+<p>jq 1.3 binaries for <a href='linux64/jq-1.3/jq'>64-bit</a> or <a href='linux32/jq-1.3/jq'>32-bit</a>.</p>
 </li>
 </ul>
 
@@ -89,15 +89,15 @@
 
 <ul>
 <li>
-<p><code>brew install jq</code> using <a href='http://mxcl.github.com/homebrew/'>homebrew</a></p>
+<p>Use <a href='http://brew.sh/'>Homebrew</a> to install jq 1.4 with <code>brew install jq</code>. You can also install 1.5rc2 with <code>brew install --devel jq</code>.</p>
 </li>
 
 <li>
-<p>Or, grab prebuilt jq 1.4 <a href='osx64/jq'>64-bit binaries</a> or <a href='osx32/jq'>32-bit binaries</a></p>
+<p>jq 1.4 binaries for <a href='osx64/jq'>64-bit</a> or <a href='osx32/jq'>32-bit</a>.</p>
 </li>
 
 <li>
-<p>Or, grab prebuilt jq 1.3 <a href='osx64/jq-1.3/jq'>64-bit binaries</a> or <a href='osx32/jq-1.3/jq'>32-bit binaries</a></p>
+<p>jq 1.3 binaries for <a href='osx64/jq-1.3/jq'>64-bit</a> or <a href='osx32/jq-1.3/jq'>32-bit</a>.</p>
 </li>
 </ul>
 
@@ -105,11 +105,11 @@
 
 <ul>
 <li>
-<p><code>pkgutil -i jq</code> in <a href='http://www.opencsw.org/p/jq'>OpenCSW</a> for Solaris 10+, Sparc and x86</p>
+<p><code>pkgutil -i jq</code> in <a href='http://www.opencsw.org/p/jq'>OpenCSW</a> for Solaris 10+, Sparc and x86.</p>
 </li>
 
 <li>
-<p>jq 1.4 executables for Solaris 11 <a href='solaris11-64/jq'>64-bit</a> or <a href='solaris11-32/jq'>32-bit</a></p>
+<p>jq 1.4 binaries for Solaris 11 <a href='solaris11-64/jq'>64-bit</a> or <a href='solaris11-32/jq'>32-bit</a>.</p>
 </li>
 </ul>
 
@@ -117,15 +117,15 @@
 
 <ul>
 <li>
-<p><code>chocolatey install jq</code> using <a href='https://chocolatey.org/'>Chocolatey NuGet</a></p>
+<p>Use <a href='https://chocolatey.org/'>Chocolatey NuGet</a> to install jq 1.4 with <code>chocolatey install jq</code>.</p>
 </li>
 
 <li>
-<p>jq 1.4 executables for <a href='win64/jq.exe'>64-bit</a> or <a href='win32/jq.exe'>32-bit</a></p>
+<p>jq 1.4 executables for <a href='win64/jq.exe'>64-bit</a> or <a href='win32/jq.exe'>32-bit</a>.</p>
 </li>
 
 <li>
-<p>jq 1.3 executables for <a href='win64/jq-1.3/jq-1.3.exe'>64-bit</a> or <a href='win32/jq-1.3/jq-1.3.exe'>32-bit</a></p>
+<p>jq 1.3 executables for <a href='win64/jq-1.3/jq-1.3.exe'>64-bit</a> or <a href='win32/jq-1.3/jq-1.3.exe'>32-bit</a>.</p>
 </li>
 </ul>
 
@@ -150,22 +150,22 @@ sudo make install</code></pre>
 <p>To build it from a git clone, you&#8217;ll need to install a few packages first:</p>
 
 <ul>
-<li><a href='http://www.gnu.org/software/flex/'>Flex</a></li>
+<li><a href='http://flex.sourceforge.net/'>Flex</a></li>
 
 <li><a href='http://www.gnu.org/software/bison/'>Bison</a></li>
 
 <li><a href='http://gcc.gnu.org'>GCC</a></li>
 
-<li><a href='http://www.gnu.org/software/make'>Make</a></li>
+<li><a href='http://www.gnu.org/software/make/'>Make</a></li>
 
-<li><a href='http://www.gnu.org/software/automake'>Autotools</a></li>
+<li><a href='http://www.gnu.org/software/automake/'>Autotools</a></li>
 </ul>
 
 <p>For Linux systems, these will all be in your system&#8217;s package manager, and if you do development on the machine they&#8217;re most likely already installed.</p>
 
-<p>On OS X, these are all included in Apple&#8217;s command line tools, which can be installed from <a href='http://developer.apple.com/technologies/tools/'>Xcode</a>. However, you may find that you need a newer version of Bison than the one provided by Apple. This can be found in <a href='http://mxcl.github.com/homebrew/'>Homebrew</a> or <a href='http://macports.org/'>MacPorts</a>.</p>
+<p>On OS X, these are all included in Apple&#8217;s command line tools, which can be installed from <a href='https://developer.apple.com/xcode/'>Xcode</a>. However, you may find that you need a newer version of Bison than the one provided by Apple. This can be found in <a href='http://brew.sh'>Homebrew</a> or <a href='http://macports.org/'>MacPorts</a>.</p>
 
-<p><code>flex</code> and <code>bison</code> are used to generate the lexer and parser for jq. For jq 1.5, neither is required if you use <code>./configure
+<p>Flex and Bison are used to generate the lexer and parser for jq. For jq 1.5, neither is required if you use <code>./configure
 --disable-maintainer-mode</code> instead of <code>./configure</code>. This flag says to use the pre-generated lexer and parser that come with the code.</p>
 
 <h4 id='building_the_documentation'>Building the documentation</h4>
