@@ -1229,3 +1229,7 @@ null
 }
 jq: error: syntax error, unexpected INVALID_CHARACTER, expecting $end (Unix shell quoting issues?) at <top-level>, line 1:
 
+(.[{}] = 0)?
+null
+
+
