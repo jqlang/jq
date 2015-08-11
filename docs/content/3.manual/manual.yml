@@ -2625,6 +2625,9 @@ sections:
       of every object before it does the assignment (for performance,
       it doesn't actually do that, but that's the general idea).
 
+      All the assignment operators in jq have path expressions on the
+      left-hand side.
+
     entries:
       - title: "`=`"
         body: |
@@ -2651,8 +2654,19 @@ sections:
           can produce can be represented in JSON.
 
           Note that the left-hand side of '=' refers to a value in `.`.
-          Thus `$var.foo = 1` won't work as expected; use `$var | .foo =
+          Thus `$var.foo = 1` won't work as expected (`$var.foo` is not
+          a valid or useful path expression in `.`); use `$var | .foo =
           1` instead.
+
+          If the right-hand side of '=' produces multiple values, then
+          for each such value jq will set the paths on the left-hand
+          side to the value and then it will output the modified `.`.
+          For example, `(.a,.b)=range(2)` outputs `{"a":0,"b":0}`, then
+          `{"a":1,"b":1}`.  The "update" assignment forms (see below) do
+          not do this.
+
+          Note too that `.a,.b=0` does not set `.a` and `.b`, but
+          `(.a,.b)=0` sets both.
 
       - title: "`|=`"
         body: |
@@ -2677,8 +2691,12 @@ sections:
           The left-hand side can be any general path expression; see `path()`.
 
           Note that the left-hand side of '|=' refers to a value in `.`.
-          Thus `$var.foo |= . + 1` won't work as expected; use `$var |
+          Thus `$var.foo |= . + 1` won't work as expected (`$var.foo` is
+          not a valid or useful path expression in `.`); use `$var |
           .foo |= . + 1` instead.
+
+          If the right-hand side outputs multiple values, only the last
+          one will be used.
 
         examples:
 
