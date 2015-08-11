@@ -237,13 +237,13 @@ sections:
 
         (This option is like `--slurpfile`, but when the file has just
         one text, then that is used, else an array of texts is used as
-        in `--slurfile`.)
+        in `--slurpfile`.)
 
       * `--run-tests [filename]`:
 
         Runs the tests in the given file or standard input.  This must
         be the last option given and does not honor all preceding
-        options.  The input consts of comment lines, empty lines, and
+        options.  The input consists of comment lines, empty lines, and
         program lines followed by one input line, as many lines of
         output as are expected (one per output), and a terminating empty
         line.  Compilation failure tests start with a line containing
@@ -338,7 +338,7 @@ sections:
 
           The `.foo` syntax only works for simply keys i.e. keys that
           are all alphanumeric characters. `.[<string>]` works with
-          keys that contain special charactors such as colons and dots.
+          keys that contain special characters such as colons and dots.
           For example `.["foo::bar"]` and `.["foo.bar"]` work while
           `.foo::bar` and `.foo.bar` would not.
 
@@ -598,7 +598,7 @@ sections:
         body: |
 
           As well as normal arithmetic subtraction on numbers, the `-`
-          operator can be used on arrays to remove all occurences of
+          operator can be used on arrays to remove all occurrences of
           the second array's elements from the first array.
 
         examples:
@@ -1526,16 +1526,16 @@ sections:
         body: |
 
           The `walk(f)` function applies f recursively to every
-	  component of the input entity.  When an array is
-	  encountered, f is first applied to its elements and then to
-	  the array itself; when an object is encountered, f is first
-	  applied to all the values and then to the object.  In
-	  practice, f will usually test the type of its input, as
-	  illustrated in the following examples.  The first example
-	  highlights the usefulness of processing the elements of an
-	  array of arrays before processing the array itself.  The second
-	  example shows how all the keys of all the objects within the
-	  input can be considered for alteration.
+          component of the input entity.  When an array is
+          encountered, f is first applied to its elements and then to
+          the array itself; when an object is encountered, f is first
+          applied to all the values and then to the object.  In
+          practice, f will usually test the type of its input, as
+          illustrated in the following examples.  The first example
+          highlights the usefulness of processing the elements of an
+          array of arrays before processing the array itself.  The second
+          example shows how all the keys of all the objects within the
+          input can be considered for alteration.
 
         examples:
           - program: 'walk(if type == "array" then sort else . end)'
@@ -1543,7 +1543,7 @@ sections:
             output:
               - '[[1,4,7],[2,5,8],[3,6,9]]'
 
-          - program: 'walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . end )
+          - program: 'walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . end )'
             input: '[ { "_a": { "__b": 2 } } ]'
             output:
               - '[{"a":{"b":2}}]'
@@ -1652,7 +1652,7 @@ sections:
 
           * `@json`:
 
-            Serialises the input as JSON.
+            Serializes the input as JSON.
 
           * `@html`:
 
@@ -2443,7 +2443,7 @@ sections:
           function can be recursive.  The `while` builtin is also
           implemented in terms of recursion.
 
-          Tail calls are optmized whenever the expression to the left of
+          Tail calls are optimized whenever the expression to the left of
           the recursive call outputs its last value.  In practice this
           means that the expression to the left of the recursive call
           should not produce more than one output for each input.
