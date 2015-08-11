@@ -12,10 +12,14 @@ static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
     start_jv = jv_number(0);
   }
   int len;
-  if (jv_get_kind(j) == JV_KIND_ARRAY)
-    len = jv_array_length(jv_copy(j));
-  else
-    len = jv_string_length_codepoints(jv_copy(j));
+  if (jv_get_kind(j) == JV_KIND_ARRAY) {
+    len = jv_array_length(j);
+  } else if (jv_get_kind(j) == JV_KIND_STRING) {
+    len = jv_string_length_codepoints(j);
+  } else {
+    jv_free(j);
+    return 0;
+  }
   if (jv_get_kind(end_jv) == JV_KIND_NULL) {
     jv_free(end_jv);
     end_jv = jv_number(len);
@@ -72,15 +76,15 @@ jv jv_get(jv t, jv k) {
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_OBJECT) {
     int start, end;
-    if (parse_slice(t, k, &start, &end)) {
+    if (parse_slice(jv_copy(t), k, &start, &end)) {
       v = jv_array_slice(t, start, end);
     } else {
-      v = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
       jv_free(t);
+      v = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
     }
   } else if (jv_get_kind(t) == JV_KIND_STRING && jv_get_kind(k) == JV_KIND_OBJECT) {
     int start, end;
-    if (parse_slice(t, k, &start, &end)) {
+    if (parse_slice(jv_copy(t), k, &start, &end)) {
       v = jv_string_slice(t, start, end);
     } else {
       v = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an string slice must be numbers"));
@@ -135,7 +139,7 @@ jv jv_set(jv t, jv k, jv v) {
              (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
     if (isnull) t = jv_array();
     int start, end;
-    if (parse_slice(t, k, &start, &end)) {
+    if (parse_slice(jv_copy(t), k, &start, &end)) {
       if (jv_get_kind(v) == JV_KIND_ARRAY) {
         int array_len = jv_array_length(jv_copy(t));
         assert(0 <= start && start <= end && end <= array_len);
@@ -166,7 +170,6 @@ jv jv_set(jv t, jv k, jv v) {
       }
     } else {
       jv_free(t);
-      jv_free(k);
       jv_free(v);
       t = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
     }
@@ -228,12 +231,11 @@ jv jv_dels(jv t, jv keys) {
         keys = jv_array_append(keys, key);
       } else if (jv_get_kind(key) == JV_KIND_OBJECT) {
         int start, end;
-        if (parse_slice(t, key, &start, &end)) {
+        if (parse_slice(jv_copy(t), key, &start, &end)) {
           starts = jv_array_append(starts, jv_number(start));
           ends = jv_array_append(ends, jv_number(end));
         } else {
           jv_free(new_array);
-          jv_free(key);
           new_array = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
           goto arr_out;
         }
