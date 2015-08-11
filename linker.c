@@ -25,6 +25,18 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw,
                         const char *as, block *out_block,
                         struct lib_loading_state *lib_state);
 
+static int path_is_relative(jv p) {
+  const char *s = jv_string_value(p);
+
+#ifdef WIN32
+  int res = PathIsRelativeA(s);
+#else
+  int res = *s != '/';
+#endif
+  jv_free(p);
+  return res;
+}
+
 
 // Given a lib_path to search first, creates a chain of search paths
 // in the following order:
@@ -34,26 +46,31 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv jq_origin, jv 
   assert(jv_get_kind(search_path) == JV_KIND_ARRAY);
   jv expanded = jv_array();
   jv expanded_elt;
+  jv err = jv_null();
   jv_array_foreach(search_path, i, path) {
+    if (jv_get_kind(path) != JV_KIND_STRING) {
+      jv_free(path);
+      continue;
+    }
+    path = expand_path(path);
+    if (!jv_is_valid(path)) {
+      err = path;
+      path = jv_null();
+      continue;
+    }
     if (strcmp(".",jv_string_value(path)) == 0) {
       expanded_elt = jv_copy(path);
-    } else if (jv_get_kind(lib_origin) == JV_KIND_STRING &&
-               strncmp("./", jv_string_value(path),sizeof("./")-1) == 0) {
-      expanded_elt = jv_string_fmt("%s/%s",
-                               jv_string_value(lib_origin),
-                               jv_string_value(path) + sizeof ("./") - 1);
-    } else if (strncmp("$ORIGIN/",jv_string_value(path),sizeof("$ORIGIN/")-1) == 0) {
+    } else if (strncmp("$ORIGIN/",jv_string_value(path),sizeof("$ORIGIN/") - 1) == 0) {
       expanded_elt = jv_string_fmt("%s/%s",
                                jv_string_value(jq_origin),
                                jv_string_value(path) + sizeof ("$ORIGIN/") - 1);
+    } else if (jv_get_kind(lib_origin) == JV_KIND_STRING &&
+               path_is_relative(jv_copy(path))) {
+      expanded_elt = jv_string_fmt("%s/%s",
+                               jv_string_value(lib_origin),
+                               jv_string_value(path));
     } else {
-      expanded_elt = expand_path(path);
-      if (!jv_is_valid(expanded_elt)) {
-        jv_free(search_path);
-        jv_free(expanded);
-        jv_free(path);
-        return expanded_elt;
-      }
+      expanded_elt = path;
       path = jv_invalid();
     }
     expanded = jv_array_append(expanded, expanded_elt);
@@ -62,7 +79,7 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv jq_origin, jv 
   jv_free(jq_origin);
   jv_free(lib_origin);
   jv_free(search_path);
-  return expanded;
+  return JV_ARRAY(expanded, err);
 }
 
 // Doesn't actually check that name not be an absolute path, and we
@@ -126,6 +143,8 @@ static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv 
 
   // Ideally we should cache this somewhere
   search = build_lib_search_chain(jq, search, jq_origin, lib_origin);
+  jv err = jv_array_get(jv_copy(search), 1);
+  search = jv_array_get(search, 0);
 
   jv bname = jv_basename(jv_copy(rel_path));
 
@@ -166,6 +185,7 @@ static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv 
       ret = stat(jv_string_value(testpath),&st);
     }
     if (ret == 0) {
+      jv_free(err);
       jv_free(rel_path);
       jv_free(search);
       jv_free(bname);
@@ -175,7 +195,17 @@ static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv 
     jv_free(testpath);
     jv_free(spath);
   }
-  jv output = jv_invalid_with_msg(jv_string_fmt("module not found: %s", jv_string_value(rel_path)));
+  jv output;
+  if (!jv_is_valid(err)) {
+    err = jv_invalid_get_msg(err);
+    output = jv_invalid_with_msg(jv_string_fmt("module not found: %s (%s)",
+                                               jv_string_value(rel_path),
+                                               jv_string_value(err)));
+  } else {
+    output = jv_invalid_with_msg(jv_string_fmt("module not found: %s",
+                                               jv_string_value(rel_path)));
+  }
+  jv_free(err);
   jv_free(rel_path);
   jv_free(search);
   jv_free(bname);
