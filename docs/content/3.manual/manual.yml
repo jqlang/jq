@@ -237,13 +237,13 @@ sections:
 
         (This option is like `--slurpfile`, but when the file has just
         one text, then that is used, else an array of texts is used as
-        in `--slurfile`.)
+        in `--slurpfile`.)
 
       * `--run-tests [filename]`:
 
         Runs the tests in the given file or standard input.  This must
         be the last option given and does not honor all preceding
-        options.  The input consts of comment lines, empty lines, and
+        options.  The input consists of comment lines, empty lines, and
         program lines followed by one input line, as many lines of
         output as are expected (one per output), and a terminating empty
         line.  Compilation failure tests start with a line containing
@@ -338,7 +338,7 @@ sections:
 
           The `.foo` syntax only works for simply keys i.e. keys that
           are all alphanumeric characters. `.[<string>]` works with
-          keys that contain special charactors such as colons and dots.
+          keys that contain special characters such as colons and dots.
           For example `.["foo::bar"]` and `.["foo.bar"]` work while
           `.foo::bar` and `.foo.bar` would not.
 
@@ -598,7 +598,7 @@ sections:
         body: |
 
           As well as normal arithmetic subtraction on numbers, the `-`
-          operator can be used on arrays to remove all occurences of
+          operator can be used on arrays to remove all occurrences of
           the second array's elements from the first array.
 
         examples:
@@ -1625,7 +1625,7 @@ sections:
 
           * `@json`:
 
-            Serialises the input as JSON.
+            Serializes the input as JSON.
 
           * `@html`:
 
@@ -2416,7 +2416,7 @@ sections:
           function can be recursive.  The `while` builtin is also
           implemented in terms of recursion.
 
-          Tail calls are optmized whenever the expression to the left of
+          Tail calls are optimized whenever the expression to the left of
           the recursive call outputs its last value.  In practice this
           means that the expression to the left of the recursive call
           should not produce more than one output for each input.
