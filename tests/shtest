@@ -190,4 +190,16 @@ if [ `HOME="$mods" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | 
     exit 1
 fi
 
+cd "$JQBASEDIR" # so that relative library paths are guaranteed correct
+if ! $VALGRIND $Q $JQ -L ./tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
+    echo "Issue #817 regression?" 1>&2
+    exit 1
+fi
+
+cd "$JQBASEDIR"
+if ! $VALGRIND $Q $JQ -L tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
+    echo "Issue #817 regression?" 1>&2
+    exit 1
+fi
+
 exit 0
