@@ -112,7 +112,7 @@ struct lexer_param;
 
 
 %type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString String
-%type <blk> FuncDef FuncDefs Import Imports ImportWhat Param Params
+%type <blk> FuncDef FuncDefs Import Imports ImportWhat ImportFrom Param Params
 %type <blk> Arg Args Module Pattern ArrayPats ObjPats ObjPat
 %type <literal> Keyword
 %{
@@ -186,6 +186,16 @@ static block constant_fold(block a, block b, int op) {
   if (!block_is_single(a) || !block_is_const(a) ||
       !block_is_single(b) || !block_is_const(b))
     return gen_noop();
+  if (op == '+') {
+    if (block_const_kind(a) == JV_KIND_NULL) {
+      block_free(a);
+      return b;
+    }
+    if (block_const_kind(b) == JV_KIND_NULL) {
+      block_free(b);
+      return a;
+    }
+  }
   if (block_const_kind(a) != block_const_kind(b))
     return gen_noop();
 
@@ -491,7 +501,7 @@ ImportWhat Exp ';' {
 }
 
 ImportWhat:
-"import" String "as" '$' IDENT {
+"import" ImportFrom "as" '$' IDENT {
   jv v = block_const($2);
   // XXX Make gen_import take only blocks and the int is_data so we
   // don't have to free so much stuff here
@@ -500,18 +510,29 @@ ImportWhat:
   jv_free($5);
   jv_free(v);
 } |
-"import" String "as" IDENT {
+"import" ImportFrom "as" IDENT {
   jv v = block_const($2);
   $$ = gen_import(jv_string_value(v), jv_string_value($4), 0);
   block_free($2);
   jv_free($4);
   jv_free(v);
 } |
-"include" String {
+"include" ImportFrom {
   jv v = block_const($2);
   $$ = gen_import(jv_string_value(v), NULL, 0);
   block_free($2);
   jv_free(v);
+}
+
+ImportFrom:
+String {
+  if (!block_is_const($1)) {
+    FAIL(@$, "Import path must be constant");
+    $$ = gen_const(jv_string(""));
+    block_free($1);
+  } else {
+    $$ = $1;
+  }
 }
 
 FuncDef:

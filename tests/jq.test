@@ -1189,6 +1189,14 @@ jq: error: Module metadata must be constant at <top-level>, line 1:
 include "a" []; 0
 jq: error: Module metadata must be an object at <top-level>, line 1:
 
+%%FAIL
+include "\ "; 0
+jq: error: Invalid escape at line 1, column 4 (while parsing '"\ "') at <top-level>, line 1:
+
+%%FAIL
+include "\(a)"; 0
+jq: error: Import path must be constant at <top-level>, line 1:
+
 modulemeta
 "c"
 {"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}
