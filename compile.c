@@ -495,21 +495,24 @@ jv block_module_meta(block b) {
   return jv_null();
 }
 
-block gen_import(const char* name, block metadata, const char* as, int is_data) {
-  assert(metadata.first == NULL || block_is_const(metadata));
+block gen_import(const char* name, const char* as, int is_data) {
   inst* i = inst_new(DEPS);
-  jv meta;
-  if (block_is_const(metadata))
-    meta = block_const(metadata);
-  else
-    meta = jv_object();
+  jv meta = jv_object();
   if (as != NULL)
     meta = jv_object_set(meta, jv_string("as"), jv_string(as));
   meta = jv_object_set(meta, jv_string("is_data"), is_data ? jv_true() : jv_false());
   meta = jv_object_set(meta, jv_string("relpath"), jv_string(name));
   i->imm.constant = meta;
-  block_free(metadata);
   return inst_block(i);
+}
+
+block gen_import_meta(block import, block metadata) {
+  assert(block_is_single(import) && import.first->op == DEPS);
+  assert(block_is_const(metadata) && block_const_kind(metadata) == JV_KIND_OBJECT);
+  inst *i = import.first;
+  i->imm.constant = jv_object_merge(block_const(metadata), i->imm.constant);
+  block_free(metadata);
+  return import;
 }
 
 block gen_function(const char* name, block formals, block body) {
