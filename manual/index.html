@@ -241,6 +241,8 @@
                   
                     "`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`" : "recursefrecurserecursefconditionrecurse_down",
                   
+                    "`walk(f)`" : "walkf",
+                  
                     "`..`" : "",
                   
                     "`env`" : "env",
@@ -572,13 +574,13 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 
 <p>Do not use. Use <code>--slurpfile</code> instead.</p>
 
-<p>(This option is like <code>--slurpfile</code>, but when the file has just one text, then that is used, else an array of texts is used as in <code>--slurfile</code>.)</p>
+<p>(This option is like <code>--slurpfile</code>, but when the file has just one text, then that is used, else an array of texts is used as in <code>--slurpfile</code>.)</p>
 </li>
 
 <li>
 <p><code>--run-tests [filename]</code>:</p>
 
-<p>Runs the tests in the given file or standard input. This must be the last option given and does not honor all preceding options. The input consts of comment lines, empty lines, and program lines followed by one input line, as many lines of output as are expected (one per output), and a terminating empty line. Compilation failure tests start with a line containing only &#8220;%%FAIL&#8221;, then a line containing the program to compile, then a line containing an error message to compare to the actual.</p>
+<p>Runs the tests in the given file or standard input. This must be the last option given and does not honor all preceding options. The input consists of comment lines, empty lines, and program lines followed by one input line, as many lines of output as are expected (one per output), and a terminating empty line. Compilation failure tests start with a line containing only &#8220;%%FAIL&#8221;, then a line containing the program to compile, then a line containing an error message to compare to the actual.</p>
 
 <p>Be warned that this option can change backwards-incompatibly.</p>
 </li>
@@ -793,7 +795,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 
 <p>The <code>.[2]</code> syntax can be used to return the element at the given index. Negative indices are allowed, with -1 referring to the last element, -2 referring to the next to last element, and so on.</p>
 
-<p>The <code>.foo</code> syntax only works for simply keys i.e. keys that are all alphanumeric characters. <code>.[&lt;string&gt;]</code> works with keys that contain special charactors such as colons and dots. For example <code>.[&quot;foo::bar&quot;]</code> and <code>.[&quot;foo.bar&quot;]</code> work while <code>.foo::bar</code> and <code>.foo.bar</code> would not.</p>
+<p>The <code>.foo</code> syntax only works for simply keys i.e. keys that are all alphanumeric characters. <code>.[&lt;string&gt;]</code> works with keys that contain special characters such as colons and dots. For example <code>.[&quot;foo::bar&quot;]</code> and <code>.[&quot;foo.bar&quot;]</code> work while <code>.foo::bar</code> and <code>.foo.bar</code> would not.</p>
 
 <p>The <code>?</code> &#8220;operator&#8221; can also be used with the slice operator, as in <code>.[10:15]?</code>, which outputs values where the inputs are slice-able.</p>
 
@@ -1416,7 +1418,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   <p>Subtraction - <code>-</code></p>
                   
                 </h3>
-                <p>As well as normal arithmetic subtraction on numbers, the <code>-</code> operator can be used on arrays to remove all occurences of the second array&#8217;s elements from the first array.</p>
+                <p>As well as normal arithmetic subtraction on numbers, the <code>-</code> operator can be used on arrays to remove all occurrences of the second array&#8217;s elements from the first array.</p>
 
                 
                   <div>
@@ -4207,6 +4209,58 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                  
                  </section>
               
+                <section id="walkf">
+                <h3>
+                  <p><code>walk(f)</code></p>
+                  
+                </h3>
+                <p>The <code>walk(f)</code> function applies f recursively to every component of the input entity. When an array is encountered, f is first applied to its elements and then to the array itself; when an object is encountered, f is first applied to all the values and then to the object. In practice, f will usually test the type of its input, as illustrated in the following examples. The first example highlights the usefulness of processing the elements of an array of arrays before processing the array itself. The second example shows how all the keys of all the objects within the input can be considered for alteration.</p>
+
+                
+                  <div>
+                    
+                    <a data-toggle="collapse" href="#example58">
+                      <i class="icon-chevron-right"></i>
+                      Examples
+                    </a>
+                    <div id="example58" class="collapse">
+                      
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'walk(if type == &quot;array&quot; then sort else . end)'</td></tr>
+                        <tr><th>Input</th><td>[[4, 1, 7], [8, 5, 2], [3, 6, 9]]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[[1,4,7],[2,5,8],[3,6,9]]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                      <table class="manual-example">
+                        <tr><th></th><td class="jqprogram">jq 'walk( if type == &quot;object&quot; then with_entries( .key |= sub( &quot;^_+&quot;; &quot;&quot;) ) else . end )'</td></tr>
+                        <tr><th>Input</th><td>[ { &quot;_a&quot;: { &quot;__b&quot;: 2 } } ]</td></tr>
+                        
+                        
+                          <tr>
+                            
+                              <th>Output</th>
+                            
+                            <td>[{&quot;a&quot;:{&quot;b&quot;:2}}]</td>
+                          </tr>
+                        
+                        
+                      </table>
+                    
+                    </div>
+                  </div>
+                 
+                 </section>
+              
                 <section id="">
                 <h3>
                   <p><code>..</code></p>
@@ -4217,11 +4271,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example58">
+                    <a data-toggle="collapse" href="#example59">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example58" class="collapse">
+                    <div id="example59" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4254,11 +4308,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example59">
+                    <a data-toggle="collapse" href="#example60">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example59" class="collapse">
+                    <div id="example60" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4291,11 +4345,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example60">
+                    <a data-toggle="collapse" href="#example61">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example60" class="collapse">
+                    <div id="example61" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4328,11 +4382,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example61">
+                    <a data-toggle="collapse" href="#example62">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example61" class="collapse">
+                    <div id="example62" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4395,11 +4449,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example62">
+                    <a data-toggle="collapse" href="#example63">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example62" class="collapse">
+                    <div id="example63" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4432,11 +4486,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example63">
+                    <a data-toggle="collapse" href="#example64">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example63" class="collapse">
+                    <div id="example64" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4506,7 +4560,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
 <li>
 <p><code>@json</code>:</p>
 
-<p>Serialises the input as JSON.</p>
+<p>Serializes the input as JSON.</p>
 </li>
 
 <li>
@@ -4559,11 +4613,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example64">
+                    <a data-toggle="collapse" href="#example65">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example64" class="collapse">
+                    <div id="example65" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4633,11 +4687,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example65">
+                    <a data-toggle="collapse" href="#example66">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example65" class="collapse">
+                    <div id="example66" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4708,11 +4762,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example66">
+                    <a data-toggle="collapse" href="#example67">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example66" class="collapse">
+                    <div id="example67" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4773,11 +4827,11 @@ B end</code> instead.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example67">
+                    <a data-toggle="collapse" href="#example68">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example67" class="collapse">
+                    <div id="example68" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4818,11 +4872,11 @@ end'</td></tr>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example68">
+                    <a data-toggle="collapse" href="#example69">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example68" class="collapse">
+                    <div id="example69" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4862,11 +4916,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example69">
+                    <a data-toggle="collapse" href="#example70">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example69" class="collapse">
+                    <div id="example70" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -4974,11 +5028,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example70">
+                    <a data-toggle="collapse" href="#example71">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example70" class="collapse">
+                    <div id="example71" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5028,11 +5082,11 @@ not</code>.</p>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example71">
+                    <a data-toggle="collapse" href="#example72">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example71" class="collapse">
+                    <div id="example72" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5130,11 +5184,11 @@ try repeat(exp) catch .==&quot;break&quot; then empty else error;</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example72">
+                    <a data-toggle="collapse" href="#example73">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example72" class="collapse">
+                    <div id="example73" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5224,11 +5278,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example73">
+                    <a data-toggle="collapse" href="#example74">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example73" class="collapse">
+                    <div id="example74" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5307,11 +5361,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example74">
+                    <a data-toggle="collapse" href="#example75">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example74" class="collapse">
+                    <div id="example75" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5425,11 +5479,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example75">
+                    <a data-toggle="collapse" href="#example76">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example75" class="collapse">
+                    <div id="example76" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5577,11 +5631,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example76">
+                    <a data-toggle="collapse" href="#example77">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example76" class="collapse">
+                    <div id="example77" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5698,11 +5752,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example77">
+                    <a data-toggle="collapse" href="#example78">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example77" class="collapse">
+                    <div id="example78" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5758,11 +5812,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example78">
+                    <a data-toggle="collapse" href="#example79">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example78" class="collapse">
+                    <div id="example79" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5795,11 +5849,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example79">
+                    <a data-toggle="collapse" href="#example80">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example79" class="collapse">
+                    <div id="example80" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5835,11 +5889,11 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn&#821
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example80">
+                    <a data-toggle="collapse" href="#example81">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example80" class="collapse">
+                    <div id="example81" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5874,11 +5928,11 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn&#821
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example81">
+                    <a data-toggle="collapse" href="#example82">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example81" class="collapse">
+                    <div id="example82" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5915,11 +5969,11 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn&#821
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example82">
+                    <a data-toggle="collapse" href="#example83">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example82" class="collapse">
+                    <div id="example83" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -5949,7 +6003,7 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn&#821
                 </h3>
                 <p>As described above, <code>recurse</code> uses recursion, and any jq function can be recursive. The <code>while</code> builtin is also implemented in terms of recursion.</p>
 
-<p>Tail calls are optmized whenever the expression to the left of the recursive call outputs its last value. In practice this means that the expression to the left of the recursive call should not produce more than one output for each input.</p>
+<p>Tail calls are optimized whenever the expression to the left of the recursive call outputs its last value. In practice this means that the expression to the left of the recursive call should not produce more than one output for each input.</p>
 
 <p>For example:</p>
 
@@ -5984,11 +6038,11 @@ def repeat(exp):
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example83">
+                    <a data-toggle="collapse" href="#example84">
                       <i class="icon-chevron-right"></i>
                       Examples
                     </a>
-                    <div id="example83" class="collapse">
+                    <div id="example84" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -6141,11 +6195,11 @@ def repeat(exp):
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example84">
+                    <a data-toggle="collapse" href="#example85">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example84" class="collapse">
+                    <div id="example85" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -6178,11 +6232,11 @@ def repeat(exp):
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example85">
+                    <a data-toggle="collapse" href="#example86">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example85" class="collapse">
+                    <div id="example86" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -6215,11 +6269,11 @@ def repeat(exp):
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example86">
+                    <a data-toggle="collapse" href="#example87">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example86" class="collapse">
+                    <div id="example87" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -6249,6 +6303,8 @@ def repeat(exp):
               <p>Assignment works a little differently in jq than in most programming languages. jq doesn&#8217;t distinguish between references to and copies of something - two objects or arrays are either equal or not equal, without any further notion of being &#8220;the same object&#8221; or &#8220;not the same object&#8221;.</p>
 
 <p>If an object has two fields which are arrays, <code>.foo</code> and <code>.bar</code>, and you append something to <code>.foo</code>, then <code>.bar</code> will not get bigger. Even if you&#8217;ve just set <code>.bar = .foo</code>. If you&#8217;re used to programming in languages like Python, Java, Ruby, Javascript, etc. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance, it doesn&#8217;t actually do that, but that&#8217;s the general idea).</p>
+
+<p>All the assignment operators in jq have path expressions on the left-hand side.</p>
               
                 <section id="">
                 <h3>
@@ -6263,8 +6319,12 @@ def repeat(exp):
 
 <p>This means that it&#8217;s impossible to build circular values in jq (such as an array whose first element is itself). This is quite intentional, and ensures that anything a jq program can produce can be represented in JSON.</p>
 
-<p>Note that the left-hand side of &#8217;=&#8217; refers to a value in <code>.</code>. Thus <code>$var.foo = 1</code> won&#8217;t work as expected; use <code>$var | .foo =
+<p>Note that the left-hand side of &#8217;=&#8217; refers to a value in <code>.</code>. Thus <code>$var.foo = 1</code> won&#8217;t work as expected (<code>$var.foo</code> is not a valid or useful path expression in <code>.</code>); use <code>$var | .foo =
 1</code> instead.</p>
+
+<p>If the right-hand side of &#8217;=&#8217; produces multiple values, then for each such value jq will set the paths on the left-hand side to the value and then it will output the modified <code>.</code>. For example, <code>(.a,.b)=range(2)</code> outputs <code>{&quot;a&quot;:0,&quot;b&quot;:0}</code>, then <code>{&quot;a&quot;:1,&quot;b&quot;:1}</code>. The &#8220;update&#8221; assignment forms (see below) do not do this.</p>
+
+<p>Note too that <code>.a,.b=0</code> does not set <code>.a</code> and <code>.b</code>, but <code>(.a,.b)=0</code> sets both.</p>
 
                 
                  </section>
@@ -6286,17 +6346,19 @@ def repeat(exp):
 
 <p>The left-hand side can be any general path expression; see <code>path()</code>.</p>
 
-<p>Note that the left-hand side of &#8216;|=&#8217; refers to a value in <code>.</code>. Thus <code>$var.foo |= . + 1</code> won&#8217;t work as expected; use <code>$var |
+<p>Note that the left-hand side of &#8216;|=&#8217; refers to a value in <code>.</code>. Thus <code>$var.foo |= . + 1</code> won&#8217;t work as expected (<code>$var.foo</code> is not a valid or useful path expression in <code>.</code>); use <code>$var |
 .foo |= . + 1</code> instead.</p>
+
+<p>If the right-hand side outputs multiple values, only the last one will be used.</p>
 
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example87">
+                    <a data-toggle="collapse" href="#example88">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example87" class="collapse">
+                    <div id="example88" class="collapse">
                       
                     
                       <table class="manual-example">
@@ -6329,11 +6391,11 @@ def repeat(exp):
                 
                   <div>
                     
-                    <a data-toggle="collapse" href="#example88">
+                    <a data-toggle="collapse" href="#example89">
                       <i class="icon-chevron-right"></i>
                       Example
                     </a>
-                    <div id="example88" class="collapse">
+                    <div id="example89" class="collapse">
                       
                     
                       <table class="manual-example">

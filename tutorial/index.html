@@ -55,7 +55,7 @@
         <h1>Tutorial</h1>
         
           
-            <p>GitHub has a JSON API, so let&#8217;s play with that. This URL gets us the last 5 commits from the jq repo:</p>
+            <p>GitHub has a JSON API, so let&#8217;s play with that. This URL gets us the last 5 commits from the jq repo.</p>
           
         
           
@@ -98,13 +98,13 @@
     "comments_url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments",
     "author": {
       "login": "stedolan",
-    ...
+...
 </pre></div>
             </div>
           
         
           
-            <p>Github returns a ton of info here, and it&#8217;s relatively hard to read as it is. To syntax highlight it and order the attributes we pipe it through jq, telling jq to just spit the input back at us using the expression <code>.</code>:</p>
+            <p>GitHub returns nicely formatted JSON. For servers that don&#8217;t, it can be helpful to pipe the response through jq to pretty-print it. The simplest jq program is the expression <code>.</code>, which takes the input and produces it unchanged as output.</p>
           
         
           
@@ -122,31 +122,38 @@
               </div>
               <div id="result2" class="accordion-body collapse"><pre>[
   {
-    "parents": [
-      {
-        "html_url": "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
-        "url": "https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
-        "sha": "54b9c9bdb225af5d886466d72f47eafc51acb4f7"
+    "sha": "d25341478381063d1c76e81b3a52e0592a7c997f",
+    "commit": {
+      "author": {
+        "name": "Stephen Dolan",
+        "email": "mu@netsoc.tcd.ie",
+        "date": "2013-06-22T16:30:59Z"
       },
-      {
-        "html_url": "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
-        "url": "https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
-        "sha": "8b1b503609c161fea4b003a7179b3fbb2dd4345a"
-      }
-    ],
-    "committer": {
-      "type": "User",
-      "received_events_url": "https://api.github.com/users/stedolan/received_events",
-      "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
-      "repos_url": "https://api.github.com/users/stedolan/repos",
-      "organizations_url": "https://api.github.com/users/stedolan/orgs",
+      "committer": {
+        "name": "Stephen Dolan",
+        "email": "mu@netsoc.tcd.ie",
+        "date": "2013-06-22T16:30:59Z"
+      },
+      "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+      "tree": {
+        "sha": "6ab697a8dfb5a96e124666bf6d6213822599fb40",
+        "url": "https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40"
+      },
+      "url": "https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
+      "comment_count": 0
+    },
+    "url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
+    "html_url": "https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f",
+    "comments_url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments",
+    "author": {
+      "login": "stedolan",
 ...
 </pre></div>
             </div>
           
         
           
-            <p>There&#8217;s still far too much info for our purposes, so we can try just grab the first commit:</p>
+            <p>We can use jq to extract just the first commit.</p>
           
         
           
@@ -163,77 +170,79 @@
                 <a data-toggle="collapse" href="#result3">Show result</a>
               </div>
               <div id="result3" class="accordion-body collapse"><pre>{
-  "parents": [
-    {
-      "html_url": "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
-      "url": "https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
-      "sha": "54b9c9bdb225af5d886466d72f47eafc51acb4f7"
-    },
-    {
-      "html_url": "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
-      "url": "https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
-      "sha": "8b1b503609c161fea4b003a7179b3fbb2dd4345a"
-    }
-  ],
-  "committer": {
-    "type": "User",
-    "received_events_url": "https://api.github.com/users/stedolan/received_events",
-    "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
-    "repos_url": "https://api.github.com/users/stedolan/repos",
-    "organizations_url": "https://api.github.com/users/stedolan/orgs",
-    "subscriptions_url": "https://api.github.com/users/stedolan/subscriptions",
-    "starred_url": "https://api.github.com/users/stedolan/starred{/owner}{/repo}",
-    "gists_url": "https://api.github.com/users/stedolan/gists{/gist_id}",
-    "login": "stedolan",
-    "id": 79765,
-    "avatar_url": "https://1.gravatar.com/avatar/31de909d8e55dd07ed782d92ece59842?d=https%3A%2F%2Fidenticons.github.com%2Ffc5b6765b1c9cfaecea48ae71df4d279.png",
-    "gravatar_id": "31de909d8e55dd07ed782d92ece59842",
-    "url": "https://api.github.com/users/stedolan",
-    "html_url": "https://github.com/stedolan",
-    "followers_url": "https://api.github.com/users/stedolan/followers",
-    "following_url": "https://api.github.com/users/stedolan/following{/other_user}"
-  },
-  "author": {
-    "type": "User",
-    "received_events_url": "https://api.github.com/users/stedolan/received_events",
-    "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
-    "repos_url": "https://api.github.com/users/stedolan/repos",
-    "organizations_url": "https://api.github.com/users/stedolan/orgs",
-    "subscriptions_url": "https://api.github.com/users/stedolan/subscriptions",
-    "starred_url": "https://api.github.com/users/stedolan/starred{/owner}{/repo}",
-    "gists_url": "https://api.github.com/users/stedolan/gists{/gist_id}",
-    "login": "stedolan",
-    "id": 79765,
-    "avatar_url": "https://1.gravatar.com/avatar/31de909d8e55dd07ed782d92ece59842?d=https%3A%2F%2Fidenticons.github.com%2Ffc5b6765b1c9cfaecea48ae71df4d279.png",
-    "gravatar_id": "31de909d8e55dd07ed782d92ece59842",
-    "url": "https://api.github.com/users/stedolan",
-    "html_url": "https://github.com/stedolan",
-    "followers_url": "https://api.github.com/users/stedolan/followers",
-    "following_url": "https://api.github.com/users/stedolan/following{/other_user}"
-  },
-  "comments_url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments",
-  "html_url": "https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f",
-  "url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
+  "sha": "d25341478381063d1c76e81b3a52e0592a7c997f",
   "commit": {
-    "comment_count": 0,
-    "url": "https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
-    "tree": {
-      "url": "https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40",
-      "sha": "6ab697a8dfb5a96e124666bf6d6213822599fb40"
+    "author": {
+      "name": "Stephen Dolan",
+      "email": "mu@netsoc.tcd.ie",
+      "date": "2013-06-22T16:30:59Z"
+    },
+    "committer": {
+      "name": "Stephen Dolan",
+      "email": "mu@netsoc.tcd.ie",
+      "date": "2013-06-22T16:30:59Z"
     },
     "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-    "committer": {
-      "date": "2013-06-22T16:30:59Z",
-      "email": "mu@netsoc.tcd.ie",
-      "name": "Stephen Dolan"
+    "tree": {
+      "sha": "6ab697a8dfb5a96e124666bf6d6213822599fb40",
+      "url": "https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40"
     },
-    "author": {
-      "date": "2013-06-22T16:30:59Z",
-      "email": "mu@netsoc.tcd.ie",
-      "name": "Stephen Dolan"
-    }
+    "url": "https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
+    "comment_count": 0
   },
-  "sha": "d25341478381063d1c76e81b3a52e0592a7c997f"
+  "url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
+  "html_url": "https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f",
+  "comments_url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments",
+  "author": {
+    "login": "stedolan",
+    "id": 79765,
+    "avatar_url": "https://avatars.githubusercontent.com/u/79765?v=3",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/stedolan",
+    "html_url": "https://github.com/stedolan",
+    "followers_url": "https://api.github.com/users/stedolan/followers",
+    "following_url": "https://api.github.com/users/stedolan/following{/other_user}",
+    "gists_url": "https://api.github.com/users/stedolan/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/stedolan/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/stedolan/subscriptions",
+    "organizations_url": "https://api.github.com/users/stedolan/orgs",
+    "repos_url": "https://api.github.com/users/stedolan/repos",
+    "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/stedolan/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "stedolan",
+    "id": 79765,
+    "avatar_url": "https://avatars.githubusercontent.com/u/79765?v=3",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/stedolan",
+    "html_url": "https://github.com/stedolan",
+    "followers_url": "https://api.github.com/users/stedolan/followers",
+    "following_url": "https://api.github.com/users/stedolan/following{/other_user}",
+    "gists_url": "https://api.github.com/users/stedolan/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/stedolan/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/stedolan/subscriptions",
+    "organizations_url": "https://api.github.com/users/stedolan/orgs",
+    "repos_url": "https://api.github.com/users/stedolan/repos",
+    "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/stedolan/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "54b9c9bdb225af5d886466d72f47eafc51acb4f7",
+      "url": "https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
+      "html_url": "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7"
+    },
+    {
+      "sha": "8b1b503609c161fea4b003a7179b3fbb2dd4345a",
+      "url": "https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
+      "html_url": "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a"
+    }
+  ]
 }
 </pre></div>
             </div>
@@ -242,7 +251,7 @@
           
             <p>For the rest of the examples, I&#8217;ll leave out the <code>curl</code> command - it&#8217;s not going to change.</p>
 
-<p>There&#8217;s still a lot of info we don&#8217;t care about there, so we&#8217;ll restrict it down to the most interesting fields.</p>
+<p>There&#8217;s a lot of info we don&#8217;t care about there, so we&#8217;ll restrict it down to the most interesting fields.</p>
           
         
           
@@ -259,17 +268,17 @@
                 <a data-toggle="collapse" href="#result4">Show result</a>
               </div>
               <div id="result4" class="accordion-body collapse"><pre>{
-  "name": "Stephen Dolan",
-  "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161"
+  "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+  "name": "Stephen Dolan"
 }
 </pre></div>
             </div>
           
         
           
-            <p>The <code>|</code> operator in jq feeds the output of one filter (<code>.[0]</code> which gets the first element of the array in the response) into the input of another (<code>{...}</code> which builds an object out of those fields). You can access nested attributes, such as <code>.commit.message</code>:</p>
+            <p>The <code>|</code> operator in jq feeds the output of one filter (<code>.[0]</code> which gets the first element of the array in the response) into the input of another (<code>{...}</code> which builds an object out of those fields). You can access nested attributes, such as <code>.commit.message</code>.</p>
 
-<p>Now let&#8217;s get the rest of the commits:</p>
+<p>Now let&#8217;s get the rest of the commits.</p>
           
         
           
@@ -286,24 +295,24 @@
                 <a data-toggle="collapse" href="#result5">Show result</a>
               </div>
               <div id="result5" class="accordion-body collapse"><pre>{
-  "name": "Stephen Dolan",
-  "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161"
+  "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+  "name": "Stephen Dolan"
 }
 {
-  "name": "Stephen Dolan",
-  "message": "Reject all overlong UTF8 sequences."
+  "message": "Reject all overlong UTF8 sequences.",
+  "name": "Stephen Dolan"
 }
 {
-  "name": "Stephen Dolan",
-  "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences."
+  "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
+  "name": "Stephen Dolan"
 }
 {
-  "name": "Stephen Dolan",
-  "message": "Fix example in manual for `floor`. See #155."
+  "message": "Fix example in manual for `floor`. See #155.",
+  "name": "Stephen Dolan"
 }
 {
-  "name": "Nicolas Williams",
-  "message": "Document floor"
+  "message": "Document floor",
+  "name": "Nicolas Williams"
 }
 </pre></div>
             </div>
@@ -334,24 +343,24 @@
               </div>
               <div id="result6" class="accordion-body collapse"><pre>[
   {
-    "name": "Stephen Dolan",
-    "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161"
+    "message": "Merge pull request #163 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+    "name": "Stephen Dolan"
   },
   {
-    "name": "Stephen Dolan",
-    "message": "Reject all overlong UTF8 sequences."
+    "message": "Reject all overlong UTF8 sequences.",
+    "name": "Stephen Dolan"
   },
   {
-    "name": "Stephen Dolan",
-    "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences."
+    "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
+    "name": "Stephen Dolan"
   },
   {
-    "name": "Stephen Dolan",
-    "message": "Fix example in manual for `floor`. See #155."
+    "message": "Fix example in manual for `floor`. See #155.",
+    "name": "Stephen Dolan"
   },
   {
-    "name": "Nicolas Williams",
-    "message": "Document floor"
+    "message": "Document floor",
+    "name": "Nicolas Williams"
   }
 ]
 </pre></div>
@@ -364,14 +373,14 @@
 
 <pre><code>&quot;parents&quot;: [
   {
-    &quot;html_url&quot;: &quot;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;,
+    &quot;sha&quot;: &quot;54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;,
     &quot;url&quot;: &quot;https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;,
-    &quot;sha&quot;: &quot;54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;
+    &quot;html_url&quot;: &quot;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;
   },
   {
-    &quot;html_url&quot;: &quot;https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;,
+    &quot;sha&quot;: &quot;8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;,
     &quot;url&quot;: &quot;https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;,
-    &quot;sha&quot;: &quot;8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;
+    &quot;html_url&quot;: &quot;https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;
   }
 ]</code></pre>
 
@@ -393,40 +402,40 @@
               </div>
               <div id="result7" class="accordion-body collapse"><pre>[
   {
+    "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+    "name": "Stephen Dolan",
     "parents": [
       "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
       "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a"
-    ],
-    "name": "Stephen Dolan",
-    "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161"
+    ]
   },
   {
+    "message": "Reject all overlong UTF8 sequences.",
+    "name": "Stephen Dolan",
     "parents": [
       "https://github.com/stedolan/jq/commit/ff48bd6ec538b01d1057be8e93b94eef6914e9ef"
-    ],
-    "name": "Stephen Dolan",
-    "message": "Reject all overlong UTF8 sequences."
+    ]
   },
   {
+    "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
+    "name": "Stephen Dolan",
     "parents": [
       "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7"
-    ],
-    "name": "Stephen Dolan",
-    "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences."
+    ]
   },
   {
+    "message": "Fix example in manual for `floor`. See #155.",
+    "name": "Stephen Dolan",
     "parents": [
       "https://github.com/stedolan/jq/commit/3dcdc582ea993afea3f5503a78a77675967ecdfa"
-    ],
-    "name": "Stephen Dolan",
-    "message": "Fix example in manual for `floor`. See #155."
+    ]
   },
   {
+    "message": "Document floor",
+    "name": "Nicolas Williams",
     "parents": [
       "https://github.com/stedolan/jq/commit/7c4171d414f647ab08bcd20c76a4d8ed68d9c602"
-    ],
-    "name": "Nicolas Williams",
-    "message": "Document floor"
+    ]
   }
 ]
 </pre></div>
@@ -434,14 +443,14 @@
           
         
           
-            <p>Here we&#8217;re making an object as before, but this time the <code>parents</code> field is being set to <code>[.parents[].html_url]}]</code>, which collects all of the parent commit URLs defined in the parents object.</p>
+            <p>Here we&#8217;re making an object as before, but this time the <code>parents</code> field is being set to <code>[.parents[].html_url]</code>, which collects all of the parent commit URLs defined in the parents object.</p>
           
         
           
         
           
             <hr />
-<p>Here endeth the tutorial! There&#8217;s lots more to play with, go read <a href='../manual/'>the manual</a> if you&#8217;re interested, and <a href='../download/'>download jq</a> if you haven&#8217;t already.</p>
+<p>Here endeth the tutorial! There&#8217;s lots more to play with. Go read <a href='../manual/'>the manual</a> if you&#8217;re interested, and <a href='../download/'>download jq</a> if you haven&#8217;t already.</p>
           
         
           
