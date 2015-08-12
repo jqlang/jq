@@ -111,8 +111,8 @@ struct lexer_param;
 %precedence "catch"
 
 
-%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString
-%type <blk> FuncDef FuncDefs String Import Imports Param Params
+%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString String
+%type <blk> FuncDef FuncDefs Import Imports ImportWhat Param Params
 %type <blk> Arg Args Module Pattern ArrayPats ObjPats ObjPat
 %type <literal> Keyword
 %{
@@ -286,7 +286,7 @@ Module:
 } |
 "module" Exp ';' {
   if (!block_is_const($2)) {
-    FAIL(@$, "Module metadata must be constant.");
+    FAIL(@$, "Module metadata must be constant");
     $$ = gen_noop();
   } else {
     $$ = gen_module($2);
@@ -471,62 +471,47 @@ Term {
 }
 
 Import:
-"import" String "as" '$' IDENT ';' {
+ImportWhat ';' {
+  $$ = $1;
+} |
+ImportWhat Exp ';' {
+  if (!block_is_const($2)) {
+    FAIL(@$, "Module metadata must be constant");
+    $$ = gen_noop();
+    block_free($1);
+    block_free($2);
+  } else if (block_const_kind($2) != JV_KIND_OBJECT) {
+    FAIL(@$, "Module metadata must be an object");
+    $$ = gen_noop();
+    block_free($1);
+    block_free($2);
+  } else {
+    $$ = gen_import_meta($1, $2);
+  }
+}
+
+ImportWhat:
+"import" String "as" '$' IDENT {
   jv v = block_const($2);
   // XXX Make gen_import take only blocks and the int is_data so we
   // don't have to free so much stuff here
-  $$ = gen_import(jv_string_value(v), gen_noop(), jv_string_value($5), 1);
+  $$ = gen_import(jv_string_value(v), jv_string_value($5), 1);
   block_free($2);
   jv_free($5);
   jv_free(v);
 } |
-"import" String "as" IDENT ';' {
+"import" String "as" IDENT {
   jv v = block_const($2);
-  $$ = gen_import(jv_string_value(v), gen_noop(), jv_string_value($4), 0);
+  $$ = gen_import(jv_string_value(v), jv_string_value($4), 0);
   block_free($2);
   jv_free($4);
   jv_free(v);
 } |
-"include" String ';' {
+"include" String {
   jv v = block_const($2);
-  $$ = gen_import(jv_string_value(v), gen_noop(), NULL, 0);
+  $$ = gen_import(jv_string_value(v), NULL, 0);
   block_free($2);
   jv_free(v);
-} |
-"import" String "as" IDENT Exp ';' {
-  if (!block_is_const($5)) {
-    FAIL(@$, "Module metadata must be constant.");
-    $$ = gen_noop();
-  } else {
-    jv v = block_const($2);
-    $$ = gen_import(jv_string_value(v), $5, jv_string_value($4), 0);
-    jv_free(v);
-  }
-  block_free($2);
-  jv_free($4);
-} |
-"include" String Exp ';' {
-  if (!block_is_const($3)) {
-    FAIL(@$, "Module metadata must be constant.");
-    $$ = gen_noop();
-  } else {
-    jv v = block_const($2);
-    $$ = gen_import(jv_string_value(v), $3, NULL, 0);
-    jv_free(v);
-  }
-  block_free($2);
-} |
-"import" String "as" '$' IDENT Exp ';' {
-  if (!block_is_const($6)) {
-    FAIL(@$, "Module metadata must be constant.");
-    $$ = gen_noop();
-  } else {
-    jv v = block_const($2);
-    $$ = gen_import(jv_string_value(v), $6, jv_string_value($5), 1);
-    jv_free(v);
-  }
-  block_free($2);
-  jv_free($5);
 }
 
 FuncDef:

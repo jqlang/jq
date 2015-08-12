@@ -32,7 +32,8 @@ block gen_op_var_fresh(opcode op, const char* name);
 
 block gen_module(block metadata);
 jv block_module_meta(block b);
-block gen_import(const char* name, block metadata, const char *as, int is_data);
+block gen_import(const char* name, const char *as, int is_data);
+block gen_import_meta(block import, block metadata);
 block gen_function(const char* name, block formals, block body);
 block gen_param_regular(const char* name);
 block gen_param(const char* name);

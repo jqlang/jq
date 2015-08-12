@@ -1181,6 +1181,14 @@ include "c"; [a, c]
 null
 [0,"acmehbah"]
 
+%%FAIL
+include "a" (.+1); 0
+jq: error: Module metadata must be constant at <top-level>, line 1:
+
+%%FAIL
+include "a" []; 0
+jq: error: Module metadata must be an object at <top-level>, line 1:
+
 modulemeta
 "c"
 {"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}
