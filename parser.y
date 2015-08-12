@@ -298,6 +298,7 @@ Module:
   if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant");
     $$ = gen_noop();
+    block_free($2);
   } else {
     $$ = gen_module($2);
   }
