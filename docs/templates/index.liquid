@@ -1,63 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
   {% include "shared/head" %}
+
   <body id="{{slug}}">
-    {% include "shared/header" %}	
-    
+    {% include "shared/header" %}
+
     <div class="container">
       <div class="row">
-        <div class="hero-unit">
-          <img src="{{root}}/jq.png" style="width: 400px; height: 220px; float: left; margin-right: 60px">
-          <div id="blurb">
-            {{blurb | markdownify}}
-
-            <div class="btn-group" style="float:right">
-              <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
-                Download jq-1.4 or 1.5rc2
-                <span class="caret"></span>
-              </a>
-              <ul class="dropdown-menu">
-                <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5rc2/jq-linux-x86_64">jq-1.5rc2 Linux (64-bit)</a></li>
-                <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5rc2/jq-osx-x86_64">jq-1.5rc2 OS X (64-bit)</a></li>
-                <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5rc2/jq-win64.exe">jq-1.5rc2 Windows (64-bit)</a></li>
-                <li><a href="https://github.com/stedolan/jq/releases/tag/jq-1.5rc2">jq-1.5rc2 Other platforms, older versions, and source</a></li>
-                <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.4/jq-linux-x86_64">jq-1.4 Linux (64-bit)</a></li>
-                <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.4/jq-osx-x86_64">jq-1.4 OS X (64-bit)</a></li>
-                <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.4/jq-win64.exe">jq-1.4 Windows (64-bit)</a></li>
-                <li><a href="https://github.com/stedolan/jq/releases/tag/jq-1.4">jq-1.4 Other platforms, older versions, and source</a></li>
-              </ul>
+        <div class="jumbotron">
+          <div class="row">
+            <div class="col-sm-6">
+              <img src="{{root}}/jq.png" class="img-responsive"
+                  width="400" height="220">
             </div>
+            <div class="col-sm-6">
+              <div id="blurb">
+                {{blurb | markdownify}}
 
-            <div class="btn-group" style="float:right">
-              <a class="btn btn-primary" href="http://jqplay.org">
-                Try online at jqplay.org!
-              </a>
+                <div class="btn-toolbar" role="toolbar">
+                  <div class="btn-group" role="group">
+                    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                      Download jq-1.4 or 1.5rc2
+                      <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5rc2/jq-linux-x86_64">jq-1.5rc2 Linux (64-bit)</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5rc2/jq-osx-x86_64">jq-1.5rc2 OS X (64-bit)</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5rc2/jq-win64.exe">jq-1.5rc2 Windows (64-bit)</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/tag/jq-1.5rc2">jq-1.5rc2 Other platforms, older versions, and source</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.4/jq-linux-x86_64">jq-1.4 Linux (64-bit)</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.4/jq-osx-x86_64">jq-1.4 OS X (64-bit)</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.4/jq-win64.exe">jq-1.4 Windows (64-bit)</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/tag/jq-1.4">jq-1.4 Other platforms, older versions, and source</a></li>
+                    </ul>
+                  </div>
+
+                  <div class="btn-group">
+                    <a class="btn btn-primary" href="http://jqplay.org">
+                      Try online at jqplay.org!
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
-
           </div>
-          <div style="clear:both;"></div>
         </div>
       </div>
-        
+
       <div class="row" id="multiblurb">
-	<div class="span4">{{body1 | markdownify}}</div>
-        <div class="span4">{{body2 | markdownify}}</div>
-	<div class="span4">{{body3 | markdownify}}</div>        
+        <div class="col-sm-4">{{body1 | markdownify}}</div>
+        <div class="col-sm-4">{{body2 | markdownify}}</div>
+        <div class="col-sm-4">{{body3 | markdownify}}</div>
       </div>
+
       <div class="row" style="text-align:center; margin-top: 30px">
         {{tail | markdownify}}
       </div>
+
       <div class="row">
         <h2>News</h2>
         <div id="news">
           <ul>
             {% for item in news %}
-            <li><span class="date">{{ item.date | date: '%m %B %Y' }}</span>{{item.body | markdownify}}</li>
+              <li>
+                <span class="date">{{ item.date | date: '%m %B %Y' }}</span>
+                {{item.body | markdownify}}
+              </li>
             {% endfor %}
           </ul>
         </div>
       </div>
     </div>
-    {% include "shared/footer" %}    
+
+    {% include "shared/footer" %}
   </body>
 </html>
