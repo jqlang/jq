@@ -190,4 +190,10 @@ if [ `HOME="$mods" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | 
     exit 1
 fi
 
+# Test finding the package root and loading a dependency.
+if [[ $($VALGRIND ./jq -n -f "tests/modules/local-project/jq/main.jq") != '"Howdy world!"' ]]; then
+    echo "Could not find dependency in .jq/packages." 1>&2
+    exit 1
+fi
+
 exit 0

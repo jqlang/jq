@@ -2800,6 +2800,10 @@ sections:
       For paths starting with "$ORIGIN/", the path of the jq executable
       is substituted for "$ORIGIN".
 
+      For paths starting with "$PACKAGEROOT/", the path of the current or nearest
+      parent directory containing a subdirectory ".jq/" is substituted for
+      "$PACKAGEROOT".
+
       For paths starting with "./" or paths that are ".", the path of
       the including file is substituted for ".".  For top-level programs
       given on the command-line, the current directory is used.
@@ -2809,7 +2813,7 @@ sections:
 
       The default search path is the search path given to the `-L`
       command-line option, else `["~/.jq", "$ORIGIN/../lib/jq",
-      "$ORIGIN/../lib"]`.
+      "$ORIGIN/../lib", "$PACKAGEROOT/.jq/packages"]`.
 
       Null and empty string path elements terminate search path
       processing.
