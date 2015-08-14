@@ -12,7 +12,7 @@
           <ul class="nav nav-pills nav-stacked">
             {% for section in sections %}
               <li>
-                <a href="#{{section.title | sanitize}}">{{section.title}}</a>
+                <a href="#{{section.title | section_id}}">{{section.title}}</a>
               </li>
             {% endfor %}
           </ul>
@@ -30,11 +30,11 @@
           {{ history | markdownify }}
           {{ body | markdownify }}
           {% for section in sections %}
-            <section id="{{section.title | sanitize}}">
+            <section id="{{section.title | section_id}}">
               <h2>{{section.title}}</h2>
               {{section.body | markdownify}}
               {% for entry in section.entries %}
-                <section>
+                <section id="{{entry.title | entry_id}}">
                   <h3>
                     {{entry.title | markdownify | no_paragraph}}
                     {% if entry.subtitle %}<small>{{entry.subtitle}}</small>{% endif %}
@@ -87,9 +87,9 @@
       var section_map = {
         {% for section in sections %}
           {% for entry in section.entries %}
-            {{entry.title | json}} : {{entry.title | sanitize | json}},
+            {{entry.title | json}} : {{entry.title | entry_id | json}},
           {% endfor %}
-          {{section.title | json}} : {{section.title | sanitize | json}}
+          {{section.title | json}} : {{section.title | section_id | json}}
           {% unless forloop.last %},{% endunless %}
         {% endfor %}
       };
