@@ -200,7 +200,7 @@ AC_LINK_IFELSE([AC_LANG_SOURCE([
 static __thread int x ;
 int main () { x = 123; return x; }
 ])], have___thread=yes)
-if test $have___thread = yes; then 
+if test $have___thread = yes; then
    AC_DEFINE([HAVE___THREAD],1,[Define to 1 if the system supports __thread])
 fi
 AC_MSG_RESULT($have___thread)

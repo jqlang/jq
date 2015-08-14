@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script is used to cross-compile binaries for 
+# This script is used to cross-compile binaries for
 # platforms other than the current one
 
 # Usage: $0 <platformname> <configure options>

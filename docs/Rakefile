@@ -19,7 +19,7 @@ module ExtraFilters
   def json(input)
     input.to_json
   end
-  
+
   def unique(input)
     @n = (@n || 0) + 1
     input + @n.to_s
@@ -32,15 +32,15 @@ Liquid::Template.register_filter(ExtraFilters)
 task :serve do
   begin
     Bonsai.log "Press Control+C to quit"
-    
+
     require 'rack'
     require 'sinatra'
     require 'watch'
     require 'launchy'
-    
+
     Bonsai.root_dir = Dir.pwd
-    
-    server = fork {        
+
+    server = fork {
       app = Rack::Builder.app {
         map "/jq" do
           use Bonsai::StaticPassThrough, :root => Bonsai.root_dir + "/output", :urls => ["/"]
@@ -50,7 +50,7 @@ task :serve do
       Rack::Handler.default.run(app, :Port => 5000) do
         Launchy.open("http://localhost:5000/jq/")
       end
-    }    
+    }
     Watch.new("{content,templates,public}/**/*") { Bonsai::Exporter.process! }
   rescue Interrupt
     Process.kill("QUIT", server)
@@ -96,7 +96,7 @@ task :manpage do
     f.puts manual['manpage_intro']
     f.puts manual['body']
     manual['sections'].each do |section|
-      
+
       f.puts "## #{section['title'].upcase}\n"
       f.puts section['body']
       f.puts ""
@@ -116,7 +116,7 @@ task :manpage do
     f.puts manual['manpage_epilogue']
     f.close
     puts Ronn::Document.new(f.path).convert('roff').gsub(/<\/?code>/,"")
-  end  
+  end
 end
 
 task :manpage_default => ["default_manpage.md"] do

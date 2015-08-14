@@ -8,7 +8,7 @@ jq_version: "1.4-2-g15c4a7f-dirty"
 
 root: '/jq'
 footer: |
-  
+
   This website is made with [Bonsai](http://www.tinytree.info) and
   [Twitter Bootstrap](http://twitter.github.com/bootstrap/), themed
   with [Bootswatch](http://bootswatch.com).

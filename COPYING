@@ -30,9 +30,9 @@ license, which can be found at:
 The documentation website includes a copy of Twitter's Boostrap and
 relies on Bonsai, Liquid templates and various other projects, look
 them up for detailed licensing conditions.
-         
 
-         
+
+
 jq incorporates David M. Gay's dtoa.c and g_fmt.c, which bear the
 following notices:
 

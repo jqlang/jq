@@ -26,7 +26,7 @@ lexer.c: lexer.l
 	$(AM_V_LEX) flex -o lexer.c --header-file=lexer.h $<
 lexer.h: lexer.c
 else
-BUILT_SOURCES = 
+BUILT_SOURCES =
 .y.c:
 	$(AM_V_YACC) echo "NOT building parser.c!"
 .l.c:
@@ -146,7 +146,7 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml	\
             docs/default_manpage.md jq.1.default
 
 # setup is only used by distribution developers, not package developers.
-# Still, as a matter of allowing patching, its not a bad idea to distribute 
+# Still, as a matter of allowing patching, its not a bad idea to distribute
 # the developer setup script in the tarball.
 EXTRA_DIST = $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER) jq.spec		\
 	$(DOC_FILES) scripts/version parser.h parser.c lexer.h		\
@@ -164,7 +164,7 @@ EXTRA_DIST = $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER) jq.spec		\
 	jq.1.prebuilt
 
 
-# README.md is expected in Github projects, good stuff in it, so we'll 
+# README.md is expected in Github projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
 docdir = ${datadir}/doc/${PACKAGE}
 dist_doc_DATA = README.md COPYING AUTHORS README
@@ -187,7 +187,7 @@ dist-clean-local:
 clean-local-docs:
 if ENABLE_DOCS
 	rm -f jq.1
-endif 
+endif
 
 clean-local-gcov:
 	rm -f *.gcno *.gcda *.gcov

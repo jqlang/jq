@@ -619,7 +619,7 @@ sections:
           that string that many times. `"x" * 0` produces **null**.
 
           Dividing a string by another splits the first using the second
-          as separators.  
+          as separators.
 
           Multiplying two objects will merge them recursively: this works
           like addition but if both objects contain a value for the
@@ -710,12 +710,12 @@ sections:
 
       - title: "`in`"
         body: |
-          
+
           The builtin function `in` returns the input key is in the
           given object, or the input index corresponds to an element
           in the given array. It is, essentially, an inversed version
           of `has`.
-      
+
         examples:
           - program: '.[] | in({"foo": 42})'
             input: '["foo", "bar"]'
@@ -723,7 +723,7 @@ sections:
           - program: 'map(in([0,1]))'
             input: '[2, 0]'
             output: ['[false, true]']
-            
+
       - title: "`path(path_expression)`"
         body: |
 
@@ -868,10 +868,10 @@ sections:
           For any filter `x`, `map(x)` will run that filter for each
           element of the input array, and produce the outputs a new
           array. `map(.+1)` will increment each element of an array of numbers.
-          
+
           Similarly, `map_values(x)` will run that filter for each element,
           but it will return an object when an object is passed.
-          
+
           `map(x)` is equivalent to `[.[] | x]`. In fact, this is how
           it's defined. Similarly, `map_values(x)` is defined as `.[] |= x`.
 
@@ -879,7 +879,7 @@ sections:
           - program: 'map(.+1)'
             input: '[1,2,3]'
             output: ['[2,3,4]']
-          
+
           - program: 'map_values(.+1)'
             input: '{"a": 1, "b": 2, "c": 3}'
             output: ['{"a": 2, "b": 3, "c": 4}']
@@ -1413,7 +1413,7 @@ sections:
       - title: "`ascii_downcase`, `ascii_upcase`"
         body: |
 
-          Emit a copy of the input string with its alphabetic characters (a-z and A-Z) 
+          Emit a copy of the input string with its alphabetic characters (a-z and A-Z)
           converted to the specified case.
 
         example:
@@ -1576,7 +1576,7 @@ sections:
       - title: "`transpose`"
         body: |
 
-          Transpose a possibly jagged matrix (an array of arrays). 
+          Transpose a possibly jagged matrix (an array of arrays).
           Rows are padded with nulls so the result is always rectangular.
 
         examples:
@@ -2589,7 +2589,7 @@ sections:
 
       However, streaming isn't easy to deal with as the jq program will
       have `[<path>, <leaf-value>]` (and a few other forms) as inputs.
-      
+
       Several builtins are provided to make handling streams easier.
 
       The examples below use the the streamed form of `[0,[1]]`, which
@@ -2842,7 +2842,7 @@ sections:
           this time jq only uses the "search" key/value of the metadata.
           The metadata is also made available to users via the
           `modulemeta` builtin.
-          
+
           The "search" key in the metadata, if present, should have a
           string or array value (array of strings); this is the search
           path to be prefixed to the top-level search path.
@@ -2875,7 +2875,7 @@ sections:
           this time jq only uses the "search" key/value of the metadata.
           The metadata is also made available to users via the
           `modulemeta` builtin.
-          
+
           The "search" key in the metadata, if present, should have a
           string or array value (array of strings); this is the search
           path to be prefixed to the top-level search path.

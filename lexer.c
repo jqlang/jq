@@ -1134,8 +1134,8 @@ YY_RULE_SETUP
 case 38:
 YY_RULE_SETUP
 #line 88 "lexer.l"
-{ 
-   yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL; 
+{
+   yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL;
 }
 	YY_BREAK
 case 39:
@@ -2399,7 +2399,7 @@ static int try_exit(int c, int state, yyscan_t yyscanner) {
   case IN_BRACE: match = ret = '}'; break;
 
   case IN_QQINTERP:
-    match = ')'; 
+    match = ')';
     ret = QQSTRING_INTERP_END;
     break;
 

@@ -85,8 +85,8 @@ struct lexer_param;
   yylval->literal = jv_string_sized(yytext + 1, yyleng - 1); return FORMAT;
 }
 
-[0-9.]+([eE][+-]?[0-9]+)? { 
-   yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL; 
+[0-9.]+([eE][+-]?[0-9]+)? {
+   yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL;
 }
 
 "\"" {
@@ -117,7 +117,7 @@ struct lexer_param;
     return INVALID_CHARACTER;
   }
 }
-  
+
 
 ([a-zA-Z_][a-zA-Z_0-9]*::)*[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext); return IDENT;}
 \.[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return FIELD;}
@@ -142,7 +142,7 @@ static int try_exit(int c, int state, yyscan_t yyscanner) {
   case IN_BRACE: match = ret = '}'; break;
 
   case IN_QQINTERP:
-    match = ')'; 
+    match = ')';
     ret = QQSTRING_INTERP_END;
     break;
 
