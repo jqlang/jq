@@ -300,7 +300,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               <h2>Basic filters</h2>
               
               
-                <section>
+                <section id="`.`">
                   <h3>
                     <code>.</code>
                     
@@ -337,7 +337,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`.foo`,`.foo.bar`">
                   <h3>
                     <code>.foo</code>, <code>.foo.bar</code>
                     
@@ -404,7 +404,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`.foo?`">
                   <h3>
                     <code>.foo?</code>
                     
@@ -481,7 +481,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`.[<string>]`,`.[2]`,`.[10:15]`">
                   <h3>
                     <code>.[&lt;string&gt;]</code>, <code>.[2]</code>, <code>.[10:15]</code>
                     
@@ -608,7 +608,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`.[]`">
                   <h3>
                     <code>.[]</code>
                     
@@ -685,7 +685,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`.[]?`">
                   <h3>
                     <code>.[]?</code>
                     
@@ -695,7 +695,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`,`">
                   <h3>
                     <code>,</code>
                     
@@ -786,7 +786,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`|`">
                   <h3>
                     <code>|</code>
                     
@@ -838,7 +838,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 
 <p>Booleans, null, strings and numbers are written the same way as in javascript. Just like everything else in jq, these simple values take an input and produce an output - <code>42</code> is a valid jq expression that takes an input, ignores it, and returns 42 instead.</p>
               
-                <section>
+                <section id="Arrayconstruction-`[]`">
                   <h3>
                     Array construction - <code>[]</code>
                     
@@ -877,7 +877,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="Objects-`{}`">
                   <h3>
                     Objects - <code>{}</code>
                     
@@ -970,7 +970,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               <h2>Builtin operators and functions</h2>
               <p>Some jq operator (for instance, <code>+</code>) do different things depending on the type of their arguments (arrays, numbers, etc.). However, jq never does implicit type conversions. If you try to add a string to an object you&#8217;ll get an error message and no result.</p>
               
-                <section>
+                <section id="Addition-`+`">
                   <h3>
                     Addition - <code>+</code>
                     
@@ -1081,7 +1081,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="Subtraction-`-`">
                   <h3>
                     Subtraction - <code>-</code>
                     
@@ -1130,7 +1130,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="Multiplication,division,modulo-`*`,`/`,and`%`">
                   <h3>
                     Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</code>
                     
@@ -1220,7 +1220,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`length`">
                   <h3>
                     <code>length</code>
                     
@@ -1294,7 +1294,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`keys`,`keys_unsorted`">
                   <h3>
                     <code>keys</code>, <code>keys_unsorted</code>
                     
@@ -1349,7 +1349,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`has(key)`">
                   <h3>
                     <code>has(key)</code>
                     
@@ -1400,7 +1400,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`in`">
                   <h3>
                     <code>in</code>
                     
@@ -1456,7 +1456,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`path(path_expression)`">
                   <h3>
                     <code>path(path_expression)</code>
                     
@@ -1513,7 +1513,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`del(path_expression)`">
                   <h3>
                     <code>del(path_expression)</code>
                     
@@ -1562,7 +1562,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
                   
                 </section>
               
-                <section>
+                <section id="`to_entries`,`from_entries`,`with_entries`">
                   <h3>
                     <code>to_entries</code>, <code>from_entries</code>, <code>with_entries</code>
                     
@@ -1628,7 +1628,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`select(boolean_expression)`">
                   <h3>
                     <code>select(boolean_expression)</code>
                     
@@ -1679,7 +1679,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`arrays`,`objects`,`iterables`,`booleans`,`numbers`,`normals`,`finites`,`strings`,`nulls`,`values`,`scalars`">
                   <h3>
                     <code>arrays</code>, <code>objects</code>, <code>iterables</code>, <code>booleans</code>, <code>numbers</code>, <code>normals</code>, <code>finites</code>, <code>strings</code>, <code>nulls</code>, <code>values</code>, <code>scalars</code>
                     
@@ -1714,7 +1714,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`empty`">
                   <h3>
                     <code>empty</code>
                     
@@ -1772,7 +1772,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`error(message)`">
                   <h3>
                     <code>error(message)</code>
                     
@@ -1782,7 +1782,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`$__loc__`">
                   <h3>
                     <code>$__loc__</code>
                     
@@ -1817,7 +1817,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`map(x)`,`map_values(x)`">
                   <h3>
                     <code>map(x)</code>, <code>map_values(x)</code>
                     
@@ -1870,7 +1870,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`paths`,`paths(node_filter)`,`leaf_paths`">
                   <h3>
                     <code>paths</code>, <code>paths(node_filter)</code>, <code>leaf_paths</code>
                     
@@ -1923,7 +1923,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`add`">
                   <h3>
                     <code>add</code>
                     
@@ -1988,7 +1988,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`any`,`any(condition)`,`any(generator;condition)`">
                   <h3>
                     <code>any</code>, <code>any(condition)</code>, <code>any(generator; condition)</code>
                     
@@ -2057,7 +2057,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`all`,`all(condition)`,`all(generator;condition)`">
                   <h3>
                     <code>all</code>, <code>all(condition)</code>, <code>all(generator; condition)</code>
                     
@@ -2126,7 +2126,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="\[Requires1.5\]`flatten`,`flatten(depth)`">
                   <h3>
                     [Requires 1.5] <code>flatten</code>, <code>flatten(depth)</code>
                     
@@ -2205,7 +2205,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`range(upto)`,`range(from;upto)``range(from;upto;by)`">
                   <h3>
                     <code>range(upto)</code>, <code>range(from;upto)</code> <code>range(from;upto;by)</code>
                     
@@ -2323,7 +2323,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`floor`">
                   <h3>
                     <code>floor</code>
                     
@@ -2358,7 +2358,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`sqrt`">
                   <h3>
                     <code>sqrt</code>
                     
@@ -2393,7 +2393,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`tonumber`">
                   <h3>
                     <code>tonumber</code>
                     
@@ -2435,7 +2435,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`tostring`">
                   <h3>
                     <code>tostring</code>
                     
@@ -2484,7 +2484,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`type`">
                   <h3>
                     <code>type</code>
                     
@@ -2519,7 +2519,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`infinite`,`nan`,`isinfinite`,`isnan`,`isfinite`,`isnormal`">
                   <h3>
                     <code>infinite</code>, <code>nan</code>, <code>isinfinite</code>, <code>isnan</code>, <code>isfinite</code>, <code>isnormal</code>
                     
@@ -2586,7 +2586,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`sort,sort_by(path_expression)`">
                   <h3>
                     <code>sort, sort_by(path_expression)</code>
                     
@@ -2657,7 +2657,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`group_by(path_expression)`">
                   <h3>
                     <code>group_by(path_expression)</code>
                     
@@ -2694,7 +2694,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`min`,`max`,`min_by(path_exp)`,`max_by(path_exp)`">
                   <h3>
                     <code>min</code>, <code>max</code>, <code>min_by(path_exp)</code>, <code>max_by(path_exp)</code>
                     
@@ -2745,7 +2745,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`unique`,`unique_by(path_exp)`">
                   <h3>
                     <code>unique</code>, <code>unique_by(path_exp)</code>
                     
@@ -2810,7 +2810,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`reverse`">
                   <h3>
                     <code>reverse</code>
                     
@@ -2845,7 +2845,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`contains(element)`">
                   <h3>
                     <code>contains(element)</code>
                     
@@ -2936,7 +2936,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`indices(s)`">
                   <h3>
                     <code>indices(s)</code>
                     
@@ -2999,7 +2999,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`index(s)`,`rindex(s)`">
                   <h3>
                     <code>index(s)</code>, <code>rindex(s)</code>
                     
@@ -3048,7 +3048,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`inside`">
                   <h3>
                     <code>inside</code>
                     
@@ -3139,7 +3139,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`startswith(str)`">
                   <h3>
                     <code>startswith(str)</code>
                     
@@ -3174,7 +3174,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`endswith(str)`">
                   <h3>
                     <code>endswith(str)</code>
                     
@@ -3209,7 +3209,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`combinations`,`combinations(n)`">
                   <h3>
                     <code>combinations</code>, <code>combinations(n)</code>
                     
@@ -3300,7 +3300,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`ltrimstr(str)`">
                   <h3>
                     <code>ltrimstr(str)</code>
                     
@@ -3335,7 +3335,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`rtrimstr(str)`">
                   <h3>
                     <code>rtrimstr(str)</code>
                     
@@ -3370,7 +3370,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`explode`">
                   <h3>
                     <code>explode</code>
                     
@@ -3405,7 +3405,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`implode`">
                   <h3>
                     <code>implode</code>
                     
@@ -3440,7 +3440,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`split`">
                   <h3>
                     <code>split</code>
                     
@@ -3475,7 +3475,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`join(str)`">
                   <h3>
                     <code>join(str)</code>
                     
@@ -3510,7 +3510,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`ascii_downcase`,`ascii_upcase`">
                   <h3>
                     <code>ascii_downcase</code>, <code>ascii_upcase</code>
                     
@@ -3520,7 +3520,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`while(cond;update)`">
                   <h3>
                     <code>while(cond; update)</code>
                     
@@ -3557,7 +3557,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`until(cond;next)`">
                   <h3>
                     <code>until(cond; next)</code>
                     
@@ -3594,7 +3594,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`recurse(f)`,`recurse`,`recurse(f;condition)`,`recurse_down`">
                   <h3>
                     <code>recurse(f)</code>, <code>recurse</code>, <code>recurse(f; condition)</code>, <code>recurse_down</code>
                     
@@ -3735,7 +3735,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`walk(f)`">
                   <h3>
                     <code>walk(f)</code>
                     
@@ -3784,7 +3784,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`..`">
                   <h3>
                     <code>..</code>
                     
@@ -3819,7 +3819,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`env`">
                   <h3>
                     <code>env</code>
                     
@@ -3854,7 +3854,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`transpose`">
                   <h3>
                     <code>transpose</code>
                     
@@ -3889,7 +3889,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="`bsearch(x)`">
                   <h3>
                     <code>bsearch(x)</code>
                     
@@ -3952,7 +3952,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="Stringinterpolation-`\(foo)`">
                   <h3>
                     String interpolation - <code>\(foo)</code>
                     
@@ -3987,7 +3987,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="Convertto/fromJSON">
                   <h3>
                     Convert to/from JSON
                     
@@ -4050,7 +4050,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="Formatstringsandescaping">
                   <h3>
                     Format strings and escaping
                     
@@ -4159,7 +4159,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="Dates">
                   <h3>
                     Dates
                     
@@ -4250,7 +4250,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               <h2>Conditionals and Comparisons</h2>
               
               
-                <section>
+                <section id="`==`,`!=`">
                   <h3>
                     <code>==</code>, <code>!=</code>
                     
@@ -4308,7 +4308,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section>
+                <section id="if-then-else">
                   <h3>
                     if-then-else
                     
@@ -4356,7 +4356,7 @@ end'</td></tr>
                   
                 </section>
               
-                <section>
+                <section id="`>,>=,<=,<`">
                   <h3>
                     <code>&gt;, &gt;=, &lt;=, &lt;</code>
                     
@@ -4393,7 +4393,7 @@ end'</td></tr>
                   
                 </section>
               
-                <section>
+                <section id="and/or/not">
                   <h3>
                     and/or/not
                     
@@ -4505,7 +4505,7 @@ not</code>.</p>
                   
                 </section>
               
-                <section>
+                <section id="Alternativeoperator-`//`">
                   <h3>
                     Alternative operator - <code>//</code>
                     
@@ -4556,7 +4556,7 @@ not</code>.</p>
                   
                 </section>
               
-                <section>
+                <section id="try-catch">
                   <h3>
                     try-catch
                     
@@ -4621,7 +4621,7 @@ not</code>.</p>
                   
                 </section>
               
-                <section>
+                <section id="Breakingoutofcontrolstructures">
                   <h3>
                     Breaking out of control structures
                     
@@ -4656,7 +4656,7 @@ try repeat(exp) catch .==&quot;break&quot; then empty else error;</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="`?`operator">
                   <h3>
                     <code>?</code> operator
                     
@@ -4748,7 +4748,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
 
 <p>evaluates to: true, true, false, false.</p>
               
-                <section>
+                <section id="\[Requires1.5\]`test(val)`,`test(regex;flags)`">
                   <h3>
                     [Requires 1.5] <code>test(val)</code>, <code>test(regex; flags)</code>
                     
@@ -4804,7 +4804,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="\[Requires1.5\]`match(val)`,`match(regex;flags)`">
                   <h3>
                     [Requires 1.5] <code>match(val)</code>, <code>match(regex; flags)</code>
                     
@@ -4940,7 +4940,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="\[Requires1.5\]`capture(val)`,`capture(regex;flags)`">
                   <h3>
                     [Requires 1.5] <code>capture(val)</code>, <code>capture(regex; flags)</code>
                     
@@ -4975,7 +4975,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="\[Requires1.5\]`scan(regex)`,`scan(regex;flags)`">
                   <h3>
                     [Requires 1.5] <code>scan(regex)</code>, <code>scan(regex; flags)</code>
                     
@@ -4985,7 +4985,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="`split(regex;flags)`">
                   <h3>
                     <code>split(regex; flags)</code>
                     
@@ -4995,7 +4995,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="\[Requires1.5\]`splits(regex)`,`splits(regex;flags)`">
                   <h3>
                     [Requires 1.5] <code>splits(regex)</code>, <code>splits(regex; flags)</code>
                     
@@ -5005,7 +5005,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="\[Requires1.5\]`sub(regex;tostring)``sub(regex;string;flags)`">
                   <h3>
                     [Requires 1.5] <code>sub(regex; tostring)</code> <code>sub(regex; string; flags)</code>
                     
@@ -5015,7 +5015,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="\[Requires1.5\]`gsub(regex;string)`,`gsub(regex;string;flags)`">
                   <h3>
                     [Requires 1.5] <code>gsub(regex; string)</code>, <code>gsub(regex; string; flags)</code>
                     
@@ -5043,7 +5043,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
 
 <p>Finally, there is a module/library system.</p>
               
-                <section>
+                <section id="Variables">
                   <h3>
                     Variables
                     
@@ -5181,7 +5181,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="DefiningFunctions">
                   <h3>
                     Defining Functions
                     
@@ -5255,7 +5255,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="Reduce">
                   <h3>
                     Reduce
                     
@@ -5298,7 +5298,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="`limit(n;exp)`">
                   <h3>
                     <code>limit(n; exp)</code>
                     
@@ -5333,7 +5333,7 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                 </section>
               
-                <section>
+                <section id="`first(expr)`,`last(expr)`,`nth(n;expr)`">
                   <h3>
                     <code>first(expr)</code>, <code>last(expr)</code>, <code>nth(n; expr)</code>
                     
@@ -5371,7 +5371,7 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn&#821
                   
                 </section>
               
-                <section>
+                <section id="`first`,`last`,`nth(n)`">
                   <h3>
                     <code>first</code>, <code>last</code>, <code>nth(n)</code>
                     
@@ -5408,7 +5408,7 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn&#821
                   
                 </section>
               
-                <section>
+                <section id="`foreach`">
                   <h3>
                     <code>foreach</code>
                     
@@ -5447,7 +5447,7 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn&#821
                   
                 </section>
               
-                <section>
+                <section id="Recursion">
                   <h3>
                     Recursion
                     
@@ -5473,7 +5473,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="Generatorsanditerators">
                   <h3>
                     Generators and iterators
                     
@@ -5567,7 +5567,7 @@ def repeat(exp):
 
 <p>One builtin provides minimal output capabilities, <code>debug</code>. (Recall that a jq program&#8217;s output values are always output as JSON texts on <code>stdout</code>.) The <code>debug</code> builtin can have application-specific behavior, such as for executables that use the libjq C API but aren&#8217;t the jq executable itself.</p>
               
-                <section>
+                <section id="`input`">
                   <h3>
                     <code>input</code>
                     
@@ -5577,7 +5577,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`inputs`">
                   <h3>
                     <code>inputs</code>
                     
@@ -5589,7 +5589,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`debug`">
                   <h3>
                     <code>debug</code>
                     
@@ -5599,7 +5599,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`input_filename`">
                   <h3>
                     <code>input_filename</code>
                     
@@ -5609,7 +5609,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`input_line_number`">
                   <h3>
                     <code>input_line_number</code>
                     
@@ -5633,7 +5633,7 @@ def repeat(exp):
 
 <p>Streaming forms include <code>[&lt;path&gt;, &lt;leaf-value&gt;]</code> (to indicate any scalar value, empty array, or empty object), and <code>[&lt;path&gt;]</code> (to indicate the end of an array or object). Future versions of jq run with <code>--stream</code> and <code>-seq</code> may output additional forms such as <code>[&quot;error message&quot;]</code> when an input text fails to parse.</p>
               
-                <section>
+                <section id="`truncate_stream(stream_expression)`">
                   <h3>
                     <code>truncate_stream(stream_expression)</code>
                     
@@ -5668,7 +5668,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`fromstream(stream_expression)`">
                   <h3>
                     <code>fromstream(stream_expression)</code>
                     
@@ -5703,7 +5703,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`tostream`">
                   <h3>
                     <code>tostream</code>
                     
@@ -5748,7 +5748,7 @@ def repeat(exp):
 
 <p>All the assignment operators in jq have path expressions on the left-hand side.</p>
               
-                <section>
+                <section id="`=`">
                   <h3>
                     <code>=</code>
                     
@@ -5771,7 +5771,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`|=`">
                   <h3>
                     <code>|=</code>
                     
@@ -5821,7 +5821,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`+=`,`-=`,`*=`,`/=`,`%=`,`//=`">
                   <h3>
                     <code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>%=</code>, <code>//=</code>
                     
@@ -5856,7 +5856,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="Complexassignments">
                   <h3>
                     Complex assignments
                     
@@ -5916,7 +5916,7 @@ def repeat(exp):
 
 <p>If &#8220;$HOME/.jq&#8221; is a file, it is sourced into the main program.</p>
               
-                <section>
+                <section id="`importRelativePathStringasNAME[<metadata>];`">
                   <h3>
                     <code>import RelativePathString as NAME [&lt;metadata&gt;];</code>
                     
@@ -5930,7 +5930,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`includeRelativePathString[<metadata>];`">
                   <h3>
                     <code>include RelativePathString [&lt;metadata&gt;];</code>
                     
@@ -5942,7 +5942,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`importRelativePathStringas$NAME[<metadata>];`">
                   <h3>
                     <code>import RelativePathString as $NAME [&lt;metadata&gt;];</code>
                     
@@ -5956,7 +5956,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`module<metadata>;`">
                   <h3>
                     <code>module &lt;metadata&gt;;</code>
                     
@@ -5968,7 +5968,7 @@ def repeat(exp):
                   
                 </section>
               
-                <section>
+                <section id="`modulemeta`">
                   <h3>
                     <code>modulemeta</code>
                     
@@ -6006,147 +6006,147 @@ def repeat(exp):
           ,
         
           
-            "`.`" : "",
+            "`.`" : "`.`",
           
-            "`.foo`, `.foo.bar`" : "foofoobar",
+            "`.foo`, `.foo.bar`" : "`.foo`,`.foo.bar`",
           
-            "`.foo?`" : "foo",
+            "`.foo?`" : "`.foo?`",
           
-            "`.[<string>]`, `.[2]`, `.[10:15]`" : "string21015",
+            "`.[<string>]`, `.[2]`, `.[10:15]`" : "`.[<string>]`,`.[2]`,`.[10:15]`",
           
-            "`.[]`" : "",
+            "`.[]`" : "`.[]`",
           
-            "`.[]?`" : "",
+            "`.[]?`" : "`.[]?`",
           
-            "`,`" : "",
+            "`,`" : "`,`",
           
-            "`|`" : "",
+            "`|`" : "`|`",
           
           "Basic filters" : "Basicfilters"
           ,
         
           
-            "Array construction - `[]`" : "Arrayconstruction",
+            "Array construction - `[]`" : "Arrayconstruction-`[]`",
           
-            "Objects - `{}`" : "Objects",
+            "Objects - `{}`" : "Objects-`{}`",
           
           "Types and Values" : "TypesandValues"
           ,
         
           
-            "Addition - `+`" : "Addition",
+            "Addition - `+`" : "Addition-`+`",
           
-            "Subtraction - `-`" : "Subtraction",
+            "Subtraction - `-`" : "Subtraction-`-`",
           
-            "Multiplication, division, modulo - `*`, `/`, and `%`" : "Multiplicationdivisionmoduloand",
+            "Multiplication, division, modulo - `*`, `/`, and `%`" : "Multiplication,division,modulo-`*`,`/`,and`%`",
           
-            "`length`" : "length",
+            "`length`" : "`length`",
           
-            "`keys`, `keys_unsorted`" : "keyskeys_unsorted",
+            "`keys`, `keys_unsorted`" : "`keys`,`keys_unsorted`",
           
-            "`has(key)`" : "haskey",
+            "`has(key)`" : "`has(key)`",
           
-            "`in`" : "in",
+            "`in`" : "`in`",
           
-            "`path(path_expression)`" : "pathpath_expression",
+            "`path(path_expression)`" : "`path(path_expression)`",
           
-            "`del(path_expression)`" : "delpath_expression",
+            "`del(path_expression)`" : "`del(path_expression)`",
           
-            "`to_entries`, `from_entries`, `with_entries`" : "to_entriesfrom_entrieswith_entries",
+            "`to_entries`, `from_entries`, `with_entries`" : "`to_entries`,`from_entries`,`with_entries`",
           
-            "`select(boolean_expression)`" : "selectboolean_expression",
+            "`select(boolean_expression)`" : "`select(boolean_expression)`",
           
-            "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `normals`, `finites`, `strings`, `nulls`, `values`, `scalars`" : "arraysobjectsiterablesbooleansnumbersnormalsfinitesstringsnullsvaluesscalars",
+            "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `normals`, `finites`, `strings`, `nulls`, `values`, `scalars`" : "`arrays`,`objects`,`iterables`,`booleans`,`numbers`,`normals`,`finites`,`strings`,`nulls`,`values`,`scalars`",
           
-            "`empty`" : "empty",
+            "`empty`" : "`empty`",
           
-            "`error(message)`" : "errormessage",
+            "`error(message)`" : "`error(message)`",
           
-            "`$__loc__`" : "__loc__",
+            "`$__loc__`" : "`$__loc__`",
           
-            "`map(x)`, `map_values(x)`" : "mapxmap_valuesx",
+            "`map(x)`, `map_values(x)`" : "`map(x)`,`map_values(x)`",
           
-            "`paths`, `paths(node_filter)`, `leaf_paths`" : "pathspathsnode_filterleaf_paths",
+            "`paths`, `paths(node_filter)`, `leaf_paths`" : "`paths`,`paths(node_filter)`,`leaf_paths`",
           
-            "`add`" : "add",
+            "`add`" : "`add`",
           
-            "`any`, `any(condition)`, `any(generator; condition)`" : "anyanyconditionanygeneratorcondition",
+            "`any`, `any(condition)`, `any(generator; condition)`" : "`any`,`any(condition)`,`any(generator;condition)`",
           
-            "`all`, `all(condition)`, `all(generator; condition)`" : "allallconditionallgeneratorcondition",
+            "`all`, `all(condition)`, `all(generator; condition)`" : "`all`,`all(condition)`,`all(generator;condition)`",
           
-            "\\[Requires 1.5\\] `flatten`, `flatten(depth)`" : "Requires15flattenflattendepth",
+            "\\[Requires 1.5\\] `flatten`, `flatten(depth)`" : "\\[Requires1.5\\]`flatten`,`flatten(depth)`",
           
-            "`range(upto)`, `range(from;upto)` `range(from;upto;by)`" : "rangeuptorangefromuptorangefromuptoby",
+            "`range(upto)`, `range(from;upto)` `range(from;upto;by)`" : "`range(upto)`,`range(from;upto)``range(from;upto;by)`",
           
-            "`floor`" : "floor",
+            "`floor`" : "`floor`",
           
-            "`sqrt`" : "sqrt",
+            "`sqrt`" : "`sqrt`",
           
-            "`tonumber`" : "tonumber",
+            "`tonumber`" : "`tonumber`",
           
-            "`tostring`" : "tostring",
+            "`tostring`" : "`tostring`",
           
-            "`type`" : "type",
+            "`type`" : "`type`",
           
-            "`infinite`, `nan`, `isinfinite`, `isnan`, `isfinite`, `isnormal`" : "infinitenanisinfiniteisnanisfiniteisnormal",
+            "`infinite`, `nan`, `isinfinite`, `isnan`, `isfinite`, `isnormal`" : "`infinite`,`nan`,`isinfinite`,`isnan`,`isfinite`,`isnormal`",
           
-            "`sort, sort_by(path_expression)`" : "sortsort_bypath_expression",
+            "`sort, sort_by(path_expression)`" : "`sort,sort_by(path_expression)`",
           
-            "`group_by(path_expression)`" : "group_bypath_expression",
+            "`group_by(path_expression)`" : "`group_by(path_expression)`",
           
-            "`min`, `max`, `min_by(path_exp)`, `max_by(path_exp)`" : "minmaxmin_bypath_expmax_bypath_exp",
+            "`min`, `max`, `min_by(path_exp)`, `max_by(path_exp)`" : "`min`,`max`,`min_by(path_exp)`,`max_by(path_exp)`",
           
-            "`unique`, `unique_by(path_exp)`" : "uniqueunique_bypath_exp",
+            "`unique`, `unique_by(path_exp)`" : "`unique`,`unique_by(path_exp)`",
           
-            "`reverse`" : "reverse",
+            "`reverse`" : "`reverse`",
           
-            "`contains(element)`" : "containselement",
+            "`contains(element)`" : "`contains(element)`",
           
-            "`indices(s)`" : "indicess",
+            "`indices(s)`" : "`indices(s)`",
           
-            "`index(s)`, `rindex(s)`" : "indexsrindexs",
+            "`index(s)`, `rindex(s)`" : "`index(s)`,`rindex(s)`",
           
-            "`inside`" : "inside",
+            "`inside`" : "`inside`",
           
-            "`startswith(str)`" : "startswithstr",
+            "`startswith(str)`" : "`startswith(str)`",
           
-            "`endswith(str)`" : "endswithstr",
+            "`endswith(str)`" : "`endswith(str)`",
           
-            "`combinations`, `combinations(n)`" : "combinationscombinationsn",
+            "`combinations`, `combinations(n)`" : "`combinations`,`combinations(n)`",
           
-            "`ltrimstr(str)`" : "ltrimstrstr",
+            "`ltrimstr(str)`" : "`ltrimstr(str)`",
           
-            "`rtrimstr(str)`" : "rtrimstrstr",
+            "`rtrimstr(str)`" : "`rtrimstr(str)`",
           
-            "`explode`" : "explode",
+            "`explode`" : "`explode`",
           
-            "`implode`" : "implode",
+            "`implode`" : "`implode`",
           
-            "`split`" : "split",
+            "`split`" : "`split`",
           
-            "`join(str)`" : "joinstr",
+            "`join(str)`" : "`join(str)`",
           
-            "`ascii_downcase`, `ascii_upcase`" : "ascii_downcaseascii_upcase",
+            "`ascii_downcase`, `ascii_upcase`" : "`ascii_downcase`,`ascii_upcase`",
           
-            "`while(cond; update)`" : "whilecondupdate",
+            "`while(cond; update)`" : "`while(cond;update)`",
           
-            "`until(cond; next)`" : "untilcondnext",
+            "`until(cond; next)`" : "`until(cond;next)`",
           
-            "`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`" : "recursefrecurserecursefconditionrecurse_down",
+            "`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`" : "`recurse(f)`,`recurse`,`recurse(f;condition)`,`recurse_down`",
           
-            "`walk(f)`" : "walkf",
+            "`walk(f)`" : "`walk(f)`",
           
-            "`..`" : "",
+            "`..`" : "`..`",
           
-            "`env`" : "env",
+            "`env`" : "`env`",
           
-            "`transpose`" : "transpose",
+            "`transpose`" : "`transpose`",
           
-            "`bsearch(x)`" : "bsearchx",
+            "`bsearch(x)`" : "`bsearch(x)`",
           
-            "String interpolation - `\\(foo)`" : "Stringinterpolationfoo",
+            "String interpolation - `\\(foo)`" : "Stringinterpolation-`\\(foo)`",
           
-            "Convert to/from JSON" : "ConverttofromJSON",
+            "Convert to/from JSON" : "Convertto/fromJSON",
           
             "Format strings and escaping" : "Formatstringsandescaping",
           
@@ -6156,41 +6156,41 @@ def repeat(exp):
           ,
         
           
-            "`==`, `!=`" : "",
+            "`==`, `!=`" : "`==`,`!=`",
           
-            "if-then-else" : "ifthenelse",
+            "if-then-else" : "if-then-else",
           
-            "`>, >=, <=, <`" : "",
+            "`>, >=, <=, <`" : "`>,>=,<=,<`",
           
-            "and/or/not" : "andornot",
+            "and/or/not" : "and/or/not",
           
-            "Alternative operator - `//`" : "Alternativeoperator",
+            "Alternative operator - `//`" : "Alternativeoperator-`//`",
           
-            "try-catch" : "trycatch",
+            "try-catch" : "try-catch",
           
             "Breaking out of control structures" : "Breakingoutofcontrolstructures",
           
-            "`?` operator" : "operator",
+            "`?` operator" : "`?`operator",
           
           "Conditionals and Comparisons" : "ConditionalsandComparisons"
           ,
         
           
-            "\\[Requires 1.5\\] `test(val)`, `test(regex; flags)`" : "Requires15testvaltestregexflags",
+            "\\[Requires 1.5\\] `test(val)`, `test(regex; flags)`" : "\\[Requires1.5\\]`test(val)`,`test(regex;flags)`",
           
-            "\\[Requires 1.5\\] `match(val)`, `match(regex; flags)`" : "Requires15matchvalmatchregexflags",
+            "\\[Requires 1.5\\] `match(val)`, `match(regex; flags)`" : "\\[Requires1.5\\]`match(val)`,`match(regex;flags)`",
           
-            "\\[Requires 1.5\\] `capture(val)`, `capture(regex; flags)`" : "Requires15capturevalcaptureregexflags",
+            "\\[Requires 1.5\\] `capture(val)`, `capture(regex; flags)`" : "\\[Requires1.5\\]`capture(val)`,`capture(regex;flags)`",
           
-            "\\[Requires 1.5\\] `scan(regex)`, `scan(regex; flags)`" : "Requires15scanregexscanregexflags",
+            "\\[Requires 1.5\\] `scan(regex)`, `scan(regex; flags)`" : "\\[Requires1.5\\]`scan(regex)`,`scan(regex;flags)`",
           
-            "`split(regex; flags)`" : "splitregexflags",
+            "`split(regex; flags)`" : "`split(regex;flags)`",
           
-            "\\[Requires 1.5\\] `splits(regex)`, `splits(regex; flags)`" : "Requires15splitsregexsplitsregexflags",
+            "\\[Requires 1.5\\] `splits(regex)`, `splits(regex; flags)`" : "\\[Requires1.5\\]`splits(regex)`,`splits(regex;flags)`",
           
-            "\\[Requires 1.5\\] `sub(regex; tostring)` `sub(regex; string; flags)`" : "Requires15subregextostringsubregexstringflags",
+            "\\[Requires 1.5\\] `sub(regex; tostring)` `sub(regex; string; flags)`" : "\\[Requires1.5\\]`sub(regex;tostring)``sub(regex;string;flags)`",
           
-            "\\[Requires 1.5\\] `gsub(regex; string)`, `gsub(regex; string; flags)`" : "Requires15gsubregexstringgsubregexstringflags",
+            "\\[Requires 1.5\\] `gsub(regex; string)`, `gsub(regex; string; flags)`" : "\\[Requires1.5\\]`gsub(regex;string)`,`gsub(regex;string;flags)`",
           
           "Regular expressions (PCRE)" : "RegularexpressionsPCRE"
           ,
@@ -6202,13 +6202,13 @@ def repeat(exp):
           
             "Reduce" : "Reduce",
           
-            "`limit(n; exp)`" : "limitnexp",
+            "`limit(n; exp)`" : "`limit(n;exp)`",
           
-            "`first(expr)`, `last(expr)`, `nth(n; expr)`" : "firstexprlastexprnthnexpr",
+            "`first(expr)`, `last(expr)`, `nth(n; expr)`" : "`first(expr)`,`last(expr)`,`nth(n;expr)`",
           
-            "`first`, `last`, `nth(n)`" : "firstlastnthn",
+            "`first`, `last`, `nth(n)`" : "`first`,`last`,`nth(n)`",
           
-            "`foreach`" : "foreach",
+            "`foreach`" : "`foreach`",
           
             "Recursion" : "Recursion",
           
@@ -6222,35 +6222,35 @@ def repeat(exp):
           ,
         
           
-            "`input`" : "input",
+            "`input`" : "`input`",
           
-            "`inputs`" : "inputs",
+            "`inputs`" : "`inputs`",
           
-            "`debug`" : "debug",
+            "`debug`" : "`debug`",
           
-            "`input_filename`" : "input_filename",
+            "`input_filename`" : "`input_filename`",
           
-            "`input_line_number`" : "input_line_number",
+            "`input_line_number`" : "`input_line_number`",
           
           "I/O" : "IO"
           ,
         
           
-            "`truncate_stream(stream_expression)`" : "truncate_streamstream_expression",
+            "`truncate_stream(stream_expression)`" : "`truncate_stream(stream_expression)`",
           
-            "`fromstream(stream_expression)`" : "fromstreamstream_expression",
+            "`fromstream(stream_expression)`" : "`fromstream(stream_expression)`",
           
-            "`tostream`" : "tostream",
+            "`tostream`" : "`tostream`",
           
           "Streaming" : "Streaming"
           ,
         
           
-            "`=`" : "",
+            "`=`" : "`=`",
           
-            "`|=`" : "",
+            "`|=`" : "`|=`",
           
-            "`+=`, `-=`, `*=`, `/=`, `%=`, `//=`" : "",
+            "`+=`, `-=`, `*=`, `/=`, `%=`, `//=`" : "`+=`,`-=`,`*=`,`/=`,`%=`,`//=`",
           
             "Complex assignments" : "Complexassignments",
           
@@ -6258,15 +6258,15 @@ def repeat(exp):
           ,
         
           
-            "`import RelativePathString as NAME [<metadata>];`" : "importRelativePathStringasNAMEmetadata",
+            "`import RelativePathString as NAME [<metadata>];`" : "`importRelativePathStringasNAME[<metadata>];`",
           
-            "`include RelativePathString [<metadata>];`" : "includeRelativePathStringmetadata",
+            "`include RelativePathString [<metadata>];`" : "`includeRelativePathString[<metadata>];`",
           
-            "`import RelativePathString as $NAME [<metadata>];`" : "importRelativePathStringasNAMEmetadata",
+            "`import RelativePathString as $NAME [<metadata>];`" : "`importRelativePathStringas$NAME[<metadata>];`",
           
-            "`module <metadata>;`" : "modulemetadata",
+            "`module <metadata>;`" : "`module<metadata>;`",
           
-            "`modulemeta`" : "modulemeta",
+            "`modulemeta`" : "`modulemeta`",
           
           "Modules" : "Modules"
           
