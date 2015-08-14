@@ -16,6 +16,10 @@ module ExtraFilters
     input.gsub(/[^a-zA-Z0-9_]/,"")
   end
 
+  def no_paragraph(input)
+    input.gsub('<p>', '').gsub('</p>', '')
+  end
+
   def json(input)
     input.to_json
   end
