@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-  {% include "shared/head" %}
+{% include "shared/head" %}
 
   <body id="{{slug}}" data-spy="scroll" data-target="#navcolumn" data-offset="100">
-    {% include "shared/header" %}
+{% include "shared/header" %}
 
     <div class="container">
       <div class="row">
@@ -84,7 +84,7 @@
       </div>
     </div>
 
-    {% include "shared/footer" %}
+{% include "shared/footer" %}
     <script>
       var section_map = {
         {% for section in sections %}
