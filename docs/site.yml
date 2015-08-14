@@ -10,9 +10,9 @@ root: '/jq'
 footer: |
 
   This website is made with [Bonsai](http://www.tinytree.info) and
-  [Twitter Bootstrap](http://twitter.github.com/bootstrap/), themed
-  with [Bootswatch](http://bootswatch.com).
+  [Bootstrap](http://getbootstrap.com), themed
+  with [Bootswatch](https://bootswatch.com).
 
   jq is licensed under the MIT license (code) and the
-  [CC-BY-3.0](http://creativecommons.org/licenses/by/3.0/) license
+  [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) license
   (docs).
