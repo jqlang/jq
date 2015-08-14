@@ -111,9 +111,14 @@ struct lexer_param;
 %precedence "catch"
 
 
-%type <blk> Exp Term MkDict MkDictPair ExpD ElseBody QQString String
-%type <blk> FuncDef FuncDefs Import Imports ImportWhat ImportFrom Param Params
-%type <blk> Arg Args Module Pattern ArrayPats ObjPats ObjPat
+%type <blk> Exp Term
+%type <blk> MkDict MkDictPair ExpD
+%type <blk> ElseBody
+%type <blk> String QQString
+%type <blk> FuncDef FuncDefs
+%type <blk> Module Import Imports ImportWhat ImportFrom
+%type <blk> Param Params Arg Args
+%type <blk> Pattern ArrayPats ObjPats ObjPat
 %type <literal> Keyword
 %{
 #include "lexer.h"
