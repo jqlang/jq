@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>http://stedolan.github.io/jq</loc>
-    <lastmod>2015-08-13</lastmod>
+    <loc>https://stedolan.github.io/jq</loc>
+    <lastmod>2015-08-15</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>http://stedolan.github.io/jq/tutorial/</loc>
-    <lastmod>2015-08-13</lastmod>
+    <loc>https://stedolan.github.io/jq/tutorial/</loc>
+    <lastmod>2015-08-15</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>http://stedolan.github.io/jq/manual/</loc>
-    <lastmod>2015-08-13</lastmod>
+    <loc>https://stedolan.github.io/jq/manual/</loc>
+    <lastmod>2015-08-15</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>http://stedolan.github.io/jq/manual/v1.3/</loc>
-    <lastmod>2015-08-13</lastmod>
+    <loc>https://stedolan.github.io/jq/manual/v1.3/</loc>
+    <lastmod>2015-08-15</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>http://stedolan.github.io/jq/manual/v1.4/</loc>
-    <lastmod>2015-08-13</lastmod>
+    <loc>https://stedolan.github.io/jq/manual/v1.4/</loc>
+    <lastmod>2015-08-15</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>http://stedolan.github.io/jq/download/</loc>
-    <lastmod>2015-08-13</lastmod>
+    <loc>https://stedolan.github.io/jq/download/</loc>
+    <lastmod>2015-08-15</lastmod>
     <changefreq>monthly</changefreq>
   </url>
 </urlset>

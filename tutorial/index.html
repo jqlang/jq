@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script>
+      if ((window.location.host == "stedolan.github.io") && (window.location.protocol != "https:"))
+        window.location.protocol = "https";
+    </script>
     <meta charset="utf-8">
     <title>Tutorial</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="canonical" href="https://stedolan.github.io/jq/tutorial/" />
     <link rel="stylesheet" href="/jq/bootstrap/css/bootstrap.css" type="text/css">
     <link rel="stylesheet" href="/jq/css/base.css" type="text/css">
     <!--[if lt IE 9]>
@@ -44,7 +49,7 @@
             
             <li><a href="https://github.com/stedolan/jq/issues">Issues</a></li>
             <li><a href="https://github.com/stedolan/jq">Source</a></li>
-            <li><a href="http://jqplay.org">Try online!</a></li>
+            <li><a href="https://jqplay.org">Try online!</a></li>
             <li><a href="https://raw.githubusercontent.com/stedolan/jq/master/NEWS">News</a></li>
           </ul>
         </div>
@@ -57,7 +62,9 @@
         <h1>Tutorial</h1>
         
           
-            <p>GitHub has a JSON API, so let&#8217;s play with that. This URL gets us the last 5 commits from the jq repo.</p>
+            
+<p>GitHub has a JSON API, so let’s play with that. This URL gets us the last 5 commits from the jq repo.</p>
+
           
 
           
@@ -106,7 +113,9 @@
           
         
           
-            <p>GitHub returns nicely formatted JSON. For servers that don&#8217;t, it can be helpful to pipe the response through jq to pretty-print it. The simplest jq program is the expression <code>.</code>, which takes the input and produces it unchanged as output.</p>
+            
+<p>GitHub returns nicely formatted JSON. For servers that don’t, it can be helpful to pipe the response through jq to pretty-print it. The simplest jq program is the expression <code>.</code>, which takes the input and produces it unchanged as output.</p>
+
           
 
           
@@ -155,7 +164,9 @@
           
         
           
-            <p>We can use jq to extract just the first commit.</p>
+            
+<p>We can use jq to extract just the first commit.</p>
+
           
 
           
@@ -251,9 +262,11 @@
           
         
           
-            <p>For the rest of the examples, I&#8217;ll leave out the <code>curl</code> command - it&#8217;s not going to change.</p>
+            
+<p>For the rest of the examples, I’ll leave out the <code>curl</code> command - it’s not going to change.</p>
 
-<p>There&#8217;s a lot of info we don&#8217;t care about there, so we&#8217;ll restrict it down to the most interesting fields.</p>
+<p>There’s a lot of info we don’t care about there, so we’ll restrict it down to the most interesting fields.</p>
+
           
 
           
@@ -278,9 +291,11 @@
           
         
           
-            <p>The <code>|</code> operator in jq feeds the output of one filter (<code>.[0]</code> which gets the first element of the array in the response) into the input of another (<code>{...}</code> which builds an object out of those fields). You can access nested attributes, such as <code>.commit.message</code>.</p>
+            
+<p>The <code>|</code> operator in jq feeds the output of one filter (<code>.[0]</code> which gets the first element of the array in the response) into the input of another (<code>{...}</code> which builds an object out of those fields). You can access nested attributes, such as <code>.commit.message</code>.</p>
 
-<p>Now let&#8217;s get the rest of the commits.</p>
+<p>Now let’s get the rest of the commits.</p>
+
           
 
           
@@ -321,13 +336,15 @@
           
         
           
-            <p><code>.[]</code> returns each element of the array returned in the response, one at a time, which are all fed into <code>{message: .commit.message, name: .commit.committer.name}</code>.</p>
+            
+<p><code>.[]</code> returns each element of the array returned in the response, one at a time, which are all fed into <code>{message: .commit.message, name: .commit.committer.name}</code>.</p>
 
 <p>Data in jq is represented as streams of JSON values - every jq expression runs for each value in its input stream, and can produce any number of values to its output stream.</p>
 
 <p>Streams are serialised by just separating JSON values with whitespace. This is a <code>cat</code>-friendly format - you can just join two JSON streams together and get a valid JSON stream.</p>
 
-<p>If you want to get the output as a single array, you can tell jq to &#8220;collect&#8221; all of the answers by wrapping the filter in square brackets:</p>
+<p>If you want to get the output as a single array, you can tell jq to “collect” all of the answers by wrapping the filter in square brackets:</p>
+
           
 
           
@@ -371,7 +388,7 @@
         
           
             <hr />
-<p>Next, let&#8217;s try getting the URLs of the parent commits out of the API results as well. In each commit, the GitHub API includes information about &#8220;parent&#8221; commits. There can be one or many.</p>
+<p>Next, let’s try getting the URLs of the parent commits out of the API results as well. In each commit, the GitHub API includes information about “parent” commits. There can be one or many.</p>
 
 <pre><code>&quot;parents&quot;: [
   {
@@ -386,7 +403,8 @@
   }
 ]</code></pre>
 
-<p>We want to pull out all of the &#8220;html_url&#8221; fields inside that array of parent commits and make a simple list of strings to go along with the &#8220;message&#8221; and &#8220;author&#8221; fields we already have.</p>
+<p>We want to pull out all of the “html_url” fields inside that array of parent commits and make a simple list of strings to go along with the “message” and “author” fields we already have.</p>
+
           
 
           
@@ -445,14 +463,17 @@
           
         
           
-            <p>Here we&#8217;re making an object as before, but this time the <code>parents</code> field is being set to <code>[.parents[].html_url]</code>, which collects all of the parent commit URLs defined in the parents object.</p>
+            
+<p>Here we’re making an object as before, but this time the <code>parents</code> field is being set to <code>[.parents[].html_url]</code>, which collects all of the parent commit URLs defined in the parents object.</p>
+
           
 
           
         
           
             <hr />
-<p>Here endeth the tutorial! There&#8217;s lots more to play with. Go read <a href='../manual/'>the manual</a> if you&#8217;re interested, and <a href='../download/'>download jq</a> if you haven&#8217;t already.</p>
+<p>Here endeth the tutorial! There’s lots more to play with. Go read <a href="../manual/">the manual</a> if you’re interested, and <a href="../download/">download jq</a> if you haven’t already.</p>
+
           
 
           
@@ -462,9 +483,8 @@
 
     <footer>
       <div class="container">
-        <p>This website is made with <a href='http://www.tinytree.info'>Bonsai</a> and <a href='http://getbootstrap.com'>Bootstrap</a>, themed with <a href='https://bootswatch.com'>Bootswatch</a>.</p>
-
-<p>jq is licensed under the MIT license (code) and the <a href='https://creativecommons.org/licenses/by/3.0/'>CC-BY-3.0</a> license (docs).</p>
+        <p>This website is made with <a href="http://www.tinytree.info">Bonsai</a> and <a href="http://getbootstrap.com">Bootstrap</a>, themed with <a href="https://bootswatch.com">Bootswatch</a>.</p>
+        <p>jq is licensed under the MIT license (code) and the <a href="https://creativecommons.org/licenses/by/3.0/">CC-BY-3.0</a> license (docs).</p>
       </div>
     </footer>
 

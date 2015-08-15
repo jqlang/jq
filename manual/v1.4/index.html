@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script>
+      if ((window.location.host == "stedolan.github.io") && (window.location.protocol != "https:"))
+        window.location.protocol = "https";
+    </script>
     <meta charset="utf-8">
     <title>jq 1.4 Manual</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="canonical" href="https://stedolan.github.io/jq/manual/v1.4/" />
     <link rel="stylesheet" href="/jq/bootstrap/css/bootstrap.css" type="text/css">
     <link rel="stylesheet" href="/jq/css/base.css" type="text/css">
     <!--[if lt IE 9]>
@@ -44,7 +49,7 @@
             
             <li><a href="https://github.com/stedolan/jq/issues">Issues</a></li>
             <li><a href="https://github.com/stedolan/jq">Source</a></li>
-            <li><a href="http://jqplay.org">Try online!</a></li>
+            <li><a href="https://jqplay.org">Try online!</a></li>
             <li><a href="https://raw.githubusercontent.com/stedolan/jq/master/NEWS">News</a></li>
           </ul>
         </div>
@@ -103,28 +108,29 @@
           <p>A jq program is a &ldquo;filter&rdquo;: it takes an input, and produces an
 output. There are a lot of builtin filters for extracting a
 particular field of an object, or converting a number to a string,
-or various other standard tasks.</p><p>Filters can be combined in various ways &ndash; you can pipe the output of
+or various other standard tasks.</p><p>Filters can be combined in various ways - you can pipe the output of
 one filter into another filter, or collect the output of a filter
 into an array.</p><p>Some filters produce multiple results, for instance there&rsquo;s one that
 produces all the elements of its input array. Piping that filter
 into a second runs the second filter for each element of the
 array. Generally, things that would be done with loops and iteration
 in other languages are just done by gluing filters together in jq.</p><p>It&rsquo;s important to remember that every filter has an input and an
-output. Even literals like &ldquo;hello&rdquo; or 42 are filters &ndash; they take an
+output. Even literals like &ldquo;hello&rdquo; or 42 are filters - they take an
 input but always produce the same literal as output. Operations that
 combine two filters, like addition, generally feed the same input to
 both and combine the results. So, you can implement an averaging
-filter as <code>add / length</code> &ndash; feeding the input array both to the <code>add</code>
+filter as <code>add / length</code> - feeding the input array both to the <code>add</code>
 filter and the <code>length</code> filter and dividing the results.</p><p>But that&rsquo;s getting ahead of ourselves. :) Let&rsquo;s start with something
 simpler:</p>
           
             <section id="Invokingjq">
               <h2>Invoking jq</h2>
-              <p>jq filters run on a stream of JSON data. The input to jq is parsed as a sequence of whitespace-separated JSON values which are passed through the provided filter one at a time. The output(s) of the filter are written to standard out, again as a sequence of whitespace-separated JSON data.</p>
+              
+<p>jq filters run on a stream of JSON data. The input to jq is parsed as a sequence of whitespace-separated JSON values which are passed through the provided filter one at a time. The output(s) of the filter are written to standard out, again as a sequence of whitespace-separated JSON data.</p>
 
-<p>Note: it is important to mind the shell&#8217;s quoting rules. As a general rule it&#8217;s best to always quote (with single-quote characters) the jq program, as too many characters with special meaning to jq are also shell meta-characters. For example, <code>jq
+<p>Note: it is important to mind the shell’s quoting rules. As a general rule it’s best to always quote (with single-quote characters) the jq program, as too many characters with special meaning to jq are also shell meta-characters. For example, <code>jq
 &quot;foo&quot;</code> will fail on most Unix shells because that will be the same as <code>jq foo</code>, which will generally fail because <code>foo is not
-defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best to use double quotes around your jq program when given on the command-line (instead of the <code>-f program-file</code> option), but then double-quotes in the jq program need backslash escaping.</p>
+defined</code>. When using the Windows command shell (cmd.exe) it’s best to use double quotes around your jq program when given on the command-line (instead of the <code>-f program-file</code> option), but then double-quotes in the jq program need backslash escaping.</p>
 
 <p>You can affect how jq reads and writes its input and output using some command-line options:</p>
 
@@ -144,19 +150,19 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 <li>
 <p><code>--online-input</code>/<code>-I</code>:</p>
 
-<p>When the top-level input value is an array produce its elements instead of the array. This allows on-line processing of potentially very large top-level arrays&#8217; elements.</p>
+<p>When the top-level input value is an array produce its elements instead of the array. This allows on-line processing of potentially very large top-level arrays’ elements.</p>
 </li>
 
 <li>
 <p><code>--raw-input</code>/<code>-R</code>:</p>
 
-<p>Don&#8217;t parse the input as JSON. Instead, each line of text is passed to the filter as a string. If combined with <code>--slurp</code>, then the entire input is passed to the filter as a single long string.</p>
+<p>Don’t parse the input as JSON. Instead, each line of text is passed to the filter as a string. If combined with <code>--slurp</code>, then the entire input is passed to the filter as a single long string.</p>
 </li>
 
 <li>
 <p><code>--null-input</code>/<code>-n</code>:</p>
 
-<p>Don&#8217;t read any input at all! Instead, the filter is run once using <code>null</code> as the input. This is useful when using jq as a simple calculator or to construct JSON data from scratch.</p>
+<p>Don’t read any input at all! Instead, the filter is run once using <code>null</code> as the input. This is useful when using jq as a simple calculator or to construct JSON data from scratch.</p>
 </li>
 
 <li>
@@ -174,13 +180,13 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 <li>
 <p><code>--ascii-output</code> / <code>-a</code>:</p>
 
-<p>jq usually outputs non-ASCII Unicode codepoints as UTF-8, even if the input specified them as escape sequences (like &#8220;\u03bc&#8221;). Using this option, you can force jq to produce pure ASCII output with every non-ASCII character replaced with the equivalent escape sequence.</p>
+<p>jq usually outputs non-ASCII Unicode codepoints as UTF-8, even if the input specified them as escape sequences (like “\u03bc”). Using this option, you can force jq to produce pure ASCII output with every non-ASCII character replaced with the equivalent escape sequence.</p>
 </li>
 
 <li>
 <p><code>--unbuffered</code></p>
 
-<p>Flush the output after each JSON object is printed (useful if you&#8217;re piping a slow data source into jq and piping jq&#8217;s output elsewhere).</p>
+<p>Flush the output after each JSON object is printed (useful if you’re piping a slow data source into jq and piping jq’s output elsewhere).</p>
 </li>
 
 <li>
@@ -192,13 +198,13 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 <li>
 <p><code>--raw-output</code> / <code>-r</code>:</p>
 
-<p>With this option, if the filter&#8217;s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes. This can be useful for making jq filters talk to non-JSON-based systems.</p>
+<p>With this option, if the filter’s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes. This can be useful for making jq filters talk to non-JSON-based systems.</p>
 </li>
 
 <li>
 <p><code>-f filename</code> / <code>--from-file filename</code>:</p>
 
-<p>Read filter from the file rather than from a command line, like awk&#8217;s -f option. You can also use &#8217;#&#8217; to make comments.</p>
+<p>Read filter from the file rather than from a command line, like awk’s -f option. You can also use ‘#’ to make comments.</p>
 </li>
 
 <li>
@@ -219,6 +225,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 <p>This option passes the first value from the named file as a value to the jq program as a predefined variable. If you run jq with <code>--argfile foo bar</code>, then <code>$foo</code> is available in the program and has the value resulting from parsing the content of the file named <code>bar</code>.</p>
 </li>
 </ul>
+
               
             </section>
           
@@ -228,12 +235,16 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`.`">
                   <h3>
-                    <code>.</code>
+                    
+<code>.</code>
+
                     
                   </h3>
-                  <p>The absolute simplest (and least interesting) filter is <code>.</code>. This is a filter that takes its input and produces it unchanged as output.</p>
+                  
+<p>The absolute simplest (and least interesting) filter is <code>.</code>. This is a filter that takes its input and produces it unchanged as output.</p>
 
 <p>Since jq by default pretty-prints all output, this trivial program can be a useful way of formatting JSON output from, say, <code>curl</code>.</p>
+
 
                   
                     <div>
@@ -265,14 +276,18 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`.foo`,`.foo.bar`">
                   <h3>
-                    <code>.foo</code>, <code>.foo.bar</code>
+                    
+<code>.foo</code>, <code>.foo.bar</code>
+
                     
                   </h3>
-                  <p>The simplest <em>useful</em> filter is <code>.foo</code>. When given a JSON object (aka dictionary or hash) as input, it produces the value at the key &#8220;foo&#8221;, or null if there&#8217;s none present.</p>
+                  
+<p>The simplest <em>useful</em> filter is <code>.foo</code>. When given a JSON object (aka dictionary or hash) as input, it produces the value at the key “foo”, or null if there’s none present.</p>
 
 <p>If the key contains special characters, you need to surround it with double quotes like this: <code>.&quot;foo$&quot;</code>.</p>
 
 <p>A filter of the form <code>.foo.bar</code> is equivalent to <code>.foo|.bar</code>.</p>
+
 
                   
                     <div>
@@ -332,10 +347,14 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`.foo?`">
                   <h3>
-                    <code>.foo?</code>
+                    
+<code>.foo?</code>
+
                     
                   </h3>
-                  <p>Just like <code>.foo</code>, but does not output even an error when <code>.</code> is not an array or an object.</p>
+                  
+<p>Just like <code>.foo</code>, but does not output even an error when <code>.</code> is not an array or an object.</p>
+
 
                   
                     <div>
@@ -409,14 +428,18 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`.[<string>]`,`.[2]`,`.[10:15]`">
                   <h3>
-                    <code>.[&lt;string&gt;]</code>, <code>.[2]</code>, <code>.[10:15]</code>
+                    
+<code>.[&lt;string&gt;]</code>, <code>.[2]</code>, <code>.[10:15]</code>
+
                     
                   </h3>
-                  <p>You can also look up fields of an object using syntax like <code>.[&quot;foo&quot;]</code> (.foo above is a shorthand version of this). This one works for arrays as well, if the key is an integer. Arrays are zero-based (like javascript), so <code>.[2]</code> returns the third element of the array.</p>
+                  
+<p>You can also look up fields of an object using syntax like <code>.[&quot;foo&quot;]</code> (.foo above is a shorthand version of this). This one works for arrays as well, if the key is an integer. Arrays are zero-based (like javascript), so <code>.[2]</code> returns the third element of the array.</p>
 
 <p>The <code>.[10:15]</code> syntax can be used to return a subarray of an array or substring of a string. The array returned by <code>.[10:15]</code> will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive). Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array).</p>
 
-<p>The <code>?</code> &#8220;operator&#8221; can also be used with the slice operator, as in <code>.[10:15]?</code>, which outputs values where the inputs are slice-able.</p>
+<p>The <code>?</code> “operator” can also be used with the slice operator, as in <code>.[10:15]?</code>, which outputs values where the inputs are slice-able.</p>
+
 
                   
                     <div>
@@ -518,12 +541,16 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`.[]`">
                   <h3>
-                    <code>.[]</code>
+                    
+<code>.[]</code>
+
                     
                   </h3>
-                  <p>If you use the <code>.[index]</code> syntax, but omit the index entirely, it will return <em>all</em> of the elements of an array. Running <code>.[]</code> with the input <code>[1,2,3]</code> will produce the numbers as three separate results, rather than as a single array.</p>
+                  
+<p>If you use the <code>.[index]</code> syntax, but omit the index entirely, it will return <em>all</em> of the elements of an array. Running <code>.[]</code> with the input <code>[1,2,3]</code> will produce the numbers as three separate results, rather than as a single array.</p>
 
 <p>You can also use this on an object, and it will return all the values of the object.</p>
+
 
                   
                     <div>
@@ -595,20 +622,28 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`.[]?`">
                   <h3>
-                    <code>.[]?</code>
+                    
+<code>.[]?</code>
+
                     
                   </h3>
-                  <p>Like <code>.[]</code>, but no errors will be output if . is not an array or object.</p>
+                  
+<p>Like <code>.[]</code>, but no errors will be output if . is not an array or object.</p>
+
 
                   
                 </section>
               
                 <section id="`,`">
                   <h3>
-                    <code>,</code>
+                    
+<code>,</code>
+
                     
                   </h3>
-                  <p>If two filters are separated by a comma, then the input will be fed into both and there will be multiple outputs: first, all of the outputs produced by the left expression, and then all of the outputs produced by the right. For instance, filter <code>.foo, .bar</code>, produces both the &#8220;foo&#8221; fields and &#8220;bar&#8221; fields as separate outputs.</p>
+                  
+<p>If two filters are separated by a comma, then the input will be fed into both and there will be multiple outputs: first, all of the outputs produced by the left expression, and then all of the outputs produced by the right. For instance, filter <code>.foo, .bar</code>, produces both the “foo” fields and “bar” fields as separate outputs.</p>
+
 
                   
                     <div>
@@ -696,12 +731,16 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`|`">
                   <h3>
-                    <code>|</code>
+                    
+<code>|</code>
+
                     
                   </h3>
-                  <p>The | operator combines two filters by feeding the output(s) of the one on the left into the input of the one on the right. It&#8217;s pretty much the same as the Unix shell&#8217;s pipe, if you&#8217;re used to that.</p>
+                  
+<p>The | operator combines two filters by feeding the output(s) of the one on the left into the input of the one on the right. It’s pretty much the same as the Unix shell’s pipe, if you’re used to that.</p>
 
-<p>If the one on the left produces multiple results, the one on the right will be run for each of those results. So, the expression <code>.[] | .foo</code> retrieves the &#8220;foo&#8221; field of each element of the input array.</p>
+<p>If the one on the left produces multiple results, the one on the right will be run for each of those results. So, the expression <code>.[] | .foo</code> retrieves the “foo” field of each element of the input array.</p>
+
 
                   
                     <div>
@@ -742,20 +781,26 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
           
             <section id="TypesandValues">
               <h2>Types and Values</h2>
-              <p>jq supports the same set of datatypes as JSON - numbers, strings, booleans, arrays, objects (which in JSON-speak are hashes with only string keys), and &#8220;null&#8221;.</p>
+              
+<p>jq supports the same set of datatypes as JSON - numbers, strings, booleans, arrays, objects (which in JSON-speak are hashes with only string keys), and “null”.</p>
 
 <p>Booleans, null, strings and numbers are written the same way as in javascript. Just like everything else in jq, these simple values take an input and produce an output - <code>42</code> is a valid jq expression that takes an input, ignores it, and returns 42 instead.</p>
+
               
                 <section id="Arrayconstruction-`[]`">
                   <h3>
-                    Array construction - <code>[]</code>
+                    
+Array construction - <code>[]</code>
+
                     
                   </h3>
-                  <p>As in JSON, <code>[]</code> is used to construct arrays, as in <code>[1,2,3]</code>. The elements of the arrays can be any jq expression. All of the results produced by all of the expressions are collected into one big array. You can use it to construct an array out of a known quantity of values (as in <code>[.foo, .bar, .baz]</code>) or to &#8220;collect&#8221; all the results of a filter into an array (as in <code>[.items[].name]</code>)</p>
+                  
+<p>As in JSON, <code>[]</code> is used to construct arrays, as in <code>[1,2,3]</code>. The elements of the arrays can be any jq expression. All of the results produced by all of the expressions are collected into one big array. You can use it to construct an array out of a known quantity of values (as in <code>[.foo, .bar, .baz]</code>) or to “collect” all the results of a filter into an array (as in <code>[.items[].name]</code>)</p>
 
-<p>Once you understand the &#8221;,&#8221; operator, you can look at jq&#8217;s array syntax in a different light: the expression <code>[1,2,3]</code> is not using a built-in syntax for comma-separated arrays, but is instead applying the <code>[]</code> operator (collect results) to the expression 1,2,3 (which produces three different results).</p>
+<p>Once you understand the “,” operator, you can look at jq’s array syntax in a different light: the expression <code>[1,2,3]</code> is not using a built-in syntax for comma-separated arrays, but is instead applying the <code>[]</code> operator (collect results) to the expression 1,2,3 (which produces three different results).</p>
 
 <p>If you have a filter <code>X</code> that produces four results, then the expression <code>[X]</code> will produce a single result, an array of four elements.</p>
+
 
                   
                     <div>
@@ -787,22 +832,25 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="Objects-`{}`">
                   <h3>
-                    Objects - <code>{}</code>
+                    
+Objects - <code>{}</code>
+
                     
                   </h3>
-                  <p>Like JSON, <code>{}</code> is for constructing objects (aka dictionaries or hashes), as in: <code>{&quot;a&quot;: 42, &quot;b&quot;: 17}</code>.</p>
+                  
+<p>Like JSON, <code>{}</code> is for constructing objects (aka dictionaries or hashes), as in: <code>{&quot;a&quot;: 42, &quot;b&quot;: 17}</code>.</p>
 
-<p>If the keys are &#8220;sensible&#8221; (all alphabetic characters), then the quotes can be left off. The value can be any expression (although you may need to wrap it in parentheses if it&#8217;s a complicated one), which gets applied to the {} expression&#8217;s input (remember, all filters have an input and an output).</p>
+<p>If the keys are “sensible” (all alphabetic characters), then the quotes can be left off. The value can be any expression (although you may need to wrap it in parentheses if it’s a complicated one), which gets applied to the {} expression’s input (remember, all filters have an input and an output).</p>
 
 <pre><code>{foo: .bar}</code></pre>
 
-<p>will produce the JSON object <code>{&quot;foo&quot;: 42}</code> if given the JSON object <code>{&quot;bar&quot;:42, &quot;baz&quot;:43}</code>. You can use this to select particular fields of an object: if the input is an object with &#8220;user&#8221;, &#8220;title&#8221;, &#8220;id&#8221;, and &#8220;content&#8221; fields and you just want &#8220;user&#8221; and &#8220;title&#8221;, you can write</p>
+<p>will produce the JSON object <code>{&quot;foo&quot;: 42}</code> if given the JSON object <code>{&quot;bar&quot;:42, &quot;baz&quot;:43}</code>. You can use this to select particular fields of an object: if the input is an object with “user”, “title”, “id”, and “content” fields and you just want “user” and “title”, you can write</p>
 
 <pre><code>{user: .user, title: .title}</code></pre>
 
-<p>Because that&#8217;s so common, there&#8217;s a shortcut syntax: <code>{user, title}</code>.</p>
+<p>Because that’s so common, there’s a shortcut syntax: <code>{user, title}</code>.</p>
 
-<p>If one of the expressions produces multiple results, multiple dictionaries will be produced. If the input&#8217;s</p>
+<p>If one of the expressions produces multiple results, multiple dictionaries will be produced. If the input’s</p>
 
 <pre><code>{&quot;user&quot;:&quot;stedolan&quot;,&quot;titles&quot;:[&quot;JQ Primer&quot;, &quot;More JQ&quot;]}</code></pre>
 
@@ -822,6 +870,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 <p>produces</p>
 
 <pre><code>{&quot;stedolan&quot;: [&quot;JQ Primer&quot;, &quot;More JQ&quot;]}</code></pre>
+
 
                   
                     <div>
@@ -876,14 +925,19 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
           
             <section id="Builtinoperatorsandfunctions">
               <h2>Builtin operators and functions</h2>
-              <p>Some jq operator (for instance, <code>+</code>) do different things depending on the type of their arguments (arrays, numbers, etc.). However, jq never does implicit type conversions. If you try to add a string to an object you&#8217;ll get an error message and no result.</p>
+              
+<p>Some jq operator (for instance, <code>+</code>) do different things depending on the type of their arguments (arrays, numbers, etc.). However, jq never does implicit type conversions. If you try to add a string to an object you’ll get an error message and no result.</p>
+
               
                 <section id="Addition-`+`">
                   <h3>
-                    Addition - <code>+</code>
+                    
+Addition - <code>+</code>
+
                     
                   </h3>
-                  <p>The operator <code>+</code> takes two filters, applies them both to the same input, and adds the results together. What &#8220;adding&#8221; means depends on the types involved:</p>
+                  
+<p>The operator <code>+</code> takes two filters, applies them both to the same input, and adds the results together. What “adding” means depends on the types involved:</p>
 
 <ul>
 <li>
@@ -904,6 +958,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 </ul>
 
 <p><code>null</code> can be added to any value, and returns the other value unchanged.</p>
+
 
                   
                     <div>
@@ -991,10 +1046,14 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="Subtraction-`-`">
                   <h3>
-                    Subtraction - <code>-</code>
+                    
+Subtraction - <code>-</code>
+
                     
                   </h3>
-                  <p>As well as normal arithmetic subtraction on numbers, the <code>-</code> operator can be used on arrays to remove all occurences of the second array&#8217;s elements from the first array.</p>
+                  
+<p>As well as normal arithmetic subtraction on numbers, the <code>-</code> operator can be used on arrays to remove all occurences of the second array’s elements from the first array.</p>
+
 
                   
                     <div>
@@ -1040,16 +1099,20 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="Multiplication,division,modulo-`*`,`/`,and`%`">
                   <h3>
-                    Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</code>
+                    
+Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</code>
+
                     
                   </h3>
-                  <p>These operators only work on numbers, and do the expected.</p>
+                  
+<p>These operators only work on numbers, and do the expected.</p>
 
 <p>Multiplying a string by a number produces the concatenation of that string that many times.</p>
 
 <p>Dividing a string by another splits the first using the second as separators.</p>
 
 <p>Multiplying two objects will merge them recursively: this works like addition but if both objects contain a value for the same key, and the values are objects, the two are merged with the same strategy.</p>
+
 
                   
                     <div>
@@ -1109,14 +1172,17 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`length`">
                   <h3>
-                    <code>length</code>
+                    
+<code>length</code>
+
                     
                   </h3>
-                  <p>The builtin function <code>length</code> gets the length of various different types of value:</p>
+                  
+<p>The builtin function <code>length</code> gets the length of various different types of value:</p>
 
 <ul>
 <li>
-<p>The length of a <strong>string</strong> is the number of Unicode codepoints it contains (which will be the same as its JSON-encoded length in bytes if it&#8217;s pure ASCII).</p>
+<p>The length of a <strong>string</strong> is the number of Unicode codepoints it contains (which will be the same as its JSON-encoded length in bytes if it’s pure ASCII).</p>
 </li>
 
 <li>
@@ -1131,6 +1197,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
 <p>The length of <strong>null</strong> is zero.</p>
 </li>
 </ul>
+
 
                   
                     <div>
@@ -1183,14 +1250,18 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`keys`">
                   <h3>
-                    <code>keys</code>
+                    
+<code>keys</code>
+
                     
                   </h3>
-                  <p>The builtin function <code>keys</code>, when given an object, returns its keys in an array.</p>
+                  
+<p>The builtin function <code>keys</code>, when given an object, returns its keys in an array.</p>
 
-<p>The keys are sorted &#8220;alphabetically&#8221;, by unicode codepoint order. This is not an order that makes particular sense in any particular language, but you can count on it being the same for any two objects with the same set of keys, regardless of locale settings.</p>
+<p>The keys are sorted “alphabetically”, by unicode codepoint order. This is not an order that makes particular sense in any particular language, but you can count on it being the same for any two objects with the same set of keys, regardless of locale settings.</p>
 
 <p>When <code>keys</code> is given an array, it returns the valid indices for that array: the integers from 0 to length-1.</p>
+
 
                   
                     <div>
@@ -1236,12 +1307,16 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`has`">
                   <h3>
-                    <code>has</code>
+                    
+<code>has</code>
+
                     
                   </h3>
-                  <p>The builtin function <code>has</code> returns whether the input object has the given key, or the input array has an element at the given index.</p>
+                  
+<p>The builtin function <code>has</code> returns whether the input object has the given key, or the input array has an element at the given index.</p>
 
 <p><code>has($key)</code> has the same effect as checking whether <code>$key</code> is a member of the array returned by <code>keys</code>, although <code>has</code> will be faster.</p>
+
 
                   
                     <div>
@@ -1287,10 +1362,14 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`del`">
                   <h3>
-                    <code>del</code>
+                    
+<code>del</code>
+
                     
                   </h3>
-                  <p>The builtin function <code>del</code> removes a key and its corresponding value from an object.</p>
+                  
+<p>The builtin function <code>del</code> removes a key and its corresponding value from an object.</p>
+
 
                   
                     <div>
@@ -1336,13 +1415,17 @@ defined</code>. When using the Windows command shell (cmd.exe) it&#8217;s best t
               
                 <section id="`to_entries`,`from_entries`,`with_entries`">
                   <h3>
-                    <code>to_entries</code>, <code>from_entries</code>, <code>with_entries</code>
+                    
+<code>to_entries</code>, <code>from_entries</code>, <code>with_entries</code>
+
                     
                   </h3>
-                  <p>These functions convert between an object and an array of key-value pairs. If <code>to_entries</code> is passed an object, then for each <code>k: v</code> entry in the input, the output array includes <code>{&quot;key&quot;: k, &quot;value&quot;: v}</code>.</p>
+                  
+<p>These functions convert between an object and an array of key-value pairs. If <code>to_entries</code> is passed an object, then for each <code>k: v</code> entry in the input, the output array includes <code>{&quot;key&quot;: k, &quot;value&quot;: v}</code>.</p>
 
 <p><code>from_entries</code> does the opposite conversion, and <code>with_entries(foo)</code> is a shorthand for <code>to_entries |
 map(foo) | from_entries</code>, useful for doing some operation to all keys and values of an object.</p>
+
 
                   
                     <div>
@@ -1402,12 +1485,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`select`">
                   <h3>
-                    <code>select</code>
+                    
+<code>select</code>
+
                     
                   </h3>
-                  <p>The function <code>select(foo)</code> produces its input unchanged if <code>foo</code> returns true for that input, and produces no output otherwise.</p>
+                  
+<p>The function <code>select(foo)</code> produces its input unchanged if <code>foo</code> returns true for that input, and produces no output otherwise.</p>
 
-<p>It&#8217;s useful for filtering lists: <code>[1,2,3] | map(select(. &gt;= 2))</code> will give you <code>[2,3]</code>.</p>
+<p>It’s useful for filtering lists: <code>[1,2,3] | map(select(. &gt;= 2))</code> will give you <code>[2,3]</code>.</p>
+
 
                   
                     <div>
@@ -1439,10 +1526,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`arrays`,`objects`,`iterables`,`booleans`,`numbers`,`strings`,`nulls`,`values`,`scalars`">
                   <h3>
-                    <code>arrays</code>, <code>objects</code>, <code>iterables</code>, <code>booleans</code>, <code>numbers</code>, <code>strings</code>, <code>nulls</code>, <code>values</code>, <code>scalars</code>
+                    
+<code>arrays</code>, <code>objects</code>, <code>iterables</code>, <code>booleans</code>, <code>numbers</code>, <code>strings</code>, <code>nulls</code>, <code>values</code>, <code>scalars</code>
+
                     
                   </h3>
-                  <p>These built-ins select only inputs that are arrays, objects, iterables (arrays or objects), booleans, numbers, strings, null, non-null values, and non-iterables, respectively.</p>
+                  
+<p>These built-ins select only inputs that are arrays, objects, iterables (arrays or objects), booleans, numbers, strings, null, non-null values, and non-iterables, respectively.</p>
+
 
                   
                     <div>
@@ -1474,12 +1565,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`empty`">
                   <h3>
-                    <code>empty</code>
+                    
+<code>empty</code>
+
                     
                   </h3>
-                  <p><code>empty</code> returns no results. None at all. Not even <code>null</code>.</p>
+                  
+<p><code>empty</code> returns no results. None at all. Not even <code>null</code>.</p>
 
-<p>It&#8217;s useful on occasion. You&#8217;ll know if you need it :)</p>
+<p>It’s useful on occasion. You’ll know if you need it :)</p>
+
 
                   
                     <div>
@@ -1532,12 +1627,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`map(x)`">
                   <h3>
-                    <code>map(x)</code>
+                    
+<code>map(x)</code>
+
                     
                   </h3>
-                  <p>For any filter <code>x</code>, <code>map(x)</code> will run that filter for each element of the input array, and produce the outputs a new array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
+                  
+<p>For any filter <code>x</code>, <code>map(x)</code> will run that filter for each element of the input array, and produce the outputs a new array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
 
-<p><code>map(x)</code> is equivalent to <code>[.[] | x]</code>. In fact, this is how it&#8217;s defined.</p>
+<p><code>map(x)</code> is equivalent to <code>[.[] | x]</code>. In fact, this is how it’s defined.</p>
+
 
                   
                     <div>
@@ -1569,14 +1668,18 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`paths`">
                   <h3>
-                    <code>paths</code>
+                    
+<code>paths</code>
+
                     
                   </h3>
-                  <p>Outputs the paths to all the elements in its input (except it does not output the empty list, representing . itself).</p>
+                  
+<p>Outputs the paths to all the elements in its input (except it does not output the empty list, representing . itself).</p>
 
 <p><code>paths</code> is equivalent to</p>
 
 <pre><code>def paths: path(recurse(if (type|. == &quot;array&quot; or . == &quot;object&quot;) then .[] else empty end))|select(length &gt; 0);</code></pre>
+
 
                   
                     <div>
@@ -1608,10 +1711,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`leaf_paths`">
                   <h3>
-                    <code>leaf_paths</code>
+                    
+<code>leaf_paths</code>
+
                     
                   </h3>
-                  <p>Outputs the paths to all the leaves (non-array, non-object elements) in its input.</p>
+                  
+<p>Outputs the paths to all the leaves (non-array, non-object elements) in its input.</p>
+
 
                   
                     <div>
@@ -1643,12 +1750,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`add`">
                   <h3>
-                    <code>add</code>
+                    
+<code>add</code>
+
                     
                   </h3>
-                  <p>The filter <code>add</code> takes as input an array, and produces as output the elements of the array added together. This might mean summed, concatenated or merged depending on the types of the elements of the input array - the rules are the same as those for the <code>+</code> operator (described above).</p>
+                  
+<p>The filter <code>add</code> takes as input an array, and produces as output the elements of the array added together. This might mean summed, concatenated or merged depending on the types of the elements of the input array - the rules are the same as those for the <code>+</code> operator (described above).</p>
 
 <p>If the input is an empty array, <code>add</code> returns <code>null</code>.</p>
+
 
                   
                     <div>
@@ -1708,12 +1819,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`any`">
                   <h3>
-                    <code>any</code>
+                    
+<code>any</code>
+
                     
                   </h3>
-                  <p>The filter <code>any</code> takes as input an array of boolean values, and produces <code>true</code> as output if any of the the elements of the array is <code>true</code>.</p>
+                  
+<p>The filter <code>any</code> takes as input an array of boolean values, and produces <code>true</code> as output if any of the the elements of the array is <code>true</code>.</p>
 
 <p>If the input is an empty array, <code>any</code> returns <code>false</code>.</p>
+
 
                   
                     <div>
@@ -1773,12 +1888,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`all`">
                   <h3>
-                    <code>all</code>
+                    
+<code>all</code>
+
                     
                   </h3>
-                  <p>The filter <code>all</code> takes as input an array of boolean values, and produces <code>true</code> as output if all of the the elements of the array are <code>true</code>.</p>
+                  
+<p>The filter <code>all</code> takes as input an array of boolean values, and produces <code>true</code> as output if all of the the elements of the array are <code>true</code>.</p>
 
 <p>If the input is an empty array, <code>all</code> returns <code>true</code>.</p>
+
 
                   
                     <div>
@@ -1838,10 +1957,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`range`">
                   <h3>
-                    <code>range</code>
+                    
+<code>range</code>
+
                     
                   </h3>
-                  <p>The <code>range</code> function produces a range of numbers. <code>range(4;10)</code> produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers are produced as separate outputs. Use <code>[range(4;10)]</code> to get a range as an array.</p>
+                  
+<p>The <code>range</code> function produces a range of numbers. <code>range(4;10)</code> produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers are produced as separate outputs. Use <code>[range(4;10)]</code> to get a range as an array.</p>
+
 
                   
                     <div>
@@ -1894,10 +2017,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`floor`">
                   <h3>
-                    <code>floor</code>
+                    
+<code>floor</code>
+
                     
                   </h3>
-                  <p>The <code>floor</code> function returns the floor of its numeric input.</p>
+                  
+<p>The <code>floor</code> function returns the floor of its numeric input.</p>
+
 
                   
                     <div>
@@ -1929,10 +2056,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`sqrt`">
                   <h3>
-                    <code>sqrt</code>
+                    
+<code>sqrt</code>
+
                     
                   </h3>
-                  <p>The <code>sqrt</code> function returns the square root of its numeric input.</p>
+                  
+<p>The <code>sqrt</code> function returns the square root of its numeric input.</p>
+
 
                   
                     <div>
@@ -1964,10 +2095,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`tonumber`">
                   <h3>
-                    <code>tonumber</code>
+                    
+<code>tonumber</code>
+
                     
                   </h3>
-                  <p>The <code>tonumber</code> function parses its input as a number. It will convert correctly-formatted strings to their numeric equivalent, leave numbers alone, and give an error on all other input.</p>
+                  
+<p>The <code>tonumber</code> function parses its input as a number. It will convert correctly-formatted strings to their numeric equivalent, leave numbers alone, and give an error on all other input.</p>
+
 
                   
                     <div>
@@ -2006,10 +2141,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`tostring`">
                   <h3>
-                    <code>tostring</code>
+                    
+<code>tostring</code>
+
                     
                   </h3>
-                  <p>The <code>tostring</code> function prints its input as a string. Strings are left unchanged, and all other values are JSON-encoded.</p>
+                  
+<p>The <code>tostring</code> function prints its input as a string. Strings are left unchanged, and all other values are JSON-encoded.</p>
+
 
                   
                     <div>
@@ -2055,10 +2194,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`type`">
                   <h3>
-                    <code>type</code>
+                    
+<code>type</code>
+
                     
                   </h3>
-                  <p>The <code>type</code> function returns the type of its argument as a string, which is one of null, boolean, number, string, array or object.</p>
+                  
+<p>The <code>type</code> function returns the type of its argument as a string, which is one of null, boolean, number, string, array or object.</p>
+
 
                   
                     <div>
@@ -2090,10 +2233,13 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`sort,sort_by`">
                   <h3>
-                    <code>sort, sort_by</code>
+                    
+<code>sort, sort_by</code>
+
                     
                   </h3>
-                  <p>The <code>sort</code> functions sorts its input, which must be an array. Values are sorted in the following order:</p>
+                  
+<p>The <code>sort</code> functions sorts its input, which must be an array. Values are sorted in the following order:</p>
 
 <ul>
 <li><code>null</code></li>
@@ -2111,9 +2257,10 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
 <li>objects</li>
 </ul>
 
-<p>The ordering for objects is a little complex: first they&#8217;re compared by comparing their sets of keys (as arrays in sorted order), and if their keys are equal then the values are compared key by key.</p>
+<p>The ordering for objects is a little complex: first they’re compared by comparing their sets of keys (as arrays in sorted order), and if their keys are equal then the values are compared key by key.</p>
 
 <p><code>sort_by</code> may be used to sort by a particular field of an object, or by applying any jq filter. <code>sort_by(foo)</code> compares two elements by comparing the result of <code>foo</code> on each element.</p>
+
 
                   
                     <div>
@@ -2159,12 +2306,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`group_by`">
                   <h3>
-                    <code>group_by</code>
+                    
+<code>group_by</code>
+
                     
                   </h3>
-                  <p><code>group_by(.foo)</code> takes as input an array, groups the elements having the same <code>.foo</code> field into separate arrays, and produces all of these arrays as elements of a larger array, sorted by the value of the <code>.foo</code> field.</p>
+                  
+<p><code>group_by(.foo)</code> takes as input an array, groups the elements having the same <code>.foo</code> field into separate arrays, and produces all of these arrays as elements of a larger array, sorted by the value of the <code>.foo</code> field.</p>
 
 <p>Any jq expression, not just a field access, may be used in place of <code>.foo</code>. The sorting order is the same as described in the <code>sort</code> function above.</p>
+
 
                   
                     <div>
@@ -2196,10 +2347,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`min`,`max`,`min_by`,`max_by`">
                   <h3>
-                    <code>min</code>, <code>max</code>, <code>min_by</code>, <code>max_by</code>
+                    
+<code>min</code>, <code>max</code>, <code>min_by</code>, <code>max_by</code>
+
                     
                   </h3>
-                  <p>Find the minimum or maximum element of the input array. The <code>_by</code> versions allow you to specify a particular field or property to examine, e.g. <code>min_by(.foo)</code> finds the object with the smallest <code>foo</code> field.</p>
+                  
+<p>Find the minimum or maximum element of the input array. The <code>_by</code> versions allow you to specify a particular field or property to examine, e.g. <code>min_by(.foo)</code> finds the object with the smallest <code>foo</code> field.</p>
+
 
                   
                     <div>
@@ -2245,10 +2400,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`unique`">
                   <h3>
-                    <code>unique</code>
+                    
+<code>unique</code>
+
                     
                   </h3>
-                  <p>The <code>unique</code> function takes as input an array and produces an array of the same elements, in sorted order, with duplicates removed.</p>
+                  
+<p>The <code>unique</code> function takes as input an array and produces an array of the same elements, in sorted order, with duplicates removed.</p>
+
 
                   
                     <div>
@@ -2280,10 +2439,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`unique_by`">
                   <h3>
-                    <code>unique_by</code>
+                    
+<code>unique_by</code>
+
                     
                   </h3>
-                  <p>The <code>unique_by(.foo)</code> function takes as input an array and produces an array of the same elements, in sorted order, with elqements with a duplicate <code>.foo</code> field removed. Think of it as making an array by taking one element out of every group produced by <code>group_by</code>.</p>
+                  
+<p>The <code>unique_by(.foo)</code> function takes as input an array and produces an array of the same elements, in sorted order, with elqements with a duplicate <code>.foo</code> field removed. Think of it as making an array by taking one element out of every group produced by <code>group_by</code>.</p>
+
 
                   
                     <div>
@@ -2329,10 +2492,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`reverse`">
                   <h3>
-                    <code>reverse</code>
+                    
+<code>reverse</code>
+
                     
                   </h3>
-                  <p>This function reverses an array.</p>
+                  
+<p>This function reverses an array.</p>
+
 
                   
                     <div>
@@ -2364,10 +2531,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`contains`">
                   <h3>
-                    <code>contains</code>
+                    
+<code>contains</code>
+
                     
                   </h3>
-                  <p>The filter <code>contains(b)</code> will produce true if b is completely contained within the input. A string B is contained in a string A if B is a substring of A. An array B is contained in an array A is all elements in B are contained in any element in A. An object B is contained in object A if all of the values in B are contained in the value in A with the same key. All other types are assumed to be contained in each other if they are equal.</p>
+                  
+<p>The filter <code>contains(b)</code> will produce true if b is completely contained within the input. A string B is contained in a string A if B is a substring of A. An array B is contained in an array A is all elements in B are contained in any element in A. An object B is contained in object A if all of the values in B are contained in the value in A with the same key. All other types are assumed to be contained in each other if they are equal.</p>
+
 
                   
                     <div>
@@ -2455,10 +2626,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`indices(s)`">
                   <h3>
-                    <code>indices(s)</code>
+                    
+<code>indices(s)</code>
+
                     
                   </h3>
-                  <p>Outputs an array containing the indices in <code>.</code> where <code>s</code> occurs. The input may be an array, in which case if <code>s</code> is an array then the indices output will be those where all elements in <code>.</code> match those of <code>s</code>.</p>
+                  
+<p>Outputs an array containing the indices in <code>.</code> where <code>s</code> occurs. The input may be an array, in which case if <code>s</code> is an array then the indices output will be those where all elements in <code>.</code> match those of <code>s</code>.</p>
+
 
                   
                     <div>
@@ -2518,10 +2693,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`index(s)`,`rindex(s)`">
                   <h3>
-                    <code>index(s)</code>, <code>rindex(s)</code>
+                    
+<code>index(s)</code>, <code>rindex(s)</code>
+
                     
                   </h3>
-                  <p>Outputs the index of the first (<code>index</code>) or last (<code>rindex</code>) occurrence of <code>s</code> in the input.</p>
+                  
+<p>Outputs the index of the first (<code>index</code>) or last (<code>rindex</code>) occurrence of <code>s</code> in the input.</p>
+
 
                   
                     <div>
@@ -2567,10 +2746,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`startswith`">
                   <h3>
-                    <code>startswith</code>
+                    
+<code>startswith</code>
+
                     
                   </h3>
-                  <p>Outputs <code>true</code> if . starts with the given string argument.</p>
+                  
+<p>Outputs <code>true</code> if . starts with the given string argument.</p>
+
 
                   
                     <div>
@@ -2602,10 +2785,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`endswith`">
                   <h3>
-                    <code>endswith</code>
+                    
+<code>endswith</code>
+
                     
                   </h3>
-                  <p>Outputs <code>true</code> if . ends with the given string argument.</p>
+                  
+<p>Outputs <code>true</code> if . ends with the given string argument.</p>
+
 
                   
                     <div>
@@ -2637,10 +2824,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`ltrimstr`">
                   <h3>
-                    <code>ltrimstr</code>
+                    
+<code>ltrimstr</code>
+
                     
                   </h3>
-                  <p>Outputs its input with the given prefix string removed, if it starts with it.</p>
+                  
+<p>Outputs its input with the given prefix string removed, if it starts with it.</p>
+
 
                   
                     <div>
@@ -2672,10 +2863,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`rtrimstr`">
                   <h3>
-                    <code>rtrimstr</code>
+                    
+<code>rtrimstr</code>
+
                     
                   </h3>
-                  <p>Outputs its input with the given suffix string removed, if it starts with it.</p>
+                  
+<p>Outputs its input with the given suffix string removed, if it starts with it.</p>
+
 
                   
                     <div>
@@ -2707,10 +2902,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`explode`">
                   <h3>
-                    <code>explode</code>
+                    
+<code>explode</code>
+
                     
                   </h3>
-                  <p>Converts an input string into an array of the string&#8217;s codepoint numbers.</p>
+                  
+<p>Converts an input string into an array of the string’s codepoint numbers.</p>
+
 
                   
                     <div>
@@ -2742,10 +2941,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`implode`">
                   <h3>
-                    <code>implode</code>
+                    
+<code>implode</code>
+
                     
                   </h3>
-                  <p>The inverse of explode.</p>
+                  
+<p>The inverse of explode.</p>
+
 
                   
                     <div>
@@ -2777,10 +2980,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`split`">
                   <h3>
-                    <code>split</code>
+                    
+<code>split</code>
+
                     
                   </h3>
-                  <p>Splits an input string on the separator argument.</p>
+                  
+<p>Splits an input string on the separator argument.</p>
+
 
                   
                     <div>
@@ -2812,10 +3019,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`join`">
                   <h3>
-                    <code>join</code>
+                    
+<code>join</code>
+
                     
                   </h3>
-                  <p>Joins the array of elements given as input, using the argument as separator. It is the inverse of <code>split</code>: that is, running <code>split(&quot;foo&quot;) | join(&quot;foo&quot;)</code> over any input string returns said input string.</p>
+                  
+<p>Joins the array of elements given as input, using the argument as separator. It is the inverse of <code>split</code>: that is, running <code>split(&quot;foo&quot;) | join(&quot;foo&quot;)</code> over any input string returns said input string.</p>
+
 
                   
                     <div>
@@ -2847,10 +3058,13 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`recurse`">
                   <h3>
-                    <code>recurse</code>
+                    
+<code>recurse</code>
+
                     
                   </h3>
-                  <p>The <code>recurse</code> function allows you to search through a recursive structure, and extract interesting data from all levels. Suppose your input represents a filesystem:</p>
+                  
+<p>The <code>recurse</code> function allows you to search through a recursive structure, and extract interesting data from all levels. Suppose your input represents a filesystem:</p>
 
 <pre><code>{&quot;name&quot;: &quot;/&quot;, &quot;children&quot;: [
   {&quot;name&quot;: &quot;/bin&quot;, &quot;children&quot;: [
@@ -2863,6 +3077,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
 <p>Now suppose you want to extract all of the filenames present. You need to retrieve <code>.name</code>, <code>.children[].name</code>, <code>.children[].children[].name</code>, and so on. You can do this with:</p>
 
 <pre><code>recurse(.children[]) | .name</code></pre>
+
 
                   
                     <div>
@@ -2915,22 +3130,30 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`recurse_down`">
                   <h3>
-                    <code>recurse_down</code>
+                    
+<code>recurse_down</code>
+
                     
                   </h3>
-                  <p>A quieter version of <code>recurse(.[])</code>, equivalent to:</p>
+                  
+<p>A quieter version of <code>recurse(.[])</code>, equivalent to:</p>
 
 <pre><code>def recurse_down: recurse(.[]?);</code></pre>
+
 
                   
                 </section>
               
                 <section id="`..`">
                   <h3>
-                    <code>..</code>
+                    
+<code>..</code>
+
                     
                   </h3>
-                  <p>Short-hand for <code>recurse_down</code>. This is intended to resemble the XPath <code>//</code> operator. Note that <code>..a</code> does not work; use <code>..|a</code> instead.</p>
+                  
+<p>Short-hand for <code>recurse_down</code>. This is intended to resemble the XPath <code>//</code> operator. Note that <code>..a</code> does not work; use <code>..|a</code> instead.</p>
+
 
                   
                     <div>
@@ -2962,10 +3185,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="Stringinterpolation-`\(foo)`">
                   <h3>
-                    String interpolation - <code>\(foo)</code>
+                    
+String interpolation - <code>\(foo)</code>
+
                     
                   </h3>
-                  <p>Inside a string, you can put an expression inside parens after a backslash. Whatever the expression returns will be interpolated into the string.</p>
+                  
+<p>Inside a string, you can put an expression inside parens after a backslash. Whatever the expression returns will be interpolated into the string.</p>
+
 
                   
                     <div>
@@ -2997,10 +3224,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="Convertto/fromJSON">
                   <h3>
-                    Convert to/from JSON
+                    
+Convert to/from JSON
+
                     
                   </h3>
-                  <p>The <code>tojson</code> and <code>fromjson</code> builtins dump values as JSON texts or parse JSON texts into values, respectively. The tojson builtin differs from tostring in that tostring returns strings unmodified, while tojson encodes strings as JSON strings.</p>
+                  
+<p>The <code>tojson</code> and <code>fromjson</code> builtins dump values as JSON texts or parse JSON texts into values, respectively. The tojson builtin differs from tostring in that tostring returns strings unmodified, while tojson encodes strings as JSON strings.</p>
+
 
                   
                     <div>
@@ -3060,10 +3291,13 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="Formatstringsandescaping">
                   <h3>
-                    Format strings and escaping
+                    
+Format strings and escaping
+
                     
                   </h3>
-                  <p>The <code>@foo</code> syntax is used to format and escape strings, which is useful for building URLs, documents in a language like HTML or XML, and so forth. <code>@foo</code> can be used as a filter on its own, the possible escapings are:</p>
+                  
+<p>The <code>@foo</code> syntax is used to format and escape strings, which is useful for building URLs, documents in a language like HTML or XML, and so forth. <code>@foo</code> can be used as a filter on its own, the possible escapings are:</p>
 
 <ul>
 <li>
@@ -3081,7 +3315,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
 <li>
 <p><code>@html</code>:</p>
 
-<p>Applies HTML/XML escaping, by mapping the characters <code>&lt;&gt;&amp;&#39;&quot;</code> to their entity equivalents <code>&amp;lt;</code>, <code>&amp;gt;</code>, <code>&amp;amp;</code>, <code>&amp;apos;</code>, <code>&amp;quot;</code>.</p>
+<p>Applies HTML/XML escaping, by mapping the characters <code>&lt;&gt;&amp;'&quot;</code> to their entity equivalents <code>&amp;lt;</code>, <code>&amp;gt;</code>, <code>&amp;amp;</code>, <code>&amp;apos;</code>, <code>&amp;quot;</code>.</p>
 </li>
 
 <li>
@@ -3111,13 +3345,14 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
 
 <p>This syntax can be combined with string interpolation in a useful way. You can follow a <code>@foo</code> token with a string literal. The contents of the string literal will <em>not</em> be escaped. However, all interpolations made inside that string literal will be escaped. For instance,</p>
 
-<pre><code>@uri &quot;http://www.google.com/search?q=\(.search)&quot;</code></pre>
+<pre><code>@uri &quot;https://www.google.com/search?q=\(.search)&quot;</code></pre>
 
 <p>will produce the following output for the input <code>{&quot;search&quot;:&quot;what is jq?&quot;}</code>:</p>
 
-<pre><code>&quot;http://www.google.com/search?q=what%20is%20jq%3f&quot;</code></pre>
+<pre><code>&quot;https://www.google.com/search?q=what%20is%20jq%3f&quot;</code></pre>
 
 <p>Note that the slashes, question mark, etc. in the URL are not escaped, as they were part of the string literal.</p>
+
 
                   
                     <div>
@@ -3169,12 +3404,16 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="`==`,`!=`">
                   <h3>
-                    <code>==</code>, <code>!=</code>
+                    
+<code>==</code>, <code>!=</code>
+
                     
                   </h3>
-                  <p>The expression &#8216;a == b&#8217; will produce &#8216;true&#8217; if the result of a and b are equal (that is, if they represent equivalent JSON documents) and &#8216;false&#8217; otherwise. In particular, strings are never considered equal to numbers. If you&#8217;re coming from Javascript, jq&#8217;s == is like Javascript&#8217;s === - considering values equal only when they have the same type as well as the same value.</p>
+                  
+<p>The expression ‘a == b’ will produce ‘true’ if the result of a and b are equal (that is, if they represent equivalent JSON documents) and ‘false’ otherwise. In particular, strings are never considered equal to numbers. If you’re coming from Javascript, jq’s == is like Javascript’s === - considering values equal only when they have the same type as well as the same value.</p>
 
-<p>!= is &#8220;not equal&#8221;, and &#8216;a != b&#8217; returns the opposite value of &#8216;a == b&#8217;</p>
+<p>!= is “not equal”, and ‘a != b’ returns the opposite value of ‘a == b’</p>
+
 
                   
                     <div>
@@ -3227,17 +3466,21 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
               
                 <section id="if-then-else">
                   <h3>
-                    if-then-else
+                    
+if-then-else
+
                     
                   </h3>
-                  <p><code>if A then B else C end</code> will act the same as <code>B</code> if <code>A</code> produces a value other than false or null, but act the same as <code>C</code> otherwise.</p>
+                  
+<p><code>if A then B else C end</code> will act the same as <code>B</code> if <code>A</code> produces a value other than false or null, but act the same as <code>C</code> otherwise.</p>
 
-<p>Checking for false or null is a simpler notion of &#8220;truthiness&#8221; than is found in Javascript or Python, but it means that you&#8217;ll sometimes have to be more explicit about the condition you want: you can&#8217;t test whether, e.g. a string is empty using <code>if .name then A else B end</code>, you&#8217;ll need something more like <code>if (.name | length) &gt; 0 then A else
+<p>Checking for false or null is a simpler notion of “truthiness” than is found in Javascript or Python, but it means that you’ll sometimes have to be more explicit about the condition you want: you can’t test whether, e.g. a string is empty using <code>if .name then A else B end</code>, you’ll need something more like <code>if (.name | length) &gt; 0 then A else
 B end</code> instead.</p>
 
-<p>If the condition A produces multiple results, it is considered &#8220;true&#8221; if any of those results is not false or null. If it produces zero results, it&#8217;s considered false.</p>
+<p>If the condition A produces multiple results, it is considered “true” if any of those results is not false or null. If it produces zero results, it’s considered false.</p>
 
 <p>More cases can be added to an if using <code>elif A then B</code> syntax.</p>
+
 
                   
                     <div>
@@ -3275,12 +3518,16 @@ end'</td></tr>
               
                 <section id="`>,>=,<=,<`">
                   <h3>
-                    <code>&gt;, &gt;=, &lt;=, &lt;</code>
+                    
+<code>&gt;, &gt;=, &lt;=, &lt;</code>
+
                     
                   </h3>
-                  <p>The comparison operators <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;</code> return whether their left argument is greater than, greater than or equal to, less than or equal to or less than their right argument (respectively).</p>
+                  
+<p>The comparison operators <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;</code> return whether their left argument is greater than, greater than or equal to, less than or equal to or less than their right argument (respectively).</p>
 
 <p>The ordering is the same as that described for <code>sort</code>, above.</p>
+
 
                   
                     <div>
@@ -3312,17 +3559,21 @@ end'</td></tr>
               
                 <section id="and/or/not">
                   <h3>
-                    and/or/not
+                    
+and/or/not
+
                     
                   </h3>
-                  <p>jq supports the normal Boolean operators and/or/not. They have the same standard of truth as if expressions - false and null are considered &#8220;false values&#8221;, and anything else is a &#8220;true value&#8221;.</p>
+                  
+<p>jq supports the normal Boolean operators and/or/not. They have the same standard of truth as if expressions - false and null are considered “false values”, and anything else is a “true value”.</p>
 
 <p>If an operand of one of these operators produces multiple results, the operator itself will produce a result for each input.</p>
 
 <p><code>not</code> is in fact a builtin function rather than an operator, so it is called as a filter to which things can be piped rather than with special syntax, as in <code>.foo and .bar |
 not</code>.</p>
 
-<p>These three only produce the values &#8220;true&#8221; and &#8220;false&#8221;, and so are only useful for genuine Boolean operations, rather than the common Perl/Python/Ruby idiom of &#8220;value_that_may_be_null or default&#8221;. If you want to use this form of &#8220;or&#8221;, picking between two values rather than evaluating a condition, see the &#8220;//&#8221; operator below.</p>
+<p>These three only produce the values “true” and “false”, and so are only useful for genuine Boolean operations, rather than the common Perl/Python/Ruby idiom of “value_that_may_be_null or default”. If you want to use this form of “or”, picking between two values rather than evaluating a condition, see the “//” operator below.</p>
+
 
                   
                     <div>
@@ -3424,12 +3675,16 @@ not</code>.</p>
               
                 <section id="Alternativeoperator-`//`">
                   <h3>
-                    Alternative operator - <code>//</code>
+                    
+Alternative operator - <code>//</code>
+
                     
                   </h3>
-                  <p>A filter of the form <code>a // b</code> produces the same results as <code>a</code>, if <code>a</code> produces results other than <code>false</code> and <code>null</code>. Otherwise, <code>a // b</code> produces the same results as <code>b</code>.</p>
+                  
+<p>A filter of the form <code>a // b</code> produces the same results as <code>a</code>, if <code>a</code> produces results other than <code>false</code> and <code>null</code>. Otherwise, <code>a // b</code> produces the same results as <code>b</code>.</p>
 
-<p>This is useful for providing defaults: <code>.foo // 1</code> will evaluate to <code>1</code> if there&#8217;s no <code>.foo</code> element in the input. It&#8217;s similar to how <code>or</code> is sometimes used in Python (jq&#8217;s <code>or</code> operator is reserved for strictly Boolean operations).</p>
+<p>This is useful for providing defaults: <code>.foo // 1</code> will evaluate to <code>1</code> if there’s no <code>.foo</code> element in the input. It’s similar to how <code>or</code> is sometimes used in Python (jq’s <code>or</code> operator is reserved for strictly Boolean operations).</p>
+
 
                   
                     <div>
@@ -3477,30 +3732,35 @@ not</code>.</p>
           
             <section id="Advancedfeatures">
               <h2>Advanced features</h2>
-              <p>Variables are an absolute necessity in most programming languages, but they&#8217;re relegated to an &#8220;advanced feature&#8221; in jq.</p>
+              
+<p>Variables are an absolute necessity in most programming languages, but they’re relegated to an “advanced feature” in jq.</p>
 
-<p>In most languages, variables are the only means of passing around data. If you calculate a value, and you want to use it more than once, you&#8217;ll need to store it in a variable. To pass a value to another part of the program, you&#8217;ll need that part of the program to define a variable (as a function parameter, object member, or whatever) in which to place the data.</p>
+<p>In most languages, variables are the only means of passing around data. If you calculate a value, and you want to use it more than once, you’ll need to store it in a variable. To pass a value to another part of the program, you’ll need that part of the program to define a variable (as a function parameter, object member, or whatever) in which to place the data.</p>
 
-<p>It is also possible to define functions in jq, although this is is a feature whose biggest use is defining jq&#8217;s standard library (many jq functions such as <code>map</code> and <code>find</code> are in fact written in jq).</p>
+<p>It is also possible to define functions in jq, although this is is a feature whose biggest use is defining jq’s standard library (many jq functions such as <code>map</code> and <code>find</code> are in fact written in jq).</p>
 
-<p>Finally, jq has a <code>reduce</code> operation, which is very powerful but a bit tricky. Again, it&#8217;s mostly used internally, to define some useful bits of jq&#8217;s standard library.</p>
+<p>Finally, jq has a <code>reduce</code> operation, which is very powerful but a bit tricky. Again, it’s mostly used internally, to define some useful bits of jq’s standard library.</p>
+
               
                 <section id="Variables">
                   <h3>
-                    Variables
+                    
+Variables
+
                     
                   </h3>
-                  <p>In jq, all filters have an input and an output, so manual plumbing is not necessary to pass a value from one part of a program to the next. Many expressions, for instance <code>a + b</code>, pass their input to two distinct subexpressions (here <code>a</code> and <code>b</code> are both passed the same input), so variables aren&#8217;t usually necessary in order to use a value twice.</p>
+                  
+<p>In jq, all filters have an input and an output, so manual plumbing is not necessary to pass a value from one part of a program to the next. Many expressions, for instance <code>a + b</code>, pass their input to two distinct subexpressions (here <code>a</code> and <code>b</code> are both passed the same input), so variables aren’t usually necessary in order to use a value twice.</p>
 
-<p>For instance, calculating the average value of an array of numbers requires a few variables in most languages - at least one to hold the array, perhaps one for each element or for a loop counter. In jq, it&#8217;s simply <code>add / length</code> - the <code>add</code> expression is given the array and produces its sum, and the <code>length</code> expression is given the array and produces its length.</p>
+<p>For instance, calculating the average value of an array of numbers requires a few variables in most languages - at least one to hold the array, perhaps one for each element or for a loop counter. In jq, it’s simply <code>add / length</code> - the <code>add</code> expression is given the array and produces its sum, and the <code>length</code> expression is given the array and produces its length.</p>
 
-<p>So, there&#8217;s generally a cleaner way to solve most problems in jq than defining variables. Still, sometimes they do make things easier, so jq lets you define variables using <code>expression as $variable</code>. All variable names start with <code>$</code>. Here&#8217;s a slightly uglier version of the array-averaging example:</p>
+<p>So, there’s generally a cleaner way to solve most problems in jq than defining variables. Still, sometimes they do make things easier, so jq lets you define variables using <code>expression as $variable</code>. All variable names start with <code>$</code>. Here’s a slightly uglier version of the array-averaging example:</p>
 
 <pre><code>length as $array_length | add / $array_length</code></pre>
 
-<p>We&#8217;ll need a more complicated problem to find a situation where using variables actually makes our lives easier.</p>
+<p>We’ll need a more complicated problem to find a situation where using variables actually makes our lives easier.</p>
 
-<p>Suppose we have an array of blog posts, with &#8220;author&#8221; and &#8220;title&#8221; fields, and another object which is used to map author usernames to real names. Our input looks like:</p>
+<p>Suppose we have an array of blog posts, with “author” and “title” fields, and another object which is used to map author usernames to real names. Our input looks like:</p>
 
 <pre><code>{&quot;posts&quot;: [{&quot;title&quot;: &quot;Frist psot&quot;, &quot;author&quot;: &quot;anon&quot;},
            {&quot;title&quot;: &quot;A well-written article&quot;, &quot;author&quot;: &quot;person1&quot;}],
@@ -3526,7 +3786,8 @@ not</code>.</p>
 
 <pre><code>(.realnames as $names | .posts[]) | {title, author: $names[.author]}</code></pre>
 
-<p>won&#8217;t.</p>
+<p>won’t.</p>
+
 
                   
                     <div>
@@ -3558,10 +3819,13 @@ not</code>.</p>
               
                 <section id="DefiningFunctions">
                   <h3>
-                    Defining Functions
+                    
+Defining Functions
+
                     
                   </h3>
-                  <p>You can give a filter a name using &#8220;def&#8221; syntax:</p>
+                  
+<p>You can give a filter a name using “def” syntax:</p>
 
 <pre><code>def increment: . + 1;</code></pre>
 
@@ -3575,7 +3839,8 @@ not</code>.</p>
 
 <pre><code>def addvalue(f): f as $value | map(. + $value);</code></pre>
 
-<p>With that definition, <code>addvalue(.foo)</code> will add the current input&#8217;s <code>.foo</code> field to each element of the array.</p>
+<p>With that definition, <code>addvalue(.foo)</code> will add the current input’s <code>.foo</code> field to each element of the array.</p>
+
 
                   
                     <div>
@@ -3621,10 +3886,13 @@ not</code>.</p>
               
                 <section id="Reduce">
                   <h3>
-                    Reduce
+                    
+Reduce
+
                     
                   </h3>
-                  <p>The <code>reduce</code> syntax in jq allows you to combine all of the results of an expression by accumulating them into a single answer. As an example, we&#8217;ll pass <code>[3,2,1]</code> to this expression:</p>
+                  
+<p>The <code>reduce</code> syntax in jq allows you to combine all of the results of an expression by accumulating them into a single answer. As an example, we’ll pass <code>[3,2,1]</code> to this expression:</p>
 
 <pre><code>reduce .[] as $item (0; . + $item)</code></pre>
 
@@ -3633,6 +3901,7 @@ not</code>.</p>
 <pre><code>0 | (3 as $item | . + $item) |
     (2 as $item | . + $item) |
     (1 as $item | . + $item)</code></pre>
+
 
                   
                     <div>
@@ -3666,50 +3935,64 @@ not</code>.</p>
           
             <section id="Assignment">
               <h2>Assignment</h2>
-              <p>Assignment works a little differently in jq than in most programming languages. jq doesn&#8217;t distinguish between references to and copies of something - two objects or arrays are either equal or not equal, without any further notion of being &#8220;the same object&#8221; or &#8220;not the same object&#8221;.</p>
+              
+<p>Assignment works a little differently in jq than in most programming languages. jq doesn’t distinguish between references to and copies of something - two objects or arrays are either equal or not equal, without any further notion of being “the same object” or “not the same object”.</p>
 
-<p>If an object has two fields which are arrays, <code>.foo</code> and <code>.bar</code>, and you append something to <code>.foo</code>, then <code>.bar</code> will not get bigger. Even if you&#8217;ve just set <code>.bar = .foo</code>. If you&#8217;re used to programming in languages like Python, Java, Ruby, Javascript, etc. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance, it doesn&#8217;t actually do that, but that&#8217;s the general idea).</p>
+<p>If an object has two fields which are arrays, <code>.foo</code> and <code>.bar</code>, and you append something to <code>.foo</code>, then <code>.bar</code> will not get bigger. Even if you’ve just set <code>.bar = .foo</code>. If you’re used to programming in languages like Python, Java, Ruby, Javascript, etc. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance, it doesn’t actually do that, but that’s the general idea).</p>
+
               
                 <section id="`=`">
                   <h3>
-                    <code>=</code>
+                    
+<code>=</code>
+
                     
                   </h3>
-                  <p>The filter <code>.foo = 1</code> will take as input an object and produce as output an object with the &#8220;foo&#8221; field set to 1. There is no notion of &#8220;modifying&#8221; or &#8220;changing&#8221; something in jq - all jq values are immutable. For instance,</p>
+                  
+<p>The filter <code>.foo = 1</code> will take as input an object and produce as output an object with the “foo” field set to 1. There is no notion of “modifying” or “changing” something in jq - all jq values are immutable. For instance,</p>
 
 <p>.foo = .bar | .foo.baz = 1</p>
 
-<p>will not have the side-effect of setting .bar.baz to be set to 1, as the similar-looking program in Javascript, Python, Ruby or other languages would. Unlike these languages (but like Haskell and some other functional languages), there is no notion of two arrays or objects being &#8220;the same array&#8221; or &#8220;the same object&#8221;. They can be equal, or not equal, but if we change one of them in no circumstances will the other change behind our backs.</p>
+<p>will not have the side-effect of setting .bar.baz to be set to 1, as the similar-looking program in Javascript, Python, Ruby or other languages would. Unlike these languages (but like Haskell and some other functional languages), there is no notion of two arrays or objects being “the same array” or “the same object”. They can be equal, or not equal, but if we change one of them in no circumstances will the other change behind our backs.</p>
 
-<p>This means that it&#8217;s impossible to build circular values in jq (such as an array whose first element is itself). This is quite intentional, and ensures that anything a jq program can produce can be represented in JSON.</p>
+<p>This means that it’s impossible to build circular values in jq (such as an array whose first element is itself). This is quite intentional, and ensures that anything a jq program can produce can be represented in JSON.</p>
+
 
                   
                 </section>
               
                 <section id="`|=`">
                   <h3>
-                    <code>|=</code>
+                    
+<code>|=</code>
+
                     
                   </h3>
-                  <p>As well as the assignment operator &#8217;=&#8217;, jq provides the &#8220;update&#8221; operator &#8216;|=&#8217;, which takes a filter on the right-hand side and works out the new value for the property being assigned to by running the old value through this expression. For instance, .foo |= .+1 will build an object with the &#8220;foo&#8221; field set to the input&#8217;s &#8220;foo&#8221; plus 1.</p>
+                  
+<p>As well as the assignment operator ‘=’, jq provides the “update” operator ‘|=’, which takes a filter on the right-hand side and works out the new value for the property being assigned to by running the old value through this expression. For instance, .foo |= .+1 will build an object with the “foo” field set to the input’s “foo” plus 1.</p>
 
-<p>This example should show the difference between &#8217;=&#8217; and &#8216;|=&#8217;:</p>
+<p>This example should show the difference between ‘=’ and ‘|=’:</p>
 
-<p>Provide input &#8216;{&#8221;a&#8221;: {&#8221;b&#8221;: 10}, &#8220;b&#8221;: 20}&#8217; to the programs:</p>
+<p>Provide input ‘{“a”: {“b”: 10}, “b”: 20}’ to the programs:</p>
 
 <p>.a = .b .a |= .b</p>
 
-<p>The former will set the &#8220;a&#8221; field of the input to the &#8220;b&#8221; field of the input, and produce the output {&#8221;a&#8221;: 20}. The latter will set the &#8220;a&#8221; field of the input to the &#8220;a&#8221; field&#8217;s &#8220;b&#8221; field, producing {&#8221;a&#8221;: 10}.</p>
+<p>The former will set the “a” field of the input to the “b” field of the input, and produce the output {“a”: 20}. The latter will set the “a” field of the input to the “a” field’s “b” field, producing {“a”: 10}.</p>
+
 
                   
                 </section>
               
                 <section id="`+=`,`-=`,`*=`,`/=`,`%=`,`//=`">
                   <h3>
-                    <code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>%=</code>, <code>//=</code>
+                    
+<code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>%=</code>, <code>//=</code>
+
                     
                   </h3>
-                  <p>jq has a few operators of the form <code>a op= b</code>, which are all equivalent to <code>a |= . op b</code>. So, <code>+= 1</code> can be used to increment values.</p>
+                  
+<p>jq has a few operators of the form <code>a op= b</code>, which are all equivalent to <code>a |= . op b</code>. So, <code>+= 1</code> can be used to increment values.</p>
+
 
                   
                     <div>
@@ -3741,10 +4024,13 @@ not</code>.</p>
               
                 <section id="Complexassignments">
                   <h3>
-                    Complex assignments
+                    
+Complex assignments
+
                     
                   </h3>
-                  <p>Lots more things are allowed on the left-hand side of a jq assignment than in most langauges. We&#8217;ve already seen simple field accesses on the left hand side, and it&#8217;s no surprise that array accesses work just as well:</p>
+                  
+<p>Lots more things are allowed on the left-hand side of a jq assignment than in most langauges. We’ve already seen simple field accesses on the left hand side, and it’s no surprise that array accesses work just as well:</p>
 
 <pre><code>.posts[0].title = &quot;JQ Manual&quot;</code></pre>
 
@@ -3752,18 +4038,19 @@ not</code>.</p>
 
 <pre><code>.posts[].comments |= . + [&quot;this is great&quot;]</code></pre>
 
-<p>That example appends the string &#8220;this is great&#8221; to the &#8220;comments&#8221; array of each post in the input (where the input is an object with a field &#8220;posts&#8221; which is an array of posts).</p>
+<p>That example appends the string “this is great” to the “comments” array of each post in the input (where the input is an object with a field “posts” which is an array of posts).</p>
 
-<p>When jq encounters an assignment like &#8216;a = b&#8217;, it records the &#8220;path&#8221; taken to select a part of the input document while executing a. This path is then used to find which part of the input to change while executing the assignment. Any filter may be used on the left-hand side of an equals - whichever paths it selects from the input will be where the assignment is performed.</p>
+<p>When jq encounters an assignment like ‘a = b’, it records the “path” taken to select a part of the input document while executing a. This path is then used to find which part of the input to change while executing the assignment. Any filter may be used on the left-hand side of an equals - whichever paths it selects from the input will be where the assignment is performed.</p>
 
-<p>This is a very powerful operation. Suppose we wanted to add a comment to blog posts, using the same &#8220;blog&#8221; input above. This time, we only want to comment on the posts written by &#8220;stedolan&#8221;. We can find those posts using the &#8220;select&#8221; function described earlier:</p>
+<p>This is a very powerful operation. Suppose we wanted to add a comment to blog posts, using the same “blog” input above. This time, we only want to comment on the posts written by “stedolan”. We can find those posts using the “select” function described earlier:</p>
 
 <pre><code>.posts[] | select(.author == &quot;stedolan&quot;)</code></pre>
 
-<p>The paths provided by this operation point to each of the posts that &#8220;stedolan&#8221; wrote, and we can comment on each of them in the same way that we did before:</p>
+<p>The paths provided by this operation point to each of the posts that “stedolan” wrote, and we can comment on each of them in the same way that we did before:</p>
 
 <pre><code>(.posts[] | select(.author == &quot;stedolan&quot;) | .comments) |=
     . + [&quot;terrible.&quot;]</code></pre>
+
 
                   
                 </section>
@@ -3776,9 +4063,8 @@ not</code>.</p>
 
     <footer>
       <div class="container">
-        <p>This website is made with <a href='http://www.tinytree.info'>Bonsai</a> and <a href='http://getbootstrap.com'>Bootstrap</a>, themed with <a href='https://bootswatch.com'>Bootswatch</a>.</p>
-
-<p>jq is licensed under the MIT license (code) and the <a href='https://creativecommons.org/licenses/by/3.0/'>CC-BY-3.0</a> license (docs).</p>
+        <p>This website is made with <a href="http://www.tinytree.info">Bonsai</a> and <a href="http://getbootstrap.com">Bootstrap</a>, themed with <a href="https://bootswatch.com">Bootswatch</a>.</p>
+        <p>jq is licensed under the MIT license (code) and the <a href="https://creativecommons.org/licenses/by/3.0/">CC-BY-3.0</a> license (docs).</p>
       </div>
     </footer>
 
