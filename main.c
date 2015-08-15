@@ -48,7 +48,7 @@ static void usage(int code) {
     "\tcopying jq's input to its output unmodified (except for\n"
     "\tformatting).\n"
     "\tFor more advanced filters see the jq(1) manpage (\"man jq\")\n"
-    "\tand/or http://stedolan.github.io/jq\n\n"
+    "\tand/or https://stedolan.github.io/jq\n\n"
     "\tSome of the options include:\n"
     "\t -c\t\tcompact instead of pretty-printed output;\n"
     "\t -n\t\tuse `null` as the single input value;\n"
@@ -69,7 +69,7 @@ static void usage(int code) {
 
 static void die() {
   fprintf(stderr, "Use %s --help for help with command-line options,\n", progname);
-  fprintf(stderr, "or see the jq manpage, or online docs  at http://stedolan.github.io/jq\n");
+  fprintf(stderr, "or see the jq manpage, or online docs  at https://stedolan.github.io/jq\n");
   exit(2);
 }
 

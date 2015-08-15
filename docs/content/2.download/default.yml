@@ -16,7 +16,7 @@ body:
 
       ### Linux
 
-       * jq 1.4 is in the official [Debian](http://packages.debian.org/jq) and
+       * jq 1.4 is in the official [Debian](https://packages.debian.org/jq) and
          [Ubuntu](http://packages.ubuntu.com/jq) repositories. Install using
          `sudo apt-get install jq`.
 
@@ -58,7 +58,7 @@ body:
 
       ### Solaris
 
-       * `pkgutil -i jq` in [OpenCSW](http://www.opencsw.org/p/jq) for Solaris
+       * `pkgutil -i jq` in [OpenCSW](https://www.opencsw.org/p/jq) for Solaris
          10+, Sparc and x86.
 
        * jq 1.4 binaries for Solaris 11
@@ -107,10 +107,10 @@ body:
       packages first:
 
        * [Flex](http://flex.sourceforge.net/)
-       * [Bison](http://www.gnu.org/software/bison/)
-       * [GCC](http://gcc.gnu.org)
-       * [Make](http://www.gnu.org/software/make/)
-       * [Autotools](http://www.gnu.org/software/automake/)
+       * [Bison](https://www.gnu.org/software/bison/)
+       * [GCC](https://gcc.gnu.org)
+       * [Make](https://www.gnu.org/software/make/)
+       * [Autotools](https://www.gnu.org/software/automake/)
 
       For Linux systems, these will all be in your system's package
       manager, and if you do development on the machine they're most
@@ -120,7 +120,7 @@ body:
       be installed from [Xcode](https://developer.apple.com/xcode/). However,
       you may find that you need a newer version of Bison than the one provided
       by Apple. This can be found in [Homebrew](http://brew.sh) or
-      [MacPorts](http://macports.org/).
+      [MacPorts](https://macports.org/).
 
       Flex and Bison are used to generate the lexer and parser for jq. For jq
       1.5, neither is required if you use `./configure

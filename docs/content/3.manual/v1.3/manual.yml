@@ -857,12 +857,12 @@ sections:
           escaped. However, all interpolations made inside that string
           literal will be escaped. For instance,
 
-              @uri "http://www.google.com/search?q=\(.search)"
+              @uri "https://www.google.com/search?q=\(.search)"
 
           will produce the following output for the input
           `{"search":"jq!"}`:
 
-              http://www.google.com/search?q=jq%21
+              https://www.google.com/search?q=jq%21
 
           Note that the slashes, question mark, etc. in the URL are
           not escaped, as they were part of the string literal.
