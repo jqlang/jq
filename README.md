@@ -4,13 +4,13 @@ jq
 jq is a command-line JSON processor.
 
 If you want to learn to use jq, read the documentation at
-[http://stedolan.github.io/jq](http://stedolan.github.io/jq).  This
+[https://stedolan.github.io/jq](https://stedolan.github.io/jq).  This
 documentation is generated from the docs/ folder of this repository.
-You can also try it online at [jqplay.org](http://jqplay.org).
+You can also try it online at [jqplay.org](https://jqplay.org).
 
 If you want to hack on jq, feel free, but be warned that its internals
 are not well-documented at the moment. Bring a hard hat and a
-shovel.  Also, read the wiki: http://github.com/stedolan/jq/wiki
+shovel.  Also, read the wiki: https://github.com/stedolan/jq/wiki
 
 Source tarball and built executable releases can be found on the
 homepage and on the github release page, https://github.com/stedolan/jq/releases
@@ -61,4 +61,4 @@ Cross-compilation requires a clean workspace, then:
 Use the --host= and --target= ./configure options to select a
 cross-compilation environment.  See also the wiki.
 
-Send questions to http://stackoverflow.com/questions/tagged/jq or to the #jq channel (http://irc.lc/freenode/%23jq/) on Freenode (https://webchat.freenode.net/).
+Send questions to https://stackoverflow.com/questions/tagged/jq or to the #jq channel (http://irc.lc/freenode/%23jq/) on Freenode (https://webchat.freenode.net/).

@@ -17,7 +17,7 @@
 #define COL(c) (ESC "[" c "m")
 #define COLRESET (ESC "[0m")
 
-// Colour table. See http://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+// Colour table. See https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 // for how to choose these.
 static const jv_kind colour_kinds[] =
   {JV_KIND_NULL,   JV_KIND_FALSE, JV_KIND_TRUE, JV_KIND_NUMBER,

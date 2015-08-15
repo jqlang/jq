@@ -1,7 +1,7 @@
 m4_define([jq_version], m4_esyscmd_s([git describe --tags --dirty --match 'jq-*'|sed 's/^jq-//']))
 
 AC_INIT([jq], [jq_version], [https://github.com/stedolan/jq/issues],
-             [jq], [http://stedolan.github.io/jq])
+             [jq], [https://stedolan.github.io/jq])
 
 m4_include([m4/ax_compare_version.m4])
 m4_include([m4/ax_prog_bison_version.m4])
