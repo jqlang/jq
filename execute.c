@@ -64,7 +64,7 @@ struct frame {
   stack_ptr env;            // jq stack address of frame to return to
   stack_ptr retdata;        // jq stack address to unwind to on RET
   uint16_t* retaddr;        // jq bytecode return address
-  union frame_entry entries[0]; // nclosures + nlocals
+  union frame_entry entries[]; // nclosures + nlocals
 };
 
 static int frame_size(struct bytecode* bc) {
