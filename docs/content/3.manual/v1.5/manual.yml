@@ -3,8 +3,8 @@ headline: jq Manual (development version)
 
 history: |
 
-  *For released versions, see [jq 1.5](/jq/manual/v1.5),
-  [jq 1.4](/jq/manual/v1.4) or [jq 1.3](/jq/manual/v1.3).*
+  *The manual for the development version of jq can be found
+  [here](/jq/manual).*
 
 body: |
 
@@ -1521,33 +1521,6 @@ sections:
                 - 2
                 - 4
                 - 16
-
-      - title: "`walk(f)`"
-        body: |
-
-          The `walk(f)` function applies f recursively to every
-          component of the input entity.  When an array is
-          encountered, f is first applied to its elements and then to
-          the array itself; when an object is encountered, f is first
-          applied to all the values and then to the object.  In
-          practice, f will usually test the type of its input, as
-          illustrated in the following examples.  The first example
-          highlights the usefulness of processing the elements of an
-          array of arrays before processing the array itself.  The second
-          example shows how all the keys of all the objects within the
-          input can be considered for alteration.
-
-        examples:
-          - program: 'walk(if type == "array" then sort else . end)'
-            input: '[[4, 1, 7], [8, 5, 2], [3, 6, 9]]'
-            output:
-              - '[[1,4,7],[2,5,8],[3,6,9]]'
-
-          - program: 'walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . end )'
-            input: '[ { "_a": { "__b": 2 } } ]'
-            output:
-              - '[{"a":{"b":2}}]'
-
 
       - title: "`..`"
         body: |

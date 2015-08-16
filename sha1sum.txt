@@ -1,6 +1,12 @@
 # SHA-1 checksums of release and pre-release binaries
 # Download from https://github.com/stedolan/jq/releases
 
+# jq 1.5
+ded2716bafcee5f9fc9358c1e71b879e26674a5e  jq-linux32
+d8e36831c3c94bb58be34dd544f44a6c6cb88568  jq-linux64
+7c27c5d941efa5c241750a89c4723d84a6d76025  jq-win32.exe
+2ee589c8821d562eca4e67c2b0e3e30f0c7c6136  jq-win64.exe
+
 # jq 1.5rc2
 4975875ed6e758ef5f14ddb72026d430ff6b7b65  jq-linux-x86
 ec498ea174ab4e696d02016e2ad47fbdec2b3aa3  jq-linux-x86_64

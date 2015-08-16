@@ -30,6 +30,11 @@ body:
          [ArchWiki](https://wiki.archlinux.org/index.php/Arch_User_Repository)
          for how to install from AUR.
 
+       * jq 1.5 binaries for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux32).
+
        * jq 1.4 binaries for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-linux-x86_64)
          or
@@ -42,9 +47,8 @@ body:
 
       ### OS X
 
-       * Use [Homebrew](http://brew.sh/) to install jq 1.4 with
-         `brew install jq`. You can also install 1.5rc2 with
-         `brew install --devel jq`.
+       * Use [Homebrew](http://brew.sh/) to install jq 1.5 with
+         `brew install jq`.
 
        * jq 1.4 binaries for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-osx-x86_64)
@@ -71,6 +75,11 @@ body:
        * Use [Chocolatey NuGet](https://chocolatey.org/) to install jq 1.4 with
          `chocolatey install jq`.
 
+       * jq 1.5 executables for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win64.exe)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win32.exe).
+
        * jq 1.4 executables for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.4/jq-win64.exe)
          or
@@ -89,7 +98,7 @@ body:
 
       ### From source on Linux, OS X, Cygwin, and other POSIX-like operating systems
 
-       * [Source tarball for jq 1.4](https://github.com/stedolan/jq/archive/jq-1.4.tar.gz)
+       * [Source tarball for jq 1.5](https://github.com/stedolan/jq/archive/jq-1.5.tar.gz)
 
       You can build it using the usual `./configure && make && sudo
       make install` rigmarole.
@@ -99,15 +108,13 @@ body:
           git clone https://github.com/stedolan/jq.git
           cd jq
           autoreconf -i
-          ./configure
+          ./configure --disable-maintainer-mode
           make
           sudo make install
 
       To build it from a git clone, you'll need to install a few
       packages first:
 
-       * [Flex](http://flex.sourceforge.net/)
-       * [Bison](https://www.gnu.org/software/bison/)
        * [GCC](https://gcc.gnu.org)
        * [Make](https://www.gnu.org/software/make/)
        * [Autotools](https://www.gnu.org/software/automake/)
@@ -122,10 +129,11 @@ body:
       by Apple. This can be found in [Homebrew](http://brew.sh) or
       [MacPorts](https://macports.org/).
 
-      Flex and Bison are used to generate the lexer and parser for jq. For jq
-      1.5, neither is required if you use `./configure
-      --disable-maintainer-mode` instead of `./configure`. This flag says to use
-      the pre-generated lexer and parser that come with the code.
+      The `--disable-maintainer-mode` flag says to use the pre-generated lexer
+      and parser that come with the code. To compile the lexer and parser also
+      from source, leave out this flag. You will need to install
+      [Flex](http://flex.sourceforge.net/) and
+      [Bison](https://www.gnu.org/software/bison/).
 
       #### Building the documentation
 
