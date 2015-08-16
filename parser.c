@@ -398,7 +398,7 @@ static block gen_binop(block a, block b, int op) {
 }
 
 static block gen_format(block a, jv fmt) {
-  return BLOCK(a, gen_call("format", BLOCK(gen_lambda(gen_const(fmt)))));
+  return BLOCK(a, gen_call("format", gen_lambda(gen_const(fmt))));
 }
 
 static block gen_definedor_assign(block object, block val) {
