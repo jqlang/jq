@@ -626,10 +626,10 @@ sections:
 
         examples:
           - program: 'del(.foo)'
-            input: '[{"foo": 42, "bar": 9001, "baz": 42}]'
+            input: '{"foo": 42, "bar": 9001, "baz": 42}'
             output: ['{"bar": 9001, "baz": 42}']
           - program: 'del(.[1, 2])'
-            input: '[["foo", "bar", "baz"]]'
+            input: '["foo", "bar", "baz"]'
             output: ['["foo"]']
 
       - title: "`to_entries`, `from_entries`, `with_entries`"
@@ -967,7 +967,7 @@ sections:
             output: ['[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]']
           - program: 'unique_by(length)'
             input: '["chunky", "bacon", "kitten", "cicada", "asparagus"]'
-            output: ['["chunky", "bacon", "asparagus"]']
+            output: ['["bacon", "chunky", "asparagus"]']
 
 
       - title: "`reverse`"
@@ -1038,7 +1038,7 @@ sections:
           - program: 'index(", ")'
             input: '"a,b, cd, efg, hijk"'
             output: ['3']
-          - program: 'rindex(", ")]'
+          - program: 'rindex(", ")'
             input: '"a,b, cd, efg, hijk"'
             output: ['12']
 
@@ -1060,7 +1060,7 @@ sections:
         examples:
           - program: '[.[]|endswith("foo")]'
             input: '["foobar", "barfoo"]'
-            output: ['[false, true, true, false, false]']
+            output: ['[false, true]']
 
       - title: "`ltrimstr`"
         body: |
