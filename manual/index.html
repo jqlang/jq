@@ -1649,6 +1649,126 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                 </section>
               
+                <section id="`getpath(PATHS)`">
+                  <h3>
+                    
+<code>getpath(PATHS)</code>
+
+                    
+                  </h3>
+                  
+<p>The builtin function <code>getpath</code> outputs the values in <code>.</code> found at each path in <code>PATHS</code>.</p>
+
+
+                  
+                    <div>
+                      
+                      <a data-toggle="collapse" href="#example19">
+                        <i class="glyphicon glyphicon-chevron-right"></i>
+                        Examples
+                      </a>
+                      <div id="example19" class="collapse">
+                        
+                          <table class="manual-example">
+                            <tr><th></th><td class="jqprogram">jq 'getpath([&quot;a&quot;,&quot;b&quot;])'</td></tr>
+                            <tr><th>Input</th><td>null</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>null</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table class="manual-example">
+                            <tr><th></th><td class="jqprogram">jq '[getpath([&quot;a&quot;,&quot;b&quot;], [&quot;a&quot;,&quot;c&quot;])]'</td></tr>
+                            <tr><th>Input</th><td>{&quot;a&quot;:{&quot;b&quot;:0, &quot;c&quot;:1}}</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>[0, 1]</td>
+                              </tr>
+                            
+                          </table>
+                        
+                      </div>
+                    </div>
+                  
+                </section>
+              
+                <section id="`setpath(PATHS;VALUE)`">
+                  <h3>
+                    
+<code>setpath(PATHS; VALUE)</code>
+
+                    
+                  </h3>
+                  
+<p>The builtin function <code>setpath</code> sets the <code>PATHS</code> in <code>.</code> to <code>VALUE</code>.</p>
+
+
+                  
+                    <div>
+                      
+                      <a data-toggle="collapse" href="#example20">
+                        <i class="glyphicon glyphicon-chevron-right"></i>
+                        Examples
+                      </a>
+                      <div id="example20" class="collapse">
+                        
+                          <table class="manual-example">
+                            <tr><th></th><td class="jqprogram">jq 'setpath([&quot;a&quot;,&quot;b&quot;]; 1)'</td></tr>
+                            <tr><th>Input</th><td>null</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>{&quot;a&quot;: {&quot;b&quot;: 1}}</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table class="manual-example">
+                            <tr><th></th><td class="jqprogram">jq 'setpath([&quot;a&quot;,&quot;b&quot;]; 1)'</td></tr>
+                            <tr><th>Input</th><td>{&quot;a&quot;:{&quot;b&quot;:0}}</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>{&quot;a&quot;: {&quot;b&quot;: 1}}</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table class="manual-example">
+                            <tr><th></th><td class="jqprogram">jq 'setpath([0,&quot;a&quot;]; 1)'</td></tr>
+                            <tr><th>Input</th><td>null</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>[{&quot;a&quot;:1}]</td>
+                              </tr>
+                            
+                          </table>
+                        
+                      </div>
+                    </div>
+                  
+                </section>
+              
                 <section id="`to_entries`,`from_entries`,`with_entries`">
                   <h3>
                     
@@ -1666,11 +1786,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example19">
+                      <a data-toggle="collapse" href="#example21">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example19" class="collapse">
+                      <div id="example21" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'to_entries'</td></tr>
@@ -1735,11 +1855,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example20">
+                      <a data-toggle="collapse" href="#example22">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example20" class="collapse">
+                      <div id="example22" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'map(select(. &gt;= 2))'</td></tr>
@@ -1788,11 +1908,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example21">
+                      <a data-toggle="collapse" href="#example23">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example21" class="collapse">
+                      <div id="example23" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '.[]|numbers'</td></tr>
@@ -1829,11 +1949,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example22">
+                      <a data-toggle="collapse" href="#example24">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example22" class="collapse">
+                      <div id="example24" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '1, empty, 2'</td></tr>
@@ -1903,11 +2023,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example23">
+                      <a data-toggle="collapse" href="#example25">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example23" class="collapse">
+                      <div id="example25" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'try error(&quot;\($__loc__)&quot;) catch .'</td></tr>
@@ -1946,11 +2066,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example24">
+                      <a data-toggle="collapse" href="#example26">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example24" class="collapse">
+                      <div id="example26" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'map(.+1)'</td></tr>
@@ -2003,11 +2123,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example25">
+                      <a data-toggle="collapse" href="#example27">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example25" class="collapse">
+                      <div id="example27" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[paths]'</td></tr>
@@ -2058,11 +2178,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example26">
+                      <a data-toggle="collapse" href="#example28">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example26" class="collapse">
+                      <div id="example28" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'add'</td></tr>
@@ -2119,7 +2239,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                     
                   </h3>
                   
-<p>The filter <code>any</code> takes as input an array of boolean values, and produces <code>true</code> as output if any of the the elements of the array is <code>true</code>.</p>
+<p>The filter <code>any</code> takes as input an array of boolean values, and produces <code>true</code> as output if any of the elements of the array are <code>true</code>.</p>
 
 <p>If the input is an empty array, <code>any</code> returns <code>false</code>.</p>
 
@@ -2131,11 +2251,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example27">
+                      <a data-toggle="collapse" href="#example29">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example27" class="collapse">
+                      <div id="example29" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'any'</td></tr>
@@ -2192,7 +2312,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                     
                   </h3>
                   
-<p>The filter <code>all</code> takes as input an array of boolean values, and produces <code>true</code> as output if all of the the elements of the array are <code>true</code>.</p>
+<p>The filter <code>all</code> takes as input an array of boolean values, and produces <code>true</code> as output if all of the elements of the array are <code>true</code>.</p>
 
 <p>The <code>all(condition)</code> form applies the given condition to the elements of the input array.</p>
 
@@ -2204,11 +2324,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example28">
+                      <a data-toggle="collapse" href="#example30">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example28" class="collapse">
+                      <div id="example30" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'all'</td></tr>
@@ -2273,11 +2393,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example29">
+                      <a data-toggle="collapse" href="#example31">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example29" class="collapse">
+                      <div id="example31" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'flatten'</td></tr>
@@ -2360,11 +2480,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example30">
+                      <a data-toggle="collapse" href="#example32">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example30" class="collapse">
+                      <div id="example32" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'range(2;4)'</td></tr>
@@ -2476,11 +2596,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example31">
+                      <a data-toggle="collapse" href="#example33">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example31" class="collapse">
+                      <div id="example33" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'floor'</td></tr>
@@ -2515,11 +2635,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example32">
+                      <a data-toggle="collapse" href="#example34">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example32" class="collapse">
+                      <div id="example34" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'sqrt'</td></tr>
@@ -2554,11 +2674,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example33">
+                      <a data-toggle="collapse" href="#example35">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example33" class="collapse">
+                      <div id="example35" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '.[] | tonumber'</td></tr>
@@ -2600,11 +2720,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example34">
+                      <a data-toggle="collapse" href="#example36">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example34" class="collapse">
+                      <div id="example36" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '.[] | tostring'</td></tr>
@@ -2653,11 +2773,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example35">
+                      <a data-toggle="collapse" href="#example37">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example35" class="collapse">
+                      <div id="example37" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'map(type)'</td></tr>
@@ -2696,11 +2816,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example36">
+                      <a data-toggle="collapse" href="#example38">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example36" class="collapse">
+                      <div id="example38" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '.[] | (infinite * .) &lt; 0'</td></tr>
@@ -2785,11 +2905,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example37">
+                      <a data-toggle="collapse" href="#example39">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example37" class="collapse">
+                      <div id="example39" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'sort'</td></tr>
@@ -2840,11 +2960,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example38">
+                      <a data-toggle="collapse" href="#example40">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example38" class="collapse">
+                      <div id="example40" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'group_by(.foo)'</td></tr>
@@ -2881,11 +3001,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example39">
+                      <a data-toggle="collapse" href="#example41">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example39" class="collapse">
+                      <div id="example41" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'min'</td></tr>
@@ -2936,11 +3056,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example40">
+                      <a data-toggle="collapse" href="#example42">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example40" class="collapse">
+                      <div id="example42" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'unique'</td></tr>
@@ -3003,11 +3123,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example41">
+                      <a data-toggle="collapse" href="#example43">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example41" class="collapse">
+                      <div id="example43" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'reverse'</td></tr>
@@ -3042,11 +3162,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example42">
+                      <a data-toggle="collapse" href="#example44">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example42" class="collapse">
+                      <div id="example44" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'contains(&quot;bar&quot;)'</td></tr>
@@ -3137,11 +3257,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example43">
+                      <a data-toggle="collapse" href="#example45">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example43" class="collapse">
+                      <div id="example45" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'indices(&quot;, &quot;)'</td></tr>
@@ -3204,11 +3324,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example44">
+                      <a data-toggle="collapse" href="#example46">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example44" class="collapse">
+                      <div id="example46" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'index(&quot;, &quot;)'</td></tr>
@@ -3257,11 +3377,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example45">
+                      <a data-toggle="collapse" href="#example47">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example45" class="collapse">
+                      <div id="example47" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'inside(&quot;foobar&quot;)'</td></tr>
@@ -3352,11 +3472,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example46">
+                      <a data-toggle="collapse" href="#example48">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example46" class="collapse">
+                      <div id="example48" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[.[]|startswith(&quot;foo&quot;)]'</td></tr>
@@ -3391,11 +3511,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example47">
+                      <a data-toggle="collapse" href="#example49">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example47" class="collapse">
+                      <div id="example49" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[.[]|endswith(&quot;foo&quot;)]'</td></tr>
@@ -3430,11 +3550,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example48">
+                      <a data-toggle="collapse" href="#example50">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example48" class="collapse">
+                      <div id="example50" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'combinations'</td></tr>
@@ -3525,11 +3645,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example49">
+                      <a data-toggle="collapse" href="#example51">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example49" class="collapse">
+                      <div id="example51" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[.[]|ltrimstr(&quot;foo&quot;)]'</td></tr>
@@ -3564,11 +3684,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example50">
+                      <a data-toggle="collapse" href="#example52">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example50" class="collapse">
+                      <div id="example52" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[.[]|rtrimstr(&quot;foo&quot;)]'</td></tr>
@@ -3603,11 +3723,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example51">
+                      <a data-toggle="collapse" href="#example53">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example51" class="collapse">
+                      <div id="example53" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'explode'</td></tr>
@@ -3642,11 +3762,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example52">
+                      <a data-toggle="collapse" href="#example54">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example52" class="collapse">
+                      <div id="example54" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'implode'</td></tr>
@@ -3681,11 +3801,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example53">
+                      <a data-toggle="collapse" href="#example55">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example53" class="collapse">
+                      <div id="example55" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'split(&quot;, &quot;)'</td></tr>
@@ -3720,11 +3840,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example54">
+                      <a data-toggle="collapse" href="#example56">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example54" class="collapse">
+                      <div id="example56" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'join(&quot;, &quot;)'</td></tr>
@@ -3775,11 +3895,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example55">
+                      <a data-toggle="collapse" href="#example57">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example55" class="collapse">
+                      <div id="example57" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[while(.&lt;100; .*2)]'</td></tr>
@@ -3816,11 +3936,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example56">
+                      <a data-toggle="collapse" href="#example58">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example56" class="collapse">
+                      <div id="example58" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[.,1]|until(.[0] &lt; 1; [.[0] - 1, .[1] * .[0]])|.[1]'</td></tr>
@@ -3877,11 +3997,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example57">
+                      <a data-toggle="collapse" href="#example59">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example57" class="collapse">
+                      <div id="example59" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'recurse(.foo[])'</td></tr>
@@ -4000,11 +4120,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example58">
+                      <a data-toggle="collapse" href="#example60">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example58" class="collapse">
+                      <div id="example60" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'walk(if type == &quot;array&quot; then sort else . end)'</td></tr>
@@ -4053,11 +4173,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example59">
+                      <a data-toggle="collapse" href="#example61">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example59" class="collapse">
+                      <div id="example61" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '..|.a?'</td></tr>
@@ -4092,11 +4212,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example60">
+                      <a data-toggle="collapse" href="#example62">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example60" class="collapse">
+                      <div id="example62" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'env.PAGER'</td></tr>
@@ -4131,11 +4251,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example61">
+                      <a data-toggle="collapse" href="#example63">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example61" class="collapse">
+                      <div id="example63" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'transpose'</td></tr>
@@ -4170,11 +4290,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example62">
+                      <a data-toggle="collapse" href="#example64">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example62" class="collapse">
+                      <div id="example64" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'bsearch(0)'</td></tr>
@@ -4237,11 +4357,11 @@ String interpolation - <code>\(foo)</code>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example63">
+                      <a data-toggle="collapse" href="#example65">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example63" class="collapse">
+                      <div id="example65" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '&quot;The input was \(.), which is one less than \(.+1)&quot;'</td></tr>
@@ -4276,11 +4396,11 @@ Convert to/from JSON
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example64">
+                      <a data-toggle="collapse" href="#example66">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example64" class="collapse">
+                      <div id="example66" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[.[]|tostring]'</td></tr>
@@ -4403,11 +4523,11 @@ Format strings and escaping
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example65">
+                      <a data-toggle="collapse" href="#example67">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example65" class="collapse">
+                      <div id="example67" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '@html'</td></tr>
@@ -4478,11 +4598,11 @@ Dates
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example66">
+                      <a data-toggle="collapse" href="#example68">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example66" class="collapse">
+                      <div id="example68" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'fromdate'</td></tr>
@@ -4553,11 +4673,11 @@ Dates
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example67">
+                      <a data-toggle="collapse" href="#example69">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example67" class="collapse">
+                      <div id="example69" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '.[] == 1'</td></tr>
@@ -4620,11 +4740,11 @@ B end</code> instead.</p>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example68">
+                      <a data-toggle="collapse" href="#example70">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example68" class="collapse">
+                      <div id="example70" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'if . == 0 then
@@ -4667,11 +4787,11 @@ end'</td></tr>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example69">
+                      <a data-toggle="collapse" href="#example71">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example69" class="collapse">
+                      <div id="example71" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '. &lt; 5'</td></tr>
@@ -4713,11 +4833,11 @@ not</code>.</p>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example70">
+                      <a data-toggle="collapse" href="#example72">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example70" class="collapse">
+                      <div id="example72" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '42 and &quot;a string&quot;'</td></tr>
@@ -4824,11 +4944,11 @@ Alternative operator - <code>//</code>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example71">
+                      <a data-toggle="collapse" href="#example73">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example71" class="collapse">
+                      <div id="example73" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '.foo // 42'</td></tr>
@@ -4879,11 +4999,11 @@ try-catch
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example72">
+                      <a data-toggle="collapse" href="#example74">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example72" class="collapse">
+                      <div id="example74" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'try .a catch &quot;. is not an object&quot;'</td></tr>
@@ -4985,11 +5105,11 @@ try repeat(exp) catch .==&quot;break&quot; then empty else error;</code></pre>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example73">
+                      <a data-toggle="collapse" href="#example75">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example73" class="collapse">
+                      <div id="example75" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[.[]|(.a)?]'</td></tr>
@@ -5083,11 +5203,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example74">
+                      <a data-toggle="collapse" href="#example76">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example74" class="collapse">
+                      <div id="example76" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'test(&quot;foo&quot;)'</td></tr>
@@ -5167,11 +5287,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example75">
+                      <a data-toggle="collapse" href="#example77">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example75" class="collapse">
+                      <div id="example77" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'match(&quot;(abc)+&quot;; &quot;g&quot;)'</td></tr>
@@ -5283,11 +5403,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example76">
+                      <a data-toggle="collapse" href="#example78">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example76" class="collapse">
+                      <div id="example78" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'capture(&quot;(?&lt;a&gt;[a-z]+)-(?&lt;n&gt;[0-9]+)&quot;)'</td></tr>
@@ -5459,11 +5579,11 @@ Variables
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example77">
+                      <a data-toggle="collapse" href="#example79">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example77" class="collapse">
+                      <div id="example79" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '.bar as $x | .foo | . + $x'</td></tr>
@@ -5579,11 +5699,11 @@ Defining Functions
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example78">
+                      <a data-toggle="collapse" href="#example80">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example78" class="collapse">
+                      <div id="example80" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'def addvalue(f): . + [f]; map(addvalue(.[0]))'</td></tr>
@@ -5640,11 +5760,11 @@ Reduce
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example79">
+                      <a data-toggle="collapse" href="#example81">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example79" class="collapse">
+                      <div id="example81" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'reduce .[] as $item (0; . + $item)'</td></tr>
@@ -5679,11 +5799,11 @@ Reduce
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example80">
+                      <a data-toggle="collapse" href="#example82">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example80" class="collapse">
+                      <div id="example82" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[limit(3;.[])]'</td></tr>
@@ -5721,11 +5841,11 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn’t 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example81">
+                      <a data-toggle="collapse" href="#example83">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example81" class="collapse">
+                      <div id="example83" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[first(range(.)), last(range(.)), nth(./2; range(.))]'</td></tr>
@@ -5762,11 +5882,11 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn’t 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example82">
+                      <a data-toggle="collapse" href="#example84">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example82" class="collapse">
+                      <div id="example84" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[range(.)]|[first, last, nth(5)]'</td></tr>
@@ -5805,11 +5925,11 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn’t 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example83">
+                      <a data-toggle="collapse" href="#example85">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example83" class="collapse">
+                      <div id="example85" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[foreach .[] as $item ([[],[]]; if $item == null then [[],.[0]] else [(.[0] + [$item]),[]] end; if $item == null then .[1] else empty end)]'</td></tr>
@@ -5880,11 +6000,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example84">
+                      <a data-toggle="collapse" href="#example86">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example84" class="collapse">
+                      <div id="example86" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'def range(init; upto; by): def _range: if (by &gt; 0 and . &lt; upto) or (by &lt; 0 and . &gt; upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by &gt; 0 and . &lt; upto) or (by &lt; 0 and . &gt; upto)); range(0; 10; 3)'</td></tr>
@@ -6045,7 +6165,7 @@ Generators and iterators
 
 <p>Several builtins are provided to make handling streams easier.</p>
 
-<p>The examples below use the the streamed form of <code>[0,[1]]</code>, which is <code>[[0],0],[[1,0],1],[[1,0]],[[1]]</code>.</p>
+<p>The examples below use the streamed form of <code>[0,[1]]</code>, which is <code>[[0],0],[[1,0],1],[[1,0]],[[1]]</code>.</p>
 
 <p>Streaming forms include <code>[&lt;path&gt;, &lt;leaf-value&gt;]</code> (to indicate any scalar value, empty array, or empty object), and <code>[&lt;path&gt;]</code> (to indicate the end of an array or object). Future versions of jq run with <code>--stream</code> and <code>-seq</code> may output additional forms such as <code>[&quot;error message&quot;]</code> when an input text fails to parse.</p>
 
@@ -6064,11 +6184,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example85">
+                      <a data-toggle="collapse" href="#example87">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example85" class="collapse">
+                      <div id="example87" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]'</td></tr>
@@ -6103,11 +6223,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example86">
+                      <a data-toggle="collapse" href="#example88">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example86" class="collapse">
+                      <div id="example88" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))'</td></tr>
@@ -6142,11 +6262,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example87">
+                      <a data-toggle="collapse" href="#example89">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example87" class="collapse">
+                      <div id="example89" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '. as $dot|fromstream($dot|tostream)|.==$dot'</td></tr>
@@ -6235,11 +6355,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example88">
+                      <a data-toggle="collapse" href="#example90">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example88" class="collapse">
+                      <div id="example90" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '(..|select(type==&quot;boolean&quot;)) |= if . then 1 else 0 end'</td></tr>
@@ -6274,11 +6394,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example89">
+                      <a data-toggle="collapse" href="#example91">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example89" class="collapse">
+                      <div id="example91" class="collapse">
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq '.foo += 1'</td></tr>
@@ -6519,6 +6639,10 @@ Complex assignments
             "`path(path_expression)`" : "`path(path_expression)`",
           
             "`del(path_expression)`" : "`del(path_expression)`",
+          
+            "`getpath(PATHS)`" : "`getpath(PATHS)`",
+          
+            "`setpath(PATHS; VALUE)`" : "`setpath(PATHS;VALUE)`",
           
             "`to_entries`, `from_entries`, `with_entries`" : "`to_entries`,`from_entries`,`with_entries`",
           

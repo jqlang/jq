@@ -172,7 +172,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
 </li>
 
 <li>
-<p><code>--colour-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</p>
+<p><code>--color-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</p>
 
 <p>By default, jq outputs colored JSON if writing to a terminal. You can force it to produce color even if writing to a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.</p>
 </li>
@@ -1382,7 +1382,7 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'del(.foo)'</td></tr>
-                            <tr><th>Input</th><td>[{&quot;foo&quot;: 42, &quot;bar&quot;: 9001, &quot;baz&quot;: 42}]</td></tr>
+                            <tr><th>Input</th><td>{&quot;foo&quot;: 42, &quot;bar&quot;: 9001, &quot;baz&quot;: 42}</td></tr>
                             
                             
                               <tr>
@@ -1396,7 +1396,7 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                         
                           <table class="manual-example">
                             <tr><th></th><td class="jqprogram">jq 'del(.[1, 2])'</td></tr>
-                            <tr><th>Input</th><td>[[&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;]]</td></tr>
+                            <tr><th>Input</th><td>[&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;]</td></tr>
                             
                             
                               <tr>
@@ -1825,7 +1825,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                     
                   </h3>
                   
-<p>The filter <code>any</code> takes as input an array of boolean values, and produces <code>true</code> as output if any of the the elements of the array is <code>true</code>.</p>
+<p>The filter <code>any</code> takes as input an array of boolean values, and produces <code>true</code> as output if any of the elements of the array are <code>true</code>.</p>
 
 <p>If the input is an empty array, <code>any</code> returns <code>false</code>.</p>
 
@@ -1894,7 +1894,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                     
                   </h3>
                   
-<p>The filter <code>all</code> takes as input an array of boolean values, and produces <code>true</code> as output if all of the the elements of the array are <code>true</code>.</p>
+<p>The filter <code>all</code> takes as input an array of boolean values, and produces <code>true</code> as output if all of the elements of the array are <code>true</code>.</p>
 
 <p>If the input is an empty array, <code>all</code> returns <code>true</code>.</p>
 
@@ -2480,7 +2480,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                                 
                                   <th>Output</th>
                                 
-                                <td>[&quot;chunky&quot;, &quot;bacon&quot;, &quot;asparagus&quot;]</td>
+                                <td>[&quot;bacon&quot;, &quot;chunky&quot;, &quot;asparagus&quot;]</td>
                               </tr>
                             
                           </table>
@@ -2726,7 +2726,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                           </table>
                         
                           <table class="manual-example">
-                            <tr><th></th><td class="jqprogram">jq 'rindex(&quot;, &quot;)]'</td></tr>
+                            <tr><th></th><td class="jqprogram">jq 'rindex(&quot;, &quot;)'</td></tr>
                             <tr><th>Input</th><td>&quot;a,b, cd, efg, hijk&quot;</td></tr>
                             
                             
@@ -2812,7 +2812,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                                 
                                   <th>Output</th>
                                 
-                                <td>[false, true, true, false, false]</td>
+                                <td>[false, true]</td>
                               </tr>
                             
                           </table>

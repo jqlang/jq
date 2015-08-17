@@ -2119,7 +2119,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                     
                   </h3>
                   
-<p>The filter <code>any</code> takes as input an array of boolean values, and produces <code>true</code> as output if any of the the elements of the array is <code>true</code>.</p>
+<p>The filter <code>any</code> takes as input an array of boolean values, and produces <code>true</code> as output if any of the elements of the array are <code>true</code>.</p>
 
 <p>If the input is an empty array, <code>any</code> returns <code>false</code>.</p>
 
@@ -2192,7 +2192,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                     
                   </h3>
                   
-<p>The filter <code>all</code> takes as input an array of boolean values, and produces <code>true</code> as output if all of the the elements of the array are <code>true</code>.</p>
+<p>The filter <code>all</code> takes as input an array of boolean values, and produces <code>true</code> as output if all of the elements of the array are <code>true</code>.</p>
 
 <p>The <code>all(condition)</code> form applies the given condition to the elements of the input array.</p>
 
@@ -5992,7 +5992,7 @@ Generators and iterators
 
 <p>Several builtins are provided to make handling streams easier.</p>
 
-<p>The examples below use the the streamed form of <code>[0,[1]]</code>, which is <code>[[0],0],[[1,0],1],[[1,0]],[[1]]</code>.</p>
+<p>The examples below use the streamed form of <code>[0,[1]]</code>, which is <code>[[0],0],[[1,0],1],[[1,0]],[[1]]</code>.</p>
 
 <p>Streaming forms include <code>[&lt;path&gt;, &lt;leaf-value&gt;]</code> (to indicate any scalar value, empty array, or empty object), and <code>[&lt;path&gt;]</code> (to indicate the end of an array or object). Future versions of jq run with <code>--stream</code> and <code>-seq</code> may output additional forms such as <code>[&quot;error message&quot;]</code> when an input text fails to parse.</p>
 
