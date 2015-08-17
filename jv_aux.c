@@ -390,6 +390,11 @@ static jv delpaths_sorted(jv object, jv paths, int start) {
 }
 
 jv jv_delpaths(jv object, jv paths) {
+  if (jv_get_kind(paths) != JV_KIND_ARRAY) {
+    jv_free(object);
+    jv_free(paths);
+    return jv_invalid_with_msg(jv_string("Paths must be specified as an array"));
+  }
   paths = jv_sort(paths, jv_copy(paths));
   jv_array_foreach(paths, i, elem) {
     if (jv_get_kind(elem) != JV_KIND_ARRAY) {

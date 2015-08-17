@@ -756,6 +756,10 @@ delpaths([[-200]])
 [1,2,3]
 [1,2,3]
 
+try delpaths(0) catch .
+{}
+"Paths must be specified as an array"
+
 del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)
 {"foo": [0,1,2,3,4], "bar": [0,1]}
 null
