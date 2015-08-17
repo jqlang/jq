@@ -17,15 +17,15 @@
 #define COL(c) (ESC "[" c "m")
 #define COLRESET (ESC "[0m")
 
-// Colour table. See https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+// Color table. See https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 // for how to choose these.
-static const jv_kind colour_kinds[] =
+static const jv_kind color_kinds[] =
   {JV_KIND_NULL,   JV_KIND_FALSE, JV_KIND_TRUE, JV_KIND_NUMBER,
    JV_KIND_STRING, JV_KIND_ARRAY, JV_KIND_OBJECT};
-static const char* const colours[] =
+static const char* const colors[] =
   {COL("1;30"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
    COL("0;32"),      COL("1;39"),     COL("1;39")};
-#define FIELD_COLOUR COL("34;1")
+#define FIELD_COLOR COL("34;1")
 
 static void put_buf(const char *s, int len, FILE *fout, jv *strout, int is_tty) {
   if (strout) {
@@ -139,13 +139,13 @@ static void put_refcnt(struct dtoa_context* C, int refcnt, FILE *F, jv* S, int T
 
 static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FILE* F, jv* S) {
   char buf[JVP_DTOA_FMT_MAX_LEN];
-  const char* colour = 0;
+  const char* color = 0;
   double refcnt = (flags & JV_PRINT_REFCOUNT) ? jv_get_refcnt(x) - 1 : -1;
-  if (flags & JV_PRINT_COLOUR) {
-    for (unsigned i=0; i<sizeof(colour_kinds)/sizeof(colour_kinds[0]); i++) {
-      if (jv_get_kind(x) == colour_kinds[i]) {
-        colour = colours[i];
-        put_str(colour, F, S, flags & JV_PRINT_ISATTY);
+  if (flags & JV_PRINT_COLOR) {
+    for (unsigned i=0; i<sizeof(color_kinds)/sizeof(color_kinds[0]); i++) {
+      if (jv_get_kind(x) == color_kinds[i]) {
+        color = colors[i];
+        put_str(color, F, S, flags & JV_PRINT_ISATTY);
         break;
       }
     }
@@ -213,13 +213,13 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
         }
       }
       jv_dump_term(C, elem, flags, indent + 1, F, S);
-      if (colour) put_str(colour, F, S, flags & JV_PRINT_ISATTY);
+      if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     }
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S, flags & JV_PRINT_ISATTY);
       put_indent(indent, flags, F, S, flags & JV_PRINT_ISATTY);
     }
-    if (colour) put_str(colour, F, S, flags & JV_PRINT_ISATTY);
+    if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     put_char(']', F, S, flags & JV_PRINT_ISATTY);
     if (flags & JV_PRINT_REFCOUNT)
       put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
@@ -272,33 +272,33 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
           put_str(",", F, S, flags & JV_PRINT_ISATTY);
         }
       }
-      if (colour) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
+      if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
       first = 0;
-      if (colour) put_str(FIELD_COLOUR, F, S, flags & JV_PRINT_ISATTY);
+      if (color) put_str(FIELD_COLOR, F, S, flags & JV_PRINT_ISATTY);
       jvp_dump_string(key, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
       jv_free(key);
-      if (colour) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
+      if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
-      if (colour) put_str(colour, F, S, flags & JV_PRINT_ISATTY);
+      if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
       put_str((flags & JV_PRINT_PRETTY) ? ": " : ":", F, S, flags & JV_PRINT_ISATTY);
-      if (colour) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
+      if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
       jv_dump_term(C, value, flags, indent + 1, F, S);
-      if (colour) put_str(colour, F, S, flags & JV_PRINT_ISATTY);
+      if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     }
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S, flags & JV_PRINT_ISATTY);
       put_indent(indent, flags, F, S, flags & JV_PRINT_ISATTY);
     }
-    if (colour) put_str(colour, F, S, flags & JV_PRINT_ISATTY);
+    if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     put_char('}', F, S, flags & JV_PRINT_ISATTY);
     if (flags & JV_PRINT_REFCOUNT)
       put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
   }
   }
   jv_free(x);
-  if (colour) {
+  if (color) {
     put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
   }
 }
@@ -317,7 +317,7 @@ void jv_dump(jv x, int flags) {
 /* This one is nice for use in debuggers */
 void jv_show(jv x, int flags) {
   if (flags == -1)
-    flags = JV_PRINT_PRETTY | JV_PRINT_COLOUR | JV_PRINT_INDENT_FLAGS(2);
+    flags = JV_PRINT_PRETTY | JV_PRINT_COLOR | JV_PRINT_INDENT_FLAGS(2);
   jv_dumpf(jv_copy(x), stderr, flags | JV_PRINT_INVALID);
   fflush(stderr);
 }

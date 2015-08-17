@@ -107,7 +107,7 @@ sections:
         will result in more compact output by instead putting each
         JSON object on a single line.
 
-      * `--colour-output` / `-C` and `--monochrome-output` / `-M`:
+      * `--color-output` / `-C` and `--monochrome-output` / `-M`:
 
         By default, jq outputs colored JSON if writing to a
         terminal. You can force it to produce color even if writing to

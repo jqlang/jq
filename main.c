@@ -104,8 +104,8 @@ enum {
   PROVIDE_NULL          = 4,
   RAW_OUTPUT            = 8,
   ASCII_OUTPUT          = 32,
-  COLOUR_OUTPUT         = 64,
-  NO_COLOUR_OUTPUT      = 128,
+  COLOR_OUTPUT          = 64,
+  NO_COLOR_OUTPUT       = 128,
   SORTED_OUTPUT         = 256,
   FROM_FILE             = 512,
   RAW_NO_LF             = 1024,
@@ -256,11 +256,11 @@ int main(int argc, char* argv[]) {
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'C', "color-output", &short_opts)) {
-        options |= COLOUR_OUTPUT;
+        options |= COLOR_OUTPUT;
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'M', "monochrome-output", &short_opts)) {
-        options |= NO_COLOUR_OUTPUT;
+        options |= NO_COLOR_OUTPUT;
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'a', "ascii-output", &short_opts)) {
@@ -426,15 +426,15 @@ int main(int argc, char* argv[]) {
   if (isatty(fileno(stdout))) {
     dumpopts |= JV_PRINT_ISATTY;
 #ifndef WIN32
-  /* Disable colour by default on Windows builds as Windows
+  /* Disable color by default on Windows builds as Windows
      terminals tend not to display it correctly */
-    dumpopts |= JV_PRINT_COLOUR;
+    dumpopts |= JV_PRINT_COLOR;
 #endif
   }
   if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
   if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
-  if (options & COLOUR_OUTPUT) dumpopts |= JV_PRINT_COLOUR;
-  if (options & NO_COLOUR_OUTPUT) dumpopts &= ~JV_PRINT_COLOUR;
+  if (options & COLOR_OUTPUT) dumpopts |= JV_PRINT_COLOR;
+  if (options & NO_COLOR_OUTPUT) dumpopts &= ~JV_PRINT_COLOR;
 
   if (jv_get_kind(lib_search_paths) == JV_KIND_NULL) {
     // Default search path list
