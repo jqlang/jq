@@ -770,6 +770,36 @@ sections:
             input: '["foo", "bar", "baz"]'
             output: ['["foo"]']
 
+      - title: "`gepath(PATHS)`"
+        body: |
+
+          The builtin function `getpath` outputs the values in `.` found
+          at each path in `PATHS`.
+
+        examples:
+          - program: 'getpath(["a","b"])'
+            input: 'null'
+            output: ['null']
+          - program: '[getpath(["a","b"], ["a","c"])]'
+            input: '{"a":{"b":0, "c":1}}'
+            output: ['[0, 1]']
+
+      - title: "`sepath(PATHS; VALUE)`"
+        body: |
+
+          The builtin function `setpath` sets the `PATHS` in `.` to `VALUE`.
+
+        examples:
+          - program: 'setpath(["a","b"]; 1)'
+            input: 'null'
+            output: ['{"a": {"b": 1}}']
+          - program: 'setpath(["a","b"]; 1)'
+            input: '{"a":{"b":0}}'
+            output: ['{"a": {"b": 1}}']
+          - program: 'setpath([0,"a"]; 1)'
+            input: 'null'
+            output: ['[{"a":1}]']
+
       - title: "`to_entries`, `from_entries`, `with_entries`"
         body: |
 
