@@ -770,7 +770,7 @@ sections:
             input: '["foo", "bar", "baz"]'
             output: ['["foo"]']
 
-      - title: "`gepath(PATHS)`"
+      - title: "`getpath(PATHS)`"
         body: |
 
           The builtin function `getpath` outputs the values in `.` found
@@ -784,7 +784,7 @@ sections:
             input: '{"a":{"b":0, "c":1}}'
             output: ['[0, 1]']
 
-      - title: "`sepath(PATHS; VALUE)`"
+      - title: "`setpath(PATHS; VALUE)`"
         body: |
 
           The builtin function `setpath` sets the `PATHS` in `.` to `VALUE`.
