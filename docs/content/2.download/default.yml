@@ -63,6 +63,11 @@ body:
          or
          [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.3/jq-osx-x86).
 
+      ### FreeBSD
+
+         * Use [FreshPorts](https://www.freshports.org/textproc/jq/) to install
+           jq 1.4 with `pkg install jq`.
+
       ### Solaris
 
        * `pkgutil -i jq` in [OpenCSW](https://www.opencsw.org/p/jq) for Solaris
