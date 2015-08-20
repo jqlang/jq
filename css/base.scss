@@ -103,13 +103,6 @@ h3 code {
     margin-bottom: 20px;
 }
 
-@media print {
-    .manual-example {
-        display: block !important;
-        height: auto !important;
-    }
-}
-
 .manual-example table {
     border-top: 1px solid #E5E5E5;
     td {
@@ -122,6 +115,19 @@ h3 code {
     th {
         text-align: right;
         padding-right: 10px;
+    }
+}
+
+@media print {
+    #navcolumn {
+        display: none !important;
+    }
+    .manual-example {
+        display: block !important;
+        height: auto !important;
+    }
+    .jqplay-btn {
+        display: none !important;
     }
 }
 
