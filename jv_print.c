@@ -115,10 +115,10 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
     }
     if (unicode_escape) {
       if (c <= 0xffff) {
-        sprintf(buf, "\\u%04x", c);
+        snprintf(buf, sizeof(buf), "\\u%04x", c);
       } else {
         c -= 0x10000;
-        sprintf(buf, "\\u%04x\\u%04x",
+        snprintf(buf, sizeof(buf), "\\u%04x\\u%04x",
                 0xD800 | ((c & 0xffc00) >> 10),
                 0xDC00 | (c & 0x003ff));
       }
