@@ -9,7 +9,7 @@ $(function(){
 });
 // add "Run" button to execute examples on jqplay.org
 $(function() {
-  $.each($('table.manual-example'), function(index, value) {
+  $.each($('.manual-example table'), function(index, value) {
     $value = $(value)
     var j = $value.find('tr:nth-child(2) td:first').text();
     var q = $value.find('.jqprogram').text().replace(/^jq /, '').replace(/^'(.+)'$/, '$1');

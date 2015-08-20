@@ -48,9 +48,9 @@
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         {% if entry.examples[1] %}Examples{%else%}Example{%endif%}
                       </a>
-                      <div id="example{{exampleID}}" class="collapse">
+                      <div id="example{{exampleID}}" class="manual-example collapse">
                         {% for example in entry.examples %}
-                          <table class="manual-example">
+                          <table>
                             <tr><th></th><td class="jqprogram">jq '{{example.program | escape}}'</td></tr>
                             <tr><th>Input</th><td>{{example.input | escape}}</td></tr>
                             {% unless example.output[0] %}

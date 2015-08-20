@@ -97,7 +97,14 @@ h3 code {
     margin-bottom: 20px;
 }
 
-.manual-example {
+@media print {
+    .manual-example {
+        display: block !important;
+        height: auto !important;
+    }
+}
+
+.manual-example table {
     border-top: 1px solid #E5E5E5;
     td {
         white-space: pre-wrap;
