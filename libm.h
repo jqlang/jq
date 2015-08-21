@@ -149,12 +149,3 @@ LIBM_DDD(remainder)
 #else
 LIBM_DDD_NO(remainder)
 #endif
-
-#if 0
-#ifdef HAVE_SCALBN
-LIBM_DDI(scalbn)
-#endif
-#ifdef HAVE_LGAMMA_R
-LIBM_DDIP(lgamma_r)
-#endif
-#endif
