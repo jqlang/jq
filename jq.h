@@ -2,7 +2,7 @@
 #define JQ_H
 
 #include <stdio.h>
-#include <jv.h>
+#include "jv.h"
 
 enum {JQ_DEBUG_TRACE = 1};
 
