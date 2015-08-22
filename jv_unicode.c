@@ -59,11 +59,12 @@ int jvp_utf8_is_valid(const char* in, const char* end) {
   return 1;
 }
 
+/* Assumes startchar is the first byte of a valid character sequence */
 int jvp_utf8_decode_length(char startchar) {
-	if ((startchar & 0x80) == 0) return 1;
-	else if ((startchar & 0xC0) == 0xC0) return 2;
-	else if ((startchar & 0xE0) == 0xE0) return 3;
-	else return 4;
+	if ((startchar & 0x80) == 0) return 1;         // 0___ ____
+	else if ((startchar & 0xE0) == 0xC0) return 2; // 110_ ____
+	else if ((startchar & 0xF0) == 0xE0) return 3; // 1110 ____
+	else return 4;                                 // 1111 ____
 }
 
 int jvp_utf8_encode_length(int codepoint) {
