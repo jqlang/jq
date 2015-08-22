@@ -145,9 +145,6 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
         docs/Gemfile docs/Gemfile.lock docs/Rakefile docs/README.md     \
         docs/default_manpage.md jq.1.default
 
-# setup is only used by distribution developers, not package developers.
-# Still, as a matter of allowing patching, its not a bad idea to distribute
-# the developer setup script in the tarball.
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec lexer.c lexer.h parser.c parser.h         \
         scripts/version tests/jq.test tests/modules/.jq                 \
