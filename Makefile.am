@@ -1,18 +1,18 @@
 
 ### C source files to be built and distributed.
 
-LIBJQ_INCS = jq_parser.h builtin.h bytecode.h compile.h exec_stack.h	\
-   libm.h jv_alloc.h jv_dtoa.h jv_unicode.h locfile.h		 	\
-   opcode_list.h parser.y jv_utf8_tables.h lexer.l util.h linker.h
+LIBJQ_INCS = jq_parser.h builtin.h bytecode.h compile.h exec_stack.h    \
+        libm.h jv_alloc.h jv_dtoa.h jv_unicode.h locfile.h              \
+        opcode_list.h parser.y jv_utf8_tables.h lexer.l util.h linker.h
 
-LIBJQ_SRC = locfile.c bytecode.c compile.c execute.c builtin.c jv.c	\
-  jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_file.c	\
-  jv_alloc.c jq_test.c util.c linker.c ${LIBJQ_INCS}
+LIBJQ_SRC = locfile.c bytecode.c compile.c execute.c builtin.c jv.c     \
+        jv_parse.c jv_print.c jv_dtoa.c jv_unicode.c jv_aux.c jv_file.c \
+        jv_alloc.c jq_test.c util.c linker.c ${LIBJQ_INCS}
 
 ### C build options
 
-AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers	\
-  -Wno-unused-parameter -Wno-unused-function
+AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers               \
+        -Wno-unused-parameter -Wno-unused-function
 
 ACLOCAL_AMFLAGS = -I config/m4
 
@@ -141,27 +141,27 @@ install-binaries: $(BUILT_SOURCES)
 # Ensure "make dist" fails when we can't build the real manpage
 dist-hook: real_docs
 
-DOC_FILES = docs/content docs/public docs/templates docs/site.yml	\
-            docs/Gemfile docs/Gemfile.lock docs/Rakefile docs/README.md \
-            docs/default_manpage.md jq.1.default
+DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
+        docs/Gemfile docs/Gemfile.lock docs/Rakefile docs/README.md     \
+        docs/default_manpage.md jq.1.default
 
 # setup is only used by distribution developers, not package developers.
 # Still, as a matter of allowing patching, its not a bad idea to distribute
 # the developer setup script in the tarball.
-EXTRA_DIST = $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER) jq.spec		\
-	$(DOC_FILES) scripts/version parser.h parser.c lexer.h		\
-	lexer.c tests/onig.supp tests/torture/input0.json		\
-	tests/modules/.jq tests/modules/a.jq tests/modules/b/b.jq	\
-	tests/modules/c/c.jq tests/modules/c/d.jq			\
-	tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq		\
-	tests/setup tests/jq.test tests/onig.test			\
-	tests/modules/data.json						\
-	tests/modules/syntaxerror/syntaxerror.jq			\
-	tests/modules/test_bind_order.jq				\
-	tests/modules/test_bind_order0.jq				\
-	tests/modules/test_bind_order1.jq				\
-	tests/modules/test_bind_order2.jq				\
-	jq.1.prebuilt
+EXTRA_DIST = $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER) jq.spec          \
+        $(DOC_FILES) scripts/version parser.h parser.c lexer.h          \
+        lexer.c tests/onig.supp tests/torture/input0.json               \
+        tests/modules/.jq tests/modules/a.jq tests/modules/b/b.jq       \
+        tests/modules/c/c.jq tests/modules/c/d.jq                       \
+        tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq           \
+        tests/setup tests/jq.test tests/onig.test                       \
+        tests/modules/data.json                                         \
+        tests/modules/syntaxerror/syntaxerror.jq                        \
+        tests/modules/test_bind_order.jq                                \
+        tests/modules/test_bind_order0.jq                               \
+        tests/modules/test_bind_order1.jq                               \
+        tests/modules/test_bind_order2.jq                               \
+        jq.1.prebuilt
 
 
 # README.md is expected in Github projects, good stuff in it, so we'll
