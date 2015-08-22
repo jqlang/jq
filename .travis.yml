@@ -18,7 +18,7 @@ addons:
             - valgrind
 
 before_install:
-    - rm lexer.h lexer.c parser.h parser.c
+    - rm src/{lexer,parser}.{c,h}
 
 install:
     - bundle install --gemfile=docs/Gemfile
@@ -41,8 +41,9 @@ script:
 after_script:
     - |
         if [ -n "$COVERAGE" ]; then
-            rm -rf .libs usr # don't care about coverage for libjq and bison
-            coveralls -e lexer.c -e parser.c -e jv_dtoa.c --gcov-options '\-lp'
+            rm -rf src/.libs usr # don't care about coverage for libjq and bison
+            coveralls --gcov-options '\-lp' \
+                -e src/lexer.c -e src/parser.c -e src/jv_dtoa.c
         fi
 
 after_failure:

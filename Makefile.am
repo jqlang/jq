@@ -1,13 +1,17 @@
 
 ### C source files to be built and distributed.
 
-LIBJQ_INCS = builtin.h bytecode.h compile.h exec_stack.h jq_parser.h    \
-        jv_alloc.h jv_dtoa.h jv_unicode.h jv_utf8_tables.h lexer.l      \
-        libm.h linker.h locfile.h opcode_list.h parser.y util.h
+LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
+        src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
+        src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
+        src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
+        src/util.h
 
-LIBJQ_SRC = builtin.c bytecode.c compile.c execute.c jq_test.c jv.c     \
-        jv_alloc.c jv_aux.c jv_dtoa.c jv_file.c jv_parse.c jv_print.c   \
-        jv_unicode.c linker.c locfile.c util.c ${LIBJQ_INCS}
+LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
+        src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
+        src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
+        src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
+        ${LIBJQ_INCS}
 
 ### C build options
 
@@ -21,10 +25,10 @@ ACLOCAL_AMFLAGS = -I config/m4
 # While there is some autoconf macro support for lex/flex, it doesn't support
 # header file creation so we'll use good old make
 if MAINTAINER_MODE
-BUILT_SOURCES = lexer.h lexer.c parser.h parser.c version.h
-lexer.c: lexer.l
-	$(AM_V_LEX) flex -o lexer.c --header-file=lexer.h $<
-lexer.h: lexer.c
+BUILT_SOURCES = src/lexer.h src/lexer.c src/parser.h src/parser.c src/version.h
+src/lexer.c: src/lexer.l
+	$(AM_V_LEX) flex -o src/lexer.c --header-file=src/lexer.h $<
+src/lexer.h: src/lexer.c
 else
 BUILT_SOURCES =
 .y.c:
@@ -45,7 +49,7 @@ libjq_la_SOURCES = ${LIBJQ_SRC}
 libjq_la_LIBADD = -lm
 libjq_la_LDFLAGS = -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
-include_HEADERS = jv.h jq.h
+include_HEADERS = src/jv.h src/jq.h
 
 ### Running tests under Valgrind
 
@@ -65,7 +69,7 @@ endif
 
 if ENABLE_ERROR_INJECTION
 lib_LTLIBRARIES += libinject_errors.la
-libinject_errors_la_SOURCES = inject_errors.c
+libinject_errors_la_SOURCES = src/inject_errors.c
 libinject_errors_la_LIBADD = -ldl
 libinject_errors_la_LDFLAGS = -module
 endif
@@ -77,13 +81,13 @@ endif
 .FORCE:
 generate_ver = ver="`{ $(srcdir)/scripts/version || echo '$(VERSION)' ; } | sed 's/.*/\#define JQ_VERSION \"&\"/'`"
 .remake-version-h: .FORCE
-	@ $(generate_ver); test "x`cat version.h 2>/dev/null`" = "x$$ver" || touch .remake-version-h
-version.h: .remake-version-h
+	@ $(generate_ver); test "x`cat src/version.h 2>/dev/null`" = "x$$ver" || touch .remake-version-h
+src/version.h: .remake-version-h
 	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
-main.c: version.h
+src/main.c: src/version.h
 
 bin_PROGRAMS = jq
-jq_SOURCES = main.c version.h
+jq_SOURCES = src/main.c src/version.h
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
 
@@ -146,8 +150,8 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
         docs/default_manpage.md jq.1.default
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
-        jq.1.prebuilt jq.spec lexer.c lexer.h parser.c parser.h         \
-        scripts/version tests/jq.test tests/modules/.jq                 \
+        jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
+        src/parser.h scripts/version tests/jq.test tests/modules/.jq    \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
         tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq           \
@@ -185,9 +189,9 @@ if ENABLE_DOCS
 endif
 
 clean-local-gcov:
-	rm -f *.gcno *.gcda *.gcov
+	rm -f src/*.gcno src/*.gcda src/*.gcov
 
 clean-local: clean-local-docs clean-local-gcov
-	rm -f version.h .remake-version-h
+	rm -f src/version.h .remake-version-h
 
 .PHONY: clean-local-docs clean-local-gcov
