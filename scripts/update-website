@@ -17,10 +17,12 @@ cd ..
 # copy to /tmp
 tmpdir=$(mktemp -d -t jq.website.XXXXXXXXXX)
 cp -r docs/output/* "$tmpdir"
+cp .gitignore "$tmpdir"
 
 # copy to gh-pages
 git checkout gh-pages
 cp -r "$tmpdir"/* .
+cp "$tmpdir"/.gitignore .
 
 # clean up
 rm -rf "$tmpdir"
