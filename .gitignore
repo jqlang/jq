@@ -5,6 +5,9 @@
 *.lai
 *.so
 *.so.*
+*.gcda
+*.gcno
+*.gcov
 *~
 .*.sw[a-p]
 tags
