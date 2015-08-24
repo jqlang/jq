@@ -103,33 +103,15 @@ TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
 ### Building the manpage
 
-# If ENABLE_DOCS is not set, just copy jq.1.default to jq.1
-# The real_docs target succeeds (possibly after building jq.1) only if ENABLE_DOCS is set
-# Thus, making "dist" depend on "real_docs" ensures that we never build a tarball with
-# a stub manpage.
-
 man_MANS = jq.1
-.PHONY: real_docs
 if ENABLE_DOCS
 jq.1: $(srcdir)/docs/content/3.manual/manual.yml
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage ) > $@ || { rm -f $@; false; }
 jq.1.prebuilt: jq.1
 	$(AM_V_GEN) cp $^ $@ || { rm -f $@; false; }
-jq.1.default: $(srcdir)/docs/default_manpage.md
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage_default ) > $@ || { rm -f $@; false; }
-real_docs: jq.1 jq.1.prebuilt
-	@if cmp jq.1 $(srcdir)/jq.1.default > /dev/null; then\
-	  rm -f jq.1; $(MAKE) $(AM_MAKEFLAGS) jq.1;\
-	fi
 else
 jq.1: $(srcdir)/jq.1.prebuilt
 	$(AM_V_GEN) cp $^ $@
-real_docs:
-	@echo "Ruby dependencies not found, cannot build manpage." > /dev/stderr
-	@echo "Follow the instructions in docs/README.md to install them" > /dev/stderr
-	@echo "and then rerun ./configure" > /dev/stderr
-	@echo "A pre-built, possibly out-of-date manpage used." > /dev/stderr
-	false
 endif
 
 
@@ -141,9 +123,6 @@ docs/site.yml: configure.ac
 
 install-binaries: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec
-
-# Ensure "make dist" fails when we can't build the real manpage
-dist-hook: real_docs
 
 DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
         docs/Gemfile docs/Gemfile.lock docs/Rakefile docs/README.md     \
