@@ -19,6 +19,7 @@ jq.1
 # Autotools junk
 .libs
 .deps
+.dirstamp
 libtool
 *.log
 stamp-h1

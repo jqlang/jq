@@ -9,7 +9,7 @@ m4_include([m4/ax_prog_bison_version.m4])
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.64])
 AC_CONFIG_AUX_DIR([config])
-AM_INIT_AUTOMAKE([1.11.2 parallel-tests foreign -Wall])
+AM_INIT_AUTOMAKE([1.11.2 subdir-objects parallel-tests foreign -Wall])
 AM_SILENT_RULES([yes])
 AM_PROG_AR
 AM_MAINTAINER_MODE([enable])
