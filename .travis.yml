@@ -52,3 +52,4 @@ after_failure:
 
 notifications:
     email: false
+
