@@ -1,7 +1,10 @@
 jq
 ==
 
-jq is a command-line JSON processor.
+jq is a lightweight and flexible command-line JSON processor.
+
+[![Build Status](https://travis-ci.org/stedolan/jq.svg?branch=master)](https://travis-ci.org/stedolan/jq)
+[![Coverage Status](https://coveralls.io/repos/stedolan/jq/badge.svg?branch=master&service=github)](https://coveralls.io/github/stedolan/jq?branch=master)
 
 If you want to learn to use jq, read the documentation at
 [https://stedolan.github.io/jq](https://stedolan.github.io/jq).  This
