@@ -16,10 +16,12 @@ RUN apt-get update && \
         ruby \
         wget \
         ruby-dev && \
-    wget http://www.geocities.jp/kosako3/oniguruma/archive/onig-5.9.6.tar.gz && \
-    sha512sum onig-5.9.6.tar.gz | grep 4a181ea6f0e1a018bbaf6c87e666dfffd1ef4b8f5dcead07fa0b6564a76174e7e01854173924668433ae74c455dbced6a0e1b43e9066f0499b4a57e855e1a2b2 && \
+    wget https://github.com/kkos/oniguruma/archive/v5.9.6.tar.gz -O onig-5.9.6.tar.gz && \
+    sha512sum onig-5.9.6.tar.gz | grep e58f14849e2b692c79d4a36ca632ee25b4b77eaa19a1298d6ec65e2577dd4dc47eaed3e8ab9a34269d53cee59e5bdf2ab3a43eca2c70bca2667ec5415e2408fb && \
     tar zxvf onig-5.9.6.tar.gz && \
-    (cd onig-5.9.6 && \
+    (cd oniguruma-5.9.6 && \
+        touch NEWS ChangeLog && \
+        autoreconf -i && \
         ./configure --prefix=/usr/local && \
         make && \
         make install ) && \
@@ -32,7 +34,7 @@ RUN apt-get update && \
         make check && \
         make install && \
         make distclean ) && \
-    (cd onig-5.9.6 && \
+    (cd oniguruma-5.9.6 && \
         make uninstall ) && \
     apt-get purge -y \
         build-essential \
@@ -44,7 +46,7 @@ RUN apt-get update && \
         ruby \
         ruby-dev && \
     apt-get autoremove -y && \
-    rm -rf onig-5.9.6 && \
+    rm -rf oniguruma-5.9.6 && \
     rm -rf /var/lib/apt/lists/* /var/lib/gems
 
 ENTRYPOINT ["/usr/local/bin/jq"]

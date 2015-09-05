@@ -12,8 +12,8 @@ NJOBS="-j`sysctl -n hw.ncpu || echo 1`"
 # Get oniguruma
 rm -rf $PWD/build/ios onig-5.9.5
 echo "Downloading oniguruma 5.9.5"
-curl http://www.geocities.jp/kosako3/oniguruma/archive/onig-5.9.5.tar.gz | tar xz
-cd onig-5.9.5
+curl -L https://github.com/kkos/oniguruma/archive/v5.9.6.tar.gz | tar xz
+cd oniguruma-5.9.5
 
 # So, we need to remake the configure scripts so that the arm64 architecture
 # exists in config.sub.  In order to keep autoreconf from failing, create
