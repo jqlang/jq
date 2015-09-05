@@ -50,3 +50,4 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /var/lib/gems
 
 ENTRYPOINT ["/usr/local/bin/jq"]
+CMD []
