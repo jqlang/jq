@@ -47,7 +47,7 @@ void *alloca (size_t);
 
 #ifdef WIN32
 FILE *fopen(const char *fname, const char *mode) {
-  size_t sz = MultiByteToWideChar(CP_UTF8, 0, fname, -1, NULL, 0);
+  size_t sz = sizeof(wchar_t) * MultiByteToWideChar(CP_UTF8, 0, fname, -1, NULL, 0);
   wchar_t *wfname = alloca(sz);
   MultiByteToWideChar(CP_UTF8, 0, fname, -1, wfname, sz);
 
