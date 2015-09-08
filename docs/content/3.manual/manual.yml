@@ -662,6 +662,18 @@ sections:
             input: '[[1,2], "string", {"a":2}, null]'
             output: [2, 6, 1, 0]
 
+
+      - title: "`utf8bytelength`"
+        body: |
+
+          The builtin function `utf8bytelength` outputs the number of
+          bytes used to encode a string in UTF-8.
+
+        examples:
+          - program: 'utf8bytelength'
+            input: '"\u03bc"'
+            output: [2]
+
       - title: "`keys`, `keys_unsorted`"
         body: |
 

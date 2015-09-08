@@ -525,6 +525,15 @@ null
 [[], {}, [1,2], {"a":42}, "asdf", "\u03bc"]
 [0, 0, 2, 1, 4, 1]
 
+utf8bytelength
+"asdf\u03bc"
+6
+
+[.[] | try utf8bytelength catch .]
+[[], {}, [1,2], 55, true, false]
+["array ([]) only strings have UTF-8 byte length","object ({}) only strings have UTF-8 byte length","array ([1,2]) only strings have UTF-8 byte length","number (55) only strings have UTF-8 byte length","boolean (true) only strings have UTF-8 byte length","boolean (false) only strings have UTF-8 byte length"]
+
+
 map(keys)
 [{}, {"abcd":1,"abc":2,"abcde":3}, {"x":1, "z": 3, "y":2}]
 [[], ["abc","abcd","abcde"], ["x","y","z"]]
