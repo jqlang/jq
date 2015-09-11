@@ -367,6 +367,10 @@ static jv f_tostring(jq_state *jq, jv input) {
   }
 }
 
+static jv f_byteslength(jq_state *jq, jv input) {
+  return jv_number(jv_string_length_bytes(f_tostring(jq, input)));
+}
+
 #define CHARS_ALPHANUM "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
 static jv escape_string(jv input, const char* escapings) {
@@ -1273,6 +1277,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_greatereq, "_greatereq", 3},
   {(cfunction_ptr)f_contains, "contains", 2},
   {(cfunction_ptr)f_length, "length", 1},
+  {(cfunction_ptr)f_byteslength, "byteslength", 1},
   {(cfunction_ptr)f_type, "type", 1},
   {(cfunction_ptr)f_isinfinite, "isinfinite", 1},
   {(cfunction_ptr)f_isnan, "isnan", 1},

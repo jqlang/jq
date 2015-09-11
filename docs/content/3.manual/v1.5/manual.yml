@@ -649,7 +649,7 @@ sections:
 
           - The length of a **string** is the number of Unicode
             codepoints it contains (which will be the same as its
-            JSON-encoded length in bytes if it's pure ASCII).
+            `byteslength` if it's pure ASCII).
 
           - The length of an **array** is the number of elements.
 
@@ -661,6 +661,18 @@ sections:
           - program: '.[] | length'
             input: '[[1,2], "string", {"a":2}, null]'
             output: [2, 6, 1, 0]
+
+      - title: "`byteslength`"
+        body: |
+
+          The builtin function `byteslength` gets the number of bytes
+          used to encode a string in UTF8, or the JSON-encoded value
+          of other types.
+
+        examples:
+          - program: '.[] | byteslength'
+            input: '[42, "\u03bc", ["\u03bc"]]'
+            output: [2, 2, 6]
 
       - title: "`keys`, `keys_unsorted`"
         body: |
