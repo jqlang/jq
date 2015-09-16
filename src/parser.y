@@ -811,7 +811,7 @@ String ':' Pattern {
   $$ = gen_object_matcher($2, $5);
 } |
 error ':' Pattern {
-  FAIL(@$, "May need parentheses around object key");
+  FAIL(@$, "May need parentheses around object key expression");
   $$ = $3;
 }
 
@@ -908,7 +908,7 @@ IDENT ':' ExpD {
   $$ = gen_dictpair($2, $5);
   }
 | error ':' ExpD {
-  FAIL(@$, "May need parentheses around object key");
+  FAIL(@$, "May need parentheses around object key expression");
   $$ = $3;
   }
 %%

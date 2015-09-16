@@ -3373,7 +3373,7 @@ yyreduce:
   case 126:
 #line 813 "src/parser.y" /* yacc.c:1646  */
     {
-  FAIL((yyloc), "May need parentheses around object key");
+  FAIL((yyloc), "May need parentheses around object key expression");
   (yyval.blk) = (yyvsp[0].blk);
 }
 #line 3380 "src/parser.c" /* yacc.c:1646  */
@@ -3619,7 +3619,7 @@ yyreduce:
   case 157:
 #line 910 "src/parser.y" /* yacc.c:1646  */
     {
-  FAIL((yyloc), "May need parentheses around object key");
+  FAIL((yyloc), "May need parentheses around object key expression");
   (yyval.blk) = (yyvsp[0].blk);
   }
 #line 3626 "src/parser.c" /* yacc.c:1646  */
