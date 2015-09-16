@@ -809,6 +809,10 @@ String ':' Pattern {
 } |
 '(' Exp ')' ':' Pattern {
   $$ = gen_object_matcher($2, $5);
+} |
+error ':' Pattern {
+  FAIL(@$, "May need parentheses around object key");
+  $$ = $3;
 }
 
 Keyword:
@@ -903,7 +907,10 @@ IDENT ':' ExpD {
 | '(' Exp ')' ':' ExpD {
   $$ = gen_dictpair($2, $5);
   }
-| '(' error ')' ':' ExpD { $$ = $5; }
+| error ':' ExpD {
+  FAIL(@$, "May need parentheses around object key");
+  $$ = $3;
+  }
 %%
 
 int jq_parse(struct locfile* locations, block* answer) {
