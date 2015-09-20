@@ -24,6 +24,9 @@ body:
          [Fedora](http://pkgs.fedoraproject.org/cgit/jq.git/) repository.
          Install using `sudo yum install jq`.
 
+       * jq 1.4 is in the official [openSUSE](https://software.opensuse.org/package/jq)
+         repository. Install using `sudo zypper install jq`.
+
        * For Arch users, a PKGBUILD is in the
          [AUR](https://aur.archlinux.org/packages/jq-git/).
          Refer to the
