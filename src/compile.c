@@ -595,6 +595,10 @@ block gen_const_object(block expr) {
       is_const = 0;
       break;
     }
+    if (jv_get_kind(k) != JV_KIND_STRING) {
+      is_const = 0;
+      break;
+    }
     o = jv_object_set(o, k, v);
     k = jv_null();
     v = jv_null();

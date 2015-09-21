@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_PARSER_H_INCLUDED
-# define YY_YY_PARSER_H_INCLUDED
+#ifndef YY_YY_SRC_PARSER_H_INCLUDED
+# define YY_YY_SRC_PARSER_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 11 "parser.y" /* yacc.c:1909  */
+#line 11 "src/parser.y" /* yacc.c:1909  */
 
 #include "locfile.h"
 struct lexer_param;
@@ -57,7 +57,7 @@ struct lexer_param;
     }                                           \
   } while (0)
 
-#line 61 "parser.h" /* yacc.c:1909  */
+#line 61 "src/parser.h" /* yacc.c:1909  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -161,12 +161,12 @@ struct lexer_param;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 31 "parser.y" /* yacc.c:1909  */
+#line 31 "src/parser.y" /* yacc.c:1909  */
 
   jv literal;
   block blk;
 
-#line 170 "parser.h" /* yacc.c:1909  */
+#line 170 "src/parser.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -190,4 +190,4 @@ struct YYLTYPE
 
 int yyparse (block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr);
 
-#endif /* !YY_YY_PARSER_H_INCLUDED  */
+#endif /* !YY_YY_SRC_PARSER_H_INCLUDED  */

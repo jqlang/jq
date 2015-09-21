@@ -164,6 +164,18 @@ int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors,
   return tok;
 }
 
+/* Returns string message if the block is a constant that is not valid as an
+ * object key. */
+static jv check_object_key(block k) {
+  if (block_is_const(k) && block_const_kind(k) != JV_KIND_STRING) {
+    char errbuf[15];
+    return jv_string_fmt("Cannot use %s (%s) as object key",
+        jv_kind_name(block_const_kind(k)),
+        jv_dump_string_trunc(jv_copy(block_const(k)), errbuf, sizeof(errbuf)));
+  }
+  return jv_invalid();
+}
+
 static block gen_dictpair(block k, block v) {
   return BLOCK(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
 }
@@ -808,6 +820,11 @@ String ':' Pattern {
   $$ = gen_object_matcher($1, $3);
 } |
 '(' Exp ')' ':' Pattern {
+  jv msg = check_object_key($2);
+  if (jv_is_valid(msg)) {
+    FAIL(@$, jv_string_value(msg));
+  }
+  jv_free(msg);
   $$ = gen_object_matcher($2, $5);
 } |
 error ':' Pattern {
@@ -905,6 +922,11 @@ IDENT ':' ExpD {
                     gen_index(gen_noop(), gen_const($1)));
   }
 | '(' Exp ')' ':' ExpD {
+  jv msg = check_object_key($2);
+  if (jv_is_valid(msg)) {
+    FAIL(@$, jv_string_value(msg));
+  }
+  jv_free(msg);
   $$ = gen_dictpair($2, $5);
   }
 | error ':' ExpD {

@@ -105,6 +105,14 @@ null
 {"a":1, "b":2, "c":3, "a$2":4}
 {"a":1, "b":2, "a$2":4}
 
+%%FAIL
+{(0):1}
+jq: error: Cannot use number (0) as object key at <top-level>, line 1:
+
+%%FAIL
+{non_const:., (0):1}
+jq: error: Cannot use number (0) as object key at <top-level>, line 1:
+
 #
 # Field access, piping
 #
