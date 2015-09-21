@@ -214,7 +214,7 @@ jv jv_has(jv t, jv k) {
 }
 
 // assumes keys is a sorted array
-jv jv_dels(jv t, jv keys) {
+static jv jv_dels(jv t, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_is_valid(t));
 
@@ -222,13 +222,17 @@ jv jv_dels(jv t, jv keys) {
     // no change
   } else if (jv_get_kind(t) == JV_KIND_ARRAY) {
     // extract slices, they must be handled differently
-    jv orig_keys = keys;
-    keys = jv_array();
+    jv neg_keys = jv_array();
+    jv nonneg_keys = jv_array();
     jv new_array = jv_array();
     jv starts = jv_array(), ends = jv_array();
-    jv_array_foreach(orig_keys, i, key) {
+    jv_array_foreach(keys, i, key) {
       if (jv_get_kind(key) == JV_KIND_NUMBER) {
-        keys = jv_array_append(keys, key);
+        if (jv_number_value(key) < 0) {
+          neg_keys = jv_array_append(neg_keys, key);
+        } else {
+          nonneg_keys = jv_array_append(nonneg_keys, key);
+        }
       } else if (jv_get_kind(key) == JV_KIND_OBJECT) {
         int start, end;
         if (parse_slice(jv_copy(t), key, &start, &end)) {
@@ -248,18 +252,30 @@ jv jv_dels(jv t, jv keys) {
       }
     }
 
-    int kidx = 0;
+    int neg_idx = 0;
+    int nonneg_idx = 0;
+    int len = jv_array_length(jv_copy(t));
     jv_array_foreach(t, i, elem) {
       int del = 0;
-      while (kidx < jv_array_length(jv_copy(keys))) {
-        int delidx = (int)jv_number_value(jv_array_get(jv_copy(keys), kidx));
+      while (neg_idx < jv_array_length(jv_copy(neg_keys))) {
+        int delidx = len + (int)jv_number_value(jv_array_get(jv_copy(neg_keys), neg_idx));
         if (i == delidx) {
           del = 1;
         }
         if (i < delidx) {
           break;
         }
-        kidx++;
+        neg_idx++;
+      }
+      while (nonneg_idx < jv_array_length(jv_copy(nonneg_keys))) {
+        int delidx = (int)jv_number_value(jv_array_get(jv_copy(nonneg_keys), nonneg_idx));
+        if (i == delidx) {
+          del = 1;
+        }
+        if (i < delidx) {
+          break;
+        }
+        nonneg_idx++;
       }
       for (int sidx=0; !del && sidx<jv_array_length(jv_copy(starts)); sidx++) {
         if ((int)jv_number_value(jv_array_get(jv_copy(starts), sidx)) <= i &&
@@ -273,9 +289,10 @@ jv jv_dels(jv t, jv keys) {
         jv_free(elem);
     }
   arr_out:
+    jv_free(neg_keys);
+    jv_free(nonneg_keys);
     jv_free(starts);
     jv_free(ends);
-    jv_free(orig_keys);
     jv_free(t);
     t = new_array;
   } else if (jv_get_kind(t) == JV_KIND_OBJECT) {
