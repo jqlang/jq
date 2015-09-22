@@ -109,9 +109,20 @@ printf '1' | $JQ -ce --seq . > $d/out 2>&1
 cmp $d/out $d/expected
 
 cat > $d/expected <<EOF
+jq: error (at <stdin>:1): Unfinished abandoned text at EOF at line 2, column 0
 EOF
-printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out
+if printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 2
+fi
 cmp $d/out $d/expected
+
+# Regression test for #951
+printf '"a\n' > $d/input
+if $VALGRIND $Q $JQ -e . $d/input; then
+  printf 'Issue #951 is back?\n' 1>&2
+  exit 2
+fi
 
 ## Test streaming parser
 
