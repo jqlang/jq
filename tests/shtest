@@ -114,8 +114,6 @@ EOF
 if printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out; then
   printf 'Error expected but jq exited successfully\n' 1>&2
   exit 2
-else
-  true
 fi
 cmp $d/out $d/expected
 
@@ -124,8 +122,6 @@ printf '"a\n' > $d/input
 if $VALGRIND $Q $JQ -e . $d/input; then
   printf 'Issue #951 is back?\n' 1>&2
   exit 2
-else
-  true
 fi
 
 ## Test streaming parser
