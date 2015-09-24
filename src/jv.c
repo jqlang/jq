@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <math.h>
 
 #include "jv_alloc.h"
 #include "jv.h"
@@ -1302,7 +1303,7 @@ int jv_identical(jv a, jv b) {
       r = a.u.ptr == b.u.ptr;
       break;
     case JV_KIND_NUMBER:
-      r = a.u.number == b.u.number;
+      r = a.u.number == b.u.number || (isnan(a.u.number) && isnan(b.u.number));
       break;
     default:
       r = 1;

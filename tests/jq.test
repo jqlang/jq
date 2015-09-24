@@ -851,6 +851,10 @@ try (def x: reverse; x=10) catch .
 [0,1,2]
 "Invalid path expression with result [2,1,0]"
 
+.[] = 1
+[1,null,Infinity,-Infinity,NaN,-NaN]
+[1,1,1,1,1,1]
+
 #
 # Conditionals
 #
