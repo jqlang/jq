@@ -101,11 +101,22 @@ body:
          or
          [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.3/jq-win32.exe).
 
-      ### Checksums
+      ### Checksums and signatures
 
-      See
-      [sha1sum.txt](https://raw.githubusercontent.com/stedolan/jq/master/sha1sum.txt)
-      for SHA-1 checksums of the binaries linked above.
+      SHA-256 checksums are provided for all release and pre-release binaries.
+      They can be found under
+      [sig/v1.x/sha256sum.txt](https://github.com/stedolan/jq/tree/master/sig).
+      The checksums for jq 1.5 are in
+      [sig/v1.5/sha256sum.txt](https://raw.githubusercontent.com/stedolan/jq/master/sig/v1.5/sha256sum.txt).
+
+      Additionally, all binaries are signed by the
+      [jq Package Signing Key](https://raw.githubusercontent.com/stedolan/jq/master/sig/jq-release.key).
+      The signatures can be found under
+      [sig/v1.x/\*.asc](https://github.com/stedolan/jq/tree/master/sig).
+      The signatures for jq 1.5 are in
+      [sig/v1.5/\*.asc](https://github.com/stedolan/jq/tree/master/sig/v1.5).
+      You can use [GnuPG](https://gnupg.org/) to verify a signature by downloading
+      the signature and running `gpg --verify signature.asc`.
 
       ### From source on Linux, OS X, Cygwin, and other POSIX-like operating systems
 
