@@ -1,0 +1,10 @@
+-----------------------------
+pub   2048R/0C3EFD8E 2011-05-18 [expired: 2014-05-17]
+      Key fingerprint = 5A5B 45C3 DE30 835C 89E0  FD47 31D3 919D 0C3E FD8E
+uid                  Nicolas Williams <nico@cryptonector.com>
+
+pub   2048R/D15684DB 2015-10-12 [expires: 2017-10-11]
+      Key fingerprint = 7F6C 7BD3 0412 AFD5 8C1A  5007 EB26 A4F8 D156 84DB
+uid                  Nicolas Williams <nico@cryptonector.com>
+sub   2048R/9C9CCD6A 2015-10-12 [expires: 2017-10-11]
+
