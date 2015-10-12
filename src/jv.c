@@ -1303,7 +1303,7 @@ int jv_identical(jv a, jv b) {
       r = a.u.ptr == b.u.ptr;
       break;
     case JV_KIND_NUMBER:
-      r = a.u.number == b.u.number || (isnan(a.u.number) && isnan(b.u.number));
+      r = memcmp(&a.u.number, &b.u.number, sizeof(a.u.number)) == 0;
       break;
     default:
       r = 1;
