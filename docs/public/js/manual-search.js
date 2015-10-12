@@ -1,10 +1,27 @@
-var section_names = $.map(section_map, function(v,k){return k});
-$(function(){
-  $('#searchbox').typeahead({source: section_names})
-  $('#searchbox').change(function() {
-    if ($(this).val() in section_map) {
-      location.hash = '#' + section_map[$(this).val()];
+var section_names = function(q, cb) {
+  var matches = [];
+  q = q.toLowerCase();
+  $.each(section_map, function(k, v) {
+    if (k.toLowerCase().indexOf(q) != -1) {
+      matches.push(k);
     }
+  });
+  cb(matches);
+}
+var go_to_section = function(section) {
+  if (section in section_map) {
+    location.hash = '#' + section_map[section];
+  }
+}
+$(function(){
+  $('#searchbox').typeahead(
+    {hint: false, highlight: true, minLength: 1},
+    {name: "contents", source: section_names, limit: 6}
+  ).on('typeahead:selected', function(e, data) {
+    go_to_section($(this).val());
+  });
+  $('#searchbox').change(function() {
+    go_to_section($(this).val());
   });
 });
 // add "Run" button to execute examples on jqplay.org
