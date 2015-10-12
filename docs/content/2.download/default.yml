@@ -16,7 +16,7 @@ body:
 
       ### Linux
 
-       * jq 1.4 is in the official [Debian](https://packages.debian.org/jq) and
+       * jq 1.5 is in the official [Debian](https://packages.debian.org/jq) and
          [Ubuntu](http://packages.ubuntu.com/jq) repositories. Install using
          `sudo apt-get install jq`.
 
