@@ -6,6 +6,10 @@ var section_names = function(q, cb) {
       matches.push(k);
     }
   });
+  matches.sort(function(a, b) {
+    // shortest to longest
+    return a.length - b.length;
+  });
   cb(matches);
 }
 var go_to_section = function(section) {
