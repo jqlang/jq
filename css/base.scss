@@ -72,13 +72,23 @@ body {
 
 /* manual.liquid ******************************************/
 
-section {
-    padding-top: 24px;
-}
-
 h3 code {
     border: 0;
     font-size: 20px;
+}
+
+section {
+    /* Adjust spacing so that anchors are not hidden behind nav bar */
+    position: relative;
+    top: -50px;
+    padding-top: 50px;
+    margin-bottom: -50px;
+    h2 {
+        margin-top: 50px;
+    }
+    h3 {
+        margin-top: 32px;
+    }
 }
 
 @media(max-width: 991px){
@@ -141,5 +151,40 @@ footer {
     text-align: center;
     p {
         margin: 8px 0;
+    }
+}
+
+/* typeahead **********************************************/
+
+.twitter-typeahead {
+    width: 100%;
+}
+
+.tt-menu {
+    width: 100%;
+    padding: 8px 0;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    -webkit-border-radius: 8px;
+       -moz-border-radius: 8px;
+            border-radius: 8px;
+    -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+       -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+            box-shadow: 0 5px 10px rgba(0,0,0,.2);
+}
+
+.tt-suggestion {
+    padding: 3px 20px;
+    &:hover {
+        cursor: pointer;
+        color: #fff;
+        background-color: #446e9b;
+    }
+    &.tt-cursor {
+        color: #fff;
+        background-color: #446e9b;
+    }
+    p {
+        margin: 0;
     }
 }
