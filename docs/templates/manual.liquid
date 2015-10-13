@@ -87,9 +87,9 @@
       var section_map = {
         {% for section in sections %}
           {% for entry in section.entries %}
-            {{entry.title | json}} : {{entry.title | entry_id | json}},
+            {{entry.title | search_id | json}} : {{entry.title | entry_id | json}},
           {% endfor %}
-          {{section.title | json}} : {{section.title | section_id | json}}
+          {{section.title | search_id | json}} : {{section.title | section_id | json}}
           {% unless forloop.last %},{% endunless %}
         {% endfor %}
       };
