@@ -187,7 +187,7 @@ simpler:</p>
               <h2>Basic filters</h2>
               
               
-                <section id="`.`">
+                <section id=".">
                   <h3>
                     
 <code>.</code>
@@ -228,7 +228,7 @@ simpler:</p>
                   
                 </section>
               
-                <section id="`.foo`">
+                <section id=".foo">
                   <h3>
                     
 <code>.foo</code>
@@ -281,7 +281,7 @@ simpler:</p>
                   
                 </section>
               
-                <section id="`.[foo]`,`.[2]`,`.[10:15]`">
+                <section id=".[foo],.[2],.[10:15]">
                   <h3>
                     
 <code>.[foo]</code>, <code>.[2]</code>, <code>.[10:15]</code>
@@ -378,7 +378,7 @@ simpler:</p>
                   
                 </section>
               
-                <section id="`.[]`">
+                <section id=".[]">
                   <h3>
                     
 <code>.[]</code>
@@ -459,7 +459,7 @@ simpler:</p>
                   
                 </section>
               
-                <section id="`,`">
+                <section id=",">
                   <h3>
                     
 <code>,</code>
@@ -554,7 +554,7 @@ simpler:</p>
                   
                 </section>
               
-                <section id="`|`">
+                <section id="|">
                   <h3>
                     
 <code>|</code>
@@ -612,7 +612,7 @@ simpler:</p>
 <p>Booleans, null, strings and numbers are written the same way as in javascript. Just like everything else in jq, these simple values take an input and produce an output - <code>42</code> is a valid jq expression that takes an input, ignores it, and returns 42 instead.</p>
 
               
-                <section id="Arrayconstruction-`[]`">
+                <section id="Arrayconstruction-[]">
                   <h3>
                     
 Array construction - <code>[]</code>
@@ -655,7 +655,7 @@ Array construction - <code>[]</code>
                   
                 </section>
               
-                <section id="Objects-`{}`">
+                <section id="Objects-{}">
                   <h3>
                     
 Objects - <code>{}</code>
@@ -754,7 +754,7 @@ Objects - <code>{}</code>
 <p>Some jq operator (for instance, <code>+</code>) do different things depending on the type of their arguments (arrays, numbers, etc.). However, jq never does implicit type conversions. If you try to add a string to an object you’ll get an error message and no result.</p>
 
               
-                <section id="Addition-`+`">
+                <section id="Addition-+">
                   <h3>
                     
 Addition - <code>+</code>
@@ -869,7 +869,7 @@ Addition - <code>+</code>
                   
                 </section>
               
-                <section id="Subtraction-`-`">
+                <section id="Subtraction--">
                   <h3>
                     
 Subtraction - <code>-</code>
@@ -922,7 +922,7 @@ Subtraction - <code>-</code>
                   
                 </section>
               
-                <section id="Multiplication,division-`*`and`/`">
+                <section id="Multiplication,division-*and/">
                   <h3>
                     
 Multiplication, division - <code>*</code> and <code>/</code>
@@ -961,7 +961,7 @@ Multiplication, division - <code>*</code> and <code>/</code>
                   
                 </section>
               
-                <section id="`length`">
+                <section id="length">
                   <h3>
                     
 <code>length</code>
@@ -1039,7 +1039,7 @@ Multiplication, division - <code>*</code> and <code>/</code>
                   
                 </section>
               
-                <section id="`keys`">
+                <section id="keys">
                   <h3>
                     
 <code>keys</code>
@@ -1096,7 +1096,7 @@ Multiplication, division - <code>*</code> and <code>/</code>
                   
                 </section>
               
-                <section id="`has`">
+                <section id="has">
                   <h3>
                     
 <code>has</code>
@@ -1151,7 +1151,7 @@ Multiplication, division - <code>*</code> and <code>/</code>
                   
                 </section>
               
-                <section id="`to_entries`,`from_entries`,`with_entries`">
+                <section id="to_entries,from_entries,with_entries">
                   <h3>
                     
 <code>to_entries</code>, <code>from_entries</code>, <code>with_entries</code>
@@ -1221,7 +1221,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`select`">
+                <section id="select">
                   <h3>
                     
 <code>select</code>
@@ -1262,7 +1262,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`empty`">
+                <section id="empty">
                   <h3>
                     
 <code>empty</code>
@@ -1324,7 +1324,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`map(x)`">
+                <section id="map(x)">
                   <h3>
                     
 <code>map(x)</code>
@@ -1365,7 +1365,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`add`">
+                <section id="add">
                   <h3>
                     
 <code>add</code>
@@ -1434,7 +1434,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`range`">
+                <section id="range">
                   <h3>
                     
 <code>range</code>
@@ -1494,7 +1494,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`tonumber`">
+                <section id="tonumber">
                   <h3>
                     
 <code>tonumber</code>
@@ -1540,7 +1540,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`tostring`">
+                <section id="tostring">
                   <h3>
                     
 <code>tostring</code>
@@ -1593,7 +1593,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`type`">
+                <section id="type">
                   <h3>
                     
 <code>type</code>
@@ -1632,7 +1632,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`sort,sort_by`">
+                <section id="sort,sort_by">
                   <h3>
                     
 <code>sort, sort_by</code>
@@ -1705,7 +1705,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`group_by`">
+                <section id="group_by">
                   <h3>
                     
 <code>group_by</code>
@@ -1746,7 +1746,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`min`,`max`,`min_by`,`max_by`">
+                <section id="min,max,min_by,max_by">
                   <h3>
                     
 <code>min</code>, <code>max</code>, <code>min_by</code>, <code>max_by</code>
@@ -1799,7 +1799,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`unique`">
+                <section id="unique">
                   <h3>
                     
 <code>unique</code>
@@ -1838,7 +1838,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`reverse`">
+                <section id="reverse">
                   <h3>
                     
 <code>reverse</code>
@@ -1877,7 +1877,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`contains`">
+                <section id="contains">
                   <h3>
                     
 <code>contains</code>
@@ -1972,7 +1972,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="`recurse`">
+                <section id="recurse">
                   <h3>
                     
 <code>recurse</code>
@@ -2044,7 +2044,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="Stringinterpolation-`\(foo)`">
+                <section id="Stringinterpolation-\(foo)">
                   <h3>
                     
 String interpolation - <code>\(foo)</code>
@@ -2196,7 +2196,7 @@ Format strings and escaping
               <h2>Conditionals and Comparisons</h2>
               
               
-                <section id="`==`,`!=`">
+                <section id="==,!=">
                   <h3>
                     
 <code>==</code>, <code>!=</code>
@@ -2310,7 +2310,7 @@ end'</td></tr>
                   
                 </section>
               
-                <section id="`>,>=,<=,<`">
+                <section id=">,>=,<=,<">
                   <h3>
                     
 <code>&gt;, &gt;=, &lt;=, &lt;</code>
@@ -2467,7 +2467,7 @@ not</code>.</p>
                   
                 </section>
               
-                <section id="Alternativeoperator-`//`">
+                <section id="Alternativeoperator-//">
                   <h3>
                     
 Alternative operator - <code>//</code>
@@ -2735,7 +2735,7 @@ Reduce
 <p>If an object has two fields which are arrays, <code>.foo</code> and <code>.bar</code>, and you append something to <code>.foo</code>, then <code>.bar</code> will not get bigger. Even if you’ve just set <code>.bar = .foo</code>. If you’re used to programming in languages like Python, Java, Ruby, Javascript, etc. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance, it doesn’t actually do that, but that’s the general idea).</p>
 
               
-                <section id="`=`">
+                <section id="=">
                   <h3>
                     
 <code>=</code>
@@ -2755,7 +2755,7 @@ Reduce
                   
                 </section>
               
-                <section id="`|=`">
+                <section id="|=">
                   <h3>
                     
 <code>|=</code>
@@ -2777,7 +2777,7 @@ Reduce
                   
                 </section>
               
-                <section id="`+=`,`-=`,`*=`,`/=`,`//=`">
+                <section id="+=,-=,*=,/=,//=">
                   <h3>
                     
 <code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>//=</code>
@@ -2874,75 +2874,75 @@ Complex assignments
           ,
         
           
-            "`.`" : "`.`",
+            "." : ".",
           
-            "`.foo`" : "`.foo`",
+            ".foo" : ".foo",
           
-            "`.[foo]`, `.[2]`, `.[10:15]`" : "`.[foo]`,`.[2]`,`.[10:15]`",
+            ".[foo], .[2], .[10:15]" : ".[foo],.[2],.[10:15]",
           
-            "`.[]`" : "`.[]`",
+            ".[]" : ".[]",
           
-            "`,`" : "`,`",
+            "," : ",",
           
-            "`|`" : "`|`",
+            "|" : "|",
           
           "Basic filters" : "Basicfilters"
           ,
         
           
-            "Array construction - `[]`" : "Arrayconstruction-`[]`",
+            "Array construction - []" : "Arrayconstruction-[]",
           
-            "Objects - `{}`" : "Objects-`{}`",
+            "Objects - {}" : "Objects-{}",
           
           "Types and Values" : "TypesandValues"
           ,
         
           
-            "Addition - `+`" : "Addition-`+`",
+            "Addition - +" : "Addition-+",
           
-            "Subtraction - `-`" : "Subtraction-`-`",
+            "Subtraction - -" : "Subtraction--",
           
-            "Multiplication, division - `*` and `/`" : "Multiplication,division-`*`and`/`",
+            "Multiplication, division - * and /" : "Multiplication,division-*and/",
           
-            "`length`" : "`length`",
+            "length" : "length",
           
-            "`keys`" : "`keys`",
+            "keys" : "keys",
           
-            "`has`" : "`has`",
+            "has" : "has",
           
-            "`to_entries`, `from_entries`, `with_entries`" : "`to_entries`,`from_entries`,`with_entries`",
+            "to_entries, from_entries, with_entries" : "to_entries,from_entries,with_entries",
           
-            "`select`" : "`select`",
+            "select" : "select",
           
-            "`empty`" : "`empty`",
+            "empty" : "empty",
           
-            "`map(x)`" : "`map(x)`",
+            "map(x)" : "map(x)",
           
-            "`add`" : "`add`",
+            "add" : "add",
           
-            "`range`" : "`range`",
+            "range" : "range",
           
-            "`tonumber`" : "`tonumber`",
+            "tonumber" : "tonumber",
           
-            "`tostring`" : "`tostring`",
+            "tostring" : "tostring",
           
-            "`type`" : "`type`",
+            "type" : "type",
           
-            "`sort, sort_by`" : "`sort,sort_by`",
+            "sort, sort_by" : "sort,sort_by",
           
-            "`group_by`" : "`group_by`",
+            "group_by" : "group_by",
           
-            "`min`, `max`, `min_by`, `max_by`" : "`min`,`max`,`min_by`,`max_by`",
+            "min, max, min_by, max_by" : "min,max,min_by,max_by",
           
-            "`unique`" : "`unique`",
+            "unique" : "unique",
           
-            "`reverse`" : "`reverse`",
+            "reverse" : "reverse",
           
-            "`contains`" : "`contains`",
+            "contains" : "contains",
           
-            "`recurse`" : "`recurse`",
+            "recurse" : "recurse",
           
-            "String interpolation - `\\(foo)`" : "Stringinterpolation-`\\(foo)`",
+            "String interpolation - \\(foo)" : "Stringinterpolation-\\(foo)",
           
             "Format strings and escaping" : "Formatstringsandescaping",
           
@@ -2950,15 +2950,15 @@ Complex assignments
           ,
         
           
-            "`==`, `!=`" : "`==`,`!=`",
+            "==, !=" : "==,!=",
           
             "if-then-else" : "if-then-else",
           
-            "`>, >=, <=, <`" : "`>,>=,<=,<`",
+            ">, >=, <=, <" : ">,>=,<=,<",
           
             "and/or/not" : "and/or/not",
           
-            "Alternative operator - `//`" : "Alternativeoperator-`//`",
+            "Alternative operator - //" : "Alternativeoperator-//",
           
           "Conditionals and Comparisons" : "ConditionalsandComparisons"
           ,
@@ -2974,11 +2974,11 @@ Complex assignments
           ,
         
           
-            "`=`" : "`=`",
+            "=" : "=",
           
-            "`|=`" : "`|=`",
+            "|=" : "|=",
           
-            "`+=`, `-=`, `*=`, `/=`, `//=`" : "`+=`,`-=`,`*=`,`/=`,`//=`",
+            "+=, -=, *=, /=, //=" : "+=,-=,*=,/=,//=",
           
             "Complex assignments" : "Complexassignments",
           
