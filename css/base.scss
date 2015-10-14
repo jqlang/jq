@@ -72,23 +72,13 @@ body {
 
 /* manual.liquid ******************************************/
 
+section {
+    padding-top: 24px;
+}
+
 h3 code {
     border: 0;
     font-size: 20px;
-}
-
-section {
-    /* Adjust spacing so that anchors are not hidden behind nav bar */
-    position: relative;
-    top: -50px;
-    padding-top: 50px;
-    margin-bottom: -50px;
-    h2 {
-        margin-top: 50px;
-    }
-    h3 {
-        margin-top: 32px;
-    }
 }
 
 @media(max-width: 991px){
