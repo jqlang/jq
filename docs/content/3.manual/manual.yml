@@ -297,7 +297,7 @@ sections:
       - title: "`.foo?`"
         body: |
 
-          Just like `.foo`, but does not output even an error when `.`
+          Just like `.foo`, but does not output an error even when `.`
           is not an array or an object.
 
         examples:
