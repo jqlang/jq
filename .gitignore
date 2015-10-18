@@ -16,6 +16,9 @@ jq
 !tests/modules/lib/jq/
 jq.1
 
+# Generated source
+src/builtin.inc
+
 # Autotools junk
 .libs
 .deps
