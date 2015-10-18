@@ -1574,6 +1574,63 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                 </section>
               
+                <section id="map(x),map_values(x)">
+                  <h3>
+                    
+<code>map(x)</code>, <code>map_values(x)</code>
+
+                    
+                  </h3>
+                  
+<p>For any filter <code>x</code>, <code>map(x)</code> will run that filter for each element of the input array, and produce the outputs a new array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
+
+<p>Similarly, <code>map_values(x)</code> will run that filter for each element, but it will return an object when an object is passed.</p>
+
+<p><code>map(x)</code> is equivalent to <code>[.[] | x]</code>. In fact, this is how it’s defined. Similarly, <code>map_values(x)</code> is defined as <code>.[] |= x</code>.</p>
+
+
+                  
+                    <div>
+                      
+                      <a data-toggle="collapse" href="#example18">
+                        <i class="glyphicon glyphicon-chevron-right"></i>
+                        Examples
+                      </a>
+                      <div id="example18" class="manual-example collapse">
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq 'map(.+1)'</td></tr>
+                            <tr><th>Input</th><td>[1,2,3]</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>[2,3,4]</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq 'map_values(.+1)'</td></tr>
+                            <tr><th>Input</th><td>{&quot;a&quot;: 1, &quot;b&quot;: 2, &quot;c&quot;: 3}</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>{&quot;a&quot;: 2, &quot;b&quot;: 3, &quot;c&quot;: 4}</td>
+                              </tr>
+                            
+                          </table>
+                        
+                      </div>
+                    </div>
+                  
+                </section>
+              
                 <section id="path(path_expression)">
                   <h3>
                     
@@ -1596,11 +1653,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example18">
+                      <a data-toggle="collapse" href="#example19">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example18" class="manual-example collapse">
+                      <div id="example19" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'path(.a[0].b)'</td></tr>
@@ -1649,11 +1706,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example19">
+                      <a data-toggle="collapse" href="#example20">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example19" class="manual-example collapse">
+                      <div id="example20" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'del(.foo)'</td></tr>
@@ -1702,11 +1759,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example20">
+                      <a data-toggle="collapse" href="#example21">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example20" class="manual-example collapse">
+                      <div id="example21" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'getpath([&quot;a&quot;,&quot;b&quot;])'</td></tr>
@@ -1755,11 +1812,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example21">
+                      <a data-toggle="collapse" href="#example22">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example21" class="manual-example collapse">
+                      <div id="example22" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'setpath([&quot;a&quot;,&quot;b&quot;]; 1)'</td></tr>
@@ -1825,11 +1882,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example22">
+                      <a data-toggle="collapse" href="#example23">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example22" class="manual-example collapse">
+                      <div id="example23" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'to_entries'</td></tr>
@@ -1894,11 +1951,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example23">
+                      <a data-toggle="collapse" href="#example24">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example23" class="manual-example collapse">
+                      <div id="example24" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'map(select(. &gt;= 2))'</td></tr>
@@ -1947,11 +2004,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example24">
+                      <a data-toggle="collapse" href="#example25">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example24" class="manual-example collapse">
+                      <div id="example25" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[]|numbers'</td></tr>
@@ -1988,11 +2045,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example25">
+                      <a data-toggle="collapse" href="#example26">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example25" class="manual-example collapse">
+                      <div id="example26" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '1, empty, 2'</td></tr>
@@ -2062,11 +2119,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example26">
+                      <a data-toggle="collapse" href="#example27">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example26" class="manual-example collapse">
+                      <div id="example27" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'try error(&quot;\($__loc__)&quot;) catch .'</td></tr>
@@ -2078,63 +2135,6 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                                   <th>Output</th>
                                 
                                 <td>&quot;{\&quot;file\&quot;:\&quot;&lt;top-level&gt;\&quot;,\&quot;line\&quot;:1}&quot;</td>
-                              </tr>
-                            
-                          </table>
-                        
-                      </div>
-                    </div>
-                  
-                </section>
-              
-                <section id="map(x),map_values(x)">
-                  <h3>
-                    
-<code>map(x)</code>, <code>map_values(x)</code>
-
-                    
-                  </h3>
-                  
-<p>For any filter <code>x</code>, <code>map(x)</code> will run that filter for each element of the input array, and produce the outputs a new array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
-
-<p>Similarly, <code>map_values(x)</code> will run that filter for each element, but it will return an object when an object is passed.</p>
-
-<p><code>map(x)</code> is equivalent to <code>[.[] | x]</code>. In fact, this is how it’s defined. Similarly, <code>map_values(x)</code> is defined as <code>.[] |= x</code>.</p>
-
-
-                  
-                    <div>
-                      
-                      <a data-toggle="collapse" href="#example27">
-                        <i class="glyphicon glyphicon-chevron-right"></i>
-                        Examples
-                      </a>
-                      <div id="example27" class="manual-example collapse">
-                        
-                          <table>
-                            <tr><th></th><td class="jqprogram">jq 'map(.+1)'</td></tr>
-                            <tr><th>Input</th><td>[1,2,3]</td></tr>
-                            
-                            
-                              <tr>
-                                
-                                  <th>Output</th>
-                                
-                                <td>[2,3,4]</td>
-                              </tr>
-                            
-                          </table>
-                        
-                          <table>
-                            <tr><th></th><td class="jqprogram">jq 'map_values(.+1)'</td></tr>
-                            <tr><th>Input</th><td>{&quot;a&quot;: 1, &quot;b&quot;: 2, &quot;c&quot;: 3}</td></tr>
-                            
-                            
-                              <tr>
-                                
-                                  <th>Output</th>
-                                
-                                <td>{&quot;a&quot;: 2, &quot;b&quot;: 3, &quot;c&quot;: 4}</td>
                               </tr>
                             
                           </table>
@@ -6677,6 +6677,8 @@ Complex assignments
           
             "in" : "in",
           
+            "map(x), map_values(x)" : "map(x),map_values(x)",
+          
             "path(path_expression)" : "path(path_expression)",
           
             "del(path_expression)" : "del(path_expression)",
@@ -6696,8 +6698,6 @@ Complex assignments
             "error(message)" : "error(message)",
           
             "$__loc__" : "$__loc__",
-          
-            "map(x), map_values(x)" : "map(x),map_values(x)",
           
             "paths, paths(node_filter), leaf_paths" : "paths,paths(node_filter),leaf_paths",
           
