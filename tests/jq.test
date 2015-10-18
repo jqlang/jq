@@ -1259,13 +1259,29 @@ try -. catch .
 "very-long-string"
 "string (\"very-long-...) cannot be negated"
 
-try join(",") catch .
-["1",2]
-"string (\",\") and number (2) cannot be added"
+join(",")
+["1",2,true,false,3.4]
+"1,2,true,false,3.4"
+
+.[] | join(",")
+[[], [null], [null,null], [null,null,null]]
+""
+""
+","
+",,"
+
+.[] | join(",")
+[["a",null], [null,"a"]]
+"a,"
+",a"
 
 try join(",") catch .
 ["1","2",{"a":{"b":{"c":33}}}]
-"string (\",\") and object ({\"a\":{\"b\":{...) cannot be added"
+"string (\"1,2,\") and object ({\"a\":{\"b\":{...) cannot be added"
+
+try join(",") catch .
+["1","2",[3,4,5]]
+"string (\"1,2,\") and array ([3,4,5]) cannot be added"
 
 {if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}
 null
