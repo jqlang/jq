@@ -913,9 +913,9 @@ sections:
           need something more like `if (.name | count) > 0 then A else
           B end` instead.
 
-          If the condition A produces multiple results, it is
-          considered "true" if any of those results is not false or
-          null. If it produces zero results, it's considered false.
+          If the condition `A` produces multiple results, then `B` is evaluated
+          once for each result that is not false or null, and `C` is evaluated
+          once for each false or null.
 
           More cases can be added to an if using `elif A then B` syntax.
 

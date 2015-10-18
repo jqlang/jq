@@ -867,8 +867,21 @@ try (def x: reverse; x=10) catch .
 [{"foo":0},{"foo":1},{"foo":[]},{"foo":true},{"foo":false},{"foo":null},{"foo":"foo"},{}]
 ["yep","yep","yep","yep","nope","nope","yep","nope"]
 
+[if 1,null,2 then 3 else 4 end]
+null
+[3,4,3]
 
-# FIXME: define/test behaviour of 'if (.foo,.bar) then A else B end'
+[if empty then 3 else 4 end]
+null
+[]
+
+[if 1 then 3,4 else 5 end]
+null
+[3,4]
+
+[if null then 3 else 5,6 end]
+null
+[5,6]
 
 [.[] | [.foo[] // .bar]]
 [{"foo":[1,2], "bar": 42}, {"foo":[1], "bar": null}, {"foo":[null,false,3], "bar": 18}, {"foo":[], "bar":42}, {"foo": [null,false,null], "bar": 41}]
