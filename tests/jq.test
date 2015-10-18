@@ -1072,12 +1072,8 @@ to_entries
 [{"key":"a", "value":1}, {"key":"b", "value":2}]
 
 from_entries
-[{"key":"a", "value":1}, {"Key":"b", "value":2}]
-{"a": 1, "b": 2}
-
-from_entries
-[{"key":"a", "Value":1}, {"Name":"b", "value":2}]
-{"a": 1, "b": 2}
+[{"key":"a", "value":1}, {"Key":"b", "Value":2}, {"name":"c", "value":3}, {"Name":"d", "Value":4}]
+{"a": 1, "b": 2, "c": 3, "d": 4}
 
 with_entries(.key |= "KEY_" + .)
 {"a": 1, "b": 2}
