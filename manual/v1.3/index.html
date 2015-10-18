@@ -2271,7 +2271,7 @@ if-then-else
 <p>Checking for false or null is a simpler notion of “truthiness” than is found in Javascript or Python, but it means that you’ll sometimes have to be more explicit about the condition you want: you can’t test whether, e.g. a string is empty using <code>if .name then A else B end</code>, you’ll need something more like <code>if (.name | count) &gt; 0 then A else
 B end</code> instead.</p>
 
-<p>If the condition A produces multiple results, it is considered “true” if any of those results is not false or null. If it produces zero results, it’s considered false.</p>
+<p>If the condition <code>A</code> produces multiple results, then <code>B</code> is evaluated once for each result that is not false or null, and <code>C</code> is evaluated once for each false or null.</p>
 
 <p>More cases can be added to an if using <code>elif A then B</code> syntax.</p>
 
