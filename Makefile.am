@@ -86,6 +86,10 @@ src/version.h: .remake-version-h
 	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
 src/main.c: src/version.h
 
+src/builtin.inc: src/builtin.jq
+	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $^ > $@
+src/main.c: src/builtin.inc
+
 bin_PROGRAMS = jq
 jq_SOURCES = src/main.c src/version.h
 jq_LDFLAGS = -static-libtool-libs
