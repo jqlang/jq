@@ -1446,11 +1446,17 @@ sections:
           running `split("foo") | join("foo")` over any input string
           returns said input string.
 
+          Numbers and booleans in the input are converted to strings.
+          Null values are treated as empty strings. Arrays and objects
+          in the input are not supported.
+
         examples:
           - program: 'join(", ")'
             input: '["a","b,c,d","e"]'
             output: ['"a, b,c,d, e"']
-
+          - program: 'join(" ")'
+            input: '["a",1,2.3,true,null,false]'
+            output: ['"a 1 2.3 true  false"']
 
       - title: "`ascii_downcase`, `ascii_upcase`"
         body: |

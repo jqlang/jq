@@ -59,7 +59,10 @@ def values: select(. != null);
 def scalars: select(. == null or . == true or . == false or type == "number" or type == "string");
 def scalars_or_empty: select(. == null or . == true or . == false or type == "number" or type == "string" or ((type=="array" or type=="object") and length==0));
 def leaf_paths: paths(scalars);
-def join($x): reduce .[] as $i (null; (.//"") + (if . == null then $i else $x + $i end))//"";
+def join($x): reduce .[] as $i (null;
+            (if .==null then "" else .+$x end) +
+            ($i | if type=="boolean" or type=="number" then tostring else .//"" end)
+        ) // "";
 def _flatten($x): reduce .[] as $i ([]; if $i | type == "array" and $x != 0 then . + ($i | _flatten($x-1)) else . + [$i] end);
 def flatten($x): if $x < 0 then error("flatten depth must not be negative") else _flatten($x) end;
 def flatten: _flatten(-1);
