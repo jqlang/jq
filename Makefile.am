@@ -25,7 +25,8 @@ ACLOCAL_AMFLAGS = -I config/m4
 # While there is some autoconf macro support for lex/flex, it doesn't support
 # header file creation so we'll use good old make
 if MAINTAINER_MODE
-BUILT_SOURCES = src/lexer.h src/lexer.c src/parser.h src/parser.c src/version.h
+BUILT_SOURCES = src/lexer.h src/lexer.c src/parser.h src/parser.c 	\
+		src/builtin.inc src/version.h
 src/lexer.c: src/lexer.l
 	$(AM_V_LEX) flex -o src/lexer.c --header-file=src/lexer.h $<
 src/lexer.h: src/lexer.c
@@ -88,7 +89,7 @@ src/main.c: src/version.h
 
 src/builtin.inc: src/builtin.jq
 	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $^ > $@
-src/main.c: src/builtin.inc
+src/builtin.o: src/builtin.inc
 
 bin_PROGRAMS = jq
 jq_SOURCES = src/main.c src/version.h
