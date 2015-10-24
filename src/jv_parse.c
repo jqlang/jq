@@ -383,7 +383,7 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
 
 static void tokenadd(struct jv_parser* p, char c) {
   assert(p->tokenpos <= p->tokenlen);
-  if (p->tokenpos == p->tokenlen) {
+  if (p->tokenpos >= (p->tokenlen - 1)) {
     p->tokenlen = p->tokenlen*2 + 256;
     p->tokenbuf = jv_mem_realloc(p->tokenbuf, p->tokenlen);
   }
@@ -485,7 +485,7 @@ static pfunc check_literal(struct jv_parser* p) {
     TRY(value(p, v));
   } else {
     // FIXME: better parser
-    p->tokenbuf[p->tokenpos] = 0; // FIXME: invalid
+    p->tokenbuf[p->tokenpos] = 0;
     char* end = 0;
     double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
     if (end == 0 || *end != 0)
