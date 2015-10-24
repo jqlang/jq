@@ -1,6 +1,7 @@
 #define _BSD_SOURCE
 #define _GNU_SOURCE
 #define _XOPEN_SOURCE
+#define _XOPEN_SOURCE_EXTENDED 1
 #include <sys/time.h>
 #include <stdlib.h>
 #include <stddef.h>
