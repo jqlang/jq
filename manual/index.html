@@ -3875,13 +3875,15 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
 <p>Joins the array of elements given as input, using the argument as separator. It is the inverse of <code>split</code>: that is, running <code>split(&quot;foo&quot;) | join(&quot;foo&quot;)</code> over any input string returns said input string.</p>
 
+<p>Numbers and booleans in the input are converted to strings. Null values are treated as empty strings. Arrays and objects in the input are not supported.</p>
+
 
                   
                     <div>
                       
                       <a data-toggle="collapse" href="#example57">
                         <i class="glyphicon glyphicon-chevron-right"></i>
-                        Example
+                        Examples
                       </a>
                       <div id="example57" class="manual-example collapse">
                         
@@ -3895,6 +3897,20 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                                   <th>Output</th>
                                 
                                 <td>&quot;a, b,c,d, e&quot;</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq 'join(&quot; &quot;)'</td></tr>
+                            <tr><th>Input</th><td>[&quot;a&quot;,1,2.3,true,null,false]</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>&quot;a 1 2.3 true  false&quot;</td>
                               </tr>
                             
                           </table>
