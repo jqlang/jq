@@ -89,6 +89,11 @@ dnl fix leaks.
 AC_ARG_ENABLE([valgrind],
    AC_HELP_STRING([--disable-valgrind], [do not run tests under Valgrind]))
 
+dnl Running tests with Valgrind is slow; address sanitizer (ASAN) is
+dnl faster.
+AC_ARG_ENABLE([asan],
+   AC_HELP_STRING([--enable-asan], [enable address sanitizer]))
+
 dnl Code coverage
 AC_ARG_ENABLE([gcov],
    AC_HELP_STRING([--enable-gcov], [enable gcov code coverage tool]))
@@ -117,7 +122,7 @@ AS_IF([test "x$enable_docs" != "xno"],[
 *****************************************************************
 *  Ruby dependencies for building jq documentation not found.   *
 *  You can still build, install and hack on jq, but the manpage *
-*  will not be rebuilt and some of the tests won't run.         *
+*  will not be rebuilt and some of the tests will not run.      *
 *  See docs/README.md for how to install the docs dependencies. *
 *****************************************************************
 EOF
@@ -130,6 +135,7 @@ EOF
 ])
 
 AM_CONDITIONAL([ENABLE_VALGRIND], [test "x$enable_valgrind" != xno])
+AM_CONDITIONAL([ENABLE_ASAN], [test "x$enable_asan" = xyes])
 AM_CONDITIONAL([ENABLE_GCOV], [test "x$enable_gcov" = xyes])
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 AM_CONDITIONAL([ENABLE_ERROR_INJECTION], [test "x$enable_error_injection" = xyes])

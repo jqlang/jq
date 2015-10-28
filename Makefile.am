@@ -54,10 +54,15 @@ include_HEADERS = src/jv.h src/jq.h
 
 ### Running tests under Valgrind
 
+if ENABLE_ASAN
+AM_CFLAGS += -fsanitize=address
+NO_VALGRIND = 1
+else
 if ENABLE_VALGRIND
 NO_VALGRIND =
 else
 NO_VALGRIND = 1
+endif
 endif
 
 ### Code coverage with gcov
