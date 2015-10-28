@@ -1059,6 +1059,61 @@ static jv f_explodes(jq_state *jq, cfunction_gen_state **data, jv input) {
   return f_explodes_step(jq, data);
 }
 
+static void f_popenr_reset(jq_state *jq, cfunction_gen_state *data) {
+  FILE *p = (void *)data;
+  if (p != NULL)
+    (void) pclose(p);
+}
+
+static jv f_popenr_step(jq_state *jq, cfunction_gen_state **state) {
+  FILE *p= *(void **)state;
+  assert(p != NULL);
+
+  jv out = jv_string("");
+  char buf[1024];
+  if (!ferror(p) && !feof(p)) {
+    while (fgets(buf, sizeof(buf), p) != NULL) {
+      char *newline = strchr(buf, '\n'); // XXX On Windows look for \r\n
+      if (newline != NULL) {
+        *newline = '\0';
+        out = jv_string_append_str(out, buf);
+        break;
+      }
+      out = jv_string_append_str(out, buf);
+    }
+  }
+  if (jv_string_length_bytes(jv_copy(out)) > 0)
+    return out;
+  assert(ferror(p) || feof(p));
+  int err = ferror(p);
+  int ret = pclose(p);
+  *state = NULL;
+  jv_free(out);
+  if (err)
+    return jv_invalid_with_msg(jv_string("error reading from pipe"));
+  if (ret != 0)
+    return jv_invalid_with_msg(jv_number(ret)); // EOF, child failed or died
+  return jv_invalid(); // EOF, child did exit(0)
+}
+
+static jv f_popenr(jq_state *jq, cfunction_gen_state **state, jv input) {
+  if (jv_get_kind(input) != JV_KIND_STRING)
+    return type_error(input, "popen inputs must be strings"); // XXX Add support for arrays (argv) too
+  FILE *p = popen(jv_string_value(input), "r");
+  if (p == NULL) {
+    jv out;
+    if (errno == ENOENT)
+      out = jv_invalid_with_msg(jv_string_fmt("No such file: %s", jv_string_value(input)));
+    else
+      out = jv_invalid_with_msg(jv_string_fmt("Error opening file %s: %s", jv_string_value(input), strerror(errno)));
+    jv_free(input);
+    return out;
+  }
+  jv_free(input);
+  *state = (void *)p;
+  return f_popenr_step(jq, state);
+}
+
 static void f_readfile_reset(jq_state *jq, cfunction_gen_state *state) {
   FILE *f = (void *)state;
   if (f)
@@ -1421,6 +1476,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_inputs, "inputs", 1, f_inputs_step},
   {(cfunction_ptr)f_readfile, "readfile", 1, f_readfile_step, f_readfile_reset},
   {(cfunction_ptr)f_explodes, "explodes", 1, f_explodes_step, f_explodes_reset},
+  {(cfunction_ptr)f_popenr, "_popenr", 1, f_popenr_step, f_popenr_reset},
   {(cfunction_ptr)f_debug, "debug", 1},
   {(cfunction_ptr)f_stderr, "stderr", 1},
   {(cfunction_ptr)f_strptime, "strptime", 2},
