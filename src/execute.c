@@ -32,7 +32,7 @@ struct jq_state {
   stack_ptr curr_frame;
   stack_ptr stk_top;
   stack_ptr fork_top;
-  void *curr_c_gen_state;
+  cfunction_gen_state *curr_c_gen_state;
 
   jv path;
   jv value_at_path;
@@ -842,36 +842,33 @@ jv jq_next(jq_state *jq) {
         goto do_backtrack;
       }
 
-      typedef jv (*gen_1)(jq_state*,void**,jv);
-      typedef jv (*gen_2)(jq_state*,void**,jv,jv);
-      typedef jv (*gen_3)(jq_state*,void**,jv,jv,jv);
-      typedef jv (*gen_4)(jq_state*,void**,jv,jv,jv,jv);
-      typedef jv (*gen_5)(jq_state*,void**,jv,jv,jv,jv,jv);
+      typedef jv (*gen_1)(jq_state*,cfunction_gen_state**,jv);
+      typedef jv (*gen_2)(jq_state*,cfunction_gen_state**,jv,jv);
+      typedef jv (*gen_3)(jq_state*,cfunction_gen_state**,jv,jv,jv);
+      typedef jv (*gen_4)(jq_state*,cfunction_gen_state**,jv,jv,jv,jv);
+      typedef jv (*gen_5)(jq_state*,cfunction_gen_state**,jv,jv,jv,jv,jv);
 
       if (opcode == CALL_BUILTIN_GENERATOR) {
-        // Initial call is with inputs from stack
+        // Initial call
         top = stack_pop(jq);
         in[0] = top;
         for (int i = 1; i < nargs; i++)
           in[i] = stack_pop(jq);
+
+        switch (function->nargs) {
+        case 1: top = ((gen_1)function->fptr)(jq, &jq->curr_c_gen_state, in[0]); break;
+        case 2: top = ((gen_2)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1]); break;
+        case 3: top = ((gen_3)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1], in[2]); break;
+        case 4: top = ((gen_4)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1], in[2], in[3]); break;
+        case 5: top = ((gen_5)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1], in[2], in[3], in[4]); break;
+        // FIXME: a) up to 7 arguments (input + 6), b) should assert
+        // because the compiler should not generate this error.
+        default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
+        }
       } else {
-        // The generator is responsible for saving inputs it cares to
-        assert(jq->curr_c_gen_state != 0);
-        for (int i = 0; i < nargs; i++)
-          in[i] = jv_invalid();
+        top = function->cgen_step(jq, &jq->curr_c_gen_state);
       }
 
-      switch (function->nargs) {
-      case 1: top = ((gen_1)function->fptr)(jq, &jq->curr_c_gen_state, in[0]); break;
-      case 2: top = ((gen_2)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1]); break;
-      case 3: top = ((gen_3)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1], in[2]); break;
-      case 4: top = ((gen_4)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1], in[2], in[3]); break;
-      case 5: top = ((gen_5)function->fptr)(jq, &jq->curr_c_gen_state, in[0], in[1], in[2], in[3], in[4]); break;
-      // FIXME: a) up to 7 arguments (input + 6), b) should assert
-      // because the compiler should not generate this error.
-      default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
-      }
-    
       if (jv_is_valid(top)) {
         struct stack_pos spos = stack_get_pos(jq);
         stack_save(jq, pc - 3, spos);   // create backtrack point

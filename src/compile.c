@@ -1146,7 +1146,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
       assert(!curr->arglist.first);
       code[pos++] = (uint16_t)curr->imm.intval;
       code[pos++] = curr->bound_by->imm.intval;
-      if (curr->bound_by->imm.cfunc->is_generator)
+      if (curr->bound_by->imm.cfunc->cgen_step != 0)
         code[op_pos] = CALL_BUILTIN_GENERATOR;
     } else if (curr->op == CALL_JQ) {
       assert(curr->bound_by->op == CLOSURE_CREATE ||
