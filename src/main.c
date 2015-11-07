@@ -161,6 +161,49 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
   return ret;
 }
 
+static int process_extra_opt(jq_state *jq, jv value, int flags, int dumpopts, jv_extra_opt *extra_opt) {
+  int ret = 14; // No valid results && -e -> exit(4)
+  jq_start(jq, value, flags);
+  jv result;
+  while (jv_is_valid(result = jq_next(jq))) {
+    if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
+      fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
+      ret = 0;
+      jv_free(result);
+    } else {
+      if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
+        ret = 11;
+      else
+        ret = 0;
+      if (options & SEQ)
+        priv_fwrite("\036", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+      jv_dump_extra_opt(result, dumpopts, extra_opt);
+    }
+    if (!(options & RAW_NO_LF))
+      priv_fwrite("\n", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+    if (options & UNBUFFERED_OUTPUT)
+      fflush(stdout);
+  }
+  if (jv_invalid_has_msg(jv_copy(result))) {
+    // Uncaught jq exception
+    jv msg = jv_invalid_get_msg(jv_copy(result));
+    jv input_pos = jq_util_input_get_position(jq);
+    if (jv_get_kind(msg) == JV_KIND_STRING) {
+      fprintf(stderr, "jq: error (at %s): %s\n",
+              jv_string_value(input_pos), jv_string_value(msg));
+    } else {
+      msg = jv_dump_string(msg, 0);
+      fprintf(stderr, "jq: error (at %s) (not a string): %s\n",
+              jv_string_value(input_pos), jv_string_value(msg));
+    }
+    ret = 5;
+    jv_free(input_pos);
+    jv_free(msg);
+  }
+  jv_free(result);
+  return ret;
+}
+
 static void debug_cb(void *data, jv input) {
   int dumpopts = *(int *)data;
   jv_dumpf(JV_ARRAY(jv_string("DEBUG:"), input), stderr, dumpopts & ~(JV_PRINT_PRETTY));
@@ -207,6 +250,10 @@ int main(int argc, char* argv[]) {
   int dumpopts = JV_PRINT_INDENT_FLAGS(2);
   const char* program = 0;
 
+  jv_extra_opt extra_opt;
+  extra_opt.array_fold=0;
+  extra_opt.array_fold_indent=1;
+
   jq_util_input_state *input_state = jq_util_input_init(NULL, NULL); // XXX add err_cb
 
   int further_args_are_files = 0;
@@ -242,6 +289,21 @@ int main(int argc, char* argv[]) {
         }
         continue;
       }
+
+      if (isoption(argv[i], 0, "fold", &short_opts)) {
+        if (i >= argc - 1) {
+          fprintf(stderr, "%s: --fold takes one parameter\n", progname);
+          die();
+        }
+        extra_opt.array_fold = atoi(argv[i+1]);
+        if (extra_opt.array_fold < 1 || extra_opt.array_fold > 255) {
+          fprintf(stderr, "%s: --fold takes a number between 1 and 255\n", progname);
+          die();
+        }
+        i++;
+        if (!short_opts) continue;
+      }
+
 
       if (isoption(argv[i], 's', "slurp", &short_opts)) {
         options |= SLURP;
@@ -521,13 +583,22 @@ int main(int argc, char* argv[]) {
     jq_util_input_add_input(input_state, "-");
 
   if (options & PROVIDE_NULL) {
-    ret = process(jq, jv_null(), jq_flags, dumpopts);
+
+    if (extra_opt.array_fold==0) {
+      ret = process(jq, jv_null(), jq_flags, dumpopts);
+    } else {
+      ret = process_extra_opt(jq, jv_null(), jq_flags, dumpopts, &extra_opt);
+    }
   } else {
     jv value;
     while (jq_util_input_errors(input_state) == 0 &&
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
-        ret = process(jq, value, jq_flags, dumpopts);
+        if (extra_opt.array_fold==0) {
+          ret = process(jq, value, jq_flags, dumpopts);
+        } else {
+          ret = process_extra_opt(jq, value, jq_flags, dumpopts, &extra_opt);
+        }
         continue;
       }
 

@@ -18,6 +18,16 @@ typedef enum {
 
 struct jv_refcnt;
 
+
+struct jv_extra_opt_t {
+  uint32_t flag;
+  int array_fold;
+  int array_fold_indent;
+};
+
+typedef struct jv_extra_opt_t jv_extra_opt;
+
+
 /* All of the fields of this struct are private.
    Really. Do not play with them. */
 typedef struct {
@@ -177,6 +187,10 @@ enum jv_print_flags {
     ((n) < 0 || (n) > 7 ? JV_PRINT_TAB | JV_PRINT_PRETTY : (n) == 0 ? 0 : (n) << 8 | JV_PRINT_PRETTY)
 void jv_dumpf(jv, FILE *f, int flags);
 void jv_dump(jv, int flags);
+
+void jv_dumpf_extra_opt(jv, FILE *f, int flags, jv_extra_opt *extra_opt);
+void jv_dump_extra_opt(jv, int flags, jv_extra_opt *extra_opt);
+
 void jv_show(jv, int flags);
 jv jv_dump_string(jv, int flags);
 char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize);
