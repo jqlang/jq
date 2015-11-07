@@ -426,6 +426,11 @@ static void jv_dump_term_extra_opt(struct dtoa_context* C, jv x, int flags, int 
             put_indent(indent + 1, flags, F, S, flags & JV_PRINT_ISATTY);
           }
 
+          else if ((i!=array_ele_counter) && (array_ele_counter==1)) {
+            put_str(",\n", F, S, flags & JV_PRINT_ISATTY);
+            put_indent(indent + 1, flags, F, S, flags & JV_PRINT_ISATTY);
+          }
+
           else if ((array_ele_counter>0)&&(array_ele_counter%fold)==0) {
             put_str(",\n", F, S, flags & JV_PRINT_ISATTY);
             put_indent(indent + 1, flags, F, S, flags & JV_PRINT_ISATTY);

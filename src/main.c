@@ -63,6 +63,7 @@ static void usage(int code) {
     "\t --arg a v\tset variable $a to value <v>;\n"
     "\t --argjson a v\tset variable $a to JSON value <v>;\n"
     "\t --slurpfile a f\tset variable $a to an array of JSON texts read from <f>;\n"
+    "\t --fold w\tprint number array elements <w> to a line;\n"
     "\tSee the manpage for more options.\n", JQ_VERSION, progname);
   exit((ret < 0 && code == 0) ? 2 : code);
 }
