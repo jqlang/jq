@@ -1428,7 +1428,7 @@ sections:
             input: '[65, 66, 67]'
             output: ['"ABC"']
 
-      - title: "`split`"
+      - title: "`split(str)`"
         body: |
 
           Splits an input string on the separator argument.
