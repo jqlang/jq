@@ -17,7 +17,7 @@ RUN apt-get update && \
         wget \
         ruby-dev && \
     wget https://github.com/kkos/oniguruma/archive/v5.9.6.tar.gz -O onig-5.9.6.tar.gz && \
-    sha512sum onig-5.9.6.tar.gz | grep e58f14849e2b692c79d4a36ca632ee25b4b77eaa19a1298d6ec65e2577dd4dc47eaed3e8ab9a34269d53cee59e5bdf2ab3a43eca2c70bca2667ec5415e2408fb && \
+    sha512sum onig-5.9.6.tar.gz | grep 6b048d345e148c9da38af7a8df76d4a358eb3d4db91fa7834076e511f526a63544284f212b0d56badbbd33112c8b458a5fff02bfbbda012ecfe478bc436ea679 && \
     tar zxvf onig-5.9.6.tar.gz && \
     (cd oniguruma-5.9.6 && \
         touch NEWS ChangeLog && \
