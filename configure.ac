@@ -52,27 +52,26 @@ fi
 AC_ARG_WITH([oniguruma],
     [AS_HELP_STRING([--with-oniguruma=prefix],
         [try this for a non-standard install prefix of the oniguruma library])],
-    [ONIGURUMAPATHSET=1],
-    [ONIGURUMAPATHSET=0])
+    [],
+    [with_oniguruma=yes])
 
-if test $ONIGURUMAPATHSET = 1; then
-  CFLAGS="$CFLAGS -I${with_oniguruma}/include"
-  LDFLAGS="$LDFLAGS -L${with_oniguruma}/lib"
-fi
-
-# check for ONIGURUMA library
-HAVE_ONIGURUMA=0
-AC_CHECK_HEADER("oniguruma.h",
-    AC_CHECK_LIB([onig],[onig_version],[LIBS="$LIBS -lonig"; HAVE_ONIGURUMA=1;]))
-
-# handle check results
-if test $HAVE_ONIGURUMA != 1; then
-    AC_MSG_NOTICE([Oniguruma was not found.])
-    AC_MSG_NOTICE([ Try setting the location using '--with-oniguruma=PREFIX' ])
-else
-    AC_DEFINE([HAVE_ONIGURUMA],1,[Define to 1 if Oniguruma is installed])
-fi
-
+AS_IF([test "x$with_oniguruma" != xno], [
+    AS_IF([test "x$with_oniguruma" != xyes], [
+        CFLAGS="$CFLAGS -I${with_oniguruma}/include"
+        LDFLAGS="$LDFLAGS -L${with_oniguruma}/lib"
+    ])
+    # check for ONIGURUMA library
+    have_oniguruma=0
+    AC_CHECK_HEADER("oniguruma.h",
+        AC_CHECK_LIB([onig],[onig_version],[LIBS="$LIBS -lonig"; have_oniguruma=1;]))
+    # handle check results
+    AS_IF([test $have_oniguruma = 1], [
+        AC_DEFINE([HAVE_ONIGURUMA], 1, [Define to 1 if Oniguruma is installed])
+    ], [
+        AC_MSG_NOTICE([Oniguruma was not found.])
+        AC_MSG_NOTICE([Try setting the location using '--with-oniguruma=PREFIX'])
+    ])
+])
 
 dnl Check for valgrind
 AC_CHECK_PROGS(valgrind_cmd, valgrind)
