@@ -16,6 +16,7 @@ void jq_set_nomem_handler(jq_state *, void (*)(void *), void *);
 jv jq_format_error(jv msg);
 void jq_report_error(jq_state *, jv);
 int jq_compile(jq_state *, const char*);
+int jq_compile_opts(jq_state *, const char*, jv, jv);
 int jq_compile_args(jq_state *, const char*, jv);
 void jq_dump_disassembly(jq_state *, int);
 void jq_start(jq_state *, jv value, int);

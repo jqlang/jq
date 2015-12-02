@@ -1128,7 +1128,7 @@ static int expand_call_arglist(block* b) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block b, struct locfile* lf) {
+static int compile(struct bytecode* bc, block b, struct locfile* lf, int dump) {
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
@@ -1196,7 +1196,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
-        errors += compile(subfn, curr->subfn, lf);
+        errors += compile(subfn, curr->subfn, lf, 0);
         curr->subfn = gen_noop();
       }
     }
@@ -1257,11 +1257,15 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
   }
   bc->constants = constant_pool;
   bc->nlocals = maxvar + 2; // FIXME: frames of size zero?
+  if (dump) {
+    jv_dump(dump_block(b), JV_PRINT_INDENT_FLAGS(2));
+    printf("\n");
+  }
   block_free(b);
   return errors;
 }
 
-int block_compile(block b, struct bytecode** out, struct locfile* lf) {
+int block_compile(block b, struct bytecode** out, struct locfile* lf, int dump) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
@@ -1271,7 +1275,7 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf) {
   bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
-  int nerrors = compile(bc, b, lf);
+  int nerrors = compile(bc, b, lf, dump);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {
     bytecode_free(bc);

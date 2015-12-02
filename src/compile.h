@@ -77,7 +77,7 @@ block block_drop_unreferenced(block body);
 
 jv block_take_imports(block* body);
 
-int block_compile(block, struct bytecode**, struct locfile*);
+int block_compile(block, struct bytecode**, struct locfile*, int dump);
 
 void block_free(block);
 
