@@ -144,17 +144,42 @@ jv jv_object_iter_value(jv, int);
            : 0;                                                         \
          jv_i__ = jv_object_iter_next(t, jv_i__))                       \
 
-#define JV_OBJECT_1(k) (jv_object_set(jv_object(),(k),jv_null()))
+#define JV_OBJECT_1(k1) (jv_object_set(jv_object(),(k1),jv_null()))
 #define JV_OBJECT_2(k1,v1) (jv_object_set(jv_object(),(k1),(v1)))
-#define JV_OBJECT_3(k1,v1,k2) (jv_object_set(JV_OBJECT_2(k1,v1),k2,jv_null()))
-#define JV_OBJECT_4(k1,v1,k2,v2) (jv_object_set(JV_OBJECT_2(k1,v1),k2,v2))
-#define JV_OBJECT_5(k1,v1,k2,v2,k3) (jv_object_set(JV_OBJECT_4(k1,v1,k2,v2),k3,jv_null))
-#define JV_OBJECT_6(k1,v1,k2,v2,k3,v3) (jv_object_set(JV_OBJECT_4(k1,v1,k2,v2),k3,v3))
-#define JV_OBJECT_7(k1,v1,k2,v2,k3,v3,k4) (jv_object_set(JV_OBJECT_6(k1,v1,k2,v2,k3,v3),k4,jv_null()))
-#define JV_OBJECT_8(k1,v1,k2,v2,k3,v3,k4,v4) (jv_object_set(JV_OBJECT_6(k1,v1,k2,v2,k3,v3),k4,v4))
-#define JV_OBJECT_IDX(_1,_2,_3,_4,_5,_6,_7,_8,NAME,...) NAME
+#define JV_OBJECT_3(k1,v1,k2) (jv_object_set(JV_OBJECT_2((k1),(v1)),(k2),jv_null()))
+#define JV_OBJECT_4(k1,v1,k2,v2) (jv_object_set(JV_OBJECT_2((k1),(v1)),(k2),(v2)))
+#define JV_OBJECT_5(k1,v1,k2,v2,k3) (jv_object_set(JV_OBJECT_4((k1),(v1),(k2),(v2)),(k3),jv_null()))
+#define JV_OBJECT_6(k1,v1,k2,v2,k3,v3) (jv_object_set(JV_OBJECT_4((k1),(v1),(k2),(v2)),(k3),(v3)))
+#define JV_OBJECT_7(k1,v1,k2,v2,k3,v3,k4) (jv_object_set(JV_OBJECT_6((k1),(v1),(k2),(v2),(k3),(v3)),(k4),jv_null()))
+#define JV_OBJECT_8(k1,v1,k2,v2,k3,v3,k4,v4) (jv_object_set(JV_OBJECT_6((k1),(v1),(k2),(v2),(k3),(v3)),(k4),(v4)))
+#define JV_OBJECT_9(k1,v1,k2,v2,k3,v3,k4,v4,k5) \
+    (jv_object_set(JV_OBJECT_8((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4)),(k5),jv_null()))
+#define JV_OBJECT_10(k1,v1,k2,v2,k3,v3,k4,v4,k5,v5) \
+    (jv_object_set(JV_OBJECT_8((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4)),(k5),(v5)))
+#define JV_OBJECT_11(k1,v1,k2,v2,k3,v3,k4,v4,k5,v5,k6) \
+    (jv_object_set(JV_OBJECT_10((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4),(k5),(v5)),(k6),jv_null()))
+#define JV_OBJECT_12(k1,v1,k2,v2,k3,v3,k4,v4,k5,v5,k6,v6) \
+    (jv_object_set(JV_OBJECT_10((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4),(k5),(v5)),(k6),(v6)))
+#define JV_OBJECT_13(k1,v1,k2,v2,k3,v3,k4,v4,k5,v5,k6,v6,k7) \
+    (jv_object_set(JV_OBJECT_12((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4),(k5),(v5),(k6),(v6)),(k7),jv_null()))
+#define JV_OBJECT_14(k1,v1,k2,v2,k3,v3,k4,v4,k5,v5,k6,v6,k7,v7) \
+    (jv_object_set(JV_OBJECT_12((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4),(k5),(v5),(k6),(v6)),(k7),(v7)))
+#define JV_OBJECT_15(k1,v1,k2,v2,k3,v3,k4,v4,k5,v5,k6,v6,k7,v7,k8) \
+    (jv_object_set(JV_OBJECT_14((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4),(k5),(v5),(k6),(v6),(k7),(v7)),(k8),jv_null()))
+#define JV_OBJECT_16(k1,v1,k2,v2,k3,v3,k4,v4,k5,v5,k6,v6,k7,v7,k8,v8) \
+    (jv_object_set(JV_OBJECT_14((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4),(k5),(v5),(k6),(v6),(k7),(v7)),(k8),(v8)))
+#define JV_OBJECT_17(k1,v1,k2,v2,k3,v3,k4,v4,k5,v5,k6,v6,k7,v7,k8,v8,k9) \
+    (jv_object_set(JV_OBJECT_16((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4),(k5),(v5),(k6),(v6),(k7),(v7),(k8),(v8)),(k9),jv_null()))
+#define JV_OBJECT_18(k1,v1,k2,v2,k3,v3,k4,v4,k5,v5,k6,v6,k7,v7,k8,v8,k9,v9) \
+    (jv_object_set(JV_OBJECT_16((k1),(v1),(k2),(v2),(k3),(v3),(k4),(v4),(k5),(v5),(k6),(v6),(k7),(v7),(k8),(v8)),(k9),(v9)))
+#define JV_OBJECT_IDX(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16,_17,_18,NAME,...) NAME
 #define JV_OBJECT(...) \
-  JV_OBJECT_IDX(__VA_ARGS__, JV_OBJECT_8, JV_OBJECT_7, JV_OBJECT_6, JV_OBJECT_5, JV_OBJECT_4, JV_OBJECT_3, JV_OBJECT_2, JV_OBJECT_1)(__VA_ARGS__)
+  JV_OBJECT_IDX(__VA_ARGS__, \
+                JV_OBJECT_18, JV_OBJECT_17, JV_OBJECT_16, JV_OBJECT_15, \
+                JV_OBJECT_14, JV_OBJECT_13, JV_OBJECT_12, JV_OBJECT_11, \
+                JV_OBJECT_10, JV_OBJECT_9, JV_OBJECT_8, JV_OBJECT_7,    \
+                JV_OBJECT_6, JV_OBJECT_5, JV_OBJECT_4, JV_OBJECT_3,     \
+                JV_OBJECT_2, JV_OBJECT_1)(__VA_ARGS__)
 
 
 
