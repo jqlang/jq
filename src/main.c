@@ -17,6 +17,15 @@
 #include <wtypes.h>
 #endif
 
+#if !defined(HAVE_ISATTY) && defined(HAVE__ISATTY)
+#undef isatty
+#define isatty _isatty
+#endif
+
+#if defined(HAVE_ISATTY) || defined(HAVE__ISATTY)
+#define USE_ISATTY
+#endif
+
 #include "compile.h"
 #include "jv.h"
 #include "jq.h"
@@ -423,7 +432,8 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (isatty(fileno(stdout))) {
+#ifdef USE_ISATTY
+  if (isatty(STDOUT_FILENO)) {
     dumpopts |= JV_PRINT_ISATTY;
 #ifndef WIN32
   /* Disable color by default on Windows builds as Windows
@@ -431,6 +441,7 @@ int main(int argc, char* argv[]) {
     dumpopts |= JV_PRINT_COLOR;
 #endif
   }
+#endif
   if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
   if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
   if (options & COLOR_OUTPUT) dumpopts |= JV_PRINT_COLOR;
@@ -457,14 +468,8 @@ int main(int argc, char* argv[]) {
   else
     jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string_fmt("%.*s-master", (int)(strchr(JQ_VERSION, '-') - JQ_VERSION), JQ_VERSION));
 
-#if (!defined(WIN32) && defined(HAVE_ISATTY)) || defined(HAVE__ISATTY)
-
-#if defined(HAVE__ISATTY) && defined(isatty)
-#undef isatty
-#define isatty _isatty
-#endif
-
-  if (!program && isatty(STDOUT_FILENO) && !isatty(STDIN_FILENO))
+#ifdef USE_ISATTY
+  if (!program && (!isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
     program = ".";
 #endif
 
