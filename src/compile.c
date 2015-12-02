@@ -78,7 +78,81 @@ static inst* inst_new(opcode op) {
   i->arglist = gen_noop();
   i->source = UNKNOWN_LOCATION;
   i->locfile = 0;
+  i->imm.intval = 0;
+  i->imm.target = 0;
+  i->imm.constant = jv_null();
+  i->imm.cfunc = 0;
   return i;
+}
+
+static jv op2jv(const struct opcode_description *op) {
+  jv flags = jv_array();
+#undef rec_flag
+#define rec_flag(f) \
+  if ((op->flags & (f))) \
+    flags = jv_array_append(flags, jv_string(#f))
+  rec_flag(OP_HAS_CONSTANT);
+  rec_flag(OP_HAS_VARIABLE);
+  rec_flag(OP_HAS_BRANCH);
+  rec_flag(OP_HAS_CFUNC);
+  rec_flag(OP_HAS_UFUNC);
+  rec_flag(OP_IS_CALL_PSEUDO);
+  rec_flag(OP_HAS_BINDING);
+  rec_flag(OP_BIND_WILDCARD);
+#undef rec_flag
+
+  return JV_OBJECT(jv_string("name"), jv_string(op->name),
+                   jv_string("flags"), flags,
+                   jv_string("length"), jv_number(op->length),
+                   jv_string("stack_in"), jv_number(op->stack_in),
+                   jv_string("stack_out"), jv_number(op->stack_out));
+}
+
+static jv source2jv(inst *i) {
+  jv fname = i->locfile ? jv_copy(i->locfile->fname) : jv_string("<unspec>");
+  jv snippet;
+
+  if (i->locfile && i->locfile->data)
+    snippet = jv_string_sized(i->locfile->data + i->source.start, i->source.end - i->source.start);
+  else
+    snippet = jv_string("");
+  return JV_OBJECT(jv_string("fname"), fname,
+                   jv_string("start"), jv_number(i->source.start),
+                   jv_string("end"), jv_number(i->source.end),
+                   jv_string("snippet"), snippet);
+}
+
+static jv binder2jv(inst *binder) {
+  return JV_OBJECT(jv_string("symbol"), binder->symbol ? jv_string(binder->symbol) : jv_null(),
+                   jv_string("source"), source2jv(binder));
+}
+
+static jv imm2jv(inst *i) {
+  return JV_OBJECT(jv_string("intval"), jv_number(i->imm.intval),
+                   jv_string("target"), i->imm.target ? binder2jv(i->imm.target) : jv_null(),
+                   jv_string("constant"), i->imm.constant,
+                   jv_string("cfunc"), i->imm.cfunc ? jv_string(i->imm.cfunc->name) : jv_null());
+}
+
+static jv dump_inst(inst *i) {
+  const struct opcode_description *op = opcode_describe(i->op);
+  jv r = JV_OBJECT(jv_string("op"), op2jv(op),
+                   jv_string("pos"), jv_number(i->bytecode_pos),
+                   jv_string("symbol"), i->symbol ? jv_string(i->symbol) : jv_null(),
+                   jv_string("bound_by"), i->bound_by ? binder2jv(i->bound_by) : jv_null(),
+                   jv_string("nformals"), jv_number(i->nformals),
+                   jv_string("nactuals"), jv_number(i->nactuals),
+                   jv_string("subfn"), dump_block(i->subfn),
+                   jv_string("arglist"), dump_block(i->arglist),
+                   jv_string("source"), source2jv(i));
+  return jv_object_set(r, jv_string("imm"), imm2jv(i));
+}
+
+jv dump_block(block b) {
+  jv r = jv_array();
+  for (inst *i = b.first; i; i = i->next)
+    r = jv_array_append(r, dump_inst(i));
+  return r;
 }
 
 static void inst_free(struct inst* i) {
