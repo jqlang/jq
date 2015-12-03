@@ -125,7 +125,8 @@ static jv source2jv(inst *i) {
 }
 
 static jv binder2jv(inst *binder) {
-  return JV_OBJECT(jv_string("symbol"), binder->symbol ? jv_string(binder->symbol) : jv_null(),
+  return JV_OBJECT(jv_string("pos"), jv_number(binder->bytecode_pos),
+                   jv_string("symbol"), binder->symbol ? jv_string(binder->symbol) : jv_null(),
                    jv_string("source"), source2jv(binder));
 }
 
@@ -138,8 +139,8 @@ static jv imm2jv(inst *i) {
 
 static jv dump_inst(inst *i) {
   const struct opcode_description *op = opcode_describe(i->op);
-  jv r = JV_OBJECT(jv_string("op"), op2jv(op),
-                   jv_string("pos"), jv_number(i->bytecode_pos),
+  jv r = JV_OBJECT(jv_string("pos"), jv_number(i->bytecode_pos),
+                   jv_string("op"), op2jv(op),
                    jv_string("symbol"), i->symbol ? jv_string(i->symbol) : jv_null(),
                    jv_string("bound_by"), i->bound_by ? binder2jv(i->bound_by) : jv_null(),
                    jv_string("nformals"), jv_number(i->nformals),
