@@ -57,6 +57,7 @@ struct inst {
 
   block subfn;   // used by CLOSURE_CREATE (body of function)
   block arglist; // used by CLOSURE_CREATE (formals) and CALL_JQ (arguments)
+  block compiled_subfn; // Mutated by compile(); kept for dumping
 
   // This instruction is compiled as part of which function?
   // (only used during block_compile)
@@ -76,6 +77,7 @@ static inst* inst_new(opcode op) {
   i->nactuals = -1;
   i->subfn = gen_noop();
   i->arglist = gen_noop();
+  i->compiled_subfn = gen_noop();
   i->source = UNKNOWN_LOCATION;
   i->locfile = 0;
   i->imm.intval = 0;
@@ -142,7 +144,7 @@ static jv dump_inst(inst *i) {
                    jv_string("bound_by"), i->bound_by ? binder2jv(i->bound_by) : jv_null(),
                    jv_string("nformals"), jv_number(i->nformals),
                    jv_string("nactuals"), jv_number(i->nactuals),
-                   jv_string("subfn"), dump_block(i->subfn),
+                   jv_string("subfn"), dump_block(i->compiled_subfn),
                    jv_string("arglist"), dump_block(i->arglist),
                    jv_string("source"), source2jv(i));
   return jv_object_set(r, jv_string("imm"), imm2jv(i));
@@ -158,6 +160,7 @@ jv dump_block(block b) {
 static void inst_free(struct inst* i) {
   jv_mem_free(i->symbol);
   block_free(i->subfn);
+  block_free(i->compiled_subfn);
   block_free(i->arglist);
   if (i->locfile)
     locfile_free(i->locfile);
@@ -1128,7 +1131,8 @@ static int expand_call_arglist(block* b) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block b, struct locfile* lf, int dump) {
+static int compile(struct bytecode* bc, block *bp, struct locfile* lf, int dump, int top) {
+  block b = *bp;
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
@@ -1196,7 +1200,8 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, int dump) {
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
-        errors += compile(subfn, curr->subfn, lf, 0);
+        errors += compile(subfn, &curr->subfn, lf, 0, 0);
+        curr->compiled_subfn = curr->subfn;
         curr->subfn = gen_noop();
       }
     }
@@ -1261,7 +1266,10 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, int dump) {
     jv_dump(dump_block(b), JV_PRINT_INDENT_FLAGS(2));
     printf("\n");
   }
-  block_free(b);
+  if (top)
+    block_free(b);
+  else
+    *bp = b;
   return errors;
 }
 
@@ -1275,7 +1283,7 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, int dump) 
   bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
-  int nerrors = compile(bc, b, lf, dump);
+  int nerrors = compile(bc, &b, lf, dump, 1);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {
     bytecode_free(bc);
