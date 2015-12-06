@@ -326,7 +326,6 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, const c
         printf("\n");
       }
       jv_free(dump);
-      block_free(program);
     }
   }
   state_idx = lib_state->ct++;
