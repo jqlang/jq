@@ -139,7 +139,6 @@ static jv imm2jv(inst *i) {
                    jv_string("cfunc"), i->imm.cfunc ? jv_string(i->imm.cfunc->name) : jv_null());
 }
 
-static jv dump_block(block, int);
 static jv dump_inst(inst *i, int compiled) {
   const struct opcode_description *op = opcode_describe(i->op);
   jv r = JV_OBJECT(jv_string("pos"), jv_number(i->bytecode_pos - op->length),
@@ -155,7 +154,7 @@ static jv dump_inst(inst *i, int compiled) {
   return jv_object_set(r, jv_string("imm"), imm2jv(i));
 }
 
-static jv dump_block(block b, int compiled) {
+jv dump_block(block b, int compiled) {
   jv r = jv_array();
   for (inst *i = b.first; i; i = i->next)
     r = jv_array_append(r, dump_inst(i, compiled));

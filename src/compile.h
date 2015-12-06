@@ -14,6 +14,7 @@ typedef struct block {
   inst* last;
 } block;
 
+jv dump_block(block, int);
 block gen_location(location, struct locfile*, block);
 
 block gen_noop();
