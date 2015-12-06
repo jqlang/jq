@@ -1294,6 +1294,7 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, int dump) 
   if (nerrors > 0) {
     bytecode_free(bc);
     *out = 0;
+    jv_free(dumped);
   } else {
     *out = bc;
     if (dump)
