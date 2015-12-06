@@ -37,6 +37,7 @@ jv jq_get_prog_origin(jq_state *);
 jv jq_get_lib_dirs(jq_state *);
 void jq_set_attr(jq_state *, jv, jv);
 jv jq_get_attr(jq_state *, jv);
+jv jq_get_option(jq_state *, jv);
 
 /*
  * We use char * instead of jf for filenames here because filenames

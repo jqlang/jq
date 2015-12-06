@@ -1142,6 +1142,10 @@ jv jq_get_attr(jq_state *jq, jv attr) {
   return jv_object_get(jv_copy(jq->attrs), attr);
 }
 
+jv jq_get_option(jq_state *jq, jv option) {
+  return jv_getpath(jv_copy(jq->attrs), JV_ARRAY(jv_string("options"), option));
+}
+
 void jq_dump_disassembly(jq_state *jq, int indent) {
   dump_disassembly(indent, jq->bc);
 }
