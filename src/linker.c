@@ -388,8 +388,8 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   if (nerrors) {
     jv dump = jq_get_option(jq, jv_string("dump_block"));
     if (jv_get_kind(dump) == JV_KIND_TRUE) {
-      dump = JV_OBJECT(jv_string("program parse error"), dump_block(program, 0));
-      jv_dump(dump, JV_PRINT_INDENT_FLAGS(2));
+      jv_dump(JV_OBJECT(jv_string("program parse error"), dump_block(program, 0)),
+              JV_PRINT_INDENT_FLAGS(2));
       printf("\n");
     }
     jv_free(dump);
