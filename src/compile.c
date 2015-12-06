@@ -54,6 +54,7 @@ struct inst {
 
   int nformals;
   int nactuals;
+  int error;
 
   block subfn;   // used by CLOSURE_CREATE (body of function)
   block arglist; // used by CLOSURE_CREATE (formals) and CALL_JQ (arguments)
@@ -75,6 +76,7 @@ static inst* inst_new(opcode op) {
   i->symbol = 0;
   i->nformals = -1;
   i->nactuals = -1;
+  i->error = 0;
   i->subfn = gen_noop();
   i->arglist = gen_noop();
   i->compiled_subfn = gen_noop();
@@ -149,6 +151,7 @@ static jv dump_inst(inst *i, int compiled) {
                    jv_string("subfn"), (compiled ? dump_block(i->compiled_subfn, 1) : dump_block(i->subfn, 0)),
                    jv_string("arglist"), dump_block(i->arglist, compiled),
                    jv_string("source"), source2jv(i));
+  r = jv_object_set(r, jv_string("error"), i->error ? jv_true() : jv_false());
   return jv_object_set(r, jv_string("imm"), imm2jv(i));
 }
 
@@ -1061,6 +1064,7 @@ static int expand_call_arglist(block* b) {
           locfile_locate(curr->locfile, curr->source, "jq: error: break used outside labeled control structure");
         else
           locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
+        curr->error = 1;
         errors++;
         // don't process this instruction if it's not well-defined
         ret = BLOCK(ret, inst_block(curr));
@@ -1110,6 +1114,7 @@ static int expand_call_arglist(block* b) {
           block body = i->subfn;
           i->subfn = gen_noop();
           inst_free(i);
+          // it might prove useful to record that we had an indirect error in this i
           // arguments should be pushed in reverse order, prepend them to prelude
           errors += expand_call_arglist(&body);
           prelude = BLOCK(gen_subexp(body), prelude);
@@ -1179,6 +1184,7 @@ static int compile(struct bytecode* bc, block *bp, struct locfile* lf) {
     // too long for program counter to fit in uint16_t
     locfile_locate(lf, UNKNOWN_LOCATION,
         "function compiled to %d bytes which is too long", pos);
+    b.first->error = 1;
     errors++;
   }
   bc->codelen = pos;
@@ -1202,6 +1208,7 @@ static int compile(struct bytecode* bc, block *bp, struct locfile* lf) {
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
+        // it might prove useful to record that we had an indirect error in this curr
         errors += compile(subfn, &curr->subfn, lf);
         curr->compiled_subfn = curr->subfn;
         curr->subfn = gen_noop();
