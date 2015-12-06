@@ -15,6 +15,7 @@ typedef struct block {
 } block;
 
 jv dump_block(block, int);
+void mark_error(block);
 block gen_location(location, struct locfile*, block);
 
 block gen_noop();

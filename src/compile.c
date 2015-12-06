@@ -89,6 +89,11 @@ static inst* inst_new(opcode op) {
   return i;
 }
 
+void mark_error(block b) {
+  if (b.first)
+    b.first->error = 1;
+}
+
 static jv op2jv(const struct opcode_description *op) {
   jv flags = jv_array();
 #undef rec_flag
