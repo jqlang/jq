@@ -94,6 +94,10 @@ void mark_error(block b) {
     b.first->error = 1;
 }
 
+int block_is_error(block b) {
+  return (b.first && b.first->error);
+}
+
 static jv op2jv(const struct opcode_description *op) {
   jv flags = jv_array();
 #undef rec_flag
