@@ -133,7 +133,7 @@ static jv binder2jv(inst *binder) {
 static jv imm2jv(inst *i) {
   return JV_OBJECT(jv_string("intval"), jv_number(i->imm.intval),
                    jv_string("target"), i->imm.target ? binder2jv(i->imm.target) : jv_null(),
-                   jv_string("constant"), i->imm.constant,
+                   jv_string("constant"), jv_copy(i->imm.constant),
                    jv_string("cfunc"), i->imm.cfunc ? jv_string(i->imm.cfunc->name) : jv_null());
 }
 
