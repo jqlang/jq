@@ -1289,14 +1289,13 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, int dump) 
   int nerrors = compile(bc, &b, lf, dump ? &dumped : NULL);
   block_free(b);
   assert(bc->globals->ncfunctions == ncfunc);
+  if (dump)
+    jv_dump(dumped, JV_PRINT_INDENT_FLAGS(2));
   if (nerrors > 0) {
     bytecode_free(bc);
     *out = 0;
-    jv_free(dumped);
   } else {
     *out = bc;
-    if (dump)
-      jv_dump(dumped, JV_PRINT_INDENT_FLAGS(2));
   }
   return nerrors;
 }
