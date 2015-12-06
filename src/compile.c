@@ -1133,7 +1133,7 @@ static int expand_call_arglist(block* b) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block *bp, struct locfile* lf, jv *dump, int top) {
+static int compile(struct bytecode* bc, block *bp, struct locfile* lf, jv *dump) {
   block b = *bp;
   int errors = 0;
   int pos = 0;
@@ -1202,7 +1202,7 @@ static int compile(struct bytecode* bc, block *bp, struct locfile* lf, jv *dump,
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
-        errors += compile(subfn, &curr->subfn, lf, NULL, 0);
+        errors += compile(subfn, &curr->subfn, lf, NULL);
         curr->compiled_subfn = curr->subfn;
         curr->subfn = gen_noop();
       }
@@ -1269,10 +1269,7 @@ static int compile(struct bytecode* bc, block *bp, struct locfile* lf, jv *dump,
     *dump = jv_object_set(*dump, jv_string("compiled"), dump_block(b, 1));
     printf("\n");
   }
-  if (top)
-    block_free(b);
-  else
-    *bp = b;
+  *bp = b;
   return errors;
 }
 
@@ -1289,7 +1286,8 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, int dump) 
   jv dumped = jv_invalid();
   if (dump)
     dumped = JV_OBJECT(jv_string("parsed"), dump_block(b, 0));
-  int nerrors = compile(bc, &b, lf, dump ? &dumped : NULL, 1);
+  int nerrors = compile(bc, &b, lf, dump ? &dumped : NULL);
+  block_free(b);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {
     bytecode_free(bc);
