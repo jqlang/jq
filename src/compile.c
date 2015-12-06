@@ -137,7 +137,8 @@ static jv imm2jv(inst *i) {
                    jv_string("cfunc"), i->imm.cfunc ? jv_string(i->imm.cfunc->name) : jv_null());
 }
 
-static jv dump_inst(inst *i) {
+static jv dump_block(block, int);
+static jv dump_inst(inst *i, int compiled) {
   const struct opcode_description *op = opcode_describe(i->op);
   jv r = JV_OBJECT(jv_string("pos"), jv_number(i->bytecode_pos - op->length),
                    jv_string("op"), op2jv(op),
@@ -145,16 +146,16 @@ static jv dump_inst(inst *i) {
                    jv_string("bound_by"), i->bound_by ? binder2jv(i->bound_by) : jv_null(),
                    jv_string("nformals"), jv_number(i->nformals),
                    jv_string("nactuals"), jv_number(i->nactuals),
-                   jv_string("subfn"), dump_block(i->compiled_subfn),
-                   jv_string("arglist"), dump_block(i->arglist),
+                   jv_string("subfn"), (compiled ? dump_block(i->compiled_subfn, 1) : dump_block(i->subfn, 0)),
+                   jv_string("arglist"), dump_block(i->arglist, compiled),
                    jv_string("source"), source2jv(i));
   return jv_object_set(r, jv_string("imm"), imm2jv(i));
 }
 
-jv dump_block(block b) {
+static jv dump_block(block b, int compiled) {
   jv r = jv_array();
   for (inst *i = b.first; i; i = i->next)
-    r = jv_array_append(r, dump_inst(i));
+    r = jv_array_append(r, dump_inst(i, compiled));
   return r;
 }
 
@@ -1132,7 +1133,7 @@ static int expand_call_arglist(block* b) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block *bp, struct locfile* lf, int dump, int top) {
+static int compile(struct bytecode* bc, block *bp, struct locfile* lf, jv *dump, int top) {
   block b = *bp;
   int errors = 0;
   int pos = 0;
@@ -1201,7 +1202,7 @@ static int compile(struct bytecode* bc, block *bp, struct locfile* lf, int dump,
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
-        errors += compile(subfn, &curr->subfn, lf, 0, 0);
+        errors += compile(subfn, &curr->subfn, lf, NULL, 0);
         curr->compiled_subfn = curr->subfn;
         curr->subfn = gen_noop();
       }
@@ -1264,7 +1265,8 @@ static int compile(struct bytecode* bc, block *bp, struct locfile* lf, int dump,
   bc->constants = constant_pool;
   bc->nlocals = maxvar + 2; // FIXME: frames of size zero?
   if (dump) {
-    jv_dump(dump_block(b), JV_PRINT_INDENT_FLAGS(2));
+    assert(jv_get_kind(*dump) == JV_KIND_OBJECT);
+    *dump = jv_object_set(*dump, jv_string("compiled"), dump_block(b, 1));
     printf("\n");
   }
   if (top)
@@ -1284,13 +1286,18 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, int dump) 
   bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
-  int nerrors = compile(bc, &b, lf, dump, 1);
+  jv dumped = jv_invalid();
+  if (dump)
+    dumped = JV_OBJECT(jv_string("parsed"), dump_block(b, 0));
+  int nerrors = compile(bc, &b, lf, dump ? &dumped : NULL, 1);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {
     bytecode_free(bc);
     *out = 0;
   } else {
     *out = bc;
+    if (dump)
+      jv_dump(dumped, JV_PRINT_INDENT_FLAGS(2));
   }
   return nerrors;
 }
