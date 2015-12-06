@@ -1081,6 +1081,7 @@ int jq_compile_opts(jq_state *jq, const char* str, jv opts, jv args) {
     bytecode_free(jq->bc);
     jq->bc = 0;
   }
+  jq_set_attr(jq, jv_string("options"), jv_copy(opts));
   int nerrors = load_program(jq, locations, &program);
   if (nerrors == 0) {
     jv_array_foreach(args, i, arg) {

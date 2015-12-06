@@ -945,10 +945,6 @@ int jq_parse(struct locfile* locations, block* answer) {
   yyparse(answer, &errors, locations, &scanner);
   jq_yy_delete_buffer(buf, scanner.lexer);
   jq_yylex_destroy(scanner.lexer);
-  if (errors > 0) {
-    block_free(*answer);
-    *answer = gen_noop();
-  }
   return errors;
 }
 

@@ -317,6 +317,16 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, const c
                                       jv_string(dirname(lib_origin)),
                                       &program, lib_state);
       free(lib_origin);
+    } else {
+      jv dump = jq_get_option(jq, jv_string("dump_block"));
+      if (jv_get_kind(dump) == JV_KIND_TRUE) {
+        dump = JV_OBJECT(jv_string("library parse error"), dump_block(program, 0),
+                         jv_string("library file"), jv_copy(lib_path));
+        jv_dump(dump, JV_PRINT_INDENT_FLAGS(2));
+        printf("\n");
+      }
+      jv_free(dump);
+      block_free(program);
     }
   }
   state_idx = lib_state->ct++;
@@ -351,6 +361,16 @@ jv load_module_meta(jq_state *jq, jv mod_relpath) {
       if (jv_get_kind(meta) == JV_KIND_NULL)
         meta = jv_object();
       meta = jv_object_set(meta, jv_string("deps"), block_take_imports(&program));
+    } else {
+      jv dump = jq_get_option(jq, jv_string("dump_block"));
+      if (jv_get_kind(dump) == JV_KIND_TRUE) {
+        dump = JV_OBJECT(jv_string("library parse error"), dump_block(program, 0),
+                         jv_string("library file"), jv_copy(lib_path));
+        jv_dump(dump, JV_PRINT_INDENT_FLAGS(2));
+        printf("\n");
+      }
+      jv_free(dump);
+      block_free(program);
     }
     locfile_free(src);
     block_free(program);
@@ -365,8 +385,17 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   block program;
   struct lib_loading_state lib_state = {0,0,0};
   nerrors = jq_parse(src, &program);
-  if (nerrors)
+  if (nerrors) {
+    jv dump = jq_get_option(jq, jv_string("dump_block"));
+    if (jv_get_kind(dump) == JV_KIND_TRUE) {
+      dump = JV_OBJECT(jv_string("program parse error"), dump_block(program, 0));
+      jv_dump(dump, JV_PRINT_INDENT_FLAGS(2));
+      printf("\n");
+    }
+    jv_free(dump);
+    block_free(program);
     return nerrors;
+  }
 
   nerrors = process_dependencies(jq, jq_get_jq_origin(jq), jq_get_prog_origin(jq), &program, &lib_state);
   block libs = gen_noop();
