@@ -359,7 +359,7 @@ Term "as" Pattern '|' Exp {
 } |
 
 "if" Exp "then" Exp ElseBody {
-  $$ = gen_cond($2, $4, $5);
+  $$ = gen_location(@$, locations, gen_cond($2, $4, $5));
 } |
 "if" Exp "then" error {
   FAIL(@$, "Possibly unterminated 'if' statement");

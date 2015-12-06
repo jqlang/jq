@@ -2434,7 +2434,7 @@ yyreduce:
   case 15:
 #line 361 "src/parser.y" /* yacc.c:1646  */
     {
-  (yyval.blk) = gen_cond((yyvsp[-3].blk), (yyvsp[-1].blk), (yyvsp[0].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_cond((yyvsp[-3].blk), (yyvsp[-1].blk), (yyvsp[0].blk)));
 }
 #line 2440 "src/parser.c" /* yacc.c:1646  */
     break;
