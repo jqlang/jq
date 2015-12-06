@@ -544,10 +544,14 @@ ImportWhat:
   jv_free(v);
 } |
 "include" ImportFrom {
-  jv v = block_const($2);
-  $$ = gen_import(jv_string_value(v), NULL, 0);
-  block_free($2);
-  jv_free(v);
+  if (block_is_error($2)) {
+    $$ = $2;
+  } else {
+    jv v = block_const($2);
+    $$ = gen_import(jv_string_value(v), NULL, 0);
+    block_free($2);
+    jv_free(v);
+  }
 }
 
 ImportFrom:
