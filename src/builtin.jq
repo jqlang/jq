@@ -125,8 +125,8 @@ def sub($re; s):
 #
 # If s contains capture variables, then create a capture object and pipe it to s
 def sub($re; s; flags):
-  def subg: explode | select(. != 103) | implode;
-# "fla" should be flags with all occurrences of g removed; gs should be non-nil if flags has a g
+  def subg: [explode[] | select(. != 103)] | implode;
+  # "fla" should be flags with all occurrences of g removed; gs should be non-nil if flags has a g
   def sub1(fla; gs):
     def mysub:
       . as $in
@@ -134,12 +134,12 @@ def sub($re; s; flags):
       | if length == 0 then $in
         else .[0] as $edit
         | ($edit | .offset + .length) as $len
-#  # create the "capture" object:
+        # create the "capture" object:
         | reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
             ({}; . + $pair)
         | $in[0:$edit.offset]
           + s
-          + ($in[$len:] | if gs then mysub else . end)
+          + ($in[$len:] | if length > 0 and gs then mysub else . end)
         end ;
     mysub ;
     (flags | index("g")) as $gs
