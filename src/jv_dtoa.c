@@ -2327,7 +2327,7 @@ retlow1:
 jvp_strtod
  (struct dtoa_context* C, const char *s00, char **se)
 {
-	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, e, e1;
+	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, e, e1, test_scale;
 	int esign, i, j, k, nd, nd0, nf, nz, nz0, nz1, sign;
 	CONST char *s, *s0, *s1;
 	double aadj, aadj1;
@@ -2941,12 +2941,11 @@ jvp_strtod
 					if (!word1(&rv)
 					 && !(word0(&rv) & Frac_mask)) {
 						y = word0(&rv) & Exp_mask;
+						test_scale = y;
 #ifdef Avoid_Underflow
-						if (!bc.scale || y > 2*P*Exp_msk1)
-#else
-						if (y)
+						test_scale = (!bc.scale || y > 2*P*Exp_msk1);
 #endif
-						  {
+						if (test_scale) {
 						  delta = lshift(C, delta,Log2P);
 						  if (cmp(C, delta, bs) <= 0)
 							adj.d = -0.5;
