@@ -16,6 +16,7 @@ void jq_set_nomem_handler(jq_state *, void (*)(void *), void *);
 jv jq_format_error(jv msg);
 void jq_report_error(jq_state *, jv);
 int jq_compile(jq_state *, const char*);
+int jq_compile_opts(jq_state *, const char*, jv, jv);
 int jq_compile_args(jq_state *, const char*, jv);
 void jq_dump_disassembly(jq_state *, int);
 void jq_start(jq_state *, jv value, int);
@@ -36,6 +37,7 @@ jv jq_get_prog_origin(jq_state *);
 jv jq_get_lib_dirs(jq_state *);
 void jq_set_attr(jq_state *, jv, jv);
 jv jq_get_attr(jq_state *, jv);
+jv jq_get_option(jq_state *, jv);
 
 /*
  * We use char * instead of jf for filenames here because filenames

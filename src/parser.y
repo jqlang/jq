@@ -135,6 +135,8 @@ struct lexer_param {
 void yyerror(YYLTYPE* loc, block* answer, int* errors,
              struct locfile* locations, struct lexer_param* lexer_param_ptr, const char *s){
   (*errors)++;
+  if (answer)
+    mark_error(*answer);
   if (strstr(s, "unexpected")) {
 #ifdef WIN32
       locfile_locate(locations, *loc, "jq: error: %s (Windows cmd shell quoting issues?)", s);
@@ -314,8 +316,8 @@ Module:
 "module" Exp ';' {
   if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant");
-    $$ = gen_noop();
-    block_free($2);
+    mark_error($2);
+    $$ = $2;
   } else {
     $$ = gen_module($2);
   }
@@ -359,10 +361,11 @@ Term "as" Pattern '|' Exp {
 } |
 
 "if" Exp "then" Exp ElseBody {
-  $$ = gen_cond($2, $4, $5);
+  $$ = gen_location(@$, locations, gen_cond($2, $4, $5));
 } |
 "if" Exp "then" error {
   FAIL(@$, "Possibly unterminated 'if' statement");
+  mark_error($2);
   $$ = $2;
 } |
 
@@ -376,6 +379,7 @@ Term "as" Pattern '|' Exp {
 } |
 "try" Exp "catch" error {
   FAIL(@$, "Possibly unterminated 'try' statement");
+  mark_error($2);
   $$ = $2;
 } |
 
@@ -452,14 +456,18 @@ Exp "*=" Exp {
 
 Exp '/' Exp {
   $$ = gen_binop($1, $3, '/');
-  if (block_is_const_inf($$))
+  if (block_is_const_inf($$)) {
+    mark_error($$);
     FAIL(@$, "Division by zero?");
+  }
 } |
 
 Exp '%' Exp {
   $$ = gen_binop($1, $3, '%');
-  if (block_is_const_inf($$))
+  if (block_is_const_inf($$)) {
+    mark_error($$);
     FAIL(@$, "Remainder by zero?");
+  }
 } |
 
 Exp "/=" Exp {
@@ -505,14 +513,14 @@ ImportWhat ';' {
 ImportWhat Exp ';' {
   if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant");
-    $$ = gen_noop();
+    mark_error($2);
+    $$ = $2;
     block_free($1);
-    block_free($2);
   } else if (block_const_kind($2) != JV_KIND_OBJECT) {
     FAIL(@$, "Module metadata must be an object");
-    $$ = gen_noop();
+    mark_error($2);
+    $$ = $2;
     block_free($1);
-    block_free($2);
   } else {
     $$ = gen_import_meta($1, $2);
   }
@@ -536,21 +544,23 @@ ImportWhat:
   jv_free(v);
 } |
 "include" ImportFrom {
-  jv v = block_const($2);
-  $$ = gen_import(jv_string_value(v), NULL, 0);
-  block_free($2);
-  jv_free(v);
+  if (block_is_error($2)) {
+    $$ = $2;
+  } else {
+    jv v = block_const($2);
+    $$ = gen_import(jv_string_value(v), NULL, 0);
+    block_free($2);
+    jv_free(v);
+  }
 }
 
 ImportFrom:
 String {
   if (!block_is_const($1)) {
     FAIL(@$, "Import path must be constant");
-    $$ = gen_const(jv_string(""));
-    block_free($1);
-  } else {
-    $$ = $1;
+    mark_error($1);
   }
+  $$ = $1;
 }
 
 FuncDef:
@@ -829,6 +839,7 @@ String ':' Pattern {
 } |
 error ':' Pattern {
   FAIL(@$, "May need parentheses around object key expression");
+  mark_error($3);
   $$ = $3;
 }
 
@@ -925,12 +936,14 @@ IDENT ':' ExpD {
   jv msg = check_object_key($2);
   if (jv_is_valid(msg)) {
     FAIL(@$, jv_string_value(msg));
+    mark_error($2);
   }
   jv_free(msg);
   $$ = gen_dictpair($2, $5);
   }
 | error ':' ExpD {
   FAIL(@$, "May need parentheses around object key expression");
+  mark_error($3);
   $$ = $3;
   }
 %%
@@ -945,10 +958,6 @@ int jq_parse(struct locfile* locations, block* answer) {
   yyparse(answer, &errors, locations, &scanner);
   jq_yy_delete_buffer(buf, scanner.lexer);
   jq_yylex_destroy(scanner.lexer);
-  if (errors > 0) {
-    block_free(*answer);
-    *answer = gen_noop();
-  }
   return errors;
 }
 

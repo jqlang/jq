@@ -14,6 +14,9 @@ typedef struct block {
   inst* last;
 } block;
 
+jv dump_block(block, int);
+void mark_error(block);
+int block_is_error(block);
 block gen_location(location, struct locfile*, block);
 
 block gen_noop();
@@ -76,7 +79,7 @@ block block_drop_unreferenced(block body);
 
 jv block_take_imports(block* body);
 
-int block_compile(block, struct bytecode**, struct locfile*);
+int block_compile(block, struct bytecode**, struct locfile*, int dump);
 
 void block_free(block);
 

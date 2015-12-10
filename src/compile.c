@@ -54,9 +54,11 @@ struct inst {
 
   int nformals;
   int nactuals;
+  int error;
 
   block subfn;   // used by CLOSURE_CREATE (body of function)
   block arglist; // used by CLOSURE_CREATE (formals) and CALL_JQ (arguments)
+  block compiled_subfn; // Mutated by compile(); kept for dumping
 
   // This instruction is compiled as part of which function?
   // (only used during block_compile)
@@ -74,16 +76,104 @@ static inst* inst_new(opcode op) {
   i->symbol = 0;
   i->nformals = -1;
   i->nactuals = -1;
+  i->error = 0;
   i->subfn = gen_noop();
   i->arglist = gen_noop();
+  i->compiled_subfn = gen_noop();
   i->source = UNKNOWN_LOCATION;
   i->locfile = 0;
+  i->imm.intval = 0;
+  i->imm.target = 0;
+  i->imm.constant = jv_null();
+  i->imm.cfunc = 0;
   return i;
+}
+
+void mark_error(block b) {
+  if (b.first)
+    b.first->error = 1;
+}
+
+int block_is_error(block b) {
+  return (b.first && b.first->error);
+}
+
+static jv op2jv(const struct opcode_description *op) {
+  jv flags = jv_array();
+#undef rec_flag
+#define rec_flag(f) \
+  if ((op->flags & (f))) \
+    flags = jv_array_append(flags, jv_string(#f))
+  rec_flag(OP_HAS_CONSTANT);
+  rec_flag(OP_HAS_VARIABLE);
+  rec_flag(OP_HAS_BRANCH);
+  rec_flag(OP_HAS_CFUNC);
+  rec_flag(OP_HAS_UFUNC);
+  rec_flag(OP_IS_CALL_PSEUDO);
+  rec_flag(OP_HAS_BINDING);
+  rec_flag(OP_BIND_WILDCARD);
+#undef rec_flag
+
+  return JV_OBJECT(jv_string("name"), jv_string(op->name),
+                   jv_string("flags"), flags,
+                   jv_string("length"), jv_number(op->length),
+                   jv_string("stack_in"), jv_number(op->stack_in),
+                   jv_string("stack_out"), jv_number(op->stack_out));
+}
+
+static jv source2jv(inst *i) {
+  jv fname = i->locfile ? jv_copy(i->locfile->fname) : jv_string("<unspec>");
+  jv snippet;
+
+  if (i->locfile && i->locfile->data)
+    snippet = jv_string_sized(i->locfile->data + i->source.start, i->source.end - i->source.start);
+  else
+    snippet = jv_string("");
+  return JV_OBJECT(jv_string("fname"), fname,
+                   jv_string("start"), jv_number(i->source.start),
+                   jv_string("end"), jv_number(i->source.end),
+                   jv_string("snippet"), snippet);
+}
+
+static jv binder2jv(inst *binder) {
+  return JV_OBJECT(jv_string("pos"), jv_number(binder->bytecode_pos),
+                   jv_string("symbol"), binder->symbol ? jv_string(binder->symbol) : jv_null(),
+                   jv_string("source"), source2jv(binder));
+}
+
+static jv imm2jv(inst *i) {
+  return JV_OBJECT(jv_string("intval"), jv_number(i->imm.intval),
+                   jv_string("target"), i->imm.target ? binder2jv(i->imm.target) : jv_null(),
+                   jv_string("constant"), jv_copy(i->imm.constant),
+                   jv_string("cfunc"), i->imm.cfunc ? jv_string(i->imm.cfunc->name) : jv_null());
+}
+
+static jv dump_inst(inst *i, int compiled) {
+  const struct opcode_description *op = opcode_describe(i->op);
+  jv r = JV_OBJECT(jv_string("pos"), jv_number(i->bytecode_pos - op->length),
+                   jv_string("op"), op2jv(op),
+                   jv_string("symbol"), i->symbol ? jv_string(i->symbol) : jv_null(),
+                   jv_string("bound_by"), i->bound_by ? binder2jv(i->bound_by) : jv_null(),
+                   jv_string("nformals"), jv_number(i->nformals),
+                   jv_string("nactuals"), jv_number(i->nactuals),
+                   jv_string("subfn"), (compiled ? dump_block(i->compiled_subfn, 1) : dump_block(i->subfn, 0)),
+                   jv_string("arglist"), dump_block(i->arglist, compiled),
+                   jv_string("source"), source2jv(i));
+  r = jv_object_set(r, jv_string("error"), i->error ? jv_true() : jv_false());
+  return jv_object_set(r, jv_string("imm"), imm2jv(i));
+}
+
+jv dump_block(block b, int compiled) {
+  jv r = jv_array();
+  for (inst *i = b.first; i; i = i->next)
+    r = jv_array_append(r, dump_inst(i, compiled));
+  return r;
 }
 
 static void inst_free(struct inst* i) {
   jv_mem_free(i->symbol);
   block_free(i->subfn);
+  block_free(i->compiled_subfn);
   block_free(i->arglist);
   if (i->locfile)
     locfile_free(i->locfile);
@@ -982,6 +1072,7 @@ static int expand_call_arglist(block* b) {
           locfile_locate(curr->locfile, curr->source, "jq: error: break used outside labeled control structure");
         else
           locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
+        curr->error = 1;
         errors++;
         // don't process this instruction if it's not well-defined
         ret = BLOCK(ret, inst_block(curr));
@@ -1031,6 +1122,7 @@ static int expand_call_arglist(block* b) {
           block body = i->subfn;
           i->subfn = gen_noop();
           inst_free(i);
+          // it might prove useful to record that we had an indirect error in this i
           // arguments should be pushed in reverse order, prepend them to prelude
           errors += expand_call_arglist(&body);
           prelude = BLOCK(gen_subexp(body), prelude);
@@ -1054,7 +1146,8 @@ static int expand_call_arglist(block* b) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block b, struct locfile* lf) {
+static int compile(struct bytecode* bc, block *bp, struct locfile* lf) {
+  block b = *bp;
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
@@ -1099,6 +1192,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
     // too long for program counter to fit in uint16_t
     locfile_locate(lf, UNKNOWN_LOCATION,
         "function compiled to %d bytes which is too long", pos);
+    b.first->error = 1;
     errors++;
   }
   bc->codelen = pos;
@@ -1122,7 +1216,9 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
-        errors += compile(subfn, curr->subfn, lf);
+        // it might prove useful to record that we had an indirect error in this curr
+        errors += compile(subfn, &curr->subfn, lf);
+        curr->compiled_subfn = curr->subfn;
         curr->subfn = gen_noop();
       }
     }
@@ -1183,11 +1279,11 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
   }
   bc->constants = constant_pool;
   bc->nlocals = maxvar + 2; // FIXME: frames of size zero?
-  block_free(b);
+  *bp = b;
   return errors;
 }
 
-int block_compile(block b, struct bytecode** out, struct locfile* lf) {
+int block_compile(block b, struct bytecode** out, struct locfile* lf, int dump) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
@@ -1197,8 +1293,18 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf) {
   bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
-  int nerrors = compile(bc, b, lf);
+  jv dumped = jv_invalid();
+  if (dump)
+    dumped = JV_OBJECT(jv_string("parsed"), dump_block(b, 0));
+  int nerrors = compile(bc, &b, lf);
+  if (dump)
+    dumped = jv_object_set(dumped, jv_string("compiled"), dump_block(b, 1));
+  block_free(b);
   assert(bc->globals->ncfunctions == ncfunc);
+  if (dump) {
+    jv_dump(dumped, JV_PRINT_INDENT_FLAGS(2));
+    printf("\n");
+  }
   if (nerrors > 0) {
     bytecode_free(bc);
     *out = 0;

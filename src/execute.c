@@ -1067,6 +1067,10 @@ static struct bytecode *optimize(struct bytecode *bc) {
 }
 
 int jq_compile_args(jq_state *jq, const char* str, jv args) {
+  return jq_compile_opts(jq, str, jv_object(), args);
+}
+
+int jq_compile_opts(jq_state *jq, const char* str, jv opts, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   assert(jv_get_kind(args) == JV_KIND_ARRAY);
   struct locfile* locations;
@@ -1077,6 +1081,7 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
     bytecode_free(jq->bc);
     jq->bc = 0;
   }
+  jq_set_attr(jq, jv_string("options"), jv_copy(opts));
   int nerrors = load_program(jq, locations, &program);
   if (nerrors == 0) {
     jv_array_foreach(args, i, arg) {
@@ -1088,13 +1093,21 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
 
     nerrors = builtins_bind(jq, &program);
     if (nerrors == 0) {
-      nerrors = block_compile(program, &jq->bc, locations);
+      program = block_drop_unreferenced(program);
+      /*
+       * We could dump_block(program) here, but block_compile() modifies
+       * the program it in important ways, so we leave it to
+       * block_compile() to dump it.
+       */
+      int dump = jv_equal(jv_true(), jv_object_get(jv_copy(opts), jv_string("dump_block")));
+      nerrors = block_compile(program, &jq->bc, locations, dump);
     }
   }
   if (nerrors)
     jq_report_error(jq, jv_string_fmt("jq: %d compile %s", nerrors, nerrors > 1 ? "errors" : "error"));
   if (jq->bc)
     jq->bc = optimize(jq->bc);
+  jv_free(opts);
   jv_free(args);
   locfile_free(locations);
   return jq->bc != NULL;
@@ -1128,6 +1141,10 @@ void jq_set_attr(jq_state *jq, jv attr, jv val) {
 
 jv jq_get_attr(jq_state *jq, jv attr) {
   return jv_object_get(jv_copy(jq->attrs), attr);
+}
+
+jv jq_get_option(jq_state *jq, jv option) {
+  return jv_getpath(jv_copy(jq->attrs), JV_ARRAY(jv_string("options"), option));
 }
 
 void jq_dump_disassembly(jq_state *jq, int indent) {

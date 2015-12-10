@@ -124,6 +124,7 @@ enum {
   RUN_TESTS             = 16384,
   /* debugging only */
   DUMP_DISASM           = 32768,
+  DUMP_BLOCK            = 65536,
 };
 static int options = 0;
 
@@ -220,6 +221,7 @@ int main(int argc, char* argv[]) {
 
   int further_args_are_files = 0;
   int jq_flags = 0;
+  jv jq_options = jv_object();
   size_t short_opts = 0;
   jv lib_search_paths = jv_null();
   for (int i=1; i<argc; i++, short_opts = 0) {
@@ -401,6 +403,11 @@ int main(int argc, char* argv[]) {
         options |= DUMP_DISASM;
         if (!short_opts) continue;
       }
+      if (isoption(argv[i],  0,  "debug-dump-block", &short_opts)) {
+        options |= DUMP_BLOCK;
+        jq_options = jv_object_set(jq_options, jv_string("dump_block"), jv_true());
+        if (!short_opts) continue;
+      }
       if (isoption(argv[i],  0,  "debug-trace", &short_opts)) {
         jq_flags |= JQ_DEBUG_TRACE;
         if (!short_opts) continue;
@@ -419,7 +426,7 @@ int main(int argc, char* argv[]) {
         // XXX Pass program_arguments, even a whole jq_state *, through;
         // could be useful for testing
         ret = jq_testsuite(lib_search_paths,
-                           (options & DUMP_DISASM) || (jq_flags & JQ_DEBUG_TRACE),
+                           (options & (DUMP_DISASM|DUMP_BLOCK|JQ_DEBUG_TRACE)),
                            argc - i, argv + i);
         goto out;
       }
@@ -491,12 +498,12 @@ int main(int argc, char* argv[]) {
       goto out;
     }
     jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string(dirname(program_origin))));
-    compiled = jq_compile_args(jq, jv_string_value(data), jv_copy(program_arguments));
+    compiled = jq_compile_opts(jq, jv_string_value(data), jv_copy(jq_options), jv_copy(program_arguments));
     free(program_origin);
     jv_free(data);
   } else {
     jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string("."))); // XXX is this good?
-    compiled = jq_compile_args(jq, program, jv_copy(program_arguments));
+    compiled = jq_compile_opts(jq, program, jv_copy(jq_options), jv_copy(program_arguments));
   }
   if (!compiled){
     ret = 3;
@@ -560,6 +567,7 @@ out:
     ret = 2;
   }
 
+  jv_free(jq_options);
   jv_free(program_arguments);
   jq_util_input_free(&input_state);
   jq_teardown(&jq);
