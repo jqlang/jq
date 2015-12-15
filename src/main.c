@@ -127,6 +127,21 @@ enum {
 };
 static int options = 0;
 
+static const char *skip_shebang(const char *p) {
+  if (strncmp(p, "#!", sizeof("#!") - 1) != 0)
+    return p;
+  const char *n = strchr(p, '\n');
+  if (n == NULL || n[1] != '#')
+    return p;
+  n = strchr(n + 1, '\n');
+  if (n == NULL || n[1] == '#' || n[1] == '\0' || n[-1] != '\\' || n[-2] == '\\')
+    return p;
+  n = strchr(n + 1, '\n');
+  if (n == NULL)
+    return p;
+  return n+1;
+}
+
 static int process(jq_state *jq, jv value, int flags, int dumpopts) {
   int ret = 14; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
@@ -491,7 +506,7 @@ int main(int argc, char* argv[]) {
       goto out;
     }
     jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string(dirname(program_origin))));
-    compiled = jq_compile_args(jq, jv_string_value(data), jv_copy(program_arguments));
+    compiled = jq_compile_args(jq, skip_shebang(jv_string_value(data)), jv_copy(program_arguments));
     free(program_origin);
     jv_free(data);
   } else {
