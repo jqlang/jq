@@ -1,0 +1,54 @@
+jq (1.5+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Acknowledge 1.4-2.1 NMU
+  * Add "Multi-Arch: foreign" flag (Closes: #799676)
+  * Remove "disable-valgrind-tests" patch (fixed by Upstream in 32ea50d:
+    http://git.io/vCC5r)
+  * Remove "disable-shared-lib" patch: libjq is still disabled, but libonig2
+    (new requirement for regular expressions) is linked dynamically. This is
+    done with the new patch "static-libjq-dynamic-libonig2".
+  * Add gbp.conf to strip minified Javascript dependencies from tarball
+
+ -- Simon Elsbrock <simon@iodev.org>  Sun, 11 Oct 2015 02:09:09 +0200
+
+jq (1.4-2.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Restore the 1.3-1.1 NMU changelog.
+  * Fix FTBFS on big endian architectures.
+    Add big-endian-fix.patch.
+    Patch by Dejan Latinovic <Dejan.Latinovic@imgtec.com>.
+    Closes: #754754.
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Mon, 21 Jul 2014 07:42:05 +0100
+
+jq (1.4-1) unstable; urgency=medium
+
+  * Imported Upstream version 1.4 (Closes: #750969, #715244, #742809, #741932)
+  * Prevent execution of test suite on armel and armhf (Closes: #752046)
+  * Update to Debian source version 9
+  * Override dh_auto_configure and dh_auto_clean
+
+ -- Simon Elsbrock <simon@iodev.org>  Sun, 22 Jun 2014 20:49:15 +0200
+
+jq (1.3-1) unstable; urgency=low
+
+  * New upstream release. (Closes: #725118)
+  * Add a new patch that enables the creation of the manpage.
+  * Add a new patch that disables valgrind on certain architectures
+    reported as failing (because of missing valgrind support) by buildd
+  * Remove a patch fixing destination directories (resolved by the
+    automake toolchain used in this release).
+  * Use github.com directly to check for new releases instead of the
+    githubredir.debian.net services (as stated in uscan(1)).
+  * Thanks to Faidon Liambotis and Michael Stapelberg for their extensive
+    reviews.
+
+ -- Simon Elsbrock <simon@iodev.org>  Wed, 02 Oct 2013 21:25:22 +0200
+
+jq (1.2-8) unstable; urgency=low
+
+  * Initial release (Closes: #696232)
+
+ -- Simon Elsbrock <simon@iodev.org>  Fri, 21 Dec 2012 23:28:59 +0100

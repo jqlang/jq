@@ -1,0 +1,3 @@
+version=3
+opts=dversionmangle=s/\+(debian|dfsg|ds|deb)(\.\d+)?$// \
+http://github.com/stedolan/jq/tags .*/jq-(\d[\d\.]*)\.tar\.gz
