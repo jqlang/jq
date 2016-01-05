@@ -1875,6 +1875,8 @@ sections:
 
           More cases can be added to an if using `elif A then B` syntax.
 
+          To simply filter elements matching a condition, use `select()`.
+
         examples:
           - program: |-
               if . == 0 then
