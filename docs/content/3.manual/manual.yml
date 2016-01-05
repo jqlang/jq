@@ -1111,6 +1111,8 @@ sections:
           will convert correctly-formatted strings to their numeric
           equivalent, leave numbers alone, and give an error on all other input.
 
+          It casts the string into an integer or a float, depending on its value.
+
         examples:
           - program: '.[] | tonumber'
             input: '[1, "1"]'
