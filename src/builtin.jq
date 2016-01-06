@@ -287,3 +287,68 @@ def walk(f):
   elif type == "array" then map( walk(f) ) | f
   else f
   end;
+
+# Assuming input is an object and q is an array of strings or an object,
+# project(q) emits an object with the same keys (and in the same order) as specified by q,
+# with corresponding values defined by the input.
+def project(q):
+  . as $in
+  | reduce (q | if type == "object" then keys[] else .[] end) as $k
+      ({}; . + { ($k) : ($in[$k]) }) ;
+
+# Unify input and y; emit null iff both are null or unification fails;
+# unification is essentially based on the substitution of each null by
+# the JSON entity at the corresponding location.
+def unify(y):
+  # helper function for when input and b are both arrays
+  def array_unify(b):
+    . as $a
+    | if length != (b|length) then null
+      else reduce range(0;length) as $i
+        ([];
+	 if . == null then .
+	 else
+	    if $a[$i] == null and b[$i] == null then . += [null]
+	    else ($a[$i]|unify(b[$i])) as $u
+               | if $u == null then null
+		 else . += [$u]
+		 end
+	    end
+	 end )
+      end ;
+
+  # helper function for when input and b are both objects
+  def object_unify(b):
+    . as $a
+    | if $a == {} then b
+      elif b == {} then $a
+      else (($a + b) | keys | unique) as $keys
+      | reduce $keys[] as $i
+          ({};
+	   if . == null then .
+	   else
+	     if $a[$i] == null and b[$i] == null then . += {($i): null}
+	     else ($a[$i]|unify(b[$i])) as $u
+               | if $u == null then null
+		 else . += {($i): ($u)}
+		 end
+	     end
+	  end )
+      end ;
+    
+  . as $x
+  | if $x == y then $x
+    elif $x == null then y
+    elif y  == null then $x
+    elif $x|type == "object"
+       then if y|type == "object" then $x | object_unify(y) else null end
+    elif $x|type == "array"
+       then if y|type == "array" then $x | array_unify(y) else null end
+    else null
+    end
+    ;
+
+# Query the input object using obj as a template:
+def query(obj):
+  unify(obj) | select(.) | project(obj);
+
