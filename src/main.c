@@ -31,7 +31,7 @@
 #include "jq.h"
 #include "jv_alloc.h"
 #include "util.h"
-#include "version.h"
+#include "src/version.h"
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
 
