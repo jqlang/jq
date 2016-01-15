@@ -31,7 +31,7 @@ src/lexer.c: src/lexer.l
 	$(AM_V_LEX) flex -o src/lexer.c --header-file=src/lexer.h $<
 src/lexer.h: src/lexer.c
 else
-BUILT_SOURCES = src/builtin.inc
+BUILT_SOURCES = src/builtin.inc src/version.h
 .y.c:
 	$(AM_V_YACC) echo "NOT building parser.c!"
 .l.c:
@@ -140,7 +140,8 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
-        src/parser.h scripts/version tests/jq.test tests/modules/.jq    \
+        src/parser.h src/version.h src/builtin.inc                      \
+        scripts/version tests/jq.test tests/modules/.jq                 \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
         tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq           \
