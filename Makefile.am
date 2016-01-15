@@ -31,7 +31,7 @@ src/lexer.c: src/lexer.l
 	$(AM_V_LEX) flex -o src/lexer.c --header-file=src/lexer.h $<
 src/lexer.h: src/lexer.c
 else
-BUILT_SOURCES =
+BUILT_SOURCES = src/builtin.inc
 .y.c:
 	$(AM_V_YACC) echo "NOT building parser.c!"
 .l.c:
