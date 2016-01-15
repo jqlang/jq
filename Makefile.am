@@ -50,6 +50,10 @@ libjq_la_SOURCES = ${LIBJQ_SRC}
 libjq_la_LIBADD = -lm
 libjq_la_LDFLAGS = -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
+if WIN32
+libjq_la_LIBADD += -lshlwapi
+endif
+
 include_HEADERS = src/jv.h src/jq.h
 
 ### Running tests under Valgrind

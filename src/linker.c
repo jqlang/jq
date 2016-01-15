@@ -8,6 +8,10 @@
 #include <sys/stat.h>
 #include <libgen.h>
 
+#ifdef WIN32
+#include <shlwapi.h>
+#endif
+
 #include "jq_parser.h"
 #include "locfile.h"
 #include "jv.h"
