@@ -33,3 +33,13 @@ artifacts:
   - path: jq.exe
     name: jq-exe
     
+  - path: test-suite.log
+    name: logs
+    
+
+on_failure:
+  - cat test-suite.log
+  - appveyor PushArtifact test-suite.log
+  # also push the jq.exe so that someone can download it anyways...
+  - appveyor PushArtifact jq-package.zip
+    
