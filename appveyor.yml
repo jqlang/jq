@@ -18,7 +18,8 @@ build_script:
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && autoreconf -i"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && ./configure --disable-shared --enable-static --enable-all-static"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make LDFLAGS=-lshlwapi"
-  - 7z a jq-package.zip jq.1 jq.exe
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && cat jq.1  | groff -mandoc -Thtml > jq.html"
+  - 7z a jq-package.zip jq.1 jq.html jq.exe
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && pwd && ls -la"
   - file jq.exe
   
