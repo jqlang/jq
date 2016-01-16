@@ -1,0 +1,35 @@
+﻿environment:
+  matrix:
+  - Compiler: mingw
+
+
+install:
+  - set "PATH=C:\msys64\usr\bin;C:\msys64\mingw64\bin;C:\Windows\System32;C:\Windows;%PATH%"
+  - set MSYSTEM=MINGW64
+  # update mysy2
+  - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
+  # this crashes? 
+  #- C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-i686-toolchain" 
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex"
+  # install oniguruma
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-i686-oniguruma mingw-w64-x86_64-oniguruma"
+
+
+build_script:
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && autoreconf -i"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && ./configure --disable-shared --enable-static --enable-all-static"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make LDFLAGS=-lshlwapi"
+  - 7z a jq-package.zip jq.1 jq.exe
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && pwd && ls -la"
+  
+test_script:
+  - echo not run?
+      
+artifacts:
+  - path: jq-package.zip
+    name: jq-package
+    
+  - path: jq.exe
+    name: jq-exe
+    
