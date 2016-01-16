@@ -1,18 +1,16 @@
-﻿environment:
+environment:
   matrix:
-  - Compiler: mingw
+  - MSYSTEM: MINGW64
+    PATH: C:\msys64\usr\bin;C:\msys64\mingw64\bin;C:\Windows\System32;C:\Windows;%PATH%
+  - MSYSTEM: MINGW32
+    PATH: C:\msys64\usr\bin;C:\msys64\mingw32\bin;C:\Windows\System32;C:\Windows;%PATH%
 
 
 install:
-  - set "PATH=C:\msys64\usr\bin;C:\msys64\mingw64\bin;C:\Windows\System32;C:\Windows;%PATH%"
-  - set MSYSTEM=MINGW64
   # update mysy2
   - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
-  # this crashes? 
-  #- C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-i686-toolchain" 
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex"
-  # install oniguruma
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-i686-oniguruma mingw-w64-x86_64-oniguruma"
 
 
@@ -22,6 +20,7 @@ build_script:
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make LDFLAGS=-lshlwapi"
   - 7z a jq-package.zip jq.1 jq.exe
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && pwd && ls -la"
+  - file jq.exe
   
 test_script:
   - echo not run?
