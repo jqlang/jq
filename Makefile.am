@@ -56,6 +56,10 @@ endif
 
 include_HEADERS = src/jv.h src/jq.h
 
+if ENABLE_UBSAN
+AM_CFLAGS += -fsanitize=undefined
+endif
+
 ### Running tests under Valgrind
 
 if ENABLE_ASAN

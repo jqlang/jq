@@ -95,6 +95,10 @@ dnl faster.
 AC_ARG_ENABLE([asan],
    AC_HELP_STRING([--enable-asan], [enable address sanitizer]))
 
+dnl Undefined Behavior Sanitizer
+AC_ARG_ENABLE([ubsan],
+   AC_HELP_STRING([--enable-ubsan], [enable undefined behavior sanitizer]))
+
 dnl Code coverage
 AC_ARG_ENABLE([gcov],
    AC_HELP_STRING([--enable-gcov], [enable gcov code coverage tool]))
@@ -137,6 +141,7 @@ EOF
 
 AM_CONDITIONAL([ENABLE_VALGRIND], [test "x$enable_valgrind" != xno])
 AM_CONDITIONAL([ENABLE_ASAN], [test "x$enable_asan" = xyes])
+AM_CONDITIONAL([ENABLE_UBSAN], [test "x$enable_ubsan" = xyes])
 AM_CONDITIONAL([ENABLE_GCOV], [test "x$enable_gcov" = xyes])
 AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 AM_CONDITIONAL([ENABLE_ERROR_INJECTION], [test "x$enable_error_injection" = xyes])
