@@ -1,0 +1,24 @@
+# See tests/jq.test and the jq manual for more information.
+
+# As long as we use the C qsort() function, this test can fail if the C
+# qsort() implementation we get is not stable (Quicksort is not stable).
+
+(sort_by(.b) | sort_by(.a)), sort_by(.a, .b), sort_by(.b, .c), group_by(.b), group_by(.a + .b - .c == 2)
+[{"a": 1, "b": 4, "c": 14}, {"a": 4, "b": 1, "c": 3}, {"a": 1, "b": 4, "c": 3}, {"a": 0, "b": 2, "c": 43}]
+[{"a": 0, "b": 2, "c": 43}, {"a": 1, "b": 4, "c": 14}, {"a": 1, "b": 4, "c": 3}, {"a": 4, "b": 1, "c": 3}]
+[{"a": 0, "b": 2, "c": 43}, {"a": 1, "b": 4, "c": 14}, {"a": 1, "b": 4, "c": 3}, {"a": 4, "b": 1, "c": 3}]
+[{"a": 4, "b": 1, "c": 3}, {"a": 0, "b": 2, "c": 43}, {"a": 1, "b": 4, "c": 3}, {"a": 1, "b": 4, "c": 14}]
+[[{"a": 4, "b": 1, "c": 3}], [{"a": 0, "b": 2, "c": 43}], [{"a": 1, "b": 4, "c": 14}, {"a": 1, "b": 4, "c": 3}]]
+[[{"a": 1, "b": 4, "c": 14}, {"a": 0, "b": 2, "c": 43}], [{"a": 4, "b": 1, "c": 3}, {"a": 1, "b": 4, "c": 3}]]
+
+# strptime() is not available on mingw/WIN32
+[strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
+"2015-03-05T23:51:47Z"
+[[2015,2,5,23,51,47,4,63],1425599507]
+
+# %e is not available on mingw/WIN32
+strftime("%A, %B %e, %Y")
+1435677542.822351
+"Tuesday, June 30, 2015"
+
+

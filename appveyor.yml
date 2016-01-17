@@ -24,7 +24,7 @@ build_script:
   - file jq.exe
   
 test_script:
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j4 'TESTS=tests/mantest tests/onigtest' check"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j4 'TESTS=tests/mantest tests/jqtest tests/onigtest' check"
       
 artifacts:
   - path: jq-package.zip
