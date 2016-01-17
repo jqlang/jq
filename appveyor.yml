@@ -17,14 +17,14 @@ install:
 build_script:
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && autoreconf -i"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && ./configure --disable-shared --enable-static --enable-all-static"
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make LDFLAGS=-lshlwapi"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j8"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && cat jq.1  | groff -mandoc -Thtml > jq.html"
   - 7z a jq-package.zip jq.1 jq.html jq.exe
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && pwd && ls -la"
   - file jq.exe
   
 test_script:
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make check"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j4 'TESTS=tests/mantest tests/onigtest' check"
       
 artifacts:
   - path: jq-package.zip
