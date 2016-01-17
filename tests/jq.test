@@ -1190,6 +1190,46 @@ bsearch(4)
 [1,2,3]
 -4
 
+walk(if type == "object" and .id == 0 then null else . end)
+[1,2,{"id":1, "next":{"id":0}}]
+[1,2,{"id":1,"next":null}]
+
+walk(if type == "object" then with_entries( select( .value != null )) else . end)
+[1,2,{"id":1, "next":null}]
+[1,2,{"id":1}]
+
+unify( {"address": { "number": 110 } } )
+{"color": "red", "address": { "street": "Brodway"} }
+{"color": "red", "address": { "street": "Brodway", "number": 110 } }
+
+unify( {"color": "red", "address": { "street": "Brodway"} } )
+{"address": { "number": 110 } }
+{"color": "red", "address": { "street": "Brodway", "number": 110 } }
+
+unify( {} )
+{"color": "red", "address": { "street": "Brodway"} } 
+{"color": "red", "address": { "street": "Brodway"} } 
+
+unify( {"color": "red", "address": { "street": "Brodway"} })
+{}
+{"color": "red", "address": { "street": "Brodway"} }
+
+unify( null )
+{"color": "red", "address": { "street": "Brodway"} }
+{"color": "red", "address": { "street": "Brodway"} }
+
+unify( {"color": "red", "address": { "street": "Brodway"} })
+null 
+{"color": "red", "address": { "street": "Brodway"} }
+
+unify( null )
+null
+null
+
+[.[] | query( {"author": "Grahame", "title": null} ) | .title]
+[{"title": "Wind in the Willows",  "author": "Grahame"}, {"title": "Voss", "author": "White"}, {"title": "The Reluctant Dragon", "author": "Grahame"}]
+["Wind in the Willows", "The Reluctant Dragon"]
+
 [strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
 "2015-03-05T23:51:47Z"
 [[2015,2,5,23,51,47,4,63],1425599507]

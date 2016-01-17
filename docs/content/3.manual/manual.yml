@@ -1655,6 +1655,58 @@ sections:
             input: '[1,2,3]'
             output: ['[1,2,3,4]']
 
+
+      - title: "`project(q)`"
+        body: |
+
+          Assuming the input is an object and that e is an object or
+          an array of strings, project(e) returns an object with the
+          same keys as in e, in the same order, but with values
+          determined by the corresponding keys in the input object;
+          the value associated with a missing key is null.
+
+        examples:
+          - program: 'project(["a","d"])'
+            input:   '{"b":2, "a":1, "c":3}'
+            output:  ['{"a":1, "d": null}']
+
+          - program: 'project({"a":10,"d":20})'
+            input:   '{"b":2, "a":1, "c":3}'
+            output:  ['{"a":1, "d": null}']
+
+
+      - title: "`query(obj)`"
+        body: |
+          query(obj) uses the object, obj, as a template to query the input.
+          If obj can be unified with the input in the sense that unify(obj) yields u,
+          then query(obj) emits u|project(obj). Otherwise, nothing is emitted.
+
+        example: 
+          - program: '.[] | query( {"author": "Grahame", "title": null} ) | .title'
+            input:  '[{"title": "Wind in the Willows",  "author": "Grahame"}, {"title": "Voss", "author": "White"}, {"title": "The Reluctant Dragon", "author": "Grahame"}]'
+            output:
+              -  '"Wind in the Willows"'
+              -  '"The Reluctant Dragon"'
+
+      - title: "`unify(e)`"
+        body: |
+
+          unify(e) emits the unification of the input entity with e if
+          possible or null otherwise; both the input and e may be any JSON entity.
+          Unification is based on replacing nulls with corresponding values at
+          structurally equivalent locations.
+
+        examples:
+          - program: 'unify(null)'
+            input:   'null'
+            output:  ['null']
+
+          - program: 'unify( {"a":null, "b": 2} )'
+            input:   '{"a":1, "b": null}'
+            output:  ['{"a":1, "b": 2}']
+
+
+
       - title: "String interpolation - `\\(foo)`"
         body: |
 
