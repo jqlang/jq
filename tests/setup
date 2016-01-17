@@ -2,6 +2,10 @@
 
 # This is meant to be included by each test's shell script driver.
 
+if [ -n "$TRACE_TESTS" ]; then
+    set -x
+fi
+
 set -eu
 
 JQTESTDIR=$(cd "$(dirname "$0")" && pwd)

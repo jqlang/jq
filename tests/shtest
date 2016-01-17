@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. "${0%/*}/setup"
+. "${0%/*}/setup" "$@"
 
 PATH=$JQBASEDIR:$PATH $JQBASEDIR/tests/jq-f-test.sh > /dev/null
 
