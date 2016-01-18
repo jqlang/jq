@@ -1,3 +1,7 @@
+os:
+    - linux
+    - osx
+
 sudo: false
 
 language: c
@@ -10,38 +14,54 @@ matrix:
     include:
         - compiler: gcc
           env: COVERAGE="--disable-valgrind --enable-gcov"
+          os: linux
 
 addons:
     apt:
         packages:
             - libonig-dev
             - valgrind
+            - bison
 
 before_install:
+    - echo "$TRAVIS_OS_NAME"
+    - uname -s
+    - brew update               || true;
+      brew install flex         || true;
+      brew install bison        || true;
+      brew install oniguruma    || true;
     - rm src/{lexer,parser}.{c,h}
 
 install:
     - bundle install --gemfile=docs/Gemfile
-
     - wget http://ftp.debian.org/debian/pool/main/b/bison/bison_3.0.2.dfsg-2_amd64.deb
     - ar p bison_3.0.2.dfsg-2_amd64.deb data.tar.xz | tar xJ
-
     - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
 
 before_script:
+    # If this is OS X we'll get bison from brew, else we'll get bison
+    # from the .deb unpacked above in the install section.
+    - PATH=/usr/local/opt/bison/bin:$PWD/usr/bin:$PATH
+    - echo SHELL=$SHELL
+    - echo PATH=$PATH
+    - which bison
+    - bison --version
     - autoreconf -i
-    - ./configure
-        YACC="usr/bin/bison -y"
-        $COVERAGE
+    - ./configure YACC="$(which bison) -y" $COVERAGE
 
 script:
-    - make -j4 BISON_PKGDATADIR=$(pwd)/usr/share/bison
+    # When using the bison from Debian we need to tell that bison where
+    # to find its data.  Yay non-relocatable code.  Not.
+    - echo PATH=$PATH
+    - which bison
+    - make BISON_PKGDATADIR=$PWD/usr/share/bison src/parser.c || make src/parser.c
+    - make -j4
     - make check -j4
 
 after_script:
     - |
         if [ -n "$COVERAGE" ]; then
-            rm -rf src/.libs usr # don't care about coverage for libjq and bison
+            rm -rf src/.libs # don't care about coverage for libjq
             coveralls --gcov-options '\-lp' \
                 -e src/lexer.c -e src/parser.c -e src/jv_dtoa.c
         fi
