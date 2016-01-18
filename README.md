@@ -3,8 +3,10 @@ jq
 
 jq is a lightweight and flexible command-line JSON processor.
 
-[![Build Status](https://travis-ci.org/stedolan/jq.svg?branch=master)](https://travis-ci.org/stedolan/jq)
-[![Coverage Status](https://coveralls.io/repos/stedolan/jq/badge.svg?branch=master&service=github)](https://coveralls.io/github/stedolan/jq?branch=master)
+[![Coverage Status](https://coveralls.io/repos/stedolan/jq/badge.svg?branch=master&service=github)](https://coveralls.io/github/stedolan/jq?branch=master),
+Unix: [![Build Status](https://travis-ci.org/stedolan/jq.svg?branch=master)](https://travis-ci.org/stedolan/jq),
+Windows: [![Windows build status](https://ci.appveyor.com/api/projects/status/mi816811c9e9mx29?svg=true)](https://ci.appveyor.com/project/stedolan/jq)
+
 
 If you want to learn to use jq, read the documentation at
 [https://stedolan.github.io/jq](https://stedolan.github.io/jq).  This
