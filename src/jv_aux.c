@@ -571,14 +571,15 @@ int jv_cmp(jv a, jv b) {
 struct sort_entry {
   jv object;
   jv key;
+  int index;
 };
 
 static int sort_cmp(const void* pa, const void* pb) {
   const struct sort_entry* a = pa;
   const struct sort_entry* b = pb;
   int r = jv_cmp(jv_copy(a->key), jv_copy(b->key));
-  // comparing by address if r == 0 makes the sort stable
-  return r ? r : (int)(a - b);
+  // comparing by index if r == 0 makes the sort stable
+  return r ? r : (a->index - b->index);
 }
 
 static struct sort_entry* sort_items(jv objects, jv keys) {
@@ -590,6 +591,7 @@ static struct sort_entry* sort_items(jv objects, jv keys) {
   for (int i=0; i<n; i++) {
     entries[i].object = jv_array_get(jv_copy(objects), i);
     entries[i].key = jv_array_get(jv_copy(keys), i);
+    entries[i].index = i;
   }
   jv_free(objects);
   jv_free(keys);
