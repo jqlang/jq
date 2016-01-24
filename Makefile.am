@@ -115,7 +115,7 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest
+TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/base64test
 TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
 

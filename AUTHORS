@@ -59,6 +59,7 @@ Ryoichi KATO         <ryo1kato@gmail.com>             - doc fixes
 Rémy Léone           <remy.leone@gmail.com>           - add .travis.yml
 Santiago Lapresta    <santiago.lapresta@gmail.com>    - join, arrays, all, any, other filters
 Sebastian Freundt    <freundt@ga-group.nl>            - build
+Shaun Guth           <shaun.guth@gmail.com>           - base64d
 Shay Elkin           <shay@everything.me>
 Simon Elsbrock       <simon@iodev.org>                - Debian
 Stefan Seemayer      <stefan@seemayer.de>
