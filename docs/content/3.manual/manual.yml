@@ -1770,6 +1770,11 @@ sections:
 
             The input is converted to base64 as specified by RFC 4648.
 
+          * `@base64d`:
+
+            The inverse of `@base64`, input is decoded as specified by RFC 4648.
+            Note\: If the decoded string is not UTF-8, the results are undefined.
+
           This syntax can be combined with string interpolation in a
           useful way. You can follow a `@foo` token with a string
           literal. The contents of the string literal will *not* be
@@ -1798,6 +1803,14 @@ sections:
           - program: '@sh "echo \(.)"'
             input: "\"O'Hara's Ale\""
             output: ["\"echo 'O'\\\\''Hara'\\\\''s Ale'\""]
+
+          - program: '@base64'
+            input: '"This is a message"'
+            output: ['"VGhpcyBpcyBhIG1lc3NhZ2U="']
+
+          - program: '@base64d'
+            input: '"VGhpcyBpcyBhIG1lc3NhZ2U="'
+            output: ['"This is a message"']
 
       - title: "Dates"
         body: |

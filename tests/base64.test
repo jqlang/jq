@@ -1,0 +1,35 @@
+# Tests are groups of three lines: program, input, expected output
+# Blank lines and lines starting with # are ignored
+
+@base64
+"<>&'\"\t"
+"PD4mJyIJ"
+
+# decoding encoded output results in same text
+(@base64|@base64d)
+"<>&'\"\t"
+"<>&'\"\t"
+
+# regression test for #436
+@base64
+"foóbar\n"
+"Zm/Ds2Jhcgo="
+
+@base64d
+"Zm/Ds2Jhcgo="
+"foóbar\n"
+
+# optional trailing equals padding (With padding, this is cWl4YmF6Cg==)
+@base64d
+"cWl4YmF6Cg"
+"qixbaz\n"
+
+# invalid base64 characters (whitespace)
+. | try @base64d catch .
+"Not base64 data"
+"string (\"Not base64...) is not valid base64 data"
+
+# invalid base64 (too many bytes, QUJD = "ABCD"
+. | try @base64d catch .
+"QUJDa"
+"string (\"QUJDa\") trailing base64 byte found"
