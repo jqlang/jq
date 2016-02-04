@@ -329,12 +329,28 @@ static jv f_json_parse(jq_state *jq, jv input) {
   return res;
 }
 
+static void remove_commas(const char *input, char *output) {
+    int index_from = 0;
+    int index_to = 0;
+    while (input[index_from] != 0) {
+      output[index_to++] = input[index_from++];
+      while (input[index_from] == ',') {
+        index_from++;
+      }
+    }
+    output[index_to] = 0;
+}
+
 static jv f_tonumber(jq_state *jq, jv input) {
   if (jv_get_kind(input) == JV_KIND_NUMBER) {
     return input;
   }
   if (jv_get_kind(input) == JV_KIND_STRING) {
-    jv parsed = jv_parse(jv_string_value(input));
+    const char * input_string = jv_string_value(input);
+    char * commaless_string = (char *) malloc(strlen(input_string) + 1);
+    remove_commas(input_string, commaless_string);
+    jv parsed = jv_parse(commaless_string);
+    free(commaless_string);
     if (!jv_is_valid(parsed) || jv_get_kind(parsed) == JV_KIND_NUMBER) {
       jv_free(input);
       return parsed;
