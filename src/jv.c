@@ -1134,7 +1134,17 @@ int jv_object_length(jv object) {
 jv jv_object_merge(jv a, jv b) {
   assert(jv_get_kind(a) == JV_KIND_OBJECT);
   jv_object_foreach(b, k, v) {
-    a = jv_object_set(a, k, v);
+    jv v_a = jv_object_get(jv_copy(a), jv_copy(k));
+
+    if (jv_get_kind(v) == JV_KIND_NUMBER &&
+      jv_is_valid(v_a) &&
+      jv_get_kind(v_a) == JV_KIND_NUMBER) {
+        a = jv_object_set(a, k,
+          jv_number(jv_number_value(v_a) + jv_number_value(v)));
+    } else {
+      a = jv_object_set(a, k, v);
+    }
+    jv_free(v_a);
   }
   jv_free(b);
   return a;
