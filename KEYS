@@ -6,8 +6,3 @@ pub   2048R/D15684DB 2015-10-12 [expires: 2017-10-11]
       Key fingerprint = 7F6C 7BD3 0412 AFD5 8C1A  5007 EB26 A4F8 D156 84DB
 uid                  Nicolas Williams <nico@cryptonector.com>
 sub   2048R/9C9CCD6A 2015-10-12 [expires: 2017-10-11]
-
-pub   4096R/95FF6D82 2011-11-13
-      Key fingerprint = 4628 C5D8 2CFF 65D6 8164  A78A F9BA 143B 95FF 6D82
-uid                  David Tolnay <dtolnay@gmail.com>
-sub   4096R/9572BD05 2011-11-13
