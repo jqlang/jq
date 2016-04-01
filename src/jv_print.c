@@ -37,9 +37,20 @@ static void put_buf(const char *s, int len, FILE *fout, jv *strout, int is_tty) 
   } else {
 #ifdef WIN32
   /* See util.h */
-  if (is_tty)
-    WriteFile((HANDLE)_get_osfhandle(fileno(fout)), s, len, NULL, NULL);
-  else
+  if (is_tty) {
+    wchar_t *ws;
+    size_t wl;
+    if (len == -1)
+      len = strlen(s);
+    wl = MultiByteToWideChar(CP_UTF8, 0, s, len, NULL, 0);
+    ws = malloc((wl + 1) * sizeof(*ws));
+    if (!ws)
+      return;
+    wl = MultiByteToWideChar(CP_UTF8, 0, s, len, ws, wl + 1);
+    ws[wl] = 0;
+    WriteConsoleW((HANDLE)_get_osfhandle(fileno(fout)), ws, wl, NULL, NULL);
+    free(ws);
+  } else
     fwrite(s, 1, len, fout);
 #else
   fwrite(s, 1, len, fout);
