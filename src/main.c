@@ -203,7 +203,6 @@ int main(int argc, char* argv[]) {
   jv program_arguments = jv_array();
 
 #ifdef WIN32
-  SetConsoleOutputCP(CP_UTF8);
   fflush(stdout);
   fflush(stderr);
   _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
