@@ -8,7 +8,7 @@
 
 jv jv_load_file(const char* filename, int raw) {
   FILE* file = fopen(filename, "r");
-  struct jv_parser* parser;
+  struct jv_parser* parser = NULL;
   jv data;
   if (!file) {
     return jv_invalid_with_msg(jv_string_fmt("Could not open %s: %s",
