@@ -27,11 +27,9 @@ body:
        * jq 1.4 is in the official [openSUSE](https://software.opensuse.org/package/jq)
          repository. Install using `sudo zypper install jq`.
 
-       * For Arch users, a PKGBUILD is in the
-         [AUR](https://aur.archlinux.org/packages/jq-git/).
-         Refer to the
-         [ArchWiki](https://wiki.archlinux.org/index.php/Arch_User_Repository)
-         for how to install from AUR.
+       * jq 1.5 is in the official
+         [Arch](https://www.archlinux.org/packages/?sort=&q=jq&maintainer=&flagged=)
+         repository.  Install using `sudo pacman -Sy jq`.
 
        * jq 1.5 binaries for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64)
