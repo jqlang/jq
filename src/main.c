@@ -129,6 +129,17 @@ enum {
 };
 static int options = 0;
 
+enum {
+    JQ_OK              =  0,
+    JQ_OK_NULL_KIND    = -1, /* exit 0 if --exit-status is not set*/
+    JQ_ERROR_SYSTEM    =  2,
+    JQ_ERROR_COMPILE   =  3,
+    JQ_OK_NO_OUTPUT    = -4, /* exit 0 if --exit-status is not set*/
+    JQ_ERROR_UNKNOWN   =  5,
+};
+#define jq_exit_with_status(r)  exit(abs(r))
+#define jq_exit(r)              exit( r > 0 ? r : 0 )
+
 static const char *skip_shebang(const char *p) {
   if (strncmp(p, "#!", sizeof("#!") - 1) != 0)
     return p;
@@ -145,19 +156,19 @@ static const char *skip_shebang(const char *p) {
 }
 
 static int process(jq_state *jq, jv value, int flags, int dumpopts) {
-  int ret = 14; // No valid results && -e -> exit(4)
+  int ret = JQ_OK_NO_OUTPUT; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
-      ret = 0;
+      ret = JQ_OK;
       jv_free(result);
     } else {
       if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
-        ret = 11;
+        ret = JQ_OK_NULL_KIND;
       else
-        ret = 0;
+        ret = JQ_OK;
       if (options & SEQ)
         priv_fwrite("\036", 1, stdout, dumpopts & JV_PRINT_ISATTY);
       jv_dump(result, dumpopts);
@@ -179,7 +190,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
       fprintf(stderr, "jq: error (at %s) (not a string): %s\n",
               jv_string_value(input_pos), jv_string_value(msg));
     }
-    ret = 5;
+    ret = JQ_ERROR_UNKNOWN;
     jv_free(input_pos);
     jv_free(msg);
   }
@@ -195,10 +206,11 @@ static void debug_cb(void *data, jv input) {
 
 int main(int argc, char* argv[]) {
   jq_state *jq = NULL;
-  int ret = 0;
+  int ret = JQ_OK;
   int compiled = 0;
   int parser_flags = 0;
   int nfiles = 0;
+  int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
   jv program_arguments = jv_array();
 
@@ -226,7 +238,7 @@ int main(int argc, char* argv[]) {
   jq = jq_init();
   if (jq == NULL) {
     perror("malloc");
-    ret = 2;
+    ret = JQ_ERROR_SYSTEM;
     goto out;
   }
 
@@ -403,7 +415,7 @@ int main(int argc, char* argv[]) {
                   argv[i+1], argv[i+2], jv_string_value(data));
           jv_free(data);
           jv_free(arg);
-          ret = 2;
+          ret = JQ_ERROR_SYSTEM;
           goto out;
         }
         if (isoption(argv[i], 0, "argfile", &short_opts) &&
@@ -428,7 +440,7 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 'V', "version", &short_opts)) {
         printf("jq-%s\n", JQ_VERSION);
-        ret = 0;
+        ret = JQ_OK;
         goto out;
       }
       if (isoption(argv[i], 0, "run-tests", &short_opts)) {
@@ -504,7 +516,7 @@ int main(int argc, char* argv[]) {
       data = jv_invalid_get_msg(data);
       fprintf(stderr, "%s: %s\n", progname, jv_string_value(data));
       jv_free(data);
-      ret = 2;
+      ret = JQ_ERROR_SYSTEM;
       goto out;
     }
     jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string(dirname(program_origin))));
@@ -516,7 +528,7 @@ int main(int argc, char* argv[]) {
     compiled = jq_compile_args(jq, program, jv_copy(program_arguments));
   }
   if (!compiled){
-    ret = 3;
+    ret = JQ_ERROR_COMPILE;
     goto out;
   }
 
@@ -550,6 +562,8 @@ int main(int argc, char* argv[]) {
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
         ret = process(jq, value, jq_flags, dumpopts);
+        if (ret <= 0 && ret != JQ_OK_NO_OUTPUT)
+          last_result = (ret != JQ_OK_NULL_KIND);
         continue;
       }
 
@@ -557,7 +571,7 @@ int main(int argc, char* argv[]) {
       jv msg = jv_invalid_get_msg(value);
       if (!(options & SEQ)) {
         // --seq -> errors are not fatal
-        ret = 4;
+        ret = JQ_OK_NO_OUTPUT;
         fprintf(stderr, "parse error: %s\n", jv_string_value(msg));
         jv_free(msg);
         break;
@@ -568,21 +582,29 @@ int main(int argc, char* argv[]) {
   }
 
   if (jq_util_input_errors(input_state) != 0)
-    ret = 2;
+    ret = JQ_ERROR_SYSTEM;
 
 out:
   badwrite = ferror(stdout);
   if (fclose(stdout)!=0 || badwrite) {
     fprintf(stderr,"Error: writing output failed: %s\n", strerror(errno));
-    ret = 2;
+    ret = JQ_ERROR_SYSTEM;
   }
 
   jv_free(program_arguments);
   jq_util_input_free(&input_state);
   jq_teardown(&jq);
-  if (ret >= 10 && (options & EXIT_STATUS))
-    return ret - 10;
-  if (ret >= 10)
-    return 0;
-  return ret;
+
+  if (options & EXIT_STATUS) {
+    if (ret != JQ_OK_NO_OUTPUT)
+      jq_exit_with_status(ret);
+    else
+      switch (last_result) {
+        case -1: jq_exit_with_status(JQ_OK_NO_OUTPUT);
+        case  0: jq_exit_with_status(JQ_OK_NULL_KIND);
+        default: jq_exit_with_status(JQ_OK);
+      }
+  } else {
+      jq_exit(ret);
+  }
 }
