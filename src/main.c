@@ -206,7 +206,7 @@ static void debug_cb(void *data, jv input) {
 
 int main(int argc, char* argv[]) {
   jq_state *jq = NULL;
-  int ret = JQ_OK;
+  int ret = JQ_OK_NO_OUTPUT;
   int compiled = 0;
   int parser_flags = 0;
   int nfiles = 0;
