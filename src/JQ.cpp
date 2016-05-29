@@ -1,5 +1,6 @@
 #include "JQ.hpp"
-#include <stdio.h>
+#include "memstream.h"
+#include <stdlib.h>
 #include <stdexcept>
 
 JQ::JQ(const std::string& json, const std::string& filter, bool dbg) :
