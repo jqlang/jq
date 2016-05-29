@@ -18,6 +18,8 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
 AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers               \
         -Wno-unused-parameter -Wno-unused-function
 
+AM_CXXFLAGS = -std=c++0x $(AM_CFLAGS)
+
 ACLOCAL_AMFLAGS = -I config/m4
 
 ### Generating the lexer and parser
@@ -77,6 +79,7 @@ endif
 
 if ENABLE_GCOV
 AM_CFLAGS += --coverage --no-inline
+AM_CXXFLAGS += --coverage --no-inline
 endif
 
 ### Error injection for testing
