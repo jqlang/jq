@@ -23,6 +23,6 @@ FILE *open_memstream(char **ptr, size_t *sizeloc);
 
 #endif /* _POSIX_C_SOURCE < 200809L */
 
-#endif // MEMSTREAM_H
+#endif /* MEMSTREAM_H */
 
-#endif // __APPLE__
+#endif /* __APPLE__ */
