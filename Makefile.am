@@ -1,22 +1,24 @@
 
-### C source files to be built and distributed.
+### C and C++ source files to be built and distributed.
 
 LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
-        src/util.h
+        src/util.h src/memstream.h src/JQ.hpp
 
 LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
         src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
-        ${LIBJQ_INCS}
+        src/JQ.cpp src/memstream.c ${LIBJQ_INCS}
 
 ### C build options
 
 AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers               \
         -Wno-unused-parameter -Wno-unused-function
+
+AM_CXXFLAGS = -std=c++0x $(AM_CFLAGS)
 
 ACLOCAL_AMFLAGS = -I config/m4
 
@@ -77,6 +79,7 @@ endif
 
 if ENABLE_GCOV
 AM_CFLAGS += --coverage --no-inline
+AM_CXXFLAGS += --coverage --no-inline
 endif
 
 ### Error injection for testing
@@ -104,13 +107,23 @@ src/builtin.inc: src/builtin.jq
 	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $^ > $@
 src/builtin.o: src/builtin.inc
 
-bin_PROGRAMS = jq
+bin_PROGRAMS = jq jq_example JQExample
 jq_SOURCES = src/main.c src/version.h
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
 
+jq_example_SOURCES =  examples/jq_example.c
+jq_example_LDFLAGS = -static-libtool-libs
+jq_example_LDADD = libjq.la -lm
+
+JQExample_SOURCES =  examples/JQExample.cpp
+JQExample_LDFLAGS = -static-libtool-libs
+JQExample_LDADD = libjq.la -lm
+
 if ENABLE_ALL_STATIC
 jq_LDFLAGS += -all-static
+JQExample_LDFLAGS += -all-static
+jq_example_LDFLAGS += -all-static
 endif
 
 ### Tests (make check)

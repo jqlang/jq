@@ -4,6 +4,10 @@
 
 #include "jv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
 #define OP(name, imm, in, out) name,
 #include "opcode_list.h"
@@ -88,5 +92,9 @@ void dump_operation(struct bytecode* bc, uint16_t* op);
 
 int bytecode_operation_length(uint16_t* codeptr);
 void bytecode_free(struct bytecode* bc);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

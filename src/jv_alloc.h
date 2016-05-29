@@ -4,13 +4,17 @@
 #include <stddef.h>
 #include "jv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef NDEBUG
 extern volatile char jv_mem_uninitialised;
 #endif
 
 static void jv_mem_invalidate(void* mem, size_t n) {
 #ifndef NDEBUG
-  char* m = mem;
+  char* m = (char*)mem;
   while (n--) *m++ ^= jv_mem_uninitialised ^ jv_mem_uninitialised;
 #endif
 }
@@ -23,5 +27,9 @@ char* jv_mem_strdup(const char *);
 char* jv_mem_strdup_unguarded(const char *);
 void jv_mem_free(void*);
 __attribute__((warn_unused_result)) void* jv_mem_realloc(void*, size_t);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -2,6 +2,10 @@
 #define JV_DTOA_H
 #define Kmax 7
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct Bigint;
 struct dtoa_context {
   struct Bigint *freelist[Kmax+1];
@@ -19,4 +23,9 @@ void jvp_freedtoa(struct dtoa_context* C, char *s);
 
 #define JVP_DTOA_FMT_MAX_LEN 64
 char* jvp_dtoa_fmt(struct dtoa_context* C, register char *b, double x);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
