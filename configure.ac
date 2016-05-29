@@ -15,13 +15,15 @@ AM_PROG_AR
 AM_MAINTAINER_MODE([enable])
 AC_PROG_CC
 AC_PROG_CC_STDC
+AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX_11
+CXXFLAGS='-std=c++11'
 AC_PROG_CPP_WERROR
 AC_PROG_YACC
 AC_OBJEXT
 AC_EXEEXT
 LT_INIT([shared static win32-dll])
 AM_PROG_CC_C_O
-
 
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
 dnl AC_PROG_YACC macros...
