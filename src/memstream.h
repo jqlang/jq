@@ -1,3 +1,7 @@
+/*
+ * memstream for OSX, courtesy of http://piumarta.com/software/memstream/
+ */
+ 
 #ifdef __APPLE__
 
 #ifndef MEMSTREAM_H
