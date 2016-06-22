@@ -517,7 +517,7 @@ sections:
         body: |
 
           As well as normal arithmetic subtraction on numbers, the `-`
-          operator can be used on arrays to remove all occurences of
+          operator can be used on arrays to remove all occurrences of
           the second array's elements from the first array.
 
         examples:

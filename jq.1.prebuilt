@@ -573,7 +573,7 @@ jq \'{a: 1} + {b: 2} + {c: 3} + {a: 42}\'
 .IP "" 0
 .
 .SS "Subtraction \- \-"
-As well as normal arithmetic subtraction on numbers, the \fB\-\fR operator can be used on arrays to remove all occurences of the second array\'s elements from the first array\.
+As well as normal arithmetic subtraction on numbers, the \fB\-\fR operator can be used on arrays to remove all occurrences of the second array\'s elements from the first array\.
 .
 .IP "" 4
 .
