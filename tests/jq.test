@@ -747,7 +747,7 @@ path(.a[path(.b)[0]])
 [1,[[],{"a":2}]]
 [[0],[1,1,"a"]]
 
-# Verifying that leaf_paths picks up false and null leaves.
+# Verifying that leaf_paths picks up false leaves.
 # Issue #1163
 [leaf_paths]
 { "a": 2, "b": false, "d": [] }

@@ -902,7 +902,7 @@ sections:
         examples:
           - program: '.[]|isnumber'
             input: '[[],{},1,"foo",null,true,false]'
-            output: [false, false, true, false, false, false]
+            output: ['false', 'false', 'true', 'false', 'false', 'false', 'false']
 
       - title: "`empty`"
         body: |
