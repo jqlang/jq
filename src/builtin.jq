@@ -46,19 +46,27 @@ def all(generator; condition):
 def all(condition): all(.[]; condition);
 def all: all(.);
 def isfinite: type == "number" and (isinfinite | not);
-def arrays: select(type == "array");
-def objects: select(type == "object");
+def isarray: type == "array";
+def arrays: select(isarray);
+def isobject: type == "object";
+def objects: select(isobject);
 def iterables: arrays, objects;
-def booleans: select(type == "boolean");
-def numbers: select(type == "number");
+def isboolean: type == "boolean";
+def booleans: select(isboolean);
+def isnumber: type == "number";
+def numbers: select(isnumber);
 def normals: select(isnormal);
 def finites: select(isfinite);
-def strings: select(type == "string");
-def nulls: select(type == "null");
-def values: select(. != null);
-def scalars: select(. == null or . == true or . == false or type == "number" or type == "string");
+def isstring: type == "string";
+def strings: select(isstring);
+def isnull: type == "null";
+def nulls: select(isnull);
+def isvalue: . != null;
+def values: select(isvalue);
+def isscalar: . == null or . == true or . == false or type == "number" or type == "string";
+def scalars: select(isscalar);
 def scalars_or_empty: select(. == null or . == true or . == false or type == "number" or type == "string" or ((type=="array" or type=="object") and length==0));
-def leaf_paths: paths(scalars);
+def leaf_paths: paths(isscalar);
 def join($x): reduce .[] as $i (null;
             (if .==null then "" else .+$x end) +
             ($i | if type=="boolean" or type=="number" then tostring else .//"" end)
