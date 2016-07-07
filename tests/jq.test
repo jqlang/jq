@@ -743,6 +743,16 @@ path(.a[path(.b)[0]])
 [1,[[],{"a":2}]]
 [[0],[1],[1,0],[1,1],[1,1,"a"]]
 
+# Make sure we get paths to nulls
+[paths]
+[1,null]
+[[0],[1]]
+
+# Make sure we don't get paths to lone items
+[paths]
+5
+[]
+
 [leaf_paths]
 [1,[[],{"a":2}]]
 [[0],[1,1,"a"]]

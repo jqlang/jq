@@ -29,7 +29,8 @@ def indices($i): if type == "array" and ($i|type) == "array" then .[$i]
   else .[$i] end;
 def index($i):   indices($i) | .[0];       # TODO: optimize
 def rindex($i):  indices($i) | .[-1:][0];  # TODO: optimize
-def paths: path(recurse(if (type|. == "array" or . == "object") then .[] else empty end))|select(length > 0);
+def paths: def recurse_pre(f; cond): def r: ., (select(cond) | f | r); r;
+           path(recurse_pre(.[]?;.!=null))|select(length > 0);
 def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_filter);
 def any(generator; condition):
         [label $out | foreach generator as $i
