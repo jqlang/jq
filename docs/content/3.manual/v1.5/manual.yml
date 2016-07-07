@@ -336,7 +336,7 @@ sections:
           to the last element, -2 referring to the next to last element,
           and so on.
 
-          The `.foo` syntax only works for simply keys i.e. keys that
+          The `.foo` syntax only works for simple keys i.e. keys that
           are all alphanumeric characters. `.[<string>]` works with
           keys that contain special characters such as colons and dots.
           For example `.["foo::bar"]` and `.["foo.bar"]` work while
