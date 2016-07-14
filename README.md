@@ -20,6 +20,19 @@ shovel.  Also, read the wiki: https://github.com/stedolan/jq/wiki
 Source tarball and built executable releases can be found on the
 homepage and on the github release page, https://github.com/stedolan/jq/releases
 
+If you want to install the release binary directly:
+
+    wget --no-check-certificate https://raw.githubusercontent.com/stedolan/jq/master/sig/jq-release.key -O /tmp/jq-release.key && \
+    wget --no-check-certificate https://raw.githubusercontent.com/stedolan/jq/master/sig/v1.5/jq-linux64.asc -O /tmp/jq-linux64.asc && \
+    wget --no-check-certificate https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O /tmp/jq-linux64 && \
+    gpg --import /tmp/jq-release.key && \
+    gpg --verify /tmp/jq-linux64.asc /tmp/jq-linux64 && \
+    cp /tmp/jq-linux64 /usr/bin/jq && \
+    chmod +x /usr/bin/jq && \
+    rm -f /tmp/jq-release.key && \
+    rm -f /tmp/jq-linux64.asc && \
+    rm -f /tmp/jq-linux64
+
 If you're building directly from the latest git, you'll need flex,
 bison (3.0 or newer), libtool, make, and autoconf installed.  To get
 regexp support you'll also need to install Oniguruma (note that jq's
