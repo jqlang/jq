@@ -24,10 +24,12 @@ typedef struct jv_refcnt {
 static const jv_refcnt JV_REFCNT_INIT = {1};
 
 static void jvp_refcnt_inc(jv_refcnt* c) {
+  assert(c->count > 0);
   c->count++;
 }
 
 static int jvp_refcnt_dec(jv_refcnt* c) {
+  assert(c->count > 0);
   c->count--;
   return c->count == 0;
 }
