@@ -474,8 +474,8 @@ int main(int argc, char* argv[]) {
 
   char *origin = strdup(argv[0]);
   if (origin == NULL) {
-    fprintf(stderr, "Error: out of memory\n");
-    exit(1);
+    perror("malloc");
+    exit(2);
   }
   jq_set_attr(jq, jv_string("JQ_ORIGIN"), jv_string(dirname(origin)));
   free(origin);
