@@ -377,6 +377,8 @@ jv jv_array_slice(jv a, int start, int end) {
 }
 
 int jv_array_contains(jv a, jv b) {
+  assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  assert(jv_get_kind(b) == JV_KIND_ARRAY);
   int r = 1;
   jv_array_foreach(b, bi, belem) {
     int ri = 0;
@@ -398,6 +400,8 @@ int jv_array_contains(jv a, jv b) {
 }
 
 jv jv_array_indexes(jv a, jv b) {
+  assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  assert(jv_get_kind(b) == JV_KIND_ARRAY);
   jv res = jv_array();
   int idx = -1;
   jv_array_foreach(a, ai, aelem) {
