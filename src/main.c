@@ -226,8 +226,7 @@ int main(int argc, char* argv[]) {
   jq = jq_init();
   if (jq == NULL) {
     perror("malloc");
-    ret = 2;
-    goto out;
+    exit(2);
   }
 
   int dumpopts = JV_PRINT_INDENT_FLAGS(2);
