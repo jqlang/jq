@@ -413,6 +413,8 @@ jv jv_array_indexes(jv a, jv b) {
         idx = -1;
       else if (bi == 0 && idx == -1)
         idx = ai;
+      if (idx == -1)
+        break;
     }
     if (idx > -1)
       res = jv_array_append(res, jv_number(idx));
