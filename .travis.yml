@@ -30,10 +30,6 @@ before_install:
       brew install flex         || true;
       brew install bison        || true;
       brew install oniguruma    || true;
-      - if [ "$TRAVIS_OS_NAME" != "linux" ]; then
-        brew uninstall libtool  || true;
-        brew install libtool    || true;
-      fi
     - rm src/{lexer,parser}.{c,h}
 
 install:
