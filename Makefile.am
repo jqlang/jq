@@ -175,6 +175,15 @@ rpm: dist jq.spec
 	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
 
+snap: snapcraft.yaml.template
+	@echo "Packaging jq as a snap..."
+	mkdir -p setup/gui
+	cp docs/public/jq.png setup/gui/icon.png
+	cp COPYING setup/license.txt
+	rm -f snapcraft.yaml
+	sed 's/@JQ_VERSION@/1.5/g' snapcraft.yaml.template > snapcraft.yaml
+	snapcraft snap
+
 dist-clean-local:
 	rm -f ${BUILT_SOURCES}
 
