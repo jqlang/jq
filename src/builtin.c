@@ -2,6 +2,7 @@
 #define _GNU_SOURCE
 #define _XOPEN_SOURCE
 #define _XOPEN_SOURCE_EXTENDED 1
+#define _XPG6
 #define __EXTENSIONS__
 #include <sys/time.h>
 #include <stdlib.h>
