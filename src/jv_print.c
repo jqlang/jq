@@ -13,6 +13,10 @@
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
 
+#ifndef MAX_PRINT_DEPTH
+#define MAX_PRINT_DEPTH (256)
+#endif
+
 #define ESC "\033"
 #define COL(c) (ESC "[" c "m")
 #define COLRESET (ESC "[0m")
@@ -150,7 +154,9 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       }
     }
   }
-  switch (jv_get_kind(x)) {
+  if (indent > MAX_PRINT_DEPTH) {
+    put_str("<skipped: too deep>", F, S, flags & JV_PRINT_ISATTY);
+  } else switch (jv_get_kind(x)) {
   default:
   case JV_KIND_INVALID:
     if (flags & JV_PRINT_INVALID) {
