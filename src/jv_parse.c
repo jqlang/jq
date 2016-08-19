@@ -10,6 +10,10 @@
 
 typedef const char* presult;
 
+#ifndef MAX_PARSING_DEPTH
+#define MAX_PARSING_DEPTH (256)
+#endif
+
 #define TRY(x) do {presult msg__ = (x); if (msg__) return msg__; } while(0)
 #ifdef __GNUC__
 #define pfunc __attribute__((warn_unused_result)) presult
@@ -147,11 +151,13 @@ static void push(struct jv_parser* p, jv v) {
 static pfunc parse_token(struct jv_parser* p, char ch) {
   switch (ch) {
   case '[':
+    if (p->stackpos >= MAX_PARSING_DEPTH) return "Exceeds depth limit for parsing";
     if (jv_is_valid(p->next)) return "Expected separator between values";
     push(p, jv_array());
     break;
 
   case '{':
+    if (p->stackpos >= MAX_PARSING_DEPTH) return "Exceeds depth limit for parsing";
     if (jv_is_valid(p->next)) return "Expected separator between values";
     push(p, jv_object());
     break;
