@@ -278,6 +278,11 @@ def bsearch(target):
       end
   end;
 
+# Convience names for `summary_stats` functions
+def mean: summary_stats | .mean;
+def variance: summary_stats | .sumsq / .count;
+def sample_variance: if length < 2 then nan else summary_stats | .sumsq / (.count - 1) end;
+
 # Apply f to composite entities recursively, and to atoms
 def walk(f):
   . as $in
