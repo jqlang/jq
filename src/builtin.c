@@ -1003,6 +1003,42 @@ static jv f_max_by_impl(jq_state *jq, jv x, jv y) {
   return minmax_by(x, y, 0);
 }
 
+static jv f_summary_stats(jq_state *jq, jv values) {
+  // Takes an array of numbers and computes count, mean, min, max, and sum of
+  // squared mean differences
+  if (jv_get_kind(values) != JV_KIND_ARRAY)
+    return type_error(values, "cannot be iterated over");
+  int count = 0;
+  double mean = 0;
+  double ssd = 0;
+  double min = INFINITY;
+  double max = -INFINITY;
+
+  for (int i=0; i<jv_array_length(jv_copy(values)); i++) {
+    jv item = jv_array_get(jv_copy(values), i);
+    jv_kind k = jv_get_kind(item);
+    if (k != JV_KIND_NUMBER) {
+      jv_free(values);
+      return type_error(item, "number required");
+    }
+    double val = jv_number_value(item);
+    double delta = val - mean;
+    jv_free(item);
+    mean += delta / ++count;
+    ssd += delta * (val - mean);
+    max = fmax(max, val);
+    min = fmin(min, val);
+  }
+  jv_free(values);
+
+  jv ret = jv_object();
+  jv_object_set(ret, jv_string("count"), jv_number(count));
+  jv_object_set(ret, jv_string("mean"), jv_number(count ? mean: NAN));
+  jv_object_set(ret, jv_string("ssd"), jv_number(count ? ssd : NAN));
+  jv_object_set(ret, jv_string("min"), jv_number(count ? min: NAN));
+  jv_object_set(ret, jv_string("max"), jv_number(count ? max: NAN));
+  return ret;
+}
 
 static jv f_type(jq_state *jq, jv input) {
   jv out = jv_string(jv_kind_name(jv_get_kind(input)));
@@ -1630,6 +1666,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_max, "max", 1},
   {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
+  {(cfunction_ptr)f_summary_stats, "summary_stats", 1},
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_env, "env", 1},

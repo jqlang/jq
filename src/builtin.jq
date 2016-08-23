@@ -280,6 +280,30 @@ def bsearch(target):
       end
   end;
 
+# Summary statistics
+def summary_stats(stream): reduce stream as $x ([0, 0, 0, infinite, -infinite];
+        .[0] += 1
+        | ($x - .[1]) as $delta
+        | .[1] += $delta / .[0]
+        | .[2] += $delta * ($x - .[1])
+        | .[3] = ([.[3], $x] | min)
+        | .[4] = ([.[4], $x] | max))
+    | if .[0] > 0
+        then {count: .[0], mean: .[1], ssd: .[2], min: .[3], max: .[4]}
+        else {count: 0, mean: nan, ssd: nan, min: nan, max: nan}
+    end;
+def mean: summary_stats | .mean;
+def mean(stream): summary_stats(stream) | .mean;
+def variance: summary_stats | .ssd / .count;
+def variance(stream): summary_stats(stream) | .ssd / .count;
+def sample_variance: if length < 2 then nan else summary_stats | .ssd / (.count - 1) end;
+def sample_variance(stream): summary_stats(stream) | if .count < 2 then nan else .ssd / (.count - 1) end;
+def median: sort
+    | if length == 0 then nan
+    elif length % 2 == 0 then (.[length / 2 - 1] + .[length / 2]) / 2
+    else .[(length - 1) / 2]
+    end;
+
 # Apply f to composite entities recursively, and to atoms
 def walk(f):
   . as $in
