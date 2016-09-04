@@ -1295,7 +1295,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
   {(cfunction_ptr)f_error, "error", 2},
-  {(cfunction_ptr)f_format, "format", 2},
+  {(cfunction_ptr)f_format, "_format", 2},
   {(cfunction_ptr)f_env, "env", 1},
   {(cfunction_ptr)f_get_search_list, "get_search_list", 1},
   {(cfunction_ptr)f_get_prog_origin, "get_prog_origin", 1},

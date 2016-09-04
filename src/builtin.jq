@@ -287,3 +287,5 @@ def walk(f):
   elif type == "array" then map( walk(f) ) | f
   else f
   end;
+
+def format(fmt): _format(fmt);
