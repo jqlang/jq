@@ -89,6 +89,10 @@ null
 ["foo", 1, ["a", 1, "b", 2, {"foo":"bar"}]]
 ["foo",1,["a",1,"b",2,{"foo":"bar"}]]
 
+@tcl
+[0,"foo",{"bar":{"baz":"quux"}}]
+"{0} {0} {1} {foo} {2} {{bar} {{baz} {quux}}}"
+
 #
 # Dictionary construction syntax
 #
