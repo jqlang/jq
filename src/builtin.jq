@@ -289,17 +289,16 @@ def walk(f):
   end;
 
 # Convert the input to a string representation of Tcl dictionaries.
-def totcl:
+def _totcl:
   if type == "array" then
     # Convert array to object with keys 0, 1, 2... and process
     # it as object.
-    [range(0;length) as $i
-        | {key: $i | tostring, value: .[$i]}]
+    [range(0;length) as $i | {key: $i | tostring, value: .[$i]}]
     | from_entries
-    | totcl
+    | _totcl
   elif type == "object" then
     to_entries
-    | [.[] | "{" + .key + "} {" + (.value | totcl) + "}"]
+    | [.[] | "{" + .key + "} {" + (.value | _totcl) + "}"]
     | join(" ")
   else
     tostring
@@ -309,7 +308,7 @@ def totcl:
 
 def format(fmt):
   if fmt == "tcl" then
-    totcl
+    _totcl
   else
     _format(fmt)
   end;
