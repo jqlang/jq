@@ -27,7 +27,10 @@ typedef struct {
   int size;
   union {
     struct jv_refcnt* ptr;
-    double number;
+    struct {
+      double dbl;
+      int64_t int64;
+    } number;
   } u;
 } jv;
 
@@ -60,8 +63,10 @@ jv jv_true(void);
 jv jv_false(void);
 jv jv_bool(int);
 
+jv jv_number_full(double, int64_t);
 jv jv_number(double);
 double jv_number_value(jv);
+int64_t jv_number_value_int64(jv);
 int jv_is_integer(jv);
 
 jv jv_array(void);

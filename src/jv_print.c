@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <float.h>
 #include <string.h>
+#include <inttypes.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -176,6 +177,13 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     put_str("true", F, S, flags & JV_PRINT_ISATTY);
     break;
   case JV_KIND_NUMBER: {
+    int64_t i = jv_number_value_int64(x);
+    if (i) {
+      char buf[21];
+      snprintf(buf, sizeof(buf), "%" PRId64, i);
+      put_str(buf, F, S, flags & JV_PRINT_ISATTY);
+      break;
+    }
     double d = jv_number_value(x);
     if (d != d) {
       // JSON doesn't have NaN, so we'll render it as "null"
