@@ -1,3 +1,8 @@
 [submodule "modules/oniguruma"]
 	path = modules/oniguruma
 	url = https://github.com/kkos/oniguruma.git
+
+[submodule "modules/TinyMT"]
+	path = modules/TinyMT
+	url = https://github.com/MersenneTwister-Lab/TinyMT.git
+	ignore = untracked

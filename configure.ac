@@ -211,6 +211,32 @@ AC_CHECK_MATH_FUNC(y0, [.5])
 AC_CHECK_MATH_FUNC(y1, [.5])
 AC_CHECK_MATH_FUNC(yn, [1,.5])
 
+dnl Check random sources
+AC_MSG_CHECKING(for the Linux getrandom() syscall)
+AC_LINK_IFELSE(
+[
+AC_LANG_SOURCE([[
+  #include <unistd.h>
+  #include <sys/syscall.h>
+  #include <linux/random.h>
+
+  int main() {
+    char buffer;
+    const size_t buflen = sizeof(buffer);
+    (void)syscall(SYS_getrandom, &buffer, buflen);
+    return 0;
+  }
+  ]])
+],[have_getrandom_syscall=yes],[have_getrandom_syscall=no])
+AC_MSG_RESULT($have_getrandom_syscall)
+
+if test "$have_getrandom_syscall" = yes; then
+  AC_DEFINE(HAVE_GETRANDOM_SYSCALL, 1,
+    [Define to 1 if the Linux getrandom() syscall is available])
+else
+  AC_CHECK_FILES("/dev/urandom", [AC_MSG_NOTICE(could not link getrandom falling back to /dev/urandom)])
+fi
+
 dnl Thread local storage
 have___thread=no
 AC_MSG_CHECKING(for thread-local storage)

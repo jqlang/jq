@@ -36,6 +36,7 @@ void *alloca (size_t);
 #include <time.h>
 #include "builtin.h"
 #include "compile.h"
+#include "rand.h"
 #include "jq_parser.h"
 #include "bytecode.h"
 #include "linker.h"
@@ -1058,6 +1059,81 @@ static jv f_error(jq_state *jq, jv input, jv msg) {
   return jv_invalid_with_msg(msg);
 }
 
+// Random functions
+static char const * const rand_error = "random functions are not supported on your machine; try specifying a \".seed\"";
+// Random number in [0, 1)
+static jv f_rand(jq_state *jq, jv input) {
+  jv_free(input);
+  if (!jq_rand_initialized()) {
+    return jv_invalid_with_msg(jv_string(rand_error));
+  } else {
+    return jv_number(jq_rand_double());
+  }
+}
+
+// Random int in [0, input)
+static jv f_randint(jq_state *jq, jv input) {
+  double max_val = jv_number_value(jv_copy(input));
+  if (!jq_rand_initialized()) {
+    jv_free(input);
+    return jv_invalid_with_msg(jv_string(rand_error));
+  } else if (max_val < 1 || (double)((uint64_t)-1) < max_val) {
+    return type_error(input, "number invalid, less than 1 or too large");
+  } else {
+    jv_free(input);
+    return jv_number(jq_rand_int((uint64_t)max_val));
+  }
+}
+
+// Shuffle array
+static jv f_shuffle(jq_state *jq, jv input) {
+  if (!jq_rand_initialized()) {
+    jv_free(input);
+    return jv_invalid_with_msg(jv_string(rand_error));
+  } else if (jv_get_kind(input) != JV_KIND_ARRAY) {
+    return type_error(input, "cannot be shuffled, as it is not an array");
+  } else {
+    int length = jv_array_length(jv_copy(input));
+    for (int i = 0; i < length; ++i) {
+        int swap = i + (int)jq_rand_int((unsigned long)(length - i));
+        jv to_swap = jv_array_get(jv_copy(input), i);
+        input = jv_array_set(input, i, jv_array_get(jv_copy(input), swap));
+        input = jv_array_set(input, swap, to_swap);
+    }
+    return input;
+  }
+}
+
+// Select j_num without replacement from array
+// More efficient than `shuffle | slice`
+static jv f_rand_select(jq_state *jq, jv input, jv j_num) {
+  int num = jv_number_value(jv_copy(j_num));
+  if (!jq_rand_initialized()) {
+    jv_free(j_num);
+    jv_free(input);
+    return jv_invalid_with_msg(jv_string(rand_error));
+  } else if (jv_get_kind(input) != JV_KIND_ARRAY) {
+    return type_error2(input, j_num, "can't select from a non array");
+  } else if (num < 0 || num > jv_array_length(jv_copy(input))) {
+    return type_error2(input, j_num, "can't select less than 0 or more than than the input");
+  } else if (num == 0) {
+    jv_free(input);
+    jv_free(j_num);
+    return jv_array();
+  } else {
+    jv result = f_shuffle(jq, jv_array_slice(jv_copy(input), 0, num));
+    for (int i = num; i < jv_array_length(jv_copy(input)); ++i) {
+      if (jq_rand_double() < (double)num / (double)(i + 1)) {
+        jv selected = jv_array_get(jv_copy(input), i);
+        result = jv_array_set(result, (int)jq_rand_int((unsigned long)num), selected);
+      }
+    }
+    jv_free(j_num);
+    jv_free(input);
+    return result;
+  }
+}
+
 // FIXME Should autoconf check for this!
 #ifndef WIN32
 extern char **environ;
@@ -1631,6 +1707,10 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
   {(cfunction_ptr)f_error, "error", 2},
+  {(cfunction_ptr)f_rand, "rand", 1},
+  {(cfunction_ptr)f_randint, "randint", 1},
+  {(cfunction_ptr)f_shuffle, "shuffle", 1},
+  {(cfunction_ptr)f_rand_select, "rand_select", 2},
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_env, "env", 1},
   {(cfunction_ptr)f_halt, "halt", 1},

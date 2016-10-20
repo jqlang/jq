@@ -1329,6 +1329,89 @@ sections:
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
 
+      - title: "`rand`"
+        body: |
+
+          Generate a random number greater than or equal to zero and less than
+          one.
+
+          *NOTE: This function should not be used for security purposes.*
+
+          This function can be made pseudorandom by assigning an unsigned
+          integer or the string of an unsigned integer to ".seed", e.g. `jq
+          --arg .seed 123`.
+
+        examples:
+          - program: 'rand | . >= 0 and . < 1'
+            input: 'null'
+            output: ['true']
+
+      - title: "`randint`, `randint(b)`, `randint(a; b)`"
+        body: |
+
+          Generate a random integer greater than or equal to `a` and less
+          than `b`. `a` is zero when unspecified. The first form reads `b` from
+          its input. The range must have at least one number in it, e.g. `b`
+          must be greater than zero if a is unspecified. Inputs will be cast to
+          an integer, so `randint(5)` and `randint(5.6)` are equivalent.
+
+          *NOTE: This function should not be used for security purposes.*
+
+          This function can be made pseudorandom by assigning an unsigned
+          integer or the string of an unsigned integer to ".seed", e.g. `jq
+          --arg .seed 123`.
+
+        examples:
+          - program: 'randint | . >= 0 and . < 5'
+            input: '5'
+            output: ['true']
+          - program: 'randint(-5; 5 + 1) | . >= -5 and . <= 5'
+            input: 'null'
+            output: ['true']
+          - program: '.[randint(length)] | . == 1 or . == 5 or . == 17'
+            input: '[1, 5, 17]'
+            output: ['true']
+
+      - title: "`shuffle`"
+        body: |
+
+          Randomly permute an array.
+
+          *NOTE: This function should not be used for security purposes.*
+
+          This function can be made pseudorandom by assigning an unsigned
+          integer or the string of an unsigned integer to ".seed", e.g. `jq
+          --arg .seed 123`.
+
+        examples:
+          - program: 'shuffle | sort == [1, 5, 17]'
+            input: '[1, 5, 17]'
+            output: ['true']
+
+      - title: "`rand_select(n)`, `rand_select(stream; n)`, `rand_select_rep(n)`"
+        body: |
+
+          Randomly select `n` elements from an array or stream. The stream
+          version is significantly slower for large inputs.  `rand_select_rep`
+          does so with repetition.
+
+          *NOTE: This function should not be used for security purposes.*
+
+          This function can be made pseudorandom by assigning an unsigned
+          integer or the string of an unsigned integer to ".seed", e.g. `jq
+          --arg .seed 123`.
+
+        examples:
+          - program: 'rand_select(2) | map(. == 1 or . == 5 or . == 17) | all'
+            input: '[1, 5, 17]'
+            output: ['true']
+          - program: 'rand_select(1, 5, 17; 2) | map(. == 1 or . == 5 or . == 17) | all'
+            input: 'null'
+            output: ['true']
+          - program: 'rand_select_rep(2) | map(. == 1 or . == 5 or . == 17) | all'
+            input: '[1, 5, 17]'
+            output: ['true']
+
       - title: "`unique`, `unique_by(path_exp)`"
         body: |
 

@@ -1247,6 +1247,84 @@ bsearch(4)
 [1,2,3]
 -4
 
+# Random function tests
+[range(1000) | rand | . >= 0 and . < 1] | all
+null
+true
+
+try randint catch .
+0
+"number (0) number invalid, less than 1 or too large"
+
+try randint(-3) catch .
+null
+"number (-3) number invalid, less than 1 or too large"
+
+# If this didn't floor each argument first, it would error
+randint(0.8; 1.2)
+null
+0
+
+try randint(4; 4) catch .
+null
+"randint upper limit must be greater than the lower 4 <= 4"
+
+[range(1000) | randint(10) | . >= 0 and . < 10] | all
+null
+true
+
+try shuffle catch .
+null
+"null (null) cannot be shuffled, as it is not an array"
+
+[range(1000) | [range(5)] | shuffle | sort == [range(length)]] | all
+null
+true
+
+try rand_select(-1) catch .
+[]
+"array ([]) and number (-1) can't select less than 0 or more than than the input"
+
+try rand_select(null; -1) catch .
+null
+"rand_select can't select less than 0 elements"
+
+try rand_select(4) catch .
+[1, 2, 3]
+"array ([1,2,3]) and number (4) can't select less than 0 or more than than the input"
+
+try rand_select(0) catch .
+null
+"null (null) and number (0) can't select from a non array"
+
+rand_select(0)
+[1, 2, 3, 4]
+[]
+
+rand_select(1, 2, 3, 4; 0)
+null
+[]
+
+rand_select(1, 2, 3, 4; 4) | sort
+null
+[1, 2, 3, 4]
+
+[range(1000) | [range(5)] | rand_select(2) | length == 2 and .[0] != .[1]] | all
+null
+true
+
+rand_select_rep(0)
+[1, 2, 3, 4]
+[]
+
+try rand_select_rep(-1) catch .
+[1, 3, 6]
+"array ([1,3,6]) and number (-1) can't select less than 0 from the input"
+
+[range(1000) | [range(5)] | rand_select_rep(2) | length == 2 and (map(. >= 0 and . < 5) | all)] | all
+null
+true
+
 # strptime tests are in optional.test
 
 strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -1368,6 +1446,7 @@ jq: error: syntax error, unexpected INVALID_CHARACTER, expecting $end (Unix shel
 
 (.[{}] = 0)?
 null
+
 
 INDEX(range(5)|[., "foo\(.)"]; .[0])
 null

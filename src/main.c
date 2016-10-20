@@ -2,8 +2,10 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
-#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -31,6 +33,7 @@
 #include "jq.h"
 #include "jv_alloc.h"
 #include "util.h"
+#include "rand.h"
 #include "src/version.h"
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
@@ -527,6 +530,42 @@ int main(int argc, char* argv[]) {
 
   if (getenv("JQ_COLORS") != NULL && !jq_set_colors(getenv("JQ_COLORS")))
       fprintf(stderr, "Failed to set $JQ_COLORS\n");
+
+  // Randomness
+  jv seed_key = jv_string(".seed");
+  if (jv_object_has(jv_copy(program_arguments), jv_copy(seed_key))) {
+    jv value = jv_object_get(jv_copy(program_arguments), jv_copy(seed_key));
+    if (jv_get_kind(value) == JV_KIND_NUMBER) {
+      double result = jv_number_value(value);
+      uint64_t seed = result;
+      if (seed == result) {
+        jq_rand_init_seed(seed);
+      } else {
+        fprintf(stderr, "%s: could not interpret \".seed\" number (%.1f) as an unsigned integer\n", progname, result);
+        jv_free(value);
+        die();
+      }
+    } else if (jv_get_kind(value) == JV_KIND_STRING) {
+      char *parsed;
+      const char *str_value = jv_string_value(value);
+      uint64_t seed = strtoull(str_value, &parsed, 0);
+      if (parsed == str_value || *parsed != 0) {
+        fprintf(stderr, "%s: could not interpret \".seed\" string (\"%s\") as an unsigned integer\n", progname, str_value);
+        jv_free(value);
+        die();
+      } else {
+        jq_rand_init_seed(seed);
+      }
+    } else {
+      char errbuf[15];
+      jv_dump_string_trunc(jv_copy(value), errbuf, sizeof(errbuf));
+      fprintf(stderr, "%s: could not interpret \".seed\" %s (%s) as an unsigned integer\n", progname, jv_kind_name(jv_get_kind(value)), errbuf);
+      jv_free(value);
+      die();
+    }
+    jv_free(value);
+  }
+  jv_free(seed_key);
 
   if (jv_get_kind(lib_search_paths) == JV_KIND_NULL) {
     // Default search path list

@@ -5,13 +5,13 @@ LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
-        src/util.h
+        src/util.h src/rand.h
 
 LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
         src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
-        ${LIBJQ_INCS}
+        src/rand.c modules/TinyMT/tinymt/tinymt64.c ${LIBJQ_INCS}
 
 ### C build options
 
@@ -117,9 +117,18 @@ if ENABLE_ALL_STATIC
 jq_LDFLAGS += -all-static
 endif
 
+### TinyMT
+
+AM_CFLAGS += -I$(srcdir)/modules/TinyMT/tinymt
+
+check_PROGRAMS = modules/TinyMT/tinymt/check64
+modules_TinyMT_tinymt_check64_SOURCES = modules/TinyMT/tinymt/check64.c
+modules_TinyMT_tinymt_check64_LDADD = modules/TinyMT/tinymt/tinymt64.o
+
+
 ### Tests (make check)
 
-TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
+TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test tests/mttest
 TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
 

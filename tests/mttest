@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -e -o pipefail
+
+. "${0%/*}/setup" "$@"
+cd "$JQBASEDIR/modules/TinyMT/tinymt"
+head -n1 check64.out.txt | cut -d' ' -f 2-4,7 | xargs ./check64 | cmp - check64.out.txt

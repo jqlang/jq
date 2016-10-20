@@ -306,3 +306,26 @@ def JOIN($idx; stream; idx_expr; join_expr):
   stream | [., $idx[idx_expr]] | join_expr;
 def IN(s): reduce (first(select(. == s)) | true) as $v (false; if . or $v then true else false end);
 def IN(src; s): reduce (src|IN(s)) as $v (false; if . or $v then true else false end);
+
+# Random aliases
+def randint(upper): upper | randint;
+def randint(lower; upper): (lower | floor) as $a
+  | (upper | floor) as $b
+  | if $b <= $a
+    then error("randint upper limit must be greater than the lower \($b) <= \($a)")
+    else $b - $a | randint + $a
+    end;
+def rand_select_rep(n): if n < 0
+  then error("\(type) (\(.)) and \(n | type) (\(n)) can't select less than 0 from the input")
+  else . as $array | [range(n) | $array[$array | length | randint]]
+  end;
+def rand_select(stream; $n):
+    if $n < 0 then error("rand_select can't select less than 0 elements")
+    elif $n == 0 then []
+    else reduce stream as $x ([0, []]; .[0] += 1
+            | if .[0] <= $n then .[1] += [$x]
+            elif rand < $n / .[0] then .[1][randint($n)] = $x
+            else .
+            end)
+        | .[1] | shuffle
+    end;
