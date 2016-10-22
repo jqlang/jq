@@ -38,5 +38,6 @@ set -x
 for jq in `find . -type f \( -name jq -o -name jq.exe \) -print`; do
     cp "$jq" ..
 done
+cd ..
 rm -rf tmp
 
