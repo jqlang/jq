@@ -107,7 +107,7 @@ sections:
         output and an ASCII LF (line feed) is printed after every
         output.  Input JSON texts that fail to parse are ignored (but
         warned about), discarding all subsequent input until the next
-        RS.  This more also parses the output of jq without the `--seq`
+        RS.  This mode also parses the output of jq without the `--seq`
         option.
 
       * `--stream`:
