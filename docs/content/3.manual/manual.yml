@@ -1353,7 +1353,7 @@ sections:
       - title: "`startswith(str)`"
         body: |
 
-          Outputs `true` if . starts with the given string argument.
+          Outputs `true` if . starts with the given string argument. Since 1.4.
 
         examples:
           - program: '[.[]|startswith("foo")]'
@@ -1363,7 +1363,7 @@ sections:
       - title: "`endswith(str)`"
         body: |
 
-          Outputs `true` if . ends with the given string argument.
+          Outputs `true` if . ends with the given string argument. Since 1.4.
 
         examples:
           - program: '[.[]|endswith("foo")]'
