@@ -20,8 +20,6 @@ addons:
 before_install:
 - echo "$TRAVIS_OS_NAME"
 - uname -s
-- brew update               || true; brew install flex         || true; brew install
-  bison        || true; brew install oniguruma    || true;
 - rm src/{lexer,parser}.{c,h}
 install:
 - bundle install --gemfile=docs/Gemfile
@@ -62,7 +60,7 @@ services:
 deploy:
   'on':
     branch: master
-    condition: "$CC = gcc"
+    condition: "$CC = gcc && -z $COVERAGE"
   provider: script
   script: docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "apt update -qq && apt
     install snapcraft -y && cd $(pwd) && snapcraft && snapcraft push *.snap --release
