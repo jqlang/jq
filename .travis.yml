@@ -1,11 +1,11 @@
 os:
 - linux
-- osx
+#- osx
 sudo: required
 language: c
 compiler:
 - gcc
-- clang
+#- clang
 matrix:
   include:
   - compiler: gcc
@@ -62,6 +62,7 @@ services:
 deploy:
   'on':
     branch: master
+    condition: "$CC = gcc"
   provider: script
   script: docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c "apt update -qq && apt
     install snapcraft -y && cd $(pwd) && snapcraft && snapcraft push *.snap --release
