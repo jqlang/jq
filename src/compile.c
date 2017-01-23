@@ -704,12 +704,27 @@ static block bind_matcher(block matcher, block body) {
 
 block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
+  block update_var = gen_op_bound(STOREV, res_var);
+  block jmp = gen_op_target(JUMP, body);
   block loop = BLOCK(gen_op_simple(DUPN),
                      source,
                      bind_matcher(matcher,
                                   BLOCK(gen_op_bound(LOADVN, res_var),
+                                        /*
+                                         * We fork to the body, jump to
+                                         * the STOREV.  This means that
+                                         * if body produces no results
+                                         * (i.e., it just does empty)
+                                         * then we keep the current
+                                         * reduction state as-is.
+                                         *
+                                         * To break out of a
+                                         * reduction... use break.
+                                         */
+                                        gen_op_target(FORK, jmp),
+                                        jmp,
                                         body,
-                                        gen_op_bound(STOREV, res_var))),
+                                        update_var)),
                      gen_op_simple(BACKTRACK));
   return BLOCK(gen_op_simple(DUP),
                init,

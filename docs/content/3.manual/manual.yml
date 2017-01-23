@@ -2413,10 +2413,18 @@ sections:
                   (2 as $item | . + $item) |
                   (1 as $item | . + $item)
 
+          If the reduction update expression outputs `empty` (that is,
+          no values), then the reduction state is left as-is.  For
+          example, `reduce range(4) as $n ({}; if .==2 then empty else
+          .[$n|tostring] |= $n)` will produce `{"0":0,"1":1,"3":3}`.
+
         examples:
           - program: 'reduce .[] as $item (0; . + $item)'
             input: '[10,2,5,3]'
             output: ['20']
+          - program: 'reduce .[] as $n ([]; if $n%2==0 then empty else . + [$n] end)'
+            input: '[0,1,2,3,4,5]'
+            output: ['[1,3,5]']
 
       - title: "`limit(n; exp)`"
         body: |
