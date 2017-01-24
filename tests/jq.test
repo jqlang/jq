@@ -91,27 +91,39 @@ null
 
 @tcl
 [0,"foo",{"bar":{"baz":"quux"}}]
-"{0 0 1 foo 2 {bar {baz quux}}}"
+"0 0 1 foo 2 {bar {baz quux}}"
 
 @tcl
 {"greeting":"Hello, world!", "bools": [false, true], "nothing": null}
-"{greeting {Hello, world!} bools {0 false 1 true} nothing null}"
+"greeting {Hello, world!} bools {0 false 1 true} nothing null"
 
 @tcl
 ["{","}"]
-"{0 \\{ 1 \\}}"
+"0 \\{ 1 \\}"
 
 @tcl
 ["a{","b}"]
-"{0 a\\{ 1 b\\}}"
+"0 a\\{ 1 b\\}"
 
 @tcl
 ["\\{","\\}"]
-"{0 \\\\\\{ 1 \\\\\\}}"
+"0 \\\\\\{ 1 \\\\\\}"
 
 @tcl
 [" \\"]
-"{0 \\ \\\\}"
+"0 \\ \\\\"
+
+@tcl
+5
+"5"
+
+@tcl
+"abc"
+"abc"
+
+@tcl
+"}"
+"\\}"
 
 #
 # Dictionary construction syntax

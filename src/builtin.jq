@@ -316,6 +316,7 @@ def _totcl:
 def format(fmt):
   if fmt == "tcl" then
     _totcl
+    | sub("^{(?<contents>.*)}$"; .contents)
   else
     _format(fmt)
   end;
