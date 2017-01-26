@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef HAVE_ACOS
 LIBM_DD(acos)
 #else
@@ -149,3 +153,8 @@ LIBM_DID(jn)
 #ifdef HAVE_YN
 LIBM_DID(yn)
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+

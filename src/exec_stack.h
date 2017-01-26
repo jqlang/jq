@@ -6,6 +6,10 @@
 #include <string.h>
 #include "jv_alloc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * The stack is a directed forest of variably sized blocks. Each block has a
  * "next" block which is at a higher memory address, or 0 if the block has no
@@ -109,4 +113,9 @@ static stack_ptr stack_pop_block(struct stack* s, stack_ptr p, size_t sz) {
   }
   return r;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
