@@ -7,7 +7,6 @@ mask = lambda n: (1 << n) - 1
 
 def print_table(type, name, t):
     print("static const %s %s[] =" % (type, name))
-    first = True
     for i in range(0,len(t),16):
         print ((" {" if i == 0 else "  ") +
                ", ".join("0x%02x"%n for n in t[i:i+16]) +
