@@ -3033,7 +3033,10 @@ The left\-hand side can be any general path expression; see \fBpath()\fR\.
 Note that the left\-hand side of \'|=\' refers to a value in \fB\.\fR\. Thus \fB$var\.foo |= \. + 1\fR won\'t work as expected (\fB$var\.foo\fR is not a valid or useful path expression in \fB\.\fR); use \fB$var | \.foo |= \. + 1\fR instead\.
 .
 .P
-If the right\-hand side outputs multiple values, only the last one will be used\.
+If the right\-hand side outputs no values (i\.e\., \fBempty\fR), then the left\-hand side path will be deleted, as with \fBdel(path)\fR\.
+.
+.P
+If the right\-hand side outputs multiple values, only the first one will be used (NOTE: it used to be that only the last one was used)\.
 .
 .IP "" 4
 .
