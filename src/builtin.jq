@@ -14,7 +14,7 @@ def _modify(paths; update): reduce path(paths) as $p (.; setpath($p; getpath($p)
 def map_values(f): .[] |= f;
 
 # recurse
-def recurse(f): def r: ., (f | select(. != null) | r); r;
+def recurse(f): def r: ., (f | r); r;
 def recurse(f; cond): def r: ., (f | select(cond) | r); r;
 def recurse: recurse(.[]?);
 def recurse_down: recurse;
