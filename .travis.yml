@@ -19,9 +19,9 @@ matrix:
 addons:
     apt:
         packages:
-            - libonig-dev
             - valgrind
             - bison
+            - automake
 
 before_install:
     - echo "$TRAVIS_OS_NAME"
@@ -29,8 +29,8 @@ before_install:
     - brew update               || true;
       brew install flex         || true;
       brew install bison        || true;
-      brew install oniguruma    || true;
     - rm src/{lexer,parser}.{c,h}
+    - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
 
 install:
     - bundle install --gemfile=docs/Gemfile
@@ -46,7 +46,7 @@ before_script:
     - echo PATH=$PATH
     - which bison
     - bison --version
-    - autoreconf -i
+    - autoreconf -if
     - ./configure YACC="$(which bison) -y" $COVERAGE
 
 script:

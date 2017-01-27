@@ -29,7 +29,7 @@ void *alloca (size_t);
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
-#ifdef HAVE_ONIGURUMA
+#ifdef HAVE_LIBONIG
 #include <oniguruma.h>
 #endif
 #include <string.h>
@@ -697,7 +697,7 @@ static jv f_group_by_impl(jq_state *jq, jv input, jv keys) {
   }
 }
 
-#ifdef HAVE_ONIGURUMA
+#ifdef HAVE_LIBONIG
 static int f_match_name_iter(const UChar* name, const UChar *name_end, int ngroups,
     int *groups, regex_t *reg, void *arg) {
   jv captures = *(jv*)arg;
@@ -901,11 +901,11 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   jv_free(regex);
   return result;
 }
-#else /* ! HAVE_ONIGURUMA */
+#else /* !HAVE_LIBONIG */
 static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   return jv_invalid_with_msg(jv_string("jq was compiled without ONIGURUMA regex libary. match/test/sub and related functions are not available."));
 }
-#endif /* HAVE_ONIGURUMA */
+#endif /* HAVE_LIBONIG */
 
 static jv minmax_by(jv values, jv keys, int is_min) {
   if (jv_get_kind(values) != JV_KIND_ARRAY)
