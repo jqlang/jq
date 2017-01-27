@@ -2005,6 +2005,45 @@ jq \'strptime("%Y\-%m\-%dT%H:%M:%SZ")|mktime\'
 .
 .IP "" 0
 .
+.SS "SQL\-Style Operators"
+jq provides a few SQL\-style operators\.
+.
+.TP
+INDEX(stream; index_expression):
+.
+.IP
+This builtin produces an object whose keys are computed by the given index expression applied to each value from the given stream\.
+.
+.TP
+JOIN($idx; stream; idx_expr; join_expr):
+.
+.IP
+This builtin joins the values from the given stream to the given index\. The index\'s keys are computed by applying the given index expression to each value from the given stream\. An array of the value in the stream and the corresponding value from the index is fed to the given join expression to produce each result\.
+.
+.TP
+JOIN($idx; stream; idx_expr):
+.
+.IP
+Same as \fBJOIN($idx; stream; idx_expr; \.)\fR\.
+.
+.TP
+JOIN($idx; idx_expr):
+.
+.IP
+This builtin joins the input \fB\.\fR to the given index, applying the given index expression to \fB\.\fR to compute the index key\. The join operation is as described above\.
+.
+.TP
+IN(s):
+.
+.IP
+This builtin outputs \fBtrue\fR if \fB\.\fR appears in the given stream, otherwise it outputs \fBfalse\fR\.
+.
+.TP
+IN(source; s):
+.
+.IP
+This builtin outputs \fBtrue\fR if any value in the source stream appears in the second stream, otherwise it outputs \fBfalse\fR\.
+.
 .SH "CONDITIONALS AND COMPARISONS"
 .
 .SS "==, !="
