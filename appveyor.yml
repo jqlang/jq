@@ -26,7 +26,7 @@ build_script:
 test_script:
   # tests/optionaltest and tests/shtest fail on Windows; run them
   # anyways but ignore their failures.  Also, trace shtest.
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j3 'TESTS=tests/mantest tests/jqtest tests/onigtest' check"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j3 'TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test' check"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make TESTS=tests/optionaltest check || cat test-suite.log"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make TRACE_TESTS=1 TESTS=tests/shtest check || cat test-suite.log"
       
