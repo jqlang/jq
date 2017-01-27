@@ -48,7 +48,7 @@ AM_YFLAGS = --warnings=all -d
 lib_LTLIBRARIES = libjq.la
 libjq_la_SOURCES = ${LIBJQ_SRC}
 libjq_la_LIBADD = -lm
-libjq_la_LDFLAGS = -export-symbols-regex '^j[qv]_' -version-info 1:4:0
+libjq_la_LDFLAGS = $(onig_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
 if WIN32
 libjq_la_LIBADD += -lshlwapi
@@ -132,6 +132,15 @@ jq.1: $(srcdir)/jq.1.prebuilt
 	$(AM_V_GEN) cp $^ $@
 endif
 
+
+### Build oniguruma
+
+if BUILD_ONIGURUMA
+libjq_la_LIBADD += modules/oniguruma/src/.libs/libonig.la
+SUBDIRS = modules/oniguruma
+endif
+
+AM_CFLAGS += $(onig_CFLAGS)
 
 ### Packaging
 

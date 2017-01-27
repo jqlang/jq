@@ -44,35 +44,6 @@ if test "$USE_MAINTAINER_MODE" = yes; then
   fi
 fi
 
-
-##########################################################################
-# check for ONIGURUMA library
-##########################################################################
-
-AC_ARG_WITH([oniguruma],
-    [AS_HELP_STRING([--with-oniguruma=prefix],
-        [try this for a non-standard install prefix of the oniguruma library])],
-    [],
-    [with_oniguruma=yes])
-
-AS_IF([test "x$with_oniguruma" != xno], [
-    AS_IF([test "x$with_oniguruma" != xyes], [
-        CFLAGS="$CFLAGS -I${with_oniguruma}/include"
-        LDFLAGS="$LDFLAGS -L${with_oniguruma}/lib"
-    ])
-    # check for ONIGURUMA library
-    have_oniguruma=0
-    AC_CHECK_HEADER("oniguruma.h",
-        AC_CHECK_LIB([onig],[onig_version],[LIBS="$LIBS -lonig"; have_oniguruma=1;]))
-    # handle check results
-    AS_IF([test $have_oniguruma = 1], [
-        AC_DEFINE([HAVE_ONIGURUMA], 1, [Define to 1 if Oniguruma is installed])
-    ], [
-        AC_MSG_NOTICE([Oniguruma was not found.])
-        AC_MSG_NOTICE([Try setting the location using '--with-oniguruma=PREFIX'])
-    ])
-])
-
 dnl Check for valgrind
 AC_CHECK_PROGS(valgrind_cmd, valgrind)
 if test "x$valgrind_cmd" = "x" ; then
@@ -254,6 +225,41 @@ AC_C_BIGENDIAN(
    AC_MSG_ERROR(universial endianess not supported)
 )
 
+dnl Oniguruma
+AC_ARG_WITH([oniguruma],
+   [AS_HELP_STRING([--with-oniguruma=prefix],
+      [try this for a non-standard install prefix of the oniguruma library])], ,
+   [with_oniguruma=yes])
+
+build_oniguruma=no
+AS_IF([test "x$with_oniguruma" != xno], [
+   save_CFLAGS="$CFLAGS"
+   save_LDFLAGS="$LDFLAGS"
+   AS_IF([test "x$with_oniguruma" != xyes], [
+      onig_CFLAGS="-I${with_oniguruma}/include"
+      onig_LDFLAGS="-L${with_oniguruma}/lib"
+      CFLAGS="$CFLAGS $onig_CFLAGS"
+      LDFLAGS="$LDFLAGS $onig_LDFLAGS"
+   ])
+   # check for ONIGURUMA library
+   AC_CHECK_HEADER("oniguruma.h",
+      AC_CHECK_LIB([onig],[onig_version]))
+   CFLAGS="$save_CFLAGS"
+   LDFLAGS="$save_LDFLAGS"
+
+   # handle check results
+   AS_IF([test "x$ac_cv_lib_onig_onig_version" != "xyes"], [
+      onig_CFLAGS="-I${srcdir}/modules/oniguruma/src"
+      onig_LDFLAGS=
+      AC_CONFIG_SUBDIRS([modules/oniguruma])
+      build_oniguruma=yes
+      AC_MSG_NOTICE([Oniguruma was not found. Will use the packaged oniguruma.])
+   ])
+   AC_SUBST(onig_CFLAGS)
+   AC_SUBST(onig_LDFLAGS)
+])
+
+AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 AC_CONFIG_MACRO_DIR([config/m4])
