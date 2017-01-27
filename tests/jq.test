@@ -303,6 +303,11 @@ null
 10
 [0,9,0,5,"nth doesn't support negative indices"]
 
+# Check that first(g) does not extract more than one value from g
+first(1,error("foo"))
+null
+1
+
 #
 # Check that various builtins evalute all arguments where appropriate,
 # doing cartesian products where appropriate.
