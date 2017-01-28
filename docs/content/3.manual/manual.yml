@@ -433,6 +433,7 @@ sections:
 
       - title: "`|`"
         body: |
+
           The | operator combines two filters by feeding the output(s) of
           the one on the left into the input of the one on the right. It's
           pretty much the same as the Unix shell's pipe, if you're used to
@@ -443,10 +444,28 @@ sections:
           expression `.[] | .foo` retrieves the "foo" field of each
           element of the input array.
 
+          Note that `.a.b.c` is the same as `.a | .b | .c`.
+
+          Note too that `.` is the input value at the particular stage
+          in a "pipeline", specifically: where the `.` expression appears.
+          Thus `.a | . | .b` is the same as `.a.b`, as the `.` in the
+          middle refers to whatever value `.a` produced.
+
         examples:
           - program: '.[] | .name'
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output: ['"JSON"', '"XML"']
+
+      - title: "Parenthesis"
+        body: |
+
+          Parenthesis work as a grouping operator just as in any typical
+          programming language.
+
+        examples:
+          - program: '(. + 2) * 5'
+            input: '1'
+            output: [15]
 
   - title: Types and Values
     body: |
@@ -833,6 +852,18 @@ sections:
           - program: 'setpath([0,"a"]; 1)'
             input: 'null'
             output: ['[{"a":1}]']
+
+      - title: "`delpaths(PATHS)`"
+        body: |
+
+          The builtin function `delpaths` sets the `PATHS` in `.`.
+          `PATHS` must be an array of paths, where each path is an array
+          of strings and numbers.
+
+        examples:
+          - program: 'delpaths([["a","b"]])'
+            input: '{"a":{"b":1},"x":{"y":2}}'
+            output: ['{"a":{},"x":{"y":2}}']
 
       - title: "`to_entries`, `from_entries`, `with_entries`"
         body: |
@@ -2389,17 +2420,17 @@ sections:
               def increment: . + 1;
 
           From then on, `increment` is usable as a filter just like a
-          builtin function (in fact, this is how some of the builtins
+          builtin function (in fact, this is how many of the builtins
           are defined). A function may take arguments:
 
               def map(f): [.[] | f];
 
-          Arguments are passed as filters, not as values. The
-          same argument may be referenced multiple times with
-          different inputs (here `f` is run for each element of the
-          input array). Arguments to a function work more like
-          callbacks than like value arguments.  This is important to
-          understand.  Consider:
+          Arguments are passed as _filters_ (functions with no
+          arguments), _not_ as values. The same argument may be
+          referenced multiple times with different inputs (here `f` is
+          run for each element of the input array).  Arguments to a
+          function work more like callbacks than like value arguments.
+          This is important to understand.  Consider:
 
               def foo(f): f|f;
               5|foo(.*2)
@@ -2420,12 +2451,16 @@ sections:
               def addvalue($f): ...;
 
           With either definition, `addvalue(.foo)` will add the current
-          input's `.foo` field to each element of the array.
+          input's `.foo` field to each element of the array.  Do note
+          that calling `addvalue(.[])` will cause the `map(. + $f)` part
+          to be evaluated once per value in the value of `.` at the call
+          site.
 
           Multiple definitions using the same function name are allowed.
           Each re-definition replaces the previous one for the same
           number of function arguments, but only for references from
           functions (or main program) subsequent to the re-definition.
+          See also the section below on scoping.
 
         examples:
           - program: 'def addvalue(f): . + [f]; map(addvalue(.[0]))'
@@ -2434,6 +2469,23 @@ sections:
           - program: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
             input: '[[1,2],[10,20]]'
             output: ['[[1,2,1,2], [10,20,1,2]]']
+
+      - title: 'Scoping'
+        body: |
+
+          There are two types of symbols in jq: value bindings (a.k.a.,
+          "variables"), and functions.  Both are scoped lexically,
+          with expressions being able to refer only to symbols that
+          have been defined "to the left" of them.  The only exception
+          to this rule is that functions can refer to themselves so as
+          to be able to create recursive functions.
+
+          For example, in the following expression there is a binding
+          which is visible "to the right" of it, `... | .*3 as
+          $times_three | [.  + $times_three] | ...`, but not "to the
+          left".  Consider this expression now, `... | (.*3 as
+          $times_three | [.+ $times_three]) | ...`: here the binding
+          `$times_three` is _not_ visible past the closing parenthesis.
 
       - title: Reduce
         body: |
@@ -2640,6 +2692,10 @@ sections:
       application-specific behavior, such as for executables that use
       the libjq C API but aren't the jq executable itself.
 
+      Most jq builtins are referentially transparent, and yield constant
+      and repeatable value streams when applied to constant inputs.
+      This is not true of I/O builtins.
+
     entries:
       - title: "`input`"
         body: |
@@ -2750,6 +2806,15 @@ sections:
 
       All the assignment operators in jq have path expressions on the
       left-hand side.
+
+      Values in jq are always immutable.  Internally, assignment works
+      by using a reduction to compute new, replacement values for `.` that
+      have had all the desired assignments applied to `.`, then
+      outputting the modified value.  This might be made clear by this
+      example: `{a:{b:{c:1}}} | (.a.b|=3), .`.  This will output
+      `{"a":{"b":3}}` and `{"a":{"b":{"c":1}}}` because the last
+      sub-expression, `.`, sees the original value, not the modified
+      value.
 
     entries:
       - title: "`=`"

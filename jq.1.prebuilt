@@ -376,6 +376,12 @@ The | operator combines two filters by feeding the output(s) of the one on the l
 .P
 If the one on the left produces multiple results, the one on the right will be run for each of those results\. So, the expression \fB\.[] | \.foo\fR retrieves the "foo" field of each element of the input array\.
 .
+.P
+Note that \fB\.a\.b\.c\fR is the same as \fB\.a | \.b | \.c\fR\.
+.
+.P
+Note too that \fB\.\fR is the input value at the particular stage in a "pipeline", specifically: where the \fB\.\fR expression appears\. Thus \fB\.a | \. | \.b\fR is the same as \fB\.a\.b\fR, as the \fB\.\fR in the middle refers to whatever value \fB\.a\fR produced\.
+.
 .IP "" 4
 .
 .nf
@@ -383,6 +389,21 @@ If the one on the left produces multiple results, the one on the right will be r
 jq \'\.[] | \.name\'
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
 => "JSON", "XML"
+.
+.fi
+.
+.IP "" 0
+.
+.SS "Parenthesis"
+Parenthesis work as a grouping operator just as in any typical programming language\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'(\. + 2) * 5\'
+   1
+=> 15
 .
 .fi
 .
@@ -843,6 +864,21 @@ jq \'setpath(["a","b"]; 1)\'
 jq \'setpath([0,"a"]; 1)\'
    null
 => [{"a":1}]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "delpaths(PATHS)"
+The builtin function \fBdelpaths\fR sets the \fBPATHS\fR in \fB\.\fR\. \fBPATHS\fR must be an array of paths, where each path is an array of strings and numbers\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'delpaths([["a","b"]])\'
+   {"a":{"b":1},"x":{"y":2}}
+=> {"a":{},"x":{"y":2}}
 .
 .fi
 .
@@ -2635,7 +2671,7 @@ def increment: \. + 1;
 .IP "" 0
 .
 .P
-From then on, \fBincrement\fR is usable as a filter just like a builtin function (in fact, this is how some of the builtins are defined)\. A function may take arguments:
+From then on, \fBincrement\fR is usable as a filter just like a builtin function (in fact, this is how many of the builtins are defined)\. A function may take arguments:
 .
 .IP "" 4
 .
@@ -2648,7 +2684,7 @@ def map(f): [\.[] | f];
 .IP "" 0
 .
 .P
-Arguments are passed as filters, not as values\. The same argument may be referenced multiple times with different inputs (here \fBf\fR is run for each element of the input array)\. Arguments to a function work more like callbacks than like value arguments\. This is important to understand\. Consider:
+Arguments are passed as \fIfilters\fR (functions with no arguments), \fInot\fR as values\. The same argument may be referenced multiple times with different inputs (here \fBf\fR is run for each element of the input array)\. Arguments to a function work more like callbacks than like value arguments\. This is important to understand\. Consider:
 .
 .IP "" 4
 .
@@ -2691,10 +2727,10 @@ def addvalue($f): \.\.\.;
 .IP "" 0
 .
 .P
-With either definition, \fBaddvalue(\.foo)\fR will add the current input\'s \fB\.foo\fR field to each element of the array\.
+With either definition, \fBaddvalue(\.foo)\fR will add the current input\'s \fB\.foo\fR field to each element of the array\. Do note that calling \fBaddvalue(\.[])\fR will cause the \fBmap(\. + $f)\fR part to be evaluated once per value in the value of \fB\.\fR at the call site\.
 .
 .P
-Multiple definitions using the same function name are allowed\. Each re\-definition replaces the previous one for the same number of function arguments, but only for references from functions (or main program) subsequent to the re\-definition\.
+Multiple definitions using the same function name are allowed\. Each re\-definition replaces the previous one for the same number of function arguments, but only for references from functions (or main program) subsequent to the re\-definition\. See also the section below on scoping\.
 .
 .IP "" 4
 .
@@ -2711,6 +2747,12 @@ jq \'def addvalue(f): f as $x | map(\. + $x); addvalue(\.[0])\'
 .fi
 .
 .IP "" 0
+.
+.SS "Scoping"
+There are two types of symbols in jq: value bindings (a\.k\.a\., "variables"), and functions\. Both are scoped lexically, with expressions being able to refer only to symbols that have been defined "to the left" of them\. The only exception to this rule is that functions can refer to themselves so as to be able to create recursive functions\.
+.
+.P
+For example, in the following expression there is a binding which is visible "to the right" of it, \fB\.\.\. | \.*3 as $times_three | [\. + $times_three] | \.\.\.\fR, but not "to the left"\. Consider this expression now, \fB\.\.\. | (\.*3 as $times_three | [\.+ $times_three]) | \.\.\.\fR: here the binding \fB$times_three\fR is \fInot\fR visible past the closing parenthesis\.
 .
 .SS "Reduce"
 The \fBreduce\fR syntax in jq allows you to combine all of the results of an expression by accumulating them into a single answer\. As an example, we\'ll pass \fB[3,2,1]\fR to this expression:
@@ -2903,6 +2945,9 @@ At this time jq has minimal support for I/O, mostly in the form of control over 
 .P
 One builtin provides minimal output capabilities, \fBdebug\fR\. (Recall that a jq program\'s output values are always output as JSON texts on \fBstdout\fR\.) The \fBdebug\fR builtin can have application\-specific behavior, such as for executables that use the libjq C API but aren\'t the jq executable itself\.
 .
+.P
+Most jq builtins are referentially transparent, and yield constant and repeatable value streams when applied to constant inputs\. This is not true of I/O builtins\.
+.
 .SS "input"
 Outputs one new input\.
 .
@@ -2989,6 +3034,9 @@ If an object has two fields which are arrays, \fB\.foo\fR and \fB\.bar\fR, and y
 .
 .P
 All the assignment operators in jq have path expressions on the left\-hand side\.
+.
+.P
+Values in jq are always immutable\. Internally, assignment works by using a reduction to compute new, replacement values for \fB\.\fR that have had all the desired assignments applied to \fB\.\fR, then outputting the modified value\. This might be made clear by this example: \fB{a:{b:{c:1}}} | (\.a\.b|=3), \.\fR\. This will output \fB{"a":{"b":3}}\fR and \fB{"a":{"b":{"c":1}}}\fR because the last sub\-expression, \fB\.\fR, sees the original value, not the modified value\.
 .
 .SS "="
 The filter \fB\.foo = 1\fR will take as input an object and produce as output an object with the "foo" field set to 1\. There is no notion of "modifying" or "changing" something in jq \- all jq values are immutable\. For instance,
