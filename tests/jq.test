@@ -1312,4 +1312,3 @@ jq: error: syntax error, unexpected INVALID_CHARACTER, expecting $end (Unix shel
 (.[{}] = 0)?
 null
 
-
