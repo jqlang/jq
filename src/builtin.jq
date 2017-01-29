@@ -287,3 +287,36 @@ def walk(f):
   elif type == "array" then map( walk(f) ) | f
   else f
   end;
+
+# Convert the input to a string representation of nested Tcl dictionaries.
+def _totcl:
+  if type == "array" then
+    # Convert the array to an object with the keys 0, 1, 2... to process it
+    # as an object.
+    [range(0; length) as $i | {key: $i | tostring, value: .[$i]}]
+    | from_entries
+    | _totcl
+  elif type == "object" then
+    to_entries
+    | [.[] | (.key | _totcl) + " " + (.value | _totcl)]
+    | "{" + join(" ") + "}"
+  else
+    # The input is of the type boolean, null, number or string.
+    # Quote it as a Tcl string in a correct and readable way.
+    tostring
+    | if test("\\\\$") or test("[{}]") then
+        gsub("(?<special>[\\s\\\\{}\\[\\]\\$])"; "\\" + .special)
+      elif test("\\s") then
+        "{" + . + "}"
+      else
+        .
+      end
+  end;
+
+def format(fmt):
+  if fmt == "tcl" then
+    _totcl
+    | sub("^{(?<contents>.*)}$"; .contents)
+  else
+    _format(fmt)
+  end;
