@@ -1,7 +1,10 @@
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include "jv.h"
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
@@ -496,8 +499,52 @@ static pfunc check_literal(struct jv_parser* p) {
     double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
     if (end == 0 || *end != 0)
       return "Invalid numeric literal";
+
+#ifndef JQ_OMIT_INTS
+    if (d == (int64_t)d || d == (uint64_t)d) {
+      if (d >= INT64_MIN && d <= INT64_MAX) {
+        TRY(value(p, jv_int64(d)));
+        goto out;
+      } else if (d >= 0 && d <= UINT64_MAX) {
+        TRY(value(p, jv_uint64(d)));
+        goto out;
+      }
+
+      char *q = p->tokenbuf;
+      int is_signed = 0;
+      while (isspace(*q))
+        q++;
+      if (*q == '-') {
+        is_signed = 1;
+        q++;
+      }
+      errno = 0;
+      if (is_signed) {
+#ifdef HAVE_STRTOIMAX
+        int64_t i64 = strtoimax(p->tokenbuf, &q, 10);
+#else
+        int64_t i64 = strtoll(p->tokenbuf, &q, 10);
+#endif
+        if (q == end && i64 < 0 && errno == 0) {
+          TRY(value(p, jv_int64(i64)));
+          goto out;
+        }
+      } else {
+#ifdef HAVE_STRTOUMAX
+        uint64_t u64 = strtoumax(p->tokenbuf, &q, 10);
+#else
+        uint64_t u64 = strtoull(p->tokenbuf, &q, 10);
+#endif
+        if (q == end && errno == 0) {
+          TRY(value(p, jv_int64(u64)));
+          goto out;
+        }
+      }
+    }
+#endif
     TRY(value(p, jv_number(d)));
   }
+out:
   p->tokenpos = 0;
   return 0;
 }

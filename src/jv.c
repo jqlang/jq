@@ -47,6 +47,10 @@ jv_kind jv_get_kind(jv x) {
   return x.kind_flags & KIND_MASK;
 }
 
+jv_subkind jv_get_subkind(jv x) {
+  return x.subkind_flags & KIND_MASK;
+}
+
 const char* jv_kind_name(jv_kind k) {
   switch (k) {
   case JV_KIND_INVALID: return "<invalid>";
@@ -138,12 +142,72 @@ static void jvp_invalid_free(jv x) {
  */
 
 jv jv_number(double x) {
-  jv j = {JV_KIND_NUMBER, 0, 0, 0, {.number = x}};
+  jv j = {JV_KIND_NUMBER, JV_SUBKIND_NONE, 0, 0, {.number = x}};
+  return j;
+}
+
+jv jv_int64(int64_t x) {
+#ifndef JQ_OMIT_INTS
+  jv j = {JV_KIND_NUMBER, JV_SUBKIND_INT64, 0, 0, {.int64 = x}};
+#else
+  jv j = {JV_KIND_NUMBER, JV_SUBKIND_INT64, 0, 0, {.number = x}};
+#endif
+  return j;
+}
+
+jv jv_uint64(uint64_t x) {
+#ifndef JQ_OMIT_INTS
+  jv j = {JV_KIND_NUMBER, JV_SUBKIND_UINT64, 0, 0, {.uint64 = x}};
+#else
+  jv j = {JV_KIND_NUMBER, JV_SUBKIND_UINT64, 0, 0, {.number = x}};
+#endif
   return j;
 }
 
 double jv_number_value(jv j) {
   assert(jv_get_kind(j) == JV_KIND_NUMBER);
+#ifndef JQ_OMIT_INTS
+  char sk = jv_get_subkind(j);
+  if (sk == JV_SUBKIND_NONE)
+    return j.u.number;
+  if (sk == JV_SUBKIND_INT64)
+    return j.u.int64;
+  assert(sk == JV_SUBKIND_UINT64);
+  return j.u.uint64;
+#else
+  return j.u.number;
+#endif
+}
+
+int64_t jv_int64_value(jv j)
+{
+  assert(jv_get_kind(j) == JV_KIND_NUMBER);
+#ifndef JQ_OMIT_INTS
+  char sk = jv_get_subkind(j);
+  if (sk == JV_SUBKIND_INT64)
+    return j.u.int64;
+  if (sk == JV_SUBKIND_UINT64) {
+    if (j.u.uint64 <= INT64_MAX)
+      return (int64_t)j.u.uint64;
+    return INT64_MAX;
+  }
+#endif
+  return j.u.number;
+}
+
+uint64_t jv_uint64_value(jv j)
+{
+  assert(jv_get_kind(j) == JV_KIND_NUMBER);
+#ifndef JQ_OMIT_INTS
+  char sk = jv_get_subkind(j);
+  if (sk == JV_SUBKIND_UINT64)
+    return j.u.uint64;
+  if (sk == JV_SUBKIND_INT64) {
+    if (j.u.int64 >= 0)
+      return j.u.int64;
+    return 0;
+  }
+#endif
   return j.u.number;
 }
 
@@ -151,12 +215,55 @@ int jv_is_integer(jv j){
   if(jv_get_kind(j) != JV_KIND_NUMBER){
     return 0;
   }
+#ifndef JQ_OMIT_INTS
+  char sk = jv_get_subkind(j);
+  if (sk != JV_SUBKIND_NONE) {
+    assert(sk == JV_SUBKIND_UINT64 || sk == JV_SUBKIND_INT64);
+    return 1;
+  }
+#endif
   double x = jv_number_value(j);
   if(x != x || x > INT_MAX || x < INT_MIN){
     return 0;
   }
 
   return x == (int)x;
+}
+
+int jv_is_int64(jv j)
+{
+  if(jv_get_kind(j) != JV_KIND_NUMBER){
+    return 0;
+  }
+#ifndef JQ_OMIT_INTS
+  char sk = jv_get_subkind(j);
+  if (sk == JV_SUBKIND_INT64)
+    return 1;
+  if (sk == JV_SUBKIND_UINT64) {
+    if (j.u.uint64 <= INT64_MAX)
+      return 1;
+    return 0;
+  }
+#endif
+  return jv_is_integer(j);
+}
+
+int jv_is_uint64(jv j)
+{
+  if(jv_get_kind(j) != JV_KIND_NUMBER){
+    return 0;
+  }
+#ifndef JQ_OMIT_INTS
+  char sk = jv_get_subkind(j);
+  if (sk == JV_SUBKIND_UINT64)
+    return 1;
+  if (sk == JV_SUBKIND_INT64) {
+    if (j.u.int64 >= 0)
+      return 1;
+    return 0;
+  }
+#endif
+  return jv_is_integer(j);
 }
 
 /*
@@ -1302,9 +1409,21 @@ int jv_identical(jv a, jv b) {
     case JV_KIND_OBJECT:
       r = a.u.ptr == b.u.ptr;
       break;
-    case JV_KIND_NUMBER:
+    case JV_KIND_NUMBER: {
+#ifndef JQ_OMIT_INTS
+      char ask = jv_get_subkind(a);
+      char bsk = jv_get_subkind(b);
+      if (ask != bsk)
+        r = jv_number_value(a) == jv_number_value(b);
+      else if (ask == JV_SUBKIND_NONE)
+        r = memcmp(&a.u.number, &b.u.number, sizeof(a.u.number)) == 0;
+      else
+        r = a.u.int64 == b.u.int64; /* this handles int64 and uint64 */
+#else
       r = memcmp(&a.u.number, &b.u.number, sizeof(a.u.number)) == 0;
+#endif
       break;
+    }
     default:
       r = 1;
       break;

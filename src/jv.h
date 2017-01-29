@@ -16,18 +16,26 @@ typedef enum {
   JV_KIND_OBJECT
 } jv_kind;
 
+typedef enum {
+  JV_SUBKIND_NONE,
+  JV_SUBKIND_INT64,
+  JV_SUBKIND_UINT64,
+} jv_subkind;
+
 struct jv_refcnt;
 
 /* All of the fields of this struct are private.
    Really. Do not play with them. */
 typedef struct {
   unsigned char kind_flags;
-  unsigned char pad_;
+  unsigned char subkind_flags;
   unsigned short offset;  /* array offsets */
   int size;
   union {
     struct jv_refcnt* ptr;
     double number;
+    int64_t int64;
+    uint64_t uint64;
   } u;
 } jv;
 
@@ -37,6 +45,7 @@ typedef struct {
  */
 
 jv_kind jv_get_kind(jv);
+jv_subkind jv_get_subkind(jv);
 const char* jv_kind_name(jv_kind);
 static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
 
@@ -61,8 +70,14 @@ jv jv_false(void);
 jv jv_bool(int);
 
 jv jv_number(double);
+jv jv_int64(int64_t);
+jv jv_uint64(uint64_t);
 double jv_number_value(jv);
+int64_t jv_int64_value(jv);
+uint64_t jv_uint64_value(jv);
 int jv_is_integer(jv);
+int jv_is_int64(jv);
+int jv_is_uint64(jv);
 
 jv jv_array(void);
 jv jv_array_sized(int);

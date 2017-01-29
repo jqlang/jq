@@ -1,6 +1,7 @@
 #include <assert.h>
-#include <stdio.h>
+#include <inttypes.h>
 #include <float.h>
+#include <stdio.h>
 #include <string.h>
 
 #ifdef WIN32
@@ -182,6 +183,21 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     put_str("true", F, S, flags & JV_PRINT_ISATTY);
     break;
   case JV_KIND_NUMBER: {
+#ifndef JQ_OMIT_INTS
+    if (jv_is_int64(x)) {
+      int64_t i64 = jv_int64_value(x);
+      char buf[21];
+      (void) snprintf(buf, sizeof(buf), "%" PRId64, i64);
+      put_str(buf, F, S, flags & JV_PRINT_ISATTY);
+      break;
+    } else if (jv_is_uint64(x)) {
+      uint64_t u64 = jv_uint64_value(x);
+      char buf[21];
+      (void) snprintf(buf, sizeof(buf), "%" PRIu64, u64);
+      put_str(buf, F, S, flags & JV_PRINT_ISATTY);
+      break;
+    }
+#endif
     double d = jv_number_value(x);
     if (d != d) {
       // JSON doesn't have NaN, so we'll render it as "null"
