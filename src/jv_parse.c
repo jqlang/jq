@@ -495,53 +495,47 @@ static pfunc check_literal(struct jv_parser* p) {
   } else {
     // FIXME: better parser
     p->tokenbuf[p->tokenpos] = 0;
-    char* end = 0;
-    double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
-    if (end == 0 || *end != 0)
-      return "Invalid numeric literal";
+    char *end = 0;
 
 #ifndef JQ_OMIT_INTS
-    if (d == (int64_t)d || d == (uint64_t)d) {
-      if (d >= INT64_MIN && d <= INT64_MAX) {
-        TRY(value(p, jv_int64(d)));
-        goto out;
-      } else if (d >= 0 && d <= UINT64_MAX) {
-        TRY(value(p, jv_uint64(d)));
-        goto out;
-      }
-
-      char *q = p->tokenbuf;
-      int is_signed = 0;
-      while (isspace(*q))
-        q++;
-      if (*q == '-') {
-        is_signed = 1;
-        q++;
-      }
-      errno = 0;
-      if (is_signed) {
+    char *q = p->tokenbuf;
+    int is_signed = 0;
+    while (isspace(*q))
+      q++;
+    if (*q == '-') {
+      is_signed = 1;
+      q++;
+    }
+    errno = 0;
+    if (is_signed) {
 #ifdef HAVE_STRTOIMAX
-        int64_t i64 = strtoimax(p->tokenbuf, &q, 10);
+      int64_t i64 = strtoimax(p->tokenbuf, &end, 10);
 #else
-        int64_t i64 = strtoll(p->tokenbuf, &q, 10);
+      int64_t i64 = strtoll(p->tokenbuf, &end, 10);
 #endif
-        if (q == end && i64 < 0 && errno == 0) {
-          TRY(value(p, jv_int64(i64)));
-          goto out;
-        }
-      } else {
+      if (end != 0 && *end == 0 && i64 < 0 && errno == 0) {
+        TRY(value(p, jv_int64(i64)));
+        goto out;
+      }
+    } else {
 #ifdef HAVE_STRTOUMAX
-        uint64_t u64 = strtoumax(p->tokenbuf, &q, 10);
+      uint64_t u64 = strtoumax(p->tokenbuf, &end, 10);
 #else
-        uint64_t u64 = strtoull(p->tokenbuf, &q, 10);
+      uint64_t u64 = strtoull(p->tokenbuf, &end, 10);
 #endif
-        if (q == end && errno == 0) {
-          TRY(value(p, jv_int64(u64)));
-          goto out;
-        }
+      if (end != 0 && *end == 0 && errno == 0) {
+        TRY(value(p, jv_uint64(u64)));
+        goto out;
       }
     }
 #endif
+    double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
+    if (end == 0 || *end != 0)
+      return "Invalid numeric literal";
+    /*
+     * So there was a decimal or exponent; this might still be an
+     * integer, but we'll go with double.
+     */
     TRY(value(p, jv_number(d)));
   }
 out:

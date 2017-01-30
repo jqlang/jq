@@ -191,6 +191,10 @@ int64_t jv_int64_value(jv j)
       return (int64_t)j.u.uint64;
     return INT64_MAX;
   }
+  if (j.u.number > 0 && (int64_t)j.u.number < 0)
+    return INT64_MAX;
+  if (j.u.number < 0 && (int64_t)j.u.number > 0)
+    return INT64_MIN;
 #endif
   return j.u.number;
 }
@@ -207,6 +211,10 @@ uint64_t jv_uint64_value(jv j)
       return j.u.int64;
     return 0;
   }
+  if (j.u.number < 0)
+    return 0;
+  if (j.u.number > (double)UINT64_MAX)
+    return UINT64_MAX;
 #endif
   return j.u.number;
 }
