@@ -15,7 +15,9 @@ You can also try it online at [jqplay.org](https://jqplay.org).
 
 If you want to hack on jq, feel free, but be warned that its internals
 are not well-documented at the moment. Bring a hard hat and a
-shovel.  Also, read the wiki: https://github.com/stedolan/jq/wiki
+shovel.  Also, read the wiki: https://github.com/stedolan/jq/wiki, where
+you will find cookbooks, discussion of advanced topics, internals,
+release engineering, and more.
 
 Source tarball and built executable releases can be found on the
 homepage and on the github release page, https://github.com/stedolan/jq/releases
