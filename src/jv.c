@@ -231,6 +231,7 @@ int jv_is_integer(jv j){
   }
 #endif
   double x = jv_number_value(j);
+  /* XXX Check against actual double min/max integers */
   if(x != x || x > INT_MAX || x < INT_MIN){
     return 0;
   }
