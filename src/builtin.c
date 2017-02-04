@@ -1375,12 +1375,25 @@ static block bind_bytecoded_builtins(block b) {
 
 #define LIBM_DD(name) "def " #name ": _" #name ";"
 #define LIBM_DDD(name) "def " #name "(a;b): _" #name "(a;b);"
-#define LIBM_DD_NO(name) "def " #name ": \"Error: " #name "() not found at build time\"|error;"
-#define LIBM_DDD_NO(name) "def " #name "(a;b): \"Error: " #name "() not found at build time\"|error;"
+#define LIBM_DD_NO(name)
+#define LIBM_DDD_NO(name)
 
 static const char* const jq_builtins =
+/* Include supported math functions first */
 #include "libm.h"
+/* Include jq-coded builtins next (some depend on math) */
 #include "src/builtin.inc"
+
+/* Include unsupported math functions next */
+#undef LIBM_DDD_NO
+#undef LIBM_DD_NO
+#undef LIBM_DDD
+#undef LIBM_DD
+#define LIBM_DD(name)
+#define LIBM_DDD(name)
+#define LIBM_DD_NO(name) "def " #name ": \"Error: " #name "() not found at build time\"|error;"
+#define LIBM_DDD_NO(name) "def " #name "(a;b): \"Error: " #name "() not found at build time\"|error;"
+#include "libm.h"
 ;
 
 #undef LIBM_DDD_NO
