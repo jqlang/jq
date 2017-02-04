@@ -149,3 +149,153 @@ LIBM_DID(jn)
 #ifdef HAVE_YN
 LIBM_DID(yn)
 #endif
+#ifdef HAVE_CEIL
+LIBM_DD(ceil)
+#else
+LIBM_DD_NO(ceil)
+#endif
+#ifdef HAVE_COPYSIGN
+LIBM_DDD(copysign)
+#else
+LIBM_DDD_NO(copysign)
+#endif
+#ifdef HAVE_DREM
+LIBM_DDD(drem)
+#else
+LIBM_DDD_NO(drem)
+#endif
+#ifdef HAVE_ERF
+LIBM_DD(erf)
+#else
+LIBM_DD_NO(erf)
+#endif
+#ifdef HAVE_ERFC
+LIBM_DD(erfc)
+#else
+LIBM_DD_NO(erfc)
+#endif
+#ifdef HAVE_EXP10
+LIBM_DD(exp10)
+#else
+LIBM_DD_NO(exp10)
+#endif
+#ifdef HAVE_EXPM1
+LIBM_DD(expm1)
+#else
+LIBM_DD_NO(expm1)
+#endif
+#ifdef HAVE_FABS
+LIBM_DD(fabs)
+#else
+LIBM_DD_NO(fabs)
+#endif
+#ifdef HAVE_FDIM
+LIBM_DDD(fdim)
+#else
+LIBM_DDD_NO(fdim)
+#endif
+#ifdef HAVE_FMA
+LIBM_DDDD(fma)
+#else
+LIBM_DDDD_NO(fma)
+#endif
+#ifdef HAVE_FMAX
+LIBM_DDD(fmax)
+#else
+LIBM_DDD_NO(fmax)
+#endif
+#ifdef HAVE_FMIN
+LIBM_DDD(fmin)
+#else
+LIBM_DDD_NO(fmin)
+#endif
+#ifdef HAVE_FMOD
+LIBM_DDD(fmod)
+#else
+LIBM_DDD_NO(fmod)
+#endif
+#ifdef HAVE_FREXP
+LIBM_DDD(frexp)
+#else
+LIBM_DDD_NO(frexp)
+#endif
+#ifdef HAVE_GAMMA
+LIBM_DD(gamma)
+#else
+LIBM_DD_NO(gamma)
+#endif
+#ifdef HAVE_LGAMMA
+LIBM_DD(lgamma)
+#else
+LIBM_DD_NO(lgamma)
+#endif
+#ifdef HAVE_LOG1P
+LIBM_DD(log1p)
+#else
+LIBM_DD_NO(log1p)
+#endif
+#ifdef HAVE_LOGB
+LIBM_DD(logb)
+#else
+LIBM_DD_NO(logb)
+#endif
+#ifdef HAVE_MODF
+LIBM_DDD(modf)
+#else
+LIBM_DDD_NO(modf)
+#endif
+#ifdef HAVE_NEARBYINT
+LIBM_DD(nearbyint)
+#else
+LIBM_DD_NO(nearbyint)
+#endif
+#ifdef HAVE_NEXTAFTER
+LIBM_DDD(nextafter)
+#else
+LIBM_DDD_NO(nextafter)
+#endif
+#ifdef HAVE_NEXTTOWARD
+LIBM_DDD(nexttoward)
+#else
+LIBM_DDD_NO(nexttoward)
+#endif
+#ifdef HAVE_POW10
+LIBM_DD(pow10)
+#else
+LIBM_DD_NO(pow10)
+#endif
+#ifdef HAVE_RINT
+LIBM_DD(rint)
+#else
+LIBM_DD_NO(rint)
+#endif
+#ifdef HAVE_ROUND
+LIBM_DD(round)
+#else
+LIBM_DD_NO(round)
+#endif
+#ifdef HAVE_SCALB
+LIBM_DDD(scalb)
+#else
+LIBM_DDD_NO(scalb)
+#endif
+#ifdef HAVE_SCALBLN
+LIBM_DDD(scalbln)
+#else
+LIBM_DDD_NO(scalbln)
+#endif
+#ifdef HAVE_SIGNIFICAND
+LIBM_DD(significand)
+#else
+LIBM_DD_NO(significand)
+#endif
+#ifdef HAVE_TRUNC
+LIBM_DD(trunc)
+#else
+LIBM_DD_NO(trunc)
+#endif
+#ifdef HAVE_LDEXP
+LIBM_DDD(ldexp)
+#else
+LIBM_DDD_NO(ldexp)
+#endif

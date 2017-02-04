@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "JQ" "1" "January 2017" "" ""
+.TH "JQ" "1" "February 2017" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -2934,10 +2934,22 @@ jq \'def while(cond; update): def _while: if cond then \., (update | _while) els
 jq currently only has IEEE754 double\-precision (64\-bit) floating point number support\.
 .
 .P
-Besides simple arithmetic operators such as \fB+\fR, jq also has most standard math functions from the C math library\. C math functions that take a single input argument (e\.g\., \fBsin()\fR) are available as zero\-argument jq functions\. C math functions that take two input arguments (e\.g\., \fBpow()\fR) are available as two\-argument jq functions that ignore \fB\.\fR\.
+Besides simple arithmetic operators such as \fB+\fR, jq also has most standard math functions from the C math library\. C math functions that take a single input argument (e\.g\., \fBsin()\fR) are available as zero\-argument jq functions\. C math functions that take two input arguments (e\.g\., \fBpow()\fR) are available as two\-argument jq functions that ignore \fB\.\fR\. C math functions that take three input arguments are available as three\-argument jq functions that ignore \fB\.\fR\.
 .
 .P
 Availability of standard math functions depends on the availability of the corresponding math functions in your operating system and C math library\. Unavailable math functions will be defined but will raise an error\.
+.
+.P
+One\-input C math functions: \fBacos\fR \fBacosh\fR \fBasin\fR \fBasinh\fR \fBatan\fR \fBatanh\fR \fBcbrt\fR \fBceil\fR \fBcos\fR \fBcosh\fR \fBerf\fR \fBerfc\fR \fBexp\fR \fBexp10\fR \fBexp2\fR \fBexpm1\fR \fBfabs\fR \fBfloor\fR \fBgamma\fR \fBj0\fR \fBj1\fR \fBlgamma\fR \fBlog\fR \fBlog10\fR \fBlog1p\fR \fBlog2\fR \fBlogb\fR \fBnearbyint\fR \fBpow10\fR \fBrint\fR \fBround\fR \fBsignificand\fR \fBsin\fR \fBsinh\fR \fBsqrt\fR \fBtan\fR \fBtanh\fR \fBtgamma\fR \fBtrunc\fR \fBy0\fR \fBy1\fR\.
+.
+.P
+Two\-input C math functions: \fBatan2\fR \fBcopysign\fR \fBdrem\fR \fBfdim\fR \fBfmax\fR \fBfmin\fR \fBfmod\fR \fBfrexp\fR \fBhypot\fR \fBjn\fR \fBldexp\fR \fBmodf\fR \fBnextafter\fR \fBnexttoward\fR \fBpow\fR \fBremainder\fR \fBscalb\fR \fBscalbln\fR \fByn\fR\.
+.
+.P
+Three\-input C math functions: \fBfma\fR\.
+.
+.P
+See your system\'s manual for more information on each of these\.
 .
 .SH "I/O"
 At this time jq has minimal support for I/O, mostly in the form of control over when inputs are read\. Two builtins functions are provided for this, \fBinput\fR and \fBinputs\fR, that read from the same sources (e\.g\., \fBstdin\fR, files named on the command\-line) as jq itself\. These two builtins, and jq\'s own reading actions, can be interleaved with each other\.

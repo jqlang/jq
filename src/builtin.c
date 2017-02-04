@@ -110,9 +110,24 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
   return ret; \
 }
 #define LIBM_DDD_NO(name)
+
+#define LIBM_DDDD(name) \
+static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
+  if (jv_get_kind(a) != JV_KIND_NUMBER || jv_get_kind(b) != JV_KIND_NUMBER) \
+    return type_error(input, "number required"); \
+  jv_free(input); \
+  jv ret = jv_number(name(jv_number_value(a), jv_number_value(b), jv_number_value(c))); \
+  jv_free(a); \
+  jv_free(b); \
+  jv_free(c); \
+  return ret; \
+}
+#define LIBM_DDDD_NO(name)
 #include "libm.h"
+#undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
 #undef LIBM_DD_NO
+#undef LIBM_DDDD
 #undef LIBM_DDD
 #undef LIBM_DD
 
@@ -1254,6 +1269,10 @@ static jv f_current_line(jq_state *jq, jv a) {
   {(cfunction_ptr)f_ ## name, "_" #name, 3},
 #define LIBM_DDD_NO(name)
 
+#define LIBM_DDDD(name) \
+  {(cfunction_ptr)f_ ## name, "_" #name, 4},
+#define LIBM_DDDD_NO(name)
+
 static const struct cfunction function_list[] = {
 #include "libm.h"
   {(cfunction_ptr)f_plus, "_plus", 3},
@@ -1321,8 +1340,10 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_current_filename, "input_filename", 1},
   {(cfunction_ptr)f_current_line, "input_line_number", 1},
 };
+#undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
 #undef LIBM_DD_NO
+#undef LIBM_DDDD
 #undef LIBM_DDD
 #undef LIBM_DD
 
@@ -1375,8 +1396,10 @@ static block bind_bytecoded_builtins(block b) {
 
 #define LIBM_DD(name) "def " #name ": _" #name ";"
 #define LIBM_DDD(name) "def " #name "(a;b): _" #name "(a;b);"
+#define LIBM_DDDD(name) "def " #name "(a;b;c): _" #name "(a;b;c);"
 #define LIBM_DD_NO(name)
 #define LIBM_DDD_NO(name)
+#define LIBM_DDDD_NO(name)
 
 static const char* const jq_builtins =
 /* Include supported math functions first */
@@ -1385,19 +1408,25 @@ static const char* const jq_builtins =
 #include "src/builtin.inc"
 
 /* Include unsupported math functions next */
+#undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
 #undef LIBM_DD_NO
+#undef LIBM_DDDD
 #undef LIBM_DDD
 #undef LIBM_DD
 #define LIBM_DD(name)
 #define LIBM_DDD(name)
+#define LIBM_DDDD(name)
 #define LIBM_DD_NO(name) "def " #name ": \"Error: " #name "() not found at build time\"|error;"
 #define LIBM_DDD_NO(name) "def " #name "(a;b): \"Error: " #name "() not found at build time\"|error;"
+#define LIBM_DDDD_NO(name) "def " #name "(a;b;c): \"Error: " #name "() not found at build time\"|error;"
 #include "libm.h"
 ;
 
+#undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
 #undef LIBM_DD_NO
+#undef LIBM_DDDD
 #undef LIBM_DDD
 #undef LIBM_DD
 
