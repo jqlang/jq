@@ -1341,15 +1341,15 @@ static jv f_current_line(jq_state *jq, jv a) {
 }
 
 #define LIBM_DD(name) \
-  {(cfunction_ptr)f_ ## name, "_" #name, 1},
+  {(cfunction_ptr)f_ ## name,  #name, 1},
 #define LIBM_DD_NO(name)
 
 #define LIBM_DDD(name) \
-  {(cfunction_ptr)f_ ## name, "_" #name, 3},
+  {(cfunction_ptr)f_ ## name, #name, 3},
 #define LIBM_DDD_NO(name)
 
 #define LIBM_DDDD(name) \
-  {(cfunction_ptr)f_ ## name, "_" #name, 4},
+  {(cfunction_ptr)f_ ## name, #name, 4},
 #define LIBM_DDDD_NO(name)
 
 static const struct cfunction function_list[] = {
@@ -1469,30 +1469,16 @@ static block bind_bytecoded_builtins(block b) {
                                             BLOCK(gen_param("start"), gen_param("end")),
                                             range));
   }
-
-  return block_bind_referenced(builtins, b, OP_IS_CALL_PSEUDO);
+  return block_bind(builtins, b, OP_IS_CALL_PSEUDO);
 }
 
-#define LIBM_DD(name) "def " #name ": _" #name ";"
-#define LIBM_DDD(name) "def " #name "(a;b): _" #name "(a;b);"
-#define LIBM_DDDD(name) "def " #name "(a;b;c): _" #name "(a;b;c);"
-#define LIBM_DD_NO(name)
-#define LIBM_DDD_NO(name)
-#define LIBM_DDDD_NO(name)
+
 
 static const char* const jq_builtins =
-/* Include supported math functions first */
-#include "libm.h"
-/* Include jq-coded builtins next (some depend on math) */
+/* Include jq-coded builtins */
 #include "src/builtin.inc"
 
 /* Include unsupported math functions next */
-#undef LIBM_DDDD_NO
-#undef LIBM_DDD_NO
-#undef LIBM_DD_NO
-#undef LIBM_DDDD
-#undef LIBM_DDD
-#undef LIBM_DD
 #define LIBM_DD(name)
 #define LIBM_DDD(name)
 #define LIBM_DDDD(name)
@@ -1510,13 +1496,18 @@ static const char* const jq_builtins =
 #undef LIBM_DD
 
 
+static block gen_builtin_list(block builtins) {
+  jv list = jv_array_append(block_list_funcs(builtins, 1), jv_string("builtins"));
+  return BLOCK(builtins, gen_function("builtins", gen_noop(), gen_const(list)));
+}
+
 static int builtins_bind_one(jq_state *jq, block* bb, const char* code) {
   struct locfile* src;
   src = locfile_init(jq, "<builtin>", code, strlen(code));
   block funcs;
   int nerrors = jq_parse_library(src, &funcs);
   if (nerrors == 0) {
-    *bb = block_bind_referenced(funcs, *bb, OP_IS_CALL_PSEUDO);
+    *bb = block_bind(funcs, *bb, OP_IS_CALL_PSEUDO);
   }
   locfile_free(src);
   return nerrors;
@@ -1538,14 +1529,18 @@ static int slurp_lib(jq_state *jq, block* bb) {
 }
 
 int builtins_bind(jq_state *jq, block* bb) {
+  block builtins = gen_noop();
   int nerrors = slurp_lib(jq, bb);
   if (nerrors) {
     block_free(*bb);
     return nerrors;
   }
-  nerrors = builtins_bind_one(jq, bb, jq_builtins);
+  nerrors = builtins_bind_one(jq, &builtins, jq_builtins);
   assert(!nerrors);
-  *bb = bind_bytecoded_builtins(*bb);
-  *bb = gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), *bb);
+  builtins = bind_bytecoded_builtins(builtins);
+  builtins = gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), builtins);
+  builtins = gen_builtin_list(builtins);
+  *bb = block_bind(builtins, *bb, OP_IS_CALL_PSEUDO);
+  *bb = block_drop_unreferenced(*bb);
   return nerrors;
 }
