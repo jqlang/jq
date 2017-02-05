@@ -1919,6 +1919,14 @@ sections:
              This builtin outputs `true` if any value in the source stream
              appears in the second stream, otherwise it outputs `false`.
 
+      - title: "`builtins`"
+        body: |
+
+          Returns a list of all builtin functions in the format `name/arity`.
+          Since functions with the same name but different arities are considered
+          separate functions, `all/0`, `all/1`, and `all/2` would all be present
+          in the list.
+
   - title: Conditionals and Comparisons
     entries:
       - title: "`==`, `!=`"

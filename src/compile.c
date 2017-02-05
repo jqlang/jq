@@ -480,6 +480,18 @@ jv block_take_imports(block* body) {
   return imports;
 }
 
+jv block_list_funcs(block body, int omit_underscores) {
+  jv funcs = jv_object(); // Use the keys for set semantics.
+  for (inst *pos = body.first; pos != NULL; pos = pos->next) {
+    if (pos->op == CLOSURE_CREATE || pos->op == CLOSURE_CREATE_C) {
+      if (pos->symbol != NULL && (!omit_underscores || pos->symbol[0] != '_')) {
+        funcs = jv_object_set(funcs, jv_string_fmt("%s/%i", pos->symbol, pos->nformals), jv_null());
+      }
+    }
+  }
+  return jv_keys_unsorted(funcs);
+}
+
 block gen_module(block metadata) {
   inst* i = inst_new(MODULEMETA);
   i->imm.constant = block_const(metadata);
