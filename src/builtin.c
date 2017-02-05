@@ -101,9 +101,15 @@ static jv f_ ## name(jq_state *jq, jv input) { \
 
 #define LIBM_DDD(name) \
 static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
-  if (jv_get_kind(a) != JV_KIND_NUMBER || jv_get_kind(b) != JV_KIND_NUMBER) \
-    return type_error(input, "number required"); \
   jv_free(input); \
+  if (jv_get_kind(a) != JV_KIND_NUMBER) { \
+    jv_free(b); \
+    return type_error(a, "number required"); \
+  } \
+  if (jv_get_kind(b) != JV_KIND_NUMBER) { \
+    jv_free(a); \
+    return type_error(b, "number required"); \
+  } \
   jv ret = jv_number(name(jv_number_value(a), jv_number_value(b))); \
   jv_free(a); \
   jv_free(b); \
@@ -113,9 +119,22 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
 
 #define LIBM_DDDD(name) \
 static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
-  if (jv_get_kind(a) != JV_KIND_NUMBER || jv_get_kind(b) != JV_KIND_NUMBER) \
-    return type_error(input, "number required"); \
   jv_free(input); \
+  if (jv_get_kind(a) != JV_KIND_NUMBER) { \
+    jv_free(b); \
+    jv_free(c); \
+    return type_error(a, "number required"); \
+  } \
+  if (jv_get_kind(b) != JV_KIND_NUMBER) { \
+    jv_free(a); \
+    jv_free(c); \
+    return type_error(b, "number required"); \
+  } \
+  if (jv_get_kind(c) != JV_KIND_NUMBER) { \
+    jv_free(a); \
+    jv_free(b); \
+    return type_error(c, "number required"); \
+  } \
   jv ret = jv_number(name(jv_number_value(a), jv_number_value(b), jv_number_value(c))); \
   jv_free(a); \
   jv_free(b); \
