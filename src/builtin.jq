@@ -210,7 +210,7 @@ def ascii_upcase:
 
 # Streaming utilities
 def truncate_stream(stream):
-  . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][1:]) else empty end;
+  . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][$n:]) else empty end;
 def fromstream(i):
   foreach i as $item (
     [null,false,null,false];
