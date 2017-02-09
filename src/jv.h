@@ -99,6 +99,9 @@ jv jv_array_indexes(jv, jv);
   __attribute__ ((__format__( __printf__, fmt_arg_num, args_num)))
 #define JV_VPRINTF_LIKE(fmt_arg_num) \
   __attribute__ ((__format__( __printf__, fmt_arg_num, 0)))
+#else
+#define JV_PRINTF_LIKE(fmt_arg_num, args_num)
+#define JV_VPRINTF_LIKE(fmt_arg_num)
 #endif
 
 
