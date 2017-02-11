@@ -115,8 +115,8 @@ const char* jv_string_value(jv);
 jv jv_string_indexes(jv j, jv k);
 jv jv_string_slice(jv j, int start, int end);
 jv jv_string_concat(jv, jv);
-jv jv_string_vfmt(const char*, va_list) JV_VPRINTF_LIKE(1);
-jv jv_string_fmt(const char*, ...) JV_PRINTF_LIKE(1, 2);
+jv jv_string_vfmt(const char* fmt, va_list ap) JV_VPRINTF_LIKE(1);
+jv jv_string_fmt(const char* fmt, ...) JV_PRINTF_LIKE(1, 2);
 jv jv_string_append_codepoint(jv a, uint32_t c);
 jv jv_string_append_buf(jv a, const char* buf, int len);
 jv jv_string_append_str(jv a, const char* str);
@@ -198,7 +198,7 @@ jv jv_object_iter_value(jv, int);
 
 int jv_get_refcnt(jv);
 
-enum jv_print_flags {
+enum {
   JV_PRINT_PRETTY   = 1,
   JV_PRINT_ASCII    = 2,
   JV_PRINT_COLOR    = 4, JV_PRINT_COLOUR = 4,
