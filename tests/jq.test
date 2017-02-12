@@ -61,7 +61,7 @@ null
 null
 "interpolation"
 
-@text,@json,([1,.] | (@csv, @tsv)),@html,@uri,@sh,@base64
+@text,@json,([1,.] | (@csv, @tsv)),@html,@uri,@sh,@base64,(@base64 | @base64d)
 "<>&'\"\t"
 "<>&'\"\t"
 "\"<>&'\\\"\\t\""
@@ -71,11 +71,16 @@ null
 "%3C%3E%26'%22%09"
 "'<>&'\\''\"\t'"
 "PD4mJyIJ"
+"<>&'\"\t"
 
 # regression test for #436
 @base64
 "foóbar\n"
 "Zm/Ds2Jhcgo="
+
+@base64d
+"Zm/Ds2Jhcgo="
+"foóbar\n"
 
 @uri
 "\u03bc"
