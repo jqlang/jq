@@ -193,8 +193,8 @@ Be warned that this option can change backwards\-incompatibly\.
 .
 .SH "BASIC FILTERS"
 .
-.SS "\."
-The absolute simplest (and least interesting) filter is \fB\.\fR\. This is a filter that takes its input and produces it unchanged as output\.
+.SS "Identity: \."
+The absolute simplest filter is \fB\.\fR \. This is a filter that takes its input and produces it unchanged as output\. That is, this is the identity operator\.
 .
 .P
 Since jq by default pretty\-prints all output, this trivial program can be a useful way of formatting JSON output from, say, \fBcurl\fR\.
@@ -211,14 +211,20 @@ jq \'\.\'
 .
 .IP "" 0
 .
-.SS "\.foo, \.foo\.bar"
+.SS "Object Identifier\-Index: \.foo, \.foo\.bar"
 The simplest \fIuseful\fR filter is \fB\.foo\fR\. When given a JSON object (aka dictionary or hash) as input, it produces the value at the key "foo", or null if there\'s none present\.
 .
 .P
-If the key contains special characters, you need to surround it with double quotes like this: \fB\."foo$"\fR\.
+A filter of the form \fB\.foo\.bar\fR is equivalent to \fB\.foo|\.bar\fR\.
 .
 .P
-A filter of the form \fB\.foo\.bar\fR is equivalent to \fB\.foo|\.bar\fR\.
+This syntax only works for simple, identifier\-like keys, that is, keys that are all made of alphanumeric characters and underscore, and which do not start with a digit\.
+.
+.P
+If the key contains special characters, you need to surround it with double quotes like this: \fB\."foo$"\fR, or else \fB\.["foo$"]\fR\.
+.
+.P
+For example \fB\.["foo::bar"]\fR and \fB\.["foo\.bar"]\fR work while \fB\.foo::bar\fR does not, and \fB\.foo\.bar\fR means \fB\.["foo"]\.["bar"]\fR\.
 .
 .IP "" 4
 .
@@ -240,7 +246,7 @@ jq \'\.["foo"]\'
 .
 .IP "" 0
 .
-.SS "\.foo?"
+.SS "Optional Object Identifier\-Index: \.foo?"
 Just like \fB\.foo\fR, but does not output even an error when \fB\.\fR is not an array or an object\.
 .
 .IP "" 4
@@ -267,20 +273,14 @@ jq \'[\.foo?]\'
 .
 .IP "" 0
 .
-.SS "\.[<string>], \.[2], \.[10:15]"
-You can also look up fields of an object using syntax like \fB\.["foo"]\fR (\.foo above is a shorthand version of this)\. This one works for arrays as well, if the key is an integer\. Arrays are zero\-based (like javascript), so \fB\.[2]\fR returns the third element of the array\.
+.SS "Generic Object Index: \.[<string>]"
+You can also look up fields of an object using syntax like \fB\.["foo"]\fR (\.foo above is a shorthand version of this, but only for identifier\-like strings)\.
+.
+.SS "Array Index: \.[2]"
+When the index value is an integer, \fB\.[<value>]\fR can index arrays\. Arrays are zero\-based, so \fB\.[2]\fR returns the third element\.
 .
 .P
-The \fB\.[10:15]\fR syntax can be used to return a subarray of an array or substring of a string\. The array returned by \fB\.[10:15]\fR will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive)\. Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array)\.
-.
-.P
-The \fB\.[2]\fR syntax can be used to return the element at the given index\. Negative indices are allowed, with \-1 referring to the last element, \-2 referring to the next to last element, and so on\.
-.
-.P
-The \fB\.foo\fR syntax only works for simply keys i\.e\. keys that are all alphanumeric characters\. \fB\.[<string>]\fR works with keys that contain special characters such as colons and dots\. For example \fB\.["foo::bar"]\fR and \fB\.["foo\.bar"]\fR work while \fB\.foo::bar\fR and \fB\.foo\.bar\fR would not\.
-.
-.P
-The \fB?\fR "operator" can also be used with the slice operator, as in \fB\.[10:15]?\fR, which outputs values where the inputs are slice\-able\.
+Negative indices are allowed, with \-1 referring to the last element, \-2 referring to the next to last element, and so on\.
 .
 .IP "" 4
 .
@@ -293,6 +293,21 @@ jq \'\.[0]\'
 jq \'\.[2]\'
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
 => null
+
+jq \'\.[\-2]\'
+   [1,2,3]
+=> 2
+.
+.fi
+.
+.IP "" 0
+.
+.SS "Array/String Slice: \.[10:15]"
+The \fB\.[10:15]\fR syntax can be used to return a subarray of an array or substring of a string\. The array returned by \fB\.[10:15]\fR will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive)\. Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array)\.
+.
+.IP "" 4
+.
+.nf
 
 jq \'\.[2:4]\'
    ["a","b","c","d","e"]
@@ -309,16 +324,12 @@ jq \'\.[:3]\'
 jq \'\.[\-2:]\'
    ["a","b","c","d","e"]
 => ["d", "e"]
-
-jq \'\.[\-2]\'
-   [1,2,3]
-=> 2
 .
 .fi
 .
 .IP "" 0
 .
-.SS "\.[]"
+.SS "Array/Object Value Iterator: \.[]"
 If you use the \fB\.[index]\fR syntax, but omit the index entirely, it will return \fIall\fR of the elements of an array\. Running \fB\.[]\fR with the input \fB[1,2,3]\fR will produce the numbers as three separate results, rather than as a single array\.
 .
 .P
@@ -347,8 +358,8 @@ jq \'\.[]\'
 .SS "\.[]?"
 Like \fB\.[]\fR, but no errors will be output if \. is not an array or object\.
 .
-.SS ","
-If two filters are separated by a comma, then the input will be fed into both and there will be multiple outputs: first, all of the outputs produced by the left expression, and then all of the outputs produced by the right\. For instance, filter \fB\.foo, \.bar\fR, produces both the "foo" fields and "bar" fields as separate outputs\.
+.SS "Comma: ,"
+If two filters are separated by a comma, then the same input will be fed into both and the two filters\' output value streams will be concatenated in order: first, all of the outputs produced by the left expression, and then all of the outputs produced by the right\. For instance, filter \fB\.foo, \.bar\fR, produces both the "foo" fields and "bar" fields as separate outputs\.
 .
 .IP "" 4
 .
@@ -370,7 +381,7 @@ jq \'\.[4,2]\'
 .
 .IP "" 0
 .
-.SS "|"
+.SS "Pipe: |"
 The | operator combines two filters by feeding the output(s) of the one on the left into the input of the one on the right\. It\'s pretty much the same as the Unix shell\'s pipe, if you\'re used to that\.
 .
 .P
@@ -415,7 +426,7 @@ jq supports the same set of datatypes as JSON \- numbers, strings, booleans, arr
 .P
 Booleans, null, strings and numbers are written the same way as in javascript\. Just like everything else in jq, these simple values take an input and produce an output \- \fB42\fR is a valid jq expression that takes an input, ignores it, and returns 42 instead\.
 .
-.SS "Array construction \- []"
+.SS "Array construction: []"
 As in JSON, \fB[]\fR is used to construct arrays, as in \fB[1,2,3]\fR\. The elements of the arrays can be any jq expression\. All of the results produced by all of the expressions are collected into one big array\. You can use it to construct an array out of a known quantity of values (as in \fB[\.foo, \.bar, \.baz]\fR) or to "collect" all the results of a filter into an array (as in \fB[\.items[]\.name]\fR)
 .
 .P
@@ -436,11 +447,14 @@ jq \'[\.user, \.projects[]]\'
 .
 .IP "" 0
 .
-.SS "Objects \- {}"
+.SS "Object Construction: {}"
 Like JSON, \fB{}\fR is for constructing objects (aka dictionaries or hashes), as in: \fB{"a": 42, "b": 17}\fR\.
 .
 .P
-If the keys are "sensible" (all alphabetic characters), then the quotes can be left off\. The value can be any expression (although you may need to wrap it in parentheses if it\'s a complicated one), which gets applied to the {} expression\'s input (remember, all filters have an input and an output)\.
+If the keys are "identifier\-like", then the quotes can be left off, as in \fB{a:42, b:17}\. Keys generated by expressions need to be parenthesized, e\.g\.,\fR{("a"+"b"):59}`\.
+.
+.P
+The value can be any expression (although you may need to wrap it in parentheses if it\'s a complicated one), which gets applied to the {} expression\'s input (remember, all filters have an input and an output)\.
 .
 .IP "" 4
 .
@@ -453,7 +467,7 @@ If the keys are "sensible" (all alphabetic characters), then the quotes can be l
 .IP "" 0
 .
 .P
-will produce the JSON object \fB{"foo": 42}\fR if given the JSON object \fB{"bar":42, "baz":43}\fR\. You can use this to select particular fields of an object: if the input is an object with "user", "title", "id", and "content" fields and you just want "user" and "title", you can write
+will produce the JSON object \fB{"foo": 42}\fR if given the JSON object \fB{"bar":42, "baz":43}\fR as its input\. You can use this to select particular fields of an object: if the input is an object with "user", "title", "id", and "content" fields and you just want "user" and "title", you can write
 .
 .IP "" 4
 .
@@ -466,7 +480,7 @@ will produce the JSON object \fB{"foo": 42}\fR if given the JSON object \fB{"bar
 .IP "" 0
 .
 .P
-Because that\'s so common, there\'s a shortcut syntax: \fB{user, title}\fR\.
+Because that is so common, there\'s a shortcut syntax for it: \fB{user, title}\fR\.
 .
 .P
 If one of the expressions produces multiple results, multiple dictionaries will be produced\. If the input\'s
@@ -542,10 +556,28 @@ jq \'{(\.user): \.titles}\'
 .
 .IP "" 0
 .
+.SS "Recursive Descent: \.\."
+Recursively descends \fB\.\fR, producing every value\. This is the same as the zero\-argument \fBrecurse\fR builtin (see below)\. This is intended to resemble the XPath \fB//\fR operator\. Note that \fB\.\.a\fR does not work; use \fB\.\.|\.a\fR instead\. In the example below we use \fB\.\.|\.a?\fR to find all the values of object keys "a" in any object found "below" \fB\.\fR\.
+.
+.P
+This is particularly useful in conjunction with \fBpath(EXP)\fR (also see below) and the \fB?\fR operator\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'\.\.|\.a?\'
+   [[{"a":1}]]
+=> 1
+.
+.fi
+.
+.IP "" 0
+.
 .SH "BUILTIN OPERATORS AND FUNCTIONS"
 Some jq operator (for instance, \fB+\fR) do different things depending on the type of their arguments (arrays, numbers, etc\.)\. However, jq never does implicit type conversions\. If you try to add a string to an object you\'ll get an error message and no result\.
 .
-.SS "Addition \- +"
+.SS "Addition: +"
 The operator \fB+\fR takes two filters, applies them both to the same input, and adds the results together\. What "adding" means depends on the types involved:
 .
 .IP "\(bu" 4
@@ -593,7 +625,7 @@ jq \'{a: 1} + {b: 2} + {c: 3} + {a: 42}\'
 .
 .IP "" 0
 .
-.SS "Subtraction \- \-"
+.SS "Subtraction: \-"
 As well as normal arithmetic subtraction on numbers, the \fB\-\fR operator can be used on arrays to remove all occurrences of the second array\'s elements from the first array\.
 .
 .IP "" 4
@@ -612,7 +644,7 @@ jq \'\. \- ["xml", "yaml"]\'
 .
 .IP "" 0
 .
-.SS "Multiplication, division, modulo \- *, /, and %"
+.SS "Multiplication, division, modulo: *, /, and %"
 These infix operators behave as expected when given two numbers\. Division by zero raises an error\. \fBx % y\fR computes x modulo y\.
 .
 .P
@@ -1783,21 +1815,6 @@ jq \'walk( if type == "object" then with_entries( \.key |= sub( "^_+"; "") ) els
 .
 .IP "" 0
 .
-.SS "\.\."
-Short\-hand for \fBrecurse\fR without arguments\. This is intended to resemble the XPath \fB//\fR operator\. Note that \fB\.\.a\fR does not work; use \fB\.\.|a\fR instead\. In the example below we use \fB\.\.|\.a?\fR to find all the values of object keys "a" in any object found "below" \fB\.\fR\.
-.
-.IP "" 4
-.
-.nf
-
-jq \'\.\.|\.a?\'
-   [[{"a":1}]]
-=> 1
-.
-.fi
-.
-.IP "" 0
-.
 .SS "env"
 Outputs an object representing jq\'s environment\.
 .
@@ -1940,6 +1957,12 @@ The input is escaped suitable for use in a command\-line for a POSIX shell\. If 
 .IP
 The input is converted to base64 as specified by RFC 4648\.
 .
+.TP
+\fB@base64d\fR:
+.
+.IP
+The inverse of \fB@base64\fR, input is decoded as specified by RFC 4648\. Note: If the decoded string is not UTF\-8, the results are undefined\.
+.
 .P
 This syntax can be combined with string interpolation in a useful way\. You can follow a \fB@foo\fR token with a string literal\. The contents of the string literal will \fInot\fR be escaped\. However, all interpolations made inside that string literal will be escaped\. For instance,
 .
@@ -1980,6 +2003,14 @@ jq \'@html\'
 jq \'@sh "echo \e(\.)"\'
    "O\'Hara\'s Ale"
 => "echo \'O\'\e\e\'\'Hara\'\e\e\'\'s Ale\'"
+
+jq \'@base64\'
+   "This is a message"
+=> "VGhpcyBpcyBhIG1lc3NhZ2U="
+
+jq \'@base64d\'
+   "VGhpcyBpcyBhIG1lc3NhZ2U="
+=> "This is a message"
 .
 .fi
 .
@@ -2080,6 +2111,9 @@ IN(source; s):
 .IP
 This builtin outputs \fBtrue\fR if any value in the source stream appears in the second stream, otherwise it outputs \fBfalse\fR\.
 .
+.SS "builtins"
+Returns a list of all builtin functions in the format \fBname/arity\fR\. Since functions with the same name but different arities are considered separate functions, \fBall/0\fR, \fBall/1\fR, and \fBall/2\fR would all be present in the list\.
+.
 .SH "CONDITIONALS AND COMPARISONS"
 .
 .SS "==, !="
@@ -2179,7 +2213,7 @@ jq \'[true, false | not]\'
 .
 .IP "" 0
 .
-.SS "Alternative operator \- //"
+.SS "Alternative operator: //"
 A filter of the form \fBa // b\fR produces the same results as \fBa\fR, if \fBa\fR produces results other than \fBfalse\fR and \fBnull\fR\. Otherwise, \fBa // b\fR produces the same results as \fBb\fR\.
 .
 .P
@@ -2294,7 +2328,7 @@ break $out
 .P
 because no label \fB$out\fR is visible\.
 .
-.SS "? operator"
+.SS "Error Suppresion / Optional Operator: ?"
 The \fB?\fR operator, used as \fBEXP?\fR, is shorthand for \fBtry EXP\fR\.
 .
 .IP "" 4
@@ -2514,7 +2548,7 @@ Some minimal I/O support (besides reading JSON from standard input, and writing 
 .P
 Finally, there is a module/library system\.
 .
-.SS "Variables"
+.SS "Variable / Symbolic Binding Operator: \.\.\. as $identifier | \.\.\."
 In jq, all filters have an input and an output, so manual plumbing is not necessary to pass a value from one part of a program to the next\. Many expressions, for instance \fBa + b\fR, pass their input to two distinct subexpressions (here \fBa\fR and \fBb\fR are both passed the same input), so variables aren\'t usually necessary in order to use a value twice\.
 .
 .P

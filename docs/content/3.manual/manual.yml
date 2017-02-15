@@ -255,12 +255,12 @@ sections:
 
   - title: Basic filters
     entries:
-      - title: "`.`"
+      - title: "Identity: `.`"
         body: |
 
-          The absolute simplest (and least interesting) filter
-          is `.`. This is a filter that takes its input and
-          produces it unchanged as output.
+          The absolute simplest filter is `.` .  This is a filter that
+          takes its input and produces it unchanged as output.  That is,
+          this is the identity operator.
 
           Since jq by default pretty-prints all output, this trivial
           program can be a useful way of formatting JSON output from,
@@ -271,17 +271,24 @@ sections:
             input: '"Hello, world!"'
             output: ['"Hello, world!"']
 
-      - title: "`.foo`, `.foo.bar`"
+      - title: "Object Identifier-Index: `.foo`, `.foo.bar`"
         body: |
 
           The simplest *useful* filter is `.foo`. When given a
           JSON object (aka dictionary or hash) as input, it produces
           the value at the key "foo", or null if there's none present.
 
-          If the key contains special characters, you need to surround
-          it with double quotes like this: `."foo$"`.
-
           A filter of the form `.foo.bar` is equivalent to `.foo|.bar`.
+
+          This syntax only works for simple, identifier-like keys, that
+          is, keys that are all made of alphanumeric characters and
+          underscore, and which do not start with a digit.
+
+          If the key contains special characters, you need to surround
+          it with double quotes like this: `."foo$"`, or else `.["foo$"]`.
+
+          For example `.["foo::bar"]` and `.["foo.bar"]` work while
+          `.foo::bar` does not, and `.foo.bar` means `.["foo"].["bar"]`.
 
         examples:
           - program: '.foo'
@@ -294,7 +301,7 @@ sections:
             input: '{"foo": 42}'
             output: [42]
 
-      - title: "`.foo?`"
+      - title: "Optional Object Identifier-Index: `.foo?`"
         body: |
 
           Just like `.foo`, but does not output even an error when `.`
@@ -314,37 +321,22 @@ sections:
             input: '[1,2]'
             output: ['[]']
 
-      - title: "`.[<string>]`, `.[2]`, `.[10:15]`"
+      - title: "Generic Object Index: `.[<string>]`"
         body: |
 
           You can also look up fields of an object using syntax like
-          `.["foo"]` (.foo above is a shorthand version of this). This
-          one works for arrays as well, if the key is an
-          integer. Arrays are zero-based (like javascript), so `.[2]`
-          returns the third element of the array.
+          `.["foo"]` (.foo above is a shorthand version of this, but
+          only for identifier-like strings).
 
-          The `.[10:15]` syntax can be used to return a subarray of an
-          array or substring of a string. The array returned by
-          `.[10:15]` will be of length 5, containing the elements from
-          index 10 (inclusive) to index 15 (exclusive). Either index may
-          be negative (in which case it counts backwards from the end of
-          the array), or omitted (in which case it refers to the start
-          or end of the array).
+      - title: "Array Index: `.[2]`"
+        body: |
 
-          The `.[2]` syntax can be used to return the element at the
-          given index.  Negative indices are allowed, with -1 referring
-          to the last element, -2 referring to the next to last element,
-          and so on.
+          When the index value is an integer, `.[<value>]` can index
+          arrays.  Arrays are zero-based, so `.[2]` returns the third
+          element.
 
-          The `.foo` syntax only works for simply keys i.e. keys that
-          are all alphanumeric characters. `.[<string>]` works with
-          keys that contain special characters such as colons and dots.
-          For example `.["foo::bar"]` and `.["foo.bar"]` work while
-          `.foo::bar` and `.foo.bar` would not.
-
-          The `?` "operator" can also be used with the slice operator,
-          as in `.[10:15]?`, which outputs values where the inputs are
-          slice-able.
+          Negative indices are allowed, with -1 referring to the last
+          element, -2 referring to the next to last element, and so on.
 
         examples:
           - program: '.[0]'
@@ -355,6 +347,22 @@ sections:
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output: ['null']
 
+          - program: '.[-2]'
+            input: '[1,2,3]'
+            output: ['2']
+
+      - title: "Array/String Slice: `.[10:15]`"
+        body: |
+
+          The `.[10:15]` syntax can be used to return a subarray of an
+          array or substring of a string. The array returned by
+          `.[10:15]` will be of length 5, containing the elements from
+          index 10 (inclusive) to index 15 (exclusive). Either index may
+          be negative (in which case it counts backwards from the end of
+          the array), or omitted (in which case it refers to the start
+          or end of the array).
+
+        examples:
           - program: '.[2:4]'
             input: '["a","b","c","d","e"]'
             output: ['["c", "d"]']
@@ -371,11 +379,7 @@ sections:
             input: '["a","b","c","d","e"]'
             output: ['["d", "e"]']
 
-          - program: '.[-2]'
-            input: '[1,2,3]'
-            output: ['2']
-
-      - title: "`.[]`"
+      - title: "Array/Object Value Iterator: `.[]`"
         body: |
 
           If you use the `.[index]` syntax, but omit the index
@@ -408,15 +412,16 @@ sections:
           Like `.[]`, but no errors will be output if . is not an array
           or object.
 
-      - title: "`,`"
+      - title: "Comma: `,`"
         body: |
 
           If two filters are separated by a comma, then the
-          input will be fed into both and there will be multiple
-          outputs: first, all of the outputs produced by the left
-          expression, and then all of the outputs produced by the
-          right. For instance, filter `.foo, .bar`, produces
-          both the "foo" fields and "bar" fields as separate outputs.
+          same input will be fed into both and the two filters' output
+          value streams will be concatenated in order: first, all of the
+          outputs produced by the left expression, and then all of the
+          outputs produced by the right. For instance, filter `.foo,
+          .bar`, produces both the "foo" fields and "bar" fields as
+          separate outputs.
 
         examples:
           - program: '.foo, .bar'
@@ -431,7 +436,7 @@ sections:
             input: '["a","b","c","d","e"]'
             output: ['"e"', '"c"']
 
-      - title: "`|`"
+      - title: "Pipe: `|`"
         body: |
 
           The | operator combines two filters by feeding the output(s) of
@@ -481,7 +486,7 @@ sections:
       instead.
 
     entries:
-      - title: Array construction - `[]`
+      - title: "Array construction: `[]`"
         body: |
 
           As in JSON, `[]` is used to construct arrays, as in
@@ -506,30 +511,33 @@ sections:
           - program: "[.user, .projects[]]"
             input: '{"user":"stedolan", "projects": ["jq", "wikiflow"]}'
             output: ['["stedolan", "jq", "wikiflow"]']
-      - title: Objects - `{}`
+      - title: "Object Construction: `{}`"
         body: |
 
           Like JSON, `{}` is for constructing objects (aka
           dictionaries or hashes), as in: `{"a": 42, "b": 17}`.
 
-          If the keys are "sensible" (all alphabetic characters), then
-          the quotes can be left off. The value can be any expression
-          (although you may need to wrap it in parentheses if it's a
-          complicated one), which gets applied to the {} expression's
-          input (remember, all filters have an input and an
-          output).
+          If the keys are "identifier-like", then the quotes can be left
+          off, as in `{a:42, b:17}.  Keys generated by expressions need
+          to be parenthesized, e.g., `{("a"+"b"):59}`.
+
+          The value can be any expression (although you may need to
+          wrap it in parentheses if it's a complicated one), which gets
+          applied to the {} expression's input (remember, all filters
+          have an input and an output).
 
               {foo: .bar}
 
           will produce the JSON object `{"foo": 42}` if given the JSON
-          object `{"bar":42, "baz":43}`. You can use this to select
-          particular fields of an object: if the input is an object
-          with "user", "title", "id", and "content" fields and you
-          just want "user" and "title", you can write
+          object `{"bar":42, "baz":43}` as its input. You can use this
+          to select particular fields of an object: if the input is an
+          object with "user", "title", "id", and "content" fields and
+          you just want "user" and "title", you can write
 
               {user: .user, title: .title}
 
-          Because that's so common, there's a shortcut syntax: `{user, title}`.
+          Because that is so common, there's a shortcut syntax for it:
+          `{user, title}`.
 
           If one of the expressions produces multiple results,
           multiple dictionaries will be produced. If the input's
@@ -564,6 +572,24 @@ sections:
             input: '{"user":"stedolan","titles":["JQ Primer", "More JQ"]}'
             output: ['{"stedolan": ["JQ Primer", "More JQ"]}']
 
+      - title: "Recursive Descent: `..`"
+        body: |
+
+          Recursively descends `.`, producing every value.  This is the
+          same as the zero-argument `recurse` builtin (see below).  This
+          is intended to resemble the XPath `//` operator.  Note that
+          `..a` does not work; use `..|.a` instead.  In the example
+          below we use `..|.a?` to find all the values of object keys
+          "a" in any object found "below" `.`.
+
+          This is particularly useful in conjunction with `path(EXP)`
+          (also see below) and the `?` operator.
+
+        examples:
+          - program: '..|.a?'
+            input: '[[{"a":1}]]'
+            output: ['1']
+
   - title: Builtin operators and functions
     body: |
 
@@ -574,7 +600,7 @@ sections:
       no result.
 
     entries:
-      - title: Addition - `+`
+      - title: "Addition: `+`"
         body: |
 
           The operator `+` takes two filters, applies them both
@@ -613,7 +639,7 @@ sections:
             input: 'null'
             output: ['{"a": 42, "b": 2, "c": 3}']
 
-      - title: Subtraction - `-`
+      - title: "Subtraction: `-`"
         body: |
 
           As well as normal arithmetic subtraction on numbers, the `-`
@@ -628,7 +654,7 @@ sections:
             input: '["xml", "yaml", "json"]'
             output: ['["json"]']
 
-      - title: Multiplication, division, modulo - `*`, `/`, and `%`
+      - title: "Multiplication, division, modulo: `*`, `/`, and `%`"
         body: |
 
           These infix operators behave as expected when given two numbers.
@@ -1627,21 +1653,6 @@ sections:
             output:
               - '[{"a":{"b":2}}]'
 
-
-      - title: "`..`"
-        body: |
-
-          Short-hand for `recurse` without arguments.  This is intended
-          to resemble the XPath `//` operator.  Note that `..a` does not
-          work; use `..|a` instead.  In the example below we use
-          `..|.a?` to find all the values of object keys "a" in any
-          object found "below" `.`.
-
-        examples:
-          - program: '..|.a?'
-            input: '[[{"a":1}]]'
-            output: ['1']
-
       - title: "`env`"
         body: |
 
@@ -2033,7 +2044,7 @@ sections:
             input: 'null'
             output: ['[false, true]']
 
-      - title: Alternative operator - `//`
+      - title: "Alternative operator: `//`"
         body: |
 
           A filter of the form `a // b` produces the same
@@ -2110,7 +2121,7 @@ sections:
 
           because no label `$out` is visible.
 
-      - title: "`?` operator"
+      - title: "Error Suppresion / Optional Operator: `?`"
         body: |
 
           The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
@@ -2333,7 +2344,7 @@ sections:
       Finally, there is a module/library system.
 
     entries:
-      - title: Variables
+      - title: "Variable / Symbolic Binding Operator: `... as $identifier | ...`"
         body: |
 
           In jq, all filters have an input and an output, so manual
