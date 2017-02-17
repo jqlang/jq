@@ -451,6 +451,15 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case PUSHK_UNDER: {
+      jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
+      assert(jv_is_valid(v));
+      jv v2 = stack_pop(jq);
+      stack_push(jq, v);
+      stack_push(jq, v2);
+      break;
+    }
+
     case POP: {
       jv_free(stack_pop(jq));
       break;
@@ -548,6 +557,8 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case STOREVN:
+        stack_save(jq, pc - 1, stack_get_pos(jq));
     case STOREV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
@@ -560,6 +571,16 @@ jv jq_next(jq_state *jq) {
       }
       jv_free(*var);
       *var = val;
+      break;
+    }
+
+    case ON_BACKTRACK(STOREVN): {
+      uint16_t level = *pc++;
+      uint16_t v = *pc++;
+      jv* var = frame_local_var(jq, v, level);
+      jv_free(*var);
+      *var = jv_null();
+      goto do_backtrack;
       break;
     }
 

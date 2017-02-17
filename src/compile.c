@@ -159,8 +159,15 @@ block gen_const_global(jv constant, const char *name) {
   return inst_block(i);
 }
 
+block gen_op_pushk_under(jv constant) {
+  assert(opcode_describe(PUSHK_UNDER)->flags & OP_HAS_CONSTANT);
+  inst* i = inst_new(PUSHK_UNDER);
+  i->imm.constant = constant;
+  return inst_block(i);
+}
+
 int block_is_const(block b) {
-  return (block_is_single(b) && b.first->op == LOADK);
+  return (block_is_single(b) && (b.first->op == LOADK || b.first->op == PUSHK_UNDER));
 }
 
 int block_is_const_inf(block b) {
@@ -218,6 +225,10 @@ block gen_op_bound(opcode op, block binder) {
   block b = gen_op_unbound(op, binder.first->symbol);
   b.first->bound_by = binder.first;
   return b;
+}
+
+block gen_dictpair(block k, block v) {
+  return BLOCK(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
 }
 
 
@@ -563,9 +574,15 @@ block gen_call(const char* name, block args) {
   return b;
 }
 
-
-
 block gen_subexp(block a) {
+  if (block_is_noop(a)) {
+    return gen_op_simple(DUP);
+  }
+  if (block_is_single(a) && a.first->op == LOADK) {
+    jv c = block_const(a);
+    block_free(a);
+    return gen_op_pushk_under(c);
+  }
   return BLOCK(gen_op_simple(SUBEXP_BEGIN), a, gen_op_simple(SUBEXP_END));
 }
 
@@ -583,17 +600,24 @@ block gen_const_object(block expr) {
   jv k = jv_null();
   jv v = jv_null();
   for (inst *i = expr.first; i; i = i->next) {
-    if (i->op != SUBEXP_BEGIN ||
+    if (i->op == PUSHK_UNDER) {
+      k = jv_copy(i->imm.constant);
+      i = i->next;
+    } else if (i->op != SUBEXP_BEGIN ||
         i->next == NULL ||
         i->next->op != LOADK ||
         i->next->next == NULL ||
         i->next->next->op != SUBEXP_END) {
       is_const = 0;
       break;
+    } else {
+      k = jv_copy(i->next->imm.constant);
+      i = i->next->next->next;
     }
-    k = jv_copy(i->next->imm.constant);
-    i = i->next->next->next;
-    if (i == NULL ||
+    if (i != NULL && i->op == PUSHK_UNDER) {
+      v = jv_copy(i->imm.constant);
+      i = i->next;
+    } else if (i == NULL ||
         i->op != SUBEXP_BEGIN ||
         i->next == NULL ||
         i->next->op != LOADK ||
@@ -601,9 +625,10 @@ block gen_const_object(block expr) {
         i->next->next->op != SUBEXP_END) {
       is_const = 0;
       break;
+    } else {
+      v = jv_copy(i->next->imm.constant);
+      i = i->next->next->next;
     }
-    v = jv_copy(i->next->imm.constant);
-    i = i->next->next->next;
     if (i == NULL || i->op != INSERT) {
       is_const = 0;
       break;
@@ -709,10 +734,91 @@ static block bind_matcher(block matcher, block body) {
   // block_has_only_binders(matcher), which is not true here as matchers
   // may also contain code to extract the correct elements
   for (inst* i = matcher.first; i; i = i->next) {
-    if (i->op == STOREV && !i->bound_by)
+    if ((i->op == STOREV || i->op == STOREVN) && !i->bound_by)
       block_bind_subblock(inst_block(i), body, OP_HAS_VARIABLE, 0);
   }
   return BLOCK(matcher, body);
+}
+
+
+// Extract destructuring var names from the block
+// *vars should be a jv_object (for set semantics)
+static void block_get_unbound_vars(block b, jv *vars) {
+  assert(vars != NULL);
+  assert(jv_get_kind(*vars) == JV_KIND_OBJECT);
+  for (inst* i = b.first; i; i = i->next) {
+    if (i->subfn.first) {
+      block_get_unbound_vars(i->subfn, vars);
+      continue;
+    }
+    if ((i->op == STOREV || i->op == STOREVN) && i->bound_by == NULL) {
+      *vars = jv_object_set(*vars, jv_string(i->symbol), jv_true());
+    }
+  }
+}
+
+/* Build wrappers around destructuring matchers so that we can chain them
+ * when we have errors.  The approach is as follows:
+ * FORK_OPT NEXT_MATCHER (unless last matcher)
+ * existing_matcher_block
+ * JUMP BODY
+ */
+static block bind_alternation_matchers(block matchers, block body) {
+  block preamble = {0};
+  block altmatchers = {0};
+  block mb = {0};
+
+  // Pass through the matchers to find all destructured names.
+  while (matchers.first && matchers.first->op == DESTRUCTURE_ALT) {
+    block_append(&altmatchers, inst_block(block_take(&matchers)));
+  }
+
+  // We don't have any alternations here, so we can use the simplest case.
+  if (altmatchers.first == NULL) {
+    return bind_matcher(matchers, body);
+  }
+
+  // The final matcher needs to strip the error from the previous FORK_OPT
+  block final_matcher = BLOCK(gen_op_simple(POP), gen_op_simple(DUP), matchers);
+
+  // Collect var names
+  jv all_vars = jv_object();
+  block_get_unbound_vars(altmatchers, &all_vars);
+  block_get_unbound_vars(final_matcher, &all_vars);
+
+  // We need a preamble of STOREVs to which to bind the matchers and the body.
+  jv_object_keys_foreach(all_vars, key) {
+    preamble = BLOCK(preamble,
+                     gen_op_simple(DUP),
+                     gen_const(jv_null()),
+                     gen_op_unbound(STOREV, jv_string_value(key)));
+    jv_free(key);
+  }
+  jv_free(all_vars);
+
+  // Now we build each matcher in turn
+  for (inst *i = altmatchers.first; i; i = i->next) {
+    block submatcher = i->subfn;
+
+    // Get rid of the error from the previous matcher
+    if (mb.first != NULL) {
+      submatcher = BLOCK(gen_op_simple(POP), gen_op_simple(DUP), submatcher);
+    }
+
+    // If we're successful, jump to the end of the matchers
+    submatcher = BLOCK(submatcher, gen_op_target(JUMP, final_matcher));
+
+    // FORK_OPT to the end of this submatcher so we can skip to the next one on error
+    mb = BLOCK(mb, gen_op_target(FORK_OPT, submatcher), submatcher);
+
+    // We're done with this inst and we don't want it anymore
+    // But we can't let it free the submatcher block.
+    i->subfn.first = i->subfn.last = NULL;
+  }
+  // We're done with these insts now.
+  block_free(altmatchers);
+
+  return bind_matcher(preamble, BLOCK(mb, final_matcher, body));
 }
 
 block gen_reduce(block source, block matcher, block init, block body) {
@@ -721,7 +827,7 @@ block gen_reduce(block source, block matcher, block init, block body) {
   block jmp = gen_op_target(JUMP, body);
   block loop = BLOCK(gen_op_simple(DUPN),
                      source,
-                     bind_matcher(matcher,
+                     bind_alternation_matchers(matcher,
                                   BLOCK(gen_op_bound(LOADVN, res_var),
                                         /*
                                          * We fork to the body, jump to
@@ -755,7 +861,7 @@ block gen_foreach(block source, block matcher, block init, block update, block e
                      source,
                      // destructure the value into variable(s) for all the code
                      // in the body to see
-                     bind_matcher(matcher,
+                     bind_alternation_matchers(matcher,
                                   // load the loop state variable
                                   BLOCK(gen_op_bound(LOADVN, state_var),
                                         // generate updated state
@@ -861,6 +967,17 @@ block gen_or(block a, block b) {
                                                    gen_const(jv_false())))));
 }
 
+block gen_destructure_alt(block matcher) {
+  for (inst *i = matcher.first; i; i = i->next) {
+    if (i->op == STOREV) {
+      i->op = STOREVN;
+    }
+  }
+  inst* i = inst_new(DESTRUCTURE_ALT);
+  i->subfn = matcher;
+  return inst_block(i);
+}
+
 block gen_var_binding(block var, const char* name, block body) {
   return gen_destructure(var, gen_op_unbound(STOREV, name), body);
 }
@@ -873,9 +990,16 @@ block gen_array_matcher(block left, block curr) {
     // `left` was returned by this function, so the third inst is the
     // constant containing the previously used index
     assert(left.first->op == DUP);
-    assert(left.first->next->op == SUBEXP_BEGIN);
-    assert(left.first->next->next->op == LOADK);
-    index = 1 + (int) jv_number_value(left.first->next->next->imm.constant);
+    assert(left.first->next != NULL);
+    inst *i = NULL;
+    if (left.first->next->op == PUSHK_UNDER) {
+      i = left.first->next;
+    } else {
+      assert(left.first->next->op == SUBEXP_BEGIN);
+      assert(left.first->next->next->op == LOADK);
+      i = left.first->next->next;
+    }
+    index = 1 + (int) jv_number_value(i->imm.constant);
   }
 
   // `left` goes at the end so that the const index is in a predictable place
@@ -888,13 +1012,18 @@ block gen_object_matcher(block name, block curr) {
                curr);
 }
 
-block gen_destructure(block var, block matcher, block body) {
+block gen_destructure(block var, block matchers, block body) {
   // var bindings can be added after coding the program; leave the TOP first.
   block top = gen_noop();
   if (body.first && body.first->op == TOP)
     top = inst_block(block_take(&body));
 
-  return BLOCK(top, gen_op_simple(DUP), gen_subexp(var), gen_op_simple(POP), bind_matcher(matcher, body));
+  if (matchers.first && matchers.first->op == DESTRUCTURE_ALT && !block_is_noop(var)) {
+    block_append(&var, gen_op_simple(DUP));
+    block_append(&matchers, gen_op_simple(POP));
+  }
+
+  return BLOCK(top, gen_op_simple(DUP), gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
 }
 
 // Like gen_var_binding(), but bind `break`'s wildcard unbound variable
