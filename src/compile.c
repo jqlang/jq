@@ -862,7 +862,12 @@ static block bind_alternation_matchers(block matchers, block body) {
 block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
   block update_var = gen_op_bound(STOREV, res_var);
-  block jmp = gen_op_target(JUMP, body);
+  block jmp = gen_op_targetlater(JUMP);
+  if (body.last == NULL) {
+    inst_set_target(jmp, jmp);
+  } else {
+    inst_set_target(jmp, body);
+  }
   block loop = BLOCK(gen_op_simple(DUPN),
                      source,
                      bind_alternation_matchers(matcher,

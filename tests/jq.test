@@ -701,6 +701,11 @@ reduce range(5) as $n ([]; select($n%2 == 1) | . + [$n])
 null
 [1,3]
 
+# This, while useless, should still compile.
+reduce . as $n (.; .)
+null
+null
+
 . as $dot|any($dot[];not)
 [1,2,3,4,true,false,1,2,3,4,5]
 true
