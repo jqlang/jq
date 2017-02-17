@@ -417,6 +417,15 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case PUSH_UNDER: {
+      jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
+      assert(jv_is_valid(v));
+      jv v2 = stack_pop(jq);
+      stack_push(jq, v);
+      stack_push(jq, v2);
+      break;
+    }
+
     case POP: {
       jv_free(stack_pop(jq));
       break;

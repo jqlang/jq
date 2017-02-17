@@ -83,6 +83,7 @@ struct lexer_param;
 %token SETDEFINEDOR "//="
 %token LESSEQ "<="
 %token GREATEREQ ">="
+%token ALTERNATION "?//"
 
 %token QQSTRING_START
 %token <literal> QQSTRING_TEXT
@@ -118,7 +119,7 @@ struct lexer_param;
 %type <blk> FuncDef FuncDefs
 %type <blk> Module Import Imports ImportWhat ImportFrom
 %type <blk> Param Params Arg Args
-%type <blk> Pattern ArrayPats ObjPats ObjPat
+%type <blk> Patterns RepPatterns Pattern ArrayPats ObjPats ObjPat
 %type <literal> Keyword
 %{
 #include "lexer.h"
@@ -174,10 +175,6 @@ static jv check_object_key(block k) {
         jv_dump_string_trunc(jv_copy(block_const(k)), errbuf, sizeof(errbuf)));
   }
   return jv_invalid();
-}
-
-static block gen_dictpair(block k, block v) {
-  return BLOCK(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
 }
 
 static block gen_index(block obj, block key) {
@@ -342,19 +339,18 @@ FuncDef Exp %prec FUNCDEF {
   $$ = block_bind_referenced($1, $2, OP_IS_CALL_PSEUDO);
 } |
 
-Term "as" Pattern '|' Exp {
+Term "as" Patterns '|' Exp {
   $$ = gen_destructure($1, $3, $5);
 } |
-
-"reduce" Term "as" Pattern '(' Exp ';' Exp ')' {
+"reduce" Term "as" Patterns '(' Exp ';' Exp ')' {
   $$ = gen_reduce($2, $4, $6, $8);
 } |
 
-"foreach" Term "as" Pattern '(' Exp ';' Exp ';' Exp ')' {
+"foreach" Term "as" Patterns '(' Exp ';' Exp ';' Exp ')' {
   $$ = gen_foreach($2, $4, $6, $8, $10);
 } |
 
-"foreach" Term "as" Pattern '(' Exp ';' Exp ')' {
+"foreach" Term "as" Patterns '(' Exp ';' Exp ')' {
   $$ = gen_foreach($2, $4, $6, $8, gen_noop());
 } |
 
@@ -776,6 +772,22 @@ Args ';' Arg {
 Arg:
 Exp {
   $$ = gen_lambda($1);
+}
+
+RepPatterns:
+RepPatterns "?//" Pattern {
+  $$ = BLOCK($1, gen_destructure_alt($3));
+} |
+Pattern {
+  $$ = gen_destructure_alt($1);
+}
+
+Patterns:
+RepPatterns "?//" Pattern {
+  $$ = BLOCK($1, $3);
+} |
+Pattern {
+  $$ = $1;
 }
 
 Pattern:
