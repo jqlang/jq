@@ -145,6 +145,15 @@ jv jv_object_iter_value(jv, int);
            : 0;                                                         \
          jv_i__ = jv_object_iter_next(t, jv_i__))                       \
 
+#define jv_object_keys_foreach(t, k)                                 \
+  for (int jv_i__ = jv_object_iter(t), jv_j__ = 1; jv_j__; jv_j__ = 0)  \
+    for (jv k;                                                          \
+         jv_object_iter_valid((t), jv_i__) ?                            \
+           (k = jv_object_iter_key(t, jv_i__),                          \
+            1)                                                          \
+           : 0;                                                         \
+         jv_i__ = jv_object_iter_next(t, jv_i__))
+
 #define JV_OBJECT_1(k1) (jv_object_set(jv_object(),(k1),jv_null()))
 #define JV_OBJECT_2(k1,v1) (jv_object_set(jv_object(),(k1),(v1)))
 #define JV_OBJECT_3(k1,v1,k2) (jv_object_set(JV_OBJECT_2((k1),(v1)),(k2),jv_null()))
