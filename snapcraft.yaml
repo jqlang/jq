@@ -1,0 +1,21 @@
+name: jq-cprov
+version: 1.5
+summary: jq is a lightweight and flexible command-line JSON processor.
+description: |
+  jq is like sed for JSON data - you can use it to slice and filter and map
+  and transform structured data with the same ease that sed, awk, grep and
+  friends let you play with text.
+confinement: strict
+
+apps:
+  jq:
+    command: jq
+
+parts:
+  jq:
+    plugin: autotools
+    source: .
+    configflags:
+      - --disable-maintainer-mode
+    snap:
+      - -install
