@@ -452,6 +452,10 @@ int main(int argc, char* argv[]) {
         options |= DUMP_DISASM;
         continue;
       }
+      if (isoption(argv[i],  0,  "debug-trace=all", &short_opts)) {
+        jq_flags |= JQ_DEBUG_TRACE_ALL;
+        if (!short_opts) continue;
+      }
       if (isoption(argv[i],  0,  "debug-trace", &short_opts)) {
         jq_flags |= JQ_DEBUG_TRACE;
         continue;
