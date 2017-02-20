@@ -365,10 +365,9 @@ jv jq_next(jq_state *jq) {
       if (!backtracking) {
         int stack_in = opdesc->stack_in;
         if (stack_in == -1) stack_in = pc[1];
+        param = jq->stk_top;
         for (int i=0; i<stack_in; i++) {
-          if (i == 0) {
-            param = jq->stk_top;
-          } else {
+          if (i != 0) {
             printf(" | ");
             param = *stack_block_next(&jq->stk, param);
           }
@@ -377,6 +376,12 @@ jv jq_next(jq_state *jq) {
           //printf("<%d>", jv_get_refcnt(param->val));
           //printf(" -- ");
           //jv_dump(jv_copy(jq->path), 0);
+        }
+        if (jq->debug_trace_enabled & JQ_DEBUG_TRACE_DETAIL) {
+          while ((param = *stack_block_next(&jq->stk, param))) {
+            printf(" || ");
+            jv_dump(jv_copy(*(jv*)stack_block(&jq->stk, param)), JV_PRINT_REFCOUNT);
+          }
         }
       } else {
         printf("\t<backtracking>");
@@ -1033,11 +1038,7 @@ void jq_start(jq_state *jq, jv input, int flags) {
 
   stack_push(jq, input);
   stack_save(jq, jq->bc->code, stack_get_pos(jq));
-  if (flags & JQ_DEBUG_TRACE) {
-    jq->debug_trace_enabled = 1;
-  } else {
-    jq->debug_trace_enabled = 0;
-  }
+  jq->debug_trace_enabled = flags & JQ_DEBUG_TRACE_ALL;
   jq->initial_execution = 1;
 }
 

@@ -4,7 +4,11 @@
 #include <stdio.h>
 #include "jv.h"
 
-enum {JQ_DEBUG_TRACE = 1};
+enum {
+  JQ_DEBUG_TRACE = 1,
+  JQ_DEBUG_TRACE_DETAIL = 2,
+  JQ_DEBUG_TRACE_ALL = JQ_DEBUG_TRACE | JQ_DEBUG_TRACE_DETAIL,
+};
 
 typedef struct jq_state jq_state;
 typedef void (*jq_msg_cb)(void *, jv);
