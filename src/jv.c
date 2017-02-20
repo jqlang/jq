@@ -1106,6 +1106,16 @@ jv jv_object_get(jv object, jv key) {
   return val;
 }
 
+int jv_object_has(jv object, jv key) {
+  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  assert(jv_get_kind(key) == JV_KIND_STRING);
+  jv* slot = jvp_object_read(object, key);
+  int res = slot ? 1 : 0;
+  jv_free(object);
+  jv_free(key);
+  return res;
+}
+
 jv jv_object_set(jv object, jv key, jv value) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(jv_get_kind(key) == JV_KIND_STRING);
