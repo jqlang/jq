@@ -1068,7 +1068,7 @@ static struct bytecode *optimize(struct bytecode *bc) {
 
 int jq_compile_args(jq_state *jq, const char* str, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
-  assert(jv_get_kind(args) == JV_KIND_ARRAY);
+  assert(jv_get_kind(args) == JV_KIND_ARRAY || jv_get_kind(args) == JV_KIND_OBJECT);
   struct locfile* locations;
   locations = locfile_init(jq, "<top-level>", str, strlen(str));
   block program;
@@ -1079,11 +1079,31 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   }
   int nerrors = load_program(jq, locations, &program);
   if (nerrors == 0) {
-    jv_array_foreach(args, i, arg) {
-      jv name = jv_object_get(jv_copy(arg), jv_string("name"));
-      jv value = jv_object_get(arg, jv_string("value"));
-      program = gen_var_binding(gen_const(value), jv_string_value(name), program);
-      jv_free(name);
+    /*
+     * jq_compile_args() is a public function.  It should always have
+     * been the case that args was an object, but originally it was an
+     * array.
+     *
+     * We have to do an O(N) binding operation for each argument given.
+     *
+     * The best way to address this might be to have a bind function
+     * that takes an object instead of a const block and a varname.
+     *
+     * However, with `--args` this can be avoided, as one can have a
+     * single such binding then: $ARGS.
+     */
+    if (jv_get_kind(args) == JV_KIND_ARRAY) {
+      jv_array_foreach(args, i, arg) {
+        jv name = jv_object_get(jv_copy(arg), jv_string("name"));
+        jv value = jv_object_get(arg, jv_string("value"));
+        program = gen_var_binding(gen_const(value), jv_string_value(name), program);
+        jv_free(name);
+      }
+    } else if (jv_get_kind(args) == JV_KIND_OBJECT) {
+      jv_object_foreach(args, name, value) {
+        program = gen_var_binding(gen_const(value), jv_string_value(name), program);
+        jv_free(name);
+      }
     }
 
     nerrors = builtins_bind(jq, &program);
