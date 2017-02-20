@@ -29,6 +29,7 @@ block gen_op_target(opcode op, block target);
 block gen_op_unbound(opcode op, const char* name);
 block gen_op_bound(opcode op, block binder);
 block gen_op_var_fresh(opcode op, const char* name);
+block gen_op_pushk_under(jv constant);
 
 block gen_module(block metadata);
 jv block_module_meta(block b);

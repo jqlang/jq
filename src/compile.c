@@ -158,15 +158,15 @@ block gen_const_global(jv constant, const char *name) {
   return inst_block(i);
 }
 
-block gen_op_push_under(jv constant) {
-  assert(opcode_describe(PUSH_UNDER)->flags & OP_HAS_CONSTANT);
-  inst* i = inst_new(PUSH_UNDER);
+block gen_op_pushk_under(jv constant) {
+  assert(opcode_describe(PUSHK_UNDER)->flags & OP_HAS_CONSTANT);
+  inst* i = inst_new(PUSHK_UNDER);
   i->imm.constant = constant;
   return inst_block(i);
 }
 
 int block_is_const(block b) {
-  return (block_is_single(b) && (b.first->op == LOADK || b.first->op == PUSH_UNDER));
+  return (block_is_single(b) && (b.first->op == LOADK || b.first->op == PUSHK_UNDER));
 }
 
 int block_is_const_inf(block b) {
@@ -573,13 +573,14 @@ block gen_call(const char* name, block args) {
   return b;
 }
 
-
-
 block gen_subexp(block a) {
-  if (block_is_const(a)) {
+  if (block_is_noop(a)) {
+    return gen_op_simple(DUP);
+  }
+  if (block_is_single(a) && a.first->op == LOADK) {
     jv c = block_const(a);
     block_free(a);
-    return gen_op_push_under(c);
+    return gen_op_pushk_under(c);
   }
   return BLOCK(gen_op_simple(SUBEXP_BEGIN), a, gen_op_simple(SUBEXP_END));
 }
@@ -598,7 +599,7 @@ block gen_const_object(block expr) {
   jv k = jv_null();
   jv v = jv_null();
   for (inst *i = expr.first; i; i = i->next) {
-    if (i->op == PUSH_UNDER) {
+    if (i->op == PUSHK_UNDER) {
       k = jv_copy(i->imm.constant);
       i = i->next;
     } else if (i->op != SUBEXP_BEGIN ||
@@ -612,7 +613,7 @@ block gen_const_object(block expr) {
       k = jv_copy(i->next->imm.constant);
       i = i->next->next->next;
     }
-    if (i != NULL && i->op == PUSH_UNDER) {
+    if (i != NULL && i->op == PUSHK_UNDER) {
       v = jv_copy(i->imm.constant);
       i = i->next;
     } else if (i == NULL ||
@@ -732,131 +733,91 @@ static block bind_matcher(block matcher, block body) {
   // block_has_only_binders(matcher), which is not true here as matchers
   // may also contain code to extract the correct elements
   for (inst* i = matcher.first; i; i = i->next) {
-    if (i->op == STOREV && !i->bound_by)
+    if ((i->op == STOREV || i->op == STOREVN) && !i->bound_by)
       block_bind_subblock(inst_block(i), body, OP_HAS_VARIABLE, 0);
   }
   return BLOCK(matcher, body);
 }
 
-/* Build a wrapper around a destructuring matcher so that we can chain them
- * when we have errors.  The approach is as follows:
- * FORK_OPT NEXT_MATCHER (unless last matcher)
- * existing_matcher_block
- * restructure matched variables into a new jv_object
- * JUMP END
- *
- * END will destructure the object returned from a wrapper into all of the
- * variables contained in the entire destructuring expression and is what the
- * program's body binds to.
- */
-static block alternation_wrapper(block submatcher, block *final_matcher, int is_first, int is_last, jv vars_list) {
-    // We need to generate an output object of what succeeded here so we can
-    // bind everyone to those values.
-    block end = gen_subexp(gen_const(jv_object()));
-
-    // Manually restructure the values we extracted into a new object.
-    jv_array_foreach(vars_list, _, var) {
-      end = BLOCK(end, gen_dictpair(gen_const(var), gen_op_unbound(LOADV, jv_string_value(var))));
-    }
-    block_append(&end, gen_op_simple(POP));
-    submatcher = bind_matcher(submatcher, end);
-
-    // If we're successful, jump to the end of the matchers
-    if (final_matcher) {
-      submatcher = BLOCK(submatcher, gen_op_target(JUMP, *final_matcher));
-    }
-
-    // Get rid of the error if we aren't the first matcher
-    if (!is_first) {
-      submatcher = BLOCK(gen_op_simple(POP), gen_op_simple(DUP), submatcher);
-    }
-
-    // If we aren't building the last submatcher, FORK_OPT to the end
-    // of this submatcher so we can skip to the next one on error
-    if (!is_last) {
-      submatcher = BLOCK(gen_op_target(FORK_OPT, submatcher), submatcher);
-    }
-    return submatcher;
-}
 
 // Extract destructuring var names from the block
-// *all_vars should be a jv_object (for set semantics)
-// *matcher_vars should be a jv_array
-static void alternation_vars(block b, jv *all_vars, jv *matcher_vars) {
-  assert(b.first != NULL);
+// *vars should be a jv_object (for set semantics)
+static void block_get_unbound_vars(block b, jv *vars) {
+  assert(vars != NULL);
+  assert(jv_get_kind(*vars) == JV_KIND_OBJECT);
   for (inst* i = b.first; i; i = i->next) {
-    if (i->op == STOREV) {
-      *matcher_vars = jv_array_append(*matcher_vars, jv_string(i->symbol));
-      *all_vars = jv_object_set(*all_vars, jv_string(i->symbol), jv_true());
+    if (i->subfn.first) {
+      block_get_unbound_vars(i->subfn, vars);
+      continue;
+    }
+    if ((i->op == STOREV || i->op == STOREVN) && i->bound_by == NULL) {
+      *vars = jv_object_set(*vars, jv_string(i->symbol), jv_true());
     }
   }
 }
 
+/* Build wrappers around destructuring matchers so that we can chain them
+ * when we have errors.  The approach is as follows:
+ * FORK_OPT NEXT_MATCHER (unless last matcher)
+ * existing_matcher_block
+ * JUMP BODY
+ */
 static block bind_alternation_matchers(block matchers, block body) {
+  block preamble = {0};
   block altmatchers = {0};
   block mb = {0};
 
   // Pass through the matchers to find all destructured names.
-  int num_matchers = 0;
   while (matchers.first && matchers.first->op == DESTRUCTURE_ALT) {
     block_append(&altmatchers, inst_block(block_take(&matchers)));
-    num_matchers++;
   }
 
   // We don't have any alternations here, so we can use the simplest case.
-  if (num_matchers == 0) {
+  if (altmatchers.first == NULL) {
     return bind_matcher(matchers, body);
   }
 
-  block final_matcher = matchers;
+  // The final matcher needs to strip the error from the previous FORK_OPT
+  block final_matcher = BLOCK(gen_op_simple(POP), gen_op_simple(DUP), matchers);
 
   // Collect var names
   jv all_vars = jv_object();
-  jv* vars_list = jv_mem_alloc((num_matchers+1) * sizeof(jv));
-  int idx = 0;
-  for (int i = 0; i < num_matchers+1; i++) {
-    vars_list[i] = jv_array();
-  }
-  for (inst *i = altmatchers.first; i; i = i->next, idx++) {
-    alternation_vars(i->subfn, &all_vars, &vars_list[idx++]);
-  }
-  alternation_vars(final_matcher, &all_vars, &vars_list[num_matchers]);
+  block_get_unbound_vars(altmatchers, &all_vars);
+  block_get_unbound_vars(final_matcher, &all_vars);
 
-
-  // Build the final matcher first, since we need to jump to the end of it
-  // everywhere else
-  final_matcher = alternation_wrapper(final_matcher, NULL, !altmatchers.first, 1, vars_list[num_matchers]);
+  // We need a preamble of STOREVs to which to bind the matchers and the body.
+  jv_object_keys_foreach(all_vars, key) {
+    preamble = BLOCK(preamble,
+                     gen_op_simple(DUP),
+                     gen_const(jv_null()),
+                     gen_op_unbound(STOREV, jv_string_value(key)));
+    jv_free(key);
+  }
+  jv_free(all_vars);
 
   // Now we build each matcher in turn
-  idx = 0;
   for (inst *i = altmatchers.first; i; i = i->next) {
-    block_append(&mb, alternation_wrapper(i->subfn, &final_matcher, mb.first != NULL, 0, vars_list[idx]));
+    block submatcher = i->subfn;
+
+    // Get rid of the error from the previous matcher
+    if (mb.first != NULL) {
+      submatcher = BLOCK(gen_op_simple(POP), gen_op_simple(DUP), submatcher);
+    }
+
+    // If we're successful, jump to the end of the matchers
+    submatcher = BLOCK(submatcher, gen_op_target(JUMP, final_matcher));
+
+    // FORK_OPT to the end of this submatcher so we can skip to the next one on error
+    mb = BLOCK(mb, gen_op_target(FORK_OPT, submatcher), submatcher);
 
     // We're done with this inst and we don't want it anymore
     // But we can't let it free the submatcher block.
     i->subfn.first = i->subfn.last = NULL;
-    idx++;
   }
   // We're done with these insts now.
   block_free(altmatchers);
 
-
-  // Destructure all of this back out into the full set of variables used in
-  // this alternation.  These variables are what the body binds to.
-  matchers.first = matchers.last = 0;
-  jv_object_foreach(all_vars, var, _) {
-    block_append(&matchers, gen_object_matcher(gen_const(var), gen_op_unbound(STOREV, jv_string_value(var))));
-  }
-  block_append(&matchers, gen_op_simple(POP));
-  mb = BLOCK(gen_op_simple(DUP), mb, final_matcher, bind_matcher(matchers, body));
-
-  // More cleanup
-  for (int i = 0; i < num_matchers+1; i++) {
-    jv_free(vars_list[i]);
-  }
-  jv_mem_free(vars_list);
-  jv_free(all_vars);
-  return mb;
+  return bind_matcher(preamble, BLOCK(mb, final_matcher, body));
 }
 
 block gen_reduce(block source, block matcher, block init, block body) {
@@ -1011,10 +972,16 @@ block gen_or(block a, block b) {
 }
 
 block gen_destructure_alt(block matcher) {
+  for (inst *i = matcher.first; i; i = i->next) {
+    if (i->op == STOREV) {
+      i->op = STOREVN;
+    }
+  }
   inst* i = inst_new(DESTRUCTURE_ALT);
   i->subfn = matcher;
   return inst_block(i);
 }
+
 block gen_var_binding(block var, const char* name, block body) {
   return gen_destructure(var, gen_op_unbound(STOREV, name), body);
 }
@@ -1029,7 +996,7 @@ block gen_array_matcher(block left, block curr) {
     assert(left.first->op == DUP);
     assert(left.first->next != NULL);
     inst *i = NULL;
-    if (left.first->next->op == PUSH_UNDER) {
+    if (left.first->next->op == PUSHK_UNDER) {
       i = left.first->next;
     } else {
       assert(left.first->next->op == SUBEXP_BEGIN);
@@ -1054,6 +1021,11 @@ block gen_destructure(block var, block matchers, block body) {
   block top = gen_noop();
   if (body.first && body.first->op == TOP)
     top = inst_block(block_take(&body));
+
+  if (matchers.first && matchers.first->op == DESTRUCTURE_ALT && !block_is_noop(var)) {
+    block_append(&var, gen_op_simple(DUP));
+    block_append(&matchers, gen_op_simple(POP));
+  }
 
   return BLOCK(top, gen_op_simple(DUP), gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
 }
