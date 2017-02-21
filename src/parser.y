@@ -822,6 +822,9 @@ ObjPat:
 '$' IDENT {
   $$ = gen_object_matcher(gen_const($2), gen_op_unbound(STOREV, jv_string_value($2)));
 } |
+'$' IDENT ':' Pattern {
+  $$ = gen_object_matcher(gen_const($2), BLOCK(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value($2)), $4));
+} |
 IDENT ':' Pattern {
   $$ = gen_object_matcher(gen_const($1), $3);
 } |
