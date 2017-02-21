@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.2.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -101,13 +101,14 @@ struct lexer_param;
     SETDEFINEDOR = 292,
     LESSEQ = 293,
     GREATEREQ = 294,
-    QQSTRING_START = 295,
-    QQSTRING_TEXT = 296,
-    QQSTRING_INTERP_START = 297,
-    QQSTRING_INTERP_END = 298,
-    QQSTRING_END = 299,
-    FUNCDEF = 300,
-    NONOPT = 301
+    ALTERNATION = 295,
+    QQSTRING_START = 296,
+    QQSTRING_TEXT = 297,
+    QQSTRING_INTERP_START = 298,
+    QQSTRING_INTERP_END = 299,
+    QQSTRING_END = 300,
+    FUNCDEF = 301,
+    NONOPT = 302
   };
 #endif
 /* Tokens.  */
@@ -148,17 +149,18 @@ struct lexer_param;
 #define SETDEFINEDOR 292
 #define LESSEQ 293
 #define GREATEREQ 294
-#define QQSTRING_START 295
-#define QQSTRING_TEXT 296
-#define QQSTRING_INTERP_START 297
-#define QQSTRING_INTERP_END 298
-#define QQSTRING_END 299
-#define FUNCDEF 300
-#define NONOPT 301
+#define ALTERNATION 295
+#define QQSTRING_START 296
+#define QQSTRING_TEXT 297
+#define QQSTRING_INTERP_START 298
+#define QQSTRING_INTERP_END 299
+#define QQSTRING_END 300
+#define FUNCDEF 301
+#define NONOPT 302
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE YYSTYPE;
+
 union YYSTYPE
 {
 #line 31 "src/parser.y" /* yacc.c:1909  */
@@ -166,8 +168,10 @@ union YYSTYPE
   jv literal;
   block blk;
 
-#line 170 "src/parser.h" /* yacc.c:1909  */
+#line 172 "src/parser.h" /* yacc.c:1909  */
 };
+
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
