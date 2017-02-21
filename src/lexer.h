@@ -2,9 +2,9 @@
 #define jq_yyHEADER_H 1
 #define jq_yyIN_HEADER 1
 
-#line 6 "lexer.h"
+#line 6 "src/lexer.h"
 
-#line 8 "lexer.h"
+#line 8 "src/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -12,8 +12,8 @@
 
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
-#define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 35
+#define YY_FLEX_MINOR_VERSION 6
+#define YY_FLEX_SUBMINOR_VERSION 0
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -214,7 +214,7 @@ void jq_yypop_buffer_state (yyscan_t yyscanner );
 
 YY_BUFFER_STATE jq_yy_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
 YY_BUFFER_STATE jq_yy_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE jq_yy_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
+YY_BUFFER_STATE jq_yy_scan_bytes (yyconst char *bytes,yy_size_t len ,yyscan_t yyscanner );
 
 void *jq_yyalloc (yy_size_t ,yyscan_t yyscanner );
 void *jq_yyrealloc (void *,yy_size_t ,yyscan_t yyscanner );
@@ -222,7 +222,7 @@ void jq_yyfree (void * ,yyscan_t yyscanner );
 
 /* Begin user sect3 */
 
-#define jq_yywrap(n) 1
+#define jq_yywrap(yyscanner) (/*CONSTCOND*/1)
 #define YY_SKIP_YYWRAP
 
 #define yytext_ptr yytext_r
@@ -266,19 +266,23 @@ void jq_yyset_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
 
 FILE *jq_yyget_in (yyscan_t yyscanner );
 
-void jq_yyset_in  (FILE * in_str ,yyscan_t yyscanner );
+void jq_yyset_in  (FILE * _in_str ,yyscan_t yyscanner );
 
 FILE *jq_yyget_out (yyscan_t yyscanner );
 
-void jq_yyset_out  (FILE * out_str ,yyscan_t yyscanner );
+void jq_yyset_out  (FILE * _out_str ,yyscan_t yyscanner );
 
-int jq_yyget_leng (yyscan_t yyscanner );
+yy_size_t jq_yyget_leng (yyscan_t yyscanner );
 
 char *jq_yyget_text (yyscan_t yyscanner );
 
 int jq_yyget_lineno (yyscan_t yyscanner );
 
-void jq_yyset_lineno (int line_number ,yyscan_t yyscanner );
+void jq_yyset_lineno (int _line_number ,yyscan_t yyscanner );
+
+int jq_yyget_column  (yyscan_t yyscanner );
+
+void jq_yyset_column (int _column_no ,yyscan_t yyscanner );
 
 YYSTYPE * jq_yyget_lval (yyscan_t yyscanner );
 
@@ -354,9 +358,9 @@ extern int jq_yylex \
 #undef YY_DECL
 #endif
 
-#line 129 "lexer.l"
+#line 130 "src/lexer.l"
 
 
-#line 361 "lexer.h"
+#line 365 "src/lexer.h"
 #undef jq_yyIN_HEADER
 #endif /* jq_yyHEADER_H */
