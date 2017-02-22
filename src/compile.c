@@ -893,7 +893,7 @@ block gen_destructure(block var, block matcher, block body) {
   if (body.first && body.first->op == TOP)
     top = inst_block(block_take(&body));
 
-  return BLOCK(top, gen_op_simple(DUP), var, bind_matcher(matcher, body));
+  return BLOCK(top, gen_op_simple(DUP), gen_subexp(var), gen_op_simple(POP), bind_matcher(matcher, body));
 }
 
 // Like gen_var_binding(), but bind `break`'s wildcard unbound variable
