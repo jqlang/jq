@@ -4,6 +4,8 @@
 
 PATH=$JQBASEDIR:$PATH $JQBASEDIR/tests/jq-f-test.sh > /dev/null
 
+PATH=$JQBASEDIR:$PATH $JQBASEDIR/tests/jq-f-test.sh > /dev/null
+
 if [ -f "$JQBASEDIR/.libs/libinject_errors.so" ]; then
   # Do some simple error injection tests to check that we're handling
   # I/O errors correctly.
