@@ -1356,3 +1356,9 @@ IN(range(5;20); range(10))
 null
 true
 
+# Regression test for #1347
+(.a as $x | .b) = "b"
+{"a":null,"b":null}
+{"a":null,"b":"b"}
+
+
