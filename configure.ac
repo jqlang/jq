@@ -236,24 +236,32 @@ AS_IF([test "x$with_oniguruma" != xno], [
    save_CFLAGS="$CFLAGS"
    save_LDFLAGS="$LDFLAGS"
    AS_IF([test "x$with_oniguruma" != xyes], [
-      onig_CFLAGS="-I${with_oniguruma}/include"
-      onig_LDFLAGS="-L${with_oniguruma}/lib"
-      CFLAGS="$CFLAGS $onig_CFLAGS"
-      LDFLAGS="$LDFLAGS $onig_LDFLAGS"
+      AS_IF([test "x$with_oniguruma" = xbuiltin], [
+          build_oniguruma=yes
+      ], [
+          onig_CFLAGS="-I${with_oniguruma}/include"
+          onig_LDFLAGS="-L${with_oniguruma}/lib"
+          CFLAGS="$CFLAGS $onig_CFLAGS"
+          LDFLAGS="$LDFLAGS $onig_LDFLAGS"
+      ])
    ])
-   # check for ONIGURUMA library
-   AC_CHECK_HEADER("oniguruma.h",
-      AC_CHECK_LIB([onig],[onig_version]))
-   CFLAGS="$save_CFLAGS"
-   LDFLAGS="$save_LDFLAGS"
+   AS_IF([test "x$build_oniguruma" = xno], [
+       # check for ONIGURUMA library
+       AC_CHECK_HEADER("oniguruma.h",
+          AC_CHECK_LIB([onig],[onig_version]))
+       CFLAGS="$save_CFLAGS"
+       LDFLAGS="$save_LDFLAGS"
 
-   # handle check results
-   AS_IF([test "x$ac_cv_lib_onig_onig_version" != "xyes"], [
-      onig_CFLAGS="-I${srcdir}/modules/oniguruma/src"
-      onig_LDFLAGS=
-      AC_CONFIG_SUBDIRS([modules/oniguruma])
-      build_oniguruma=yes
-      AC_MSG_NOTICE([Oniguruma was not found. Will use the packaged oniguruma.])
+       # handle check results
+       AS_IF([test "x$ac_cv_lib_onig_onig_version" != "xyes"], [
+          build_oniguruma=yes
+          AC_MSG_NOTICE([Oniguruma was not found. Will use the packaged oniguruma.])
+       ])
+   ])
+   AS_IF([test "x$build_oniguruma" = xyes], [
+       onig_CFLAGS="-I${srcdir}/modules/oniguruma/src"
+       onig_LDFLAGS=
+       AC_CONFIG_SUBDIRS([modules/oniguruma])
    ])
    AC_SUBST(onig_CFLAGS)
    AC_SUBST(onig_LDFLAGS)
