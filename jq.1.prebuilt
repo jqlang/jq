@@ -3017,7 +3017,7 @@ See your system\'s manual for more information on each of these\.
 At this time jq has minimal support for I/O, mostly in the form of control over when inputs are read\. Two builtins functions are provided for this, \fBinput\fR and \fBinputs\fR, that read from the same sources (e\.g\., \fBstdin\fR, files named on the command\-line) as jq itself\. These two builtins, and jq\'s own reading actions, can be interleaved with each other\.
 .
 .P
-One builtin provides minimal output capabilities, \fBdebug\fR\. (Recall that a jq program\'s output values are always output as JSON texts on \fBstdout\fR\.) The \fBdebug\fR builtin can have application\-specific behavior, such as for executables that use the libjq C API but aren\'t the jq executable itself\.
+Two builtins provide minimal output capabilities, \fBdebug\fR, and \fBstderr\fR\. (Recall that a jq program\'s output values are always output as JSON texts on \fBstdout\fR\.) The \fBdebug\fR builtin can have application\-specific behavior, such as for executables that use the libjq C API but aren\'t the jq executable itself\. The \fBstderr\fR builtin outputs its input in raw mode to stder with no additional decoration, not even a newline\.
 .
 .P
 Most jq builtins are referentially transparent, and yield constant and repeatable value streams when applied to constant inputs\. This is not true of I/O builtins\.
@@ -3033,6 +3033,9 @@ This is primarily useful for reductions over a program\'s inputs\.
 .
 .SS "debug"
 Causes a debug message based on the input value to be produced\. The jq executable wraps the input value with \fB["DEBUG:", <input\-value>]\fR and prints that and a newline on stderr, compactly\. This may change in the future\.
+.
+.SS "stderr"
+Prints its input in raw and compact mode to stderr with no additional decoration, not even a newline\.
 .
 .SS "input_filename"
 Returns the name of the file whose input is currently being filtered\. Note that this will not work well unless jq is running in a UTF\-8 locale\.
