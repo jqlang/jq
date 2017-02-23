@@ -1031,6 +1031,19 @@ static jv f_env(jq_state *jq, jv input) {
   return env;
 }
 
+static jv f_halt(jq_state *jq, jv input) {
+  jv_free(input);
+  jq_halt(jq, jv_invalid(), jv_invalid());
+  return jv_true();
+}
+
+static jv f_halt_error(jq_state *jq, jv input, jv a) {
+  if (jv_get_kind(a) != JV_KIND_NUMBER)
+    return type_error(input, "halt_error/1: number required"); \
+  jq_halt(jq, a, input);
+  return jv_true();
+}
+
 static jv f_get_search_list(jq_state *jq, jv input) {
   jv_free(input);
   return jq_get_lib_dirs(jq);
@@ -1467,6 +1480,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_error, "error", 2},
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_env, "env", 1},
+  {(cfunction_ptr)f_halt, "halt", 1},
+  {(cfunction_ptr)f_halt_error, "halt_error", 2},
   {(cfunction_ptr)f_get_search_list, "get_search_list", 1},
   {(cfunction_ptr)f_get_prog_origin, "get_prog_origin", 1},
   {(cfunction_ptr)f_get_jq_origin, "get_jq_origin", 1},

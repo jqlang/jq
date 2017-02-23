@@ -40,6 +40,10 @@ struct jq_state {
   int initial_execution;
   unsigned next_label;
 
+  int halted;
+  jv exit_code;
+  jv error_message;
+
   jv attrs;
   jq_input_cb input_cb;
   void *input_cb_data;
@@ -285,6 +289,9 @@ static void jq_reset(jq_state *jq) {
   jv_free(jq->error);
   jq->error = jv_null();
 
+  jq->halted = 0;
+  jv_free(jq->exit_code);
+  jv_free(jq->error_message);
   if (jv_get_kind(jq->path) != JV_KIND_INVALID)
     jv_free(jq->path);
   jq->path = jv_null();
@@ -320,6 +327,11 @@ jv jq_next(jq_state *jq) {
   jq->initial_execution = 0;
   assert(jv_get_kind(jq->error) == JV_KIND_NULL);
   while (1) {
+    if (jq->halted) {
+      if (jq->debug_trace_enabled)
+        printf("\t<halted>\n");
+      return jv_invalid();
+    }
     uint16_t opcode = *pc;
     raising = 0;
 
@@ -932,6 +944,10 @@ jq_state *jq_init(void) {
   jq->curr_frame = 0;
   jq->error = jv_null();
 
+  jq->halted = 0;
+  jq->exit_code = jv_invalid();
+  jq->error_message = jv_invalid();
+
   jq->err_cb = default_err_cb;
   jq->err_cb_data = stderr;
 
@@ -1162,4 +1178,29 @@ void jq_set_debug_cb(jq_state *jq, jq_msg_cb cb, void *data) {
 void jq_get_debug_cb(jq_state *jq, jq_msg_cb *cb, void **data) {
   *cb = jq->debug_cb;
   *data = jq->debug_cb_data;
+}
+
+void
+jq_halt(jq_state *jq, jv exit_code, jv error_message)
+{
+  assert(!jq->halted);
+  jq->halted = 1;
+  jq->exit_code = exit_code;
+  jq->error_message = error_message;
+}
+
+int
+jq_halted(jq_state *jq)
+{
+  return jq->halted;
+}
+
+jv jq_get_exit_code(jq_state *jq)
+{
+  return jv_copy(jq->exit_code);
+}
+
+jv jq_get_error_message(jq_state *jq)
+{
+  return jv_copy(jq->error_message);
 }

@@ -137,10 +137,11 @@ enum {
   RAW_NO_LF             = 1024,
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
-  SEQ                   = 8192,
-  RUN_TESTS             = 16384,
+  EXIT_STATUS_EXACT     = 8192,
+  SEQ                   = 16384,
+  RUN_TESTS             = 32768,
   /* debugging only */
-  DUMP_DISASM           = 32768,
+  DUMP_DISASM           = 65536,
 };
 static int options = 0;
 
@@ -182,7 +183,29 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
     if (options & UNBUFFERED_OUTPUT)
       fflush(stdout);
   }
-  if (jv_invalid_has_msg(jv_copy(result))) {
+  if (jq_halted(jq)) {
+    // jq program invoked `halt` or `halt_error`
+    options |= EXIT_STATUS_EXACT;
+    jv exit_code = jq_get_exit_code(jq);
+    if (!jv_is_valid(exit_code))
+      ret = 0;
+    else if (jv_get_kind(exit_code) == JV_KIND_NUMBER)
+      ret = jv_number_value(exit_code);
+    else
+      ret = 5;
+    jv_free(exit_code);
+    jv error_message = jq_get_error_message(jq);
+    if (jv_get_kind(error_message) == JV_KIND_STRING) {
+      fprintf(stderr, "%s", jv_string_value(error_message));
+    } else if (jv_get_kind(error_message) == JV_KIND_NULL) {
+      // Halt with no output
+    } else if (jv_is_valid(error_message)) {
+      error_message = jv_dump_string(jv_copy(error_message), 0);
+      fprintf(stderr, "%s\n", jv_string_value(error_message));
+    } // else no message on stderr; use --debug-trace to see a message
+    fflush(stderr);
+    jv_free(error_message);
+  } else if (jv_invalid_has_msg(jv_copy(result))) {
     // Uncaught jq exception
     jv msg = jv_invalid_get_msg(jv_copy(result));
     jv input_pos = jq_util_input_get_position(jq);
@@ -623,7 +646,7 @@ out:
   jq_teardown(&jq);
   if (ret >= 10 && (options & EXIT_STATUS))
     return ret - 10;
-  if (ret >= 10)
+  if (ret >= 10 && !(options & EXIT_STATUS_EXACT))
     return 0;
   return ret;
 }

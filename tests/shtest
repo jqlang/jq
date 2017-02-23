@@ -211,4 +211,37 @@ if ! $VALGRIND $Q $JQ -L tests/modules -ne 'import "test_bind_order" as check; c
     exit 1
 fi
 
+## Halt
+
+if ! $VALGRIND $Q $JQ -n halt; then
+    echo "jq halt didn't work as expected" 1>&2
+    exit 1
+fi
+if $VALGRIND $Q $VG_EXIT0 $JQ -n 'halt_error(1)'; then
+    echo "jq halt_error(1) didn't work as expected" 1>&2
+    exit 1
+elif [ $? -ne 1 ]; then
+    echo "jq halt_error(1) had wrong error code" 1>&2
+    exit 1
+fi
+if $VALGRIND $Q $VG_EXIT0 $JQ -n 'halt_error(11)'; then
+    echo "jq halt_error(11) didn't work as expected" 1>&2
+    exit 1
+elif [ $? -ne 11 ]; then
+    echo "jq halt_error(11) had wrong error code" 1>&2
+    exit 1
+fi
+if [ -n "`$VALGRIND $Q $JQ -n 'halt_error(1)' 2>&1`" ]; then
+    echo "jq halt_error(1) had unexpected output" 1>&2
+    exit 1
+fi
+if [ -n "`$VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>/dev/null`" ]; then
+    echo "jq halt_error(1) had unexpected output on stdout" 1>&2
+    exit 1
+fi
+if [ "`$VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>&1`" != xyz ]; then
+    echo "jq halt_error(1) had unexpected output" 1>&2
+    exit 1
+fi
+
 exit 0

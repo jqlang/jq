@@ -209,6 +209,9 @@ sections:
         problem or system error, 3 if there was a jq program compile
         error, or 0 if the jq program ran.
 
+        Another way to set the exit status is with the `halt_error`
+        builtin function.
+
       * `--arg name value`:
 
         This option passes a value to the jq program as a predefined
@@ -982,7 +985,25 @@ sections:
 
           Produces an error, just like `.a` applied to values other than
           null and objects would, but with the given message as the
-          error's value.
+          error's value.  Errors can be caught with try/catch; see below.
+
+      - title: "`halt`"
+        body: |
+
+          Stops the jq program with no further outputs.  jq will exit
+          with exit status `0`.
+
+      - title: "`halt_error`, `halt_error(exit_code)`"
+        body: |
+
+          Stops the jq program with no further outputs.  The input will
+          be printed on `stderr` as raw output (i.e., strings will not
+          have double quotes) with no decoration, not even a newline.
+
+          The given `exit_code` (defaulting to `5`) will be jq's exit
+          status.
+
+          For example, `"Error: somthing went wrong\n"|halt_error(1)`.
 
       - title: "`$__loc__`"
         body: |
