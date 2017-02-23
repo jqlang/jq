@@ -2763,11 +2763,13 @@ sections:
       jq itself.  These two builtins, and jq's own reading actions, can
       be interleaved with each other.
 
-      One builtin provides minimal output capabilities, `debug`.
-      (Recall that a jq program's output values are always output as
-      JSON texts on `stdout`.)  The `debug` builtin can have
+      Two builtins provide minimal output capabilities, `debug`, and
+      `stderr`.  (Recall that a jq program's output values are always
+      output as JSON texts on `stdout`.)  The `debug` builtin can have
       application-specific behavior, such as for executables that use
-      the libjq C API but aren't the jq executable itself.
+      the libjq C API but aren't the jq executable itself.  The `stderr`
+      builtin outputs its input in raw mode to stder with no additional
+      decoration, not even a newline.
 
       Most jq builtins are referentially transparent, and yield constant
       and repeatable value streams when applied to constant inputs.
@@ -2794,6 +2796,12 @@ sections:
           produced.  The jq executable wraps the input value with
           `["DEBUG:", <input-value>]` and prints that and a newline on
           stderr, compactly.  This may change in the future.
+
+      - title: "`stderr`"
+        body: |
+
+          Prints its input in raw and compact mode to stderr with no
+          additional decoration, not even a newline.
 
       - title: "`input_filename`"
         body: |

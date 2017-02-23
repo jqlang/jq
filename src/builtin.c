@@ -1112,7 +1112,6 @@ static jv f_debug(jq_state *jq, jv input) {
 
 static jv f_stderr(jq_state *jq, jv input) {
   jv_dumpf(jv_copy(input), stderr, 0);
-  fprintf(stderr, "\n");
   return input;
 }
 
