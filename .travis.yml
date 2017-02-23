@@ -47,7 +47,7 @@ before_script:
     - which bison
     - bison --version
     - autoreconf -if
-    - ./configure YACC="$(which bison) -y" $COVERAGE
+    - ./configure --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
 
 script:
     # When using the bison from Debian we need to tell that bison where

@@ -11,12 +11,13 @@ install:
   - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-i686-oniguruma mingw-w64-x86_64-oniguruma"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S git"
+  - git submodule update --init --recursive
 
 
 build_script:
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && autoreconf -i"
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && ./configure --disable-shared --enable-static --enable-all-static"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && ./configure --with-onigurum=builtin --disable-shared --enable-static --enable-all-static"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j8"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && cat jq.1  | groff -mandoc -Thtml > jq.html"
   - 7z a jq-package.zip jq.1 jq.html jq.exe
