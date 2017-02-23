@@ -153,6 +153,9 @@ Prepend \fBdirectory\fR to the search list for modules\. If this option is used 
 .IP
 Sets the exit status of jq to 0 if the last output values was neither \fBfalse\fR nor \fBnull\fR, 1 if the last output value was either \fBfalse\fR or \fBnull\fR, or 4 if no valid result was ever produced\. Normally jq exits with 2 if there was any usage problem or system error, 3 if there was a jq program compile error, or 0 if the jq program ran\.
 .
+.IP
+Another way to set the exit status is with the \fBhalt_error\fR builtin function\.
+.
 .IP "\(bu" 4
 \fB\-\-arg name value\fR:
 .
@@ -1017,7 +1020,19 @@ jq \'[1,2,empty,3]\'
 .IP "" 0
 .
 .SS "error(message)"
-Produces an error, just like \fB\.a\fR applied to values other than null and objects would, but with the given message as the error\'s value\.
+Produces an error, just like \fB\.a\fR applied to values other than null and objects would, but with the given message as the error\'s value\. Errors can be caught with try/catch; see below\.
+.
+.SS "halt"
+Stops the jq program with no further outputs\. jq will exit with exit status \fB0\fR\.
+.
+.SS "halt_error, halt_error(exit_code)"
+Stops the jq program with no further outputs\. The input will be printed on \fBstderr\fR as raw output (i\.e\., strings will not have double quotes) with no decoration, not even a newline\.
+.
+.P
+The given \fBexit_code\fR (defaulting to \fB5\fR) will be jq\'s exit status\.
+.
+.P
+For example, \fB"Error: somthing went wrong\en"|halt_error(1)\fR\.
 .
 .SS "$__loc__"
 Produces an object with a "file" key and a "line" key, with the filename and line number where \fB$__loc__\fR occurs, as values\.
