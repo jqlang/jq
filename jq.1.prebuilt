@@ -2032,10 +2032,13 @@ The \fBtodate\fR builtin is an alias for \fBtodateiso8601\fR\.
 The \fBnow\fR builtin outputs the current time, in seconds since the Unix epoch\.
 .
 .P
-Low\-level jq interfaces to the C\-library time functions are also provided: \fBstrptime\fR, \fBstrftime\fR, \fBmktime\fR, and \fBgmtime\fR\. Refer to your host operating system\'s documentation for the format strings used by \fBstrptime\fR and \fBstrftime\fR\. Note: these are not necessarily stable interfaces in jq, particularly as to their localization functionality\.
+Low\-level jq interfaces to the C\-library time functions are also provided: \fBstrptime\fR, \fBstrftime\fR, \fBstrflocaltime\fR, \fBmktime\fR, \fBgmtime\fR, and \fBlocaltime\fR\. Refer to your host operating system\'s documentation for the format strings used by \fBstrptime\fR and \fBstrftime\fR\. Note: these are not necessarily stable interfaces in jq, particularly as to their localization functionality\.
 .
 .P
-The \fBgmtime\fR builtin consumes a number of seconds since the Unix epoch and outputs a "broken down time" representation of time as an array of numbers representing (in this order): the year, the month (zero\-based), the day of the month, the hour of the day, the minute of the hour, the second of the minute, the day of the week, and the day of the year \-\- all one\-based unless otherwise stated\.
+The \fBgmtime\fR builtin consumes a number of seconds since the Unix epoch and outputs a "broken down time" representation of Greenwhich Meridian time as an array of numbers representing (in this order): the year, the month (zero\-based), the day of the month, the hour of the day, the minute of the hour, the second of the minute, the day of the week, and the day of the year \-\- all one\-based unless otherwise stated\.
+.
+.P
+The \fBlocaltime\fR builtin works like the \fBgmtime\fR builtin, but using the local timezone setting\.
 .
 .P
 The \fBmktime\fR builtin consumes "broken down time" representations of time output by \fBgmtime\fR and \fBstrptime\fR\.
@@ -2044,7 +2047,7 @@ The \fBmktime\fR builtin consumes "broken down time" representations of time out
 The \fBstrptime(fmt)\fR builtin parses input strings matching the \fBfmt\fR argument\. The output is in the "broken down time" representation consumed by \fBgmtime\fR and output by \fBmktime\fR\.
 .
 .P
-The \fBstrftime(fmt)\fR builtin formats a time with the given format\.
+The \fBstrftime(fmt)\fR builtin formats a time (GMT) with the given format\. The \fBstrflocaltime\fR does the same, but using the local timezone setting\.
 .
 .P
 The format strings for \fBstrptime\fR and \fBstrftime\fR are described in typical C library documentation\. The format string for ISO 8601 datetime is \fB"%Y\-%m\-%dT%H:%M:%SZ"\fR\.

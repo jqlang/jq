@@ -1846,19 +1846,23 @@ sections:
           the Unix epoch.
 
           Low-level jq interfaces to the C-library time functions are
-          also provided: `strptime`, `strftime`, `mktime`, and `gmtime`.
-          Refer to your host operating system's documentation for the
-          format strings used by `strptime` and `strftime`.  Note: these
-          are not necessarily stable interfaces in jq, particularly as
-          to their localization functionality.
+          also provided: `strptime`, `strftime`, `strflocaltime`,
+          `mktime`, `gmtime`, and `localtime`.  Refer to your host
+          operating system's documentation for the format strings used
+          by `strptime` and `strftime`.  Note: these are not necessarily
+          stable interfaces in jq, particularly as to their localization
+          functionality.
 
           The `gmtime` builtin consumes a number of seconds since the
           Unix epoch and outputs a "broken down time" representation of
-          time as an array of numbers representing (in this order): the
-          year, the month (zero-based), the day of the month, the hour
-          of the day, the minute of the hour, the second of the minute,
-          the day of the week, and the day of the year -- all one-based
-          unless otherwise stated.
+          Greenwhich Meridian time as an array of numbers representing
+          (in this order): the year, the month (zero-based), the day of
+          the month, the hour of the day, the minute of the hour, the
+          second of the minute, the day of the week, and the day of the
+          year -- all one-based unless otherwise stated.
+
+          The `localtime` builtin works like the `gmtime` builtin, but
+          using the local timezone setting.
 
           The `mktime` builtin consumes "broken down time"
           representations of time output by `gmtime` and `strptime`.
@@ -1867,8 +1871,9 @@ sections:
           `fmt` argument.  The output is in the "broken down time"
           representation consumed by `gmtime` and output by `mktime`.
 
-          The `strftime(fmt)` builtin formats a time with the given
-          format.
+          The `strftime(fmt)` builtin formats a time (GMT) with the
+          given format.  The `strflocaltime` does the same, but using
+          the local timezone setting.
 
           The format strings for `strptime` and `strftime` are described
           in typical C library documentation.  The format string for ISO
