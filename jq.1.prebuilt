@@ -3076,49 +3076,28 @@ jq \'\. as $dot|fromstream($dot|tostream)|\.==$dot\'
 Assignment works a little differently in jq than in most programming languages\. jq doesn\'t distinguish between references to and copies of something \- two objects or arrays are either equal or not equal, without any further notion of being "the same object" or "not the same object"\.
 .
 .P
-If an object has two fields which are arrays, \fB\.foo\fR and \fB\.bar\fR, and you append something to \fB\.foo\fR, then \fB\.bar\fR will not get bigger\. Even if you\'ve just set \fB\.bar = \.foo\fR\. If you\'re used to programming in languages like Python, Java, Ruby, Javascript, etc\. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance, it doesn\'t actually do that, but that\'s the general idea)\.
-.
-.P
-All the assignment operators in jq have path expressions on the left\-hand side\.
-.
-.P
-Values in jq are always immutable\. Internally, assignment works by using a reduction to compute new, replacement values for \fB\.\fR that have had all the desired assignments applied to \fB\.\fR, then outputting the modified value\. This might be made clear by this example: \fB{a:{b:{c:1}}} | (\.a\.b|=3), \.\fR\. This will output \fB{"a":{"b":3}}\fR and \fB{"a":{"b":{"c":1}}}\fR because the last sub\-expression, \fB\.\fR, sees the original value, not the modified value\.
-.
-.SS "="
-The filter \fB\.foo = 1\fR will take as input an object and produce as output an object with the "foo" field set to 1\. There is no notion of "modifying" or "changing" something in jq \- all jq values are immutable\. For instance,
-.
-.P
-\&\.foo = \.bar | \.foo\.baz = 1
-.
-.P
-will not have the side\-effect of setting \.bar\.baz to be set to 1, as the similar\-looking program in Javascript, Python, Ruby or other languages would\. Unlike these languages (but like Haskell and some other functional languages), there is no notion of two arrays or objects being "the same array" or "the same object"\. They can be equal, or not equal, but if we change one of them in no circumstances will the other change behind our backs\.
+If an object has two fields which are arrays, \fB\.foo\fR and \fB\.bar\fR, and you append something to \fB\.foo\fR, then \fB\.bar\fR will not get bigger, even if you\'ve previously set \fB\.bar = \.foo\fR\. If you\'re used to programming in languages like Python, Java, Ruby, Javascript, etc\. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance it doesn\'t actually do that, but that\'s the general idea)\.
 .
 .P
 This means that it\'s impossible to build circular values in jq (such as an array whose first element is itself)\. This is quite intentional, and ensures that anything a jq program can produce can be represented in JSON\.
 .
 .P
-Note that the left\-hand side of \'=\' refers to a value in \fB\.\fR\. Thus \fB$var\.foo = 1\fR won\'t work as expected (\fB$var\.foo\fR is not a valid or useful path expression in \fB\.\fR); use \fB$var | \.foo = 1\fR instead\.
+All the assignment operators in jq have path expressions on the left\-hand side (LHS)\. The right\-hand side (RHS) procides values to set to the paths named by the LHS path expressions\.
 .
 .P
-If the right\-hand side of \'=\' produces multiple values, then for each such value jq will set the paths on the left\-hand side to the value and then it will output the modified \fB\.\fR\. For example, \fB(\.a,\.b)=range(2)\fR outputs \fB{"a":0,"b":0}\fR, then \fB{"a":1,"b":1}\fR\. The "update" assignment forms (see below) do not do this\.
+Values in jq are always immutable\. Internally, assignment works by using a reduction to compute new, replacement values for \fB\.\fR that have had all the desired assignments applied to \fB\.\fR, then outputting the modified value\. This might be made clear by this example: \fB{a:{b:{c:1}}} | (\.a\.b|=3), \.\fR\. This will output \fB{"a":{"b":3}}\fR and \fB{"a":{"b":{"c":1}}}\fR because the last sub\-expression, \fB\.\fR, sees the original value, not the modified value\.
+.
+.P
+Most users will want to use modification assignment operators, such as \fB|=\fR or \fB+=\fR, rather than \fB=\fR\.
+.
+.P
+Note that the LHS of assignment operators refers to a value in \fB\.\fR\. Thus \fB$var\.foo = 1\fR won\'t work as expected (\fB$var\.foo\fR is not a valid or useful path expression in \fB\.\fR); use \fB$var | \.foo = 1\fR instead\.
 .
 .P
 Note too that \fB\.a,\.b=0\fR does not set \fB\.a\fR and \fB\.b\fR, but \fB(\.a,\.b)=0\fR sets both\.
 .
-.SS "|="
-As well as the assignment operator \'=\', jq provides the "update" operator \'|=\', which takes a filter on the right\-hand side and works out the new value for the property of \fB\.\fR being assigned to by running the old value through this expression\. For instance, \.foo |= \.+1 will build an object with the "foo" field set to the input\'s "foo" plus 1\.
-.
-.P
-This example should show the difference between \'=\' and \'|=\':
-.
-.P
-Provide input \'{"a": {"b": 10}, "b": 20}\' to the programs:
-.
-.P
-\&\.a = \.b \.a |= \.b
-.
-.P
-The former will set the "a" field of the input to the "b" field of the input, and produce the output {"a": 20}\. The latter will set the "a" field of the input to the "a" field\'s "b" field, producing {"a": 10}\.
+.SS "Update\-assignment: |="
+This is the "update" operator \'|=\'\. It takes a filter on the right\-hand side and works out the new value for the property of \fB\.\fR being assigned to by running the old value through this expression\. For instance, (\.foo, \.bar) |= \.+1 will build an object with the "foo" field set to the input\'s "foo" plus 1, and the "bar" field set to the input\'s "bar" plus 1\.
 .
 .P
 The left\-hand side can be any general path expression; see \fBpath()\fR\.
@@ -3130,7 +3109,7 @@ Note that the left\-hand side of \'|=\' refers to a value in \fB\.\fR\. Thus \fB
 If the right\-hand side outputs no values (i\.e\., \fBempty\fR), then the left\-hand side path will be deleted, as with \fBdel(path)\fR\.
 .
 .P
-If the right\-hand side outputs multiple values, only the first one will be used (NOTE: it used to be that only the last one was used)\.
+If the right\-hand side outputs multiple values, only the first one will be used (COMPATIBILITY NOTE: in jq 1\.5 and earlier releases, it used to be that only the last one was used)\.
 .
 .IP "" 4
 .
@@ -3144,8 +3123,8 @@ jq \'(\.\.|select(type=="boolean")) |= if \. then 1 else 0 end\'
 .
 .IP "" 0
 .
-.SS "+=, \-=, *=, /=, %=, //="
-jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \fBa |= \. op b\fR\. So, \fB+= 1\fR can be used to increment values\.
+.SS "Arithmetic update\-assignment: +=, \-=, *=, /=, %=, //="
+jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \fBa |= \. op b\fR\. So, \fB+= 1\fR can be used to increment values, being the same as \fB|= \. + 1\fR\.
 .
 .IP "" 4
 .
@@ -3158,6 +3137,42 @@ jq \'\.foo += 1\'
 .fi
 .
 .IP "" 0
+.
+.SS "Plain assignment: ="
+This is the plain assignment operator\. Unlike the others, the input to the right\-hand\-side (RHS) is the same as the input to the left\-hand\-side (LHS) rather than the value at the LHS path, and all values output by the RHS will be used (as shown below)\.
+.
+.P
+If the RHS of \'=\' produces multiple values, then for each such value jq will set the paths on the left\-hand side to the value and then it will output the modified \fB\.\fR\. For example, \fB(\.a,\.b)=range(2)\fR outputs \fB{"a":0,"b":0}\fR, then \fB{"a":1,"b":1}\fR\. The "update" assignment forms (see above) do not do this\.
+.
+.P
+This example should show the difference between \'=\' and \'|=\':
+.
+.P
+Provide input \'{"a": {"b": 10}, "b": 20}\' to the programs:
+.
+.P
+\&\.a = \.b
+.
+.P
+\&\.a |= \.b
+.
+.P
+The former will set the "a" field of the input to the "b" field of the input, and produce the output {"a": 20, "b": 20}\. The latter will set the "a" field of the input to the "a" field\'s "b" field, producing {"a": 10, "b": 20}\.
+.
+.P
+Another example of the difference between \'=\' and \'|=\':
+.
+.P
+null|(\.a,\.b)=range(3)
+.
+.P
+outputs \'{"a":0,"b":0}\', \'{"a":1,"b":1}\', and \'{"a":2,"b":2}\', while
+.
+.P
+null|(\.a,\.b)|=range(3)
+.
+.P
+outputs just \'{"a":0,"b":0}\'\.
 .
 .SS "Complex assignments"
 Lots more things are allowed on the left\-hand side of a jq assignment than in most languages\. We\'ve already seen simple field accesses on the left hand side, and it\'s no surprise that array accesses work just as well:
