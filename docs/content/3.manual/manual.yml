@@ -2838,7 +2838,6 @@ sections:
 
   - title: Assignment
     body: |
-
       Assignment works a little differently in jq than in most
       programming languages. jq doesn't distinguish between references
       to and copies of something - two objects or arrays are either
@@ -2847,14 +2846,21 @@ sections:
 
       If an object has two fields which are arrays, `.foo` and `.bar`,
       and you append something to `.foo`, then `.bar` will not get
-      bigger. Even if you've just set `.bar = .foo`. If you're used to
-      programming in languages like Python, Java, Ruby, Javascript,
-      etc. then you can think of it as though jq does a full deep copy
-      of every object before it does the assignment (for performance,
-      it doesn't actually do that, but that's the general idea).
+      bigger, even if you've previously set `.bar = .foo`.  If you're
+      used to programming in languages like Python, Java, Ruby,
+      Javascript, etc. then you can think of it as though jq does a full
+      deep copy of every object before it does the assignment (for
+      performance it doesn't actually do that, but that's the general
+      idea).
+
+      This means that it's impossible to build circular values in jq
+      (such as an array whose first element is itself). This is quite
+      intentional, and ensures that anything a jq program can produce
+      can be represented in JSON.
 
       All the assignment operators in jq have path expressions on the
-      left-hand side.
+      left-hand side (LHS).  The right-hand side (RHS) procides values
+      to set to the paths named by the LHS path expressions.
 
       Values in jq are always immutable.  Internally, assignment works
       by using a reduction to compute new, replacement values for `.` that
@@ -2865,65 +2871,26 @@ sections:
       sub-expression, `.`, sees the original value, not the modified
       value.
 
+      Most users will want to use modification assignment operators,
+      such as `|=` or `+=`, rather than `=`.
+
+      Note that the LHS of assignment operators refers to a value in
+      `.`.  Thus `$var.foo = 1` won't work as expected (`$var.foo` is
+      not a valid or useful path expression in `.`); use `$var | .foo =
+      1` instead.
+
+      Note too that `.a,.b=0` does not set `.a` and `.b`, but
+      `(.a,.b)=0` sets both.
+
     entries:
-      - title: "`=`"
+      - title: "Update-assignment: `|=`"
         body: |
-
-          The filter `.foo = 1` will take as input an object
-          and produce as output an object with the "foo" field set to
-          1. There is no notion of "modifying" or "changing" something
-          in jq - all jq values are immutable. For instance,
-
-           .foo = .bar | .foo.baz = 1
-
-          will not have the side-effect of setting .bar.baz to be set
-          to 1, as the similar-looking program in Javascript, Python,
-          Ruby or other languages would. Unlike these languages (but
-          like Haskell and some other functional languages), there is
-          no notion of two arrays or objects being "the same array" or
-          "the same object". They can be equal, or not equal, but if
-          we change one of them in no circumstances will the other
-          change behind our backs.
-
-          This means that it's impossible to build circular values in
-          jq (such as an array whose first element is itself). This is
-          quite intentional, and ensures that anything a jq program
-          can produce can be represented in JSON.
-
-          Note that the left-hand side of '=' refers to a value in `.`.
-          Thus `$var.foo = 1` won't work as expected (`$var.foo` is not
-          a valid or useful path expression in `.`); use `$var | .foo =
-          1` instead.
-
-          If the right-hand side of '=' produces multiple values, then
-          for each such value jq will set the paths on the left-hand
-          side to the value and then it will output the modified `.`.
-          For example, `(.a,.b)=range(2)` outputs `{"a":0,"b":0}`, then
-          `{"a":1,"b":1}`.  The "update" assignment forms (see below) do
-          not do this.
-
-          Note too that `.a,.b=0` does not set `.a` and `.b`, but
-          `(.a,.b)=0` sets both.
-
-      - title: "`|=`"
-        body: |
-          As well as the assignment operator '=', jq provides the "update"
-          operator '|=', which takes a filter on the right-hand side and
-          works out the new value for the property of `.` being assigned
-          to by running the old value through this expression. For
-          instance, .foo |= .+1 will build an object with the "foo"
-          field set to the input's "foo" plus 1.
-
-          This example should show the difference between '=' and '|=':
-
-          Provide input '{"a": {"b": 10}, "b": 20}' to the programs:
-
-          .a = .b
-          .a |= .b
-
-          The former will set the "a" field of the input to the "b" field of the
-          input, and produce the output {"a": 20}. The latter will set the "a"
-          field of the input to the "a" field's "b" field, producing {"a": 10}.
+          This is the "update" operator '|='.  It takes a filter on the
+          right-hand side and works out the new value for the property
+          of `.` being assigned to by running the old value through this
+          expression. For instance, (.foo, .bar) |= .+1 will build an
+          object with the "foo" field set to the input's "foo" plus 1,
+          and the "bar" field set to the input's "bar" plus 1.
 
           The left-hand side can be any general path expression; see `path()`.
 
@@ -2936,25 +2903,65 @@ sections:
           the left-hand side path will be deleted, as with `del(path)`.
 
           If the right-hand side outputs multiple values, only the first
-          one will be used (NOTE: it used to be that only the last one was
-          used).
+          one will be used (COMPATIBILITY NOTE: in jq 1.5 and earlier
+          releases, it used to be that only the last one was used).
 
         examples:
-
           - program: '(..|select(type=="boolean")) |= if . then 1 else 0 end'
             input: '[true,false,[5,true,[true,[false]],false]]'
             output: ['[1,0,[5,1,[1,[0]],0]]']
 
-      - title: "`+=`, `-=`, `*=`, `/=`, `%=`, `//=`"
+      - title: "Arithmetic update-assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`"
         body: |
 
           jq has a few operators of the form `a op= b`, which are all
-          equivalent to `a |= . op b`. So, `+= 1` can be used to increment values.
+          equivalent to `a |= . op b`. So, `+= 1` can be used to
+          increment values, being the same as `|= . + 1`.
 
         examples:
           - program: .foo += 1
             input: '{"foo": 42}'
             output: ['{"foo": 43}']
+
+      - title: "Plain assignment: `=`"
+        body: |
+
+          This is the plain assignment operator.  Unlike the others, the
+          input to the right-hand-side (RHS) is the same as the input to
+          the left-hand-side (LHS) rather than the value at the LHS
+          path, and all values output by the RHS will be used (as shown
+          below).
+
+          If the RHS of '=' produces multiple values, then for each such
+          value jq will set the paths on the left-hand side to the value
+          and then it will output the modified `.`.  For example,
+          `(.a,.b)=range(2)` outputs `{"a":0,"b":0}`, then
+          `{"a":1,"b":1}`.  The "update" assignment forms (see above) do
+          not do this.
+
+          This example should show the difference between '=' and '|=':
+
+          Provide input '{"a": {"b": 10}, "b": 20}' to the programs:
+
+          .a = .b
+
+          .a |= .b
+
+          The former will set the "a" field of the input to the "b"
+          field of the input, and produce the output {"a": 20, "b": 20}.
+          The latter will set the "a" field of the input to the "a"
+          field's "b" field, producing {"a": 10, "b": 20}.
+
+          Another example of the difference between '=' and '|=':
+
+          null|(.a,.b)=range(3)
+
+          outputs '{"a":0,"b":0}', '{"a":1,"b":1}', and '{"a":2,"b":2}',
+          while
+
+          null|(.a,.b)|=range(3)
+
+          outputs just '{"a":0,"b":0}'.
 
       - title: Complex assignments
         body: |
