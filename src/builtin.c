@@ -1283,6 +1283,43 @@ static jv f_gmtime(jq_state *jq, jv a) {
 }
 #endif
 
+#ifdef HAVE_LOCALTIME_R
+static jv f_localtime(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_NUMBER)
+    return jv_invalid_with_msg(jv_string("localtime() requires numeric inputs"));
+  struct tm tm, *tmp;
+  memset(&tm, 0, sizeof(tm));
+  double fsecs = jv_number_value(a);
+  time_t secs = fsecs;
+  jv_free(a);
+  tmp = localtime_r(&secs, &tm);
+  if (tmp == NULL)
+    return jv_invalid_with_msg(jv_string("errror converting number of seconds since epoch to datetime"));
+  a = tm2jv(tmp);
+  return jv_array_set(a, 5, jv_number(jv_number_value(jv_array_get(jv_copy(a), 5)) + (fsecs - floor(fsecs))));
+}
+#elif defined HAVE_GMTIME
+static jv f_localtime(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_NUMBER)
+    return jv_invalid_with_msg(jv_string("localtime requires numeric inputs"));
+  struct tm tm, *tmp;
+  memset(&tm, 0, sizeof(tm));
+  double fsecs = jv_number_value(a);
+  time_t secs = fsecs;
+  jv_free(a);
+  tmp = localtime(&secs);
+  if (tmp == NULL)
+    return jv_invalid_with_msg(jv_string("errror converting number of seconds since epoch to datetime"));
+  a = tm2jv(tmp);
+  return jv_array_set(a, 5, jv_number(jv_number_value(jv_array_get(jv_copy(a), 5)) + (fsecs - floor(fsecs))));
+}
+#else
+static jv f_localtime(jq_state *jq, jv a) {
+  jv_free(a);
+  return jv_invalid_with_msg(jv_string("localtime not implemented on this platform"));
+}
+#endif
+
 #ifdef HAVE_STRFTIME
 static jv f_strftime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER) {
@@ -1308,6 +1345,34 @@ static jv f_strftime(jq_state *jq, jv a) {
   jv_free(a);
   jv_free(b);
   return jv_invalid_with_msg(jv_string("strftime/1 not implemented on this platform"));
+}
+#endif
+
+#ifdef HAVE_STRFTIME
+static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
+  if (jv_get_kind(a) == JV_KIND_NUMBER) {
+    a = f_localtime(jq, a);
+  } else if (jv_get_kind(a) != JV_KIND_ARRAY) {
+    return jv_invalid_with_msg(jv_string("strflocaltime/1 requires parsed datetime inputs"));
+  }
+  struct tm tm;
+  if (!jv2tm(a, &tm))
+    return jv_invalid_with_msg(jv_string("strflocaltime/1 requires parsed datetime inputs")); \
+  const char *fmt = jv_string_value(b);
+  size_t alloced = strlen(fmt) + 100;
+  char *buf = alloca(alloced);
+  size_t n = strftime(buf, alloced, fmt, &tm);
+  jv_free(b);
+  /* POSIX doesn't provide errno values for strftime() failures; weird */
+  if (n == 0 || n > alloced)
+    return jv_invalid_with_msg(jv_string("strflocaltime/1: unknown system failure"));
+  return jv_string(buf);
+}
+#else
+static jv f_strflocaltime(jq_state *jq, jv a) {
+  jv_free(a);
+  jv_free(b);
+  return jv_invalid_with_msg(jv_string("strflocaltime/1 not implemented on this platform"));
 }
 #endif
 
@@ -1413,8 +1478,10 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_stderr, "stderr", 1},
   {(cfunction_ptr)f_strptime, "strptime", 2},
   {(cfunction_ptr)f_strftime, "strftime", 2},
+  {(cfunction_ptr)f_strflocaltime, "strflocaltime", 2},
   {(cfunction_ptr)f_mktime, "mktime", 1},
   {(cfunction_ptr)f_gmtime, "gmtime", 1},
+  {(cfunction_ptr)f_localtime, "localtime", 1},
   {(cfunction_ptr)f_now, "now", 1},
   {(cfunction_ptr)f_current_filename, "input_filename", 1},
   {(cfunction_ptr)f_current_line, "input_line_number", 1},
