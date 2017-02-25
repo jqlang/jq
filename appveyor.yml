@@ -5,6 +5,10 @@ environment:
   - MSYSTEM: MINGW32
     PATH: C:\msys64\usr\bin;C:\msys64\mingw32\bin;C:\Windows\System32;C:\Windows;%PATH%
 
+clone_script:
+  - bash -lc "git clone -q --branch=$APPVEYOR_REPO_BRANCH https://github.com/${APPVEYOR_REPO_NAME}.git $APPVEYOR_BUILD_FOLDER"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git checkout -qf $APPVEYOR_REPO_COMMIT"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git submodule update --init --recursive"
 
 install:
   # update mysy2
@@ -12,12 +16,10 @@ install:
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S git"
-  - git submodule update --init --recursive
-
 
 build_script:
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && autoreconf -i"
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && ./configure --with-onigurum=builtin --disable-shared --enable-static --enable-all-static"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && ./configure --with-oniguruma=builtin --disable-shared --enable-static --enable-all-static"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j8"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && cat jq.1  | groff -mandoc -Thtml > jq.html"
   - 7z a jq-package.zip jq.1 jq.html jq.exe
@@ -27,9 +29,9 @@ build_script:
 test_script:
   # tests/optionaltest and tests/shtest fail on Windows; run them
   # anyways but ignore their failures.  Also, trace shtest.
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j3 'TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test' check"
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make TESTS=tests/optionaltest check || cat test-suite.log"
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make TRACE_TESTS=1 TESTS=tests/shtest check || cat test-suite.log"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j3 SUBDIRS= 'TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test' check"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make SUBDIRS= TESTS=tests/optionaltest check || true"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make SUBDIRS= TRACE_TESTS=1 TESTS=tests/shtest check || true"
       
 artifacts:
   - path: jq-package.zip
@@ -43,6 +45,7 @@ artifacts:
     
 
 on_failure:
+  - cat config.log
   - cat test-suite.log
   - appveyor PushArtifact test-suite.log
   # also push the jq.exe so that someone can download it anyways...
