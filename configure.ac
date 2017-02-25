@@ -38,10 +38,7 @@ if test "$USE_MAINTAINER_MODE" = yes; then
       [AC_MSG_ERROR([You need bison version 3.0 or greater, or use --disable-maintainer-mode.])])
   fi
 
-  AC_PROG_LEX
-  if test "x$LEX" != xflex; then
-    LEX="$SHELL $missing_dir/missing flex"
-  fi
+  AC_CHECK_PROGS(LEX, flex lex)
 fi
 
 dnl Check for valgrind
