@@ -275,6 +275,14 @@ AS_IF([test "x$with_oniguruma" != xno], [
 AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
+case "$host" in
+    *mingw*)
+        LIBS="$LIBS -lshlwapi"
+    ;;
+    *)
+    ;;
+esac
+
 AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
