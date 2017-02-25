@@ -52,7 +52,7 @@ FILE *fopen(const char *fname, const char *mode) {
   MultiByteToWideChar(CP_UTF8, 0, fname, -1, wfname, sz);
 
   sz = sizeof(wchar_t) * MultiByteToWideChar(CP_UTF8, 0, mode, -1, NULL, 0);
-  wchar_t *wmode = alloca(sz); // +2 is not needed, but just in case
+  wchar_t *wmode = alloca(sz + 2); // +2 is not needed, but just in case
   MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, sz);
   return _wfopen(wfname, wmode);
 }
