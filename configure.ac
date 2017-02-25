@@ -262,8 +262,11 @@ AS_IF([test "x$with_oniguruma" != xno], [
    ])
    AS_IF([test "x$build_oniguruma" = xyes], [
        onig_CFLAGS="-I${srcdir}/modules/oniguruma/src"
-       onig_LDFLAGS=
+       onig_LDFLAGS="-L${srcdir}/modules/oniguruma/src -Wl,-rpath,${libdir}"
+       CFLAGS="$CFLAGS $onig_CFLAGS"
+       LDFLAGS="$LDFLAGS $onig_LDFLAGS"
        AC_CONFIG_SUBDIRS([modules/oniguruma])
+       AC_DEFINE([HAVE_LIBONIG],1,[Define to 1 if the system includes libonig])
    ])
    AC_SUBST(onig_CFLAGS)
    AC_SUBST(onig_LDFLAGS)
