@@ -2568,6 +2568,16 @@ sections:
             input: '[0,1,2,3,4,5]'
             output: ['[1,3,5]']
 
+      - title: "`isempty(exp)`"
+        body: |
+
+          Returns true or false as the stream specified by `exp` is empty.
+
+        example:
+          - program: 'isempty(empty)'
+            input: 'null'
+            output: ['true']
+
       - title: "`limit(n; exp)`"
         body: |
 

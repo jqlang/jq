@@ -167,6 +167,7 @@ def until(cond; next):
          if cond then . else (next|_until) end;
      _until;
 def limit($n; exp): if $n < 0 then exp else label $out | foreach exp as $item ([$n, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1]) end;
+def isempty(g): 0 == ((label $go | g | (1, break $go)) // 0);
 def first(g): label $out | g | ., break $out;
 def last(g): reduce g as $item (null; $item);
 def nth($n; g): if $n < 0 then error("nth doesn't support negative indices") else last(limit($n + 1; g)) end;

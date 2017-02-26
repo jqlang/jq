@@ -1361,4 +1361,7 @@ true
 {"a":null,"b":null}
 {"a":null,"b":"b"}
 
+isempty(empty)
+null
+true
 
