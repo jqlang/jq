@@ -278,7 +278,7 @@ null
 
 %%FAIL
 . as $foo | break $foo
-jq: error: *label-foo/0 is not defined at <top-level>, line 1:
+jq: error: $*label-foo is not defined at <top-level>, line 1:
 
 [.[]|[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]]
 [1,2,3,4,5]

@@ -1007,6 +1007,8 @@ static int expand_call_arglist(block* b) {
       if (!curr->bound_by) {
         if (curr->symbol[0] == '*' && curr->symbol[1] >= '1' && curr->symbol[1] <= '3' && curr->symbol[2] == '\0')
           locfile_locate(curr->locfile, curr->source, "jq: error: break used outside labeled control structure");
+        else if (curr->op == LOADV)
+          locfile_locate(curr->locfile, curr->source, "jq: error: $%s is not defined", curr->symbol);
         else
           locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
         errors++;
