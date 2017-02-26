@@ -1100,7 +1100,8 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
     if (nerrors == 0) {
       nerrors = block_compile(program, &jq->bc, locations, args = args2obj(args));
     }
-  }
+  } else
+    jv_free(args);
   if (nerrors)
     jq_report_error(jq, jv_string_fmt("jq: %d compile %s", nerrors, nerrors > 1 ? "errors" : "error"));
   if (jq->bc)
