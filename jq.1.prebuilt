@@ -159,6 +159,9 @@ Sets the exit status of jq to 0 if the last output values was neither \fBfalse\f
 .IP
 This option passes a value to the jq program as a predefined variable\. If you run jq with \fB\-\-arg foo bar\fR, then \fB$foo\fR is available in the program and has the value \fB"bar"\fR\. Note that \fBvalue\fR will be treated as a string, so \fB\-\-arg foo 123\fR will bind \fB$foo\fR to \fB"123"\fR\.
 .
+.IP
+Named arguments are also available to the jq program as \fB$ARGS\.named\fR\.
+.
 .IP "\(bu" 4
 \fB\-\-argjson name JSON\-text\fR:
 .
@@ -179,6 +182,18 @@ Do not use\. Use \fB\-\-slurpfile\fR instead\.
 .
 .IP
 (This option is like \fB\-\-slurpfile\fR, but when the file has just one text, then that is used, else an array of texts is used as in \fB\-\-slurpfile\fR\.)
+.
+.IP "\(bu" 4
+\fB\-\-args\fR:
+.
+.IP
+Remaining arguments are positional string arguments\. These are available to the jq program as \fB$ARGS\.positional[]\fR\.
+.
+.IP "\(bu" 4
+\fB\-\-jsonargs\fR:
+.
+.IP
+Remaining arguments are positional JSON text arguments\. These are available to the jq program as \fB$ARGS\.positional[]\fR\.
 .
 .IP "\(bu" 4
 \fB\-\-run\-tests [filename]\fR:
