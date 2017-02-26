@@ -1666,12 +1666,22 @@ sections:
             output:
               - '[{"a":{"b":2}}]'
 
-      - title: "`env`"
+      - title: "`$ENV`, `env`"
         body: |
 
-          Outputs an object representing jq's environment.
+          `$ENV` is an object representing the environment variables as
+          set when the jq program started.
+
+          `env` outputs an object representing jq's current environment.
+
+          At the moment there is no builtin for setting environment
+          variables.
 
         examples:
+          - program: '$ENV.PAGER'
+            input: 'null'
+            output: ['"less"']
+
           - program: 'env.PAGER'
             input: 'null'
             output: ['"less"']

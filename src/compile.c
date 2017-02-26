@@ -5,6 +5,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "compile.h"
 #include "bytecode.h"
 #include "locfile.h"
@@ -997,6 +998,37 @@ static int count_cfunctions(block b) {
   return n;
 }
 
+#ifdef WIN32
+extern const char **environ;
+#endif
+
+static jv env = {JV_KIND_INVALID, 0, 0, 0, {0}};
+
+static void
+free_env(void)
+{
+  jv_free(env);
+}
+
+static jv
+make_env(void)
+{
+  if (jv_is_valid(env))
+    return jv_copy(env);
+  jv r = jv_object();
+  if (environ == NULL)
+    return r;
+  for (size_t i = 0; environ[i] != NULL; i++) {
+    const char *eq;
+
+    if ((eq = strchr(environ[i], '=')) == NULL)
+      r = jv_object_delete(r, jv_string(environ[i]));
+    else
+      r = jv_object_set(r, jv_string_sized(environ[i], eq - environ[i]), jv_string(eq + 1));
+  }
+  atexit(free_env);
+  return (env = jv_copy(r));
+}
 
 // Expands call instructions into a calling sequence
 static int expand_call_arglist(block* b) {
@@ -1004,7 +1036,10 @@ static int expand_call_arglist(block* b) {
   block ret = gen_noop();
   for (inst* curr; (curr = block_take(b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_BINDING) {
-      if (!curr->bound_by) {
+      if (!curr->bound_by && curr->op == LOADV && strcmp(curr->symbol, "ENV") == 0) {
+        curr->op = LOADK;
+        curr->imm.constant = make_env();
+      } else if (!curr->bound_by) {
         if (curr->symbol[0] == '*' && curr->symbol[1] >= '1' && curr->symbol[1] <= '3' && curr->symbol[2] == '\0')
           locfile_locate(curr->locfile, curr->source, "jq: error: break used outside labeled control structure");
         else if (curr->op == LOADV)

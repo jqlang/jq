@@ -1830,12 +1830,22 @@ jq \'walk( if type == "object" then with_entries( \.key |= sub( "^_+"; "") ) els
 .
 .IP "" 0
 .
-.SS "env"
-Outputs an object representing jq\'s environment\.
+.SS "$ENV, env"
+\fB$ENV\fR is an object representing the environment variables as set when the jq program started\.
+.
+.P
+\fBenv\fR outputs an object representing jq\'s current environment\.
+.
+.P
+At the moment there is no builtin for setting environment variables\.
 .
 .IP "" 4
 .
 .nf
+
+jq \'$ENV\.PAGER\'
+   null
+=> "less"
 
 jq \'env\.PAGER\'
    null
