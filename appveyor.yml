@@ -7,7 +7,7 @@ environment:
 
 clone_script:
   - bash -lc "git clone -q --branch=$APPVEYOR_REPO_BRANCH https://github.com/${APPVEYOR_REPO_NAME}.git $APPVEYOR_BUILD_FOLDER"
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git checkout -qf $APPVEYOR_REPO_COMMIT"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git checkout -qf $APPVEYOR_REPO_BRANCH"
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git submodule update --init --recursive"
 
 install:
