@@ -1002,16 +1002,8 @@ static int count_cfunctions(block b) {
 extern const char **environ;
 #endif
 
-static jv env = {JV_KIND_INVALID, 0, 0, 0, {0}};
-
-static void
-free_env(void)
-{
-  jv_free(env);
-}
-
 static jv
-make_env(void)
+make_env(jv env)
 {
   if (jv_is_valid(env))
     return jv_copy(env);
@@ -1026,19 +1018,21 @@ make_env(void)
     else
       r = jv_object_set(r, jv_string_sized(environ[i], eq - environ[i]), jv_string(eq + 1));
   }
-  atexit(free_env);
-  return (env = jv_copy(r));
+  return jv_copy(r);
 }
 
 // Expands call instructions into a calling sequence
-static int expand_call_arglist(block* b) {
+static int expand_call_arglist(block* b, jv args, jv *env) {
   int errors = 0;
   block ret = gen_noop();
   for (inst* curr; (curr = block_take(b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_BINDING) {
       if (!curr->bound_by && curr->op == LOADV && strcmp(curr->symbol, "ENV") == 0) {
         curr->op = LOADK;
-        curr->imm.constant = make_env();
+        *env = curr->imm.constant = make_env(*env);
+      } else if (!curr->bound_by && curr->op == LOADV && jv_object_has(jv_copy(args), jv_string(curr->symbol))) {
+        curr->op = LOADK;
+        curr->imm.constant = jv_object_get(jv_copy(args), jv_string(curr->symbol));
       } else if (!curr->bound_by) {
         if (curr->symbol[0] == '*' && curr->symbol[1] >= '1' && curr->symbol[1] <= '3' && curr->symbol[2] == '\0')
           locfile_locate(curr->locfile, curr->source, "jq: error: break used outside labeled control structure");
@@ -1096,7 +1090,7 @@ static int expand_call_arglist(block* b) {
           i->subfn = gen_noop();
           inst_free(i);
           // arguments should be pushed in reverse order, prepend them to prelude
-          errors += expand_call_arglist(&body);
+          errors += expand_call_arglist(&body, args, env);
           prelude = BLOCK(gen_subexp(body), prelude);
           actual_args++;
         }
@@ -1118,12 +1112,12 @@ static int expand_call_arglist(block* b) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block b, struct locfile* lf) {
+static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv *env) {
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
-  errors += expand_call_arglist(&b);
+  errors += expand_call_arglist(&b, args, env);
   b = BLOCK(b, gen_op_simple(RET));
   jv localnames = jv_array();
   for (inst* curr = b.first; curr; curr = curr->next) {
@@ -1186,7 +1180,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
-        errors += compile(subfn, curr->subfn, lf);
+        errors += compile(subfn, curr->subfn, lf, args, env);
         curr->subfn = gen_noop();
       }
     }
@@ -1251,7 +1245,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
   return errors;
 }
 
-int block_compile(block b, struct bytecode** out, struct locfile* lf) {
+int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
@@ -1261,7 +1255,10 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf) {
   bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
-  int nerrors = compile(bc, b, lf);
+  jv env = jv_invalid();
+  int nerrors = compile(bc, b, lf, args, &env);
+  jv_free(args);
+  jv_free(env);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {
     bytecode_free(bc);
