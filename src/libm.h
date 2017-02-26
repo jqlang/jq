@@ -159,7 +159,7 @@ LIBM_DDD(copysign)
 #else
 LIBM_DDD_NO(copysign)
 #endif
-#ifdef HAVE_DREM
+#if defined(HAVE_DREM) && !defined(WIN32)
 LIBM_DDD(drem)
 #else
 LIBM_DDD_NO(drem)
@@ -174,7 +174,7 @@ LIBM_DD(erfc)
 #else
 LIBM_DD_NO(erfc)
 #endif
-#ifdef HAVE_EXP10
+#if defined(HAVE_EXP10) && !defined(WIN32)
 LIBM_DD(exp10)
 #else
 LIBM_DD_NO(exp10)
@@ -259,7 +259,7 @@ LIBM_DDD(nexttoward)
 #else
 LIBM_DDD_NO(nexttoward)
 #endif
-#ifdef HAVE_POW10
+#if defined(HAVE_POW10) && !defined(WIN32)
 LIBM_DD(pow10)
 #else
 LIBM_DD_NO(pow10)
@@ -284,7 +284,7 @@ LIBM_DDD(scalbln)
 #else
 LIBM_DDD_NO(scalbln)
 #endif
-#ifdef HAVE_SIGNIFICAND
+#if defined(HAVE_SIGNIFICAND) && !defined(WIN32)
 LIBM_DD(significand)
 #else
 LIBM_DD_NO(significand)
