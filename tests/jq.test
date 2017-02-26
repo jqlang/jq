@@ -1408,4 +1408,16 @@ true
 {"a": {"b": [1, {"b": 3}]}}
 {"a": {"b": 1}}
 
+isempty(empty)
+null
+true
+
+isempty(range(3))
+null
+false
+
+isempty(1,error("foo"))
+null
+false
+
 
