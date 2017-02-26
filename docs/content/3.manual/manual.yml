@@ -2571,9 +2571,9 @@ sections:
       - title: "`isempty(exp)`"
         body: |
 
-          Returns true or false as the stream specified by `exp` is empty.
+          Returns true if `exp` produces no outputs, false otherwise.
 
-        example:
+        examples:
           - program: 'isempty(empty)'
             input: 'null'
             output: ['true']

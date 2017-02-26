@@ -1365,3 +1365,8 @@ isempty(empty)
 null
 true
 
+isempty(.)
+null
+false
+
+

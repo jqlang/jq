@@ -2853,6 +2853,21 @@ jq \'reduce \.[] as $n ([]; if $n%2==0 then empty else \. + [$n] end)\'
 .
 .IP "" 0
 .
+.SS "isempty(exp)"
+Returns true if \fBexp\fR produces no outputs, false otherwise\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'isempty(empty)\'
+   null
+=> true
+.
+.fi
+.
+.IP "" 0
+.
 .SS "limit(n; exp)"
 The \fBlimit\fR function extracts up to \fBn\fR outputs from \fBexp\fR\.
 .
