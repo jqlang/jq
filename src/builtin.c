@@ -1014,13 +1014,16 @@ static jv f_error(jq_state *jq, jv input, jv msg) {
 // FIXME Should autoconf check for this!
 #ifndef WIN32
 extern const char **environ;
+typedef const char ** environ_ptr;
+#else
+typedef char ** environ_ptr;
 #endif
 
 static jv f_env(jq_state *jq, jv input) {
   jv_free(input);
   jv env = jv_object();
   const char *var, *val;
-  for (const char **e = environ; *e != NULL; e++) {
+  for (environ_ptr e = environ; *e != NULL; e++) {
     var = e[0];
     val = strchr(e[0], '=');
     if (val == NULL)

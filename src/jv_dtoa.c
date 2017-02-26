@@ -2336,6 +2336,7 @@ jvp_strtod
 	ULong y, z;
 	BCinfo bc;
 	Bigint *bb=0, *bb1, *bd=0, *bd0, *bs=0, *delta=0;
+	(void)(test_scale); // Unused variable in some builds.
 #ifdef Avoid_Underflow
 	ULong Lsb, Lsb1;
 #endif
