@@ -217,6 +217,9 @@ sections:
         `value` will be treated as a string, so `--arg foo 123` will
         bind `$foo` to `"123"`.
 
+        Named arguments are also available to the jq program as
+        `$ARGS.named`.
+
       * `--argjson name JSON-text`:
 
         This option passes a JSON-encoded value to the jq program as a
@@ -238,6 +241,16 @@ sections:
         (This option is like `--slurpfile`, but when the file has just
         one text, then that is used, else an array of texts is used as
         in `--slurpfile`.)
+
+      * `--args`:
+
+        Remaining arguments are positional string arguments.  These are
+        available to the jq program as `$ARGS.positional[]`.
+
+      * `--jsonargs`:
+
+        Remaining arguments are positional JSON text arguments.  These
+        are available to the jq program as `$ARGS.positional[]`.
 
       * `--run-tests [filename]`:
 
