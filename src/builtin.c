@@ -1013,7 +1013,7 @@ static jv f_error(jq_state *jq, jv input, jv msg) {
 
 // FIXME Should autoconf check for this!
 #ifndef WIN32
-extern const char **environ;
+extern char **environ;
 #endif
 
 static jv f_env(jq_state *jq, jv input) {
