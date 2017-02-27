@@ -998,8 +998,8 @@ static int count_cfunctions(block b) {
   return n;
 }
 
-#ifdef WIN32
-extern const char **environ;
+#ifndef WIN32
+extern char **environ;
 #endif
 
 static jv
