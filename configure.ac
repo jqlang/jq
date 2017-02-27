@@ -256,7 +256,7 @@ AS_IF([test "x$with_oniguruma" != xno], [
           AC_MSG_NOTICE([Oniguruma was not found. Will use the packaged oniguruma.])
        ])
    ])
-   AS_IF([test "x$build_oniguruma" = xyes], [
+   AS_IF([test "x$build_oniguruma" = xyes -a -f "${srcdir}/modules/oniguruma/configure.ac" ], [
        onig_CFLAGS="-I${srcdir}/modules/oniguruma/src"
        onig_LDFLAGS="-L${srcdir}/modules/oniguruma/src -Wl,-rpath,${libdir}"
        AC_CONFIG_SUBDIRS([modules/oniguruma])
