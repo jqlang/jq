@@ -1020,7 +1020,7 @@ static jv f_env(jq_state *jq, jv input) {
   jv_free(input);
   jv env = jv_object();
   const char *var, *val;
-  for (const char **e = environ; *e != NULL; e++) {
+  for (char **e = environ; *e != NULL; e++) {
     var = e[0];
     val = strchr(e[0], '=');
     if (val == NULL)
