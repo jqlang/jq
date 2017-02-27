@@ -1578,7 +1578,7 @@ static const char* const jq_builtins =
 
 
 static block gen_builtin_list(block builtins) {
-  jv list = jv_array_append(block_list_funcs(builtins, 1), jv_string("builtins"));
+  jv list = jv_array_append(block_list_funcs(builtins, 1), jv_string("builtins/0"));
   return BLOCK(builtins, gen_function("builtins", gen_noop(), gen_const(list)));
 }
 
