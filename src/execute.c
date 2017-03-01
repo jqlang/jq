@@ -246,6 +246,28 @@ static void path_append(jq_state* jq, jv component, jv value_at_path) {
   }
 }
 
+/* For f_getpath() */
+jv
+_jq_path_append(jq_state *jq, jv v, jv p, jv value_at_path) {
+  if (jq->subexp_nest != 0 ||
+      jv_get_kind(jq->path) != JV_KIND_ARRAY ||
+      !jv_is_valid(value_at_path)) {
+    jv_free(v);
+    jv_free(p);
+    return value_at_path;
+  }
+  if (!jv_identical(v, jv_copy(jq->value_at_path))) {
+    jv_free(p);
+    return value_at_path;
+  }
+  if (jv_get_kind(p) == JV_KIND_ARRAY)
+    jq->path = jv_array_concat(jq->path, p);
+  else
+    jq->path = jv_array_append(jq->path, p);
+  jv_free(jq->value_at_path);
+  return jv_copy(jq->value_at_path = value_at_path);
+}
+
 uint16_t* stack_restore(jq_state *jq){
   while (!stack_pop_will_free(&jq->stk, jq->fork_top)) {
     if (stack_pop_will_free(&jq->stk, jq->stk_top)) {

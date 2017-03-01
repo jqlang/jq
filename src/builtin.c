@@ -1089,7 +1089,10 @@ static jv f_string_implode(jq_state *jq, jv a) {
 }
 
 static jv f_setpath(jq_state *jq, jv a, jv b, jv c) { return jv_setpath(a, b, c); }
-static jv f_getpath(jq_state *jq, jv a, jv b) { return jv_getpath(a, b); }
+extern jv _jq_path_append(jq_state *, jv, jv, jv);
+static jv f_getpath(jq_state *jq, jv a, jv b) {
+  return _jq_path_append(jq, a, b, jv_getpath(jv_copy(a), jv_copy(b)));
+}
 static jv f_delpaths(jq_state *jq, jv a, jv b) { return jv_delpaths(a, b); }
 static jv f_has(jq_state *jq, jv a, jv b) { return jv_has(a, b); }
 
