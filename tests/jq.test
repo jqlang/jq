@@ -842,6 +842,18 @@ def inc(x): x |= .+1; inc(.[].a)
 [{"a":1,"b":2},{"a":2,"b":4},{"a":7,"b":8}]
 [{"a":2,"b":2},{"a":3,"b":4},{"a":8,"b":8}]
 
+# #1358, getpath/1 should work in path expressions
+.[] | try (getpath(["a",0,"b"]) |= 5) catch .
+[null,{"b":0},{"a":0},{"a":null},{"a":[0,1]},{"a":{"b":1}},{"a":[{}]},{"a":[{"c":3}]}]
+{"a":[{"b":5}]}
+{"b":0,"a":[{"b":5}]}
+"Cannot index number with number"
+{"a":[{"b":5}]}
+"Cannot index number with string \"b\""
+"Cannot index object with number"
+{"a":[{"b":5}]}
+{"a":[{"c":3,"b":5}]}
+
 .[2][3] = 1
 [4]
 [4, null, [null, null, null, 1]]
