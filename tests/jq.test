@@ -383,6 +383,15 @@ del(.[2:4],.[0],.[-2:])
 [0,1,"a","b",4,5,6,7]
 [0,1,"a","b","c",4,5,6,7]
 
+# Slices at large offsets (issue #1108)
+#
+# This is written this way because [range(<large number>)] is
+# significantly slower under valgrind than .[<large number>] = value.
+#
+# We range down rather than up so that we have just one realloc.
+reduce range(70010;69999;-1) as $i ([]; .[$i] = $i)|.[69999:70003]
+null
+[null,70000,70001,70002]
 
 #
 # Variables
