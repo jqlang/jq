@@ -297,7 +297,7 @@ static jv jvp_array_slice(jv a, int start, int end) {
     return jv_array();
   }
 
-  if (a.offset + start > 1 << (sizeof(a.offset) * CHAR_BIT)) {
+  if (a.offset + start >= 1 << (sizeof(a.offset) * CHAR_BIT)) {
     jv r = jv_array_sized(end - start);
     for (int i = start; i < end; i++)
       r = jv_array_append(r, jv_array_get(jv_copy(a), i));

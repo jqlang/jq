@@ -389,9 +389,9 @@ del(.[2:4],.[0],.[-2:])
 # significantly slower under valgrind than .[<large number>] = value.
 #
 # We range down rather than up so that we have just one realloc.
-reduce range(70010;69999;-1) as $i ([]; .[$i] = $i)|.[69999:70003]
+reduce range(65540;65536;-1) as $i ([]; .[$i] = $i)|.[65536:]
 null
-[null,70000,70001,70002]
+[null,65537,65538,65539,65540]
 
 #
 # Variables
