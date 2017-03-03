@@ -55,6 +55,23 @@ script:
     - echo PATH=$PATH
     - which bison
     - make BISON_PKGDATADIR=$PWD/usr/share/bison src/parser.c || make src/parser.c
+    # Make dist!
+    #
+    # Make it first to fail the build early, before we test with
+    # valgrind.
+    - make dist
+    # Build and test the dist (without valgrind)
+    - |
+        (
+          tar xvf jq-`scripts/version`.tar.gz &&
+          cd jq-`scripts/version` &&
+          pwd &&
+          ./configure --disable-valgrind --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE &&
+          make BISON_PKGDATADIR=$PWD/usr/share/bison src/parser.c || make src/parser.c &&
+          make -j4 &&
+          make check -j4 || true
+        )
+    # Build and test the HEAD
     - make -j4
     - make check -j4
 
