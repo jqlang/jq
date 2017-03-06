@@ -2599,6 +2599,16 @@ sections:
             input: '[0,1,2,3,4,5]'
             output: ['[1,3,5]']
 
+      - title: "`isempty(exp)`"
+        body: |
+
+          Returns true if `exp` produces no outputs, false otherwise.
+
+        examples:
+          - program: 'isempty(empty)'
+            input: 'null'
+            output: ['true']
+
       - title: "`limit(n; exp)`"
         body: |
 
