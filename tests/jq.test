@@ -1382,4 +1382,9 @@ true
 {"a":null,"b":null}
 {"a":null,"b":"b"}
 
+# Regression test for #1368
+(.. | select(type == "object" and has("b") and (.b | type) == "array")|.b) |= .[0]
+{"a": {"b": [1, {"b": 3}]}}
+{"a": {"b": 1}}
+
 
