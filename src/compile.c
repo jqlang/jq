@@ -905,7 +905,7 @@ static block gen_wildvar_binding(block var, const char* name, block body) {
 }
 
 block gen_cond(block cond, block iftrue, block iffalse) {
-  return BLOCK(gen_op_simple(DUP), cond,
+  return BLOCK(gen_op_simple(DUP), BLOCK(gen_subexp(cond), gen_op_simple(POP)),
                gen_condbranch(BLOCK(gen_op_simple(POP), iftrue),
                               BLOCK(gen_op_simple(POP), iffalse)));
 }
