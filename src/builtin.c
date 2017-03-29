@@ -150,6 +150,41 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
 #undef LIBM_DDD
 #undef LIBM_DD
 
+#ifdef HAVE_FREXP
+static jv f_frexp(jq_state *jq, jv input) {
+  if (jv_get_kind(input) != JV_KIND_NUMBER) {
+    return type_error(input, "number required");
+  }
+  int exp;
+  double d = frexp(jv_number_value(input), &exp);
+  jv ret = JV_ARRAY(jv_number(d), jv_number(exp));
+  jv_free(input);
+  return ret;
+}
+#endif
+#ifdef HAVE_MODF
+static jv f_modf(jq_state *jq, jv input) {
+  if (jv_get_kind(input) != JV_KIND_NUMBER) {
+    return type_error(input, "number required");
+  }
+  double i;
+  jv ret = JV_ARRAY(jv_number(modf(jv_number_value(input), &i)));
+  jv_free(input);
+  return jv_array_append(ret, jv_number(i));
+}
+#endif
+#ifdef HAVE_LGAMMA_R
+static jv f_lgamma_r(jq_state *jq, jv input) {
+  if (jv_get_kind(input) != JV_KIND_NUMBER) {
+    return type_error(input, "number required");
+  }
+  int sign;
+  jv ret = JV_ARRAY(jv_number(lgamma_r(jv_number_value(input), &sign)));
+  jv_free(input);
+  return jv_array_append(ret, jv_number(sign));
+}
+#endif
+
 static jv f_negate(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_NUMBER) {
     return type_error(input, "cannot be negated");
@@ -1434,6 +1469,15 @@ static jv f_current_line(jq_state *jq, jv a) {
 
 static const struct cfunction function_list[] = {
 #include "libm.h"
+#ifdef HAVE_FREXP
+  {(cfunction_ptr)f_frexp,"frexp", 1},
+#endif
+#ifdef HAVE_MODF
+  {(cfunction_ptr)f_modf,"modf", 1},
+#endif
+#ifdef HAVE_LGAMMA_R
+  {(cfunction_ptr)f_lgamma_r,"lgamma_r", 1},
+#endif
   {(cfunction_ptr)f_plus, "_plus", 3},
   {(cfunction_ptr)f_negate, "_negate", 1},
   {(cfunction_ptr)f_minus, "_minus", 3},
@@ -1566,10 +1610,19 @@ static const char* const jq_builtins =
 #define LIBM_DD(name)
 #define LIBM_DDD(name)
 #define LIBM_DDDD(name)
-#define LIBM_DD_NO(name) "def " #name ": \"Error: " #name "() not found at build time\"|error;"
-#define LIBM_DDD_NO(name) "def " #name "(a;b): \"Error: " #name "() not found at build time\"|error;"
-#define LIBM_DDDD_NO(name) "def " #name "(a;b;c): \"Error: " #name "() not found at build time\"|error;"
+#define LIBM_DD_NO(name) "def " #name ": \"Error: " #name "/0 not found at build time\"|error;"
+#define LIBM_DDD_NO(name) "def " #name "(a;b): \"Error: " #name "/2 not found at build time\"|error;"
+#define LIBM_DDDD_NO(name) "def " #name "(a;b;c): \"Error: " #name "/3 not found at build time\"|error;"
 #include "libm.h"
+#ifndef HAVE_FREXP
+  "def frexp: \"Error: frexp/0 not found found at build time\"|error;"
+#endif
+#ifndef HAVE_MODF
+  "def modf: \"Error: modf/0 not found found at build time\"|error;"
+#endif
+#ifndef HAVE_LGAMMA_R
+  "def lgamma_r: \"Error: lgamma_r/0 not found found at build time\"|error;"
+#endif
 ;
 
 #undef LIBM_DDDD_NO
