@@ -214,11 +214,6 @@ LIBM_DDD(fmod)
 #else
 LIBM_DDD_NO(fmod)
 #endif
-#ifdef HAVE_FREXP
-LIBM_DDD(frexp)
-#else
-LIBM_DDD_NO(frexp)
-#endif
 #ifdef HAVE_GAMMA
 LIBM_DD(gamma)
 #else
@@ -238,11 +233,6 @@ LIBM_DD_NO(log1p)
 LIBM_DD(logb)
 #else
 LIBM_DD_NO(logb)
-#endif
-#ifdef HAVE_MODF
-LIBM_DDD(modf)
-#else
-LIBM_DDD_NO(modf)
 #endif
 #ifdef HAVE_NEARBYINT
 LIBM_DD(nearbyint)
