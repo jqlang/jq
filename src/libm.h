@@ -144,10 +144,10 @@ LIBM_DD(y1)
 LIBM_DD_NO(y1)
 #endif
 #ifdef HAVE_JN
-LIBM_DID(jn)
+LIBM_DDD(jn)
 #endif
 #ifdef HAVE_YN
-LIBM_DID(yn)
+LIBM_DDD(yn)
 #endif
 #ifdef HAVE_CEIL
 LIBM_DD(ceil)

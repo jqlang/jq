@@ -179,6 +179,7 @@ AC_CHECK_MATH_FUNC(gamma,[.5])
 AC_CHECK_MATH_FUNC(hypot, [.5,.5])
 AC_CHECK_MATH_FUNC(j0, [.5])
 AC_CHECK_MATH_FUNC(j1, [.5])
+AC_CHECK_MATH_FUNC(jn, [1,.5])
 AC_CHECK_MATH_FUNC(ldexp,[.5,2])
 AC_CHECK_MATH_FUNC(lgamma,[.5])
 AC_CHECK_MATH_FUNC(log10, [.5])
@@ -208,6 +209,7 @@ AC_CHECK_MATH_FUNC(tgamma, [.5])
 AC_CHECK_MATH_FUNC(trunc,[.5])
 AC_CHECK_MATH_FUNC(y0, [.5])
 AC_CHECK_MATH_FUNC(y1, [.5])
+AC_CHECK_MATH_FUNC(yn, [1,.5])
 
 dnl Thread local storage
 have___thread=no
