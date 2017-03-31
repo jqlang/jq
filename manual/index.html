@@ -984,7 +984,7 @@ Array construction: <code>[]</code>
                     
                   </h3>
                   
-<p>As in JSON, <code>[]</code> is used to construct arrays, as in <code>[1,2,3]</code>. The elements of the arrays can be any jq expression. All of the results produced by all of the expressions are collected into one big array. You can use it to construct an array out of a known quantity of values (as in <code>[.foo, .bar, .baz]</code>) or to “collect” all the results of a filter into an array (as in <code>[.items[].name]</code>)</p>
+<p>As in JSON, <code>[]</code> is used to construct arrays, as in <code>[1,2,3]</code>. The elements of the arrays can be any jq expression, including a pipeline. All of the results produced by all of the expressions are collected into one big array. You can use it to construct an array out of a known quantity of values (as in <code>[.foo, .bar, .baz]</code>) or to “collect” all the results of a filter into an array (as in <code>[.items[].name]</code>)</p>
 
 <p>Once you understand the “,” operator, you can look at jq’s array syntax in a different light: the expression <code>[1,2,3]</code> is not using a built-in syntax for comma-separated arrays, but is instead applying the <code>[]</code> operator (collect results) to the expression 1,2,3 (which produces three different results).</p>
 
@@ -996,7 +996,7 @@ Array construction: <code>[]</code>
                       
                       <a data-toggle="collapse" href="#example10">
                         <i class="glyphicon glyphicon-chevron-right"></i>
-                        Example
+                        Examples
                       </a>
                       <div id="example10" class="manual-example collapse">
                         
@@ -1010,6 +1010,20 @@ Array construction: <code>[]</code>
                                   <th>Output</th>
                                 
                                 <td>[&quot;stedolan&quot;, &quot;jq&quot;, &quot;wikiflow&quot;]</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '[ .[] | . * 2]'</td></tr>
+                            <tr><th>Input</th><td>[1, 2, 3]</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>[2, 4, 6]</td>
                               </tr>
                             
                           </table>
