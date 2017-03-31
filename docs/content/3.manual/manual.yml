@@ -507,11 +507,11 @@ sections:
 
           As in JSON, `[]` is used to construct arrays, as in
           `[1,2,3]`. The elements of the arrays can be any jq
-          expression. All of the results produced by all of the
-          expressions are collected into one big array. You can use it
-          to construct an array out of a known quantity of values (as
-          in `[.foo, .bar, .baz]`) or to "collect" all the results of a
-          filter into an array (as in `[.items[].name]`)
+          expression, including a pipeline. All of the results produced
+          by all of the expressions are collected into one big array.
+          You can use it to construct an array out of a known quantity
+          of values (as in `[.foo, .bar, .baz]`) or to "collect" all the
+          results of a filter into an array (as in `[.items[].name]`)
 
           Once you understand the "," operator, you can look at jq's array
           syntax in a different light: the expression `[1,2,3]` is not using a
@@ -527,6 +527,10 @@ sections:
           - program: "[.user, .projects[]]"
             input: '{"user":"stedolan", "projects": ["jq", "wikiflow"]}'
             output: ['["stedolan", "jq", "wikiflow"]']
+          - program: "[ .[] | . * 2]"
+            input: '[1, 2, 3]'
+            output: ['[2, 4, 6]']
+
       - title: "Object Construction: `{}`"
         body: |
 
