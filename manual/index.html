@@ -164,7 +164,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
 <li>
 <p><code>--seq</code>:</p>
 
-<p>Use the <code>application/json-seq</code> MIME type scheme for separating JSON texts in jq’s input and output. This means that an ASCII RS (record separator) character is printed before each value on output and an ASCII LF (line feed) is printed after every output. Input JSON texts that fail to parse are ignored (but warned about), discarding all subsequent input until the next RS. This more also parses the output of jq without the <code>--seq</code> option.</p>
+<p>Use the <code>application/json-seq</code> MIME type scheme for separating JSON texts in jq’s input and output. This means that an ASCII RS (record separator) character is printed before each value on output and an ASCII LF (line feed) is printed after every output. Input JSON texts that fail to parse are ignored (but warned about), discarding all subsequent input until the next RS. This mode also parses the output of jq without the <code>--seq</code> option.</p>
 </li>
 
 <li>
@@ -263,12 +263,16 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
 <p><code>-e</code> / <code>--exit-status</code>:</p>
 
 <p>Sets the exit status of jq to 0 if the last output values was neither <code>false</code> nor <code>null</code>, 1 if the last output value was either <code>false</code> or <code>null</code>, or 4 if no valid result was ever produced. Normally jq exits with 2 if there was any usage problem or system error, 3 if there was a jq program compile error, or 0 if the jq program ran.</p>
+
+<p>Another way to set the exit status is with the <code>halt_error</code> builtin function.</p>
 </li>
 
 <li>
 <p><code>--arg name value</code>:</p>
 
 <p>This option passes a value to the jq program as a predefined variable. If you run jq with <code>--arg foo bar</code>, then <code>$foo</code> is available in the program and has the value <code>&quot;bar&quot;</code>. Note that <code>value</code> will be treated as a string, so <code>--arg foo 123</code> will bind <code>$foo</code> to <code>&quot;123&quot;</code>.</p>
+
+<p>Named arguments are also available to the jq program as <code>$ARGS.named</code>.</p>
 </li>
 
 <li>
@@ -292,6 +296,18 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
 </li>
 
 <li>
+<p><code>--args</code>:</p>
+
+<p>Remaining arguments are positional string arguments. These are available to the jq program as <code>$ARGS.positional[]</code>.</p>
+</li>
+
+<li>
+<p><code>--jsonargs</code>:</p>
+
+<p>Remaining arguments are positional JSON text arguments. These are available to the jq program as <code>$ARGS.positional[]</code>.</p>
+</li>
+
+<li>
 <p><code>--run-tests [filename]</code>:</p>
 
 <p>Runs the tests in the given file or standard input. This must be the last option given and does not honor all preceding options. The input consists of comment lines, empty lines, and program lines followed by one input line, as many lines of output as are expected (one per output), and a terminating empty line. Compilation failure tests start with a line containing only “%%FAIL”, then a line containing the program to compile, then a line containing an error message to compare to the actual.</p>
@@ -307,15 +323,15 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
               <h2>Basic filters</h2>
               
               
-                <section id=".">
+                <section id="Identity:.">
                   <h3>
                     
-<code>.</code>
+Identity: <code>.</code>
 
                     
                   </h3>
                   
-<p>The absolute simplest (and least interesting) filter is <code>.</code>. This is a filter that takes its input and produces it unchanged as output.</p>
+<p>The absolute simplest filter is <code>.</code> . This is a filter that takes its input and produces it unchanged as output. That is, this is the identity operator.</p>
 
 <p>Since jq by default pretty-prints all output, this trivial program can be a useful way of formatting JSON output from, say, <code>curl</code>.</p>
 
@@ -348,19 +364,23 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
                   
                 </section>
               
-                <section id=".foo,.foo.bar">
+                <section id="ObjectIdentifier-Index:.foo,.foo.bar">
                   <h3>
                     
-<code>.foo</code>, <code>.foo.bar</code>
+Object Identifier-Index: <code>.foo</code>, <code>.foo.bar</code>
 
                     
                   </h3>
                   
 <p>The simplest <em>useful</em> filter is <code>.foo</code>. When given a JSON object (aka dictionary or hash) as input, it produces the value at the key “foo”, or null if there’s none present.</p>
 
-<p>If the key contains special characters, you need to surround it with double quotes like this: <code>.&quot;foo$&quot;</code>.</p>
-
 <p>A filter of the form <code>.foo.bar</code> is equivalent to <code>.foo|.bar</code>.</p>
+
+<p>This syntax only works for simple, identifier-like keys, that is, keys that are all made of alphanumeric characters and underscore, and which do not start with a digit.</p>
+
+<p>If the key contains special characters, you need to surround it with double quotes like this: <code>.&quot;foo$&quot;</code>, or else <code>.[&quot;foo$&quot;]</code>.</p>
+
+<p>For example <code>.[&quot;foo::bar&quot;]</code> and <code>.[&quot;foo.bar&quot;]</code> work while <code>.foo::bar</code> does not, and <code>.foo.bar</code> means <code>.[&quot;foo&quot;].[&quot;bar&quot;]</code>.</p>
 
 
                   
@@ -419,10 +439,10 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
                   
                 </section>
               
-                <section id=".foo?">
+                <section id="OptionalObjectIdentifier-Index:.foo?">
                   <h3>
                     
-<code>.foo?</code>
+Optional Object Identifier-Index: <code>.foo?</code>
 
                     
                   </h3>
@@ -500,23 +520,31 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
                   
                 </section>
               
-                <section id=".[<string>],.[2],.[10:15]">
+                <section id="GenericObjectIndex:.[<string>]">
                   <h3>
                     
-<code>.[&lt;string&gt;]</code>, <code>.[2]</code>, <code>.[10:15]</code>
+Generic Object Index: <code>.[&lt;string&gt;]</code>
 
                     
                   </h3>
                   
-<p>You can also look up fields of an object using syntax like <code>.[&quot;foo&quot;]</code> (.foo above is a shorthand version of this). This one works for arrays as well, if the key is an integer. Arrays are zero-based (like javascript), so <code>.[2]</code> returns the third element of the array.</p>
+<p>You can also look up fields of an object using syntax like <code>.[&quot;foo&quot;]</code> (.foo above is a shorthand version of this, but only for identifier-like strings).</p>
 
-<p>The <code>.[10:15]</code> syntax can be used to return a subarray of an array or substring of a string. The array returned by <code>.[10:15]</code> will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive). Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array).</p>
 
-<p>The <code>.[2]</code> syntax can be used to return the element at the given index. Negative indices are allowed, with -1 referring to the last element, -2 referring to the next to last element, and so on.</p>
+                  
+                </section>
+              
+                <section id="ArrayIndex:.[2]">
+                  <h3>
+                    
+Array Index: <code>.[2]</code>
 
-<p>The <code>.foo</code> syntax only works for simply keys i.e. keys that are all alphanumeric characters. <code>.[&lt;string&gt;]</code> works with keys that contain special characters such as colons and dots. For example <code>.[&quot;foo::bar&quot;]</code> and <code>.[&quot;foo.bar&quot;]</code> work while <code>.foo::bar</code> and <code>.foo.bar</code> would not.</p>
+                    
+                  </h3>
+                  
+<p>When the index value is an integer, <code>.[&lt;value&gt;]</code> can index arrays. Arrays are zero-based, so <code>.[2]</code> returns the third element.</p>
 
-<p>The <code>?</code> “operator” can also be used with the slice operator, as in <code>.[10:15]?</code>, which outputs values where the inputs are slice-able.</p>
+<p>Negative indices are allowed, with -1 referring to the last element, -2 referring to the next to last element, and so on.</p>
 
 
                   
@@ -555,6 +583,45 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
                               </tr>
                             
                           </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '.[-2]'</td></tr>
+                            <tr><th>Input</th><td>[1,2,3]</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>2</td>
+                              </tr>
+                            
+                          </table>
+                        
+                      </div>
+                    </div>
+                  
+                </section>
+              
+                <section id="Array/StringSlice:.[10:15]">
+                  <h3>
+                    
+Array/String Slice: <code>.[10:15]</code>
+
+                    
+                  </h3>
+                  
+<p>The <code>.[10:15]</code> syntax can be used to return a subarray of an array or substring of a string. The array returned by <code>.[10:15]</code> will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive). Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array).</p>
+
+
+                  
+                    <div>
+                      
+                      <a data-toggle="collapse" href="#example5">
+                        <i class="glyphicon glyphicon-chevron-right"></i>
+                        Examples
+                      </a>
+                      <div id="example5" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[2:4]'</td></tr>
@@ -612,29 +679,15 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
                             
                           </table>
                         
-                          <table>
-                            <tr><th></th><td class="jqprogram">jq '.[-2]'</td></tr>
-                            <tr><th>Input</th><td>[1,2,3]</td></tr>
-                            
-                            
-                              <tr>
-                                
-                                  <th>Output</th>
-                                
-                                <td>2</td>
-                              </tr>
-                            
-                          </table>
-                        
                       </div>
                     </div>
                   
                 </section>
               
-                <section id=".[]">
+                <section id="Array/ObjectValueIterator:.[]">
                   <h3>
                     
-<code>.[]</code>
+Array/Object Value Iterator: <code>.[]</code>
 
                     
                   </h3>
@@ -647,11 +700,11 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example5">
+                      <a data-toggle="collapse" href="#example6">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example5" class="manual-example collapse">
+                      <div id="example6" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[]'</td></tr>
@@ -726,25 +779,26 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
                   
                 </section>
               
-                <section id=",">
+                <section id="Comma:,">
                   <h3>
                     
-<code>,</code>
+Comma: <code>,</code>
 
                     
                   </h3>
                   
-<p>If two filters are separated by a comma, then the input will be fed into both and there will be multiple outputs: first, all of the outputs produced by the left expression, and then all of the outputs produced by the right. For instance, filter <code>.foo, .bar</code>, produces both the “foo” fields and “bar” fields as separate outputs.</p>
+<p>If two filters are separated by a comma, then the same input will be fed into both and the two filters’ output value streams will be concatenated in order: first, all of the outputs produced by the left expression, and then all of the outputs produced by the right. For instance, filter <code>.foo,
+.bar</code>, produces both the “foo” fields and “bar” fields as separate outputs.</p>
 
 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example6">
+                      <a data-toggle="collapse" href="#example7">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example6" class="manual-example collapse">
+                      <div id="example7" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.foo, .bar'</td></tr>
@@ -821,10 +875,10 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
                   
                 </section>
               
-                <section id="|">
+                <section id="Pipe:|">
                   <h3>
                     
-<code>|</code>
+Pipe: <code>|</code>
 
                     
                   </h3>
@@ -833,15 +887,19 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
 
 <p>If the one on the left produces multiple results, the one on the right will be run for each of those results. So, the expression <code>.[] | .foo</code> retrieves the “foo” field of each element of the input array.</p>
 
+<p>Note that <code>.a.b.c</code> is the same as <code>.a | .b | .c</code>.</p>
+
+<p>Note too that <code>.</code> is the input value at the particular stage in a “pipeline”, specifically: where the <code>.</code> expression appears. Thus <code>.a | . | .b</code> is the same as <code>.a.b</code>, as the <code>.</code> in the middle refers to whatever value <code>.a</code> produced.</p>
+
 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example7">
+                      <a data-toggle="collapse" href="#example8">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example7" class="manual-example collapse">
+                      <div id="example8" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[] | .name'</td></tr>
@@ -869,6 +927,45 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
                   
                 </section>
               
+                <section id="Parenthesis">
+                  <h3>
+                    
+Parenthesis
+
+                    
+                  </h3>
+                  
+<p>Parenthesis work as a grouping operator just as in any typical programming language.</p>
+
+
+                  
+                    <div>
+                      
+                      <a data-toggle="collapse" href="#example9">
+                        <i class="glyphicon glyphicon-chevron-right"></i>
+                        Example
+                      </a>
+                      <div id="example9" class="manual-example collapse">
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '(. + 2) * 5'</td></tr>
+                            <tr><th>Input</th><td>1</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>15</td>
+                              </tr>
+                            
+                          </table>
+                        
+                      </div>
+                    </div>
+                  
+                </section>
+              
             </section>
           
             <section id="TypesandValues">
@@ -879,10 +976,10 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
 <p>Booleans, null, strings and numbers are written the same way as in javascript. Just like everything else in jq, these simple values take an input and produce an output - <code>42</code> is a valid jq expression that takes an input, ignores it, and returns 42 instead.</p>
 
               
-                <section id="Arrayconstruction-[]">
+                <section id="Arrayconstruction:[]">
                   <h3>
                     
-Array construction - <code>[]</code>
+Array construction: <code>[]</code>
 
                     
                   </h3>
@@ -897,11 +994,11 @@ Array construction - <code>[]</code>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example8">
+                      <a data-toggle="collapse" href="#example10">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example8" class="manual-example collapse">
+                      <div id="example10" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[.user, .projects[]]'</td></tr>
@@ -922,25 +1019,27 @@ Array construction - <code>[]</code>
                   
                 </section>
               
-                <section id="Objects-{}">
+                <section id="ObjectConstruction:{}">
                   <h3>
                     
-Objects - <code>{}</code>
+Object Construction: <code>{}</code>
 
                     
                   </h3>
                   
 <p>Like JSON, <code>{}</code> is for constructing objects (aka dictionaries or hashes), as in: <code>{&quot;a&quot;: 42, &quot;b&quot;: 17}</code>.</p>
 
-<p>If the keys are “sensible” (all alphabetic characters), then the quotes can be left off. The value can be any expression (although you may need to wrap it in parentheses if it’s a complicated one), which gets applied to the {} expression’s input (remember, all filters have an input and an output).</p>
+<p>If the keys are “identifier-like”, then the quotes can be left off, as in <code>{a:42, b:17}</code>. Keys generated by expressions need to be parenthesized, e.g., <code>{(&quot;a&quot;+&quot;b&quot;):59}</code>.</p>
+
+<p>The value can be any expression (although you may need to wrap it in parentheses if it’s a complicated one), which gets applied to the {} expression’s input (remember, all filters have an input and an output).</p>
 
 <pre><code>{foo: .bar}</code></pre>
 
-<p>will produce the JSON object <code>{&quot;foo&quot;: 42}</code> if given the JSON object <code>{&quot;bar&quot;:42, &quot;baz&quot;:43}</code>. You can use this to select particular fields of an object: if the input is an object with “user”, “title”, “id”, and “content” fields and you just want “user” and “title”, you can write</p>
+<p>will produce the JSON object <code>{&quot;foo&quot;: 42}</code> if given the JSON object <code>{&quot;bar&quot;:42, &quot;baz&quot;:43}</code> as its input. You can use this to select particular fields of an object: if the input is an object with “user”, “title”, “id”, and “content” fields and you just want “user” and “title”, you can write</p>
 
 <pre><code>{user: .user, title: .title}</code></pre>
 
-<p>Because that’s so common, there’s a shortcut syntax: <code>{user, title}</code>.</p>
+<p>Because that is so common, there’s a shortcut syntax for it: <code>{user, title}</code>.</p>
 
 <p>If one of the expressions produces multiple results, multiple dictionaries will be produced. If the input’s</p>
 
@@ -967,11 +1066,11 @@ Objects - <code>{}</code>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example9">
+                      <a data-toggle="collapse" href="#example11">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example9" class="manual-example collapse">
+                      <div id="example11" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '{user, title: .titles[]}'</td></tr>
@@ -1013,6 +1112,47 @@ Objects - <code>{}</code>
                   
                 </section>
               
+                <section id="RecursiveDescent:..">
+                  <h3>
+                    
+Recursive Descent: <code>..</code>
+
+                    
+                  </h3>
+                  
+<p>Recursively descends <code>.</code>, producing every value. This is the same as the zero-argument <code>recurse</code> builtin (see below). This is intended to resemble the XPath <code>//</code> operator. Note that <code>..a</code> does not work; use <code>..|.a</code> instead. In the example below we use <code>..|.a?</code> to find all the values of object keys “a” in any object found “below” <code>.</code>.</p>
+
+<p>This is particularly useful in conjunction with <code>path(EXP)</code> (also see below) and the <code>?</code> operator.</p>
+
+
+                  
+                    <div>
+                      
+                      <a data-toggle="collapse" href="#example12">
+                        <i class="glyphicon glyphicon-chevron-right"></i>
+                        Example
+                      </a>
+                      <div id="example12" class="manual-example collapse">
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '..|.a?'</td></tr>
+                            <tr><th>Input</th><td>[[{&quot;a&quot;:1}]]</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>1</td>
+                              </tr>
+                            
+                          </table>
+                        
+                      </div>
+                    </div>
+                  
+                </section>
+              
             </section>
           
             <section id="Builtinoperatorsandfunctions">
@@ -1021,10 +1161,10 @@ Objects - <code>{}</code>
 <p>Some jq operator (for instance, <code>+</code>) do different things depending on the type of their arguments (arrays, numbers, etc.). However, jq never does implicit type conversions. If you try to add a string to an object you’ll get an error message and no result.</p>
 
               
-                <section id="Addition-+">
+                <section id="Addition:+">
                   <h3>
                     
-Addition - <code>+</code>
+Addition: <code>+</code>
 
                     
                   </h3>
@@ -1055,11 +1195,11 @@ Addition - <code>+</code>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example10">
+                      <a data-toggle="collapse" href="#example13">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example10" class="manual-example collapse">
+                      <div id="example13" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.a + 1'</td></tr>
@@ -1136,10 +1276,10 @@ Addition - <code>+</code>
                   
                 </section>
               
-                <section id="Subtraction--">
+                <section id="Subtraction:-">
                   <h3>
                     
-Subtraction - <code>-</code>
+Subtraction: <code>-</code>
 
                     
                   </h3>
@@ -1150,11 +1290,11 @@ Subtraction - <code>-</code>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example11">
+                      <a data-toggle="collapse" href="#example14">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example11" class="manual-example collapse">
+                      <div id="example14" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '4 - .a'</td></tr>
@@ -1189,10 +1329,10 @@ Subtraction - <code>-</code>
                   
                 </section>
               
-                <section id="Multiplication,division,modulo-*,/,and%">
+                <section id="Multiplication,division,modulo:*,/,and%">
                   <h3>
                     
-Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</code>
+Multiplication, division, modulo: <code>*</code>, <code>/</code>, and <code>%</code>
 
                     
                   </h3>
@@ -1209,11 +1349,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example12">
+                      <a data-toggle="collapse" href="#example15">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example12" class="manual-example collapse">
+                      <div id="example15" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '10 / . * 3'</td></tr>
@@ -1315,11 +1455,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example13">
+                      <a data-toggle="collapse" href="#example16">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example13" class="manual-example collapse">
+                      <div id="example16" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[] | length'</td></tr>
@@ -1375,11 +1515,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example14">
+                      <a data-toggle="collapse" href="#example17">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example14" class="manual-example collapse">
+                      <div id="example17" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'utf8bytelength'</td></tr>
@@ -1420,11 +1560,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example15">
+                      <a data-toggle="collapse" href="#example18">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example15" class="manual-example collapse">
+                      <div id="example18" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'keys'</td></tr>
@@ -1475,11 +1615,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example16">
+                      <a data-toggle="collapse" href="#example19">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example16" class="manual-example collapse">
+                      <div id="example19" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'map(has(&quot;foo&quot;))'</td></tr>
@@ -1522,17 +1662,17 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                     
                   </h3>
                   
-<p>The builtin function <code>in</code> returns the input key is in the given object, or the input index corresponds to an element in the given array. It is, essentially, an inversed version of <code>has</code>.</p>
+<p>The builtin function <code>in</code> returns whether or not the input key is in the given object, or the input index corresponds to an element in the given array. It is, essentially, an inversed version of <code>has</code>.</p>
 
 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example17">
+                      <a data-toggle="collapse" href="#example20">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example17" class="manual-example collapse">
+                      <div id="example20" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[] | in({&quot;foo&quot;: 42})'</td></tr>
@@ -1582,7 +1722,7 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                     
                   </h3>
                   
-<p>For any filter <code>x</code>, <code>map(x)</code> will run that filter for each element of the input array, and produce the outputs a new array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
+<p>For any filter <code>x</code>, <code>map(x)</code> will run that filter for each element of the input array, and return the outputs in a new array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
 
 <p>Similarly, <code>map_values(x)</code> will run that filter for each element, but it will return an object when an object is passed.</p>
 
@@ -1592,11 +1732,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example18">
+                      <a data-toggle="collapse" href="#example21">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example18" class="manual-example collapse">
+                      <div id="example21" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'map(.+1)'</td></tr>
@@ -1639,7 +1779,7 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                     
                   </h3>
                   
-<p>Outputs array representations of the given path expression in <code>.</code>. The outputs are arrays of strings (keys in objects0 and/or numbers (array indices.</p>
+<p>Outputs array representations of the given path expression in <code>.</code>. The outputs are arrays of strings (object keys) and/or numbers (array indices).</p>
 
 <p>Path expressions are jq expressions like <code>.a</code>, but also <code>.[]</code>. There are two types of path expressions: ones that can match exactly, and ones that cannot. For example, <code>.a.b.c</code> is an exact match path expression, while <code>.a[].b</code> is not.</p>
 
@@ -1653,11 +1793,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example19">
+                      <a data-toggle="collapse" href="#example22">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example19" class="manual-example collapse">
+                      <div id="example22" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'path(.a[0].b)'</td></tr>
@@ -1706,11 +1846,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example20">
+                      <a data-toggle="collapse" href="#example23">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example20" class="manual-example collapse">
+                      <div id="example23" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'del(.foo)'</td></tr>
@@ -1759,11 +1899,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example21">
+                      <a data-toggle="collapse" href="#example24">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example21" class="manual-example collapse">
+                      <div id="example24" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'getpath([&quot;a&quot;,&quot;b&quot;])'</td></tr>
@@ -1812,11 +1952,11 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example22">
+                      <a data-toggle="collapse" href="#example25">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example22" class="manual-example collapse">
+                      <div id="example25" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'setpath([&quot;a&quot;,&quot;b&quot;]; 1)'</td></tr>
@@ -1865,6 +2005,45 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                   
                 </section>
               
+                <section id="delpaths(PATHS)">
+                  <h3>
+                    
+<code>delpaths(PATHS)</code>
+
+                    
+                  </h3>
+                  
+<p>The builtin function <code>delpaths</code> sets the <code>PATHS</code> in <code>.</code>. <code>PATHS</code> must be an array of paths, where each path is an array of strings and numbers.</p>
+
+
+                  
+                    <div>
+                      
+                      <a data-toggle="collapse" href="#example26">
+                        <i class="glyphicon glyphicon-chevron-right"></i>
+                        Example
+                      </a>
+                      <div id="example26" class="manual-example collapse">
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq 'delpaths([[&quot;a&quot;,&quot;b&quot;]])'</td></tr>
+                            <tr><th>Input</th><td>{&quot;a&quot;:{&quot;b&quot;:1},&quot;x&quot;:{&quot;y&quot;:2}}</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>{&quot;a&quot;:{},&quot;x&quot;:{&quot;y&quot;:2}}</td>
+                              </tr>
+                            
+                          </table>
+                        
+                      </div>
+                    </div>
+                  
+                </section>
+              
                 <section id="to_entries,from_entries,with_entries">
                   <h3>
                     
@@ -1882,11 +2061,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example23">
+                      <a data-toggle="collapse" href="#example27">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example23" class="manual-example collapse">
+                      <div id="example27" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'to_entries'</td></tr>
@@ -1951,11 +2130,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example24">
+                      <a data-toggle="collapse" href="#example28">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example24" class="manual-example collapse">
+                      <div id="example28" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'map(select(. &gt;= 2))'</td></tr>
@@ -2004,11 +2183,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example25">
+                      <a data-toggle="collapse" href="#example29">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example25" class="manual-example collapse">
+                      <div id="example29" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[]|numbers'</td></tr>
@@ -2045,11 +2224,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example26">
+                      <a data-toggle="collapse" href="#example30">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example26" class="manual-example collapse">
+                      <div id="example30" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '1, empty, 2'</td></tr>
@@ -2099,7 +2278,39 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                     
                   </h3>
                   
-<p>Produces an error, just like <code>.a</code> applied to values other than null and objects would, but with the given message as the error’s value.</p>
+<p>Produces an error, just like <code>.a</code> applied to values other than null and objects would, but with the given message as the error’s value. Errors can be caught with try/catch; see below.</p>
+
+
+                  
+                </section>
+              
+                <section id="halt">
+                  <h3>
+                    
+<code>halt</code>
+
+                    
+                  </h3>
+                  
+<p>Stops the jq program with no further outputs. jq will exit with exit status <code>0</code>.</p>
+
+
+                  
+                </section>
+              
+                <section id="halt_error,halt_error(exit_code)">
+                  <h3>
+                    
+<code>halt_error</code>, <code>halt_error(exit_code)</code>
+
+                    
+                  </h3>
+                  
+<p>Stops the jq program with no further outputs. The input will be printed on <code>stderr</code> as raw output (i.e., strings will not have double quotes) with no decoration, not even a newline.</p>
+
+<p>The given <code>exit_code</code> (defaulting to <code>5</code>) will be jq’s exit status.</p>
+
+<p>For example, <code>&quot;Error: somthing went wrong\n&quot;|halt_error(1)</code>.</p>
 
 
                   
@@ -2119,11 +2330,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example27">
+                      <a data-toggle="collapse" href="#example31">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example27" class="manual-example collapse">
+                      <div id="example31" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'try error(&quot;\($__loc__)&quot;) catch .'</td></tr>
@@ -2162,11 +2373,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example28">
+                      <a data-toggle="collapse" href="#example32">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example28" class="manual-example collapse">
+                      <div id="example32" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[paths]'</td></tr>
@@ -2217,11 +2428,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example29">
+                      <a data-toggle="collapse" href="#example33">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example29" class="manual-example collapse">
+                      <div id="example33" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'add'</td></tr>
@@ -2290,11 +2501,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example30">
+                      <a data-toggle="collapse" href="#example34">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example30" class="manual-example collapse">
+                      <div id="example34" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'any'</td></tr>
@@ -2363,11 +2574,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example31">
+                      <a data-toggle="collapse" href="#example35">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example31" class="manual-example collapse">
+                      <div id="example35" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'all'</td></tr>
@@ -2432,11 +2643,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example32">
+                      <a data-toggle="collapse" href="#example36">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example32" class="manual-example collapse">
+                      <div id="example36" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'flatten'</td></tr>
@@ -2519,11 +2730,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example33">
+                      <a data-toggle="collapse" href="#example37">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example33" class="manual-example collapse">
+                      <div id="example37" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'range(2;4)'</td></tr>
@@ -2635,11 +2846,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example34">
+                      <a data-toggle="collapse" href="#example38">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example34" class="manual-example collapse">
+                      <div id="example38" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'floor'</td></tr>
@@ -2674,11 +2885,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example35">
+                      <a data-toggle="collapse" href="#example39">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example35" class="manual-example collapse">
+                      <div id="example39" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'sqrt'</td></tr>
@@ -2713,11 +2924,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example36">
+                      <a data-toggle="collapse" href="#example40">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example36" class="manual-example collapse">
+                      <div id="example40" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[] | tonumber'</td></tr>
@@ -2759,11 +2970,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example37">
+                      <a data-toggle="collapse" href="#example41">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example37" class="manual-example collapse">
+                      <div id="example41" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[] | tostring'</td></tr>
@@ -2812,11 +3023,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example38">
+                      <a data-toggle="collapse" href="#example42">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example38" class="manual-example collapse">
+                      <div id="example42" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'map(type)'</td></tr>
@@ -2855,11 +3066,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example39">
+                      <a data-toggle="collapse" href="#example43">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example39" class="manual-example collapse">
+                      <div id="example43" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[] | (infinite * .) &lt; 0'</td></tr>
@@ -2944,11 +3155,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example40">
+                      <a data-toggle="collapse" href="#example44">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example40" class="manual-example collapse">
+                      <div id="example44" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'sort'</td></tr>
@@ -2999,11 +3210,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example41">
+                      <a data-toggle="collapse" href="#example45">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example41" class="manual-example collapse">
+                      <div id="example45" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'group_by(.foo)'</td></tr>
@@ -3040,11 +3251,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example42">
+                      <a data-toggle="collapse" href="#example46">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example42" class="manual-example collapse">
+                      <div id="example46" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'min'</td></tr>
@@ -3095,11 +3306,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example43">
+                      <a data-toggle="collapse" href="#example47">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example43" class="manual-example collapse">
+                      <div id="example47" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'unique'</td></tr>
@@ -3162,11 +3373,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example44">
+                      <a data-toggle="collapse" href="#example48">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example44" class="manual-example collapse">
+                      <div id="example48" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'reverse'</td></tr>
@@ -3201,11 +3412,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example45">
+                      <a data-toggle="collapse" href="#example49">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example45" class="manual-example collapse">
+                      <div id="example49" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'contains(&quot;bar&quot;)'</td></tr>
@@ -3296,11 +3507,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example46">
+                      <a data-toggle="collapse" href="#example50">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example46" class="manual-example collapse">
+                      <div id="example50" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'indices(&quot;, &quot;)'</td></tr>
@@ -3363,11 +3574,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example47">
+                      <a data-toggle="collapse" href="#example51">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example47" class="manual-example collapse">
+                      <div id="example51" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'index(&quot;, &quot;)'</td></tr>
@@ -3416,11 +3627,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example48">
+                      <a data-toggle="collapse" href="#example52">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example48" class="manual-example collapse">
+                      <div id="example52" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'inside(&quot;foobar&quot;)'</td></tr>
@@ -3511,11 +3722,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example49">
+                      <a data-toggle="collapse" href="#example53">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example49" class="manual-example collapse">
+                      <div id="example53" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[.[]|startswith(&quot;foo&quot;)]'</td></tr>
@@ -3550,11 +3761,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example50">
+                      <a data-toggle="collapse" href="#example54">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example50" class="manual-example collapse">
+                      <div id="example54" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[.[]|endswith(&quot;foo&quot;)]'</td></tr>
@@ -3589,11 +3800,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example51">
+                      <a data-toggle="collapse" href="#example55">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example51" class="manual-example collapse">
+                      <div id="example55" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'combinations'</td></tr>
@@ -3684,11 +3895,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example52">
+                      <a data-toggle="collapse" href="#example56">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example52" class="manual-example collapse">
+                      <div id="example56" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[.[]|ltrimstr(&quot;foo&quot;)]'</td></tr>
@@ -3723,11 +3934,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example53">
+                      <a data-toggle="collapse" href="#example57">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example53" class="manual-example collapse">
+                      <div id="example57" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[.[]|rtrimstr(&quot;foo&quot;)]'</td></tr>
@@ -3762,11 +3973,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example54">
+                      <a data-toggle="collapse" href="#example58">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example54" class="manual-example collapse">
+                      <div id="example58" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'explode'</td></tr>
@@ -3801,11 +4012,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example55">
+                      <a data-toggle="collapse" href="#example59">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example55" class="manual-example collapse">
+                      <div id="example59" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'implode'</td></tr>
@@ -3840,11 +4051,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example56">
+                      <a data-toggle="collapse" href="#example60">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example56" class="manual-example collapse">
+                      <div id="example60" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'split(&quot;, &quot;)'</td></tr>
@@ -3881,11 +4092,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example57">
+                      <a data-toggle="collapse" href="#example61">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example57" class="manual-example collapse">
+                      <div id="example61" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'join(&quot;, &quot;)'</td></tr>
@@ -3950,11 +4161,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example58">
+                      <a data-toggle="collapse" href="#example62">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example58" class="manual-example collapse">
+                      <div id="example62" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[while(.&lt;100; .*2)]'</td></tr>
@@ -3991,11 +4202,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example59">
+                      <a data-toggle="collapse" href="#example63">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example59" class="manual-example collapse">
+                      <div id="example63" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[.,1]|until(.[0] &lt; 1; [.[0] - 1, .[1] * .[0]])|.[1]'</td></tr>
@@ -4052,11 +4263,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example60">
+                      <a data-toggle="collapse" href="#example64">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example60" class="manual-example collapse">
+                      <div id="example64" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'recurse(.foo[])'</td></tr>
@@ -4175,11 +4386,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example61">
+                      <a data-toggle="collapse" href="#example65">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example61" class="manual-example collapse">
+                      <div id="example65" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'walk(if type == &quot;array&quot; then sort else . end)'</td></tr>
@@ -4214,64 +4425,43 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                 </section>
               
-                <section id="..">
+                <section id="$ENV,env">
                   <h3>
                     
-<code>..</code>
+<code>$ENV</code>, <code>env</code>
 
                     
                   </h3>
                   
-<p>Short-hand for <code>recurse</code> without arguments. This is intended to resemble the XPath <code>//</code> operator. Note that <code>..a</code> does not work; use <code>..|a</code> instead. In the example below we use <code>..|.a?</code> to find all the values of object keys “a” in any object found “below” <code>.</code>.</p>
+<p><code>$ENV</code> is an object representing the environment variables as set when the jq program started.</p>
+
+<p><code>env</code> outputs an object representing jq’s current environment.</p>
+
+<p>At the moment there is no builtin for setting environment variables.</p>
 
 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example62">
+                      <a data-toggle="collapse" href="#example66">
                         <i class="glyphicon glyphicon-chevron-right"></i>
-                        Example
+                        Examples
                       </a>
-                      <div id="example62" class="manual-example collapse">
+                      <div id="example66" class="manual-example collapse">
                         
                           <table>
-                            <tr><th></th><td class="jqprogram">jq '..|.a?'</td></tr>
-                            <tr><th>Input</th><td>[[{&quot;a&quot;:1}]]</td></tr>
+                            <tr><th></th><td class="jqprogram">jq '$ENV.PAGER'</td></tr>
+                            <tr><th>Input</th><td>null</td></tr>
                             
                             
                               <tr>
                                 
                                   <th>Output</th>
                                 
-                                <td>1</td>
+                                <td>&quot;less&quot;</td>
                               </tr>
                             
                           </table>
-                        
-                      </div>
-                    </div>
-                  
-                </section>
-              
-                <section id="env">
-                  <h3>
-                    
-<code>env</code>
-
-                    
-                  </h3>
-                  
-<p>Outputs an object representing jq’s environment.</p>
-
-
-                  
-                    <div>
-                      
-                      <a data-toggle="collapse" href="#example63">
-                        <i class="glyphicon glyphicon-chevron-right"></i>
-                        Example
-                      </a>
-                      <div id="example63" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'env.PAGER'</td></tr>
@@ -4306,11 +4496,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example64">
+                      <a data-toggle="collapse" href="#example67">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example64" class="manual-example collapse">
+                      <div id="example67" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'transpose'</td></tr>
@@ -4345,11 +4535,11 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example65">
+                      <a data-toggle="collapse" href="#example68">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example65" class="manual-example collapse">
+                      <div id="example68" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'bsearch(0)'</td></tr>
@@ -4412,11 +4602,11 @@ String interpolation - <code>\(foo)</code>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example66">
+                      <a data-toggle="collapse" href="#example69">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example66" class="manual-example collapse">
+                      <div id="example69" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '&quot;The input was \(.), which is one less than \(.+1)&quot;'</td></tr>
@@ -4451,11 +4641,11 @@ Convert to/from JSON
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example67">
+                      <a data-toggle="collapse" href="#example70">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example67" class="manual-example collapse">
+                      <div id="example70" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[.[]|tostring]'</td></tr>
@@ -4562,6 +4752,12 @@ Format strings and escaping
 
 <p>The input is converted to base64 as specified by RFC 4648.</p>
 </li>
+
+<li>
+<p><code>@base64d</code>:</p>
+
+<p>The inverse of <code>@base64</code>, input is decoded as specified by RFC 4648. Note: If the decoded string is not UTF-8, the results are undefined.</p>
+</li>
 </ul>
 
 <p>This syntax can be combined with string interpolation in a useful way. You can follow a <code>@foo</code> token with a string literal. The contents of the string literal will <em>not</em> be escaped. However, all interpolations made inside that string literal will be escaped. For instance,</p>
@@ -4578,11 +4774,11 @@ Format strings and escaping
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example68">
+                      <a data-toggle="collapse" href="#example71">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example68" class="manual-example collapse">
+                      <div id="example71" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '@html'</td></tr>
@@ -4612,6 +4808,34 @@ Format strings and escaping
                             
                           </table>
                         
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '@base64'</td></tr>
+                            <tr><th>Input</th><td>&quot;This is a message&quot;</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>&quot;VGhpcyBpcyBhIG1lc3NhZ2U=&quot;</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '@base64d'</td></tr>
+                            <tr><th>Input</th><td>&quot;VGhpcyBpcyBhIG1lc3NhZ2U=&quot;</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>&quot;This is a message&quot;</td>
+                              </tr>
+                            
+                          </table>
+                        
                       </div>
                     </div>
                   
@@ -4635,15 +4859,17 @@ Dates
 
 <p>The <code>now</code> builtin outputs the current time, in seconds since the Unix epoch.</p>
 
-<p>Low-level jq interfaces to the C-library time functions are also provided: <code>strptime</code>, <code>strftime</code>, <code>mktime</code>, and <code>gmtime</code>. Refer to your host operating system’s documentation for the format strings used by <code>strptime</code> and <code>strftime</code>. Note: these are not necessarily stable interfaces in jq, particularly as to their localization functionality.</p>
+<p>Low-level jq interfaces to the C-library time functions are also provided: <code>strptime</code>, <code>strftime</code>, <code>strflocaltime</code>, <code>mktime</code>, <code>gmtime</code>, and <code>localtime</code>. Refer to your host operating system’s documentation for the format strings used by <code>strptime</code> and <code>strftime</code>. Note: these are not necessarily stable interfaces in jq, particularly as to their localization functionality.</p>
 
-<p>The <code>gmtime</code> builtin consumes a number of seconds since the Unix epoch and outputs a “broken down time” representation of time as an array of numbers representing (in this order): the year, the month (zero-based), the day of the month, the hour of the day, the minute of the hour, the second of the minute, the day of the week, and the day of the year – all one-based unless otherwise stated.</p>
+<p>The <code>gmtime</code> builtin consumes a number of seconds since the Unix epoch and outputs a “broken down time” representation of Greenwhich Meridian time as an array of numbers representing (in this order): the year, the month (zero-based), the day of the month, the hour of the day, the minute of the hour, the second of the minute, the day of the week, and the day of the year – all one-based unless otherwise stated.</p>
+
+<p>The <code>localtime</code> builtin works like the <code>gmtime</code> builtin, but using the local timezone setting.</p>
 
 <p>The <code>mktime</code> builtin consumes “broken down time” representations of time output by <code>gmtime</code> and <code>strptime</code>.</p>
 
 <p>The <code>strptime(fmt)</code> builtin parses input strings matching the <code>fmt</code> argument. The output is in the “broken down time” representation consumed by <code>gmtime</code> and output by <code>mktime</code>.</p>
 
-<p>The <code>strftime(fmt)</code> builtin formats a time with the given format.</p>
+<p>The <code>strftime(fmt)</code> builtin formats a time (GMT) with the given format. The <code>strflocaltime</code> does the same, but using the local timezone setting.</p>
 
 <p>The format strings for <code>strptime</code> and <code>strftime</code> are described in typical C library documentation. The format string for ISO 8601 datetime is <code>&quot;%Y-%m-%dT%H:%M:%SZ&quot;</code>.</p>
 
@@ -4653,11 +4879,11 @@ Dates
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example69">
+                      <a data-toggle="collapse" href="#example72">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example69" class="manual-example collapse">
+                      <div id="example72" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'fromdate'</td></tr>
@@ -4706,6 +4932,72 @@ Dates
                   
                 </section>
               
+                <section id="SQL-StyleOperators">
+                  <h3>
+                    
+SQL-Style Operators
+
+                    
+                  </h3>
+                  
+<p>jq provides a few SQL-style operators.</p>
+
+<ul>
+<li>
+<p>INDEX(stream; index_expression):</p>
+
+<p>This builtin produces an object whose keys are computed by the given index expression applied to each value from the given stream.</p>
+</li>
+
+<li>
+<p>JOIN($idx; stream; idx_expr; join_expr):</p>
+
+<p>This builtin joins the values from the given stream to the given index. The index’s keys are computed by applying the given index expression to each value from the given stream. An array of the value in the stream and the corresponding value from the index is fed to the given join expression to produce each result.</p>
+</li>
+
+<li>
+<p>JOIN($idx; stream; idx_expr):</p>
+
+<p>Same as <code>JOIN($idx; stream; idx_expr; .)</code>.</p>
+</li>
+
+<li>
+<p>JOIN($idx; idx_expr):</p>
+
+<p>This builtin joins the input <code>.</code> to the given index, applying the given index expression to <code>.</code> to compute the index key. The join operation is as described above.</p>
+</li>
+
+<li>
+<p>IN(s):</p>
+
+<p>This builtin outputs <code>true</code> if <code>.</code> appears in the given stream, otherwise it outputs <code>false</code>.</p>
+</li>
+
+<li>
+<p>IN(source; s):</p>
+
+<p>This builtin outputs <code>true</code> if any value in the source stream appears in the second stream, otherwise it outputs <code>false</code>.</p>
+</li>
+</ul>
+
+
+                  
+                </section>
+              
+                <section id="builtins">
+                  <h3>
+                    
+<code>builtins</code>
+
+                    
+                  </h3>
+                  
+<p>Returns a list of all builtin functions in the format <code>name/arity</code>. Since functions with the same name but different arities are considered separate functions, <code>all/0</code>, <code>all/1</code>, and <code>all/2</code> would all be present in the list.</p>
+
+
+                  
+                </section>
+              
             </section>
           
             <section id="ConditionalsandComparisons">
@@ -4728,11 +5020,11 @@ Dates
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example70">
+                      <a data-toggle="collapse" href="#example73">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example70" class="manual-example collapse">
+                      <div id="example73" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[] == 1'</td></tr>
@@ -4795,11 +5087,11 @@ B end</code> instead.</p>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example71">
+                      <a data-toggle="collapse" href="#example74">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example71" class="manual-example collapse">
+                      <div id="example74" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'if . == 0 then
@@ -4842,11 +5134,11 @@ end'</td></tr>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example72">
+                      <a data-toggle="collapse" href="#example75">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example72" class="manual-example collapse">
+                      <div id="example75" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '. &lt; 5'</td></tr>
@@ -4888,11 +5180,11 @@ not</code>.</p>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example73">
+                      <a data-toggle="collapse" href="#example76">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example73" class="manual-example collapse">
+                      <div id="example76" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '42 and &quot;a string&quot;'</td></tr>
@@ -4983,10 +5275,10 @@ not</code>.</p>
                   
                 </section>
               
-                <section id="Alternativeoperator-//">
+                <section id="Alternativeoperator://">
                   <h3>
                     
-Alternative operator - <code>//</code>
+Alternative operator: <code>//</code>
 
                     
                   </h3>
@@ -4999,11 +5291,11 @@ Alternative operator - <code>//</code>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example74">
+                      <a data-toggle="collapse" href="#example77">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example74" class="manual-example collapse">
+                      <div id="example77" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.foo // 42'</td></tr>
@@ -5054,11 +5346,11 @@ try-catch
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example75">
+                      <a data-toggle="collapse" href="#example78">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example75" class="manual-example collapse">
+                      <div id="example78" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'try .a catch &quot;. is not an object&quot;'</td></tr>
@@ -5146,10 +5438,10 @@ try repeat(exp) catch .==&quot;break&quot; then empty else error;</code></pre>
                   
                 </section>
               
-                <section id="?operator">
+                <section id="ErrorSuppresion/OptionalOperator:?">
                   <h3>
                     
-<code>?</code> operator
+Error Suppresion / Optional Operator: <code>?</code>
 
                     
                   </h3>
@@ -5160,11 +5452,11 @@ try repeat(exp) catch .==&quot;break&quot; then empty else error;</code></pre>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example76">
+                      <a data-toggle="collapse" href="#example79">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example76" class="manual-example collapse">
+                      <div id="example79" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[.[]|(.a)?]'</td></tr>
@@ -5258,11 +5550,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example77">
+                      <a data-toggle="collapse" href="#example80">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example77" class="manual-example collapse">
+                      <div id="example80" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'test(&quot;foo&quot;)'</td></tr>
@@ -5342,11 +5634,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example78">
+                      <a data-toggle="collapse" href="#example81">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example78" class="manual-example collapse">
+                      <div id="example81" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'match(&quot;(abc)+&quot;; &quot;g&quot;)'</td></tr>
@@ -5458,11 +5750,11 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example79">
+                      <a data-toggle="collapse" href="#example82">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example79" class="manual-example collapse">
+                      <div id="example82" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'capture(&quot;(?&lt;a&gt;[a-z]+)-(?&lt;n&gt;[0-9]+)&quot;)'</td></tr>
@@ -5573,10 +5865,10 @@ STRING | FILTER( [REGEX, FLAGS] )</code></pre>
 <p>Finally, there is a module/library system.</p>
 
               
-                <section id="Variables">
+                <section id="Variable/SymbolicBindingOperator:...as$identifier|...">
                   <h3>
                     
-Variables
+Variable / Symbolic Binding Operator: <code>... as $identifier | ...</code>
 
                     
                   </h3>
@@ -5634,11 +5926,11 @@ Variables
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example80">
+                      <a data-toggle="collapse" href="#example83">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example80" class="manual-example collapse">
+                      <div id="example83" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.bar as $x | .foo | . + $x'</td></tr>
@@ -5727,11 +6019,11 @@ Defining Functions
 
 <pre><code>def increment: . + 1;</code></pre>
 
-<p>From then on, <code>increment</code> is usable as a filter just like a builtin function (in fact, this is how some of the builtins are defined). A function may take arguments:</p>
+<p>From then on, <code>increment</code> is usable as a filter just like a builtin function (in fact, this is how many of the builtins are defined). A function may take arguments:</p>
 
 <pre><code>def map(f): [.[] | f];</code></pre>
 
-<p>Arguments are passed as filters, not as values. The same argument may be referenced multiple times with different inputs (here <code>f</code> is run for each element of the input array). Arguments to a function work more like callbacks than like value arguments. This is important to understand. Consider:</p>
+<p>Arguments are passed as <em>filters</em> (functions with no arguments), <em>not</em> as values. The same argument may be referenced multiple times with different inputs (here <code>f</code> is run for each element of the input array). Arguments to a function work more like callbacks than like value arguments. This is important to understand. Consider:</p>
 
 <pre><code>def foo(f): f|f;
 5|foo(.*2)</code></pre>
@@ -5746,19 +6038,19 @@ Defining Functions
 
 <pre><code>def addvalue($f): ...;</code></pre>
 
-<p>With either definition, <code>addvalue(.foo)</code> will add the current input’s <code>.foo</code> field to each element of the array.</p>
+<p>With either definition, <code>addvalue(.foo)</code> will add the current input’s <code>.foo</code> field to each element of the array. Do note that calling <code>addvalue(.[])</code> will cause the <code>map(. + $f)</code> part to be evaluated once per value in the value of <code>.</code> at the call site.</p>
 
-<p>Multiple definitions using the same function name are allowed. Each re-definition replaces the previous one for the same number of function arguments, but only for references from functions (or main program) subsequent to the re-definition.</p>
+<p>Multiple definitions using the same function name are allowed. Each re-definition replaces the previous one for the same number of function arguments, but only for references from functions (or main program) subsequent to the re-definition. See also the section below on scoping.</p>
 
 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example81">
+                      <a data-toggle="collapse" href="#example84">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example81" class="manual-example collapse">
+                      <div id="example84" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'def addvalue(f): . + [f]; map(addvalue(.[0]))'</td></tr>
@@ -5793,6 +6085,24 @@ Defining Functions
                   
                 </section>
               
+                <section id="Scoping">
+                  <h3>
+                    
+Scoping
+
+                    
+                  </h3>
+                  
+<p>There are two types of symbols in jq: value bindings (a.k.a., “variables”), and functions. Both are scoped lexically, with expressions being able to refer only to symbols that have been defined “to the left” of them. The only exception to this rule is that functions can refer to themselves so as to be able to create recursive functions.</p>
+
+<p>For example, in the following expression there is a binding which is visible “to the right” of it, <code>... | .*3 as
+$times_three | [.  + $times_three] | ...</code>, but not “to the left”. Consider this expression now, <code>... | (.*3 as
+$times_three | [.+ $times_three]) | ...</code>: here the binding <code>$times_three</code> is <em>not</em> visible past the closing parenthesis.</p>
+
+
+                  
+                </section>
+              
                 <section id="Reduce">
                   <h3>
                     
@@ -5811,15 +6121,18 @@ Reduce
     (2 as $item | . + $item) |
     (1 as $item | . + $item)</code></pre>
 
+<p>If the reduction update expression outputs <code>empty</code> (that is, no values), then the reduction state is left as-is. For example, <code>reduce range(4) as $n ({}; if .==2 then empty else
+.[$n|tostring] |= $n)</code> will produce <code>{&quot;0&quot;:0,&quot;1&quot;:1,&quot;3&quot;:3}</code>.</p>
+
 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example82">
+                      <a data-toggle="collapse" href="#example85">
                         <i class="glyphicon glyphicon-chevron-right"></i>
-                        Example
+                        Examples
                       </a>
-                      <div id="example82" class="manual-example collapse">
+                      <div id="example85" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'reduce .[] as $item (0; . + $item)'</td></tr>
@@ -5831,6 +6144,20 @@ Reduce
                                   <th>Output</th>
                                 
                                 <td>20</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq 'reduce .[] as $n ([]; if $n%2==0 then empty else . + [$n] end)'</td></tr>
+                            <tr><th>Input</th><td>[0,1,2,3,4,5]</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>[1,3,5]</td>
                               </tr>
                             
                           </table>
@@ -5854,11 +6181,11 @@ Reduce
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example83">
+                      <a data-toggle="collapse" href="#example86">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example83" class="manual-example collapse">
+                      <div id="example86" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[limit(3;.[])]'</td></tr>
@@ -5896,11 +6223,11 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn’t 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example84">
+                      <a data-toggle="collapse" href="#example87">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example84" class="manual-example collapse">
+                      <div id="example87" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[first(range(.)), last(range(.)), nth(./2; range(.))]'</td></tr>
@@ -5937,11 +6264,11 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn’t 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example85">
+                      <a data-toggle="collapse" href="#example88">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example85" class="manual-example collapse">
+                      <div id="example88" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[range(.)]|[first, last, nth(5)]'</td></tr>
@@ -5980,11 +6307,11 @@ last(limit(n + 1; expr));</code>. Note that <code>nth(n; expr)</code> doesn’t 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example86">
+                      <a data-toggle="collapse" href="#example89">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example86" class="manual-example collapse">
+                      <div id="example89" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[foreach .[] as $item ([[],[]]; if $item == null then [[],.[0]] else [(.[0] + [$item]),[]] end; if $item == null then .[1] else empty end)]'</td></tr>
@@ -6055,11 +6382,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example87">
+                      <a data-toggle="collapse" href="#example90">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Examples
                       </a>
-                      <div id="example87" class="manual-example collapse">
+                      <div id="example90" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'def range(init; upto; by): def _range: if (by &gt; 0 and . &lt; upto) or (by &lt; 0 and . &gt; upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by &gt; 0 and . &lt; upto) or (by &lt; 0 and . &gt; upto)); range(0; 10; 3)'</td></tr>
@@ -6122,9 +6449,17 @@ Generators and iterators
               
 <p>jq currently only has IEEE754 double-precision (64-bit) floating point number support.</p>
 
-<p>Besides simple arithmetic operators such as <code>+</code>, jq also has most standard math functions from the C math library. C math functions that take a single input argument (e.g., <code>sin()</code>) are available as zero-argument jq functions. C math functions that take two input arguments (e.g., <code>pow()</code>) are available as two-argument jq functions that ignore <code>.</code>.</p>
+<p>Besides simple arithmetic operators such as <code>+</code>, jq also has most standard math functions from the C math library. C math functions that take a single input argument (e.g., <code>sin()</code>) are available as zero-argument jq functions. C math functions that take two input arguments (e.g., <code>pow()</code>) are available as two-argument jq functions that ignore <code>.</code>. C math functions that take three input arguments are available as three-argument jq functions that ignore <code>.</code>.</p>
 
 <p>Availability of standard math functions depends on the availability of the corresponding math functions in your operating system and C math library. Unavailable math functions will be defined but will raise an error.</p>
+
+<p>One-input C math functions: <code>acos</code> <code>acosh</code> <code>asin</code> <code>asinh</code> <code>atan</code> <code>atanh</code> <code>cbrt</code> <code>ceil</code> <code>cos</code> <code>cosh</code> <code>erf</code> <code>erfc</code> <code>exp</code> <code>exp10</code> <code>exp2</code> <code>expm1</code> <code>fabs</code> <code>floor</code> <code>gamma</code> <code>j0</code> <code>j1</code> <code>lgamma</code> <code>log</code> <code>log10</code> <code>log1p</code> <code>log2</code> <code>logb</code> <code>nearbyint</code> <code>pow10</code> <code>rint</code> <code>round</code> <code>significand</code> <code>sin</code> <code>sinh</code> <code>sqrt</code> <code>tan</code> <code>tanh</code> <code>tgamma</code> <code>trunc</code> <code>y0</code> <code>y1</code>.</p>
+
+<p>Two-input C math functions: <code>atan2</code> <code>copysign</code> <code>drem</code> <code>fdim</code> <code>fmax</code> <code>fmin</code> <code>fmod</code> <code>frexp</code> <code>hypot</code> <code>jn</code> <code>ldexp</code> <code>modf</code> <code>nextafter</code> <code>nexttoward</code> <code>pow</code> <code>remainder</code> <code>scalb</code> <code>scalbln</code> <code>yn</code>.</p>
+
+<p>Three-input C math functions: <code>fma</code>.</p>
+
+<p>See your system’s manual for more information on each of these.</p>
 
               
             </section>
@@ -6134,7 +6469,9 @@ Generators and iterators
               
 <p>At this time jq has minimal support for I/O, mostly in the form of control over when inputs are read. Two builtins functions are provided for this, <code>input</code> and <code>inputs</code>, that read from the same sources (e.g., <code>stdin</code>, files named on the command-line) as jq itself. These two builtins, and jq’s own reading actions, can be interleaved with each other.</p>
 
-<p>One builtin provides minimal output capabilities, <code>debug</code>. (Recall that a jq program’s output values are always output as JSON texts on <code>stdout</code>.) The <code>debug</code> builtin can have application-specific behavior, such as for executables that use the libjq C API but aren’t the jq executable itself.</p>
+<p>Two builtins provide minimal output capabilities, <code>debug</code>, and <code>stderr</code>. (Recall that a jq program’s output values are always output as JSON texts on <code>stdout</code>.) The <code>debug</code> builtin can have application-specific behavior, such as for executables that use the libjq C API but aren’t the jq executable itself. The <code>stderr</code> builtin outputs its input in raw mode to stder with no additional decoration, not even a newline.</p>
+
+<p>Most jq builtins are referentially transparent, and yield constant and repeatable value streams when applied to constant inputs. This is not true of I/O builtins.</p>
 
               
                 <section id="input">
@@ -6176,6 +6513,20 @@ Generators and iterators
                   </h3>
                   
 <p>Causes a debug message based on the input value to be produced. The jq executable wraps the input value with <code>[&quot;DEBUG:&quot;, &lt;input-value&gt;]</code> and prints that and a newline on stderr, compactly. This may change in the future.</p>
+
+
+                  
+                </section>
+              
+                <section id="stderr">
+                  <h3>
+                    
+<code>stderr</code>
+
+                    
+                  </h3>
+                  
+<p>Prints its input in raw and compact mode to stderr with no additional decoration, not even a newline.</p>
 
 
                   
@@ -6239,11 +6590,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example88">
+                      <a data-toggle="collapse" href="#example91">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example88" class="manual-example collapse">
+                      <div id="example91" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]'</td></tr>
@@ -6278,11 +6629,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example89">
+                      <a data-toggle="collapse" href="#example92">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example89" class="manual-example collapse">
+                      <div id="example92" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))'</td></tr>
@@ -6317,11 +6668,11 @@ Generators and iterators
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example90">
+                      <a data-toggle="collapse" href="#example93">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example90" class="manual-example collapse">
+                      <div id="example93" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '. as $dot|fromstream($dot|tostream)|.==$dot'</td></tr>
@@ -6349,72 +6700,50 @@ Generators and iterators
               
 <p>Assignment works a little differently in jq than in most programming languages. jq doesn’t distinguish between references to and copies of something - two objects or arrays are either equal or not equal, without any further notion of being “the same object” or “not the same object”.</p>
 
-<p>If an object has two fields which are arrays, <code>.foo</code> and <code>.bar</code>, and you append something to <code>.foo</code>, then <code>.bar</code> will not get bigger. Even if you’ve just set <code>.bar = .foo</code>. If you’re used to programming in languages like Python, Java, Ruby, Javascript, etc. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance, it doesn’t actually do that, but that’s the general idea).</p>
-
-<p>All the assignment operators in jq have path expressions on the left-hand side.</p>
-
-              
-                <section id="=">
-                  <h3>
-                    
-<code>=</code>
-
-                    
-                  </h3>
-                  
-<p>The filter <code>.foo = 1</code> will take as input an object and produce as output an object with the “foo” field set to 1. There is no notion of “modifying” or “changing” something in jq - all jq values are immutable. For instance,</p>
-
-<p>.foo = .bar | .foo.baz = 1</p>
-
-<p>will not have the side-effect of setting .bar.baz to be set to 1, as the similar-looking program in Javascript, Python, Ruby or other languages would. Unlike these languages (but like Haskell and some other functional languages), there is no notion of two arrays or objects being “the same array” or “the same object”. They can be equal, or not equal, but if we change one of them in no circumstances will the other change behind our backs.</p>
+<p>If an object has two fields which are arrays, <code>.foo</code> and <code>.bar</code>, and you append something to <code>.foo</code>, then <code>.bar</code> will not get bigger, even if you’ve previously set <code>.bar = .foo</code>. If you’re used to programming in languages like Python, Java, Ruby, Javascript, etc. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance it doesn’t actually do that, but that’s the general idea).</p>
 
 <p>This means that it’s impossible to build circular values in jq (such as an array whose first element is itself). This is quite intentional, and ensures that anything a jq program can produce can be represented in JSON.</p>
 
-<p>Note that the left-hand side of ‘=’ refers to a value in <code>.</code>. Thus <code>$var.foo = 1</code> won’t work as expected (<code>$var.foo</code> is not a valid or useful path expression in <code>.</code>); use <code>$var | .foo =
-1</code> instead.</p>
+<p>All the assignment operators in jq have path expressions on the left-hand side (LHS). The right-hand side (RHS) procides values to set to the paths named by the LHS path expressions.</p>
 
-<p>If the right-hand side of ‘=’ produces multiple values, then for each such value jq will set the paths on the left-hand side to the value and then it will output the modified <code>.</code>. For example, <code>(.a,.b)=range(2)</code> outputs <code>{&quot;a&quot;:0,&quot;b&quot;:0}</code>, then <code>{&quot;a&quot;:1,&quot;b&quot;:1}</code>. The “update” assignment forms (see below) do not do this.</p>
+<p>Values in jq are always immutable. Internally, assignment works by using a reduction to compute new, replacement values for <code>.</code> that have had all the desired assignments applied to <code>.</code>, then outputting the modified value. This might be made clear by this example: <code>{a:{b:{c:1}}} | (.a.b|=3), .</code>. This will output <code>{&quot;a&quot;:{&quot;b&quot;:3}}</code> and <code>{&quot;a&quot;:{&quot;b&quot;:{&quot;c&quot;:1}}}</code> because the last sub-expression, <code>.</code>, sees the original value, not the modified value.</p>
+
+<p>Most users will want to use modification assignment operators, such as <code>|=</code> or <code>+=</code>, rather than <code>=</code>.</p>
+
+<p>Note that the LHS of assignment operators refers to a value in <code>.</code>. Thus <code>$var.foo = 1</code> won’t work as expected (<code>$var.foo</code> is not a valid or useful path expression in <code>.</code>); use <code>$var | .foo =
+1</code> instead.</p>
 
 <p>Note too that <code>.a,.b=0</code> does not set <code>.a</code> and <code>.b</code>, but <code>(.a,.b)=0</code> sets both.</p>
 
-
-                  
-                </section>
               
-                <section id="|=">
+                <section id="Update-assignment:|=">
                   <h3>
                     
-<code>|=</code>
+Update-assignment: <code>|=</code>
 
                     
                   </h3>
                   
-<p>As well as the assignment operator ‘=’, jq provides the “update” operator ‘|=’, which takes a filter on the right-hand side and works out the new value for the property of <code>.</code> being assigned to by running the old value through this expression. For instance, .foo |= .+1 will build an object with the “foo” field set to the input’s “foo” plus 1.</p>
-
-<p>This example should show the difference between ‘=’ and ‘|=’:</p>
-
-<p>Provide input ‘{“a”: {“b”: 10}, “b”: 20}’ to the programs:</p>
-
-<p>.a = .b .a |= .b</p>
-
-<p>The former will set the “a” field of the input to the “b” field of the input, and produce the output {“a”: 20}. The latter will set the “a” field of the input to the “a” field’s “b” field, producing {“a”: 10}.</p>
+<p>This is the “update” operator ‘|=’. It takes a filter on the right-hand side and works out the new value for the property of <code>.</code> being assigned to by running the old value through this expression. For instance, (.foo, .bar) |= .+1 will build an object with the “foo” field set to the input’s “foo” plus 1, and the “bar” field set to the input’s “bar” plus 1.</p>
 
 <p>The left-hand side can be any general path expression; see <code>path()</code>.</p>
 
 <p>Note that the left-hand side of ‘|=’ refers to a value in <code>.</code>. Thus <code>$var.foo |= . + 1</code> won’t work as expected (<code>$var.foo</code> is not a valid or useful path expression in <code>.</code>); use <code>$var |
 .foo |= . + 1</code> instead.</p>
 
-<p>If the right-hand side outputs multiple values, only the last one will be used.</p>
+<p>If the right-hand side outputs no values (i.e., <code>empty</code>), then the left-hand side path will be deleted, as with <code>del(path)</code>.</p>
+
+<p>If the right-hand side outputs multiple values, only the first one will be used (COMPATIBILITY NOTE: in jq 1.5 and earlier releases, it used to be that only the last one was used).</p>
 
 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example91">
+                      <a data-toggle="collapse" href="#example94">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example91" class="manual-example collapse">
+                      <div id="example94" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '(..|select(type==&quot;boolean&quot;)) |= if . then 1 else 0 end'</td></tr>
@@ -6435,25 +6764,25 @@ Generators and iterators
                   
                 </section>
               
-                <section id="+=,-=,*=,/=,%=,//=">
+                <section id="Arithmeticupdate-assignment:+=,-=,*=,/=,%=,//=">
                   <h3>
                     
-<code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>%=</code>, <code>//=</code>
+Arithmetic update-assignment: <code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>%=</code>, <code>//=</code>
 
                     
                   </h3>
                   
-<p>jq has a few operators of the form <code>a op= b</code>, which are all equivalent to <code>a |= . op b</code>. So, <code>+= 1</code> can be used to increment values.</p>
+<p>jq has a few operators of the form <code>a op= b</code>, which are all equivalent to <code>a |= . op b</code>. So, <code>+= 1</code> can be used to increment values, being the same as <code>|= . + 1</code>.</p>
 
 
                   
                     <div>
                       
-                      <a data-toggle="collapse" href="#example92">
+                      <a data-toggle="collapse" href="#example95">
                         <i class="glyphicon glyphicon-chevron-right"></i>
                         Example
                       </a>
-                      <div id="example92" class="manual-example collapse">
+                      <div id="example95" class="manual-example collapse">
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.foo += 1'</td></tr>
@@ -6471,6 +6800,42 @@ Generators and iterators
                         
                       </div>
                     </div>
+                  
+                </section>
+              
+                <section id="Plainassignment:=">
+                  <h3>
+                    
+Plain assignment: <code>=</code>
+
+                    
+                  </h3>
+                  
+<p>This is the plain assignment operator. Unlike the others, the input to the right-hand-side (RHS) is the same as the input to the left-hand-side (LHS) rather than the value at the LHS path, and all values output by the RHS will be used (as shown below).</p>
+
+<p>If the RHS of ‘=’ produces multiple values, then for each such value jq will set the paths on the left-hand side to the value and then it will output the modified <code>.</code>. For example, <code>(.a,.b)=range(2)</code> outputs <code>{&quot;a&quot;:0,&quot;b&quot;:0}</code>, then <code>{&quot;a&quot;:1,&quot;b&quot;:1}</code>. The “update” assignment forms (see above) do not do this.</p>
+
+<p>This example should show the difference between ‘=’ and ‘|=’:</p>
+
+<p>Provide input ‘{“a”: {“b”: 10}, “b”: 20}’ to the programs:</p>
+
+<p>.a = .b</p>
+
+<p>.a |= .b</p>
+
+<p>The former will set the “a” field of the input to the “b” field of the input, and produce the output {“a”: 20, “b”: 20}. The latter will set the “a” field of the input to the “a” field’s “b” field, producing {“a”: 10, “b”: 20}.</p>
+
+<p>Another example of the difference between ‘=’ and ‘|=’:</p>
+
+<p>null|(.a,.b)=range(3)</p>
+
+<p>outputs ‘{“a”:0,“b”:0}’, ‘{“a”:1,“b”:1}’, and ‘{“a”:2,“b”:2}’, while</p>
+
+<p>null|(.a,.b)|=range(3)</p>
+
+<p>outputs just ‘{“a”:0,“b”:0}’.</p>
+
+
                   
                 </section>
               
@@ -6649,39 +7014,47 @@ Complex assignments
           ,
         
           
-            "." : ".",
+            "Identity: ." : "Identity:.",
           
-            ".foo, .foo.bar" : ".foo,.foo.bar",
+            "Object Identifier-Index: .foo, .foo.bar" : "ObjectIdentifier-Index:.foo,.foo.bar",
           
-            ".foo?" : ".foo?",
+            "Optional Object Identifier-Index: .foo?" : "OptionalObjectIdentifier-Index:.foo?",
           
-            ".[<string>], .[2], .[10:15]" : ".[<string>],.[2],.[10:15]",
+            "Generic Object Index: .[<string>]" : "GenericObjectIndex:.[<string>]",
           
-            ".[]" : ".[]",
+            "Array Index: .[2]" : "ArrayIndex:.[2]",
+          
+            "Array/String Slice: .[10:15]" : "Array/StringSlice:.[10:15]",
+          
+            "Array/Object Value Iterator: .[]" : "Array/ObjectValueIterator:.[]",
           
             ".[]?" : ".[]?",
           
-            "," : ",",
+            "Comma: ," : "Comma:,",
           
-            "|" : "|",
+            "Pipe: |" : "Pipe:|",
+          
+            "Parenthesis" : "Parenthesis",
           
           "Basic filters" : "Basicfilters"
           ,
         
           
-            "Array construction - []" : "Arrayconstruction-[]",
+            "Array construction: []" : "Arrayconstruction:[]",
           
-            "Objects - {}" : "Objects-{}",
+            "Object Construction: {}" : "ObjectConstruction:{}",
+          
+            "Recursive Descent: .." : "RecursiveDescent:..",
           
           "Types and Values" : "TypesandValues"
           ,
         
           
-            "Addition - +" : "Addition-+",
+            "Addition: +" : "Addition:+",
           
-            "Subtraction - -" : "Subtraction--",
+            "Subtraction: -" : "Subtraction:-",
           
-            "Multiplication, division, modulo - *, /, and %" : "Multiplication,division,modulo-*,/,and%",
+            "Multiplication, division, modulo: *, /, and %" : "Multiplication,division,modulo:*,/,and%",
           
             "length" : "length",
           
@@ -6703,6 +7076,8 @@ Complex assignments
           
             "setpath(PATHS; VALUE)" : "setpath(PATHS;VALUE)",
           
+            "delpaths(PATHS)" : "delpaths(PATHS)",
+          
             "to_entries, from_entries, with_entries" : "to_entries,from_entries,with_entries",
           
             "select(boolean_expression)" : "select(boolean_expression)",
@@ -6712,6 +7087,10 @@ Complex assignments
             "empty" : "empty",
           
             "error(message)" : "error(message)",
+          
+            "halt" : "halt",
+          
+            "halt_error, halt_error(exit_code)" : "halt_error,halt_error(exit_code)",
           
             "$__loc__" : "$__loc__",
           
@@ -6785,9 +7164,7 @@ Complex assignments
           
             "walk(f)" : "walk(f)",
           
-            ".." : "..",
-          
-            "env" : "env",
+            "$ENV, env" : "$ENV,env",
           
             "transpose" : "transpose",
           
@@ -6801,6 +7178,10 @@ Complex assignments
           
             "Dates" : "Dates",
           
+            "SQL-Style Operators" : "SQL-StyleOperators",
+          
+            "builtins" : "builtins",
+          
           "Builtin operators and functions" : "Builtinoperatorsandfunctions"
           ,
         
@@ -6813,13 +7194,13 @@ Complex assignments
           
             "and/or/not" : "and/or/not",
           
-            "Alternative operator - //" : "Alternativeoperator-//",
+            "Alternative operator: //" : "Alternativeoperator://",
           
             "try-catch" : "try-catch",
           
             "Breaking out of control structures" : "Breakingoutofcontrolstructures",
           
-            "? operator" : "?operator",
+            "Error Suppresion / Optional Operator: ?" : "ErrorSuppresion/OptionalOperator:?",
           
           "Conditionals and Comparisons" : "ConditionalsandComparisons"
           ,
@@ -6845,9 +7226,11 @@ Complex assignments
           ,
         
           
-            "Variables" : "Variables",
+            "Variable / Symbolic Binding Operator: ... as $identifier | ..." : "Variable/SymbolicBindingOperator:...as$identifier|...",
           
             "Defining Functions" : "DefiningFunctions",
+          
+            "Scoping" : "Scoping",
           
             "Reduce" : "Reduce",
           
@@ -6877,6 +7260,8 @@ Complex assignments
           
             "debug" : "debug",
           
+            "stderr" : "stderr",
+          
             "input_filename" : "input_filename",
           
             "input_line_number" : "input_line_number",
@@ -6895,11 +7280,11 @@ Complex assignments
           ,
         
           
-            "=" : "=",
+            "Update-assignment: |=" : "Update-assignment:|=",
           
-            "|=" : "|=",
+            "Arithmetic update-assignment: +=, -=, *=, /=, %=, //=" : "Arithmeticupdate-assignment:+=,-=,*=,/=,%=,//=",
           
-            "+=, -=, *=, /=, %=, //=" : "+=,-=,*=,/=,%=,//=",
+            "Plain assignment: =" : "Plainassignment:=",
           
             "Complex assignments" : "Complexassignments",
           

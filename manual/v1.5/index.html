@@ -514,7 +514,7 @@ defined</code>. When using the Windows command shell (cmd.exe) it’s best to us
 
 <p>The <code>.[2]</code> syntax can be used to return the element at the given index. Negative indices are allowed, with -1 referring to the last element, -2 referring to the next to last element, and so on.</p>
 
-<p>The <code>.foo</code> syntax only works for simply keys i.e. keys that are all alphanumeric characters. <code>.[&lt;string&gt;]</code> works with keys that contain special characters such as colons and dots. For example <code>.[&quot;foo::bar&quot;]</code> and <code>.[&quot;foo.bar&quot;]</code> work while <code>.foo::bar</code> and <code>.foo.bar</code> would not.</p>
+<p>The <code>.foo</code> syntax only works for simple keys i.e. keys that are all alphanumeric characters. <code>.[&lt;string&gt;]</code> works with keys that contain special characters such as colons and dots. For example <code>.[&quot;foo::bar&quot;]</code> and <code>.[&quot;foo.bar&quot;]</code> work while <code>.foo::bar</code> and <code>.foo.bar</code> would not.</p>
 
 <p>The <code>?</code> “operator” can also be used with the slice operator, as in <code>.[10:15]?</code>, which outputs values where the inputs are slice-able.</p>
 
@@ -1483,7 +1483,7 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                     
                   </h3>
                   
-<p>The builtin function <code>in</code> returns the input key is in the given object, or the input index corresponds to an element in the given array. It is, essentially, an inversed version of <code>has</code>.</p>
+<p>The builtin function <code>in</code> returns whether or not the input key is in the given object, or the input index corresponds to an element in the given array. It is, essentially, an inversed version of <code>has</code>.</p>
 
 
                   
@@ -1543,7 +1543,7 @@ Multiplication, division, modulo - <code>*</code>, <code>/</code>, and <code>%</
                     
                   </h3>
                   
-<p>Outputs array representations of the given path expression in <code>.</code>. The outputs are arrays of strings (keys in objects0 and/or numbers (array indices.</p>
+<p>Outputs array representations of the given path expression in <code>.</code>. The outputs are arrays of strings (object keys) and/or numbers (array indices).</p>
 
 <p>Path expressions are jq expressions like <code>.a</code>, but also <code>.[]</code>. There are two types of path expressions: ones that can match exactly, and ones that cannot. For example, <code>.a.b.c</code> is an exact match path expression, while <code>.a[].b</code> is not.</p>
 
@@ -1936,7 +1936,7 @@ map(foo) | from_entries</code>, useful for doing some operation to all keys and 
                     
                   </h3>
                   
-<p>For any filter <code>x</code>, <code>map(x)</code> will run that filter for each element of the input array, and produce the outputs a new array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
+<p>For any filter <code>x</code>, <code>map(x)</code> will run that filter for each element of the input array, and return the outputs in a new array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
 
 <p>Similarly, <code>map_values(x)</code> will run that filter for each element, but it will return an object when an object is passed.</p>
 
