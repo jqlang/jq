@@ -30,6 +30,16 @@ end
 
 Liquid::Template.register_filter(ExtraFilters)
 
+begin
+  `java 2>&1`
+rescue
+  class Bonsai::Exporter
+    def self.compress_assets
+      Bonsai.log "java not found! Not compressing javascript or stylesheets"
+    end
+  end
+end
+
 task :build do
   Bonsai.root_dir = Dir.pwd
   Bonsai::Exporter.publish!
