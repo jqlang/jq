@@ -2620,7 +2620,7 @@ Suppose we have an array of blog posts, with "author" and "title" fields, and an
 .
 .nf
 
-{"posts": [{"title": "Frist psot", "author": "anon"},
+{"posts": [{"title": "Frist post", "author": "anon"},
            {"title": "A well\-written article", "author": "person1"}],
  "realnames": {"anon": "Anonymous Coward",
                "person1": "Person McPherson"}}
@@ -2636,7 +2636,7 @@ We want to produce the posts with the author field containing a real name, as in
 .
 .nf
 
-{"title": "Frist psot", "author": "Anonymous Coward"}
+{"title": "Frist post", "author": "Anonymous Coward"}
 {"title": "A well\-written article", "author": "Person McPherson"}
 .
 .fi
