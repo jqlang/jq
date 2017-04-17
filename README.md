@@ -68,4 +68,4 @@ Cross-compilation requires a clean workspace, then:
 Use the --host= and --target= ./configure options to select a
 cross-compilation environment.  See also the wiki.
 
-Send questions to https://stackoverflow.com/questions/tagged/jq or to the #jq channel (http://irc.lc/freenode/%23jq/) on Freenode (https://webchat.freenode.net/).
+Send questions to https://stackoverflow.com/questions/tagged/jq or to the #jq channel (https://irc.lc/freenode/jq) on Freenode (https://webchat.freenode.net/).
