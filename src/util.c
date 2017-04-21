@@ -139,7 +139,7 @@ jv jq_realpath(jv path) {
   path_max = PATH_MAX;
 #endif
   if (path_max > 0) {
-     buf = malloc(sizeof(char) * path_max);
+     buf = jv_mem_alloc(path_max);
   }
 #ifdef WIN32
   char *tmp = _fullpath(buf, jv_string_value(path), path_max);

@@ -43,7 +43,7 @@ static void put_buf(const char *s, int len, FILE *fout, jv *strout, int is_tty) 
     if (len == -1)
       len = strlen(s);
     wl = MultiByteToWideChar(CP_UTF8, 0, s, len, NULL, 0);
-    ws = malloc((wl + 1) * sizeof(*ws));
+    ws = jv_mem_calloc((wl + 1), sizeof(*ws));
     if (!ws)
       return;
     wl = MultiByteToWideChar(CP_UTF8, 0, s, len, ws, wl + 1);

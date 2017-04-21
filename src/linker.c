@@ -19,6 +19,7 @@
 #include "parser.h"
 #include "util.h"
 #include "compile.h"
+#include "jv_alloc.h"
 
 struct lib_loading_state {
   char **names;
@@ -324,8 +325,8 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, const c
     }
   }
   state_idx = lib_state->ct++;
-  lib_state->names = realloc(lib_state->names, lib_state->ct * sizeof(const char *));
-  lib_state->defs = realloc(lib_state->defs, lib_state->ct * sizeof(block));
+  lib_state->names = jv_mem_realloc(lib_state->names, lib_state->ct * sizeof(const char *));
+  lib_state->defs = jv_mem_realloc(lib_state->defs, lib_state->ct * sizeof(block));
   lib_state->names[state_idx] = strdup(jv_string_value(lib_path));
   lib_state->defs[state_idx] = program;
   *out_block = program;
