@@ -41,6 +41,7 @@ void *alloca (size_t);
 #include "linker.h"
 #include "locfile.h"
 #include "jv_unicode.h"
+#include "jv_alloc.h"
 
 
 static jv type_error(jv bad, const char* msg) {
@@ -645,7 +646,7 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     const unsigned char* data = (const unsigned char*)jv_string_value(input);
     int len = jv_string_length_bytes(jv_copy(input));
     size_t decoded_len = (3 * len) / 4; // 3 usable bytes for every 4 bytes of input
-    char *result = malloc(decoded_len * sizeof(char));
+    char *result = jv_mem_calloc(decoded_len, sizeof(char));
     memset(result, 0, decoded_len * sizeof(char));
     uint32_t ri = 0;
     int input_bytes_read=0;
