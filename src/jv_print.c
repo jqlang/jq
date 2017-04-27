@@ -12,6 +12,7 @@
 #include "jv.h"
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
+#include "jv_alloc.h"
 
 #ifndef MAX_PRINT_DEPTH
 #define MAX_PRINT_DEPTH (256)
