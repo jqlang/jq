@@ -269,19 +269,33 @@ printf '[0m\033[1;35m\033[1;35'
 printf 'm]\033[0m\n'
 ) > $d/expect
 cmp $d/color $d/expect
-# Check garbage in JQ_COLORS
+
+# Check garbage in JQ_COLORS.  We write each color sequence into a 16
+# char buffer that needs to hold ESC [ <color> m NUL, so each color
+# sequence can be no more than 12 chars (bytes).  These emit a warning
+# on stderr.
+set -vx
+echo 'Failed to set $JQ_COLORS' > $d/expect_warning
 $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/expect
 JQ_COLORS='garbage;30:*;31:,;3^:0;$%:0;34:1;35:1;36' \
-  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
 cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
 JQ_COLORS='1234567890123456789;30:0;31:0;32:0;33:0;34:1;35:1;36' \
-  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
 cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
 JQ_COLORS='1;31234567890123456789:0;31:0;32:0;33:0;34:1;35:1;36' \
-  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
 cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
 JQ_COLORS='1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456' \
-  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
 cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
+JQ_COLORS="0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:" \
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
+cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
 
 exit 0
