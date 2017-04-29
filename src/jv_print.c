@@ -27,10 +27,45 @@
 static const jv_kind color_kinds[] =
   {JV_KIND_NULL,   JV_KIND_FALSE, JV_KIND_TRUE, JV_KIND_NUMBER,
    JV_KIND_STRING, JV_KIND_ARRAY, JV_KIND_OBJECT};
-static const char* const colors[] =
+static char color_bufs[sizeof(color_kinds)/sizeof(color_kinds[0])][16];
+static const char *color_bufps[8];
+static const char* def_colors[] =
   {COL("1;30"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
    COL("0;32"),      COL("1;39"),     COL("1;39")};
 #define FIELD_COLOR COL("34;1")
+
+static const char **colors = def_colors;
+
+int
+jq_set_colors(const char *c)
+{
+  const char *e;
+  size_t i;
+
+  if (c == NULL)
+    return 1;
+  colors = def_colors;
+  memset(color_bufs, 0, sizeof(color_bufs));
+  for (i = 0; i < sizeof(def_colors) / sizeof(def_colors[0]); i++)
+    color_bufps[i] = def_colors[i];
+  for (i = 0; i < sizeof(def_colors) / sizeof(def_colors[0]) && *c != '\0'; i++, c = e) {
+    if ((e = strchr(c, ':')) == NULL)
+      e = c + strlen(c);
+    if ((size_t)(e - c) > sizeof(color_bufs[i]) - 4 /* ESC [ m NUL */)
+      return 0;
+    color_bufs[i][0] = ESC[0];
+    color_bufs[i][1] = '[';
+    (void) strncpy(&color_bufs[i][2], c, e - c);
+    if (strspn(&color_bufs[i][2], "0123456789;") < strlen(&color_bufs[i][2]))
+      return 0;
+    color_bufs[i][2 + (e - c)] = 'm';
+    color_bufps[i] = color_bufs[i];
+    if (e[0] == ':')
+      e++;
+  }
+  colors = color_bufps;
+  return 1;
+}
 
 static void put_buf(const char *s, int len, FILE *fout, jv *strout, int is_tty) {
   if (strout) {
