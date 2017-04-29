@@ -105,6 +105,9 @@ Use the given number of spaces (no more than 8) for indentation\.
 .IP
 By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\.
 .
+.IP
+Colors can be configured with the \fBJQ_COLORS\fR environment variable (see below)\.
+.
 .IP "\(bu" 4
 \fB\-\-ascii\-output\fR / \fB\-a\fR:
 .
@@ -3372,6 +3375,87 @@ Takes a module name as input and outputs the module\'s metadata as an object, wi
 .
 .P
 Programs can use this to query a module\'s metadata, which they could then use to, for example, search for, download, and install missing dependencies\.
+.
+.SH "COLORS"
+To configure alternative colors just set the \fBJQ_COLORS\fR environment variable to colon\-delimited list of partial terminal escape sequences like \fB"1;31"\fR, in this order:
+.
+.IP "\(bu" 4
+color for \fBnull\fR
+.
+.IP "\(bu" 4
+color for \fBfalse\fR
+.
+.IP "\(bu" 4
+color for \fBtrue\fR
+.
+.IP "\(bu" 4
+color for numbers
+.
+.IP "\(bu" 4
+color for strings
+.
+.IP "\(bu" 4
+color for arrays
+.
+.IP "\(bu" 4
+color for objects
+.
+.IP "" 0
+.
+.P
+The default color scheme is the same as setting \fB"JQ_COLORS=1;30:0;39:0;39:0;39:0;32:1;39:1;39"\fR\.
+.
+.P
+This is not a manual for VT100/ANSI escapes\. However, each of these color specifications should consist of two numbers separated by a semi\-colon, where the first number is one of these:
+.
+.IP "\(bu" 4
+1 (bright)
+.
+.IP "\(bu" 4
+2 (dim)
+.
+.IP "\(bu" 4
+4 (underscore)
+.
+.IP "\(bu" 4
+5 (blink)
+.
+.IP "\(bu" 4
+7 (reverse)
+.
+.IP "\(bu" 4
+8 (hidden)
+.
+.IP "" 0
+.
+.P
+and the second is one of these:
+.
+.IP "\(bu" 4
+30 (black)
+.
+.IP "\(bu" 4
+31 (red)
+.
+.IP "\(bu" 4
+32 (green)
+.
+.IP "\(bu" 4
+33 (yellow)
+.
+.IP "\(bu" 4
+34 (blue)
+.
+.IP "\(bu" 4
+35 (magenta)
+.
+.IP "\(bu" 4
+36 (cyan)
+.
+.IP "\(bu" 4
+37 (white)
+.
+.IP "" 0
 .
 .SH "BUGS"
 Presumably\. Report them or discuss them at:
