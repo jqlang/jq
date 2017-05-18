@@ -1921,6 +1921,7 @@ sections:
           The `strptime(fmt)` builtin parses input strings matching the
           `fmt` argument.  The output is in the "broken down time"
           representation consumed by `gmtime` and output by `mktime`.
+          Milliseconds can be parsed by `strptime(fmt)` as %f in `fmt`.
 
           The `strftime(fmt)` builtin formats a time (GMT) with the
           given format.  The `strflocaltime` does the same, but using
