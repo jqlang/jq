@@ -30,10 +30,12 @@ jv jv_load_file(const char* filename, int raw) {
   while (!feof(file) && !ferror(file)) {
     size_t n = fread(buf, 1, sizeof(buf)-max_utf8_len, file);
     int len = 0;
-    if (jvp_utf8_backtrack(buf+(n-1), buf, &len) && len > 0) {
-      if (!feof(file) && !ferror(file)) {
-        n += fread(buf+n, 1, len, file);
-      }
+
+    if (n == 0)
+      continue;
+    if (jvp_utf8_backtrack(buf+(n-1), buf, &len) && len > 0 &&
+        !feof(file) && !ferror(file)) {
+      n += fread(buf+n, 1, len, file);
     }
 
     if (raw) {

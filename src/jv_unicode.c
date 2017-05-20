@@ -9,7 +9,7 @@
 // *missing_bytes.  If there are no leading bytes or an invalid byte is
 // encountered, NULL is returned and *missing_bytes is not altered.
 const char* jvp_utf8_backtrack(const char* start, const char* min, int *missing_bytes) {
-  assert(min < start);
+  assert(min <= start);
   if (min == start) {
     return min;
   }
