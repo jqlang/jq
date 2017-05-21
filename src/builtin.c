@@ -1221,6 +1221,63 @@ static time_t my_mktime(struct tm *tm) {
 #endif
 }
 
+/* Compute and set tm_wday */
+static void set_tm_wday(struct tm *tm) {
+  /*
+   * https://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week#Gauss.27s_algorithm
+   * https://cs.uwaterloo.ca/~alopez-o/math-faq/node73.html
+   *
+   * Tested with dates from 1900-01-01 through 2100-01-01.  This
+   * algorithm produces the wrong day-of-the-week number for dates in
+   * the range 1900-01-01..1900-02-28, and for 2100-01-01..2100-02-28.
+   * Since this is only needed on OS X and *BSD, we might just document
+   * this.
+   */
+  int century = (1900 + tm->tm_year) / 100;
+  int year = (1900 + tm->tm_year) % 100;
+  if (tm->tm_mon < 2)
+    year--;
+  /*
+   * The month value in the wday computation below is shifted so that
+   * March is 1, April is 2, .., January is 11, and February is 12.
+   */
+  int mon = tm->tm_mon - 1;
+  if (mon < 1)
+    mon += 12;
+  int wday =
+    (tm->tm_mday + (int)floor((2.6 * mon - 0.2)) + year + (int)floor(year / 4.0) + (int)floor(century / 4.0) - 2 * century) % 7;
+  if (wday < 0)
+    wday += 7;
+#if 0
+  /* See commentary above */
+  assert(wday == tm->tm_wday || tm->tm_wday == 8);
+#endif
+  tm->tm_wday = wday;
+}
+/*
+ * Compute and set tm_yday.
+ *
+ */
+static void set_tm_yday(struct tm *tm) {
+  static const int d[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+  int mon = tm->tm_mon;
+  int year = 1900 + tm->tm_year;
+  int leap_day = 0;
+  if (tm->tm_mon > 1 &&
+      ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)))
+    leap_day = 1;
+
+  /* Bound check index into d[] */
+  if (mon < 0)
+    mon = -mon;
+  if (mon > 11)
+    mon %= 12;
+
+  int yday = d[mon] + leap_day + tm->tm_mday - 1;
+  assert(yday == tm->tm_yday || tm->tm_yday == 367);
+  tm->tm_yday = yday;
+}
+
 #ifdef HAVE_STRPTIME
 static jv f_strptime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING)
@@ -1241,10 +1298,19 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
     return e;
   }
   jv_free(b);
-  if ((tm.tm_wday == 8 || tm.tm_yday == 367) && my_timegm(&tm) == (time_t)-2) {
-    jv_free(a);
-    return jv_invalid_with_msg(jv_string("strptime/1 not supported on this platform"));
-  }
+  /*
+   * This is OS X or some *BSD whose strptime() is just not that
+   * helpful!
+   *
+   * We don't know that the format string did involve parsing a
+   * year, or a month (if tm->tm_mon == 0).  But with our invalid
+   * day-of-week and day-of-year sentinel checks above, the worst
+   * this can do is produce garbage.
+   */
+  if (tm.tm_wday == 8 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)
+    set_tm_wday(&tm);
+  if (tm.tm_yday == 367 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)
+    set_tm_yday(&tm);
   jv r = tm2jv(&tm);
   if (*end != '\0')
     r = jv_array_append(r, jv_string(end));
