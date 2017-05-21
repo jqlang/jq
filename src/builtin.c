@@ -1193,10 +1193,22 @@ static jv tm2jv(struct tm *tm) {
  *
  * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
  */
-static time_t my_mktime(struct tm *tm) {
+static time_t my_timegm(struct tm *tm) {
 #ifdef HAVE_TIMEGM
   return timegm(tm);
 #else /* HAVE_TIMEGM */
+  char *tz;
+
+  tz = (tz = getenv("TZ")) != NULL ? strdup(tz) : NULL;
+  if (tz != NULL)
+    setenv("TZ", "", 1);
+  time_t t = mktime(tm);
+  if (tz != NULL)
+    setenv("TZ", tz, 1);
+  return t;
+#endif /* !HAVE_TIMEGM */
+}
+static time_t my_mktime(struct tm *tm) {
   time_t t = mktime(tm);
   if (t == (time_t)-1)
     return t;
@@ -1207,7 +1219,6 @@ static time_t my_mktime(struct tm *tm) {
 #else
   return (time_t)-2; /* Not supported */
 #endif
-#endif /* !HAVE_TIMEGM */
 }
 
 #ifdef HAVE_STRPTIME
