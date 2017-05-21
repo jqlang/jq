@@ -1201,9 +1201,9 @@ static time_t my_mktime(struct tm *tm) {
   if (t == (time_t)-1)
     return t;
 #ifdef HAVE_TM_TM_GMT_OFF
-  return t + tm.tm_gmtoff;
-#elif defined(HAVE_TM_TM_GMT_OFF)
-  return t + tm.__tm_gmtoff;
+  return t + tm->tm_gmtoff;
+#elif HAVE_TM___TM_GMT_OFF
+  return t + tm->__tm_gmtoff;
 #else
   return (time_t)-2; /* Not supported */
 #endif
