@@ -1228,6 +1228,8 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
 
   struct tm tm;
   memset(&tm, 0, sizeof(tm));
+  tm.tm_wday = 8; // sentinel
+  tm.tm_yday = 367; // sentinel
   const char *input = jv_string_value(a);
   const char *fmt = jv_string_value(b);
   const char *end = strptime(input, fmt, &tm);
@@ -1239,7 +1241,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
     return e;
   }
   jv_free(b);
-  if (tm.tm_wday == 0 && tm.tm_yday == 0 && my_mktime(&tm) == (time_t)-2) {
+  if ((tm.tm_wday == 8 || tm.tm_yday == 367) && my_timegm(&tm) == (time_t)-2) {
     jv_free(a);
     return jv_invalid_with_msg(jv_string("strptime/1 not supported on this platform"));
   }
