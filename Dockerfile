@@ -32,8 +32,7 @@ RUN apt-get update && \
         ./configure --disable-valgrind --enable-all-static --prefix=/usr/local && \
         make -j8 && \
         make check && \
-        make install && \
-        make distclean ) && \
+        make install ) && \
     (cd oniguruma-5.9.6 && \
         make uninstall ) && \
     apt-get purge -y \
