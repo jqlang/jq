@@ -284,7 +284,7 @@ def bsearch(target):
 def walk(f):
   . as $in
   | if type == "object" then
-      reduce keys[] as $key
+      reduce keys_unsorted[] as $key
         ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f
   elif type == "array" then map( walk(f) ) | f
   else f
