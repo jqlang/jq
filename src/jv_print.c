@@ -30,9 +30,9 @@ static const jv_kind color_kinds[] =
 static char color_bufs[sizeof(color_kinds)/sizeof(color_kinds[0])][16];
 static const char *color_bufps[8];
 static const char* def_colors[] =
-  {COL("1;30"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
-   COL("0;32"),      COL("1;39"),     COL("1;39")};
-#define FIELD_COLOR COL("34;1")
+  {COL("1;30"), COL("0;39"), COL("0;39"), COL("0;39"),
+   COL("0;32"), COL("1;39"), COL("1;39"), COL("1;34")};
+#define FIELD_COLOR_INDEX 7
 
 static const char **colors = def_colors;
 
@@ -328,7 +328,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
       first = 0;
-      if (color) put_str(FIELD_COLOR, F, S, flags & JV_PRINT_ISATTY);
+      if (color) put_str(colors[FIELD_COLOR_INDEX], F, S, flags & JV_PRINT_ISATTY);
       jvp_dump_string(key, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
       jv_free(key);
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
