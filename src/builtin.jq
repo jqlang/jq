@@ -32,18 +32,12 @@ def index($i):   indices($i) | .[0];       # TODO: optimize
 def rindex($i):  indices($i) | .[-1:][0];  # TODO: optimize
 def paths: path(recurse(if (type|. == "array" or . == "object") then .[] else empty end))|select(length > 0);
 def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_filter);
-def any(generator; condition):
-        [label $out | foreach generator as $i
-                 (false;
-                  if . then break $out elif $i | condition then true else . end;
-                  if . then . else empty end)] | length == 1;
+
+def isempty(g): 0 == ((label $go | g | (1, break $go)) // 0);
+def any(stream; predicate): isempty(stream | predicate or empty) | not;
 def any(condition): any(.[]; condition);
 def any: any(.);
-def all(generator; condition):
-        [label $out | foreach generator as $i
-                 (true;
-                  if .|not then break $out elif $i | condition then . else false end;
-                  if .|not then . else empty end)] | length == 0;
+def all(stream; predicate):isempty(stream | predicate and empty);
 def all(condition): all(.[]; condition);
 def all: all(.);
 def isfinite: type == "number" and (isinfinite | not);
@@ -168,7 +162,7 @@ def until(cond; next):
          if cond then . else (next|_until) end;
      _until;
 def limit($n; exp): if $n < 0 then exp else label $out | foreach exp as $item ([$n, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1]) end;
-def isempty(g): 0 == ((label $go | g | (1, break $go)) // 0);
+
 def first(g): label $out | g | ., break $out;
 def last(g): reduce g as $item (null; $item);
 def nth($n; g): if $n < 0 then error("nth doesn't support negative indices") else last(limit($n + 1; g)) end;
@@ -304,5 +298,5 @@ def JOIN($idx; stream; idx_expr):
   stream | [., $idx[idx_expr]];
 def JOIN($idx; stream; idx_expr; join_expr):
   stream | [., $idx[idx_expr]] | join_expr;
-def IN(s): reduce (first(select(. == s)) | true) as $v (false; if . or $v then true else false end);
-def IN(src; s): reduce (src|IN(s)) as $v (false; if . or $v then true else false end);
+def IN(s): . as $in | first( if (s == $in) then true else empty end ) // false;
+def IN(src; s): any( src|IN(s); .);
