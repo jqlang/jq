@@ -164,11 +164,12 @@ body:
       There's a lot of info we don't care about there, so we'll restrict it down
       to the most interesting fields.
 
-  - command: "jq '.[0] | {message: .commit.message, name: .commit.committer.name}'"
+  - command: "jq '.[0] | {message: .commit.message, name: .commit.committer.name, sha}'"
     result: |
       {
         "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-        "name": "Stephen Dolan"
+        "name": "Stephen Dolan",
+        "sha": d25341478381063d1c76e81b3a52e0592a7c997f
       }
 
   - text: |
@@ -176,7 +177,9 @@ body:
       The `|` operator in jq feeds the output of one filter (`.[0]` which gets
       the first element of the array in the response) into the input of another
       (`{...}` which builds an object out of those fields). You can access
-      nested attributes, such as `.commit.message`.
+      nested attributes, such as `.commit.message`.  Giving the name of an
+      attribute without a value will use the value of the same attribute from
+      the input. That is, `sha` in this example is a shortcut for `sha: .sha`.
 
       Now let's get the rest of the commits.
 
