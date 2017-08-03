@@ -20,7 +20,7 @@ if eval "test \"\$ac_cv_func_$1\" != yes" ; then
 		*) ac_lib="-l$ac_lib" ;;
 		esac
 		LIBS="$6 $ac_lib $5 $ac_save_LIBS"
-		AC_LINK_IFELSE([AC_LANG_PROGRAM([[$3]],[[$1($4)]])],[eval "if test -n \"$ac_lib\";then ac_cv_funclib_$1=$ac_lib; else ac_cv_funclib_$1=yes; fi";break])
+		AC_LINK_IFELSE([AC_LANG_PROGRAM([[$3]],[[$1($4*rand())]])],[eval "if test -n \"$ac_lib\";then ac_cv_funclib_$1=$ac_lib; else ac_cv_funclib_$1=yes; fi";break])
 	done
 	eval "ac_cv_funclib_$1=\${ac_cv_funclib_$1-no}"
 	LIBS="$ac_save_LIBS"
