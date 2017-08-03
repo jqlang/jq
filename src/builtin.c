@@ -1282,7 +1282,12 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   const char *fmt = jv_string_value(b);
   const char *end = strptime(input, fmt, &tm);
 
-  if (end == NULL || (*end != '\0' && !isspace(*end))) {
+  /*
+   * "*end" may be a signed char, and passing a value which is less than -1
+   * to isspace() violates the C standard, thus, casting to (unsigned char *)
+   * is necessary.
+   */
+  if (end == NULL || (*end != '\0' && !isspace(*(unsigned char *)end))) {
     jv e = jv_invalid_with_msg(jv_string_fmt("date \"%s\" does not match format \"%s\"", input, fmt));
     jv_free(a);
     jv_free(b);
