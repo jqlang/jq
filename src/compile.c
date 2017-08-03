@@ -1,6 +1,3 @@
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE // for strdup
-#endif
 #include <assert.h>
 #include <math.h>
 #include <string.h>

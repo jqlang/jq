@@ -14,6 +14,7 @@ AC_PREREQ([2.64])
 AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([1.11.2 subdir-objects parallel-tests foreign -Wall])
 AM_SILENT_RULES([yes])
+AC_USE_SYSTEM_EXTENSIONS
 AM_PROG_AR
 AM_MAINTAINER_MODE([enable])
 AC_PROG_CC
