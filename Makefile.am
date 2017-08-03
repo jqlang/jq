@@ -28,7 +28,7 @@ if MAINTAINER_MODE
 BUILT_SOURCES = src/lexer.h src/lexer.c src/parser.h src/parser.c 	\
 		src/builtin.inc src/version.h
 src/lexer.c: src/lexer.l
-	$(AM_V_LEX) flex -o src/lexer.c --header-file=src/lexer.h $<
+	$(AM_V_LEX) flex -o src/lexer.c --header-file=src/lexer.h src/lexer.l
 src/lexer.h: src/lexer.c
 else
 BUILT_SOURCES = src/builtin.inc src/version.h
@@ -101,7 +101,7 @@ src/version.h: .remake-version-h
 src/main.c: src/version.h
 
 src/builtin.inc: src/builtin.jq
-	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $^ > $@
+	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' src/builtin.jq > $@
 src/builtin.o: src/builtin.inc
 
 bin_PROGRAMS = jq
@@ -130,10 +130,10 @@ if ENABLE_DOCS
 jq.1: $(srcdir)/docs/content/3.manual/manual.yml
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage ) > $@ || { rm -f $@; false; }
 jq.1.prebuilt: jq.1
-	$(AM_V_GEN) cp $^ $@ || { rm -f $@; false; }
+	$(AM_V_GEN) cp jq.1 $@ || { rm -f $@; false; }
 else
 jq.1: $(srcdir)/jq.1.prebuilt
-	$(AM_V_GEN) cp $^ $@
+	$(AM_V_GEN) cp $(srcdir)/jq.1.prebuilt $@
 endif
 
 
