@@ -25,14 +25,14 @@ jq's documentation (everything found under the docs/ subdirectory in
 the source tree) is licensed under the Creative Commons CC BY 3.0
 license, which can be found at:
 
-         http://creativecommons.org/licenses/by/3.0/
+         https://creativecommons.org/licenses/by/3.0/
 
 The documentation website includes a copy of Twitter's Boostrap and
 relies on Bonsai, Liquid templates and various other projects, look
 them up for detailed licensing conditions.
-         
 
-         
+
+
 jq incorporates David M. Gay's dtoa.c and g_fmt.c, which bear the
 following notices:
 

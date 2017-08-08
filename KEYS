@@ -1,0 +1,8 @@
+pub   4096R/71523402 2015-10-11
+      Key fingerprint = 4FD7 01D6 FA9B 3D2D F5AC  935D AF19 040C 7152 3402
+uid                  jq Release Signing Key <jq@stedolan.github.io>
+
+pub   2048R/D15684DB 2015-10-12 [expires: 2017-10-11]
+      Key fingerprint = 7F6C 7BD3 0412 AFD5 8C1A  5007 EB26 A4F8 D156 84DB
+uid                  Nicolas Williams <nico@cryptonector.com>
+sub   2048R/9C9CCD6A 2015-10-12 [expires: 2017-10-11]

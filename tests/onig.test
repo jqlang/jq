@@ -1,0 +1,98 @@
+# match builtin
+[match("( )*"; "g")]
+"abc"
+[{"offset":0, "length":0, "string":"", "captures":[]},{"offset":1, "length":0, "string":"", "captures":[]},{"offset":2, "length":0, "string":"", "captures":[]}]
+
+[match("( )*"; "gn")]
+"abc"
+[]
+
+[match("a"; "gi")]
+"āáàä"
+[]
+
+[match(["(bar)"])]
+"foo bar"
+[{"offset": 4, "length": 3, "string": "bar", "captures":[{"offset": 4, "length": 3, "string": "bar", "name": null}]}]
+
+# offsets account for combining codepoints and multi-byte UTF-8
+[match("bar")]
+"ā bar with a combining codepoint U+0304"
+[{"offset": 3, "length": 3, "string": "bar", "captures":[]}]
+
+# matches with combining codepoints still count them in their length
+[match("bār")]
+"a bār"
+[{"offset": 2, "length": 4, "string": "bār", "captures":[]}]
+
+[match(".+?\\b")]
+"ā two-codepoint grapheme"
+[{"offset": 0, "length": 2, "string": "ā", "captures":[]}]
+
+[match(["foo (?<bar123>bar)? foo", "ig"])]
+"foo bar foo foo  foo"
+[{"offset": 0, "length": 11, "string": "foo bar foo", "captures":[{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]},{"offset":12, "length": 8, "string": "foo  foo", "captures":[{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}]
+
+#test builtin
+[test("( )*"; "gn")]
+"abc"
+[false]
+
+[test("ā")]
+"ā"
+[true]
+
+capture("(?<a>[a-z]+)-(?<n>[0-9]+)")
+"xyzzy-14"
+{"a":"xyzzy","n":"14"}
+
+
+# jq-coded utilities built on match:
+#
+# The second element in these tests' inputs tests the case where the
+# fromstring matches both the head and tail of the string
+[.[] | sub(", "; ":")]
+["a,b, c, d, e,f", ", a,b, c, d, e,f, "]
+["a,b:c, d, e,f",":a,b, c, d, e,f, "]
+
+sub("^(?<head>.)"; "Head=\(.head) Tail=")
+"abcdef"
+"Head=a Tail=bcdef"
+
+[.[] | gsub(", "; ":")]
+["a,b, c, d, e,f",", a,b, c, d, e,f, "]
+["a,b:c:d:e,f",":a,b:c:d:e,f:"]
+
+gsub("(?<d>\\d)"; ":\(.d);")
+"a1b2"
+"a:1;b:2;"
+
+gsub("a";"b")
+"aaaaa"
+"bbbbb"
+
+gsub( "(.*)"; "";  "x")
+""
+""
+
+[.[] | scan(", ")]
+["a,b, c, d, e,f",", a,b, c, d, e,f, "]
+[", ",", ",", ",", ",", ",", ",", ",", "]
+
+[.[]|[[sub(", *";":")], [gsub(", *";":")], [scan(", *")]]]
+["a,b, c, d, e,f",", a,b, c, d, e,f, "]
+[[["a:b, c, d, e,f"],["a:b:c:d:e:f"],[",",", ",", ",", ",","]],[[":a,b, c, d, e,f, "],[":a:b:c:d:e:f:"],[", ",",",", ",", ",", ",",",", "]]]
+
+[.[]|[[sub(", +";":")], [gsub(", +";":")], [scan(", +")]]]
+["a,b, c, d, e,f",", a,b, c, d, e,f, "]
+[[["a,b:c, d, e,f"],["a,b:c:d:e,f"],[", ",", ",", "]],[[":a,b, c, d, e,f, "],[":a,b:c:d:e,f:"],[", ",", ",", ",", ",", "]]]
+
+# reference to named captures
+gsub("(?<x>.)[^a]*"; "+\(.x)-")
+"Abcabc"
+"+A-+a-"
+
+# utf-8
+sub("(?<x>.)"; "\(.x)!")
+"’"
+"’!"

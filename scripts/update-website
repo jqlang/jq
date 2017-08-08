@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# This script builds the website from the docs directory of
+# the current branch and copies it over to the gh-pages
+# branch.
+
+set -eu
+set -o xtrace
+
+# build website
+scriptdir=`dirname "$0"`
+cd "$scriptdir"/../docs
+rm -rf output
+rake build
+cd ..
+
+# copy to /tmp
+tmpdir=$(mktemp -d -t jq.website.XXXXXXXXXX)
+cp -r docs/output/* "$tmpdir"
+cp .gitignore "$tmpdir"
+
+# copy to gh-pages
+git checkout gh-pages
+cp -r "$tmpdir"/* .
+cp "$tmpdir"/.gitignore .
+
+# clean up
+rm -rf "$tmpdir"
+echo SUCCESS

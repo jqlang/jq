@@ -12,7 +12,7 @@ FileETag All
 	</IfModule>
 </IfModule>
 
-# Cache, aggressively 
+# Cache, aggressively
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresDefault "access plus 10 days"

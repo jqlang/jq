@@ -1,0 +1,301 @@
+#!/bin/sh
+
+. "${0%/*}/setup" "$@"
+
+PATH=$JQBASEDIR:$PATH $JQBASEDIR/tests/jq-f-test.sh > /dev/null
+
+if [ -f "$JQBASEDIR/.libs/libinject_errors.so" ]; then
+  # Do some simple error injection tests to check that we're handling
+  # I/O errors correctly.
+  (
+  libinject=$JQBASEDIR/.libs/libinject_errors.so
+  cd $d
+  LD_PRELOAD=$libinject $JQ . /dev/null
+  touch fail_read
+  LD_PRELOAD=$libinject $JQ . fail_read && exit 2
+  touch fail_close
+  LD_PRELOAD=$libinject $JQ . fail_close && exit 2
+  true
+  )
+fi
+
+printf 'a\0b\nc\0d\ne' > $d/input
+$VALGRIND $Q $JQ -Rse '. == "a\u0000b\nc\u0000d\ne"' $d/input
+$VALGRIND $Q $JQ -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input
+
+## Test constant folding
+
+## XXX If we add a builtin to list the program's disassembly then we can
+## move all of these into tests/all.test
+
+# String constant folding (addition only)
+nref=`$VALGRIND $Q $JQ -n --debug-dump-disasm '"foo"' | wc -l`
+
+# Numeric constant folding (not all ops yet)
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '1+1' | wc -l`
+if [ $n -ne $nref ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '1-1' | wc -l`
+if [ $n -ne $nref ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '2*3' | wc -l`
+if [ $n -ne $nref ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9/3' | wc -l`
+if [ $n -ne $nref ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9==3' | wc -l`
+if [ $n -ne $nref ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9!=3' | wc -l`
+if [ $n -ne $nref ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9<=3' | wc -l`
+if [ $n -ne $nref ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9>=3' | wc -l`
+if [ $n -ne $nref ]; then
+    echo "Constant expression folding for strings didn't work"
+    exit 1
+fi
+
+## Test JSON sequence support
+
+cat > $d/expected <<EOF
+ignoring parse error: Truncated value at line 2, column 5
+ignoring parse error: Truncated value at line 2, column 25
+ignoring parse error: Truncated value at line 2, column 41
+EOF
+printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"\036false\n'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},false]' > /dev/null 2> $d/out
+cmp $d/out $d/expected
+
+cat > $d/expected <<EOF
+ignoring parse error: Truncated value at line 2, column 5
+ignoring parse error: Truncated value at line 2, column 25
+ignoring parse error: Truncated value at line 3, column 1
+EOF
+printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
+cmp $d/out $d/expected
+
+# Note that here jq sees no inputs at all but it still succeeds because
+# --seq ignores parse errors
+cat > $d/expected <<EOF
+ignoring parse error: Unfinished abandoned text at EOF at line 1, column 4
+EOF
+printf '"foo' | $JQ -ce --seq . > $d/out 2>&1
+cmp $d/out $d/expected
+
+# Numeric values truncated by EOF are ignored
+cat > $d/expected <<EOF
+ignoring parse error: Unfinished abandoned text at EOF at line 1, column 1
+EOF
+printf '1' | $JQ -ce --seq . > $d/out 2>&1
+cmp $d/out $d/expected
+
+cat > $d/expected <<EOF
+jq: error (at <stdin>:1): Unfinished abandoned text at EOF at line 2, column 0
+EOF
+if printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 2
+fi
+cmp $d/out $d/expected
+
+# Regression test for #951
+printf '"a\n' > $d/input
+if $VALGRIND $Q $JQ -e . $d/input; then
+  printf 'Issue #951 is back?\n' 1>&2
+  exit 2
+fi
+
+## Test streaming parser
+
+## If we add an option to stream to the `import ... as $symbol;` directive
+## then we can move these tests into tests/all.test.
+$VALGRIND $Q $JQ -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p,.]' < "$JQTESTDIR/torture/input0.json" > $d/out0
+$VALGRIND $Q $JQ --stream -c '.|select(length==2)' < "$JQTESTDIR/torture/input0.json" > $d/out1
+diff $d/out0 $d/out1
+
+## XXX This test can be moved to tests/all.test _now_
+clean=false
+if which seq > /dev/null 2>&1; then
+    # XXX We should try every prefix of input0.json, but that makes this
+    # test very, very slow when run with valgrind, and the whole point
+    # is to run it with valgrind.
+    #
+    #len=`wc -c < "$JQTESTDIR/torture/input0.json"`
+    if [ -z "$VALGRIND" ]; then
+        start=1
+        end=`wc -c < "$JQTESTDIR/torture/input0.json"`
+    else
+        start=120
+        end=151
+    fi
+    for i in `seq $start $end`; do
+        dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
+            $VALGRIND $JQ -c . > $d/out0 2>$d/err || true
+        if [ -n "$VALGRIND" ]; then
+            grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
+        else
+            tail -1 $d/err | egrep -i 'assert|abort|core' && false
+        fi
+
+        dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
+            $VALGRIND $JQ -cn --stream 'fromstream(inputs)' > $d/out1 2>$d/err || true
+        if [ -n "$VALGRIND" ]; then
+            grep '^==[0-9][0-9]*== ERROR SUMMARY: 0 errors' $d/err > /dev/null
+        else
+            tail -1 $d/err | egrep -i 'assert|abort|core' && false
+        fi
+
+        diff $d/out0 $d/out1
+    done
+else
+    echo "Not doing torture tests"
+fi
+
+## Fuzz parser
+
+## XXX With a `urandom` builtin we could move this test into tests/all.test
+clean=false
+if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
+    # Have a /dev/urandom, good
+    $VALGRIND $Q $JQ --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q $JQ --seq --stream . $d/rand >/dev/null 2>&1
+    dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null
+    $VALGRIND $Q $JQ --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q $JQ --seq --stream . $d/rand >/dev/null 2>&1
+    dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null
+    $VALGRIND $Q $JQ --seq . $d/rand >/dev/null 2>&1
+    $VALGRIND $Q $JQ --seq --stream . $d/rand >/dev/null 2>&1
+fi
+clean=true
+
+## Test library/module system
+
+# Check handling of ~/.jq; these can't move into jq_test.c yet because
+# they depend on $HOME
+if [ "`HOME="$mods" $VALGRIND $Q $JQ -nr fg`" != foobar ]; then
+    echo "Bug #479 appears to be back" 1>&2
+    exit 1
+fi
+
+if [ `HOME="$mods" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
+    echo "Binding too many defs into program" 1>&2
+    exit 1
+fi
+
+cd "$JQBASEDIR" # so that relative library paths are guaranteed correct
+if ! $VALGRIND $Q $JQ -L ./tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
+    echo "Issue #817 regression?" 1>&2
+    exit 1
+fi
+
+cd "$JQBASEDIR"
+if ! $VALGRIND $Q $JQ -L tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
+    echo "Issue #817 regression?" 1>&2
+    exit 1
+fi
+
+## Halt
+
+if ! $VALGRIND $Q $JQ -n halt; then
+    echo "jq halt didn't work as expected" 1>&2
+    exit 1
+fi
+if $VALGRIND $Q $VG_EXIT0 $JQ -n 'halt_error(1)'; then
+    echo "jq halt_error(1) didn't work as expected" 1>&2
+    exit 1
+elif [ $? -ne 1 ]; then
+    echo "jq halt_error(1) had wrong error code" 1>&2
+    exit 1
+fi
+if $VALGRIND $Q $VG_EXIT0 $JQ -n 'halt_error(11)'; then
+    echo "jq halt_error(11) didn't work as expected" 1>&2
+    exit 1
+elif [ $? -ne 11 ]; then
+    echo "jq halt_error(11) had wrong error code" 1>&2
+    exit 1
+fi
+if [ -n "`$VALGRIND $Q $JQ -n 'halt_error(1)' 2>&1`" ]; then
+    echo "jq halt_error(1) had unexpected output" 1>&2
+    exit 1
+fi
+if [ -n "`$VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>/dev/null`" ]; then
+    echo "jq halt_error(1) had unexpected output on stdout" 1>&2
+    exit 1
+fi
+if [ "`$VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>&1`" != xyz ]; then
+    echo "jq halt_error(1) had unexpected output" 1>&2
+    exit 1
+fi
+
+# Check $JQ_COLORS
+$JQ -Ccn . > $d/color
+printf '\033[1;30mnull\033[0m\n' > $d/expect
+cmp $d/color $d/expect
+JQ_COLORS='4;31' $JQ -Ccn . > $d/color
+printf '\033[4;31mnull\033[0m\n' > $d/expect
+cmp $d/color $d/expect
+JQ_COLORS='1;30:0;31:0;32:0;33:0;34:1;35:1;36' \
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color
+(
+printf '\033[1;35m[\033[1;36m{'
+printf '\033[0m\033[34;1m"a"\033['
+printf '0m\033[1;36m:\033[0m\033['
+printf '0;32mtrue\033[0m\033[1'
+printf ';36m,\033[0m\033[34;1m'
+printf '"b"\033[0m\033[1;36m:\033'
+printf '[0m\033[0;31mfalse\033'
+printf '[0m\033[1;36m\033[1;36'
+printf 'm}\033[0m\033[1;35m,\033['
+printf '0;33m123\033[0m\033[1;'
+printf '35m,\033[1;30mnull\033'
+printf '[0m\033[1;35m\033[1;35'
+printf 'm]\033[0m\n'
+) > $d/expect
+cmp $d/color $d/expect
+
+# Check garbage in JQ_COLORS.  We write each color sequence into a 16
+# char buffer that needs to hold ESC [ <color> m NUL, so each color
+# sequence can be no more than 12 chars (bytes).  These emit a warning
+# on stderr.
+set -vx
+echo 'Failed to set $JQ_COLORS' > $d/expect_warning
+$JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/expect
+JQ_COLORS='garbage;30:*;31:,;3^:0;$%:0;34:1;35:1;36' \
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
+cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
+JQ_COLORS='1234567890123456789;30:0;31:0;32:0;33:0;34:1;35:1;36' \
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
+cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
+JQ_COLORS='1;31234567890123456789:0;31:0;32:0;33:0;34:1;35:1;36' \
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
+cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
+JQ_COLORS='1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456' \
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
+cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
+JQ_COLORS="0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:" \
+  $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color 2>$d/warning
+cmp $d/color $d/expect
+cmp $d/warning $d/expect_warning
+
+exit 0

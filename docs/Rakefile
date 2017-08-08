@@ -1,146 +1,24 @@
-require 'yaml'
-require 'bonsai'
-require 'liquid'
-require 'maruku'
-require 'json'
-require 'ronn'
-require 'tempfile'
-require 'yaml'
+current_dir = File.dirname(__FILE__)
+rakefile_manual = File.expand_path(File.join(current_dir, "Rakefile.manual"))
+rakefile_website = File.expand_path(File.join(current_dir, "Rakefile.website"))
 
-module ExtraFilters
-  def markdownify(input)
-    Maruku.new(input).to_html
-  end
-
-  def sanitize(input)
-    input.gsub(/[^a-zA-Z0-9_]/,"")
-  end
-
-  def json(input)
-    input.to_json
-  end
-  
-  def unique(input)
-    @n = (@n || 0) + 1
-    input + @n.to_s
-  end
-end
-
-Liquid::Template.register_filter(ExtraFilters)
-
-
-task :serve do
-  begin
-    Bonsai.log "Press Control+C to quit"
-    
-    require 'rack'
-    require 'sinatra'
-    require 'watch'
-    require 'launchy'
-    
-    Bonsai.root_dir = Dir.pwd
-    
-    server = fork {        
-      app = Rack::Builder.app {
-        map "/jq" do
-          use Bonsai::StaticPassThrough, :root => Bonsai.root_dir + "/output", :urls => ["/"]
-        end
-        run Bonsai::DevelopmentServer
-      }
-      Rack::Handler.default.run(app, :Port => 5000) do
-        Launchy.open("http://localhost:5000/jq/")
-      end
-    }    
-    Watch.new("{content,templates,public}/**/*") { Bonsai::Exporter.process! }
-  rescue Interrupt
-    Process.kill("QUIT", server)
-    Process.wait(server)
-    exit
-  end
-end
-
-task :build do
-  Bonsai.root_dir = Dir.pwd
-  Bonsai::Exporter.publish!
-end
-
-$BINARIES = {
-  :osx32 => "--host=i686-apple-darwin10 CFLAGS='-m32 -g -O'",
-  :osx64 => "--host=i686-apple-darwin10 CFLAGS='-m64 -g -O'",
-  :win32 => "--host=i686-w64-mingw32 CFLAGS='-g -O'",
-  :win64 => "--host=x86_64-w64-mingw32 CFLAGS='-g -O'",
-  :linux32 => "--host=x86_64-linux-gnu CFLAGS='-m32 -g -O'",
-  :linux64 => "--host=x86_64-linux-gnu CFLAGS='-m64 -g -O'"
-}
-
-$BINARIES.each do |name, args|
-  file "../build/#{name}" do |t|
-    sh "../scripts/crosscompile -j4 #{name} #{args}"
-  end
-  task :binaries => ["../build/#{name}"]
-end
-
-task :binaries => ["output/download"] do
-  $BINARIES.each do |name, args|
-    FileUtils.cp_r "../build/#{name}", "output/download/"
-  end
-end
-
-def load_manual
-  YAML::ENGINE.yamler = 'syck'
-  YAML::load(File.open("content/3.manual/manual.yml"))
-end
-
+desc "Build the manpage from the bonsai source of the manual"
 task :manpage do
-  Tempfile.open "manpage" do |f|
-    manual = load_manual
-    f.puts manual['manpage_intro']
-    f.puts manual['body']
-    manual['sections'].each do |section|
-      
-      f.puts "## #{section['title'].upcase}\n"
-      f.puts section['body']
-      f.puts ""
-      (section['entries'] || []).each do |entry|
-        f.puts "### #{entry['title']}\n"
-        f.puts entry['body']
-        f.puts ""
-        (entry['examples'] || []).each do |example|
-          f.puts "    jq '#{example['program']}'"
-          f.puts "       #{example['input']}"
-          f.puts "    => #{example['output'].join(", ")}"
-          f.puts
-        end
-      end
-      f.puts ""
-    end
-    f.puts manual['manpage_epilogue']
-    f.close
-    puts Ronn::Document.new(f.path).convert('roff').gsub(/<\/?code>/,"")
-  end  
+    system %(#{$0} -f #{rakefile_manual} manpage)
 end
 
-task :manpage_default => ["default_manpage.md"] do
-  puts Ronn::Document.new("default_manpage.md").convert('roff').gsub(/<\/?code>/,"")
-end
-
+desc "Collect jq unit test cases from the bonsai source of the manual"
 task :mantests do
-  load_manual['sections'].each do |section|
-    (section['entries'] || []).each do |entry|
-      (entry['examples'] || []).each do |example|
-        puts example['program'].gsub("\n", " ")
-        puts example['input']
-        example['output'].each do |s| puts s end
-        puts
-      end
-    end
-  end
+    system %(#{$0} -f #{rakefile_manual} mantests)
 end
 
-directory "output/download/source"
-task :tarball => ["output/download/source"] do
-  sh "cd ..; ./configure && make dist && make distclean"
-  sh "cp ../jq-*.tar.gz output/download/source"
+desc "Build the website from the bonsai sources"
+task :build do
+    system %(#{$0} -f #{rakefile_website} build)
 end
 
-task :dist => [:build, :binaries, :tarball]
+desc "Serve a live view of the website on http://localhost:5000/jq/"
+task :serve do
+    system %(#{$0} -f #{rakefile_website} serve)
+end
+

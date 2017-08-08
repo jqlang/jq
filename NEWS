@@ -1,23 +1,48 @@
 
 Release history
 
- * jq version 1.0 was released on Sun Oct 21 2012
- * jq version 1.1 was released on Sun Oct 21 2012
- * jq version 1.2 was released on Thu Dec 20 2012
- * jq version 1.3 was released on Sun May 19 2013
+ * jq version 1.5 was released on Sat Aug 15 2015
  * jq version 1.4 was released on Mon Jun 9 2014
+ * jq version 1.3 was released on Sun May 19 2013
+ * jq version 1.2 was released on Thu Dec 20 2012
+ * jq version 1.1 was released on Sun Oct 21 2012
+ * jq version 1.0 was released on Sun Oct 21 2012
 
-As yet unreleased features in master branch, since 1.4:
+New features in 1.5 since 1.4:
 
- - semantics
+ - regular expressions (with Oniguruma)
 
-    - multiple function argument numbers for any one function name,
-      dispatching on number of arguments in function calls
+ - a library/module system
 
- - misc
+ - many new builtins
 
-    - env builting (to access the environment)
-    - prebuilt jq.1 man page
+    - datetime builtins
+    - math builtins
+    - regexp-related builtins
+    - stream-related builtins (e.g., all/1, any/1)
+    - minimal I/O builtins (`inputs`, `debug`)
+
+ - new syntactic features, including:
+
+    - destructuring (`. as [$first, $second] | ...`)
+    - try/catch, generalized `?` operator, and label/break
+    - `foreach`
+    - multiple definitions of a function with different numbers of
+      arguments
+
+ - command-line arguments
+
+    - --join-lines / -j for raw output
+    - --argjson and --slurpfile
+    - --tab and --indent
+    - --stream (streaming JSON parser)
+    - --seq (RFC7464 JSON text sequence)
+    - --run-tests improvements
+
+ - optimizations:
+
+    - tail-call optimization
+    - reduce and foreach no longer leak a reference to .
 
 New features in 1.4 since 1.3:
 

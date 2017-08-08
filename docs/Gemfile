@@ -4,3 +4,4 @@ gem "rake"
 gem "bonsai"
 gem "maruku"
 gem "ronn"
+gem "mustache", "<1.0" # to support ruby <2.0

@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# This is meant to be included by each test's shell script driver.
+
+if [ -n "$TRACE_TESTS" ]; then
+    set -x
+fi
+
+set -eu
+
+JQTESTDIR=$(cd "$(dirname "$0")" && pwd)
+JQBASEDIR=$JQTESTDIR/..
+JQ=$JQBASEDIR/jq
+
+if [ -z "${NO_VALGRIND-}" ] && which valgrind > /dev/null; then
+    VALGRIND="valgrind --error-exitcode=1 --leak-check=full \
+                       --suppressions=$JQTESTDIR/onig.supp"
+    VG_EXIT0=--error-exitcode=0
+    Q=-q
+else
+    VALGRIND=
+    VG_EXIT0=
+    Q=
+fi
+
+mods=$JQTESTDIR/modules
+
+clean=true
+d=
+clean () {
+    if ! $clean; then
+        echo "See temp files in $d!"
+    elif [ -n "$d" ]; then
+        rm -rf "$d"
+    fi
+}
+trap clean EXIT
+d=`mktemp -d -t jqXXXXXX || true`
+if [ -z "$d" ]; then
+    echo "Your OS does not support mktemp(1) -d" 1>&2
+    exit 1
+fi

@@ -13,7 +13,7 @@ RVM and Ruby 1.9.3 like so:
 
 After that finishes installing, you'll need to make sure RVM is on
 your path by doing `source $HOME/.rvm/scripts/rvm`, or just opening a
-new shell. See <http://rvm.io> for more info on RVM.
+new shell. See <https://rvm.io> for more info on RVM.
 
 Once RVM is installed, you can install all the dependencies for jq's
 documentation build by running this from the `docs` directory:

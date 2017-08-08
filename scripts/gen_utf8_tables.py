@@ -7,10 +7,9 @@ mask = lambda n: (1 << n) - 1
 
 def print_table(type, name, t):
     print("static const %s %s[] =" % (type, name))
-    first = True
     for i in range(0,len(t),16):
         print ((" {" if i == 0 else "  ") +
-               ", ".join("0x%02x"%n for n in t[i:i+16]) + 
+               ", ".join("0x%02x"%n for n in t[i:i+16]) +
                ("," if i + 16 < len(t) else "};"))
 
 
@@ -22,7 +21,7 @@ def utf8info(c):
     if 0xE0 <= c <= 0xEF: return 3, mask(4)
     if 0xF0 <= c <= 0xF4: return 4, mask(3)
     if 0xF4 <= c <= 0xFF: return 0, 0
-        
+
 table = lambda i: [utf8info(c)[i] for c in range(256)]
 
 print("#define UTF8_CONTINUATION_BYTE ((unsigned char)255)")
