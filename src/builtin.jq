@@ -303,3 +303,6 @@ def JOIN($idx; stream; idx_expr; join_expr):
   stream | [., $idx[idx_expr]] | join_expr;
 def IN(s): . as $in | first( if (s == $in) then true else empty end ) // false;
 def IN(src; s): any( src|IN(s); .);
+
+# f should always evaluate to a string:
+def GROUPS_BY(stream; f): reduce stream as $x ({}; .[$x|f] += [$x] ) | .[];

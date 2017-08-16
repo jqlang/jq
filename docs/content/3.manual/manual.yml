@@ -1312,6 +1312,20 @@ sections:
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
             output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
 
+      - title: "`GROUPS_BY(stream; path_expression)`"
+        body: |
+
+          `GROUPS_BY/2` is a stream-oriented version of group_by/1: it takes as input the items
+	  in `stream`, and emits a stream of arrays, one per group as defined by
+	  `path_expression`, which must evaluate to a string for all items in the stream.
+
+        examples:
+          - program: 'GROUPS_BY(1,2,1; tostring)'
+            input: 'null'
+            output:
+	      - ['[1,1]']
+              - ['[2]']
+
       - title: "`min`, `max`, `min_by(path_exp)`, `max_by(path_exp)`"
         body: |
 

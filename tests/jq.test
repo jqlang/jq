@@ -1420,4 +1420,7 @@ isempty(1,error("foo"))
 null
 false
 
-
+GROUPS_BY(1,1,2; tostring)
+null
+[1,1]
+[2]

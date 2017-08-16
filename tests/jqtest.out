@@ -1,0 +1,346 @@
+peter:~/github/pkoppstein/jq/tests$ ./jqtest
+--73109-- run: /usr/bin/dsymutil "/Users/peter/github/pkoppstein/jq/tests/../jq"
+Testing 'true' at line number 8
+Testing 'false' at line number 12
+Testing 'null' at line number 16
+Testing '1' at line number 20
+Testing '-1' at line number 25
+Testing '{}' at line number 31
+Testing '[]' at line number 35
+Testing '{x: -1}' at line number 39
+Testing '.' at line number 46
+Testing '"Aa\r\n\t\b\f\u03bc"' at line number 52
+Testing '.' at line number 56
+Testing '"inter\("pol" + "ation")"' at line number 60
+Testing '@text,@json,([1,.] | (@csv, @tsv)),@html,@uri,@sh,@base64,(@base64 | @base64d)' at line number 64
+Testing '@base64' at line number 77
+Testing '@base64d' at line number 81
+Testing '@uri' at line number 85
+Testing '@html "<b>\(.)</b>"' at line number 89
+Testing '[.[]|tojson|fromjson]' at line number 93
+Testing '{a: 1}' at line number 101
+Testing '{a,b,(.d):.a,e:.b}' at line number 105
+Testing '{"a",b,"a$\(1+1)"}' at line number 109
+Testing '{(0):1}' at line number 114
+Testing '{non_const:., (0):1}' at line number 118
+Testing '.foo' at line number 125
+Testing '.foo | .bar' at line number 129
+Testing '.foo.bar' at line number 133
+Testing '.foo_bar' at line number 137
+Testing '.["foo"].bar' at line number 141
+Testing '."foo"."bar"' at line number 145
+Testing '[.[]|.foo?]' at line number 149
+Testing '[.[]|.foo?.bar?]' at line number 153
+Testing '[..]' at line number 157
+Testing '[.[]|.[]?]' at line number 161
+Testing '[.[]|.[1:3]?]' at line number 165
+Testing 'try (.foo[-1] = 0) catch .' at line number 173
+Testing 'try (.foo[-2] = 0) catch .' at line number 177
+Testing '.[-1] = 5' at line number 181
+Testing '.[-2] = 5' at line number 185
+Testing '.[]' at line number 193
+Testing '1,1' at line number 199
+Testing '1,.' at line number 204
+Testing '[.]' at line number 209
+Testing '[[2]]' at line number 213
+Testing '[{}]' at line number 217
+Testing '[.[]]' at line number 221
+Testing '[(.,1),((.,.[]),(2,3))]' at line number 225
+Testing '[([5,5][]),.,.[]]' at line number 229
+Testing '{x: (1,2)},{x:3} | .x' at line number 233
+Testing '.[-2]' at line number 239
+Testing '[range(0;10)]' at line number 243
+Testing '[range(0,1;3,4)]' at line number 247
+Testing '[range(0;10;3)]' at line number 251
+Testing '[range(0;10;-1)]' at line number 255
+Testing '[range(0;-5;-1)]' at line number 259
+Testing '[range(0,1;4,5;1,2)]' at line number 263
+Testing '[while(.<100; .*2)]' at line number 267
+Testing '[(label $here | .[] | if .>1 then break $here else . end), "hi!"]' at line number 271
+Testing '[(label $here | .[] | if .>1 then break $here else . end), "hi!"]' at line number 275
+Testing '. as $foo | break $foo' at line number 280
+Testing '[.[]|[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]]' at line number 283
+Testing '[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]' at line number 287
+Testing '[foreach range(5) as $item (0; $item)]' at line number 291
+Testing '[foreach .[] as [$i, $j] (0; . + $i - $j)]' at line number 295
+Testing '[foreach .[] as {a:$a} (0; . + $a; -.)]' at line number 299
+Testing '[limit(3; .[])]' at line number 303
+Testing '[first(range(.)), last(range(.)), nth(0; range(.)), nth(5; range(.)), try nth(-1; range(.)) catch .]' at line number 307
+Testing 'first(1,error("foo"))' at line number 312
+Testing '[limit(5,7; range(9))]' at line number 322
+Testing '[nth(5,7; range(9;0;-1))]' at line number 327
+Testing '[range(0,1,2;4,3,2;2,3)]' at line number 332
+Testing '[range(3,5)]' at line number 337
+Testing '[(index(",","|"), rindex(",","|")), indices(",","|")]' at line number 342
+Testing 'join(",","/")' at line number 347
+Testing '[.[]|join("a")]' at line number 352
+Testing 'flatten(3,2,1)' at line number 357
+Testing '[.[3:2], .[-5:4], .[:-2], .[-2:], .[3:3][1:], .[10:]]' at line number 368
+Testing '[.[3:2], .[-5:4], .[:-2], .[-2:], .[3:3][1:], .[10:]]' at line number 372
+Testing 'del(.[2:4],.[0],.[-2:])' at line number 376
+Testing '.[2:4] = ([], ["a","b"], ["a","b","c"])' at line number 380
+Testing 'reduce range(65540;65536;-1) as $i ([]; .[$i] = $i)|.[65536:]' at line number 392
+Testing '1 as $x | 2 as $y | [$x,$y,$x]' at line number 400
+Testing '[1,2,3][] as $x | [[4,5,6,7][$x]]' at line number 404
+Testing '42 as $x | . | . | . + 432 | $x + 1' at line number 410
+Testing '1 as $x | [$x,$x,$x as $x | $x]' at line number 414
+Testing '[1, {c:3, d:4}] as [$a, {c:$b, b:$c}] | $a, $b, $c' at line number 418
+Testing '. as {as: $kw, "str": $str, ("e"+"x"+"p"): $exp} | [$kw, $str, $exp]' at line number 424
+Testing '.[] as [$a, $b] | [$b, $a]' at line number 428
+Testing '. as $i | . as [$i] | $i' at line number 433
+Testing '. as [$i] | . as $i | $i' at line number 437
+Testing '. as [] | null' at line number 442
+Testing '. as {} | null' at line number 446
+Testing '1+1' at line number 455
+Testing '1+1' at line number 459
+Testing '2-1' at line number 463
+Testing '2-(-1)' at line number 467
+Testing '1e+0+0.001e3' at line number 471
+Testing '.+4' at line number 475
+Testing '.+null' at line number 479
+Testing 'null+.' at line number 483
+Testing '.a+.b' at line number 487
+Testing '[1,2,3] + [.]' at line number 491
+Testing '{"a":1} + {"b":2} + {"c":3}' at line number 495
+Testing '"asdf" + "jkl;" + . + . + .' at line number 499
+Testing '"\u0000\u0020\u0000" + .' at line number 503
+Testing '42 - .' at line number 507
+Testing '[1,2,3,4,1] - [.,3]' at line number 511
+Testing '[10 * 20, 20 / .]' at line number 515
+Testing '1 + 2 * 2 + 10 / 2' at line number 519
+Testing '[16 / 4 / 2, 16 / 4 * 2, 16 - 4 - 2, 16 - 4 + 2]' at line number 523
+Testing '25 % 7' at line number 527
+Testing '49732 % 472' at line number 531
+Testing '1 + tonumber + ("10" | tonumber)' at line number 535
+Testing '[{"a":42},.object,10,.num,false,true,null,"b",[1,4]] | .[] as $x | [$x == .[]]' at line number 539
+Testing '[.[] | length]' at line number 551
+Testing 'utf8bytelength' at line number 555
+Testing '[.[] | try utf8bytelength catch .]' at line number 559
+Testing 'map(keys)' at line number 564
+Testing '[1,2,empty,3,empty,4]' at line number 568
+Testing 'map(add)' at line number 572
+Testing 'map_values(.+1)' at line number 576
+Testing 'def f: . + 1; def g: def g: . + 100; f | g | f; (f | g), g' at line number 585
+Testing 'def f: (1000,2000); f' at line number 590
+Testing 'def f(a;b;c;d;e;f): [a+1,b,c,d,e,f]; f(.[0];.[1];.[0];.[0];.[0];.[0])' at line number 595
+Testing 'def a: 0; . | a' at line number 600
+Testing 'def f(a;b;c;d;e;f;g;h;i;j): [j,i,h,g,f,e,d,c,b,a]; f(.[0];.[1];.[2];.[3];.[4];.[5];.[6];.[7];.[8];.[9])' at line number 605
+Testing '([1,2] + [4,5])' at line number 609
+Testing 'true' at line number 613
+Testing 'null,1,null' at line number 617
+Testing '[1,2,3]' at line number 623
+Testing '[.[]|floor]' at line number 627
+Testing '[.[]|sqrt]' at line number 631
+Testing '(add / length) as $m | map((. - $m) as $d | $d * $d) | add / length | sqrt' at line number 635
+Testing 'atan * 4 * 1000000|floor / 1000000' at line number 644
+Testing '[(3.141592 / 2) * (range(0;20) / 20)|cos * 1000000|floor / 1000000]' at line number 648
+Testing '[(3.141592 / 2) * (range(0;20) / 20)|sin * 1000000|floor / 1000000]' at line number 652
+Testing 'def f(x): x | x; f([.], . + [42])' at line number 657
+Testing 'def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]' at line number 665
+Testing 'def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x | f($x,$x+x); g($x)' at line number 670
+Testing 'def x(a;b): a as $a | b as $b | $a + $b; def y($a;$b): $a + $b; def check(a;b): [x(a;b)] == [y(a;b)]; check(.[];.[]*2)' at line number 675
+Testing '[[20,10][1,0] as $x | def f: (100,200) as $y | def g: [$x + $y, .]; . + $x | g; f[0] | [f][0][1] | f]' at line number 681
+Testing 'def fac: if . == 1 then 1 else . * (. - 1 | fac) end; [.[] | fac]' at line number 686
+Testing 'reduce .[] as $x (0; . + $x)' at line number 696
+Testing 'reduce .[] as [$i, {j:$j}] (0; . + $i - $j)' at line number 700
+Testing 'reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)' at line number 704
+Testing 'reduce range(5) as $n ([]; select($n%2 == 1) | . + [$n])' at line number 709
+Testing 'reduce . as $n (.; .)' at line number 714
+Testing '. as {$a, b: [$c, {$d}]} | [$a, $c, $d]' at line number 719
+Testing '. as {$a, $b:[$c, $d]}| [$a, $b, $c, $d]' at line number 723
+Testing '.[] | . as {$a, b: [$c, {$d}]} ?// [$a, {$b}, $e] ?// $f | [$a, $b, $c, $d, $e, $f]' at line number 728
+Testing '. as $dot|any($dot[];not)' at line number 734
+Testing '. as $dot|any($dot[];not)' at line number 738
+Testing '. as $dot|all($dot[];.)' at line number 742
+Testing '. as $dot|all($dot[];.)' at line number 746
+Testing 'path(.foo[0,1])' at line number 754
+Testing 'path(.[] | select(.>3))' at line number 759
+Testing 'path(.)' at line number 763
+Testing 'try path(.a | map(select(.b == 0))) catch .' at line number 767
+Testing 'try path(.a | map(select(.b == 0)) | .[0]) catch .' at line number 771
+Testing 'try path(.a | map(select(.b == 0)) | .c) catch .' at line number 775
+Testing 'try path(.a | map(select(.b == 0)) | .[]) catch .' at line number 779
+Testing 'path(.a[path(.b)[0]])' at line number 783
+Testing '[paths]' at line number 787
+Testing '[leaf_paths]' at line number 791
+Testing '["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])' at line number 795
+Testing 'map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))' at line number 801
+Testing 'map(delpaths([[0,"foo"]]))' at line number 807
+Testing '["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])' at line number 811
+Testing 'delpaths([[-200]])' at line number 817
+Testing 'try delpaths(0) catch .' at line number 821
+Testing 'del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)' at line number 825
+Testing 'del(.[1], .[-6], .[2], .[-3:9])' at line number 832
+Testing '.message = "goodbye"' at line number 839
+Testing '.foo = .bar' at line number 843
+Testing '.foo |= .+1' at line number 847
+Testing '.[] += 2, .[] *= 2, .[] -= 2, .[] /= 2, .[] %=2' at line number 851
+Testing '[.[] % 7]' at line number 859
+Testing '.foo += .foo' at line number 863
+Testing '.[0].a |= {"old":., "new":(.+1)}' at line number 867
+Testing 'def inc(x): x |= .+1; inc(.[].a)' at line number 871
+Testing '.[] | try (getpath(["a",0,"b"]) |= 5) catch .' at line number 876
+Testing '.[2][3] = 1' at line number 887
+Testing '.foo[2].bar = 1' at line number 891
+Testing 'try ((map(select(.a == 1))[].b) = 10) catch .' at line number 895
+Testing 'try ((map(select(.a == 1))[].a) |= .+1) catch .' at line number 899
+Testing 'def x: .[1,2]; x=10' at line number 903
+Testing 'try (def x: reverse; x=10) catch .' at line number 907
+Testing '.[] = 1' at line number 911
+Testing '[.[] | if .foo then "yep" else "nope" end]' at line number 919
+Testing '[.[] | if .baz then "strange" elif .foo then "yep" else "nope" end]' at line number 923
+Testing '[if 1,null,2 then 3 else 4 end]' at line number 927
+Testing '[if empty then 3 else 4 end]' at line number 931
+Testing '[if 1 then 3,4 else 5 end]' at line number 935
+Testing '[if null then 3 else 5,6 end]' at line number 939
+Testing '[.[] | [.foo[] // .bar]]' at line number 943
+Testing '.[] //= .[0]' at line number 947
+Testing '.[] | [.[0] and .[1], .[0] or .[1]]' at line number 951
+Testing '[.[] | not]' at line number 958
+Testing '[10 > 0, 10 > 10, 10 > 20, 10 < 0, 10 < 10, 10 < 20]' at line number 963
+Testing '[10 >= 0, 10 >= 10, 10 >= 20, 10 <= 0, 10 <= 10, 10 <= 20]' at line number 967
+Testing '[ 10 == 10, 10 != 10, 10 != 11, 10 == 11]' at line number 972
+Testing '["hello" == "hello", "hello" != "hello", "hello" == "world", "hello" != "world" ]' at line number 976
+Testing '[[1,2,3] == [1,2,3], [1,2,3] != [1,2,3], [1,2,3] == [4,5,6], [1,2,3] != [4,5,6]]' at line number 980
+Testing '[{"foo":42} == {"foo":42},{"foo":42} != {"foo":42}, {"foo":42} != {"bar":42}, {"foo":42} == {"bar":42}]' at line number 984
+Testing '[{"foo":[1,2,{"bar":18},"world"]} == {"foo":[1,2,{"bar":18},"world"]},{"foo":[1,2,{"bar":18},"world"]} == {"foo":[1,2,{"bar":19},"world"]}]' at line number 989
+Testing '[("foo" | contains("foo")), ("foobar" | contains("foo")), ("foo" | contains("foobar"))]' at line number 994
+Testing '[.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]' at line number 999
+Testing '[.[]|(.a, .a)?]' at line number 1003
+Testing '[[.[]|[.a,.a]]?]' at line number 1007
+Testing 'try error("\($__loc__)") catch .' at line number 1011
+Testing '[.[]|startswith("foo")]' at line number 1016
+Testing '[.[]|endswith("foo")]' at line number 1020
+Testing '[.[] | split(", ")]' at line number 1024
+Testing 'split("")' at line number 1028
+Testing '[.[]|ltrimstr("foo")]' at line number 1032
+Testing '[.[]|rtrimstr("foo")]' at line number 1036
+Testing '[(index(","), rindex(",")), indices(",")]' at line number 1040
+Testing 'indices(1)' at line number 1044
+Testing 'indices([1,2])' at line number 1048
+Testing 'indices([1,2])' at line number 1052
+Testing 'indices(", ")' at line number 1056
+Testing '[.[]|split(",")]' at line number 1060
+Testing '[.[]|split(", ")]' at line number 1064
+Testing '[.[] * 3]' at line number 1068
+Testing '[.[] / ","]' at line number 1072
+Testing '[.[] / ", "]' at line number 1076
+Testing 'map(.[1] as $needle | .[0] | contains($needle))' at line number 1080
+Testing 'map(.[1] as $needle | .[0] | contains($needle))' at line number 1084
+Testing '[({foo: 12, bar:13} | contains({foo: 12})), ({foo: 12} | contains({})), ({foo: 12, bar:13} | contains({baz:14}))]' at line number 1088
+Testing '{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {}}})' at line number 1092
+Testing '{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {bar: 14}}})' at line number 1096
+Testing 'sort' at line number 1100
+Testing '(sort_by(.b) | sort_by(.a)), sort_by(.a, .b), sort_by(.b, .c), group_by(.b), group_by(.a + .b - .c == 2)' at line number 1104
+Testing 'unique' at line number 1112
+Testing 'unique' at line number 1116
+Testing '[min, max, min_by(.[1]), max_by(.[1]), min_by(.[2]), max_by(.[2])]' at line number 1120
+Testing '[min,max,min_by(.),max_by(.)]' at line number 1124
+Testing '.foo[.baz]' at line number 1128
+Testing '.[] | .error = "no, it's OK"' at line number 1132
+Testing '[{a:1}] | .[] | .a=999' at line number 1136
+Testing 'to_entries' at line number 1140
+Testing 'from_entries' at line number 1144
+Testing 'with_entries(.key |= "KEY_" + .)' at line number 1148
+Testing 'map(has("foo"))' at line number 1152
+Testing 'map(has(2))' at line number 1156
+Testing 'keys' at line number 1160
+Testing '[][.]' at line number 1164
+Testing 'map([1,2][0:.])' at line number 1168
+Testing '{"k": {"a": 1, "b": 2}} * .' at line number 1174
+Testing '{"k": {"a": 1, "b": 2}, "hello": {"x": 1}} * .' at line number 1178
+Testing '{"k": {"a": 1, "b": 2}, "hello": 1} * .' at line number 1182
+Testing '{"a": {"b": 1}, "c": {"d": 2}, "e": 5} * .' at line number 1186
+Testing '[.[]|arrays]' at line number 1190
+Testing '[.[]|objects]' at line number 1194
+Testing '[.[]|iterables]' at line number 1198
+Testing '[.[]|scalars]' at line number 1202
+Testing '[.[]|values]' at line number 1206
+Testing '[.[]|booleans]' at line number 1210
+Testing '[.[]|nulls]' at line number 1214
+Testing 'flatten' at line number 1218
+Testing 'flatten(0)' at line number 1222
+Testing 'flatten(2)' at line number 1226
+Testing 'flatten(2)' at line number 1230
+Testing 'try flatten(-1) catch .' at line number 1234
+Testing 'transpose' at line number 1238
+Testing 'ascii_upcase' at line number 1242
+Testing 'bsearch(4)' at line number 1246
+Testing 'strftime("%Y-%m-%dT%H:%M:%SZ")' at line number 1252
+Testing 'strftime("%A, %B %d, %Y")' at line number 1256
+Testing 'gmtime' at line number 1260
+Testing 'import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]' at line number 1265
+Testing 'import "c" as foo; [foo::a, foo::c]' at line number 1269
+Testing 'include "c"; [a, c]' at line number 1273
+Testing 'module (.+1); 0' at line number 1278
+Testing 'include "a" (.+1); 0' at line number 1282
+Testing 'include "a" []; 0' at line number 1286
+Testing 'include "\ "; 0' at line number 1290
+Testing 'include "\(a)"; 0' at line number 1294
+Testing 'modulemeta' at line number 1297
+Testing 'import "syntaxerror" as e; .' at line number 1302
+Testing '%::wat' at line number 1306
+Testing 'import "test_bind_order" as check; check::check' at line number 1309
+Testing 'try -. catch .' at line number 1313
+Testing 'join(",")' at line number 1317
+Testing '.[] | join(",")' at line number 1321
+Testing '.[] | join(",")' at line number 1328
+Testing 'try join(",") catch .' at line number 1333
+Testing 'try join(",") catch .' at line number 1337
+Testing '{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}' at line number 1341
+Testing 'try (1/.) catch .' at line number 1345
+Testing 'try (1%.) catch .' at line number 1349
+Testing '1/0' at line number 1354
+Testing '[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers' at line number 1358
+Testing '[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)' at line number 1362
+Testing '}' at line number 1366
+Testing '(.[{}] = 0)?' at line number 1369
+Testing 'INDEX(range(5)|[., "foo\(.)"]; .[0])' at line number 1372
+Testing 'JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[0]|tostring)' at line number 1376
+Testing 'range(5;10)|IN(range(10))' at line number 1380
+Testing 'range(10;12)|IN(range(10))' at line number 1388
+Testing 'IN(range(10;20); range(10))' at line number 1393
+Testing 'IN(range(5;20); range(10))' at line number 1397
+Testing '(.a as $x | .b) = "b"' at line number 1402
+Testing '(.. | select(type == "object" and has("b") and (.b | type) == "array")|.b) |= .[0]' at line number 1407
+Testing 'isempty(empty)' at line number 1411
+Testing 'isempty(range(3))' at line number 1415
+Testing 'isempty(1,error("foo"))' at line number 1419
+306 of 306 tests passed (0 malformed)
+==73109== 1,024 bytes in 1 blocks are definitely lost in loss record 84 of 99
+==73109==    at 0x640B: malloc (in /usr/local/Cellar/valgrind/3.11.0/lib/valgrind/vgpreload_memcheck-amd64-darwin.so)
+==73109==    by 0x1CED3C: dirname (in /usr/lib/system/libsystem_c.dylib)
+==73109==    by 0x10002F417: process_dependencies (linker.c:322)
+==73109==    by 0x10002ECBB: load_program (linker.c:376)
+==73109==    by 0x100019DE7: jq_compile_args (execute.c:1157)
+==73109==    by 0x10001B92D: jq_testsuite (jq_test.c:86)
+==73109==    by 0x100002CC0: main (main.c:499)
+==73109== 
+==73109== 2,048 bytes in 1 blocks are definitely lost in loss record 92 of 99
+==73109==    at 0x6B09: calloc (in /usr/local/Cellar/valgrind/3.11.0/lib/valgrind/vgpreload_memcheck-amd64-darwin.so)
+==73109==    by 0x203016: strerror (in /usr/lib/system/libsystem_c.dylib)
+==73109==    by 0x100028DA4: jv_load_file (jv_file.c:16)
+==73109==    by 0x10000333A: builtins_bind (builtin.c:1738)
+==73109==    by 0x100019E09: jq_compile_args (execute.c:1159)
+==73109==    by 0x10001B92D: jq_testsuite (jq_test.c:86)
+==73109==    by 0x100002CC0: main (main.c:499)
+==73109== 
+==73109== 4,096 bytes in 1 blocks are definitely lost in loss record 97 of 99
+==73109==    at 0x640B: malloc (in /usr/local/Cellar/valgrind/3.11.0/lib/valgrind/vgpreload_memcheck-amd64-darwin.so)
+==73109==    by 0x1E7862: __smakebuf (in /usr/lib/system/libsystem_c.dylib)
+==73109==    by 0x1EAE33: __srefill0 (in /usr/lib/system/libsystem_c.dylib)
+==73109==    by 0x1EAF30: __srefill (in /usr/lib/system/libsystem_c.dylib)
+==73109==    by 0x1E4922: fgets (in /usr/lib/system/libsystem_c.dylib)
+==73109==    by 0x10001B7BD: jq_testsuite (jq_test.c:73)
+==73109==    by 0x100002CC0: main (main.c:499)
+==73109== 
+==73109== 10,808 bytes in 1 blocks are definitely lost in loss record 99 of 99
+==73109==    at 0x640B: malloc (in /usr/local/Cellar/valgrind/3.11.0/lib/valgrind/vgpreload_memcheck-amd64-darwin.so)
+==73109==    by 0x1FD6F1: gmtsub (in /usr/lib/system/libsystem_c.dylib)
+==73109==    by 0x10000C3DE: f_gmtime (builtin.c:1388)
+==73109==    by 0x10000C07C: f_strftime (builtin.c:1456)
+==73109==    by 0x100018DA7: jq_next (execute.c:845)
+==73109==    by 0x10001BB8F: jq_testsuite (jq_test.c:146)
+==73109==    by 0x100002CC0: main (main.c:499)
+==73109== 
+peter:~/github/pkoppstein/jq/tests$ 
