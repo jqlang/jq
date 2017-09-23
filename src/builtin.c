@@ -1196,6 +1196,8 @@ static jv tm2jv(struct tm *tm) {
 static time_t my_timegm(struct tm *tm) {
 #ifdef HAVE_TIMEGM
   return timegm(tm);
+#elif _WIN32
+  return _mkgmtime(tm);
 #else /* HAVE_TIMEGM */
   char *tz;
 
