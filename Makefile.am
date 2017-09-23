@@ -48,7 +48,7 @@ AM_YFLAGS = --warnings=all -d
 lib_LTLIBRARIES = libjq.la
 libjq_la_SOURCES = ${LIBJQ_SRC}
 libjq_la_LIBADD = -lm
-libjq_la_LDFLAGS = $(onig_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info 1:4:0
+libjq_la_LDFLAGS = $(onig_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info 1:4:0 -no-undefined
 
 if WIN32
 libjq_la_LIBADD += -lshlwapi
