@@ -364,7 +364,7 @@ extern int jq_yylex \
 
 #line 130 "src/lexer.l"
 
-#line 365 "lexer.h"
+#line 365 "src/lexer.h"
 
 #ifdef __cplusplus
 }
