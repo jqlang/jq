@@ -61,7 +61,7 @@ null
 null
 "interpolation"
 
-@text,@json,([1,.] | (@csv, @tsv)),@html,@uri,@sh,@base64
+@text,@json,([1,.] | (@csv, @tsv)),@html,@uri,@sh,@base64,(@base64 | @base64d)
 "<>&'\"\t"
 "<>&'\"\t"
 "\"<>&'\\\"\\t\""
@@ -71,11 +71,16 @@ null
 "%3C%3E%26'%22%09"
 "'<>&'\\''\"\t'"
 "PD4mJyIJ"
+"<>&'\"\t"
 
 # regression test for #436
 @base64
 "foóbar\n"
 "Zm/Ds2Jhcgo="
+
+@base64d
+"Zm/Ds2Jhcgo="
+"foóbar\n"
 
 @uri
 "\u03bc"
@@ -273,7 +278,7 @@ null
 
 %%FAIL
 . as $foo | break $foo
-jq: error: *label-foo/0 is not defined at <top-level>, line 1:
+jq: error: $*label-foo is not defined at <top-level>, line 1:
 
 [.[]|[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]]
 [1,2,3,4,5]
@@ -302,6 +307,11 @@ null
 [first(range(.)), last(range(.)), nth(0; range(.)), nth(5; range(.)), try nth(-1; range(.)) catch .]
 10
 [0,9,0,5,"nth doesn't support negative indices"]
+
+# Check that first(g) does not extract more than one value from g
+first(1,error("foo"))
+null
+1
 
 #
 # Check that various builtins evalute all arguments where appropriate,
@@ -373,6 +383,15 @@ del(.[2:4],.[0],.[-2:])
 [0,1,"a","b",4,5,6,7]
 [0,1,"a","b","c",4,5,6,7]
 
+# Slices at large offsets (issue #1108)
+#
+# This is written this way because [range(<large number>)] is
+# significantly slower under valgrind than .[<large number>] = value.
+#
+# We range down rather than up so that we have just one realloc.
+reduce range(65540;65536;-1) as $i ([]; .[$i] = $i)|.[65536:]
+null
+[null,65537,65538,65539,65540]
 
 #
 # Variables
@@ -686,6 +705,32 @@ reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)
 null
 14
 
+# Test fix for #1313 (reduce should handle empty updates)
+reduce range(5) as $n ([]; select($n%2 == 1) | . + [$n])
+null
+[1,3]
+
+# This, while useless, should still compile.
+reduce . as $n (.; .)
+null
+null
+
+# Destructuring
+. as {$a, b: [$c, {$d}]} | [$a, $c, $d]
+{"a":1, "b":[2,{"d":3}]}
+[1,2,3]
+
+. as {$a, $b:[$c, $d]}| [$a, $b, $c, $d]
+{"a":1, "b":[2,{"d":3}]}
+[1,[2,{"d":3}],2,{"d":3}]
+
+# Destructuring with alternation
+.[] | . as {$a, b: [$c, {$d}]} ?// [$a, {$b}, $e] ?// $f | [$a, $b, $c, $d, $e, $f]
+[{"a":1, "b":[2,{"d":3}]}, [4, {"b":5, "c":6}, 7, 8, 9], "foo"]
+[1, null, 2, 3, null, null]
+[4, 5, null, null, 7, null]
+[null, null, null, null, null, "foo"]
+
 . as $dot|any($dot[];not)
 [1,2,3,4,true,false,1,2,3,4,5]
 true
@@ -826,6 +871,18 @@ del(.[1], .[-6], .[2], .[-3:9])
 def inc(x): x |= .+1; inc(.[].a)
 [{"a":1,"b":2},{"a":2,"b":4},{"a":7,"b":8}]
 [{"a":2,"b":2},{"a":3,"b":4},{"a":8,"b":8}]
+
+# #1358, getpath/1 should work in path expressions
+.[] | try (getpath(["a",0,"b"]) |= 5) catch .
+[null,{"b":0},{"a":0},{"a":null},{"a":[0,1]},{"a":{"b":1}},{"a":[{}]},{"a":[{"c":3}]}]
+{"a":[{"b":5}]}
+{"b":0,"a":[{"b":5}]}
+"Cannot index number with number"
+{"a":[{"b":5}]}
+"Cannot index number with string \"b\""
+"Cannot index object with number"
+{"a":[{"b":5}]}
+{"a":[{"c":3,"b":5}]}
 
 .[2][3] = 1
 [4]
@@ -1311,5 +1368,56 @@ jq: error: syntax error, unexpected INVALID_CHARACTER, expecting $end (Unix shel
 
 (.[{}] = 0)?
 null
+
+INDEX(range(5)|[., "foo\(.)"]; .[0])
+null
+{"0":[0,"foo0"],"1":[1,"foo1"],"2":[2,"foo2"],"3":[3,"foo3"],"4":[4,"foo4"]}
+
+JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[0]|tostring)
+[[5,"foo"],[3,"bar"],[1,"foobar"]]
+[[[5,"foo"],null],[[3,"bar"],[3,"efg"]],[[1,"foobar"],[1,"bcd"]]]
+
+range(5;10)|IN(range(10))
+null
+true
+true
+true
+true
+true
+
+range(10;12)|IN(range(10))
+null
+false
+false
+
+IN(range(10;20); range(10))
+null
+false
+
+IN(range(5;20); range(10))
+null
+true
+
+# Regression test for #1347
+(.a as $x | .b) = "b"
+{"a":null,"b":null}
+{"a":null,"b":"b"}
+
+# Regression test for #1368
+(.. | select(type == "object" and has("b") and (.b | type) == "array")|.b) |= .[0]
+{"a": {"b": [1, {"b": 3}]}}
+{"a": {"b": 1}}
+
+isempty(empty)
+null
+true
+
+isempty(range(3))
+null
+false
+
+isempty(1,error("foo"))
+null
+false
 
 

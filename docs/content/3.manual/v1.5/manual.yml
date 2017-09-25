@@ -336,7 +336,7 @@ sections:
           to the last element, -2 referring to the next to last element,
           and so on.
 
-          The `.foo` syntax only works for simply keys i.e. keys that
+          The `.foo` syntax only works for simple keys i.e. keys that
           are all alphanumeric characters. `.[<string>]` works with
           keys that contain special characters such as colons and dots.
           For example `.["foo::bar"]` and `.["foo.bar"]` work while
@@ -711,7 +711,7 @@ sections:
       - title: "`in`"
         body: |
 
-          The builtin function `in` returns the input key is in the
+          The builtin function `in` returns whether or not the input key is in the
           given object, or the input index corresponds to an element
           in the given array. It is, essentially, an inversed version
           of `has`.
@@ -728,8 +728,8 @@ sections:
         body: |
 
           Outputs array representations of the given path expression
-          in `.`.  The outputs are arrays of strings (keys in objects0
-          and/or numbers (array indices.
+          in `.`.  The outputs are arrays of strings (object keys)
+          and/or numbers (array indices).
 
           Path expressions are jq expressions like `.a`, but also `.[]`.
           There are two types of path expressions: ones that can match
@@ -866,7 +866,7 @@ sections:
         body: |
 
           For any filter `x`, `map(x)` will run that filter for each
-          element of the input array, and produce the outputs a new
+          element of the input array, and return the outputs in a new
           array. `map(.+1)` will increment each element of an array of numbers.
 
           Similarly, `map_values(x)` will run that filter for each element,

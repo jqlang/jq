@@ -107,7 +107,7 @@ sections:
         output and an ASCII LF (line feed) is printed after every
         output.  Input JSON texts that fail to parse are ignored (but
         warned about), discarding all subsequent input until the next
-        RS.  This more also parses the output of jq without the `--seq`
+        RS.  This mode also parses the output of jq without the `--seq`
         option.
 
       * `--stream`:
@@ -160,6 +160,9 @@ sections:
         terminal. You can force it to produce color even if writing to
         a pipe or a file using `-C`, and disable color with `-M`.
 
+        Colors can be configured with the `JQ_COLORS` environment
+        variable (see below).
+
       * `--ascii-output` / `-a`:
 
         jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
@@ -209,6 +212,9 @@ sections:
         problem or system error, 3 if there was a jq program compile
         error, or 0 if the jq program ran.
 
+        Another way to set the exit status is with the `halt_error`
+        builtin function.
+
       * `--arg name value`:
 
         This option passes a value to the jq program as a predefined
@@ -216,6 +222,9 @@ sections:
         available in the program and has the value `"bar"`. Note that
         `value` will be treated as a string, so `--arg foo 123` will
         bind `$foo` to `"123"`.
+
+        Named arguments are also available to the jq program as
+        `$ARGS.named`.
 
       * `--argjson name JSON-text`:
 
@@ -239,6 +248,16 @@ sections:
         one text, then that is used, else an array of texts is used as
         in `--slurpfile`.)
 
+      * `--args`:
+
+        Remaining arguments are positional string arguments.  These are
+        available to the jq program as `$ARGS.positional[]`.
+
+      * `--jsonargs`:
+
+        Remaining arguments are positional JSON text arguments.  These
+        are available to the jq program as `$ARGS.positional[]`.
+
       * `--run-tests [filename]`:
 
         Runs the tests in the given file or standard input.  This must
@@ -255,12 +274,12 @@ sections:
 
   - title: Basic filters
     entries:
-      - title: "`.`"
+      - title: "Identity: `.`"
         body: |
 
-          The absolute simplest (and least interesting) filter
-          is `.`. This is a filter that takes its input and
-          produces it unchanged as output.
+          The absolute simplest filter is `.` .  This is a filter that
+          takes its input and produces it unchanged as output.  That is,
+          this is the identity operator.
 
           Since jq by default pretty-prints all output, this trivial
           program can be a useful way of formatting JSON output from,
@@ -271,17 +290,24 @@ sections:
             input: '"Hello, world!"'
             output: ['"Hello, world!"']
 
-      - title: "`.foo`, `.foo.bar`"
+      - title: "Object Identifier-Index: `.foo`, `.foo.bar`"
         body: |
 
           The simplest *useful* filter is `.foo`. When given a
           JSON object (aka dictionary or hash) as input, it produces
           the value at the key "foo", or null if there's none present.
 
-          If the key contains special characters, you need to surround
-          it with double quotes like this: `."foo$"`.
-
           A filter of the form `.foo.bar` is equivalent to `.foo|.bar`.
+
+          This syntax only works for simple, identifier-like keys, that
+          is, keys that are all made of alphanumeric characters and
+          underscore, and which do not start with a digit.
+
+          If the key contains special characters, you need to surround
+          it with double quotes like this: `."foo$"`, or else `.["foo$"]`.
+
+          For example `.["foo::bar"]` and `.["foo.bar"]` work while
+          `.foo::bar` does not, and `.foo.bar` means `.["foo"].["bar"]`.
 
         examples:
           - program: '.foo'
@@ -294,7 +320,7 @@ sections:
             input: '{"foo": 42}'
             output: [42]
 
-      - title: "`.foo?`"
+      - title: "Optional Object Identifier-Index: `.foo?`"
         body: |
 
           Just like `.foo`, but does not output even an error when `.`
@@ -314,37 +340,22 @@ sections:
             input: '[1,2]'
             output: ['[]']
 
-      - title: "`.[<string>]`, `.[2]`, `.[10:15]`"
+      - title: "Generic Object Index: `.[<string>]`"
         body: |
 
           You can also look up fields of an object using syntax like
-          `.["foo"]` (.foo above is a shorthand version of this). This
-          one works for arrays as well, if the key is an
-          integer. Arrays are zero-based (like javascript), so `.[2]`
-          returns the third element of the array.
+          `.["foo"]` (.foo above is a shorthand version of this, but
+          only for identifier-like strings).
 
-          The `.[10:15]` syntax can be used to return a subarray of an
-          array or substring of a string. The array returned by
-          `.[10:15]` will be of length 5, containing the elements from
-          index 10 (inclusive) to index 15 (exclusive). Either index may
-          be negative (in which case it counts backwards from the end of
-          the array), or omitted (in which case it refers to the start
-          or end of the array).
+      - title: "Array Index: `.[2]`"
+        body: |
 
-          The `.[2]` syntax can be used to return the element at the
-          given index.  Negative indices are allowed, with -1 referring
-          to the last element, -2 referring to the next to last element,
-          and so on.
+          When the index value is an integer, `.[<value>]` can index
+          arrays.  Arrays are zero-based, so `.[2]` returns the third
+          element.
 
-          The `.foo` syntax only works for simply keys i.e. keys that
-          are all alphanumeric characters. `.[<string>]` works with
-          keys that contain special characters such as colons and dots.
-          For example `.["foo::bar"]` and `.["foo.bar"]` work while
-          `.foo::bar` and `.foo.bar` would not.
-
-          The `?` "operator" can also be used with the slice operator,
-          as in `.[10:15]?`, which outputs values where the inputs are
-          slice-able.
+          Negative indices are allowed, with -1 referring to the last
+          element, -2 referring to the next to last element, and so on.
 
         examples:
           - program: '.[0]'
@@ -355,6 +366,22 @@ sections:
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output: ['null']
 
+          - program: '.[-2]'
+            input: '[1,2,3]'
+            output: ['2']
+
+      - title: "Array/String Slice: `.[10:15]`"
+        body: |
+
+          The `.[10:15]` syntax can be used to return a subarray of an
+          array or substring of a string. The array returned by
+          `.[10:15]` will be of length 5, containing the elements from
+          index 10 (inclusive) to index 15 (exclusive). Either index may
+          be negative (in which case it counts backwards from the end of
+          the array), or omitted (in which case it refers to the start
+          or end of the array).
+
+        examples:
           - program: '.[2:4]'
             input: '["a","b","c","d","e"]'
             output: ['["c", "d"]']
@@ -371,11 +398,7 @@ sections:
             input: '["a","b","c","d","e"]'
             output: ['["d", "e"]']
 
-          - program: '.[-2]'
-            input: '[1,2,3]'
-            output: ['2']
-
-      - title: "`.[]`"
+      - title: "Array/Object Value Iterator: `.[]`"
         body: |
 
           If you use the `.[index]` syntax, but omit the index
@@ -408,15 +431,16 @@ sections:
           Like `.[]`, but no errors will be output if . is not an array
           or object.
 
-      - title: "`,`"
+      - title: "Comma: `,`"
         body: |
 
           If two filters are separated by a comma, then the
-          input will be fed into both and there will be multiple
-          outputs: first, all of the outputs produced by the left
-          expression, and then all of the outputs produced by the
-          right. For instance, filter `.foo, .bar`, produces
-          both the "foo" fields and "bar" fields as separate outputs.
+          same input will be fed into both and the two filters' output
+          value streams will be concatenated in order: first, all of the
+          outputs produced by the left expression, and then all of the
+          outputs produced by the right. For instance, filter `.foo,
+          .bar`, produces both the "foo" fields and "bar" fields as
+          separate outputs.
 
         examples:
           - program: '.foo, .bar'
@@ -431,8 +455,9 @@ sections:
             input: '["a","b","c","d","e"]'
             output: ['"e"', '"c"']
 
-      - title: "`|`"
+      - title: "Pipe: `|`"
         body: |
+
           The | operator combines two filters by feeding the output(s) of
           the one on the left into the input of the one on the right. It's
           pretty much the same as the Unix shell's pipe, if you're used to
@@ -443,10 +468,28 @@ sections:
           expression `.[] | .foo` retrieves the "foo" field of each
           element of the input array.
 
+          Note that `.a.b.c` is the same as `.a | .b | .c`.
+
+          Note too that `.` is the input value at the particular stage
+          in a "pipeline", specifically: where the `.` expression appears.
+          Thus `.a | . | .b` is the same as `.a.b`, as the `.` in the
+          middle refers to whatever value `.a` produced.
+
         examples:
           - program: '.[] | .name'
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output: ['"JSON"', '"XML"']
+
+      - title: "Parenthesis"
+        body: |
+
+          Parenthesis work as a grouping operator just as in any typical
+          programming language.
+
+        examples:
+          - program: '(. + 2) * 5'
+            input: '1'
+            output: [15]
 
   - title: Types and Values
     body: |
@@ -462,16 +505,16 @@ sections:
       instead.
 
     entries:
-      - title: Array construction - `[]`
+      - title: "Array construction: `[]`"
         body: |
 
           As in JSON, `[]` is used to construct arrays, as in
           `[1,2,3]`. The elements of the arrays can be any jq
-          expression. All of the results produced by all of the
-          expressions are collected into one big array. You can use it
-          to construct an array out of a known quantity of values (as
-          in `[.foo, .bar, .baz]`) or to "collect" all the results of a
-          filter into an array (as in `[.items[].name]`)
+          expression, including a pipeline. All of the results produced
+          by all of the expressions are collected into one big array.
+          You can use it to construct an array out of a known quantity
+          of values (as in `[.foo, .bar, .baz]`) or to "collect" all the
+          results of a filter into an array (as in `[.items[].name]`)
 
           Once you understand the "," operator, you can look at jq's array
           syntax in a different light: the expression `[1,2,3]` is not using a
@@ -487,30 +530,37 @@ sections:
           - program: "[.user, .projects[]]"
             input: '{"user":"stedolan", "projects": ["jq", "wikiflow"]}'
             output: ['["stedolan", "jq", "wikiflow"]']
-      - title: Objects - `{}`
+          - program: "[ .[] | . * 2]"
+            input: '[1, 2, 3]'
+            output: ['[2, 4, 6]']
+
+      - title: "Object Construction: `{}`"
         body: |
 
           Like JSON, `{}` is for constructing objects (aka
           dictionaries or hashes), as in: `{"a": 42, "b": 17}`.
 
-          If the keys are "sensible" (all alphabetic characters), then
-          the quotes can be left off. The value can be any expression
-          (although you may need to wrap it in parentheses if it's a
-          complicated one), which gets applied to the {} expression's
-          input (remember, all filters have an input and an
-          output).
+          If the keys are "identifier-like", then the quotes can be left
+          off, as in `{a:42, b:17}`.  Keys generated by expressions need
+          to be parenthesized, e.g., `{("a"+"b"):59}`.
+
+          The value can be any expression (although you may need to
+          wrap it in parentheses if it's a complicated one), which gets
+          applied to the {} expression's input (remember, all filters
+          have an input and an output).
 
               {foo: .bar}
 
           will produce the JSON object `{"foo": 42}` if given the JSON
-          object `{"bar":42, "baz":43}`. You can use this to select
-          particular fields of an object: if the input is an object
-          with "user", "title", "id", and "content" fields and you
-          just want "user" and "title", you can write
+          object `{"bar":42, "baz":43}` as its input. You can use this
+          to select particular fields of an object: if the input is an
+          object with "user", "title", "id", and "content" fields and
+          you just want "user" and "title", you can write
 
               {user: .user, title: .title}
 
-          Because that's so common, there's a shortcut syntax: `{user, title}`.
+          Because that is so common, there's a shortcut syntax for it:
+          `{user, title}`.
 
           If one of the expressions produces multiple results,
           multiple dictionaries will be produced. If the input's
@@ -545,6 +595,24 @@ sections:
             input: '{"user":"stedolan","titles":["JQ Primer", "More JQ"]}'
             output: ['{"stedolan": ["JQ Primer", "More JQ"]}']
 
+      - title: "Recursive Descent: `..`"
+        body: |
+
+          Recursively descends `.`, producing every value.  This is the
+          same as the zero-argument `recurse` builtin (see below).  This
+          is intended to resemble the XPath `//` operator.  Note that
+          `..a` does not work; use `..|.a` instead.  In the example
+          below we use `..|.a?` to find all the values of object keys
+          "a" in any object found "below" `.`.
+
+          This is particularly useful in conjunction with `path(EXP)`
+          (also see below) and the `?` operator.
+
+        examples:
+          - program: '..|.a?'
+            input: '[[{"a":1}]]'
+            output: ['1']
+
   - title: Builtin operators and functions
     body: |
 
@@ -555,7 +623,7 @@ sections:
       no result.
 
     entries:
-      - title: Addition - `+`
+      - title: "Addition: `+`"
         body: |
 
           The operator `+` takes two filters, applies them both
@@ -594,7 +662,7 @@ sections:
             input: 'null'
             output: ['{"a": 42, "b": 2, "c": 3}']
 
-      - title: Subtraction - `-`
+      - title: "Subtraction: `-`"
         body: |
 
           As well as normal arithmetic subtraction on numbers, the `-`
@@ -609,7 +677,7 @@ sections:
             input: '["xml", "yaml", "json"]'
             output: ['["json"]']
 
-      - title: Multiplication, division, modulo - `*`, `/`, and `%`
+      - title: "Multiplication, division, modulo: `*`, `/`, and `%`"
         body: |
 
           These infix operators behave as expected when given two numbers.
@@ -723,7 +791,7 @@ sections:
       - title: "`in`"
         body: |
 
-          The builtin function `in` returns the input key is in the
+          The builtin function `in` returns whether or not the input key is in the
           given object, or the input index corresponds to an element
           in the given array. It is, essentially, an inversed version
           of `has`.
@@ -740,7 +808,7 @@ sections:
         body: |
 
           For any filter `x`, `map(x)` will run that filter for each
-          element of the input array, and produce the outputs a new
+          element of the input array, and return the outputs in a new
           array. `map(.+1)` will increment each element of an array of numbers.
 
           Similarly, `map_values(x)` will run that filter for each element,
@@ -762,8 +830,8 @@ sections:
         body: |
 
           Outputs array representations of the given path expression
-          in `.`.  The outputs are arrays of strings (keys in objects0
-          and/or numbers (array indices.
+          in `.`.  The outputs are arrays of strings (object keys)
+          and/or numbers (array indices).
 
           Path expressions are jq expressions like `.a`, but also `.[]`.
           There are two types of path expressions: ones that can match
@@ -833,6 +901,18 @@ sections:
           - program: 'setpath([0,"a"]; 1)'
             input: 'null'
             output: ['[{"a":1}]']
+
+      - title: "`delpaths(PATHS)`"
+        body: |
+
+          The builtin function `delpaths` sets the `PATHS` in `.`.
+          `PATHS` must be an array of paths, where each path is an array
+          of strings and numbers.
+
+        examples:
+          - program: 'delpaths([["a","b"]])'
+            input: '{"a":{"b":1},"x":{"y":2}}'
+            output: ['{"a":{},"x":{"y":2}}']
 
       - title: "`to_entries`, `from_entries`, `with_entries`"
         body: |
@@ -912,7 +992,25 @@ sections:
 
           Produces an error, just like `.a` applied to values other than
           null and objects would, but with the given message as the
-          error's value.
+          error's value.  Errors can be caught with try/catch; see below.
+
+      - title: "`halt`"
+        body: |
+
+          Stops the jq program with no further outputs.  jq will exit
+          with exit status `0`.
+
+      - title: "`halt_error`, `halt_error(exit_code)`"
+        body: |
+
+          Stops the jq program with no further outputs.  The input will
+          be printed on `stderr` as raw output (i.e., strings will not
+          have double quotes) with no decoration, not even a newline.
+
+          The given `exit_code` (defaulting to `5`) will be jq's exit
+          status.
+
+          For example, `"Error: somthing went wrong\n"|halt_error(1)`.
 
       - title: "`$__loc__`"
         body: |
@@ -1596,27 +1694,22 @@ sections:
             output:
               - '[{"a":{"b":2}}]'
 
-
-      - title: "`..`"
+      - title: "`$ENV`, `env`"
         body: |
 
-          Short-hand for `recurse` without arguments.  This is intended
-          to resemble the XPath `//` operator.  Note that `..a` does not
-          work; use `..|a` instead.  In the example below we use
-          `..|.a?` to find all the values of object keys "a" in any
-          object found "below" `.`.
+          `$ENV` is an object representing the environment variables as
+          set when the jq program started.
+
+          `env` outputs an object representing jq's current environment.
+
+          At the moment there is no builtin for setting environment
+          variables.
 
         examples:
-          - program: '..|.a?'
-            input: '[[{"a":1}]]'
-            output: ['1']
+          - program: '$ENV.PAGER'
+            input: 'null'
+            output: ['"less"']
 
-      - title: "`env`"
-        body: |
-
-          Outputs an object representing jq's environment.
-
-        examples:
           - program: 'env.PAGER'
             input: 'null'
             output: ['"less"']
@@ -1739,6 +1832,11 @@ sections:
 
             The input is converted to base64 as specified by RFC 4648.
 
+          * `@base64d`:
+
+            The inverse of `@base64`, input is decoded as specified by RFC 4648.
+            Note\: If the decoded string is not UTF-8, the results are undefined.
+
           This syntax can be combined with string interpolation in a
           useful way. You can follow a `@foo` token with a string
           literal. The contents of the string literal will *not* be
@@ -1768,6 +1866,14 @@ sections:
             input: "\"O'Hara's Ale\""
             output: ["\"echo 'O'\\\\''Hara'\\\\''s Ale'\""]
 
+          - program: '@base64'
+            input: '"This is a message"'
+            output: ['"VGhpcyBpcyBhIG1lc3NhZ2U="']
+
+          - program: '@base64d'
+            input: '"VGhpcyBpcyBhIG1lc3NhZ2U="'
+            output: ['"This is a message"']
+
       - title: "Dates"
         body: |
 
@@ -1791,19 +1897,25 @@ sections:
           the Unix epoch.
 
           Low-level jq interfaces to the C-library time functions are
-          also provided: `strptime`, `strftime`, `mktime`, and `gmtime`.
-          Refer to your host operating system's documentation for the
-          format strings used by `strptime` and `strftime`.  Note: these
-          are not necessarily stable interfaces in jq, particularly as
-          to their localization functionality.
+          also provided: `strptime`, `strftime`, `strflocaltime`,
+          `mktime`, `gmtime`, and `localtime`.  Refer to your host
+          operating system's documentation for the format strings used
+          by `strptime` and `strftime`.  Note: these are not necessarily
+          stable interfaces in jq, particularly as to their localization
+          functionality.
 
           The `gmtime` builtin consumes a number of seconds since the
           Unix epoch and outputs a "broken down time" representation of
-          time as an array of numbers representing (in this order): the
-          year, the month (zero-based), the day of the month, the hour
-          of the day, the minute of the hour, the second of the minute,
-          the day of the week, and the day of the year -- all one-based
-          unless otherwise stated.
+          Greenwhich Meridian time as an array of numbers representing
+          (in this order): the year, the month (zero-based), the day of
+          the month (one-based), the hour of the day, the minute of the
+          hour, the second of the minute, the day of the week, and the
+          day of the year -- all one-based unless otherwise stated.  The
+          day of the week number may be wrong on some systems for dates
+          before March 1st 1900, or after December 31 2099.
+
+          The `localtime` builtin works like the `gmtime` builtin, but
+          using the local timezone setting.
 
           The `mktime` builtin consumes "broken down time"
           representations of time output by `gmtime` and `strptime`.
@@ -1812,8 +1924,9 @@ sections:
           `fmt` argument.  The output is in the "broken down time"
           representation consumed by `gmtime` and output by `mktime`.
 
-          The `strftime(fmt)` builtin formats a time with the given
-          format.
+          The `strftime(fmt)` builtin formats a time (GMT) with the
+          given format.  The `strflocaltime` does the same, but using
+          the local timezone setting.
 
           The format strings for `strptime` and `strftime` are described
           in typical C library documentation.  The format string for ISO
@@ -1834,6 +1947,54 @@ sections:
           - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")|mktime'
             input: '"2015-03-05T23:51:47Z"'
             output: ['1425599507']
+
+      - title: "SQL-Style Operators"
+        body: |
+
+          jq provides a few SQL-style operators.
+
+           * INDEX(stream; index_expression):
+
+             This builtin produces an object whose keys are computed by
+             the given index expression applied to each value from the
+             given stream.
+
+           * JOIN($idx; stream; idx_expr; join_expr):
+
+             This builtin joins the values from the given stream to the
+             given index.  The index's keys are computed by applying the
+             given index expression to each value from the given stream.
+             An array of the value in the stream and the corresponding
+             value from the index is fed to the given join expression to
+             produce each result.
+
+           * JOIN($idx; stream; idx_expr):
+
+             Same as `JOIN($idx; stream; idx_expr; .)`.
+
+           * JOIN($idx; idx_expr):
+
+             This builtin joins the input `.` to the given index, applying
+             the given index expression to `.` to compute the index key.
+             The join operation is as described above.
+
+           * IN(s):
+
+             This builtin outputs `true` if `.` appears in the given
+             stream, otherwise it outputs `false`.
+
+           * IN(source; s):
+
+             This builtin outputs `true` if any value in the source stream
+             appears in the second stream, otherwise it outputs `false`.
+
+      - title: "`builtins`"
+        body: |
+
+          Returns a list of all builtin functions in the format `name/arity`.
+          Since functions with the same name but different arities are considered
+          separate functions, `all/0`, `all/1`, and `all/2` would all be present
+          in the list.
 
   - title: Conditionals and Comparisons
     entries:
@@ -1941,7 +2102,7 @@ sections:
             input: 'null'
             output: ['[false, true]']
 
-      - title: Alternative operator - `//`
+      - title: "Alternative operator: `//`"
         body: |
 
           A filter of the form `a // b` produces the same
@@ -2018,7 +2179,7 @@ sections:
 
           because no label `$out` is visible.
 
-      - title: "`?` operator"
+      - title: "Error Suppresion / Optional Operator: `?`"
         body: |
 
           The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
@@ -2241,7 +2402,7 @@ sections:
       Finally, there is a module/library system.
 
     entries:
-      - title: Variables
+      - title: "Variable / Symbolic Binding Operator: `... as $identifier | ...`"
         body: |
 
           In jq, all filters have an input and an output, so manual
@@ -2349,17 +2510,17 @@ sections:
               def increment: . + 1;
 
           From then on, `increment` is usable as a filter just like a
-          builtin function (in fact, this is how some of the builtins
+          builtin function (in fact, this is how many of the builtins
           are defined). A function may take arguments:
 
               def map(f): [.[] | f];
 
-          Arguments are passed as filters, not as values. The
-          same argument may be referenced multiple times with
-          different inputs (here `f` is run for each element of the
-          input array). Arguments to a function work more like
-          callbacks than like value arguments.  This is important to
-          understand.  Consider:
+          Arguments are passed as _filters_ (functions with no
+          arguments), _not_ as values. The same argument may be
+          referenced multiple times with different inputs (here `f` is
+          run for each element of the input array).  Arguments to a
+          function work more like callbacks than like value arguments.
+          This is important to understand.  Consider:
 
               def foo(f): f|f;
               5|foo(.*2)
@@ -2380,12 +2541,16 @@ sections:
               def addvalue($f): ...;
 
           With either definition, `addvalue(.foo)` will add the current
-          input's `.foo` field to each element of the array.
+          input's `.foo` field to each element of the array.  Do note
+          that calling `addvalue(.[])` will cause the `map(. + $f)` part
+          to be evaluated once per value in the value of `.` at the call
+          site.
 
           Multiple definitions using the same function name are allowed.
           Each re-definition replaces the previous one for the same
           number of function arguments, but only for references from
           functions (or main program) subsequent to the re-definition.
+          See also the section below on scoping.
 
         examples:
           - program: 'def addvalue(f): . + [f]; map(addvalue(.[0]))'
@@ -2394,6 +2559,23 @@ sections:
           - program: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
             input: '[[1,2],[10,20]]'
             output: ['[[1,2,1,2], [10,20,1,2]]']
+
+      - title: 'Scoping'
+        body: |
+
+          There are two types of symbols in jq: value bindings (a.k.a.,
+          "variables"), and functions.  Both are scoped lexically,
+          with expressions being able to refer only to symbols that
+          have been defined "to the left" of them.  The only exception
+          to this rule is that functions can refer to themselves so as
+          to be able to create recursive functions.
+
+          For example, in the following expression there is a binding
+          which is visible "to the right" of it, `... | .*3 as
+          $times_three | [.  + $times_three] | ...`, but not "to the
+          left".  Consider this expression now, `... | (.*3 as
+          $times_three | [.+ $times_three]) | ...`: here the binding
+          `$times_three` is _not_ visible past the closing parenthesis.
 
       - title: Reduce
         body: |
@@ -2413,10 +2595,28 @@ sections:
                   (2 as $item | . + $item) |
                   (1 as $item | . + $item)
 
+          If the reduction update expression outputs `empty` (that is,
+          no values), then the reduction state is left as-is.  For
+          example, `reduce range(4) as $n ({}; if .==2 then empty else
+          .[$n|tostring] |= $n)` will produce `{"0":0,"1":1,"3":3}`.
+
         examples:
           - program: 'reduce .[] as $item (0; . + $item)'
             input: '[10,2,5,3]'
             output: ['20']
+          - program: 'reduce .[] as $n ([]; if $n%2==0 then empty else . + [$n] end)'
+            input: '[0,1,2,3,4,5]'
+            output: ['[1,3,5]']
+
+      - title: "`isempty(exp)`"
+        body: |
+
+          Returns true if `exp` produces no outputs, false otherwise.
+
+        examples:
+          - program: 'isempty(empty)'
+            input: 'null'
+            output: ['true']
 
       - title: "`limit(n; exp)`"
         body: |
@@ -2569,12 +2769,29 @@ sections:
       that take a single input argument (e.g., `sin()`) are available as
       zero-argument jq functions.  C math functions that take two input
       arguments (e.g., `pow()`) are available as two-argument jq
-      functions that ignore `.`.
+      functions that ignore `.`.  C math functions that take three input
+      arguments are available as three-argument jq functions that ignore
+      `.`.
 
       Availability of standard math functions depends on the
       availability of the corresponding math functions in your operating
       system and C math library.  Unavailable math functions will be
       defined but will raise an error.
+
+      One-input C math functions: `acos` `acosh` `asin` `asinh` `atan`
+      `atanh` `cbrt` `ceil` `cos` `cosh` `erf` `erfc` `exp` `exp10`
+      `exp2` `expm1` `fabs` `floor` `gamma` `j0` `j1` `lgamma` `log`
+      `log10` `log1p` `log2` `logb` `nearbyint` `pow10` `rint` `round`
+      `significand` `sin` `sinh` `sqrt` `tan` `tanh` `tgamma` `trunc`
+      `y0` `y1`.
+
+      Two-input C math functions: `atan2` `copysign` `drem` `fdim`
+      `fmax` `fmin` `fmod` `frexp` `hypot` `jn` `ldexp` `modf`
+      `nextafter` `nexttoward` `pow` `remainder` `scalb` `scalbln` `yn`.
+
+      Three-input C math functions: `fma`.
+
+      See your system's manual for more information on each of these.
 
   - title: 'I/O'
     body: |
@@ -2586,11 +2803,17 @@ sections:
       jq itself.  These two builtins, and jq's own reading actions, can
       be interleaved with each other.
 
-      One builtin provides minimal output capabilities, `debug`.
-      (Recall that a jq program's output values are always output as
-      JSON texts on `stdout`.)  The `debug` builtin can have
+      Two builtins provide minimal output capabilities, `debug`, and
+      `stderr`.  (Recall that a jq program's output values are always
+      output as JSON texts on `stdout`.)  The `debug` builtin can have
       application-specific behavior, such as for executables that use
-      the libjq C API but aren't the jq executable itself.
+      the libjq C API but aren't the jq executable itself.  The `stderr`
+      builtin outputs its input in raw mode to stder with no additional
+      decoration, not even a newline.
+
+      Most jq builtins are referentially transparent, and yield constant
+      and repeatable value streams when applied to constant inputs.
+      This is not true of I/O builtins.
 
     entries:
       - title: "`input`"
@@ -2613,6 +2836,12 @@ sections:
           produced.  The jq executable wraps the input value with
           `["DEBUG:", <input-value>]` and prints that and a newline on
           stderr, compactly.  This may change in the future.
+
+      - title: "`stderr`"
+        body: |
+
+          Prints its input in raw and compact mode to stderr with no
+          additional decoration, not even a newline.
 
       - title: "`input_filename`"
         body: |
@@ -2685,7 +2914,6 @@ sections:
 
   - title: Assignment
     body: |
-
       Assignment works a little differently in jq than in most
       programming languages. jq doesn't distinguish between references
       to and copies of something - two objects or arrays are either
@@ -2694,74 +2922,51 @@ sections:
 
       If an object has two fields which are arrays, `.foo` and `.bar`,
       and you append something to `.foo`, then `.bar` will not get
-      bigger. Even if you've just set `.bar = .foo`. If you're used to
-      programming in languages like Python, Java, Ruby, Javascript,
-      etc. then you can think of it as though jq does a full deep copy
-      of every object before it does the assignment (for performance,
-      it doesn't actually do that, but that's the general idea).
+      bigger, even if you've previously set `.bar = .foo`.  If you're
+      used to programming in languages like Python, Java, Ruby,
+      Javascript, etc. then you can think of it as though jq does a full
+      deep copy of every object before it does the assignment (for
+      performance it doesn't actually do that, but that's the general
+      idea).
+
+      This means that it's impossible to build circular values in jq
+      (such as an array whose first element is itself). This is quite
+      intentional, and ensures that anything a jq program can produce
+      can be represented in JSON.
 
       All the assignment operators in jq have path expressions on the
-      left-hand side.
+      left-hand side (LHS).  The right-hand side (RHS) procides values
+      to set to the paths named by the LHS path expressions.
+
+      Values in jq are always immutable.  Internally, assignment works
+      by using a reduction to compute new, replacement values for `.` that
+      have had all the desired assignments applied to `.`, then
+      outputting the modified value.  This might be made clear by this
+      example: `{a:{b:{c:1}}} | (.a.b|=3), .`.  This will output
+      `{"a":{"b":3}}` and `{"a":{"b":{"c":1}}}` because the last
+      sub-expression, `.`, sees the original value, not the modified
+      value.
+
+      Most users will want to use modification assignment operators,
+      such as `|=` or `+=`, rather than `=`.
+
+      Note that the LHS of assignment operators refers to a value in
+      `.`.  Thus `$var.foo = 1` won't work as expected (`$var.foo` is
+      not a valid or useful path expression in `.`); use `$var | .foo =
+      1` instead.
+
+      Note too that `.a,.b=0` does not set `.a` and `.b`, but
+      `(.a,.b)=0` sets both.
 
     entries:
-      - title: "`=`"
+      - title: "Update-assignment: `|=`"
         body: |
-
-          The filter `.foo = 1` will take as input an object
-          and produce as output an object with the "foo" field set to
-          1. There is no notion of "modifying" or "changing" something
-          in jq - all jq values are immutable. For instance,
-
-           .foo = .bar | .foo.baz = 1
-
-          will not have the side-effect of setting .bar.baz to be set
-          to 1, as the similar-looking program in Javascript, Python,
-          Ruby or other languages would. Unlike these languages (but
-          like Haskell and some other functional languages), there is
-          no notion of two arrays or objects being "the same array" or
-          "the same object". They can be equal, or not equal, but if
-          we change one of them in no circumstances will the other
-          change behind our backs.
-
-          This means that it's impossible to build circular values in
-          jq (such as an array whose first element is itself). This is
-          quite intentional, and ensures that anything a jq program
-          can produce can be represented in JSON.
-
-          Note that the left-hand side of '=' refers to a value in `.`.
-          Thus `$var.foo = 1` won't work as expected (`$var.foo` is not
-          a valid or useful path expression in `.`); use `$var | .foo =
-          1` instead.
-
-          If the right-hand side of '=' produces multiple values, then
-          for each such value jq will set the paths on the left-hand
-          side to the value and then it will output the modified `.`.
-          For example, `(.a,.b)=range(2)` outputs `{"a":0,"b":0}`, then
-          `{"a":1,"b":1}`.  The "update" assignment forms (see below) do
-          not do this.
-
-          Note too that `.a,.b=0` does not set `.a` and `.b`, but
-          `(.a,.b)=0` sets both.
-
-      - title: "`|=`"
-        body: |
-          As well as the assignment operator '=', jq provides the "update"
-          operator '|=', which takes a filter on the right-hand side and
-          works out the new value for the property of `.` being assigned
-          to by running the old value through this expression. For
-          instance, .foo |= .+1 will build an object with the "foo"
-          field set to the input's "foo" plus 1.
-
-          This example should show the difference between '=' and '|=':
-
-          Provide input '{"a": {"b": 10}, "b": 20}' to the programs:
-
-          .a = .b
-          .a |= .b
-
-          The former will set the "a" field of the input to the "b" field of the
-          input, and produce the output {"a": 20}. The latter will set the "a"
-          field of the input to the "a" field's "b" field, producing {"a": 10}.
+          This is the "update" operator '|='.  It takes a filter on the
+          right-hand side and works out the new value for the property
+          of `.` being assigned to by running the old value through this
+          expression. For instance, (.foo, .bar) |= .+1 will build an
+          object with the "foo" field set to the input's "foo" plus 1,
+          and the "bar" field set to the input's "bar" plus 1.
 
           The left-hand side can be any general path expression; see `path()`.
 
@@ -2770,25 +2975,69 @@ sections:
           not a valid or useful path expression in `.`); use `$var |
           .foo |= . + 1` instead.
 
-          If the right-hand side outputs multiple values, only the last
-          one will be used.
+          If the right-hand side outputs no values (i.e., `empty`), then
+          the left-hand side path will be deleted, as with `del(path)`.
+
+          If the right-hand side outputs multiple values, only the first
+          one will be used (COMPATIBILITY NOTE: in jq 1.5 and earlier
+          releases, it used to be that only the last one was used).
 
         examples:
-
           - program: '(..|select(type=="boolean")) |= if . then 1 else 0 end'
             input: '[true,false,[5,true,[true,[false]],false]]'
             output: ['[1,0,[5,1,[1,[0]],0]]']
 
-      - title: "`+=`, `-=`, `*=`, `/=`, `%=`, `//=`"
+      - title: "Arithmetic update-assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`"
         body: |
 
           jq has a few operators of the form `a op= b`, which are all
-          equivalent to `a |= . op b`. So, `+= 1` can be used to increment values.
+          equivalent to `a |= . op b`. So, `+= 1` can be used to
+          increment values, being the same as `|= . + 1`.
 
         examples:
           - program: .foo += 1
             input: '{"foo": 42}'
             output: ['{"foo": 43}']
+
+      - title: "Plain assignment: `=`"
+        body: |
+
+          This is the plain assignment operator.  Unlike the others, the
+          input to the right-hand-side (RHS) is the same as the input to
+          the left-hand-side (LHS) rather than the value at the LHS
+          path, and all values output by the RHS will be used (as shown
+          below).
+
+          If the RHS of '=' produces multiple values, then for each such
+          value jq will set the paths on the left-hand side to the value
+          and then it will output the modified `.`.  For example,
+          `(.a,.b)=range(2)` outputs `{"a":0,"b":0}`, then
+          `{"a":1,"b":1}`.  The "update" assignment forms (see above) do
+          not do this.
+
+          This example should show the difference between '=' and '|=':
+
+          Provide input '{"a": {"b": 10}, "b": 20}' to the programs:
+
+          .a = .b
+
+          .a |= .b
+
+          The former will set the "a" field of the input to the "b"
+          field of the input, and produce the output {"a": 20, "b": 20}.
+          The latter will set the "a" field of the input to the "a"
+          field's "b" field, producing {"a": 10, "b": 20}.
+
+          Another example of the difference between '=' and '|=':
+
+          null|(.a,.b)=range(3)
+
+          outputs '{"a":0,"b":0}', '{"a":1,"b":1}', and '{"a":2,"b":2}',
+          while
+
+          null|(.a,.b)|=range(3)
+
+          outputs just '{"a":0,"b":0}'.
 
       - title: Complex assignments
         body: |
@@ -2951,3 +3200,42 @@ sections:
           could then use to, for example, search for, download, and
           install missing dependencies.
 
+  - title: Colors
+    body: |
+
+      To configure alternative colors just set the `JQ_COLORS`
+      environment variable to colon-delimited list of partial terminal
+      escape sequences like `"1;31"`, in this order:
+
+        - color for `null`
+        - color for `false`
+        - color for `true`
+        - color for numbers
+        - color for strings
+        - color for arrays
+        - color for objects
+
+      The default color scheme is the same as setting
+      `"JQ_COLORS=1;30:0;39:0;39:0;39:0;32:1;39:1;39"`.
+
+      This is not a manual for VT100/ANSI escapes.  However, each of
+      these color specifications should consist of two numbers separated
+      by a semi-colon, where the first number is one of these:
+
+        - 1 (bright)
+        - 2 (dim)
+        - 4 (underscore)
+        - 5 (blink)
+        - 7 (reverse)
+        - 8 (hidden)
+
+      and the second is one of these:
+
+        - 30 (black)
+        - 31 (red)
+        - 32 (green)
+        - 33 (yellow)
+        - 34 (blue)
+        - 35 (magenta)
+        - 36 (cyan)
+        - 37 (white)

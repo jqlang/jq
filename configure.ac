@@ -1,4 +1,7 @@
-m4_define([jq_version], m4_esyscmd_s([git describe --tags --dirty --match 'jq-*'|sed 's/^jq-//']))
+m4_define([jq_version],
+          m4_esyscmd_s([(git rev-parse --verify -q jq-1.0 > /dev/null &&
+                        (git describe --tags --dirty --match 'jq-*'|sed 's/^jq-//')) ||
+                        echo `git rev-parse --abbrev-ref HEAD`-`git describe --always --dirty`])))
 
 AC_INIT([jq], [jq_version], [https://github.com/stedolan/jq/issues],
              [jq], [https://stedolan.github.io/jq])
@@ -39,40 +42,8 @@ if test "$USE_MAINTAINER_MODE" = yes; then
       [AC_MSG_ERROR([You need bison version 3.0 or greater, or use --disable-maintainer-mode.])])
   fi
 
-  AC_PROG_LEX
-  if test "x$LEX" != xflex; then
-    LEX="$SHELL $missing_dir/missing flex"
-  fi
+  AC_CHECK_PROGS(LEX, flex lex)
 fi
-
-
-##########################################################################
-# check for ONIGURUMA library
-##########################################################################
-
-AC_ARG_WITH([oniguruma],
-    [AS_HELP_STRING([--with-oniguruma=prefix],
-        [try this for a non-standard install prefix of the oniguruma library])],
-    [],
-    [with_oniguruma=yes])
-
-AS_IF([test "x$with_oniguruma" != xno], [
-    AS_IF([test "x$with_oniguruma" != xyes], [
-        CFLAGS="$CFLAGS -I${with_oniguruma}/include"
-        LDFLAGS="$LDFLAGS -L${with_oniguruma}/lib"
-    ])
-    # check for ONIGURUMA library
-    have_oniguruma=0
-    AC_CHECK_HEADER("oniguruma.h",
-        AC_CHECK_LIB([onig],[onig_version],[LIBS="$LIBS -lonig"; have_oniguruma=1;]))
-    # handle check results
-    AS_IF([test $have_oniguruma = 1], [
-        AC_DEFINE([HAVE_ONIGURUMA], 1, [Define to 1 if Oniguruma is installed])
-    ], [
-        AC_MSG_NOTICE([Oniguruma was not found.])
-        AC_MSG_NOTICE([Try setting the location using '--with-oniguruma=PREFIX'])
-    ])
-])
 
 dnl Check for valgrind
 AC_CHECK_PROGS(valgrind_cmd, valgrind)
@@ -157,6 +128,8 @@ AC_FIND_FUNC([strftime], [c], [#include <time.h>], [0, 0, 0, 0])
 AC_FIND_FUNC([timegm], [c], [#include <time.h>], [0])
 AC_FIND_FUNC([gmtime_r], [c], [#include <time.h>], [0, 0])
 AC_FIND_FUNC([gmtime], [c], [#include <time.h>], [0])
+AC_FIND_FUNC([localtime_r], [c], [#include <time.h>], [0, 0])
+AC_FIND_FUNC([localtime], [c], [#include <time.h>], [0])
 AC_FIND_FUNC([gettimeofday], [c], [#include <time.h>], [0, 0])
 AC_CHECK_MEMBER([struct tm.tm_gmtoff], [AC_DEFINE([HAVE_TM_TM_GMT_OFF],1,[Define to 1 if the system has the tm_gmt_off field in struct tm])],
                 [], [[#include <time.h>]])
@@ -180,31 +153,64 @@ AC_CHECK_MATH_FUNC(acos, [.5])
 AC_CHECK_MATH_FUNC(acosh, [.5])
 AC_CHECK_MATH_FUNC(asin, [.5])
 AC_CHECK_MATH_FUNC(asinh, [.5])
-AC_CHECK_MATH_FUNC(atan, [.5])
 AC_CHECK_MATH_FUNC(atan2, [.5,.5])
+AC_CHECK_MATH_FUNC(atan, [.5])
 AC_CHECK_MATH_FUNC(atanh, [.5])
 AC_CHECK_MATH_FUNC(cbrt, [.5])
+AC_CHECK_MATH_FUNC(ceil,[.5])
+AC_CHECK_MATH_FUNC(copysign,[.5,1.0])
 AC_CHECK_MATH_FUNC(cos, [.5])
 AC_CHECK_MATH_FUNC(cosh, [.5])
-AC_CHECK_MATH_FUNC(exp, [.5])
+AC_CHECK_MATH_FUNC(drem,[.5,1.0])
+AC_CHECK_MATH_FUNC(erf,[.5])
+AC_CHECK_MATH_FUNC(erfc,[.5])
+AC_CHECK_MATH_FUNC(exp10,[.5])
 AC_CHECK_MATH_FUNC(exp2, [.5])
+AC_CHECK_MATH_FUNC(exp, [.5])
+AC_CHECK_MATH_FUNC(expm1,[.5])
+AC_CHECK_MATH_FUNC(fabs,[.5])
+AC_CHECK_MATH_FUNC(fdim,[.5,1.0])
 AC_CHECK_MATH_FUNC(floor, [.5])
+AC_CHECK_MATH_FUNC(fma,[.5,1.0,1.5])
+AC_CHECK_MATH_FUNC(fmax,[.5,1.0])
+AC_CHECK_MATH_FUNC(fmin,[.5,1.0])
+AC_CHECK_MATH_FUNC(fmod,[.5,1.0])
+AC_FIND_FUNC([frexp], [m c], [#include <math.h>], [0, 0])
+AC_CHECK_MATH_FUNC(gamma,[.5])
 AC_CHECK_MATH_FUNC(hypot, [.5,.5])
 AC_CHECK_MATH_FUNC(j0, [.5])
 AC_CHECK_MATH_FUNC(j1, [.5])
-AC_CHECK_MATH_FUNC(log, [.5])
+AC_CHECK_MATH_FUNC(jn, [1,.5])
+AC_CHECK_MATH_FUNC(ldexp,[.5,2])
+AC_CHECK_MATH_FUNC(lgamma,[.5])
 AC_CHECK_MATH_FUNC(log10, [.5])
+AC_CHECK_MATH_FUNC(log1p,[.5])
 AC_CHECK_MATH_FUNC(log2, [.5])
+AC_CHECK_MATH_FUNC(log, [.5])
+AC_CHECK_MATH_FUNC(logb,[.5])
+AC_CHECK_MATH_FUNC([modf], [m c], [#include <math.h>], [0, 0])
+AC_CHECK_MATH_FUNC([lgamma_r], [m c], [#include <math.h>], [0, 0])
+AC_CHECK_MATH_FUNC(nearbyint,[.5])
+AC_CHECK_MATH_FUNC(nextafter,[.5,1.0])
+AC_CHECK_MATH_FUNC(nexttoward,[.5,1.0])
+AC_CHECK_MATH_FUNC(pow10,[.5])
 AC_CHECK_MATH_FUNC(pow, [2,2])
 AC_CHECK_MATH_FUNC(remainder, [3,2])
+AC_CHECK_MATH_FUNC(rint,[.5])
+AC_CHECK_MATH_FUNC(round,[.5])
+AC_CHECK_MATH_FUNC(scalb,[.5,1.0])
+AC_CHECK_MATH_FUNC(scalbln,[.5,2])
+AC_CHECK_MATH_FUNC(significand,[.5])
 AC_CHECK_MATH_FUNC(sin, [.5])
 AC_CHECK_MATH_FUNC(sinh, [.5])
 AC_CHECK_MATH_FUNC(sqrt, [.5])
 AC_CHECK_MATH_FUNC(tan, [.5])
 AC_CHECK_MATH_FUNC(tanh, [.5])
 AC_CHECK_MATH_FUNC(tgamma, [.5])
+AC_CHECK_MATH_FUNC(trunc,[.5])
 AC_CHECK_MATH_FUNC(y0, [.5])
 AC_CHECK_MATH_FUNC(y1, [.5])
+AC_CHECK_MATH_FUNC(yn, [1,.5])
 
 dnl Thread local storage
 have___thread=no
@@ -225,10 +231,54 @@ AC_C_BIGENDIAN(
    AC_MSG_ERROR(universial endianess not supported)
 )
 
+dnl Oniguruma
+AC_ARG_WITH([oniguruma],
+   [AS_HELP_STRING([--with-oniguruma=prefix],
+      [try this for a non-standard install prefix of the oniguruma library])], ,
+   [with_oniguruma=yes])
+
+onig_CFLAGS=
+onig_LDFLAGS=
+build_oniguruma=no
+AS_IF([test "x$with_oniguruma" != xno], [
+   save_CFLAGS="$CFLAGS"
+   save_LDFLAGS="$LDFLAGS"
+   AS_IF([test "x$with_oniguruma" != xyes], [
+      AS_IF([test "x$with_oniguruma" = xbuiltin], [
+          build_oniguruma=yes
+      ], [
+          onig_CFLAGS="-I${with_oniguruma}/include"
+          onig_LDFLAGS="-L${with_oniguruma}/lib"
+      ])
+   ])
+   AS_IF([test "x$build_oniguruma" = xno], [
+       # check for ONIGURUMA library, either in /usr or where requested
+       CFLAGS="$CFLAGS $onig_CFLAGS"
+       LDFLAGS="$LDFLAGS $onig_LDFLAGS"
+       AC_CHECK_HEADER("oniguruma.h",
+          AC_CHECK_LIB([onig],[onig_version]))
+       # handle check results
+       AS_IF([test "x$ac_cv_lib_onig_onig_version" != "xyes"], [
+          build_oniguruma=yes
+          AC_MSG_NOTICE([Oniguruma was not found. Will use the packaged oniguruma.])
+       ])
+   ])
+   AS_IF([test "x$build_oniguruma" = xyes -a -f "${srcdir}/modules/oniguruma/configure.ac" ], [
+       onig_CFLAGS="-I${srcdir}/modules/oniguruma/src"
+       onig_LDFLAGS="-L${srcdir}/modules/oniguruma/src -Wl,-rpath,${libdir}"
+       AC_CONFIG_SUBDIRS([modules/oniguruma])
+       AC_DEFINE([HAVE_LIBONIG],1,[Define to 1 if the system includes libonig])
+   ])
+   CFLAGS="$save_CFLAGS"
+   LDFLAGS="$save_LDFLAGS"
+])
+AC_SUBST(onig_CFLAGS)
+AC_SUBST(onig_LDFLAGS)
+
+AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
-
 

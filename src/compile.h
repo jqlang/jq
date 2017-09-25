@@ -33,6 +33,7 @@ block gen_op_target(opcode op, block target);
 block gen_op_unbound(opcode op, const char* name);
 block gen_op_bound(opcode op, block binder);
 block gen_op_var_fresh(opcode op, const char* name);
+block gen_op_pushk_under(jv constant);
 
 block gen_module(block metadata);
 jv block_module_meta(block b);
@@ -53,11 +54,13 @@ block gen_definedor(block a, block b);
 block gen_condbranch(block iftrue, block iffalse);
 block gen_and(block a, block b);
 block gen_or(block a, block b);
+block gen_dictpair(block k, block v);
 
 block gen_var_binding(block var, const char* name, block body);
 block gen_array_matcher(block left, block curr);
 block gen_object_matcher(block name, block curr);
 block gen_destructure(block var, block matcher, block body);
+block gen_destructure_alt(block matcher);
 
 block gen_cond(block cond, block iftrue, block iffalse);
 block gen_try_handler(block handler);
@@ -79,8 +82,9 @@ block block_bind_referenced(block binder, block body, int bindflags);
 block block_drop_unreferenced(block body);
 
 jv block_take_imports(block* body);
+jv block_list_funcs(block body, int omit_underscores);
 
-int block_compile(block, struct bytecode**, struct locfile*);
+int block_compile(block, struct bytecode**, struct locfile*, jv);
 
 void block_free(block);
 

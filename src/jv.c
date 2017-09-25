@@ -296,10 +296,18 @@ static jv jvp_array_slice(jv a, int start, int end) {
     jv_free(a);
     return jv_array();
   }
-  // FIXME FIXME FIXME large offsets
-  a.offset += start;
-  a.size = end - start;
-  return a;
+
+  if (a.offset + start >= 1 << (sizeof(a.offset) * CHAR_BIT)) {
+    jv r = jv_array_sized(end - start);
+    for (int i = start; i < end; i++)
+      r = jv_array_append(r, jv_array_get(jv_copy(a), i));
+    jv_free(a);
+    return r;
+  } else {
+    a.offset += start;
+    a.size = end - start;
+    return a;
+  }
 }
 
 /*
@@ -1104,6 +1112,16 @@ jv jv_object_get(jv object, jv key) {
   jv_free(object);
   jv_free(key);
   return val;
+}
+
+int jv_object_has(jv object, jv key) {
+  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  assert(jv_get_kind(key) == JV_KIND_STRING);
+  jv* slot = jvp_object_read(object, key);
+  int res = slot ? 1 : 0;
+  jv_free(object);
+  jv_free(key);
+  return res;
 }
 
 jv jv_object_set(jv object, jv key, jv value) {

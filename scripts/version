@@ -1,5 +1,10 @@
 #!/bin/sh
 set -e
 cd `dirname "$0"`
-git rev-parse --verify -q jq-1.0 > /dev/null 2>&1
-git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//'
+if git rev-parse --verify -q jq-1.0 > /dev/null 2>&1; then
+    git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//'
+else
+    b=`git rev-parse --abbrev-ref HEAD`
+    c=`git describe --always --dirty`
+    echo "${b}-${c}"
+fi

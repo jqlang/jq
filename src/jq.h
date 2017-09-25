@@ -8,7 +8,11 @@
 extern "C" {
 #endif
 
-enum {JQ_DEBUG_TRACE = 1};
+enum {
+  JQ_DEBUG_TRACE = 1,
+  JQ_DEBUG_TRACE_DETAIL = 2,
+  JQ_DEBUG_TRACE_ALL = JQ_DEBUG_TRACE | JQ_DEBUG_TRACE_DETAIL,
+};
 
 typedef struct jq_state jq_state;
 typedef void (*jq_msg_cb)(void *, jv);
@@ -25,6 +29,11 @@ void jq_dump_disassembly(jq_state *, int);
 void jq_start(jq_state *, jv value, int);
 jv jq_next(jq_state *);
 void jq_teardown(jq_state **);
+
+void jq_halt(jq_state *, jv, jv);
+int jq_halted(jq_state *);
+jv jq_get_exit_code(jq_state *);
+jv jq_get_error_message(jq_state *);
 
 typedef jv (*jq_input_cb)(jq_state *, void *);
 void jq_set_input_cb(jq_state *, jq_input_cb, void *);
@@ -60,6 +69,7 @@ jv jq_util_input_next_input_cb(jq_state *, void *);
 jv jq_util_input_get_position(jq_state*);
 jv jq_util_input_get_current_filename(jq_state*);
 jv jq_util_input_get_current_line(jq_state*);
+int jq_set_colors(const char *);
 
 #ifdef __cplusplus
 }

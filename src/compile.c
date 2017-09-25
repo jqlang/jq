@@ -5,6 +5,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "compile.h"
 #include "bytecode.h"
 #include "locfile.h"
@@ -158,8 +159,15 @@ block gen_const_global(jv constant, const char *name) {
   return inst_block(i);
 }
 
+block gen_op_pushk_under(jv constant) {
+  assert(opcode_describe(PUSHK_UNDER)->flags & OP_HAS_CONSTANT);
+  inst* i = inst_new(PUSHK_UNDER);
+  i->imm.constant = constant;
+  return inst_block(i);
+}
+
 int block_is_const(block b) {
-  return (block_is_single(b) && b.first->op == LOADK);
+  return (block_is_single(b) && (b.first->op == LOADK || b.first->op == PUSHK_UNDER));
 }
 
 int block_is_const_inf(block b) {
@@ -217,6 +225,10 @@ block gen_op_bound(opcode op, block binder) {
   block b = gen_op_unbound(op, binder.first->symbol);
   b.first->bound_by = binder.first;
   return b;
+}
+
+block gen_dictpair(block k, block v) {
+  return BLOCK(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
 }
 
 
@@ -480,6 +492,18 @@ jv block_take_imports(block* body) {
   return imports;
 }
 
+jv block_list_funcs(block body, int omit_underscores) {
+  jv funcs = jv_object(); // Use the keys for set semantics.
+  for (inst *pos = body.first; pos != NULL; pos = pos->next) {
+    if (pos->op == CLOSURE_CREATE || pos->op == CLOSURE_CREATE_C) {
+      if (pos->symbol != NULL && (!omit_underscores || pos->symbol[0] != '_')) {
+        funcs = jv_object_set(funcs, jv_string_fmt("%s/%i", pos->symbol, pos->nformals), jv_null());
+      }
+    }
+  }
+  return jv_keys_unsorted(funcs);
+}
+
 block gen_module(block metadata) {
   inst* i = inst_new(MODULEMETA);
   i->imm.constant = block_const(metadata);
@@ -550,9 +574,15 @@ block gen_call(const char* name, block args) {
   return b;
 }
 
-
-
 block gen_subexp(block a) {
+  if (block_is_noop(a)) {
+    return gen_op_simple(DUP);
+  }
+  if (block_is_single(a) && a.first->op == LOADK) {
+    jv c = block_const(a);
+    block_free(a);
+    return gen_op_pushk_under(c);
+  }
   return BLOCK(gen_op_simple(SUBEXP_BEGIN), a, gen_op_simple(SUBEXP_END));
 }
 
@@ -570,17 +600,24 @@ block gen_const_object(block expr) {
   jv k = jv_null();
   jv v = jv_null();
   for (inst *i = expr.first; i; i = i->next) {
-    if (i->op != SUBEXP_BEGIN ||
+    if (i->op == PUSHK_UNDER) {
+      k = jv_copy(i->imm.constant);
+      i = i->next;
+    } else if (i->op != SUBEXP_BEGIN ||
         i->next == NULL ||
         i->next->op != LOADK ||
         i->next->next == NULL ||
         i->next->next->op != SUBEXP_END) {
       is_const = 0;
       break;
+    } else {
+      k = jv_copy(i->next->imm.constant);
+      i = i->next->next->next;
     }
-    k = jv_copy(i->next->imm.constant);
-    i = i->next->next->next;
-    if (i == NULL ||
+    if (i != NULL && i->op == PUSHK_UNDER) {
+      v = jv_copy(i->imm.constant);
+      i = i->next;
+    } else if (i == NULL ||
         i->op != SUBEXP_BEGIN ||
         i->next == NULL ||
         i->next->op != LOADK ||
@@ -588,9 +625,10 @@ block gen_const_object(block expr) {
         i->next->next->op != SUBEXP_END) {
       is_const = 0;
       break;
+    } else {
+      v = jv_copy(i->next->imm.constant);
+      i = i->next->next->next;
     }
-    v = jv_copy(i->next->imm.constant);
-    i = i->next->next->next;
     if (i == NULL || i->op != INSERT) {
       is_const = 0;
       break;
@@ -696,20 +734,121 @@ static block bind_matcher(block matcher, block body) {
   // block_has_only_binders(matcher), which is not true here as matchers
   // may also contain code to extract the correct elements
   for (inst* i = matcher.first; i; i = i->next) {
-    if (i->op == STOREV && !i->bound_by)
+    if ((i->op == STOREV || i->op == STOREVN) && !i->bound_by)
       block_bind_subblock(inst_block(i), body, OP_HAS_VARIABLE, 0);
   }
   return BLOCK(matcher, body);
 }
 
+
+// Extract destructuring var names from the block
+// *vars should be a jv_object (for set semantics)
+static void block_get_unbound_vars(block b, jv *vars) {
+  assert(vars != NULL);
+  assert(jv_get_kind(*vars) == JV_KIND_OBJECT);
+  for (inst* i = b.first; i; i = i->next) {
+    if (i->subfn.first) {
+      block_get_unbound_vars(i->subfn, vars);
+      continue;
+    }
+    if ((i->op == STOREV || i->op == STOREVN) && i->bound_by == NULL) {
+      *vars = jv_object_set(*vars, jv_string(i->symbol), jv_true());
+    }
+  }
+}
+
+/* Build wrappers around destructuring matchers so that we can chain them
+ * when we have errors.  The approach is as follows:
+ * FORK_OPT NEXT_MATCHER (unless last matcher)
+ * existing_matcher_block
+ * JUMP BODY
+ */
+static block bind_alternation_matchers(block matchers, block body) {
+  block preamble = {0};
+  block altmatchers = {0};
+  block mb = {0};
+
+  // Pass through the matchers to find all destructured names.
+  while (matchers.first && matchers.first->op == DESTRUCTURE_ALT) {
+    block_append(&altmatchers, inst_block(block_take(&matchers)));
+  }
+
+  // We don't have any alternations here, so we can use the simplest case.
+  if (altmatchers.first == NULL) {
+    return bind_matcher(matchers, body);
+  }
+
+  // The final matcher needs to strip the error from the previous FORK_OPT
+  block final_matcher = BLOCK(gen_op_simple(POP), gen_op_simple(DUP), matchers);
+
+  // Collect var names
+  jv all_vars = jv_object();
+  block_get_unbound_vars(altmatchers, &all_vars);
+  block_get_unbound_vars(final_matcher, &all_vars);
+
+  // We need a preamble of STOREVs to which to bind the matchers and the body.
+  jv_object_keys_foreach(all_vars, key) {
+    preamble = BLOCK(preamble,
+                     gen_op_simple(DUP),
+                     gen_const(jv_null()),
+                     gen_op_unbound(STOREV, jv_string_value(key)));
+    jv_free(key);
+  }
+  jv_free(all_vars);
+
+  // Now we build each matcher in turn
+  for (inst *i = altmatchers.first; i; i = i->next) {
+    block submatcher = i->subfn;
+
+    // Get rid of the error from the previous matcher
+    if (mb.first != NULL) {
+      submatcher = BLOCK(gen_op_simple(POP), gen_op_simple(DUP), submatcher);
+    }
+
+    // If we're successful, jump to the end of the matchers
+    submatcher = BLOCK(submatcher, gen_op_target(JUMP, final_matcher));
+
+    // FORK_OPT to the end of this submatcher so we can skip to the next one on error
+    mb = BLOCK(mb, gen_op_target(FORK_OPT, submatcher), submatcher);
+
+    // We're done with this inst and we don't want it anymore
+    // But we can't let it free the submatcher block.
+    i->subfn.first = i->subfn.last = NULL;
+  }
+  // We're done with these insts now.
+  block_free(altmatchers);
+
+  return bind_matcher(preamble, BLOCK(mb, final_matcher, body));
+}
+
 block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
+  block update_var = gen_op_bound(STOREV, res_var);
+  block jmp = gen_op_targetlater(JUMP);
+  if (body.last == NULL) {
+    inst_set_target(jmp, jmp);
+  } else {
+    inst_set_target(jmp, body);
+  }
   block loop = BLOCK(gen_op_simple(DUPN),
                      source,
-                     bind_matcher(matcher,
+                     bind_alternation_matchers(matcher,
                                   BLOCK(gen_op_bound(LOADVN, res_var),
+                                        /*
+                                         * We fork to the body, jump to
+                                         * the STOREV.  This means that
+                                         * if body produces no results
+                                         * (i.e., it just does empty)
+                                         * then we keep the current
+                                         * reduction state as-is.
+                                         *
+                                         * To break out of a
+                                         * reduction... use break.
+                                         */
+                                        gen_op_target(FORK, jmp),
+                                        jmp,
                                         body,
-                                        gen_op_bound(STOREV, res_var))),
+                                        update_var)),
                      gen_op_simple(BACKTRACK));
   return BLOCK(gen_op_simple(DUP),
                init,
@@ -727,7 +866,7 @@ block gen_foreach(block source, block matcher, block init, block update, block e
                      source,
                      // destructure the value into variable(s) for all the code
                      // in the body to see
-                     bind_matcher(matcher,
+                     bind_alternation_matchers(matcher,
                                   // load the loop state variable
                                   BLOCK(gen_op_bound(LOADVN, state_var),
                                         // generate updated state
@@ -833,6 +972,17 @@ block gen_or(block a, block b) {
                                                    gen_const(jv_false())))));
 }
 
+block gen_destructure_alt(block matcher) {
+  for (inst *i = matcher.first; i; i = i->next) {
+    if (i->op == STOREV) {
+      i->op = STOREVN;
+    }
+  }
+  inst* i = inst_new(DESTRUCTURE_ALT);
+  i->subfn = matcher;
+  return inst_block(i);
+}
+
 block gen_var_binding(block var, const char* name, block body) {
   return gen_destructure(var, gen_op_unbound(STOREV, name), body);
 }
@@ -845,9 +995,16 @@ block gen_array_matcher(block left, block curr) {
     // `left` was returned by this function, so the third inst is the
     // constant containing the previously used index
     assert(left.first->op == DUP);
-    assert(left.first->next->op == SUBEXP_BEGIN);
-    assert(left.first->next->next->op == LOADK);
-    index = 1 + (int) jv_number_value(left.first->next->next->imm.constant);
+    assert(left.first->next != NULL);
+    inst *i = NULL;
+    if (left.first->next->op == PUSHK_UNDER) {
+      i = left.first->next;
+    } else {
+      assert(left.first->next->op == SUBEXP_BEGIN);
+      assert(left.first->next->next->op == LOADK);
+      i = left.first->next->next;
+    }
+    index = 1 + (int) jv_number_value(i->imm.constant);
   }
 
   // `left` goes at the end so that the const index is in a predictable place
@@ -860,13 +1017,18 @@ block gen_object_matcher(block name, block curr) {
                curr);
 }
 
-block gen_destructure(block var, block matcher, block body) {
+block gen_destructure(block var, block matchers, block body) {
   // var bindings can be added after coding the program; leave the TOP first.
   block top = gen_noop();
   if (body.first && body.first->op == TOP)
     top = inst_block(block_take(&body));
 
-  return BLOCK(top, gen_op_simple(DUP), var, bind_matcher(matcher, body));
+  if (matchers.first && matchers.first->op == DESTRUCTURE_ALT && !block_is_noop(var)) {
+    block_append(&var, gen_op_simple(DUP));
+    block_append(&matchers, gen_op_simple(POP));
+  }
+
+  return BLOCK(top, gen_op_simple(DUP), gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
 }
 
 // Like gen_var_binding(), but bind `break`'s wildcard unbound variable
@@ -877,7 +1039,7 @@ static block gen_wildvar_binding(block var, const char* name, block body) {
 }
 
 block gen_cond(block cond, block iftrue, block iffalse) {
-  return BLOCK(gen_op_simple(DUP), cond,
+  return BLOCK(gen_op_simple(DUP), BLOCK(gen_subexp(cond), gen_op_simple(POP)),
                gen_condbranch(BLOCK(gen_op_simple(POP), iftrue),
                               BLOCK(gen_op_simple(POP), iffalse)));
 }
@@ -970,16 +1132,46 @@ static int count_cfunctions(block b) {
   return n;
 }
 
+#ifndef WIN32
+extern char **environ;
+#endif
+
+static jv
+make_env(jv env)
+{
+  if (jv_is_valid(env))
+    return jv_copy(env);
+  jv r = jv_object();
+  if (environ == NULL)
+    return r;
+  for (size_t i = 0; environ[i] != NULL; i++) {
+    const char *eq;
+
+    if ((eq = strchr(environ[i], '=')) == NULL)
+      r = jv_object_delete(r, jv_string(environ[i]));
+    else
+      r = jv_object_set(r, jv_string_sized(environ[i], eq - environ[i]), jv_string(eq + 1));
+  }
+  return jv_copy(r);
+}
 
 // Expands call instructions into a calling sequence
-static int expand_call_arglist(block* b) {
+static int expand_call_arglist(block* b, jv args, jv *env) {
   int errors = 0;
   block ret = gen_noop();
   for (inst* curr; (curr = block_take(b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_BINDING) {
-      if (!curr->bound_by) {
+      if (!curr->bound_by && curr->op == LOADV && strcmp(curr->symbol, "ENV") == 0) {
+        curr->op = LOADK;
+        *env = curr->imm.constant = make_env(*env);
+      } else if (!curr->bound_by && curr->op == LOADV && jv_object_has(jv_copy(args), jv_string(curr->symbol))) {
+        curr->op = LOADK;
+        curr->imm.constant = jv_object_get(jv_copy(args), jv_string(curr->symbol));
+      } else if (!curr->bound_by) {
         if (curr->symbol[0] == '*' && curr->symbol[1] >= '1' && curr->symbol[1] <= '3' && curr->symbol[2] == '\0')
           locfile_locate(curr->locfile, curr->source, "jq: error: break used outside labeled control structure");
+        else if (curr->op == LOADV)
+          locfile_locate(curr->locfile, curr->source, "jq: error: $%s is not defined", curr->symbol);
         else
           locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
         errors++;
@@ -1032,7 +1224,7 @@ static int expand_call_arglist(block* b) {
           i->subfn = gen_noop();
           inst_free(i);
           // arguments should be pushed in reverse order, prepend them to prelude
-          errors += expand_call_arglist(&body);
+          errors += expand_call_arglist(&body, args, env);
           prelude = BLOCK(gen_subexp(body), prelude);
           actual_args++;
         }
@@ -1054,12 +1246,12 @@ static int expand_call_arglist(block* b) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block b, struct locfile* lf) {
+static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv *env) {
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
-  errors += expand_call_arglist(&b);
+  errors += expand_call_arglist(&b, args, env);
   b = BLOCK(b, gen_op_simple(RET));
   jv localnames = jv_array();
   for (inst* curr = b.first; curr; curr = curr->next) {
@@ -1104,7 +1296,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
   bc->codelen = pos;
   bc->debuginfo = jv_object_set(bc->debuginfo, jv_string("locals"), localnames);
   if (bc->nsubfunctions) {
-    bc->subfunctions = jv_mem_alloc(sizeof(struct bytecode*) * bc->nsubfunctions);
+    bc->subfunctions = jv_mem_calloc(sizeof(struct bytecode*), bc->nsubfunctions);
     for (inst* curr = b.first; curr; curr = curr->next) {
       if (curr->op == CLOSURE_CREATE) {
         struct bytecode* subfn = jv_mem_alloc(sizeof(struct bytecode));
@@ -1122,14 +1314,14 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
           params = jv_array_append(params, jv_string(param->symbol));
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
-        errors += compile(subfn, curr->subfn, lf);
+        errors += compile(subfn, curr->subfn, lf, args, env);
         curr->subfn = gen_noop();
       }
     }
   } else {
     bc->subfunctions = 0;
   }
-  uint16_t* code = jv_mem_alloc(sizeof(uint16_t) * bc->codelen);
+  uint16_t* code = jv_mem_calloc(sizeof(uint16_t), bc->codelen);
   bc->code = code;
   pos = 0;
   jv constant_pool = jv_array();
@@ -1187,17 +1379,20 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf) {
   return errors;
 }
 
-int block_compile(block b, struct bytecode** out, struct locfile* lf) {
+int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
   bc->globals = jv_mem_alloc(sizeof(struct symbol_table));
   int ncfunc = count_cfunctions(b);
   bc->globals->ncfunctions = 0;
-  bc->globals->cfunctions = jv_mem_alloc(sizeof(struct cfunction) * ncfunc);
+  bc->globals->cfunctions = jv_mem_calloc(sizeof(struct cfunction), ncfunc);
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
-  int nerrors = compile(bc, b, lf);
+  jv env = jv_invalid();
+  int nerrors = compile(bc, b, lf, args, &env);
+  jv_free(args);
+  jv_free(env);
   assert(bc->globals->ncfunctions == ncfunc);
   if (nerrors > 0) {
     bytecode_free(bc);

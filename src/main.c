@@ -41,7 +41,7 @@ static const char* progname;
  * For a longer help message we could use a better option parsing
  * strategy, one that lets stack options.
  */
-static void usage(int code) {
+static void usage(int code, int keep_it_short) {
   FILE *f = stderr;
 
   if (code == 0)
@@ -49,7 +49,9 @@ static void usage(int code) {
 
   int ret = fprintf(f,
     "jq - commandline JSON processor [version %s]\n"
-    "\nUsage:\n\n\t%s [options] <jq filter> [file...]\n\n"
+    "\nUsage:\t%s [options] <jq filter> [file...]\n"
+    "\t%s [options] --args <jq filter> [strings...]\n"
+    "\t%s [options] --jsonargs <jq filter> [JSON_TEXTS...]\n\n"
     "jq is a tool for processing JSON inputs, applying the given filter to\n"
     "its JSON text inputs and producing the filter's results as JSON on\n"
     "standard output.\n\n"
@@ -59,22 +61,35 @@ static void usage(int code) {
     "For more advanced filters see the jq(1) manpage (\"man jq\")\n"
     "and/or https://stedolan.github.io/jq\n\n"
     "Example:\n\n\t$ echo '{\"foo\": 0}' | jq .\n"
-    "\t{\n\t\t\"foo\": 0\n\t}\n\n"
-    "Some of the options include:\n"
-    "  -c               compact instead of pretty-printed output;\n"
-    "  -n               use `null` as the single input value;\n"
-    "  -e               set the exit status code based on the output;\n"
-    "  -s               read (slurp) all inputs into an array; apply filter to it;\n"
-    "  -r               output raw strings, not JSON texts;\n"
-    "  -R               read raw strings, not JSON texts;\n"
-    "  -C               colorize JSON;\n"
-    "  -M               monochrome (don't colorize JSON);\n"
-    "  -S               sort keys of objects on output;\n"
-    "  --tab            use tabs for indentation;\n"
-    "  --arg a v        set variable $a to value <v>;\n"
-    "  --argjson a v    set variable $a to JSON value <v>;\n"
-    "  --slurpfile a f  set variable $a to an array of JSON texts read from <f>;\n"
-    "\nSee the manpage for more options.\n", JQ_VERSION, progname);
+    "\t{\n\t\t\"foo\": 0\n\t}\n\n",
+    JQ_VERSION, progname, progname, progname);
+  if (keep_it_short) {
+    fprintf(f,
+      "For a listing of options, use %s --help.\n",
+      progname);
+  } else {
+    (void) fprintf(f,
+      "Some of the options include:\n"
+      "  -c               compact instead of pretty-printed output;\n"
+      "  -n               use `null` as the single input value;\n"
+      "  -e               set the exit status code based on the output;\n"
+      "  -s               read (slurp) all inputs into an array; apply filter to it;\n"
+      "  -r               output raw strings, not JSON texts;\n"
+      "  -R               read raw strings, not JSON texts;\n"
+      "  -C               colorize JSON;\n"
+      "  -M               monochrome (don't colorize JSON);\n"
+      "  -S               sort keys of objects on output;\n"
+      "  --tab            use tabs for indentation;\n"
+      "  --arg a v        set variable $a to value <v>;\n"
+      "  --argjson a v    set variable $a to JSON value <v>;\n"
+      "  --slurpfile a f  set variable $a to an array of JSON texts read from <f>;\n"
+      "  --args           remaining arguments are string arguments, not files;\n"
+      "  --jsonargs       remaining arguments are JSON arguments, not files;\n"
+      "  --               terminates argument processing;\n\n"
+      "Named arguments are also available as $ARGS.named[], while\n"
+      "positional arguments are available as $ARGS.positional[].\n"
+      "\nSee the manpage for more options.\n");
+  }
   exit((ret < 0 && code == 0) ? 2 : code);
 }
 
@@ -122,10 +137,11 @@ enum {
   RAW_NO_LF             = 1024,
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
-  SEQ                   = 8192,
-  RUN_TESTS             = 16384,
+  EXIT_STATUS_EXACT     = 8192,
+  SEQ                   = 16384,
+  RUN_TESTS             = 32768,
   /* debugging only */
-  DUMP_DISASM           = 32768,
+  DUMP_DISASM           = 65536,
 };
 static int options = 0;
 
@@ -167,7 +183,29 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
     if (options & UNBUFFERED_OUTPUT)
       fflush(stdout);
   }
-  if (jv_invalid_has_msg(jv_copy(result))) {
+  if (jq_halted(jq)) {
+    // jq program invoked `halt` or `halt_error`
+    options |= EXIT_STATUS_EXACT;
+    jv exit_code = jq_get_exit_code(jq);
+    if (!jv_is_valid(exit_code))
+      ret = 0;
+    else if (jv_get_kind(exit_code) == JV_KIND_NUMBER)
+      ret = jv_number_value(exit_code);
+    else
+      ret = 5;
+    jv_free(exit_code);
+    jv error_message = jq_get_error_message(jq);
+    if (jv_get_kind(error_message) == JV_KIND_STRING) {
+      fprintf(stderr, "%s", jv_string_value(error_message));
+    } else if (jv_get_kind(error_message) == JV_KIND_NULL) {
+      // Halt with no output
+    } else if (jv_is_valid(error_message)) {
+      error_message = jv_dump_string(jv_copy(error_message), 0);
+      fprintf(stderr, "%s\n", jv_string_value(error_message));
+    } // else no message on stderr; use --debug-trace to see a message
+    fflush(stderr);
+    jv_free(error_message);
+  } else if (jv_invalid_has_msg(jv_copy(result))) {
     // Uncaught jq exception
     jv msg = jv_invalid_get_msg(jv_copy(result));
     jv input_pos = jq_util_input_get_position(jq);
@@ -200,10 +238,10 @@ int main(int argc, char* argv[]) {
   int parser_flags = 0;
   int nfiles = 0;
   int badwrite;
-  jv program_arguments = jv_array();
+  jv ARGS = jv_array(); /* positional arguments */
+  jv program_arguments = jv_object(); /* named arguments */
 
 #ifdef WIN32
-  SetConsoleOutputCP(CP_UTF8);
   fflush(stdout);
   fflush(stderr);
   _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
@@ -235,21 +273,35 @@ int main(int argc, char* argv[]) {
 
   jq_util_input_state *input_state = jq_util_input_init(NULL, NULL); // XXX add err_cb
 
-  int further_args_are_files = 0;
+  int further_args_are_strings = 0;
+  int further_args_are_json = 0;
+  int args_done = 0;
   int jq_flags = 0;
   size_t short_opts = 0;
   jv lib_search_paths = jv_null();
   for (int i=1; i<argc; i++, short_opts = 0) {
-    if (further_args_are_files) {
-      jq_util_input_add_input(input_state, argv[i]);
-      nfiles++;
-    } else if (!strcmp(argv[i], "--")) {
-      if (!program) usage(2);
-      further_args_are_files = 1;
-    } else if (!isoptish(argv[i])) {
-      if (program) {
+    if (args_done) {
+      if (further_args_are_strings) {
+        ARGS = jv_array_append(ARGS, jv_string(argv[i]));
+      } else if (further_args_are_json) {
+        ARGS = jv_array_append(ARGS, jv_parse(argv[i]));
+      } else {
         jq_util_input_add_input(input_state, argv[i]);
         nfiles++;
+      }
+    } else if (!strcmp(argv[i], "--")) {
+      if (!program) usage(2, 1);
+      args_done = 1;
+    } else if (!isoptish(argv[i])) {
+      if (program) {
+        if (further_args_are_strings) {
+          ARGS = jv_array_append(ARGS, jv_string(argv[i]));
+        } else if (further_args_are_json) {
+          ARGS = jv_array_append(ARGS, jv_parse(argv[i]));
+        } else {
+          jq_util_input_add_input(input_state, argv[i]);
+          nfiles++;
+        }
       } else {
         program = argv[i];
       }
@@ -295,7 +347,7 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 0, "unbuffered", &short_opts)) {
         options |= UNBUFFERED_OUTPUT;
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i], 'S', "sort-keys", &short_opts)) {
         options |= SORTED_OUTPUT;
@@ -320,7 +372,7 @@ int main(int argc, char* argv[]) {
       if (isoption(argv[i], 0, "tab", &short_opts)) {
         dumpopts &= ~JV_PRINT_INDENT_FLAGS(7);
         dumpopts |= JV_PRINT_TAB | JV_PRINT_PRETTY;
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i], 0, "indent", &short_opts)) {
         if (i >= argc - 1) {
@@ -335,53 +387,60 @@ int main(int argc, char* argv[]) {
         }
         dumpopts |= JV_PRINT_INDENT_FLAGS(indent);
         i++;
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i], 0, "seq", &short_opts)) {
         options |= SEQ;
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i], 0, "stream", &short_opts)) {
         parser_flags |= JV_PARSE_STREAMING;
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i], 0, "stream-errors", &short_opts)) {
         parser_flags |= JV_PARSE_STREAM_ERRORS;
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i], 'e', "exit-status", &short_opts)) {
         options |= EXIT_STATUS;
         if (!short_opts) continue;
       }
       // FIXME: For --arg* we should check that the varname is acceptable
+      if (isoption(argv[i], 0, "args", &short_opts)) {
+        further_args_are_strings = 1;
+        further_args_are_json = 0;
+        continue;
+      }
+      if (isoption(argv[i], 0, "jsonargs", &short_opts)) {
+        further_args_are_strings = 0;
+        further_args_are_json = 1;
+        continue;
+      }
       if (isoption(argv[i], 0, "arg", &short_opts)) {
         if (i >= argc - 2) {
           fprintf(stderr, "%s: --arg takes two parameters (e.g. --arg varname value)\n", progname);
           die();
         }
-        jv arg = jv_object();
-        arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
-        arg = jv_object_set(arg, jv_string("value"), jv_string(argv[i+2]));
-        program_arguments = jv_array_append(program_arguments, arg);
+        if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1])))
+          program_arguments = jv_object_set(program_arguments, jv_string(argv[i+1]), jv_string(argv[i+2]));
         i += 2; // skip the next two arguments
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i], 0, "argjson", &short_opts)) {
         if (i >= argc - 2) {
           fprintf(stderr, "%s: --argjson takes two parameters (e.g. --argjson varname text)\n", progname);
           die();
         }
-        jv v = jv_parse(argv[i+2]);
-        if (!jv_is_valid(v)) {
-          fprintf(stderr, "%s: invalid JSON text passed to --argjson\n", progname);
-          die();
+        if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1]))) {
+          jv v = jv_parse(argv[i+2]);
+          if (!jv_is_valid(v)) {
+            fprintf(stderr, "%s: invalid JSON text passed to --argjson\n", progname);
+            die();
+          }
+          program_arguments = jv_object_set(program_arguments, jv_string(argv[i+1]), v);
         }
-        jv arg = jv_object();
-        arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
-        arg = jv_object_set(arg, jv_string("value"), v);
-        program_arguments = jv_array_append(program_arguments, arg);
         i += 2; // skip the next two arguments
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i], 0, "argfile", &short_opts) ||
           isoption(argv[i], 0, "slurpfile", &short_opts)) {
@@ -394,36 +453,38 @@ int main(int argc, char* argv[]) {
           fprintf(stderr, "%s: --%s takes two parameters (e.g. --%s varname filename)\n", progname, which, which);
           die();
         }
-        jv arg = jv_object();
-        arg = jv_object_set(arg, jv_string("name"), jv_string(argv[i+1]));
-        jv data = jv_load_file(argv[i+2], 0);
-        if (!jv_is_valid(data)) {
-          data = jv_invalid_get_msg(data);
-          fprintf(stderr, "%s: Bad JSON in --%s %s %s: %s\n", progname, which,
-                  argv[i+1], argv[i+2], jv_string_value(data));
-          jv_free(data);
-          jv_free(arg);
-          ret = 2;
-          goto out;
+        if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1]))) {
+          jv data = jv_load_file(argv[i+2], 0);
+          if (!jv_is_valid(data)) {
+            data = jv_invalid_get_msg(data);
+            fprintf(stderr, "%s: Bad JSON in --%s %s %s: %s\n", progname, which,
+                    argv[i+1], argv[i+2], jv_string_value(data));
+            jv_free(data);
+            ret = 2;
+            goto out;
+          }
+          if (strcmp(which, "argfile") == 0 &&
+              jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
+              data = jv_array_get(data, 0);
+          program_arguments = jv_object_set(program_arguments, jv_string(argv[i+1]), data);
         }
-        if (isoption(argv[i], 0, "argfile", &short_opts) &&
-            jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
-            data = jv_array_get(data, 0);
-        arg = jv_object_set(arg, jv_string("value"), data);
-        program_arguments = jv_array_append(program_arguments, arg);
         i += 2; // skip the next two arguments
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i],  0,  "debug-dump-disasm", &short_opts)) {
         options |= DUMP_DISASM;
+        continue;
+      }
+      if (isoption(argv[i],  0,  "debug-trace=all", &short_opts)) {
+        jq_flags |= JQ_DEBUG_TRACE_ALL;
         if (!short_opts) continue;
       }
       if (isoption(argv[i],  0,  "debug-trace", &short_opts)) {
         jq_flags |= JQ_DEBUG_TRACE;
-        if (!short_opts) continue;
+        continue;
       }
       if (isoption(argv[i], 'h', "help", &short_opts)) {
-        usage(0);
+        usage(0, 0);
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'V', "version", &short_opts)) {
@@ -464,6 +525,9 @@ int main(int argc, char* argv[]) {
   if (options & COLOR_OUTPUT) dumpopts |= JV_PRINT_COLOR;
   if (options & NO_COLOR_OUTPUT) dumpopts &= ~JV_PRINT_COLOR;
 
+  if (getenv("JQ_COLORS") != NULL && !jq_set_colors(getenv("JQ_COLORS")))
+      fprintf(stderr, "Failed to set $JQ_COLORS\n");
+
   if (jv_get_kind(lib_search_paths) == JV_KIND_NULL) {
     // Default search path list
     lib_search_paths = JV_ARRAY(jv_string("~/.jq"),
@@ -490,7 +554,7 @@ int main(int argc, char* argv[]) {
     program = ".";
 #endif
 
-  if (!program) usage(2);
+  if (!program) usage(2, 1);
 
   if (options & FROM_FILE) {
     char *program_origin = strdup(program);
@@ -508,11 +572,17 @@ int main(int argc, char* argv[]) {
       goto out;
     }
     jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string(dirname(program_origin))));
+    ARGS = JV_OBJECT(jv_string("positional"), ARGS,
+                     jv_string("named"), jv_copy(program_arguments));
+    program_arguments = jv_object_set(program_arguments, jv_string("ARGS"), jv_copy(ARGS));
     compiled = jq_compile_args(jq, skip_shebang(jv_string_value(data)), jv_copy(program_arguments));
     free(program_origin);
     jv_free(data);
   } else {
     jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string("."))); // XXX is this good?
+    ARGS = JV_OBJECT(jv_string("positional"), ARGS,
+                     jv_string("named"), jv_copy(program_arguments));
+    program_arguments = jv_object_set(program_arguments, jv_string("ARGS"), jv_copy(ARGS));
     compiled = jq_compile_args(jq, program, jv_copy(program_arguments));
   }
   if (!compiled){
@@ -577,12 +647,13 @@ out:
     ret = 2;
   }
 
+  jv_free(ARGS);
   jv_free(program_arguments);
   jq_util_input_free(&input_state);
   jq_teardown(&jq);
   if (ret >= 10 && (options & EXIT_STATUS))
     return ret - 10;
-  if (ret >= 10)
+  if (ret >= 10 && !(options & EXIT_STATUS_EXACT))
     return 0;
   return ret;
 }

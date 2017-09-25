@@ -40,6 +40,10 @@ struct jq_state {
   int initial_execution;
   unsigned next_label;
 
+  int halted;
+  jv exit_code;
+  jv error_message;
+
   jv attrs;
   jq_input_cb input_cb;
   void *input_cb_data;
@@ -242,6 +246,28 @@ static void path_append(jq_state* jq, jv component, jv value_at_path) {
   }
 }
 
+/* For f_getpath() */
+jv
+_jq_path_append(jq_state *jq, jv v, jv p, jv value_at_path) {
+  if (jq->subexp_nest != 0 ||
+      jv_get_kind(jq->path) != JV_KIND_ARRAY ||
+      !jv_is_valid(value_at_path)) {
+    jv_free(v);
+    jv_free(p);
+    return value_at_path;
+  }
+  if (!jv_identical(v, jv_copy(jq->value_at_path))) {
+    jv_free(p);
+    return value_at_path;
+  }
+  if (jv_get_kind(p) == JV_KIND_ARRAY)
+    jq->path = jv_array_concat(jq->path, p);
+  else
+    jq->path = jv_array_append(jq->path, p);
+  jv_free(jq->value_at_path);
+  return jv_copy(jq->value_at_path = value_at_path);
+}
+
 uint16_t* stack_restore(jq_state *jq){
   while (!stack_pop_will_free(&jq->stk, jq->fork_top)) {
     if (stack_pop_will_free(&jq->stk, jq->stk_top)) {
@@ -285,6 +311,9 @@ static void jq_reset(jq_state *jq) {
   jv_free(jq->error);
   jq->error = jv_null();
 
+  jq->halted = 0;
+  jv_free(jq->exit_code);
+  jv_free(jq->error_message);
   if (jv_get_kind(jq->path) != JV_KIND_INVALID)
     jv_free(jq->path);
   jq->path = jv_null();
@@ -320,6 +349,11 @@ jv jq_next(jq_state *jq) {
   jq->initial_execution = 0;
   assert(jv_get_kind(jq->error) == JV_KIND_NULL);
   while (1) {
+    if (jq->halted) {
+      if (jq->debug_trace_enabled)
+        printf("\t<halted>\n");
+      return jv_invalid();
+    }
     uint16_t opcode = *pc;
     raising = 0;
 
@@ -331,10 +365,9 @@ jv jq_next(jq_state *jq) {
       if (!backtracking) {
         int stack_in = opdesc->stack_in;
         if (stack_in == -1) stack_in = pc[1];
+        param = jq->stk_top;
         for (int i=0; i<stack_in; i++) {
-          if (i == 0) {
-            param = jq->stk_top;
-          } else {
+          if (i != 0) {
             printf(" | ");
             param = *stack_block_next(&jq->stk, param);
           }
@@ -343,6 +376,12 @@ jv jq_next(jq_state *jq) {
           //printf("<%d>", jv_get_refcnt(param->val));
           //printf(" -- ");
           //jv_dump(jv_copy(jq->path), 0);
+        }
+        if (jq->debug_trace_enabled & JQ_DEBUG_TRACE_DETAIL) {
+          while ((param = *stack_block_next(&jq->stk, param))) {
+            printf(" || ");
+            jv_dump(jv_copy(*(jv*)stack_block(&jq->stk, param)), JV_PRINT_REFCOUNT);
+          }
         }
       } else {
         printf("\t<backtracking>");
@@ -414,6 +453,15 @@ jv jq_next(jq_state *jq) {
       jv b = stack_pop(jq);
       stack_push(jq, a);
       stack_push(jq, b);
+      break;
+    }
+
+    case PUSHK_UNDER: {
+      jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
+      assert(jv_is_valid(v));
+      jv v2 = stack_pop(jq);
+      stack_push(jq, v);
+      stack_push(jq, v2);
       break;
     }
 
@@ -514,6 +562,8 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case STOREVN:
+        stack_save(jq, pc - 1, stack_get_pos(jq));
     case STOREV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
@@ -526,6 +576,16 @@ jv jq_next(jq_state *jq) {
       }
       jv_free(*var);
       *var = val;
+      break;
+    }
+
+    case ON_BACKTRACK(STOREVN): {
+      uint16_t level = *pc++;
+      uint16_t v = *pc++;
+      jv* var = frame_local_var(jq, v, level);
+      jv_free(*var);
+      *var = jv_null();
+      goto do_backtrack;
       break;
     }
 
@@ -932,6 +992,10 @@ jq_state *jq_init(void) {
   jq->curr_frame = 0;
   jq->error = jv_null();
 
+  jq->halted = 0;
+  jq->exit_code = jv_invalid();
+  jq->error_message = jv_invalid();
+
   jq->err_cb = default_err_cb;
   jq->err_cb_data = stderr;
 
@@ -974,11 +1038,7 @@ void jq_start(jq_state *jq, jv input, int flags) {
 
   stack_push(jq, input);
   stack_save(jq, jq->bc->code, stack_get_pos(jq));
-  if (flags & JQ_DEBUG_TRACE) {
-    jq->debug_trace_enabled = 1;
-  } else {
-    jq->debug_trace_enabled = 0;
-  }
+  jq->debug_trace_enabled = flags & JQ_DEBUG_TRACE_ALL;
   jq->initial_execution = 1;
 }
 
@@ -1066,9 +1126,26 @@ static struct bytecode *optimize(struct bytecode *bc) {
   return optimize_code(bc);
 }
 
+static jv
+args2obj(jv args)
+{
+  if (jv_get_kind(args) == JV_KIND_OBJECT)
+    return args;
+  assert(jv_get_kind(args) == JV_KIND_ARRAY);
+  jv r = jv_object();
+  jv kk = jv_string("name");
+  jv vk = jv_string("value");
+  jv_array_foreach(args, i, v)
+    r = jv_object_set(r, jv_object_get(jv_copy(v), kk), jv_object_get(v, vk));
+  jv_free(args);
+  jv_free(kk);
+  jv_free(vk);
+  return r;
+}
+
 int jq_compile_args(jq_state *jq, const char* str, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
-  assert(jv_get_kind(args) == JV_KIND_ARRAY);
+  assert(jv_get_kind(args) == JV_KIND_ARRAY || jv_get_kind(args) == JV_KIND_OBJECT);
   struct locfile* locations;
   locations = locfile_init(jq, "<top-level>", str, strlen(str));
   block program;
@@ -1079,29 +1156,22 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   }
   int nerrors = load_program(jq, locations, &program);
   if (nerrors == 0) {
-    jv_array_foreach(args, i, arg) {
-      jv name = jv_object_get(jv_copy(arg), jv_string("name"));
-      jv value = jv_object_get(arg, jv_string("value"));
-      program = gen_var_binding(gen_const(value), jv_string_value(name), program);
-      jv_free(name);
-    }
-
     nerrors = builtins_bind(jq, &program);
     if (nerrors == 0) {
-      nerrors = block_compile(program, &jq->bc, locations);
+      nerrors = block_compile(program, &jq->bc, locations, args = args2obj(args));
     }
-  }
+  } else
+    jv_free(args);
   if (nerrors)
     jq_report_error(jq, jv_string_fmt("jq: %d compile %s", nerrors, nerrors > 1 ? "errors" : "error"));
   if (jq->bc)
     jq->bc = optimize(jq->bc);
-  jv_free(args);
   locfile_free(locations);
   return jq->bc != NULL;
 }
 
 int jq_compile(jq_state *jq, const char* str) {
-  return jq_compile_args(jq, str, jv_array());
+  return jq_compile_args(jq, str, jv_object());
 }
 
 jv jq_get_jq_origin(jq_state *jq) {
@@ -1152,4 +1222,29 @@ void jq_set_debug_cb(jq_state *jq, jq_msg_cb cb, void *data) {
 void jq_get_debug_cb(jq_state *jq, jq_msg_cb *cb, void **data) {
   *cb = jq->debug_cb;
   *data = jq->debug_cb_data;
+}
+
+void
+jq_halt(jq_state *jq, jv exit_code, jv error_message)
+{
+  assert(!jq->halted);
+  jq->halted = 1;
+  jq->exit_code = exit_code;
+  jq->error_message = error_message;
+}
+
+int
+jq_halted(jq_state *jq)
+{
+  return jq->halted;
+}
+
+jv jq_get_exit_code(jq_state *jq)
+{
+  return jv_copy(jq->exit_code);
+}
+
+jv jq_get_error_message(jq_state *jq)
+{
+  return jv_copy(jq->error_message);
 }

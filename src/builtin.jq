@@ -1,3 +1,4 @@
+def halt_error: halt_error(5);
 def error: error(.);
 def map(f): [.[] | f];
 def select(f): if f then . else empty end;
@@ -10,11 +11,11 @@ def min_by(f): _min_by_impl(map([f]));
 def add: reduce .[] as $x (null; . + $x);
 def del(f): delpaths([path(f)]);
 def _assign(paths; value): value as $v | reduce path(paths) as $p (.; setpath($p; $v));
-def _modify(paths; update): reduce path(paths) as $p (.; setpath($p; getpath($p) | update));
+def _modify(paths; update): reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]));
 def map_values(f): .[] |= f;
 
 # recurse
-def recurse(f): def r: ., (f | select(. != null) | r); r;
+def recurse(f): def r: ., (f | r); r;
 def recurse(f; cond): def r: ., (f | select(cond) | r); r;
 def recurse: recurse(.[]?);
 def recurse_down: recurse;
@@ -167,7 +168,8 @@ def until(cond; next):
          if cond then . else (next|_until) end;
      _until;
 def limit($n; exp): if $n < 0 then exp else label $out | foreach exp as $item ([$n, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1]) end;
-def first(g): label $out | foreach g as $item ([false, null]; if .[0]==true then break $out else [true, $item] end; .[1]);
+def isempty(g): 0 == ((label $go | g | (1, break $go)) // 0);
+def first(g): label $out | g | ., break $out;
 def last(g): reduce g as $item (null; $item);
 def nth($n; g): if $n < 0 then error("nth doesn't support negative indices") else last(limit($n + 1; g)) end;
 def first: .[0];
@@ -210,7 +212,7 @@ def ascii_upcase:
 
 # Streaming utilities
 def truncate_stream(stream):
-  . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][1:]) else empty end;
+  . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][$n:]) else empty end;
 def fromstream(i):
   foreach i as $item (
     [null,false,null,false];
@@ -282,8 +284,25 @@ def bsearch(target):
 def walk(f):
   . as $in
   | if type == "object" then
-      reduce keys[] as $key
+      reduce keys_unsorted[] as $key
         ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f
   elif type == "array" then map( walk(f) ) | f
   else f
   end;
+
+# SQL-ish operators here:
+def INDEX(stream; idx_expr):
+  reduce stream as $row ({};
+    .[$row|idx_expr|
+      if type != "string" then tojson
+      else .
+      end] |= $row);
+def INDEX(idx_expr): INDEX(.[]; idx_expr);
+def JOIN($idx; idx_expr):
+  [.[] | [., $idx[idx_expr]]];
+def JOIN($idx; stream; idx_expr):
+  stream | [., $idx[idx_expr]];
+def JOIN($idx; stream; idx_expr; join_expr):
+  stream | [., $idx[idx_expr]] | join_expr;
+def IN(s): reduce (first(select(. == s)) | true) as $v (false; if . or $v then true else false end);
+def IN(src; s): reduce (src|IN(s)) as $v (false; if . or $v then true else false end);

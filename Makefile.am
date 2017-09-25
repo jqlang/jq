@@ -50,7 +50,7 @@ AM_YFLAGS = --warnings=all -d
 lib_LTLIBRARIES = libjq.la
 libjq_la_SOURCES = ${LIBJQ_SRC}
 libjq_la_LIBADD = -lm
-libjq_la_LDFLAGS = -export-symbols-regex '^j[qv]_' -version-info 1:4:0
+libjq_la_LDFLAGS = $(onig_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
 if WIN32
 libjq_la_LIBADD += -lshlwapi
@@ -111,6 +111,9 @@ bin_PROGRAMS = jq jq_example JQExample
 jq_SOURCES = src/main.c src/version.h
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
+if WIN32
+jq_LDADD += -lshlwapi
+endif
 
 jq_example_SOURCES =  examples/jq_example.c
 jq_example_LDFLAGS = -static-libtool-libs
@@ -128,7 +131,7 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest
+TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
 TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
 
@@ -146,6 +149,15 @@ jq.1: $(srcdir)/jq.1.prebuilt
 endif
 
 
+### Build oniguruma
+
+if BUILD_ONIGURUMA
+libjq_la_LIBADD += modules/oniguruma/src/.libs/libonig.la
+SUBDIRS = modules/oniguruma
+endif
+
+AM_CFLAGS += $(onig_CFLAGS)
+
 ### Packaging
 
 docs/site.yml: configure.ac
@@ -157,11 +169,11 @@ install-binaries: $(BUILT_SOURCES)
 
 DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
         docs/Gemfile docs/Gemfile.lock docs/Rakefile docs/README.md     \
-        docs/default_manpage.md jq.1.default
+        jq.1.prebuilt
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
-        src/parser.h src/version.h src/builtin.inc                      \
+        src/parser.h src/version.h src/builtin.jq                       \
         scripts/version tests/jq.test tests/modules/.jq                 \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
@@ -171,7 +183,12 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order0.jq                               \
         tests/modules/test_bind_order1.jq                               \
         tests/modules/test_bind_order2.jq tests/onig.supp               \
-        tests/onig.test tests/setup tests/torture/input0.json
+        tests/onig.test tests/setup tests/torture/input0.json		\
+        tests/optional.test tests/optionaltest				\
+	tests/utf8-truncate.jq tests/utf8test				\
+	tests/base64.test tests/base64test 				\
+	tests/jq-f-test.sh tests/shtest
+
 
 
 # README.md is expected in Github projects, good stuff in it, so we'll

@@ -19,9 +19,9 @@ matrix:
 addons:
     apt:
         packages:
-            - libonig-dev
             - valgrind
             - bison
+            - automake
 
 before_install:
     - echo "$TRAVIS_OS_NAME"
@@ -29,8 +29,8 @@ before_install:
     - brew update               || true;
       brew install flex         || true;
       brew install bison        || true;
-      brew install oniguruma    || true;
     - rm src/{lexer,parser}.{c,h}
+    - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
 
 install:
     - bundle install --gemfile=docs/Gemfile
@@ -46,8 +46,8 @@ before_script:
     - echo PATH=$PATH
     - which bison
     - bison --version
-    - autoreconf -i
-    - ./configure YACC="$(which bison) -y" $COVERAGE
+    - autoreconf -if
+    - ./configure --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
 
 script:
     # When using the bison from Debian we need to tell that bison where
@@ -55,6 +55,23 @@ script:
     - echo PATH=$PATH
     - which bison
     - make BISON_PKGDATADIR=$PWD/usr/share/bison src/parser.c || make src/parser.c
+    # Make dist!
+    #
+    # Make it first to fail the build early, before we test with
+    # valgrind.
+    - make dist
+    # Build and test the dist (without valgrind)
+    - |
+        (
+          tar xvf jq-`scripts/version`.tar.gz &&
+          cd jq-`scripts/version` &&
+          pwd &&
+          ./configure --disable-valgrind --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE &&
+          make BISON_PKGDATADIR=$PWD/usr/share/bison src/parser.c || make src/parser.c &&
+          make -j4 &&
+          make check -j4 || true
+        )
+    # Build and test the HEAD
     - make -j4
     - make check -j4
 

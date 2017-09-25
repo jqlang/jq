@@ -127,6 +127,7 @@ jv jv_string_implode(jv j);
 
 jv jv_object(void);
 jv jv_object_get(jv object, jv key);
+int jv_object_has(jv object, jv key);
 jv jv_object_set(jv object, jv key, jv value);
 jv jv_object_delete(jv object, jv key);
 int jv_object_length(jv object);
@@ -147,6 +148,15 @@ jv jv_object_iter_value(jv, int);
             1)                                                          \
            : 0;                                                         \
          jv_i__ = jv_object_iter_next(t, jv_i__))                       \
+
+#define jv_object_keys_foreach(t, k)                                 \
+  for (int jv_i__ = jv_object_iter(t), jv_j__ = 1; jv_j__; jv_j__ = 0)  \
+    for (jv k;                                                          \
+         jv_object_iter_valid((t), jv_i__) ?                            \
+           (k = jv_object_iter_key(t, jv_i__),                          \
+            1)                                                          \
+           : 0;                                                         \
+         jv_i__ = jv_object_iter_next(t, jv_i__))
 
 #define JV_OBJECT_1(k1) (jv_object_set(jv_object(),(k1),jv_null()))
 #define JV_OBJECT_2(k1,v1) (jv_object_set(jv_object(),(k1),(v1)))
