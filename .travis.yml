@@ -15,6 +15,14 @@ matrix:
         - compiler: gcc
           env: COVERAGE="--disable-valgrind --enable-gcov"
           os: linux
+        - if: branch = master
+          compiler: gcc
+          os: osx
+          script: brew install --HEAD jq && brew test jq
+        - if: branch = master
+          compiler: clang
+          os: osx
+          script: brew install --HEAD jq && brew test jq
 
 addons:
     apt:
