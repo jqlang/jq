@@ -246,6 +246,9 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
     jv v = jv_object_get(jv_copy(dep), jv_string("raw"));
     if (jv_get_kind(v) == JV_KIND_TRUE)
       raw = 1;
+    int optional = 0;
+    if (jv_get_kind(jv_object_get(jv_copy(dep), jv_string("optional"))) == JV_KIND_TRUE)
+      optional = 1;
     jv_free(v);
     jv relpath = validate_relpath(jv_object_get(jv_copy(dep), jv_string("relpath")));
     jv as = jv_object_get(jv_copy(dep), jv_string("as"));
@@ -259,10 +262,14 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
     jv resolved = find_lib(jq, relpath, search, is_data ? ".json" : ".jq", jv_copy(jq_origin), jv_copy(lib_origin));
     // XXX ...move the rest of this into a callback.
     if (!jv_is_valid(resolved)) {
+      jv_free(as);
+      if (optional) {
+        jv_free(resolved);
+        continue;
+      }
       jv emsg = jv_invalid_get_msg(resolved);
       jq_report_error(jq, jv_string_fmt("jq: error: %s\n",jv_string_value(emsg)));
       jv_free(emsg);
-      jv_free(as);
       jv_free(deps);
       jv_free(jq_origin);
       jv_free(lib_origin);
