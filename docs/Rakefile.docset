@@ -1,0 +1,132 @@
+# -*- ruby -*-
+require_relative 'helpers.rb'
+require 'sqlite3'
+require 'fileutils'
+
+
+task :build do
+  DocsetGenerator.new(Dir.pwd, File.join(Dir.pwd, 'jq.docset')).run!
+end
+
+
+class << Bonsai::Exporter
+  def write_index; Bonsai.log '[docset] Skipping index'; end
+  def write_sitemap; Bonsai.log '[docset] Skipping sitemap'; end
+  def write_readme; Bonsai.log '[docset] Skipping readme'; end
+end
+
+
+# Generate a docset for consumption by Dash: https://kapeli.com/docsets
+class DocsetGenerator
+  def initialize(input_path, docset_dir)
+    @input_path = input_path
+    @docset_dir = docset_dir
+    @html_dir = File.join(@docset_dir, 'Contents', 'Resources', 'Documents')
+
+    @manual = load_manual
+  end
+
+  def run!
+    clean
+    generate_manual
+    generate_info_plist
+    generate_index
+
+    FileUtils.copy File.join(@input_path, 'docset-icon.png'), File.join(@docset_dir, 'icon.png')
+
+    # Remove unneeded files
+    FileUtils.rm File.join(@html_dir, 'jq.png')
+    FileUtils.rm File.join(@html_dir, 'robots.txt')
+    FileUtils.rm File.join(@html_dir, 'css', 'base.scss')
+  end
+
+  def clean
+    FileUtils.rm_r(@docset_dir)
+  end
+
+  def generate_manual
+    Dir.mktmpdir do |tmpdir|
+      FileUtils.mkdir_p File.join(tmpdir, 'content', '3.manual')
+      for asset in ['public', 'templates', File.join('content', '3.manual', 'manual.yml')]
+        File.symlink File.join(@input_path, asset), File.join(tmpdir, asset)
+      end
+
+      site = YAML::load_file(File.join(@input_path, 'site.yml'))
+      site['is_docset'] = true
+      site['root'] = '..'
+      File.open File.join(tmpdir, 'site.yml'), 'w' do |f|
+        YAML::dump(site, f)
+      end
+
+      Bonsai.root_dir = tmpdir
+      Bonsai::Exporter.path = @html_dir
+      Bonsai::Exporter.publish!
+    end
+  end
+
+  def generate_info_plist
+    File.open File.join(@docset_dir, 'Contents', 'Info.plist'), 'w' do |f|
+      f << <<-XML
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key> <string>io.github.stedolan.jq</string>
+    <key>CFBundleName</key> <string>jq</string>
+    <key>isDashDocset</key> <true/>
+    <key>DocSetPlatformFamily</key> <string>jq</string>
+    <key>DashDocSetFamily</key> <string>dashtoc2</string>
+    <key>DashDocSetFallbackURL</key> <string>https://stedolan.github.io/jq/manual/</string>
+    <key>DashDocSetPlayURL</key> <string>https://jqplay.org/</string>
+    <key>dashIndexFilePath</key> <string>manual/index.html</string>
+    <key>isJavaScriptEnabled</key> <true/>
+</dict>
+</plist>
+XML
+    end
+  end
+
+  def generate_index
+    entries = 0
+    index_db_path = File.join(@docset_dir, 'Contents', 'Resources', 'docSet.dsidx')
+    File.delete(index_db_path) if File.exist?(index_db_path)
+    SQLite3::Database.new index_db_path do |db|
+      db.execute <<-SQL
+        CREATE TABLE searchIndex (id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT);
+        CREATE UNIQUE INDEX anchor ON searchIndex (name, type, path);
+      SQL
+
+      insert_entry = lambda do |name, type, path|
+        entries += 1
+        db.execute 'INSERT INTO searchIndex (name, type, path) VALUES (?, ?, ?);', [name, type, path]
+      end
+
+      insert_entry['jq Manual', 'Guide', 'manual/index.html#//dash_ref/Guide/jq Manual/0']
+
+      filters = Class.new { include ExtraFilters }.new
+      @manual['sections'].each do |section|
+        name = filters.dash_anchor(section['short_title'] || section['title'])
+        path = 'manual/index.html#' + filters.section_id(section['title'])
+        insert_entry[name, 'Section', path]
+
+        (section['aliases'] || []).each do |name|
+          insert_entry[name, 'Function', path]
+        end
+
+        (section['entries'] || []).each do |entry|
+          name = filters.dash_anchor(entry['short_title'] || entry['title'])
+          path = 'manual/index.html#' + filters.entry_id(entry['title'])
+          type = entry['type'] || section['default_type'] || 'Function'
+          insert_entry[name, type, path]
+
+          (entry['aliases'] || []).each do |name|
+            insert_entry[name, 'Function', path]
+          end
+        end
+      end
+    end
+
+    puts "Generated index with #{entries} entries"
+  end
+
+end

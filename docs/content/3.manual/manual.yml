@@ -273,8 +273,10 @@ sections:
         Be warned that this option can change backwards-incompatibly.
 
   - title: Basic filters
+    default_type: Filter
     entries:
       - title: "Identity: `.`"
+        short_title: "."
         body: |
 
           The absolute simplest filter is `.` .  This is a filter that
@@ -291,6 +293,7 @@ sections:
             output: ['"Hello, world!"']
 
       - title: "Object Identifier-Index: `.foo`, `.foo.bar`"
+        short_title: ".foo, .foo.bar"
         body: |
 
           The simplest *useful* filter is `.foo`. When given a
@@ -321,6 +324,7 @@ sections:
             output: [42]
 
       - title: "Optional Object Identifier-Index: `.foo?`"
+        short_title: ".foo?"
         body: |
 
           Just like `.foo`, but does not output even an error when `.`
@@ -341,6 +345,7 @@ sections:
             output: ['[]']
 
       - title: "Generic Object Index: `.[<string>]`"
+        short_title: '.["foo"]'
         body: |
 
           You can also look up fields of an object using syntax like
@@ -348,6 +353,7 @@ sections:
           only for identifier-like strings).
 
       - title: "Array Index: `.[2]`"
+        short_title: ".[2]"
         body: |
 
           When the index value is an integer, `.[<value>]` can index
@@ -371,6 +377,7 @@ sections:
             output: ['2']
 
       - title: "Array/String Slice: `.[10:15]`"
+        short_title: ".[10:15]"
         body: |
 
           The `.[10:15]` syntax can be used to return a subarray of an
@@ -399,6 +406,7 @@ sections:
             output: ['["d", "e"]']
 
       - title: "Array/Object Value Iterator: `.[]`"
+        short_title: ".[]"
         body: |
 
           If you use the `.[index]` syntax, but omit the index
@@ -426,12 +434,15 @@ sections:
             output: ['1', '1']
 
       - title: "`.[]?`"
+        short_title: ".[]?"
         body: |
 
           Like `.[]`, but no errors will be output if . is not an array
           or object.
 
       - title: "Comma: `,`"
+        short_title: ","
+        type: Operator
         body: |
 
           If two filters are separated by a comma, then the
@@ -456,6 +467,8 @@ sections:
             output: ['"e"', '"c"']
 
       - title: "Pipe: `|`"
+        short_title: "|"
+        type: Operator
         body: |
 
           The | operator combines two filters by feeding the output(s) of
@@ -481,6 +494,8 @@ sections:
             output: ['"JSON"', '"XML"']
 
       - title: "Parenthesis"
+        short_title: "( )"
+        type: Operator
         body: |
 
           Parenthesis work as a grouping operator just as in any typical
@@ -506,6 +521,8 @@ sections:
 
     entries:
       - title: "Array construction: `[]`"
+        short_title: "[ … ]"
+        type: Literal
         body: |
 
           As in JSON, `[]` is used to construct arrays, as in
@@ -535,6 +552,8 @@ sections:
             output: ['[2, 4, 6]']
 
       - title: "Object Construction: `{}`"
+        short_title: "{ … }"
+        type: Literal
         body: |
 
           Like JSON, `{}` is for constructing objects (aka
@@ -596,6 +615,8 @@ sections:
             output: ['{"stedolan": ["JQ Primer", "More JQ"]}']
 
       - title: "Recursive Descent: `..`"
+        short_title: ".."
+        type: Filter
         body: |
 
           Recursively descends `.`, producing every value.  This is the
@@ -614,6 +635,7 @@ sections:
             output: ['1']
 
   - title: Builtin operators and functions
+    default_type: Function
     body: |
 
       Some jq operator (for instance, `+`) do different things
@@ -624,6 +646,8 @@ sections:
 
     entries:
       - title: "Addition: `+`"
+        short_title: "+"
+        type: Operator
         body: |
 
           The operator `+` takes two filters, applies them both
@@ -663,6 +687,8 @@ sections:
             output: ['{"a": 42, "b": 2, "c": 3}']
 
       - title: "Subtraction: `-`"
+        short_title: "-"
+        type: Operator
         body: |
 
           As well as normal arithmetic subtraction on numbers, the `-`
@@ -678,6 +704,8 @@ sections:
             output: ['["json"]']
 
       - title: "Multiplication, division, modulo: `*`, `/`, and `%`"
+        short_title: "*, /, %"
+        type: Operator
         body: |
 
           These infix operators behave as expected when given two numbers.
@@ -788,7 +816,7 @@ sections:
             input: '[[0,1], ["a","b","c"]]'
             output: ['[false, true]']
 
-      - title: "`in`"
+      - title: "`in(obj)`"
         body: |
 
           The builtin function `in` returns whether or not the input key is in the
@@ -995,12 +1023,14 @@ sections:
           error's value.  Errors can be caught with try/catch; see below.
 
       - title: "`halt`"
+        type: Directive
         body: |
 
           Stops the jq program with no further outputs.  jq will exit
           with exit status `0`.
 
       - title: "`halt_error`, `halt_error(exit_code)`"
+        type: Directive
         body: |
 
           Stops the jq program with no further outputs.  The input will
@@ -1013,6 +1043,7 @@ sections:
           For example, `"Error: somthing went wrong\n"|halt_error(1)`.
 
       - title: "`$__loc__`"
+        type: Global
         body: |
 
           Produces an object with a "file" key and a "line" key, with
@@ -1695,6 +1726,7 @@ sections:
               - '[{"a":{"b":2}}]'
 
       - title: "`$ENV`, `env`"
+        type: Global
         body: |
 
           `$ENV` is an object representing the environment variables as
@@ -1749,6 +1781,8 @@ sections:
             output: ['[1,2,3,4]']
 
       - title: "String interpolation - `\\(foo)`"
+        short_title: '"\(…)" (string interpolation)'
+        type: Notation
         body: |
 
           Inside a string, you can put an expression inside parens
@@ -1761,6 +1795,7 @@ sections:
             output: ['"The input was 42, which is one less than 43"']
 
       - title: "Convert to/from JSON"
+        short_title: "tojson, fromjson"
         body: |
 
           The `tojson` and `fromjson` builtins dump values as JSON texts
@@ -1780,6 +1815,9 @@ sections:
             output: ['[1,"foo",["foo"]]']
 
       - title: "Format strings and escaping"
+        short_title: 'Format strings and escaping'
+        type: Section
+        aliases: ['@text', '@json', '@html', '@uri', '@csv', '@tsv', '@sh', '@base64', '@base64d']
         body: |
 
           The `@foo` syntax is used to format and escape strings,
@@ -1875,6 +1913,12 @@ sections:
             output: ['"This is a message"']
 
       - title: "Dates"
+        type: Section
+        aliases: [
+          fromdateiso8601, todateiso8601,
+          fromdate, todate, now, gmtime, localtime, mktime,
+          strptime(fmt), strftime(fmt), strflocaltime
+        ]
         body: |
 
           jq provides some basic date handling functionality, with some
@@ -1949,17 +1993,18 @@ sections:
             output: ['1425599507']
 
       - title: "SQL-Style Operators"
+        type: Section
         body: |
 
           jq provides a few SQL-style operators.
 
-           * INDEX(stream; index_expression):
+           * `INDEX(stream; index_expression)`:
 
              This builtin produces an object whose keys are computed by
              the given index expression applied to each value from the
              given stream.
 
-           * JOIN($idx; stream; idx_expr; join_expr):
+           * `JOIN($idx; stream; idx_expr; join_expr)`:
 
              This builtin joins the values from the given stream to the
              given index.  The index's keys are computed by applying the
@@ -1968,22 +2013,22 @@ sections:
              value from the index is fed to the given join expression to
              produce each result.
 
-           * JOIN($idx; stream; idx_expr):
+           * `JOIN($idx; stream; idx_expr)`:
 
              Same as `JOIN($idx; stream; idx_expr; .)`.
 
-           * JOIN($idx; idx_expr):
+           * `JOIN($idx; idx_expr)`:
 
              This builtin joins the input `.` to the given index, applying
              the given index expression to `.` to compute the index key.
              The join operation is as described above.
 
-           * IN(s):
+           * `IN(s)`:
 
              This builtin outputs `true` if `.` appears in the given
              stream, otherwise it outputs `false`.
 
-           * IN(source; s):
+           * `IN(source; s)`:
 
              This builtin outputs `true` if any value in the source stream
              appears in the second stream, otherwise it outputs `false`.
@@ -1997,6 +2042,7 @@ sections:
           in the list.
 
   - title: Conditionals and Comparisons
+    default_type: Operator
     entries:
       - title: "`==`, `!=`"
         body: |
@@ -2016,6 +2062,7 @@ sections:
             output: ['true', 'true', 'false', 'false']
 
       - title: if-then-else
+        short_title: "if … then … else … end"
         body: |
 
           `if A then B else C end` will act the same as `B` if `A`
@@ -2063,7 +2110,7 @@ sections:
             input: 2
             output: ['true']
 
-      - title: and/or/not
+      - title: "`and`, `or`, `not`"
         body: |
 
           jq supports the normal Boolean operators and/or/not. They have the
@@ -2103,6 +2150,7 @@ sections:
             output: ['[false, true]']
 
       - title: "Alternative operator: `//`"
+        short_title: "//"
         body: |
 
           A filter of the form `a // b` produces the same
@@ -2124,6 +2172,8 @@ sections:
             output: [42]
 
       - title: try-catch
+        short_title: "try … catch …"
+        type: Directive
         body: |
 
           Errors can be caught by using `try EXP catch EXP`.  The first
@@ -2146,6 +2196,8 @@ sections:
             output: ['"some exception"']
 
       - title: Breaking out of control structures
+        short_title: "break, label"
+        type: Directive
         body: |
 
           A convenient use of try/catch is to break out of control
@@ -2179,7 +2231,8 @@ sections:
 
           because no label `$out` is visible.
 
-      - title: "Error Suppresion / Optional Operator: `?`"
+      - title: "Error Suppression / Optional Operator: `?`"
+        short_title: "…?"
         body: |
 
           The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
@@ -2403,6 +2456,8 @@ sections:
 
     entries:
       - title: "Variable / Symbolic Binding Operator: `... as $identifier | ...`"
+        short_title: "… as $foo | …"
+        type: Operator
         body: |
 
           In jq, all filters have an input and an output, so manual
@@ -2503,6 +2558,7 @@ sections:
             output: ['{"a":0,"b":null}', '{"a":0,"b":1}', '{"a":2,"b":1}']
 
       - title: 'Defining Functions'
+        type: Section
         body: |
 
           You can give a filter a name using "def" syntax:
@@ -2561,6 +2617,7 @@ sections:
             output: ['[[1,2,1,2], [10,20,1,2]]']
 
       - title: 'Scoping'
+        type: Section
         body: |
 
           There are two types of symbols in jq: value bindings (a.k.a.,
@@ -2578,6 +2635,7 @@ sections:
           `$times_three` is _not_ visible past the closing parenthesis.
 
       - title: Reduce
+        short_title: reduce
         body: |
 
           The `reduce` syntax in jq allows you to combine all of the
@@ -2629,6 +2687,7 @@ sections:
             output: ['[0,1,2]']
 
       - title: "`first(expr)`, `last(expr)`, `nth(n; expr)`"
+        short_title: "first(…), last(…), nth(n; …)"
         body: |
 
           The `first(expr)` and `last(expr)` functions extract the first
@@ -2685,6 +2744,7 @@ sections:
             output: ['[[1,2,3,4],["a","b"]]']
 
       - title: Recursion
+        type: Section
         body: |
 
           As described above, `recurse` uses recursion, and any jq
@@ -2711,6 +2771,7 @@ sections:
                 _repeat;
 
       - title: Generators and iterators
+        type: Section
         body: |
 
             Some jq operators and functions are actually generators in
@@ -2759,6 +2820,17 @@ sections:
             output: ['[1,2,4,8,16,32,64]']
 
   - title: 'Math'
+    aliases: [
+      acos, acosh, asin, asinh, atan,
+      atanh, cbrt, ceil, cos, cosh, erf, erfc, exp, exp10,
+      exp2, expm1, fabs, floor, gamma, j0, j1, lgamma, log,
+      log10, log1p, log2, logb, nearbyint, pow10, rint, round,
+      significand, sin, sinh, sqrt, tan, tanh, tgamma, trunc,
+      y0, y1, atan2, copysign, drem, fdim,
+      fmax, fmin, fmod, frexp, hypot, jn, ldexp, modf,
+      nextafter, nexttoward, pow, remainder, scalb, scalbln, yn,
+      fma
+    ]
     body: |
 
       jq currently only has IEEE754 double-precision (64-bit) floating
@@ -2880,6 +2952,7 @@ sections:
 
     entries:
       - title: "`truncate_stream(stream_expression)`"
+        short_title: "truncate_stream(…)"
         body: |
 
           Consumes a number as input and truncates the corresponding
@@ -2892,6 +2965,7 @@ sections:
             output: ['[[[0],2],[[0]]]']
 
       - title: "`fromstream(stream_expression)`"
+        short_title: "fromstream(…)"
         body: |
 
           Outputs values corresponding to the stream expression's
@@ -2960,6 +3034,8 @@ sections:
 
     entries:
       - title: "Update-assignment: `|=`"
+        short_title: "|="
+        type: Operator
         body: |
           This is the "update" operator '|='.  It takes a filter on the
           right-hand side and works out the new value for the property
@@ -2988,6 +3064,8 @@ sections:
             output: ['[1,0,[5,1,[1,[0]],0]]']
 
       - title: "Arithmetic update-assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`"
+        short_title: "+=, -=, *=, /=, %=, //="
+        type: Operator
         body: |
 
           jq has a few operators of the form `a op= b`, which are all
@@ -3000,6 +3078,8 @@ sections:
             output: ['{"foo": 43}']
 
       - title: "Plain assignment: `=`"
+        short_title: "="
+        type: Operator
         body: |
 
           This is the plain assignment operator.  Unlike the others, the
@@ -3040,6 +3120,7 @@ sections:
           outputs just '{"a":0,"b":0}'.
 
       - title: Complex assignments
+        type: Section
         body: |
           Lots more things are allowed on the left-hand side of a jq assignment
           than in most languages. We've already seen simple field accesses on
@@ -3127,6 +3208,8 @@ sections:
 
     entries:
       - title: "`import RelativePathString as NAME [<metadata>];`"
+        short_title: "import … as NAME […];"
+        type: Directive
         body: |
 
           Imports a module found at the given path relative to a
@@ -3145,6 +3228,8 @@ sections:
           path to be prefixed to the top-level search path.
 
       - title: "`include RelativePathString [<metadata>];`"
+        short_title: "import … […];"
+        type: Directive
         body: |
 
           Imports a module found at the given path relative to a
@@ -3160,6 +3245,8 @@ sections:
           `modulemeta` builtin.
 
       - title: "`import RelativePathString as $NAME [<metadata>];`"
+        short_title: "import … as $NAME […];"
+        type: Directive
         body: |
 
           Imports a JSON file found at the given path relative to a
@@ -3178,6 +3265,7 @@ sections:
           path to be prefixed to the top-level search path.
 
       - title: "`module <metadata>;`"
+        type: Directive
         body: |
 
           This directive is entirely optional.  It's not required for

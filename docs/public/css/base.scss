@@ -1,6 +1,9 @@
 @charset "utf-8";
 body {
     padding-top: 80px;
+    &.docset {
+        padding-top: 0;
+    }
 }
 
 .container {
@@ -81,18 +84,11 @@ h3 code {
     font-size: 20px;
 }
 
-@media(max-width: 991px){
-    #navcolumn {
-        /* Put nav column above manual content */
+@media(max-width: 767px){
+    #navinner {
+        /* Disable affix behavior */
         position: relative !important;
         margin-bottom: 60px;
-    }
-}
-
-@media(min-width: 992px) {
-    #manualcontent {
-        /* Put nav column left of manual content */
-        padding-left: 280px;
     }
 }
 

@@ -1,10 +1,7 @@
+# -*- ruby -*-
+require_relative 'helpers.rb'
 require 'ronn'
 require 'tempfile'
-require 'yaml'
-
-def load_manual
-  YAML::load(File.open("content/3.manual/manual.yml"))
-end
 
 task :manpage do
   Tempfile.open "manpage" do |f|

@@ -2,39 +2,68 @@
 <html lang="en">
 {% include "shared/head" %}
 
-  <body id="{{slug}}" data-spy="scroll" data-target="#navcolumn" data-offset="100">
+  <body id="{{slug}}"
+    {% if is_docset %}
+      class="docset"
+    {% else %}
+      data-spy="scroll" data-target="#navcolumn" data-offset="100"
+    {% endif %}
+    >
+{% unless is_docset %}
 {% include "shared/navbar" %}
+{% endunless %}
 
     <div class="container">
       <div class="row">
-        <div class="affix" id="navcolumn">
-          <h4>Contents</h4>
-          <ul class="nav nav-pills nav-stacked">
-            {% for section in sections %}
-              <li>
-                <a href="#{{section.title | section_id}}">{{section.title}}</a>
-              </li>
-            {% endfor %}
-          </ul>
-          <form class="form-group" onsubmit="go_to_section(); return false;">
-            <input type="text"
-                  class="form-control"
-                  placeholder="Search"
-                  autocomplete="off"
-                  id="searchbox">
-          </form>
+        {% unless is_docset %}
+        <div class="col-sm-4" id="navcolumn">
+          <div class="affix" id="navinner">
+            <h4>Contents</h4>
+            <ul class="nav nav-pills nav-stacked">
+              {% for section in sections %}
+                <li>
+                  <a href="#{{section.title | section_id}}">{{section.title}}</a>
+                </li>
+              {% endfor %}
+            </ul>
+            <form class="form-group" onsubmit="go_to_section(); return false;">
+              <input type="text"
+                    class="form-control"
+                    placeholder="Search"
+                    autocomplete="off"
+                    id="searchbox">
+            </form>
+          </div>
         </div>
+        {% endunless %}
 
-        <div id="manualcontent">
+        <div id="manualcontent"
+          {% if is_docset %}
+            class="col-sm-12"
+          {% else %}
+            class="col-sm-8"
+          {% endif %}
+          >
+          {% if is_docset %}<a class="dashAnchor" name="//dash_ref/Guide/jq Manual/0"></a>{% endif %}
           <h1>{{headline}}</h1>
-          {{ history | markdownify }}
+          {% unless is_docset %}{{ history | markdownify }}{% endunless %}
           {{ body | markdownify }}
           {% for section in sections %}
             <section id="{{section.title | section_id}}">
+              {% if is_docset %}
+                {% assign section_title = section.title | dash_anchor | percent_encode %}
+                {% unless forloop.first %}<a class="dashAnchor" name="//dash_ref/Section/{{section_title}}/1"></a>{% endunless %}
+                {% if section.body != null %}<a class="dashAnchor" name="//dash_ref/Section/{{section_title}}/0"></a>{% endif %}
+              {% endif %}
               <h2>{{section.title}}</h2>
               {{section.body | markdownify}}
               {% for entry in section.entries %}
                 <section id="{{entry.title | entry_id}}">
+                  {% if is_docset %}
+                    {% assign entry_type = entry.type | default: section.default_type | default: "Function" | percent_encode %}
+                    {% assign entry_title = entry.short_title | default: (entry.title | dash_anchor) | percent_encode %}
+                    <a class="dashAnchor" name="//dash_ref/{{entry_type}}/{{entry_title}}/0"></a>
+                  {% endif %}
                   <h3>
                     {{entry.title | markdownify | no_paragraph}}
                     {% if entry.subtitle %}<small>{{entry.subtitle}}</small>{% endif %}
