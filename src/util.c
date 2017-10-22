@@ -429,8 +429,6 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
     } else {
       if (jv_parser_remaining(state->parser) == 0) {
         is_last = jq_util_input_read_more(state);
-        if (is_last && state->buf_valid_len == 0)
-          value = jv_invalid();
         jv_parser_set_buf(state->parser, state->buf, state->buf_valid_len, !is_last);
       }
       value = jv_parser_next(state->parser);
