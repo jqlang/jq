@@ -2,6 +2,7 @@
 
 # strptime() is not available on mingw/WIN32
 [strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
+"2015-03-05T23:51:47Z"
 [[2015,2,5,23,51,47,4,63],1425599507]
 
 # Check day-of-week and day of year computations
