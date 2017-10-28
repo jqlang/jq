@@ -35,7 +35,7 @@ clean () {
     fi
 }
 trap clean EXIT
-d=`mktemp -d -t jqXXXXXX || true`
+d=$(mktemp -d -t jqXXXXXX || true)
 if [ -z "$d" ]; then
     echo "Your OS does not support mktemp(1) -d" 1>&2
     exit 1
