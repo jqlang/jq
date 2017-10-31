@@ -28,13 +28,13 @@ GEM
     launchy (2.4.3)
       addressable (~> 2.3)
     liquid (3.0.6)
-    maruku (0.7.2)
+    maruku (0.7.3)
     minitest (5.8.0)
     mustache (0.99.8)
     rack (1.6.4)
     rack-protection (1.5.3)
       rack
-    rake (10.4.2)
+    rake (12.2.1)
     rdiscount (2.1.8)
     ronn (0.7.3)
       hpricot (>= 0.8.2)
@@ -61,3 +61,6 @@ DEPENDENCIES
   mustache (< 1.0)
   rake
   ronn
+
+BUNDLED WITH
+   1.16.0
