@@ -29,6 +29,8 @@ before_install:
     - brew update               || true;
       brew install flex         || true;
       brew install bison        || true;
+    - rvm install ruby-1.9.3-p551
+    - rvm use 1.9.3
     - rm src/{lexer,parser}.{c,h}
     - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
 
