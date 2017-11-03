@@ -1287,6 +1287,11 @@ sections:
           `sort_by(foo)` compares two elements by comparing the result of
           `foo` on each element.
 
+          In versions newer than jq 1.5, the sorting functions are stable,
+          so sorting by multiple criteria can be done by either providing an
+          array, or by piping a sort on the second criteria into a sort on
+          the first.
+
         examples:
           - program: 'sort'
             input: '[8,3,null,6]'
@@ -1294,6 +1299,12 @@ sections:
           - program: 'sort_by(.foo)'
             input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]'
             output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]']
+          - program: 'sort_by(.foo,.bar)'
+            input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":4, "bar":1}, {"foo":3, "bar":99}]'
+            output: '[{"foo":3, "bar":99}, {"foo":3, "bar":100}, {"foo":4, "bar":1}, {"foo":4, "bar":10}]'
+          - program: 'sort_by(.bar)|sort_by(.foo)'
+            input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":4, "bar":1}, {"foo":3, "bar":99}]'
+            output: '[{"foo":3, "bar":99}, {"foo":3, "bar":100}, {"foo":4, "bar":1}, {"foo":4, "bar":10}]'
 
       - title: "`group_by(path_expression)`"
         body: |
