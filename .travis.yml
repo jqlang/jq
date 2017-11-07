@@ -26,9 +26,7 @@ addons:
 before_install:
     - echo "$TRAVIS_OS_NAME"
     - uname -s
-    - brew update               || true;
-      brew install flex         || true;
-      brew install bison        || true;
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew bundle; fi
     - rm src/{lexer,parser}.{c,h}
     - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
 
