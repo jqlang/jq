@@ -2179,7 +2179,7 @@ sections:
 
           because no label `$out` is visible.
 
-      - title: "Error Suppresion / Optional Operator: `?`"
+      - title: "Error Suppression / Optional Operator: `?`"
         body: |
 
           The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
