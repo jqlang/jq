@@ -872,7 +872,7 @@ sections:
           Similarly, `map_values(x)` will run that filter for each element,
           but it will return an object when an object is passed.
 
-          `map(x)` is equivalent to `[.[] | x]`. In fact, this is how
+          `map(x)` is equivalent to `[.[] | .x]`. In fact, this is how
           it's defined. Similarly, `map_values(x)` is defined as `.[] |= x`.
 
         examples:
