@@ -1280,8 +1280,11 @@ static void set_tm_yday(struct tm *tm) {
 
 #ifdef HAVE_STRPTIME
 static jv f_strptime(jq_state *jq, jv a, jv b) {
-  if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING)
+  if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING) {
+    jv_free(a);
+    jv_free(b);
     return jv_invalid_with_msg(jv_string("strptime/1 requires string inputs and arguments"));
+  }
 
   struct tm tm;
   memset(&tm, 0, sizeof(tm));
