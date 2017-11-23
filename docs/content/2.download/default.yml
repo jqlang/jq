@@ -16,12 +16,15 @@ body:
 
       ### Linux
 
-       * jq 1.5 is in the official [Debian](https://packages.debian.org/jq) and
-         [Ubuntu](http://packages.ubuntu.com/jq) repositories. Install using
-         `sudo apt-get install jq`.
+       * jq 1.5 is in the official repositories for [Debian](https://packages.debian.org/jq)
+         releases "jessie-backports" and later, an 
+         [Ubuntu](http://packages.ubuntu.com/jq) releases "xenial (16.04LTS)" and later.
+         Install using `sudo apt-get install jq`.
+         For installing jq 1.5 on earlier releases, please see
+         [issue #1164](https://github.com/stedolan/jq/issues/1164#issuecomment-241160559)
 
        * jq 1.5 is in the official
-         [Fedora](http://pkgs.fedoraproject.org/cgit/jq.git/) repository.
+         [Fedora](https://apps.fedoraproject.org/packages/jq) repository.
          Install using `sudo dnf install jq`.
 
        * jq 1.4 is in the official [openSUSE](https://software.opensuse.org/package/jq)
