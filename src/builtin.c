@@ -1292,14 +1292,29 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   tm.tm_yday = 367; // sentinel
   const char *input = jv_string_value(a);
   const char *fmt = jv_string_value(b);
-  const char *end = strptime(input, fmt, &tm);
+  char *inputdup = strdup(input);
+  char *fmtdup = strdup(fmt);
 
-  if (end == NULL || (*end != '\0' && !isspace(*end))) {
-    jv e = jv_invalid_with_msg(jv_string_fmt("date \"%s\" does not match format \"%s\"", input, fmt));
-    jv_free(a);
-    jv_free(b);
-    return e;
+  int ms = -1;
+  char *pf = strstr(fmtdup, "%f");
+  if (pf) {
+    char *msfmtloc = pf - 1;
+    char delim = *msfmtloc;
+    *msfmtloc = '\0';
+    char *msloc = strrchr(inputdup, delim);
+    if (msloc == NULL)
+      goto bad_fmt_out;
+    *msloc = '\0';
+    ms = atoi(msloc + 1);
   }
+
+  const char *end = strptime(inputdup, fmtdup, &tm);
+
+  if (end == NULL || (*end != '\0' && !isspace(*end)))
+    goto bad_fmt_out;
+
+  free(inputdup);
+  free(fmtdup);
   jv_free(b);
   /*
    * This is OS X or some *BSD whose strptime() is just not that
@@ -1315,10 +1330,20 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   if (tm.tm_yday == 367 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)
     set_tm_yday(&tm);
   jv r = tm2jv(&tm);
+  if (ms >= 0)
+    r = jv_array_append(r, jv_number(ms));
   if (*end != '\0')
     r = jv_array_append(r, jv_string(end));
   jv_free(a); // must come after `*end` because `end` is a pointer into `a`'s string
   return r;
+
+ bad_fmt_out:;
+  jv e = jv_invalid_with_msg(jv_string_fmt("date \"%s\" does not match format \"%s\"", input, fmt));
+  jv_free(a);
+  jv_free(b);
+  free(inputdup);
+  free(fmtdup);
+  return e;
 }
 #else
 static jv f_strptime(jq_state *jq, jv a, jv b) {
