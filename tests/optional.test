@@ -7,9 +7,9 @@
 
 # Check day-of-week and day of year computations
 # (should trip an assert if this fails)
-last(range(365 * 199)|("1900-03-01T01:02:03Z"|strptime("%Y-%m-%dT%H:%M:%SZ")|mktime) + (86400 * .)|strftime("%Y-%m-%dT%H:%M:%SZ")|strptime("%Y-%m-%dT%H:%M:%SZ"))
+last(range(365 * 199)|("1970-03-01T01:02:03Z"|strptime("%Y-%m-%dT%H:%M:%SZ")|mktime) + (86400 * .)|strftime("%Y-%m-%dT%H:%M:%SZ")|strptime("%Y-%m-%dT%H:%M:%SZ"))
 null
-[2099,0,10,1,2,3,6,9]
+[2169,0,10,1,2,3,1,9]
 
 # %e is not available on mingw/WIN32
 strftime("%A, %B %e, %Y")
