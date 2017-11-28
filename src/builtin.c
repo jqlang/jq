@@ -67,6 +67,17 @@ static jv type_error2(jv bad1, jv bad2, const char* msg) {
   return err;
 }
 
+static inline jv ret_error(jv bad, jv msg) {
+  jv_free(bad);
+  return jv_invalid_with_msg(msg);
+}
+
+static inline jv ret_error2(jv bad1, jv bad2, jv msg) {
+  jv_free(bad1);
+  jv_free(bad2);
+  return jv_invalid_with_msg(msg);
+}
+
 static jv f_plus(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NULL) {
@@ -197,7 +208,7 @@ static jv f_negate(jq_state *jq, jv input) {
 
 static jv f_startswith(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING)
-    return jv_invalid_with_msg(jv_string("startswith() requires string inputs"));
+    return ret_error2(a, b, jv_string("startswith() requires string inputs"));
   int alen = jv_string_length_bytes(jv_copy(a));
   int blen = jv_string_length_bytes(jv_copy(b));
   jv ret;
@@ -213,7 +224,7 @@ static jv f_startswith(jq_state *jq, jv a, jv b) {
 
 static jv f_endswith(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING)
-    return jv_invalid_with_msg(jv_string("endswith() requires string inputs"));
+    return ret_error2(a, b, jv_string("endswith() requires string inputs"));
   const char *astr = jv_string_value(a);
   const char *bstr = jv_string_value(b);
   size_t alen = jv_string_length_bytes(jv_copy(a));
@@ -1074,8 +1085,10 @@ static jv f_halt(jq_state *jq, jv input) {
 }
 
 static jv f_halt_error(jq_state *jq, jv input, jv a) {
-  if (jv_get_kind(a) != JV_KIND_NUMBER)
-    return type_error(input, "halt_error/1: number required"); \
+  if (jv_get_kind(a) != JV_KIND_NUMBER) {
+    jv_free(a);
+    return type_error(input, "halt_error/1: number required");
+  }
   jq_halt(jq, a, input);
   return jv_true();
 }
@@ -1097,17 +1110,14 @@ static jv f_get_jq_origin(jq_state *jq, jv input) {
 
 static jv f_string_split(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING) {
-    jv_free(a);
-    jv_free(b);
-    return jv_invalid_with_msg(jv_string("split input and separator must be strings"));
+    return ret_error2(a, b, jv_string("split input and separator must be strings"));
   }
   return jv_string_split(a, b);
 }
 
 static jv f_string_explode(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_STRING) {
-    jv_free(a);
-    return jv_invalid_with_msg(jv_string("explode input must be a string"));
+    return ret_error(a, jv_string("explode input must be a string"));
   }
   return jv_string_explode(a);
 }
@@ -1118,8 +1128,7 @@ static jv f_string_indexes(jq_state *jq, jv a, jv b) {
 
 static jv f_string_implode(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY) {
-    jv_free(a);
-    return jv_invalid_with_msg(jv_string("implode input must be an array"));
+    return ret_error(a, jv_string("implode input must be an array"));
   }
   return jv_string_implode(a);
 }
@@ -1134,8 +1143,7 @@ static jv f_has(jq_state *jq, jv a, jv b) { return jv_has(a, b); }
 
 static jv f_modulemeta(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_STRING) {
-    jv_free(a);
-    return jv_invalid_with_msg(jv_string("modulemeta input module name must be a string"));
+    return ret_error(a, jv_string("modulemeta input module name must be a string"));
   }
   return load_module_meta(jq, a);
 }
@@ -1281,9 +1289,7 @@ static void set_tm_yday(struct tm *tm) {
 #ifdef HAVE_STRPTIME
 static jv f_strptime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING) {
-    jv_free(a);
-    jv_free(b);
-    return jv_invalid_with_msg(jv_string("strptime/1 requires string inputs and arguments"));
+    return ret_error2(a, b, jv_string("strptime/1 requires string inputs and arguments"));
   }
 
   struct tm tm;
@@ -1295,10 +1301,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   const char *end = strptime(input, fmt, &tm);
 
   if (end == NULL || (*end != '\0' && !isspace(*end))) {
-    jv e = jv_invalid_with_msg(jv_string_fmt("date \"%s\" does not match format \"%s\"", input, fmt));
-    jv_free(a);
-    jv_free(b);
-    return e;
+    return ret_error2(a, b, jv_string_fmt("date \"%s\" does not match format \"%s\"", input, fmt));
   }
   jv_free(b);
   /*
@@ -1331,8 +1334,10 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
 #define TO_TM_FIELD(t, j, i)                    \
     do {                                        \
       jv n = jv_array_get(jv_copy(j), (i));     \
-      if (jv_get_kind(n) != (JV_KIND_NUMBER))   \
+      if (jv_get_kind(n) != (JV_KIND_NUMBER)) { \
+        jv_free(j);                             \
         return 0;                               \
+      }                                         \
       t = jv_number_value(n);                   \
       jv_free(n);                               \
     } while (0)
@@ -1365,9 +1370,9 @@ static int jv2tm(jv a, struct tm *tm) {
 
 static jv f_mktime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY)
-    return jv_invalid_with_msg(jv_string("mktime requires array inputs"));
+    return ret_error(a, jv_string("mktime requires array inputs"));
   if (jv_array_length(jv_copy(a)) < 6)
-    return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
+    return ret_error(a, jv_string("mktime requires parsed datetime inputs"));
   struct tm tm;
   if (!jv2tm(a, &tm))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
@@ -1382,7 +1387,7 @@ static jv f_mktime(jq_state *jq, jv a) {
 #ifdef HAVE_GMTIME_R
 static jv f_gmtime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_NUMBER)
-    return jv_invalid_with_msg(jv_string("gmtime() requires numeric inputs"));
+    return ret_error(a, jv_string("gmtime() requires numeric inputs"));
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
@@ -1397,7 +1402,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
 #elif defined HAVE_GMTIME
 static jv f_gmtime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_NUMBER)
-    return jv_invalid_with_msg(jv_string("gmtime requires numeric inputs"));
+    return ret_error(a, jv_string("gmtime requires numeric inputs"));
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
@@ -1419,7 +1424,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
 #ifdef HAVE_LOCALTIME_R
 static jv f_localtime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_NUMBER)
-    return jv_invalid_with_msg(jv_string("localtime() requires numeric inputs"));
+    return ret_error(a, jv_string("localtime() requires numeric inputs"));
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
@@ -1427,14 +1432,14 @@ static jv f_localtime(jq_state *jq, jv a) {
   jv_free(a);
   tmp = localtime_r(&secs, &tm);
   if (tmp == NULL)
-    return jv_invalid_with_msg(jv_string("errror converting number of seconds since epoch to datetime"));
+    return jv_invalid_with_msg(jv_string("error converting number of seconds since epoch to datetime"));
   a = tm2jv(tmp);
   return jv_array_set(a, 5, jv_number(jv_number_value(jv_array_get(jv_copy(a), 5)) + (fsecs - floor(fsecs))));
 }
 #elif defined HAVE_GMTIME
 static jv f_localtime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_NUMBER)
-    return jv_invalid_with_msg(jv_string("localtime requires numeric inputs"));
+    return ret_error(a, jv_string("localtime requires numeric inputs"));
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
@@ -1442,7 +1447,7 @@ static jv f_localtime(jq_state *jq, jv a) {
   jv_free(a);
   tmp = localtime(&secs);
   if (tmp == NULL)
-    return jv_invalid_with_msg(jv_string("errror converting number of seconds since epoch to datetime"));
+    return jv_invalid_with_msg(jv_string("error converting number of seconds since epoch to datetime"));
   a = tm2jv(tmp);
   return jv_array_set(a, 5, jv_number(jv_number_value(jv_array_get(jv_copy(a), 5)) + (fsecs - floor(fsecs))));
 }
@@ -1458,11 +1463,14 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER) {
     a = f_gmtime(jq, a);
   } else if (jv_get_kind(a) != JV_KIND_ARRAY) {
-    return jv_invalid_with_msg(jv_string("strftime/1 requires parsed datetime inputs"));
+    return ret_error2(a, b, jv_string("strftime/1 requires parsed datetime inputs"));
+  } else if (jv_get_kind(b) != JV_KIND_STRING) {
+    return ret_error2(a, b, jv_string("strftime/1 requires a string format"));
   }
   struct tm tm;
   if (!jv2tm(a, &tm))
-    return jv_invalid_with_msg(jv_string("strftime/1 requires parsed datetime inputs")); \
+    return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
+
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
   char *buf = alloca(alloced);
@@ -1474,7 +1482,7 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   return jv_string(buf);
 }
 #else
-static jv f_strftime(jq_state *jq, jv a) {
+static jv f_strftime(jq_state *jq, jv a, jv b) {
   jv_free(a);
   jv_free(b);
   return jv_invalid_with_msg(jv_string("strftime/1 not implemented on this platform"));
@@ -1486,11 +1494,13 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER) {
     a = f_localtime(jq, a);
   } else if (jv_get_kind(a) != JV_KIND_ARRAY) {
-    return jv_invalid_with_msg(jv_string("strflocaltime/1 requires parsed datetime inputs"));
+    return ret_error2(a, b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
+  } else if (jv_get_kind(b) != JV_KIND_STRING) {
+    return ret_error2(a, b, jv_string("strflocaltime/1 requires a string format"));
   }
   struct tm tm;
   if (!jv2tm(a, &tm))
-    return jv_invalid_with_msg(jv_string("strflocaltime/1 requires parsed datetime inputs")); \
+    return jv_invalid_with_msg(jv_string("strflocaltime/1 requires parsed datetime inputs"));
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
   char *buf = alloca(alloced);
@@ -1502,7 +1512,7 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   return jv_string(buf);
 }
 #else
-static jv f_strflocaltime(jq_state *jq, jv a) {
+static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   jv_free(a);
   jv_free(b);
   return jv_invalid_with_msg(jv_string("strflocaltime/1 not implemented on this platform"));
