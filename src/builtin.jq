@@ -237,7 +237,7 @@ def tostream:
   else
     # We really need a _streaming_ form of `keys`.
     # We can use `range` for arrays, but not for objects.
-    keys as $keys |
+    keys_unsorted as $keys |
     $keys[-1] as $last|
     ((# for each key
       $keys[] | . as $key |

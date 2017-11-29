@@ -24,6 +24,7 @@ David R. MacIver     <david@drmaciver.com>            - bug fixes
 David Tolnay         <dtolnay@gmail.com>              - destructuring, build improvements
 Doug Luce            <doug@github.con.com>            - build
 Eiichi Sato          <sato.eiichi@gmail.com>
+Eric Bréchemier      <eric@egull.co>                  - bug fix
 Filippo Giunchedi    <fgiunchedi@gmail.com>           - bug fixes
 Filippo Valsorda     <filippo.valsorda@gmail.com>     - recursive object merge (`*`)
 Hanfei Shen          <qqshfox@gmail.com>
