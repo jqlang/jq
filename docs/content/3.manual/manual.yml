@@ -1933,7 +1933,8 @@ sections:
           8601 datetime is `"%Y-%m-%dT%H:%M:%SZ"`.
 
           jq may not support some or all of this date functionality on
-          some systems.
+          some systems. In particular, the `%u` and `%j` specifiers for
+          `strptime(fmt)` are not supported on macOS.
 
         examples:
           - program: 'fromdate'

@@ -1313,10 +1313,23 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
    * day-of-week and day-of-year sentinel checks above, the worst
    * this can do is produce garbage.
    */
+#ifdef __APPLE__
+  /*
+   * Apple has made it worse, and different versions of the OS have different
+   * behaviors. Some versions just don't touch the fields, but others do, and
+   * sometimes provide wrong answers, at that! We can't tell at compile-time
+   * which behavior the target system will have, so instead we always use our
+   * functions to set these on OS X, and document that %u and %j are
+   * unsupported on OS X.
+   */
+  set_tm_wday(&tm);
+  set_tm_yday(&tm);
+#else
   if (tm.tm_wday == 8 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)
     set_tm_wday(&tm);
   if (tm.tm_yday == 367 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)
     set_tm_yday(&tm);
+#endif
   jv r = tm2jv(&tm);
   if (*end != '\0')
     r = jv_array_append(r, jv_string(end));
