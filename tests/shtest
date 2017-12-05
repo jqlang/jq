@@ -126,6 +126,8 @@ fi
 echo "[1,2,3,4]" > $d/expected
 printf "[1,2][3,4]" | $JQ -cs add > $d/out 2>&1
 cmp $d/out $d/expected
+printf "[1,2][3,4]\n" | $JQ -cs add > $d/out 2>&1
+cmp $d/out $d/expected
 
 
 ## Test streaming parser

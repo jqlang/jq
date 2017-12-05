@@ -442,13 +442,13 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
       }
       value = jv_parser_next(state->parser);
       if (jv_is_valid(state->slurped)) {
+        // When slurping an input that doesn't have a trailing newline,
+        // we might have more than one value on the same line, so let's check
+        // to see if we have more data to parse.
+        has_more = jv_parser_remaining(state->parser);
         if (jv_is_valid(value)) {
           state->slurped = jv_array_append(state->slurped, value);
           value = jv_invalid();
-          // When slurping an input that doesn't have a trailing newline,
-          // we might have more than one value on the same line, so let's check
-          // to see if we have more data to parse.
-          has_more = jv_parser_remaining(state->parser);
         } else if (jv_invalid_has_msg(jv_copy(value)))
           return value; // Not slurped parsed input
       } else if (jv_is_valid(value) || jv_invalid_has_msg(jv_copy(value))) {
