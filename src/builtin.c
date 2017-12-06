@@ -1061,6 +1061,22 @@ static jv f_error(jq_state *jq, jv input, jv msg) {
 
 // Random functions
 static char const * const rand_error = "random functions are not supported on your machine; try specifying a \".seed\"";
+
+// Set the seed and pass input through
+static jv f_seed(jq_state *jq, jv input, jv seed) {
+  if (jv_get_kind(seed) != JV_KIND_NUMBER) {
+    return type_error2(input, seed, "can't set the seed with a non-number");
+  }
+  double d_seed = jv_number_value(jv_copy(seed));
+  uint64_t i_seed = d_seed;
+  if (d_seed != i_seed) {
+    return type_error2(input, seed, "seed must be a non-negative integer");
+  }
+  jq_rand_init_seed(i_seed);
+  jv_free(seed);
+  return input;
+}
+
 // Random number in [0, 1)
 static jv f_rand(jq_state *jq, jv input) {
   jv_free(input);
@@ -1072,16 +1088,20 @@ static jv f_rand(jq_state *jq, jv input) {
 }
 
 // Random int in [0, input)
-static jv f_randint(jq_state *jq, jv input) {
-  double max_val = jv_number_value(jv_copy(input));
+static jv f_rand_range(jq_state *jq, jv input) {
   if (!jq_rand_initialized()) {
     jv_free(input);
     return jv_invalid_with_msg(jv_string(rand_error));
-  } else if (max_val < 1 || (double)((uint64_t)-1) < max_val) {
-    return type_error(input, "number invalid, less than 1 or too large");
+  } else if (jv_get_kind(input) != JV_KIND_NUMBER) {
+    return type_error(input, "maximum value must be a number");
+  }
+  double d_max_val = ceil(jv_number_value(jv_copy(input)));
+  uint64_t max_val = d_max_val;
+  if (d_max_val != (double)max_val) {
+    return type_error(input, "maximum value must be positive and fit in an unsigned integer");
   } else {
     jv_free(input);
-    return jv_number(jq_rand_int((uint64_t)max_val));
+    return jv_number(jq_rand_int(max_val));
   }
 }
 
@@ -1107,25 +1127,31 @@ static jv f_shuffle(jq_state *jq, jv input) {
 // Select j_num without replacement from array
 // More efficient than `shuffle | slice`
 static jv f_rand_select(jq_state *jq, jv input, jv j_num) {
-  int num = jv_number_value(jv_copy(j_num));
   if (!jq_rand_initialized()) {
     jv_free(j_num);
     jv_free(input);
     return jv_invalid_with_msg(jv_string(rand_error));
   } else if (jv_get_kind(input) != JV_KIND_ARRAY) {
-    return type_error2(input, j_num, "can't select from a non array");
-  } else if (num < 0 || num > jv_array_length(jv_copy(input))) {
-    return type_error2(input, j_num, "can't select less than 0 or more than than the input");
-  } else if (num == 0) {
+    return type_error2(input, j_num, "can't select from a non-array");
+  } else if (jv_get_kind(j_num) != JV_KIND_NUMBER) {
+    return type_error2(input, j_num, "can't select a non-number of elements");
+  }
+  double length = jv_array_length(jv_copy(input));
+  double num = ceil(jv_number_value(jv_copy(j_num)));
+  if (num <= 0) {
     jv_free(input);
     jv_free(j_num);
     return jv_array();
+  } else if (length <= num) {
+    jv_free(j_num);
+    return f_shuffle(jq, input);
   } else {
+    uint64_t unum = num;
     jv result = f_shuffle(jq, jv_array_slice(jv_copy(input), 0, num));
-    for (int i = num; i < jv_array_length(jv_copy(input)); ++i) {
-      if (jq_rand_double() < (double)num / (double)(i + 1)) {
+    for (int i = num; i < length; ++i) {
+      if (jq_rand_double() < num / (double)(i + 1)) {
         jv selected = jv_array_get(jv_copy(input), i);
-        result = jv_array_set(result, (int)jq_rand_int((unsigned long)num), selected);
+        result = jv_array_set(result, (int)jq_rand_int(unum), selected);
       }
     }
     jv_free(j_num);
@@ -1707,8 +1733,9 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
   {(cfunction_ptr)f_error, "error", 2},
+  {(cfunction_ptr)f_seed, "seed", 2},
   {(cfunction_ptr)f_rand, "rand", 1},
-  {(cfunction_ptr)f_randint, "randint", 1},
+  {(cfunction_ptr)f_rand_range, "rand_range", 1},
   {(cfunction_ptr)f_shuffle, "shuffle", 1},
   {(cfunction_ptr)f_rand_select, "rand_select", 2},
   {(cfunction_ptr)f_format, "format", 2},

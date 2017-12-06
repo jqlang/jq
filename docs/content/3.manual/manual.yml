@@ -1329,6 +1329,33 @@ sections:
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
 
+      - title: "`seed(uint)`"
+        body: |
+
+          Change all random functions to use a pseudorandom number generator
+          seeded with the provided unsigned integer. The internal state of the
+          random functions is changed, while passing the input through the
+          function. Unlike most functions, an error will be thrown if `seed` is
+          not an integer, so consider using `floor` if you intentionally want
+          to discard the fractional bits.
+
+          This seed can also be specified on the command line by setting the
+          variable ".seed" to an unsigned integer or its string representation,
+          e.g. `jq --arg .seed 123`.
+
+          Internally the Mersenne Twister PRNG is used.
+
+        examples:
+          - program: 'seed(123)'
+            input: '"input"'
+            output: ['"input"']
+          - program: 'seed(now | floor)'
+            input: '"input"'
+            output: ['"input"']
+          - program: '(seed(123) | rand) == (seed(123) | rand)'
+            input: 'null'
+            output: ['true']
+
       - title: "`rand`"
         body: |
 
@@ -1337,38 +1364,30 @@ sections:
 
           *NOTE: This function should not be used for security purposes.*
 
-          This function can be made pseudorandom by assigning an unsigned
-          integer or the string of an unsigned integer to ".seed", e.g. `jq
-          --arg .seed 123`.
-
         examples:
           - program: 'rand | . >= 0 and . < 1'
             input: 'null'
             output: ['true']
 
-      - title: "`randint`, `randint(b)`, `randint(a; b)`"
+      - title: "`rand_range`, `rand_range(upto)`, `rand_range(from;upto)`, `rand_range(from;upto;by)"
         body: |
 
-          Generate a random integer greater than or equal to `a` and less
-          than `b`. `a` is zero when unspecified. The first form reads `b` from
-          its input. The range must have at least one number in it, e.g. `b`
-          must be greater than zero if a is unspecified. Inputs will be cast to
-          an integer, so `randint(5)` and `randint(5.6)` are equivalent.
+          Generate a random number from the specified range.  In the
+          unary form, `upto` is taken from the input. `null` is returned
+          if the range is empty.  The output of `rand_range(...)` shares
+          the same distribution as `[range(...)] | shuffle | .[0]`, but
+          samples much more efficiently.
 
           *NOTE: This function should not be used for security purposes.*
 
-          This function can be made pseudorandom by assigning an unsigned
-          integer or the string of an unsigned integer to ".seed", e.g. `jq
-          --arg .seed 123`.
-
         examples:
-          - program: 'randint | . >= 0 and . < 5'
+          - program: 'rand_range | . >= 0 and . < 5'
             input: '5'
             output: ['true']
-          - program: 'randint(-5; 5 + 1) | . >= -5 and . <= 5'
+          - program: 'rand_range(-5; 6) | . >= -5 and . <= 5'
             input: 'null'
             output: ['true']
-          - program: '.[randint(length)] | . == 1 or . == 5 or . == 17'
+          - program: '.[rand_range(length)] | . == 1 or . == 5 or . == 17'
             input: '[1, 5, 17]'
             output: ['true']
 
@@ -1379,27 +1398,21 @@ sections:
 
           *NOTE: This function should not be used for security purposes.*
 
-          This function can be made pseudorandom by assigning an unsigned
-          integer or the string of an unsigned integer to ".seed", e.g. `jq
-          --arg .seed 123`.
-
         examples:
           - program: 'shuffle | sort == [1, 5, 17]'
             input: '[1, 5, 17]'
             output: ['true']
 
-      - title: "`rand_select(n)`, `rand_select(stream; n)`, `rand_select_rep(n)`"
+      - title: "`rand_select(n)`, `rand_select(stream;n)`, `rand_select_rep(n)`"
         body: |
 
           Randomly select `n` elements from an array or stream. The stream
           version is significantly slower for large inputs.  `rand_select_rep`
-          does so with repetition.
+          does so with repetition. For the versions without repetition, this
+          produces outputs from the same distribution as `shuffle | .[:n]`, but
+          more efficiently.
 
           *NOTE: This function should not be used for security purposes.*
-
-          This function can be made pseudorandom by assigning an unsigned
-          integer or the string of an unsigned integer to ".seed", e.g. `jq
-          --arg .seed 123`.
 
         examples:
           - program: 'rand_select(2) | map(. == 1 or . == 5 or . == 17) | all'

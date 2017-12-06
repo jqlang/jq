@@ -307,23 +307,20 @@ cmp $d/color $d/expect
 cmp $d/warning $d/expect_warning
 
 # Test that random seed produces identical output
-# To verify it's not identical clock time we need to put a sleep in, which sucks.
-# It's also why the tests are done in "parallel"
 $VALGRIND $Q $JQ --arg .seed 1234 -n 'range(5) | rand' >$d/rand1
-$VALGRIND $Q $JQ --arg .seed 1234 -n 'range(1;6) | randint' >$d/randint1
-$VALGRIND $Q $JQ --arg .seed 1234 -n '[range(5)] | shuffle' >$d/shuffle1
-$VALGRIND $Q $JQ --arg .seed 1234 -n '[range(5)] | rand_select(3)' >$d/select1
-
-sleep 1.5
-
 $VALGRIND $Q $JQ --argjson .seed 1234 -n 'range(5) | rand' >$d/rand2
-$VALGRIND $Q $JQ --argjson .seed 1234 -n 'range(1;6) | randint' >$d/randint2
-$VALGRIND $Q $JQ --argjson .seed 1234 -n '[range(5)] | shuffle' >$d/shuffle2
-$VALGRIND $Q $JQ --argjson .seed 1234 -n '[range(5)] | rand_select(3)' >$d/select2
-
 cmp $d/rand1 $d/rand2
-cmp $d/randint1 $d/randint2
+
+$VALGRIND $Q $JQ --arg .seed 1234 -n 'range(1;6) | rand_range' >$d/rand_range1
+$VALGRIND $Q $JQ --argjson .seed 1234 -n 'range(1;6) | rand_range' >$d/rand_range2
+cmp $d/rand_range1 $d/rand_range2
+
+$VALGRIND $Q $JQ --arg .seed 1234 -n '[range(5)] | shuffle' >$d/shuffle1
+$VALGRIND $Q $JQ --argjson .seed 1234 -n '[range(5)] | shuffle' >$d/shuffle2
 cmp $d/shuffle1 $d/shuffle2
+
+$VALGRIND $Q $JQ --arg .seed 1234 -n '[range(5)] | rand_select(3)' >$d/select1
+$VALGRIND $Q $JQ --argjson .seed 1234 -n '[range(5)] | rand_select(3)' >$d/select2
 cmp $d/select1 $d/select2
 
 # Test that rand seed fails for bad inputs
