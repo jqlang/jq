@@ -1,5 +1,5 @@
 m4_define([jq_version],
-          m4_esyscmd_s([(git rev-parse --verify -q jq-1.0 > /dev/null &&
+          m4_esyscmd_s([(git rev-parse --verify -q eca89ac > /dev/null &&
                         (git describe --tags --dirty --match 'jq-*'|sed 's/^jq-//')) ||
                         echo `git rev-parse --abbrev-ref HEAD`-`git describe --always --dirty`])))
 
