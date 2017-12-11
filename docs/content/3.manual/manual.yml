@@ -236,9 +236,16 @@ sections:
 
         This option reads all the JSON texts in the named file and binds
         an array of the parsed JSON values to the given global variable.
-        If you run jq with `--argfile foo bar`, then `$foo` is available
+        If you run jq with `--slurpfile foo bar`, then `$foo` is available
         in the program and has an array whose elements correspond to the
         texts in the file named `bar`.
+
+      * `--rawfile variable-name filename`:
+
+        This option reads in the named file and binds its contents to the given
+        global variable.  If you run jq with `--rawfile foo bar`, then `$foo` is
+        available in the program and has a string whose contents are to the texs
+        in the file named `bar`.
 
       * `--argfile variable-name filename`:
 
