@@ -4894,7 +4894,7 @@ Breaking out of control structures
 <pre><code># Repeat an expression until it raises &quot;break&quot; as an
 # error, then stop repeating without re-raising the error.
 # But if the error caught is not &quot;break&quot; then re-raise it.
-try repeat(exp) catch .==&quot;break&quot; then empty else error;</code></pre>
+try repeat(exp) catch if .==&quot;break&quot; then empty else error end</code></pre>
 
 <p>jq has a syntax for named lexical labels to “break” or “go (back) to”:</p>
 
