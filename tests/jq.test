@@ -705,11 +705,6 @@ reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)
 null
 14
 
-# Test fix for #1313 (reduce should handle empty updates)
-reduce range(5) as $n ([]; select($n%2 == 1) | . + [$n])
-null
-[1,3]
-
 # This, while useless, should still compile.
 reduce . as $n (.; .)
 null

@@ -410,6 +410,7 @@ jv jq_util_input_get_current_line(jq_state* jq) {
 // When slurping, it returns just one value
 jv jq_util_input_next_input(jq_util_input_state *state) {
   int is_last = 0;
+  int has_more = 0;
   jv value = jv_invalid(); // need more input
   do {
     if (state->parser == NULL) {
@@ -441,6 +442,10 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
       }
       value = jv_parser_next(state->parser);
       if (jv_is_valid(state->slurped)) {
+        // When slurping an input that doesn't have a trailing newline,
+        // we might have more than one value on the same line, so let's check
+        // to see if we have more data to parse.
+        has_more = jv_parser_remaining(state->parser);
         if (jv_is_valid(value)) {
           state->slurped = jv_array_append(state->slurped, value);
           value = jv_invalid();
@@ -450,7 +455,7 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
         return value;
       }
     }
-  } while (!is_last);
+  } while (!is_last || has_more);
 
   if (jv_is_valid(state->slurped)) {
     value = state->slurped;

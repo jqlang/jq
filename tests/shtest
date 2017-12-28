@@ -122,6 +122,14 @@ if $VALGRIND $Q $JQ -e . $d/input; then
   exit 2
 fi
 
+# Regression test for #1534
+echo "[1,2,3,4]" > $d/expected
+printf "[1,2][3,4]" | $JQ -cs add > $d/out 2>&1
+cmp $d/out $d/expected
+printf "[1,2][3,4]\n" | $JQ -cs add > $d/out 2>&1
+cmp $d/out $d/expected
+
+
 ## Test streaming parser
 
 ## If we add an option to stream to the `import ... as $symbol;` directive
