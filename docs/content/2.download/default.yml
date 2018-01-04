@@ -66,8 +66,12 @@ body:
 
       ### FreeBSD
 
-         * Use [FreshPorts](https://www.freshports.org/textproc/jq/) to install
-           jq 1.4 with `pkg install jq`.
+	 * `pkg install jq` as root installs a pre-built
+	   [binary package](https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/pkgng-intro.html).
+	 * `make -C /usr/ports/textproc/jq install clean` as root installs the
+	   [jq](https://www.freshports.org/textproc/jq/)
+	   [port](https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/ports-using.html)
+	   from source.
 
       ### Solaris
 
