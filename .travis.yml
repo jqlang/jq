@@ -1,93 +1,115 @@
-os:
-    - linux
-    - osx
-
 sudo: false
 
 language: c
 
-compiler:
-    - gcc
-    - clang
-
-matrix:
+jobs:
     include:
-        - compiler: gcc
-          env: COVERAGE="--disable-valgrind --enable-gcov"
-          os: linux
+        # Build with gcc and run tests on Ubuntu.
+        -   &test-ubuntu
+            stage: test
+            os: linux
+            compiler: gcc
 
-addons:
-    apt:
-        packages:
-            - valgrind
-            - bison
-            - automake
+            addons:
+                apt:
+                    packages:
+                        - valgrind
+                        - bison
+                        - automake
 
-before_install:
-    - echo "$TRAVIS_OS_NAME"
-    - uname -s
-    - brew update               || true;
-      brew install flex         || true;
-      brew install bison        || true;
-    - rvm install ruby-1.9.3-p551
-    - rvm use 1.9.3
-    - rm src/{lexer,parser}.{c,h}
-    - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
+            before_install:
+                - uname -s
+                - rvm install ruby-1.9.3-p551
+                - rvm use 1.9.3
+                - rm src/{lexer,parser}.{c,h}
+                - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
 
-install:
-    - bundle install --gemfile=docs/Gemfile
-    - wget http://ftp.debian.org/debian/pool/main/b/bison/bison_3.0.2.dfsg-2_amd64.deb
-    - ar p bison_3.0.2.dfsg-2_amd64.deb data.tar.xz | tar xJ
-    - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
+            install:
+                - bundle install --gemfile=docs/Gemfile
+                - wget http://ftp.debian.org/debian/pool/main/b/bison/bison_3.0.2.dfsg-2_amd64.deb
+                - ar p bison_3.0.2.dfsg-2_amd64.deb data.tar.xz | tar xJ
+                - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
 
-before_script:
-    # If this is OS X we'll get bison from brew, else we'll get bison
-    # from the .deb unpacked above in the install section.
-    - PATH=/usr/local/opt/bison/bin:$PWD/usr/bin:$PATH
-    - echo SHELL=$SHELL
-    - echo PATH=$PATH
-    - which bison
-    - bison --version
-    - autoreconf -if
-    - ./configure --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
+            before_script:
+                # If this is OS X we'll get bison from brew, else we'll get bison
+                # from the .deb unpacked above in the install section.
+                - PATH=/usr/local/opt/bison/bin:$PWD/usr/bin:$PATH
+                - echo SHELL=$SHELL
+                - echo PATH=$PATH
+                - which bison
+                - bison --version
+                - autoreconf -if
+                - ./configure --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
 
-script:
-    # When using the bison from Debian we need to tell that bison where
-    # to find its data.  Yay non-relocatable code.  Not.
-    - echo PATH=$PATH
-    - which bison
-    - make BISON_PKGDATADIR=$PWD/usr/share/bison src/parser.c || make src/parser.c
-    # Make dist!
-    #
-    # Make it first to fail the build early, before we test with
-    # valgrind.
-    - make dist
-    # Build and test the dist (without valgrind)
-    - |
-        (
-          tar xvf jq-`scripts/version`.tar.gz &&
-          cd jq-`scripts/version` &&
-          pwd &&
-          ./configure --disable-valgrind --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE &&
-          make BISON_PKGDATADIR=$PWD/usr/share/bison src/parser.c || make src/parser.c &&
-          make -j4 &&
-          make check -j4 || true
-        )
-    # Build and test the HEAD
-    - make -j4
-    - make check -j4
+            script:
+                # When using the bison from Debian we need to tell that bison where
+                # to find its data.  Yay non-relocatable code.  Not.
+                - echo PATH=$PATH
+                - which bison
+                - make BISON_PKGDATADIR=$PWD/usr/share/bison src/parser.c || make src/parser.c
+                # Make dist!
+                #
+                # Make it first to fail the build early, before we test with
+                # valgrind.
+                - make dist
+                # Build and test the dist (without valgrind)
+                - |
+                    (
+                    tar xvf jq-`scripts/version`.tar.gz &&
+                    cd jq-`scripts/version` &&
+                    pwd &&
+                    ./configure --disable-valgrind --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE &&
+                    make BISON_PKGDATADIR=$PWD/usr/share/bison src/parser.c || make src/parser.c &&
+                    make -j4 &&
+                    make check -j4 || true
+                    )
+                # Build and test the HEAD
+                - make -j4
+                - make check -j4
 
-after_script:
-    - |
-        if [ -n "$COVERAGE" ]; then
-            rm -rf src/.libs # don't care about coverage for libjq
-            coveralls --gcov-options '\-lp' \
-                -e src/lexer.c -e src/parser.c -e src/jv_dtoa.c
-        fi
+            after_failure:
+                - cat test-suite.log
+                - cat tests/*.log
 
-after_failure:
-    - cat test-suite.log
-    - cat tests/*.log
+
+        # Build with clang and run tests on Ubuntu.
+        -   <<: *test-ubuntu
+            compiler: clang
+
+
+        # Build with gcc and run tests with gcov on Ubuntu.
+        -   <<: *test-ubuntu
+            env: COVERAGE="--disable-valgrind --enable-gcov"
+
+            after_script:
+                - rm -rf src/.libs # don't care about coverage for libjq
+                - coveralls --gcov-options '\-lp'
+                    -e src/lexer.c -e src/parser.c -e src/jv_dtoa.c
+
+
+        # Build with gcc and run tests on macOS.
+        -   &test-osx
+            <<: *test-ubuntu
+            os: osx
+
+            before_install:
+                - uname -s
+                - brew update
+                - brew install flex
+                - brew install bison
+                - rvm install ruby-1.9.3-p551
+                - rvm use 1.9.3
+                - rm src/{lexer,parser}.{c,h}
+                - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
+
+            install:
+                - bundle install --gemfile=docs/Gemfile
+                - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
+
+
+        # Build with clang and run tests on macOS.
+        -   <<: *test-osx
+            compiler: clang
 
 notifications:
     email: false
