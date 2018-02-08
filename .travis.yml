@@ -111,6 +111,34 @@ jobs:
         -   <<: *test-osx
             compiler: clang
 
+
+        # Build with gcc and run tests on Alpine Linux v3.7 (inside chroot).
+        # Note: Alpine uses musl libc.
+        -   &test-alpine
+            stage: test
+            os: linux
+            language: minimal
+            compiler: gcc
+            sudo: true
+
+            before_install:
+                - "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.7.0/alpine-chroot-install' \
+                    && echo '090d323d887ef3a2fd4e752428553f22a52b87bb  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
+                - alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
+
+            install:
+                - sudo sh alpine-chroot-install -b v3.7 -a "$ARCH"
+                    -p 'build-base automake autoconf bison libtool oniguruma-dev'
+
+            before_script:
+                - autoreconf -if
+
+            script:
+                - alpine ./configure --disable-docs
+                - alpine make
+                - alpine make check
+
+
 notifications:
     email: false
 
