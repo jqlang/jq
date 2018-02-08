@@ -2,6 +2,14 @@ sudo: false
 
 language: c
 
+stages:
+    -   name: test
+
+    -   name: build
+        # Don't run build stage for pull requests to save time and resources.
+        if: type != pull_request
+
+
 jobs:
     include:
         # Build with gcc and run tests on Ubuntu.
@@ -137,6 +145,56 @@ jobs:
                 - alpine ./configure --disable-docs
                 - alpine make
                 - alpine make check
+
+
+        # Build release binary statically linked with musl libc on Alpine Linux
+        # (inside chroot). If building a tagged commit, then deploy release
+        # tarball to GitHub Releases.
+        -   &build-alpine
+            <<: *test-alpine
+            stage: build
+            env: ARCH=x86_64
+
+            script:
+                - alpine ./configure --disable-docs --enable-all-static
+                    CFLAGS='-Os -static -no-pie' CXXFLAGS='-Os -static -no-pie'
+                - alpine make
+                - alpine strip jq
+
+                - jq -V
+                - ls -lah jq
+                - file jq
+                # Ensure that the built executable is really statically linked.
+                - file jq | grep -Fw 'statically linked'
+
+            before_deploy:
+                - PKGNAME="jq-$TRAVIS_TAG-$ARCH-linux"
+                - mkdir $PKGNAME && mv jq $PKGNAME/
+                - tar -czf $PKGNAME.tar.gz $PKGNAME/
+                - sha256sum $PKGNAME.tar.gz > $PKGNAME.tar.gz.sha256
+
+            deploy:
+                provider: releases
+                api_key:
+                    secure:  # TODO: put encrypted GitHub token here!
+                file: jq-$TRAVIS_TAG-*.tar.gz*
+                file_glob: true
+                skip_cleanup: true
+                on:
+                    tags: true
+
+        # Build binaries for other architectures using QEMU user-mode emulation.
+        -   <<: *build-alpine
+            env: ARCH=x86
+
+        -   <<: *build-alpine
+            env: ARCH=aarch64
+
+        -   <<: *build-alpine
+            env: ARCH=armhf
+
+        -   <<: *build-alpine
+            env: ARCH=ppc64le
 
 
 notifications:
