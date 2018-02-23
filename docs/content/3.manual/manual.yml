@@ -2935,7 +2935,7 @@ sections:
       can be represented in JSON.
 
       All the assignment operators in jq have path expressions on the
-      left-hand side (LHS).  The right-hand side (RHS) procides values
+      left-hand side (LHS).  The right-hand side (RHS) provides values
       to set to the paths named by the LHS path expressions.
 
       Values in jq are always immutable.  Internally, assignment works
