@@ -2603,10 +2603,19 @@ sections:
                   (2 as $item | . + $item) |
                   (1 as $item | . + $item)
 
+          Note that if any reduction iteration outputs `empty`, the
+          result being accumulated will be reset to null.
+
         examples:
           - program: 'reduce .[] as $item (0; . + $item)'
             input: '[10,2,5,3]'
             output: ['20']
+          - program: 'reduce .[] as $n ([]; if $n%2==0 then . else . + [$n] end)'
+            input: '[0,1,2,3,4,5]'
+            output: ['[1,3,5]']
+          - program: 'reduce .[] as $x (10; if ($x == 2) then empty else . + $x end)'
+            input: '[1,2,4]'
+            output: ['4']
 
       - title: "`isempty(exp)`"
         body: |
@@ -2976,7 +2985,10 @@ sections:
           .foo |= . + 1` instead.
 
           If the right-hand side outputs no values (i.e., `empty`), then
-          the left-hand side path will be deleted, as with `del(path)`.
+          the left-hand side path will be deleted, as with `del(path)`
+          (COMPATIBILITY NOTE: in jq 1.5 and earlier releases, the entire
+          jq output used to be set to `null` when the ride-hand side would
+          output no values).
 
           If the right-hand side outputs multiple values, only the first
           one will be used (COMPATIBILITY NOTE: in jq 1.5 and earlier
