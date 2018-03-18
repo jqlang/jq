@@ -202,6 +202,35 @@ if [ "$(HOME="$mods" $VALGRIND $Q $JQ -nr fg)" != foobar ]; then
     exit 1
 fi
 
+#1501
+touch "$d/.jqrc"
+if [ "$(HOME="$d" $VALGRIND $Q $JQ -n get_init_file_path)" != "\"$d/.jqrc\"" ]; then
+    echo 'failure (#1501): init file should be ~/.jqrc' 1>&2
+    exit 1
+fi
+
+rm "$d/.jqrc"
+touch "$d/.jq"
+if [ "$(HOME="$d" $VALGRIND $Q $JQ -n get_init_file_path)" != "\"$d/.jq\"" ]; then
+    echo 'failure (#1501): init file should be ~/.jq' 1>&2
+    exit 1
+fi
+
+rm "$d/.jq"
+mkdir "$d/.jq"
+touch "$d/.jq/jqrc"
+if [ "$(HOME="$d" $VALGRIND $Q $JQ -n get_init_file_path)" != "\"$d/.jq/jqrc\"" ]; then
+    echo 'failure (#1501): init file should be ~/.jq/jqrc' 1>&2
+    exit 1
+fi
+rm "$d/.jq/jqrc"
+
+if [ $(HOME="$d" bash -c "$VALGRIND $Q $JQ -n 'get_search_list' | grep '$d/\.jq' | wc -l") -eq 0 ]; then
+    echo 'failure (#1501): jq module search path should include ~/.jq' 1>&2
+    exit 1
+fi
+rmdir "$d/.jq"
+
 if [ $(HOME="$mods" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l) -gt 3 ]; then
     echo "Binding too many defs into program" 1>&2
     exit 1

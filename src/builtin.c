@@ -1093,6 +1093,11 @@ static jv f_halt_error(jq_state *jq, jv input, jv a) {
   return jv_true();
 }
 
+static jv f_get_init_file_path(jq_state *jq, jv input) {
+  jv_free(input);
+  return jq_get_init_file_path(jq);
+}
+
 static jv f_get_search_list(jq_state *jq, jv input) {
   jv_free(input);
   return jq_get_lib_dirs(jq);
@@ -1635,6 +1640,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_env, "env", 1},
   {(cfunction_ptr)f_halt, "halt", 1},
   {(cfunction_ptr)f_halt_error, "halt_error", 2},
+  {(cfunction_ptr)f_get_init_file_path, "get_init_file_path", 1},
   {(cfunction_ptr)f_get_search_list, "get_search_list", 1},
   {(cfunction_ptr)f_get_prog_origin, "get_prog_origin", 1},
   {(cfunction_ptr)f_get_jq_origin, "get_jq_origin", 1},
@@ -1758,16 +1764,15 @@ static int builtins_bind_one(jq_state *jq, block* bb, const char* code) {
 
 static int slurp_lib(jq_state *jq, block* bb) {
   int nerrors = 0;
-  char* home = getenv("HOME");
-  if (home) {    // silently ignore no $HOME
-    jv filename = jv_string_append_str(jv_string(home), "/.jq");
-    jv data = jv_load_file(jv_string_value(filename), 1);
+  jv init_file_path = jq_get_init_file_path(jq);
+  if (jv_get_kind(init_file_path) == JV_KIND_STRING) {
+    jv data = jv_load_file(jv_string_value(init_file_path), 1);
     if (jv_is_valid(data)) {
       nerrors = builtins_bind_one(jq, bb, jv_string_value(data) );
     }
-    jv_free(filename);
     jv_free(data);
   }
+  jv_free(init_file_path);
   return nerrors;
 }
 

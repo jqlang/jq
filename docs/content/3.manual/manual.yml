@@ -3106,7 +3106,7 @@ sections:
 
       The default search path is the search path given to the `-L`
       command-line option, else `["~/.jq", "$ORIGIN/../lib/jq",
-      "$ORIGIN/../lib"]`.
+      "$ORIGIN/../lib"]`. Any non-directory entries are ignored.
 
       Null and empty string path elements terminate search path
       processing.
@@ -3123,7 +3123,9 @@ sections:
       For example, with `-L$HOME/.jq` a module `foo` can be found in
       `$HOME/.jq/foo.jq` and `$HOME/.jq/foo/foo.jq`.
 
-      If "$HOME/.jq" is a file, it is sourced into the main program.
+      An init file will be sourced into the main program if found. The
+      init used will be first of "$HOME/.jqrc", "$HOME/.jq", or
+      "$HOME/.jq/jqrc" that exists and is a file.
 
     entries:
       - title: "`import RelativePathString as NAME [<metadata>];`"

@@ -1182,6 +1182,10 @@ jv jq_get_prog_origin(jq_state *jq) {
   return jq_get_attr(jq, jv_string("PROGRAM_ORIGIN"));
 }
 
+jv jq_get_init_file_path(jq_state *jq) {
+  return jq_get_attr(jq, jv_string("JQ_INIT_FILE_PATH"));
+}
+
 jv jq_get_lib_dirs(jq_state *jq) {
   return jq_get_attr(jq, jv_string("JQ_LIBRARY_PATH"));
 }

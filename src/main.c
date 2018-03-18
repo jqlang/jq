@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -537,11 +539,43 @@ int main(int argc, char* argv[]) {
   if (getenv("JQ_COLORS") != NULL && !jq_set_colors(getenv("JQ_COLORS")))
       fprintf(stderr, "Failed to set $JQ_COLORS\n");
 
+  // resolve init file
+  jv init_file_path;
+  jq_set_attr(jq, jv_string("JQ_INIT_FILE_PATH"), jv_null());
+  jv home = get_home();
+  if (jv_is_valid(home)) {
+    jv init_file_candidates = JV_ARRAY(jv_string("/.jqrc"), jv_string("/.jq"), jv_string("/.jq/jqrc"));
+    jv_array_foreach(init_file_candidates, i, candidate) {
+      struct stat stat_buffer;
+      init_file_path = jv_string_concat(jv_copy(home), candidate);
+      if(!stat(jv_string_value(init_file_path), &stat_buffer) && (stat_buffer.st_mode & S_IFREG)
+         && jv_get_kind(jq_get_attr(jq, jv_string("JQ_INIT_FILE_PATH"))) == JV_KIND_NULL) {
+        jq_set_attr(jq, jv_string("JQ_INIT_FILE_PATH"), init_file_path);
+      } else {
+        jv_free(init_file_path);
+      }
+    }
+    jv_free(init_file_candidates);
+  }
+  jv_free(home);
+
   if (jv_get_kind(lib_search_paths) == JV_KIND_NULL) {
     // Default search path list
-    lib_search_paths = JV_ARRAY(jv_string("~/.jq"),
-                                jv_string("$ORIGIN/../lib/jq"),
-                                jv_string("$ORIGIN/lib"));
+    jv search_path_candidates = JV_ARRAY(expand_path(jv_string("~/.jq")),
+                                         expand_path(jv_string("$ORIGIN/../lib/jq")),
+                                         expand_path(jv_string("$ORIGIN/lib")));
+    lib_search_paths = jv_array();
+    jv_array_foreach(search_path_candidates, i, directory) {
+      DIR *dir = opendir(jv_string_value(directory));
+      if(dir) {
+        lib_search_paths = jv_array_append(lib_search_paths, directory);
+        closedir(dir);
+      }
+      else {
+        jv_free(directory);
+      }
+    }
+    jv_free(search_path_candidates);
   }
   jq_set_attr(jq, jv_string("JQ_LIBRARY_PATH"), lib_search_paths);
 
