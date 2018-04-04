@@ -298,7 +298,11 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
   jv_kind ak = jv_get_kind(a);
   jv_kind bk = jv_get_kind(b);
   jv_free(input);
-  if (ak == JV_KIND_NUMBER && bk == JV_KIND_NUMBER) {
+  if (ak == JV_KIND_NULL) {
+    return b;
+  } else if (bk == JV_KIND_NULL) {
+    return a;
+  } else if (ak == JV_KIND_NUMBER && bk == JV_KIND_NUMBER) {
     return jv_number(jv_number_value(a) * jv_number_value(b));
   } else if ((ak == JV_KIND_STRING && bk == JV_KIND_NUMBER) ||
              (ak == JV_KIND_NUMBER && bk == JV_KIND_STRING)) {
@@ -321,6 +325,13 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
       return jv_null();
     }
     return res;
+  } else if ((ak == JV_KIND_OBJECT && bk == JV_KIND_NUMBER) ||
+             (ak == JV_KIND_NUMBER && bk == JV_KIND_OBJECT)) {
+    jv obj = a;
+    if (bk == JV_KIND_OBJECT) {
+      obj = b;
+    }
+    return obj;
   } else if (ak == JV_KIND_OBJECT && bk == JV_KIND_OBJECT) {
     return jv_object_merge_recursive(a, b);
   } else {

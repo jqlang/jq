@@ -33,7 +33,7 @@ RUN apt-get update && \
         make -j8 && \
         make check && \
         make install && \
-        make distclean ) && \
+        make dist-clean-local ) && \
     (cd oniguruma-5.9.6 && \
         make uninstall ) && \
     apt-get purge -y \
