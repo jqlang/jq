@@ -1,16 +1,33 @@
+#include <sys/stat.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "jv.h"
 #include "jv_unicode.h"
 
 jv jv_load_file(const char* filename, int raw) {
-  FILE* file = fopen(filename, "r");
+  struct stat sb;
+  int fd = open(filename, O_RDONLY);
+  if (fd == -1) {
+    return jv_invalid_with_msg(jv_string_fmt("Could not open %s: %s",
+                                             filename,
+                                             strerror(errno)));
+  }
+  if (fstat(fd, &sb) == -1 || S_ISDIR(sb.st_mode)) {
+    close(fd);
+    return jv_invalid_with_msg(jv_string_fmt("Could not open %s: %s",
+                                             filename,
+                                             "It's a directory"));
+  }
+  FILE* file = fdopen(fd, "r");
   struct jv_parser* parser = NULL;
   jv data;
   if (!file) {
+    close(fd);
     return jv_invalid_with_msg(jv_string_fmt("Could not open %s: %s",
                                              filename,
                                              strerror(errno)));
