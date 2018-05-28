@@ -170,7 +170,8 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
       if (options & ASCII_OUTPUT) {
         jv_dumpf(result, stdout, JV_PRINT_ASCII);
       } else {
-        fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
+        priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
+        stdout, dumpopts & JV_PRINT_ISATTY);
       }
       ret = 0;
       jv_free(result);
