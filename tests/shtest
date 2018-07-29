@@ -96,14 +96,20 @@ cmp $d/out $d/expected
 cat > $d/expected <<EOF
 ignoring parse error: Unfinished abandoned text at EOF at line 1, column 4
 EOF
-printf '"foo' | $JQ -ce --seq . > $d/out 2>&1
+printf '"foo' | $JQ -c --seq . > $d/out 2>&1
+cmp $d/out $d/expected
+
+# with -e option should give 4 here as there's no valid output after
+# ignoring parse errors with --seq.
+printf '"foo' | $JQ -ce --seq . > $d/out 2>&1 || ret=$?
+[ $ret -eq 4 ]
 cmp $d/out $d/expected
 
 # Numeric values truncated by EOF are ignored
 cat > $d/expected <<EOF
 ignoring parse error: Unfinished abandoned text at EOF at line 1, column 1
 EOF
-printf '1' | $JQ -ce --seq . > $d/out 2>&1
+printf '1' | $JQ -c --seq . > $d/out 2>&1
 cmp $d/out $d/expected
 
 cat > $d/expected <<EOF
@@ -114,6 +120,21 @@ if printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out; then
   exit 2
 fi
 cmp $d/out $d/expected
+
+
+## Test --exit-status
+data='{"i": 1}\n{"i": 2}\n{"i": 3}\n'
+echo "$data" | $JQ --exit-status 'select(.i==1)' > /dev/null 2>&1
+echo "$data" | $JQ --exit-status 'select(.i==2)' > /dev/null 2>&1
+echo "$data" | $JQ --exit-status 'select(.i==3)' > /dev/null 2>&1
+ret=0
+echo "$data" | $JQ --exit-status 'select(.i==4)' > /dev/null 2>&1 || ret=$?
+[ $ret -eq 4 ]
+ret=0
+echo "$data" | $JQ --exit-status 'select(.i==2) | false' > /dev/null 2>&1 || ret=$?
+[ $ret -eq 1 ]
+echo "$data" | $JQ --exit-status 'select(.i==2) | true' > /dev/null 2>&1
+
 
 # Regression test for #951
 printf '"a\n' > $d/input
