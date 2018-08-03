@@ -31,6 +31,7 @@
 #include "jq.h"
 #include "jv_alloc.h"
 #include "util.h"
+#include "src/signal.h"
 #include "src/version.h"
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
@@ -272,6 +273,10 @@ int main(int argc, char* argv[]) {
     ret = 2;
     goto out;
   }
+
+#ifndef WIN32
+  jq_register_signal_handler();
+#endif
 
   int dumpopts = JV_PRINT_INDENT_FLAGS(2);
   const char* program = 0;

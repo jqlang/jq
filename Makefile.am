@@ -105,7 +105,7 @@ src/builtin.inc: src/builtin.jq
 src/builtin.o: src/builtin.inc
 
 bin_PROGRAMS = jq
-jq_SOURCES = src/main.c src/version.h
+jq_SOURCES = src/main.c src/version.h src/signal.c
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
 
