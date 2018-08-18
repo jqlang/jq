@@ -726,6 +726,107 @@ null
 [4, 5, null, null, 7, null]
 [null, null, null, null, null, "foo"]
 
+# Destructuring DUP/POP issues
+.[] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
+[[3],[4],[5],6]
+# Runtime error: "jq: Cannot index array with string \"c\""
+
+.[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
+[[3],[4],[5],6]
+# Runtime error: "jq: Cannot index array with string \"c\""
+
+[[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
+null
+# Runtime error: "jq: Cannot index array with string \"c\""
+
+[[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
+null
+# Runtime error: "jq: Cannot index array with string \"c\""
+
+.[] | . as {a:$a} ?// {a:$a} ?// $a | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+.[] as {a:$a} ?// {a:$a} ?// $a | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// $a | $a
+null
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// $a | $a
+null
+[3]
+[4]
+[5]
+6
+
+.[] | . as {a:$a} ?// $a ?// {a:$a} | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+.[] as {a:$a} ?// $a ?// {a:$a} | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6][] | . as {a:$a} ?// $a ?// {a:$a} | $a
+null
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6] | .[] as {a:$a} ?// $a ?// {a:$a} | $a
+null
+[3]
+[4]
+[5]
+6
+
+.[] | . as $a ?// {a:$a} ?// {a:$a} | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+.[] as $a ?// {a:$a} ?// {a:$a} | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6][] | . as $a ?// {a:$a} ?// {a:$a} | $a
+null
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6] | .[] as $a ?// {a:$a} ?// {a:$a} | $a
+null
+[3]
+[4]
+[5]
+6
+
 . as $dot|any($dot[];not)
 [1,2,3,4,true,false,1,2,3,4,5]
 true

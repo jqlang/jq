@@ -799,21 +799,27 @@ jv jq_next(jq_state *jq) {
     }
 
     case FORK_OPT:
+    case DESTRUCTURE_ALT:
     case FORK: {
       stack_save(jq, pc - 1, stack_get_pos(jq));
       pc++; // skip offset this time
       break;
     }
 
-    case ON_BACKTRACK(FORK_OPT): {
+    case ON_BACKTRACK(FORK_OPT):
+    case ON_BACKTRACK(DESTRUCTURE_ALT): {
       if (jv_is_valid(jq->error)) {
         // `try EXP ...` backtracked here (no value, `empty`), so we backtrack more
         jv_free(stack_pop(jq));
         goto do_backtrack;
       }
       // `try EXP ...` exception caught in EXP
-      jv_free(stack_pop(jq)); // free the input
-      stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
+      // DESTRUCTURE_ALT doesn't want the error message on the stack,
+      // as we would just want to throw it away anyway.
+      if (opcode != ON_BACKTRACK(DESTRUCTURE_ALT)) {
+        jv_free(stack_pop(jq)); // free the input
+        stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
+      }
       jq->error = jv_null();
       uint16_t offset = *pc++;
       pc += offset;
