@@ -819,6 +819,8 @@ jv jq_next(jq_state *jq) {
       if (opcode != ON_BACKTRACK(DESTRUCTURE_ALT)) {
         jv_free(stack_pop(jq)); // free the input
         stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
+      } else {
+        jv_free(jq->error);
       }
       jq->error = jv_null();
       uint16_t offset = *pc++;
