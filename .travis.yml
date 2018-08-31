@@ -103,10 +103,10 @@ jobs:
             before_install:
                 - uname -s
                 - brew update
-                - brew install flex
-                - brew install bison
+                - brew install flex bison
                 - rvm install ruby-1.9.3-p551
                 - rvm use 1.9.3
+                - gem install bundler
                 - rm src/{lexer,parser}.{c,h}
                 - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
 
