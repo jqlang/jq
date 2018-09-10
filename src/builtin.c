@@ -454,6 +454,14 @@ static jv f_tostring(jq_state *jq, jv input) {
   }
 }
 
+static jv f_fromstring(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_STRING) {
+    return jv_parse(jv_string_value(input));
+  } else {
+    return type_error(input, "only strings can be parsed to JSON");
+  }
+}
+
 static jv f_utf8bytelength(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_STRING)
     return type_error(input, "only strings have UTF-8 byte length");
@@ -1594,6 +1602,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_json_parse, "fromjson", 1},
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
+  {(cfunction_ptr)f_fromstring, "fromstring", 1},
   {(cfunction_ptr)f_keys, "keys", 1},
   {(cfunction_ptr)f_keys_unsorted, "keys_unsorted", 1},
   {(cfunction_ptr)f_startswith, "startswith", 2},
