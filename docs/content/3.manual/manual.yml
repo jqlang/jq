@@ -1232,7 +1232,16 @@ sections:
           - program: '.[] | tostring'
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
+      - title: "`fromstring`"
+        body: |
 
+          The `fromstring` function parses its string input as JSON.
+          All other input types are rejected.
+        
+        examples:
+          - program: '[.[] | fromstring] | tostring'
+            input: '["{ \"a\": 1 }", "1"]'
+            output: ['[{"a": 1}, 1]']
       - title: "`type`"
         body: |
 
