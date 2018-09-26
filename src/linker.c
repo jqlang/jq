@@ -273,7 +273,7 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
       // Bind the library to the program
       bk = block_bind_library(lib_state->defs[state_idx], bk, OP_IS_CALL_PSEUDO, as_str);
     } else { // Not found.   Add it to the table before binding.
-      block dep_def_block = gen_noop();
+      block dep_def_block = jq_gen_noop();
       nerrors += load_library(jq, resolved, is_data, raw, as_str, &dep_def_block, lib_state);
       // resolved has been freed
       if (nerrors == 0) {
@@ -313,7 +313,7 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, const c
     goto out;
   } else if (is_data) {
     // import "foo" as $bar;
-    program = gen_const_global(jv_copy(data), as);
+    program = jq_gen_const_global(jv_copy(data), as);
   } else {
     // import "foo" as bar;
     src = locfile_init(jq, jv_string_value(lib_path), jv_string_value(data), jv_string_length_bytes(jv_copy(data)));
@@ -376,7 +376,7 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
     return nerrors;
 
   nerrors = process_dependencies(jq, jq_get_jq_origin(jq), jq_get_prog_origin(jq), &program, &lib_state);
-  block libs = gen_noop();
+  block libs = jq_gen_noop();
   for (uint64_t i = 0; i < lib_state.ct; ++i) {
     free(lib_state.names[i]);
     if (nerrors == 0 && !block_is_const(lib_state.defs[i]))
