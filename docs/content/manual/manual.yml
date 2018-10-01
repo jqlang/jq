@@ -153,7 +153,7 @@ sections:
 
       * `--indent n`:
 
-        Use the given number of spaces (no more than 8) for indentation.
+        Use the given number of spaces (no more than 7) for indentation.
 
       * `--color-output` / `-C` and `--monochrome-output` / `-M`:
 
