@@ -97,7 +97,7 @@ Use a tab for each indentation level instead of two spaces\.
 \fB\-\-indent n\fR:
 .
 .IP
-Use the given number of spaces (no more than 8) for indentation\.
+Use the given number of spaces (no more than 7) for indentation\.
 .
 .IP "\(bu" 4
 \fB\-\-color\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
