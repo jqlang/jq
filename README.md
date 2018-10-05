@@ -67,7 +67,9 @@ Cross-compilation requires a clean workspace, then:
     make distclean
     scripts/crosscompile <name-of-build> <configure-options>
 
-Use the --host= and --target= ./configure options to select a
-cross-compilation environment.  See also the wiki.
+Use the `--host=` and `--target=` ./configure options to select a
+cross-compilation environment.  See also 
+["Cross compilation"](https://github.com/stedolan/jq/wiki/Cross-compilation) on
+the wiki.
 
 Send questions to https://stackoverflow.com/questions/tagged/jq or to the #jq channel (http://irc.lc/freenode/%23jq/) on Freenode (https://webchat.freenode.net/).
