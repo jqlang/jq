@@ -2887,7 +2887,7 @@ sections:
           given streaming expression.
 
         examples:
-          - program: '[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]'
+          - program: '[truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]'
             input: '1'
             output: ['[[[0],2],[[0]]]']
 
