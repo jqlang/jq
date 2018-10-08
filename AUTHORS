@@ -19,11 +19,13 @@ cdnbacon             <mike@busbud.com>
 Charles Merriam      <charles.merriam@gmail.com>
 Colin von Heuring    <colin@janrain.com>
 Damian Gryski        <damian@gryski.com>
+David Fetter         <david@fetter.org>               - added --rawfile
 David Haguenauer     <ml@kurokatta.org>
 David R. MacIver     <david@drmaciver.com>            - bug fixes
 David Tolnay         <dtolnay@gmail.com>              - destructuring, build improvements
 Doug Luce            <doug@github.con.com>            - build
 Eiichi Sato          <sato.eiichi@gmail.com>
+Eric Bréchemier      <eric@egull.co>                  - bug fix
 Filippo Giunchedi    <fgiunchedi@gmail.com>           - bug fixes
 Filippo Valsorda     <filippo.valsorda@gmail.com>     - recursive object merge (`*`)
 Hanfei Shen          <qqshfox@gmail.com>

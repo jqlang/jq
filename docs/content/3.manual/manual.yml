@@ -236,9 +236,16 @@ sections:
 
         This option reads all the JSON texts in the named file and binds
         an array of the parsed JSON values to the given global variable.
-        If you run jq with `--argfile foo bar`, then `$foo` is available
+        If you run jq with `--slurpfile foo bar`, then `$foo` is available
         in the program and has an array whose elements correspond to the
         texts in the file named `bar`.
+
+      * `--rawfile variable-name filename`:
+
+        This option reads in the named file and binds its contents to the given
+        global variable.  If you run jq with `--rawfile foo bar`, then `$foo` is
+        available in the program and has a string whose contents are to the texs
+        in the file named `bar`.
 
       * `--argfile variable-name filename`:
 
@@ -1933,7 +1940,8 @@ sections:
           8601 datetime is `"%Y-%m-%dT%H:%M:%SZ"`.
 
           jq may not support some or all of this date functionality on
-          some systems.
+          some systems. In particular, the `%u` and `%j` specifiers for
+          `strptime(fmt)` are not supported on macOS.
 
         examples:
           - program: 'fromdate'
@@ -2179,7 +2187,7 @@ sections:
 
           because no label `$out` is visible.
 
-      - title: "Error Suppresion / Optional Operator: `?`"
+      - title: "Error Suppression / Optional Operator: `?`"
         body: |
 
           The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
@@ -2595,18 +2603,10 @@ sections:
                   (2 as $item | . + $item) |
                   (1 as $item | . + $item)
 
-          If the reduction update expression outputs `empty` (that is,
-          no values), then the reduction state is left as-is.  For
-          example, `reduce range(4) as $n ({}; if .==2 then empty else
-          .[$n|tostring] |= $n)` will produce `{"0":0,"1":1,"3":3}`.
-
         examples:
           - program: 'reduce .[] as $item (0; . + $item)'
             input: '[10,2,5,3]'
             output: ['20']
-          - program: 'reduce .[] as $n ([]; if $n%2==0 then empty else . + [$n] end)'
-            input: '[0,1,2,3,4,5]'
-            output: ['[1,3,5]']
 
       - title: "`isempty(exp)`"
         body: |
@@ -2935,7 +2935,7 @@ sections:
       can be represented in JSON.
 
       All the assignment operators in jq have path expressions on the
-      left-hand side (LHS).  The right-hand side (RHS) procides values
+      left-hand side (LHS).  The right-hand side (RHS) provides values
       to set to the paths named by the LHS path expressions.
 
       Values in jq are always immutable.  Internally, assignment works

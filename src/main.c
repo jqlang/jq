@@ -83,6 +83,7 @@ static void usage(int code, int keep_it_short) {
       "  --arg a v        set variable $a to value <v>;\n"
       "  --argjson a v    set variable $a to JSON value <v>;\n"
       "  --slurpfile a f  set variable $a to an array of JSON texts read from <f>;\n"
+      "  --rawfile a f    set variable $a to a string consisting of the contents of <f>;\n"
       "  --args           remaining arguments are string arguments, not files;\n"
       "  --jsonargs       remaining arguments are JSON arguments, not files;\n"
       "  --               terminates argument processing;\n\n"
@@ -166,7 +167,11 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
-      fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
+      if (options & ASCII_OUTPUT) {
+        jv_dumpf(result, stdout, JV_PRINT_ASCII);
+      } else {
+        fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
+      }
       ret = 0;
       jv_free(result);
     } else {
@@ -443,10 +448,14 @@ int main(int argc, char* argv[]) {
         continue;
       }
       if (isoption(argv[i], 0, "argfile", &short_opts) ||
+          isoption(argv[i], 0, "rawfile", &short_opts) ||
           isoption(argv[i], 0, "slurpfile", &short_opts)) {
+        int raw = isoption(argv[i], 0, "rawfile", &short_opts);
         const char *which;
         if (isoption(argv[i], 0, "argfile", &short_opts))
           which = "argfile";
+        else if (raw)
+          which = "rawfile";
         else
           which = "slurpfile";
         if (i >= argc - 2) {
@@ -454,7 +463,7 @@ int main(int argc, char* argv[]) {
           die();
         }
         if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1]))) {
-          jv data = jv_load_file(argv[i+2], 0);
+          jv data = jv_load_file(argv[i+2], raw);
           if (!jv_is_valid(data)) {
             data = jv_invalid_get_msg(data);
             fprintf(stderr, "%s: Bad JSON in --%s %s %s: %s\n", progname, which,

@@ -2,13 +2,15 @@
 
 # strptime() is not available on mingw/WIN32
 [strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
+"2015-03-05T23:51:47Z"
 [[2015,2,5,23,51,47,4,63],1425599507]
 
 # Check day-of-week and day of year computations
 # (should trip an assert if this fails)
-last(range(365 * 199)|("1900-03-01T01:02:03Z"|strptime("%Y-%m-%dT%H:%M:%SZ")|mktime) + (86400 * .)|strftime("%Y-%m-%dT%H:%M:%SZ")|strptime("%Y-%m-%dT%H:%M:%SZ"))
+# This date range
+last(range(365 * 67)|("1970-03-01T01:02:03Z"|strptime("%Y-%m-%dT%H:%M:%SZ")|mktime) + (86400 * .)|strftime("%Y-%m-%dT%H:%M:%SZ")|strptime("%Y-%m-%dT%H:%M:%SZ"))
 null
-[2099,0,10,1,2,3,6,9]
+[2037,1,11,1,2,3,3,41]
 
 # %e is not available on mingw/WIN32
 strftime("%A, %B %e, %Y")

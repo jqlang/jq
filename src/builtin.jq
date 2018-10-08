@@ -167,7 +167,10 @@ def until(cond; next):
      def _until:
          if cond then . else (next|_until) end;
      _until;
-def limit($n; exp): if $n < 0 then exp else label $out | foreach exp as $item ([$n, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1]) end;
+def limit($n; exp):
+  if $n < 0 then exp
+  else label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
+  end;
 def isempty(g): 0 == ((label $go | g | (1, break $go)) // 0);
 def first(g): label $out | g | ., break $out;
 def last(g): reduce g as $item (null; $item);
@@ -237,7 +240,7 @@ def tostream:
   else
     # We really need a _streaming_ form of `keys`.
     # We can use `range` for arrays, but not for objects.
-    keys as $keys |
+    keys_unsorted as $keys |
     $keys[-1] as $last|
     ((# for each key
       $keys[] | . as $key |

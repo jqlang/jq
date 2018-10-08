@@ -29,45 +29,45 @@ $VALGRIND $Q $JQ -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input
 ## move all of these into tests/all.test
 
 # String constant folding (addition only)
-nref=`$VALGRIND $Q $JQ -n --debug-dump-disasm '"foo"' | wc -l`
+nref=$($VALGRIND $Q $JQ -n --debug-dump-disasm '"foo"' | wc -l)
 
 # Numeric constant folding (not all ops yet)
-n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '1+1' | wc -l`
+n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '1+1' | wc -l)
 if [ $n -ne $nref ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '1-1' | wc -l`
+n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '1-1' | wc -l)
 if [ $n -ne $nref ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '2*3' | wc -l`
+n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '2*3' | wc -l)
 if [ $n -ne $nref ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9/3' | wc -l`
+n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9/3' | wc -l)
 if [ $n -ne $nref ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9==3' | wc -l`
+n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9==3' | wc -l)
 if [ $n -ne $nref ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9!=3' | wc -l`
+n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9!=3' | wc -l)
 if [ $n -ne $nref ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9<=3' | wc -l`
+n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9<=3' | wc -l)
 if [ $n -ne $nref ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
 fi
-n=`$VALGRIND $Q $JQ -n --debug-dump-disasm '9>=3' | wc -l`
+n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9>=3' | wc -l)
 if [ $n -ne $nref ]; then
     echo "Constant expression folding for strings didn't work"
     exit 1
@@ -122,6 +122,14 @@ if $VALGRIND $Q $JQ -e . $d/input; then
   exit 2
 fi
 
+# Regression test for #1534
+echo "[1,2,3,4]" > $d/expected
+printf "[1,2][3,4]" | $JQ -cs add > $d/out 2>&1
+cmp $d/out $d/expected
+printf "[1,2][3,4]\n" | $JQ -cs add > $d/out 2>&1
+cmp $d/out $d/expected
+
+
 ## Test streaming parser
 
 ## If we add an option to stream to the `import ... as $symbol;` directive
@@ -137,15 +145,15 @@ if which seq > /dev/null 2>&1; then
     # test very, very slow when run with valgrind, and the whole point
     # is to run it with valgrind.
     #
-    #len=`wc -c < "$JQTESTDIR/torture/input0.json"`
+    #len=$(wc -c < "$JQTESTDIR/torture/input0.json")
     if [ -z "$VALGRIND" ]; then
         start=1
-        end=`wc -c < "$JQTESTDIR/torture/input0.json"`
+        end=$(wc -c < "$JQTESTDIR/torture/input0.json")
     else
         start=120
         end=151
     fi
-    for i in `seq $start $end`; do
+    for i in $(seq $start $end); do
         dd "if=tests/torture/input0.json" bs=$i count=1 2>/dev/null |
             $VALGRIND $JQ -c . > $d/out0 2>$d/err || true
         if [ -n "$VALGRIND" ]; then
@@ -170,7 +178,7 @@ fi
 
 ## Fuzz parser
 
-## XXX With a `urandom` builtin we could move this test into tests/all.test
+## XXX With a $(urandom) builtin we could move this test into tests/all.test
 clean=false
 if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
     # Have a /dev/urandom, good
@@ -189,12 +197,12 @@ clean=true
 
 # Check handling of ~/.jq; these can't move into jq_test.c yet because
 # they depend on $HOME
-if [ "`HOME="$mods" $VALGRIND $Q $JQ -nr fg`" != foobar ]; then
+if [ "$(HOME="$mods" $VALGRIND $Q $JQ -nr fg)" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
 fi
 
-if [ `HOME="$mods" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l` -gt 3 ]; then
+if [ $(HOME="$mods" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l) -gt 3 ]; then
     echo "Binding too many defs into program" 1>&2
     exit 1
 fi
@@ -231,15 +239,15 @@ elif [ $? -ne 11 ]; then
     echo "jq halt_error(11) had wrong error code" 1>&2
     exit 1
 fi
-if [ -n "`$VALGRIND $Q $JQ -n 'halt_error(1)' 2>&1`" ]; then
+if [ -n "$($VALGRIND $Q $JQ -n 'halt_error(1)' 2>&1)" ]; then
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
 fi
-if [ -n "`$VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>/dev/null`" ]; then
+if [ -n "$($VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>/dev/null)" ]; then
     echo "jq halt_error(1) had unexpected output on stdout" 1>&2
     exit 1
 fi
-if [ "`$VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>&1`" != xyz ]; then
+if [ "$($VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>&1)" != xyz ]; then
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
 fi

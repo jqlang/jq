@@ -759,7 +759,7 @@ static void block_get_unbound_vars(block b, jv *vars) {
 
 /* Build wrappers around destructuring matchers so that we can chain them
  * when we have errors.  The approach is as follows:
- * FORK_OPT NEXT_MATCHER (unless last matcher)
+ * DESTRUCTURE_ALT NEXT_MATCHER (unless last matcher)
  * existing_matcher_block
  * JUMP BODY
  */
@@ -767,19 +767,17 @@ static block bind_alternation_matchers(block matchers, block body) {
   block preamble = {0};
   block altmatchers = {0};
   block mb = {0};
+  block final_matcher = matchers;
 
   // Pass through the matchers to find all destructured names.
-  while (matchers.first && matchers.first->op == DESTRUCTURE_ALT) {
-    block_append(&altmatchers, inst_block(block_take(&matchers)));
+  while (final_matcher.first && final_matcher.first->op == DESTRUCTURE_ALT) {
+    block_append(&altmatchers, inst_block(block_take(&final_matcher)));
   }
 
   // We don't have any alternations here, so we can use the simplest case.
   if (altmatchers.first == NULL) {
-    return bind_matcher(matchers, body);
+    return bind_matcher(final_matcher, body);
   }
-
-  // The final matcher needs to strip the error from the previous FORK_OPT
-  block final_matcher = BLOCK(gen_op_simple(POP), gen_op_simple(DUP), matchers);
 
   // Collect var names
   jv all_vars = jv_object();
@@ -800,16 +798,11 @@ static block bind_alternation_matchers(block matchers, block body) {
   for (inst *i = altmatchers.first; i; i = i->next) {
     block submatcher = i->subfn;
 
-    // Get rid of the error from the previous matcher
-    if (mb.first != NULL) {
-      submatcher = BLOCK(gen_op_simple(POP), gen_op_simple(DUP), submatcher);
-    }
-
     // If we're successful, jump to the end of the matchers
     submatcher = BLOCK(submatcher, gen_op_target(JUMP, final_matcher));
 
-    // FORK_OPT to the end of this submatcher so we can skip to the next one on error
-    mb = BLOCK(mb, gen_op_target(FORK_OPT, submatcher), submatcher);
+    // DESTRUCTURE_ALT to the end of this submatcher so we can skip to the next one on error
+    mb = BLOCK(mb, gen_op_target(DESTRUCTURE_ALT, submatcher), submatcher);
 
     // We're done with this inst and we don't want it anymore
     // But we can't let it free the submatcher block.
@@ -823,32 +816,12 @@ static block bind_alternation_matchers(block matchers, block body) {
 
 block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
-  block update_var = gen_op_bound(STOREV, res_var);
-  block jmp = gen_op_targetlater(JUMP);
-  if (body.last == NULL) {
-    inst_set_target(jmp, jmp);
-  } else {
-    inst_set_target(jmp, body);
-  }
   block loop = BLOCK(gen_op_simple(DUPN),
                      source,
                      bind_alternation_matchers(matcher,
                                   BLOCK(gen_op_bound(LOADVN, res_var),
-                                        /*
-                                         * We fork to the body, jump to
-                                         * the STOREV.  This means that
-                                         * if body produces no results
-                                         * (i.e., it just does empty)
-                                         * then we keep the current
-                                         * reduction state as-is.
-                                         *
-                                         * To break out of a
-                                         * reduction... use break.
-                                         */
-                                        gen_op_target(FORK, jmp),
-                                        jmp,
                                         body,
-                                        update_var)),
+                                        gen_op_bound(STOREV, res_var))),
                      gen_op_simple(BACKTRACK));
   return BLOCK(gen_op_simple(DUP),
                init,
@@ -1023,12 +996,13 @@ block gen_destructure(block var, block matchers, block body) {
   if (body.first && body.first->op == TOP)
     top = inst_block(block_take(&body));
 
-  if (matchers.first && matchers.first->op == DESTRUCTURE_ALT && !block_is_noop(var)) {
+  if (matchers.first && matchers.first->op == DESTRUCTURE_ALT) {
     block_append(&var, gen_op_simple(DUP));
-    block_append(&matchers, gen_op_simple(POP));
+  } else {
+    top = BLOCK(top, gen_op_simple(DUP));
   }
 
-  return BLOCK(top, gen_op_simple(DUP), gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
+  return BLOCK(top, gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
 }
 
 // Like gen_var_binding(), but bind `break`'s wildcard unbound variable
