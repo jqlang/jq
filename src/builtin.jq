@@ -39,6 +39,9 @@ def any(generator; condition):
                   if . then . else empty end)] | length == 1;
 def any(condition): any(.[]; condition);
 def any: any(.);
+def fetch(key; default):
+  ({} | path(key)) as $k | if any(path(..); . == $k) then key else default end;
+def fetch(key): fetch(key; empty);
 def all(generator; condition):
         [label $out | foreach generator as $i
                  (true;

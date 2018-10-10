@@ -795,6 +795,32 @@ sections:
             input: '[[0,1], ["a","b","c"]]'
             output: ['[false, true]']
 
+      - title: "`fetch(key)`, `fetch(key; fallback)`"
+        body: |
+
+          The builtin function `fetch` returns the value of the path expression of
+          the input object, or if it is unavailable, an empty object. A path
+          expression can also be deeply nested. You can also indicate what the
+          fallback value should be with a second path expression. This function
+          was inspired by the function of the same name in Ruby.
+
+        examples:
+          - program: 'fetch(.foo)'
+            input: '{"foo": "bar"}'
+            output: ['"bar"']
+          - program: 'fetch(.fu)'
+            input: '{"foo": "bar"}'
+            output: []
+          - program: 'fetch(.fu; "baz")'
+            input: '{"foo": "bar"}'
+            output: ['"baz"']
+          - program: 'fetch(.foo.bar)'
+            input: '{"foo": {"bar": 1}}'
+            output: ['1']
+          - program: 'fetch(.foo.bar; .foo.baz)'
+            input: '{"foo": {"baz": 2}}'
+            output: ['2']
+
       - title: "`in`"
         body: |
 

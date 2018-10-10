@@ -1516,4 +1516,30 @@ isempty(1,error("foo"))
 null
 false
 
+fetch(.foo)
+{"foo": "bar"}
+"bar"
 
+isempty(fetch(.notFoo))
+{"foo": "bar"}
+true
+
+fetch(.foo.baz)
+{"fu":0, "foo": {"bar":1, "baz":2}}
+2
+
+fetch(.notFoo; "baz")
+{"foo": "bar"}
+"baz"
+
+fetch(.notFoo; .fu)
+{"foo": "bar", "fu": "baz"}
+"baz"
+
+fetch(.notFoo; .fu.baz)
+{"foo": "bar", "fu": {"baz": "bor"}}
+"bor"
+
+fetch(.foo)
+{"foo": null}
+null
