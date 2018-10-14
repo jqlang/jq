@@ -801,8 +801,8 @@ sections:
           The builtin function `fetch` returns the value of the path expression of
           the input object, or if it is unavailable, an empty object. A path
           expression can also be deeply nested. You can also indicate what the
-          fallback value should be with a second path expression. This function
-          was inspired by the function of the same name in Ruby.
+          fallback value should be with a second (deeply nested) path expression.
+          This function was inspired by the function of the same name in Ruby.
 
         examples:
           - program: 'fetch(.foo)'
@@ -820,6 +820,9 @@ sections:
           - program: 'fetch(.foo.bar; .foo.baz)'
             input: '{"foo": {"baz": 2}}'
             output: ['2']
+          - program: 'fetch(.few; fetch(.fu; .foo))'
+            input: '{"foo": "bar"}'
+            output: ['"bar"']
 
       - title: "`in`"
         body: |

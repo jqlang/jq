@@ -1528,6 +1528,14 @@ fetch(.foo.baz)
 {"fu":0, "foo": {"bar":1, "baz":2}}
 2
 
+isempty(fetch(.notFoo.baz))
+{}
+true
+
+isempty(fetch(.notFoo.baz))
+{"foo": "baz"}
+true
+
 fetch(.notFoo; "baz")
 {"foo": "bar"}
 "baz"
@@ -1536,10 +1544,22 @@ fetch(.notFoo; .fu)
 {"foo": "bar", "fu": "baz"}
 "baz"
 
+fetch(.notFoo.bar; .fu)
+{"foo": {"bar": true}, "fu": "baz"}
+"baz"
+
 fetch(.notFoo; .fu.baz)
+{"foo": "bar", "fu": {"baz": "bor"}}
+"bor"
+
+fetch(.notFoo.bar; .fu.baz)
 {"foo": "bar", "fu": {"baz": "bor"}}
 "bor"
 
 fetch(.foo)
 {"foo": null}
 null
+
+fetch(.notFoo; fetch(.notFooEither; .foo))
+{"foo": true}
+true
