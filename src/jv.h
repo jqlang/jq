@@ -61,8 +61,11 @@ jv jv_false(void);
 jv jv_bool(int);
 
 jv jv_number(double);
+jv jv_literal_number(double, const char*, int);
 double jv_number_value(jv);
 int jv_is_integer(jv);
+int jv_is_literal_number(jv);
+int jv_literal_number_literal(jv, const char**);
 
 jv jv_array(void);
 jv jv_array_sized(int);

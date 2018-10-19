@@ -137,6 +137,63 @@ static void jvp_invalid_free(jv x) {
  * Numbers
  */
 
+typedef struct {
+  jv_refcnt refcnt;
+  double number;
+  char literal_data[];
+} jvp_literal_number;
+
+static inline int jvp_number_is_literal(jv n) {
+  assert(jv_get_kind(n) == JV_KIND_NUMBER);
+  return n.size > 0;
+}
+
+static jvp_literal_number* jvp_literal_number_ptr(jv j) {
+  assert(jvp_number_is_literal(j));
+  return (jvp_literal_number*)j.u.ptr;
+}
+
+static jvp_literal_number* jvp_literal_number_alloc(unsigned literal_length) {
+  jvp_literal_number* n = jv_mem_alloc(sizeof(jvp_literal_number) + literal_length);
+  n->refcnt = JV_REFCNT_INIT;
+  return n;
+}
+
+static jv jvp_literal_number_new(double number, const char * literal, int literal_length) {
+  jvp_literal_number * n = jvp_literal_number_alloc(literal_length);
+  memcpy(n->literal_data, literal, literal_length);
+  n->number = number;
+  jv r = {JV_KIND_NUMBER, 0, 0, literal_length, {&n->refcnt}};
+  return r;
+}
+
+static int jvp_literal_number_equal(jv a, jv b) {
+  assert(jvp_number_is_literal(a));
+  assert(jvp_number_is_literal(b));
+
+  if (a.size != b.size) {
+    return 0;
+  }
+
+  return memcmp(
+    jvp_literal_number_ptr(a)->literal_data,
+    jvp_literal_number_ptr(b)->literal_data,
+    a.size
+  ) == 0;
+}
+
+static void jvp_literal_number_free(jv j) {
+  assert(jvp_number_is_literal(j));
+  if (jvp_refcnt_dec(j.u.ptr)) {
+    jvp_literal_number* n = jvp_literal_number_ptr(j);
+    jv_mem_free(n);
+  }
+}
+
+jv jv_literal_number(double number, const char * literal, int literal_length) {
+  return jvp_literal_number_new(number, literal, literal_length);
+}
+
 jv jv_number(double x) {
   jv j = {JV_KIND_NUMBER, 0, 0, 0, {.number = x}};
   return j;
@@ -144,7 +201,14 @@ jv jv_number(double x) {
 
 double jv_number_value(jv j) {
   assert(jv_get_kind(j) == JV_KIND_NUMBER);
-  return j.u.number;
+  if (jvp_number_is_literal(j)) {
+    jvp_literal_number* n = jvp_literal_number_ptr(j);
+    // warning!
+    fprintf(stderr, "Returning %f for a literal '%.*s'", n->number, j.size, n->literal_data);
+    return n->number;
+  } else {
+    return j.u.number;
+  }
 }
 
 int jv_is_integer(jv j){
@@ -157,6 +221,20 @@ int jv_is_integer(jv j){
   }
 
   return x == (int)x;
+}
+
+int jv_is_literal_number(jv j) {
+  if(jv_get_kind(j) != JV_KIND_NUMBER){
+    return 0;
+  }
+  return jvp_number_is_literal(j);
+}
+
+int jv_literal_number_literal(jv j, const char* *literal_data_out) {
+  assert(jvp_number_is_literal(j));
+  assert(literal_data_out != NULL);
+  *literal_data_out = jvp_literal_number_ptr(j)->literal_data;
+  return j.size;
 }
 
 /*
@@ -1245,6 +1323,8 @@ jv jv_copy(jv j) {
       jv_get_kind(j) == JV_KIND_OBJECT ||
       (jv_get_kind(j) == JV_KIND_INVALID && j.u.ptr != 0)) {
     jvp_refcnt_inc(j.u.ptr);
+  } else if (jv_is_literal_number(j)) {
+    jvp_refcnt_inc(j.u.ptr);
   }
   return j;
 }
@@ -1258,6 +1338,8 @@ void jv_free(jv j) {
     jvp_object_free(j);
   } else if (jv_get_kind(j) == JV_KIND_INVALID) {
     jvp_invalid_free(j);
+  } else if (jv_is_literal_number(j)) {
+    jvp_literal_number_free(j);
   }
 }
 
@@ -1267,6 +1349,8 @@ int jv_get_refcnt(jv j) {
   case JV_KIND_STRING:
   case JV_KIND_OBJECT:
     return j.u.ptr->count;
+  case JV_KIND_NUMBER:
+    return jvp_number_is_literal(j) ? j.u.ptr->count : 1;
   default:
     return 1;
   }
@@ -1281,7 +1365,11 @@ int jv_equal(jv a, jv b) {
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER) {
-    r = jv_number_value(a) == jv_number_value(b);
+    if (jvp_number_is_literal(a) && jvp_number_is_literal(b)) {
+      r = jvp_literal_number_equal(a, b);
+    } else {
+      r = jv_number_value(a) == jv_number_value(b);
+    }
   } else if (a.kind_flags == b.kind_flags &&
              a.size == b.size &&
              a.u.ptr == b.u.ptr) {
@@ -1321,7 +1409,11 @@ int jv_identical(jv a, jv b) {
       r = a.u.ptr == b.u.ptr;
       break;
     case JV_KIND_NUMBER:
-      r = memcmp(&a.u.number, &b.u.number, sizeof(a.u.number)) == 0;
+      if (jvp_number_is_literal(a) && jvp_number_is_literal(b)) {
+        r = a.u.ptr == b.u.ptr;
+      } else {
+        r = memcmp(&a.u.number, &b.u.number, sizeof(a.u.number)) == 0;
+      }
       break;
     default:
       r = 1;

@@ -540,8 +540,8 @@ null
 {"object": {"a":42}, "num":10.0}
 [true,  true,  false, false, false, false, false, false, false]
 [true,  true,  false, false, false, false, false, false, false]
-[false, false, true,  true,  false, false, false, false, false]
-[false, false, true,  true,  false, false, false, false, false]
+[false, false, true,  false, false, false, false, false, false]
+[false, false, false, true,  false, false, false, false, false]
 [false, false, false, false, true,  false, false, false, false]
 [false, false, false, false, false, true,  false, false, false]
 [false, false, false, false, false, false, true,  false, false]
@@ -1516,4 +1516,38 @@ isempty(1,error("foo"))
 null
 false
 
+
+#
+# Tests to cover the new literal number functionality
+# For an example see #1652 and other linked issues
+#
+
+# When no arithmetic is involved jq should preserve the literal value
+
+.
+13911860366432393
+13911860366432393
+
+.[0]
+[13911860366432393]
+13911860366432393
+
+.x
+{"x":13911860366432393}
+13911860366432393
+
+
+# Applying arithmetic to the value will truncate the result to double
+
+. - 10
+13911860366432393
+13911860366432382
+
+.[0] - 10
+[13911860366432393]
+13911860366432382
+
+.x - 10
+{"x":13911860366432393}
+13911860366432382
 

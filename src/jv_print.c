@@ -229,15 +229,21 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     put_str("true", F, S, flags & JV_PRINT_ISATTY);
     break;
   case JV_KIND_NUMBER: {
-    double d = jv_number_value(x);
-    if (d != d) {
-      // JSON doesn't have NaN, so we'll render it as "null"
-      put_str("null", F, S, flags & JV_PRINT_ISATTY);
+    if (jv_is_literal_number(x)) {
+      const char * literal_data;
+      int length = jv_literal_number_literal(x, &literal_data);
+      put_buf(literal_data, length, F, S, flags & JV_PRINT_ISATTY);
     } else {
-      // Normalise infinities to something we can print in valid JSON
-      if (d > DBL_MAX) d = DBL_MAX;
-      if (d < -DBL_MAX) d = -DBL_MAX;
-      put_str(jvp_dtoa_fmt(C, buf, d), F, S, flags & JV_PRINT_ISATTY);
+      double d = jv_number_value(x);
+      if (d != d) {
+        // JSON doesn't have NaN, so we'll render it as "null"
+        put_str("null", F, S, flags & JV_PRINT_ISATTY);
+      } else {
+        // Normalise infinities to something we can print in valid JSON
+        if (d > DBL_MAX) d = DBL_MAX;
+        if (d < -DBL_MAX) d = -DBL_MAX;
+        put_str(jvp_dtoa_fmt(C, buf, d), F, S, flags & JV_PRINT_ISATTY);
+      }
     }
     break;
   }
