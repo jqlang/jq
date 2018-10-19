@@ -2,6 +2,16 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "jv_alloc.h"
+#include "jv_type_private.h"
+
+// making this static verbose function here
+// until we introduce a less confusing naming scheme
+// of jv_* API with regards to the memory management
+static double jv_number_get_value_and_consume(jv number) {
+  double value = jv_number_value(number);
+  jv_free(number);
+  return value;
+}
 
 static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
   // Array slices
@@ -32,6 +42,8 @@ static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
   } else {
     double dstart = jv_number_value(start_jv);
     double dend = jv_number_value(end_jv);
+    jv_free(start_jv);
+    jv_free(end_jv);
     if (dstart < 0) dstart += len;
     if (dend < 0) dend += len;
     if (dstart < 0) dstart = 0;
@@ -69,6 +81,7 @@ jv jv_get(jv t, jv k) {
         jv_free(v);
         v = jv_null();
       }
+      jv_free(k);
     } else {
       jv_free(t);
       jv_free(k);
@@ -135,6 +148,7 @@ jv jv_set(jv t, jv k, jv v) {
              (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
     if (isnull) t = jv_array();
     t = jv_array_set(t, (int)jv_number_value(k), v);
+    jv_free(k);
   } else if (jv_get_kind(k) == JV_KIND_OBJECT &&
              (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
     if (isnull) t = jv_array();
@@ -202,6 +216,7 @@ jv jv_has(jv t, jv k) {
              jv_get_kind(k) == JV_KIND_NUMBER) {
     jv elem = jv_array_get(t, (int)jv_number_value(k));
     ret = jv_bool(jv_is_valid(elem));
+    jv_free(k);
     jv_free(elem);
   } else {
     ret = jv_invalid_with_msg(jv_string_fmt("Cannot check whether %s has a %s key",
@@ -240,6 +255,7 @@ static jv jv_dels(jv t, jv keys) {
           ends = jv_array_append(ends, jv_number(end));
         } else {
           jv_free(new_array);
+          jv_free(key);
           new_array = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
           goto arr_out;
         }
@@ -258,7 +274,7 @@ static jv jv_dels(jv t, jv keys) {
     jv_array_foreach(t, i, elem) {
       int del = 0;
       while (neg_idx < jv_array_length(jv_copy(neg_keys))) {
-        int delidx = len + (int)jv_number_value(jv_array_get(jv_copy(neg_keys), neg_idx));
+        int delidx = len + (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(neg_keys), neg_idx));
         if (i == delidx) {
           del = 1;
         }
@@ -268,7 +284,7 @@ static jv jv_dels(jv t, jv keys) {
         neg_idx++;
       }
       while (nonneg_idx < jv_array_length(jv_copy(nonneg_keys))) {
-        int delidx = (int)jv_number_value(jv_array_get(jv_copy(nonneg_keys), nonneg_idx));
+        int delidx = (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(nonneg_keys), nonneg_idx));
         if (i == delidx) {
           del = 1;
         }
@@ -278,8 +294,8 @@ static jv jv_dels(jv t, jv keys) {
         nonneg_idx++;
       }
       for (int sidx=0; !del && sidx<jv_array_length(jv_copy(starts)); sidx++) {
-        if ((int)jv_number_value(jv_array_get(jv_copy(starts), sidx)) <= i &&
-            i < (int)jv_number_value(jv_array_get(jv_copy(ends), sidx))) {
+        if ((int)jv_number_get_value_and_consume(jv_array_get(jv_copy(starts), sidx)) <= i &&
+            i < (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(ends), sidx))) {
           del = 1;
         }
       }
@@ -511,14 +527,13 @@ int jv_cmp(jv a, jv b) {
     break;
 
   case JV_KIND_NUMBER: {
-    double da = jv_number_value(a), db = jv_number_value(b);
-
-    // handle NaN as though it were null
-    if (da != da) r = jv_cmp(jv_null(), jv_number(db));
-    else if (db != db) r = jv_cmp(jv_number(da), jv_null());
-    else if (da < db) r = -1;
-    else if (da == db) r = 0;
-    else r = 1;
+    if (jvp_number_is_nan(a)) {
+      r = jv_cmp(jv_null(), jv_copy(b));
+    } else if (jvp_number_is_nan(b)) {
+      r = jv_cmp(jv_copy(a), jv_null());
+    } else {
+      r = jvp_number_cmp(a, b);
+    }
     break;
   }
 

@@ -11,6 +11,8 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
         src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
+        src/decNumber/decContext.c src/decNumber/decNumber.c            \
+        src/jv_dtoa_tsd.c                                               \
         ${LIBJQ_INCS}
 
 ### C build options
@@ -186,9 +188,13 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order.jq                                \
         tests/modules/test_bind_order0.jq                               \
         tests/modules/test_bind_order1.jq                               \
-        tests/modules/test_bind_order2.jq tests/onig.supp               \
-        tests/onig.test tests/optional.test tests/setup                 \
-        tests/torture/input0.json tests/utf8-truncate.jq
+        tests/modules/test_bind_order2.jq                               \
+        tests/onig.supp tests/local.supp                                \
+        tests/onig.test tests/setup tests/torture/input0.json		\
+        tests/optional.test tests/optionaltest				\
+        tests/utf8-truncate.jq tests/utf8test				\
+        tests/base64.test tests/base64test 				\
+        tests/jq-f-test.sh tests/shtest
 
 # README.md is expected in Github projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.

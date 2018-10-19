@@ -136,17 +136,9 @@ AC_CHECK_MEMBER([struct tm.tm_gmtoff], [AC_DEFINE([HAVE_TM_TM_GMT_OFF],1,[Define
 AC_CHECK_MEMBER([struct tm.__tm_gmtoff], [AC_DEFINE([HAVE_TM___TM_GMT_OFF],1,[Define to 1 if the system has the __tm_gmt_off field in struct tm])],
                 [], [[#include <time.h>]])
 
-AC_ARG_ENABLE([pthread-tls],
-              [AC_HELP_STRING([--enable-pthread-tls],
-                              [Enable use of pthread thread local storage])],
-              [],
-              [enable_pthread_tls=no])
-
-if test $enable_pthread_tls = yes; then
-    AC_FIND_FUNC([pthread_key_create], [pthread], [#include <pthread.h>], [NULL, NULL])
-    AC_FIND_FUNC([pthread_once], [pthread], [#include <pthread.h>], [NULL, NULL])
-    AC_FIND_FUNC([atexit], [pthread], [#include <stdlib.h>], [NULL])
-fi
+AC_FIND_FUNC([pthread_key_create], [pthread], [#include <pthread.h>], [NULL, NULL])
+AC_FIND_FUNC([pthread_once], [pthread], [#include <pthread.h>], [NULL, NULL])
+AC_FIND_FUNC([atexit], [pthread], [#include <stdlib.h>], [NULL])
 
 dnl libm math.h functions
 AC_CHECK_MATH_FUNC(acos)

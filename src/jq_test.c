@@ -6,20 +6,32 @@
 #include "jq.h"
 
 static void jv_test();
-static void run_jq_tests(jv, int, FILE *);
+static void run_jq_tests(jv, int, FILE *, int, int);
 
 
 int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
   FILE *testdata = stdin;
+  int skip = -1;
+  int take = -1;
   jv_test();
   if (argc > 0) {
-    testdata = fopen(argv[0], "r");
-    if (!testdata) {
-      perror("fopen");
-      exit(1);
+    for(int i = 0; i < argc; i++) {
+      if (!strcmp(argv[i], "--skip")) {
+        skip = atoi(argv[i+1]);
+        i++;
+      } else if (!strcmp(argv[i], "--take")) {
+        take = atoi(argv[i+1]);
+        i++;
+      } else {
+        testdata = fopen(argv[i], "r");
+        if (!testdata) {
+          perror("fopen");
+          exit(1);
+        }
+      }
     }
   }
-  run_jq_tests(libdirs, verbose, testdata);
+  run_jq_tests(libdirs, verbose, testdata, skip, take);
   return 0;
 }
 
@@ -53,7 +65,7 @@ static void test_err_cb(void *data, jv e) {
   jv_free(e);
 }
 
-static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata) {
+static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int take) {
   char prog[4096];
   char buf[4096];
   struct err_data err_msg;
@@ -62,6 +74,9 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata) {
   int must_fail = 0;
   int check_msg = 0;
   jq_state *jq = NULL;
+
+  int tests_to_skip = skip;
+  int tests_to_take = take;
 
   jq = jq_init();
   assert(jq);
@@ -80,6 +95,34 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata) {
       continue;
     }
     if (prog[strlen(prog)-1] == '\n') prog[strlen(prog)-1] = 0;
+
+    if (skip > 0) {
+      skip--;
+
+      // skip past test data
+      while (fgets(buf, sizeof(buf), testdata)) {
+        lineno++;
+        if (buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
+          break;
+      }
+      
+      must_fail = 0;
+      check_msg = 0;
+
+      continue;
+    } else if (skip == 0) {
+      printf("Skipped %d tests\n", tests_to_skip);
+      skip = -1;
+    }
+
+    if (take > 0) {
+      take--;
+    } else if (take == 0) {
+      printf("Hit the number of tests limit (%d), breaking\n", tests_to_take);
+      take = -1;
+      break;
+    }
+
     printf("Testing '%s' at line number %u\n", prog, lineno);
     int pass = 1;
     tests++;
@@ -179,7 +222,21 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata) {
     passed+=pass;
   }
   jq_teardown(&jq);
-  printf("%d of %d tests passed (%d malformed)\n", passed,tests,invalid);
+
+  int total_skipped = tests_to_skip > 0 ? tests_to_skip : 0;
+
+  if (skip > 0) {
+    total_skipped = tests_to_skip - skip;
+  }
+
+  printf("%d of %d tests passed (%d malformed, %d skipped)\n", 
+    passed, tests, invalid, total_skipped);
+
+  if (skip > 0) {
+    printf("WARN: skipped past the end of file, exiting with status 2\n");
+    exit(2);
+  }
+
   if (passed != tests) exit(1);
 }
 

@@ -1673,3 +1673,42 @@ false
 #null
 
 
+#
+# Tests to cover the new toliteral number functionality
+# For an example see #1652 and other linked issues
+#
+
+# We are backward and sanity compatible
+
+map(. == 1)
+[1, 1.0, 1.000, 100e-2, 1e+0, 0.0001e4]
+[true, true, true, true, true, true]
+
+# When no arithmetic is involved jq should preserve the literal value
+
+.[0] | tostring
+[13911860366432393]
+"13911860366432393"
+
+.x | tojson
+{"x":13911860366432393}
+"13911860366432393"
+
+13911860366432393 == 13911860366432392
+null
+false
+
+
+# Applying arithmetic to the value will truncate the result to double
+
+. - 10
+13911860366432393
+13911860366432382
+
+.[0] - 10
+[13911860366432393]
+13911860366432382
+
+.x - 10
+{"x":13911860366432393}
+13911860366432382
