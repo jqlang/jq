@@ -203,8 +203,10 @@ double jv_number_value(jv j) {
   assert(jv_get_kind(j) == JV_KIND_NUMBER);
   if (jvp_number_is_literal(j)) {
     jvp_literal_number* n = jvp_literal_number_ptr(j);
-    // warning!
-    fprintf(stderr, "Returning %f for a literal '%.*s'", n->number, j.size, n->literal_data);
+    // the number may be truncated at this point
+    // consider printing a warning,
+    // however it's unclear what should be done in the library use case
+    // fprintf(stderr, "Returning %f for a literal '%.*s'\n", n->number, j.size, n->literal_data);
     return n->number;
   } else {
     return j.u.number;
