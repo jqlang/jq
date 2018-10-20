@@ -87,8 +87,11 @@ static jv f_plus(jq_state *jq, jv input, jv a, jv b) {
     jv_free(b);
     return a;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    return jv_number(jv_number_value(a) +
+    jv r = jv_number(jv_number_value(a) +
                      jv_number_value(b));
+    jv_free(a);
+    jv_free(b);
+    return r;
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
     return jv_string_concat(a, b);
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
@@ -271,7 +274,10 @@ static jv f_rtrimstr(jq_state *jq, jv input, jv right) {
 static jv f_minus(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    return jv_number(jv_number_value(a) - jv_number_value(b));
+    jv r = jv_number(jv_number_value(a) - jv_number_value(b));
+    jv_free(a);
+    jv_free(b);
+    return r;
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
     jv out = jv_array();
     jv_array_foreach(a, i, x) {
@@ -299,7 +305,10 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
   jv_kind bk = jv_get_kind(b);
   jv_free(input);
   if (ak == JV_KIND_NUMBER && bk == JV_KIND_NUMBER) {
-    return jv_number(jv_number_value(a) * jv_number_value(b));
+    jv r = jv_number(jv_number_value(a) * jv_number_value(b));
+    jv_free(a);
+    jv_free(b);
+    return r;
   } else if ((ak == JV_KIND_STRING && bk == JV_KIND_NUMBER) ||
              (ak == JV_KIND_NUMBER && bk == JV_KIND_STRING)) {
     jv str = a;
@@ -333,7 +342,10 @@ static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     if (jv_number_value(b) == 0.0)
       return type_error2(a, b, "cannot be divided because the divisor is zero");
-    return jv_number(jv_number_value(a) / jv_number_value(b));
+    jv r = jv_number(jv_number_value(a) / jv_number_value(b));
+    jv_free(a);
+    jv_free(b);
+    return r;
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
     return jv_string_split(a, b);
   } else {
@@ -346,7 +358,10 @@ static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     if ((intmax_t)jv_number_value(b) == 0)
       return type_error2(a, b, "cannot be divided (remainder) because the divisor is zero");
-    return jv_number((intmax_t)jv_number_value(a) % (intmax_t)jv_number_value(b));
+    jv r = jv_number((intmax_t)jv_number_value(a) % (intmax_t)jv_number_value(b));
+    jv_free(a);
+    jv_free(b);
+    return r;
   } else {
     return type_error2(a, b, "cannot be divided (remainder)");
   }
@@ -437,7 +452,9 @@ static jv f_length(jq_state *jq, jv input) {
   } else if (jv_get_kind(input) == JV_KIND_STRING) {
     return jv_number(jv_string_length_codepoints(input));
   } else if (jv_get_kind(input) == JV_KIND_NUMBER) {
-    return jv_number(fabs(jv_number_value(input)));
+    jv r = jv_number(fabs(jv_number_value(input)));
+    jv_free(input);
+    return r;
   } else if (jv_get_kind(input) == JV_KIND_NULL) {
     jv_free(input);
     return jv_number(0);
