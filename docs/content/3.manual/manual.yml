@@ -2018,10 +2018,12 @@ sections:
 
           != is "not equal", and 'a != b' returns the opposite value of 'a == b'
 
+          Numbers are now taken literally, so 1 != 1.0
+
         examples:
           - program: '.[] == 1'
             input: '[1, 1.0, "1", "banana"]'
-            output: ['true', 'true', 'false', 'false']
+            output: ['true', 'false', 'false', 'false']
 
       - title: if-then-else
         body: |
