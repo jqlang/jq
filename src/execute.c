@@ -515,15 +515,16 @@ jv jq_next(jq_state *jq) {
         set_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
         jv_free(max);
         goto do_backtrack;
-      } else if (jv_number_value(jv_copy(*var)) >= jv_number_value(jv_copy(max))) {
+      } else if (jv_number_value(*var) >= jv_number_value(max)) {
         /* finished iterating */
+        jv_free(max);
         goto do_backtrack;
       } else {
-        jv curr = jv_copy(*var);
+        jv curr = *var;
         *var = jv_number(jv_number_value(*var) + 1);
 
         struct stack_pos spos = stack_get_pos(jq);
-        stack_push(jq, jv_copy(max));
+        stack_push(jq, max);
         stack_save(jq, pc - 3, spos);
 
         stack_push(jq, curr);

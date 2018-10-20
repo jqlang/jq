@@ -256,8 +256,12 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
     break;
 
   case ':':
-    if (p->stacklen == 0 || jv_get_kind(jv_array_get(jv_copy(p->path), p->stacklen - 1)) == JV_KIND_NUMBER)
+    last = jv_invalid();
+    if (p->stacklen == 0 || jv_get_kind(last = jv_array_get(jv_copy(p->path), p->stacklen - 1)) == JV_KIND_NUMBER) {
+      jv_free(last);
       return "':' not as part of an object";
+    }
+    jv_free(last);
     if (!jv_is_valid(p->next) || p->last_seen == JV_LAST_NONE)
       return "Expected string key before ':'";
     if (jv_get_kind(p->next) != JV_KIND_STRING)
