@@ -41,10 +41,29 @@ static int jvp_refcnt_unshared(jv_refcnt* c) {
  * Simple values (true, false, null)
  */
 
-#define KIND_MASK 0xf
+#define KIND_MASK   0xF
+#define PFLAGS_MASK 0xF0
+#define PTYPE_MASK  0x70
+
+typedef enum {
+  JVP_PAYLOAD_NONE = 0,
+  JVP_PAYLOAD_ALLOCATED = 0x80,
+} payload_flags;
+
+
+#define JVP_MAKE_PFLAGS(ptype, allocated) ((((ptype) << 4) & PTYPE_MASK) | ((allocated) ? JVP_PAYLOAD_ALLOCATED : 0))
+#define JVP_MAKE_FLAGS(kind, pflags) ((kind & KIND_MASK) | (pflags & PFLAGS_MASK))
+
+#define JVP_FLAGS(j)  ((j).kind_flags)
+#define JVP_KIND(j)   (JVP_FLAGS(j) & KIND_MASK)
+
+#define JVP_HAS_FLAGS(j, flags) (JVP_FLAGS(j) == flags)
+#define JVP_HAS_KIND(j, kind)   (JVP_KIND(j) == kind)
+
+#define JVP_IS_ALLOCATED(j) (j.kind_flags & JVP_PAYLOAD_ALLOCATED)
 
 jv_kind jv_get_kind(jv x) {
-  return x.kind_flags & KIND_MASK;
+  return JVP_KIND(x);
 }
 
 const char* jv_kind_name(jv_kind k) {
@@ -62,10 +81,17 @@ const char* jv_kind_name(jv_kind k) {
   return "<unknown>";
 }
 
-static const jv JV_NULL = {JV_KIND_NULL, 0, 0, 0, {0}};
-static const jv JV_INVALID = {JV_KIND_INVALID, 0, 0, 0, {0}};
-static const jv JV_FALSE = {JV_KIND_FALSE, 0, 0, 0, {0}};
-static const jv JV_TRUE = {JV_KIND_TRUE, 0, 0, 0, {0}};
+
+#define JVP_FLAGS_NULL      JVP_MAKE_FLAGS(JV_KIND_NULL, JVP_PAYLOAD_NONE)
+#define JVP_FLAGS_INVALID   JVP_MAKE_FLAGS(JV_KIND_INVALID, JVP_PAYLOAD_NONE)
+#define JVP_FLAGS_FALSE     JVP_MAKE_FLAGS(JV_KIND_FALSE, JVP_PAYLOAD_NONE)
+#define JVP_FLAGS_TRUE      JVP_MAKE_FLAGS(JV_KIND_TRUE, JVP_PAYLOAD_NONE)
+
+
+static const jv JV_NULL = {JVP_FLAGS_NULL, 0, 0, 0, {0}};
+static const jv JV_INVALID = {JVP_FLAGS_INVALID, 0, 0, 0, {0}};
+static const jv JV_FALSE = {JVP_FLAGS_FALSE, 0, 0, 0, {0}};
+static const jv JV_TRUE = {JVP_FLAGS_TRUE, 0, 0, 0, {0}};
 
 jv jv_true() {
   return JV_TRUE;
@@ -87,19 +113,22 @@ jv jv_bool(int x) {
  * Invalid objects, with optional error messages
  */
 
+
+#define JVP_FLAGS_INVALID_MSG   JVP_MAKE_FLAGS(JV_KIND_INVALID, JVP_PAYLOAD_ALLOCATED)
+
 typedef struct {
   jv_refcnt refcnt;
   jv errmsg;
 } jvp_invalid;
 
 jv jv_invalid_with_msg(jv err) {
-  if (jv_get_kind(err) == JV_KIND_NULL)
+  if (JVP_HAS_KIND(err, JV_KIND_NULL))
     return JV_INVALID;
   jvp_invalid* i = jv_mem_alloc(sizeof(jvp_invalid));
   i->refcnt = JV_REFCNT_INIT;
   i->errmsg = err;
 
-  jv x = {JV_KIND_INVALID, 0, 0, 0, {&i->refcnt}};
+  jv x = {JVP_FLAGS_INVALID_MSG, 0, 0, 0, {&i->refcnt}};
   return x;
 }
 
@@ -109,25 +138,29 @@ jv jv_invalid() {
 
 jv jv_invalid_get_msg(jv inv) {
   assert(jv_get_kind(inv) == JV_KIND_INVALID);
+
   jv x;
-  if (inv.u.ptr == 0)
-    x = jv_null();
-  else
+  if (JVP_HAS_FLAGS(inv, JVP_FLAGS_INVALID_MSG)) {
     x = jv_copy(((jvp_invalid*)inv.u.ptr)->errmsg);
+  }
+  else {
+    x = jv_null();
+  }
+
   jv_free(inv);
   return x;
 }
 
 int jv_invalid_has_msg(jv inv) {
-  jv msg = jv_invalid_get_msg(inv);
-  int r = jv_get_kind(msg) != JV_KIND_NULL;
-  jv_free(msg);
+  assert(JVP_HAS_KIND(inv, JV_KIND_INVALID));
+  int r = JVP_HAS_FLAGS(inv, JVP_FLAGS_INVALID_MSG);
+  jv_free(inv);
   return r;
 }
 
 static void jvp_invalid_free(jv x) {
-  assert(jv_get_kind(x) == JV_KIND_INVALID);
-  if (x.u.ptr != 0 && jvp_refcnt_dec(x.u.ptr)) {
+  assert(JVP_HAS_KIND(x, JV_KIND_INVALID));
+  if (JVP_HAS_FLAGS(x, JVP_FLAGS_INVALID_MSG) && jvp_refcnt_dec(x.u.ptr)) {
     jv_free(((jvp_invalid*)x.u.ptr)->errmsg);
     jv_mem_free(x.u.ptr);
   }
@@ -137,6 +170,9 @@ static void jvp_invalid_free(jv x) {
  * Numbers
  */
 
+#define JVP_FLAGS_NUMBER_D      JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_PAYLOAD_NONE)
+#define JVP_FLAGS_NUMBER_L      JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_PAYLOAD_ALLOCATED)
+
 typedef struct {
   jv_refcnt refcnt;
   double number;
@@ -144,12 +180,12 @@ typedef struct {
 } jvp_literal_number;
 
 static inline int jvp_number_is_literal(jv n) {
-  assert(jv_get_kind(n) == JV_KIND_NUMBER);
-  return n.size > 0;
+  assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
+  return JVP_HAS_FLAGS(n, JVP_FLAGS_NUMBER_L);
 }
 
 static jvp_literal_number* jvp_literal_number_ptr(jv j) {
-  assert(jvp_number_is_literal(j));
+  assert(JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_L));
   return (jvp_literal_number*)j.u.ptr;
 }
 
@@ -163,13 +199,13 @@ static jv jvp_literal_number_new(double number, const char * literal, int litera
   jvp_literal_number * n = jvp_literal_number_alloc(literal_length);
   memcpy(n->literal_data, literal, literal_length);
   n->number = number;
-  jv r = {JV_KIND_NUMBER, 0, 0, literal_length, {&n->refcnt}};
+  jv r = {JVP_FLAGS_NUMBER_L, 0, 0, literal_length, {&n->refcnt}};
   return r;
 }
 
 static int jvp_literal_number_equal(jv a, jv b) {
-  assert(jvp_number_is_literal(a));
-  assert(jvp_number_is_literal(b));
+  assert(JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_L));
+  assert(JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_L));
 
   if (a.size != b.size) {
     return 0;
@@ -183,7 +219,7 @@ static int jvp_literal_number_equal(jv a, jv b) {
 }
 
 static void jvp_literal_number_free(jv j) {
-  assert(jvp_number_is_literal(j));
+  assert(JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_L));
   if (jvp_refcnt_dec(j.u.ptr)) {
     jvp_literal_number* n = jvp_literal_number_ptr(j);
     jv_mem_free(n);
@@ -195,13 +231,13 @@ jv jv_literal_number(double number, const char * literal, int literal_length) {
 }
 
 jv jv_number(double x) {
-  jv j = {JV_KIND_NUMBER, 0, 0, 0, {.number = x}};
+  jv j = {JVP_FLAGS_NUMBER_D, 0, 0, 0, {.number = x}};
   return j;
 }
 
 double jv_number_value(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_NUMBER);
-  if (jvp_number_is_literal(j)) {
+  assert(JVP_HAS_KIND(j, JV_KIND_NUMBER));
+  if (JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_L)) {
     jvp_literal_number* n = jvp_literal_number_ptr(j);
     // the number may be truncated at this point
     // consider printing a warning,
@@ -214,7 +250,7 @@ double jv_number_value(jv j) {
 }
 
 int jv_is_integer(jv j){
-  if(jv_get_kind(j) != JV_KIND_NUMBER){
+  if(!JVP_HAS_KIND(j, JV_KIND_NUMBER)){
     return 0;
   }
   double x = jv_number_value(j);
@@ -226,14 +262,11 @@ int jv_is_integer(jv j){
 }
 
 int jv_is_literal_number(jv j) {
-  if(jv_get_kind(j) != JV_KIND_NUMBER){
-    return 0;
-  }
-  return jvp_number_is_literal(j);
+  return JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_L);
 }
 
 int jv_literal_number_literal(jv j, const char* *literal_data_out) {
-  assert(jvp_number_is_literal(j));
+  assert(JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_L));
   assert(literal_data_out != NULL);
   *literal_data_out = jvp_literal_number_ptr(j)->literal_data;
   return j.size;
@@ -244,6 +277,7 @@ int jv_literal_number_literal(jv j, const char* *literal_data_out) {
  */
 
 #define ARRAY_SIZE_ROUND_UP(n) (((n)*3)/2)
+#define JVP_FLAGS_ARRAY   JVP_MAKE_FLAGS(JV_KIND_ARRAY, JVP_PAYLOAD_ALLOCATED)
 
 static int imax(int a, int b) {
   if (a>b) return a;
@@ -271,7 +305,7 @@ static jvp_array* jvp_array_alloc(unsigned size) {
 }
 
 static jv jvp_array_new(unsigned size) {
-  jv r = {JV_KIND_ARRAY, 0, 0, 0, {&jvp_array_alloc(size)->refcnt}};
+  jv r = {JVP_FLAGS_ARRAY, 0, 0, 0, {&jvp_array_alloc(size)->refcnt}};
   return r;
 }
 
@@ -334,7 +368,7 @@ static jv* jvp_array_write(jv* a, int i) {
     }
     new_array->length = new_length;
     jvp_array_free(*a);
-    jv new_jv = {JV_KIND_ARRAY, 0, 0, new_length, {&new_array->refcnt}};
+    jv new_jv = {JVP_FLAGS_ARRAY, 0, 0, new_length, {&new_array->refcnt}};
     *a = new_jv;
     return &new_array->elements[i];
   }
@@ -510,6 +544,8 @@ jv jv_array_indexes(jv a, jv b) {
  * Strings (internal helpers)
  */
 
+#define JVP_FLAGS_STRING  JVP_MAKE_FLAGS(JV_KIND_STRING, JVP_PAYLOAD_ALLOCATED)
+
 typedef struct {
   jv_refcnt refcnt;
   uint32_t hash;
@@ -553,7 +589,7 @@ static jv jvp_string_copy_replace_bad(const char* data, uint32_t length) {
   length = out - s->data;
   s->data[length] = 0;
   s->length_hashed = length << 1;
-  jv r = {JV_KIND_STRING, 0, 0, 0, {&s->refcnt}};
+  jv r = {JVP_FLAGS_STRING, 0, 0, 0, {&s->refcnt}};
   return r;
 }
 
@@ -564,7 +600,7 @@ static jv jvp_string_new(const char* data, uint32_t length) {
   if (data != NULL)
     memcpy(s->data, data, length);
   s->data[length] = 0;
-  jv r = {JV_KIND_STRING, 0, 0, 0, {&s->refcnt}};
+  jv r = {JVP_FLAGS_STRING, 0, 0, 0, {&s->refcnt}};
   return r;
 }
 
@@ -572,7 +608,7 @@ static jv jvp_string_empty_new(uint32_t length) {
   jvp_string* s = jvp_string_alloc(length);
   s->length_hashed = 0;
   memset(s->data, 0, length);
-  jv r = {JV_KIND_STRING, 0, 0, 0, {&s->refcnt}};
+  jv r = {JVP_FLAGS_STRING, 0, 0, 0, {&s->refcnt}};
   return r;
 }
 
@@ -615,7 +651,7 @@ static jv jvp_string_append(jv string, const char* data, uint32_t len) {
     memcpy(news->data + currlen, data, len);
     news->data[currlen + len] = 0;
     jvp_string_free(string);
-    jv r = {JV_KIND_STRING, 0, 0, 0, {&news->refcnt}};
+    jv r = {JVP_FLAGS_STRING, 0, 0, 0, {&news->refcnt}};
     return r;
   }
 }
@@ -938,6 +974,8 @@ jv jv_string_fmt(const char* fmt, ...) {
  * Objects (internal helpers)
  */
 
+#define JVP_FLAGS_OBJECT  JVP_MAKE_FLAGS(JV_KIND_OBJECT, JVP_PAYLOAD_ALLOCATED)
+
 struct object_slot {
   int next; /* next slot with same hash, for collisions */
   uint32_t hash;
@@ -974,7 +1012,7 @@ static jv jvp_object_new(int size) {
   for (int i=0; i<size*2; i++) {
     hashbuckets[i] = -1;
   }
-  jv r = {JV_KIND_OBJECT, 0, 0, size, {&obj->refcnt}};
+  jv r = {JVP_FLAGS_OBJECT, 0, 0, size, {&obj->refcnt}};
   return r;
 }
 
@@ -1320,40 +1358,36 @@ jv jv_object_iter_value(jv object, int iter) {
  * Memory management
  */
 jv jv_copy(jv j) {
-  if (jv_get_kind(j) == JV_KIND_ARRAY ||
-      jv_get_kind(j) == JV_KIND_STRING ||
-      jv_get_kind(j) == JV_KIND_OBJECT ||
-      (jv_get_kind(j) == JV_KIND_INVALID && j.u.ptr != 0)) {
-    jvp_refcnt_inc(j.u.ptr);
-  } else if (jv_is_literal_number(j)) {
+  if (JVP_IS_ALLOCATED(j)) {
     jvp_refcnt_inc(j.u.ptr);
   }
   return j;
 }
 
 void jv_free(jv j) {
-  if (jv_get_kind(j) == JV_KIND_ARRAY) {
-    jvp_array_free(j);
-  } else if (jv_get_kind(j) == JV_KIND_STRING) {
-    jvp_string_free(j);
-  } else if (jv_get_kind(j) == JV_KIND_OBJECT) {
-    jvp_object_free(j);
-  } else if (jv_get_kind(j) == JV_KIND_INVALID) {
-    jvp_invalid_free(j);
-  } else if (jv_is_literal_number(j)) {
-    jvp_literal_number_free(j);
+  switch(JVP_FLAGS(j)) {
+    case JVP_FLAGS_ARRAY:
+      jvp_array_free(j);
+      break;
+    case JVP_FLAGS_STRING:
+      jvp_string_free(j);
+      break;
+    case JVP_FLAGS_OBJECT:
+      jvp_object_free(j);
+      break;
+    case JVP_FLAGS_INVALID_MSG:
+      jvp_invalid_free(j);
+      break;
+    case JVP_FLAGS_NUMBER_L:
+      jvp_literal_number_free(j);
+      break;
   }
 }
 
 int jv_get_refcnt(jv j) {
-  switch (jv_get_kind(j)) {
-  case JV_KIND_ARRAY:
-  case JV_KIND_STRING:
-  case JV_KIND_OBJECT:
+  if (JVP_IS_ALLOCATED(j)) {
     return j.u.ptr->count;
-  case JV_KIND_NUMBER:
-    return jvp_number_is_literal(j) ? j.u.ptr->count : 1;
-  default:
+  } else {
     return 1;
   }
 }
@@ -1367,7 +1401,7 @@ int jv_equal(jv a, jv b) {
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER) {
-    if (jvp_number_is_literal(a) && jvp_number_is_literal(b)) {
+    if (JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_L) && JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_L)) {
       r = jvp_literal_number_equal(a, b);
     } else {
       r = jv_number_value(a) == jv_number_value(b);
@@ -1411,7 +1445,7 @@ int jv_identical(jv a, jv b) {
       r = a.u.ptr == b.u.ptr;
       break;
     case JV_KIND_NUMBER:
-      if (jvp_number_is_literal(a) && jvp_number_is_literal(b)) {
+      if (JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_L) && JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_L)) {
         r = a.u.ptr == b.u.ptr;
       } else {
         r = memcmp(&a.u.number, &b.u.number, sizeof(a.u.number)) == 0;
