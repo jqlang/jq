@@ -216,19 +216,26 @@ static block constant_fold(block a, block b, int op) {
   jv res = jv_invalid();
 
   if (block_const_kind(a) == JV_KIND_NUMBER) {
-    double na = jv_number_value(block_const(a));
-    double nb = jv_number_value(block_const(b));
+    jv jv_a = block_const(a);
+    jv jv_b = block_const(b);
+
+    double na = jv_number_value(jv_a);
+    double nb = jv_number_value(jv_b);
+
+    // consumes the numbers
+    int equal = jv_equal(jv_a, jv_b);
+
     switch (op) {
     case '+': res = jv_number(na + nb); break;
     case '-': res = jv_number(na - nb); break;
     case '*': res = jv_number(na * nb); break;
     case '/': res = jv_number(na / nb); break;
-    case EQ:  res = (na == nb ? jv_true() : jv_false()); break;
-    case NEQ: res = (na != nb ? jv_true() : jv_false()); break;
+    case EQ:  res = (equal ? jv_true() : jv_false()); break;
+    case NEQ: res = (!equal ? jv_true() : jv_false()); break;
     case '<': res = (na < nb ? jv_true() : jv_false()); break;
     case '>': res = (na > nb ? jv_true() : jv_false()); break;
-    case LESSEQ: res = (na <= nb ? jv_true() : jv_false()); break;
-    case GREATEREQ: res = (na >= nb ? jv_true() : jv_false()); break;
+    case LESSEQ: res = ((equal || (na <= nb)) ? jv_true() : jv_false()); break;
+    case GREATEREQ: res = ((equal || (na >= nb)) ? jv_true() : jv_false()); break;
     default: break;
     }
   } else if (op == '+' && block_const_kind(a) == JV_KIND_STRING) {
