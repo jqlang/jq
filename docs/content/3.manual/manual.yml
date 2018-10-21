@@ -292,10 +292,20 @@ sections:
           program can be a useful way of formatting JSON output from,
           say, `curl`.
 
+          An important point about the identity filter is that it 
+          guarantees to preserve the literal representation of values. 
+          This is particularly important when dealing with numbers 
+          which otherwise get truncated to an IEEE754 double precision 
+          representation.
+
         examples:
           - program: '.'
             input: '"Hello, world!"'
             output: ['"Hello, world!"']
+
+          - program: '. | tojson'
+            input: '12345678909876543212345'
+            output: ['"12345678909876543212345"']
 
       - title: "Object Identifier-Index: `.foo`, `.foo.bar`"
         body: |
@@ -511,6 +521,16 @@ sections:
       expression that takes an input, ignores it, and returns 42
       instead.
 
+      Numbers in jq are internally represented by their IEEE754 double 
+      precision approximation. Any arithmetic operation with numbers, 
+      whether they are literals or results of previous filters, will 
+      produce a double precision floating point result.
+
+      However, when parsing a literal jq will store the original literal
+      string. If no mutation is applied to this value then it will make
+      to the output in its original form, even if conversion to double 
+      would result in a loss. 
+
     entries:
       - title: "Array construction: `[]`"
         body: |
@@ -628,6 +648,18 @@ sections:
       etc.). However, jq never does implicit type conversions. If you
       try to add a string to an object you'll get an error message and
       no result.
+
+      Please note that all numbers are converted to IEEE754 double precision 
+      floating point representation. Arithmetic and logical operators are working
+      with these converted doubles. Results of all such operations are also limited 
+      to the double precision. 
+
+      The only exception to this behaviour of number is a snapshot of original number 
+      literal. When a number which originally was provided as a literal is never
+      mutated until the end of the program then it is printed to the output in its 
+      original literal form. This also includes cases when the original literal 
+      would be truncated when converted to the IEEE754 double precision floating point
+      number. See `literal` filter for more information on this topic.
 
     entries:
       - title: "Addition: `+`"
@@ -1233,6 +1265,36 @@ sections:
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
 
+      - title: "`literal`"
+        body: |
+
+          The `literal` function can be used to return the original literal
+          representation of a value as a string. This function can only be applied
+          to the simple types [string, null, false, true] and numbers which were provided
+          as literal constants. Calucated numbers don't have an associated literal, and will 
+          produce an error.
+
+          There is resemblence between this function and `tojson`, `tostring`. 
+          jq will preserve the original literal value of a number constant
+          in when converted to string via any of `literal`, `tostring`, `tojson`.
+          However, the `literal` varaint will provide type safety by returning an error
+          if applied to a computed number.
+
+          `fromjson` can be used to generate a literal number
+
+        examples: 
+          - program: '. as $big | [literal($big), ($big | tojson), ($big | tostring)] | map(.=="10000000000000000000000000000001")'
+            input: '10000000000000000000000000000001'
+            output: ['[true, true, true]']
+
+          - program: '(. + 1) as $big | (try literal($big) catch .), ($big | tojson), ($big | tostring)'
+            input: '10000000000000000000000000000001'
+            output: ['"literal value is not available for a calculated number"', '"1e+31"', '"1e+31"']
+
+          - program: 'literal(.) as $l | [$l, ($l | fromjson)] | tojson'
+            input: '10000000000000000000000000000001'
+            output: ['"[\"10000000000000000000000000000001\",10000000000000000000000000000001]"']
+         
       - title: "`type`"
         body: |
 
@@ -2018,12 +2080,10 @@ sections:
 
           != is "not equal", and 'a != b' returns the opposite value of 'a == b'
 
-          Numbers are now taken literally, so 1 != 1.0
-
         examples:
           - program: '.[] == 1'
             input: '[1, 1.0, "1", "banana"]'
-            output: ['true', 'false', 'false', 'false']
+            output: ['true', 'true', 'false', 'false']
 
       - title: if-then-else
         body: |

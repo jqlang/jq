@@ -1401,11 +1401,7 @@ int jv_equal(jv a, jv b) {
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER) {
-    if (JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_L) && JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_L)) {
-      r = jvp_literal_number_equal(a, b);
-    } else {
-      r = jv_number_value(a) == jv_number_value(b);
-    }
+    r = jv_number_value(a) == jv_number_value(b);
   } else if (a.kind_flags == b.kind_flags &&
              a.size == b.size &&
              a.u.ptr == b.u.ptr) {
@@ -1448,7 +1444,9 @@ int jv_identical(jv a, jv b) {
       if (JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_L) && JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_L)) {
         r = a.u.ptr == b.u.ptr;
       } else {
-        r = memcmp(&a.u.number, &b.u.number, sizeof(a.u.number)) == 0;
+        double an = jv_number_value(a);
+        double bn = jv_number_value(b);
+        r = memcmp(&an, &bn, sizeof(double)) == 0;
       }
       break;
     default:

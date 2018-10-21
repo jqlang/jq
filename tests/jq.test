@@ -540,8 +540,8 @@ null
 {"object": {"a":42}, "num":10.0}
 [true,  true,  false, false, false, false, false, false, false]
 [true,  true,  false, false, false, false, false, false, false]
-[false, false, true,  false, false, false, false, false, false]
-[false, false, false, true,  false, false, false, false, false]
+[false, false, true,  true,  false, false, false, false, false]
+[false, false, true,  true,  false, false, false, false, false]
 [false, false, false, false, true,  false, false, false, false]
 [false, false, false, false, false, true,  false, false, false]
 [false, false, false, false, false, false, true,  false, false]
@@ -1522,19 +1522,25 @@ false
 # For an example see #1652 and other linked issues
 #
 
+# We care about backward compatibility! 
+
+1.0 == 1.00
+null
+true
+
 # When no arithmetic is involved jq should preserve the literal value
 
-.
+literal(.)
 13911860366432393
-13911860366432393
+"13911860366432393"
 
-.[0]
+.[0] | tostring
 [13911860366432393]
-13911860366432393
+"13911860366432393"
 
-.x
+.x | tojson
 {"x":13911860366432393}
-13911860366432393
+"13911860366432393"
 
 
 # Applying arithmetic to the value will truncate the result to double
@@ -1550,4 +1556,18 @@ false
 .x - 10
 {"x":13911860366432393}
 13911860366432382
+
+13911860366432393 == 13911860366432392
+null
+true
+
+# literal(x) should fail for arrays, objects and calculated numbers
+
+[1e+12345, 1+1, {}, []] | map(try literal(.) catch .)[]
+null
+"1e+12345"
+"literal value is not available for a calculated number"
+"object ({}) isn't a simple type; only string, null, true, false and non calculated numbers can produce a literal"
+"array ([]) isn't a simple type; only string, null, true, false and non calculated numbers can produce a literal"
+
 
