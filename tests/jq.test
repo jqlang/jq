@@ -1522,11 +1522,11 @@ false
 # For an example see #1652 and other linked issues
 #
 
-# We care about backward compatibility! 
+# We are backward and sanity compatible
 
-1.0 == 1.00
-null
-true
+map(. == 1)
+[1, 1.0, 1.000, 100e-2, 1e+0, 0.0001e4]
+[true, true, true, true, true, true]
 
 # When no arithmetic is involved jq should preserve the literal value
 
