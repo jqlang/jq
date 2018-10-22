@@ -137,7 +137,7 @@ jv jv_invalid() {
 }
 
 jv jv_invalid_get_msg(jv inv) {
-  assert(jv_get_kind(inv) == JV_KIND_INVALID);
+  assert(JVP_HAS_KIND(inv, JV_KIND_INVALID));
 
   jv x;
   if (JVP_HAS_FLAGS(inv, JVP_FLAGS_INVALID_MSG)) {
@@ -292,7 +292,7 @@ typedef struct {
 } jvp_array;
 
 static jvp_array* jvp_array_ptr(jv a) {
-  assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
   return (jvp_array*)a.u.ptr;
 }
 
@@ -310,7 +310,7 @@ static jv jvp_array_new(unsigned size) {
 }
 
 static void jvp_array_free(jv a) {
-  assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
   if (jvp_refcnt_dec(a.u.ptr)) {
     jvp_array* array = jvp_array_ptr(a);
     for (int i=0; i<array->length; i++) {
@@ -321,17 +321,17 @@ static void jvp_array_free(jv a) {
 }
 
 static int jvp_array_length(jv a) {
-  assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
   return a.size;
 }
 
 static int jvp_array_offset(jv a) {
-  assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
   return a.offset;
 }
 
 static jv* jvp_array_read(jv a, int i) {
-  assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
   if (i >= 0 && i < jvp_array_length(a)) {
     jvp_array* array = jvp_array_ptr(a);
     assert(i + jvp_array_offset(a) < array->length);
@@ -400,7 +400,7 @@ static void jvp_clamp_slice_params(int len, int *pstart, int *pend)
 }
 
 static jv jvp_array_slice(jv a, int start, int end) {
-  assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
   int len = jvp_array_length(a);
   jvp_clamp_slice_params(len, &start, &end);
   assert(0 <= start && start <= end && end <= len);
@@ -437,14 +437,14 @@ jv jv_array() {
 }
 
 int jv_array_length(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(j, JV_KIND_ARRAY));
   int len = jvp_array_length(j);
   jv_free(j);
   return len;
 }
 
 jv jv_array_get(jv j, int idx) {
-  assert(jv_get_kind(j) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(j, JV_KIND_ARRAY));
   jv* slot = jvp_array_read(j, idx);
   jv val;
   if (slot) {
@@ -457,7 +457,7 @@ jv jv_array_get(jv j, int idx) {
 }
 
 jv jv_array_set(jv j, int idx, jv val) {
-  assert(jv_get_kind(j) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(j, JV_KIND_ARRAY));
 
   if (idx < 0)
     idx = jvp_array_length(j) + idx;
@@ -479,8 +479,8 @@ jv jv_array_append(jv j, jv val) {
 }
 
 jv jv_array_concat(jv a, jv b) {
-  assert(jv_get_kind(a) == JV_KIND_ARRAY);
-  assert(jv_get_kind(b) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
+  assert(JVP_HAS_KIND(b, JV_KIND_ARRAY));
 
   // FIXME: could be faster
   jv_array_foreach(b, i, elem) {
@@ -491,7 +491,7 @@ jv jv_array_concat(jv a, jv b) {
 }
 
 jv jv_array_slice(jv a, int start, int end) {
-  assert(jv_get_kind(a) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
   // copy/free of a coalesced
   return jvp_array_slice(a, start, end);
 }
@@ -557,7 +557,7 @@ typedef struct {
 } jvp_string;
 
 static jvp_string* jvp_string_ptr(jv a) {
-  assert(jv_get_kind(a) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(a, JV_KIND_STRING));
   return (jvp_string*)a.u.ptr;
 }
 
@@ -719,8 +719,8 @@ static uint32_t jvp_string_hash(jv jstr) {
 }
 
 static int jvp_string_equal(jv a, jv b) {
-  assert(jv_get_kind(a) == JV_KIND_STRING);
-  assert(jv_get_kind(b) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(a, JV_KIND_STRING));
+  assert(JVP_HAS_KIND(b, JV_KIND_STRING));
   jvp_string* stra = jvp_string_ptr(a);
   jvp_string* strb = jvp_string_ptr(b);
   if (jvp_string_length(stra) != jvp_string_length(strb)) return 0;
@@ -747,14 +747,14 @@ jv jv_string(const char* str) {
 }
 
 int jv_string_length_bytes(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(j, JV_KIND_STRING));
   int r = jvp_string_length(jvp_string_ptr(j));
   jv_free(j);
   return r;
 }
 
 int jv_string_length_codepoints(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(j, JV_KIND_STRING));
   const char* i = jv_string_value(j);
   const char* end = i + jv_string_length_bytes(jv_copy(j));
   int c = 0, len = 0;
@@ -765,8 +765,8 @@ int jv_string_length_codepoints(jv j) {
 
 
 jv jv_string_indexes(jv j, jv k) {
-  assert(jv_get_kind(j) == JV_KIND_STRING);
-  assert(jv_get_kind(k) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(j, JV_KIND_STRING));
+  assert(JVP_HAS_KIND(k, JV_KIND_STRING));
   const char *jstr = jv_string_value(j);
   const char *idxstr = jv_string_value(k);
   const char *p;
@@ -785,8 +785,8 @@ jv jv_string_indexes(jv j, jv k) {
 }
 
 jv jv_string_split(jv j, jv sep) {
-  assert(jv_get_kind(j) == JV_KIND_STRING);
-  assert(jv_get_kind(sep) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(j, JV_KIND_STRING));
+  assert(JVP_HAS_KIND(sep, JV_KIND_STRING));
   const char *jstr = jv_string_value(j);
   const char *jend = jstr + jv_string_length_bytes(jv_copy(j));
   const char *sepstr = jv_string_value(sep);
@@ -817,7 +817,7 @@ jv jv_string_split(jv j, jv sep) {
 }
 
 jv jv_string_explode(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(j, JV_KIND_STRING));
   const char* i = jv_string_value(j);
   int len = jv_string_length_bytes(jv_copy(j));
   const char* end = i + len;
@@ -830,7 +830,7 @@ jv jv_string_explode(jv j) {
 }
 
 jv jv_string_implode(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_ARRAY);
+  assert(JVP_HAS_KIND(j, JV_KIND_ARRAY));
   int len = jv_array_length(jv_copy(j));
   jv s = jv_string_empty(len);
   int i;
@@ -839,7 +839,7 @@ jv jv_string_implode(jv j) {
 
   for (i = 0; i < len; i++) {
     jv n = jv_array_get(jv_copy(j), i);
-    assert(jv_get_kind(n) == JV_KIND_NUMBER);
+    assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
     int nv = jv_number_value(n);
     if (nv > 0x10FFFF)
       nv = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
@@ -851,19 +851,19 @@ jv jv_string_implode(jv j) {
 }
 
 unsigned long jv_string_hash(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(j, JV_KIND_STRING));
   uint32_t hash = jvp_string_hash(j);
   jv_free(j);
   return hash;
 }
 
 const char* jv_string_value(jv j) {
-  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(j, JV_KIND_STRING));
   return jvp_string_ptr(j)->data;
 }
 
 jv jv_string_slice(jv j, int start, int end) {
-  assert(jv_get_kind(j) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(j, JV_KIND_STRING));
   const char *s = jv_string_value(j);
   int len = jv_string_length_bytes(jv_copy(j));
   int i;
@@ -1017,17 +1017,17 @@ static jv jvp_object_new(int size) {
 }
 
 static jvp_object* jvp_object_ptr(jv o) {
-  assert(jv_get_kind(o) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(o, JV_KIND_OBJECT));
   return (jvp_object*)o.u.ptr;
 }
 
 static uint32_t jvp_object_mask(jv o) {
-  assert(jv_get_kind(o) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(o, JV_KIND_OBJECT));
   return (o.size * 2) - 1;
 }
 
 static int jvp_object_size(jv o) {
-  assert(jv_get_kind(o) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(o, JV_KIND_OBJECT));
   return o.size;
 }
 
@@ -1075,7 +1075,7 @@ static struct object_slot* jvp_object_add_slot(jv object, jv key, int* bucket) {
 }
 
 static jv* jvp_object_read(jv object, jv key) {
-  assert(jv_get_kind(key) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(key, JV_KIND_STRING));
   int* bucket = jvp_object_find_bucket(object, key);
   struct object_slot* slot = jvp_object_find_slot(object, key, bucket);
   if (slot == 0) return 0;
@@ -1083,7 +1083,7 @@ static jv* jvp_object_read(jv object, jv key) {
 }
 
 static void jvp_object_free(jv o) {
-  assert(jv_get_kind(o) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(o, JV_KIND_OBJECT));
   if (jvp_refcnt_dec(o.u.ptr)) {
     for (int i=0; i<jvp_object_size(o); i++) {
       struct object_slot* slot = jvp_object_get_slot(o, i);
@@ -1097,7 +1097,7 @@ static void jvp_object_free(jv o) {
 }
 
 static jv jvp_object_rehash(jv object) {
-  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
   assert(jvp_refcnt_unshared(object.u.ptr));
   int size = jvp_object_size(object);
   jv new_object = jvp_object_new(size * 2);
@@ -1116,7 +1116,7 @@ static jv jvp_object_rehash(jv object) {
 }
 
 static jv jvp_object_unshare(jv object) {
-  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
   if (jvp_refcnt_unshared(object.u.ptr))
     return object;
 
@@ -1165,7 +1165,7 @@ static jv* jvp_object_write(jv* object, jv key) {
 }
 
 static int jvp_object_delete(jv* object, jv key) {
-  assert(jv_get_kind(key) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(key, JV_KIND_STRING));
   *object = jvp_object_unshare(*object);
   int* bucket = jvp_object_find_bucket(*object, key);
   int* prev_ptr = bucket;
@@ -1218,8 +1218,8 @@ jv jv_object() {
 }
 
 jv jv_object_get(jv object, jv key) {
-  assert(jv_get_kind(object) == JV_KIND_OBJECT);
-  assert(jv_get_kind(key) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
+  assert(JVP_HAS_KIND(key, JV_KIND_STRING));
   jv* slot = jvp_object_read(object, key);
   jv val;
   if (slot) {
@@ -1233,8 +1233,8 @@ jv jv_object_get(jv object, jv key) {
 }
 
 int jv_object_has(jv object, jv key) {
-  assert(jv_get_kind(object) == JV_KIND_OBJECT);
-  assert(jv_get_kind(key) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
+  assert(JVP_HAS_KIND(key, JV_KIND_STRING));
   jv* slot = jvp_object_read(object, key);
   int res = slot ? 1 : 0;
   jv_free(object);
@@ -1243,8 +1243,8 @@ int jv_object_has(jv object, jv key) {
 }
 
 jv jv_object_set(jv object, jv key, jv value) {
-  assert(jv_get_kind(object) == JV_KIND_OBJECT);
-  assert(jv_get_kind(key) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
+  assert(JVP_HAS_KIND(key, JV_KIND_STRING));
   // copy/free of object, key, value coalesced
   jv* slot = jvp_object_write(&object, key);
   jv_free(*slot);
@@ -1253,22 +1253,22 @@ jv jv_object_set(jv object, jv key, jv value) {
 }
 
 jv jv_object_delete(jv object, jv key) {
-  assert(jv_get_kind(object) == JV_KIND_OBJECT);
-  assert(jv_get_kind(key) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
+  assert(JVP_HAS_KIND(key, JV_KIND_STRING));
   jvp_object_delete(&object, key);
   jv_free(key);
   return object;
 }
 
 int jv_object_length(jv object) {
-  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
   int n = jvp_object_length(object);
   jv_free(object);
   return n;
 }
 
 jv jv_object_merge(jv a, jv b) {
-  assert(jv_get_kind(a) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(a, JV_KIND_OBJECT));
   jv_object_foreach(b, k, v) {
     a = jv_object_set(a, k, v);
   }
@@ -1277,14 +1277,14 @@ jv jv_object_merge(jv a, jv b) {
 }
 
 jv jv_object_merge_recursive(jv a, jv b) {
-  assert(jv_get_kind(a) == JV_KIND_OBJECT);
-  assert(jv_get_kind(b) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(a, JV_KIND_OBJECT));
+  assert(JVP_HAS_KIND(b, JV_KIND_OBJECT));
 
   jv_object_foreach(b, k, v) {
     jv elem = jv_object_get(jv_copy(a), jv_copy(k));
     if (jv_is_valid(elem) &&
-        jv_get_kind(elem) == JV_KIND_OBJECT &&
-        jv_get_kind(v) == JV_KIND_OBJECT) {
+        JVP_HAS_KIND(elem, JV_KIND_OBJECT) &&
+        JVP_HAS_KIND(v, JV_KIND_OBJECT)) {
       a = jv_object_set(a, k, jv_object_merge_recursive(elem, v));
     } else {
       jv_free(elem);
@@ -1296,8 +1296,8 @@ jv jv_object_merge_recursive(jv a, jv b) {
 }
 
 int jv_object_contains(jv a, jv b) {
-  assert(jv_get_kind(a) == JV_KIND_OBJECT);
-  assert(jv_get_kind(b) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(a, JV_KIND_OBJECT));
+  assert(JVP_HAS_KIND(b, JV_KIND_OBJECT));
   int r = 1;
 
   jv_object_foreach(b, key, b_val) {
@@ -1325,12 +1325,12 @@ int jv_object_iter_valid(jv object, int i) {
 }
 
 int jv_object_iter(jv object) {
-  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
   return jv_object_iter_next(object, -1);
 }
 
 int jv_object_iter_next(jv object, int iter) {
-  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
   assert(iter != ITER_FINISHED);
   struct object_slot* slot;
   do {
@@ -1346,7 +1346,7 @@ int jv_object_iter_next(jv object, int iter) {
 
 jv jv_object_iter_key(jv object, int iter) {
   jv s = jvp_object_get_slot(object, iter)->string;
-  assert(jv_get_kind(s) == JV_KIND_STRING);
+  assert(JVP_HAS_KIND(s, JV_KIND_STRING));
   return jv_copy(s);
 }
 
@@ -1400,7 +1400,7 @@ int jv_equal(jv a, jv b) {
   int r;
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
-  } else if (jv_get_kind(a) == JV_KIND_NUMBER) {
+  } else if (JVP_HAS_KIND(a, JV_KIND_NUMBER)) {
     r = jv_number_value(a) == jv_number_value(b);
   } else if (a.kind_flags == b.kind_flags &&
              a.size == b.size &&
@@ -1463,11 +1463,11 @@ int jv_contains(jv a, jv b) {
   int r = 1;
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
-  } else if (jv_get_kind(a) == JV_KIND_OBJECT) {
+  } else if (JVP_HAS_KIND(a, JV_KIND_OBJECT)) {
     r = jv_object_contains(jv_copy(a), jv_copy(b));
-  } else if (jv_get_kind(a) == JV_KIND_ARRAY) {
+  } else if (JVP_HAS_KIND(a, JV_KIND_ARRAY)) {
     r = jv_array_contains(jv_copy(a), jv_copy(b));
-  } else if (jv_get_kind(a) == JV_KIND_STRING) {
+  } else if (JVP_HAS_KIND(a, JV_KIND_STRING)) {
     r = strstr(jv_string_value(a), jv_string_value(b)) != 0;
   } else {
     r = jv_equal(jv_copy(a), jv_copy(b));
