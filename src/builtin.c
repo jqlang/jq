@@ -471,23 +471,21 @@ static jv f_tostring(jq_state *jq, jv input) {
   }
 }
 
-static jv f_literal(jq_state *jq, jv unused_input, jv a) {
-  jv_free(unused_input);
-  switch(jv_get_kind(a)) {
+static jv f_toliteral(jq_state *jq, jv input) {
+  switch(jv_get_kind(input)) {
     case JV_KIND_NUMBER:
-      if (!jv_is_literal_number(a)) {
-        return ret_error(a, jv_string("literal value is not available for a calculated number"));
+      if (!jv_is_literal_number(input)) {
+        return ret_error(input, jv_string("literal value is not available for a calculated number"));
       } else {
         // fallthrough!
       }
     case JV_KIND_NULL:
     case JV_KIND_TRUE:
     case JV_KIND_FALSE:
-      return jv_dump_string(a, 0);
     case JV_KIND_STRING:
-      return a;
+      return jv_dump_string(input, 0);
     default:
-      return type_error(a, "isn't a simple type; only string, null, true, false and non calculated numbers can produce a literal");
+      return type_error(input, "isn't a simple type; only string, null, true, false and non calculated numbers can produce a literal");
   }
 }
 
@@ -1631,7 +1629,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_json_parse, "fromjson", 1},
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
-  {(cfunction_ptr)f_literal, "literal", 2},
+  {(cfunction_ptr)f_toliteral, "toliteral", 1},
   {(cfunction_ptr)f_keys, "keys", 1},
   {(cfunction_ptr)f_keys_unsorted, "keys_unsorted", 1},
   {(cfunction_ptr)f_startswith, "startswith", 2},

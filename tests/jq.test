@@ -1518,7 +1518,7 @@ false
 
 
 #
-# Tests to cover the new literal number functionality
+# Tests to cover the new toliteral number functionality
 # For an example see #1652 and other linked issues
 #
 
@@ -1530,7 +1530,7 @@ true
 
 # When no arithmetic is involved jq should preserve the literal value
 
-literal(.)
+toliteral
 13911860366432393
 "13911860366432393"
 
@@ -1561,9 +1561,9 @@ literal(.)
 null
 true
 
-# literal(x) should fail for arrays, objects and calculated numbers
+# (x | toliteral) should fail for arrays, objects and calculated numbers
 
-[1e+12345, 1+1, {}, []] | map(try literal(.) catch .)[]
+[1e+12345, 1+1, {}, []] | map(try (. | toliteral) catch .)[]
 null
 "1e+12345"
 "literal value is not available for a calculated number"

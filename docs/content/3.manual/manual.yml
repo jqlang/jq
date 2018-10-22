@@ -659,7 +659,7 @@ sections:
       mutated until the end of the program then it is printed to the output in its 
       original literal form. This also includes cases when the original literal 
       would be truncated when converted to the IEEE754 double precision floating point
-      number. See `literal` filter for more information on this topic.
+      number. See `toliteral` filter for more information on this topic.
 
     entries:
       - title: "Addition: `+`"
@@ -1265,10 +1265,10 @@ sections:
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
 
-      - title: "`literal`"
+      - title: "`toliteral`"
         body: |
 
-          The `literal` function can be used to return the original literal
+          The `toliteral` function can be used to return the original literal
           representation of a value as a string. This function can only be applied
           to the simple types [string, null, false, true] and numbers which were provided
           as literal constants. Calucated numbers don't have an associated literal, and will 
@@ -1276,25 +1276,33 @@ sections:
 
           There is resemblence between this function and `tojson`, `tostring`. 
           jq will preserve the original literal value of a number constant
-          in when converted to string via any of `literal`, `tostring`, `tojson`.
+          when converted to string via any of `literal`, `tostring`, `tojson`.
           However, the `literal` varaint will provide type safety by returning an error
           if applied to a computed number.
+
+          In practice, `toliteral` can be used as a typesefe version of `tojson`
+          Please note that for strings `toliteral` will produce a quoted JSON string,
+          while `tostring` will produce the string itelf. In this, `toliteral` works
+          like `tojson`
 
           `fromjson` can be used to generate a literal number
 
         examples: 
-          - program: '. as $big | [literal($big), ($big | tojson), ($big | tostring)] | map(.=="10000000000000000000000000000001")'
+          - program: '. as $big | [($big | toliteral), ($big | tojson), ($big | tostring)] | map(.=="10000000000000000000000000000001")'
             input: '10000000000000000000000000000001'
             output: ['[true, true, true]']
 
-          - program: '(. + 1) as $big | (try literal($big) catch .), ($big | tojson), ($big | tostring)'
+          - program: '(. + 1) as $big | (try ($big | toliteral) catch .), ($big | tojson), ($big | tostring)'
             input: '10000000000000000000000000000001'
             output: ['"literal value is not available for a calculated number"', '"1e+31"', '"1e+31"']
 
-          - program: 'literal(.) as $l | [$l, ($l | fromjson)] | tojson'
+          - program: '(. | toliteral) as $l | [$l, ($l | fromjson)] | tojson'
             input: '10000000000000000000000000000001'
             output: ['"[\"10000000000000000000000000000001\",10000000000000000000000000000001]"']
          
+          - program: '(. | toliteral) == (. | tojson)'
+            input: '"Hello literal"'
+            output: [true]
       - title: "`type`"
         body: |
 
