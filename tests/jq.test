@@ -1563,11 +1563,12 @@ true
 
 # (x | toliteral) should fail for arrays, objects and calculated numbers
 
-[1e+12345, 1+1, {}, []] | map(try (. | toliteral) catch .)[]
+[1e+12345, 1+1, {}, [], nan, infinite] | map(try (. | toliteral) catch .)[]
 null
 "1e+12345"
-"literal value is not available for a calculated number"
+"literal value is not available for a calculated number, infinite number or a NaN"
 "object ({}) isn't a simple type; only string, null, true, false and non calculated numbers can produce a literal"
 "array ([]) isn't a simple type; only string, null, true, false and non calculated numbers can produce a literal"
-
+"literal value is not available for a calculated number, infinite number or a NaN"
+"literal value is not available for a calculated number, infinite number or a NaN"
 

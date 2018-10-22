@@ -1272,20 +1272,22 @@ sections:
           representation of a value as a string. This function can only be applied
           to the simple types [string, null, false, true] and numbers which were provided
           as literal constants. Calucated numbers don't have an associated literal, and will 
-          produce an error.
+          produce an error. Trying to get a literal of NaN or infinity will produce 
+          an error as well.
 
           There is resemblence between this function and `tojson`, `tostring`. 
           jq will preserve the original literal value of a number constant
           when converted to string via any of `literal`, `tostring`, `tojson`.
-          However, the `literal` varaint will provide type safety by returning an error
-          if applied to a computed number.
+          However, the `literal` varaint will provide type safety by as per
+          the rules described above.
 
-          In practice, `toliteral` can be used as a typesefe version of `tojson`
           Please note that for strings `toliteral` will produce a quoted JSON string,
           while `tostring` will produce the string itelf. In this, `toliteral` works
           like `tojson`
 
-          `fromjson` can be used to generate a literal number
+          In practice, `toliteral` can be used as a typesefe version of `tojson`.
+          
+          `fromjson` can be used to generate a number from its literal representation.
 
         examples: 
           - program: '. as $big | [($big | toliteral), ($big | tojson), ($big | tostring)] | map(.=="10000000000000000000000000000001")'
@@ -1294,7 +1296,7 @@ sections:
 
           - program: '(. + 1) as $big | (try ($big | toliteral) catch .), ($big | tojson), ($big | tostring)'
             input: '10000000000000000000000000000001'
-            output: ['"literal value is not available for a calculated number"', '"1e+31"', '"1e+31"']
+            output: ['"literal value is not available for a calculated number, infinite number or a NaN"', '"1e+31"', '"1e+31"']
 
           - program: '(. | toliteral) as $l | [$l, ($l | fromjson)] | tojson'
             input: '10000000000000000000000000000001'
