@@ -229,9 +229,9 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     put_str("true", F, S, flags & JV_PRINT_ISATTY);
     break;
   case JV_KIND_NUMBER: {
-    if (jv_is_literal_number(x)) {
+    if (jv_number_has_literal(x)) {
       const char * literal_data;
-      int length = jv_literal_number_literal(x, &literal_data);
+      int length = jv_number_get_literal(x, &literal_data);
       put_buf(literal_data, length, F, S, flags & JV_PRINT_ISATTY);
     } else {
       double d = jv_number_value(x);

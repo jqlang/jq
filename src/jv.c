@@ -226,7 +226,7 @@ static void jvp_literal_number_free(jv j) {
   }
 }
 
-jv jv_literal_number(double number, const char * literal, int literal_length) {
+jv jv_number_with_literal(double number, const char * literal, int literal_length) {
   return jvp_literal_number_new(number, literal, literal_length);
 }
 
@@ -261,11 +261,11 @@ int jv_is_integer(jv j){
   return x == (int)x;
 }
 
-int jv_is_literal_number(jv j) {
+int jv_number_has_literal(jv j) {
   return JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_L);
 }
 
-int jv_literal_number_literal(jv j, const char* *literal_data_out) {
+int jv_number_get_literal(jv j, const char* *literal_data_out) {
   assert(JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_L));
   assert(literal_data_out != NULL);
   *literal_data_out = jvp_literal_number_ptr(j)->literal_data;

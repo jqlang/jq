@@ -474,7 +474,7 @@ static jv f_tostring(jq_state *jq, jv input) {
 static jv f_toliteral(jq_state *jq, jv input) {
   switch(jv_get_kind(input)) {
     case JV_KIND_NUMBER:
-      if (!jv_is_literal_number(input)) {
+      if (!jv_number_has_literal(input)) {
         return ret_error(input, jv_string("literal value is not available for a calculated number, infinite number or a NaN"));
       } else {
         // fallthrough!
