@@ -312,7 +312,7 @@ static jv check_object_key(block k) {
     char errbuf[15];
     return jv_string_fmt("Cannot use %s (%s) as object key",
         jv_kind_name(block_const_kind(k)),
-        jv_dump_string_trunc(jv_copy(block_const(k)), errbuf, sizeof(errbuf)));
+        jv_dump_string_trunc(block_const(k), errbuf, sizeof(errbuf)));
   }
   return jv_invalid();
 }
