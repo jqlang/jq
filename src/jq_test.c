@@ -105,6 +105,9 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
         if (buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
           break;
       }
+      
+      must_fail = 0;
+      check_msg = 0;
 
       continue;
     } else if (skip == 0) {
