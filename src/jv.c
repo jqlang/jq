@@ -521,14 +521,13 @@ jv jv_array_indexes(jv a, jv b) {
   jv res = jv_array();
   int idx = -1;
   jv_array_foreach(a, ai, aelem) {
+    jv_free(aelem);
     jv_array_foreach(b, bi, belem) {
-      // quieten compiler warnings about aelem not being used... by
-      // using it
-      if ((bi == 0 && !jv_equal(jv_copy(aelem), jv_copy(belem))) ||
-          (bi > 0 && !jv_equal(jv_array_get(jv_copy(a), ai + bi), jv_copy(belem))))
+      if (!jv_equal(jv_array_get(jv_copy(a), ai + bi), jv_copy(belem)))
         idx = -1;
       else if (bi == 0 && idx == -1)
         idx = ai;
+      jv_free(belem);
     }
     if (idx > -1)
       res = jv_array_append(res, jv_number(idx));
@@ -841,6 +840,7 @@ jv jv_string_implode(jv j) {
     jv n = jv_array_get(jv_copy(j), i);
     assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
     int nv = jv_number_value(n);
+    jv_free(n);
     if (nv > 0x10FFFF)
       nv = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
     s = jv_string_append_codepoint(s, nv);

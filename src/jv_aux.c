@@ -32,6 +32,8 @@ static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
   } else {
     double dstart = jv_number_value(start_jv);
     double dend = jv_number_value(end_jv);
+    jv_free(start_jv);
+    jv_free(end_jv);
     if (dstart < 0) dstart += len;
     if (dend < 0) dend += len;
     if (dstart < 0) dstart = 0;
@@ -69,6 +71,7 @@ jv jv_get(jv t, jv k) {
         jv_free(v);
         v = jv_null();
       }
+      jv_free(k);
     } else {
       jv_free(t);
       jv_free(k);
@@ -135,6 +138,7 @@ jv jv_set(jv t, jv k, jv v) {
              (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
     if (isnull) t = jv_array();
     t = jv_array_set(t, (int)jv_number_value(k), v);
+    jv_free(k);
   } else if (jv_get_kind(k) == JV_KIND_OBJECT &&
              (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
     if (isnull) t = jv_array();
@@ -202,6 +206,7 @@ jv jv_has(jv t, jv k) {
              jv_get_kind(k) == JV_KIND_NUMBER) {
     jv elem = jv_array_get(t, (int)jv_number_value(k));
     ret = jv_bool(jv_is_valid(elem));
+    jv_free(k);
     jv_free(elem);
   } else {
     ret = jv_invalid_with_msg(jv_string_fmt("Cannot check whether %s has a %s key",
@@ -233,6 +238,7 @@ static jv jv_dels(jv t, jv keys) {
         } else {
           nonneg_keys = jv_array_append(nonneg_keys, key);
         }
+        jv_free(key);
       } else if (jv_get_kind(key) == JV_KIND_OBJECT) {
         int start, end;
         if (parse_slice(jv_copy(t), key, &start, &end)) {
@@ -240,6 +246,7 @@ static jv jv_dels(jv t, jv keys) {
           ends = jv_array_append(ends, jv_number(end));
         } else {
           jv_free(new_array);
+          jv_free(key);
           new_array = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
           goto arr_out;
         }
