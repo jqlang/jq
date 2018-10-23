@@ -170,7 +170,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order.jq                                \
         tests/modules/test_bind_order0.jq                               \
         tests/modules/test_bind_order1.jq                               \
-        tests/modules/test_bind_order2.jq tests/onig.supp               \
+        tests/modules/test_bind_order2.jq                               \
+        tests/onig.supp tests/local.supp                                \
         tests/onig.test tests/setup tests/torture/input0.json		\
         tests/optional.test tests/optionaltest				\
 	tests/utf8-truncate.jq tests/utf8test				\
