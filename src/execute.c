@@ -1014,6 +1014,9 @@ jq_state *jq_init(void) {
   jq->attrs = jv_object();
   jq->path = jv_null();
   jq->value_at_path = jv_null();
+
+  jq->nomem_handler = NULL;
+  jq->nomem_handler_data = NULL;
   return jq;
 }
 
