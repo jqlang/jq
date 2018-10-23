@@ -509,7 +509,10 @@ jv jq_next(jq_state *jq) {
       uint16_t v = *pc++;
       jv* var = frame_local_var(jq, v, level);
       jv max = stack_pop(jq);
-      if (raising) goto do_backtrack;
+      if (raising) {
+        jv_free(max);
+        goto do_backtrack;
+      } 
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
           jv_get_kind(max) != JV_KIND_NUMBER) {
         set_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
