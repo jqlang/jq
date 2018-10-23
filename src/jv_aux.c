@@ -3,6 +3,15 @@
 #include <assert.h>
 #include "jv_alloc.h"
 
+// making this static verbose function here
+// until we introduce a less confusing naming scheme
+// of jv_* API with regards to the memory management
+static double jv_number_get_value_and_consume(jv number) {
+  double value = jv_number_value(number);
+  jv_free(number);
+  return value;
+}
+
 static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
   // Array slices
   jv start_jv = jv_object_get(jv_copy(slice), jv_string("start"));
@@ -238,7 +247,6 @@ static jv jv_dels(jv t, jv keys) {
         } else {
           nonneg_keys = jv_array_append(nonneg_keys, key);
         }
-        jv_free(key);
       } else if (jv_get_kind(key) == JV_KIND_OBJECT) {
         int start, end;
         if (parse_slice(jv_copy(t), key, &start, &end)) {
@@ -265,7 +273,7 @@ static jv jv_dels(jv t, jv keys) {
     jv_array_foreach(t, i, elem) {
       int del = 0;
       while (neg_idx < jv_array_length(jv_copy(neg_keys))) {
-        int delidx = len + (int)jv_number_value(jv_array_get(jv_copy(neg_keys), neg_idx));
+        int delidx = len + (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(neg_keys), neg_idx));
         if (i == delidx) {
           del = 1;
         }
@@ -275,7 +283,7 @@ static jv jv_dels(jv t, jv keys) {
         neg_idx++;
       }
       while (nonneg_idx < jv_array_length(jv_copy(nonneg_keys))) {
-        int delidx = (int)jv_number_value(jv_array_get(jv_copy(nonneg_keys), nonneg_idx));
+        int delidx = (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(nonneg_keys), nonneg_idx));
         if (i == delidx) {
           del = 1;
         }
@@ -285,8 +293,8 @@ static jv jv_dels(jv t, jv keys) {
         nonneg_idx++;
       }
       for (int sidx=0; !del && sidx<jv_array_length(jv_copy(starts)); sidx++) {
-        if ((int)jv_number_value(jv_array_get(jv_copy(starts), sidx)) <= i &&
-            i < (int)jv_number_value(jv_array_get(jv_copy(ends), sidx))) {
+        if ((int)jv_number_get_value_and_consume(jv_array_get(jv_copy(starts), sidx)) <= i &&
+            i < (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(ends), sidx))) {
           del = 1;
         }
       }
