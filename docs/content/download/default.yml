@@ -13,6 +13,10 @@ body:
       jq is licensed under the MIT license. For all of the gory
       details, read the file `COPYING` in the source distribution.
 
+      jq uses a C library for decimal number support. This is an ICU 1.8.1
+      licensed code obtained from the ICU downloads archive
+      http://download.icu-project.org/files/decNumber/decNumber-icu-368.zip.
+
 
       ### Linux
 
