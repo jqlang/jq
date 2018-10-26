@@ -1,0 +1,101 @@
+Skipped 9 tests
+Testing '.[0]' at line number 37
+Hit the number of tests limit (1), breaking
+1 of 1 tests passed (0 malformed)
+==9681== 17 bytes in 1 blocks are definitely lost in loss record 4 of 45
+==9681==    at 0x100180545: malloc (vg_replace_malloc.c:302)
+==9681==    by 0x1000240D8: jv_mem_alloc (jv_alloc.c:122)
+==9681==    by 0x10001F425: jv_number_with_literal (jv.c:193)
+==9681==    by 0x10002F9C8: check_literal (jv_parse.c:508)
+==9681==    by 0x10002EAA4: jv_parser_next (jv_parse.c:797)
+==9681==    by 0x10002FBF2: jv_parse_sized (jv_parse.c:830)
+==9681==    by 0x10003544B: jq_yylex (lexer.l:90)
+==9681==    by 0x100036FB4: yylex (parser.y:153)
+==9681==    by 0x100037352: yyparse (parser.c:2292)
+==9681==    by 0x10003B0FD: jq_parse (parser.y:967)
+==9681==    by 0x100032CD4: load_program (linker.c:374)
+==9681==    by 0x10001C5B3: jq_compile_args (execute.c:1172)
+==9681==
+
+
+Skipped 10 tests
+Testing '.[2]' at line number 41
+Hit the number of tests limit (1), breaking
+1 of 1 tests passed (0 malformed)
+==9690== 17 bytes in 1 blocks are definitely lost in loss record 4 of 45
+==9690==    at 0x100180545: malloc (vg_replace_malloc.c:302)
+==9690==    by 0x1000240D8: jv_mem_alloc (jv_alloc.c:122)
+==9690==    by 0x10001F425: jv_number_with_literal (jv.c:193)
+==9690==    by 0x10002F9C8: check_literal (jv_parse.c:508)
+==9690==    by 0x10002EAA4: jv_parser_next (jv_parse.c:797)
+==9690==    by 0x10002FBF2: jv_parse_sized (jv_parse.c:830)
+==9690==    by 0x10003544B: jq_yylex (lexer.l:90)
+==9690==    by 0x100036FB4: yylex (parser.y:153)
+==9690==    by 0x100037352: yyparse (parser.c:2292)
+==9690==    by 0x10003B0FD: jq_parse (parser.y:967)
+==9690==    by 0x100032CD4: load_program (linker.c:374)
+==9690==    by 0x10001C5B3: jq_compile_args (execute.c:1172)
+==9690==
+
+Skipped 12 tests
+Testing '.[2:4]' at line number 49
+Hit the number of tests limit (1), breaking
+1 of 1 tests passed (0 malformed)
+==9713== 34 bytes in 2 blocks are definitely lost in loss record 15 of 45
+==9713==    at 0x100180545: malloc (vg_replace_malloc.c:302)
+==9713==    by 0x1000240D8: jv_mem_alloc (jv_alloc.c:122)
+==9713==    by 0x10001F425: jv_number_with_literal (jv.c:193)
+==9713==    by 0x10002F9C8: check_literal (jv_parse.c:508)
+==9713==    by 0x10002EAA4: jv_parser_next (jv_parse.c:797)
+==9713==    by 0x10002FBF2: jv_parse_sized (jv_parse.c:830)
+==9713==    by 0x10003544B: jq_yylex (lexer.l:90)
+==9713==    by 0x100036FB4: yylex (parser.y:153)
+==9713==    by 0x100037352: yyparse (parser.c:2292)
+==9713==    by 0x10003B0FD: jq_parse (parser.y:967)
+==9713==    by 0x100032CD4: load_program (linker.c:374)
+==9713==    by 0x10001C5B3: jq_compile_args (execute.c:1172)
+==9713==
+
+Skipped 13 tests
+Testing '.[2:4]' at line number 53
+Hit the number of tests limit (1), breaking
+1 of 1 tests passed (0 malformed)
+==9714== 34 bytes in 2 blocks are definitely lost in loss record 15 of 45
+==9714==    at 0x100180545: malloc (vg_replace_malloc.c:302)
+==9714==    by 0x1000240D8: jv_mem_alloc (jv_alloc.c:122)
+==9714==    by 0x10001F425: jv_number_with_literal (jv.c:193)
+==9714==    by 0x10002F9C8: check_literal (jv_parse.c:508)
+==9714==    by 0x10002EAA4: jv_parser_next (jv_parse.c:797)
+==9714==    by 0x10002FBF2: jv_parse_sized (jv_parse.c:830)
+==9714==    by 0x10003544B: jq_yylex (lexer.l:90)
+==9714==    by 0x100036FB4: yylex (parser.y:153)
+==9714==    by 0x100037352: yyparse (parser.c:2292)
+==9714==    by 0x10003B0FD: jq_parse (parser.y:967)
+==9714==    by 0x100032CD4: load_program (linker.c:374)
+==9714==    by 0x10001C5B3: jq_compile_args (execute.c:1172)
+==9714==
+
+Skipped 14 tests
+Testing '.[:3]' at line number 57
+Hit the number of tests limit (1), breaking
+1 of 1 tests passed (0 malformed)
+==9715== 17 bytes in 1 blocks are definitely lost in loss record 4 of 45
+==9715==    at 0x100180545: malloc (vg_replace_malloc.c:302)
+==9715==    by 0x1000240D8: jv_mem_alloc (jv_alloc.c:122)
+==9715==    by 0x10001F425: jv_number_with_literal (jv.c:193)
+==9715==    by 0x10002F9C8: check_literal (jv_parse.c:508)
+==9715==    by 0x10002EAA4: jv_parser_next (jv_parse.c:797)
+==9715==    by 0x10002FBF2: jv_parse_sized (jv_parse.c:830)
+==9715==    by 0x10003544B: jq_yylex (lexer.l:90)
+==9715==    by 0x100036FB4: yylex (parser.y:153)
+==9715==    by 0x100037352: yyparse (parser.c:2292)
+==9715==    by 0x10003B0FD: jq_parse (parser.y:967)
+==9715==    by 0x100032CD4: load_program (linker.c:374)
+==9715==    by 0x10001C5B3: jq_compile_args (execute.c:1172)
+==9715==
+
+Skipped 19 tests
+Testing '.foo, .bar' at line number 78
+Hit the number of tests limit (1), breaking
+1 of 1 tests passed (0 malformed)
+
