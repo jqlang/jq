@@ -33,6 +33,12 @@ tail: |
   [Freenode](https://webchat.freenode.net/).
 
 news:
+  - date: 1 November 2018
+    body: |
+        jq 1.6 released. See installation options on the [download](/jq/download/)
+        page, and the [release notes](https://github.com/stedolan/jq/releases/tag/jq-1.6)
+        for details.
+
   - date: 15 August 2015
     body: |
 
