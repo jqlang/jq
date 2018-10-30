@@ -75,7 +75,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
   int check_msg = 0;
   jq_state *jq = NULL;
 
-  int tests_to_skip = skip;
+  int tests_to_skip = skip > 0 ? skip : 0;
   int tests_to_take = take;
 
   jq = jq_init();
@@ -123,9 +123,9 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
       break;
     }
 
-    printf("Testing '%s' at line number %u\n", prog, lineno);
     int pass = 1;
     tests++;
+    printf("Test #%d: '%s' at line number %u\n", tests + tests_to_skip, prog, lineno);
     int compiled = jq_compile(jq, prog);
 
     if (must_fail) {
@@ -223,7 +223,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
   }
   jq_teardown(&jq);
 
-  int total_skipped = tests_to_skip > 0 ? tests_to_skip : 0;
+  int total_skipped = tests_to_skip;
 
   if (skip > 0) {
     total_skipped = tests_to_skip - skip;
