@@ -89,6 +89,10 @@
 </li>
 
 <li>
+<p>jq 1.6 binaries for <a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64">64-bit</a> or <a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux32">32-bit</a>.</p>
+</li>
+
+<li>
 <p>jq 1.5 binaries for <a href="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64">64-bit</a> or <a href="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux32">32-bit</a>.</p>
 </li>
 
@@ -109,6 +113,10 @@
 </li>
 
 <li>
+<p>jq 1.6 binary for <a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64">64-bit</a>.</p>
+</li>
+
+<li>
 <p>jq 1.5 binary for <a href="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-osx-amd64">64-bit</a>.</p>
 </li>
 
@@ -124,7 +132,13 @@
 <h3 id="freebsd">FreeBSD</h3>
 
 <ul>
-<li>Use <a href="https://www.freshports.org/textproc/jq/">FreshPorts</a> to install jq 1.4 with <code>pkg install jq</code>.</li>
+<li>
+<p><code>pkg install jq</code> as root installs a pre-built <a href="https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/pkgng-intro.html">binary package</a>.</p>
+</li>
+
+<li>
+<p><code>make -C /usr/ports/textproc/jq install clean</code> as root installs the <a href="https://www.freshports.org/textproc/jq/">jq</a> <a href="https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/ports-using.html">port</a> from source.</p>
+</li>
 </ul>
 
 <h3 id="solaris">Solaris</h3>
@@ -147,6 +161,10 @@
 </li>
 
 <li>
+<p>jq 1.6 executables for <a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-win64.exe">64-bit</a> or <a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-win32.exe">32-bit</a>.</p>
+</li>
+
+<li>
 <p>jq 1.5 executables for <a href="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win64.exe">64-bit</a> or <a href="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win32.exe">32-bit</a>.</p>
 </li>
 
@@ -161,13 +179,15 @@
 
 <h3 id="checksums_and_signatures">Checksums and signatures</h3>
 
-<p>SHA-256 checksums are provided for all release and pre-release binaries. They can be found under <a href="https://github.com/stedolan/jq/tree/master/sig">sig/v1.x/sha256sum.txt</a>. The checksums for jq 1.5 are in <a href="https://raw.githubusercontent.com/stedolan/jq/master/sig/v1.5/sha256sum.txt">sig/v1.5/sha256sum.txt</a>.</p>
+<p>SHA-256 checksums are provided for all release and pre-release binaries. They can be found under <a href="https://github.com/stedolan/jq/tree/master/sig">sig/v1.x/sha256sum.txt</a>. The checksums for jq 1.6 are in <a href="https://raw.githubusercontent.com/stedolan/jq/master/sig/v1.6/sha256sum.txt">sig/v1.6/sha256sum.txt</a>. The checksums for jq 1.5 are in <a href="https://raw.githubusercontent.com/stedolan/jq/master/sig/v1.5/sha256sum.txt">sig/v1.5/sha256sum.txt</a>.</p>
 
-<p>Additionally, all binaries are signed by the <a href="https://raw.githubusercontent.com/stedolan/jq/master/sig/jq-release.key">jq Package Signing Key</a>. The signatures can be found under <a href="https://github.com/stedolan/jq/tree/master/sig">sig/v1.x/*.asc</a>. The signatures for jq 1.5 are in <a href="https://github.com/stedolan/jq/tree/master/sig/v1.5">sig/v1.5/*.asc</a>. You can use <a href="https://gnupg.org/">GnuPG</a> to verify a signature by downloading the signature and running <code>gpg --verify signature.asc</code>.</p>
+<p>Additionally, all binaries are signed by the <a href="https://raw.githubusercontent.com/stedolan/jq/master/sig/jq-release.key">jq Package Signing Key</a>. The signatures can be found under <a href="https://github.com/stedolan/jq/tree/master/sig">sig/v1.x/*.asc</a>. The signatures for jq 1.6 are in <a href="https://github.com/stedolan/jq/tree/master/sig/v1.6">sig/v1.5/*.asc</a>. The signatures for jq 1.5 are in <a href="https://github.com/stedolan/jq/tree/master/sig/v1.5">sig/v1.5/*.asc</a>. You can use <a href="https://gnupg.org/">GnuPG</a> to verify a signature by downloading the signature and running <code>gpg --verify signature.asc</code>.</p>
 
 <h3 id="from_source_on_linux_os_x_cygwin_and_other_posixlike_operating_systems">From source on Linux, OS X, Cygwin, and other POSIX-like operating systems</h3>
 
 <ul>
+<li><a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-1.6.tar.gz">Source tarball for jq 1.6</a></li>
+
 <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz">Source tarball for jq 1.5</a></li>
 </ul>
 
