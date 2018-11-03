@@ -299,5 +299,5 @@ def JOIN($idx; stream; idx_expr):
   stream | [., $idx[idx_expr]];
 def JOIN($idx; stream; idx_expr; join_expr):
   stream | [., $idx[idx_expr]] | join_expr;
-def IN(s): reduce (first(select(. == s)) | true) as $v (false; if . or $v then true else false end);
-def IN(src; s): reduce (src|IN(s)) as $v (false; if . or $v then true else false end);
+def IN(s): . as $a | any($a == s; .);
+def IN(src; s): any(src == s; .);
