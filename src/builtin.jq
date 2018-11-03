@@ -33,20 +33,12 @@ def index($i):   indices($i) | .[0];       # TODO: optimize
 def rindex($i):  indices($i) | .[-1:][0];  # TODO: optimize
 def paths: path(recurse(if (type|. == "array" or . == "object") then .[] else empty end))|select(length > 0);
 def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_filter);
-def any(generator; condition):
-        [label $out | foreach generator as $i
-                 (false;
-                  if . then break $out elif $i | condition then true else . end;
-                  if . then . else empty end)] | length == 1;
-def any(condition): any(.[]; condition);
-def any: any(.);
-def all(generator; condition):
-        [label $out | foreach generator as $i
-                 (true;
-                  if .|not then break $out elif $i | condition then . else false end;
-                  if .|not then . else empty end)] | length == 0;
-def all(condition): all(.[]; condition);
-def all: all(.);
+def any(generator; condition): false==isempty(generator | condition or empty);
+def any: false==isempty(.[] or empty);
+def any(condition): false==isempty(.[] | condition or empty);
+def all(generator; condition): isempty(generator | condition and empty);
+def all: isempty(.[] and empty);
+def all(condition): isempty(.[] | condition and empty);
 def isfinite: type == "number" and (isinfinite | not);
 def arrays: select(type == "array");
 def objects: select(type == "object");
