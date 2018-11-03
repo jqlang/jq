@@ -13,7 +13,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 6
-#define YY_FLEX_SUBMINOR_VERSION 0
+#define YY_FLEX_SUBMINOR_VERSION 1
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -92,25 +92,13 @@ typedef unsigned int flex_uint32_t;
 
 #endif /* ! FLEXINT_H */
 
-#ifdef __cplusplus
-
-/* The "const" storage-class-modifier is valid. */
-#define YY_USE_CONST
-
-#else	/* ! __cplusplus */
-
-/* C99 requires __STDC__ to be defined as 1. */
-#if defined (__STDC__)
-
-#define YY_USE_CONST
-
-#endif	/* defined (__STDC__) */
-#endif	/* ! __cplusplus */
-
-#ifdef YY_USE_CONST
+/* TODO: this is always defined, so inline it */
 #define yyconst const
+
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define yynoreturn __attribute__((__noreturn__))
 #else
-#define yyconst
+#define yynoreturn
 #endif
 
 /* An opaque pointer. */
@@ -165,7 +153,7 @@ struct yy_buffer_state
 	/* Size of input buffer in bytes, not including room for EOB
 	 * characters.
 	 */
-	yy_size_t yy_buf_size;
+	int yy_buf_size;
 
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
@@ -214,7 +202,7 @@ void jq_yypop_buffer_state (yyscan_t yyscanner );
 
 YY_BUFFER_STATE jq_yy_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
 YY_BUFFER_STATE jq_yy_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE jq_yy_scan_bytes (yyconst char *bytes,yy_size_t len ,yyscan_t yyscanner );
+YY_BUFFER_STATE jq_yy_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
 
 void *jq_yyalloc (yy_size_t ,yyscan_t yyscanner );
 void *jq_yyrealloc (void *,yy_size_t ,yyscan_t yyscanner );
@@ -272,7 +260,7 @@ FILE *jq_yyget_out (yyscan_t yyscanner );
 
 void jq_yyset_out  (FILE * _out_str ,yyscan_t yyscanner );
 
-yy_size_t jq_yyget_leng (yyscan_t yyscanner );
+			int jq_yyget_leng (yyscan_t yyscanner );
 
 char *jq_yyget_text (yyscan_t yyscanner );
 
@@ -361,6 +349,6 @@ extern int jq_yylex \
 #line 130 "src/lexer.l"
 
 
-#line 365 "src/lexer.h"
+#line 353 "src/lexer.h"
 #undef jq_yyIN_HEADER
 #endif /* jq_yyHEADER_H */
