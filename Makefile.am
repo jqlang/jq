@@ -97,10 +97,12 @@ generate_ver = ver="`{ $(srcdir)/scripts/version || echo '$(VERSION)' ; } | sed 
 .remake-version-h: .FORCE
 	@ $(generate_ver); test "x`cat src/version.h 2>/dev/null`" = "x$$ver" || touch .remake-version-h
 src/version.h: .remake-version-h
+	mkdir -p src
 	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
 src/main.c: src/version.h
 
 src/builtin.inc: src/builtin.jq
+	mkdir -p src
 	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $^ > $@
 src/builtin.o: src/builtin.inc
 
