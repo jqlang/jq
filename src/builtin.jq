@@ -217,22 +217,25 @@ def ascii_upcase:
 def truncate_stream(stream):
   . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][$n:]) else empty end;
 def fromstream(i):
-  foreach i as $item (
-    [null,false,null,false];
-    if ($item[0]|length) == 0 then [null,false,.[2],.[3]]
-    elif ($item|length) == 1 and ($item[0]|length) < 2 then [null,false,.[0],.[1]]
-    else . end |
-    . as $state |
-    if ($item|length) > 1 and ($item[0]|length) > 0 then
-      [.[0]|setpath(($item|.[0]); ($item|.[1])),
-      true,
-      $state[2],
-      $state[3]]
+  foreach i as $i (
+    [null, null];
+
+    if ($i | length) == 2 then
+      if ($i[0] | length) == 0 then .
+      else [ ( .[0] | setpath($i[0]; $i[1]) ), .[1] ]
+      end
+    elif ($i[0] | length) == 1 then [ null, .[0] ]
     else .
     end;
-    if ($item[0]|length) == 1 and ($item|length == 1) and .[3] then .[2] else empty end,
-    if ($item[0]|length) == 0 then $item[1] else empty end
-    );
+
+    if ($i | length) == 1 then
+      if ($i[0] | length) == 1 then .[1]
+      else empty
+      end
+    elif ($i[0] | length) == 0 then $i[1]
+    else empty
+    end
+  );
 def tostream:
   {string:true,number:true,boolean:true,null:true} as $leaf_types |
   . as $dot |
