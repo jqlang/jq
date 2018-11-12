@@ -3,6 +3,8 @@
 #ifndef __sun__
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED 1
+#elif defined _AIX
+# define _XOPEN_SOURCE 700
 #else
 # define _XPG6
 # define __EXTENSIONS__
