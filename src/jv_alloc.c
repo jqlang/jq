@@ -120,8 +120,10 @@ static void memory_exhausted() {
 
 void* jv_mem_alloc(size_t sz) {
   void* p = malloc(sz);
-  if (!p) {
-    memory_exhausted();
+  if (sz) {
+    if (!p) {
+      memory_exhausted();
+    }
   }
   return p;
 }
@@ -132,8 +134,10 @@ void* jv_mem_alloc_unguarded(size_t sz) {
 
 void* jv_mem_calloc(size_t nemb, size_t sz) {
   void* p = calloc(nemb, sz);
-  if (!p) {
-    memory_exhausted();
+  if (sz) {
+    if (!p) {
+      memory_exhausted();
+    }
   }
   return p;
 }

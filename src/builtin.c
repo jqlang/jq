@@ -1,5 +1,6 @@
 #define _BSD_SOURCE
 #define _GNU_SOURCE
+#ifndef _AIX
 #ifndef __sun__
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED 1
@@ -9,6 +10,7 @@
 # define _XPG6
 # define __EXTENSIONS__
 #endif
+#endif /* _AIX */
 #include <sys/time.h>
 #include <stdlib.h>
 #include <stddef.h>
