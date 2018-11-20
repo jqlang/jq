@@ -1257,6 +1257,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
       int idx = bc->globals->ncfunctions++;
       bc->globals->cfunc_names = jv_array_append(bc->globals->cfunc_names,
                                                  jv_string(curr->symbol));
+      assert(idx <= bc->globals->lencfunctions);
       bc->globals->cfunctions[idx] = *curr->imm.cfunc;
       curr->imm.intval = idx;
     }
@@ -1359,8 +1360,13 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
   bc->nclosures = 0;
   bc->globals = jv_mem_alloc(sizeof(struct symbol_table));
   int ncfunc = count_cfunctions(b);
+  bc->globals->lencfunctions = ncfunc;
   bc->globals->ncfunctions = 0;
-  bc->globals->cfunctions = jv_mem_calloc(sizeof(struct cfunction), ncfunc);
+  if (ncfunc > 0) {
+    bc->globals->cfunctions = jv_mem_calloc(sizeof(struct cfunction), ncfunc);
+  } else {
+    bc->globals->cfunctions = NULL;
+  }
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
   jv env = jv_invalid();

@@ -55,6 +55,7 @@ struct cfunction {
 struct symbol_table {
   struct cfunction* cfunctions;
   int ncfunctions;
+  int lencfunctions;
   jv cfunc_names;
 };
 
