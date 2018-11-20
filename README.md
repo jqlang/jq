@@ -23,7 +23,7 @@ Source tarball and built executable releases can be found on the
 homepage and on the github release page, https://github.com/stedolan/jq/releases
 
 If you're building directly from the latest git, you'll need flex,
-bison (3.0 or newer), libtool, make, and autoconf installed.
+bison (3.0 or newer), libtool, make, automake, and autoconf installed.
 To get regexp support you'll also need to install Oniguruma or clone it as a
 git submodule as per the instructions below.
 (note that jq's tests require regexp support to pass).  To build, run:
