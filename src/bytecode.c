@@ -56,7 +56,8 @@ static void dump_code(int indent, struct bytecode* bc) {
 }
 
 static void symbol_table_free(struct symbol_table* syms) {
-  jv_mem_free(syms->cfunctions);
+  if (syms->cfunctions)
+    jv_mem_free(syms->cfunctions);
   jv_free(syms->cfunc_names);
   jv_mem_free(syms);
 }
