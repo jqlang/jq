@@ -177,29 +177,29 @@ static jv check_object_key(block k) {
   return jv_invalid();
 }
 
-static block gen_index(block obj, block key) {
-  return BLOCK(gen_subexp(key), obj, gen_op_simple(INDEX));
+static block jq_gen_index(block obj, block key) {
+  return BLOCK(jq_gen_subexp(key), obj, jq_gen_op_simple(INDEX));
 }
 
-static block gen_index_opt(block obj, block key) {
-  return BLOCK(gen_subexp(key), obj, gen_op_simple(INDEX_OPT));
+static block jq_gen_index_opt(block obj, block key) {
+  return BLOCK(jq_gen_subexp(key), obj, jq_gen_op_simple(INDEX_OPT));
 }
 
-static block gen_slice_index(block obj, block start, block end, opcode idx_op) {
-  block key = BLOCK(gen_subexp(gen_const(jv_object())),
-                    gen_subexp(gen_const(jv_string("start"))),
-                    gen_subexp(start),
-                    gen_op_simple(INSERT),
-                    gen_subexp(gen_const(jv_string("end"))),
-                    gen_subexp(end),
-                    gen_op_simple(INSERT));
-  return BLOCK(key, obj, gen_op_simple(idx_op));
+static block jq_gen_slice_index(block obj, block start, block end, opcode idx_op) {
+  block key = BLOCK(jq_gen_subexp(jq_gen_const(jv_object())),
+                    jq_gen_subexp(jq_gen_const(jv_string("start"))),
+                    jq_gen_subexp(start),
+                    jq_gen_op_simple(INSERT),
+                    jq_gen_subexp(jq_gen_const(jv_string("end"))),
+                    jq_gen_subexp(end),
+                    jq_gen_op_simple(INSERT));
+  return BLOCK(key, obj, jq_gen_op_simple(idx_op));
 }
 
 static block constant_fold(block a, block b, int op) {
   if (!block_is_single(a) || !block_is_const(a) ||
       !block_is_single(b) || !block_is_const(b))
-    return gen_noop();
+    return jq_gen_noop();
   if (op == '+') {
     if (block_const_kind(a) == JV_KIND_NULL) {
       block_free(a);
@@ -211,7 +211,7 @@ static block constant_fold(block a, block b, int op) {
     }
   }
   if (block_const_kind(a) != block_const_kind(b))
-    return gen_noop();
+    return jq_gen_noop();
 
   jv res = jv_invalid();
 
@@ -234,18 +234,18 @@ static block constant_fold(block a, block b, int op) {
   } else if (op == '+' && block_const_kind(a) == JV_KIND_STRING) {
     res = jv_string_concat(block_const(a),  block_const(b));
   } else {
-    return gen_noop();
+    return jq_gen_noop();
   }
 
   if (jv_get_kind(res) == JV_KIND_INVALID)
-    return gen_noop();
+    return jq_gen_noop();
 
   block_free(a);
   block_free(b);
-  return gen_const(res);
+  return jq_gen_const(res);
 }
 
-static block gen_binop(block a, block b, int op) {
+static block jq_gen_binop(block a, block b, int op) {
   block folded = constant_fold(a, b, op);
   if (!block_is_noop(folded))
     return folded;
@@ -266,30 +266,30 @@ static block gen_binop(block a, block b, int op) {
   }
   assert(funcname);
 
-  return gen_call(funcname, BLOCK(gen_lambda(a), gen_lambda(b)));
+  return jq_gen_call(funcname, BLOCK(jq_gen_lambda(a), jq_gen_lambda(b)));
 }
 
-static block gen_format(block a, jv fmt) {
-  return BLOCK(a, gen_call("format", gen_lambda(gen_const(fmt))));
+static block jq_gen_format(block a, jv fmt) {
+  return BLOCK(a, jq_gen_call("format", jq_gen_lambda(jq_gen_const(fmt))));
 }
 
-static block gen_definedor_assign(block object, block val) {
-  block tmp = gen_op_var_fresh(STOREV, "tmp");
-  return BLOCK(gen_op_simple(DUP),
+static block jq_gen_definedor_assign(block object, block val) {
+  block tmp = jq_gen_op_var_fresh(STOREV, "tmp");
+  return BLOCK(jq_gen_op_simple(DUP),
                val, tmp,
-               gen_call("_modify", BLOCK(gen_lambda(object),
-                                         gen_lambda(gen_definedor(gen_noop(),
-                                                                  gen_op_bound(LOADV, tmp))))));
+               jq_gen_call("_modify", BLOCK(jq_gen_lambda(object),
+                                         jq_gen_lambda(jq_gen_definedor(jq_gen_noop(),
+                                                                  jq_gen_op_bound(LOADV, tmp))))));
 }
 
-static block gen_update(block object, block val, int optype) {
-  block tmp = gen_op_var_fresh(STOREV, "tmp");
-  return BLOCK(gen_op_simple(DUP),
+static block jq_gen_update(block object, block val, int optype) {
+  block tmp = jq_gen_op_var_fresh(STOREV, "tmp");
+  return BLOCK(jq_gen_op_simple(DUP),
                val,
                tmp,
-               gen_call("_modify", BLOCK(gen_lambda(object),
-                                         gen_lambda(gen_binop(gen_noop(),
-                                                              gen_op_bound(LOADV, tmp),
+               jq_gen_call("_modify", BLOCK(jq_gen_lambda(object),
+                                         jq_gen_lambda(jq_gen_binop(jq_gen_noop(),
+                                                              jq_gen_op_bound(LOADV, tmp),
                                                               optype)))));
 }
 
@@ -298,7 +298,7 @@ static block gen_update(block object, block val, int optype) {
 %%
 TopLevel:
 Module Imports Exp {
-  *answer = BLOCK($1, $2, gen_op_simple(TOP), $3);
+  *answer = BLOCK($1, $2, jq_gen_op_simple(TOP), $3);
 } |
 Module Imports FuncDefs {
   *answer = BLOCK($1, $2, $3);
@@ -306,21 +306,21 @@ Module Imports FuncDefs {
 
 Module:
 %empty {
-  $$ = gen_noop();
+  $$ = jq_gen_noop();
 } |
 "module" Exp ';' {
   if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant");
-    $$ = gen_noop();
+    $$ = jq_gen_noop();
     block_free($2);
   } else {
-    $$ = gen_module($2);
+    $$ = jq_gen_module($2);
   }
 }
 
 Imports:
 %empty {
-  $$ = gen_noop();
+  $$ = jq_gen_noop();
 } |
 Import Imports {
   $$ = BLOCK($1, $2);
@@ -328,7 +328,7 @@ Import Imports {
 
 FuncDefs:
 %empty {
-  $$ = gen_noop();
+  $$ = jq_gen_noop();
 } |
 FuncDef FuncDefs {
   $$ = block_bind($1, $2, OP_IS_CALL_PSEUDO);
@@ -340,22 +340,22 @@ FuncDef Exp %prec FUNCDEF {
 } |
 
 Term "as" Patterns '|' Exp {
-  $$ = gen_destructure($1, $3, $5);
+  $$ = jq_gen_destructure($1, $3, $5);
 } |
 "reduce" Term "as" Patterns '(' Exp ';' Exp ')' {
-  $$ = gen_reduce($2, $4, $6, $8);
+  $$ = jq_gen_reduce($2, $4, $6, $8);
 } |
 
 "foreach" Term "as" Patterns '(' Exp ';' Exp ';' Exp ')' {
-  $$ = gen_foreach($2, $4, $6, $8, $10);
+  $$ = jq_gen_foreach($2, $4, $6, $8, $10);
 } |
 
 "foreach" Term "as" Patterns '(' Exp ';' Exp ')' {
-  $$ = gen_foreach($2, $4, $6, $8, gen_noop());
+  $$ = jq_gen_foreach($2, $4, $6, $8, jq_gen_noop());
 } |
 
 "if" Exp "then" Exp ElseBody {
-  $$ = gen_cond($2, $4, $5);
+  $$ = jq_gen_cond($2, $4, $5);
 } |
 "if" Exp "then" error {
   FAIL(@$, "Possibly unterminated 'if' statement");
@@ -363,12 +363,12 @@ Term "as" Patterns '|' Exp {
 } |
 
 "try" Exp "catch" Exp {
-  //$$ = BLOCK(gen_op_target(FORK_OPT, $2), $2, $4);
-  $$ = gen_try($2, gen_try_handler($4));
+  //$$ = BLOCK(jq_gen_op_target(FORK_OPT, $2), $2, $4);
+  $$ = jq_gen_try($2, jq_gen_try_handler($4));
 } |
 "try" Exp {
-  //$$ = BLOCK(gen_op_target(FORK_OPT, $2), $2, gen_op_simple(BACKTRACK));
-  $$ = gen_try($2, gen_op_simple(BACKTRACK));
+  //$$ = BLOCK(jq_gen_op_target(FORK_OPT, $2), $2, jq_gen_op_simple(BACKTRACK));
+  $$ = jq_gen_try($2, jq_gen_op_simple(BACKTRACK));
 } |
 "try" Exp "catch" error {
   FAIL(@$, "Possibly unterminated 'try' statement");
@@ -377,37 +377,37 @@ Term "as" Patterns '|' Exp {
 
 "label" '$' IDENT '|' Exp {
   jv v = jv_string_fmt("*label-%s", jv_string_value($3));
-  $$ = gen_location(@$, locations, gen_label(jv_string_value(v), $5));
+  $$ = jq_gen_location(@$, locations, jq_gen_label(jv_string_value(v), $5));
   jv_free($3);
   jv_free(v);
 } |
 
 Exp '?' {
-  $$ = gen_try($1, gen_op_simple(BACKTRACK));
+  $$ = jq_gen_try($1, jq_gen_op_simple(BACKTRACK));
 } |
 
 Exp '=' Exp {
-  $$ = gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3)));
+  $$ = jq_gen_call("_assign", BLOCK(jq_gen_lambda($1), jq_gen_lambda($3)));
 } |
 
 Exp "or" Exp {
-  $$ = gen_or($1, $3);
+  $$ = jq_gen_or($1, $3);
 } |
 
 Exp "and" Exp {
-  $$ = gen_and($1, $3);
+  $$ = jq_gen_and($1, $3);
 } |
 
 Exp "//" Exp {
-  $$ = gen_definedor($1, $3);
+  $$ = jq_gen_definedor($1, $3);
 } |
 
 Exp "//=" Exp {
-  $$ = gen_definedor_assign($1, $3);
+  $$ = jq_gen_definedor_assign($1, $3);
 } |
 
 Exp "|=" Exp {
-  $$ = gen_call("_modify", BLOCK(gen_lambda($1), gen_lambda($3)));
+  $$ = jq_gen_call("_modify", BLOCK(jq_gen_lambda($1), jq_gen_lambda($3)));
 } |
 
 Exp '|' Exp {
@@ -415,79 +415,79 @@ Exp '|' Exp {
 } |
 
 Exp ',' Exp {
-  $$ = gen_both($1, $3);
+  $$ = jq_gen_both($1, $3);
 } |
 
 Exp '+' Exp {
-  $$ = gen_binop($1, $3, '+');
+  $$ = jq_gen_binop($1, $3, '+');
 } |
 
 Exp "+=" Exp {
-  $$ = gen_update($1, $3, '+');
+  $$ = jq_gen_update($1, $3, '+');
 } |
 
 '-' Exp {
-  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
+  $$ = BLOCK($2, jq_gen_call("_negate", jq_gen_noop()));
 } |
 
 Exp '-' Exp {
-  $$ = gen_binop($1, $3, '-');
+  $$ = jq_gen_binop($1, $3, '-');
 } |
 
 Exp "-=" Exp {
-  $$ = gen_update($1, $3, '-');
+  $$ = jq_gen_update($1, $3, '-');
 } |
 
 Exp '*' Exp {
-  $$ = gen_binop($1, $3, '*');
+  $$ = jq_gen_binop($1, $3, '*');
 } |
 
 Exp "*=" Exp {
-  $$ = gen_update($1, $3, '*');
+  $$ = jq_gen_update($1, $3, '*');
 } |
 
 Exp '/' Exp {
-  $$ = gen_binop($1, $3, '/');
+  $$ = jq_gen_binop($1, $3, '/');
   if (block_is_const_inf($$))
     FAIL(@$, "Division by zero?");
 } |
 
 Exp '%' Exp {
-  $$ = gen_binop($1, $3, '%');
+  $$ = jq_gen_binop($1, $3, '%');
   if (block_is_const_inf($$))
     FAIL(@$, "Remainder by zero?");
 } |
 
 Exp "/=" Exp {
-  $$ = gen_update($1, $3, '/');
+  $$ = jq_gen_update($1, $3, '/');
 } |
 
 Exp SETMOD Exp {
-  $$ = gen_update($1, $3, '%');
+  $$ = jq_gen_update($1, $3, '%');
 } |
 
 Exp "==" Exp {
-  $$ = gen_binop($1, $3, EQ);
+  $$ = jq_gen_binop($1, $3, EQ);
 } |
 
 Exp "!=" Exp {
-  $$ = gen_binop($1, $3, NEQ);
+  $$ = jq_gen_binop($1, $3, NEQ);
 } |
 
 Exp '<' Exp {
-  $$ = gen_binop($1, $3, '<');
+  $$ = jq_gen_binop($1, $3, '<');
 } |
 
 Exp '>' Exp {
-  $$ = gen_binop($1, $3, '>');
+  $$ = jq_gen_binop($1, $3, '>');
 } |
 
 Exp "<=" Exp {
-  $$ = gen_binop($1, $3, LESSEQ);
+  $$ = jq_gen_binop($1, $3, LESSEQ);
 } |
 
 Exp ">=" Exp {
-  $$ = gen_binop($1, $3, GREATEREQ);
+  $$ = jq_gen_binop($1, $3, GREATEREQ);
 } |
 
 Term {
@@ -501,39 +501,39 @@ ImportWhat ';' {
 ImportWhat Exp ';' {
   if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant");
-    $$ = gen_noop();
+    $$ = jq_gen_noop();
     block_free($1);
     block_free($2);
   } else if (block_const_kind($2) != JV_KIND_OBJECT) {
     FAIL(@$, "Module metadata must be an object");
-    $$ = gen_noop();
+    $$ = jq_gen_noop();
     block_free($1);
     block_free($2);
   } else {
-    $$ = gen_import_meta($1, $2);
+    $$ = jq_gen_import_meta($1, $2);
   }
 }
 
 ImportWhat:
 "import" ImportFrom "as" '$' IDENT {
   jv v = block_const($2);
-  // XXX Make gen_import take only blocks and the int is_data so we
+  // XXX Make jq_gen_import take only blocks and the int is_data so we
   // don't have to free so much stuff here
-  $$ = gen_import(jv_string_value(v), jv_string_value($5), 1);
+  $$ = jq_gen_import(jv_string_value(v), jv_string_value($5), 1);
   block_free($2);
   jv_free($5);
   jv_free(v);
 } |
 "import" ImportFrom "as" IDENT {
   jv v = block_const($2);
-  $$ = gen_import(jv_string_value(v), jv_string_value($4), 0);
+  $$ = jq_gen_import(jv_string_value(v), jv_string_value($4), 0);
   block_free($2);
   jv_free($4);
   jv_free(v);
 } |
 "include" ImportFrom {
   jv v = block_const($2);
-  $$ = gen_import(jv_string_value(v), NULL, 0);
+  $$ = jq_gen_import(jv_string_value(v), NULL, 0);
   block_free($2);
   jv_free(v);
 }
@@ -542,7 +542,7 @@ ImportFrom:
 String {
   if (!block_is_const($1)) {
     FAIL(@$, "Import path must be constant");
-    $$ = gen_const(jv_string(""));
+    $$ = jq_gen_const(jv_string(""));
     block_free($1);
   } else {
     $$ = $1;
@@ -551,12 +551,12 @@ String {
 
 FuncDef:
 "def" IDENT ':' Exp ';' {
-  $$ = gen_function(jv_string_value($2), gen_noop(), $4);
+  $$ = jq_gen_function(jv_string_value($2), jq_gen_noop(), $4);
   jv_free($2);
 } |
 
 "def" IDENT '(' Params ')' ':' Exp ';' {
-  $$ = gen_function(jv_string_value($2), $4, $7);
+  $$ = jq_gen_function(jv_string_value($2), $4, $7);
   jv_free($2);
 }
 
@@ -570,12 +570,12 @@ Params ';' Param {
 
 Param:
 '$' IDENT {
-  $$ = gen_param_regular(jv_string_value($2));
+  $$ = jq_gen_param_regular(jv_string_value($2));
   jv_free($2);
 } |
 
 IDENT {
-  $$ = gen_param(jv_string_value($1));
+  $$ = jq_gen_param(jv_string_value($1));
   jv_free($1);
 }
 
@@ -593,19 +593,19 @@ FORMAT QQSTRING_START { $<literal>$ = $1; } QQString QQSTRING_END {
 
 QQString:
 %empty {
-  $$ = gen_const(jv_string(""));
+  $$ = jq_gen_const(jv_string(""));
 } |
 QQString QQSTRING_TEXT {
-  $$ = gen_binop($1, gen_const($2), '+');
+  $$ = jq_gen_binop($1, jq_gen_const($2), '+');
 } |
 QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END {
-  $$ = gen_binop($1, gen_format($3, jv_copy($<literal>0)), '+');
+  $$ = jq_gen_binop($1, jq_gen_format($3, jv_copy($<literal>0)), '+');
 }
 
 
 ElseBody:
 "elif" Exp "then" Exp ElseBody {
-  $$ = gen_cond($2, $4, $5);
+  $$ = jq_gen_cond($2, $4, $5);
 } |
 "else" Exp "end" {
   $$ = $2;
@@ -616,7 +616,7 @@ ExpD '|' ExpD {
   $$ = block_join($1, $3);
 } |
 '-' ExpD {
-  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
+  $$ = BLOCK($2, jq_gen_call("_negate", jq_gen_noop()));
 } |
 Term {
   $$ = $1;
@@ -625,141 +625,141 @@ Term {
 
 Term:
 '.' {
-  $$ = gen_noop();
+  $$ = jq_gen_noop();
 } |
 REC {
-  $$ = gen_call("recurse", gen_noop());
+  $$ = jq_gen_call("recurse", jq_gen_noop());
 } |
 BREAK '$' IDENT {
   jv v = jv_string_fmt("*label-%s", jv_string_value($3));     // impossible symbol
-  $$ = gen_location(@$, locations,
-                    BLOCK(gen_op_unbound(LOADV, jv_string_value(v)),
-                    gen_call("error", gen_noop())));
+  $$ = jq_gen_location(@$, locations,
+                    BLOCK(jq_gen_op_unbound(LOADV, jv_string_value(v)),
+                    jq_gen_call("error", jq_gen_noop())));
   jv_free(v);
   jv_free($3);
 } |
 BREAK error {
   FAIL(@$, "break requires a label to break to");
-  $$ = gen_noop();
+  $$ = jq_gen_noop();
 } |
 Term FIELD '?' {
-  $$ = gen_index_opt($1, gen_const($2));
+  $$ = jq_gen_index_opt($1, jq_gen_const($2));
 } |
 FIELD '?' {
-  $$ = gen_index_opt(gen_noop(), gen_const($1));
+  $$ = jq_gen_index_opt(jq_gen_noop(), jq_gen_const($1));
 } |
 Term '.' String '?' {
-  $$ = gen_index_opt($1, $3);
+  $$ = jq_gen_index_opt($1, $3);
 } |
 '.' String '?' {
-  $$ = gen_index_opt(gen_noop(), $2);
+  $$ = jq_gen_index_opt(jq_gen_noop(), $2);
 } |
 Term FIELD %prec NONOPT {
-  $$ = gen_index($1, gen_const($2));
+  $$ = jq_gen_index($1, jq_gen_const($2));
 } |
 FIELD %prec NONOPT {
-  $$ = gen_index(gen_noop(), gen_const($1));
+  $$ = jq_gen_index(jq_gen_noop(), jq_gen_const($1));
 } |
 Term '.' String %prec NONOPT {
-  $$ = gen_index($1, $3);
+  $$ = jq_gen_index($1, $3);
 } |
 '.' String %prec NONOPT {
-  $$ = gen_index(gen_noop(), $2);
+  $$ = jq_gen_index(jq_gen_noop(), $2);
 } |
 '.' error {
   FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
-  $$ = gen_noop();
+  $$ = jq_gen_noop();
 } |
 '.' IDENT error {
   jv_free($2);
   FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
-  $$ = gen_noop();
+  $$ = jq_gen_noop();
 } |
 /* FIXME: string literals */
 Term '[' Exp ']' '?' {
-  $$ = gen_index_opt($1, $3);
+  $$ = jq_gen_index_opt($1, $3);
 } |
 Term '[' Exp ']' %prec NONOPT {
-  $$ = gen_index($1, $3);
+  $$ = jq_gen_index($1, $3);
 } |
 Term '[' ']' '?' {
-  $$ = block_join($1, gen_op_simple(EACH_OPT));
+  $$ = block_join($1, jq_gen_op_simple(EACH_OPT));
 } |
 Term '[' ']' %prec NONOPT {
-  $$ = block_join($1, gen_op_simple(EACH));
+  $$ = block_join($1, jq_gen_op_simple(EACH));
 } |
 Term '[' Exp ':' Exp ']' '?' {
-  $$ = gen_slice_index($1, $3, $5, INDEX_OPT);
+  $$ = jq_gen_slice_index($1, $3, $5, INDEX_OPT);
 } |
 Term '[' Exp ':' ']' '?' {
-  $$ = gen_slice_index($1, $3, gen_const(jv_null()), INDEX_OPT);
+  $$ = jq_gen_slice_index($1, $3, jq_gen_const(jv_null()), INDEX_OPT);
 } |
 Term '[' ':' Exp ']' '?' {
-  $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX_OPT);
+  $$ = jq_gen_slice_index($1, jq_gen_const(jv_null()), $4, INDEX_OPT);
 } |
 Term '[' Exp ':' Exp ']' %prec NONOPT {
-  $$ = gen_slice_index($1, $3, $5, INDEX);
+  $$ = jq_gen_slice_index($1, $3, $5, INDEX);
 } |
 Term '[' Exp ':' ']' %prec NONOPT {
-  $$ = gen_slice_index($1, $3, gen_const(jv_null()), INDEX);
+  $$ = jq_gen_slice_index($1, $3, jq_gen_const(jv_null()), INDEX);
 } |
 Term '[' ':' Exp ']' %prec NONOPT {
-  $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX);
+  $$ = jq_gen_slice_index($1, jq_gen_const(jv_null()), $4, INDEX);
 } |
 LITERAL {
-  $$ = gen_const($1);
+  $$ = jq_gen_const($1);
 } |
 String {
   $$ = $1;
 } |
 FORMAT {
-  $$ = gen_format(gen_noop(), $1);
+  $$ = jq_gen_format(jq_gen_noop(), $1);
 } |
 '(' Exp ')' {
   $$ = $2;
 } |
 '[' Exp ']' {
-  $$ = gen_collect($2);
+  $$ = jq_gen_collect($2);
 } |
 '[' ']' {
-  $$ = gen_const(jv_array());
+  $$ = jq_gen_const(jv_array());
 } |
 '{' MkDict '}' {
-  block o = gen_const_object($2);
+  block o = jq_gen_const_object($2);
   if (o.first != NULL)
     $$ = o;
   else
-    $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
+    $$ = BLOCK(jq_gen_subexp(jq_gen_const(jv_object())), $2, jq_gen_op_simple(POP));
 } |
 '$' LOC {
-  $$ = gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
+  $$ = jq_gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
                            jv_string("line"), jv_number(locfile_get_line(locations, @$.start) + 1)));
 } |
 '$' IDENT {
-  $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));
+  $$ = jq_gen_location(@$, locations, jq_gen_op_unbound(LOADV, jv_string_value($2)));
   jv_free($2);
 } |
 IDENT {
   const char *s = jv_string_value($1);
   if (strcmp(s, "false") == 0)
-    $$ = gen_const(jv_false());
+    $$ = jq_gen_const(jv_false());
   else if (strcmp(s, "true") == 0)
-    $$ = gen_const(jv_true());
+    $$ = jq_gen_const(jv_true());
   else if (strcmp(s, "null") == 0)
-    $$ = gen_const(jv_null());
+    $$ = jq_gen_const(jv_null());
   else
-    $$ = gen_location(@$, locations, gen_call(s, gen_noop()));
+    $$ = jq_gen_location(@$, locations, jq_gen_call(s, jq_gen_noop()));
   jv_free($1);
 } |
 IDENT '(' Args ')' {
-  $$ = gen_call(jv_string_value($1), $3);
-  $$ = gen_location(@1, locations, $$);
+  $$ = jq_gen_call(jv_string_value($1), $3);
+  $$ = jq_gen_location(@1, locations, $$);
   jv_free($1);
 } |
-'(' error ')' { $$ = gen_noop(); } |
-'[' error ']' { $$ = gen_noop(); } |
+'(' error ')' { $$ = jq_gen_noop(); } |
+'[' error ']' { $$ = jq_gen_noop(); } |
 Term '[' error ']' { $$ = $1; } |
-'{' error '}' { $$ = gen_noop(); }
+'{' error '}' { $$ = jq_gen_noop(); }
 
 Args:
 Arg {
@@ -771,15 +771,15 @@ Args ';' Arg {
 
 Arg:
 Exp {
-  $$ = gen_lambda($1);
+  $$ = jq_gen_lambda($1);
 }
 
 RepPatterns:
 RepPatterns "?//" Pattern {
-  $$ = BLOCK($1, gen_destructure_alt($3));
+  $$ = BLOCK($1, jq_gen_destructure_alt($3));
 } |
 Pattern {
-  $$ = gen_destructure_alt($1);
+  $$ = jq_gen_destructure_alt($1);
 }
 
 Patterns:
@@ -792,22 +792,22 @@ Pattern {
 
 Pattern:
 '$' IDENT {
-  $$ = gen_op_unbound(STOREV, jv_string_value($2));
+  $$ = jq_gen_op_unbound(STOREV, jv_string_value($2));
   jv_free($2);
 } |
 '[' ArrayPats ']' {
-  $$ = BLOCK($2, gen_op_simple(POP));
+  $$ = BLOCK($2, jq_gen_op_simple(POP));
 } |
 '{' ObjPats '}' {
-  $$ = BLOCK($2, gen_op_simple(POP));
+  $$ = BLOCK($2, jq_gen_op_simple(POP));
 }
 
 ArrayPats:
 Pattern {
-  $$ = gen_array_matcher(gen_noop(), $1);
+  $$ = jq_gen_array_matcher(jq_gen_noop(), $1);
 } |
 ArrayPats ',' Pattern {
-  $$ = gen_array_matcher($1, $3);
+  $$ = jq_gen_array_matcher($1, $3);
 }
 
 ObjPats:
@@ -820,19 +820,19 @@ ObjPats ',' ObjPat {
 
 ObjPat:
 '$' IDENT {
-  $$ = gen_object_matcher(gen_const($2), gen_op_unbound(STOREV, jv_string_value($2)));
+  $$ = jq_gen_object_matcher(jq_gen_const($2), jq_gen_op_unbound(STOREV, jv_string_value($2)));
 } |
 '$' IDENT ':' Pattern {
-  $$ = gen_object_matcher(gen_const($2), BLOCK(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value($2)), $4));
+  $$ = jq_gen_object_matcher(jq_gen_const($2), BLOCK(jq_gen_op_simple(DUP), jq_gen_op_unbound(STOREV, jv_string_value($2)), $4));
 } |
 IDENT ':' Pattern {
-  $$ = gen_object_matcher(gen_const($1), $3);
+  $$ = jq_gen_object_matcher(jq_gen_const($1), $3);
 } |
 Keyword ':' Pattern {
-  $$ = gen_object_matcher(gen_const($1), $3);
+  $$ = jq_gen_object_matcher(jq_gen_const($1), $3);
 } |
 String ':' Pattern {
-  $$ = gen_object_matcher($1, $3);
+  $$ = jq_gen_object_matcher($1, $3);
 } |
 '(' Exp ')' ':' Pattern {
   jv msg = check_object_key($2);
@@ -840,7 +840,7 @@ String ':' Pattern {
     FAIL(@$, jv_string_value(msg));
   }
   jv_free(msg);
-  $$ = gen_object_matcher($2, $5);
+  $$ = jq_gen_object_matcher($2, $5);
 } |
 error ':' Pattern {
   FAIL(@$, "May need parentheses around object key expression");
@@ -908,7 +908,7 @@ Keyword:
 
 MkDict:
 %empty {
-  $$=gen_noop();
+  $$=jq_gen_noop();
 } |
  MkDictPair { $$ = $1; }
 | MkDictPair ',' MkDict { $$=block_join($1, $3); }
@@ -916,25 +916,25 @@ MkDict:
 
 MkDictPair:
 IDENT ':' ExpD {
-  $$ = gen_dictpair(gen_const($1), $3);
+  $$ = jq_gen_dictpair(jq_gen_const($1), $3);
  }
 | Keyword ':' ExpD {
-  $$ = gen_dictpair(gen_const($1), $3);
+  $$ = jq_gen_dictpair(jq_gen_const($1), $3);
   }
 | String ':' ExpD {
-  $$ = gen_dictpair($1, $3);
+  $$ = jq_gen_dictpair($1, $3);
   }
 | String {
-  $$ = gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
-                              gen_op_simple(DUP2), gen_op_simple(INDEX)));
+  $$ = jq_gen_dictpair($1, BLOCK(jq_gen_op_simple(POP), jq_gen_op_simple(DUP2),
+                              jq_gen_op_simple(DUP2), jq_gen_op_simple(INDEX)));
   }
 | '$' IDENT {
-  $$ = gen_dictpair(gen_const($2),
-                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))));
+  $$ = jq_gen_dictpair(jq_gen_const($2),
+                    jq_gen_location(@$, locations, jq_gen_op_unbound(LOADV, jv_string_value($2))));
   }
 | IDENT {
-  $$ = gen_dictpair(gen_const(jv_copy($1)),
-                    gen_index(gen_noop(), gen_const($1)));
+  $$ = jq_gen_dictpair(jq_gen_const(jv_copy($1)),
+                    jq_gen_index(jq_gen_noop(), jq_gen_const($1)));
   }
 | '(' Exp ')' ':' ExpD {
   jv msg = check_object_key($2);
@@ -942,7 +942,7 @@ IDENT ':' ExpD {
     FAIL(@$, jv_string_value(msg));
   }
   jv_free(msg);
-  $$ = gen_dictpair($2, $5);
+  $$ = jq_gen_dictpair($2, $5);
   }
 | error ':' ExpD {
   FAIL(@$, "May need parentheses around object key expression");
@@ -956,13 +956,13 @@ int jq_parse(struct locfile* locations, block* answer) {
   jq_yylex_init_extra(0, &scanner.lexer);
   buf = jq_yy_scan_bytes(locations->data, locations->length, scanner.lexer);
   int errors = 0;
-  *answer = gen_noop();
+  *answer = jq_gen_noop();
   yyparse(answer, &errors, locations, &scanner);
   jq_yy_delete_buffer(buf, scanner.lexer);
   jq_yylex_destroy(scanner.lexer);
   if (errors > 0) {
     block_free(*answer);
-    *answer = gen_noop();
+    *answer = jq_gen_noop();
   }
   return errors;
 }

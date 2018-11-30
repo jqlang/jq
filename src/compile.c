@@ -47,7 +47,7 @@ struct inst {
   //   inst->bound_by = inst  - This instruction binds a variable
   //   inst->bound_by = other - Uses variable bound by other instruction
   // Unbound instructions (references to other things that may or may not
-  // exist) are created by "gen_foo_unbound", and bindings are created by
+  // exist) are created by "jq_gen_foo_unbound", and bindings are created by
   // block_bind(definition, body), which binds all instructions in
   // body which are unboudn and refer to "definition" by name.
   struct inst* bound_by;
@@ -75,8 +75,8 @@ static inst* inst_new(opcode op) {
   i->symbol = 0;
   i->nformals = -1;
   i->nactuals = -1;
-  i->subfn = gen_noop();
-  i->arglist = gen_noop();
+  i->subfn = jq_gen_noop();
+  i->arglist = jq_gen_noop();
   i->source = UNKNOWN_LOCATION;
   i->locfile = 0;
   return i;
@@ -117,7 +117,7 @@ static inst* block_take(block* b) {
   return i;
 }
 
-block gen_location(location loc, struct locfile* l, block b) {
+block jq_gen_location(location loc, struct locfile* l, block b) {
   for (inst* i = b.first; i; i = i->next) {
     if (i->source.start == UNKNOWN_LOCATION.start &&
         i->source.end == UNKNOWN_LOCATION.end) {
@@ -128,7 +128,7 @@ block gen_location(location loc, struct locfile* l, block b) {
   return b;
 }
 
-block gen_noop() {
+block jq_gen_noop() {
   block b = {0,0};
   return b;
 }
@@ -137,20 +137,20 @@ int block_is_noop(block b) {
   return (b.first == 0 && b.last == 0);
 }
 
-block gen_op_simple(opcode op) {
+block jq_gen_op_simple(opcode op) {
   assert(opcode_describe(op)->length == 1);
   return inst_block(inst_new(op));
 }
 
 
-block gen_const(jv constant) {
+block jq_gen_const(jv constant) {
   assert(opcode_describe(LOADK)->flags & OP_HAS_CONSTANT);
   inst* i = inst_new(LOADK);
   i->imm.constant = constant;
   return inst_block(i);
 }
 
-block gen_const_global(jv constant, const char *name) {
+block jq_gen_const_global(jv constant, const char *name) {
   assert((opcode_describe(STORE_GLOBAL)->flags & (OP_HAS_CONSTANT | OP_HAS_VARIABLE | OP_HAS_BINDING)) ==
          (OP_HAS_CONSTANT | OP_HAS_VARIABLE | OP_HAS_BINDING));
   inst* i = inst_new(STORE_GLOBAL);
@@ -159,7 +159,7 @@ block gen_const_global(jv constant, const char *name) {
   return inst_block(i);
 }
 
-block gen_op_pushk_under(jv constant) {
+block jq_gen_op_pushk_under(jv constant) {
   assert(opcode_describe(PUSHK_UNDER)->flags & OP_HAS_CONSTANT);
   inst* i = inst_new(PUSHK_UNDER);
   i->imm.constant = constant;
@@ -186,7 +186,7 @@ jv block_const(block b) {
   return jv_copy(b.first->imm.constant);
 }
 
-block gen_op_target(opcode op, block target) {
+block jq_gen_op_target(opcode op, block target) {
   assert(opcode_describe(op)->flags & OP_HAS_BRANCH);
   assert(target.last);
   inst* i = inst_new(op);
@@ -194,7 +194,7 @@ block gen_op_target(opcode op, block target) {
   return inst_block(i);
 }
 
-block gen_op_targetlater(opcode op) {
+block jq_gen_op_targetlater(opcode op) {
   assert(opcode_describe(op)->flags & OP_HAS_BRANCH);
   inst* i = inst_new(op);
   i->imm.target = 0;
@@ -207,28 +207,28 @@ void inst_set_target(block b, block target) {
   b.first->imm.target = target.last;
 }
 
-block gen_op_unbound(opcode op, const char* name) {
+block jq_gen_op_unbound(opcode op, const char* name) {
   assert(opcode_describe(op)->flags & OP_HAS_BINDING);
   inst* i = inst_new(op);
   i->symbol = strdup(name);
   return inst_block(i);
 }
 
-block gen_op_var_fresh(opcode op, const char* name) {
+block jq_gen_op_var_fresh(opcode op, const char* name) {
   assert(opcode_describe(op)->flags & OP_HAS_VARIABLE);
-  return block_bind(gen_op_unbound(op, name),
-                    gen_noop(), OP_HAS_VARIABLE);
+  return block_bind(jq_gen_op_unbound(op, name),
+                    jq_gen_noop(), OP_HAS_VARIABLE);
 }
 
-block gen_op_bound(opcode op, block binder) {
+block jq_gen_op_bound(opcode op, block binder) {
   assert(block_is_single(binder));
-  block b = gen_op_unbound(op, binder.first->symbol);
+  block b = jq_gen_op_unbound(op, binder.first->symbol);
   b.first->bound_by = binder.first;
   return b;
 }
 
-block gen_dictpair(block k, block v) {
-  return BLOCK(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
+block jq_gen_dictpair(block k, block v) {
+  return BLOCK(jq_gen_subexp(k), jq_gen_subexp(v), jq_gen_op_simple(INSERT));
 }
 
 
@@ -418,8 +418,8 @@ block block_bind_library(block binder, block body, int bindflags, const char *li
 block block_bind_referenced(block binder, block body, int bindflags) {
   assert(block_has_only_binders(binder, bindflags));
   bindflags |= OP_HAS_BINDING;
-  block refd = gen_noop();
-  block unrefd = gen_noop();
+  block refd = jq_gen_noop();
+  block unrefd = jq_gen_noop();
   int nrefs;
   for (int last_kept = 0, kept = 0; ; ) {
     for (inst* curr; (curr = block_take(&binder));) {
@@ -440,7 +440,7 @@ block block_bind_referenced(block binder, block body, int bindflags) {
       break;
     last_kept = kept;
     binder = unrefd;
-    unrefd = gen_noop();
+    unrefd = jq_gen_noop();
   }
   block_free(unrefd);
   return block_join(refd, body);
@@ -448,8 +448,8 @@ block block_bind_referenced(block binder, block body, int bindflags) {
 
 block block_drop_unreferenced(block body) {
   inst* curr;
-  block refd = gen_noop();
-  block unrefd = gen_noop();
+  block refd = jq_gen_noop();
+  block unrefd = jq_gen_noop();
   int drop;
   do {
     drop = 0;
@@ -466,7 +466,7 @@ block block_drop_unreferenced(block body) {
       body = BLOCK(inst_block(curr),body);
     }
     body = BLOCK(refd, body);
-    refd = gen_noop();
+    refd = jq_gen_noop();
   } while (drop != 0);
   block_free(unrefd);
   return body;
@@ -504,7 +504,7 @@ jv block_list_funcs(block body, int omit_underscores) {
   return jv_keys_unsorted(funcs);
 }
 
-block gen_module(block metadata) {
+block jq_gen_module(block metadata) {
   inst* i = inst_new(MODULEMETA);
   i->imm.constant = block_const(metadata);
   if (jv_get_kind(i->imm.constant) != JV_KIND_OBJECT)
@@ -519,7 +519,7 @@ jv block_module_meta(block b) {
   return jv_null();
 }
 
-block gen_import(const char* name, const char* as, int is_data) {
+block jq_gen_import(const char* name, const char* as, int is_data) {
   inst* i = inst_new(DEPS);
   jv meta = jv_object();
   if (as != NULL)
@@ -530,7 +530,7 @@ block gen_import(const char* name, const char* as, int is_data) {
   return inst_block(i);
 }
 
-block gen_import_meta(block import, block metadata) {
+block jq_gen_import_meta(block import, block metadata) {
   assert(block_is_single(import) && import.first->op == DEPS);
   assert(block_is_const(metadata) && block_const_kind(metadata) == JV_KIND_OBJECT);
   inst *i = import.first;
@@ -539,12 +539,12 @@ block gen_import_meta(block import, block metadata) {
   return import;
 }
 
-block gen_function(const char* name, block formals, block body) {
+block jq_gen_function(const char* name, block formals, block body) {
   inst* i = inst_new(CLOSURE_CREATE);
   for (inst* i = formals.last; i; i = i->prev) {
     if (i->op == CLOSURE_PARAM_REGULAR) {
       i->op = CLOSURE_PARAM;
-      body = gen_var_binding(gen_call(i->symbol, gen_noop()), i->symbol, body);
+      body = jq_gen_var_binding(jq_gen_call(i->symbol, jq_gen_noop()), i->symbol, body);
     }
     block_bind_subblock(inst_block(i), body, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
   }
@@ -556,45 +556,45 @@ block gen_function(const char* name, block formals, block body) {
   return b;
 }
 
-block gen_param_regular(const char* name) {
-  return gen_op_unbound(CLOSURE_PARAM_REGULAR, name);
+block jq_gen_param_regular(const char* name) {
+  return jq_gen_op_unbound(CLOSURE_PARAM_REGULAR, name);
 }
 
-block gen_param(const char* name) {
-  return gen_op_unbound(CLOSURE_PARAM, name);
+block jq_gen_param(const char* name) {
+  return jq_gen_op_unbound(CLOSURE_PARAM, name);
 }
 
-block gen_lambda(block body) {
-  return gen_function("@lambda", gen_noop(), body);
+block jq_gen_lambda(block body) {
+  return jq_gen_function("@lambda", jq_gen_noop(), body);
 }
 
-block gen_call(const char* name, block args) {
-  block b = gen_op_unbound(CALL_JQ, name);
+block jq_gen_call(const char* name, block args) {
+  block b = jq_gen_op_unbound(CALL_JQ, name);
   b.first->arglist = args;
   return b;
 }
 
-block gen_subexp(block a) {
+block jq_gen_subexp(block a) {
   if (block_is_noop(a)) {
-    return gen_op_simple(DUP);
+    return jq_gen_op_simple(DUP);
   }
   if (block_is_single(a) && a.first->op == LOADK) {
     jv c = block_const(a);
     block_free(a);
-    return gen_op_pushk_under(c);
+    return jq_gen_op_pushk_under(c);
   }
-  return BLOCK(gen_op_simple(SUBEXP_BEGIN), a, gen_op_simple(SUBEXP_END));
+  return BLOCK(jq_gen_op_simple(SUBEXP_BEGIN), a, jq_gen_op_simple(SUBEXP_END));
 }
 
-block gen_both(block a, block b) {
-  block jump = gen_op_targetlater(JUMP);
-  block fork = gen_op_target(FORK, jump);
+block jq_gen_both(block a, block b) {
+  block jump = jq_gen_op_targetlater(JUMP);
+  block fork = jq_gen_op_target(FORK, jump);
   block c = BLOCK(fork, a, jump, b);
   inst_set_target(jump, c);
   return c;
 }
 
-block gen_const_object(block expr) {
+block jq_gen_const_object(block expr) {
   int is_const = 1;
   jv o = jv_object();
   jv k = jv_null();
@@ -649,10 +649,10 @@ block gen_const_object(block expr) {
     return b;
   }
   block_free(expr);
-  return gen_const(o);
+  return jq_gen_const(o);
 }
 
-static block gen_const_array(block expr) {
+static block jq_gen_const_array(block expr) {
   /*
    * An expr of all constant elements looks like this:
    *
@@ -703,7 +703,7 @@ static block gen_const_array(block expr) {
       (expr.last == NULL || expr.last->op == LOADK) &&
       jv_array_length(jv_copy(a)) == commas + 1) {
     block_free(expr);
-    return gen_const(a);
+    return jq_gen_const(a);
   }
 
   jv_free(a);
@@ -711,22 +711,22 @@ static block gen_const_array(block expr) {
   return b;
 }
 
-block gen_collect(block expr) {
-  block const_array = gen_const_array(expr);
+block jq_gen_collect(block expr) {
+  block const_array = jq_gen_const_array(expr);
   if (const_array.first != NULL)
     return const_array;
 
-  block array_var = gen_op_var_fresh(STOREV, "collect");
-  block c = BLOCK(gen_op_simple(DUP), gen_const(jv_array()), array_var);
+  block array_var = jq_gen_op_var_fresh(STOREV, "collect");
+  block c = BLOCK(jq_gen_op_simple(DUP), jq_gen_const(jv_array()), array_var);
 
-  block tail = BLOCK(gen_op_bound(APPEND, array_var),
-                     gen_op_simple(BACKTRACK));
+  block tail = BLOCK(jq_gen_op_bound(APPEND, array_var),
+                     jq_gen_op_simple(BACKTRACK));
 
   return BLOCK(c,
-               gen_op_target(FORK, tail),
+               jq_gen_op_target(FORK, tail),
                expr,
                tail,
-               gen_op_bound(LOADVN, array_var));
+               jq_gen_op_bound(LOADVN, array_var));
 }
 
 static block bind_matcher(block matcher, block body) {
@@ -787,9 +787,9 @@ static block bind_alternation_matchers(block matchers, block body) {
   // We need a preamble of STOREVs to which to bind the matchers and the body.
   jv_object_keys_foreach(all_vars, key) {
     preamble = BLOCK(preamble,
-                     gen_op_simple(DUP),
-                     gen_const(jv_null()),
-                     gen_op_unbound(STOREV, jv_string_value(key)));
+                     jq_gen_op_simple(DUP),
+                     jq_gen_const(jv_null()),
+                     jq_gen_op_unbound(STOREV, jv_string_value(key)));
     jv_free(key);
   }
   jv_free(all_vars);
@@ -799,10 +799,10 @@ static block bind_alternation_matchers(block matchers, block body) {
     block submatcher = i->subfn;
 
     // If we're successful, jump to the end of the matchers
-    submatcher = BLOCK(submatcher, gen_op_target(JUMP, final_matcher));
+    submatcher = BLOCK(submatcher, jq_gen_op_target(JUMP, final_matcher));
 
     // DESTRUCTURE_ALT to the end of this submatcher so we can skip to the next one on error
-    mb = BLOCK(mb, gen_op_target(DESTRUCTURE_ALT, submatcher), submatcher);
+    mb = BLOCK(mb, jq_gen_op_target(DESTRUCTURE_ALT, submatcher), submatcher);
 
     // We're done with this inst and we don't want it anymore
     // But we can't let it free the submatcher block.
@@ -814,40 +814,40 @@ static block bind_alternation_matchers(block matchers, block body) {
   return bind_matcher(preamble, BLOCK(mb, final_matcher, body));
 }
 
-block gen_reduce(block source, block matcher, block init, block body) {
-  block res_var = gen_op_var_fresh(STOREV, "reduce");
-  block loop = BLOCK(gen_op_simple(DUPN),
+block jq_gen_reduce(block source, block matcher, block init, block body) {
+  block res_var = jq_gen_op_var_fresh(STOREV, "reduce");
+  block loop = BLOCK(jq_gen_op_simple(DUPN),
                      source,
                      bind_alternation_matchers(matcher,
-                                  BLOCK(gen_op_bound(LOADVN, res_var),
+                                  BLOCK(jq_gen_op_bound(LOADVN, res_var),
                                         body,
-                                        gen_op_bound(STOREV, res_var))),
-                     gen_op_simple(BACKTRACK));
-  return BLOCK(gen_op_simple(DUP),
+                                        jq_gen_op_bound(STOREV, res_var))),
+                     jq_gen_op_simple(BACKTRACK));
+  return BLOCK(jq_gen_op_simple(DUP),
                init,
                res_var,
-               gen_op_target(FORK, loop),
+               jq_gen_op_target(FORK, loop),
                loop,
-               gen_op_bound(LOADVN, res_var));
+               jq_gen_op_bound(LOADVN, res_var));
 }
 
-block gen_foreach(block source, block matcher, block init, block update, block extract) {
-  block output = gen_op_targetlater(JUMP);
-  block state_var = gen_op_var_fresh(STOREV, "foreach");
-  block loop = BLOCK(gen_op_simple(DUPN),
+block jq_gen_foreach(block source, block matcher, block init, block update, block extract) {
+  block output = jq_gen_op_targetlater(JUMP);
+  block state_var = jq_gen_op_var_fresh(STOREV, "foreach");
+  block loop = BLOCK(jq_gen_op_simple(DUPN),
                      // get a value from the source expression:
                      source,
                      // destructure the value into variable(s) for all the code
                      // in the body to see
                      bind_alternation_matchers(matcher,
                                   // load the loop state variable
-                                  BLOCK(gen_op_bound(LOADVN, state_var),
+                                  BLOCK(jq_gen_op_bound(LOADVN, state_var),
                                         // generate updated state
                                         update,
                                         // save the updated state for value extraction
-                                        gen_op_simple(DUP),
+                                        jq_gen_op_simple(DUP),
                                         // save new state
-                                        gen_op_bound(STOREV, state_var),
+                                        jq_gen_op_bound(STOREV, state_var),
                                         // extract an output...
                                         extract,
                                         // ...and output it by jumping
@@ -861,46 +861,46 @@ block gen_foreach(block source, block matcher, block init, block update, block e
                                         // empty, in which case we don't
                                         // get here.)
                                         output)));
-  block foreach = BLOCK(gen_op_simple(DUP),
+  block foreach = BLOCK(jq_gen_op_simple(DUP),
                         init,
                         state_var,
-                        gen_op_target(FORK, loop),
+                        jq_gen_op_target(FORK, loop),
                         loop,
                         // ...at this point `foreach`'s original input
                         // will be on top of the stack, and we don't
                         // want to output it, so we backtrack.
-                        gen_op_simple(BACKTRACK));
+                        jq_gen_op_simple(BACKTRACK));
   inst_set_target(output, foreach); // make that JUMP go bast the BACKTRACK at the end of the loop
   return foreach;
 }
 
-block gen_definedor(block a, block b) {
+block jq_gen_definedor(block a, block b) {
   // var found := false
-  block found_var = gen_op_var_fresh(STOREV, "found");
-  block init = BLOCK(gen_op_simple(DUP), gen_const(jv_false()), found_var);
+  block found_var = jq_gen_op_var_fresh(STOREV, "found");
+  block init = BLOCK(jq_gen_op_simple(DUP), jq_gen_const(jv_false()), found_var);
 
   // if found, backtrack. Otherwise execute b
-  block backtrack = gen_op_simple(BACKTRACK);
-  block tail = BLOCK(gen_op_simple(DUP),
-                     gen_op_bound(LOADV, found_var),
-                     gen_op_target(JUMP_F, backtrack),
+  block backtrack = jq_gen_op_simple(BACKTRACK);
+  block tail = BLOCK(jq_gen_op_simple(DUP),
+                     jq_gen_op_bound(LOADV, found_var),
+                     jq_gen_op_target(JUMP_F, backtrack),
                      backtrack,
-                     gen_op_simple(POP),
+                     jq_gen_op_simple(POP),
                      b);
 
   // try again
-  block if_notfound = gen_op_simple(BACKTRACK);
+  block if_notfound = jq_gen_op_simple(BACKTRACK);
 
   // found := true, produce result
-  block if_found = BLOCK(gen_op_simple(DUP),
-                         gen_const(jv_true()),
-                         gen_op_bound(STOREV, found_var),
-                         gen_op_target(JUMP, tail));
+  block if_found = BLOCK(jq_gen_op_simple(DUP),
+                         jq_gen_const(jv_true()),
+                         jq_gen_op_bound(STOREV, found_var),
+                         jq_gen_op_target(JUMP, tail));
 
   return BLOCK(init,
-               gen_op_target(FORK, if_notfound),
+               jq_gen_op_target(FORK, if_notfound),
                a,
-               gen_op_target(JUMP_F, if_found),
+               jq_gen_op_target(JUMP_F, if_found),
                if_found,
                if_notfound,
                tail);
@@ -920,32 +920,32 @@ int block_is_funcdef(block b) {
   return 0;
 }
 
-block gen_condbranch(block iftrue, block iffalse) {
-  iftrue = BLOCK(iftrue, gen_op_target(JUMP, iffalse));
-  return BLOCK(gen_op_target(JUMP_F, iftrue), iftrue, iffalse);
+block jq_gen_condbranch(block iftrue, block iffalse) {
+  iftrue = BLOCK(iftrue, jq_gen_op_target(JUMP, iffalse));
+  return BLOCK(jq_gen_op_target(JUMP_F, iftrue), iftrue, iffalse);
 }
 
-block gen_and(block a, block b) {
+block jq_gen_and(block a, block b) {
   // a and b = if a then (if b then true else false) else false
-  return BLOCK(gen_op_simple(DUP), a,
-               gen_condbranch(BLOCK(gen_op_simple(POP),
+  return BLOCK(jq_gen_op_simple(DUP), a,
+               jq_gen_condbranch(BLOCK(jq_gen_op_simple(POP),
                                     b,
-                                    gen_condbranch(gen_const(jv_true()),
-                                                   gen_const(jv_false()))),
-                              BLOCK(gen_op_simple(POP), gen_const(jv_false()))));
+                                    jq_gen_condbranch(jq_gen_const(jv_true()),
+                                                   jq_gen_const(jv_false()))),
+                              BLOCK(jq_gen_op_simple(POP), jq_gen_const(jv_false()))));
 }
 
-block gen_or(block a, block b) {
+block jq_gen_or(block a, block b) {
   // a or b = if a then true else (if b then true else false)
-  return BLOCK(gen_op_simple(DUP), a,
-               gen_condbranch(BLOCK(gen_op_simple(POP), gen_const(jv_true())),
-                              BLOCK(gen_op_simple(POP),
+  return BLOCK(jq_gen_op_simple(DUP), a,
+               jq_gen_condbranch(BLOCK(jq_gen_op_simple(POP), jq_gen_const(jv_true())),
+                              BLOCK(jq_gen_op_simple(POP),
                                     b,
-                                    gen_condbranch(gen_const(jv_true()),
-                                                   gen_const(jv_false())))));
+                                    jq_gen_condbranch(jq_gen_const(jv_true()),
+                                                   jq_gen_const(jv_false())))));
 }
 
-block gen_destructure_alt(block matcher) {
+block jq_gen_destructure_alt(block matcher) {
   for (inst *i = matcher.first; i; i = i->next) {
     if (i->op == STOREV) {
       i->op = STOREVN;
@@ -956,11 +956,11 @@ block gen_destructure_alt(block matcher) {
   return inst_block(i);
 }
 
-block gen_var_binding(block var, const char* name, block body) {
-  return gen_destructure(var, gen_op_unbound(STOREV, name), body);
+block jq_gen_var_binding(block var, const char* name, block body) {
+  return jq_gen_destructure(var, jq_gen_op_unbound(STOREV, name), body);
 }
 
-block gen_array_matcher(block left, block curr) {
+block jq_gen_array_matcher(block left, block curr) {
   int index;
   if (block_is_noop(left))
     index = 0;
@@ -981,59 +981,59 @@ block gen_array_matcher(block left, block curr) {
   }
 
   // `left` goes at the end so that the const index is in a predictable place
-  return BLOCK(gen_op_simple(DUP), gen_subexp(gen_const(jv_number(index))),
-               gen_op_simple(INDEX), curr, left);
+  return BLOCK(jq_gen_op_simple(DUP), jq_gen_subexp(jq_gen_const(jv_number(index))),
+               jq_gen_op_simple(INDEX), curr, left);
 }
 
-block gen_object_matcher(block name, block curr) {
-  return BLOCK(gen_op_simple(DUP), gen_subexp(name), gen_op_simple(INDEX),
+block jq_gen_object_matcher(block name, block curr) {
+  return BLOCK(jq_gen_op_simple(DUP), jq_gen_subexp(name), jq_gen_op_simple(INDEX),
                curr);
 }
 
-block gen_destructure(block var, block matchers, block body) {
+block jq_gen_destructure(block var, block matchers, block body) {
   // var bindings can be added after coding the program; leave the TOP first.
-  block top = gen_noop();
+  block top = jq_gen_noop();
   if (body.first && body.first->op == TOP)
     top = inst_block(block_take(&body));
 
   if (matchers.first && matchers.first->op == DESTRUCTURE_ALT) {
-    block_append(&var, gen_op_simple(DUP));
+    block_append(&var, jq_gen_op_simple(DUP));
   } else {
-    top = BLOCK(top, gen_op_simple(DUP));
+    top = BLOCK(top, jq_gen_op_simple(DUP));
   }
 
-  return BLOCK(top, gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
+  return BLOCK(top, jq_gen_subexp(var), jq_gen_op_simple(POP), bind_alternation_matchers(matchers, body));
 }
 
-// Like gen_var_binding(), but bind `break`'s wildcard unbound variable
-static block gen_wildvar_binding(block var, const char* name, block body) {
-  return BLOCK(gen_op_simple(DUP), var,
-               block_bind(gen_op_unbound(STOREV, name),
+// Like jq_gen_var_binding(), but bind `break`'s wildcard unbound variable
+static block jq_gen_wildvar_binding(block var, const char* name, block body) {
+  return BLOCK(jq_gen_op_simple(DUP), var,
+               block_bind(jq_gen_op_unbound(STOREV, name),
                           body, OP_HAS_VARIABLE | OP_BIND_WILDCARD));
 }
 
-block gen_cond(block cond, block iftrue, block iffalse) {
-  return BLOCK(gen_op_simple(DUP), BLOCK(gen_subexp(cond), gen_op_simple(POP)),
-               gen_condbranch(BLOCK(gen_op_simple(POP), iftrue),
-                              BLOCK(gen_op_simple(POP), iffalse)));
+block jq_gen_cond(block cond, block iftrue, block iffalse) {
+  return BLOCK(jq_gen_op_simple(DUP), BLOCK(jq_gen_subexp(cond), jq_gen_op_simple(POP)),
+               jq_gen_condbranch(BLOCK(jq_gen_op_simple(POP), iftrue),
+                              BLOCK(jq_gen_op_simple(POP), iffalse)));
 }
 
-block gen_try_handler(block handler) {
+block jq_gen_try_handler(block handler) {
   // Quite a pain just to hide jq's internal errors.
-  return gen_cond(// `if type=="object" and .__jq
-                  gen_and(gen_call("_equal",
-                                   BLOCK(gen_lambda(gen_const(jv_string("object"))),
-                                         gen_lambda(gen_noop()))),
-                          BLOCK(gen_subexp(gen_const(jv_string("__jq"))),
-                                gen_noop(),
-                                gen_op_simple(INDEX))),
+  return jq_gen_cond(// `if type=="object" and .__jq
+                  jq_gen_and(jq_gen_call("_equal",
+                                   BLOCK(jq_gen_lambda(jq_gen_const(jv_string("object"))),
+                                         jq_gen_lambda(jq_gen_noop()))),
+                          BLOCK(jq_gen_subexp(jq_gen_const(jv_string("__jq"))),
+                                jq_gen_noop(),
+                                jq_gen_op_simple(INDEX))),
                   // `then error`
-                  gen_call("error", gen_noop()),
+                  jq_gen_call("error", jq_gen_noop()),
                   // `else HANDLER end`
                   handler);
 }
 
-block gen_try(block exp, block handler) {
+block jq_gen_try(block exp, block handler) {
   /*
    * Produce something like:
    *  FORK_OPT <address of handler>
@@ -1052,31 +1052,31 @@ block gen_try(block exp, block handler) {
    */
   if (!handler.first && !handler.last)
     // A hack to deal with `.` as the handler; we could use a real NOOP here
-    handler = BLOCK(gen_op_simple(DUP), gen_op_simple(POP), handler);
-  exp = BLOCK(exp, gen_op_target(JUMP, handler));
-  return BLOCK(gen_op_target(FORK_OPT, exp), exp, handler);
+    handler = BLOCK(jq_gen_op_simple(DUP), jq_gen_op_simple(POP), handler);
+  exp = BLOCK(exp, jq_gen_op_target(JUMP, handler));
+  return BLOCK(jq_gen_op_target(FORK_OPT, exp), exp, handler);
 }
 
-block gen_label(const char *label, block exp) {
-  block cond = gen_call("_equal",
-                        BLOCK(gen_lambda(gen_noop()),
-                              gen_lambda(gen_op_unbound(LOADV, label))));
-  return gen_wildvar_binding(gen_op_simple(GENLABEL), label,
-                             BLOCK(gen_op_simple(POP),
+block jq_gen_label(const char *label, block exp) {
+  block cond = jq_gen_call("_equal",
+                        BLOCK(jq_gen_lambda(jq_gen_noop()),
+                              jq_gen_lambda(jq_gen_op_unbound(LOADV, label))));
+  return jq_gen_wildvar_binding(jq_gen_op_simple(GENLABEL), label,
+                             BLOCK(jq_gen_op_simple(POP),
                                    // try exp catch if . == $label
                                    //               then empty
                                    //               else error end
                                    //
-                                   // Can't use gen_binop(), as that's firmly
+                                   // Can't use jq_gen_binop(), as that's firmly
                                    // stuck in parser.y as it refers to things
                                    // like EQ.
-                                   gen_try(exp,
-                                           gen_cond(cond,
-                                                    gen_op_simple(BACKTRACK),
-                                                    gen_call("error", gen_noop())))));
+                                   jq_gen_try(exp,
+                                           jq_gen_cond(cond,
+                                                    jq_gen_op_simple(BACKTRACK),
+                                                    jq_gen_call("error", jq_gen_noop())))));
 }
 
-block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block code) {
+block jq_gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block code) {
   for (int cfunc=0; cfunc<ncfunctions; cfunc++) {
     inst* i = inst_new(CLOSURE_CREATE_C);
     i->imm.cfunc = &cfunctions[cfunc];
@@ -1132,7 +1132,7 @@ make_env(jv env)
 // Expands call instructions into a calling sequence
 static int expand_call_arglist(block* b, jv args, jv *env) {
   int errors = 0;
-  block ret = gen_noop();
+  block ret = jq_gen_noop();
   for (inst* curr; (curr = block_take(b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_BINDING) {
       if (!curr->bound_by && curr->op == LOADV && strcmp(curr->symbol, "ENV") == 0) {
@@ -1155,7 +1155,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
       }
     }
 
-    block prelude = gen_noop();
+    block prelude = jq_gen_noop();
     if (curr->op == CALL_JQ) {
       int actual_args = 0, desired_args = 0;
       // We expand the argument list as a series of instructions
@@ -1163,7 +1163,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
       default: assert(0 && "Unknown function type"); break;
       case CLOSURE_CREATE:
       case CLOSURE_PARAM: {
-        block callargs = gen_noop();
+        block callargs = jq_gen_noop();
         for (inst* i; (i = block_take(&curr->arglist));) {
           assert(opcode_describe(i->op)->flags & OP_IS_CALL_PSEUDO);
           block b = inst_block(i);
@@ -1174,7 +1174,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
             break;
           case CLOSURE_CREATE:
             block_append(&prelude, b);
-            block_append(&callargs, gen_op_bound(CLOSURE_REF, b));
+            block_append(&callargs, jq_gen_op_bound(CLOSURE_REF, b));
             break;
           }
           actual_args++;
@@ -1195,11 +1195,11 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
         for (inst* i; (i = block_take(&curr->arglist)); ) {
           assert(i->op == CLOSURE_CREATE); // FIXME
           block body = i->subfn;
-          i->subfn = gen_noop();
+          i->subfn = jq_gen_noop();
           inst_free(i);
           // arguments should be pushed in reverse order, prepend them to prelude
           errors += expand_call_arglist(&body, args, env);
-          prelude = BLOCK(gen_subexp(body), prelude);
+          prelude = BLOCK(jq_gen_subexp(body), prelude);
           actual_args++;
         }
         assert(curr->op == CALL_JQ);
@@ -1226,7 +1226,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
   errors += expand_call_arglist(&b, args, env);
-  b = BLOCK(b, gen_op_simple(RET));
+  b = BLOCK(b, jq_gen_op_simple(RET));
   jv localnames = jv_array();
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
@@ -1289,7 +1289,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
         errors += compile(subfn, curr->subfn, lf, args, env);
-        curr->subfn = gen_noop();
+        curr->subfn = jq_gen_noop();
       }
     }
   } else {
