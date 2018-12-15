@@ -1,12 +1,36 @@
 
 Release history
 
+ * jq version 1.6 was released on Fri Nov 2 2018
  * jq version 1.5 was released on Sat Aug 15 2015
  * jq version 1.4 was released on Mon Jun 9 2014
  * jq version 1.3 was released on Sun May 19 2013
  * jq version 1.2 was released on Thu Dec 20 2012
  * jq version 1.1 was released on Sun Oct 21 2012
  * jq version 1.0 was released on Sun Oct 21 2012
+
+New features in 1.6 since 1.5:
+
+ - Destructuring Alternation
+
+ - New Builtins:
+   - builtins/0
+   - stderr/0
+   - halt/0, halt_error/1
+   - isempty/1
+   - walk/1
+   - utf8bytelength/1
+   - localtime/0, strflocaltime/1
+   - SQL-style builtins
+   - and more!
+
+ - Add support for ASAN and UBSAN
+
+ - Make it easier to use jq with shebangs (8f6f28c)
+
+ - Add $ENV builtin variable to access environment
+
+ - Add JQ_COLORS env var for configuring the output colors
 
 New features in 1.5 since 1.4:
 
