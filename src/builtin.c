@@ -1186,6 +1186,27 @@ static jv tm2jv(struct tm *tm) {
                   jv_number(tm->tm_yday));
 }
 
+#if defined(WIN32) && !defined(HAVE_SETENV)
+static int setenv(const char *var, const char *val, int ovr)
+{
+  BOOL b;
+  char c[2];
+  if (!ovr)
+  {
+    DWORD d;
+    d = GetEnvironmentVariableA (var, c, 2);
+    if (0 != d && GetLastError () != ERROR_ENVVAR_NOT_FOUND) {
+      return d;
+    }
+  }
+  b = SetEnvironmentVariableA (var, val);
+  if (b) {
+    return 0;
+  }
+  return 1;
+}
+#endif
+
 /*
  * mktime() has side-effects and anyways, returns time in the local
  * timezone, not UTC.  We want timegm(), which isn't standard.
