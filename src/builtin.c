@@ -34,7 +34,7 @@ void *alloca (size_t);
 #endif
 #include <string.h>
 #include <time.h>
-#if defined(WIN32) && !defined(HAVE_SETENV)
+#ifdef WIN32
 #include <windows.h>
 #endif
 #include "builtin.h"
