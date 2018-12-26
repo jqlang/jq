@@ -52,6 +52,7 @@ libjq_la_LDFLAGS = $(onig_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info
 
 if WIN32
 libjq_la_LIBADD += -lshlwapi
+libjq_la_LDFLAGS += -no-undefined
 endif
 
 include_HEADERS = src/jv.h src/jq.h
