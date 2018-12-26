@@ -61,6 +61,8 @@ if ENABLE_UBSAN
 AM_CFLAGS += -fsanitize=undefined
 endif
 
+AM_CPPFLAGS = -I$(srcdir)/src
+
 ### Running tests under Valgrind
 
 if ENABLE_ASAN
