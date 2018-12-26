@@ -34,6 +34,9 @@ void *alloca (size_t);
 #endif
 #include <string.h>
 #include <time.h>
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include "builtin.h"
 #include "compile.h"
 #include "jq_parser.h"
