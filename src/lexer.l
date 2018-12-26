@@ -1,7 +1,7 @@
 %{
 #include <assert.h>
-#include "jv_alloc.h"
-#include "compile.h"
+#include "src/jv_alloc.h"
+#include "src/compile.h"
 
 struct lexer_param;
 

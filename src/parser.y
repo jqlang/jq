@@ -3,13 +3,13 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include "compile.h"
-#include "jv_alloc.h"
+#include "src/compile.h"
+#include "src/jv_alloc.h"
 #define YYMALLOC jv_mem_alloc
 #define YYFREE jv_mem_free
 %}
 %code requires {
-#include "locfile.h"
+#include "src/locfile.h"
 struct lexer_param;
 
 #define YYLTYPE location
