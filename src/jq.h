@@ -68,4 +68,6 @@ jv jq_util_input_get_current_line(jq_state*);
 
 int jq_set_colors(const char *);
 
+void jvp_dump_string_raw(jv str, int ascii_only, FILE* F, jv* S, int T);
+
 #endif /* !JQ_H */

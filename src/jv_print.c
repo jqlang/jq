@@ -114,13 +114,18 @@ static void put_indent(int n, int flags, FILE* fout, jv* strout, int T) {
 }
 
 static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
+  put_char('"', F, S, T);
+  jvp_dump_string_raw(str, ascii_only, F, S, T);
+  put_char('"', F, S, T);
+}
+
+void jvp_dump_string_raw(jv str, int ascii_only, FILE* F, jv* S, int T) {
   assert(jv_get_kind(str) == JV_KIND_STRING);
   const char* i = jv_string_value(str);
   const char* end = i + jv_string_length_bytes(jv_copy(str));
   const char* cstart;
   int c = 0;
   char buf[32];
-  put_char('"', F, S, T);
   while ((i = jvp_utf8_next((cstart = i), end, &c))) {
     assert(c != -1);
     int unicode_escape = 0;
@@ -177,7 +182,6 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
     }
   }
   assert(c != -1);
-  put_char('"', F, S, T);
 }
 
 static void put_refcnt(struct dtoa_context* C, int refcnt, FILE *F, jv* S, int T){
