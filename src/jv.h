@@ -215,6 +215,7 @@ void jv_dump(jv, int flags);
 void jv_show(jv, int flags);
 jv jv_dump_string(jv, int flags);
 char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize);
+void jvp_dump_string_raw(jv str, int ascii_only, FILE* F, jv* S, int T);
 
 enum {
   JV_PARSE_SEQ              = 1,
