@@ -280,14 +280,14 @@ cmp $d/color $d/expect
 JQ_COLORS='4;31' $JQ -Ccn . > $d/color
 printf '\033[4;31mnull\033[0m\n' > $d/expect
 cmp $d/color $d/expect
-JQ_COLORS='1;30:0;31:0;32:0;33:0;34:1;35:1;36' \
+JQ_COLORS='1;30:0;31:0;32:0;33:0;34:1;35:1;36:1;30' \
   $JQ -Ccn '[{"a":true,"b":false},123,null]' > $d/color
 (
 printf '\033[1;35m[\033[1;36m{'
-printf '\033[0m\033[1;34m"a"\033['
+printf '\033[0m\033[1;30m"a"\033['
 printf '0m\033[1;36m:\033[0m\033['
 printf '0;32mtrue\033[0m\033[1'
-printf ';36m,\033[0m\033[1;34m'
+printf ';36m,\033[0m\033[1;30m'
 printf '"b"\033[0m\033[1;36m:\033'
 printf '[0m\033[0;31mfalse\033'
 printf '[0m\033[1;36m\033[1;36'
