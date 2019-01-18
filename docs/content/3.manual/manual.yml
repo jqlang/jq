@@ -3264,7 +3264,7 @@ sections:
     body: |
 
       To configure alternative colors just set the `JQ_COLORS`
-      environment variable to colon-delimited list of partial terminal
+      environment variable to colon-separated list of partial terminal
       escape sequences like `"1;31"`, in this order:
 
         - color for `null`
