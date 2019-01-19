@@ -1342,7 +1342,12 @@ int jv_contains(jv a, jv b) {
   } else if (jv_get_kind(a) == JV_KIND_ARRAY) {
     r = jv_array_contains(jv_copy(a), jv_copy(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING) {
-    r = strstr(jv_string_value(a), jv_string_value(b)) != 0;
+    const char *str_a = jv_string_value(a);
+    uint32_t len_a = jv_string_length_bytes(jv_copy(a));
+    const char *str_b = jv_string_value(b);
+    uint32_t len_b = jv_string_length_bytes(jv_copy(b));
+
+    r = _jq_memmem(str_a, len_a, str_b, len_b) != NULL;
   } else {
     r = jv_equal(jv_copy(a), jv_copy(b));
   }
