@@ -1091,6 +1091,11 @@ null
 {}
 [true, true, false]
 
+# containment operator (embedded NULs!)
+[contains("foo"), contains("\u0000b"), contains("\u0000z"),  contains("bar"), contains("baz")]
+"foo\u0000bar"
+[true, true, false, true, false]
+
 # Try/catch and general `?` operator
 [.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]
 [0,1,2,3]
