@@ -1092,9 +1092,26 @@ null
 [true, true, false]
 
 # containment operator (embedded NULs!)
-[contains("foo"), contains("\u0000b"), contains("\u0000z"),  contains("bar"), contains("baz")]
-"foo\u0000bar"
-[true, true, false, true, false]
+[contains(""), contains("\u0000")]
+"\u0000"
+[true, true]
+
+[contains(""), contains("a"), contains("ab"), contains("c"), contains("d")]
+"ab\u0000cd"
+[true, true, true, true, true]
+
+[contains("cd"), contains("b\u0000"), contains("ab\u0000")]
+"ab\u0000cd"
+[true, true, true]
+
+[contains("b\u0000c"), contains("b\u0000cd"), contains("b\u0000cd")]
+"ab\u0000cd"
+[true, true, true]
+
+[contains("@"), contains("\u0000@"), contains("\u0000what")]
+"ab\u0000cd"
+[false, false, false]
+
 
 # Try/catch and general `?` operator
 [.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]
