@@ -236,6 +236,30 @@ def fromstream(i):
     else empty
     end
   );
+def fromstream_with_dups(i; fix):
+  foreach i as $i (
+    [null, null];
+
+    if ($i | length) == 2 then
+      if ($i[0] | length) == 0 then .
+      elif $i[0][-1]|type == "string" then
+        [ ( .[0] | setpath($i[0]; getpath($i[0]) + [$i[1]]) ), .[1] ]
+      else [ ( .[0] | setpath($i[0]; $i[1]) ), .[1] ]
+      end
+    elif ($i[0] | length) == 1 then [ null, .[0] ]
+    else .
+    end;
+
+    if ($i | length) == 1 then
+      if ($i[0] | length) == 1 then
+        .[1] | if type=="object" then fix else . end
+      else empty
+      end
+    elif ($i[0] | length) == 0 then $i[1]
+    else empty
+    end
+  );
+def fromstream_with_dups(i): fromstream_with_dups(i; .);
 def tostream:
   {string:true,number:true,boolean:true,null:true} as $leaf_types |
   . as $dot |
