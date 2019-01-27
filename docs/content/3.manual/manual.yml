@@ -2924,6 +2924,9 @@ sections:
       single JSON text that is 1GB in size, streaming it will allow you
       to process it much more quickly.
 
+      Streaming not only allows for online consumption of large JSON
+      texts, but also allows for processing of duplicate object keys.
+
       However, streaming isn't easy to deal with as the jq program will
       have `[<path>, <leaf-value>]` (and a few other forms) as inputs.
 
@@ -2961,6 +2964,35 @@ sections:
           - program: 'fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))'
             input: 'null'
             output: ['[2]']
+
+      - title: "`fromstream_with_dups(stream_expression)`"
+        body: |
+
+          Outputs values corresponding to the stream expression's
+          outputs.  The values of object's keys are collected into
+          arrays, so that if there are duplicates in the input, then
+          those will all be available.
+
+        examples:
+          - program: 'fromstream_with_dups([["a"],0],[["a"],1],[["b"],2],[["b"]])'
+            input: 'null'
+            output: ['{"a":[0,1],"b":[2]}']
+
+      - title: "`fromstream_with_dups(stream_expression; fixup_object)`"
+        body: |
+
+          Same as `fromstream_with_dups/1`, but the `fixup_object`
+          expression makes it possible to rewrite objects to handle
+          duplicates in other ways than as arrays.
+
+          In the example below the first value of any key is used
+          instead of the last as jq's JSON parser normally does.
+
+        examples:
+          - program: 'def fix: reduce keys_unsorted[] as $key (.; .[$key] |= .[0]);
+                      fromstream_with_dups(.[]; fix)'
+            input: '[[["a"],0],[["a"],1],[["b"],2],[["b"]]]'
+            output: ['{"a":0,"b":2}']
 
       - title: "`tostream`"
         body: |
