@@ -24,6 +24,7 @@ jobs:
                         - valgrind
                         - bison
                         - automake
+                        - git
 
             before_install:
                 - uname -s
