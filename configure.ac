@@ -76,7 +76,7 @@ AC_ARG_ENABLE([gcov],
 
 dnl Don't attempt to build docs if there's no Ruby lying around
 AC_ARG_ENABLE([docs],
-   AC_HELP_STRING([--disable-docs], [don't build docs]))
+   AC_HELP_STRING([--disable-docs], [do not build docs]))
 
 dnl Don't attempt to build the error injection object (if there is no LD_PRELOAD support)
 AC_ARG_ENABLE([error-injection],

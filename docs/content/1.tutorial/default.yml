@@ -162,13 +162,14 @@ body:
       going to change.
 
       There's a lot of info we don't care about there, so we'll restrict it down
-      to the most interesting fields.
+      to the most interesting fields by searches that index into the JSON
+      document.  You also can transform the output JSON at the same time.
 
-  - command: "jq '.[0] | {message: .commit.message, name: .commit.committer.name}'"
+  - command: "jq '.[0] | {comment: .commit.message, contributor: .commit.committer.name}'"
     result: |
       {
-        "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-        "name": "Stephen Dolan"
+        "comment": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+        "contributor": "Stephen Dolan"
       }
 
   - text: |
@@ -180,34 +181,34 @@ body:
 
       Now let's get the rest of the commits.
 
-  - command:  "jq '.[] | {message: .commit.message, name: .commit.committer.name}'"
+  - command:  "jq '.[] | {comment: .commit.message, contributor: .commit.committer.name}'"
     result: |
       {
-        "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-        "name": "Stephen Dolan"
+        "comment": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+        "contributor": "Stephen Dolan"
       }
       {
-        "message": "Reject all overlong UTF8 sequences.",
-        "name": "Stephen Dolan"
+        "comment": "Reject all overlong UTF8 sequences.",
+        "contributor": "Stephen Dolan"
       }
       {
-        "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
-        "name": "Stephen Dolan"
+        "comment": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
+        "contributor": "Stephen Dolan"
       }
       {
-        "message": "Fix example in manual for `floor`. See #155.",
-        "name": "Stephen Dolan"
+        "comment": "Fix example in manual for `floor`. See #155.",
+        "contributor": "Stephen Dolan"
       }
       {
-        "message": "Document floor",
-        "name": "Nicolas Williams"
+        "comment": "Document floor",
+        "contributor": "Nicolas Williams"
       }
 
   - text: |
 
       `.[]` returns each element of the array returned in the response, one at a
       time, which are all fed into
-      `{message: .commit.message, name: .commit.committer.name}`.
+      `{comment: .commit.message, contributor: .commit.committer.name}`.
 
       Data in jq is represented as streams of JSON values - every jq
       expression runs for each value in its input stream, and can
@@ -221,28 +222,28 @@ body:
       "collect" all of the answers by wrapping the filter in square
       brackets:
 
-  - command: "jq '[.[] | {message: .commit.message, name: .commit.committer.name}]'"
+  - command: "jq '[.[] | {comment: .commit.message, contributor: .commit.committer.name}]'"
     result: |
       [
         {
-          "message": "Merge pull request #163 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-          "name": "Stephen Dolan"
+          "comment": "Merge pull request #163 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+          "contributor": "Stephen Dolan"
         },
         {
-          "message": "Reject all overlong UTF8 sequences.",
-          "name": "Stephen Dolan"
+          "comment": "Reject all overlong UTF8 sequences.",
+          "contributor": "Stephen Dolan"
         },
         {
-          "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
-          "name": "Stephen Dolan"
+          "comment": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
+          "contributor": "Stephen Dolan"
         },
         {
-          "message": "Fix example in manual for `floor`. See #155.",
-          "name": "Stephen Dolan"
+          "comment": "Fix example in manual for `floor`. See #155.",
+          "contributor": "Stephen Dolan"
         },
         {
-          "message": "Document floor",
-          "name": "Nicolas Williams"
+          "comment": "Document floor",
+          "contributor": "Nicolas Williams"
         }
       ]
 
@@ -269,43 +270,43 @@ body:
 
       We want to pull out all of the "html_url" fields inside that array of parent
       commits and make a simple list of strings to go along with the
-      "message" and "author" fields we already have.
+      "comment": and "contributer" fields we already have.
 
-  - command: "jq '[.[] | {message: .commit.message, name: .commit.committer.name, parents: [.parents[].html_url]}]'"
+  - command: "jq '[.[] | {comment: .commit.message, contributor: .commit.committer.name, parents: [.parents[].html_url]}]'"
     result: |
       [
         {
-          "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-          "name": "Stephen Dolan",
+          "comment": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
+          "contributor": "Stephen Dolan",
           "parents": [
             "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
             "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a"
           ]
         },
         {
-          "message": "Reject all overlong UTF8 sequences.",
-          "name": "Stephen Dolan",
+          "comment": "Reject all overlong UTF8 sequences.",
+          "contributor": "Stephen Dolan",
           "parents": [
             "https://github.com/stedolan/jq/commit/ff48bd6ec538b01d1057be8e93b94eef6914e9ef"
           ]
         },
         {
-          "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
-          "name": "Stephen Dolan",
+          "comment": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
+          "contributor": "Stephen Dolan",
           "parents": [
             "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7"
           ]
         },
         {
-          "message": "Fix example in manual for `floor`. See #155.",
-          "name": "Stephen Dolan",
+          "comment": "Fix example in manual for `floor`. See #155.",
+          "contributor": "Stephen Dolan",
           "parents": [
             "https://github.com/stedolan/jq/commit/3dcdc582ea993afea3f5503a78a77675967ecdfa"
           ]
         },
         {
-          "message": "Document floor",
-          "name": "Nicolas Williams",
+          "comment": "Document floor",
+          "contributor": "Nicolas Williams",
           "parents": [
             "https://github.com/stedolan/jq/commit/7c4171d414f647ab08bcd20c76a4d8ed68d9c602"
           ]
