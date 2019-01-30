@@ -5,6 +5,10 @@
 #include "bytecode.h"
 #include "locfile.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct inst;
 typedef struct inst inst;
 
@@ -102,5 +106,8 @@ void block_free(block);
 #define BLOCK(...) \
   BLOCK_IDX(__VA_ARGS__, BLOCK_8, BLOCK_7, BLOCK_6, BLOCK_5, BLOCK_4, BLOCK_3, BLOCK_2, BLOCK_1)(__VA_ARGS__)
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

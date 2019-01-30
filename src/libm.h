@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef HAVE_ACOS
 LIBM_DD(acos)
 #else
@@ -289,3 +293,8 @@ LIBM_DDD(ldexp)
 #else
 LIBM_DDD_NO(ldexp)
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+

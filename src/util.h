@@ -13,8 +13,12 @@
 
 #include "jv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef HAVE_MKSTEMP
-int mkstemp(char *template);
+int mkstemp(char *tpl);
 #endif
 
 jv expand_path(jv);
@@ -59,6 +63,10 @@ const void *_jq_memmem(const void *haystack, size_t haystacklen,
   ({ __typeof__ (a) _a = (a); \
    __typeof__ (b) _b = (b); \
    _a > _b ? _a : _b; })
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* UTIL_H */

@@ -3,6 +3,10 @@
 
 #include "jq.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   int start, end;
 } location;
@@ -25,5 +29,9 @@ struct locfile* locfile_retain(struct locfile *);
 int locfile_get_line(struct locfile *, int);
 void locfile_free(struct locfile *);
 void locfile_locate(struct locfile *, location, const char *, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

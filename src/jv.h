@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
   JV_KIND_INVALID,
   JV_KIND_NULL,
@@ -249,6 +253,9 @@ int jv_cmp(jv, jv);
 jv jv_group(jv, jv);
 jv jv_sort(jv, jv);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

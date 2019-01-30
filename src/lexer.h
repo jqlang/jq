@@ -2,6 +2,10 @@
 #define jq_yyHEADER_H 1
 #define jq_yyIN_HEADER 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #line 6 "src/lexer.h"
 
 #line 8 "src/lexer.h"
@@ -360,7 +364,11 @@ extern int jq_yylex \
 
 #line 130 "src/lexer.l"
 
-
 #line 365 "src/lexer.h"
+
+#ifdef __cplusplus
+}
+#endif
+
 #undef jq_yyIN_HEADER
 #endif /* jq_yyHEADER_H */

@@ -32,6 +32,11 @@
 
 #ifndef YY_YY_SRC_PARSER_H_INCLUDED
 # define YY_YY_SRC_PARSER_H_INCLUDED
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -193,5 +198,9 @@ struct YYLTYPE
 
 
 int yyparse (block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !YY_YY_SRC_PARSER_H_INCLUDED  */
