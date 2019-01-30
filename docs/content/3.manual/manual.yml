@@ -1350,6 +1350,54 @@ sections:
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
 
+      - title: "`summary_stats`, `summary_stats(stream)`"
+        body: |
+
+          Compute summary statistics on an array or a stream of numbers. The
+          output of `summary_stats` is an object with five fields, "count",
+          "mean", "min", "max", and "ssd". "ssd" is the sum of squared
+          differences from the mean, everything else has the obvious
+          definition.  If the input list is empty, every field but count is
+          `nan`. Computing the mean through these filters is slightly faster
+          and more stable than `add / length`. The stream version is
+          significantly slower for large inputs.
+
+        examples:
+          - program: 'summary_stats'
+            input: '[5,4,2,7]'
+            output: ['{"count":4,"mean":4.5,"ssd":13,"min":2,"max":7}']
+          - program: 'summary_stats(5, 4, 2, 7)'
+            input: 'null'
+            output: ['{"count":4,"mean":4.5,"ssd":13,"min":2,"max":7}']
+
+      - title: "`mean`, `mean(stream)`, `variance`, `variance(stream)`, `sample_variance`, `sample_variance(stream)`"
+        body: |
+
+          Compute `mean`, `variance`, and `sample_variance` on an array or a
+          stream of numbers. The stream versions are significantly slower than
+          their array counterparts on large inputs.
+
+        examples:
+          - program: 'sample_variance'
+            input: '[5,4,2,7,9]'
+            output: ['7.3']
+          - program: 'sample_variance(.[])'
+            input: '[5,4,2,7,9]'
+            output: ['7.3']
+
+      - title: "`median`"
+        body: |
+
+          Compute the median of an array.
+
+        examples:
+          - program: 'median'
+            input: '[1,2,10]'
+            output: ['2']
+          - program: 'median'
+            input: '[1,2,4,100]'
+            output: ['3']
+
       - title: "`unique`, `unique_by(path_exp)`"
         body: |
 
