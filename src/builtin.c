@@ -1225,10 +1225,21 @@ static int setenv(const char *var, const char *val, int ovr)
  *
  * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
  */
-static time_t my_timegm(struct tm *tm) {
+static time_t my_mktime(struct tm *tm) {
 #ifdef HAVE_TIMEGM
   return timegm(tm);
-#else /* HAVE_TIMEGM */
+#elif HAVE_TM_TM_GMT_OFF
+
+  time_t t = mktime(tm);
+  if (t == (time_t)-1)
+    return t;
+  return t + tm->tm_gmtoff;
+#elif HAVE_TM___TM_GMT_OFF
+  time_t t = mktime(tm);
+  if (t == (time_t)-1)
+    return t;
+  return t + tm->__tm_gmtoff;
+#else
   char *tz;
 
   tz = (tz = getenv("TZ")) != NULL ? strdup(tz) : NULL;
@@ -1238,18 +1249,6 @@ static time_t my_timegm(struct tm *tm) {
   if (tz != NULL)
     setenv("TZ", tz, 1);
   return t;
-#endif /* !HAVE_TIMEGM */
-}
-static time_t my_mktime(struct tm *tm) {
-  time_t t = mktime(tm);
-  if (t == (time_t)-1)
-    return t;
-#ifdef HAVE_TM_TM_GMT_OFF
-  return t + tm->tm_gmtoff;
-#elif HAVE_TM___TM_GMT_OFF
-  return t + tm->__tm_gmtoff;
-#else
-  return (time_t)-2; /* Not supported */
 #endif
 }
 
