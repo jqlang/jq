@@ -122,7 +122,9 @@ jv jv_string_explode(jv j);
 jv jv_string_implode(jv j);
 
 jv jv_object(void);
+jv jv_object_get_raw_key(jv object, const char *key, size_t keylen);
 jv jv_object_get(jv object, jv key);
+int jv_object_has_raw_key(jv object, const char *key, size_t keylen);
 int jv_object_has(jv object, jv key);
 jv jv_object_set(jv object, jv key, jv value);
 jv jv_object_delete(jv object, jv key);

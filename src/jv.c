@@ -546,17 +546,12 @@ static uint32_t rotl32 (uint32_t x, int8_t r){
   return (x << r) | (x >> (32 - r));
 }
 
-static uint32_t jvp_string_hash(jv jstr) {
-  jvp_string* str = jvp_string_ptr(jstr);
-  if (str->length_hashed & 1)
-    return str->hash;
-
+static uint32_t string_hash_mem(const char *s, size_t len) {
   /* The following is based on MurmurHash3.
      MurmurHash3 was written by Austin Appleby, and is placed
      in the public domain. */
 
-  const uint8_t* data = (const uint8_t*)str->data;
-  int len = (int)jvp_string_length(str);
+  const uint8_t* data = (const uint8_t*)s;
   const int nblocks = len / 4;
 
   uint32_t h1 = HASH_SEED;
@@ -596,6 +591,21 @@ static uint32_t jvp_string_hash(jv jstr) {
   h1 *= 0xc2b2ae35;
   h1 ^= h1 >> 16;
 
+  return h1;
+}
+
+static uint32_t jvp_string_hash(jv jstr) {
+  jvp_string* str = jvp_string_ptr(jstr);
+  if (str->length_hashed & 1)
+    return str->hash;
+
+  /* The following is based on MurmurHash3.
+     MurmurHash3 was written by Austin Appleby, and is placed
+     in the public domain. */
+
+  uint32_t h1 = string_hash_mem(str->data, jvp_string_length(str));
+
+  /* XXX Thread safety? */
   str->length_hashed |= 1;
   str->hash = h1;
 
@@ -917,6 +927,10 @@ static int* jvp_object_buckets(jv o) {
   return (int*)(&jvp_object_ptr(o)->elements[o.size]);
 }
 
+static int* jvp_object_find_bucket_raw(jv object, uint32_t hash) {
+  return jvp_object_buckets(object) + (jvp_object_mask(object) & hash);
+}
+
 static int* jvp_object_find_bucket(jv object, jv key) {
   return jvp_object_buckets(object) + (jvp_object_mask(object) & jvp_string_hash(key));
 }
@@ -929,6 +943,19 @@ static struct object_slot* jvp_object_get_slot(jv object, int slot) {
 
 static struct object_slot* jvp_object_next_slot(jv object, struct object_slot* slot) {
   return jvp_object_get_slot(object, slot->next);
+}
+
+static struct object_slot* jvp_object_find_slot_raw(jv object, uint32_t hash, const char *key, size_t keylen, int* bucket) {
+  for (struct object_slot* curr = jvp_object_get_slot(object, *bucket);
+       curr;
+       curr = jvp_object_next_slot(object, curr)) {
+    if (curr->hash == hash &&
+        jvp_string_length(jvp_string_ptr(curr->string)) == keylen &&
+        memcmp(jvp_string_ptr(curr->string)->data, key, keylen) == 0) {
+      return curr;
+    }
+  }
+  return 0;
 }
 
 static struct object_slot* jvp_object_find_slot(jv object, jv keystr, int* bucket) {
@@ -954,6 +981,14 @@ static struct object_slot* jvp_object_add_slot(jv object, jv key, int* bucket) {
   newslot->hash = jvp_string_hash(key);
   newslot->string = key;
   return newslot;
+}
+
+static jv* jvp_object_read_raw(jv object, const char *key, size_t keylen) {
+  uint32_t hash = string_hash_mem(key, keylen);
+  int* bucket = jvp_object_find_bucket_raw(object, hash);
+  struct object_slot* slot = jvp_object_find_slot_raw(object, hash, key, keylen, bucket);
+  if (slot == 0) return 0;
+  else return &slot->value;
 }
 
 static jv* jvp_object_read(jv object, jv key) {
@@ -1099,6 +1134,19 @@ jv jv_object() {
   return jvp_object_new(8);
 }
 
+jv jv_object_get_raw_key(jv object, const char *key, size_t keylen) {
+  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  jv* slot = jvp_object_read_raw(object, key, keylen);
+  jv val;
+  if (slot) {
+    val = jv_copy(*slot);
+  } else {
+    val = jv_invalid();
+  }
+  jv_free(object);
+  return val;
+}
+
 jv jv_object_get(jv object, jv key) {
   assert(jv_get_kind(object) == JV_KIND_OBJECT);
   assert(jv_get_kind(key) == JV_KIND_STRING);
@@ -1112,6 +1160,14 @@ jv jv_object_get(jv object, jv key) {
   jv_free(object);
   jv_free(key);
   return val;
+}
+
+int jv_object_has_raw_key(jv object, const char *key, size_t keylen) {
+  assert(jv_get_kind(object) == JV_KIND_OBJECT);
+  jv* slot = jvp_object_read_raw(object, key, keylen);
+  int res = slot ? 1 : 0;
+  jv_free(object);
+  return res;
 }
 
 int jv_object_has(jv object, jv key) {
