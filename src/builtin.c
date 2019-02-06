@@ -1663,7 +1663,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_get_jq_origin, "get_jq_origin", 1},
   {(cfunction_ptr)f_match, "_match_impl", 4},
   {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
-  {(cfunction_ptr)f_input, "_input", 1},
+  {(cfunction_ptr)f_input, "input", 1},
   {(cfunction_ptr)f_debug, "debug", 1},
   {(cfunction_ptr)f_stderr, "stderr", 1},
   {(cfunction_ptr)f_strptime, "strptime", 2},

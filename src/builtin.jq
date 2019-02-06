@@ -200,12 +200,11 @@ def transpose:
 	        end;
 def in(xs): . as $x | xs | has($x);
 def inside(xs): . as $x | xs | contains($x);
-def input: _input;
 def repeat(exp):
      def _repeat:
          exp, _repeat;
      _repeat;
-def inputs: try repeat(_input) catch if .=="break" then empty else .|error end;
+def inputs: try repeat(input) catch if .=="break" then empty else .|error end;
 # like ruby's downcase - only characters A to Z are affected
 def ascii_downcase:
   explode | map( if 65 <= . and . <= 90 then . + 32  else . end) | implode;
