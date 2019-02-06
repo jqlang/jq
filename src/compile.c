@@ -52,6 +52,7 @@ struct inst {
   // body which are unboudn and refer to "definition" by name.
   struct inst* bound_by;
   char* symbol;
+  size_t symbol_len;
 
   int nformals;
   int nactuals;
@@ -64,6 +65,8 @@ struct inst {
   struct bytecode* compiled;
 
   int bytecode_pos; // position just after this insn
+
+  jv unbounds;
 };
 
 static inst* inst_new(opcode op) {
@@ -73,10 +76,12 @@ static inst* inst_new(opcode op) {
   i->bytecode_pos = -1;
   i->bound_by = 0;
   i->symbol = 0;
+  i->symbol_len = 0;
   i->nformals = -1;
   i->nactuals = -1;
   i->subfn = gen_noop();
   i->arglist = gen_noop();
+  i->unbounds = jv_invalid();
   i->source = UNKNOWN_LOCATION;
   i->locfile = 0;
   return i;
@@ -86,6 +91,7 @@ static void inst_free(struct inst* i) {
   jv_mem_free(i->symbol);
   block_free(i->subfn);
   block_free(i->arglist);
+  jv_free(i->unbounds);
   if (i->locfile)
     locfile_free(i->locfile);
   if (opcode_describe(i->op)->flags & OP_HAS_CONSTANT) {
@@ -156,6 +162,7 @@ block gen_const_global(jv constant, const char *name) {
   inst* i = inst_new(STORE_GLOBAL);
   i->imm.constant = constant;
   i->symbol = strdup(name);
+  i->symbol_len = strlen(name);
   return inst_block(i);
 }
 
@@ -211,6 +218,7 @@ block gen_op_unbound(opcode op, const char* name) {
   assert(opcode_describe(op)->flags & OP_HAS_BINDING);
   inst* i = inst_new(op);
   i->symbol = strdup(name);
+  i->symbol_len = strlen(name);
   return inst_block(i);
 }
 
@@ -365,11 +373,27 @@ static int block_bind_subblock(block binder, block body, int bindflags, int brea
   return nrefs;
 }
 
+static jv block_unbounds(block body, jv unbounds) {
+  for (inst *curr = body.first; curr; curr = curr->next) {
+    if (curr->symbol && !curr->bound_by) {
+      unbounds = jv_object_set(unbounds, jv_string(curr->symbol), jv_true());
+    }
+    unbounds = block_unbounds(curr->subfn, unbounds);
+    unbounds = block_unbounds(curr->arglist, unbounds);
+  }
+  return unbounds;
+}
+
 static int block_bind_each(block binder, block body, int bindflags) {
+  if (body.first && !jv_is_valid(body.first->unbounds))
+    body.first->unbounds = block_unbounds(body, jv_object());
   assert(block_has_only_binders(binder, bindflags));
   bindflags |= OP_HAS_BINDING;
   int nrefs = 0;
   for (inst* curr = binder.first; curr; curr = curr->next) {
+    if (body.first &&
+        !jv_object_has_raw_key(jv_copy(body.first->unbounds), curr->symbol, curr->symbol_len))
+      continue;
     nrefs += block_bind_subblock(inst_block(curr), body, bindflags, 0);
   }
   return nrefs;
@@ -381,6 +405,7 @@ block block_bind(block binder, block body, int bindflags) {
 }
 
 block block_bind_library(block binder, block body, int bindflags, const char *libname) {
+  jv unbounds = block_unbounds(body, jv_object());
   bindflags |= OP_HAS_BINDING;
   int nrefs = 0;
   int matchlen = (libname == NULL) ? 0 : strlen(libname);
@@ -393,8 +418,12 @@ block block_bind_library(block binder, block body, int bindflags, const char *li
   }
   assert(block_has_only_binders(binder, bindflags));
   for (inst *curr = binder.first; curr; curr = curr->next) {
+    if (!jv_object_has_raw_key(jv_copy(unbounds), curr->symbol, curr->symbol_len))
+      continue;
+
     int bindflags2 = bindflags;
     char* cname = curr->symbol;
+    size_t cname_len = curr->symbol_len;
     char* tname = jv_mem_alloc(strlen(curr->symbol)+matchlen+1);
     strcpy(tname, matchname);
     strcpy(tname+matchlen, curr->symbol);
@@ -405,11 +434,14 @@ block block_bind_library(block binder, block body, int bindflags, const char *li
 
     // This mutation is ugly, even if we undo it
     curr->symbol = tname;
+    curr->symbol_len = strlen(tname);
     nrefs += block_bind_subblock(inst_block(curr), body, bindflags2, 0);
     curr->symbol = cname;
+    curr->symbol_len = cname_len;
     free(tname);
   }
   free(matchname);
+  jv_free(unbounds);
   return body; // We don't return a join because we don't want those sticking around...
 }
 
@@ -550,6 +582,7 @@ block gen_function(const char* name, block formals, block body) {
   }
   i->subfn = body;
   i->symbol = strdup(name);
+  i->symbol_len = strlen(name);
   i->arglist = formals;
   block b = inst_block(i);
   block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
@@ -1081,6 +1114,7 @@ block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block co
     inst* i = inst_new(CLOSURE_CREATE_C);
     i->imm.cfunc = &cfunctions[cfunc];
     i->symbol = strdup(i->imm.cfunc->name);
+    i->symbol_len = strlen(i->imm.cfunc->name);
     code = block_bind(inst_block(i), code, OP_IS_CALL_PSEUDO);
   }
   return code;
