@@ -1056,9 +1056,8 @@ static jv f_nan(jq_state *jq, jv input) {
   return jv_number(NAN);
 }
 
-static jv f_error(jq_state *jq, jv input, jv msg) {
-  jv_free(input);
-  return jv_invalid_with_msg(msg);
+static jv f_error(jq_state *jq, jv input) {
+  return jv_invalid_with_msg(input);
 }
 
 // FIXME Should autoconf check for this!
@@ -1653,7 +1652,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_max, "max", 1},
   {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
-  {(cfunction_ptr)f_error, "error", 2},
+  {(cfunction_ptr)f_error, "error", 1},
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_env, "env", 1},
   {(cfunction_ptr)f_halt, "halt", 1},
