@@ -884,9 +884,25 @@ path(.a[path(.b)[0]])
 [1,[[],{"a":2}]]
 [[0],[1],[1,0],[1,1],[1,1,"a"]]
 
+# Make sure we get paths to nulls
+[paths]
+[1,null]
+[[0],[1]]
+
+# Make sure we don't get paths to lone items
+[paths]
+5
+[]
+
 [leaf_paths]
 [1,[[],{"a":2}]]
 [[0],[1,1,"a"]]
+
+# Verifying that leaf_paths picks up false leaves.
+# Issue #1163
+[leaf_paths]
+{ "a": 2, "b": false, "d": [] }
+[ [ "a" ], [ "b" ] ]
 
 ["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
 {"bar": 42, "foo": ["a", "b", "c", "d"]}
@@ -1309,9 +1325,17 @@ map([1,2][0:.])
 [1,2,"foo",[],[3,[]],{},true,false,null]
 [[],[3,[]]]
 
+[.[]|isarray]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[false,false,false,true,true,false,false,false,false]
+
 [.[]|objects]
 [1,2,"foo",[],[3,[]],{},true,false,null]
 [{}]
+
+[.[]|isobject]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[false,false,false,false,false,true,false,false,false]
 
 [.[]|iterables]
 [1,2,"foo",[],[3,[]],{},true,false,null]
@@ -1321,17 +1345,33 @@ map([1,2][0:.])
 [1,2,"foo",[],[3,[]],{},true,false,null]
 [1,2,"foo",true,false,null]
 
+[.[]|isscalar]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[true,true,true,false,false,false,true,true,true]
+
 [.[]|values]
 [1,2,"foo",[],[3,[]],{},true,false,null]
 [1,2,"foo",[],[3,[]],{},true,false]
+
+[.[]|isvalue]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[true,true,true,true,true,true,true,true,false]
 
 [.[]|booleans]
 [1,2,"foo",[],[3,[]],{},true,false,null]
 [true,false]
 
+[.[]|isboolean]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[false,false,false,false,false,false,true,true,false]
+
 [.[]|nulls]
 [1,2,"foo",[],[3,[]],{},true,false,null]
 [null]
+
+[.[]|isnull]
+[1,2,"foo",[],[3,[]],{},true,false,null]
+[false,false,false,false,false,false,false,false,true]
 
 flatten
 [0, [1], [[2]], [[[3]]]]

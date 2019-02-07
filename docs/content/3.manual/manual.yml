@@ -993,6 +993,18 @@ sections:
             input: '[[],{},1,"foo",null,true,false]'
             output: ['1']
 
+      - title: "`isarray`, `isobject`, `isboolean`, `isnumber`, `isnormal`, `isfinite`, `isstring`, `isnull`, `isvalue`, `isscalar`"
+        body: |
+
+          These built-ins produce whether inputs are arrays, objects,
+          booleans, numbers, normal numbers, finite numbers, strings,
+          null, non-null values, and non-iterables, respectively.
+
+        examples:
+          - program: '.[]|isnumber'
+            input: '[[],{},1,"foo",null,true,false]'
+            output: ['false', 'false', 'true', 'false', 'false', 'false', 'false']
+
       - title: "`empty`"
         body: |
 
@@ -1056,7 +1068,7 @@ sections:
           That is, `paths(numbers)` outputs the paths to all numeric
           values.
 
-          `leaf_paths` is an alias of `paths(scalars)`; `leaf_paths` is
+          `leaf_paths` is an alias of `paths(isscalar)`; `leaf_paths` is
           *deprecated* and will be removed in the next major release.
 
         examples:
