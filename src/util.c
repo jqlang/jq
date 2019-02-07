@@ -309,7 +309,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
   state->buf_valid_len = 0;
   if (state->current_input) {
     char *res;
-    memset(state->buf, 0, sizeof(state->buf));
+    memset(state->buf, 0xff, sizeof(state->buf));
 
     while (!(res = fgets(state->buf, sizeof(state->buf), state->current_input)) &&
            ferror(state->current_input) && errno == EINTR)
@@ -334,20 +334,22 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
         size_t i;
 
         /*
-         * XXX We can't know how many bytes we've read!
+         * XXX We don't know how many bytes we've read!
          *
          * We can't use getline() because there need not be any newlines
          * in the input.  The only entirely correct choices are: use
          * fgetc() or fread().  Using fread() will complicate buffer
          * management here.
          *
-         * For now we guess how much fgets() read.
+         * For now we check how much fgets() read by scanning backwards for the
+         * terminating '\0'. This only works because we previously memset our
+         * buffer with something nonzero.
          */
-        for (p = state->buf, i = 0; i < sizeof(state->buf); i++) {
-          if (state->buf[i] != '\0')
-            p = &state->buf[i];
+        for (p = state->buf, i = sizeof(state->buf) - 1; i > 0; i--) {
+          if (state->buf[i] == '\0')
+            break;
         }
-        state->buf_valid_len = p - state->buf + 1;
+        state->buf_valid_len = i;
       } else if (p == NULL) {
         state->buf_valid_len = sizeof(state->buf) - 1;
       } else {
