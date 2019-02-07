@@ -1,5 +1,5 @@
 def halt_error: halt_error(5);
-def error: error(.);
+def error(msg): msg|error;
 def map(f): [.[] | f];
 def select(f): if f then . else empty end;
 def sort_by(f): _sort_by_impl(map([f]));
