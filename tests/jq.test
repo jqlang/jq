@@ -1392,6 +1392,10 @@ include "c"; [a, c]
 null
 [0,"acmehbah"]
 
+import "data" as $e; import "data" as $d; [$d[].this,$e[].that,$d::d[].this,$e::e[].that]|join(";")
+null
+"is a test;is too;is a test;is too"
+
 %%FAIL
 module (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1:
