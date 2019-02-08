@@ -64,6 +64,7 @@ struct inst {
   struct bytecode* compiled;
 
   int bytecode_pos; // position just after this insn
+  int all_bound;
 };
 
 static inst* inst_new(opcode op) {
@@ -77,6 +78,7 @@ static inst* inst_new(opcode op) {
   i->nactuals = -1;
   i->subfn = gen_noop();
   i->arglist = gen_noop();
+  i->all_bound = 0;
   i->source = UNKNOWN_LOCATION;
   i->locfile = 0;
   return i;
@@ -244,6 +246,7 @@ void block_append(block* b, block b2) {
   if (b2.first) {
     if (b->last) {
       inst_join(b->last, b2.first);
+      b->first->all_bound = b->first->all_bound && b2.first->all_bound;
     } else {
       b->first = b2.first;
     }
@@ -334,9 +337,15 @@ static int block_bind_subblock(block binder, block body, int bindflags, int brea
   binder.first->bound_by = binder.first;
   if (binder.first->nformals == -1)
     binder.first->nformals = block_count_formals(binder);
+
+  if (!body.first || body.first->all_bound)
+    return 0;
+
   int nrefs = 0;
+  int all_bound = 1;
   for (inst* i = body.first; i; i = i->next) {
     int flags = opcode_describe(i->op)->flags;
+
     if ((flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD) && i->bound_by == 0 &&
         (!strcmp(i->symbol, binder.first->symbol) ||
          // Check for break/break2/break3; see parser.y
@@ -349,6 +358,8 @@ static int block_bind_subblock(block binder, block body, int bindflags, int brea
       if (i->nactuals == -1 || i->nactuals == binder.first->nformals) {
         i->bound_by = binder.first;
         nrefs++;
+      } else {
+        all_bound = 0;
       }
     } else if ((flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD) && i->bound_by != 0 &&
                !strncmp(binder.first->symbol, "*anonlabel", sizeof("*anonlabel") - 1) &&
@@ -356,12 +367,23 @@ static int block_bind_subblock(block binder, block body, int bindflags, int brea
       // Increment the break distance required for this binder to match
       // a break whenever we come across a STOREV of *anonlabel...
       break_distance++;
+    } else {
+      all_bound = 0;
     }
     // binding recurses into closures
-    nrefs += block_bind_subblock(binder, i->subfn, bindflags, break_distance);
+    if (i->subfn.first && !i->subfn.first->all_bound) {
+      nrefs += block_bind_subblock(binder, i->subfn, bindflags, break_distance);
+      if (i->subfn.first && !i->subfn.first->all_bound)
+        all_bound = 0;
+    }
     // binding recurses into argument list
-    nrefs += block_bind_subblock(binder, i->arglist, bindflags, break_distance);
+    if (i->arglist.first && !i->arglist.first->all_bound) {
+      nrefs += block_bind_subblock(binder, i->arglist, bindflags, break_distance);
+      if (i->arglist.first && !i->arglist.first->all_bound)
+        all_bound = 0;
+    }
   }
+  body.first->all_bound = all_bound;
   return nrefs;
 }
 
