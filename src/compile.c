@@ -49,9 +49,10 @@ struct inst {
   // Unbound instructions (references to other things that may or may not
   // exist) are created by "gen_foo_unbound", and bindings are created by
   // block_bind(definition, body), which binds all instructions in
-  // body which are unboudn and refer to "definition" by name.
+  // body which are unbound and refer to "definition" by name.
   struct inst* bound_by;
   char* symbol;
+  int any_unbound;
 
   int nformals;
   int nactuals;
@@ -73,6 +74,7 @@ static inst* inst_new(opcode op) {
   i->bytecode_pos = -1;
   i->bound_by = 0;
   i->symbol = 0;
+  i->any_unbound = 0;
   i->nformals = -1;
   i->nactuals = -1;
   i->subfn = gen_noop();
@@ -156,6 +158,7 @@ block gen_const_global(jv constant, const char *name) {
   inst* i = inst_new(STORE_GLOBAL);
   i->imm.constant = constant;
   i->symbol = strdup(name);
+  i->any_unbound = 0;
   return inst_block(i);
 }
 
@@ -211,6 +214,7 @@ block gen_op_unbound(opcode op, const char* name) {
   assert(opcode_describe(op)->flags & OP_HAS_BINDING);
   inst* i = inst_new(op);
   i->symbol = strdup(name);
+  i->any_unbound = 1;
   return inst_block(i);
 }
 
@@ -224,6 +228,7 @@ block gen_op_bound(opcode op, block binder) {
   assert(block_is_single(binder));
   block b = gen_op_unbound(op, binder.first->symbol);
   b.first->bound_by = binder.first;
+  b.first->any_unbound = 0;
   return b;
 }
 
@@ -324,7 +329,7 @@ static int block_count_refs(block binder, block body) {
   return nrefs;
 }
 
-static int block_bind_subblock(block binder, block body, int bindflags, int break_distance) {
+static int block_bind_subblock_inner(int* any_unbound, block binder, block body, int bindflags, int break_distance) {
   assert(block_is_single(binder));
   assert((opcode_describe(binder.first->op)->flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD));
   assert(binder.first->symbol);
@@ -336,6 +341,9 @@ static int block_bind_subblock(block binder, block body, int bindflags, int brea
     binder.first->nformals = block_count_formals(binder);
   int nrefs = 0;
   for (inst* i = body.first; i; i = i->next) {
+    if (i->any_unbound == 0)
+      continue;
+
     int flags = opcode_describe(i->op)->flags;
     if ((flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD) && i->bound_by == 0 &&
         (!strcmp(i->symbol, binder.first->symbol) ||
@@ -357,12 +365,23 @@ static int block_bind_subblock(block binder, block body, int bindflags, int brea
       // a break whenever we come across a STOREV of *anonlabel...
       break_distance++;
     }
+
+    i->any_unbound = (i->symbol && !i->bound_by);
+
     // binding recurses into closures
-    nrefs += block_bind_subblock(binder, i->subfn, bindflags, break_distance);
+    nrefs += block_bind_subblock_inner(&i->any_unbound, binder, i->subfn, bindflags, break_distance);
     // binding recurses into argument list
-    nrefs += block_bind_subblock(binder, i->arglist, bindflags, break_distance);
+    nrefs += block_bind_subblock_inner(&i->any_unbound, binder, i->arglist, bindflags, break_distance);
+
+    if (i->any_unbound)
+      *any_unbound = 1;
   }
   return nrefs;
+}
+
+static int block_bind_subblock(block binder, block body, int bindflags, int break_distance) {
+  int any_unbound;
+  return block_bind_subblock_inner(&any_unbound, binder, body, bindflags, break_distance);
 }
 
 static int block_bind_each(block binder, block body, int bindflags) {
@@ -550,6 +569,7 @@ block gen_function(const char* name, block formals, block body) {
   }
   i->subfn = body;
   i->symbol = strdup(name);
+  i->any_unbound = -1;
   i->arglist = formals;
   block b = inst_block(i);
   block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
@@ -1081,6 +1101,7 @@ block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block co
     inst* i = inst_new(CLOSURE_CREATE_C);
     i->imm.cfunc = &cfunctions[cfunc];
     i->symbol = strdup(i->imm.cfunc->name);
+    i->any_unbound = 0;
     code = block_bind(inst_block(i), code, OP_IS_CALL_PSEUDO);
   }
   return code;
