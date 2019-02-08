@@ -275,26 +275,38 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
       jv_free(lib_origin);
       return 1;
     }
-    uint64_t state_idx = 0;
-    for (; state_idx < lib_state->ct; ++state_idx) {
-      if (strcmp(lib_state->names[state_idx],jv_string_value(resolved)) == 0)
-        break;
-    }
-    if (state_idx < lib_state->ct) { // Found
-      jv_free(resolved);
-      // Bind the library to the program
-      bk = block_bind_library(lib_state->defs[state_idx], bk, OP_IS_CALL_PSEUDO, as_str);
-    } else { // Not found.   Add it to the table before binding.
-      block dep_def_block = gen_noop();
+
+    if (is_data) {
+      // Can't reuse data libs because the wrong name is bound
+      block dep_def_block;
       nerrors += load_library(jq, resolved, is_data, raw, as_str, &dep_def_block, lib_state);
-      // resolved has been freed
       if (nerrors == 0) {
-        // Bind the library to the program
+        // Bind as both $data::data and $data for backward compatibility vs common sense
         bk = block_bind_library(dep_def_block, bk, OP_IS_CALL_PSEUDO, as_str);
-        if (is_data)
-          bk = block_bind_library(dep_def_block, bk, OP_IS_CALL_PSEUDO, NULL);
+        bk = block_bind_library(dep_def_block, bk, OP_IS_CALL_PSEUDO, NULL);
+      }
+    } else {
+      uint64_t state_idx = 0;
+      for (; state_idx < lib_state->ct; ++state_idx) {
+        if (strcmp(lib_state->names[state_idx],jv_string_value(resolved)) == 0)
+          break;
+      }
+
+      if (state_idx < lib_state->ct) { // Found
+        jv_free(resolved);
+        // Bind the library to the program
+        bk = block_bind_library(lib_state->defs[state_idx], bk, OP_IS_CALL_PSEUDO, as_str);
+      } else { // Not found.   Add it to the table before binding.
+        block dep_def_block = gen_noop();
+        nerrors += load_library(jq, resolved, is_data, raw, as_str, &dep_def_block, lib_state);
+        // resolved has been freed
+        if (nerrors == 0) {
+          // Bind the library to the program
+          bk = block_bind_library(dep_def_block, bk, OP_IS_CALL_PSEUDO, as_str);
+        }
       }
     }
+
     jv_free(as);
   }
   jv_free(lib_origin);
