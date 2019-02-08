@@ -49,9 +49,10 @@ struct inst {
   // Unbound instructions (references to other things that may or may not
   // exist) are created by "gen_foo_unbound", and bindings are created by
   // block_bind(definition, body), which binds all instructions in
-  // body which are unboudn and refer to "definition" by name.
+  // body which are unbound and refer to "definition" by name.
   struct inst* bound_by;
   char* symbol;
+  int bound_flags;
 
   int nformals;
   int nactuals;
@@ -73,6 +74,7 @@ static inst* inst_new(opcode op) {
   i->bytecode_pos = -1;
   i->bound_by = 0;
   i->symbol = 0;
+  i->bound_flags = 0;
   i->nformals = -1;
   i->nactuals = -1;
   i->subfn = gen_noop();
@@ -324,7 +326,7 @@ static int block_count_refs(block binder, block body) {
   return nrefs;
 }
 
-static int block_bind_subblock(block binder, block body, int bindflags, int break_distance) {
+static int block_bind_subblock_inner(block binder, block body, int* bound_flags, int bindflags, int break_distance) {
   assert(block_is_single(binder));
   assert((opcode_describe(binder.first->op)->flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD));
   assert(binder.first->symbol);
@@ -336,6 +338,9 @@ static int block_bind_subblock(block binder, block body, int bindflags, int brea
     binder.first->nformals = block_count_formals(binder);
   int nrefs = 0;
   for (inst* i = body.first; i; i = i->next) {
+    if ((i->bound_flags & bindflags) == bindflags)
+      continue;
+
     int flags = opcode_describe(i->op)->flags;
     if ((flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD) && i->bound_by == 0 &&
         (!strcmp(i->symbol, binder.first->symbol) ||
@@ -357,12 +362,24 @@ static int block_bind_subblock(block binder, block body, int bindflags, int brea
       // a break whenever we come across a STOREV of *anonlabel...
       break_distance++;
     }
+
+    if ((flags & bindflags) != (bindflags & ~OP_BIND_WILDCARD) || i->bound_by != 0) {
+      i->bound_flags |= bindflags;
+    }
+
     // binding recurses into closures
-    nrefs += block_bind_subblock(binder, i->subfn, bindflags, break_distance);
+    nrefs += block_bind_subblock_inner(binder, i->subfn, &i->bound_flags, bindflags, break_distance);
     // binding recurses into argument list
-    nrefs += block_bind_subblock(binder, i->arglist, bindflags, break_distance);
+    nrefs += block_bind_subblock_inner(binder, i->arglist, &i->bound_flags, bindflags, break_distance);
+
+    *bound_flags &= i->bound_flags;
   }
   return nrefs;
+}
+
+static int block_bind_subblock(block binder, block body, int bindflags, int break_distance) {
+  int bound_flags;
+  return block_bind_subblock_inner(binder, body, &bound_flags, bindflags, break_distance);
 }
 
 static int block_bind_each(block binder, block body, int bindflags) {
