@@ -1538,4 +1538,9 @@ isempty(1,error("foo"))
 null
 false
 
+# Regression test for #1815
+index("")
+""
+null
+
 
