@@ -658,12 +658,12 @@ jv jv_string_indexes(jv j, jv k) {
   int idxlen = jv_string_length_bytes(jv_copy(k));
   jv a = jv_array();
 
-  if (idxlen == 0)
-    return a;
-  p = jstr;
-  while ((p = _jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
-    a = jv_array_append(a, jv_number(p - jstr));
-    p += idxlen;
+  if (idxlen != 0) {
+    p = jstr;
+    while ((p = _jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
+      a = jv_array_append(a, jv_number(p - jstr));
+      p += idxlen;
+    }
   }
   jv_free(j);
   jv_free(k);
