@@ -53,6 +53,7 @@ struct inst {
   struct inst* bound_by;
   char* symbol;
   int any_unbound;
+  int referenced;
 
   int nformals;
   int nactuals;
@@ -75,6 +76,7 @@ static inst* inst_new(opcode op) {
   i->bound_by = 0;
   i->symbol = 0;
   i->any_unbound = 0;
+  i->referenced = 0;
   i->nformals = -1;
   i->nactuals = -1;
   i->subfn = gen_noop();
@@ -465,30 +467,36 @@ block block_bind_referenced(block binder, block body, int bindflags) {
   return block_join(refd, body);
 }
 
+static void block_mark_referenced(block body) {
+  int saw_top = 0;
+  for (inst* i = body.last; i; i = i->prev) {
+    if (saw_top && i->bound_by == i && !i->referenced)
+      continue;
+    if (i->op == TOP) {
+      saw_top = 1;
+    }
+    if (i->bound_by) {
+      i->bound_by->referenced = 1;
+    }
+
+    block_mark_referenced(i->arglist);
+    block_mark_referenced(i->subfn);
+  }
+}
+
 block block_drop_unreferenced(block body) {
-  inst* curr;
+  block_mark_referenced(body);
+
   block refd = gen_noop();
-  block unrefd = gen_noop();
-  int drop;
-  do {
-    drop = 0;
-    while ((curr = block_take(&body)) && curr->op != TOP) {
-      block b = inst_block(curr);
-      if (block_count_refs(b,refd) + block_count_refs(b,body) == 0) {
-        unrefd = BLOCK(unrefd, b);
-        drop++;
-      } else {
-        refd = BLOCK(refd, b);
-      }
+  inst* curr;
+  while ((curr = block_take(&body))) {
+    if (curr->bound_by == curr && !curr->referenced) {
+      inst_free(curr);
+    } else {
+      refd = BLOCK(inst_block(curr), refd);
     }
-    if (curr && curr->op == TOP) {
-      body = BLOCK(inst_block(curr),body);
-    }
-    body = BLOCK(refd, body);
-    refd = gen_noop();
-  } while (drop != 0);
-  block_free(unrefd);
-  return body;
+  }
+  return refd;
 }
 
 jv block_take_imports(block* body) {
