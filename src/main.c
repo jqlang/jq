@@ -247,7 +247,26 @@ static void debug_cb(void *data, jv input) {
   fprintf(stderr, "\n");
 }
 
+#ifdef WIN32
+int umain(int argc, char* argv[]);
+
+int wmain(int argc, wchar_t* wargv[]) {
+  size_t arg_sz;
+  char **argv = alloca(argc * sizeof(wchar_t*));
+  for (int i = 0; i < argc; i++) {
+    argv[i] = alloca((arg_sz = WideCharToMultiByte(CP_UTF8,
+                                                   0,
+                                                   wargv[i],
+                                                   -1, 0, 0, 0, 0)));
+    WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, argv[i], arg_sz, 0, 0);
+  }
+  return umain(argc, argv);
+}
+
+int umain(int argc, char* argv[]) {
+#else /*}*/
 int main(int argc, char* argv[]) {
+#endif
   jq_state *jq = NULL;
   int ret = JQ_OK_NO_OUTPUT;
   int compiled = 0;
@@ -263,17 +282,6 @@ int main(int argc, char* argv[]) {
   fflush(stderr);
   _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
   _setmode(fileno(stderr), _O_TEXT | _O_U8TEXT);
-  int wargc;
-  wchar_t **wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
-  assert(wargc == argc);
-  size_t arg_sz;
-  for (int i = 0; i < argc; i++) {
-    argv[i] = alloca((arg_sz = WideCharToMultiByte(CP_UTF8,
-                                                   0,
-                                                   wargv[i],
-                                                   -1, 0, 0, 0, 0)));
-    WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, argv[i], arg_sz, 0, 0);
-  }
 #endif
 
   if (argc) progname = argv[0];
