@@ -533,21 +533,19 @@ int main(int argc, char* argv[]) {
 
 #ifdef USE_ISATTY
   if (isatty(STDOUT_FILENO)) {
-    dumpopts |= JV_PRINT_ISATTY;
 #ifndef WIN32
-  /* Disable color by default on Windows builds as Windows
-     terminals tend not to display it correctly */
-    dumpopts |= JV_PRINT_COLOR;
+    dumpopts |= JV_PRINT_ISATTY | JV_PRINT_COLOR;
 #else
-    // Unless ANSICON is installed, or it's Windows 10
-    if (getenv("ANSICON") != NULL)
-      dumpopts |= JV_PRINT_COLOR;
-    else {
-      DWORD mode;
-      HANDLE con = GetStdHandle(STD_OUTPUT_HANDLE);
-      if (GetConsoleMode(con, &mode) &&
-	  SetConsoleMode(con, mode | 4/*ENABLE_VIRTUAL_TERMINAL_PROCESSING*/))
-	dumpopts |= JV_PRINT_COLOR;
+  /* Verify we actually have the console, as the NUL device is also regarded as
+     tty.  Windows can handle color if ANSICON (or ConEmu) is installed, or
+     Windows 10 supports the virtual terminal */
+    DWORD mode;
+    HANDLE con = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (GetConsoleMode(con, &mode)) {
+      dumpopts |= JV_PRINT_ISATTY;
+      if (getenv("ANSICON") != NULL ||
+          SetConsoleMode(con, mode | 4/*ENABLE_VIRTUAL_TERMINAL_PROCESSING*/))
+        dumpopts |= JV_PRINT_COLOR;
     }
 #endif
   }
