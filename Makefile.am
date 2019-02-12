@@ -18,6 +18,10 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
 AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers               \
         -Wno-unused-parameter -Wno-unused-function
 
+if WIN32
+AM_CFLAGS += -municode
+endif
+
 ACLOCAL_AMFLAGS = -I config/m4
 
 ### Generating the lexer and parser
