@@ -538,6 +538,17 @@ int main(int argc, char* argv[]) {
   /* Disable color by default on Windows builds as Windows
      terminals tend not to display it correctly */
     dumpopts |= JV_PRINT_COLOR;
+#else
+    // Unless ANSICON is installed, or it's Windows 10
+    if (getenv("ANSICON") != NULL)
+      dumpopts |= JV_PRINT_COLOR;
+    else {
+      DWORD mode;
+      HANDLE con = GetStdHandle(STD_OUTPUT_HANDLE);
+      if (GetConsoleMode(con, &mode) &&
+	  SetConsoleMode(con, mode | 4/*ENABLE_VIRTUAL_TERMINAL_PROCESSING*/))
+	dumpopts |= JV_PRINT_COLOR;
+    }
 #endif
   }
 #endif
