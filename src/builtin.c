@@ -1238,6 +1238,8 @@ static time_t my_mktime(struct tm *tm) {
   if (t == (time_t)-1)
     return t;
   return t + tm->__tm_gmtoff;
+#elif WIN32
+  return _mkgmtime(tm);
 #else
   char *tz;
 
