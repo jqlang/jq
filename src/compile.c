@@ -27,6 +27,7 @@
 struct inst {
   struct inst* next;
   struct inst* prev;
+  struct inst* next_unbound;
 
   opcode op;
 
@@ -70,7 +71,7 @@ struct inst {
 
 static inst* inst_new(opcode op) {
   inst* i = jv_mem_alloc(sizeof(inst));
-  i->next = i->prev = 0;
+  i->next_unbound = i->next = i->prev = 0;
   i->op = op;
   i->bytecode_pos = -1;
   i->bound_by = 0;
@@ -342,7 +343,9 @@ static int block_bind_subblock_inner(int* any_unbound, block binder, block body,
   if (binder.first->nformals == -1)
     binder.first->nformals = block_count_formals(binder);
   int nrefs = 0;
-  for (inst* i = body.first; i; i = i->next) {
+  int fast_path = body.first && body.first->next_unbound != 0;
+  inst *prev = fast_path ? body.first : 0;
+  for (inst* i = fast_path ? body.first : body.last; i; i = fast_path ? i->next_unbound : i->prev) {
     if (i->any_unbound == 0)
       continue;
 
@@ -375,8 +378,32 @@ static int block_bind_subblock_inner(int* any_unbound, block binder, block body,
     // binding recurses into argument list
     nrefs += block_bind_subblock_inner(&i->any_unbound, binder, i->arglist, bindflags, break_distance);
 
-    if (i->any_unbound)
+    if (i->any_unbound) {
       *any_unbound = 1;
+      if (!fast_path) {
+        /*
+         * This inst is unbound in the slow path, so we hook it up into a
+         * sub-tree of unbound insts.
+         *
+         * Note that we're going backwards from body.last to body.first in the
+         * slow path.
+         */
+        i->next_unbound = prev;
+      }
+      prev = i;
+    } else if (!fast_path && prev) {
+      /*
+       * This inst is bound, so it need not go into the unbounds sub-tree, but
+       * we make its next_unbound point into the unbounds sub-tree anyways.
+       */
+      i->next_unbound = prev; /* ditto */
+    } else if (fast_path && i != body.first) {
+      /*
+       * In this case we must have finally fully-bound the sub-tree at this
+       * inst, so we remove this inst from the sub-tree of unbounds.
+       */
+      prev->next_unbound = i->next_unbound;
+    }
   }
   return nrefs;
 }
