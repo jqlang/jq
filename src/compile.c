@@ -469,19 +469,16 @@ block block_drop_unreferenced(block body) {
 jv block_take_imports(block* body) {
   jv imports = jv_array();
 
-  inst* top = NULL;
-  if (body->first && body->first->op == TOP) {
-    top = block_take(body);
-  }
+  /* Parser should never generate TOP before imports */
+  assert(!(body->first && body->first->op == TOP && body->first->next &&
+        (body->first->next->op == MODULEMETA || body->first->next->op == DEPS)));
+
   while (body->first && (body->first->op == MODULEMETA || body->first->op == DEPS)) {
     inst* dep = block_take(body);
     if (dep->op == DEPS) {
       imports = jv_array_append(imports, jv_copy(dep->imm.constant));
     }
     inst_free(dep);
-  }
-  if (top) {
-    *body = block_join(inst_block(top),*body);
   }
   return imports;
 }
