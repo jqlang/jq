@@ -1702,12 +1702,52 @@ static const struct cfunction function_list[] = {
 
 struct bytecoded_builtin { const char* name; block code; };
 static block bind_bytecoded_builtins(block b) {
+  {
+    /* _assign and _modify depend on path/1, so they need to be bound separately */
+    block builtins = BLOCK(
+        /* def _assign(paths; $value): reduce path(paths) as $p (.; setpath($p; $value)); */
+        gen_function("_assign",
+          BLOCK(gen_param("paths"), gen_param_regular("value")),
+          gen_reduce(gen_call("path", gen_lambda(gen_call("paths", gen_noop()))),
+            gen_op_unbound(STOREV, "p"),
+            gen_noop(),
+            gen_call("setpath",
+              BLOCK(gen_lambda(gen_op_unbound(LOADV, "p")),
+                gen_lambda(gen_op_unbound(LOADV, "value")))))),
+        /* def _modify(paths; update): reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p])); */
+        gen_function("_modify",
+          BLOCK(gen_param("paths"), gen_param("update")),
+          gen_reduce(gen_call("path", gen_lambda(gen_call("paths", gen_noop()))),
+            gen_op_unbound(STOREV, "p"),
+            gen_noop(),
+            /* label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]) */
+            gen_label("*label-out",
+              gen_both(BLOCK(
+                  /* setpath($p; getpath($p) | update) */
+                  gen_call("setpath",
+                    BLOCK(gen_lambda(gen_op_unbound(LOADV, "p")),
+                      gen_lambda(BLOCK(
+                          gen_call("getpath", gen_lambda(gen_op_unbound(LOADV, "p"))),
+                          gen_call("update", gen_noop()))))),
+                  /* ., break $out */
+                  gen_both(gen_noop(),
+                    BLOCK(gen_op_unbound(LOADV, "*label-out"),
+                      gen_call("error", gen_noop())))),
+                gen_call("delpaths",
+                  gen_lambda(gen_collect(gen_op_unbound(LOADV, "p")))))))));
+    b = block_bind(builtins, b, OP_IS_CALL_PSEUDO);
+  }
+
   block builtins = gen_noop();
   {
     struct bytecoded_builtin builtin_defs[] = {
       {"empty", gen_op_simple(BACKTRACK)},
       {"not", gen_condbranch(gen_const(jv_false()),
-                             gen_const(jv_true()))}
+                             gen_const(jv_true()))},
+      /* def recurse: ., (.[]?|recurse); */
+      {"recurse",
+        gen_both(gen_noop(), block_join(gen_op_simple(EACH_OPT),
+              gen_call("recurse", gen_noop())))}
     };
     for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
       builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, gen_noop(),

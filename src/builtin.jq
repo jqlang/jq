@@ -10,14 +10,11 @@ def max_by(f): _max_by_impl(map([f]));
 def min_by(f): _min_by_impl(map([f]));
 def add: reduce .[] as $x (null; . + $x);
 def del(f): delpaths([path(f)]);
-def _assign(paths; value): value as $v | reduce path(paths) as $p (.; setpath($p; $v));
-def _modify(paths; update): reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]));
 def map_values(f): .[] |= f;
 
 # recurse
 def recurse(f): def r: ., (f | r); r;
 def recurse(f; cond): def r: ., (f | select(cond) | r); r;
-def recurse: recurse(.[]?);
 def recurse_down: recurse;
 
 def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];
