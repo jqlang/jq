@@ -98,12 +98,9 @@ static jv validate_relpath(jv name) {
     return res;
   }
   jv components = jv_string_split(jv_copy(name), jv_string("/"));
-  jv rp = jv_array_get(jv_copy(components), 0);
-  components = jv_array_slice(components, 1, jv_array_length(jv_copy(components)));
   jv_array_foreach(components, i, x) {
     if (!strcmp(jv_string_value(x), "..")) {
       jv_free(x);
-      jv_free(rp);
       jv_free(components);
       jv res = jv_invalid_with_msg(jv_string_fmt("Relative paths to modules may not traverse to parent directories (%s)", s));
       jv_free(name);
@@ -111,18 +108,16 @@ static jv validate_relpath(jv name) {
     }
     if (i > 0 && jv_equal(jv_copy(x), jv_array_get(jv_copy(components), i - 1))) {
       jv_free(x);
-      jv_free(rp);
       jv_free(components);
       jv res = jv_invalid_with_msg(jv_string_fmt("module names must not have equal consecutive components: %s",
                                                  jv_string_value(name)));
       jv_free(name);
       return res;
     }
-    rp = jv_string_concat(rp, jv_string_concat(jv_string("/"), x));
+    jv_free(x);
   }
   jv_free(components);
-  jv_free(name);
-  return rp;
+  return name;
 }
 
 // Assumes name has been validated
