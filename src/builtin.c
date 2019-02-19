@@ -1746,9 +1746,7 @@ static block bind_bytecoded_builtins(block b) {
   return block_bind(builtins, b, OP_IS_CALL_PSEUDO);
 }
 
-
-
-static const char* const jq_builtins =
+static const char jq_builtins[] =
 /* Include jq-coded builtins */
 #include "src/builtin.inc"
 
@@ -1784,45 +1782,17 @@ static block gen_builtin_list(block builtins) {
   return BLOCK(builtins, gen_function("builtins", gen_noop(), gen_const(list)));
 }
 
-static int builtins_bind_one(jq_state *jq, block* bb, const char* code) {
-  struct locfile* src;
-  src = locfile_init(jq, "<builtin>", code, strlen(code));
-  block funcs;
-  int nerrors = jq_parse_library(src, &funcs);
-  if (nerrors == 0) {
-    *bb = block_bind(funcs, *bb, OP_IS_CALL_PSEUDO);
-  }
-  locfile_free(src);
-  return nerrors;
-}
-
-static int slurp_lib(jq_state *jq, block* bb) {
-  int nerrors = 0;
-  char* home = getenv("HOME");
-  if (home) {    // silently ignore no $HOME
-    jv filename = jv_string_append_str(jv_string(home), "/.jq");
-    jv data = jv_load_file(jv_string_value(filename), 1);
-    if (jv_is_valid(data)) {
-      nerrors = builtins_bind_one(jq, bb, jv_string_value(data) );
-    }
-    jv_free(filename);
-    jv_free(data);
-  }
-  return nerrors;
-}
-
 int builtins_bind(jq_state *jq, block* bb) {
-  block builtins = gen_noop();
-  int nerrors = slurp_lib(jq, bb);
-  if (nerrors) {
-    block_free(*bb);
-    return nerrors;
-  }
-  nerrors = builtins_bind_one(jq, &builtins, jq_builtins);
+  block builtins;
+  struct locfile* src = locfile_init(jq, "<builtin>", jq_builtins, sizeof(jq_builtins)-1);
+  int nerrors = jq_parse_library(src, &builtins);
   assert(!nerrors);
+  locfile_free(src);
+
   builtins = bind_bytecoded_builtins(builtins);
   builtins = gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), builtins);
   builtins = gen_builtin_list(builtins);
+
   *bb = block_bind(builtins, *bb, OP_IS_CALL_PSEUDO);
   *bb = block_drop_unreferenced(*bb);
   return nerrors;
