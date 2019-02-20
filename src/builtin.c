@@ -1743,7 +1743,7 @@ static block bind_bytecoded_builtins(block b) {
                                             BLOCK(gen_param("start"), gen_param("end")),
                                             range));
   }
-  return block_bind(builtins, b, OP_IS_CALL_PSEUDO);
+  return BLOCK(builtins, b);
 }
 
 static const char jq_builtins[] =
@@ -1793,7 +1793,7 @@ int builtins_bind(jq_state *jq, block* bb) {
   builtins = gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), builtins);
   builtins = gen_builtin_list(builtins);
 
-  *bb = block_bind(builtins, *bb, OP_IS_CALL_PSEUDO);
+  *bb = block_bind_incremental(builtins, *bb, OP_IS_CALL_PSEUDO);
   *bb = block_drop_unreferenced(*bb);
   return nerrors;
 }

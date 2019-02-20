@@ -2423,7 +2423,7 @@ yyreduce:
   case 9:
 #line 333 "src/parser.y" /* yacc.c:1646  */
     {
-  (yyval.blk) = block_bind((yyvsp[-1].blk), (yyvsp[0].blk), OP_IS_CALL_PSEUDO);
+  (yyval.blk) = block_join((yyvsp[-1].blk), (yyvsp[0].blk));
 }
 #line 2429 "src/parser.c" /* yacc.c:1646  */
     break;

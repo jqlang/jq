@@ -222,8 +222,9 @@ block gen_op_unbound(opcode op, const char* name) {
 
 block gen_op_var_fresh(opcode op, const char* name) {
   assert(opcode_describe(op)->flags & OP_HAS_VARIABLE);
-  return block_bind(gen_op_unbound(op, name),
-                    gen_noop(), OP_HAS_VARIABLE);
+  block b = gen_op_unbound(op, name);
+  b.first->bound_by = b.first;
+  return b;
 }
 
 block gen_op_bound(opcode op, block binder) {
@@ -382,7 +383,7 @@ static int block_bind_each(block binder, block body, int bindflags) {
   return nrefs;
 }
 
-block block_bind(block binder, block body, int bindflags) {
+static block block_bind(block binder, block body, int bindflags) {
   block_bind_each(binder, body, bindflags);
   return block_join(binder, body);
 }
@@ -430,6 +431,48 @@ block block_bind_referenced(block binder, block body, int bindflags) {
     block_free(binder);
   } else {
     body = BLOCK(binder, body);
+  }
+  return body;
+}
+
+static inst* block_take_last(block* b) {
+  inst* i = b->last;
+  if (i == 0)
+    return 0;
+  if (i->prev) {
+    i->prev->next = i->next;
+    b->last = i->prev;
+    i->prev = 0;
+  } else {
+    b->first = 0;
+    b->last = 0;
+  }
+  return i;
+}
+
+// Binds a sequence of binders, which *must not* alrady be bound to each other,
+// to body, throwing away unreferenced defs
+block block_bind_incremental(block binder, block body, int bindflags) {
+  assert(block_has_only_binders(binder, bindflags));
+  bindflags |= OP_HAS_BINDING;
+
+  inst* curr;
+  while ((curr = block_take_last(&binder))) {
+    body = block_bind_referenced(inst_block(curr), body, bindflags);
+  }
+  return body;
+}
+
+block block_bind_self(block binder, int bindflags) {
+  assert(block_has_only_binders(binder, bindflags));
+  bindflags |= OP_HAS_BINDING;
+  block body = gen_noop();
+
+  inst* curr;
+  while ((curr = block_take_last(&binder))) {
+    block b = inst_block(curr);
+    block_bind_subblock(b, body, bindflags, 0);
+    body = BLOCK(b, body);
   }
   return body;
 }
@@ -1074,7 +1117,7 @@ block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block co
     i->imm.cfunc = &cfunctions[cfunc];
     i->symbol = strdup(i->imm.cfunc->name);
     i->any_unbound = 0;
-    code = block_bind(inst_block(i), code, OP_IS_CALL_PSEUDO);
+    code = BLOCK(inst_block(i), code);
   }
   return code;
 }
