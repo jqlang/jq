@@ -331,7 +331,7 @@ FuncDefs:
   $$ = gen_noop();
 } |
 FuncDef FuncDefs {
-  $$ = block_bind($1, $2, OP_IS_CALL_PSEUDO);
+  $$ = block_join($1, $2);
 }
 
 Exp:
