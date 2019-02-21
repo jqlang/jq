@@ -604,6 +604,10 @@ def f(a;b;c;d;e;f): [a+1,b,c,d,e,f]; f(.[0];.[1];.[0];.[0];.[0];.[0])
 [1,2]
 [2,2,1,1,1,1]
 
+def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]
+null
+[4,1,2,3,3,5,4,1,2,3,3]
+
 # Test precedence of 'def' vs '|'
 def a: 0; . | a
 null
@@ -1464,6 +1468,18 @@ import "data" as $e; import "data" as $d; [$d[].this,$e[].that,$d::d[].this,$e::
 null
 "is a test;is too;is a test;is too"
 
+include "shadow1"; e
+null
+2
+
+include "shadow1"; include "shadow2"; e
+null
+3
+
+import "shadow1" as f; import "shadow2" as f; import "shadow1" as e; [e::e, f::e]
+null
+[2,3]
+
 %%FAIL
 module (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1:
@@ -1487,6 +1503,10 @@ jq: error: Import path must be constant at <top-level>, line 1:
 modulemeta
 "c"
 {"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}
+
+modulemeta | .deps |= length
+"c"
+{"whatever":null,"deps":6}
 
 %%FAIL IGNORE MSG
 import "syntaxerror" as e; .

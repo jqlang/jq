@@ -400,7 +400,7 @@ block block_bind_library(block binder, block body, int bindflags, const char *li
     matchlen += 2;
   }
   assert(block_has_only_binders(binder, bindflags));
-  for (inst *curr = binder.first; curr; curr = curr->next) {
+  for (inst *curr = binder.last; curr; curr = curr->prev) {
     int bindflags2 = bindflags;
     char* cname = curr->symbol;
     char* tname = jv_mem_alloc(strlen(curr->symbol)+matchlen+1);
