@@ -1,26 +1,27 @@
 environment:
   matrix:
   - MSYSTEM: MINGW64
-    PATH: C:\msys64\usr\bin;C:\msys64\mingw64\bin;C:\Windows\System32;C:\Windows;%PATH%
+    PATH: C:\Python36;C:\Python36\Scripts;C:\msys64\usr\bin;C:\msys64\mingw64\bin;C:\Windows\System32;C:\Windows;%PATH%
   - MSYSTEM: MINGW32
-    PATH: C:\msys64\usr\bin;C:\msys64\mingw32\bin;C:\Windows\System32;C:\Windows;%PATH%
+    PATH: C:\Python36;C:\Python36\Scripts;C:\msys64\usr\bin;C:\msys64\mingw32\bin;C:\Windows\System32;C:\Windows;%PATH%
 
 clone_script:
-  - bash -lc "git clone -q --branch=$APPVEYOR_REPO_BRANCH https://github.com/${APPVEYOR_REPO_NAME}.git $APPVEYOR_BUILD_FOLDER"
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git checkout -qf $APPVEYOR_REPO_BRANCH"
+  - bash -lc "git clone -q --branch=${APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH:-$APPVEYOR_REPO_BRANCH} https://github.com/${APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME:-$APPVEYOR_REPO_NAME}.git $APPVEYOR_BUILD_FOLDER"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git checkout -qf ${APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH:APPVEYOR_REPO_BRANCH}"
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git submodule update --init --recursive"
 
 install:
-  # update mysy2
+  # update msys2
   - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S git"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Su"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex git"
+  - C:\msys64\usr\bin\bash -lc "pip3 install --upgrade pipenv"
+  - C:\msys64\usr\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER/docs && pipenv sync"
 
 build_script:
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && autoreconf -i"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && ./configure --with-oniguruma=builtin --disable-shared --enable-static --enable-all-static"
-  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make -j8"
+  - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && make"
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && cat jq.1  | groff -mandoc -Thtml > jq.html"
   - 7z a jq-package.zip jq.1 jq.html jq.exe
   - bash -lc "exec 0</dev/null && cd $APPVEYOR_BUILD_FOLDER && pwd && ls -la"
