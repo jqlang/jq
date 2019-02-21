@@ -9,3 +9,4 @@ verify_ssl = true
 jinja2 = "*"
 pyyaml = "*"
 markdown = "*"
+lxml = "*"

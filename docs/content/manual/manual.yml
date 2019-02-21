@@ -172,7 +172,7 @@ sections:
         ASCII output with every non-ASCII character replaced with the
         equivalent escape sequence.
 
-      * `--unbuffered`
+      * `--unbuffered`:
 
         Flush the output after each JSON object is printed (useful if
         you're piping a slow data source into jq and piping jq's
@@ -658,10 +658,10 @@ sections:
           - **Strings** are added by being joined into a larger string.
 
           - **Objects** are added by merging, that is, inserting all
-              the key-value pairs from both objects into a single
-              combined object. If both objects contain a value for the
-              same key, the object on the right of the `+` wins. (For
-              recursive merge use the `*` operator.)
+            the key-value pairs from both objects into a single
+            combined object. If both objects contain a value for the
+            same key, the object on the right of the `+` wins. (For
+            recursive merge use the `*` operator.)
 
           `null` can be added to any value, and returns the other
           value unchanged.
@@ -1975,40 +1975,40 @@ sections:
 
           jq provides a few SQL-style operators.
 
-           * INDEX(stream; index_expression):
+          * INDEX(stream; index_expression):
 
-             This builtin produces an object whose keys are computed by
-             the given index expression applied to each value from the
-             given stream.
+            This builtin produces an object whose keys are computed by
+            the given index expression applied to each value from the
+            given stream.
 
-           * JOIN($idx; stream; idx_expr; join_expr):
+          * JOIN($idx; stream; idx_expr; join_expr):
 
-             This builtin joins the values from the given stream to the
-             given index.  The index's keys are computed by applying the
-             given index expression to each value from the given stream.
-             An array of the value in the stream and the corresponding
-             value from the index is fed to the given join expression to
-             produce each result.
+            This builtin joins the values from the given stream to the
+            given index.  The index's keys are computed by applying the
+            given index expression to each value from the given stream.
+            An array of the value in the stream and the corresponding
+            value from the index is fed to the given join expression to
+            produce each result.
 
-           * JOIN($idx; stream; idx_expr):
+          * JOIN($idx; stream; idx_expr):
 
-             Same as `JOIN($idx; stream; idx_expr; .)`.
+            Same as `JOIN($idx; stream; idx_expr; .)`.
 
-           * JOIN($idx; idx_expr):
+          * JOIN($idx; idx_expr):
 
-             This builtin joins the input `.` to the given index, applying
-             the given index expression to `.` to compute the index key.
-             The join operation is as described above.
+            This builtin joins the input `.` to the given index, applying
+            the given index expression to `.` to compute the index key.
+            The join operation is as described above.
 
-           * IN(s):
+          * IN(s):
 
-             This builtin outputs `true` if `.` appears in the given
-             stream, otherwise it outputs `false`.
+            This builtin outputs `true` if `.` appears in the given
+            stream, otherwise it outputs `false`.
 
-           * IN(source; s):
+          * IN(source; s):
 
-             This builtin outputs `true` if any value in the source stream
-             appears in the second stream, otherwise it outputs `false`.
+            This builtin outputs `true` if any value in the source stream
+            appears in the second stream, otherwise it outputs `false`.
 
       - title: "`builtins`"
         body: |
@@ -2643,9 +2643,9 @@ sections:
 
           For example, in the following expression there is a binding
           which is visible "to the right" of it, `... | .*3 as
-          $times_three | [.  + $times_three] | ...`, but not "to the
+          $times_three | [. + $times_three] | ...`, but not "to the
           left".  Consider this expression now, `... | (.*3 as
-          $times_three | [.+ $times_three]) | ...`: here the binding
+          $times_three | [. + $times_three]) | ...`: here the binding
           `$times_three` is _not_ visible past the closing parenthesis.
 
       - title: Reduce
@@ -2868,7 +2868,7 @@ sections:
 
       Two builtins provide minimal output capabilities, `debug`, and
       `stderr`.  (Recall that a jq program's output values are always
-      output as JSON texts on `stdout`.)  The `debug` builtin can have
+      output as JSON texts on `stdout`.) The `debug` builtin can have
       application-specific behavior, such as for executables that use
       the libjq C API but aren't the jq executable itself.  The `stderr`
       builtin outputs its input in raw mode to stder with no additional
