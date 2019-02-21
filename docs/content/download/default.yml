@@ -180,14 +180,13 @@ body:
 
       #### Building the documentation
 
-      jq's documentation is compiled into static HTML using
-      [Bonsai](http://www.tinytree.info).  To view the documentation
-      locally, run `rake serve` (or `bundle exec rake serve`) from the
-      docs/ subdirectory.  To build the docs just `rake build` from the
-      docs subdirectory.  You'll need a few Ruby dependencies, which can
-      be installed by following the instructions in `docs/README.md`.
+      jq's documentation is compiled into static HTML using Python.
+      To build the docs, run `pipenv run python3 build_website.py` from
+      the docs/ subdirectory. To serve them locally, you can run
+      `python3 -m SimpleHTTPServer`. You'll need a few Python dependencies,
+      which can be installed by following the instructions in `docs/README.md`.
 
       The man page is built by `make jq.1`, or just `make`, also from
-      the YAML docs, and you'll still need the Ruby dependencies to
+      the YAML docs, and you'll still need the Python dependencies to
       build the manpage.
 

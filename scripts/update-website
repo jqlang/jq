@@ -11,7 +11,7 @@ set -o xtrace
 scriptdir=`dirname "$0"`
 cd "$scriptdir"/../docs
 rm -rf output
-rake build
+pipenv run python3 build_website.py
 cd ..
 
 # copy to /tmp

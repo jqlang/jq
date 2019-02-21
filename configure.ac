@@ -74,7 +74,7 @@ dnl Code coverage
 AC_ARG_ENABLE([gcov],
    AC_HELP_STRING([--enable-gcov], [enable gcov code coverage tool]))
 
-dnl Don't attempt to build docs if there's no Ruby lying around
+dnl Don't attempt to build docs if python deps aren't installed
 AC_ARG_ENABLE([docs],
    AC_HELP_STRING([--disable-docs], [don't build docs]))
 
@@ -87,25 +87,25 @@ AC_ARG_ENABLE([all-static],
    AC_HELP_STRING([--enable-all-static], [link jq with static libraries only]))
 
 AS_IF([test "x$enable_docs" != "xno"],[
-   AC_CHECK_PROGS(bundle_cmd, bundle)
+   AC_CHECK_PROGS(pipenv_cmd, pipenv)
 
-   AC_CACHE_CHECK([for Ruby dependencies], [jq_cv_ruby_deps],
-     [jq_cv_ruby_deps=yes;
-        AS_IF([test "x$bundle_cmd" = "x" || \
-        ! bmsg="`cd ${srcdir}/docs; "$bundle_cmd" check 2>/dev/null`"],[
-           AC_MSG_WARN([$bmsg])
+   AC_CACHE_CHECK([for Python dependencies], [jq_cv_python_deps],
+     [jq_cv_python_deps=yes;
+        AS_IF([test "x$pipenv_cmd" = "x" || \
+        ! bmsg="`cd ${srcdir}/docs; LC_ALL=$LANG "$pipenv_cmd" check`"],[
+           AC_MSG_ERROR([$bmsg])
            cat <<EOF
 *****************************************************************
-*  Ruby dependencies for building jq documentation not found.   *
+*  Python dependencies for building jq documentation not found. *
 *  You can still build, install and hack on jq, but the manpage *
 *  will not be rebuilt and some of the tests will not run.      *
 *  See docs/README.md for how to install the docs dependencies. *
 *****************************************************************
 EOF
-           jq_cv_ruby_deps=no
+           jq_cv_python_deps=no
      ])])
 
-   if test "x$jq_cv_ruby_deps" != "xyes"; then
+   if test "x$jq_cv_python_deps" != "xyes"; then
      enable_docs=no
    fi
 ])

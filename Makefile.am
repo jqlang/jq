@@ -136,8 +136,8 @@ TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
 man_MANS = jq.1
 if ENABLE_DOCS
-jq.1: $(srcdir)/docs/content/3.manual/manual.yml
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; '$(BUNDLER)' exec rake manpage ) > $@ || { rm -f $@; false; }
+jq.1: $(srcdir)/docs/content/manual/manual.yml
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; pipenv run python build_manpage.py ) > $@ || { rm -f $@; false; }
 jq.1.prebuilt: jq.1
 	$(AM_V_GEN) cp jq.1 $@ || { rm -f $@; false; }
 else
@@ -165,8 +165,8 @@ install-binaries: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec
 
 DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
-        docs/Gemfile docs/Gemfile.lock docs/Rakefile docs/README.md     \
-        jq.1.prebuilt
+        docs/Pipfile docs/Pipfile.lock docs/build_website.py            \
+        docs/README.md jq.1.prebuilt
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
@@ -180,11 +180,11 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order0.jq                               \
         tests/modules/test_bind_order1.jq                               \
         tests/modules/test_bind_order2.jq tests/onig.supp               \
-        tests/onig.test tests/setup tests/torture/input0.json		\
-        tests/optional.test tests/optionaltest				\
-	tests/utf8-truncate.jq tests/utf8test				\
-	tests/base64.test tests/base64test 				\
-	tests/jq-f-test.sh tests/shtest
+        tests/onig.test tests/setup tests/torture/input0.json           \
+        tests/optional.test tests/optionaltest                          \
+        tests/utf8-truncate.jq tests/utf8test                           \
+        tests/base64.test tests/base64test                              \
+        tests/jq-f-test.sh tests/shtest
 
 
 
