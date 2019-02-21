@@ -170,23 +170,19 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
-        src/parser.h src/version.h src/builtin.jq                       \
-        scripts/version tests/jq.test tests/modules/.jq                 \
+        src/parser.h src/version.h src/builtin.jq scripts/version       \
+        tests/base64.test tests/jq-f-test.sh tests/jq.test              \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
+        tests/modules/home1/.jq tests/modules/home2/.jq/g.jq            \
         tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq           \
         tests/modules/syntaxerror/syntaxerror.jq                        \
         tests/modules/test_bind_order.jq                                \
         tests/modules/test_bind_order0.jq                               \
         tests/modules/test_bind_order1.jq                               \
         tests/modules/test_bind_order2.jq tests/onig.supp               \
-        tests/onig.test tests/setup tests/torture/input0.json           \
-        tests/optional.test tests/optionaltest                          \
-        tests/utf8-truncate.jq tests/utf8test                           \
-        tests/base64.test tests/base64test                              \
-        tests/jq-f-test.sh tests/shtest
-
-
+        tests/onig.test tests/optional.test tests/setup                 \
+        tests/torture/input0.json tests/utf8-truncate.jq
 
 # README.md is expected in Github projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.

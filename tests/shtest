@@ -218,13 +218,18 @@ clean=true
 
 # Check handling of ~/.jq; these can't move into jq_test.c yet because
 # they depend on $HOME
-if [ "$(HOME="$mods" $VALGRIND $Q $JQ -nr fg)" != foobar ]; then
+if [ "$(HOME="$mods/home1" $VALGRIND $Q $JQ -nr fg)" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
 fi
 
-if [ $(HOME="$mods" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l) -gt 3 ]; then
+if [ $(HOME="$mods/home1" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l) -ne 3 ]; then
     echo "Binding too many defs into program" 1>&2
+    exit 1
+fi
+
+if ! HOME="$mods/home2" $VALGRIND $Q $JQ -n 'include "g"; empty'; then
+    echo "Mishanding directory ~/.jq" 1>&2
     exit 1
 fi
 
