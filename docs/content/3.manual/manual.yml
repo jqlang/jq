@@ -2044,13 +2044,16 @@ sections:
           produces a value other than false or null, but act the same
           as `C` otherwise.
 
+          `if A then B end` is the same as `if A then B else .  end`.
+          That is, the `else` branch is optional, and if absent is the
+          same as `.`.
+
           Checking for false or null is a simpler notion of
           "truthiness" than is found in Javascript or Python, but it
           means that you'll sometimes have to be more explicit about
-          the condition you want: you can't test whether, e.g. a
+          the condition you want.  You can't test whether, e.g. a
           string is empty using `if .name then A else B end`, you'll
-          need something more like `if (.name | length) > 0 then A else
-          B end` instead.
+          need something more like `if .name then A else B end` instead.
 
           If the condition `A` produces multiple results, then `B` is evaluated
           once for each result that is not false or null, and `C` is evaluated
