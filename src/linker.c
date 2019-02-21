@@ -26,7 +26,8 @@ struct lib_loading_state {
   block *defs;
   uint64_t ct;
 };
-static int load_library(jq_state *jq, jv lib_path, int is_data, int raw,
+static int load_library(jq_state *jq, jv lib_path,
+                        int is_data, int raw, int optional,
                         const char *as, block *out_block,
                         struct lib_loading_state *lib_state);
 
@@ -279,7 +280,7 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
     if (is_data) {
       // Can't reuse data libs because the wrong name is bound
       block dep_def_block;
-      nerrors += load_library(jq, resolved, is_data, raw, as_str, &dep_def_block, lib_state);
+      nerrors += load_library(jq, resolved, is_data, raw, optional, as_str, &dep_def_block, lib_state);
       if (nerrors == 0) {
         // Bind as both $data::data and $data for backward compatibility vs common sense
         bk = block_bind_library(dep_def_block, bk, OP_IS_CALL_PSEUDO, as_str);
@@ -298,7 +299,7 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
         bk = block_bind_library(lib_state->defs[state_idx], bk, OP_IS_CALL_PSEUDO, as_str);
       } else { // Not found.   Add it to the table before binding.
         block dep_def_block = gen_noop();
-        nerrors += load_library(jq, resolved, is_data, raw, as_str, &dep_def_block, lib_state);
+        nerrors += load_library(jq, resolved, is_data, raw, optional, as_str, &dep_def_block, lib_state);
         // resolved has been freed
         if (nerrors == 0) {
           // Bind the library to the program
@@ -317,7 +318,7 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
 
 // Loads the library at lib_path into lib_state, putting the library's defs
 // into *out_block
-static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, const char *as, block *out_block, struct lib_loading_state *lib_state) {
+static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int optional, const char *as, block *out_block, struct lib_loading_state *lib_state) {
   int nerrors = 0;
   struct locfile* src = NULL;
   block program;
@@ -328,12 +329,15 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, const c
     data = jv_load_file(jv_string_value(lib_path), 1);
   int state_idx;
   if (!jv_is_valid(data)) {
-    if (jv_invalid_has_msg(jv_copy(data)))
-      data = jv_invalid_get_msg(data);
-    else
-      data = jv_string("unknown error");
-    jq_report_error(jq, jv_string_fmt("jq: error loading data file %s: %s\n", jv_string_value(lib_path), jv_string_value(data)));
-    nerrors++;
+    program = gen_noop();
+    if (!optional) {
+      if (jv_invalid_has_msg(jv_copy(data)))
+        data = jv_invalid_get_msg(data);
+      else
+        data = jv_string("unknown error");
+      jq_report_error(jq, jv_string_fmt("jq: error loading data file %s: %s\n", jv_string_value(lib_path), jv_string_value(data)));
+      nerrors++;
+    }
     goto out;
   } else if (is_data) {
     // import "foo" as $bar;
@@ -342,6 +346,7 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, const c
     // import "foo" as bar;
     src = locfile_init(jq, jv_string_value(lib_path), jv_string_value(data), jv_string_length_bytes(jv_copy(data)));
     nerrors += jq_parse_library(src, &program);
+    locfile_free(src);
     if (nerrors == 0) {
       char *lib_origin = strdup(jv_string_value(lib_path));
       nerrors += process_dependencies(jq, jq_get_jq_origin(jq),
@@ -356,10 +361,8 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, const c
   lib_state->defs = jv_mem_realloc(lib_state->defs, lib_state->ct * sizeof(block));
   lib_state->names[state_idx] = strdup(jv_string_value(lib_path));
   lib_state->defs[state_idx] = program;
-  *out_block = program;
-  if (src)
-    locfile_free(src);
 out:
+  *out_block = program;
   jv_free(lib_path);
   jv_free(data);
   return nerrors;
