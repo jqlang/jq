@@ -165,8 +165,8 @@ install-binaries: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec
 
 DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
-        docs/Pipfile docs/Pipfile.lock docs/build_website.py            \
-        docs/README.md jq.1.prebuilt
+        docs/Pipfile docs/Pipfile.lock docs/build_manpage.py            \
+        docs/build_manpage.py docs/README.md jq.1.prebuilt
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
