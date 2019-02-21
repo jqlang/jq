@@ -13,9 +13,8 @@ RUN apt-get update && \
         git \
         bison \
         flex \
-        ruby \
-        wget \
-        ruby-dev && \
+        python3 \
+        wget && \
     wget https://github.com/kkos/oniguruma/archive/v5.9.6.tar.gz -O onig-5.9.6.tar.gz && \
     sha512sum onig-5.9.6.tar.gz | grep 6b048d345e148c9da38af7a8df76d4a358eb3d4db91fa7834076e511f526a63544284f212b0d56badbbd33112c8b458a5fff02bfbbda012ecfe478bc436ea679 && \
     tar zxvf onig-5.9.6.tar.gz && \
@@ -25,8 +24,8 @@ RUN apt-get update && \
         ./configure --prefix=/usr/local && \
         make && \
         make install ) && \
-    gem install bundler && \
-    (cd /app/docs && bundle install) && \
+    pip3 install pipenv && \
+    (cd /app/docs && pipenv sync) && \
     (cd /app && \
         autoreconf -i && \
         ./configure --disable-valgrind --enable-all-static --prefix=/usr/local && \
@@ -43,8 +42,7 @@ RUN apt-get update && \
         bison \
         git \
         flex \
-        ruby \
-        ruby-dev && \
+        python3 && \
     apt-get autoremove -y && \
     rm -rf oniguruma-5.9.6 && \
     rm -rf /var/lib/apt/lists/* /var/lib/gems
