@@ -2062,14 +2062,13 @@ sections:
           More cases can be added to an if using `elif A then B` syntax.
 
         examples:
-          - program: |-
-              if . == 0 then
+          - program: 'if . == 0 then
                 "zero"
               elif . == 1 then
                 "one"
               else
                 "many"
-              end
+              end'
             input: 2
             output: ['"many"']
 
