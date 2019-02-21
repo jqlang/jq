@@ -304,6 +304,14 @@ null
 [11,22,33,44,55,66,77,88,99]
 [11,22,33]
 
+[limit(0; error)]
+"badness"
+[]
+
+[limit(1; 1, error)]
+"badness"
+[1]
+
 [first(range(.)), last(range(.)), nth(0; range(.)), nth(5; range(.)), try nth(-1; range(.)) catch .]
 10
 [0,9,0,5,"nth doesn't support negative indices"]
