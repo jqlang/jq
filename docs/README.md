@@ -2,24 +2,19 @@ Documentation
 =============
 
 The jq website, manpages and some of the tests are generated from this
-directory. The directory holds a [Bonsai](http://tinytree.info)
-website, and the manual is a YAML file in `content/3.manual`.
+directory. The manual is a YAML file in `content/manual`.
 
 To build the documentation (including building the jq manpage), you'll
-need a working Ruby setup. The easiest way to get one is to install
-RVM and Ruby 1.9.3 like so:
+need python3 and pipenv. You can install pipenv like so:
 
-    \curl -L https://get.rvm.io | bash -s stable --ruby=1.9.3
+    pip install pipenv
 
-After that finishes installing, you'll need to make sure RVM is on
-your path by doing `source $HOME/.rvm/scripts/rvm`, or just opening a
-new shell. See <https://rvm.io> for more info on RVM.
+Though, you may need to say pip3 instead, depending on your system. Once
+you have pipenv installed, you can install the dependencies by running
+`pipenv install` from the `docs` directory.
 
-Once RVM is installed, you can install all the dependencies for jq's
-documentation build by running this from the `docs` directory:
+Once this is done, rerun `./configure` in the jq root directory and then
+the Makefile will be able to generate the jq manpage.
 
-    bundle install
-
-When bundle manages to install the dependencies, rerun `./configure`
-in the jq root directory and then the Makefile will be able to
-generate the jq manpage.
+To build the website, run `pipenv run ./build_website.py` from inside
+the `docs` directory.

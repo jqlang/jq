@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-{% include "shared/head" %}
+{% include "shared/_head.html.j2" %}
 
   <body id="{{slug}}">
-{% include "shared/navbar" %}
+{% include "shared/_navbar.html.j2" %}
 
     <div class="container">
       <div class="row">
         <h1>{{headline}}</h1>
         {% for item in body %}
           {% if item.text %}
-            {{ item.text | replace: '$JQ_VERSION', jq_version | markdownify }}
+            {{ item.text | replace('$JQ_VERSION', jq_version) | markdownify }}
           {% endif %}
 
           {% if item.command %}
-            {% capture resultID %}{{ "result" | unique}}{% endcapture %}
+            {% set resultID = unique_id() %}
             <div class="tutorial-example">
               <div class="accordion-heading">
                 <pre>{{item.command}}</pre>
-                <a data-toggle="collapse" href="#{{resultID}}">Show result</a>
+                <a data-toggle="collapse" href="#result{{resultID}}">Show result</a>
               </div>
-              <div id="{{resultID}}" class="accordion-body collapse">
+              <div id="result{{resultID}}" class="accordion-body collapse">
                 <pre>{{item.result}}</pre>
               </div>
             </div>
@@ -29,6 +29,6 @@
       </div>
     </div>
 
-{% include "shared/footer" %}
+{% include "shared/_footer.html.j2" %}
   </body>
 </html>
