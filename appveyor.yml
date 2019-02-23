@@ -6,8 +6,9 @@ environment:
     PATH: C:\Python36;C:\Python36\Scripts;C:\msys64\usr\bin;C:\msys64\mingw32\bin;C:\Windows\System32;C:\Windows;%PATH%
 
 clone_script:
-  - bash -lc "git clone -q --branch=$APPVEYOR_REPO_BRANCH https://github.com/${APPVEYOR_REPO_NAME}.git $APPVEYOR_BUILD_FOLDER"
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git checkout -qf $APPVEYOR_REPO_BRANCH"
+  - bash -lc "echo $APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME - $APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH"
+  - bash -lc "git clone -q --branch=${APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH:APPVEYOR_REPO_BRANCH} https://github.com/${APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME:$APPVEYOR_REPO_NAME}.git $APPVEYOR_BUILD_FOLDER"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git checkout -qf ${APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH:APPVEYOR_REPO_BRANCH}"
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git submodule update --init --recursive"
 
 install:
