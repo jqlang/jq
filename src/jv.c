@@ -1344,8 +1344,13 @@ int jv_contains(jv a, jv b) {
   } else if (jv_get_kind(a) == JV_KIND_ARRAY) {
     r = jv_array_contains(jv_copy(a), jv_copy(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING) {
-    r = _jq_memmem(jv_string_value(a), jv_string_length_bytes(jv_copy(a)),
-                   jv_string_value(b), jv_string_length_bytes(jv_copy(b))) != 0;
+    int b_len = jv_string_length_bytes(jv_copy(b));
+    if (b_len != 0) {
+      r = _jq_memmem(jv_string_value(a), jv_string_length_bytes(jv_copy(a)),
+                     jv_string_value(b), b_len) != 0;
+    } else {
+      r = 1;
+    }
   } else {
     r = jv_equal(jv_copy(a), jv_copy(b));
   }
