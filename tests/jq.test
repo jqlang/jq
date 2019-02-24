@@ -851,6 +851,51 @@ false
 [1,2,3,4,true]
 true
 
+# Check short-circuiting
+any(true, error; .)
+"badness"
+true
+
+all(false, error; .)
+"badness"
+false
+
+any(not)
+[]
+false
+
+all(not)
+[]
+true
+
+any(not)
+[false]
+true
+
+all(not)
+[false]
+true
+
+[any,all]
+[]
+[false,true]
+
+[any,all]
+[true]
+[true,true]
+
+[any,all]
+[false]
+[false,false]
+
+[any,all]
+[true,false]
+[true,false]
+
+[any,all]
+[null,null,true]
+[true,false]
+
 #
 # Paths
 #
