@@ -215,22 +215,9 @@ def fromstream(i): {x: null, e: false} as $init |
     else setpath(["e"]; $i[0]|length==1) end
   ; if .e then .x else empty end);
 def tostream:
-  {string:true,number:true,boolean:true,null:true} as $leaf_types |
-  . as $dot |
-  if $leaf_types[$dot|type] or length==0 then [[],$dot]
-  else
-    # We really need a _streaming_ form of `keys`.
-    # We can use `range` for arrays, but not for objects.
-    keys_unsorted as $keys |
-    $keys[-1] as $last|
-    ((# for each key
-      $keys[] | . as $key |
-      $dot[$key] | . as $dot |
-      # recurse on each key/value
-      tostream|.[0]|=[$key]+.),
-     # then add the closing marker
-     [[$last]])
-  end;
+  path(def r: (.[]?|r), .; r) as $p |
+  getpath($p) |
+  reduce path(.[]?) as $q ([$p, .]; [$p+$q]);
 
 
 # Assuming the input array is sorted, bsearch/1 returns
