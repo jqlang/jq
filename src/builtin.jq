@@ -35,15 +35,15 @@ def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_fil
 def isfinite: type == "number" and (isinfinite | not);
 def arrays: select(type == "array");
 def objects: select(type == "object");
-def iterables: arrays, objects;
+def iterables: select(type|. == "array" or . == "object");
 def booleans: select(type == "boolean");
 def numbers: select(type == "number");
 def normals: select(isnormal);
 def finites: select(isfinite);
 def strings: select(type == "string");
-def nulls: select(type == "null");
+def nulls: select(. == null);
 def values: select(. != null);
-def scalars: select(. == null or . == true or . == false or type == "number" or type == "string");
+def scalars: select(type|. != "array" and . != "object");
 def leaf_paths: paths(scalars);
 def join($x): reduce .[] as $i (null;
             (if .==null then "" else .+$x end) +
@@ -195,7 +195,7 @@ def repeat(exp):
      def _repeat:
          exp, _repeat;
      _repeat;
-def inputs: try repeat(input) catch if .=="break" then empty else .|error end;
+def inputs: try repeat(input) catch if .=="break" then empty else error end;
 # like ruby's downcase - only characters A to Z are affected
 def ascii_downcase:
   explode | map( if 65 <= . and . <= 90 then . + 32  else . end) | implode;
