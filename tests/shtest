@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -vx
 
 . "${0%/*}/setup" "$@"
 
