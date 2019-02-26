@@ -206,26 +206,14 @@ def ascii_upcase:
 # Streaming utilities
 def truncate_stream(stream):
   . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][$n:]) else empty end;
-def fromstream(i):
-  foreach i as $i (
-    [null, null];
-
-    if ($i | length) == 2 then
-      if ($i[0] | length) == 0 then .
-      else [ ( .[0] | setpath($i[0]; $i[1]) ), .[1] ]
-      end
-    elif ($i[0] | length) == 1 then [ null, .[0] ]
-    else .
-    end;
-
-    if ($i | length) == 1 then
-      if ($i[0] | length) == 1 then .[1]
-      else empty
-      end
-    elif ($i[0] | length) == 0 then $i[1]
-    else empty
-    end
-  );
+def fromstream(i): {x: null, e: false} as $init |
+  # .x = object being built; .e = emit and reset state
+  foreach i as $i ($init
+  ; if .e then $init else . end
+  | if $i|length == 2
+    then setpath(["e"]; $i[0]|length==0) | setpath(["x"]+$i[0]; $i[1])
+    else setpath(["e"]; $i[0]|length==1) end
+  ; if .e then .x else empty end);
 def tostream:
   {string:true,number:true,boolean:true,null:true} as $leaf_types |
   . as $dot |
