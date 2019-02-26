@@ -58,7 +58,6 @@ def strings: select(type == "string");
 def nulls: select(type == "null");
 def values: select(. != null);
 def scalars: select(. == null or . == true or . == false or type == "number" or type == "string");
-def scalars_or_empty: select(. == null or . == true or . == false or type == "number" or type == "string" or ((type=="array" or type=="object") and length==0));
 def leaf_paths: paths(scalars);
 def join($x): reduce .[] as $i (null;
             (if .==null then "" else .+$x end) +
