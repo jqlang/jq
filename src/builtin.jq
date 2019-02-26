@@ -138,11 +138,6 @@ def gsub($re; s; flags): sub($re; s; flags + "g");
 def gsub($re; s): sub($re; s; "g");
 
 ########################################################################
-# range/3, with a `by` expression argument
-def range($init; $upto; $by):
-    def _range:
-        if ($by > 0 and . < $upto) or ($by < 0 and . > $upto) then ., ((.+$by)|_range) else . end;
-    if $by == 0 then $init else $init|_range end | select(($by > 0 and . < $upto) or ($by < 0 and . > $upto));
 # generic iterator/generator
 def while(cond; update):
      def _while:
@@ -156,6 +151,11 @@ def limit($n; exp):
     if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
     elif $n == 0 then empty
     else exp end;
+# range/3, with a `by` expression argument
+def range($init; $upto; $by):
+    if $by > 0 then $init|while(. < $upto; . + $by)
+  elif $by < 0 then $init|while(. > $upto; . + $by)
+  else empty end;
 def first(g): label $out | g | ., break $out;
 def isempty(g): first((g|false), true);
 def all(generator; condition): isempty(generator|condition and empty);
