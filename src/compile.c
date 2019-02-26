@@ -421,20 +421,6 @@ block block_bind_library(block binder, block body, int bindflags, const char *li
   return body; // We don't return a join because we don't want those sticking around...
 }
 
-// Bind binder to body, then throw it away if not referenced.
-block block_bind_referenced(block binder, block body, int bindflags) {
-  assert(block_is_single(binder));
-  assert(block_has_only_binders(binder, bindflags));
-  bindflags |= OP_HAS_BINDING;
-
-  if (block_bind_subblock(binder, body, bindflags, 0) == 0) {
-    block_free(binder);
-  } else {
-    body = BLOCK(binder, body);
-  }
-  return body;
-}
-
 static inst* block_take_last(block* b) {
   inst* i = b->last;
   if (i == 0)
@@ -452,13 +438,18 @@ static inst* block_take_last(block* b) {
 
 // Binds a sequence of binders, which *must not* alrady be bound to each other,
 // to body, throwing away unreferenced defs
-block block_bind_incremental(block binder, block body, int bindflags) {
+block block_bind_referenced(block binder, block body, int bindflags) {
   assert(block_has_only_binders(binder, bindflags));
   bindflags |= OP_HAS_BINDING;
 
   inst* curr;
   while ((curr = block_take_last(&binder))) {
-    body = block_bind_referenced(inst_block(curr), body, bindflags);
+    block b = inst_block(curr);
+    if (block_bind_subblock(b, body, bindflags, 0) == 0) {
+      block_free(b);
+    } else {
+      body = BLOCK(b, body);
+    }
   }
   return body;
 }

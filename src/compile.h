@@ -74,7 +74,6 @@ int block_is_funcdef(block b);
 int block_is_single(block b);
 block block_bind_library(block binder, block body, int bindflags, const char* libname);
 block block_bind_referenced(block binder, block body, int bindflags);
-block block_bind_incremental(block binder, block body, int bindflags);
 block block_bind_self(block binder, int bindflags);
 block block_drop_unreferenced(block body);
 
