@@ -503,7 +503,7 @@ block block_drop_unreferenced(block body) {
     if (curr->bound_by == curr && !curr->referenced) {
       inst_free(curr);
     } else {
-      refd = BLOCK(inst_block(curr), refd);
+      refd = BLOCK(refd, inst_block(curr));
     }
   }
   return refd;
