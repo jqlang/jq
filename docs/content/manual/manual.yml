@@ -378,6 +378,10 @@ sections:
             input: '[1,2,3]'
             output: ['2']
 
+          - program: '.letters[1]'
+            input: '{"letters":["a","b","c","d"]}'
+            output: '"b"'
+
       - title: "Array/String Slice: `.[10:15]`"
         body: |
 
