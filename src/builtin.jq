@@ -224,10 +224,10 @@ def tostream:
 # the index of the target if the target is in the input array; and otherwise
 #  (-1 - ix), where ix is the insertion point that would leave the array sorted.
 # If the input is not sorted, bsearch will terminate but with irrelevant results.
-def bsearch(target):
+def bsearch($target):
   if length == 0 then -1
   elif length == 1 then
-     if target == .[0] then 0 elif target < .[0] then -1 else -2 end
+     if $target == .[0] then 0 elif $target < .[0] then -1 else -2 end
   else . as $in
     # state variable: [start, end, answer]
     # where start and end are the upper and lower offsets to use.
@@ -237,14 +237,14 @@ def bsearch(target):
              else
                ( ( (.[1] + .[0]) / 2 ) | floor ) as $mid
                | $in[$mid] as $monkey
-               | if $monkey == target  then (.[2] = $mid)   # success
+               | if $monkey == $target  then (.[2] = $mid)   # success
                  elif .[0] == .[1]     then (.[1] = -1)     # failure
-                 elif $monkey < target then (.[0] = ($mid + 1))
+                 elif $monkey < $target then (.[0] = ($mid + 1))
                  else (.[1] = ($mid - 1))
                  end
              end )
     | if .[2] == null then          # compute the insertion point
-         if $in[ .[0] ] < target then (-2 -.[0])
+         if $in[ .[0] ] < $target then (-2 -.[0])
          else (-1 -.[0])
          end
       else .[2]
