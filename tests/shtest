@@ -155,7 +155,7 @@ cmp $d/out $d/expected
 
 ## If we add an option to stream to the `import ... as $symbol;` directive
 ## then we can move these tests into tests/all.test.
-$VALGRIND $Q $JQ -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p,.]' < "$JQTESTDIR/torture/input0.json" > $d/out0
+$VALGRIND $Q $JQ -c '. as $d|path(..) as $p|$d|getpath($p)|select((type|. != "array" and . != "object") or length==0)|[$p,.]' < "$JQTESTDIR/torture/input0.json" > $d/out0
 $VALGRIND $Q $JQ --stream -c '.|select(length==2)' < "$JQTESTDIR/torture/input0.json" > $d/out1
 diff $d/out0 $d/out1
 
