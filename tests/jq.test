@@ -1575,6 +1575,17 @@ true
 true
 true
 
+range(5;13)|IN(range(0;10;3))
+null
+false
+true
+false
+false
+true
+false
+false
+false
+
 range(10;12)|IN(range(10))
 null
 false

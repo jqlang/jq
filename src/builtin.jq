@@ -263,11 +263,7 @@ def walk(f):
 
 # SQL-ish operators here:
 def INDEX(stream; idx_expr):
-  reduce stream as $row ({};
-    .[$row|idx_expr|
-      if type != "string" then tojson
-      else .
-      end] |= $row);
+  reduce stream as $row ({}; .[$row|idx_expr|tostring] = $row);
 def INDEX(idx_expr): INDEX(.[]; idx_expr);
 def JOIN($idx; idx_expr):
   [.[] | [., $idx[idx_expr]]];
@@ -275,5 +271,5 @@ def JOIN($idx; stream; idx_expr):
   stream | [., $idx[idx_expr]];
 def JOIN($idx; stream; idx_expr; join_expr):
   stream | [., $idx[idx_expr]] | join_expr;
-def IN(s): reduce (first(select(. == s)) | true) as $v (false; if . or $v then true else false end);
-def IN(src; s): reduce (src|IN(s)) as $v (false; if . or $v then true else false end);
+def IN(s): any(s == .; .);
+def IN(src; s): any(src == s; .);
