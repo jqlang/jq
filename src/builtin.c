@@ -1794,6 +1794,5 @@ int builtins_bind(jq_state *jq, block* bb) {
   builtins = gen_builtin_list(builtins);
 
   *bb = block_bind_referenced(builtins, *bb, OP_IS_CALL_PSEUDO);
-  *bb = block_drop_unreferenced(*bb);
   return nerrors;
 }
