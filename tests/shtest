@@ -1,4 +1,4 @@
-#!/bin/sh -vx
+#!/bin/sh
 
 . "${0%/*}/setup" "$@"
 
@@ -124,16 +124,16 @@ cmp $d/out $d/expected
 
 ## Test --exit-status
 data='{"i": 1}\n{"i": 2}\n{"i": 3}\n'
-echo "$data" | $JQ --exit-status 'select(.i==1)' > /dev/null 2>&1
-echo "$data" | $JQ --exit-status 'select(.i==2)' > /dev/null 2>&1
-echo "$data" | $JQ --exit-status 'select(.i==3)' > /dev/null 2>&1
+printf "$data" | $JQ --exit-status 'select(.i==1)' > /dev/null 2>&1
+printf "$data" | $JQ --exit-status 'select(.i==2)' > /dev/null 2>&1
+printf "$data" | $JQ --exit-status 'select(.i==3)' > /dev/null 2>&1
 ret=0
-echo "$data" | $JQ --exit-status 'select(.i==4)' > /dev/null 2>&1 || ret=$?
+printf "$data" | $JQ --exit-status 'select(.i==4)' > /dev/null 2>&1 || ret=$?
 [ $ret -eq 4 ]
 ret=0
-echo "$data" | $JQ --exit-status 'select(.i==2) | false' > /dev/null 2>&1 || ret=$?
+printf "$data" | $JQ --exit-status 'select(.i==2) | false' > /dev/null 2>&1 || ret=$?
 [ $ret -eq 1 ]
-echo "$data" | $JQ --exit-status 'select(.i==2) | true' > /dev/null 2>&1
+printf "$data" | $JQ --exit-status 'select(.i==2) | true' > /dev/null 2>&1
 
 
 # Regression test for #951
