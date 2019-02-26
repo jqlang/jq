@@ -32,20 +32,6 @@ def index($i):   indices($i) | .[0];       # TODO: optimize
 def rindex($i):  indices($i) | .[-1:][0];  # TODO: optimize
 def paths: path(recurse(if (type|. == "array" or . == "object") then .[] else empty end))|select(length > 0);
 def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_filter);
-def any(generator; condition):
-        [label $out | foreach generator as $i
-                 (false;
-                  if . then break $out elif $i | condition then true else . end;
-                  if . then . else empty end)] | length == 1;
-def any(condition): any(.[]; condition);
-def any: any(.);
-def all(generator; condition):
-        [label $out | foreach generator as $i
-                 (true;
-                  if .|not then break $out elif $i | condition then . else false end;
-                  if .|not then . else empty end)] | length == 0;
-def all(condition): all(.[]; condition);
-def all: all(.);
 def isfinite: type == "number" and (isinfinite | not);
 def arrays: select(type == "array");
 def objects: select(type == "object");
@@ -170,8 +156,14 @@ def limit($n; exp):
     if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
     elif $n == 0 then empty
     else exp end;
-def isempty(g): 0 == ((label $go | g | (1, break $go)) // 0);
 def first(g): label $out | g | ., break $out;
+def isempty(g): first((g|false), true);
+def all(generator; condition): isempty(generator|condition and empty);
+def any(generator; condition): isempty(generator|condition or empty)|not;
+def all(condition): all(.[]; condition);
+def any(condition): any(.[]; condition);
+def all: all(.[]; .);
+def any: any(.[]; .);
 def last(g): reduce g as $item (null; $item);
 def nth($n; g): if $n < 0 then error("nth doesn't support negative indices") else last(limit($n + 1; g)) end;
 def first: .[0];
