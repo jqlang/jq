@@ -290,18 +290,6 @@ int block_has_only_binders(block binders, int bindflags) {
   return 1;
 }
 
-// Count a binder's (function) formal params
-static int block_count_formals(block b) {
-  int args = 0;
-  if (b.first->op == CLOSURE_CREATE_C)
-    return b.first->imm.cfunc->nargs - 1;
-  for (inst* i = b.first->arglist.first; i; i = i->next) {
-    assert(i->op == CLOSURE_PARAM);
-    args++;
-  }
-  return args;
-}
-
 // Count a call site's actual params
 static int block_count_actuals(block b) {
   int args = 0;
@@ -326,8 +314,6 @@ static int block_bind_subblock_inner(int* any_unbound, block binder, block body,
   assert(break_distance >= 0);
 
   binder.first->bound_by = binder.first;
-  if (binder.first->nformals == -1)
-    binder.first->nformals = block_count_formals(binder);
   int nrefs = 0;
   for (inst* i = body.first; i; i = i->next) {
     if (i->any_unbound == 0)
@@ -341,8 +327,6 @@ static int block_bind_subblock_inner(int* any_unbound, block binder, block body,
           break_distance <= 3 && (i->symbol[1] == '1' + break_distance) &&
           i->symbol[2] == '\0'))) {
       // bind this instruction
-      if (i->op == CALL_JQ && i->nactuals == -1)
-        i->nactuals = block_count_actuals(i->arglist);
       if (i->nactuals == -1 || i->nactuals == binder.first->nformals) {
         i->bound_by = binder.first;
         nrefs++;
@@ -566,7 +550,10 @@ block gen_import_meta(block import, block metadata) {
 
 block gen_function(const char* name, block formals, block body) {
   inst* i = inst_new(CLOSURE_CREATE);
+  int nformals = 0;
   for (inst* i = formals.last; i; i = i->prev) {
+    nformals++;
+    i->nformals = 0;
     if (i->op == CLOSURE_PARAM_REGULAR) {
       i->op = CLOSURE_PARAM;
       body = gen_var_binding(gen_call(i->symbol, gen_noop()), i->symbol, body);
@@ -576,6 +563,7 @@ block gen_function(const char* name, block formals, block body) {
   i->subfn = body;
   i->symbol = strdup(name);
   i->any_unbound = -1;
+  i->nformals = nformals;
   i->arglist = formals;
   block b = inst_block(i);
   block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
@@ -597,6 +585,7 @@ block gen_lambda(block body) {
 block gen_call(const char* name, block args) {
   block b = gen_op_unbound(CALL_JQ, name);
   b.first->arglist = args;
+  b.first->nactuals = block_count_actuals(b.first->arglist);
   return b;
 }
 
@@ -1106,7 +1095,8 @@ block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block co
   for (int cfunc=0; cfunc<ncfunctions; cfunc++) {
     inst* i = inst_new(CLOSURE_CREATE_C);
     i->imm.cfunc = &cfunctions[cfunc];
-    i->symbol = strdup(i->imm.cfunc->name);
+    i->symbol = strdup(cfunctions[cfunc].name);
+    i->nformals = cfunctions[cfunc].nargs - 1;
     i->any_unbound = 0;
     code = BLOCK(inst_block(i), code);
   }
@@ -1174,7 +1164,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
         else if (curr->op == LOADV)
           locfile_locate(curr->locfile, curr->source, "jq: error: $%s is not defined", curr->symbol);
         else
-          locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, block_count_actuals(curr->arglist));
+          locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, curr->nactuals);
         errors++;
         // don't process this instruction if it's not well-defined
         ret = BLOCK(ret, inst_block(curr));

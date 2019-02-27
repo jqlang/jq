@@ -1646,4 +1646,19 @@ index("")
 ""
 null
 
+# check that dead code removal occurs after builtin it generation
+builtins|length > 10
+null
+true
 
+"-1"|IN(builtins[] / "/"|.[1])
+null
+false
+
+all(builtins[] / "/"; .[1]|tonumber >= 0)
+null
+true
+
+builtins|any(.[:1] == "_")
+null
+false
