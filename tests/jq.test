@@ -1468,6 +1468,10 @@ import "data" as $e; import "data" as $d; [$d[].this,$e[].that,$d::d[].this,$e::
 null
 "is a test;is too;is a test;is too"
 
+import "./data" as $d; import "data" as $e;
+1
+1
+
 include "shadow1"; e
 null
 2
