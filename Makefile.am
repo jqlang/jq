@@ -128,7 +128,11 @@ endif
 
 ### Tests (make check)
 
+if ENABLE_DOCS
 TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
+else
+TESTS = tests/optionaltest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
+endif
 TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
 

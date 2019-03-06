@@ -86,7 +86,7 @@ dnl Enable building all static
 AC_ARG_ENABLE([all-static],
    AC_HELP_STRING([--enable-all-static], [link jq with static libraries only]))
 
-AS_IF([test "x$enable_docs" != "xno"],[
+AS_IF([test "x$enable_docs" = "xyes"],[
    AC_CHECK_PROGS(pipenv_cmd, pipenv)
 
    AC_CACHE_CHECK([for Python dependencies], [jq_cv_python_deps],
