@@ -688,6 +688,12 @@ Term '[' Exp ']' '?' {
 Term '[' Exp ']' %prec NONOPT {
   $$ = gen_index($1, $3);
 } |
+Term '.' '[' Exp ']' '?' {
+  $$ = gen_index_opt($1, $4);
+} |
+Term '.' '[' Exp ']' %prec NONOPT {
+  $$ = gen_index($1, $4);
+} |
 Term '[' ']' '?' {
   $$ = block_join($1, gen_op_simple(EACH_OPT));
 } |
