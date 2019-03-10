@@ -87,6 +87,10 @@ dnl Enable building all static
 AC_ARG_ENABLE([all-static],
    AC_HELP_STRING([--enable-all-static], [link jq with static libraries only]))
 
+if test "x$enable_all_static" != xyes; then
+  AC_FIND_FUNC([dlopen], [dl], [#include <dlfcn.h>], [0, 0])
+fi
+
 AS_IF([test "x$enable_docs" = "xyes"],[
    AC_CHECK_PROGS(pipenv_cmd, pipenv)
 

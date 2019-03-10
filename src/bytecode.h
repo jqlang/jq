@@ -3,6 +3,8 @@
 #include <stdint.h>
 
 #include "jv.h"
+#include "jq.h"
+#include "jq_plugin.h"
 
 typedef enum {
 #define OP(name, imm, in, out) name,
@@ -42,15 +44,6 @@ struct opcode_description {
 };
 
 const struct opcode_description* opcode_describe(opcode op);
-
-
-#define MAX_CFUNCTION_ARGS 10
-typedef void (*cfunction_ptr)();
-struct cfunction {
-  cfunction_ptr fptr;
-  const char* name;
-  int nargs;
-};
 
 struct symbol_table {
   struct cfunction* cfunctions;

@@ -150,6 +150,13 @@ cmp $d/out $d/expected
 printf "[1,2][3,4]\n" | $JQ -cs add > $d/out 2>&1
 cmp $d/out $d/expected
 
+## Test dlopen/LoadLibrary
+if expr match "`file $JQ`" '.*ELF'; then
+  cp -p $JQBASEDIR/.libs/somod.so $JQBASEDIR/tests/modules/somod/somod.so
+  $VALGRIND $Q $JQ -L $JQBASEDIR/tests/modules -n 'include "somod"; "HELLO DLOPEN! \(1|add1)"'
+else
+  echo "No dlopen support"
+fi
 
 ## Test streaming parser
 

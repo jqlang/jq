@@ -14,15 +14,20 @@
 #include "locfile.h"
 #include "jv.h"
 #include "jq.h"
+#include "jq_plugin.h"
 #include "parser.h"
 #include "builtin.h"
 #include "util.h"
 #include "linker.h"
 
+struct jq_plugin_vtable vtable;
+
 struct jq_state {
+  struct jq_plugin_vtable *vtable; /* Must be first! */
   void (*nomem_handler)(void *);
   void *nomem_handler_data;
   struct bytecode* bc;
+  struct lib_loading_state *libs;
 
   jq_msg_cb err_cb;
   void *err_cb_data;
@@ -980,6 +985,8 @@ jv jq_format_error(jv msg) {
   return jq_format_error(jv_invalid_get_msg(msg));
 }
 
+static void init_vtable(struct jq_plugin_vtable *);
+
 // XXX Refactor into a utility function that returns a jv and one that
 // uses it and then prints that jv's string as the complete error
 // message.
@@ -995,7 +1002,10 @@ jq_state *jq_init(void) {
   if (jq == NULL)
     return NULL;
 
+  init_vtable(&vtable);
+  jq->vtable = &vtable;
   jq->bc = 0;
+  jq->libs = 0;
   jq->next_label = 0;
 
   stack_init(&jq->stk);
@@ -1066,6 +1076,7 @@ void jq_teardown(jq_state **jq) {
   jq_reset(old_jq);
   bytecode_free(old_jq->bc);
   old_jq->bc = 0;
+  libraries_free(old_jq->libs);
   jv_free(old_jq->attrs);
 
   jv_mem_free(old_jq);
@@ -1169,7 +1180,11 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
     bytecode_free(jq->bc);
     jq->bc = 0;
   }
-  int nerrors = load_program(jq, locations, &program);
+  if (jq->libs) {
+    libraries_free(jq->libs);
+    jq->libs = 0;
+  }
+  int nerrors = load_program(jq, locations, &program, &jq->libs);
   if (nerrors == 0) {
     nerrors = builtins_bind(jq, &program);
     if (nerrors == 0) {
@@ -1262,4 +1277,139 @@ jv jq_get_exit_code(jq_state *jq)
 jv jq_get_error_message(jq_state *jq)
 {
   return jv_copy(jq->error_message);
+}
+
+static void init_vtable(struct jq_plugin_vtable *vtable) {
+  vtable->jv_string_append_buf = jv_string_append_buf;
+  vtable->jv_object_iter_next = jv_object_iter_next;
+  vtable->jq_get_lib_dirs = jq_get_lib_dirs;
+  vtable->jv_mem_free = jv_mem_free;
+  vtable->jq_get_error_cb = jq_get_error_cb;
+  vtable->jv_string_vfmt = jv_string_vfmt;
+  vtable->jv_number_value = jv_number_value;
+  vtable->jv_mem_alloc_unguarded = jv_mem_alloc_unguarded;
+  vtable->jv_true = jv_true;
+  vtable->jv_object_set = jv_object_set;
+  vtable->jv_mem_calloc = jv_mem_calloc;
+  vtable->jv_parser_next = jv_parser_next;
+  vtable->jv_dump_string = jv_dump_string;
+  vtable->jv_invalid_get_msg = jv_invalid_get_msg;
+  vtable->jq_util_input_set_parser = jq_util_input_set_parser;
+  vtable->jv_copy = jv_copy;
+  vtable->jv_get = jv_get;
+  vtable->jv_mem_calloc_unguarded = jv_mem_calloc_unguarded;
+  vtable->jv_string_value = jv_string_value;
+  vtable->jv_identical = jv_identical;
+  vtable->jq_get_prog_origin = jq_get_prog_origin;
+  vtable->jv_invalid_with_msg = jv_invalid_with_msg;
+  vtable->jv_equal = jv_equal;
+  vtable->jq_dump_disassembly = jq_dump_disassembly;
+  vtable->jv_object_iter = jv_object_iter;
+  vtable->jv_dump = jv_dump;
+  vtable->jv_array_sized = jv_array_sized;
+  vtable->jv_string_append_str = jv_string_append_str;
+  vtable->jq_get_exit_code = jq_get_exit_code;
+  vtable->jv_getpath = jv_getpath;
+  vtable->jq_get_attr = jq_get_attr;
+  vtable->jq_halted = jq_halted;
+  vtable->jv_array_length = jv_array_length;
+  vtable->jv_array_concat = jv_array_concat;
+  vtable->jv_string_implode = jv_string_implode;
+  vtable->jv_string_explode = jv_string_explode;
+  vtable->jq_start = jq_start;
+  vtable->jq_teardown = jq_teardown;
+  vtable->jv_parser_remaining = jv_parser_remaining;
+  vtable->jq_util_input_get_position = jq_util_input_get_position;
+  vtable->jv_group = jv_group;
+  vtable->jv_false = jv_false;
+  vtable->jv_string_fmt = jv_string_fmt;
+  vtable->jq_set_input_cb = jq_set_input_cb;
+  vtable->jq_util_input_init = jq_util_input_init;
+  vtable->jv_null = jv_null;
+  vtable->jv_setpath = jv_setpath;
+  vtable->jv_string_split = jv_string_split;
+  vtable->jv_set = jv_set;
+  vtable->jv_mem_strdup_unguarded = jv_mem_strdup_unguarded;
+  vtable->jq_get_jq_origin = jq_get_jq_origin;
+  vtable->jq_halt = jq_halt;
+  vtable->jv_show = jv_show;
+  vtable->jq_init = jq_init;
+  vtable->jv_kind_name = jv_kind_name;
+  vtable->jv_string_append_codepoint = jv_string_append_codepoint;
+  vtable->jq_get_error_message = jq_get_error_message;
+  vtable->jv_array_get = jv_array_get;
+  vtable->jv_object_merge = jv_object_merge;
+  vtable->jq_compile_args = jq_compile_args;
+  vtable->jq_util_input_next_input = jq_util_input_next_input;
+  vtable->jv_dump_string_trunc = jv_dump_string_trunc;
+  vtable->jq_next = jq_next;
+  vtable->jv_parse_sized = jv_parse_sized;
+  vtable->jv_cmp = jv_cmp;
+  vtable->jv_number = jv_number;
+  vtable->jv_dumpf = jv_dumpf;
+  vtable->jv_object_get = jv_object_get;
+  vtable->jv_parse = jv_parse;
+  vtable->jq_set_attr = jq_set_attr;
+  vtable->jq_util_input_get_current_line = jq_util_input_get_current_line;
+  vtable->jv_parser_new = jv_parser_new;
+  vtable->jv_object_iter_value = jv_object_iter_value;
+  vtable->jv_invalid_has_msg = jv_invalid_has_msg;
+  vtable->jv_string_length_bytes = jv_string_length_bytes;
+  vtable->jv_object_iter_key = jv_object_iter_key;
+  vtable->jq_report_error = jq_report_error;
+  vtable->jv_is_integer = jv_is_integer;
+  vtable->jv_string = jv_string;
+  vtable->jv_contains = jv_contains;
+  vtable->jv_mem_alloc = jv_mem_alloc;
+  vtable->jv_string_hash = jv_string_hash;
+  vtable->jv_string_slice = jv_string_slice;
+  vtable->jv_load_file = jv_load_file;
+  vtable->jq_compile = jq_compile;
+  vtable->jv_get_kind = jv_get_kind;
+  vtable->jv_object_merge_recursive = jv_object_merge_recursive;
+  vtable->jv_bool = jv_bool;
+  vtable->jq_util_input_get_current_filename = jq_util_input_get_current_filename;
+  vtable->jv_object_iter_valid = jv_object_iter_valid;
+  vtable->jv_has = jv_has;
+  vtable->jv_array_set = jv_array_set;
+  vtable->jv_object_delete = jv_object_delete;
+  vtable->jq_set_debug_cb = jq_set_debug_cb;
+  vtable->jv_string_empty = jv_string_empty;
+  vtable->jq_realpath = jq_realpath;
+  vtable->jq_set_error_cb = jq_set_error_cb;
+  vtable->jq_util_input_next_input_cb = jq_util_input_next_input_cb;
+  vtable->jv_get_refcnt = jv_get_refcnt;
+  vtable->jq_set_colors = jq_set_colors;
+  vtable->jv_array_slice = jv_array_slice;
+  vtable->jv_mem_realloc = jv_mem_realloc;
+  vtable->jv_array = jv_array;
+  vtable->jv_parser_set_buf = jv_parser_set_buf;
+  vtable->jv_keys_unsorted = jv_keys_unsorted;
+  vtable->jv_delpaths = jv_delpaths;
+  vtable->jv_sort = jv_sort;
+  vtable->jv_parser_free = jv_parser_free;
+  vtable->jv_array_indexes = jv_array_indexes;
+  vtable->jv_string_concat = jv_string_concat;
+  vtable->jv_object_has = jv_object_has;
+  vtable->jv_invalid = jv_invalid;
+  vtable->jq_util_input_free = jq_util_input_free;
+  vtable->jv_object_length = jv_object_length;
+  vtable->jq_get_input_cb = jq_get_input_cb;
+  vtable->jv_string_sized = jv_string_sized;
+  vtable->jv_string_length_codepoints = jv_string_length_codepoints;
+  vtable->jq_format_error = jq_format_error;
+  vtable->jv_array_append = jv_array_append;
+  vtable->jv_string_indexes = jv_string_indexes;
+  vtable->jv_free = jv_free;
+  vtable->jq_get_debug_cb = jq_get_debug_cb;
+  vtable->jq_util_input_errors = jq_util_input_errors;
+  vtable->jv_mem_strdup = jv_mem_strdup;
+  vtable->jq_util_input_add_input = jq_util_input_add_input;
+  vtable->jv_object = jv_object;
+  vtable->jv_keys = jv_keys;
+  vtable->jq_set_attrs = jq_set_attrs;
+  vtable->jq_get_handle_kind = jq_get_handle_kind;
+  vtable->jq_get_handle = jq_get_handle;
+  vtable->jq_new_handle = jq_new_handle;
+  vtable->jq_dup_handle = jq_dup_handle;
 }

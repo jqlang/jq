@@ -5,14 +5,14 @@ LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
-        src/util.h
+        src/util.h src/builtin_modules.h
 
 LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
         src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
         src/decNumber/decContext.c src/decNumber/decNumber.c            \
-        src/jv_dtoa_tsd.c                                               \
+        src/jv_dtoa_tsd.c src/builtin_modules.c                         \
         ${LIBJQ_INCS}
 
 ### C build options
@@ -61,7 +61,7 @@ libjq_la_LIBADD += -lshlwapi
 libjq_la_LDFLAGS += -no-undefined
 endif
 
-include_HEADERS = src/jv.h src/jq.h
+include_HEADERS = src/jv.h src/jq.h src/jq_plugin.h
 
 if ENABLE_UBSAN
 AM_CFLAGS += -fsanitize=undefined
@@ -137,6 +137,11 @@ TESTS = tests/optionaltest tests/jqtest tests/onigtest tests/shtest tests/utf8te
 endif
 TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
+lib_LTLIBRARIES += somod.la
+somod_la_SOURCES = tests/modules/somod/somod.c
+somod_la_CFLAGS = -DJQ_PLUGIN
+somod_la_LIBADD =
+somod_la_LDFLAGS = -module
 
 ### Building the manpage
 
@@ -185,6 +190,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq           \
         tests/modules/shadow1.jq tests/modules/shadow2.jq               \
         tests/modules/syntaxerror/syntaxerror.jq                        \
+        tests/modules/somod/somod.jq tests/modules/somod/somod.c        \
         tests/modules/test_bind_order.jq                                \
         tests/modules/test_bind_order0.jq                               \
         tests/modules/test_bind_order1.jq                               \

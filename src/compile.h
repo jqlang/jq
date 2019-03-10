@@ -76,6 +76,7 @@ block block_bind_library(block binder, block body, int bindflags, const char* li
 block block_bind_referenced(block binder, block body, int bindflags);
 block block_bind_self(block binder, int bindflags);
 block block_drop_unreferenced(block body);
+block block_hide(block body);
 
 jv block_take_imports(block* body);
 jv block_list_funcs(block body, int omit_underscores);

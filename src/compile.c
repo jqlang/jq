@@ -66,6 +66,7 @@ struct inst {
   struct bytecode* compiled;
 
   int bytecode_pos; // position just after this insn
+  unsigned int hidden:1;
 };
 
 static inst* inst_new(opcode op) {
@@ -83,6 +84,7 @@ static inst* inst_new(opcode op) {
   i->arglist = gen_noop();
   i->source = UNKNOWN_LOCATION;
   i->locfile = 0;
+  i->hidden = 0;
   return i;
 }
 
@@ -119,6 +121,14 @@ static inst* block_take(block* b) {
     b->last = 0;
   }
   return i;
+}
+
+block block_hide(block b) {
+  for (inst* i = b.first; i; i = i->next) {
+    if (i->op == CLOSURE_CREATE_C && !i->imm.cfunc->exported)
+      i->hidden = 1;
+  }
+  return b;
 }
 
 block gen_location(location loc, struct locfile* l, block b) {
@@ -321,6 +331,7 @@ static int block_bind_subblock_inner(int* any_unbound, block binder, block body,
 
     int flags = opcode_describe(i->op)->flags;
     if ((flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD) && i->bound_by == 0 &&
+        !binder.first->hidden &&
         (!strcmp(i->symbol, binder.first->symbol) ||
          // Check for break/break2/break3; see parser.y
          ((bindflags & OP_BIND_WILDCARD) && i->symbol[0] == '*' &&
