@@ -1604,6 +1604,27 @@ static jv f_now(jq_state *jq, jv a) {
 }
 #endif
 
+static jv f_random_int(jq_state *jq, jv a) {
+  jv_free(a);
+  return jv_number_random_int();
+}
+
+static jv f_random_bytes(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_NUMBER)
+    return jv_invalid_with_msg(jv_string("randombytes needs an integer input"));
+  size_t n = jv_number_value(a);
+  jv_free(a);
+  return jv_number_random_bytes(n);
+}
+
+static jv f_random_string(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_NUMBER)
+    return jv_invalid_with_msg(jv_string("randomstring needs an integer input"));
+  size_t n = jv_number_value(a);
+  jv_free(a);
+  return jv_number_random_string(n);
+}
+
 static jv f_current_filename(jq_state *jq, jv a) {
   jv_free(a);
 
@@ -1707,6 +1728,9 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_gmtime, "gmtime", 1, 1, 1},
   {(cfunction_ptr)f_localtime, "localtime", 1, 1, 1},
   {(cfunction_ptr)f_now, "now", 1, 0, 1},
+  {(cfunction_ptr)f_random_int, "random", 1, 0, 1},
+  {(cfunction_ptr)f_random_bytes, "randombytes", 1, 0, 1},
+  {(cfunction_ptr)f_random_string, "randomstring", 1, 0, 1},
   {(cfunction_ptr)f_current_filename, "input_filename", 1, 0, 1},
   {(cfunction_ptr)f_current_line, "input_line_number", 1, 0, 1},
 };

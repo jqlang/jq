@@ -251,7 +251,9 @@ jv jv_keys_unsorted(jv /*object or array*/);
 int jv_cmp(jv, jv);
 jv jv_group(jv, jv);
 jv jv_sort(jv, jv);
-
+jv jv_number_random_int(void);
+jv jv_number_random_bytes(size_t);
+jv jv_number_random_string(size_t);
 
 #endif
 

@@ -6,6 +6,15 @@
 #include <stdint.h>
 #include <sys/stat.h>
 
+#ifdef WIN32
+#include <windows.h>
+#include <ntstatus.h>
+#include <bcrypt.h>
+#else
+#include <unistd.h>
+#include <fcntl.h>
+#endif
+
 #include "exec_stack.h"
 #include "bytecode.h"
 

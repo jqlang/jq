@@ -2868,6 +2868,17 @@ sections:
 
       See your system's manual for more information on each of these.
 
+  - title: 'Random numbers'
+    body: |
+
+      Three builtins provide access to entropy on systems that support
+      CNG (Windows) or /dev/urandom (Unix), `random` (outputs a random
+      number), `randombytes` (outputs an array of as many integer byte
+      values as its input number indicates), and `randomstring` (outputs
+      a string of as many Unicode codepoints between `NUL` and `U+FFFF`
+      as its input number indicates).  Note well that `randomstring` may
+      not yield a meaningful, printable string!
+
   - title: 'I/O'
     body: |
 

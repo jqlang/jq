@@ -1,8 +1,20 @@
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <assert.h>
+
+#ifdef WIN32
+#include <windows.h>
+#include <ntstatus.h>
+#include <bcrypt.h>
+#else
+#include <unistd.h>
+#include <fcntl.h>
+#endif
+
+#include "jv.h"
 #include "jv_alloc.h"
 #include "jv_type_private.h"
+#include "jv_unicode.h"
 
 // making this static verbose function here
 // until we introduce a less confusing naming scheme
@@ -654,5 +666,76 @@ jv jv_group(jv objects, jv keys) {
     ret = jv_array_append(ret, group);
   }
   jv_mem_free(entries);
+  return ret;
+}
+
+static int random_fill_buffer(unsigned char *buf, size_t sz) {
+#ifdef WIN32
+  if (BCryptGenRandom(NULL, buf, sz,
+                      BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
+    return 1;
+#else
+  int fd = open("/dev/urandom", O_RDONLY);
+  ssize_t n = -1;
+
+  if (fd > -1) {
+    n = read(fd, buf, sz);
+    (void) close(fd);
+  }
+  if (n > -1 && sz == (size_t)n)
+    return 1;
+#endif
+  return 0;
+}
+
+jv jv_number_random_int(void) {
+  unsigned char buf[7];
+
+  if (!random_fill_buffer(buf, sizeof(buf)))
+    return jv_invalid_with_msg(jv_string("Could not generate random numbers"));
+  return jv_number(( (uint64_t)buf[0]                |
+                     (uint64_t)buf[1]         << 8   |
+                     (uint64_t)buf[2]         << 16  |
+                     (uint64_t)buf[3]         << 24  |
+                     (uint64_t)buf[4]         << 32  |
+                     (uint64_t)buf[5]         << 40  |
+                    ((uint64_t)buf[6] & 0x7)  << 48));
+}
+
+jv jv_number_random_bytes(size_t n) {
+  unsigned char buf[64];
+  jv ret = jv_array();
+
+  while (n > 0) {
+    size_t r = n > sizeof(buf) ? sizeof(buf) : n;
+    if (!random_fill_buffer(buf, r)) {
+      jv_free(ret);
+      return jv_invalid_with_msg(jv_string("Could not generate random numbers"));
+    }
+    n -= r;
+    for (size_t i = 0; i < r; i++)
+      ret = jv_array_append(ret, jv_number(buf[i]));
+  }
+  return ret;
+}
+
+jv jv_number_random_string(size_t n) {
+  jv ret = jv_string("");
+
+  n *= 2;
+  while (n > 0) {
+    unsigned char buf[64];
+    size_t r = n > sizeof(buf) ? sizeof(buf) : n;
+    if (!random_fill_buffer(buf, r)) {
+      jv_free(ret);
+      return jv_invalid_with_msg(jv_string("Could not generate random numbers"));
+    }
+    n -= r;
+    for (size_t i = 0; i < r; i+=2) {
+      char u8[8]; /* 4 is enough */
+      int len = jvp_utf8_encode(buf[i] << 8 | buf[i+1], u8);
+      ret = jv_string_concat(ret, jv_string_sized(u8, len));
+    }
+  }
   return ret;
 }
