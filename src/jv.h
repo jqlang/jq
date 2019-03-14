@@ -63,6 +63,7 @@ jv jv_bool(int);
 jv jv_number(double);
 double jv_number_value(jv);
 int jv_is_integer(jv);
+int jv_is_integer_large(jv);
 
 jv jv_array(void);
 jv jv_array_sized(int);
