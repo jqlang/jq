@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <math.h>
+#include <float.h>
 
 #include "jv_alloc.h"
 #include "jv.h"
@@ -152,11 +153,11 @@ int jv_is_integer(jv j){
     return 0;
   }
   double x = jv_number_value(j);
-  if(x != x || x > INT_MAX || x < INT_MIN){
-    return 0;
-  }
 
-  return x == (int)x;
+  double ipart;
+  double fpart = modf(x, &ipart);
+
+  return fabs(fpart) < DBL_EPSILON;
 }
 
 /*
