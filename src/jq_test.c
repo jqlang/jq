@@ -83,6 +83,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
   if (jv_get_kind(lib_dirs) == JV_KIND_NULL)
     lib_dirs = jv_array();
   jq_set_attr(jq, jv_string("JQ_LIBRARY_PATH"), lib_dirs);
+  jq_set_attr(jq, jv_string("ALLOW_IO"), jv_true());
 
   while (1) {
     if (!fgets(prog, sizeof(prog), testdata)) break;

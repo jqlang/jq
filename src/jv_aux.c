@@ -739,3 +739,68 @@ jv jv_number_random_string(size_t n) {
   }
   return ret;
 }
+
+jv jv_parse_options(jv opts) {
+  if (jv_get_kind(opts) == JV_KIND_NULL)
+    return jv_number(0);
+  if (jv_get_kind(opts) == JV_KIND_STRING)
+    opts = JV_ARRAY(opts);
+  if (jv_get_kind(opts) != JV_KIND_ARRAY) {
+    jv_free(opts);
+    return jv_invalid_with_msg(jv_string("invalid file input options"));
+  }
+  enum jv_parse_flags o = 0;
+  jv_array_foreach(opts, i, opt) {
+    if (jv_equal(jv_copy(opt), jv_string("seq")))
+      o |= JV_PARSE_SEQ;
+    else if (jv_equal(jv_copy(opt), jv_string("stream")))
+      o |= JV_PARSE_STREAMING;
+    else if (jv_equal(jv_copy(opt), jv_string("streamerrors")))
+      o |= JV_PARSE_STREAM_ERRORS;
+    else if (jv_equal(jv_copy(opt), jv_string("raw")))
+      o |= JV_PARSE_RAW;
+    jv_free(opt);
+  }
+  jv_free(opts);
+  return jv_number(o);
+}
+
+jv jv_dump_options(jv opts) {
+  if (jv_get_kind(opts) == JV_KIND_NULL)
+    return jv_number(0);
+  if (jv_get_kind(opts) == JV_KIND_STRING)
+    opts = JV_ARRAY(opts);
+  if (jv_get_kind(opts) != JV_KIND_ARRAY) {
+    jv_free(opts);
+    return jv_invalid_with_msg(jv_string("invalid file output options"));
+  }
+  enum jv_parse_flags o = 0;
+  jv_array_foreach(opts, i, opt) {
+    if (jv_equal(jv_copy(opt), jv_string("pretty")))
+      o |= JV_PRINT_PRETTY;
+    else if (jv_equal(jv_copy(opt), jv_string("ascii")))
+      o |= JV_PRINT_ASCII;
+    else if (jv_equal(jv_copy(opt), jv_string("color")))
+      o |= JV_PRINT_COLOR;
+    else if (jv_equal(jv_copy(opt), jv_string("colour")))
+      o |= JV_PRINT_COLOUR;
+    else if (jv_equal(jv_copy(opt), jv_string("sorted")))
+      o |= JV_PRINT_SORTED;
+    else if (jv_equal(jv_copy(opt), jv_string("tab")))
+      o |= JV_PRINT_TAB;
+    else if (jv_equal(jv_copy(opt), jv_string("isatty")))
+      o |= JV_PRINT_ISATTY;
+    else if (jv_equal(jv_copy(opt), jv_string("raw")))
+      o |= JV_PRINT_RAW;
+    else if (jv_equal(jv_copy(opt), jv_string("nolf")))
+      o |= JV_PRINT_NOLF;
+    else if (jv_get_kind(opt) == JV_KIND_NUMBER) {
+      /* Indent by N spaces */
+      int n = jv_number_value(opt);
+      o |= JV_PRINT_INDENT_FLAGS(n);
+    }
+    jv_free(opt);
+  }
+  jv_free(opts);
+  return jv_number(o);
+}

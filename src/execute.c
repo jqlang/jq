@@ -1334,8 +1334,11 @@ static int new_handle_slot(jq_state *jq) {
 jv jq_handle_new(jq_state *jq, const char *kind, struct jq_io_table *vt, void *hdl) {
   int i = new_handle_slot(jq);
 
-  if (i < 0)
+  if (i < 0) {
+    if (vt->fhclose)
+      jv_free(vt->fhclose(jq, jv_invalid(), hdl));
     return jv_invalid();
+  }
 
   jv jhandle = JV_OBJECT(jv_string("n"), jv_number(i),
                          jv_string("v"), make_verifier(kind, hdl, jq->handles->handles));
@@ -1365,7 +1368,6 @@ jv jq_handle_close(jq_state *jq, jv handle) {
   rhp->handle = 0;
   rhp->vt = 0;
   free(rhp);
-  jv ret;
   if (rh.vt->fhclose)
     return rh.vt->fhclose(jq, handle, rh.handle);
   jv_free(handle);

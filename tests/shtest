@@ -19,6 +19,10 @@ if [ -f "$JQBASEDIR/.libs/libinject_errors.so" ]; then
   )
 fi
 
+# Rudimentary test of I/O
+printf '["a"]{"b":1}\n'|
+  $VALGRIND $Q $JQ -cne --io 'include "jq/io";"/dev/stdin"|slurpfile== [["a"],{b:1}]' > /dev/null
+
 printf 'a\0b\nc\0d\ne' > $d/input
 $VALGRIND $Q $JQ -Rse '. == "a\u0000b\nc\u0000d\ne"' $d/input
 $VALGRIND $Q $JQ -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input

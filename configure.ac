@@ -133,6 +133,8 @@ AM_CONDITIONAL([ENABLE_ALL_STATIC], [test "x$enable_all_static" = xyes])
 
 AC_FUNC_ALLOCA
 
+AC_FIND_FUNC([getline], [c], [#define _POSIX_C_SOURCE 200809L
+#include <stdio.h>], [0, 0, 0])
 AC_FIND_FUNC([isatty], [c], [#include <unistd.h>], [0])
 AC_FIND_FUNC([_isatty], [c], [#include <io.h>], [0])
 AC_FIND_FUNC([strptime], [c], [#include <time.h>], [0, 0, 0])

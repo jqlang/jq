@@ -2882,24 +2882,34 @@ sections:
   - title: 'I/O'
     body: |
 
-      At this time jq has minimal support for I/O, mostly in the
-      form of control over when inputs are read.  Two builtins functions
-      are provided for this, `input` and `inputs`, that read from the
-      same sources (e.g., `stdin`, files named on the command-line) as
-      jq itself.  These two builtins, and jq's own reading actions, can
-      be interleaved with each other.
+      By default, jq has minimal support for I/O, mostly in the form of
+      control over when inputs are read.
 
-      Two builtins provide minimal output capabilities, `debug`, and
-      `stderr`.  (Recall that a jq program's output values are always
-      output as JSON texts on `stdout`.) The `debug` builtin can have
-      application-specific behavior, such as for executables that use
-      the libjq C API but aren't the jq executable itself.  The `stderr`
-      builtin outputs its input in raw mode to stder with no additional
-      decoration, not even a newline.
+      Adding the `-I` / `--io` command-line option enables more advanced
+      I/O builtins.
+
+      Two builtin functions are available, by default, `input` and
+      `inputs`, that read from the same sources (e.g., `stdin`, files
+      named on the command-line) as jq itself.  These two builtins, and
+      jq's own reading actions, can be interleaved with each other --
+      this can be confusing, so use the `-n` command-line option when
+      using `inputs` to avoid this.
+
+      Two builtins, available by default, provide minimal output
+      capabilities, `debug`, and `stderr`.  (Recall that a jq program's
+      output values are always output as JSON texts on `stdout`.) The
+      `debug` builtin can have application-specific behavior, such as
+      for executables that use the libjq C API but aren't the jq
+      executable itself.  The `stderr` builtin outputs its input in raw
+      mode to stder with no additional decoration, not even a newline.
+
+      If the `-I` / `--io` command-line option is provided, then one can
+      `include "jq/io"` and then also have available builtin functions
+      that permit reading from or writing to arbitrary files.
 
       Most jq builtins are referentially transparent, and yield constant
       and repeatable value streams when applied to constant inputs.
-      This is not true of I/O builtins.
+      This is clearly not true of I/O builtins.
 
     entries:
       - title: "`input`"
@@ -2940,6 +2950,128 @@ sections:
         body: |
 
           Returns the line number of the input currently being filtered.
+
+      - title: "`streamfile` `slurpfile`"
+        body: |
+
+          Read and parse JSON tests from the file named by `.`.
+
+          `slurpfile` outputs an array of all the values in the file
+          named by `.`.
+
+          These builtins are provided by the `"jq/io"` module.  Prefix
+          `include "jq/io"` to your jq program, and use the `-I` /
+          `--io` command-line option to use it.
+
+      - title: "`streamfile(name; options)` `slurpfile(name; options)`"
+        body: |
+
+          Like `streamfile` and `slurpfile`.
+
+          The `options` argument should be an array of any of the
+          following strings, `"raw"` (do not parse inputs, do not
+          JSON-encode strings on output), `"input_raw_lines"`,
+          `"input_stream"` (use the streaming JSON parser), `"compact"`,
+          `"tab"`, `"color"`, `"ascii"`, `"unbuffered"`,
+          `"output_raw_lines"` (do not JSON-encode strings on output,
+          print a newline between top-level values), `"output_raw"` (do
+          not print newlines between top-level values), `"output_seq"`
+          (output `application/json-seq`).  These correspond to many of
+          the jq command-line options for input/output.
+
+          These builtins are provided by the `"jq/io"` module.  Prefix
+          `include "jq/io"` to your jq program, and use the `-I` /
+          `--io` command-line option to use it.
+
+      - title: "`writefile(contents)`, `appendfile(contents)`"
+        body: |
+
+          Write (or append) `contents` to the file named by `.`.
+
+          These builtins are provided by the `"jq/io"` module.  Prefix
+          `include "jq/io"` to your jq program, and use the `-I` /
+          `--io` command-line option to use it.
+
+      - title: "`fhopen(fn; mode)` `fhopen(fn; mode; options)`"
+        body: |
+
+          Opens the file named `fn` with the given `mode`, both of which
+          must be strings.
+
+          Modes are the same as in `fopen(3)`.
+
+          The `options` argument should be an array of any of the
+          following strings, `"raw"` (do not parse inputs, do not
+          JSON-encode strings on output), `"input_raw_lines"`,
+          `"input_stream"` (use the streaming JSON parser), `"compact"`,
+          `"tab"`, `"color"`, `"ascii"`, `"unbuffered"`,
+          `"output_raw_lines"` (do not JSON-encode strings on output,
+          print a newline between top-level values), `"output_raw"` (do
+          not print newlines between top-level values), `"output_seq"`
+          (output `application/json-seq`).  These correspond to many of
+          the jq command-line options for input/output.
+
+          The output is a file handle which will be closed
+          automatically when the scope calling `fhopen` exits.
+
+          These builtins are provided by the `"jq/io"` module.  Prefix
+          `include "jq/io"` to your jq program, and use the `-I` /
+          `--io` command-line option to use it.
+
+      - title: "`fhopen(fn)`"
+        body: |
+
+          Like `fhopen/2`, but opens the file named `fn` for reading.
+
+      - title: "`fhopen`"
+        body: |
+
+          Like `fhopen/1`, but opens its input filename for reading.
+
+      - title: "`fhclose`"
+        body: |
+
+          Closes the file handle given on input.
+
+          Note that file handles are closed automatically, so there is
+          no need to call this.  Accidentally referring to a file handle
+          after it has been closed yields an error.
+
+      - title: "`fhread`"
+        body: |
+
+          Reads the next value in the input file handle.
+
+      - title: "`fhwrite(fh; output)`"
+        body: |
+
+          Writes the given `output` as a JSON text to the given `fh` if
+          it is open for writing.
+
+      - title: "`fhfeof`"
+        body: |
+
+          Outputs `true` if the input file handle is at EOF, else
+          `false`.
+
+      - title: "`fhinterleave`"
+        body: |
+
+          Interleaves reads of every handle in the input array.
+
+      - title: "`fhinterleave_repeat`"
+        body: |
+
+          Interleaves reads of every handle in the input array,
+          resetting each as they reach EOF.  If the file handles are for
+          plain files, then this will repeat forever.
+
+      - title: "`fhinterleave_pad($pad)`"
+        body: |
+
+          Interleaves reads of every handle in the input array,
+          using $pad when each handle reaches EOF, stopping when all
+          file handles read EOF.
 
   - title: 'Streaming'
     body: |

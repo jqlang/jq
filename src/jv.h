@@ -210,20 +210,26 @@ enum jv_print_flags {
   JV_PRINT_SPACE0   = 256,
   JV_PRINT_SPACE1   = 512,
   JV_PRINT_SPACE2   = 1024,
+  JV_PRINT_RAW      = 8192,  /* not a real flag for jv_dump functions yet */
+  JV_PRINT_NOLF     = 16384, /* not a real flag for jv_dump functions yet */
 };
 #define JV_PRINT_INDENT_FLAGS(n) \
     ((n) < 0 || (n) > 7 ? JV_PRINT_TAB | JV_PRINT_PRETTY : (n) == 0 ? 0 : (n) << 8 | JV_PRINT_PRETTY)
+jv jv_dump_options(jv);
 void jv_dumpf(jv, FILE *f, int flags);
 void jv_dump(jv, int flags);
 void jv_show(jv, int flags);
 jv jv_dump_string(jv, int flags);
 char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize);
 
-enum {
+enum jv_parse_flags {
+  JV_PARSE_PLAIN            = 0,
   JV_PARSE_SEQ              = 1,
   JV_PARSE_STREAMING        = 2,
   JV_PARSE_STREAM_ERRORS    = 4,
+  JV_PARSE_RAW              = 8,
 };
+jv jv_parse_options(jv);
 
 jv jv_parse(const char* string);
 jv jv_parse_sized(const char* string, int length);
