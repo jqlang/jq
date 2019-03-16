@@ -31,6 +31,7 @@ struct io_handle {
   FILE *f;
   jv_parser *parser;
   jv fn;
+  jv cmd;
   jv mode;
   enum jv_parse_flags in_options;
   enum jv_print_flags out_options;
@@ -60,6 +61,7 @@ static jv f_close(jq_state *jq, jv handle, void *d) {
     jv_parser_free(h->parser);
   jv_free(h->mode);
   jv_free(h->fn);
+  jv_free(h->cmd);
   jv_free(handle);
   free(h);
   return jv_is_valid(ret) ? ret : jv_number(0);
@@ -290,6 +292,7 @@ static jv builtin_jq_fopen(jq_state *jq, jv input, jv fn, jv mode, jv in_opts, j
     struct io_handle *h = jv_mem_alloc(sizeof(*h));
     h->f = f;
     h->fn = jv_copy(fn);
+    h->cmd = jv_invalid();
     h->mode = jv_copy(mode);
     h->in_options = jv_number_value(in_opts);
     h->out_options = jv_number_value(out_opts);
@@ -308,6 +311,76 @@ out:
   jv_free(mode);
   jv_free(fn);
   return ret;
+}
+
+
+static jv builtin_jq_fhcmd(jq_state *jq, jv fh) {
+  struct io_handle *h = jq_handle_get(jq, fh);
+
+  if (h && jv_is_valid(h->cmd))
+    return jv_copy(h->cmd);
+  return jv_invalid_with_msg(jv_string("command for filehandle not known"));
+}
+
+static jv builtin_jq_popen(jq_state *jq, jv input, jv cmd, jv mode, jv opts) {
+  jv_free(input);
+
+  jv ret = allow_io(jq);
+  if (jv_is_valid(ret) && jv_get_kind(cmd) != JV_KIND_STRING)
+    ret = jv_invalid_with_msg(jv_string("popen: filename must be a string"));
+  if (jv_is_valid(ret) && jv_get_kind(mode) != JV_KIND_STRING)
+    ret = jv_invalid_with_msg(jv_string("popen: mode must be a string"));
+
+  char type = 0;
+  if (jv_is_valid(ret)) {
+    type = jv_string_value(mode)[0];
+    if (type != 'r' && type != 'w')
+      ret = jv_invalid_with_msg(jv_string("popen: mode must be \"r\" or \"w\""));
+  }
+  if (type == 'r' && !jv_is_valid((opts = jv_parse_options(opts))))
+    ret = jv_invalid_with_msg(jv_string("popen: invalid input options"));
+  else if (type == 'w' && !jv_is_valid((opts = jv_dump_options(opts))))
+    ret = jv_invalid_with_msg(jv_string("popen: invalid output options"));
+  if (!jv_is_valid(ret))
+    goto out;
+
+  FILE *f = 0;
+  f = popen(jv_string_value(cmd), jv_string_value(mode));
+  if (f) {
+    struct io_handle *h = jv_mem_alloc(sizeof(*h));
+    h->f = f;
+    h->fn = jv_invalid();
+    h->cmd = jv_copy(cmd);
+    h->mode = jv_copy(mode);
+    if (type == 'r') {
+      h->in_options = jv_number_value(opts);
+      h->out_options = 0;
+    } else {
+      h->in_options = 0;
+      h->out_options = jv_number_value(opts);
+    }
+    if (h->in_options & JV_PARSE_RAW)
+      h->parser = 0;
+    else
+      h->parser = jv_parser_new(0);
+    ret = jq_handle_new(jq, "FILE", &iovt, h);
+  } else {
+    ret = jv_invalid_with_msg(jv_string_fmt("popen: Failed to execute %s: %s", jv_string_value(cmd), strerror(errno)));
+  }
+
+out:
+  jv_free(opts);
+  jv_free(mode);
+  jv_free(cmd);
+  return ret;
+}
+
+static jv builtin_jq_system(jq_state *jq, jv input) {
+  if (jv_get_kind(input) != JV_KIND_STRING) {
+    jv_free(input);
+    return jv_invalid_with_msg(jv_string("system: input must be a string"));
+  }
+  return jv_number(system(jv_string_value(input)));
 }
 
 JQ_BUILTIN_INIT_FUN(builtin_jq_io_init,
@@ -349,6 +422,49 @@ JQ_BUILTIN_INIT_FUN(builtin_jq_io_init,
                  },
                  )
 
+JQ_BUILTIN_INIT_FUN(builtin_jq_proc_init,
+                 "def popen($fn; $mode; $opts): \n"
+                 "    label $out | _popen($fn; $mode; $opts) as $fh\n"
+                 "  | try $fh catch (\n"
+                 "        . as $error|$fh|_fhcmd as $fn|fhclose|$error\n"
+                 "      | if . == \"EOF\" then break $out\n"
+                 "        else \"Error reading from \\($fn): \\($error)\"|error end);\n"
+                 "def popen($fn; $mode): popen($fn; $mode; null);\n"
+                 "def popen($fn): popen($fn; \"r\");\n"
+                 "def popen: popen(.; \"r\");\n"
+                 "def streamcmd($fn; $opts):\n"
+                 "    label $out |\n"
+                 "    popen($fn; \"r\"; $opts)|\n"
+                 "    repeat(try fhread catch if .==\"EOF\" then break $out else error end);\n"
+                 "def streamcmd: streamcmd(.; null);\n"
+                 "def slurpcmd($fn; $opts): [streamcmd($fn; $opts)];\n"
+                 "def slurpcmd: [streamcmd];\n"
+                 "def writecmd($fn; $opts; contents):\n"
+                 "    fhwrite(popen($fn; \"w\"; $opts); contents);\n"
+                 "def writecmd(contents): writecmd(.; null; contents);\n",
+                 {
+                   .fptr = (cfunction_ptr)builtin_jq_popen,
+                   .name = "_popen",
+                   .nargs = 4,
+                   .pure = 0,
+                   .exported = 0
+                 },
+                 {
+                   .fptr = (cfunction_ptr)builtin_jq_system,
+                   .name = "system",
+                   .nargs = 1,
+                   .pure = 0,
+                   .exported = 1
+                 },
+                 {
+                   .fptr = (cfunction_ptr)builtin_jq_fhcmd,
+                   .name = "_fhcmd",
+                   .nargs = 1,
+                   .pure = 0,
+                   .exported = 1
+                 },
+                 )
+
 /* Builtin module "files" */
 static struct jq_builtin_module builtin_modules[] = {
   {
@@ -360,6 +476,16 @@ static struct jq_builtin_module builtin_modules[] = {
     .name = "jq" JQ_PATH_SEP "io" JQ_DLL_EXT,
     .contents = 0,
     .init = builtin_jq_io_init,
+  },
+  {
+    .name = "jq" JQ_PATH_SEP "proc.jq",
+    .contents = "module {cfunctions:\"proc\"};",
+    .init = 0,
+  },
+  {
+    .name = "jq" JQ_PATH_SEP "proc" JQ_DLL_EXT,
+    .contents = 0,
+    .init = builtin_jq_proc_init,
   },
 };
 
