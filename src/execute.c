@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +32,18 @@
 
 struct jq_plugin_vtable vtable;
 
+struct raw_handle {
+  struct jq_io_table *vt;
+  void *handle;
+  int refcnt;
+};
+
+struct jq_handles {
+  jv jhandles;
+  struct raw_handle **handles;
+  size_t nhandles;
+};
+
 struct jq_state {
   struct jq_plugin_vtable *vtable; /* Must be first! */
   void (*nomem_handler)(void *);
@@ -41,6 +54,8 @@ struct jq_state {
   jq_msg_cb err_cb;
   void *err_cb_data;
   jv error;
+
+  struct jq_state* parent;
 
   struct stack stk;
   stack_ptr curr_frame;
@@ -63,6 +78,17 @@ struct jq_state {
   void *input_cb_data;
   jq_msg_cb debug_cb;
   void *debug_cb_data;
+
+  /*
+   * I/O and co-routine handles (futures).
+   *
+   * Once we have co-routines we'll have a single handle namespace
+   * for all co-routines in a family.  To avoid an extra allocation
+   * in jq_init(), we'll have a struct jq_handles and a pointer to it
+   * or an ancestor co-routine's jq_state's handles.
+   */
+  struct jq_handles handles_s;
+  struct jq_handles *handles;
 };
 
 struct closure {
@@ -328,6 +354,21 @@ static void jq_reset(jq_state *jq) {
   jq->halted = 0;
   jv_free(jq->exit_code);
   jv_free(jq->error_message);
+
+  if (jq->handles == &jq->handles_s) {
+    if (jv_is_valid(jq->handles->jhandles)) {
+      jv_array_foreach(jq->handles->jhandles, i, v) {
+        if (jv_is_valid(v) && i > -1 && (size_t)i < jq->handles->nhandles)
+          jv_free(jq_handle_close(jq, v));
+      }
+    }
+    jv_free(jq->handles->jhandles);
+    free(jq->handles->handles);
+    jq->handles->handles = 0;
+    jq->handles->nhandles = 0;
+    jq->handles->jhandles = jv_array();
+  }
+
   if (jv_get_kind(jq->path) != JV_KIND_INVALID)
     jv_free(jq->path);
   jq->path = jv_null();
@@ -1018,6 +1059,7 @@ jq_state *jq_init(void) {
   jq->next_label = 0;
 
   stack_init(&jq->stk);
+  jq->parent = 0;
   jq->stk_top = 0;
   jq->fork_top = 0;
   jq->curr_frame = 0;
@@ -1036,6 +1078,11 @@ jq_state *jq_init(void) {
 
   jq->nomem_handler = NULL;
   jq->nomem_handler_data = NULL;
+  jq->handles = &jq->handles_s;
+  jq->handles->jhandles = jv_array();
+  jq->handles->nhandles = 0;
+  jq->handles->handles = 0;
+
   return jq;
 }
 
@@ -1076,19 +1123,21 @@ void jq_start(jq_state *jq, jv input, int flags) {
   jq->initial_execution = 1;
 }
 
-void jq_teardown(jq_state **jq) {
-  jq_state *old_jq = *jq;
-  if (old_jq == NULL)
+void jq_teardown(jq_state **jqp) {
+  jq_state *jq = *jqp;
+  if (jq == NULL)
     return;
-  *jq = NULL;
+  *jqp = NULL;
 
-  jq_reset(old_jq);
-  bytecode_free(old_jq->bc);
-  old_jq->bc = 0;
-  libraries_free(old_jq->libs);
-  jv_free(old_jq->attrs);
+  jq_reset(jq);
+  if (jq->handles == &jq->handles_s)
+    jv_free(jq->handles->jhandles);
 
-  jv_mem_free(old_jq);
+  bytecode_free(jq->bc);
+  libraries_free(jq->libs);
+  jv_free(jq->attrs);
+
+  jv_mem_free(jq);
 }
 
 static int ret_follows(uint16_t *pc) {
@@ -1211,6 +1260,186 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
 
 int jq_compile(jq_state *jq, const char* str) {
   return jq_compile_args(jq, str, jv_object());
+}
+
+static int get_handle_index(jq_state *jq, jv handle) {
+  int i = -1;
+  jv n = jv_invalid();
+
+  if (jq->handles->nhandles > 0 &&
+      jv_get_kind(handle) == JV_KIND_OBJECT &&
+      jv_get_kind((n = jv_object_get(jv_copy(handle), jv_string("n")))) == JV_KIND_NUMBER &&
+      jv_number_value(n) < jq->handles->nhandles &&
+      jv_number_value(n) < INT_MAX &&
+      jv_equal(jv_copy(handle),
+               jv_array_get(jv_copy(jq->handles->jhandles), jv_number_value(n))))
+    i = jv_number_value(n);
+  jv_free(handle);
+  jv_free(n);
+  return i;
+}
+
+void *jq_handle_get(jq_state *jq, jv handle) {
+  int i = get_handle_index(jq, handle);
+
+  if (i == -1 || !jq->handles->handles[i])
+    return 0;
+  return jq->handles->handles[i]->handle;
+}
+
+jv jq_handle_get_kind(jq_state *jq, jv handle) {
+  void *h = jq_handle_get(jq, handle);
+
+  if (h && jv_get_kind(handle) == JV_KIND_OBJECT)
+    return jv_getpath(handle, JV_ARRAY(jv_string("v"), jv_string("kind")));
+
+  jv_free(handle);
+  return jv_invalid();
+}
+
+static jv make_verifier(const char *kind, void *handle, void *junk) {
+  jv n = jv_number_random_int();
+
+  if (jv_is_valid(n))
+    return JV_OBJECT(jv_string("kind"), jv_string(kind),
+                     jv_string("r"), n);
+
+  /* No system RNG?  Use handle and junk ptr values as verifier "randoms" */
+  return JV_OBJECT(jv_string("kind"), jv_string(kind),
+                   jv_string("r"), JV_ARRAY(jv_number((uintptr_t)handle),
+                                            jv_number((uintptr_t)junk)));
+}
+
+static int new_handle_slot(jq_state *jq) {
+  size_t additions = jq->handles->nhandles == 0 ? 16 : (jq->handles->nhandles>>1) + 4;
+  size_t k;
+
+  /* Find a slot */
+  for (k = 0; k < jq->handles->nhandles; k++) {
+    if (jq->handles->handles[k] == 0 || jq->handles->handles[k]->handle == 0) {
+      assert(k < INT_MAX);
+      return k;
+    }
+  }
+
+  /* Allocate additional slots */
+  jq->handles->handles = jv_mem_realloc(jq->handles->handles,
+                                        sizeof(jq->handles->handles[0]) * (jq->handles->nhandles + additions));
+  memset(&jq->handles->handles[jq->handles->nhandles], 0, sizeof(jq->handles->handles[0]) * additions);
+  jq->handles->nhandles += additions;
+  assert(k < INT_MAX);
+  return k;
+}
+
+jv jq_handle_new(jq_state *jq, const char *kind, struct jq_io_table *vt, void *hdl) {
+  int i = new_handle_slot(jq);
+
+  if (i < 0)
+    return jv_invalid();
+
+  jv jhandle = JV_OBJECT(jv_string("n"), jv_number(i),
+                         jv_string("v"), make_verifier(kind, hdl, jq->handles->handles));
+  jq->handles->jhandles = jv_array_set(jq->handles->jhandles, i, jv_copy(jhandle));
+  jq->handles->handles[i] = jv_mem_alloc(sizeof(jq->handles->handles[i][0]));
+  jq->handles->handles[i]->handle = hdl;
+  jq->handles->handles[i]->refcnt = 1;
+  jq->handles->handles[i]->vt = vt;
+  return jhandle;
+}
+
+jv jq_handle_close(jq_state *jq, jv handle) {
+  struct raw_handle *rhp;
+  int i = get_handle_index(jq, jv_copy(handle));
+
+  if (i < 0)
+    return jv_invalid_with_msg(jv_string("No such open file handle"));
+
+  rhp = jq->handles->handles[i];
+  jq->handles->handles[i] = 0;
+  if (--(rhp->refcnt))
+    return jv_true();
+
+  /* We cleanup first, then call the close function to avoid reentry via coclose() */
+  struct raw_handle rh = *rhp;
+  jq->handles->jhandles = jv_array_set(jq->handles->jhandles, i, jv_invalid());
+  rhp->handle = 0;
+  rhp->vt = 0;
+  free(rhp);
+  jv ret;
+  if (rh.vt->fhclose)
+    return rh.vt->fhclose(jq, handle, rh.handle);
+  jv_free(handle);
+  return jv_true();
+}
+
+jv jq_handle_reset(jq_state *jq, jv handle) {
+  struct raw_handle *rh;
+  int i = get_handle_index(jq, jv_copy(handle));
+
+  if (i < 0)
+    return jv_invalid_with_msg(jv_string("No such open file handle"));
+
+  rh = jq->handles->handles[i];
+  if (rh->vt->fhreset)
+    return rh->vt->fhreset(jq, handle, rh->handle);
+  jv_free(handle);
+  return jv_false();
+}
+
+jv jq_handle_write(jq_state *jq, jv handle, jv v) {
+  struct raw_handle *rh;
+  int i = get_handle_index(jq, jv_copy(handle));
+
+  if (i < 0)
+    return jv_invalid_with_msg(jv_string("No such open file handle"));
+
+  rh = jq->handles->handles[i];
+  if (rh->vt->fhwrite)
+    return rh->vt->fhwrite(jq, handle, rh->handle, v);
+  jv_free(handle);
+  return jv_invalid_with_msg(jv_string("Failed to write to file")); /* XXX filename would be nice */
+}
+
+jv jq_handle_read(jq_state *jq, jv handle) {
+  struct raw_handle *rh;
+  int i = get_handle_index(jq, jv_copy(handle));
+
+  if (i < 0)
+    return jv_invalid_with_msg(jv_string("No such open file handle"));
+
+  rh = jq->handles->handles[i];
+  if (rh->vt->fhread)
+    return rh->vt->fhread(jq, handle, rh->handle);
+  jv_free(handle);
+  return jv_invalid_with_msg(jv_string("Failed to read from file")); /* XXX filename would be nice */
+}
+
+jv jq_handle_stat(jq_state *jq, jv handle) {
+  struct raw_handle *rh;
+  int i = get_handle_index(jq, jv_copy(handle));
+
+  if (i < 0)
+    return jv_invalid_with_msg(jv_string("No such open file handle"));
+
+  rh = jq->handles->handles[i];
+  if (rh->vt->fhstat)
+    return rh->vt->fhstat(jq, handle, rh->handle);
+  jv_free(handle);
+  return jv_invalid_with_msg(jv_string("Failed to stat file")); /* XXX filename would be nice */
+}
+
+jv jq_handle_eof(jq_state *jq, jv handle) {
+  struct raw_handle *rh;
+  int i = get_handle_index(jq, jv_copy(handle));
+
+  if (i < 0)
+    return jv_invalid_with_msg(jv_string("No such open file handle"));
+
+  rh = jq->handles->handles[i];
+  if (rh->vt->fheof)
+    return rh->vt->fheof(jq, handle, rh->handle);
+  jv_free(handle);
+  return jv_invalid_with_msg(jv_string("Failed to determine if file handle at EOF"));
 }
 
 jv jq_get_jq_origin(jq_state *jq) {
@@ -1417,8 +1646,13 @@ static void init_vtable(struct jq_plugin_vtable *vtable) {
   vtable->jv_object = jv_object;
   vtable->jv_keys = jv_keys;
   vtable->jq_set_attrs = jq_set_attrs;
-  vtable->jq_get_handle_kind = jq_get_handle_kind;
-  vtable->jq_get_handle = jq_get_handle;
-  vtable->jq_new_handle = jq_new_handle;
-  vtable->jq_dup_handle = jq_dup_handle;
+  vtable->jq_handle_get_kind = jq_handle_get_kind;
+  vtable->jq_handle_get = jq_handle_get;
+  vtable->jq_handle_new = jq_handle_new;
+  vtable->jq_handle_reset = jq_handle_reset;
+  vtable->jq_handle_close = jq_handle_close;
+  vtable->jq_handle_write = jq_handle_write;
+  vtable->jq_handle_read = jq_handle_read;
+  vtable->jq_handle_stat = jq_handle_stat;
+  vtable->jq_handle_eof = jq_handle_eof;
 }

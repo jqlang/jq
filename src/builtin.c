@@ -1733,6 +1733,13 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_random_string, "randomstring", 1, 0, 1},
   {(cfunction_ptr)f_current_filename, "input_filename", 1, 0, 1},
   {(cfunction_ptr)f_current_line, "input_line_number", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_get_kind, "fhkind", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_close, "fhclose", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_reset, "fhreset", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_write, "fhwrite", 2, 0, 1},
+  {(cfunction_ptr)jq_handle_read, "fhread", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_stat, "fhstat", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_eof, "fheof", 1, 0, 1},
 };
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
