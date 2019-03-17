@@ -105,7 +105,7 @@ static jv* frame_local_var(struct jq_state* jq, int var, int level) {
   return &fr->entries[fr->bc->nclosures + var].localvar;
 }
 
-static struct closure make_closure(struct jq_state* jq, uint16_t* pc) {
+static struct closure make_closure(struct jq_state* jq, const uint16_t* pc) {
   uint16_t level = *pc++;
   uint16_t idx = *pc++;
   stack_ptr fridx = frame_get_level(jq, level);
@@ -129,7 +129,7 @@ static struct closure make_closure(struct jq_state* jq, uint16_t* pc) {
 }
 
 static struct frame* frame_push(struct jq_state* jq, struct closure callee,
-                                uint16_t* argdef, int nargs) {
+                                const uint16_t* argdef, int nargs) {
   stack_ptr new_frame_idx = stack_push_block(&jq->stk, jq->curr_frame, frame_size(callee.bc));
   struct frame* new_frame = stack_block(&jq->stk, new_frame_idx);
   new_frame->bc = callee.bc;
@@ -204,7 +204,7 @@ struct stack_pos {
   stack_ptr saved_data_stack, saved_curr_frame;
 };
 
-struct stack_pos stack_get_pos(jq_state* jq) {
+struct stack_pos stack_get_pos(const jq_state* jq) {
   struct stack_pos sp = {jq->stk_top, jq->curr_frame};
   return sp;
 }
@@ -1064,7 +1064,7 @@ void jq_teardown(jq_state **jq) {
   jv_mem_free(old_jq);
 }
 
-static int ret_follows(uint16_t *pc) {
+static int ret_follows(const uint16_t *pc) {
   if (*pc == RET)
     return 1;
   if (*pc++ != JUMP)
@@ -1096,7 +1096,7 @@ static int ret_follows(uint16_t *pc) {
  *
  * b) none of the closures -callee included- have level == 0.
  */
-static uint16_t tail_call_analyze(uint16_t *pc) {
+static uint16_t tail_call_analyze(const uint16_t *pc) {
   assert(*pc == CALL_JQ);
   pc++;
   // + 1 for the callee closure
