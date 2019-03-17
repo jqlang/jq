@@ -397,7 +397,7 @@ static void tokenadd(struct jv_parser* p, char c) {
   p->tokenbuf[p->tokenpos++] = c;
 }
 
-static int unhex4(char* hex) {
+static int unhex4(const char* hex) {
   int r = 0;
   for (int i=0; i<4; i++) {
     char c = *hex++;
@@ -566,20 +566,20 @@ static int stream_check_done(struct jv_parser* p, jv* out) {
   }
 }
 
-static int parse_check_truncation(struct jv_parser* p) {
+static int parse_check_truncation(const struct jv_parser* p) {
   return ((p->flags & JV_PARSE_SEQ) && !p->last_ch_was_ws && (p->stackpos > 0 || p->tokenpos > 0 || jv_get_kind(p->next) == JV_KIND_NUMBER));
 }
 
-static int stream_check_truncation(struct jv_parser* p) {
+static int stream_check_truncation(const struct jv_parser* p) {
   jv_kind k = jv_get_kind(p->next);
   return (p->stacklen > 0 || k == JV_KIND_NUMBER || k == JV_KIND_TRUE || k == JV_KIND_FALSE || k == JV_KIND_NULL);
 }
 
-static int parse_is_top_num(struct jv_parser* p) {
+static int parse_is_top_num(const struct jv_parser* p) {
   return (p->stackpos == 0 && jv_get_kind(p->next) == JV_KIND_NUMBER);
 }
 
-static int stream_is_top_num(struct jv_parser* p) {
+static int stream_is_top_num(const struct jv_parser* p) {
   return (p->stacklen == 0 && jv_get_kind(p->next) == JV_KIND_NUMBER);
 }
 
@@ -674,7 +674,7 @@ void jv_parser_free(struct jv_parser* p) {
 
 static const unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
 
-int jv_parser_remaining(struct jv_parser* p) {
+int jv_parser_remaining(const struct jv_parser* p) {
   if (p->curr_buf == 0)
     return 0;
   return (p->curr_buf_length - p->curr_buf_pos);
@@ -705,9 +705,9 @@ void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_
   p->curr_buf_is_partial = is_partial;
 }
 
-static jv make_error(struct jv_parser*, const char *, ...) JV_PRINTF_LIKE(2, 3);
+static jv make_error(const struct jv_parser*, const char *, ...) JV_PRINTF_LIKE(2, 3);
 
-static jv make_error(struct jv_parser* p, const char *fmt, ...) {
+static jv make_error(const struct jv_parser* p, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   jv e = jv_string_vfmt(fmt, ap);
