@@ -47,7 +47,7 @@ void locfile_free(struct locfile* l) {
   }
 }
 
-int locfile_get_line(struct locfile* l, int pos) {
+int locfile_get_line(const struct locfile* l, int pos) {
   assert(pos < l->length);
   int line = 1;
   while (l->linemap[line] <= pos) line++;   // == if pos at start (before, never ==, because pos never on \n)
@@ -55,12 +55,12 @@ int locfile_get_line(struct locfile* l, int pos) {
   return line-1;
 }
 
-static int locfile_line_length(struct locfile* l, int line) {
+static int locfile_line_length(const struct locfile* l, int line) {
   assert(line < l->nlines);
   return l->linemap[line+1] - l->linemap[line] -1;   // -1 to omit \n
 }
 
-void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
+void locfile_locate(const struct locfile* l, location loc, const char* fmt, ...) {
   va_list fmtargs;
   va_start(fmtargs, fmt);
   int startline;
