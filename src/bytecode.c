@@ -37,7 +37,7 @@ const struct opcode_description* opcode_describe(opcode op) {
 }
 
 
-int bytecode_operation_length(uint16_t* codeptr) {
+int bytecode_operation_length(const uint16_t* codeptr) {
   int length = opcode_describe(*codeptr)->length;
   if (*codeptr == CALL_JQ || *codeptr == TAIL_CALL_JQ) {
     length += codeptr[1] * 2;
@@ -92,7 +92,7 @@ static struct bytecode* getlevel(struct bytecode* bc, int level) {
   return bc;
 }
 
-void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
+void dump_operation(struct bytecode* bc, const uint16_t* codeptr) {
   int pc = codeptr - bc->code;
   printf("%04d ", pc);
   const struct opcode_description* op = opcode_describe(bc->code[pc++]);
