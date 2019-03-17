@@ -232,7 +232,7 @@ static jv f_endswith(jq_state *jq, jv a, jv b) {
   const char *bstr = jv_string_value(b);
   size_t alen = jv_string_length_bytes(jv_copy(a));
   size_t blen = jv_string_length_bytes(jv_copy(b));
-  jv ret;;
+  jv ret;
 
   if (alen < blen ||
      memcmp(astr + (alen - blen), bstr, blen) != 0)
