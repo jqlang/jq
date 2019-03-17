@@ -275,10 +275,6 @@ int block_has_only_binders_and_imports(block binders, int bindflags) {
   return 1;
 }
 
-static int inst_is_binder(inst *i, int bindflags) {
-  return !((opcode_describe(i->op)->flags & bindflags) != bindflags && i->op != MODULEMETA);
-}
-
 int block_has_only_binders(block binders, int bindflags) {
   bindflags |= OP_HAS_BINDING;
   bindflags &= ~OP_BIND_WILDCARD;
