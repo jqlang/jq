@@ -27,7 +27,7 @@ jv jq_next(jq_state *);
 void jq_teardown(jq_state **);
 
 void jq_halt(jq_state *, jv, jv);
-int jq_halted(jq_state *);
+int jq_halted(const jq_state *);
 jv jq_get_exit_code(jq_state *);
 jv jq_get_error_message(jq_state *);
 

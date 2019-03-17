@@ -1242,7 +1242,7 @@ jq_halt(jq_state *jq, jv exit_code, jv error_message)
 }
 
 int
-jq_halted(jq_state *jq)
+jq_halted(const jq_state *jq)
 {
   return jq->halted;
 }
