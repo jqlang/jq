@@ -20,6 +20,18 @@
  * stack. The stack pointer of the "next" block is stored directly below each
  * block.
  *
+ * On the stack itself we only ever store pointers into the stack encoded this
+ * way.  Pointers to heap objects are not encoded in any way, and mostly are
+ * only pushed on the stack as part of jv values.
+ *
+ * Because stack pointers on the stack itself are encoded as relative to the
+ * top of the stack, we can reallocate, copy, move a stack without having to
+ * rewrite pointers written in the stack.  For co-routines, as long as neither
+ * parent nor child co-routines backtracks past the point at which the child
+ * was cloned without halting the child (or the child halting first), all the
+ * jv values on the stack before the clone operation will be safe to use by
+ * both, parent and child.
+ *
  *                      <- mem_end = 0x100
  * 0xF8  +------------+
  * 0xF0  |            |
@@ -59,8 +71,12 @@ static void stack_init(struct stack* s) {
   s->limit = 0;
 }
 
-static void stack_reset(struct stack* s) {
-  assert(s->limit == 0 && "stack freed while not empty");
+static void stack_reset(struct stack* s, stack_ptr upto) {
+  if (upto) {
+    assert(s->limit == upto && "stack freed while not empty");
+  } else {
+    assert(s->limit == 0 && "stack freed while not empty");
+  }
   char* mem_start = s->mem_end - ( -s->bound + ALIGNMENT);
   free(mem_start);
   stack_init(s);
@@ -70,6 +86,7 @@ static int stack_pop_will_free(struct stack* s, stack_ptr p) {
   return p == s->limit;
 }
 
+/* Dereference an encoded stack pointer */
 static void* stack_block(struct stack* s, stack_ptr p) {
   return (void*)(s->mem_end + p);
 }
@@ -88,6 +105,21 @@ static void stack_reallocate(struct stack* s, size_t sz) {
             new_mem_start, old_mem_length);
   s->mem_end = new_mem_start + new_mem_length;
   s->bound = -(new_mem_length - ALIGNMENT);
+}
+
+static void stack_copy(struct stack* d, struct stack* s) {
+  char* src_mem_start = s->mem_end - ( -s->bound + ALIGNMENT);
+  int src_mem_length = s->mem_end - src_mem_start;
+
+  if (src_mem_length == 0) {
+    stack_init(d);
+  } else {
+    char* dst_mem_start = jv_mem_alloc(src_mem_length);
+    memcpy(dst_mem_start, src_mem_start, src_mem_length);
+    d->mem_end = dst_mem_start + src_mem_length;
+    d->bound = s->bound;
+    d->limit = s->limit;
+  }
 }
 
 static stack_ptr stack_push_block(struct stack* s, stack_ptr p, size_t sz) {

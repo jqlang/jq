@@ -46,6 +46,7 @@ struct lexer_param;
 "include" { return INCLUDE; }
 "module" { return MODULE; }
 "def" { return DEF; }
+"codef" { return CODEF; }
 "if" { return IF; }
 "then" { return THEN; }
 "else" { return ELSE; }
@@ -72,6 +73,7 @@ struct lexer_param;
 ">=" { return GREATEREQ; }
 ".." { return REC; }
 "?//" { return ALTERNATION; }
+"@@" { return COEXPR; }
 "."|"?"|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"%"|"\$"|"<"|">" { return yytext[0];}
 
 "["|"{"|"(" {

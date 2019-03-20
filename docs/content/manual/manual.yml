@@ -3297,6 +3297,121 @@ sections:
               (.posts[] | select(.author == "stedolan") | .comments) |=
                   . + ["terrible."]
 
+  - title: Eval
+    body: |
+
+      The `eval/0` and `eval/3` builtins allow one to compile and
+      evaluate jq programs.
+
+    entries:
+      - title: "`eval`"
+        body: |
+
+          This builtin evaluates the input program.
+
+        examples:
+          - program: 'eval'
+            input: '"1 + 2"'
+            output: ['3']
+
+      - title: "`eval(program; arguments; options)`"
+        body: |
+
+          This builtin evaluates the given program, with the given
+          arguments, and the given options.  The `program` must be a
+          string.
+
+          `arguments` must be an object with a key for every global
+          `$binding` that the `program` may refer to.
+
+          The `options` argument must be `null`, or an object that may
+          have a key `"ALLOW_IO"` whose value is a boolean.
+
+      - title: "`eval`"
+        body: |
+
+          This builtin is like `eval/3`, but it outputs an open handle
+          that can be read from using `fhread`.
+
+        examples:
+          - program: '[coeval|label $out | repeat(fhread // break $out)]'
+            input: '"range(5)"'
+            output: ['[0,1,2,3,4]']
+
+      - title: "`coeval(program; arguments; options)`"
+        body: |
+
+          This builtin is like `eval/3`, but it creates a co-routine to
+          evalue the program, and outputs an open handle that can be
+          read from using `fhread`.
+
+  - title: Co-expressions
+    body: |
+
+      jq has co-routines, called co-expressions.  These can be used to,
+      for example, interleave the results of two generator expressions.
+      This is useful for building breadth-first search algorithms.
+
+      We call these co-expressions because the expression to run as a
+      co-routine can have lexical bindings -- that is, it can see the
+      same variables and functions that the caller of `coexp/1` can see.
+
+      The `inputs` builtin in a co-expression produces the last value
+      written to the co-expression via `fhwrite`.
+
+    entries:
+      - title: "`codef ($)name: body; ...`"
+        body: |
+
+          This form creates a co-routine to run `body`, creates a
+          function named `name` that extracts one output from the
+          co-routine, and a variable named `$name` that holds an open
+          handle for the co-routine.  The handle can be written to
+          with `fhwrite`, with values written to it made available to
+          the co-routine body if it calls `input` or `inputs`.
+
+      - title: "`coexp(expr)`"
+        body: |
+
+          The `coexp(expr)` builtin produces the handle to a co-routine
+          that evaluates `expr` -- a co-expression.  This handle will be
+          closed automatically.  A jq program can read from a co-routine
+          handle using `fhread`.  Once `expr` runs out of values, the
+          co-routine will be cleaned up.
+
+          Note that `expr` is not a program string to be compiled and
+          evaluated!  Instead, `expr` is a jq expression of arbitrary
+          complexity.  To evaluate a string as a jq program, use `eval`
+          or `coeval`.
+
+      - title: "`while(expr)`"
+        body: |
+
+          Repeats `expr` while it's not empty.  This is useful when
+          `expr` refers to one or more co-expressions.
+
+        examples:
+          - program: 'codef ($)foo: 1,2,3; codef ($)bar: "a","b","c","d","e"; [while(foo?,bar?)]'
+            input: 'null'
+            output: ['[1,"a",2,"b",3,"c","d","e"]']
+
+      - title: "`def f(@@a0; a1; @@a2): body;`"
+        body: |
+
+          This is syntactic sugar equivalent to `def f(a0; a1; a2):
+            codef ($)co0: a0; codef ($)co2: a2; body;`.
+
+          This is useful for creating control structures.
+
+        examples:
+          - program: 'def comingle(@@a; @@b): while(a, b); [comingle(1,2,3; "a","b","c")]'
+            input: 'null'
+            output: ['[1,"a",2,"b",3,"c"]']
+
+          - program: 'def f(@@a; @@b): a, b, b, a, b, a; [f(1,2,3; "a","b","c")]'
+            input: 'null'
+            output: ['[1,"a","b",2,"c",3]']
+
   - title: Modules
     body: |
 

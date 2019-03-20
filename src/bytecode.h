@@ -19,7 +19,7 @@ enum {
 #undef OP
 };
 
-enum {
+enum op_flag {
   OP_HAS_CONSTANT = 2,
   OP_HAS_VARIABLE = 4,
   OP_HAS_BRANCH = 8,

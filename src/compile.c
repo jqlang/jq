@@ -123,6 +123,10 @@ static inst* block_take(block* b) {
   return i;
 }
 
+block block_take_block(block *b) {
+  return inst_block(block_take(b));
+}
+
 block block_hide(block b) {
   for (inst* i = b.first; i; i = i->next) {
     if (i->op == CLOSURE_CREATE_C && !i->imm.cfunc->exported)
@@ -431,6 +435,20 @@ static inst* block_take_last(block* b) {
   return i;
 }
 
+void block_inline(block inlines, block body) {
+  inst *i;
+  inst *b;
+  for (i = inlines.first; i; i = i->next) {
+    for (b = body.first; b; b = b->next) {
+      if (b->op == CALL_JQ && !b->bound_by && strcmp(b->symbol, i->symbol) == 0 &&
+          b->nactuals == 0)
+        b->op = i->subfn.first->op;
+      block_inline(inlines, b->arglist);
+      block_inline(inlines, b->subfn);
+    }
+  }
+}
+
 // Binds a sequence of binders, which *must not* alrady be bound to each other,
 // to body, throwing away unreferenced defs
 block block_bind_referenced(block binder, block body, int bindflags) {
@@ -568,6 +586,11 @@ block gen_function(const char* name, block formals, block body) {
     if (i->op == CLOSURE_PARAM_REGULAR) {
       i->op = CLOSURE_PARAM;
       body = gen_var_binding(gen_call(i->symbol, gen_noop()), i->symbol, body);
+    } else if (i->op == CLOSURE_PARAM_COEXPR) {
+      i->op = CLOSURE_PARAM;
+      block coexp = gen_function(i->symbol, gen_noop(), BLOCK(gen_op_unbound(LOADV,i->symbol), gen_call("fhread", gen_noop())));
+      block_bind_subblock(coexp, body, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
+      body = gen_var_binding(gen_call("coexp", gen_lambda(gen_call(i->symbol, gen_noop()))), i->symbol, BLOCK(coexp, body));
     }
     block_bind_subblock(inst_block(i), body, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
   }
@@ -579,6 +602,10 @@ block gen_function(const char* name, block formals, block body) {
   block b = inst_block(i);
   block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
   return b;
+}
+
+block gen_param_coexpr(const char* name) {
+  return gen_op_unbound(CLOSURE_PARAM_COEXPR, name);
 }
 
 block gen_param_regular(const char* name) {

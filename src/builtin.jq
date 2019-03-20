@@ -144,6 +144,13 @@ def while(cond; update):
      def _while:
          if cond then ., (update | _while) else empty end;
      _while;
+def while(exp):
+  label $out |
+  def _while:
+    foreach . as $nothing (null; (exp|[.])//break $out;
+                           .[0]),
+    _while;
+  _while;
 def until(cond; next):
      def _until:
          if cond then . else (next|_until) end;
@@ -275,6 +282,22 @@ def JOIN($idx; stream; idx_expr; join_expr):
 def IN(s): any(s == .; .);
 def IN(src; s): any(src == s; .);
 
+
+def coeval(program; args; options): [program, ., args, options] | coeval;
+def eval(program; args; options):
+  label $out |
+  coeval(program; args; options) |
+  repeat(try fhread catch if .=="EOF" then break $out else error end);
+def eval: . as $dot | null | eval($dot; {}; {});
+def coeval: . as $program | null | coeval($program; {}; {});
+
+def coexp(cexp):
+  null |
+  cocreate as $child |
+  if ($child == false) or $child == true
+  then null | cexp | cooutput # child;  call and output (which always backtracks!)
+  else $child end;            # parent; output the child's handle
+
 def fhinterleave:
   label $out | repeat(.[] | try fhread catch if .=="EOF" then break $out else error end);
 
@@ -289,3 +312,46 @@ def fhinterleave_pad($pad):
     if $all|all(fheof) then $pad, break $out else $pad end
   else (try fhread catch if .=="EOF" then empty else error end) // if $all|all(fheof) then $pad, break $out elif fheof then $pad else empty end
   end);
+
+## We could really use vararg support here:
+#def comingle(a; b):
+#  coexp(a) as $a | coexp(b) as $b | [$a, $b] | fhinterleave;
+#def comingle(a; b; c):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c | [$a, $b, $c] | fhinterleave;
+#def comingle(a; b; c; d):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c |
+#  coexp(d) as $d | [$a, $b, $c, $d] | fhinterleave;
+#def comingle(a; b; c; d; e):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c |
+#  coexp(d) as $d | coexp(e) as $e | [$a, $b, $c, $d, $e] | fhinterleave;
+#def comingle(a; b; c; d; e; f):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c |
+#  coexp(d) as $d | coexp(e) as $e | coexp(f) as $f | [$a, $b, $c, $d, $e, $f] | fhinterleave;
+#
+#def comingle_repeat(a; b):
+#  coexp(a) as $a | coexp(b) as $b | [$a, $b] | fhinterleave_repeat;
+#def comingle_repeat(a; b; c):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c | [$a, $b, $c] | fhinterleave_repeat;
+#def comingle_repeat(a; b; c; d):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c |
+#  coexp(d) as $d | [$a, $b, $c, $d] | fhinterleave_repeat;
+#def comingle_repeat(a; b; c; d; e):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c |
+#  coexp(d) as $d | coexp(e) as $e | [$a, $b, $c, $d, $e] | fhinterleave_repeat;
+#def comingle_repeat(a; b; c; d; e; f):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c |
+#  coexp(d) as $d | coexp(e) as $e | coexp(f) as $f | [$a, $b, $c, $d, $e, $f] | fhinterleave_repeat;
+#
+#def comingle_pad($pad; a; b):
+#  coexp(a) as $a | coexp(b) as $b | [$a, $b] | fhinterleave_pad($pad);
+#def comingle_pad($pad; a; b; c):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c | [$a, $b, $c] | fhinterleave_pad($pad);
+#def comingle_pad($pad; a; b; c; d):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c |
+#  coexp(d) as $d | [$a, $b, $c, $d] | fhinterleave_pad($pad);
+#def comingle_pad($pad; a; b; c; d; e):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c |
+#  coexp(d) as $d | coexp(e) as $e | [$a, $b, $c, $d, $e] | fhinterleave_pad($pad);
+#def comingle_pad($pad; a; b; c; d; e; f):
+#  coexp(a) as $a | coexp(b) as $b | coexp(c) as $c |
+#  coexp(d) as $d | coexp(e) as $e | coexp(f) as $f | [$a, $b, $c, $d, $e, $f] | fhinterleave_pad($pad);

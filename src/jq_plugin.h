@@ -48,6 +48,7 @@ struct cfunction {
 typedef jv (*jq_get_error_message_f)(jq_state*);
 typedef jv (*jq_get_exit_code_f)(jq_state*);
 typedef int (*jq_halted_f)(jq_state*);
+typedef int (*jq_finished_f)(jq_state*);
 typedef void (*jq_halt_f)(jq_state*,jv,jv);
 typedef void (*jq_get_debug_cb_f)(jq_state*,jq_msg_cb*,void **);
 typedef void (*jq_set_debug_cb_f)(jq_state*,jq_msg_cb,void *);
@@ -186,6 +187,7 @@ struct jq_plugin_vtable {
   jq_get_error_message_f jq_get_error_message;
   jq_get_exit_code_f jq_get_exit_code;
   jq_halted_f jq_halted;
+  jq_finished_f jq_finished;
   jq_halt_f jq_halt;
   jq_get_debug_cb_f jq_get_debug_cb;
   jq_set_debug_cb_f jq_set_debug_cb;
@@ -354,6 +356,7 @@ struct jq_plugin_vtable {
 #define jv_getpath ((*(struct jq_plugin_vtable **)jq)->jv_getpath)
 #define jq_get_attr ((*(struct jq_plugin_vtable **)jq)->jq_get_attr)
 #define jq_halted ((*(struct jq_plugin_vtable **)jq)->jq_halted)
+#define jq_finished ((*(struct jq_plugin_vtable **)jq)->jq_finished)
 #define jv_array_length ((*(struct jq_plugin_vtable **)jq)->jv_array_length)
 #define jv_array_concat ((*(struct jq_plugin_vtable **)jq)->jv_array_concat)
 #define jv_string_implode ((*(struct jq_plugin_vtable **)jq)->jv_string_implode)
