@@ -935,7 +935,7 @@ sections:
             input: '{"a":{"b":1},"x":{"y":2}}'
             output: ['{"a":{},"x":{"y":2}}']
 
-      - title: "`to_entries`, `from_entries`, `with_entries`"
+      - title: "`to_entries`, `from_entries`, `with_entries`, `pipe_entries`"
         body: |
 
           These functions convert between an object and an array of
@@ -943,11 +943,13 @@ sections:
           for each `k: v` entry in the input, the output array
           includes `{"key": k, "value": v}`.
 
-          `from_entries` does the opposite conversion, and
+          `from_entries` does the opposite conversion.
           `with_entries(foo)` is a shorthand for `to_entries |
           map(foo) | from_entries`, useful for doing some operation to
-          all keys and values of an object. `from_entries` accepts key, Key,
-          name, Name, value and Value as keys.
+          all keys and values of an object. `pipe_entries(foo)` is shorthand
+          for `to_entries | foo | from_entries`, useful for doing some
+          operation on the entire object like sorting it by its keys.
+          `from_entries` accepts key, Key, name, Name, value and Value as keys.
 
         examples:
           - program: 'to_entries'
@@ -959,6 +961,9 @@ sections:
           - program: 'with_entries(.key |= "KEY_" + .)'
             input: '{"a": 1, "b": 2}'
             output: ['{"KEY_a": 1, "KEY_b": 2}']
+          - program: 'pipe_entries(sort_by(.key))'
+            input: '{"foo": 1, "bar": 2}'
+            output: ['{"bar": 2, "foo": 1}']
 
 
       - title: "`select(boolean_expression)`"
@@ -2529,7 +2534,7 @@ sections:
 
       - title: 'Destructuring Alternative Operator: `?//`'
         body: |
-        
+
           The destructuring alternative operator provides a concise mechanism
           for destructuring an input that can take one of several forms.
 
@@ -2538,10 +2543,10 @@ sections:
           the first event for each resource. The API (having been clumsily
           converted from XML) will only wrap the events in an array if the resource
           has multiple events:
-          
+
               {"resources": [{"id": 1, "kind": "widget", "events": {"action": "create", "user_id": 1, "ts": 13}},
                              {"id": 2, "kind": "widget", "events": [{"action": "create", "user_id": 1, "ts": 14}, {"action": "destroy", "user_id": 1, "ts": 15}]}]}
-          
+
           We can use the destructuring alternative operator to handle this structural change simply:
 
               .resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$user_id, $ts}]} | {$user_id, $kind, $id, $ts}
