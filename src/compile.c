@@ -1099,7 +1099,7 @@ block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block co
   return code;
 }
 
-static uint16_t nesting_level(struct bytecode* bc, inst* target) {
+static uint16_t nesting_level(const struct bytecode* bc, const inst* target) {
   uint16_t level = 0;
   assert(bc && target && target->compiled);
   while (bc && target->compiled != bc) {
@@ -1233,7 +1233,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv *env) {
+static int compile(struct bytecode* bc, block b, const struct locfile* lf, jv args, jv *env) {
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
@@ -1366,7 +1366,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   return errors;
 }
 
-int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
+int block_compile(block b, struct bytecode** out, const struct locfile* lf, jv args) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
