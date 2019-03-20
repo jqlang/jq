@@ -32,7 +32,7 @@ static int jvp_refcnt_dec(jv_refcnt* c) {
   return c->count == 0;
 }
 
-static int jvp_refcnt_unshared(jv_refcnt* c) {
+static int jvp_refcnt_unshared(const jv_refcnt* c) {
   assert(c->count > 0);
   return c->count == 1;
 }
