@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 11 "src/parser.y" /* yacc.c:1910  */
+#line 11 "src/parser.y" /* yacc.c:1909  */
 
 #include "locfile.h"
 struct lexer_param;
@@ -57,7 +57,7 @@ struct lexer_param;
     }                                           \
   } while (0)
 
-#line 61 "src/parser.h" /* yacc.c:1910  */
+#line 61 "src/parser.h" /* yacc.c:1909  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -163,12 +163,12 @@ struct lexer_param;
 
 union YYSTYPE
 {
-#line 31 "src/parser.y" /* yacc.c:1910  */
+#line 31 "src/parser.y" /* yacc.c:1909  */
 
   jv literal;
   block blk;
 
-#line 172 "src/parser.h" /* yacc.c:1910  */
+#line 172 "src/parser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
