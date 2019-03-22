@@ -164,7 +164,7 @@ def all(condition): all(.[]; condition);
 def any(condition): any(.[]; condition);
 def all: all(.[]; .);
 def any: any(.[]; .);
-def last(g): reduce g as $item (null; $item);
+def last(g): reduce . as $_ (.; g);
 def nth($n; g): if $n < 0 then error("nth doesn't support negative indices") else last(limit($n + 1; g)) end;
 def first: .[0];
 def last: .[-1];
