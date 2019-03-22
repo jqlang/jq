@@ -333,6 +333,14 @@ first(1,error("foo"))
 null
 1
 
+[first(empty)]
+null
+[]
+
+[last(empty)]
+null
+[]
+
 #
 # Check that various builtins evalute all arguments where appropriate,
 # doing cartesian products where appropriate.
