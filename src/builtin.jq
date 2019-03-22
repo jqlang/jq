@@ -148,7 +148,7 @@ def until(cond; next):
          if cond then . else (next|_until) end;
      _until;
 def limit($n; exp):
-    if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
+    if $n > 0 then label $out | foreach exp as $item ($n; .-1; if . > 0 then $item else $item, break $out end)
     elif $n == 0 then empty
     else exp end;
 # range/3, with a `by` expression argument
