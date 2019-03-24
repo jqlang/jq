@@ -394,6 +394,16 @@ int main(int argc, char* argv[]) {
         options |= RAW_OUTPUT | RAW_NO_LF;
         if (!short_opts) continue;
       }
+      if (isoption(argv[i], 'b', "binary", &short_opts)) {
+#ifdef WIN32
+        fflush(stdout);
+        fflush(stderr);
+        _setmode(fileno(stdin),  _O_BINARY);
+        _setmode(fileno(stdout), _O_BINARY);
+        _setmode(fileno(stderr), _O_BINARY);
+        if (!short_opts) continue;
+#endif
+      }
       if (isoption(argv[i], 0, "tab", &short_opts)) {
         dumpopts &= ~JV_PRINT_INDENT_FLAGS(7);
         dumpopts |= JV_PRINT_TAB | JV_PRINT_PRETTY;

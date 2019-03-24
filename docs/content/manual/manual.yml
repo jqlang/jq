@@ -164,6 +164,12 @@ sections:
         Colors can be configured with the `JQ_COLORS` environment
         variable (see below).
 
+      * `--binary` / `-b`:
+
+        Windows users using WSL, MSYS2, or Cygwin, should use this option
+        when using a native jq.exe, otherwise jq will turn newlines (LFs)
+        into carriage-return-then-newline (CRLF).
+
       * `--ascii-output` / `-a`:
 
         jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
