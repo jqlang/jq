@@ -1663,13 +1663,13 @@ builtins|any(.[:1] == "_")
 null
 false
 
-# Test ability to use keywords
-(.[] as $kw | "\"{\($kw)} as $\($kw) | $\($kw) | {$\($kw)} | {\($kw):.\($kw)}\""|eval|empty),null
-["as","def","module","import","include","if","then","else","elif","end","reduce","foreach","and","or","try","catch","label","break","__loc__"]
-null
-
-(.[] as $kw | "\"def f($\($kw)): $\($kw); f(.)\""|eval|empty),null
-["as","def","module","import","include","if","then","else","elif","end","reduce","foreach","and","or","try","catch","label","break","__loc__"]
-null
+## Test ability to use keywords (uncomment after eval is pushed)
+#(.[] as $kw | "\"{\($kw)} as $\($kw) | $\($kw) | {$\($kw)} | {\($kw):.\($kw)}\""|eval|empty),null
+#["as","def","module","import","include","if","then","else","elif","end","reduce","foreach","and","or","try","catch","label","break","__loc__"]
+#null
+#
+#(.[] as $kw | "\"def f($\($kw)): $\($kw); f(.)\""|eval|empty),null
+#["as","def","module","import","include","if","then","else","elif","end","reduce","foreach","and","or","try","catch","label","break","__loc__"]
+#null
 
 
