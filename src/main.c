@@ -212,12 +212,12 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
     jv_free(exit_code);
     jv error_message = jq_get_error_message(jq);
     if (jv_get_kind(error_message) == JV_KIND_STRING) {
-      fprintf(stderr, "%s", jv_string_value(error_message));
+      fprintf(stderr, "jq: error: %s", jv_string_value(error_message));
     } else if (jv_get_kind(error_message) == JV_KIND_NULL) {
       // Halt with no output
     } else if (jv_is_valid(error_message)) {
       error_message = jv_dump_string(jv_copy(error_message), 0);
-      fprintf(stderr, "%s\n", jv_string_value(error_message));
+      fprintf(stderr, "jq: error: %s\n", jv_string_value(error_message));
     } // else no message on stderr; use --debug-trace to see a message
     fflush(stderr);
     jv_free(error_message);
@@ -586,7 +586,7 @@ int main(int argc, char* argv[]) {
 
   char *origin = strdup(argv[0]);
   if (origin == NULL) {
-    fprintf(stderr, "Error: out of memory\n");
+    fprintf(stderr, "jq: error: out of memory\n");
     exit(1);
   }
   jq_set_attr(jq, jv_string("JQ_ORIGIN"), jv_string(dirname(origin)));
@@ -678,11 +678,11 @@ int main(int argc, char* argv[]) {
       if (!(options & SEQ)) {
         // --seq -> errors are not fatal
         ret = JQ_OK_NO_OUTPUT;
-        fprintf(stderr, "parse error: %s\n", jv_string_value(msg));
+        fprintf(stderr, "jq: parse error: %s\n", jv_string_value(msg));
         jv_free(msg);
         break;
       }
-      fprintf(stderr, "ignoring parse error: %s\n", jv_string_value(msg));
+      fprintf(stderr, "jq: ignoring parse error: %s\n", jv_string_value(msg));
       jv_free(msg);
     }
   }
@@ -693,7 +693,7 @@ int main(int argc, char* argv[]) {
 out:
   badwrite = ferror(stdout);
   if (fclose(stdout)!=0 || badwrite) {
-    fprintf(stderr,"Error: writing output failed: %s\n", strerror(errno));
+    fprintf(stderr,"jq: error: writing output failed: %s\n", strerror(errno));
     ret = JQ_ERROR_SYSTEM;
   }
 

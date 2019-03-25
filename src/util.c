@@ -275,7 +275,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
       // System-level input error on the stream. It will be closed (below).
       // TODO: report it. Can't use 'state->err_cb()' as it is hard-coded for
       //       'open' related problems.
-      fprintf(stderr,"Input error: %s\n", strerror(errno));
+      fprintf(stderr,"jq: error: %s\n", strerror(errno));
     }
     if (state->current_input) {
       if (state->current_input == stdin) {
