@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 . "${0%/*}/setup" "$@"
 
@@ -76,17 +76,17 @@ fi
 ## Test JSON sequence support
 
 cat > $d/expected <<EOF
-ignoring parse error: Truncated value at line 2, column 5
-ignoring parse error: Truncated value at line 2, column 25
-ignoring parse error: Truncated value at line 2, column 41
+jq: ignoring parse error: Truncated value at line 2, column 5
+jq: ignoring parse error: Truncated value at line 2, column 25
+jq: ignoring parse error: Truncated value at line 2, column 41
 EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"\036false\n'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},false]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
 
 cat > $d/expected <<EOF
-ignoring parse error: Truncated value at line 2, column 5
-ignoring parse error: Truncated value at line 2, column 25
-ignoring parse error: Truncated value at line 3, column 1
+jq: ignoring parse error: Truncated value at line 2, column 5
+jq: ignoring parse error: Truncated value at line 2, column 25
+jq: ignoring parse error: Truncated value at line 3, column 1
 EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
@@ -94,7 +94,7 @@ cmp $d/out $d/expected
 # Note that here jq sees no inputs at all but it still succeeds because
 # --seq ignores parse errors
 cat > $d/expected <<EOF
-ignoring parse error: Unfinished abandoned text at EOF at line 1, column 4
+jq: ignoring parse error: Unfinished abandoned text at EOF at line 1, column 4
 EOF
 printf '"foo' | $JQ -c --seq . > $d/out 2>&1
 cmp $d/out $d/expected
@@ -107,7 +107,7 @@ cmp $d/out $d/expected
 
 # Numeric values truncated by EOF are ignored
 cat > $d/expected <<EOF
-ignoring parse error: Unfinished abandoned text at EOF at line 1, column 1
+jq: ignoring parse error: Unfinished abandoned text at EOF at line 1, column 1
 EOF
 printf '1' | $JQ -c --seq . > $d/out 2>&1
 cmp $d/out $d/expected
@@ -273,7 +273,7 @@ if [ -n "$($VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>/dev/null)" ]; then
     echo "jq halt_error(1) had unexpected output on stdout" 1>&2
     exit 1
 fi
-if [ "$($VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>&1)" != xyz ]; then
+if [ "$($VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>&1)" != "jq: error: xyz" ]; then
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
 fi
