@@ -292,7 +292,7 @@ uint16_t* stack_restore(jq_state *jq){
     assert(path_len >= 0);
     jq->path = jv_array_slice(jq->path, 0, path_len);
   } else {
-    assert(path_len == 0);
+    fork->path_len = 0;
   }
   jv_free(jq->value_at_path);
   jq->value_at_path = fork->value_at_path;
