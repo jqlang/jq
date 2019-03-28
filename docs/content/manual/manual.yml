@@ -2951,6 +2951,19 @@ sections:
 
           Returns the line number of the input currently being filtered.
 
+      - title: "`unwind(protect) | rest`"
+        body: |
+
+          Executes `protect|empty` when the `rest` produces no further
+          outputs, or when the `rest` raises an error, or `break`s out.
+
+          The input to `protect` will be `true` as input if no error was
+          raised, else with the error produced by `rest`, wrapped in an
+          array, as input.
+
+          This is useful for, for example, writing a footer to a file
+          after writing its contents.
+
       - title: "`streamfile` `slurpfile`"
         body: |
 

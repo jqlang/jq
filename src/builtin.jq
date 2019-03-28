@@ -269,6 +269,17 @@ def walk(f):
   else f
   end;
 
+# Run `protect` no matter what when backtracking through a call to this
+# function.  `protect` gets called with `true` if no error was raised,
+# else with the error (wrapped in an array) that was raised.
+def _unwind(protect):
+  . as $dot |
+  unwinding |
+  if .==false then $dot
+  else protect
+  end;
+def unwind(protect): _unwind(protect|empty);
+
 # SQL-ish operators here:
 def INDEX(stream; idx_expr):
   reduce stream as $row ({}; .[$row|idx_expr|tostring] = $row);

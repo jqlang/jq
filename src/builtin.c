@@ -1851,6 +1851,7 @@ static block bind_bytecoded_builtins(block b) {
       {"empty", gen_op_simple(BACKTRACK)},
       {"not", gen_condbranch(gen_const(jv_false()),
                              gen_const(jv_true()))},
+      {"unwinding", gen_op_simple(UNWINDING)},
     };
     for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
       /*
