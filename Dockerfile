@@ -1,5 +1,8 @@
 FROM debian:8
 
+ENV DEBIAN_FRONTEND=noninteractive \
+    DEBCONF_NONINTERACTIVE_SEEN=true
+
 COPY . /app
 
 # get dependencies, build, and remove anything we don't need for running jq.
