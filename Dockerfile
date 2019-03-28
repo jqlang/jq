@@ -19,6 +19,7 @@ RUN apt-get update && \
         bison \
         flex \
         python3 \
+        python3-pip \
         wget && \
     wget https://github.com/kkos/oniguruma/archive/v5.9.6.tar.gz -O onig-5.9.6.tar.gz && \
     sha512sum onig-5.9.6.tar.gz | grep 6b048d345e148c9da38af7a8df76d4a358eb3d4db91fa7834076e511f526a63544284f212b0d56badbbd33112c8b458a5fff02bfbbda012ecfe478bc436ea679 && \
@@ -47,7 +48,8 @@ RUN apt-get update && \
         bison \
         git \
         flex \
-        python3 && \
+        python3 \
+        python3-pip && \
     apt-get autoremove -y && \
     rm -rf oniguruma-5.9.6 && \
     rm -rf /var/lib/apt/lists/* /var/lib/gems
