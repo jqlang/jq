@@ -30,10 +30,11 @@ RUN apt-get update && \
         ./configure --disable-valgrind --enable-all-static --prefix=/usr/local && \
         make -j8 && \
         make check && \
-        make install && \
-        make distclean ) && \
+        make install ) && \
     (cd /app/modules/oniguruma && \
         make uninstall ) && \
+    (cd /app && \
+        make distclean ) && \
     apt-get purge -y \
         build-essential \
         autoconf \
