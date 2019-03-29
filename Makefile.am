@@ -175,6 +175,7 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
         src/parser.h src/version.h src/builtin.jq scripts/version       \
+        libjq.pc                                                        \
         tests/base64.test tests/jq-f-test.sh tests/jq.test              \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
@@ -193,6 +194,9 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
 # distribute it and install it with the package in the doc directory.
 docdir = ${datadir}/doc/${PACKAGE}
 dist_doc_DATA = README.md COPYING AUTHORS README
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libjq.pc
 
 RELEASE ?= 1
 rpm: dist jq.spec
