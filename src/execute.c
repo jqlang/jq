@@ -1400,7 +1400,8 @@ static jq_state *coinit(jq_state *parent) {
   do {
     jv_free(child->vmid);
     child->vmid = jv_number_random_int();
-  } while (jv_equal(jv_copy(parent->vmid), jv_copy(child->vmid))); /* paranoia */
+  } while (jv_is_valid(child->vmid) && jv_is_valid(parent->vmid) &&
+           jv_equal(jv_copy(parent->vmid), jv_copy(child->vmid)));  /* paranoia */
 
   /* Copy or null out various jv values not kept on the stack */
   child->value_at_path = jv_copy(parent->value_at_path);
