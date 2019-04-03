@@ -509,7 +509,12 @@ jv jq_next(jq_state *jq) {
     }
 
     case GENLABEL: {
-      stack_push(jq, JV_OBJECT(jv_string("__jq"), jv_number(jq->next_label++)));
+      if (!jv_is_valid(jq->vmid)) {
+        stack_push(jq, JV_OBJECT(jv_string("__jq"), jv_number(jq->next_label++)));
+      } else {
+        stack_push(jq, JV_OBJECT(jv_string("__jq"), jv_number(jq->next_label++),
+                                 jv_string("__jqv"), jv_copy((jq->vmid))));
+      }
       break;
     }
 
