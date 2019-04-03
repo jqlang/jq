@@ -6,7 +6,7 @@
 #include "jq.h"
 #include "jq_plugin.h"
 
-typedef enum {
+typedef enum opcode {
 #define OP(name, imm, in, out) name,
 #include "opcode_list.h"
 #undef OP
