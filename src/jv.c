@@ -153,18 +153,6 @@ int jv_is_integer(jv j){
     return 0;
   }
   double x = jv_number_value(j);
-  if(x != x || x > INT_MAX || x < INT_MIN){
-    return 0;
-  }
-
-  return x == (int)x;
-}
-
-int jv_is_integer_large(jv j){
-  if(jv_get_kind(j) != JV_KIND_NUMBER){
-    return 0;
-  }
-  double x = jv_number_value(j);
 
   double ipart;
   double fpart = modf(x, &ipart);
