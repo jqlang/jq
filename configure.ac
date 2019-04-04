@@ -110,6 +110,14 @@ EOF
    fi
 ])
 
+dnl Disable decNumber support
+AC_ARG_ENABLE([decnum],
+   AC_HELP_STRING([--disable-decnum], [disable decnum support]))
+
+AS_IF([test "x$enable_decnum" != "xno"],[
+   AC_DEFINE([USE_DECNUM],1)
+])
+
 AM_CONDITIONAL([ENABLE_VALGRIND], [test "x$enable_valgrind" != xno])
 AM_CONDITIONAL([ENABLE_ASAN], [test "x$enable_asan" = xyes])
 AM_CONDITIONAL([ENABLE_UBSAN], [test "x$enable_ubsan" = xyes])
