@@ -234,10 +234,12 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     if (jvp_number_is_nan(x)) {
       jv_dump_term(C, jv_null(), flags, indent, F, S);
     } else {
+#ifdef USE_DECNUM
       const char * literal_data = jv_number_get_literal(x);
       if (literal_data) {
         put_str(literal_data, F, S, flags & JV_PRINT_ISATTY);
       } else {
+#endif
         double d = jv_number_value(x);
         if (d != d) {
           // JSON doesn't have NaN, so we'll render it as "null"
@@ -249,7 +251,9 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
           put_str(jvp_dtoa_fmt(C, buf, d), F, S, flags & JV_PRINT_ISATTY);
         }
       }
+#ifdef USE_DECNUM
     }
+#endif
     break;
   }
   case JV_KIND_STRING:

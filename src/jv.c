@@ -412,6 +412,7 @@ jv jv_number(double x) {
 
 double jv_number_value(jv j) {
   assert(JVP_HAS_KIND(j, JV_KIND_NUMBER));
+#ifdef USE_DECNUM
   if (JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_LITERAL)) {
     jvp_literal_number* n = jvp_literal_number_ptr(j);
 
@@ -422,8 +423,11 @@ double jv_number_value(jv j) {
 
     return n->num_double;
   } else {
+#endif
     return j.u.number;
+#ifdef USE_DECNUM
   }
+#endif
 }
 
 int jv_is_integer(jv j){
