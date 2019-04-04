@@ -73,6 +73,7 @@ struct jq_state {
   jv error_message;
 
   jv vmid;
+  jv rnd;
   jv attrs;
   jq_input_cb input_cb;
   void *input_cb_data;
@@ -509,11 +510,11 @@ jv jq_next(jq_state *jq) {
     }
 
     case GENLABEL: {
-      if (!jv_is_valid(jq->vmid)) {
+      if (!jv_is_valid(jq->rnd)) {
         stack_push(jq, JV_OBJECT(jv_string("__jq"), jv_number(jq->next_label++)));
       } else {
         stack_push(jq, JV_OBJECT(jv_string("__jq"), jv_number(jq->next_label++),
-                                 jv_string("__jqv"), jv_copy((jq->vmid))));
+                                 jv_string("__jqv"), jv_copy((jq->rnd))));
       }
       break;
     }
@@ -1036,11 +1037,41 @@ jv jq_next(jq_state *jq) {
     }
     case ON_BACKTRACK(UNWINDING): {
       jv done = stack_pop(jq);
-      if (jv_get_kind(done) == JV_KIND_TRUE)
+      /*
+       * done is false the first time we backtrack to an UNWINDING because the
+       * above case will have pushed false.
+       *
+       * In that case we'll go forth so we can run an unwind-protect handler.
+       *
+       * But first we'll push a value so that when the unwind-protect handler
+       * backtracks we then backtrack too.
+       */
+      if (jv_get_kind(done) == JV_KIND_FALSE) {
+        if (!raising) {
+          /*
+           * We push true because when we backtrack here it will be because an
+           * unwind-protect handler is done and so we'll take the else brack if
+           * the if jv_get_kind(done) == JV_KIND_FALSE) above.
+           */
+          stack_push(jq, jv_true());
+        } else {
+          /*
+           * We'll push the error's message, and we wrap it in an array in case
+           * the message was a jv_true().
+           */
+          stack_push(jq, JV_ARRAY(jv_invalid_get_msg(jq->error)));
+          jq->error = jv_null();
+        }
+        stack_save(jq, pc - 1, stack_get_pos(jq));
+      } else {
+        /*
+         * We're done then.  If done is an array, the one element will be an
+         * error message.
+         */
+        if (jv_get_kind(done) == JV_KIND_ARRAY)
+          set_error(jq, jv_invalid_with_msg(jv_array_get(done, 0)));
         goto do_backtrack;
-      assert(jv_get_kind(done) == JV_KIND_FALSE);
-      stack_push(jq, jv_true());
-      stack_save(jq, pc - 1, stack_get_pos(jq));
+      }
       break;
     }
 
@@ -1338,6 +1369,7 @@ jq_state *jq_init(void) {
   jq->input_cb_data = 0;
 
   jq->vmid = jv_number_random_int();
+  jq->rnd = jv_number_random_int();
   jq->attrs = jv_object();
   jq->path = jv_null();
   jq->value_at_path = jv_null();
@@ -1401,6 +1433,7 @@ static jq_state *coinit(jq_state *parent) {
   child->libs = 0;
 
   /* Give the client a VM ID */
+  child->rnd = jv_number_random_int();
   child->vmid = jv_invalid();
   do {
     jv_free(child->vmid);
@@ -1502,6 +1535,7 @@ void jq_teardown(jq_state **jqp) {
 
   bytecode_free(jq->bc);
   libraries_free(jq->libs);
+  jv_free(jq->rnd);
   jv_free(jq->vmid);
   jv_free(jq->attrs);
 
