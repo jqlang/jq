@@ -51,6 +51,8 @@ if test "x$valgrind_cmd" = "x" ; then
 fi
 AC_CHECK_FUNCS(memmem)
 AC_CHECK_FUNCS(mkstemp)
+AC_CHECK_FUNCS(strtoimax)
+AC_CHECK_FUNCS(strtoumax)
 
 AC_CHECK_HEADER("shlwapi.h",[have_win32=1;])
 AM_CONDITIONAL([WIN32], [test "x$have_win32" = x1])

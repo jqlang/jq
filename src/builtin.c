@@ -432,6 +432,33 @@ static jv f_tonumber(jq_state *jq, jv input) {
   return type_error(input, "cannot be parsed as a number");
 }
 
+static jv f_toint(jq_state *jq, jv input) {
+  input = f_tonumber(jq, input);
+  if (!jv_is_valid(input))
+    return input;
+  if (jv_is_int64(input) || jv_is_uint64(input))
+    return input;
+  double d = jv_number_value(input);
+  if (d < 0 && d >= INT64_MIN) {
+    int64_t i = d;
+    if (i < 0)
+      return jv_int64(i);
+  } else if (d < UINT64_MAX) {
+    uint64_t u = d;
+    if (d == (double)u)
+      return jv_uint64(u);
+  }
+  return jv_number(nearbyint(d));
+}
+
+static jv f_isint(jq_state *jq, jv input) {
+  if (jv_get_kind(input) != JV_KIND_NUMBER)
+    return type_error(input, "only numbers can be integers");
+  if (jv_is_int64(input) || jv_is_uint64(input) || jv_is_integer(input))
+    return jv_true();
+  return jv_false();
+}
+
 static jv f_length(jq_state *jq, jv input) {
   if (jv_get_kind(input) == JV_KIND_ARRAY) {
     return jv_number(jv_array_length(input));
@@ -1634,6 +1661,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_json_parse, "fromjson", 1},
   {(cfunction_ptr)f_tonumber, "tonumber", 1},
   {(cfunction_ptr)f_tostring, "tostring", 1},
+  {(cfunction_ptr)f_toint, "tointeger", 1},
+  {(cfunction_ptr)f_isint, "isinteger", 1},
   {(cfunction_ptr)f_keys, "keys", 1},
   {(cfunction_ptr)f_keys_unsorted, "keys_unsorted", 1},
   {(cfunction_ptr)f_startswith, "startswith", 2},
