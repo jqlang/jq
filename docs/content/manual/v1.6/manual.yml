@@ -1,10 +1,10 @@
 ---
-headline: jq Manual (development version)
+headline: jq 1.6 Manual
 
 history: |
 
-  *For released versions, see [jq 1.5](/jq/manual/v1.5),
-  [jq 1.4](/jq/manual/v1.4) or [jq 1.3](/jq/manual/v1.3).*
+  *The manual for the development version of jq can be found
+  [here](/jq/manual).*
 
 body: |
 
@@ -623,7 +623,7 @@ sections:
   - title: Builtin operators and functions
     body: |
 
-      Some jq operator (for instance, `+`) do different things
+      Some jq operators (for instance, `+`) do different things
       depending on the type of their arguments (arrays, numbers,
       etc.). However, jq never does implicit type conversions. If you
       try to add a string to an object you'll get an error message and
@@ -2509,6 +2509,52 @@ sections:
           - program: '.[] as [$a, $b] | {a: $a, b: $b}'
             input: '[[0], [0, 1], [2, 1, 0]]'
             output: ['{"a":0,"b":null}', '{"a":0,"b":1}', '{"a":2,"b":1}']
+
+      - title: 'Destructuring Alternative Operator: `?//`'
+        body: |
+        
+          The destructuring alternative operator provides a concise mechanism
+          for destructuring an input that can take one of several forms.
+
+          Suppose we have an API that returns a list of resources and events
+          associated with them, and we want to get the user_id and timestamp of
+          the first event for each resource. The API (having been clumsily
+          converted from XML) will only wrap the events in an array if the resource
+          has multiple events:
+          
+              {"resources": [{"id": 1, "kind": "widget", "events": {"action": "create", "user_id": 1, "ts": 13}},
+                             {"id": 2, "kind": "widget", "events": [{"action": "create", "user_id": 1, "ts": 14}, {"action": "destroy", "user_id": 1, "ts": 15}]}]}
+          
+          We can use the destructuring alternative operator to handle this structural change simply:
+
+              .resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$user_id, $ts}]} | {$user_id, $kind, $id, $ts}
+
+          Or, if we aren't sure if the input is an array of values or an object:
+
+              .[] as [$id, $kind, $user_id, $ts] ?// {$id, $kind, $user_id, $ts} | ...
+
+          Each alternative need not define all of the same variables, but all named
+          variables will be available to the subsequent expression. Variables not
+          matched in the alternative that succeeded will be `null`:
+
+              .resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$first_user_id, $first_ts}]} | {$user_id, $first_user_id, $kind, $id, $ts, $first_ts}
+
+          Additionally, if the subsequent expression returns an error, the
+          alternative operator will attempt to try the next binding. Errors
+          that occur during the final alternative are passed through.
+
+              [[3]] | .[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end
+
+        examples:
+          - program: '.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}'
+            input: '[{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]'
+            output: ['{"a":1,"b":2,"d":3,"e":4}', '{"a":1,"b":2,"d":3,"e":4}']
+          - program: '.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}'
+            input: '[{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]'
+            output: ['{"a":1,"b":2,"d":3,"e":null}', '{"a":1,"b":2,"d":null,"e":4}']
+          - program: '.[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end'
+            input: '[[3]]'
+            output: ['{"a":null,"b":3}']
 
       - title: 'Defining Functions'
         body: |

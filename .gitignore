@@ -18,6 +18,7 @@ jq.1
 
 # Generated source
 src/builtin.inc
+*.pc
 
 # Autotools junk
 .libs

@@ -304,6 +304,14 @@ null
 [11,22,33,44,55,66,77,88,99]
 [11,22,33]
 
+[limit(0; error)]
+"badness"
+[]
+
+[limit(1; 1, error)]
+"badness"
+[1]
+
 [first(range(.)), last(range(.)), nth(0; range(.)), nth(5; range(.)), try nth(-1; range(.)) catch .]
 10
 [0,9,0,5,"nth doesn't support negative indices"]
@@ -596,6 +604,10 @@ def f(a;b;c;d;e;f): [a+1,b,c,d,e,f]; f(.[0];.[1];.[0];.[0];.[0];.[0])
 [1,2]
 [2,2,1,1,1,1]
 
+def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]
+null
+[4,1,2,3,3,5,4,1,2,3,3]
+
 # Test precedence of 'def' vs '|'
 def a: 0; . | a
 null
@@ -726,6 +738,107 @@ null
 [4, 5, null, null, 7, null]
 [null, null, null, null, null, "foo"]
 
+# Destructuring DUP/POP issues
+.[] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
+[[3],[4],[5],6]
+# Runtime error: "jq: Cannot index array with string \"c\""
+
+.[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
+[[3],[4],[5],6]
+# Runtime error: "jq: Cannot index array with string \"c\""
+
+[[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
+null
+# Runtime error: "jq: Cannot index array with string \"c\""
+
+[[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
+null
+# Runtime error: "jq: Cannot index array with string \"c\""
+
+.[] | . as {a:$a} ?// {a:$a} ?// $a | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+.[] as {a:$a} ?// {a:$a} ?// $a | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// $a | $a
+null
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// $a | $a
+null
+[3]
+[4]
+[5]
+6
+
+.[] | . as {a:$a} ?// $a ?// {a:$a} | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+.[] as {a:$a} ?// $a ?// {a:$a} | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6][] | . as {a:$a} ?// $a ?// {a:$a} | $a
+null
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6] | .[] as {a:$a} ?// $a ?// {a:$a} | $a
+null
+[3]
+[4]
+[5]
+6
+
+.[] | . as $a ?// {a:$a} ?// {a:$a} | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+.[] as $a ?// {a:$a} ?// {a:$a} | $a
+[[3],[4],[5],6]
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6][] | . as $a ?// {a:$a} ?// {a:$a} | $a
+null
+[3]
+[4]
+[5]
+6
+
+[[3],[4],[5],6] | .[] as $a ?// {a:$a} ?// {a:$a} | $a
+null
+[3]
+[4]
+[5]
+6
+
 . as $dot|any($dot[];not)
 [1,2,3,4,true,false,1,2,3,4,5]
 true
@@ -741,6 +854,51 @@ false
 . as $dot|all($dot[];.)
 [1,2,3,4,true]
 true
+
+# Check short-circuiting
+any(true, error; .)
+"badness"
+true
+
+all(false, error; .)
+"badness"
+false
+
+any(not)
+[]
+false
+
+all(not)
+[]
+true
+
+any(not)
+[false]
+true
+
+all(not)
+[false]
+true
+
+[any,all]
+[]
+[false,true]
+
+[any,all]
+[true]
+[true,true]
+
+[any,all]
+[false]
+[false,false]
+
+[any,all]
+[true,false]
+[true,false]
+
+[any,all]
+[null,null,true]
+[true,false]
 
 #
 # Paths
@@ -935,6 +1093,19 @@ null
 null
 [5,6]
 
+[if true then 3 end]
+7
+[3]
+
+[if false then 3 end]
+7
+[7]
+
+[if false then 3 else . end]
+7
+[7]
+
+
 [.[] | [.foo[] // .bar]]
 [{"foo":[1,2], "bar": 42}, {"foo":[1], "bar": null}, {"foo":[null,false,3], "bar": 18}, {"foo":[], "bar":42}, {"foo": [null,false,null], "bar": 41}]
 [[1,2], [1], [3], [42], [41]]
@@ -989,6 +1160,28 @@ null
 [("foo" | contains("foo")), ("foobar" | contains("foo")), ("foo" | contains("foobar"))]
 {}
 [true, true, false]
+
+# containment operator (embedded NULs!)
+[contains(""), contains("\u0000")]
+"\u0000"
+[true, true]
+
+[contains(""), contains("a"), contains("ab"), contains("c"), contains("d")]
+"ab\u0000cd"
+[true, true, true, true, true]
+
+[contains("cd"), contains("b\u0000"), contains("ab\u0000")]
+"ab\u0000cd"
+[true, true, true]
+
+[contains("b\u0000c"), contains("b\u0000cd"), contains("b\u0000cd")]
+"ab\u0000cd"
+[true, true, true]
+
+[contains("@"), contains("\u0000@"), contains("\u0000what")]
+"ab\u0000cd"
+[false, false, false]
+
 
 # Try/catch and general `?` operator
 [.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]
@@ -1238,8 +1431,10 @@ ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"
 
-bsearch(4)
+bsearch(0,2,4)
 [1,2,3]
+-1
+1
 -4
 
 # strptime tests are in optional.test
@@ -1269,6 +1464,22 @@ include "c"; [a, c]
 null
 [0,"acmehbah"]
 
+import "data" as $e; import "data" as $d; [$d[].this,$e[].that,$d::d[].this,$e::e[].that]|join(";")
+null
+"is a test;is too;is a test;is too"
+
+include "shadow1"; e
+null
+2
+
+include "shadow1"; include "shadow2"; e
+null
+3
+
+import "shadow1" as f; import "shadow2" as f; import "shadow1" as e; [e::e, f::e]
+null
+[2,3]
+
 %%FAIL
 module (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1:
@@ -1292,6 +1503,10 @@ jq: error: Import path must be constant at <top-level>, line 1:
 modulemeta
 "c"
 {"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}
+
+modulemeta | .deps |= length
+"c"
+{"whatever":null,"deps":6}
 
 %%FAIL IGNORE MSG
 import "syntaxerror" as e; .
@@ -1380,6 +1595,17 @@ true
 true
 true
 
+range(5;13)|IN(range(0;10;3))
+null
+false
+true
+false
+false
+true
+false
+false
+false
+
 range(10;12)|IN(range(10))
 null
 false
@@ -1414,5 +1640,36 @@ false
 isempty(1,error("foo"))
 null
 false
+
+# Regression test for #1815
+index("")
+""
+null
+
+# check that dead code removal occurs after builtin it generation
+builtins|length > 10
+null
+true
+
+"-1"|IN(builtins[] / "/"|.[1])
+null
+false
+
+all(builtins[] / "/"; .[1]|tonumber >= 0)
+null
+true
+
+builtins|any(.[:1] == "_")
+null
+false
+
+## Test ability to use keywords (uncomment after eval is pushed)
+#(.[] as $kw | "\"{\($kw)} as $\($kw) | $\($kw) | {$\($kw)} | {\($kw):.\($kw)}\""|eval|empty),null
+#["as","def","module","import","include","if","then","else","elif","end","reduce","foreach","and","or","try","catch","label","break","__loc__"]
+#null
+#
+#(.[] as $kw | "\"def f($\($kw)): $\($kw); f(.)\""|eval|empty),null
+#["as","def","module","import","include","if","then","else","elif","end","reduce","foreach","and","or","try","catch","label","break","__loc__"]
+#null
 
 

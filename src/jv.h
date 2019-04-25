@@ -198,7 +198,7 @@ int jv_get_refcnt(jv);
 enum jv_print_flags {
   JV_PRINT_PRETTY   = 1,
   JV_PRINT_ASCII    = 2,
-  JV_PRINT_COLOR    = 4,
+  JV_PRINT_COLOR    = 4, JV_PRINT_COLOUR = 4,
   JV_PRINT_SORTED   = 8,
   JV_PRINT_INVALID  = 16,
   JV_PRINT_REFCOUNT = 32,

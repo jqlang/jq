@@ -31,6 +31,11 @@ body:
          [Arch](https://www.archlinux.org/packages/?sort=&q=jq&maintainer=&flagged=)
          repository.  Install using `sudo pacman -Sy jq`.
 
+       * jq 1.6 binaries for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux32).
+
        * jq 1.5 binaries for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64)
          or
@@ -51,6 +56,9 @@ body:
        * Use [Homebrew](http://brew.sh/) to install jq 1.5 with
          `brew install jq`.
 
+       * jq 1.6 binary for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64).
+
        * jq 1.5 binary for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.5/jq-osx-amd64).
 
@@ -66,12 +74,13 @@ body:
 
       ### FreeBSD
 
-	 * `pkg install jq` as root installs a pre-built
-	   [binary package](https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/pkgng-intro.html).
-	 * `make -C /usr/ports/textproc/jq install clean` as root installs the
-	   [jq](https://www.freshports.org/textproc/jq/)
-	   [port](https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/ports-using.html)
-	   from source.
+       * `pkg install jq` as root installs a pre-built
+         [binary package](https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/pkgng-intro.html).
+
+       * `make -C /usr/ports/textproc/jq install clean` as root installs the
+         [jq](https://www.freshports.org/textproc/jq/)
+         [port](https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/ports-using.html)
+         from source.
 
       ### Solaris
 
@@ -87,6 +96,11 @@ body:
 
        * Use [Chocolatey NuGet](https://chocolatey.org/) to install jq 1.5 with
          `chocolatey install jq`.
+
+       * jq 1.6 executables for
+         [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.6/jq-win64.exe)
+         or
+         [32-bit](https://github.com/stedolan/jq/releases/download/jq-1.6/jq-win32.exe).
 
        * jq 1.5 executables for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win64.exe)
@@ -108,6 +122,8 @@ body:
       SHA-256 checksums are provided for all release and pre-release binaries.
       They can be found under
       [sig/v1.x/sha256sum.txt](https://github.com/stedolan/jq/tree/master/sig).
+      The checksums for jq 1.6 are in
+      [sig/v1.6/sha256sum.txt](https://raw.githubusercontent.com/stedolan/jq/master/sig/v1.6/sha256sum.txt).
       The checksums for jq 1.5 are in
       [sig/v1.5/sha256sum.txt](https://raw.githubusercontent.com/stedolan/jq/master/sig/v1.5/sha256sum.txt).
 
@@ -115,6 +131,8 @@ body:
       [jq Package Signing Key](https://raw.githubusercontent.com/stedolan/jq/master/sig/jq-release.key).
       The signatures can be found under
       [sig/v1.x/\*.asc](https://github.com/stedolan/jq/tree/master/sig).
+      The signatures for jq 1.6 are in
+      [sig/v1.5/\*.asc](https://github.com/stedolan/jq/tree/master/sig/v1.6).
       The signatures for jq 1.5 are in
       [sig/v1.5/\*.asc](https://github.com/stedolan/jq/tree/master/sig/v1.5).
       You can use [GnuPG](https://gnupg.org/) to verify a signature by downloading
@@ -122,6 +140,7 @@ body:
 
       ### From source on Linux, OS X, Cygwin, and other POSIX-like operating systems
 
+       * [Source tarball for jq 1.6](https://github.com/stedolan/jq/releases/download/jq-1.6/jq-1.6.tar.gz)
        * [Source tarball for jq 1.5](https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz)
 
       You can build it using the usual `./configure && make && sudo
@@ -161,14 +180,13 @@ body:
 
       #### Building the documentation
 
-      jq's documentation is compiled into static HTML using
-      [Bonsai](http://www.tinytree.info).  To view the documentation
-      locally, run `rake serve` (or `bundle exec rake serve`) from the
-      docs/ subdirectory.  To build the docs just `rake build` from the
-      docs subdirectory.  You'll need a few Ruby dependencies, which can
-      be installed by following the instructions in `docs/README.md`.
+      jq's documentation is compiled into static HTML using Python.
+      To build the docs, run `pipenv run python3 build_website.py` from
+      the docs/ subdirectory. To serve them locally, you can run
+      `python3 -m SimpleHTTPServer`. You'll need a few Python dependencies,
+      which can be installed by following the instructions in `docs/README.md`.
 
       The man page is built by `make jq.1`, or just `make`, also from
-      the YAML docs, and you'll still need the Ruby dependencies to
+      the YAML docs, and you'll still need the Python dependencies to
       build the manpage.
 

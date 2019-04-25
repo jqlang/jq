@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-{% include "shared/head" %}
+{% include "shared/_head.html.j2" %}
 
-  <body id="{{slug}}">
-{% include "shared/navbar" %}
+  <body id="{{ slug }}">
+{% include "shared/_navbar.html.j2" %}
 
     <div class="container">
       <div class="row">
@@ -20,14 +20,14 @@
                 <div class="btn-toolbar" role="toolbar">
                   <div class="btn-group" role="group">
                     <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
-                      Download jq 1.5
+                      Download jq 1.6
                       <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
-                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64">Linux (64-bit)</a></li>
-                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-osx-amd64">OS X (64-bit)</a></li>
-                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win64.exe">Windows (64-bit)</a></li>
-                      <li><a href="/jq/download/">Other platforms, older versions, and source</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64">Linux (64-bit)</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64">OS X (64-bit)</a></li>
+                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-win64.exe">Windows (64-bit)</a></li>
+                      <li><a href="{{root}}/download/">Other platforms, older versions, and source</a></li>
                     </ul>
                   </div>
 
@@ -68,6 +68,6 @@
       </div>
     </div>
 
-{% include "shared/footer" %}
+{% include "shared/_footer.html.j2" %}
   </body>
 </html>

@@ -34,6 +34,9 @@ void *alloca (size_t);
 #endif
 #include <string.h>
 #include <time.h>
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include "builtin.h"
 #include "compile.h"
 #include "jq_parser.h"
@@ -862,7 +865,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
       if (region->end[0] == region->beg[0]) {
         unsigned long idx;
         const char *fr = (const char*)input_string;
-        for (idx = 0; fr != input_string+region->beg[0]; idx++) {
+        for (idx = 0; fr < input_string+region->beg[0]; idx++) {
           fr += jvp_utf8_decode_length(*fr);
         }
         jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
@@ -899,7 +902,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
             cap = jv_object_set(cap, jv_string("string"), jv_null());
           } else {
             fr = input_string;
-            for (idx = 0; fr != input_string+region->beg[i]; idx++) {
+            for (idx = 0; fr < input_string+region->beg[i]; idx++) {
               fr += jvp_utf8_decode_length(*fr);
             }
             cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
@@ -911,7 +914,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
           continue;
         }
         fr = input_string;
-        for (idx = len = 0; fr != input_string+region->end[i]; len++) {
+        for (idx = len = 0; fr < input_string+region->end[i]; len++) {
           if (fr == input_string+region->beg[i]) idx = len, len=0;
           fr += jvp_utf8_decode_length(*fr);
         }
@@ -932,7 +935,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
       break;
     } else { /* Error */
       UChar ebuf[ONIG_MAX_ERROR_MESSAGE_LEN];
-      onig_error_code_to_str(ebuf, onigret, einfo);
+      onig_error_code_to_str(ebuf, onigret, &einfo);
       jv_free(result);
       result = jv_invalid_with_msg(jv_string_concat(jv_string("Regex failure: "),
             jv_string((char*)ebuf)));
@@ -1053,9 +1056,8 @@ static jv f_nan(jq_state *jq, jv input) {
   return jv_number(NAN);
 }
 
-static jv f_error(jq_state *jq, jv input, jv msg) {
-  jv_free(input);
-  return jv_invalid_with_msg(msg);
+static jv f_error(jq_state *jq, jv input) {
+  return jv_invalid_with_msg(input);
 }
 
 // FIXME Should autoconf check for this!
@@ -1186,6 +1188,27 @@ static jv tm2jv(struct tm *tm) {
                   jv_number(tm->tm_yday));
 }
 
+#if defined(WIN32) && !defined(HAVE_SETENV)
+static int setenv(const char *var, const char *val, int ovr)
+{
+  BOOL b;
+  char c[2];
+  if (!ovr)
+  {
+    DWORD d;
+    d = GetEnvironmentVariableA (var, c, 2);
+    if (0 != d && GetLastError () != ERROR_ENVVAR_NOT_FOUND) {
+      return d;
+    }
+  }
+  b = SetEnvironmentVariableA (var, val);
+  if (b) {
+    return 0;
+  }
+  return 1;
+}
+#endif
+
 /*
  * mktime() has side-effects and anyways, returns time in the local
  * timezone, not UTC.  We want timegm(), which isn't standard.
@@ -1201,10 +1224,23 @@ static jv tm2jv(struct tm *tm) {
  *
  * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
  */
-static time_t my_timegm(struct tm *tm) {
+static time_t my_mktime(struct tm *tm) {
 #ifdef HAVE_TIMEGM
   return timegm(tm);
-#else /* HAVE_TIMEGM */
+#elif HAVE_TM_TM_GMT_OFF
+
+  time_t t = mktime(tm);
+  if (t == (time_t)-1)
+    return t;
+  return t + tm->tm_gmtoff;
+#elif HAVE_TM___TM_GMT_OFF
+  time_t t = mktime(tm);
+  if (t == (time_t)-1)
+    return t;
+  return t + tm->__tm_gmtoff;
+#elif WIN32
+  return _mkgmtime(tm);
+#else
   char *tz;
 
   tz = (tz = getenv("TZ")) != NULL ? strdup(tz) : NULL;
@@ -1214,18 +1250,6 @@ static time_t my_timegm(struct tm *tm) {
   if (tz != NULL)
     setenv("TZ", tz, 1);
   return t;
-#endif /* !HAVE_TIMEGM */
-}
-static time_t my_mktime(struct tm *tm) {
-  time_t t = mktime(tm);
-  if (t == (time_t)-1)
-    return t;
-#ifdef HAVE_TM_TM_GMT_OFF
-  return t + tm->tm_gmtoff;
-#elif HAVE_TM___TM_GMT_OFF
-  return t + tm->__tm_gmtoff;
-#else
-  return (time_t)-2; /* Not supported */
 #endif
 }
 
@@ -1286,7 +1310,25 @@ static void set_tm_yday(struct tm *tm) {
   tm->tm_yday = yday;
 }
 
-#ifdef HAVE_STRPTIME
+#ifndef HAVE_STRPTIME
+static char *strptime(const char *s, const char *format, struct tm *tm) {
+  if (strcmp(format, "%Y-%m-%dT%H:%M:%SZ"))
+    return NULL;
+
+  int count, end;
+  count = sscanf(s, "%d-%d-%dT%d:%d:%d%n",
+                    &tm->tm_year, &tm->tm_mon, &tm->tm_mday,
+                    &tm->tm_hour, &tm->tm_min, &tm->tm_sec,
+                    &end );
+  if (count == 6 && s[end] == 'Z') {
+    tm->tm_year -= 1900;
+    tm->tm_mon--;
+    return (char*)s + end + 1;
+  }
+  return NULL;
+}
+#endif
+
 static jv f_strptime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING) {
     return ret_error2(a, b, jv_string("strptime/1 requires string inputs and arguments"));
@@ -1298,8 +1340,13 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   tm.tm_yday = 367; // sentinel
   const char *input = jv_string_value(a);
   const char *fmt = jv_string_value(b);
-  const char *end = strptime(input, fmt, &tm);
 
+#ifndef HAVE_STRPTIME
+  if (strcmp(fmt, "%Y-%m-%dT%H:%M:%SZ")) {
+    return ret_error2(a, b, jv_string("strptime/1 only supports ISO 8601 on this platform"));
+  }
+#endif
+  const char *end = strptime(input, fmt, &tm);
   if (end == NULL || (*end != '\0' && !isspace(*end))) {
     return ret_error2(a, b, jv_string_fmt("date \"%s\" does not match format \"%s\"", input, fmt));
   }
@@ -1336,13 +1383,6 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   jv_free(a); // must come after `*end` because `end` is a pointer into `a`'s string
   return r;
 }
-#else
-static jv f_strptime(jq_state *jq, jv a, jv b) {
-  jv_free(a);
-  jv_free(b);
-  return jv_invalid_with_msg(jv_string("strptime/1 not implemented on this platform"));
-}
-#endif
 
 #define TO_TM_FIELD(t, j, i)                    \
     do {                                        \
@@ -1630,7 +1670,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_max, "max", 1},
   {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
   {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
-  {(cfunction_ptr)f_error, "error", 2},
+  {(cfunction_ptr)f_error, "error", 1},
   {(cfunction_ptr)f_format, "format", 2},
   {(cfunction_ptr)f_env, "env", 1},
   {(cfunction_ptr)f_halt, "halt", 1},
@@ -1640,7 +1680,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_get_jq_origin, "get_jq_origin", 1},
   {(cfunction_ptr)f_match, "_match_impl", 4},
   {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
-  {(cfunction_ptr)f_input, "_input", 1},
+  {(cfunction_ptr)f_input, "input", 1},
   {(cfunction_ptr)f_debug, "debug", 1},
   {(cfunction_ptr)f_stderr, "stderr", 1},
   {(cfunction_ptr)f_strptime, "strptime", 2},
@@ -1703,12 +1743,10 @@ static block bind_bytecoded_builtins(block b) {
                                             BLOCK(gen_param("start"), gen_param("end")),
                                             range));
   }
-  return block_bind(builtins, b, OP_IS_CALL_PSEUDO);
+  return BLOCK(builtins, b);
 }
 
-
-
-static const char* const jq_builtins =
+static const char jq_builtins[] =
 /* Include jq-coded builtins */
 #include "src/builtin.inc"
 
@@ -1744,46 +1782,17 @@ static block gen_builtin_list(block builtins) {
   return BLOCK(builtins, gen_function("builtins", gen_noop(), gen_const(list)));
 }
 
-static int builtins_bind_one(jq_state *jq, block* bb, const char* code) {
-  struct locfile* src;
-  src = locfile_init(jq, "<builtin>", code, strlen(code));
-  block funcs;
-  int nerrors = jq_parse_library(src, &funcs);
-  if (nerrors == 0) {
-    *bb = block_bind(funcs, *bb, OP_IS_CALL_PSEUDO);
-  }
-  locfile_free(src);
-  return nerrors;
-}
-
-static int slurp_lib(jq_state *jq, block* bb) {
-  int nerrors = 0;
-  char* home = getenv("HOME");
-  if (home) {    // silently ignore no $HOME
-    jv filename = jv_string_append_str(jv_string(home), "/.jq");
-    jv data = jv_load_file(jv_string_value(filename), 1);
-    if (jv_is_valid(data)) {
-      nerrors = builtins_bind_one(jq, bb, jv_string_value(data) );
-    }
-    jv_free(filename);
-    jv_free(data);
-  }
-  return nerrors;
-}
-
 int builtins_bind(jq_state *jq, block* bb) {
-  block builtins = gen_noop();
-  int nerrors = slurp_lib(jq, bb);
-  if (nerrors) {
-    block_free(*bb);
-    return nerrors;
-  }
-  nerrors = builtins_bind_one(jq, &builtins, jq_builtins);
+  block builtins;
+  struct locfile* src = locfile_init(jq, "<builtin>", jq_builtins, sizeof(jq_builtins)-1);
+  int nerrors = jq_parse_library(src, &builtins);
   assert(!nerrors);
+  locfile_free(src);
+
   builtins = bind_bytecoded_builtins(builtins);
   builtins = gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), builtins);
   builtins = gen_builtin_list(builtins);
-  *bb = block_bind(builtins, *bb, OP_IS_CALL_PSEUDO);
-  *bb = block_drop_unreferenced(*bb);
+
+  *bb = block_bind_referenced(builtins, *bb, OP_IS_CALL_PSEUDO);
   return nerrors;
 }

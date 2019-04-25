@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <math.h>
+#include <float.h>
 
 #include "jv_alloc.h"
 #include "jv.h"
@@ -152,11 +153,11 @@ int jv_is_integer(jv j){
     return 0;
   }
   double x = jv_number_value(j);
-  if(x != x || x > INT_MAX || x < INT_MIN){
-    return 0;
-  }
 
-  return x == (int)x;
+  double ipart;
+  double fpart = modf(x, &ipart);
+
+  return fabs(fpart) < DBL_EPSILON;
 }
 
 /*
@@ -658,10 +659,12 @@ jv jv_string_indexes(jv j, jv k) {
   int idxlen = jv_string_length_bytes(jv_copy(k));
   jv a = jv_array();
 
-  p = jstr;
-  while ((p = _jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
-    a = jv_array_append(a, jv_number(p - jstr));
-    p += idxlen;
+  if (idxlen != 0) {
+    p = jstr;
+    while ((p = _jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
+      a = jv_array_append(a, jv_number(p - jstr));
+      p += idxlen;
+    }
   }
   jv_free(j);
   jv_free(k);
@@ -1342,7 +1345,13 @@ int jv_contains(jv a, jv b) {
   } else if (jv_get_kind(a) == JV_KIND_ARRAY) {
     r = jv_array_contains(jv_copy(a), jv_copy(b));
   } else if (jv_get_kind(a) == JV_KIND_STRING) {
-    r = strstr(jv_string_value(a), jv_string_value(b)) != 0;
+    int b_len = jv_string_length_bytes(jv_copy(b));
+    if (b_len != 0) {
+      r = _jq_memmem(jv_string_value(a), jv_string_length_bytes(jv_copy(a)),
+                     jv_string_value(b), b_len) != 0;
+    } else {
+      r = 1;
+    }
   } else {
     r = jv_equal(jv_copy(a), jv_copy(b));
   }

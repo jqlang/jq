@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 . "${0%/*}/setup" "$@"
 
@@ -76,17 +76,17 @@ fi
 ## Test JSON sequence support
 
 cat > $d/expected <<EOF
-ignoring parse error: Truncated value at line 2, column 5
-ignoring parse error: Truncated value at line 2, column 25
-ignoring parse error: Truncated value at line 2, column 41
+jq: ignoring parse error: Truncated value at line 2, column 5
+jq: ignoring parse error: Truncated value at line 2, column 25
+jq: ignoring parse error: Truncated value at line 2, column 41
 EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"\036false\n'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},false]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
 
 cat > $d/expected <<EOF
-ignoring parse error: Truncated value at line 2, column 5
-ignoring parse error: Truncated value at line 2, column 25
-ignoring parse error: Truncated value at line 3, column 1
+jq: ignoring parse error: Truncated value at line 2, column 5
+jq: ignoring parse error: Truncated value at line 2, column 25
+jq: ignoring parse error: Truncated value at line 3, column 1
 EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
@@ -94,16 +94,22 @@ cmp $d/out $d/expected
 # Note that here jq sees no inputs at all but it still succeeds because
 # --seq ignores parse errors
 cat > $d/expected <<EOF
-ignoring parse error: Unfinished abandoned text at EOF at line 1, column 4
+jq: ignoring parse error: Unfinished abandoned text at EOF at line 1, column 4
 EOF
-printf '"foo' | $JQ -ce --seq . > $d/out 2>&1
+printf '"foo' | $JQ -c --seq . > $d/out 2>&1
+cmp $d/out $d/expected
+
+# with -e option should give 4 here as there's no valid output after
+# ignoring parse errors with --seq.
+printf '"foo' | $JQ -ce --seq . > $d/out 2>&1 || ret=$?
+[ $ret -eq 4 ]
 cmp $d/out $d/expected
 
 # Numeric values truncated by EOF are ignored
 cat > $d/expected <<EOF
-ignoring parse error: Unfinished abandoned text at EOF at line 1, column 1
+jq: ignoring parse error: Unfinished abandoned text at EOF at line 1, column 1
 EOF
-printf '1' | $JQ -ce --seq . > $d/out 2>&1
+printf '1' | $JQ -c --seq . > $d/out 2>&1
 cmp $d/out $d/expected
 
 cat > $d/expected <<EOF
@@ -114,6 +120,21 @@ if printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out; then
   exit 2
 fi
 cmp $d/out $d/expected
+
+
+## Test --exit-status
+data='{"i": 1}\n{"i": 2}\n{"i": 3}\n'
+printf "$data" | $JQ --exit-status 'select(.i==1)' > /dev/null 2>&1
+printf "$data" | $JQ --exit-status 'select(.i==2)' > /dev/null 2>&1
+printf "$data" | $JQ --exit-status 'select(.i==3)' > /dev/null 2>&1
+ret=0
+printf "$data" | $JQ --exit-status 'select(.i==4)' > /dev/null 2>&1 || ret=$?
+[ $ret -eq 4 ]
+ret=0
+printf "$data" | $JQ --exit-status 'select(.i==2) | false' > /dev/null 2>&1 || ret=$?
+[ $ret -eq 1 ]
+printf "$data" | $JQ --exit-status 'select(.i==2) | true' > /dev/null 2>&1
+
 
 # Regression test for #951
 printf '"a\n' > $d/input
@@ -134,7 +155,7 @@ cmp $d/out $d/expected
 
 ## If we add an option to stream to the `import ... as $symbol;` directive
 ## then we can move these tests into tests/all.test.
-$VALGRIND $Q $JQ -c '. as $d|path(..) as $p|$d|getpath($p)|scalars_or_empty|[$p,.]' < "$JQTESTDIR/torture/input0.json" > $d/out0
+$VALGRIND $Q $JQ -c '. as $d|path(..) as $p|$d|getpath($p)|select((type|. != "array" and . != "object") or length==0)|[$p,.]' < "$JQTESTDIR/torture/input0.json" > $d/out0
 $VALGRIND $Q $JQ --stream -c '.|select(length==2)' < "$JQTESTDIR/torture/input0.json" > $d/out1
 diff $d/out0 $d/out1
 
@@ -197,13 +218,18 @@ clean=true
 
 # Check handling of ~/.jq; these can't move into jq_test.c yet because
 # they depend on $HOME
-if [ "$(HOME="$mods" $VALGRIND $Q $JQ -nr fg)" != foobar ]; then
+if [ "$(HOME="$mods/home1" $VALGRIND $Q $JQ -nr fg)" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
 fi
 
-if [ $(HOME="$mods" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l) -gt 3 ]; then
+if [ $(HOME="$mods/home1" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l) -ne 3 ]; then
     echo "Binding too many defs into program" 1>&2
+    exit 1
+fi
+
+if ! HOME="$mods/home2" $VALGRIND $Q $JQ -n 'include "g"; empty'; then
+    echo "Mishanding directory ~/.jq" 1>&2
     exit 1
 fi
 
@@ -247,7 +273,7 @@ if [ -n "$($VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>/dev/null)" ]; then
     echo "jq halt_error(1) had unexpected output on stdout" 1>&2
     exit 1
 fi
-if [ "$($VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>&1)" != xyz ]; then
+if [ "$($VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>&1)" != "jq: error: xyz" ]; then
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
 fi
