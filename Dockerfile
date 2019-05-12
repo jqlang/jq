@@ -1,4 +1,4 @@
-FROM debian:9
+FROM debian:9 as build
 
 ENV DEBIAN_FRONTEND=noninteractive \
     DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -27,7 +27,7 @@ RUN apt-get update && \
         git submodule init && \
         git submodule update && \
         autoreconf -i && \
-        ./configure --disable-valgrind --enable-all-static --prefix=/usr/local && \
+./configure --disable-valgrind --enable-all-static --prefix=/usr/local && \
         make -j8 && \
         make check && \
         make install ) && \
@@ -50,5 +50,8 @@ RUN apt-get update && \
     rm -rf /app/modules/oniguruma/.gitignore && \
     rm -rf /var/lib/apt/lists/* /var/lib/gems
 
-ENTRYPOINT ["/usr/local/bin/jq"]
+FROM scratch
+COPY --from=build /usr/local/bin/jq /bin/jq
+
+ENTRYPOINT ["/bin/jq"]
 CMD []
