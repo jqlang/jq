@@ -27,7 +27,7 @@ RUN apt-get update && \
         git submodule init && \
         git submodule update && \
         autoreconf -i && \
-./configure --disable-valgrind --enable-all-static --prefix=/usr/local && \
+    ./configure --disable-valgrind --enable-all-static --prefix=/usr/local && \
         make -j8 && \
         make check && \
         make install ) && \
