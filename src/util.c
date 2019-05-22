@@ -65,6 +65,33 @@ int open(const char *fname, int mode, ...) {
   return fd;
 }
 
+int stat(const char *fname, struct stat *stat) {
+  wchar_t *wfname = utf8_to_utf16(fname);
+
+  struct _stat wstat;
+  int res = _wstat(wfname, &wstat);
+
+  if(res == -1)
+    memset(stat, 0, sizeof(struct stat));
+  else
+  {
+    stat->st_dev   = wstat.st_dev;
+    stat->st_ino   = wstat.st_ino;
+    stat->st_mode  = wstat.st_mode;
+    stat->st_nlink = wstat.st_nlink;
+    stat->st_uid   = wstat.st_uid;
+    stat->st_gid   = wstat.st_gid;
+    stat->st_rdev  = wstat.st_rdev;
+    stat->st_size  = wstat.st_size;
+    stat->st_atime = wstat.st_atime;
+    stat->st_mtime = wstat.st_mtime;
+    stat->st_ctime = wstat.st_ctime;
+  }
+
+  jv_mem_free(wfname);
+  return res;
+}
+
 FILE *fopen(const char *fname, const char *mode) {
   wchar_t *wfname = utf8_to_utf16(fname);
   wchar_t *wmode = utf8_to_utf16(mode);
