@@ -35,7 +35,9 @@ static int path_is_relative(jv p) {
   const char *s = jv_string_value(p);
 
 #ifdef WIN32
-  int res = PathIsRelativeA(s);
+  wchar_t *ws = utf8_to_utf16(s);
+  int res = PathIsRelativeW(ws);
+  jv_mem_free(ws);
 #else
   int res = *s != '/';
 #endif
