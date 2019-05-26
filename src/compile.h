@@ -60,7 +60,6 @@ block gen_destructure(block var, block matcher, block body);
 block gen_destructure_alt(block matcher);
 
 block gen_cond(block cond, block iftrue, block iffalse);
-block gen_try_handler(block handler);
 block gen_try(block exp, block handler);
 block gen_label(const char *label, block exp);
 
