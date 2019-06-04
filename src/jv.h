@@ -109,7 +109,6 @@ int jv_string_length_bytes(jv);
 int jv_string_length_codepoints(jv);
 unsigned long jv_string_hash(jv);
 const char* jv_string_value(jv);
-jv jv_string_indexes(jv j, jv k);
 jv jv_string_slice(jv j, int start, int end);
 jv jv_string_concat(jv, jv);
 jv jv_string_vfmt(const char*, va_list) JV_VPRINTF_LIKE(1);

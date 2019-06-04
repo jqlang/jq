@@ -1124,10 +1124,6 @@ static jv f_string_explode(jq_state *jq, jv a) {
   return jv_string_explode(a);
 }
 
-static jv f_string_indexes(jq_state *jq, jv a, jv b) {
-  return jv_string_indexes(a, b);
-}
-
 static jv f_string_implode(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY) {
     return ret_error(a, jv_string("implode input must be an array"));
@@ -1643,7 +1639,6 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_string_split, "split", 2},
   {(cfunction_ptr)f_string_explode, "explode", 1},
   {(cfunction_ptr)f_string_implode, "implode", 1},
-  {(cfunction_ptr)f_string_indexes, "_strindices", 2},
   {(cfunction_ptr)f_setpath, "setpath", 3}, // FIXME typechecking
   {(cfunction_ptr)f_getpath, "getpath", 2},
   {(cfunction_ptr)f_delpaths, "delpaths", 2},

@@ -26,7 +26,7 @@ def with_entries(f): to_entries | map(f) | from_entries;
 def reverse: [.[length - 1 - range(0;length)]];
 def indices($i): if type == "array" and ($i|type) == "array" then .[$i]
   elif type == "array" then .[[$i]]
-  elif type == "string" and ($i|type) == "string" then _strindices($i)
+  elif type == "string" and ($i|type) == "string" then explode | .[$i|explode]
   else .[$i] end;
 def index($i):   indices($i) | .[0];       # TODO: optimize
 def rindex($i):  indices($i) | .[-1:][0];  # TODO: optimize
