@@ -618,7 +618,7 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
 
       case JV_KIND_STRING: {
         line = jv_string_append_str(line, "'");
-        line = jv_string_concat(line, escape_string(x, "''\\''\0"));
+        line = jv_string_concat(line, escape_string(x, "''\"'\"'\0"));
         line = jv_string_append_str(line, "'");
         break;
       }
