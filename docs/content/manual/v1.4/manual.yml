@@ -212,8 +212,8 @@ sections:
           JSON object (aka dictionary or hash) as input, it produces
           the value at the key "foo", or null if there's none present.
 
-          If the key contains special characters, you need to surround
-          it with double quotes like this: `."foo$"`.
+          If the key contains special characters or starts with a digit,
+          you need to surround it with double quotes like this: `."foo$"`.
 
           A filter of the form `.foo.bar` is equivalent to `.foo|.bar`.
 
