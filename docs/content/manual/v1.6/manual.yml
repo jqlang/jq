@@ -310,8 +310,9 @@ sections:
           is, keys that are all made of alphanumeric characters and
           underscore, and which do not start with a digit.
 
-          If the key contains special characters, you need to surround
-          it with double quotes like this: `."foo$"`, or else `.["foo$"]`.
+          If the key contains special characters or starts with a digit,
+          you need to surround it with double quotes like this:
+          `."foo$"`, or else `.["foo$"]`.
 
           For example `.["foo::bar"]` and `.["foo.bar"]` work while
           `.foo::bar` does not, and `.foo.bar` means `.["foo"].["bar"]`.
@@ -2512,7 +2513,7 @@ sections:
 
       - title: 'Destructuring Alternative Operator: `?//`'
         body: |
-        
+
           The destructuring alternative operator provides a concise mechanism
           for destructuring an input that can take one of several forms.
 
@@ -2521,10 +2522,10 @@ sections:
           the first event for each resource. The API (having been clumsily
           converted from XML) will only wrap the events in an array if the resource
           has multiple events:
-          
+
               {"resources": [{"id": 1, "kind": "widget", "events": {"action": "create", "user_id": 1, "ts": 13}},
                              {"id": 2, "kind": "widget", "events": [{"action": "create", "user_id": 1, "ts": 14}, {"action": "destroy", "user_id": 1, "ts": 15}]}]}
-          
+
           We can use the destructuring alternative operator to handle this structural change simply:
 
               .resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$user_id, $ts}]} | {$user_id, $kind, $id, $ts}
