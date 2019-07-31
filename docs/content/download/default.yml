@@ -29,7 +29,7 @@ body:
 
        * jq 1.5 is in the official
          [Arch](https://www.archlinux.org/packages/?sort=&q=jq&maintainer=&flagged=)
-         repository.  Install using `sudo pacman -Sy jq`.
+         repository.  Install using `sudo pacman -S jq`.
 
        * jq 1.6 binaries for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64)
