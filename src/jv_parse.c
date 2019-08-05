@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 #include "jv.h"
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
@@ -496,7 +497,12 @@ static pfunc check_literal(struct jv_parser* p) {
     double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
     if (end == 0 || *end != 0)
       return "Invalid numeric literal";
-    TRY(value(p, jv_number(d)));
+    end = 0;
+    errno = 0;
+    int64_t i = strtoll(p->tokenbuf, &end, 10);
+    if (end == 0 || *end != 0 || errno != 0)
+      i = 0;
+    TRY(value(p, jv_number_full(d, i)));
   }
   p->tokenpos = 0;
   return 0;

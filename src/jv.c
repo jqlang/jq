@@ -138,14 +138,27 @@ static void jvp_invalid_free(jv x) {
  * Numbers
  */
 
-jv jv_number(double x) {
-  jv j = {JV_KIND_NUMBER, 0, 0, 0, {.number = x}};
+jv jv_number_full(double x, int64_t y) {
+  jv j = {JV_KIND_NUMBER, 0, 0, 0, {.number.dbl = x, .number.int64 = y}};
   return j;
+}
+
+jv jv_number(double x) {
+  int64_t y = 0;
+  if(x == x && x < INT_MAX && x > INT_MIN && x == (int)x) {
+    y = x;
+  }
+  return jv_number_full(x, y);
 }
 
 double jv_number_value(jv j) {
   assert(jv_get_kind(j) == JV_KIND_NUMBER);
-  return j.u.number;
+  return j.u.number.dbl;
+}
+
+int64_t jv_number_value_int64(jv j) {
+  assert(jv_get_kind(j) == JV_KIND_NUMBER);
+  return j.u.number.int64;
 }
 
 int jv_is_integer(jv j){
