@@ -52,7 +52,6 @@ def join($x): reduce .[] as $i (null;
 def _flatten($x): reduce .[] as $i ([]; if $i | type == "array" and $x != 0 then . + ($i | _flatten($x-1)) else . + [$i] end);
 def flatten($x): if $x < 0 then error("flatten depth must not be negative") else _flatten($x) end;
 def flatten: _flatten(-1);
-def range($x): range(0;$x);
 def fromdateiso8601: strptime("%Y-%m-%dT%H:%M:%SZ")|mktime;
 def todateiso8601: strftime("%Y-%m-%dT%H:%M:%SZ");
 def fromdate: fromdateiso8601;
@@ -151,11 +150,13 @@ def limit($n; exp):
     if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
     elif $n == 0 then empty
     else exp end;
-# range/3, with a `by` expression argument
 def range($init; $upto; $by):
     if $by > 0 then $init|while(. < $upto; . + $by)
   elif $by < 0 then $init|while(. > $upto; . + $by)
   else empty end;
+def range($init; $upto):
+  $init | while(. < $upto; . + 1);
+def range($x): range(0; $x);
 def first(g): label $out | g | ., break $out;
 def isempty(g): first((g|false), true);
 def all(generator; condition): isempty(generator|condition and empty);
