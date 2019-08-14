@@ -23,7 +23,6 @@ def recurse_down: recurse;
 def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];
 def from_entries: map({(.key // .Key // .name // .Name): (if has("value") then .value else .Value end)}) | add | .//={};
 def with_entries(f): to_entries | map(f) | from_entries;
-def reverse: [.[length - 1 - range(0;length)]];
 def indices($i): if type == "array" and ($i|type) == "array" then .[$i]
   elif type == "array" then .[[$i]]
   elif type == "string" and ($i|type) == "string" then _strindices($i)
@@ -157,6 +156,7 @@ def range($init; $upto; $by):
 def range($init; $upto):
   $init | while(. < $upto; . + 1);
 def range($x): range(0; $x);
+def reverse: [.[length - 1 - range(0; length)]];
 def first(g): label $out | g | ., break $out;
 def isempty(g): first((g|false), true);
 def all(generator; condition): isempty(generator|condition and empty);
