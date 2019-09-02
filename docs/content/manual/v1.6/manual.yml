@@ -1422,7 +1422,7 @@ sections:
         body: |
 
           The filter `contains(b)` will produce true if b is
-          completely contained within the input. A string B is
+          completely contained within the input. String B is
           contained in a string A if B is a substring of A. An array B
           is contained in an array A if all elements in B are
           contained in any element in A. An object B is contained in
