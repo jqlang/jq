@@ -50,3 +50,8 @@ tests/*.trs
 cscope.in.out
 cscope.out
 cscope.po.out
+
+snapcraft.yaml
+jq_*.snap
+prime
+setup
