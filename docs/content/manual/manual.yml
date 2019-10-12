@@ -92,6 +92,11 @@ sections:
       best to use double quotes around your jq program when given on the
       command-line (instead of the `-f program-file` option), but then
       double-quotes in the jq program need backslash escaping.
+      
+      Note: when providing positional arguments, any arguments that begin
+      with `-` will be misinterpreted as a flag that may or may not 
+      exist. Adding `--` as an arg instructs the parser to not parse 
+      anything to the right of `--` as a flag.
 
       You can affect how jq reads and writes its input and output
       using some command-line options:
