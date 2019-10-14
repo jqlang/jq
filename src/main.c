@@ -130,6 +130,7 @@ enum {
   RAW_INPUT             = 2,
   PROVIDE_NULL          = 4,
   RAW_OUTPUT            = 8,
+  RAW_NUL               = 16,
   ASCII_OUTPUT          = 32,
   COLOR_OUTPUT          = 64,
   NO_COLOR_OUTPUT       = 128,
@@ -196,6 +197,8 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
     }
     if (!(options & RAW_NO_LF))
       priv_fwrite("\n", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+    if (options & RAW_NUL)
+      priv_fwrite("\0", 1, stdout, dumpopts & JV_PRINT_ISATTY);
     if (options & UNBUFFERED_OUTPUT)
       fflush(stdout);
   }
@@ -392,6 +395,10 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 'j', "join-output", &short_opts)) {
         options |= RAW_OUTPUT | RAW_NO_LF;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], '0', "nul-output", &short_opts)) {
+        options |= RAW_OUTPUT | RAW_NO_LF | RAW_NUL;
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'b', "binary", &short_opts)) {

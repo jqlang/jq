@@ -199,6 +199,11 @@ sections:
 
         Like `-r` but jq won't print a newline after each output.
 
+      * `--nul-output` / `-0`:
+
+        Like `-r` but jq will print NUL instead of newline after each output.
+        This can be useful when the values being output can contain newlines.
+
       * `-f filename` / `--from-file filename`:
 
         Read filter from the file rather than from a command line, like
