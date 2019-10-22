@@ -1,0 +1,843 @@
+.
+"Hello, world!"
+"Hello, world!"
+
+.foo
+{"foo": 42, "bar": "less interesting data"}
+42
+
+.foo
+{"notfoo": true, "alsonotfoo": false}
+null
+
+.["foo"]
+{"foo": 42}
+42
+
+.foo?
+{"foo": 42, "bar": "less interesting data"}
+42
+
+.foo?
+{"notfoo": true, "alsonotfoo": false}
+null
+
+.["foo"]?
+{"foo": 42}
+42
+
+[.foo?]
+[1,2]
+[]
+
+.[0]
+[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
+{"name":"JSON", "good":true}
+
+.[2]
+[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
+null
+
+.[-2]
+[1,2,3]
+2
+
+.[2:4]
+["a","b","c","d","e"]
+["c", "d"]
+
+.[2:4]
+"abcdefghi"
+"cd"
+
+.[:3]
+["a","b","c","d","e"]
+["a", "b", "c"]
+
+.[-2:]
+["a","b","c","d","e"]
+["d", "e"]
+
+.[]
+[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
+{"name":"JSON", "good":true}
+{"name":"XML", "good":false}
+
+.[]
+[]
+
+.[]
+{"a": 1, "b": 1}
+1
+1
+
+.foo, .bar
+{"foo": 42, "bar": "something else", "baz": true}
+42
+"something else"
+
+.user, .projects[]
+{"user":"stedolan", "projects": ["jq", "wikiflow"]}
+"stedolan"
+"jq"
+"wikiflow"
+
+.[4,2]
+["a","b","c","d","e"]
+"e"
+"c"
+
+.[] | .name
+[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
+"JSON"
+"XML"
+
+(. + 2) * 5
+1
+15
+
+[.user, .projects[]]
+{"user":"stedolan", "projects": ["jq", "wikiflow"]}
+["stedolan", "jq", "wikiflow"]
+
+[ .[] | . * 2]
+[1, 2, 3]
+[2, 4, 6]
+
+{user, title: .titles[]}
+{"user":"stedolan","titles":["JQ Primer", "More JQ"]}
+{"user":"stedolan", "title": "JQ Primer"}
+{"user":"stedolan", "title": "More JQ"}
+
+{(.user): .titles}
+{"user":"stedolan","titles":["JQ Primer", "More JQ"]}
+{"stedolan": ["JQ Primer", "More JQ"]}
+
+..|.a?
+[[{"a":1}]]
+1
+
+.a + 1
+{"a": 7}
+8
+
+.a + .b
+{"a": [1,2], "b": [3,4]}
+[1,2,3,4]
+
+.a + null
+{"a": 1}
+1
+
+.a + 1
+{}
+1
+
+{a: 1} + {b: 2} + {c: 3} + {a: 42}
+null
+{"a": 42, "b": 2, "c": 3}
+
+4 - .a
+{"a":3}
+1
+
+. - ["xml", "yaml"]
+["xml", "yaml", "json"]
+["json"]
+
+10 / . * 3
+5
+6
+
+. / ", "
+"a, b,c,d, e"
+["a","b,c,d","e"]
+
+{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}
+null
+{"k": {"a": 0, "b": 2, "c": 3}}
+
+.[] | (1 / .)?
+[1,0,-1]
+1
+-1
+
+.[] | length
+[[1,2], "string", {"a":2}, null]
+2
+6
+1
+0
+
+utf8bytelength
+"\u03bc"
+2
+
+keys
+{"abc": 1, "abcd": 2, "Foo": 3}
+["Foo", "abc", "abcd"]
+
+keys
+[42,3,35]
+[0,1,2]
+
+map(has("foo"))
+[{"foo": 42}, {}]
+[true, false]
+
+map(has(2))
+[[0,1], ["a","b","c"]]
+[false, true]
+
+.[] | in({"foo": 42})
+["foo", "bar"]
+true
+false
+
+map(in([0,1]))
+[2, 0]
+[false, true]
+
+map(.+1)
+[1,2,3]
+[2,3,4]
+
+map_values(.+1)
+{"a": 1, "b": 2, "c": 3}
+{"a": 2, "b": 3, "c": 4}
+
+path(.a[0].b)
+null
+["a",0,"b"]
+
+[path(..)]
+{"a":[{"b":1}]}
+[[],["a"],["a",0],["a",0,"b"]]
+
+del(.foo)
+{"foo": 42, "bar": 9001, "baz": 42}
+{"bar": 9001, "baz": 42}
+
+del(.[1, 2])
+["foo", "bar", "baz"]
+["foo"]
+
+getpath(["a","b"])
+null
+null
+
+[getpath(["a","b"], ["a","c"])]
+{"a":{"b":0, "c":1}}
+[0, 1]
+
+setpath(["a","b"]; 1)
+null
+{"a": {"b": 1}}
+
+setpath(["a","b"]; 1)
+{"a":{"b":0}}
+{"a": {"b": 1}}
+
+setpath([0,"a"]; 1)
+null
+[{"a":1}]
+
+delpaths([["a","b"]])
+{"a":{"b":1},"x":{"y":2}}
+{"a":{},"x":{"y":2}}
+
+to_entries
+{"a": 1, "b": 2}
+[{"key":"a", "value":1}, {"key":"b", "value":2}]
+
+from_entries
+[{"key":"a", "value":1}, {"key":"b", "value":2}]
+{"a": 1, "b": 2}
+
+with_entries(.key |= "KEY_" + .)
+{"a": 1, "b": 2}
+{"KEY_a": 1, "KEY_b": 2}
+
+map(select(. >= 2))
+[1,5,3,0,7]
+[5,3,7]
+
+.[] | select(.id == "second")
+[{"id": "first", "val": 1}, {"id": "second", "val": 2}]
+{"id": "second", "val": 2}
+
+.[]|numbers
+[[],{},1,"foo",null,true,false]
+1
+
+1, empty, 2
+null
+1
+2
+
+[1,2,empty,3]
+null
+[1,2,3]
+
+try error("\($__loc__)") catch .
+null
+"{\"file\":\"<top-level>\",\"line\":1}"
+
+[paths]
+[1,[[],{"a":2}]]
+[[0],[1],[1,0],[1,1],[1,1,"a"]]
+
+[paths(scalars)]
+[1,[[],{"a":2}]]
+[[0],[1,1,"a"]]
+
+add
+["a","b","c"]
+"abc"
+
+add
+[1, 2, 3]
+6
+
+add
+[]
+null
+
+any
+[true, false]
+true
+
+any
+[false, false]
+false
+
+any
+[]
+false
+
+all
+[true, false]
+false
+
+all
+[true, true]
+true
+
+all
+[]
+true
+
+flatten
+[1, [2], [[3]]]
+[1, 2, 3]
+
+flatten(1)
+[1, [2], [[3]]]
+[1, 2, [3]]
+
+flatten
+[[]]
+[]
+
+flatten
+[{"foo": "bar"}, [{"foo": "baz"}]]
+[{"foo": "bar"}, {"foo": "baz"}]
+
+range(2;4)
+null
+2
+3
+
+[range(2;4)]
+null
+[2,3]
+
+[range(4)]
+null
+[0,1,2,3]
+
+[range(0;10;3)]
+null
+[0,3,6,9]
+
+[range(0;10;-1)]
+null
+[]
+
+[range(0;-5;-1)]
+null
+[0,-1,-2,-3,-4]
+
+floor
+3.14159
+3
+
+sqrt
+9
+3
+
+.[] | tonumber
+[1, "1"]
+1
+1
+
+.[] | tostring
+[1, "1", [1]]
+"1"
+"1"
+"[1]"
+
+map(type)
+[0, false, [], {}, null, "hello"]
+["number", "boolean", "array", "object", "null", "string"]
+
+.[] | (infinite * .) < 0
+[-1, 1]
+true
+false
+
+infinite, nan | type
+null
+"number"
+"number"
+
+sort
+[8,3,null,6]
+[null,3,6,8]
+
+sort_by(.foo)
+[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]
+[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]
+
+group_by(.foo)
+[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]
+[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]
+
+min
+[5,4,2,7]
+2
+
+max_by(.foo)
+[{"foo":1, "bar":14}, {"foo":2, "bar":3}]
+{"foo":2, "bar":3}
+
+unique
+[1,2,5,3,5,3,1,3]
+[1,2,3,5]
+
+unique_by(.foo)
+[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]
+[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]
+
+unique_by(length)
+["chunky", "bacon", "kitten", "cicada", "asparagus"]
+["bacon", "chunky", "asparagus"]
+
+reverse
+[1,2,3,4]
+[4,3,2,1]
+
+contains("bar")
+"foobar"
+true
+
+contains(["baz", "bar"])
+["foobar", "foobaz", "blarp"]
+true
+
+contains(["bazzzzz", "bar"])
+["foobar", "foobaz", "blarp"]
+false
+
+contains({foo: 12, bar: [{barp: 12}]})
+{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}
+true
+
+contains({foo: 12, bar: [{barp: 15}]})
+{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}
+false
+
+indices(", ")
+"a,b, cd, efg, hijk"
+[3,7,12]
+
+indices(1)
+[0,1,2,1,3,1,4]
+[1,3,5]
+
+indices([1,2])
+[0,1,2,3,1,4,2,5,1,2,6,7]
+[1,8]
+
+index(", ")
+"a,b, cd, efg, hijk"
+3
+
+rindex(", ")
+"a,b, cd, efg, hijk"
+12
+
+inside("foobar")
+"bar"
+true
+
+inside(["foobar", "foobaz", "blarp"])
+["baz", "bar"]
+true
+
+inside(["foobar", "foobaz", "blarp"])
+["bazzzzz", "bar"]
+false
+
+inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})
+{"foo": 12, "bar": [{"barp": 12}]}
+true
+
+inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})
+{"foo": 12, "bar": [{"barp": 15}]}
+false
+
+[.[]|startswith("foo")]
+["fo", "foo", "barfoo", "foobar", "barfoob"]
+[false, true, false, true, false]
+
+[.[]|endswith("foo")]
+["foobar", "barfoo"]
+[false, true]
+
+combinations
+[[1,2], [3, 4]]
+[1, 3]
+[1, 4]
+[2, 3]
+[2, 4]
+
+combinations(2)
+[0, 1]
+[0, 0]
+[0, 1]
+[1, 0]
+[1, 1]
+
+[.[]|ltrimstr("foo")]
+["fo", "foo", "barfoo", "foobar", "afoo"]
+["fo","","barfoo","bar","afoo"]
+
+[.[]|rtrimstr("foo")]
+["fo", "foo", "barfoo", "foobar", "foob"]
+["fo","","bar","foobar","foob"]
+
+explode
+"foobar"
+[102,111,111,98,97,114]
+
+implode
+[65, 66, 67]
+"ABC"
+
+split(", ")
+"a, b,c,d, e, "
+["a","b,c,d","e",""]
+
+join(", ")
+["a","b,c,d","e"]
+"a, b,c,d, e"
+
+join(" ")
+["a",1,2.3,true,null,false]
+"a 1 2.3 true  false"
+
+[while(.<100; .*2)]
+1
+[1,2,4,8,16,32,64]
+
+[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]
+4
+24
+
+recurse(.foo[])
+{"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}
+{"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}
+{"foo":[]}
+{"foo":[{"foo":[]}]}
+{"foo":[]}
+
+recurse
+{"a":0,"b":[1]}
+{"a":0,"b":[1]}
+0
+[1]
+1
+
+recurse(. * .; . < 20)
+2
+2
+4
+16
+
+walk(if type == "array" then sort else . end)
+[[4, 1, 7], [8, 5, 2], [3, 6, 9]]
+[[1,4,7],[2,5,8],[3,6,9]]
+
+walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . end )
+[ { "_a": { "__b": 2 } } ]
+[{"a":{"b":2}}]
+
+$ENV.PAGER
+null
+"less"
+
+env.PAGER
+null
+"less"
+
+transpose
+[[1], [2,3]]
+[[1,2],[null,3]]
+
+bsearch(0)
+[0,1]
+0
+
+bsearch(0)
+[1,2,3]
+-1
+
+bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
+[1,2,3]
+[1,2,3,4]
+
+"The input was \(.), which is one less than \(.+1)"
+42
+"The input was 42, which is one less than 43"
+
+[.[]|tostring]
+[1, "foo", ["foo"]]
+["1","foo","[\"foo\"]"]
+
+[.[]|tojson]
+[1, "foo", ["foo"]]
+["1","\"foo\"","[\"foo\"]"]
+
+[.[]|tojson|fromjson]
+[1, "foo", ["foo"]]
+[1,"foo",["foo"]]
+
+@html
+"This works if x < y"
+"This works if x &lt; y"
+
+@sh "echo \(.)"
+"O'Hara's Ale"
+"echo 'O'\\''Hara'\\''s Ale'"
+
+@base64
+"This is a message"
+"VGhpcyBpcyBhIG1lc3NhZ2U="
+
+@base64d
+"VGhpcyBpcyBhIG1lc3NhZ2U="
+"This is a message"
+
+fromdate
+"2015-03-05T23:51:47Z"
+1425599507
+
+strptime("%Y-%m-%dT%H:%M:%SZ")
+"2015-03-05T23:51:47Z"
+[2015,2,5,23,51,47,4,63]
+
+strptime("%Y-%m-%dT%H:%M:%SZ")|mktime
+"2015-03-05T23:51:47Z"
+1425599507
+
+.[] == 1
+[1, 1.0, "1", "banana"]
+true
+true
+false
+false
+
+if . == 0 then "zero" elif . == 1 then "one" else "many" end
+2
+"many"
+
+. < 5
+2
+true
+
+42 and "a string"
+null
+true
+
+(true, false) or false
+null
+true
+false
+
+(true, true) and (true, false)
+null
+true
+false
+true
+false
+
+[true, false | not]
+null
+[false, true]
+
+.foo // 42
+{"foo": 19}
+19
+
+.foo // 42
+{}
+42
+
+try .a catch ". is not an object"
+true
+". is not an object"
+
+[.[]|try .a]
+[{}, true, {"a":1}]
+[null, 1]
+
+try error("some exception") catch .
+true
+"some exception"
+
+[.[]|(.a)?]
+[{}, true, {"a":1}]
+[null, 1]
+
+test("foo")
+"foo"
+true
+
+.[] | test("a b c # spaces are ignored"; "ix")
+["xabcd", "ABC"]
+true
+true
+
+match("(abc)+"; "g")
+"abc abc"
+{"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}
+{"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
+
+match("foo")
+"foo bar foo"
+{"offset": 0, "length": 3, "string": "foo", "captures": []}
+
+match(["foo", "ig"])
+"foo bar FOO"
+{"offset": 0, "length": 3, "string": "foo", "captures": []}
+{"offset": 8, "length": 3, "string": "FOO", "captures": []}
+
+match("foo (?<bar123>bar)? foo"; "ig")
+"foo bar foo foo  foo"
+{"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}
+{"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}
+
+[ match("."; "g")] | length
+"abc"
+3
+
+capture("(?<a>[a-z]+)-(?<n>[0-9]+)")
+"xyzzy-14"
+{ "a": "xyzzy", "n": "14" }
+
+.bar as $x | .foo | . + $x
+{"foo":10, "bar":200}
+210
+
+. as $i|[(.*2|. as $i| $i), $i]
+5
+[10,5]
+
+. as [$a, $b, {c: $c}] | $a + $b + $c
+[2, 3, {"c": 4, "d": 5}]
+9
+
+.[] as [$a, $b] | {a: $a, b: $b}
+[[0], [0, 1], [2, 1, 0]]
+{"a":0,"b":null}
+{"a":0,"b":1}
+{"a":2,"b":1}
+
+.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}
+[{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
+{"a":1,"b":2,"d":3,"e":4}
+{"a":1,"b":2,"d":3,"e":4}
+
+.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}
+[{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
+{"a":1,"b":2,"d":3,"e":null}
+{"a":1,"b":2,"d":null,"e":4}
+
+.[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end
+[[3]]
+{"a":null,"b":3}
+
+def addvalue(f): . + [f]; map(addvalue(.[0]))
+[[1,2],[10,20]]
+[[1,2,1], [10,20,10]]
+
+def addvalue(f): f as $x | map(. + $x); addvalue(.[0])
+[[1,2],[10,20]]
+[[1,2,1,2], [10,20,1,2]]
+
+reduce .[] as $item (0; . + $item)
+[10,2,5,3]
+20
+
+isempty(empty)
+null
+true
+
+[limit(3;.[])]
+[0,1,2,3,4,5,6,7,8,9]
+[0,1,2]
+
+[first(range(.)), last(range(.)), nth(./2; range(.))]
+10
+[0,9,5]
+
+[range(.)]|[first, last, nth(5)]
+10
+[0,9,5]
+
+[foreach .[] as $item ([[],[]]; if $item == null then [[],.[0]] else [(.[0] + [$item]),[]] end; if $item == null then .[1] else empty end)]
+[1,2,3,4,null,"a","b",null]
+[[1,2,3,4],["a","b"]]
+
+def range(init; upto; by): def _range: if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto)); range(0; 10; 3)
+null
+0
+3
+6
+9
+
+def while(cond; update): def _while: if cond then ., (update | _while) else empty end; _while; [while(.<100; .*2)]
+1
+[1,2,4,8,16,32,64]
+
+[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]
+1
+[[[0],2],[[0]]]
+
+fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))
+null
+[2]
+
+. as $dot|fromstream($dot|tostream)|.==$dot
+[0,[1,{"a":1},{"b":2}]]
+true
+
+(..|select(type=="boolean")) |= if . then 1 else 0 end
+[true,false,[5,true,[true,[false]],false]]
+[1,0,[5,1,[1,[0]],0]]
+
+.foo += 1
+{"foo": 42}
+{"foo": 43}
+
