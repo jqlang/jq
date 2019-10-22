@@ -130,27 +130,46 @@ endif
 
 ### Tests (make check)
 
-if ENABLE_DOCS
 TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
-else
-TESTS = tests/optionaltest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
-endif
 TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
+# This is a magic make variable that causes it to treat tests/man.test as a
+# DATA-type dependency for the check target. As a result, it will attempt to
+# run any defined targets for tests/man.test as a dependency for check. This
+# allows us to ensure that the tests are up-to-date if the manual has been updated
+check_DATA = tests/man.test
+
+### Building the man tests
+
+# We use the examples in the manual as additional tests, to ensure they always work.
+# As a result, we need to rebuild the tests if the manual has been updated.
+# Making changes to the manpage without having the python deps means your
+# tests won't run. If you aren't making changes to the examples, you probably
+# don't care. But if you are, then you need to run the tests anyway.
+tests/man.test: $(srcdir)/docs/content/manual/manual.yml
+if ENABLE_DOCS
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_mantests.py ) > $@
+else
+	@echo Changes to the manual.yml require docs to be enabled to run the tests
+	@false
+endif
 
 ### Building the manpage
 
+# We build the docs from the manpage yml. If no changes have been made to the
+# manpage, then we'll end up using the cached version. Otherwise, we need to
+# rebuild it.
 man_MANS = jq.1
+jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-jq.1: $(srcdir)/docs/content/manual/manual.yml
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; pipenv run python build_manpage.py ) > $@ || { rm -f $@; false; }
-jq.1.prebuilt: jq.1
-	$(AM_V_GEN) cp jq.1 $@ || { rm -f $@; false; }
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_manpage.py ) > $@ || { rm -f $@; false; }
 else
-jq.1: $(srcdir)/jq.1.prebuilt
-	$(AM_V_GEN) cp $(srcdir)/jq.1.prebuilt $@
+	@echo Changes to the manual.yml require docs to be enabled to generate an updated manpage
+	@echo As a result, your manpage is out of date.
 endif
 
+jq.1: jq.1.prebuilt
+	$(AM_V_GEN) cp jq.1.prebuilt $@
 
 ### Build oniguruma
 

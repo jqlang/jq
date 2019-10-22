@@ -77,7 +77,7 @@ AC_ARG_ENABLE([gcov],
 
 dnl Don't attempt to build docs if python deps aren't installed
 AC_ARG_ENABLE([docs],
-   AC_HELP_STRING([--disable-docs], [don't build docs]))
+   AC_HELP_STRING([--disable-docs], [don't build docs]), [], [enable_docs=yes])
 
 dnl Don't attempt to build the error injection object (if there is no LD_PRELOAD support)
 AC_ARG_ENABLE([error-injection],
@@ -87,28 +87,29 @@ dnl Enable building all static
 AC_ARG_ENABLE([all-static],
    AC_HELP_STRING([--enable-all-static], [link jq with static libraries only]))
 
-AS_IF([test "x$enable_docs" = "xyes"],[
-   AC_CHECK_PROGS(pipenv_cmd, pipenv)
+dnl find pipenv
+AC_ARG_VAR([PIPENV], [pipenv command])
+AC_CHECK_PROGS([PIPENV], pipenv)
 
-   AC_CACHE_CHECK([for Python dependencies], [jq_cv_python_deps],
-     [jq_cv_python_deps=yes;
-        AS_IF([test "x$pipenv_cmd" = "x" || \
-        ! bmsg="`cd ${srcdir}/docs; LC_ALL=$LANG "$pipenv_cmd" check`"],[
-           AC_MSG_ERROR([$bmsg])
-           cat <<EOF
+AS_IF([test "x$enable_docs" != "xno"],[
+   AC_CACHE_CHECK([for Python dependencies], [jq_cv_python_deps],[
+      jq_cv_python_deps=yes
+      AS_IF([test "x$PIPENV" = "x" || \
+      ! bmsg="`cd ${srcdir}/docs; LC_ALL=$LANG "$PIPENV" --venv`"],[
+         jq_cv_python_deps=no
+      ])
+   ])
+
+   AS_IF([test "x$jq_cv_python_deps" != "xyes"], [
+      AC_MSG_WARN([Error checking python dependencies: $bmsg
 *****************************************************************
 *  Python dependencies for building jq documentation not found. *
 *  You can still build, install and hack on jq, but the manpage *
-*  will not be rebuilt and some of the tests will not run.      *
+*  will not be rebuilt and new manpage tests will not be run.   *
 *  See docs/README.md for how to install the docs dependencies. *
-*****************************************************************
-EOF
-           jq_cv_python_deps=no
-     ])])
-
-   if test "x$jq_cv_python_deps" != "xyes"; then
-     enable_docs=no
-   fi
+*****************************************************************])
+      enable_docs=no
+   ])
 ])
 
 dnl Disable decNumber support
