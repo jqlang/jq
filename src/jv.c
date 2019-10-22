@@ -291,8 +291,9 @@ static decNumber* jvp_dec_number_ptr(jv j) {
 
 static jvp_literal_number* jvp_literal_number_alloc(unsigned literal_length) {
 
-  /* The number of units needed is ceil(DECNUMDIGITS/DECDPUN)         */
-  int units = ((literal_length+DECDPUN-1)/DECDPUN);
+  // The number of units needed is ceil(DECNUMDIGITS/DECDPUN)
+  // We already have one in the decNumber, so we subtract one from that
+  int units = ((literal_length+DECDPUN-1)/DECDPUN)-1;
 
   jvp_literal_number* n = jv_mem_alloc(
     sizeof(jvp_literal_number)
@@ -314,6 +315,7 @@ static jv jvp_literal_number_new(const char * literal) {
 
   if (ctx->status & DEC_Conversion_syntax) {
     jv_mem_free(n);
+    decContextClearStatus(ctx, DEC_Conversion_syntax);
     return JV_INVALID;
   }
 
@@ -482,6 +484,33 @@ int jvp_number_cmp(jv a, jv b) {
       return 1;
     }
   }
+}
+
+jv jv_number_add(jv a, jv b) {
+  if (jvp_number_is_literal(a) && jvp_number_is_literal(b)) {
+    decNumber *da = jvp_dec_number_ptr(a);
+    decNumber *db = jvp_dec_number_ptr(b);
+    unsigned digits = MAX(da->digits, db->digits) + 1;
+    jvp_literal_number *nlit = jvp_literal_number_alloc(digits);
+
+    nlit->refcnt = JV_REFCNT_INIT;
+    nlit->literal_data = NULL;
+    decContext *ctx = DEC_CONTEXT();
+    nlit->num_double = NAN;
+    decNumberAdd(&nlit->num_decimal, da, db, ctx);
+    // TODO: Check context for error?
+
+    jv_free(a);
+    jv_free(b);
+
+    jv r = {JVP_FLAGS_NUMBER_LITERAL, 0, 0, JV_NUMBER_SIZE_INIT, {&nlit->refcnt}};
+    return r;
+  }
+
+  jv r = jv_number(jv_number_value(a) + jv_number_value(b));
+  jv_free(a);
+  jv_free(b);
+  return r;
 }
 
 /*

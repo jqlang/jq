@@ -1698,8 +1698,13 @@ map(. == 1)
 null
 false
 
+# Applying addition to the value will not truncate the result to double
 
-# Applying arithmetic to the value will truncate the result to double
+. + 1
+418502930602131457
+418502930602131458
+
+# Applying other arithmetic to the value will truncate the result to double
 
 . - 10
 13911860366432393
