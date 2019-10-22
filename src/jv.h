@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define JV_STRINGIFY(x) #x
+#define JV_TOSTRING(x) JV_STRINGIFY(x)
+
 typedef enum {
   JV_KIND_INVALID,
   JV_KIND_NULL,
@@ -207,12 +210,16 @@ enum jv_print_flags {
   JV_PRINT_REFCOUNT = 32,
   JV_PRINT_TAB      = 64,
   JV_PRINT_ISATTY   = 128,
+  // JV_PRINT_SPACE* stores the indentation level (3-bit number)
   JV_PRINT_SPACE0   = 256,
   JV_PRINT_SPACE1   = 512,
   JV_PRINT_SPACE2   = 1024,
 };
+// position of JV_PRINT_SPACE0 in the enum
+#define JV_PRINT_INDENT_OFFSET 8
+#define JV_PRINT_INDENT_MAX 7
 #define JV_PRINT_INDENT_FLAGS(n) \
-    ((n) < 0 || (n) > 7 ? JV_PRINT_TAB | JV_PRINT_PRETTY : (n) == 0 ? 0 : (n) << 8 | JV_PRINT_PRETTY)
+    ((n) < 0 || (n) > JV_PRINT_INDENT_MAX ? JV_PRINT_TAB | JV_PRINT_PRETTY : (n) == 0 ? 0 : (n) << JV_PRINT_INDENT_OFFSET | JV_PRINT_PRETTY)
 void jv_dumpf(jv, FILE *f, int flags);
 void jv_dump(jv, int flags);
 void jv_show(jv, int flags);

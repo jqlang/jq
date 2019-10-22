@@ -109,7 +109,7 @@ static void put_indent(int n, int flags, FILE* fout, jv* strout, int T) {
     while (n--)
       put_char('\t', fout, strout, T);
   } else {
-    n *= ((flags & (JV_PRINT_SPACE0 | JV_PRINT_SPACE1 | JV_PRINT_SPACE2)) >> 8);
+    n *= ((flags & (JV_PRINT_SPACE0 | JV_PRINT_SPACE1 | JV_PRINT_SPACE2)) >> JV_PRINT_INDENT_OFFSET);
     while (n--)
       put_char(' ', fout, strout, T);
   }

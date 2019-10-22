@@ -358,7 +358,7 @@ int main(int argc, char* argv[]) {
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'c', "compact-output", &short_opts)) {
-        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(7));
+        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(JV_PRINT_INDENT_MAX));
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'C', "color-output", &short_opts)) {
@@ -412,7 +412,7 @@ int main(int argc, char* argv[]) {
 #endif
       }
       if (isoption(argv[i], 0, "tab", &short_opts)) {
-        dumpopts &= ~JV_PRINT_INDENT_FLAGS(7);
+        dumpopts &= ~JV_PRINT_INDENT_FLAGS(JV_PRINT_INDENT_MAX);
         dumpopts |= JV_PRINT_TAB | JV_PRINT_PRETTY;
         continue;
       }
@@ -421,10 +421,11 @@ int main(int argc, char* argv[]) {
           fprintf(stderr, "%s: --indent takes one parameter\n", progname);
           die();
         }
-        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(7));
+        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(JV_PRINT_INDENT_MAX));
         int indent = atoi(argv[i+1]);
-        if (indent < -1 || indent > 7) {
-          fprintf(stderr, "%s: --indent takes a number between -1 and 7\n", progname);
+        if (indent < -1 || indent > JV_PRINT_INDENT_MAX) {
+          fprintf(stderr,
+                  "%s: --indent takes a number between -1 and " JV_TOSTRING(JV_PRINT_INDENT_MAX) "\n", progname);
           die();
         }
         dumpopts |= JV_PRINT_INDENT_FLAGS(indent);
