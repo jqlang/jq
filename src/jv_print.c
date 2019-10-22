@@ -115,6 +115,8 @@ static void put_indent(int n, int flags, FILE* fout, jv* strout, int T) {
   }
 }
 
+static const jv_kind raw_kind = JV_KIND_STRING;
+
 static void jvp_dump_char(int c, const char* cstart, const char* cend,
     int ascii_only, char buf[static 32], FILE* F, jv* S, int T) {
   // sizeof(buf) cannot be used, despite the size expression & guarantees
@@ -179,16 +181,22 @@ static void jvp_dump_string(jv str, int flags, FILE* F, jv* S) {
   const int ascii_only = flags & JV_PRINT_ASCII;
   const int T = flags & JV_PRINT_ISATTY;
   const char* i = jv_string_value(str);
-  const char* end = i + jv_string_length_bytes(jv_copy(str));
-  const char* cstart;
-  int c = 0;
-  char buf[32];
-  put_char('"', F, S, T);
-  while ((i = jvp_utf8_next((cstart = i), end, &c))) {
-    jvp_dump_char(c, cstart, i, ascii_only, buf, F, S, T);
+  const int len = jv_string_length_bytes(jv_copy(str));
+
+  if ((flags & JV_PRINT_RAW) && !ascii_only) {
+    put_buf(i, len, F, S, T);
+  } else {
+    const char* end = i + len;
+    const char* cstart;
+    int c = 0;
+    char buf[32];
+    put_char('"', F, S, T);
+    while ((i = jvp_utf8_next((cstart = i), end, &c))) {
+      jvp_dump_char(c, cstart, i, ascii_only, buf, F, S, T);
+    }
+    assert(c != -1);
+    put_char('"', F, S, T);
   }
-  assert(c != -1);
-  put_char('"', F, S, T);
 }
 
 static void put_refcnt(struct dtoa_context* C, int refcnt, FILE *F, jv* S, int T){
@@ -203,9 +211,14 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   char buf[JVP_DTOA_FMT_MAX_LEN];
   const char* color = 0;
   double refcnt = (flags & JV_PRINT_REFCOUNT) ? jv_get_refcnt(x) - 1 : -1;
+  const jv_kind kind = jv_get_kind(x);
+  if (!(flags & JV_PRINT_RAWCOLOR) && (flags & JV_PRINT_RAW) &&
+      kind == raw_kind) {
+    flags &= ~JV_PRINT_COLOR;
+  }
   if (flags & JV_PRINT_COLOR) {
     for (unsigned i=0; i<sizeof(color_kinds)/sizeof(color_kinds[0]); i++) {
-      if (jv_get_kind(x) == color_kinds[i]) {
+      if (kind == color_kinds[i]) {
         color = colors[i];
         put_str(color, F, S, flags & JV_PRINT_ISATTY);
         break;
@@ -214,7 +227,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   }
   if (indent > MAX_PRINT_DEPTH) {
     put_str("<skipped: too deep>", F, S, flags & JV_PRINT_ISATTY);
-  } else switch (jv_get_kind(x)) {
+  } else switch (kind) {
   default:
   case JV_KIND_INVALID:
     if (flags & JV_PRINT_INVALID) {
@@ -289,7 +302,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
           put_str(",", F, S, flags & JV_PRINT_ISATTY);
         }
       }
-      jv_dump_term(C, elem, flags, indent + 1, F, S);
+      jv_dump_term(C, elem, flags & ~JV_PRINT_RAW, indent + 1, F, S);
       if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     }
     if (flags & JV_PRINT_PRETTY) {
@@ -353,7 +366,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
 
       first = 0;
       if (color) put_str(FIELD_COLOR, F, S, flags & JV_PRINT_ISATTY);
-      jvp_dump_string(key, flags, F, S);
+      jvp_dump_string(key, flags & ~JV_PRINT_RAW, F, S);
       jv_free(key);
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
@@ -361,7 +374,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       put_str((flags & JV_PRINT_PRETTY) ? ": " : ":", F, S, flags & JV_PRINT_ISATTY);
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
-      jv_dump_term(C, value, flags, indent + 1, F, S);
+      jv_dump_term(C, value, flags & ~JV_PRINT_RAW, indent + 1, F, S);
       if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     }
     if (flags & JV_PRINT_PRETTY) {

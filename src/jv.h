@@ -214,6 +214,8 @@ enum jv_print_flags {
   JV_PRINT_SPACE0   = 256,
   JV_PRINT_SPACE1   = 512,
   JV_PRINT_SPACE2   = 1024,
+  JV_PRINT_RAW      = 2048,
+  JV_PRINT_RAWCOLOR = 4096,
 };
 // position of JV_PRINT_SPACE0 in the enum
 #define JV_PRINT_INDENT_OFFSET 8
