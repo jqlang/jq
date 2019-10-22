@@ -115,8 +115,10 @@ static void put_indent(int n, int flags, FILE* fout, jv* strout, int T) {
   }
 }
 
-static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
+
+static void jvp_dump_string(jv str, int flags, FILE* F, jv* S) {
   assert(jv_get_kind(str) == JV_KIND_STRING);
+  const int T = flags & JV_PRINT_ISATTY;
   const char* i = jv_string_value(str);
   const char* end = i + jv_string_length_bytes(jv_copy(str));
   const char* cstart;
@@ -160,7 +162,7 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
         break;
       }
     } else {
-      if (ascii_only) {
+      if (flags & JV_PRINT_ASCII) {
         unicode_escape = 1;
       } else {
         put_buf(cstart, i - cstart, F, S, T);
@@ -212,7 +214,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       jv msg = jv_invalid_get_msg(jv_copy(x));
       if (jv_get_kind(msg) == JV_KIND_STRING) {
         put_str("<invalid:", F, S, flags & JV_PRINT_ISATTY);
-        jvp_dump_string(msg, flags | JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+        jvp_dump_string(msg, flags | JV_PRINT_ASCII, F, S);
         put_str(">", F, S, flags & JV_PRINT_ISATTY);
       } else {
         put_str("<invalid>", F, S, flags & JV_PRINT_ISATTY);
@@ -257,7 +259,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     break;
   }
   case JV_KIND_STRING:
-    jvp_dump_string(x, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+    jvp_dump_string(x, flags, F, S);
     if (flags & JV_PRINT_REFCOUNT)
       put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
     break;
@@ -344,7 +346,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
 
       first = 0;
       if (color) put_str(FIELD_COLOR, F, S, flags & JV_PRINT_ISATTY);
-      jvp_dump_string(key, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+      jvp_dump_string(key, flags, F, S);
       jv_free(key);
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
