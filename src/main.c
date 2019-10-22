@@ -240,6 +240,11 @@ static void debug_cb(void *data, jv input) {
   fprintf(stderr, "\n");
 }
 
+static void stderr_cb(void *data, jv input) {
+  int dumpopts = *(int *)data;
+  jv_dumpf(input, stderr, (dumpopts & ~JV_PRINT_PRETTY) | JV_PRINT_RAW);
+}
+
 #ifdef WIN32
 int umain(int argc, char* argv[]);
 
@@ -655,6 +660,9 @@ int main(int argc, char* argv[]) {
 
   // Let jq program call `debug` builtin and have that go somewhere
   jq_set_debug_cb(jq, debug_cb, &dumpopts);
+
+  // Let jq program call `stderr` builtin and have that go somewhere
+  jq_set_stderr_cb(jq, stderr_cb, &dumpopts);
 
   if (nfiles == 0)
     jq_util_input_add_input(input_state, "-");
