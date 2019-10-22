@@ -230,28 +230,24 @@ static decContext* tsd_dec_ctx_get(pthread_key_t *key) {
     return ctx;
   }
 
-  decContext _ctx = {
-      0,
-      DEC_MAX_EMAX,
-      DEC_MIN_EMAX,
-      DEC_ROUND_HALF_UP,
-      0, /*no errors*/
-      0, /*status*/
-      0, /*no clamping*/
-    };
-  if (key == &dec_ctx_key) {
-    _ctx.digits = DEC_MAX_DIGITS;
-  } else if (key == &dec_ctx_dbl_key) {
-    _ctx.digits = BIN64_DEC_PRECISION;
+  ctx = malloc(sizeof(decContext));
+  if (!ctx) {
+    return ctx;
   }
 
-  ctx = malloc(sizeof(decContext));
-  if (ctx) {
-    *ctx = _ctx;
-    if (pthread_setspecific(*key, ctx) != 0) {
-      fprintf(stderr, "error: cannot store thread specific data");
-      abort();
-    }
+  // Initialize the context, clear any traps
+  decContextDefault(ctx, DEC_INIT_BASE);
+  ctx->traps = 0;
+
+  if (key == &dec_ctx_key) {
+    ctx->digits = DEC_MAX_DIGITS;
+  } else if (key == &dec_ctx_dbl_key) {
+    ctx->digits = BIN64_DEC_PRECISION;
+  }
+
+  if (pthread_setspecific(*key, ctx) != 0) {
+    fprintf(stderr, "error: cannot store thread specific data");
+    abort();
   }
   return ctx;
 }
