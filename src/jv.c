@@ -487,12 +487,13 @@ jv jv_number_add(jv a, jv b) {
     decNumber *da = jvp_dec_number_ptr(a);
     decNumber *db = jvp_dec_number_ptr(b);
     unsigned digits = MAX(da->digits, db->digits) + 1;
-    jvp_literal_number *nlit = jvp_literal_number_alloc(digits);
 
+    jvp_literal_number *nlit = jvp_literal_number_alloc(digits);
     nlit->refcnt = JV_REFCNT_INIT;
     nlit->literal_data = NULL;
-    decContext *ctx = DEC_CONTEXT();
     nlit->num_double = NAN;
+
+    decContext *ctx = DEC_CONTEXT();
     decNumberAdd(&nlit->num_decimal, da, db, ctx);
     // TODO: Check context for error?
 
