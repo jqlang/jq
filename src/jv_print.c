@@ -118,14 +118,19 @@ static void put_indent(int n, int flags, FILE* fout, jv* strout, int T) {
 static const jv_kind raw_kind = JV_KIND_STRING;
 
 static void jvp_dump_char(int c, const char* cstart, const char* cend,
-    int ascii_only, char buf[static 32], FILE* F, jv* S, int T) {
+    int raw, int ascii_only, char buf[static 32], FILE* F, jv* S, int T) {
   // sizeof(buf) cannot be used, despite the size expression & guarantees
   const int bufsize = 32;
   assert(c != -1);
   int unicode_escape = 0;
-  if (0x20 <= c && c <= 0x7E) {
+  if (raw && c <= 0x7F) {
+    if (c == '\\') {
+      put_char('\\', F, S, T);
+    }
+    put_char(c, F, S, T);
+  } else if (0x20 <= c && c <= 0x7E) {
     // printable ASCII
-    if (c == '"' || c == '\\') {
+    if (c == '\\' || c == '"') {
       put_char('\\', F, S, T);
     }
     put_char(c, F, S, T);
@@ -179,23 +184,28 @@ static void jvp_dump_char(int c, const char* cstart, const char* cend,
 static void jvp_dump_string(jv str, int flags, FILE* F, jv* S) {
   assert(jv_get_kind(str) == JV_KIND_STRING);
   const int ascii_only = flags & JV_PRINT_ASCII;
+  const int raw = flags & JV_PRINT_RAW;
   const int T = flags & JV_PRINT_ISATTY;
   const char* i = jv_string_value(str);
   const int len = jv_string_length_bytes(jv_copy(str));
 
-  if ((flags & JV_PRINT_RAW) && !ascii_only) {
+  if (raw && !ascii_only) {
     put_buf(i, len, F, S, T);
   } else {
     const char* end = i + len;
     const char* cstart;
     int c = 0;
     char buf[32];
-    put_char('"', F, S, T);
+    if (!raw) {
+      put_char('"', F, S, T);
+    }
     while ((i = jvp_utf8_next((cstart = i), end, &c))) {
-      jvp_dump_char(c, cstart, i, ascii_only, buf, F, S, T);
+      jvp_dump_char(c, cstart, i, raw, ascii_only, buf, F, S, T);
     }
     assert(c != -1);
-    put_char('"', F, S, T);
+    if (!raw) {
+      put_char('"', F, S, T);
+    }
   }
 }
 
