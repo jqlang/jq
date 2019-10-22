@@ -28,11 +28,12 @@ jobs:
 
             before_install:
                 - uname -s
+                - pyenv install -s 3.6.7
                 - rm src/{lexer,parser}.{c,h}
                 - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
 
             install:
-                - pyenv global 3.6
+                - pyenv global 3.6.7
                 - pip3 install pipenv
                 - pushd docs && pipenv sync && popd
                 - wget http://ftp.debian.org/debian/pool/main/b/bison/bison_3.0.2.dfsg-2_amd64.deb
@@ -105,10 +106,13 @@ jobs:
                 - uname -s
                 - brew update
                 - brew install flex bison
+                - brew upgrade pyenv
+                - pyenv install -s 3.6.7
                 - rm src/{lexer,parser}.{c,h}
                 - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
 
             install:
+                - pyenv global 3.6.7
                 - pip3 install pipenv
                 - pushd docs && pipenv sync && popd
                 - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
