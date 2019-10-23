@@ -225,7 +225,7 @@ static block constant_fold(block a, block b, int op) {
     int cmp = jv_cmp(jv_a, jv_b);
 
     switch (op) {
-    case '+': res = jv_number(na + nb); break;
+    case '+': res = jv_number_add(jv_copy(jv_a), jv_copy(jv_b)); break;
     case '-': res = jv_number(na - nb); break;
     case '*': res = jv_number(na * nb); break;
     case '/': res = jv_number(na / nb); break;

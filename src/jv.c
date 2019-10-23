@@ -486,8 +486,9 @@ jv jv_number_add(jv a, jv b) {
   if (jvp_number_is_literal(a) && jvp_number_is_literal(b)) {
     decNumber *da = jvp_dec_number_ptr(a);
     decNumber *db = jvp_dec_number_ptr(b);
-    unsigned digits = MAX(da->digits, db->digits) + 1;
 
+    unsigned digits = MAX(da->digits+da->exponent, db->digits+db->exponent) -
+                      MIN(da->exponent, db->exponent) + 1;
     jvp_literal_number *nlit = jvp_literal_number_alloc(digits);
     nlit->refcnt = JV_REFCNT_INIT;
     nlit->literal_data = NULL;
@@ -495,6 +496,7 @@ jv jv_number_add(jv a, jv b) {
 
     decContext *ctx = DEC_CONTEXT();
     decNumberAdd(&nlit->num_decimal, da, db, ctx);
+    decNumberReduce(&nlit->num_decimal, &nlit->num_decimal, ctx);
     // TODO: Check context for error?
 
     jv_free(a);
