@@ -496,7 +496,7 @@ jv jv_number_add(jv a, jv b) {
 
     decContext *ctx = DEC_CONTEXT();
     decNumberAdd(&nlit->num_decimal, da, db, ctx);
-    decNumberReduce(&nlit->num_decimal, &nlit->num_decimal, ctx);
+    decNumberTrim(&nlit->num_decimal);
     // TODO: Check context for error?
 
     jv_free(a);

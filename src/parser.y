@@ -222,7 +222,10 @@ static block constant_fold(block a, block b, int op) {
     double na = jv_number_value(jv_a);
     double nb = jv_number_value(jv_b);
 
-    int cmp = jv_cmp(jv_a, jv_b);
+    // Once we implement the rest of the arithmetic operations, all of these
+    // copy/frees can be optimized away, if we move the call to jv_cmp inside
+    // the switch cases. We'd just need to move the final frees into the default
+    int cmp = jv_cmp(jv_copy(jv_a), jv_copy(jv_b));
 
     switch (op) {
     case '+': res = jv_number_add(jv_copy(jv_a), jv_copy(jv_b)); break;
@@ -237,6 +240,8 @@ static block constant_fold(block a, block b, int op) {
     case GREATEREQ: res = (cmp >= 0 ? jv_true() : jv_false()); break;
     default: break;
     }
+    jv_free(jv_a);
+    jv_free(jv_b);
   } else if (op == '+' && block_const_kind(a) == JV_KIND_STRING) {
     res = jv_string_concat(block_const(a),  block_const(b));
   } else {
