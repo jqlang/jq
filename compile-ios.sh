@@ -1,102 +1,106 @@
-#!/bin/bash
+-#!/usr/bin/env bash
+# Mac C. compile-ios.sh for JQ.
 
-# old values
-OLD_CFLAGS=$CFLAGS
-OLD_LDFLAGS=$LDFLAGS
-ORIG_PWD=`pwd`
+# Defaults
+set -e
+oniguruma='6.9.3'
 
-# For parallelism in make
-NJOBS="-j`sysctl -n hw.ncpu || echo 1`"
+unset CFLAGS
+unset CXXFLAGS
+unset LDFLAGS
 
+# Parse args. 
+usage(){
+cat << EOF
+${0##*/}: usage
 
-# Get oniguruma
-rm -rf $PWD/build/ios oniguruma-5.9.6
-echo "Downloading oniguruma 5.9.6"
-curl -L https://github.com/kkos/oniguruma/archive/v5.9.6.tar.gz | tar xz
-cd oniguruma-5.9.6
+    Description:
+       This simple script builds oniguruma and jq for all *-apple-darwin devices.
 
-# So, we need to remake the configure scripts so that the arm64 architecture
-# exists in config.sub.  In order to keep autoreconf from failing, create
-# NEWS and ChangeLog.
-touch NEWS ChangeLog
-autoreconf -fi >/dev/null 2>&1
+    Arguments:
+    --extra-cflags <arg>: Pass defines or includes to clang.
+    --extra-ldflags <arg>: Pass libs or included to ld64.
 
+    --with-oniguruma <arg>: Change default version of onigurma from ${oniguruma}.
+EOF
+exit 1
+}
 
+while (( $# )); do
+   case "$1" in
+      --with-oniguruma) shift; oniguruma="${1}" ;;
 
+      --extra-cflags) shift; export CFLAGS_="${1}" ;;
+      --extra-ldflags) shift; export LDFLAGS_="${1}" ;;
 
-CC=`xcrun -f clang`
-cd $ORIG_PWD
+      --help) usage ;;
+      *) echo -e "Unknown option: ${1}\n"; usage ;;
+   esac
+   shift
+done 
 
-autoreconf -fi
-for arch in i386 x86_64 armv7 armv7s arm64; do
+# Start building.
+echo "Building..."
+MAKEJOBS="$(sysctl -n hw.ncpu || echo 1)"
+CC_="$(xcrun -f clang || echo clang)"
 
-	# Some of the architectures are a bit different...
-	if [[ "$arch" = "i386" || "$arch" = "x86_64" ]]
-	then
-		SYSROOT=`xcrun -f --sdk iphonesimulator --show-sdk-path`
-	else
-		SYSROOT=`xcrun -f --sdk iphoneos --show-sdk-path`
-	fi
-	if [[ "$arch" = "arm64" ]]
-	then
-		HOST="aarch64-apple-darwin"
-	else
-		HOST="$arch-apple-darwin"
-	fi
+onig_url="https://github.com/kkos/oniguruma/releases/download/v${oniguruma}/onig-${oniguruma}.tar.gz"
+builddir="${TMPDIR:-/tmp}/${RANDOM:-'xxxxx'}-compile-ios-build"
+cwd="$(realpath ${PWD})"
 
-	CFLAGS="-arch $arch -miphoneos-version-min=6.0 -isysroot $SYSROOT $OLD_CFLAGS"
-	LDFLAGS="-arch $arch -miphoneos-version-min=6.0 -isysroot $SYSROOT $OLD_LDFLAGS"
+t_exit() {
+cat << EOF
 
+A error as occured.
+    oniguruma location: ${builddir}/onig
+    jq location: ${cwd}
 
+    Provide config.log and console logs when posting a issue.
 
-	# Build oniguruma for this architecture
-	cd oniguruma-5.9.6
-	CC=$CC CFLAGS=$CFLAGS LDFLAGS=$LDFLAGS ./configure --disable-shared --enable-static --host=$HOST --prefix=$ORIG_PWD/build/ios/$arch
-	STATUS=$?
-	if [ $STATUS -ne 0 ]
-	then
-		echo "Failed to configure oniguruma for architecture $arch.  Check `pwd`/config.log for details."
-		cd $PWD
-		exit $STATUS
-	fi
-	make clean
-	make $NJBOS install
-	STATUS=$?
-	if [ $STATUS -ne 0 ]
-	then
-		echo "Failed to make oniguruma for architecture $arch."
-		cd $PWD
-		exit $STATUS
-	fi
+EOF
+}
+trap t_exit ERR
 
+#  Onig.
+mkdir -p "${builddir}/onig"
+cd "${builddir}/"
+ curl -L ${onig_url} | tar xz
+ for arch in i386 x86_64 armv7 armv7s arm64; do
+     if [[ "$arch" = "i386" || "$arch" = "x86_64" ]]; then
+         SYSROOT=$(xcrun -f --sdk iphonesimulator --show-sdk-path)
+     else
+         SYSROOT=$(xcrun -f --sdk iphoneos --show-sdk-path)
+     fi
+     HOST="${arch}-apple-darwin"
+     [[ "${arch}" = "arm64" ]] && HOST="aarch64-apple-darwin"
 
+     CFLAGS="-arch ${arch} -miphoneos-version-min=9.0 -isysroot ${SYSROOT} ${CFLAGS_} -D_REENTRANT"
+     LDFLAGS="-arch ${arch} -miphoneos-version-min=9.0 -isysroot ${SYSROOT} ${LDFLAGS_}"
+     CC="${CC_} ${CFLAGS}"
 
-	# Build jq for this architecture
-	cd $ORIG_PWD
-	CC=$CC CFLAGS=$CFLAGS LDFLAGS=$LDFLAGS ./configure --disable-shared --enable-static -host=$HOST --prefix=$ORIG_PWD/build/ios/$arch --with-oniguruma=$ORIG_PWD/build/ios/$arch
-	STATUS=$?
-	if [ $STATUS -ne 0 ]
-	then
-		echo "Failed to configure jq for architecture $arch"
-		exit $STATUS
-	fi
-	make clean
-	make $NJOBS install
-	STATUS=$?
-	if [ $STATUS -ne 0 ]
-	then
-		echo "Failed to make jq for architecture $arch"
-		exit $STATUS
-	fi
-done
+     # ./configure; make install
+     cd "${builddir}/onig-${oniguruma}"
+     CC=${CC} LDFLAGS=${LDFLAGS} \
+     ./configure --host=${HOST} --build=$(./config.guess) --enable-shared=no --enable-static=yes --prefix=/
+     make -j${MAKEJOBS} install DESTDIR="${cwd}/ios/onig/${arch}"
+     make clean
+     
+     # Jump back to JQ.
+     cd ${cwd}
+     [[ ! -f ./configure ]] && autoreconf -ivf
+     CC=${CC} LDFLAGS=${LDFLAGS} \
+     ./configure --host=${HOST} --build=$(./config/config.guess) --enable-docs=no --enable-shared=no --enable-static=yes --prefix=/ --with-oniguruma=${cwd}/ios/onig/${arch} $(test -z ${BISON+x} && echo '--disable-maintainer-mode')
+     make -j${MAKEJOBS} install DESTDIR="${cwd}/ios/jq/${arch}"  # No jobs on purpose.
+     make clean
+ done
 
+mkdir -p "${cwd}/ios/dest/lib"
+# lipo, make a static lib.
+lipo -create -output ${cwd}/ios/dest/lib/libonig.a ${cwd}/ios/onig/{i386,x86_64,armv7,armv7s,arm64}/lib/libonig.a
+lipo -create -output ${cwd}/ios/dest/lib/libjq.a ${cwd}/ios/jq/{i386,x86_64,armv7,armv7s,arm64}/lib/libjq.a
 
-# lipo together the different architectures into a universal 'fat' file
-lipo -create -output $ORIG_PWD/build/ios/libonig.a $ORIG_PWD/build/ios/{i386,x86_64,armv7,armv7s,arm64}/lib/libonig.a
-lipo -create -output $ORIG_PWD/build/ios/libjq.a $ORIG_PWD/build/ios/{i386,x86_64,armv7,armv7s,arm64}/lib/libjq.a
+# Take the arm64 headers- the most common target.
+cp -r ${cwd}/ios/jq/arm64/include ${cwd}/ios/dest/
+rm -rf ${cwd}/build/ios/{i386,x86_64,armv7,armv7s,arm64}
 
-# copy the products into the destination directory and clean up the single-architecture files.
-cp $ORIG_PWD/build/ios/i386/include/*.h $ORIG_PWD/build/ios/
-rm -rf $ORIG_PWD/build/ios/{i386,x86_64,armv7,armv7s,arm64}
-
-echo "Products are in $ORIG_PWD/build/ios"
+echo "Output to ${cwd}/ios/dest"
