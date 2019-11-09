@@ -1,4 +1,4 @@
--#!/usr/bin/env bash
+#!/usr/bin/env bash
 # Mac C. compile-ios.sh for JQ.
 
 # Defaults
@@ -19,7 +19,7 @@ ${0##*/}: usage
 
     Arguments:
     --extra-cflags <arg>: Pass defines or includes to clang.
-    --extra-ldflags <arg>: Pass libs or included to ld64.
+    --extra-ldflags <arg>: Pass libs or includes to ld64.
 
     --with-oniguruma <arg>: Change default version of onigurma from ${oniguruma}.
 EOF
@@ -52,7 +52,7 @@ t_exit() {
 cat << EOF
 
 A error as occured.
-    oniguruma location: ${builddir}/onig
+    oniguruma location: ${builddir}/onig/onig-${oniguruma}
     jq location: ${cwd}
 
     Provide config.log and console logs when posting a issue.
@@ -90,7 +90,7 @@ cd "${builddir}/"
      [[ ! -f ./configure ]] && autoreconf -ivf
      CC=${CC} LDFLAGS=${LDFLAGS} \
      ./configure --host=${HOST} --build=$(./config/config.guess) --enable-docs=no --enable-shared=no --enable-static=yes --prefix=/ --with-oniguruma=${cwd}/ios/onig/${arch} $(test -z ${BISON+x} && echo '--disable-maintainer-mode')
-     make -j${MAKEJOBS} install DESTDIR="${cwd}/ios/jq/${arch}"  # No jobs on purpose.
+     make -j${MAKEJOBS} install DESTDIR="${cwd}/ios/jq/${arch}"
      make clean
  done
 
