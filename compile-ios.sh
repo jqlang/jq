@@ -46,7 +46,7 @@ CC_="$(xcrun -f clang || echo clang)"
 
 onig_url="https://github.com/kkos/oniguruma/releases/download/v${oniguruma}/onig-${oniguruma}.tar.gz"
 builddir="${TMPDIR:-/tmp}/${RANDOM:-'xxxxx'}-compile-ios-build"
-cwd="$(realpath ${PWD})"
+cwd="$(realpath ${PWD} 2>/dev/null || echo ${PWD})"
 
 t_exit() {
 cat << EOF
