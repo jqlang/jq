@@ -56,7 +56,7 @@ body:
 
       ### OS X
 
-       * Use [Homebrew](http://brew.sh/) to install jq 1.5 with
+       * Use [Homebrew](http://brew.sh/) to install jq 1.6 with
          `brew install jq`.
 
        * Use [MacPorts](https://www.macports.org) to install jq 1.6 with
