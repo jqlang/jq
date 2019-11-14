@@ -113,10 +113,11 @@ sections:
 
       * `--stream`:
 
-        Parse the input in streaming fashion, outputing arrays of path
-        and leaf values (scalars and empty arrays or empty objects).
-        For example, `"a"` becomes `[[],"a"]`, and `[[],"a",["b"]]`
-        becomes `[[0],[]]`, `[[1],"a"]`, and `[[1,0],"b"]`.
+        Parse the input in depth-first, streaming fashion, outputting 
+        arrays of path and leaf values (scalars and empty arrays or 
+        empty objects). For example, `"a"` becomes `[[],"a"]`, and 
+        `[[],"a",["b"]]` becomes `[[0],[]]`, `[[1],"a"]`, and 
+        `[[2,0],"b"]`.
 
         This is useful for processing very large inputs.  Use this in
         conjunction with filtering and the `reduce` and `foreach` syntax
