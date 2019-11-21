@@ -1038,7 +1038,7 @@ block gen_try_handler(block handler) {
   return gen_cond(// `if type=="object" and .__jq
                   gen_and(gen_call("_equal",
                                    BLOCK(gen_lambda(gen_const(jv_string("object"))),
-                                         gen_lambda(gen_noop()))),
+                                         gen_lambda(gen_call("type", gen_noop())))),
                           BLOCK(gen_subexp(gen_const(jv_string("__jq"))),
                                 gen_noop(),
                                 gen_op_simple(INDEX))),
