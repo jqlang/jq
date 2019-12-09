@@ -52,8 +52,9 @@ fi
 AC_CHECK_FUNCS(memmem)
 AC_CHECK_FUNCS(mkstemp)
 
-AC_CHECK_HEADER("shlwapi.h",[have_win32=1;])
-AM_CONDITIONAL([WIN32], [test "x$have_win32" = x1])
+AC_CHECK_HEADER("sys/cygwin.h", [have_cygwin=1;])
+AC_CHECK_HEADER("shlwapi.h",[have_shlwapi=1;])
+AM_CONDITIONAL([WIN32], [test \( "x$have_shlwapi" = x1 \) -a ! \( "x$have_cygwin" = x1 \)])
 
 dnl Running tests with Valgrind is slow. It is faster to iterate on
 dnl code without Valgrind until tests pass, then enable Valgrind and
