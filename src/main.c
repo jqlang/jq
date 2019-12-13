@@ -57,7 +57,7 @@ static void usage(int code, int keep_it_short) {
     "standard output.\n\n"
     "The simplest filter is ., which copies jq's input to its output\n"
     "unmodified (except for formatting, but note that IEEE754 is used\n"
-    "for number representation internally, with all that that implies).\n\n"
+    "for number representation internally, with all that implies).\n\n"
     "For more advanced filters see the jq(1) manpage (\"man jq\")\n"
     "and/or https://stedolan.github.io/jq\n\n"
     "Example:\n\n\t$ echo '{\"foo\": 0}' | jq .\n"
