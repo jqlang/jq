@@ -970,7 +970,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
 }
 #else /* !HAVE_LIBONIG */
 static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
-  return jv_invalid_with_msg(jv_string("jq was compiled without ONIGURUMA regex libary. match/test/sub and related functions are not available."));
+  return jv_invalid_with_msg(jv_string("jq was compiled without ONIGURUMA regex library. match/test/sub and related functions are not available."));
 }
 #endif /* HAVE_LIBONIG */
 
