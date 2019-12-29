@@ -293,6 +293,12 @@ def JOIN($idx; stream; idx_expr; join_expr):
 def IN(s): any(s == .; .);
 def IN(src; s): any(src == s; .);
 
+def _try_finally(e; h; f):
+  . as $dot |
+  unwinding |
+  if .==false then $dot|try(e; h)
+  else f
+  end;
 
 def coeval(program; args; options): [program, ., args, options] | coeval;
 def eval(program; args; options):

@@ -1053,7 +1053,7 @@ sections:
           values.
 
         examples:
-          - program: 'try error("\($__loc__)") catch .'
+          - program: 'try(error("\($__loc__)"); .)'
             input: 'null'
             output: ['"{\"file\":\"<top-level>\",\"line\":1}"']
 
@@ -2159,25 +2159,35 @@ sections:
             input: '{}'
             output: [42]
 
-      - title: try-catch
+      - title: try-catch-finally
         body: |
 
-          Errors can be caught by using `try EXP catch EXP`.  The first
-          expression is executed, and if it fails then the second is
-          executed with the error message.  The output of the handler,
-          if any, is output as if it had been the output of the
-          expression to try.
+          Errors can be caught and handled by using any of `EXP?`,
+          `try(EXP)`, `try(EXP; EXP)`, or `try(EXP; EXP; EXP)`.
 
-          The `try EXP` form uses `empty` as the exception handler.
+          In the second and third forms, the second `EXP` is a handler
+          that will run when an error is handled.
+
+          In the first two forms errors are suppressed, as if `empty`
+          had been used as the handler in the second or third forms.
+
+          In the third form, the third `EXP` runs once in all cases,
+          after the first `EXP` is exhausted and the handler has run if
+          an error was produced.  The input to the third, "finally"
+          expression will be `true` if no error was caught, or an array
+          containing the error if an error was caught.
+
+          The older `try Exp catch Exp` syntax was problematic and is
+          now obsolete, and may be removed in future versions of jq.
 
         examples:
-          - program: 'try .a catch ". is not an object"'
+          - program: 'try(.a; ". is not an object")'
             input: 'true'
             output: ['". is not an object"']
-          - program: '[.[]|try .a]'
+          - program: '[.[]|try(.a)]'
             input: '[{}, true, {"a":1}]'
             output: ['[null, 1]']
-          - program: 'try error("some exception") catch .'
+          - program: 'try(error("some exception"); .)'
             input: 'true'
             output: ['"some exception"']
 
@@ -2192,7 +2202,7 @@ sections:
               # Repeat an expression until it raises "break" as an
               # error, then stop repeating without re-raising the error.
               # But if the error caught is not "break" then re-raise it.
-              try repeat(exp) catch .=="break" then empty else error;
+              try(repeat(exp); if .=="break" then empty else error end);
 
           jq has a syntax for named lexical labels to "break" or "go (back) to":
 

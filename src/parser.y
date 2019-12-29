@@ -393,6 +393,12 @@ Term "as" Patterns '|' Exp {
   $$ = $2;
 } |
 
+"try" '(' Exp ';' Exp ')' {
+  $$ = gen_try($3, $5);
+} |
+"try" '(' Exp ';' Exp ';' Exp ')' {
+  $$ = BLOCK(gen_call("_try_finally", BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7))));
+} |
 "try" Exp "catch" Exp {
   $$ = gen_try($2, $4);
 } |
