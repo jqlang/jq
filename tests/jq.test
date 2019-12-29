@@ -741,19 +741,19 @@ null
 # Destructuring DUP/POP issues
 .[] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 [[3],[4],[5],6]
-# Runtime error: "jq: Cannot index array with string \"c\""
+%%ERROR: "Cannot index array with string \"a\""
 
 .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 [[3],[4],[5],6]
-# Runtime error: "jq: Cannot index array with string \"c\""
+%%ERROR: "Cannot index array with string \"a\""
 
 [[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 null
-# Runtime error: "jq: Cannot index array with string \"c\""
+%%ERROR: "Cannot index array with string \"a\""
 
 [[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 null
-# Runtime error: "jq: Cannot index array with string \"c\""
+%%ERROR: "Cannot index array with string \"a\""
 
 .[] | . as {a:$a} ?// {a:$a} ?// $a | $a
 [[3],[4],[5],6]
