@@ -105,6 +105,12 @@ struct jq_state {
   struct jq_state* parent;
   stack_ptr restore_limit;
   stack_ptr start_limit;
+
+  /*
+   * I/O policy
+   */
+  struct jq_state* io_policy;
+  jv io_policy_data;
 };
 
 struct closure {
@@ -300,6 +306,15 @@ static void path_append(jq_state* jq, jv component, jv value_at_path) {
     jv_free(component);
     jv_free(value_at_path);
   }
+}
+
+static void copy_callbacks(jq_state *src, jq_state *dst) {
+  dst->err_cb = src->err_cb;
+  dst->err_cb_data = src->err_cb_data;
+  dst->input_cb = src->input_cb;
+  dst->input_cb_data = src->input_cb_data;
+  dst->debug_cb = src->debug_cb;
+  dst->debug_cb_data = src->debug_cb_data;
 }
 
 /* For f_getpath() */
@@ -1291,6 +1306,7 @@ jv jq_next(jq_state *jq) {
       /* Now let the child send errors to stderr again? */
       jq_set_error_cb(child, NULL, NULL);
       jq_start(child, jv_copy(input), jq->debug_trace_enabled ? JQ_DEBUG_TRACE_ALL : 0);
+      copy_callbacks(jq, child);
       jv_free(program);
       jv_free(options);
       jv_free(input);
@@ -1432,6 +1448,9 @@ jq_state *jq_init(void) {
   jq->handles->jhandles = jv_array();
   jq->handles->nhandles = 0;
   jq->handles->handles = 0;
+
+  jq->io_policy = NULL;
+  jq->io_policy_data = jv_null();
 
   return jq;
 }
@@ -1590,6 +1609,10 @@ void jq_teardown(jq_state **jqp) {
   jv_free(jq->rnd);
   jv_free(jq->vmid);
   jv_free(jq->attrs);
+  jv_free(jq->io_policy_data);
+
+  if (jq->io_policy)
+    jq_teardown(&jq->io_policy);
 
   if (jq->input_cb == coinput_cb)
     jv_mem_free(jq->input_cb_data);
@@ -1922,6 +1945,110 @@ void jq_set_attrs(jq_state *jq, jv attrs) {
   jq->attrs = attrs;
 }
 
+/*
+ * Set an I/O policy -- a jq program.
+ *
+ * If, when given `null` as input, the policy jq program produces an object or
+ * an array, or `true` or `null` or `false`, then that will be the policy data
+ * and the program used at run time will be the `default_io_policy_check`
+ * builtin using the constant data produced by running the original program
+ * with `null` as input.
+ *
+ * Otherwise the given jq program will be the policy checker.
+ *
+ * At run-time the policy will be checked by calling the policy program (on a
+ * separate jq_state!) with a request descriptor and the policy data as input.
+ */
+jv jq_set_io_policy(jq_state *jq, jv policy) {
+  if (jq->io_policy)
+    jq_teardown(&jq->io_policy);
+
+  switch (jv_get_kind(policy)) {
+  case JV_KIND_STRING:
+    break;
+  case JV_KIND_INVALID:
+    jv_free(policy);
+    return jv_invalid_with_msg(jv_string_fmt("Invalid I/O policy given"));
+  case JV_KIND_NULL:
+  case JV_KIND_TRUE:
+  case JV_KIND_FALSE:
+    jv_free(jq->io_policy_data);
+    jq->io_policy_data = policy;
+    return jv_true();
+  default:
+    jv_free(jq->io_policy_data);
+    jq->io_policy_data = policy;
+    policy = jv_string("default_io_policy_check");
+    break;
+  }
+
+  jq_state *io_policy = jq_init();
+  if (!io_policy)
+    return jv_invalid_with_msg(jv_string("Out of memory"));
+
+  int r = jq_compile_args(io_policy, jv_string_value(policy), jv_array());
+  if (!r) {
+    jq_teardown(&io_policy);
+    jv ret = jv_invalid_with_msg(jv_string_fmt("Failed to compile I/O policy program: %s\n",
+                                               jv_string_value(policy)));
+    jv_free(policy);
+    return ret;
+  }
+
+  /* Check if the program produces policy data, or evaluates policy */
+  jq_start(io_policy, jv_null(), 0);
+  copy_callbacks(jq, io_policy);
+  jv v = jq_next(io_policy);
+  jv ret;
+  switch (jv_get_kind(v)) {
+  case JV_KIND_OBJECT:
+  case JV_KIND_ARRAY:
+    /* Produces data to evaluate with the default policy checker */
+    jv_free(jq->io_policy_data);
+    jq->io_policy_data = v;
+    v = jv_null();
+    jq_teardown(&io_policy);
+    io_policy = jq_init();
+    if (!io_policy) {
+      jv_free(policy);
+      return jv_invalid_with_msg(jv_string("Out of memory")); // XXX leak
+    }
+    r = jq_compile_args(io_policy, "default_io_policy_check", jv_array());
+    if (!r) {
+      jq_teardown(&io_policy);
+      jv ret = jv_invalid_with_msg(jv_string("Failed to compile default I/O policy program\n"));
+      jv_free(policy);
+      return ret;
+    }
+    jq->io_policy = io_policy;
+    return jv_true();
+  case JV_KIND_NULL:
+  case JV_KIND_TRUE:
+  case JV_KIND_FALSE:
+    /* Produces simple data */
+    jv_free(jq->io_policy_data);
+    jq->io_policy_data = v;
+    jq_teardown(&io_policy);
+    return jv_true();
+  case JV_KIND_INVALID:
+    /* The program is a policy evaluator */
+    jq->io_policy = io_policy;
+    jv_free(policy);
+    jv_free(v);
+    return jv_true();
+  case JV_KIND_STRING:
+    /* Usage error */
+    ret = jv_invalid_with_msg(jv_string_fmt("Strange policy value: %s", jv_string_value(policy)));
+    jv_free(policy);
+    return ret;
+  default:
+    /* Usage error */
+    ret = jv_invalid_with_msg(jv_string_fmt("Strange policy value"));
+    jv_free(policy);
+    return ret;
+  }
+}
+
 void jq_set_attr(jq_state *jq, jv attr, jv val) {
   jq->attrs = jv_object_set(jq->attrs, attr, val);
 }
@@ -1983,6 +2110,29 @@ jv jq_get_exit_code(jq_state *jq)
 jv jq_get_error_message(jq_state *jq)
 {
   return jv_copy(jq->error_message);
+}
+
+jv jq_io_policy_check(jq_state *jq, jv req) {
+  if (!jq->io_policy)
+    return jv_copy(jq->io_policy_data);
+  jq_start(jq->io_policy,
+           JV_OBJECT(jv_string("io_policy"), jv_copy(jq->io_policy_data),
+                     jv_string("io_request"), req), 0);
+  copy_callbacks(jq, jq->io_policy);
+  jv res = jq_next(jq->io_policy);
+  switch (jv_get_kind(res)) {
+  case JV_KIND_TRUE:
+  case JV_KIND_FALSE:
+    return res;
+  case JV_KIND_INVALID:
+    if (jv_invalid_has_msg(jv_copy(res)))
+      return res;
+    jv_free(res);
+    return jv_false();
+  default:
+    jv_free(res);
+    return jv_false();
+  }
 }
 
 static void init_vtable(struct jq_plugin_vtable *vtable) {

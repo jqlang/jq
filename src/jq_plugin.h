@@ -56,6 +56,8 @@ typedef void (*jq_get_input_cb_f)(jq_state*,jq_input_cb*,void **);
 typedef void (*jq_set_input_cb_f)(jq_state*,jq_input_cb,void *);
 typedef void (*jq_dump_disassembly_f)(jq_state*,int);
 typedef jv (*jq_get_attr_f)(jq_state*,jv);
+typedef jv (*jq_io_policy_check_f)(jq_state *, jv);
+typedef jv (*jq_set_io_policy_f)(jq_state *, jv);
 typedef void (*jq_set_attr_f)(jq_state*,jv,jv);
 typedef void (*jq_set_attrs_f)(jq_state*,jv);
 typedef void * (*jq_handle_get_f)(jq_state*,jv);
@@ -322,6 +324,8 @@ struct jq_plugin_vtable {
   jq_util_input_set_parser_f jq_util_input_set_parser;
   jq_util_input_init_f jq_util_input_init;
   jq_realpath_f jq_realpath;
+  jq_set_io_policy_f jq_set_io_policy;
+  jq_io_policy_check_f jq_io_policy_check;
 };
 #ifdef JQ_PLUGIN
 #define jv_string_append_buf ((*(struct jq_plugin_vtable **)jq)->jv_string_append_buf)
@@ -394,6 +398,8 @@ struct jq_plugin_vtable {
 #define jv_dumpf ((*(struct jq_plugin_vtable **)jq)->jv_dumpf)
 #define jv_object_get ((*(struct jq_plugin_vtable **)jq)->jv_object_get)
 #define jv_parse ((*(struct jq_plugin_vtable **)jq)->jv_parse)
+#define jq_io_policy_check ((*(struct jq_plugin_vtable **)jq)->jq_io_policy_check)
+#define jq_set_io_policy ((*(struct jq_plugin_vtable **)jq)->jq_set_io_policy)
 #define jq_set_attr ((*(struct jq_plugin_vtable **)jq)->jq_set_attr)
 #define jq_util_input_get_current_line ((*(struct jq_plugin_vtable **)jq)->jq_util_input_get_current_line)
 #define jv_parser_new ((*(struct jq_plugin_vtable **)jq)->jv_parser_new)

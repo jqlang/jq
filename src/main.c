@@ -354,6 +354,28 @@ int main(int argc, char* argv[]) {
         options |= ALLOW_IO;
         if (!short_opts) continue;
       }
+      if (isoption(argv[i], 0, "io-policy", &short_opts)) {
+        options &= ~ALLOW_IO;
+        if (argv[i+1] == NULL) {
+          fprintf(stderr, "--io-policy takes a parameter");
+          die();
+        }
+        jv res = jq_set_io_policy(jq, jv_string(argv[i+1]));
+        if (!jv_is_valid(res)) {
+          if (jv_invalid_has_msg(res)) {
+            res = jv_invalid_get_msg(res);
+          } else {
+            jv_free(res);
+            res = jv_string("unkown error");
+          }
+          fprintf(stderr, "Error: I/O policy rejected: %s", jv_string_value(res));
+          jv_free(res);
+          die();
+        }
+        jv_free(res);
+        i++;
+        continue;
+      }
       if (isoption(argv[i], 's', "slurp", &short_opts)) {
         options |= SLURP;
         if (!short_opts) continue;

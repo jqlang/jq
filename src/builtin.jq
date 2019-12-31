@@ -300,6 +300,26 @@ def _try_finally(e; h; f):
   else f
   end;
 
+def default_io_policy_check:
+  select(.!=null) |
+  .io_request as $req |
+  def _check:
+    (.kind == $req.kind) and
+    (.mode|any(. == ($req.mode))) and
+    ((.name|type) == "string" and .name == $req.name) or
+    ((.prefix|type) == "string" and .prefix as $prefix | ($req.name|startswith($prefix)));
+
+  .io_policy as $policy |
+  if $policy == true then
+    true
+  elif ($policy|type) == "array" then
+    $policy|any(_check)
+  elif ($policy|type) == "object" then
+    debug|$policy|_check
+  else
+    false
+  end;
+
 def coeval(program; args; options): [program, ., args, options] | coeval;
 def eval(program; args; options):
   label $out |

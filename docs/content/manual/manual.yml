@@ -2898,6 +2898,20 @@ sections:
       Adding the `-I` / `--io` command-line option enables more advanced
       I/O builtins.
 
+      More fine-grained control over what I/O actions a jq program may
+      execute can be gained using `--io-policy POLICY`, where `POLICY`
+      is a jq program that either outputs policy data, or consumes an
+      I/O action description and outputs `true` or `false` or an error.
+      The input to the `POLICY` is an object with a field named
+      `io_request` whose value is an object with `kind`, `name`, and
+      `mode` fields, all of which are string-valued.  Thus to open a
+      file named "/tmp/foo" for reading the request would be
+      `{"io_request":{"kind":"file","name":"/tmp/foo","mode":"r"}}` (the
+      `name` will be a real path, with no `.` or `..` components).  The
+      default `POLICY` accepts an array of objects with `kind`, `name`
+      or `prefix`, and `mode` fields, all of which are strings except
+      for `mode` which is an array of strings.
+
       Two builtin functions are available, by default, `input` and
       `inputs`, that read from the same sources (e.g., `stdin`, files
       named on the command-line) as jq itself.  These two builtins, and

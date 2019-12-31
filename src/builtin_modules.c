@@ -38,13 +38,25 @@ struct io_handle {
   char buf[4096 - (sizeof(FILE *) + sizeof(jv_parser *) + sizeof(jv))];
 };
 
-static jv allow_io(jq_state *jq) {
-  jv ret = jq_get_attr(jq, jv_string("ALLOW_IO"));
+static jv allow_io(jq_state *jq, const char *what, jv req, jv s, jv mode) {
+  jv ret = jq_io_policy_check(jq, req);
 
   if (jv_get_kind(ret) == JV_KIND_TRUE)
     return ret;
+
+  const char *reason = "<unspecified>";
+  jv junk = jv_null();
+
+  if (jv_get_kind(ret) == JV_KIND_INVALID && jv_invalid_has_msg(jv_copy(ret))) {
+    junk = jv_invalid_get_msg(jv_copy(ret));
+    if (jv_get_kind(junk) == JV_KIND_STRING)
+      reason = jv_string_value(junk);
+  }
   jv_free(ret);
-  return jv_invalid_with_msg(jv_string("I/O not permitted"));
+  ret = jv_invalid_with_msg(jv_string_fmt("%s: Use of %s (%s) rejected by policy: %s", what,
+                                          jv_string_value(s), jv_string_value(mode), reason));
+  jv_free(junk);
+  return ret;
 }
 
 static jv f_close(jq_state *jq, jv handle, void *d) {
@@ -261,9 +273,9 @@ struct jq_io_table iovt = {
 
 static jv builtin_jq_fopen(jq_state *jq, jv input, jv fn, jv mode, jv in_opts, jv out_opts) {
   jv_free(input);
+  jv ret = jv_true();
 
-  jv ret = allow_io(jq);
-  if (jv_is_valid(ret) && jv_get_kind(fn) != JV_KIND_STRING)
+  if (jv_get_kind(fn) != JV_KIND_STRING)
     ret = jv_invalid_with_msg(jv_string("fopen: filename must be a string"));
   if (jv_is_valid(ret) && jv_get_kind(mode) != JV_KIND_STRING)
     ret = jv_invalid_with_msg(jv_string("fopen: mode must be a string"));
@@ -271,6 +283,13 @@ static jv builtin_jq_fopen(jq_state *jq, jv input, jv fn, jv mode, jv in_opts, j
     ret = jv_invalid_with_msg(jv_string("fopen: invalid input options"));
   if (jv_is_valid(ret) && !jv_is_valid((out_opts = jv_dump_options(out_opts))))
     ret = jv_invalid_with_msg(jv_string("fopen: invalid output options"));
+  if (jv_is_valid(ret)) {
+    ret = allow_io(jq, "fopen",
+                   JV_OBJECT(jv_string("kind"), jv_string("file"),
+                             jv_string("name"), jv_copy(fn),
+                             jv_string("mode"), jv_copy(mode)),
+                   fn, mode);
+  }
   if (!jv_is_valid(ret))
     goto out;
 
@@ -325,8 +344,8 @@ static jv builtin_jq_fhcmd(jq_state *jq, jv fh) {
 static jv builtin_jq_popen(jq_state *jq, jv input, jv cmd, jv mode, jv opts) {
   jv_free(input);
 
-  jv ret = allow_io(jq);
-  if (jv_is_valid(ret) && jv_get_kind(cmd) != JV_KIND_STRING)
+  jv ret = jv_null();
+  if (jv_get_kind(cmd) != JV_KIND_STRING)
     ret = jv_invalid_with_msg(jv_string("popen: filename must be a string"));
   if (jv_is_valid(ret) && jv_get_kind(mode) != JV_KIND_STRING)
     ret = jv_invalid_with_msg(jv_string("popen: mode must be a string"));
@@ -341,6 +360,13 @@ static jv builtin_jq_popen(jq_state *jq, jv input, jv cmd, jv mode, jv opts) {
     ret = jv_invalid_with_msg(jv_string("popen: invalid input options"));
   else if (type == 'w' && !jv_is_valid((opts = jv_dump_options(opts))))
     ret = jv_invalid_with_msg(jv_string("popen: invalid output options"));
+  if (jv_is_valid(ret)) {
+    ret = allow_io(jq, "popen",
+                   JV_OBJECT(jv_string("kind"), jv_string("popen"),
+                             jv_string("name"), jv_copy(cmd),
+                             jv_string("mode"), jv_copy(mode)),
+                   cmd, mode);
+  }
   if (!jv_is_valid(ret))
     goto out;
 
@@ -390,7 +416,7 @@ JQ_BUILTIN_INIT_FUN(builtin_jq_io_init,
                  "        . as $error|$fh|_fhname as $fn|fhclose|$error\n"
                  "      | if . == \"EOF\" then break $out\n"
                  "        else \"Error reading from \\($fn): \\($error)\"|error end);\n"
-                 "def fopen($fn; $mode): fopen($fn; $mode; null);\n"
+                 "def fopen($fn; $mode): fopen($fn; $mode; null; null);\n"
                  "def fopen($fn): fopen($fn; \"r\");\n"
                  "def fopen: fopen(.; \"r\");\n"
                  "def streamfile($fn; $opts):\n"

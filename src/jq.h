@@ -42,6 +42,9 @@ void jq_get_debug_cb(jq_state *, jq_msg_cb *, void **);
 
 jv jq_get_vmid(jq_state *);
 
+jv jq_io_policy_check(jq_state *, jv);
+
+jv jq_set_io_policy(jq_state *, jv);
 void jq_set_attrs(jq_state *, jv);
 jv jq_get_attrs(jq_state *);
 jv jq_get_jq_origin(jq_state *);
