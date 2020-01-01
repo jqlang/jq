@@ -300,22 +300,55 @@ def _try_finally(e; h; f):
   else f
   end;
 
+# Default I/O policy evaluator.
+#
+# Input must be of form {io_request:<request>,io_policy:<policy>},
+# where <request> is:
+#
+#  {kind:"<kind>",name:"<path/command>"}
+#  {kind:"<kind>",name:"<path/command>",mode:"<file mode>"}
+#
+# <policy> is one of:
+#
+#  [<policy>,...]
+#  {kinds:{"<kind>":{"<name>":<policy>}}}
+#  {kind:"<kind>",name:"<name>",mode:[<mode>,...]}
+#  {kind:"<kind>",prefix:"<prefix>",mode:[<mode>,...]}
+#
+# <kind> is one of "file", "popen", "system", or "spawn"
+# <name> is the a file path or command
+# <prefix> is a string prefix of a file path ('/' gets no special treatment)
 def default_io_policy_check:
   select(.!=null) |
   .io_request as $req |
-  def _check:
-    (.kind == $req.kind) and
-    (.mode|any(. == ($req.mode))) and
-    ((.name|type) == "string" and .name == $req.name) or
-    ((.prefix|type) == "string" and .prefix as $prefix | ($req.name|startswith($prefix)));
+
+  def check_file:
+    (.kind==$req.kind) and
+    (.mode|select(.!=null)|any(. == ($req.mode))) and
+    ((.name == $req.name) or
+     ((.prefix|type) == "string" and .prefix as $prefix | ($req.name|startswith($prefix))));
+
+  def check_cmd:
+    (.kind==$req.kind) and
+    (.mode|select(.!=null)|any(. == ($req.mode))) and
+    .name == $req.name;
+
+  def check:
+    if $req.kind=="file" then check_file
+    elif $req.kind=="popen" then check_cmd
+    elif $req.kind=="system" then check_cmd
+    # Note that file actions for spawn are checked separately, though
+    # we could also check them here.
+    elif $req.kind=="spawn" then check_cmd
+    else false end;
 
   .io_policy as $policy |
   if $policy == true then
     true
   elif ($policy|type) == "array" then
-    $policy|any(_check)
+    $policy|any(check)
   elif ($policy|type) == "object" then
-    debug|$policy|_check
+    ($policy.kinds[$req.kind//""][$req.name//""]|(.kind=$req.kind)|(.name=$req.name)|check) or ($policy|check)
   else
     false
   end;

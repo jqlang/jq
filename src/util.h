@@ -12,6 +12,7 @@
 #endif
 
 #include "jv.h"
+#include "jq.h"
 
 #ifndef HAVE_MKSTEMP
 int mkstemp(char *template);
@@ -20,6 +21,7 @@ int mkstemp(char *template);
 jv expand_path(jv);
 jv get_home(void);
 jv jq_realpath(jv);
+jv jq_spawn_process(jq_state *, jv, jv, jv, jv, jv);
 
 /*
  * The Windows CRT and console are something else.  In order for the

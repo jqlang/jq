@@ -9,6 +9,15 @@
 #include <sys/stat.h>
 #include <libgen.h>
 
+#ifdef WIN32
+#include <windows.h>
+#include <stdio.h>
+#include <tchar.h>
+#else
+#include <sys/wait.h>
+#include <signal.h>
+#endif
+
 #include "jv.h"
 #include "jv_unicode.h"
 #include "jq.h"
@@ -21,6 +30,19 @@
 /*
  * This file defines builtin modules that can be imported or included by
  * jq programs or jq modules.
+ *
+ * TBD:
+ *
+ *  - XXX make sure to relapth all paths always!
+ *  - finish the spawn module for WIN32
+ *  - add a POSIX filesystem module (non-stdio open, stat, rename, link, symlink, ...)
+ *  - add a WIN32 filesystem module (non-stdio open/CreateFile, ...)
+ *  - add an HTTP client module     (maybe using curl)
+ *  - add a PostgreSQL module (maybe including a sandbox / private / ephemeral
+ *    postgres server option)
+ *  - add crypto modules (at least hash functions)
+ *  - add a proper jq/math module and move libm bindings there, with a default
+ *    implied include of that module into jq programs for backwards-compat?
  */
 
 /*
@@ -32,13 +54,14 @@ struct io_handle {
   jv_parser *parser;
   jv fn;
   jv cmd;
+  jv spawnspec;
   jv mode;
   enum jv_parse_flags in_options;
   enum jv_print_flags out_options;
   char buf[4096 - (sizeof(FILE *) + sizeof(jv_parser *) + sizeof(jv))];
 };
 
-static jv allow_io(jq_state *jq, const char *what, jv req, jv s, jv mode) {
+static jv allow_io(jq_state *jq, const char *what, jv req, jv s) {
   jv ret = jq_io_policy_check(jq, req);
 
   if (jv_get_kind(ret) == JV_KIND_TRUE)
@@ -53,8 +76,8 @@ static jv allow_io(jq_state *jq, const char *what, jv req, jv s, jv mode) {
       reason = jv_string_value(junk);
   }
   jv_free(ret);
-  ret = jv_invalid_with_msg(jv_string_fmt("%s: Use of %s (%s) rejected by policy: %s", what,
-                                          jv_string_value(s), jv_string_value(mode), reason));
+  ret = jv_invalid_with_msg(jv_string_fmt("%s: Use of %s rejected by policy: %s", what,
+                                          jv_string_value(s), reason));
   jv_free(junk);
   return ret;
 }
@@ -89,6 +112,7 @@ static jv f_reset(jq_state *jq, jv handle, void *vh) {
     return jv_invalid_with_msg(jv_string("No such file handle"));
   clearerr(h->f);
   fseek(h->f, 0, SEEK_SET);
+  jv_free(handle);
   return jv_true();
 }
 
@@ -260,7 +284,7 @@ static jv builtin_jq_fhname(jq_state *jq, jv fh) {
   return jv_invalid_with_msg(jv_string("filename for filehandle not known"));
 }
 
-struct jq_io_table iovt = {
+struct jq_io_table f_iovt = {
   .kind    = "FILE",
   .fhclose = f_close,
   .fhreset = f_reset,
@@ -270,6 +294,23 @@ struct jq_io_table iovt = {
   .fheof   = f_eof,
 };
 
+static jv make_f_handle(jq_state *jq, FILE *f, jv fn, jv cmd, jv spawnspec, jv mode, jv in_opts, jv out_opts) {
+  struct io_handle *h = jv_mem_alloc(sizeof(*h));
+  h->f = f;
+  h->fn = fn;
+  h->cmd = cmd;
+  h->spawnspec = spawnspec;
+  h->mode = mode;
+  h->in_options = jv_number_value(in_opts);
+  h->out_options = jv_number_value(out_opts);
+  jv_free(in_opts);
+  jv_free(out_opts);
+  if (h->in_options & JV_PARSE_RAW)
+    h->parser = 0;
+  else
+    h->parser = jv_parser_new(0);
+  return jq_handle_new(jq, "FILE", &f_iovt, h);
+}
 
 static jv builtin_jq_fopen(jq_state *jq, jv input, jv fn, jv mode, jv in_opts, jv out_opts) {
   jv_free(input);
@@ -288,7 +329,7 @@ static jv builtin_jq_fopen(jq_state *jq, jv input, jv fn, jv mode, jv in_opts, j
                    JV_OBJECT(jv_string("kind"), jv_string("file"),
                              jv_string("name"), jv_copy(fn),
                              jv_string("mode"), jv_copy(mode)),
-                   fn, mode);
+                   fn);
   }
   if (!jv_is_valid(ret))
     goto out;
@@ -308,18 +349,8 @@ static jv builtin_jq_fopen(jq_state *jq, jv input, jv fn, jv mode, jv in_opts, j
   else
     f = fopen(jv_string_value(fn), jv_string_value(mode));
   if (f) {
-    struct io_handle *h = jv_mem_alloc(sizeof(*h));
-    h->f = f;
-    h->fn = jv_copy(fn);
-    h->cmd = jv_invalid();
-    h->mode = jv_copy(mode);
-    h->in_options = jv_number_value(in_opts);
-    h->out_options = jv_number_value(out_opts);
-    if (h->in_options & JV_PARSE_RAW)
-      h->parser = 0;
-    else
-      h->parser = jv_parser_new(0);
-    ret = jq_handle_new(jq, "FILE", &iovt, h);
+    ret = make_f_handle(jq, f, jv_copy(fn), jv_invalid(), jv_invalid(),
+                        jv_copy(mode), jv_copy(in_opts), jv_copy(out_opts));
   } else {
     ret = jv_invalid_with_msg(jv_string_fmt("fopen: Failed to open %s: %s", jv_string_value(fn), strerror(errno)));
   }
@@ -365,7 +396,7 @@ static jv builtin_jq_popen(jq_state *jq, jv input, jv cmd, jv mode, jv opts) {
                    JV_OBJECT(jv_string("kind"), jv_string("popen"),
                              jv_string("name"), jv_copy(cmd),
                              jv_string("mode"), jv_copy(mode)),
-                   cmd, mode);
+                   cmd);
   }
   if (!jv_is_valid(ret))
     goto out;
@@ -373,23 +404,10 @@ static jv builtin_jq_popen(jq_state *jq, jv input, jv cmd, jv mode, jv opts) {
   FILE *f = 0;
   f = popen(jv_string_value(cmd), jv_string_value(mode));
   if (f) {
-    struct io_handle *h = jv_mem_alloc(sizeof(*h));
-    h->f = f;
-    h->fn = jv_invalid();
-    h->cmd = jv_copy(cmd);
-    h->mode = jv_copy(mode);
-    if (type == 'r') {
-      h->in_options = jv_number_value(opts);
-      h->out_options = 0;
-    } else {
-      h->in_options = 0;
-      h->out_options = jv_number_value(opts);
-    }
-    if (h->in_options & JV_PARSE_RAW)
-      h->parser = 0;
-    else
-      h->parser = jv_parser_new(0);
-    ret = jq_handle_new(jq, "FILE", &iovt, h);
+    ret = make_f_handle(jq, f, jv_invalid(), jv_copy(cmd), jv_invalid(),
+                        jv_copy(mode),
+                        (type == 'r') ? jv_copy(opts) : jv_number(0),
+                        (type == 'r') ? jv_copy(opts) : jv_number(0));
   } else {
     ret = jv_invalid_with_msg(jv_string_fmt("popen: Failed to execute %s: %s", jv_string_value(cmd), strerror(errno)));
   }
@@ -401,21 +419,388 @@ out:
   return ret;
 }
 
-static jv builtin_jq_system(jq_state *jq, jv input) {
-  if (jv_get_kind(input) != JV_KIND_STRING) {
-    jv_free(input);
+static jv builtin_jq_system(jq_state *jq, jv cmd) {
+  if (jv_get_kind(cmd) != JV_KIND_STRING) {
+    jv_free(cmd);
     return jv_invalid_with_msg(jv_string("system: input must be a string"));
   }
-  return jv_number(system(jv_string_value(input)));
+  jv ret = allow_io(jq, "popen",
+                    JV_OBJECT(jv_string("kind"), jv_string("system"),
+                              jv_string("name"), jv_copy(cmd)),
+                   cmd);
+  if (jv_is_valid(ret))
+    ret = jv_number(system(jv_string_value(cmd)));
+  jv_free(cmd);
+  return ret;
+}
+
+#ifdef WIN32
+typedef HANDLE jv_pid_t;
+#else
+typedef pid_t jv_pid_t;
+#endif
+
+struct proc_handle {
+  jv_pid_t proc;
+  jv spawnspec;
+  char buf[4096 - (sizeof(jv_pid_t) + sizeof(jv))];
+};
+
+static jv p_close(jq_state *jq, jv handle, void *d) {
+  struct proc_handle *h = d;
+  jv ret = jv_false();
+
+  if (!h) {
+    jv_free(handle);
+    return ret;
+  }
+#ifdef WIN32
+  WORD code;
+  if (h->proc != NULL &&
+      (WaitForSingleObject(h->proc, INFINITE) == WAIT_OBJECT_0 ||
+       GetExitCodeProcess(h->proc, &code) == 0))
+    ret = jv_string("wait failed");
+  else
+    ret = jv_number(code);
+#else
+  int status;
+  if (h->proc != (pid_t)-1 && waitpid(h->proc, &status, 0) == -1) {
+    ret = jv_string_fmt("wait failed: %s", strerror(errno));
+  } else {
+    if (WIFEXITED(status))
+      ret = jv_number(WEXITSTATUS(status));
+    else if (WIFSIGNALED(status))
+      ret = jv_number(-WTERMSIG(status));
+    else
+      ret = jv_number(0); // can't happen
+  }
+#endif
+  jv_free(h->spawnspec);
+  jv_free(handle);
+  free(h);
+  return jv_is_valid(ret) ? ret : jv_number(0);
+}
+
+static jv p_reset(jq_state *jq, jv handle, void *vh) {
+  //nothing to do...
+  jv_free(handle);
+  return jv_true();
+}
+
+/* Kill */
+static jv p_write(jq_state *jq, jv input, void *vh, jv sig) {
+  struct proc_handle *h = vh;
+
+#ifdef WIN32
+  if (h->proc == NULL)
+    return jv_false();
+
+  if (jv_get_kind(sig) == JV_KIND_STRING) {
+    jv_free(sig);
+    sig = jv_number(1);
+  }
+#else
+  if (h->proc == (pid_t)-1)
+    return jv_false();
+
+  if (jv_get_kind(sig) == JV_KIND_STRING) {
+    const char *s = jv_string_value(sig);
+    
+#define sig1(name) \
+    do { if (strcmp(s, #name) == 0) { jv_free(sig); sig = jv_number(name); goto gotone; } } while (0)
+    sig1(SIGHUP);
+    sig1(SIGINT);
+    sig1(SIGQUIT);
+    sig1(SIGILL);
+    sig1(SIGTRAP);
+#ifdef SIGIOT
+    sig1(SIGIOT);
+#endif
+    sig1(SIGBUS);
+    sig1(SIGFPE);
+    sig1(SIGKILL);
+    sig1(SIGUSR1);
+    sig1(SIGSEGV);
+    sig1(SIGUSR2);
+    sig1(SIGPIPE);
+    sig1(SIGALRM);
+    sig1(SIGTERM);
+#ifdef SIGSTKFLT
+    sig1(SIGSTKFLT);
+#endif
+    sig1(SIGCHLD);
+    sig1(SIGCONT);
+    sig1(SIGSTOP);
+    sig1(SIGTSTP);
+    sig1(SIGTTIN);
+    sig1(SIGTTOU);
+    sig1(SIGURG);
+#ifdef SIGSTKFLT
+    sig1(SIGXCPU);
+#endif
+#ifdef SIGXFSZ
+    sig1(SIGXFSZ);
+#endif
+#ifdef SIGVTALRM
+    sig1(SIGVTALRM);
+#endif
+#ifdef SIGPROF
+    sig1(SIGPROF);
+#endif
+#ifdef SIGWINCH
+    sig1(SIGWINCH);
+#endif
+#ifdef SIGPOLL
+    sig1(SIGPOLL);
+#endif
+#ifdef SIGPWR
+    sig1(SIGPWR);
+#endif
+#ifdef SIGSYS
+    sig1(SIGSYS);
+#endif
+    return jv_invalid_with_msg(jv_string("fhwrite: invalid signal"));
+  }
+gotone:
+#endif
+
+  if (jv_get_kind(sig) != JV_KIND_NUMBER) {
+    jv_free(sig);
+    return jv_invalid_with_msg(jv_string("fhwrite: invalid signal"));
+  }
+#ifdef WIN32
+  if (TerminateProcess(h->proc, 1)) {
+    jv_free(sig);
+    return jv_true();
+  }
+  jv_free(sig);
+  return jv_false();
+#else
+  if (kill(h->proc, jv_number_value(sig)) == 0) {
+    jv_free(sig);
+    return jv_true();
+  }
+  jv_free(sig);
+  return jv_invalid_with_msg(jv_string_fmt("fhwrite: could not kill process: %s", strerror(errno)));
+#endif
+}
+
+static jv p_stat(jq_state *jq, jv input, void *vh) {
+  struct proc_handle *h = vh;
+
+  if (!h)
+    return jv_invalid_with_msg(jv_string("invalid process handle"));
+
+#ifdef WIN32
+  if (h->proc != NULL)
+    return jv_true();
+#else
+  int status;
+  if (h->proc == (pid_t)-1)
+    return jv_false();
+  pid_t pid = waitpid(h->proc, &status, WNOHANG);
+  if (pid == 0)
+    return jv_true();
+  if (pid == (pid_t)-1)
+    return jv_invalid_with_msg(jv_string_fmt("waitpid error: %s", strerror(errno)));
+  h->proc = (pid_t)-1;
+  if (WIFEXITED(status))
+    return jv_number(WEXITSTATUS(status));
+  else if (WIFSIGNALED(status))
+    return jv_number(-WTERMSIG(status));
+  return jv_number(0); // can't happen
+#endif
+}
+
+static jv p_read(jq_state *jq, jv input, void *vh) {
+  struct proc_handle *h = vh;
+  jv ret = jv_false();
+
+  if (!h)
+    return jv_invalid_with_msg(jv_string("invalid process handle"));
+
+#ifdef WIN32
+  WORD code;
+  if (h->proc != NULL &&
+      (WaitForSingleObject(h->proc, INFINITE) == WAIT_OBJECT_0 ||
+       GetExitCodeProcess(h->proc, &code) == 0))
+    ret = jv_invalid_with_msg(jv_string("wait failed"));
+  else
+    ret = jv_number(code);
+  h->proc = NULL;
+#else
+  int status;
+  if (h->proc != (pid_t)-1 && waitpid(h->proc, &status, 0) == -1) {
+    ret = jv_invalid_with_msg(jv_string_fmt("wait failed: %s", strerror(errno)));
+  } else {
+    if (WIFEXITED(status))
+      ret = jv_number(WEXITSTATUS(status));
+    else if (WIFSIGNALED(status))
+      ret = jv_number(-WTERMSIG(status));
+    else
+      ret = jv_number(0); // can't happen
+  }
+  h->proc = (pid_t)-1;
+#endif
+
+  return ret;
+}
+
+static jv p_eof(jq_state *jq, jv input, void *vh) {
+  return jv_invalid_with_msg(jv_string("Reading a process handle is currently not supported"));
+}
+
+struct jq_io_table p_iovt = {
+  .kind    = "PROCESS",
+  .fhclose = p_close,
+  .fhreset = p_reset,
+  .fhwrite = p_write,
+  .fhread  = p_read,
+  .fhstat  = p_stat,
+  .fheof   = p_eof,
+};
+
+static jv make_p_handle(jq_state *jq, jv_pid_t proc, jv spawnspec) {
+  struct proc_handle *h = jv_mem_alloc(sizeof(*h));
+  h->proc = proc;
+  h->spawnspec = spawnspec;
+  return jq_handle_new(jq, "PROCESS", &p_iovt, h);
+}
+
+static int jv2fd(jv f) {
+  int fd = -1;
+
+  if (jv_get_kind(f) == JV_KIND_NUMBER) {
+    fd = jv_number_value(f);
+  } else if (jv_get_kind(f) == JV_KIND_STRING) {
+    const char *s = jv_string_value(f);
+
+    if (strcmp(s, "stdin") == 0) fd = STDIN_FILENO;
+    else if (strcmp(s, "stdout") == 0) fd = STDOUT_FILENO;
+    else if (strcmp(s, "stderr") == 0) fd = STDERR_FILENO;
+  }
+  return fd;
+}
+
+/* XXX Maybe this should be in src/util.c and be called from jq_spawn_process()... */
+static jv allow_spawn(jq_state *jq, jv file, jv file_actions, jv argv) {
+  jv ret = jv_true();
+
+  if (jv_get_kind(file_actions) == JV_KIND_ARRAY) {
+    jv_array_foreach(file_actions, i, action) {
+      if (jv_get_kind(action) != JV_KIND_OBJECT) {
+        jv_free(action);
+        continue;
+      }
+      int fd = jv2fd(jv_object_get(jv_copy(action), jv_string("f")));
+      jv target = jv_object_get(action, jv_string("target"));
+      if (jv_get_kind(target) != JV_KIND_STRING || fd < 0) {
+        jv_free(target);
+        continue;
+      }
+      ret = allow_io(jq, "file",
+                     JV_OBJECT(jv_string("kind"), jv_string("file"),
+                               jv_string("name"), jv_copy(target)),
+                     jv_copy(target));
+      jv_free(target);
+      break;
+    }
+  }
+  if (jv_is_valid(ret)) {
+    ret = allow_io(jq, "spawn",
+                   JV_OBJECT(jv_string("kind"), jv_string("spawn"),
+                             jv_string("name"), jv_copy(file),
+                             jv_string("argv"), jv_copy(argv),
+                             jv_string("file_actions"), jv_copy(file_actions)),
+                   jv_copy(file));
+  }
+  jv_free(file_actions);
+  jv_free(file);
+  jv_free(argv);
+  return ret;
+}
+
+static jv builtin_jq_spawn(jq_state *jq, jv input) {
+  jv file =         jv_array_get(jv_copy(input), 0);
+  jv file_actions = jv_array_get(jv_copy(input), 1);
+  jv attrs =        jv_array_get(jv_copy(input), 2);
+  jv argv =         jv_array_get(jv_copy(input), 3);
+  jv env =          jv_array_get(jv_copy(input), 4);
+  jv inopts =       jv_parse_options(jv_array_get(jv_copy(input), 5));
+  jv outopts =      jv_parse_options(jv_array_get(jv_copy(input), 6));
+  jv spawnspec =    input;
+  jv res = jq_spawn_process(jq, file, file_actions, attrs, argv, env);
+  if (!jv_is_valid(res)) {
+    jv_free(spawnspec);
+    return res;
+  }
+
+#ifdef WIN32
+#error "implement this"
+#else
+  jv pid = jv_object_get(jv_copy(res), jv_string("pid"));
+  jv handle = make_p_handle(jq, jv_number_value(pid), jv_copy(spawnspec));
+  jv_free(pid);
+  res = jv_object_set(res, jv_string("proc_handle"), handle);
+#endif
+
+  FILE *f = NULL;
+  int fd;
+  jv junk;
+  jv v;
+
+  if (jv_is_valid((v = jv_object_get(jv_copy(res), jv_string("stdin"))))) {
+    fd = jv_number_value((junk = jv_array_get(jv_object_get(jv_copy(res), jv_string("stdin")), 1)));
+    jv_free(junk);
+    if ((f = fdopen(fd, "a")) == NULL) {
+      res = jv_object_set(res, jv_string("error"),
+                          jv_string(strerror(errno)));
+      return res;
+    }
+    (void) close(jv_number_value((junk = jv_array_get(jv_object_get(jv_copy(res), jv_string("stdin")), 0))));
+    jv_free(junk);
+    res = jv_object_set(res, jv_string("stdin_handle"),
+                        make_f_handle(jq, f, jv_string("<spawn>"), jv_invalid(), jv_copy(spawnspec), jv_string("a"),
+                                      inopts, outopts));
+  }
+
+  if (jv_is_valid((v = jv_object_get(jv_copy(res), jv_string("stdout"))))) {
+    fd = jv_number_value((junk = jv_array_get(jv_object_get(jv_copy(res), jv_string("stdout")), 0)));
+    jv_free(junk);
+    if ((f = fdopen(fd, "r")) == NULL) {
+      res = jv_object_set(res, jv_string("error"),
+                          jv_string(strerror(errno)));
+      return res;
+    }
+    (void) close(jv_number_value((junk = jv_array_get(jv_object_get(jv_copy(res), jv_string("stdout")), 1))));
+    jv_free(junk);
+    res = jv_object_set(res, jv_string("stdout_handle"),
+                        make_f_handle(jq, f, jv_string("<spawn>"), jv_invalid(), jv_copy(spawnspec), jv_string("r"),
+                                      inopts, outopts));
+  }
+
+  if (jv_is_valid((v = jv_object_get(jv_copy(res), jv_string("stderr"))))) {
+    fd = jv_number_value(jv_array_get(jv_object_get(jv_copy(res), jv_string("stderr")), 0));
+    jv_free(junk);
+    if ((f = fdopen(fd, "r")) == NULL) {
+      res = jv_object_set(res, jv_string("error"),
+                          jv_string(strerror(errno)));
+      return res;
+    }
+    (void) close(jv_number_value((junk = jv_array_get(jv_object_get(jv_copy(res), jv_string("stderr")), 1))));
+    jv_free(junk);
+    res = jv_object_set(res, jv_string("stderr_handle"),
+                        make_f_handle(jq, f, jv_string("<spawn>"), jv_invalid(), jv_copy(spawnspec), jv_string("r"),
+                                      inopts, outopts));
+  }
+
+  return res;
 }
 
 JQ_BUILTIN_INIT_FUN(builtin_jq_io_init,
                  "def fopen($fn; $mode; $inopts; $outopts): \n"
-                 "    label $out | _fopen($fn; $mode; $inopts; $outopts) as $fh\n"
-                 "  | try $fh catch (\n"
-                 "        . as $error|$fh|_fhname as $fn|fhclose|$error\n"
-                 "      | if . == \"EOF\" then break $out\n"
-                 "        else \"Error reading from \\($fn): \\($error)\"|error end);\n"
+                 "    _fopen($fn; $mode; $inopts; $outopts)\n"
+                 "  | . as $fh | unwind($fh|fhclose?);\n"
                  "def fopen($fn; $mode): fopen($fn; $mode; null; null);\n"
                  "def fopen($fn): fopen($fn; \"r\");\n"
                  "def fopen: fopen(.; \"r\");\n"
@@ -448,13 +833,61 @@ JQ_BUILTIN_INIT_FUN(builtin_jq_io_init,
                  },
                  )
 
+JQ_BUILTIN_INIT_FUN(builtin_jq_spawn_init,
+                 /*
+                  * XXX What about non-stdio handles?
+                  *
+                  * XXX Add a spawn attribute for "kill/wait on unwind"?  Or
+                  * let the app do it?
+                  *
+                  * Anyways, programs that spawn w/o stdout/stderr pipes should
+                  * read from the process handle, while ones that do should
+                  * read from the stdout/stderr handles until EOF, then from
+                  * the process handle.  (Note the lack of non-blocking I/O in
+                  * the whole system.)
+                  *
+                  * XXX Make sure to fetch posix_spawn attributes like pgroup
+                  * IDs so that one could build a shell out of jq that spawns
+                  * one process to get a pgroup ID then spawns others in a
+                  * pipeline in the same pgroup.
+                  *
+                  * With all this one could write a Unix shell in jq!  A toy
+                  * shell, naturally, unless we add some functionality to
+                  * support job control, ttys, etc.  Still, no async I/O
+                  * needed, mostly.  For async I/O we will need to ditch stdio.
+                  * Stdio is a handy crutch, but a crutch nonetheless.
+                  *
+                  * For async I/O we'll need jq varargs, too, as we'll need to
+                  * be able to use that as a proxy for first-class function
+                  * values (which jq will never have).
+                  */
+                 "def _spawn:\n"
+                 "    __spawn\n"
+                 "  | . as $res\n"
+                 "  | unwind(  $res\n"
+                 "           | ((.stdin_handle|fhclose?),\n"
+                 "              (.stdout_handle|fhclose?),\n"
+                 "              (.stderr_handle|fhclose?),\n"
+                 "              (.proc_handle|fhclose?)));\n"
+                 "def spawn(f; actions; attrs; argv; env; inopts; outopts):\n"
+                 "  [f, actions, attrs, argv, env, inopts, outopts]|_spawn;\n"
+                 "def spawn(f; actions; attrs; argv; env):\n"
+                 "  [f, actions, attrs, argv, env]|_spawn;\n"
+                 "def spawn: if type==\"string\" then [.,[],[],[.],null]|_spawn\n"
+                 "           else [.[0],[],[],.,null]|_spawn end;\n",
+                 {
+                   .fptr = (cfunction_ptr)builtin_jq_spawn,
+                   .name = "__spawn",
+                   .nargs = 1,
+                   .pure = 0,
+                   .exported = 0
+                 },
+                 )
+
 JQ_BUILTIN_INIT_FUN(builtin_jq_proc_init,
                  "def popen($fn; $mode; $opts): \n"
-                 "    label $out | _popen($fn; $mode; $opts) as $fh\n"
-                 "  | try $fh catch (\n"
-                 "        . as $error|$fh|_fhcmd as $fn|fhclose|$error\n"
-                 "      | if . == \"EOF\" then break $out\n"
-                 "        else \"Error reading from \\($fn): \\($error)\"|error end);\n"
+                 "    _popen($fn; $mode; $opts)\n"
+                 "  | . as $fh | unwind($fh|fhclose?);\n"
                  "def popen($fn; $mode): popen($fn; $mode; null);\n"
                  "def popen($fn): popen($fn; \"r\");\n"
                  "def popen: popen(.; \"r\");\n"
@@ -502,6 +935,16 @@ static struct jq_builtin_module builtin_modules[] = {
     .name = "jq" JQ_PATH_SEP "io" JQ_DLL_EXT,
     .contents = 0,
     .init = builtin_jq_io_init,
+  },
+  {
+    .name = "jq" JQ_PATH_SEP "spawn.jq",
+    .contents = "module {cfunctions:\"spawn\"};",
+    .init = 0,
+  },
+  {
+    .name = "jq" JQ_PATH_SEP "spawn" JQ_DLL_EXT,
+    .contents = 0,
+    .init = builtin_jq_spawn_init,
   },
   {
     .name = "jq" JQ_PATH_SEP "proc.jq",

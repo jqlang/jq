@@ -741,8 +741,11 @@ jv jv_number_random_string(size_t n) {
 }
 
 jv jv_parse_options(jv opts) {
-  if (jv_get_kind(opts) == JV_KIND_NULL)
+  if (jv_get_kind(opts) == JV_KIND_NULL ||
+      (jv_get_kind(opts) == JV_KIND_INVALID && !jv_invalid_has_msg(jv_copy(opts)))) {
+    jv_free(opts);
     return jv_number(0);
+  }
   if (jv_get_kind(opts) == JV_KIND_STRING)
     opts = JV_ARRAY(opts);
   if (jv_get_kind(opts) != JV_KIND_ARRAY) {

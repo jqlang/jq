@@ -15,6 +15,8 @@
 #include <shellapi.h>
 #include <wchar.h>
 #include <wtypes.h>
+#else
+#include <signal.h>
 #endif
 
 #if !defined(HAVE_ISATTY) && defined(HAVE__ISATTY)
@@ -251,6 +253,10 @@ static void debug_cb(void *data, jv input) {
   fprintf(stderr, "\n");
 }
 
+#ifndef WIN32
+static void sigchld(int sig) {}
+#endif
+
 #ifdef WIN32
 int umain(int argc, char* argv[]);
 
@@ -286,6 +292,12 @@ int main(int argc, char* argv[]) {
   fflush(stderr);
   _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
   _setmode(fileno(stderr), _O_TEXT | _O_U8TEXT);
+#else
+  struct sigaction sa;
+
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = sigchld;
+  (void) sigaction(SIGCHLD, &sa, NULL);
 #endif
 
   if (argc) progname = argv[0];
