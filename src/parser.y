@@ -76,6 +76,7 @@ struct lexer_param;
 %token LABEL "label"
 %token BREAK "break"
 %token LOC "__loc__"
+%token HIGHPRECPIPE ">|"
 %token SETPIPE "|="
 %token SETPLUS "+="
 %token SETMINUS "-="
@@ -112,6 +113,7 @@ struct lexer_param;
 %precedence '?'
 %precedence "try"
 %precedence "catch"
+%right HIGHPRECPIPE
 
 
 %type <blk> Exp Term
@@ -446,6 +448,10 @@ Exp "|=" Exp {
 } |
 
 Exp '|' Exp {
+  $$ = block_join($1, $3);
+} |
+
+Exp ">|" Exp {
   $$ = block_join($1, $3);
 } |
 

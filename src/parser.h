@@ -94,23 +94,24 @@ struct lexer_param;
     LABEL = 285,
     BREAK = 286,
     LOC = 287,
-    SETPIPE = 288,
-    SETPLUS = 289,
-    SETMINUS = 290,
-    SETMULT = 291,
-    SETDIV = 292,
-    SETDEFINEDOR = 293,
-    LESSEQ = 294,
-    GREATEREQ = 295,
-    ALTERNATION = 296,
-    COEXPR = 297,
-    QQSTRING_START = 298,
-    QQSTRING_TEXT = 299,
-    QQSTRING_INTERP_START = 300,
-    QQSTRING_INTERP_END = 301,
-    QQSTRING_END = 302,
-    FUNCDEF = 303,
-    NONOPT = 304
+    HIGHPRECPIPE = 288,
+    SETPIPE = 289,
+    SETPLUS = 290,
+    SETMINUS = 291,
+    SETMULT = 292,
+    SETDIV = 293,
+    SETDEFINEDOR = 294,
+    LESSEQ = 295,
+    GREATEREQ = 296,
+    ALTERNATION = 297,
+    COEXPR = 298,
+    QQSTRING_START = 299,
+    QQSTRING_TEXT = 300,
+    QQSTRING_INTERP_START = 301,
+    QQSTRING_INTERP_END = 302,
+    QQSTRING_END = 303,
+    FUNCDEF = 304,
+    NONOPT = 305
   };
 #endif
 /* Tokens.  */
@@ -144,23 +145,24 @@ struct lexer_param;
 #define LABEL 285
 #define BREAK 286
 #define LOC 287
-#define SETPIPE 288
-#define SETPLUS 289
-#define SETMINUS 290
-#define SETMULT 291
-#define SETDIV 292
-#define SETDEFINEDOR 293
-#define LESSEQ 294
-#define GREATEREQ 295
-#define ALTERNATION 296
-#define COEXPR 297
-#define QQSTRING_START 298
-#define QQSTRING_TEXT 299
-#define QQSTRING_INTERP_START 300
-#define QQSTRING_INTERP_END 301
-#define QQSTRING_END 302
-#define FUNCDEF 303
-#define NONOPT 304
+#define HIGHPRECPIPE 288
+#define SETPIPE 289
+#define SETPLUS 290
+#define SETMINUS 291
+#define SETMULT 292
+#define SETDIV 293
+#define SETDEFINEDOR 294
+#define LESSEQ 295
+#define GREATEREQ 296
+#define ALTERNATION 297
+#define COEXPR 298
+#define QQSTRING_START 299
+#define QQSTRING_TEXT 300
+#define QQSTRING_INTERP_START 301
+#define QQSTRING_INTERP_END 302
+#define QQSTRING_END 303
+#define FUNCDEF 304
+#define NONOPT 305
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -172,7 +174,7 @@ union YYSTYPE
   jv literal;
   block blk;
 
-#line 176 "src/parser.h" /* yacc.c:1909  */
+#line 178 "src/parser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
