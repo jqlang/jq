@@ -32,8 +32,8 @@ static const jv_kind color_kinds[] =
 static char color_bufs[sizeof(color_kinds)/sizeof(color_kinds[0])][16];
 static const char *color_bufps[8];
 static const char* def_colors[] =
-  {COL("1;30"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
-   COL("0;32"),      COL("1;39"),     COL("1;39")};
+  {COL("1;30"),    COL("0;37"),      COL("0;37"),     COL("0;37"),
+   COL("0;32"),      COL("1;37"),     COL("1;37")};
 #define FIELD_COLOR COL("34;1")
 
 static const char **colors = def_colors;

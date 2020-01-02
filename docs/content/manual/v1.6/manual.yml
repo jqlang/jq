@@ -3311,7 +3311,7 @@ sections:
         - color for objects
 
       The default color scheme is the same as setting
-      `"JQ_COLORS=1;30:0;39:0;39:0;39:0;32:1;39:1;39"`.
+      `"JQ_COLORS=1;30:0;37:0;37:0;37:0;32:1;37:1;37"`.
 
       This is not a manual for VT100/ANSI escapes.  However, each of
       these color specifications should consist of two numbers separated
