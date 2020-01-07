@@ -1,6 +1,5 @@
 headline: Download jq
 body:
-
   - text: |
 
       jq is written in C and has no runtime dependencies, so it should be
@@ -59,6 +58,9 @@ body:
 
        * Use [Homebrew](http://brew.sh/) to install jq 1.5 with
          `brew install jq`.
+
+       * Use [MacPorts](https://www.macports.org) to install jq 1.6 with
+         `port install jq`.
 
        * jq 1.6 binary for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64).
@@ -193,4 +195,3 @@ body:
       The man page is built by `make jq.1`, or just `make`, also from
       the YAML docs, and you'll still need the Python dependencies to
       build the manpage.
-
