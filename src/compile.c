@@ -66,6 +66,7 @@ struct inst {
   struct bytecode* compiled;
 
   int bytecode_pos; // position just after this insn
+  unsigned int hidden:1;
 };
 
 static inst* inst_new(opcode op) {
@@ -83,6 +84,7 @@ static inst* inst_new(opcode op) {
   i->arglist = gen_noop();
   i->source = UNKNOWN_LOCATION;
   i->locfile = 0;
+  i->hidden = 0;
   return i;
 }
 
@@ -119,6 +121,18 @@ static inst* block_take(block* b) {
     b->last = 0;
   }
   return i;
+}
+
+block block_take_block(block *b) {
+  return inst_block(block_take(b));
+}
+
+block block_hide(block b) {
+  for (inst* i = b.first; i; i = i->next) {
+    if (i->op == CLOSURE_CREATE_C && !i->imm.cfunc->exported)
+      i->hidden = 1;
+  }
+  return b;
 }
 
 block gen_location(location loc, struct locfile* l, block b) {
@@ -321,6 +335,7 @@ static int block_bind_subblock_inner(int* any_unbound, block binder, block body,
 
     int flags = opcode_describe(i->op)->flags;
     if ((flags & bindflags) == (bindflags & ~OP_BIND_WILDCARD) && i->bound_by == 0 &&
+        !binder.first->hidden &&
         (!strcmp(i->symbol, binder.first->symbol) ||
          // Check for break/break2/break3; see parser.y
          ((bindflags & OP_BIND_WILDCARD) && i->symbol[0] == '*' &&
@@ -418,6 +433,20 @@ static inst* block_take_last(block* b) {
     b->last = 0;
   }
   return i;
+}
+
+void block_inline(block inlines, block body) {
+  inst *i;
+  inst *b;
+  for (i = inlines.first; i; i = i->next) {
+    for (b = body.first; b; b = b->next) {
+      if (b->op == CALL_JQ && !b->bound_by && strcmp(b->symbol, i->symbol) == 0 &&
+          b->nactuals == 0)
+        b->op = i->subfn.first->op;
+      block_inline(inlines, b->arglist);
+      block_inline(inlines, b->subfn);
+    }
+  }
 }
 
 // Binds a sequence of binders, which *must not* alrady be bound to each other,
@@ -557,6 +586,11 @@ block gen_function(const char* name, block formals, block body) {
     if (i->op == CLOSURE_PARAM_REGULAR) {
       i->op = CLOSURE_PARAM;
       body = gen_var_binding(gen_call(i->symbol, gen_noop()), i->symbol, body);
+    } else if (i->op == CLOSURE_PARAM_COEXPR) {
+      i->op = CLOSURE_PARAM;
+      block coexp = gen_function(i->symbol, gen_noop(), BLOCK(gen_op_unbound(LOADV,i->symbol), gen_call("fhread", gen_noop())));
+      block_bind_subblock(coexp, body, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
+      body = gen_var_binding(gen_call("coexp", gen_lambda(gen_call(i->symbol, gen_noop()))), i->symbol, BLOCK(coexp, body));
     }
     block_bind_subblock(inst_block(i), body, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
   }
@@ -568,6 +602,10 @@ block gen_function(const char* name, block formals, block body) {
   block b = inst_block(i);
   block_bind_subblock(b, b, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
   return b;
+}
+
+block gen_param_coexpr(const char* name) {
+  return gen_op_unbound(CLOSURE_PARAM_COEXPR, name);
 }
 
 block gen_param_regular(const char* name) {
@@ -1033,43 +1071,40 @@ block gen_cond(block cond, block iftrue, block iffalse) {
                               BLOCK(gen_op_simple(POP), iffalse)));
 }
 
-block gen_try_handler(block handler) {
-  // Quite a pain just to hide jq's internal errors.
-  return gen_cond(// `if type=="object" and .__jq
-                  gen_and(gen_call("_equal",
-                                   BLOCK(gen_lambda(gen_const(jv_string("object"))),
-                                         gen_lambda(gen_call("type", gen_noop())))),
-                          BLOCK(gen_subexp(gen_const(jv_string("__jq"))),
-                                gen_noop(),
-                                gen_op_simple(INDEX))),
-                  // `then error`
-                  gen_call("error", gen_noop()),
-                  // `else HANDLER end`
-                  handler);
-}
-
 block gen_try(block exp, block handler) {
   /*
-   * Produce something like:
-   *  FORK_OPT <address of handler>
+   * Produce:
+   *
+   *  TRY_BEGIN handler
    *  <exp>
-   *  JUMP <end of handler>
-   *  <handler>
+   *  TRY_END
+   *  JUMP past_handler
+   *  handler: <handler>
+   *  past_handler:
    *
-   * If this is not an internal try/catch, then catch and re-raise
-   * internal errors to prevent them from leaking.
+   * If <exp> backtracks then TRY_BEGIN will backtrack.
    *
-   * The handler will only execute if we backtrack to the FORK_OPT with
-   * an error (exception).  If <exp> produces no value then FORK_OPT
-   * will backtrack (propagate the `empty`, as it were.  If <exp>
-   * produces a value then we'll execute whatever bytecode follows this
-   * sequence.
+   * If <exp> produces a value then we'll execute whatever bytecode follows
+   * this sequence.  If that code raises an exception, then TRY_END will wrap
+   * and re-raise that exception, and TRY_BEGIN will unwrap and re-raise the
+   * exception (see jq_next()).
+   *
+   * If <exp> raises then the TRY_BEGIN will see a non-wrapped exception and
+   * will jump to the handler (note the TRY_END will not execute in this case),
+   * and if the handler produces any values, then we'll execute whatever
+   * bytecode follows this sequence.  Note that TRY_END will not execute in
+   * this case, so if the handler raises an exception, or code past the handler
+   * raises an exception, then that exception won't be wrapped and re-raised,
+   * and the TRY_BEGIN will not catch it because it does not stack_save() when
+   * it branches to the handler.
    */
-  if (!handler.first && !handler.last)
-    // A hack to deal with `.` as the handler; we could use a real NOOP here
-    handler = BLOCK(gen_op_simple(DUP), gen_op_simple(POP), handler);
-  exp = BLOCK(exp, gen_op_target(JUMP, handler));
-  return BLOCK(gen_op_target(FORK_OPT, exp), exp, handler);
+
+  if (block_is_noop(handler))
+    handler = BLOCK(gen_op_simple(DUP), gen_op_simple(POP));
+
+  block jump = gen_op_target(JUMP, handler);
+  return BLOCK(gen_op_target(TRY_BEGIN, jump), exp, gen_op_simple(TRY_END),
+               jump, handler);
 }
 
 block gen_label(const char *label, block exp) {

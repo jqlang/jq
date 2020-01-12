@@ -38,7 +38,7 @@ typedef struct {
 
 jv_kind jv_get_kind(jv);
 const char* jv_kind_name(jv_kind);
-static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
+static int jv_is_valid(jv x) { return ((x).kind_flags & 0xf) != JV_KIND_INVALID; }
 
 jv jv_copy(jv);
 void jv_free(jv);
@@ -210,20 +210,26 @@ enum jv_print_flags {
   JV_PRINT_SPACE0   = 256,
   JV_PRINT_SPACE1   = 512,
   JV_PRINT_SPACE2   = 1024,
+  JV_PRINT_RAW      = 8192,  /* not a real flag for jv_dump functions yet */
+  JV_PRINT_NOLF     = 16384, /* not a real flag for jv_dump functions yet */
 };
 #define JV_PRINT_INDENT_FLAGS(n) \
     ((n) < 0 || (n) > 7 ? JV_PRINT_TAB | JV_PRINT_PRETTY : (n) == 0 ? 0 : (n) << 8 | JV_PRINT_PRETTY)
+jv jv_dump_options(jv);
 void jv_dumpf(jv, FILE *f, int flags);
 void jv_dump(jv, int flags);
 void jv_show(jv, int flags);
 jv jv_dump_string(jv, int flags);
 char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize);
 
-enum {
+enum jv_parse_flags {
+  JV_PARSE_PLAIN            = 0,
   JV_PARSE_SEQ              = 1,
   JV_PARSE_STREAMING        = 2,
   JV_PARSE_STREAM_ERRORS    = 4,
+  JV_PARSE_RAW              = 8,
 };
+jv jv_parse_options(jv);
 
 jv jv_parse(const char* string);
 jv jv_parse_sized(const char* string, int length);
@@ -251,7 +257,9 @@ jv jv_keys_unsorted(jv /*object or array*/);
 int jv_cmp(jv, jv);
 jv jv_group(jv, jv);
 jv jv_sort(jv, jv);
-
+jv jv_number_random_int(void);
+jv jv_number_random_bytes(size_t);
+jv jv_number_random_string(size_t);
 
 #endif
 

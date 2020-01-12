@@ -1,9 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.3.2.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
-   Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,9 +30,6 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
-
 #ifndef YY_YY_SRC_PARSER_H_INCLUDED
 # define YY_YY_SRC_PARSER_H_INCLUDED
 /* Debug traces.  */
@@ -44,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 11 "src/parser.y" /* yacc.c:1927  */
+#line 11 "src/parser.y" /* yacc.c:1909  */
 
 #include "locfile.h"
 struct lexer_param;
@@ -61,7 +57,7 @@ struct lexer_param;
     }                                           \
   } while (0)
 
-#line 65 "src/parser.h" /* yacc.c:1927  */
+#line 61 "src/parser.h" /* yacc.c:1909  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -80,39 +76,42 @@ struct lexer_param;
     DEFINEDOR = 267,
     AS = 268,
     DEF = 269,
-    MODULE = 270,
-    IMPORT = 271,
-    INCLUDE = 272,
-    IF = 273,
-    THEN = 274,
-    ELSE = 275,
-    ELSE_IF = 276,
-    REDUCE = 277,
-    FOREACH = 278,
-    END = 279,
-    AND = 280,
-    OR = 281,
-    TRY = 282,
-    CATCH = 283,
-    LABEL = 284,
-    BREAK = 285,
-    LOC = 286,
-    SETPIPE = 287,
-    SETPLUS = 288,
-    SETMINUS = 289,
-    SETMULT = 290,
-    SETDIV = 291,
-    SETDEFINEDOR = 292,
-    LESSEQ = 293,
-    GREATEREQ = 294,
-    ALTERNATION = 295,
-    QQSTRING_START = 296,
-    QQSTRING_TEXT = 297,
-    QQSTRING_INTERP_START = 298,
-    QQSTRING_INTERP_END = 299,
-    QQSTRING_END = 300,
-    FUNCDEF = 301,
-    NONOPT = 302
+    CODEF = 270,
+    MODULE = 271,
+    IMPORT = 272,
+    INCLUDE = 273,
+    IF = 274,
+    THEN = 275,
+    ELSE = 276,
+    ELSE_IF = 277,
+    REDUCE = 278,
+    FOREACH = 279,
+    END = 280,
+    AND = 281,
+    OR = 282,
+    TRY = 283,
+    CATCH = 284,
+    LABEL = 285,
+    BREAK = 286,
+    LOC = 287,
+    HIGHPRECPIPE = 288,
+    SETPIPE = 289,
+    SETPLUS = 290,
+    SETMINUS = 291,
+    SETMULT = 292,
+    SETDIV = 293,
+    SETDEFINEDOR = 294,
+    LESSEQ = 295,
+    GREATEREQ = 296,
+    ALTERNATION = 297,
+    COEXPR = 298,
+    QQSTRING_START = 299,
+    QQSTRING_TEXT = 300,
+    QQSTRING_INTERP_START = 301,
+    QQSTRING_INTERP_END = 302,
+    QQSTRING_END = 303,
+    FUNCDEF = 304,
+    NONOPT = 305
   };
 #endif
 /* Tokens.  */
@@ -128,51 +127,54 @@ struct lexer_param;
 #define DEFINEDOR 267
 #define AS 268
 #define DEF 269
-#define MODULE 270
-#define IMPORT 271
-#define INCLUDE 272
-#define IF 273
-#define THEN 274
-#define ELSE 275
-#define ELSE_IF 276
-#define REDUCE 277
-#define FOREACH 278
-#define END 279
-#define AND 280
-#define OR 281
-#define TRY 282
-#define CATCH 283
-#define LABEL 284
-#define BREAK 285
-#define LOC 286
-#define SETPIPE 287
-#define SETPLUS 288
-#define SETMINUS 289
-#define SETMULT 290
-#define SETDIV 291
-#define SETDEFINEDOR 292
-#define LESSEQ 293
-#define GREATEREQ 294
-#define ALTERNATION 295
-#define QQSTRING_START 296
-#define QQSTRING_TEXT 297
-#define QQSTRING_INTERP_START 298
-#define QQSTRING_INTERP_END 299
-#define QQSTRING_END 300
-#define FUNCDEF 301
-#define NONOPT 302
+#define CODEF 270
+#define MODULE 271
+#define IMPORT 272
+#define INCLUDE 273
+#define IF 274
+#define THEN 275
+#define ELSE 276
+#define ELSE_IF 277
+#define REDUCE 278
+#define FOREACH 279
+#define END 280
+#define AND 281
+#define OR 282
+#define TRY 283
+#define CATCH 284
+#define LABEL 285
+#define BREAK 286
+#define LOC 287
+#define HIGHPRECPIPE 288
+#define SETPIPE 289
+#define SETPLUS 290
+#define SETMINUS 291
+#define SETMULT 292
+#define SETDIV 293
+#define SETDEFINEDOR 294
+#define LESSEQ 295
+#define GREATEREQ 296
+#define ALTERNATION 297
+#define COEXPR 298
+#define QQSTRING_START 299
+#define QQSTRING_TEXT 300
+#define QQSTRING_INTERP_START 301
+#define QQSTRING_INTERP_END 302
+#define QQSTRING_END 303
+#define FUNCDEF 304
+#define NONOPT 305
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 
 union YYSTYPE
 {
-#line 31 "src/parser.y" /* yacc.c:1927  */
+#line 31 "src/parser.y" /* yacc.c:1909  */
 
   jv literal;
   block blk;
 
-#line 176 "src/parser.h" /* yacc.c:1927  */
+#line 178 "src/parser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

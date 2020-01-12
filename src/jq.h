@@ -10,6 +10,7 @@ enum {
   JQ_DEBUG_TRACE_ALL = JQ_DEBUG_TRACE | JQ_DEBUG_TRACE_DETAIL,
 };
 
+
 typedef struct jq_state jq_state;
 typedef void (*jq_msg_cb)(void *, jv);
 
@@ -28,6 +29,7 @@ void jq_teardown(jq_state **);
 
 void jq_halt(jq_state *, jv, jv);
 int jq_halted(jq_state *);
+int jq_finished(jq_state *);
 jv jq_get_exit_code(jq_state *);
 jv jq_get_error_message(jq_state *);
 
@@ -38,6 +40,11 @@ void jq_get_input_cb(jq_state *, jq_input_cb *, void **);
 void jq_set_debug_cb(jq_state *, jq_msg_cb, void *);
 void jq_get_debug_cb(jq_state *, jq_msg_cb *, void **);
 
+jv jq_get_vmid(jq_state *);
+
+jv jq_io_policy_check(jq_state *, jv);
+
+jv jq_set_io_policy(jq_state *, jv);
 void jq_set_attrs(jq_state *, jv);
 jv jq_get_attrs(jq_state *);
 jv jq_get_jq_origin(jq_state *);

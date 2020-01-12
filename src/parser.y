@@ -58,6 +58,7 @@ struct lexer_param;
 %token DEFINEDOR "//"
 %token AS "as"
 %token DEF "def"
+%token CODEF "codef"
 %token MODULE "module"
 %token IMPORT "import"
 %token INCLUDE "include"
@@ -75,6 +76,7 @@ struct lexer_param;
 %token LABEL "label"
 %token BREAK "break"
 %token LOC "__loc__"
+%token HIGHPRECPIPE ">|"
 %token SETPIPE "|="
 %token SETPLUS "+="
 %token SETMINUS "-="
@@ -84,6 +86,7 @@ struct lexer_param;
 %token LESSEQ "<="
 %token GREATEREQ ">="
 %token ALTERNATION "?//"
+%token COEXPR "@@"
 
 %token QQSTRING_START
 %token <literal> QQSTRING_TEXT
@@ -110,6 +113,7 @@ struct lexer_param;
 %precedence '?'
 %precedence "try"
 %precedence "catch"
+%right HIGHPRECPIPE
 
 
 %type <blk> Exp Term
@@ -345,6 +349,26 @@ FuncDef Exp %prec FUNCDEF {
   $$ = block_bind_referenced($1, $2, OP_IS_CALL_PSEUDO);
 } |
 
+"codef" '(' '$' ')' IDENT ':' Exp ';' %prec FUNCDEF Exp {
+  /* coexp(body) */
+  block coexp = gen_call("coexp", gen_lambda($7));
+  /* as $IDENT | */
+  block covar = gen_op_var_fresh(STOREV, jv_string_value($5));
+  /* def IDENT: $IDENT | fhread; */
+  block codef = gen_function(jv_string_value($5), gen_noop(), BLOCK(gen_op_unbound(LOADV, jv_string_value($5)), gen_call("fhread", gen_noop())));
+
+  /* Now bind $6 so it sees the codef */
+  block b = block_bind_referenced(codef, $9, OP_IS_CALL_PSEUDO | OP_HAS_BINDING);
+  
+  /* Now bind that so it sees the variable $IDENT */
+  b = block_bind_referenced(covar, b, OP_HAS_VARIABLE);
+
+  /* Now do the rest of the binding for a $IDENT | Exp */
+  covar = block_take_block(&b);
+  $$ = gen_destructure(coexp, covar, b);
+  jv_free($5);
+} |
+
 Term "as" Patterns '|' Exp {
   $$ = gen_destructure($1, $3, $5);
 } |
@@ -371,12 +395,16 @@ Term "as" Patterns '|' Exp {
   $$ = $2;
 } |
 
+"try" '(' Exp ';' Exp ')' {
+  $$ = gen_try($3, $5);
+} |
+"try" '(' Exp ';' Exp ';' Exp ')' {
+  $$ = BLOCK(gen_call("_try_finally", BLOCK(gen_lambda($3), gen_lambda($5), gen_lambda($7))));
+} |
 "try" Exp "catch" Exp {
-  //$$ = BLOCK(gen_op_target(FORK_OPT, $2), $2, $4);
-  $$ = gen_try($2, gen_try_handler($4));
+  $$ = gen_try($2, $4);
 } |
 "try" Exp {
-  //$$ = BLOCK(gen_op_target(FORK_OPT, $2), $2, gen_op_simple(BACKTRACK));
   $$ = gen_try($2, gen_op_simple(BACKTRACK));
 } |
 "try" Exp "catch" error {
@@ -420,6 +448,10 @@ Exp "|=" Exp {
 } |
 
 Exp '|' Exp {
+  $$ = block_join($1, $3);
+} |
+
+Exp ">|" Exp {
   $$ = block_join($1, $3);
 } |
 
@@ -584,6 +616,10 @@ Param:
 } |
 '$' Keyword {
   $$ = gen_param_regular(jv_string_value($2));
+  jv_free($2);
+} |
+"@@" IDENT {
+  $$ = gen_param_coexpr(jv_string_value($2));
   jv_free($2);
 } |
 IDENT {
@@ -876,6 +912,9 @@ Keyword:
 } |
 "def" {
   $$ = jv_string("def");
+} |
+"codef" {
+  $$ = jv_string("codef");
 } |
 "module" {
   $$ = jv_string("module");

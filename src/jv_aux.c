@@ -1,8 +1,20 @@
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <assert.h>
+
+#ifdef WIN32
+#include <windows.h>
+#include <ntstatus.h>
+#include <bcrypt.h>
+#else
+#include <unistd.h>
+#include <fcntl.h>
+#endif
+
+#include "jv.h"
 #include "jv_alloc.h"
 #include "jv_type_private.h"
+#include "jv_unicode.h"
 
 // making this static verbose function here
 // until we introduce a less confusing naming scheme
@@ -655,4 +667,143 @@ jv jv_group(jv objects, jv keys) {
   }
   jv_mem_free(entries);
   return ret;
+}
+
+static int random_fill_buffer(unsigned char *buf, size_t sz) {
+#ifdef WIN32
+  if (BCryptGenRandom(NULL, buf, sz,
+                      BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
+    return 1;
+#else
+  int fd = open("/dev/urandom", O_RDONLY);
+  ssize_t n = -1;
+
+  if (fd > -1) {
+    n = read(fd, buf, sz);
+    (void) close(fd);
+  }
+  if (n > -1 && sz == (size_t)n)
+    return 1;
+#endif
+  return 0;
+}
+
+jv jv_number_random_int(void) {
+  unsigned char buf[7];
+
+  if (!random_fill_buffer(buf, sizeof(buf)))
+    return jv_invalid_with_msg(jv_string("Could not generate random numbers"));
+  return jv_number(( (uint64_t)buf[0]                |
+                     (uint64_t)buf[1]         << 8   |
+                     (uint64_t)buf[2]         << 16  |
+                     (uint64_t)buf[3]         << 24  |
+                     (uint64_t)buf[4]         << 32  |
+                     (uint64_t)buf[5]         << 40  |
+                    ((uint64_t)buf[6] & 0x7)  << 48));
+}
+
+jv jv_number_random_bytes(size_t n) {
+  unsigned char buf[64];
+  jv ret = jv_array();
+
+  while (n > 0) {
+    size_t r = n > sizeof(buf) ? sizeof(buf) : n;
+    if (!random_fill_buffer(buf, r)) {
+      jv_free(ret);
+      return jv_invalid_with_msg(jv_string("Could not generate random numbers"));
+    }
+    n -= r;
+    for (size_t i = 0; i < r; i++)
+      ret = jv_array_append(ret, jv_number(buf[i]));
+  }
+  return ret;
+}
+
+jv jv_number_random_string(size_t n) {
+  jv ret = jv_string("");
+
+  n *= 2;
+  while (n > 0) {
+    unsigned char buf[64];
+    size_t r = n > sizeof(buf) ? sizeof(buf) : n;
+    if (!random_fill_buffer(buf, r)) {
+      jv_free(ret);
+      return jv_invalid_with_msg(jv_string("Could not generate random numbers"));
+    }
+    n -= r;
+    for (size_t i = 0; i < r; i+=2) {
+      char u8[8]; /* 4 is enough */
+      int len = jvp_utf8_encode(buf[i] << 8 | buf[i+1], u8);
+      ret = jv_string_concat(ret, jv_string_sized(u8, len));
+    }
+  }
+  return ret;
+}
+
+jv jv_parse_options(jv opts) {
+  if (jv_get_kind(opts) == JV_KIND_NULL ||
+      (jv_get_kind(opts) == JV_KIND_INVALID && !jv_invalid_has_msg(jv_copy(opts)))) {
+    jv_free(opts);
+    return jv_number(0);
+  }
+  if (jv_get_kind(opts) == JV_KIND_STRING)
+    opts = JV_ARRAY(opts);
+  if (jv_get_kind(opts) != JV_KIND_ARRAY) {
+    jv_free(opts);
+    return jv_invalid_with_msg(jv_string("invalid file input options"));
+  }
+  enum jv_parse_flags o = 0;
+  jv_array_foreach(opts, i, opt) {
+    if (jv_equal(jv_copy(opt), jv_string("seq")))
+      o |= JV_PARSE_SEQ;
+    else if (jv_equal(jv_copy(opt), jv_string("stream")))
+      o |= JV_PARSE_STREAMING;
+    else if (jv_equal(jv_copy(opt), jv_string("streamerrors")))
+      o |= JV_PARSE_STREAM_ERRORS;
+    else if (jv_equal(jv_copy(opt), jv_string("raw")))
+      o |= JV_PARSE_RAW;
+    jv_free(opt);
+  }
+  jv_free(opts);
+  return jv_number(o);
+}
+
+jv jv_dump_options(jv opts) {
+  if (jv_get_kind(opts) == JV_KIND_NULL)
+    return jv_number(0);
+  if (jv_get_kind(opts) == JV_KIND_STRING)
+    opts = JV_ARRAY(opts);
+  if (jv_get_kind(opts) != JV_KIND_ARRAY) {
+    jv_free(opts);
+    return jv_invalid_with_msg(jv_string("invalid file output options"));
+  }
+  enum jv_parse_flags o = 0;
+  jv_array_foreach(opts, i, opt) {
+    if (jv_equal(jv_copy(opt), jv_string("pretty")))
+      o |= JV_PRINT_PRETTY;
+    else if (jv_equal(jv_copy(opt), jv_string("ascii")))
+      o |= JV_PRINT_ASCII;
+    else if (jv_equal(jv_copy(opt), jv_string("color")))
+      o |= JV_PRINT_COLOR;
+    else if (jv_equal(jv_copy(opt), jv_string("colour")))
+      o |= JV_PRINT_COLOUR;
+    else if (jv_equal(jv_copy(opt), jv_string("sorted")))
+      o |= JV_PRINT_SORTED;
+    else if (jv_equal(jv_copy(opt), jv_string("tab")))
+      o |= JV_PRINT_TAB;
+    else if (jv_equal(jv_copy(opt), jv_string("isatty")))
+      o |= JV_PRINT_ISATTY;
+    else if (jv_equal(jv_copy(opt), jv_string("raw")))
+      o |= JV_PRINT_RAW;
+    else if (jv_equal(jv_copy(opt), jv_string("nolf")))
+      o |= JV_PRINT_NOLF;
+    else if (jv_get_kind(opt) == JV_KIND_NUMBER) {
+      /* Indent by N spaces */
+      int n = jv_number_value(opt);
+      o |= JV_PRINT_INDENT_FLAGS(n);
+    }
+    jv_free(opt);
+  }
+  jv_free(opts);
+  return jv_number(o);
 }

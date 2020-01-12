@@ -741,19 +741,19 @@ null
 # Destructuring DUP/POP issues
 .[] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 [[3],[4],[5],6]
-# Runtime error: "jq: Cannot index array with string \"c\""
+%%ERROR: "Cannot index array with string \"a\""
 
 .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 [[3],[4],[5],6]
-# Runtime error: "jq: Cannot index array with string \"c\""
+%%ERROR: "Cannot index array with string \"a\""
 
 [[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 null
-# Runtime error: "jq: Cannot index array with string \"c\""
+%%ERROR: "Cannot index array with string \"a\""
 
 [[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 null
-# Runtime error: "jq: Cannot index array with string \"c\""
+%%ERROR: "Cannot index array with string \"a\""
 
 .[] | . as {a:$a} ?// {a:$a} ?// $a | $a
 [[3],[4],[5],6]
@@ -1716,3 +1716,27 @@ false
 . |= try . catch .
 1
 1
+
+# try/catch catches more than it should #1859
+(try . catch .) | error
+"foo"
+%%ERROR: "foo"
+
+.[]|(try (if .=="hi" then . else error end) catch empty) | "\(.) there!"
+["hi","ho"]
+"hi there!"
+
+.[]|(try . catch (if .=="ho" then "BROKEN"|error else empty end)) | if .=="ho" then error else "\(.) there!" end
+["hi","ho"]
+"hi there!"
+%%ERROR: "ho"
+
+try (try error catch "inner catch \(.)") catch "outer catch \(.)"
+"foo"
+"inner catch foo"
+
+try ((try error catch "inner catch \(.)")|error) catch "outer catch \(.)"
+"foo"
+"outer catch inner catch foo"
+
+

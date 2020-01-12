@@ -10,7 +10,8 @@
 static pthread_key_t dtoa_ctx_key;
 static pthread_once_t dtoa_ctx_once = PTHREAD_ONCE_INIT;
 
-static void tsd_dtoa_ctx_dtor(struct dtoa_context *ctx) {
+static void tsd_dtoa_ctx_dtor(void *d) {
+  struct dtoa_context *ctx = d;
   if (ctx) {
     jvp_dtoa_context_free(ctx);
     jv_mem_free(ctx);

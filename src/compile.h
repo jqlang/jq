@@ -37,6 +37,7 @@ block gen_import(const char* name, const char *as, int is_data);
 block gen_import_meta(block import, block metadata);
 block gen_function(const char* name, block formals, block body);
 block gen_param_regular(const char* name);
+block gen_param_coexpr(const char* name);
 block gen_param(const char* name);
 block gen_lambda(block body);
 block gen_call(const char* name, block body);
@@ -59,12 +60,12 @@ block gen_destructure(block var, block matcher, block body);
 block gen_destructure_alt(block matcher);
 
 block gen_cond(block cond, block iftrue, block iffalse);
-block gen_try_handler(block handler);
 block gen_try(block exp, block handler);
 block gen_label(const char *label, block exp);
 
 block gen_cbinding(const struct cfunction* functions, int nfunctions, block b);
 
+block block_take_block(block *);
 void block_append(block* b, block b2);
 block block_join(block a, block b);
 int block_has_only_binders_and_imports(block, int bindflags);
@@ -76,6 +77,8 @@ block block_bind_library(block binder, block body, int bindflags, const char* li
 block block_bind_referenced(block binder, block body, int bindflags);
 block block_bind_self(block binder, int bindflags);
 block block_drop_unreferenced(block body);
+block block_hide(block body);
+void block_inline(block inlines, block body);
 
 jv block_take_imports(block* body);
 jv block_list_funcs(block body, int omit_underscores);

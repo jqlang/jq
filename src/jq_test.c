@@ -83,6 +83,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
   if (jv_get_kind(lib_dirs) == JV_KIND_NULL)
     lib_dirs = jv_array();
   jq_set_attr(jq, jv_string("JQ_LIBRARY_PATH"), lib_dirs);
+  jq_set_attr(jq, jv_string("ALLOW_IO"), jv_true());
 
   while (1) {
     if (!fgets(prog, sizeof(prog), testdata)) break;
@@ -177,28 +178,69 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
     }
     jq_start(jq, input, verbose ? JQ_DEBUG_TRACE : 0);
 
+    // XXX Use getline(), not fgets()
     while (fgets(buf, sizeof(buf), testdata)) {
+      int expect_error = 0;
+      int ignore_error = 0;
+      jv expected;
+
       lineno++;
       if (skipline(buf)) break;
-      jv expected = jv_parse(buf);
+      if ((expect_error = (strncmp(buf, "%%ERROR", sizeof("%%ERROR") - 1) == 0))) {
+        if ((ignore_error = (strncmp(buf, "%%ERROR IGNORE", sizeof("%%ERROR IGNORE") - 1) == 0))) {
+          expected = jv_parse(buf + sizeof("%%ERROR IGNORE") - 1);
+        } else {
+          expected = jv_parse(buf + sizeof("%%ERROR:") - 1);
+        }
+      } else {
+        expected = jv_parse(buf);
+      }
       if (!jv_is_valid(expected)) {
         printf("*** Expected result is invalid on line %u: %s\n", lineno, buf);
         invalid++;
         continue;
       }
       jv actual = jq_next(jq);
-      if (!jv_is_valid(actual)) {
+      if (!jv_is_valid(actual) && jv_invalid_has_msg(jv_copy(actual))) {
+        actual = jv_invalid_get_msg(actual);
+        if (!expect_error) {
+          printf("*** Expected non-error ");
+          jv_dump(expected, 0);
+          printf(", but got jq program error ");
+          jv_dump(actual, 0);
+          printf(" for test at line number %u: %s\n", lineno, prog);
+          pass = 0;
+          break;
+        }
+        if (!jv_equal(jv_copy(expected), jv_copy(actual))) {
+          printf("*** Expected %s", expect_error ? "error " : "");
+          jv_dump(jv_copy(expected), 0);
+          printf(", but got %s", expect_error ? "error " : "");
+          jv_dump(jv_copy(actual), 0);
+          printf(" for test at line number %u: %s\n", lineno, prog);
+          pass = 0;
+        }
+      } else if (!jv_is_valid(actual)) {
         jv_free(actual);
         printf("*** Insufficient results for test at line number %u: %s\n", lineno, prog);
         pass = 0;
         break;
-      } else if (!jv_equal(jv_copy(expected), jv_copy(actual))) {
-        printf("*** Expected ");
-        jv_dump(jv_copy(expected), 0);
-        printf(", but got ");
-        jv_dump(jv_copy(actual), 0);
+      } else if (expect_error) {
+        printf("*** Expected error ");
+        jv_dump(expected, 0);
+        printf(", but got non-error ");
+        jv_dump(actual, 0);
         printf(" for test at line number %u: %s\n", lineno, prog);
         pass = 0;
+        break;
+      } else if (!jv_equal(jv_copy(expected), jv_copy(actual))) {
+        printf("*** Expected %s", expect_error ? "error " : "");
+        jv_dump(expected, 0);
+        printf(", but got %s", expect_error ? "error " : "");
+        jv_dump(actual, 0);
+        printf(" for test at line number %u: %s\n", lineno, prog);
+        pass = 0;
+        break;
       }
       jv as_string = jv_dump_string(jv_copy(expected), rand() & ~(JV_PRINT_COLOR|JV_PRINT_REFCOUNT));
       jv reparsed = jv_parse_sized(jv_string_value(as_string), jv_string_length_bytes(jv_copy(as_string)));
@@ -208,11 +250,16 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
       jv_free(expected);
       jv_free(actual);
     }
-    if (pass) {
+    if (compiled && pass) {
       jv extra = jq_next(jq);
       if (jv_is_valid(extra)) {
         printf("*** Superfluous result: ");
         jv_dump(extra, 0);
+        printf(" for test at line number %u, %s\n", lineno, prog);
+        pass = 0;
+      } else if (jv_invalid_has_msg(jv_copy(extra))) {
+        printf("*** Superfluous error result: ");
+        jv_dump(jv_invalid_get_msg(extra), 0);
         printf(" for test at line number %u, %s\n", lineno, prog);
         pass = 0;
       } else {

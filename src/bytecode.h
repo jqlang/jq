@@ -3,8 +3,10 @@
 #include <stdint.h>
 
 #include "jv.h"
+#include "jq.h"
+#include "jq_plugin.h"
 
-typedef enum {
+typedef enum opcode {
 #define OP(name, imm, in, out) name,
 #include "opcode_list.h"
 #undef OP
@@ -17,7 +19,7 @@ enum {
 #undef OP
 };
 
-enum {
+enum op_flag {
   OP_HAS_CONSTANT = 2,
   OP_HAS_VARIABLE = 4,
   OP_HAS_BRANCH = 8,
@@ -42,15 +44,6 @@ struct opcode_description {
 };
 
 const struct opcode_description* opcode_describe(opcode op);
-
-
-#define MAX_CFUNCTION_ARGS 10
-typedef void (*cfunction_ptr)();
-struct cfunction {
-  cfunction_ptr fptr;
-  const char* name;
-  int nargs;
-};
 
 struct symbol_table {
   struct cfunction* cfunctions;

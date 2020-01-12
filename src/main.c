@@ -15,6 +15,8 @@
 #include <shellapi.h>
 #include <wchar.h>
 #include <wtypes.h>
+#else
+#include <signal.h>
 #endif
 
 #if !defined(HAVE_ISATTY) && defined(HAVE__ISATTY)
@@ -125,27 +127,28 @@ static int isoption(const char* text, char shortopt, const char* longopt, size_t
   return 0;
 }
 
-enum {
-  SLURP                 = 1,
-  RAW_INPUT             = 2,
-  PROVIDE_NULL          = 4,
-  RAW_OUTPUT            = 8,
-  RAW_NUL               = 16,
-  ASCII_OUTPUT          = 32,
-  COLOR_OUTPUT          = 64,
-  NO_COLOR_OUTPUT       = 128,
-  SORTED_OUTPUT         = 256,
-  FROM_FILE             = 512,
-  RAW_NO_LF             = 1024,
-  UNBUFFERED_OUTPUT     = 2048,
-  EXIT_STATUS           = 4096,
-  EXIT_STATUS_EXACT     = 8192,
-  SEQ                   = 16384,
-  RUN_TESTS             = 32768,
+enum option_flags {
+  SLURP                 = 1UL,
+  RAW_INPUT             = 1UL<<1,
+  PROVIDE_NULL          = 1UL<<2,
+  RAW_OUTPUT            = 1UL<<3,
+  RAW_NUL               = 1UL<<4,
+  ASCII_OUTPUT          = 1UL<<5,
+  COLOR_OUTPUT          = 1UL<<6,
+  NO_COLOR_OUTPUT       = 1UL<<7,
+  SORTED_OUTPUT         = 1UL<<8,
+  FROM_FILE             = 1UL<<9,
+  RAW_NO_LF             = 1UL<<10,
+  UNBUFFERED_OUTPUT     = 1UL<<11,
+  EXIT_STATUS           = 1UL<<12,
+  EXIT_STATUS_EXACT     = 1UL<<13,
+  SEQ                   = 1UL<<14,
+  RUN_TESTS             = 1UL<<15,
+  ALLOW_IO              = 1UL<<16,
   /* debugging only */
-  DUMP_DISASM           = 65536,
+  DUMP_DISASM           = 1UL<<17,
 };
-static int options = 0;
+static enum option_flags options = 0;
 
 enum {
     JQ_OK              =  0,
@@ -250,6 +253,10 @@ static void debug_cb(void *data, jv input) {
   fprintf(stderr, "\n");
 }
 
+#ifndef WIN32
+static void sigchld(int sig) {}
+#endif
+
 #ifdef WIN32
 int umain(int argc, char* argv[]);
 
@@ -285,6 +292,12 @@ int main(int argc, char* argv[]) {
   fflush(stderr);
   _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
   _setmode(fileno(stderr), _O_TEXT | _O_U8TEXT);
+#else
+  struct sigaction sa;
+
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = sigchld;
+  (void) sigaction(SIGCHLD, &sa, NULL);
 #endif
 
   if (argc) progname = argv[0];
@@ -349,6 +362,32 @@ int main(int argc, char* argv[]) {
         continue;
       }
 
+      if (isoption(argv[i], 'I', "io", &short_opts)) {
+        options |= ALLOW_IO;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 0, "io-policy", &short_opts)) {
+        options &= ~ALLOW_IO;
+        if (argv[i+1] == NULL) {
+          fprintf(stderr, "--io-policy takes a parameter");
+          die();
+        }
+        jv res = jq_set_io_policy(jq, jv_string(argv[i+1]));
+        if (!jv_is_valid(res)) {
+          if (jv_invalid_has_msg(res)) {
+            res = jv_invalid_get_msg(res);
+          } else {
+            jv_free(res);
+            res = jv_string("unkown error");
+          }
+          fprintf(stderr, "Error: I/O policy rejected: %s", jv_string_value(res));
+          jv_free(res);
+          die();
+        }
+        jv_free(res);
+        i++;
+        continue;
+      }
       if (isoption(argv[i], 's', "slurp", &short_opts)) {
         options |= SLURP;
         if (!short_opts) continue;
@@ -579,6 +618,9 @@ int main(int argc, char* argv[]) {
   if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
   if (options & COLOR_OUTPUT) dumpopts |= JV_PRINT_COLOR;
   if (options & NO_COLOR_OUTPUT) dumpopts &= ~JV_PRINT_COLOR;
+
+  if (options & ALLOW_IO)
+    jq_set_attr(jq, jv_string("ALLOW_IO"), jv_true());
 
   if (getenv("JQ_COLORS") != NULL && !jq_set_colors(getenv("JQ_COLORS")))
       fprintf(stderr, "Failed to set $JQ_COLORS\n");

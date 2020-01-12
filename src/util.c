@@ -38,6 +38,9 @@ void *alloca (size_t);
 #include <shellapi.h>
 #include <wchar.h>
 #include <wtypes.h>
+#else
+#include <signal.h>
+#include <spawn.h>
 #endif
 
 
@@ -454,3 +457,691 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
   }
   return value;
 }
+
+#ifdef WIN32
+/*
+ * For CreateProcess() calls we need to encode an argv into a command-line.
+ *
+ * See https://stackoverflow.com/questions/31838469/!
+ */
+static int quote_arg(char **cmdline, size_t *cmdlinesz, const char *arg) {
+  size_t cmdlen = strlen(*cmdline);
+  size_t arglen = strlen(arg);
+  size_t nbackslashes = 0;
+  size_t newsz;
+  const char *p;
+  char *tmp;
+
+  if (strpbrk(arg, " \t\n\v\"") == NULL) {
+    /* No quoting needed */
+    if (cmdlen + arglen + 2 >= *cmdlinesz) {
+      newsz = cmdlen + arglen + 128;
+      if ((tmp = realloc(*cmdline, newsz)) == NULL)
+        return ENOMEM;
+      memset(tmp + cmdlen, 0, newsz - cmdlen);
+      *cmdline = tmp;
+      *cmdlinesz = newsz;
+    }
+
+    /* Add " ${arg}" */
+    (*cmdline)[cmdlen] = ' ';
+    memcpy((*cmdline) + cmdlen + 1, arg, arglen);
+    return 0;
+  }
+
+  /* Quoting needed */
+  if (cmdlen + 3 * arglen + 2 >= *cmdlinesz) {
+    newsz = cmdlen + 3 * arglen + 128;
+    if ((tmp = realloc(*cmdline, newsz)) == NULL)
+      return ENOMEM;
+    memset(tmp + cmdlen, 0, newsz - cmdlen);
+    *cmdline = tmp;
+    *cmdlinesz = newsz;
+  }
+
+  /* Add " \"" */
+  (*cmdline)[cmdlen++] = ' ';
+  (*cmdline)[cmdlen++] = '"';
+
+  for (p = arg; *p; p++) {
+    for (p++; *p && *p == '\\'; p++)
+      nbackslashes++;
+    if (*p == '"') {
+      /* output 2 * nbackslashes */
+      while (nbackslashes) {
+        (*cmdline)[cmdlen++] = '\\';
+        (*cmdline)[cmdlen++] = '\\';
+      }
+      /* output "\\\"" */
+      (*cmdline)[cmdlen++] = '\\';
+      (*cmdline)[cmdlen++] = '"';
+    } else {
+      /* output nbackslashes */
+      while (nbackslashes)
+        (*cmdline)[cmdlen++] = '\\';
+      (*cmdline)[cmdlen++] = *p;
+    }
+    nbackslashes = 0;
+  }
+
+  while (nbackslashes) {
+    /* arg ended in a sequence of backslashes */
+    (*cmdline)[cmdlen++] = '\\';
+    (*cmdline)[cmdlen++] = '\\';
+  }
+
+  (*cmdline)[cmdlen++] = '"';
+  return 0;
+}
+
+static char *encode_argv(char **argv) {
+  size_t cmdlinesz = 0;
+  size_t i;
+  char *cmdline = NULL;
+
+  for (i = 0; argv[i]; i++) {
+    if (quote_arg(&cmdline, &cmdlinesz, argv[i])) {
+      free(cmdline);
+      return NULL;
+    }
+  }
+  return cmdline;
+}
+
+jv jq_spawn_process(jq_state *jq, jv file, jv file_actions, jv attrs, jv argv, jv env) {
+  /*
+   * XXX Finish
+   *
+   * Similar to the non-WIN32 version... but see
+   *
+   * https://github.com/rprichard/win32-console-docs
+   *
+   * Basically:
+   *
+   *  - encode the argv as one string
+   *  - support only stdin/out/err redirections
+   *  - open files or make pipes the usual way, except using _pipe()
+   *  - get HANDLEs for FDs using _get_osfhandle()
+   *  - setup STARTUPINFO struct with STARTF_USESTDHANDLES if we're redirecting I/O
+   *  - call CreateProcess()
+   *  - fdopen() our ends of pipes
+   *  - ...
+   */
+}
+#else
+
+struct pipes {
+  int pin[2];
+  int pout[2];
+  int perr[2];
+};
+
+static int jv2oflags(int *oflagsp, int fd, jv oflags, jv *res) {
+  *oflagsp = 0;
+
+  if (!jv_is_valid(oflags)) {
+    if (fd == STDIN_FILENO)
+      *oflagsp = O_RDONLY;
+    else
+      *oflagsp = O_WRONLY | O_CREAT;
+    return 0;
+  }
+  if (jv_get_kind(oflags) != JV_KIND_ARRAY) {
+    *res = jv_invalid_with_msg(jv_string("spawn file actions oflags must be array of O_* flag names"));
+    jv_free(oflags);
+    return EINVAL;
+  }
+
+  jv_array_foreach(oflags, i, oflag) {
+    const char *s;
+
+    if (jv_get_kind(oflag) != JV_KIND_STRING) {
+      *res = jv_invalid_with_msg(jv_string("spawn file actions oflags must be array of O_* flag names"));
+      jv_free(oflags);
+      jv_free(oflag);
+      return EINVAL;
+    }
+    s = jv_string_value(oflag);
+    if      (strcmp(s, "O_RDONLY") == 0)
+      *oflagsp |= O_RDONLY;
+    else if (strcmp(s, "O_WRONLY") == 0)
+      *oflagsp |= O_WRONLY;
+    else if (strcmp(s, "O_RDWR")   == 0)
+      *oflagsp |= O_RDWR;
+    else if (strcmp(s, "O_CREAT")  == 0)
+      *oflagsp |= O_CREAT;
+    else if (strcmp(s, "O_EXCL")   == 0)
+      *oflagsp |= O_EXCL;
+    else if (strcmp(s, "O_APPEND") == 0)
+      *oflagsp |= O_APPEND;
+    else if (strcmp(s, "O_TRUNC")  == 0)
+      *oflagsp |= O_TRUNC;
+    else {
+      jv_free(oflags);
+      jv_free(oflag);
+      *res = jv_invalid_with_msg(jv_string("spawn file actions oflags: only O_RDONLY, "
+                                           "O_WRONLY, O_RDWR, O_CREAT, O_EXCL, O_APPEND, and "
+                                           "O_TRUNC supported"));
+      return EINVAL;
+    }
+  }
+  jv_free(oflags);
+  return 0;
+}
+
+static int jv2mode(mode_t *modep, jv mode, jv *res) {
+  *modep = 0600;
+  if (!jv_is_valid(mode))
+    return 0;
+  if (jv_get_kind(mode) != JV_KIND_NUMBER) {
+    *res = jv_invalid_with_msg(jv_string("spawn file actions mode must be a 16-bit unsigned number"));
+    jv_free(mode);
+    return EINVAL;
+  }
+  *modep = jv_number_value(mode);
+  if (jv_number_value(mode) != (double)*modep) {
+    *res = jv_invalid_with_msg(jv_string("spawn file actions mode must be a 16-bit unsigned number"));
+    jv_free(mode);
+    return EINVAL;
+  }
+  jv_free(mode);
+  return 0;
+}
+
+/*
+ * This is an insane function :(
+ *
+ * The goal is to allow "file actions" of various types:
+ *
+ *  - {f: "stdin/out/err"}              --> setup a  pipe for stdin/out/err
+ *  - {f: 0/1/2}                        --> setup a  pipe for stdin/out/err
+ *  - {f: <number>, target: -1}         --> setup a  close action
+ *  - {f: <number>, target: <number>}   --> setup a  dup2  action
+ *  - {f: ..., target: <path>,
+ *     oflags: [<oflag>], mode: <mode>} --> setup an open action
+ *
+ * <mode> has to be an array of O_* flag names
+ *
+ * XXX We really want something like posix_spawn_file_actions_addclosefrom(),
+ * or something similar.  Might need to have an exec helper, perhaps jq itself
+ * as an exec helper, to make it so.
+ */
+static int jv2pfac(jq_state *jq, jv fac, struct pipes *p, posix_spawn_file_actions_t *pfacs, jv *res) {
+  static int devnull = -1;
+  int fd = -1;
+
+  if (devnull == -1 && (devnull = open("/dev/null", O_RDWR)) == -1) {
+    jv_free(fac);
+    return (*res = jv_invalid_with_msg(jv_string_fmt("could not open /dev/null: %s", strerror(errno)))),
+           EINVAL;
+  }
+  if (jv_get_kind(fac) != JV_KIND_OBJECT) {
+    jv_free(fac);
+    return (*res = jv_invalid_with_msg(jv_string("spawn file action descriptors must be objects"))),
+           EINVAL;
+  }
+
+  jv v = jv_object_get(jv_copy(fac), jv_string("f"));
+  if (!jv_is_valid(v)) {
+    jv_free(fac);
+    return (*res = jv_invalid_with_msg(jv_string("spawn file action descriptors must have f field"))),
+           EINVAL;
+  }
+  if (jv_get_kind(v) == JV_KIND_STRING) {
+    if (!(strcmp(jv_string_value(v), "stdin")  == 0 && ((fd = STDIN_FILENO), 1)) &&
+        !(strcmp(jv_string_value(v), "stdout") == 0 && (fd = STDOUT_FILENO)) &&
+        !(strcmp(jv_string_value(v), "stderr") == 0 && (fd = STDERR_FILENO)) ) {
+      jv_free(fac);
+      jv_free(v);
+      return (*res = jv_invalid_with_msg(jv_string("spawn file action descriptors must have f field with stdin/stdout/stderr or fd number"))),
+             EINVAL;
+    }
+  } else if (jv_get_kind(v) == JV_KIND_NUMBER) {
+    fd = jv_number_value(v);
+    if (fd < 0) {
+      jv_free(fac);
+      jv_free(v);
+      return (*res = jv_invalid_with_msg(jv_string("spawn file action descriptors must have f field with stdin/stdout/stderr or fd number"))),
+             EINVAL;
+    }
+  } else {
+    jv_free(fac);
+    jv_free(v);
+    return (*res = jv_invalid_with_msg(jv_string("spawn file action descriptors must have f field with stdin/stdout/stderr or fd number"))),
+           EINVAL;
+  }
+  jv_free(v);
+
+  v = jv_object_get(jv_copy(fac), jv_string("target"));
+  if (jv_get_kind(v) == JV_KIND_NULL) {
+    /* null -> /dev/null */
+    if ((errno = posix_spawn_file_actions_adddup2(pfacs, devnull, fd))) {
+      jv_free(fac);
+      jv_free(v);
+      return (*res = jv_invalid_with_msg(jv_string_fmt("could not set up spawn /dev/null fd: %s (%d)",
+                                                      strerror(errno), errno))),
+             errno;
+    }
+  } else if (jv_get_kind(v) == JV_KIND_NUMBER) {
+    int target = jv_number_value(v);
+
+    if (target < 0)
+      errno = posix_spawn_file_actions_addclose(pfacs, fd);
+    else
+      errno = posix_spawn_file_actions_adddup2(pfacs, target, fd);
+    if (errno) {
+      jv_free(fac);
+      jv_free(v);
+      return (*res = jv_invalid_with_msg(jv_string_fmt("could not set up spawn pipe actions: %s (%d)",
+                                                      strerror(errno), errno))),
+             errno;
+    }
+  } else if (jv_get_kind(v) == JV_KIND_INVALID) {
+    int *pp = NULL;
+    /* No target -> pipe */
+    if ((fd == STDIN_FILENO  && (pp = p->pin)  && p->pin[0]  != -1) ||
+        (fd == STDOUT_FILENO && (pp = p->pout) && p->pout[0] != -1) ||
+        (fd == STDERR_FILENO && (pp = p->perr) && p->perr[0] != -1)) {
+      jv_free(fac);
+      jv_free(v);
+      return (*res = jv_invalid_with_msg(jv_string("duplicate spawn file action descriptors"))),
+             EINVAL;
+    }
+    if (fd != STDIN_FILENO && fd != STDOUT_FILENO && fd != STDERR_FILENO) {
+      jv_free(fac);
+      jv_free(v);
+      return (*res = jv_invalid_with_msg(jv_string("only stdin/out/err can have pipes"))),
+             EINVAL;
+    }
+    if (pipe(pp) == -1) {
+      jv_free(fac);
+      jv_free(v);
+      return (*res = jv_invalid_with_msg(jv_string_fmt("could not create pipe: %s (%d)",
+                                                      strerror(errno), errno))),
+             errno;
+    }
+    if (fd == STDIN_FILENO) {
+      errno = posix_spawn_file_actions_adddup2(pfacs, p->pin[0], STDIN_FILENO);
+      if (errno == 0)
+        errno = posix_spawn_file_actions_addclose(pfacs, p->pin[0]);
+      if (errno == 0)
+        errno = posix_spawn_file_actions_addclose(pfacs, p->pin[1]);
+      if (errno) {
+        jv_free(fac);
+        jv_free(v);
+        return (*res = jv_invalid_with_msg(jv_string_fmt("could not set up spawn pipe actions: %s (%d)",
+                                                        strerror(errno), errno))),
+               errno;
+      }
+    } else if (fd == STDOUT_FILENO) {
+      errno = posix_spawn_file_actions_adddup2(pfacs, p->pout[1], STDOUT_FILENO);
+      if (errno == 0)
+        errno = posix_spawn_file_actions_addclose(pfacs, p->pout[0]);
+      if (errno == 0)
+        errno = posix_spawn_file_actions_addclose(pfacs, p->pout[1]);
+      if (errno) {
+        jv_free(fac);
+        jv_free(v);
+        return (*res = jv_invalid_with_msg(jv_string_fmt("could not set up spawn pipe actions: %s (%d)",
+                                                        strerror(errno), errno))),
+               errno;
+      }
+    } else if (fd == STDERR_FILENO) {
+      errno = posix_spawn_file_actions_adddup2(pfacs, p->perr[1], STDERR_FILENO);
+      if (errno == 0)
+        errno = posix_spawn_file_actions_addclose(pfacs, p->perr[0]);
+      if (errno == 0)
+        errno = posix_spawn_file_actions_addclose(pfacs, p->perr[1]);
+      if (errno) {
+        jv_free(fac);
+        jv_free(v);
+        return (*res = jv_invalid_with_msg(jv_string_fmt("could not set up spawn pipe actions: %s (%d)",
+                                                        strerror(errno), errno))),
+               errno;
+      }
+    }
+  } else if (jv_get_kind(v) == JV_KIND_STRING) {
+    mode_t mode;
+    int oflags;
+
+    if (jv2oflags(&oflags, fd, jv_object_get(jv_copy(fac), jv_string("oflags")), res) ||
+        jv2mode(&mode, jv_object_get(jv_copy(fac), jv_string("mode")), res)) {
+      jv_free(fac);
+      jv_free(v);
+      return EINVAL;
+    }
+
+    *res = jq_io_policy_check(jq, JV_OBJECT(jv_string("kind"), jv_string("fileaction"),
+                                           jv_string("action"), jv_copy(fac)));
+    if (jv_get_kind(*res) != JV_KIND_TRUE) {
+      jv_free(fac);
+      jv_free(v);
+      return EACCES;
+    }
+
+    if (fd == STDIN_FILENO)
+      oflags = O_RDONLY;
+    else if ((fd == STDOUT_FILENO || fd == STDERR_FILENO) && !(oflags & O_WRONLY)) {
+      jv_free(fac);
+      jv_free(v);
+      return (*res = jv_invalid_with_msg(jv_string("invalid oflags for stdout or stderr"))),
+             EINVAL;
+    }
+
+    errno = posix_spawn_file_actions_addopen(pfacs, fd, jv_string_value(v), oflags, mode);
+    if (errno) {
+      jv_free(fac);
+      jv_free(v);
+      return (*res = jv_invalid_with_msg(jv_string_fmt("could not set up spawn pipe actions: %s (%d)",
+                                                      strerror(errno), errno))),
+             errno;
+    }
+  } else {
+    jv_free(fac);
+    jv_free(v);
+    return (*res = jv_invalid_with_msg(jv_string("spawn file action descriptors can only have target field with path string or fd number"))),
+           EINVAL;
+  }
+
+  *res = jv_true();
+  jv_free(fac);
+  jv_free(v);
+  return 0;
+}
+
+static int jv2attrflags(short *flagsp, jv flags, jv *res) {
+  *flagsp = 0;
+
+  if (jv_get_kind(flags) != JV_KIND_ARRAY) {
+    *res = jv_invalid_with_msg(jv_string("spawn attribute flags must be array of flag names"));
+    jv_free(flags);
+    return EINVAL;
+  }
+  jv_array_foreach(flags, i, flag) {
+    if (jv_get_kind(flag) != JV_KIND_STRING) {
+      *res = jv_invalid_with_msg(jv_string("spawn attribute flags must be array of flag names"));
+      jv_free(flags);
+      return EINVAL;
+    }
+    const char *s = jv_string_value(flag);
+    if      (strcmp(s, "RESETIDS") == 0) *flagsp |= POSIX_SPAWN_RESETIDS;
+    else if (strcmp(s, "SETPGROUP") == 0) *flagsp |= POSIX_SPAWN_SETPGROUP;
+    else if (strcmp(s, "SETSIGDEF") == 0) *flagsp |= POSIX_SPAWN_SETSIGDEF;
+    else if (strcmp(s, "SETSIGMASK") == 0) *flagsp |= POSIX_SPAWN_SETSIGMASK;
+    else {
+      *res = jv_invalid_with_msg(jv_string_fmt("spawn attribute flag %s not supported", s));
+      jv_free(flags);
+      jv_free(flag);
+      return EINVAL;
+    }
+    jv_free(flag);
+  }
+  jv_free(flags);
+  return 0;
+}
+
+static int jv2sigset(sigset_t *ssp, jv ss, jv *res) {
+  (void) sigemptyset(ssp);
+
+  if (jv_get_kind(ss) != JV_KIND_ARRAY) {
+    *res = jv_invalid_with_msg(jv_string("spawn attribute sigset must be array of signal names"));
+    jv_free(ss);
+    return EINVAL;
+  }
+  jv_array_foreach(ss, i, signame) {
+    if (jv_get_kind(signame) != JV_KIND_STRING) {
+      *res = jv_invalid_with_msg(jv_string("spawn attribute sigset must be array of signal names"));
+      jv_free(ss);
+      return EINVAL;
+    }
+    const char *s = jv_string_value(signame);
+#define sig1(name) \
+    do { if (strcmp(s, #name) == 0) { sigaddset(ssp, name); jv_free(signame); continue; } } while (0)
+    sig1(SIGHUP);
+    sig1(SIGINT);
+    sig1(SIGQUIT);
+    sig1(SIGILL);
+    sig1(SIGTRAP);
+#ifdef SIGIOT
+    sig1(SIGIOT);
+#endif
+    sig1(SIGBUS);
+    sig1(SIGFPE);
+    sig1(SIGKILL);
+    sig1(SIGUSR1);
+    sig1(SIGSEGV);
+    sig1(SIGUSR2);
+    sig1(SIGPIPE);
+    sig1(SIGALRM);
+    sig1(SIGTERM);
+#ifdef SIGSTKFLT
+    sig1(SIGSTKFLT);
+#endif
+    sig1(SIGCHLD);
+    sig1(SIGCONT);
+    sig1(SIGSTOP);
+    sig1(SIGTSTP);
+    sig1(SIGTTIN);
+    sig1(SIGTTOU);
+    sig1(SIGURG);
+#ifdef SIGSTKFLT
+    sig1(SIGXCPU);
+#endif
+#ifdef SIGXFSZ
+    sig1(SIGXFSZ);
+#endif
+#ifdef SIGVTALRM
+    sig1(SIGVTALRM);
+#endif
+#ifdef SIGPROF
+    sig1(SIGPROF);
+#endif
+#ifdef SIGWINCH
+    sig1(SIGWINCH);
+#endif
+#ifdef SIGPOLL
+    sig1(SIGPOLL);
+#endif
+#ifdef SIGPWR
+    sig1(SIGPWR);
+#endif
+#ifdef SIGSYS
+    sig1(SIGSYS);
+#endif
+    *res = jv_invalid_with_msg(jv_string_fmt("spawn attribute signal %s not supported", s));
+    jv_free(signame);
+    jv_free(ss);
+    return EINVAL;
+  }
+  jv_free(ss);
+  return 0;
+}
+
+static int jv2pattr(jv attr, posix_spawnattr_t *pattrs, jv *res) {
+  int ret;
+
+  if (jv_get_kind(attr) != JV_KIND_OBJECT) {
+    *res = jv_invalid_with_msg(jv_string("spawn attributes must be objects"));
+    jv_free(attr);
+    return EINVAL;
+  }
+  jv v = jv_object_get(jv_copy(attr), jv_string("value"));
+  attr = jv_object_get(attr, jv_string("attr"));
+  
+  if (jv_get_kind(attr) != JV_KIND_STRING) {
+    *res = jv_invalid_with_msg(jv_string("spawn attributes names must be strings"));
+    jv_free(attr);
+    return EINVAL;
+  }
+
+  const char *s = jv_string_value(attr);
+  if (strcmp(s, "flags") == 0) {
+    short flags;
+
+    if (jv2attrflags(&flags, v, res)) {
+      jv_free(attr);
+      return EINVAL;
+    }
+    if ((ret = posix_spawnattr_setflags(pattrs, flags))) {
+      *res = jv_invalid_with_msg(jv_string_fmt("could not set spawn flags: %s", strerror(ret)));
+      jv_free(attr);
+      return ret;
+    }
+  } else if (strcmp(s, "pgroup") == 0) {
+    if (jv_get_kind(v) != JV_KIND_NUMBER) {
+      *res = jv_invalid_with_msg(jv_string("spawn pgroup attribute must be numeric"));
+      jv_free(attr);
+      return EINVAL;
+    }
+    if ((ret = posix_spawnattr_setpgroup(pattrs, jv_number_value(v)))) {
+      *res = jv_invalid_with_msg(jv_string_fmt("could not set spawn pgroup: %s", strerror(ret)));
+      jv_free(v);
+      jv_free(attr);
+      return ret;
+    }
+    jv_free(v);
+  } else if (strcmp(s, "sigdefault") == 0 || strcmp(s, "sigmask") == 0) {
+    sigset_t ss;
+
+    if (!jv2sigset(&ss, v, res)) {
+      jv_free(attr);
+      return EINVAL;
+    }
+    if (strcmp(s, "sigdefault") == 0 && (ret = posix_spawnattr_setsigdefault(pattrs, &ss))) {
+      *res = jv_invalid_with_msg(jv_string_fmt("could not set spawn sigdefault: %s", strerror(ret)));
+      jv_free(attr);
+      return ret;
+    } else if (strcmp(s, "sigmask") == 0 && (ret = posix_spawnattr_setsigmask(pattrs, &ss))) {
+      *res = jv_invalid_with_msg(jv_string_fmt("could not set spawn sigmask: %s", strerror(ret)));
+      jv_free(attr);
+      return ret;
+    }
+  } else {
+    *res = jv_invalid_with_msg(jv_string_fmt("spawn attribute %s not supported", s));
+    jv_free(attr);
+    return EINVAL;
+  }
+
+  return 0;
+}
+
+static const char **jv2charvec(jv vec, jv *res) {
+  const char **charvec;
+  size_t n = 0;
+
+  if ((charvec = calloc(jv_array_length(vec) + 1, sizeof(charvec[0])))) {
+    jv_array_foreach(vec, i, v) {
+      if (jv_get_kind(v) != JV_KIND_STRING) {
+        jv_free(v);
+        free(charvec);
+        *res = jv_invalid_with_msg(jv_string("argument vector must be an array of strings"));
+        return NULL;
+      }
+      charvec[i] = jv_string_value(v);
+      jv_free(v); // we still have a reference via vec
+      n++;
+    }
+    jv_free(vec);
+    charvec[n] = NULL;
+  }
+  return charvec;
+}
+
+jv jq_spawn_process(jq_state *jq, jv file, jv file_actions, jv attrs, jv argv, jv env) {
+  posix_spawn_file_actions_t pfacs;
+  posix_spawnattr_t pattrs;
+  struct pipes p;
+  const char **argvp = NULL;
+  const char **envp = NULL;
+  pid_t pid;
+  int ret;
+  jv res = jv_invalid();
+
+  p.pin[0] = p.pin[1] = p.pout[0] = p.pout[1] = p.perr[0] = p.perr[1] = -1;
+
+  if ((ret = posix_spawn_file_actions_init(&pfacs))) {
+    res = jv_invalid_with_msg(jv_string_fmt("Could not spawn process: %s", strerror(ret)));
+    goto out3;
+  }
+  if ((ret = posix_spawnattr_init(&pattrs))) {
+    res = jv_invalid_with_msg(jv_string_fmt("Could not spawn process: %s", strerror(ret)));
+    goto out2;
+  }
+
+  if (jv_get_kind(file) != JV_KIND_STRING) {
+    res = jv_invalid_with_msg(jv_string("spawn file must be a string"));
+    goto out;
+  }
+  if (jv_get_kind(argv) != JV_KIND_ARRAY) {
+    res = jv_invalid_with_msg(jv_string("argument vector must be an array of strings"));
+    goto out;
+  }
+  res = jq_io_policy_check(jq, JV_OBJECT(jv_string("kind"), jv_string("spawn"),
+                                         jv_string("file"), jv_copy(file),
+                                         jv_string("file_actions"), jv_copy(file_actions),
+                                         jv_string("attributes"), jv_copy(attrs),
+                                         jv_string("argv"), jv_copy(argv),
+                                         jv_string("env"), jv_copy(env)));
+  if (jv_get_kind(res) != JV_KIND_TRUE)
+    goto out;
+  if ((argvp = jv2charvec(jv_copy(argv), &res)) == NULL)
+    goto out;
+  if (jv_get_kind(env) != JV_KIND_NULL && jv_get_kind(env) != JV_KIND_ARRAY) {
+    res = jv_invalid_with_msg(jv_string("environment vector must be an array of strings"));
+    goto out;
+  }
+  if (jv_get_kind(env) == JV_KIND_ARRAY && (envp = jv2charvec(jv_copy(env), &res)) == NULL)
+    goto out;
+
+  if (jv_get_kind(file_actions) == JV_KIND_ARRAY) {
+    jv_array_foreach(file_actions, i, v) {
+      if (jv2pfac(jq, v, &p, &pfacs, &res))
+        goto out;
+    }
+  }
+
+  if (jv_get_kind(attrs) == JV_KIND_ARRAY) {
+    jv_array_foreach(attrs, i, v) {
+      if (jv2pattr(jv_copy(v), &pattrs, &res))
+        goto out;
+    }
+  }
+
+  if ((ret = posix_spawnp(&pid, jv_string_value(file), &pfacs, &pattrs,
+                          (char * const *)argvp,
+                          envp ? (char * const *)envp : environ))) {
+    res = jv_invalid_with_msg(jv_string_fmt("Could not spawn process: %s", strerror(ret)));
+    goto out;
+  }
+
+  res = JV_OBJECT(jv_string("pid"), jv_number(pid),
+                  jv_string("ppid"), jv_number(getpid()),
+                  jv_string("pgroup"), jv_number(getpgid(pid)));
+  if (p.pin[0] != -1)
+    res = jv_object_set(res, jv_string("stdin"), JV_ARRAY(jv_number(p.pin[0]), jv_number(p.pin[1])));
+  if (p.pout[0] != -1)
+    res = jv_object_set(res, jv_string("stdout"), JV_ARRAY(jv_number(p.pout[0]), jv_number(p.pout[1])));
+  if (p.perr[0] != -1)
+    res = jv_object_set(res, jv_string("stderr"), JV_ARRAY(jv_number(p.perr[0]), jv_number(p.perr[1])));
+
+out:
+out2:
+out3:
+  jv_free(file_actions);
+  jv_free(attrs);
+  jv_free(argv);
+  jv_free(env);
+  free(argvp);
+  free(envp);
+  if (jv_get_kind(res) == JV_KIND_INVALID) {
+    (void) close(p.pin[0]);
+    (void) close(p.pin[1]);
+    (void) close(p.pout[0]);
+    (void) close(p.pout[1]);
+    (void) close(p.perr[0]);
+    (void) close(p.perr[1]);
+  }
+  return res;
+
+}
+#endif

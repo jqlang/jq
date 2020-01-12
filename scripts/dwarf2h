@@ -1,0 +1,281 @@
+#!/bin/bash
+
+PROG=${0##*/}
+
+function usage {
+  ((${1:-1})) && exec 1>&2
+  cat <<EOF
+Usage: $PROG [options] OBJECT...
+       $PROG [options] -i DWARF_DUMP_FILE
+  Prints C prototypes and other information about functions exported
+  from OBJECT.  The OBJECT files must be compiled to contain DWARF
+  sections -- i.e., use -ggdb3.
+
+  (The second usage is intended for debugging.)
+
+  This is intended to be used for generating v-tables for plugins.
+
+  Output options:
+  
+    -B      Output function stubs for exported functions
+    -I      Generate code to initialize a v-table
+    -P      Output prototypes for exported functions
+    -n      Include argument names in prototypes
+    -T      Output function pointer typedefs for exported functions
+
+    -s NAME Name of v-table struct
+    -S      Output struct definition (requires -s NAME)
+    -M      Output macros that indirect through jq_state v-table
+            (requires -s NAME)
+
+  Function symbol filter options:
+
+    -p GLOB Only include functions whose names match GLOB
+            (may be given multiple times)
+    -x GLOB Exclude functions matching GLOB
+            (may be given multiple times)
+    -f FILE Exclude functions that appear to be in a v-table in FILE
+            (useful when updating a v-table so as to generate additions
+             to the v-table that go at the end)
+            (may be given multiple times)
+
+  Debug options:
+
+    -i FILE Use the dump of DWARF data in FILE, made with llvm-dwarfdump
+    -v      Trace this script
+
+  At least one of -P, -T, -S, or -s must be given.
+EOF
+  exit ${1:-1}
+}
+
+(($#==0)) && usage
+declare -A exclude
+pats=()
+xpats=()
+dwarf_in=
+struct_name=
+stubs=false
+debug=false
+struct=false
+macros=false
+typedefs=false
+prototypes=false
+initializers=false
+include_arg_names=false
+while getopts +:IMPSTf:bdhi:np:s:vx: opt; do
+  case "$opt" in
+  I) initializers=true;;
+  M) macros=true;;
+  P) prototypes=true;;
+  S) struct=true;;
+  T) typedefs=true;;
+  f) for fname in $(
+            grep '^  \([^ ]*\)_f \1;' "$OPTARG" | cut -d' ' -f4 | cut -d';' -f1;
+            grep ')(' "$OPTARG" | cut -d'(' -f2 | cut -d'*' -f2 | cut -d')' -f1
+           ); do
+       exclude[$fname]=true
+     done ;;
+  b) stubs=true;;
+  d) debug=true;;
+  h) usage 0;;
+  i) dwarf_in=$OPTARG;;
+  n) include_arg_names=true;;
+  p) pats+=("$OPTARG");;
+  s) struct_name=$OPTARG;;
+  v) set -vx;;
+  x) xpats+=("$OPTARG");;
+  *) usage;;
+  esac
+done
+shift $((OPTIND - 1))
+(($#==0)) && [[ -z $dwarf_in ]] && usage
+(($#)) && [[ -n $dwarf_in ]] && usage
+
+! $stubs && ! $typedefs && ! $prototypes && [[ -z $struct_name ]] && usage
+
+$struct && [[ -z $struct_name ]] && usage
+$macros && [[ -z $struct_name ]] && usage
+
+eof=false
+function read1 {
+  if ! read a b; then
+    $debug && printf 1>&2 'EOF\n'
+    eof=true
+    return 1
+  fi
+  $debug && printf 2>&2 'READ: a=%s, b=%s\n' "$a" "$b"
+  return 0
+}
+
+function finish_function {
+  if $skip; then
+    printf 'WARNING: Excluding function with function-valued return type or argument, %s()\n' "$fname" 1>&2
+    return 0
+  fi
+  [[ -n ${fnames[$fname]} ]] && return 0 # probably static inline
+  $exported || return 0 # static
+  if ((${#pats[@]})); then
+    match=false
+    for pat in "${pats[@]}"; do
+      if [[ $fname = $pat ]]; then
+        match=true
+        break
+      fi
+    done
+    $match || return 0
+  fi
+  if ((${#xpats[@]})); then
+    match=false
+    for pat in "${xpats[@]}"; do
+      if [[ $fname = $pat ]]; then
+        match=true
+        break
+      fi
+    done
+    $match && return 0
+  fi
+  [[ -z $fname ]] && return 0
+  [[ -n ${exclude[$fname]} ]] && return 0
+  fnames[$fname]=$fname
+  IFS=,
+  $typedefs && printf 'typedef %s (*%s_f)(%s);\n' "$rettype" "$fname" "${argtypes[*]}"
+  $prototypes && $include_arg_names &&
+    printf '%s %s(%s);\n' "$rettype" "$fname" "${args[*]}"
+  $prototypes && ! $include_arg_names &&
+    printf '%s %s(%s);\n' "$rettype" "$fname" "${argtypes[*]}"
+  $stubs && printf '%s\n%s(%s)\n{\n}\n' "$rettype" "$fname" "${args[*]}"
+  if $typedefs; then
+    fields+=("${fname}_f ${fname}")
+  else
+    fields+=("$rettype (*${fname})(${argtypes[*]})")
+  fi
+  IFS=$OIFS
+}
+
+function parse_function {
+  local skip=$skip
+
+  args=()
+  argnames=()
+  argtypes=()
+
+  [[ $a = 0x* && $b = DW_TAG_subprogram ]] || exit 5
+  fname=
+  rettype=void
+  exported=false
+
+  # Extract function name and type
+  while read1; do
+    # Functions with no arguments do not get a NULL to terminate their
+    # DWARF dump.  In this case we will recurse.  Hope we don't blow
+    # the stack.
+    if [[ $a = 0x* && $b = DW_TAG_subprogram ]]; then
+      $skip || finish_function
+      parse_function
+      $skip || finish_function
+      return $?
+    fi
+
+    [[ $a = 0x* ]] && break
+    case "$a" in
+    DW_AT_external) [[ $b = *true* ]] && exported=true;;
+    DW_AT_name)
+      b=${b%\"*}
+      fname=${b#*\"};;
+    DW_AT_type)
+      b=${b%\"*}
+      rettype=${b#*\"}
+      [[ $rettype = [*]* ]] && rettype="void $rettype";;
+    *) true;;
+    esac
+  done
+  skip=false
+  [[ $rettype = *subroutine* ]] && skip=true
+  if [[ $b = DW_TAG_unspecified_parameters ]]; then
+    argtypes+=(...)
+    continue
+  fi
+  while [[ $b = DW_TAG_formal_parameter || $b = DW_TAG_unspecified_parameters ]]; do
+    argname=
+    argtype=void
+    while read1; do
+      if [[ $a = 0x* && $b = DW_TAG_subprogram ]]; then
+        $skip || finish_function
+        parse_function
+        $skip || finish_function
+        return $?
+      fi
+      [[ $a = 0x* ]] && break
+      case "$a" in
+      DW_AT_name)
+        b=${b%\"*}
+        argname=${b#*\"}
+        argnames+=("$argname");;
+      DW_AT_type)
+        b=${b%\"*}
+        argtype=${b#*\"}
+        [[ $argtype = [*]* ]] && argtype="void $argtype"
+        [[ $argtype = va_list ]] && argtype=...
+        [[ $argtype = __va_list_tag\* ]] && argtype=va_list
+        [[ $argtype = *subroutine* ]] && skip=true
+        argtypes+=("$argtype");;
+      *) true;;
+      esac
+    done
+    args+=("$argtype $argname")
+  done
+  if ! $eof; then
+    while [[ $a != 0x* || $b != NULL || $b != DW_TAG_subprogram ]]; do
+      read1 || break
+      if [[ $a = 0x* && $b = DW_TAG_subprogram ]]; then
+        finish_function
+        parse_function
+        return $?
+      fi
+    done
+  fi
+  finish_function
+}
+
+declare -A fnames
+fields=()
+OIFS=$IFS
+a=
+b=
+while read1; do
+  [[ $a = 0x* && $b = DW_TAG_subprogram ]] || continue
+  parse_function
+done < <(if [[ -n $dwarf_in ]]; then cat "$dwarf_in"; else llvm-dwarfdump-6.0 "$@"; fi)
+
+if $struct; then
+  printf 'struct %s {\n' "$struct_name"
+  if ((${#exclude[@]} == 0)); then
+    printf '  %s;\n' "${fields[@]}"
+  else
+    # Print only fields for functions not listed in the FILE given via -f FILE.
+    #
+    # The developer will have to edit that file and add the new fields (and
+    # typedefs) themselves.
+    for field in "${fields[@]}"; do
+      fname=$(echo "$field" | grep '^\([^ ]*\)_f \1' | cut -d' ' -f2 | cut -d';' -f1;
+              echo "$field" | grep ')(' | cut -d'(' -f2 | cut -d'*' -f2 | cut -d')' -f1)
+      [[ -n ${exclude[$fname]} ]] && continue
+      printf '  %s;\n' "$field"
+    done
+  fi
+  printf '};\n'
+fi
+
+if $macros; then
+  for fname in "${!fnames[@]}"; do
+    [[ -n ${exclude[$fname]} ]] && continue
+    printf '#define %s ((*(struct %s **)jq)->%s)\n' "$fname" "$struct_name" "$fname"
+  done
+fi
+
+if $initializers; then
+  for fname in "${!fnames[@]}"; do
+    printf 'vtable->%s = %s;\n' "$fname" "$fname"
+  done
+fi

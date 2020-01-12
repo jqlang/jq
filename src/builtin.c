@@ -1604,6 +1604,97 @@ static jv f_now(jq_state *jq, jv a) {
 }
 #endif
 
+static jv f_vmid(jq_state *jq, jv a) {
+  jv_free(a);
+  return jq_get_vmid(jq);
+}
+
+static jv coreset(jq_state *parent, jv input, void *vchild) {
+  jq_state *child = vchild;
+  jq_start(child, jv_null(), 0);
+  jv_free(input);
+  return jv_true();
+}
+
+static jv coinput_cb(jq_state *child, void *vjv) {
+  jv *jvp = vjv;
+  jv ret;
+
+  if (jv_is_valid(*jvp) || jv_invalid_has_msg(jv_copy(*jvp))) {
+    ret = *jvp;
+    *jvp = jv_invalid();
+    return ret;
+  }
+  /* Hack */
+  return jv_invalid_with_msg(jv_string("EOF"));
+}
+
+static jv cowrite(jq_state *parent, jv handle, void *vchild, jv v) {
+  jq_state *child = vchild;
+  jq_input_cb junk;
+  jv *jvp;
+  jq_get_input_cb(child, &junk, (void **)&jvp);
+  jv_free(*jvp);
+  *jvp = jv_copy(v);
+  jv_free(handle);
+  return v;
+}
+
+static jv coread(jq_state *parent, jv handle, void *vchild) {
+  jq_state *child = vchild;
+  jv_free(handle);
+  if (child == parent)
+    return jv_invalid_with_msg(jv_string("Co-routines cannot call themselves"));
+  if (jq_finished(child))
+    return jv_invalid_with_msg(jv_string("EOF"));
+  return jq_next(child);
+}
+
+static jv coeof(jq_state *parent, jv handle, void *vchild) {
+  jq_state *child = vchild;
+  jv_free(handle);
+  return jq_finished(child) ? jv_true() : jv_false();
+}
+
+static jv coclose(jq_state *parent, jv handle, void *vchild) {
+  jq_state *child = vchild;
+  if (child)
+    jq_teardown(&child);
+  jv_free(handle);
+  return jv_true();
+}
+
+struct jq_io_table jq__covt = {
+  .kind = "coroutine",
+  .fhclose = coclose,
+  .fhreset = coreset,
+  .fhwrite = cowrite,
+  .fhread = coread,
+  .fhstat = 0,
+  .fheof = coeof,
+};
+
+static jv f_random_int(jq_state *jq, jv a) {
+  jv_free(a);
+  return jv_number_random_int();
+}
+
+static jv f_random_bytes(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_NUMBER)
+    return jv_invalid_with_msg(jv_string("randombytes needs an integer input"));
+  size_t n = jv_number_value(a);
+  jv_free(a);
+  return jv_number_random_bytes(n);
+}
+
+static jv f_random_string(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_NUMBER)
+    return jv_invalid_with_msg(jv_string("randomstring needs an integer input"));
+  size_t n = jv_number_value(a);
+  jv_free(a);
+  return jv_number_random_string(n);
+}
+
 static jv f_current_filename(jq_state *jq, jv a) {
   jv_free(a);
 
@@ -1619,96 +1710,107 @@ static jv f_current_line(jq_state *jq, jv a) {
 }
 
 #define LIBM_DD(name) \
-  {(cfunction_ptr)f_ ## name,  #name, 1},
+  {(cfunction_ptr)f_ ## name,  #name, 1, 1, 1},
 #define LIBM_DD_NO(name)
 
 #define LIBM_DDD(name) \
-  {(cfunction_ptr)f_ ## name, #name, 3},
+  {(cfunction_ptr)f_ ## name, #name, 3, 1, 1},
 #define LIBM_DDD_NO(name)
 
 #define LIBM_DDDD(name) \
-  {(cfunction_ptr)f_ ## name, #name, 4},
+  {(cfunction_ptr)f_ ## name, #name, 4, 1, 1},
 #define LIBM_DDDD_NO(name)
 
 static const struct cfunction function_list[] = {
 #include "libm.h"
 #ifdef HAVE_FREXP
-  {(cfunction_ptr)f_frexp,"frexp", 1},
+  {(cfunction_ptr)f_frexp,"frexp", 1, 1, 1},
 #endif
 #ifdef HAVE_MODF
-  {(cfunction_ptr)f_modf,"modf", 1},
+  {(cfunction_ptr)f_modf,"modf", 1, 1, 1},
 #endif
 #ifdef HAVE_LGAMMA_R
-  {(cfunction_ptr)f_lgamma_r,"lgamma_r", 1},
+  {(cfunction_ptr)f_lgamma_r,"lgamma_r", 1, 1, 1},
 #endif
-  {(cfunction_ptr)f_plus, "_plus", 3},
-  {(cfunction_ptr)f_negate, "_negate", 1},
-  {(cfunction_ptr)f_minus, "_minus", 3},
-  {(cfunction_ptr)f_multiply, "_multiply", 3},
-  {(cfunction_ptr)f_divide, "_divide", 3},
-  {(cfunction_ptr)f_mod, "_mod", 3},
-  {(cfunction_ptr)f_dump, "tojson", 1},
-  {(cfunction_ptr)f_json_parse, "fromjson", 1},
-  {(cfunction_ptr)f_tonumber, "tonumber", 1},
-  {(cfunction_ptr)f_tostring, "tostring", 1},
-  {(cfunction_ptr)f_keys, "keys", 1},
-  {(cfunction_ptr)f_keys_unsorted, "keys_unsorted", 1},
-  {(cfunction_ptr)f_startswith, "startswith", 2},
-  {(cfunction_ptr)f_endswith, "endswith", 2},
-  {(cfunction_ptr)f_ltrimstr, "ltrimstr", 2},
-  {(cfunction_ptr)f_rtrimstr, "rtrimstr", 2},
-  {(cfunction_ptr)f_string_split, "split", 2},
-  {(cfunction_ptr)f_string_explode, "explode", 1},
-  {(cfunction_ptr)f_string_implode, "implode", 1},
-  {(cfunction_ptr)f_string_indexes, "_strindices", 2},
-  {(cfunction_ptr)f_setpath, "setpath", 3}, // FIXME typechecking
-  {(cfunction_ptr)f_getpath, "getpath", 2},
-  {(cfunction_ptr)f_delpaths, "delpaths", 2},
-  {(cfunction_ptr)f_has, "has", 2},
-  {(cfunction_ptr)f_equal, "_equal", 3},
-  {(cfunction_ptr)f_notequal, "_notequal", 3},
-  {(cfunction_ptr)f_less, "_less", 3},
-  {(cfunction_ptr)f_greater, "_greater", 3},
-  {(cfunction_ptr)f_lesseq, "_lesseq", 3},
-  {(cfunction_ptr)f_greatereq, "_greatereq", 3},
-  {(cfunction_ptr)f_contains, "contains", 2},
-  {(cfunction_ptr)f_length, "length", 1},
-  {(cfunction_ptr)f_utf8bytelength, "utf8bytelength", 1},
-  {(cfunction_ptr)f_type, "type", 1},
-  {(cfunction_ptr)f_isinfinite, "isinfinite", 1},
-  {(cfunction_ptr)f_isnan, "isnan", 1},
-  {(cfunction_ptr)f_isnormal, "isnormal", 1},
-  {(cfunction_ptr)f_infinite, "infinite", 1},
-  {(cfunction_ptr)f_nan, "nan", 1},
-  {(cfunction_ptr)f_sort, "sort", 1},
-  {(cfunction_ptr)f_sort_by_impl, "_sort_by_impl", 2},
-  {(cfunction_ptr)f_group_by_impl, "_group_by_impl", 2},
-  {(cfunction_ptr)f_min, "min", 1},
-  {(cfunction_ptr)f_max, "max", 1},
-  {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2},
-  {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2},
-  {(cfunction_ptr)f_error, "error", 1},
-  {(cfunction_ptr)f_format, "format", 2},
-  {(cfunction_ptr)f_env, "env", 1},
-  {(cfunction_ptr)f_halt, "halt", 1},
-  {(cfunction_ptr)f_halt_error, "halt_error", 2},
-  {(cfunction_ptr)f_get_search_list, "get_search_list", 1},
-  {(cfunction_ptr)f_get_prog_origin, "get_prog_origin", 1},
-  {(cfunction_ptr)f_get_jq_origin, "get_jq_origin", 1},
-  {(cfunction_ptr)f_match, "_match_impl", 4},
-  {(cfunction_ptr)f_modulemeta, "modulemeta", 1},
-  {(cfunction_ptr)f_input, "input", 1},
-  {(cfunction_ptr)f_debug, "debug", 1},
-  {(cfunction_ptr)f_stderr, "stderr", 1},
-  {(cfunction_ptr)f_strptime, "strptime", 2},
-  {(cfunction_ptr)f_strftime, "strftime", 2},
-  {(cfunction_ptr)f_strflocaltime, "strflocaltime", 2},
-  {(cfunction_ptr)f_mktime, "mktime", 1},
-  {(cfunction_ptr)f_gmtime, "gmtime", 1},
-  {(cfunction_ptr)f_localtime, "localtime", 1},
-  {(cfunction_ptr)f_now, "now", 1},
-  {(cfunction_ptr)f_current_filename, "input_filename", 1},
-  {(cfunction_ptr)f_current_line, "input_line_number", 1},
+  {(cfunction_ptr)f_plus, "_plus", 3, 1, 1},
+  {(cfunction_ptr)f_negate, "_negate", 1, 1, 1},
+  {(cfunction_ptr)f_minus, "_minus", 3, 1, 1},
+  {(cfunction_ptr)f_multiply, "_multiply", 3, 1, 1},
+  {(cfunction_ptr)f_divide, "_divide", 3, 1, 1},
+  {(cfunction_ptr)f_mod, "_mod", 3, 1, 1},
+  {(cfunction_ptr)f_dump, "tojson", 1, 1, 1},
+  {(cfunction_ptr)f_json_parse, "fromjson", 1, 1, 1},
+  {(cfunction_ptr)f_tonumber, "tonumber", 1, 1, 1},
+  {(cfunction_ptr)f_tostring, "tostring", 1, 1, 1},
+  {(cfunction_ptr)f_keys, "keys", 1, 1, 1},
+  {(cfunction_ptr)f_keys_unsorted, "keys_unsorted", 1, 1, 1},
+  {(cfunction_ptr)f_startswith, "startswith", 2, 1, 1},
+  {(cfunction_ptr)f_endswith, "endswith", 2, 1, 1},
+  {(cfunction_ptr)f_ltrimstr, "ltrimstr", 2, 1, 1},
+  {(cfunction_ptr)f_rtrimstr, "rtrimstr", 2, 1, 1},
+  {(cfunction_ptr)f_string_split, "split", 2, 1, 1},
+  {(cfunction_ptr)f_string_explode, "explode", 1, 1, 1},
+  {(cfunction_ptr)f_string_implode, "implode", 1, 1, 1},
+  {(cfunction_ptr)f_string_indexes, "_strindices", 2, 1, 1},
+  {(cfunction_ptr)f_setpath, "setpath", 3, 1, 1}, // FIXME typechecking
+  {(cfunction_ptr)f_getpath, "getpath", 2, 1, 1},
+  {(cfunction_ptr)f_delpaths, "delpaths", 2, 1, 1},
+  {(cfunction_ptr)f_has, "has", 2, 1, 1},
+  {(cfunction_ptr)f_equal, "_equal", 3, 1, 1},
+  {(cfunction_ptr)f_notequal, "_notequal", 3, 1, 1},
+  {(cfunction_ptr)f_less, "_less", 3, 1, 1},
+  {(cfunction_ptr)f_greater, "_greater", 3, 1, 1},
+  {(cfunction_ptr)f_lesseq, "_lesseq", 3, 1, 1},
+  {(cfunction_ptr)f_greatereq, "_greatereq", 3, 1, 1},
+  {(cfunction_ptr)f_contains, "contains", 2, 1, 1},
+  {(cfunction_ptr)f_length, "length", 1, 1, 1},
+  {(cfunction_ptr)f_utf8bytelength, "utf8bytelength", 1, 1, 1},
+  {(cfunction_ptr)f_type, "type", 1, 1, 1},
+  {(cfunction_ptr)f_isinfinite, "isinfinite", 1, 1, 1},
+  {(cfunction_ptr)f_isnan, "isnan", 1, 1, 1},
+  {(cfunction_ptr)f_isnormal, "isnormal", 1, 1, 1},
+  {(cfunction_ptr)f_infinite, "infinite", 1, 1, 1},
+  {(cfunction_ptr)f_nan, "nan", 1, 1, 1},
+  {(cfunction_ptr)f_sort, "sort", 1, 1, 1},
+  {(cfunction_ptr)f_sort_by_impl, "_sort_by_impl", 2, 1, 1},
+  {(cfunction_ptr)f_group_by_impl, "_group_by_impl", 2, 1, 1},
+  {(cfunction_ptr)f_min, "min", 1, 1, 1},
+  {(cfunction_ptr)f_max, "max", 1, 1, 1},
+  {(cfunction_ptr)f_min_by_impl, "_min_by_impl", 2, 1, 1},
+  {(cfunction_ptr)f_max_by_impl, "_max_by_impl", 2, 1, 1},
+  {(cfunction_ptr)f_error, "error", 1, 0, 1},
+  {(cfunction_ptr)f_format, "format", 2, 1, 1},
+  {(cfunction_ptr)f_env, "env", 1, 0, 1},
+  {(cfunction_ptr)f_halt, "halt", 1, 0, 1},
+  {(cfunction_ptr)f_halt_error, "halt_error", 2, 0, 1},
+  {(cfunction_ptr)f_get_search_list, "get_search_list", 1, 0, 1},
+  {(cfunction_ptr)f_get_prog_origin, "get_prog_origin", 1, 0, 1},
+  {(cfunction_ptr)f_get_jq_origin, "get_jq_origin", 1, 0, 1},
+  {(cfunction_ptr)f_match, "_match_impl", 4, 1, 1},
+  {(cfunction_ptr)f_modulemeta, "modulemeta", 1, 0, 1},
+  {(cfunction_ptr)f_input, "input", 1, 0, 1},
+  {(cfunction_ptr)f_debug, "debug", 1, 0, 1},
+  {(cfunction_ptr)f_stderr, "stderr", 1, 0, 1},
+  {(cfunction_ptr)f_strptime, "strptime", 2, 1, 1},
+  {(cfunction_ptr)f_strftime, "strftime", 2, 1, 1},
+  {(cfunction_ptr)f_strflocaltime, "strflocaltime", 2, 1, 1},
+  {(cfunction_ptr)f_mktime, "mktime", 1, 1, 1},
+  {(cfunction_ptr)f_gmtime, "gmtime", 1, 1, 1},
+  {(cfunction_ptr)f_localtime, "localtime", 1, 1, 1},
+  {(cfunction_ptr)f_now, "now", 1, 0, 1},
+  {(cfunction_ptr)f_vmid, "vmid", 1, 0, 1},
+  {(cfunction_ptr)f_random_int, "random", 1, 0, 1},
+  {(cfunction_ptr)f_random_bytes, "randombytes", 1, 0, 1},
+  {(cfunction_ptr)f_random_string, "randomstring", 1, 0, 1},
+  {(cfunction_ptr)f_current_filename, "input_filename", 1, 0, 1},
+  {(cfunction_ptr)f_current_line, "input_line_number", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_get_kind, "fhkind", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_close, "fhclose", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_reset, "fhreset", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_write, "fhwrite", 2, 0, 1},
+  {(cfunction_ptr)jq_handle_read, "fhread", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_stat, "fhstat", 1, 0, 1},
+  {(cfunction_ptr)jq_handle_eof, "fheof", 1, 0, 1},
 };
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
@@ -1717,16 +1819,49 @@ static const struct cfunction function_list[] = {
 #undef LIBM_DDD
 #undef LIBM_DD
 
+
 struct bytecoded_builtin { const char* name; block code; };
+static block private_bytecoded_builtins(void) {
+  block builtins = gen_noop();
+  {
+    /*
+     * The following are all special bytecoded builtins that only jq-coded
+     * builtins should be able to use.  User programs should not be able to use
+     * them, otherwise they could corrupt jq VMs.
+     *
+     * We'll inline these.
+     */
+    struct bytecoded_builtin builtin_defs[] = {
+      {"coeval", gen_op_simple(COEVAL)},
+      {"cocreate", gen_op_simple(COCREATE)},
+      {"cooutput", gen_op_simple(CORET)},
+    };
+    for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
+      builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, gen_noop(),
+                                              builtin_defs[i].code));
+    }
+  }
+  return builtins;
+}
+
 static block bind_bytecoded_builtins(block b) {
   block builtins = gen_noop();
   {
     struct bytecoded_builtin builtin_defs[] = {
       {"empty", gen_op_simple(BACKTRACK)},
       {"not", gen_condbranch(gen_const(jv_false()),
-                             gen_const(jv_true()))}
+                             gen_const(jv_true()))},
+      {"unwinding", gen_op_simple(UNWINDING)},
     };
     for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
+      /*
+       * This results in a CALL_JQ instruction to call a function that has two
+       * instructions, the one instruction (e.g., BACKTRACK), and a RET.  So we
+       * use up to three instructions (the RET doesn't execute in the case of
+       * `empty`, naturally) to execute just one.
+       *
+       * We should inline `empty` and `unwinding` at least.
+       */
       builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, gen_noop(),
                                               builtin_defs[i].code));
     }
@@ -1799,17 +1934,23 @@ static block gen_builtin_list(block builtins) {
   return BLOCK(builtins, gen_function("builtins", gen_noop(), gen_const(list)));
 }
 
+extern void block_inline(block inlines, block body);
+
 int builtins_bind(jq_state *jq, block* bb) {
-  block builtins;
+  block builtins, inlines;
   struct locfile* src = locfile_init(jq, "<builtin>", jq_builtins, sizeof(jq_builtins)-1);
   int nerrors = jq_parse_library(src, &builtins);
   assert(!nerrors);
   locfile_free(src);
 
+  inlines = private_bytecoded_builtins();
   builtins = bind_bytecoded_builtins(builtins);
   builtins = gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), builtins);
   builtins = gen_builtin_list(builtins);
 
+  block_inline(inlines, builtins);
+
   *bb = block_bind_referenced(builtins, *bb, OP_IS_CALL_PSEUDO);
+  block_free(inlines);
   return nerrors;
 }
