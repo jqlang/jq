@@ -87,7 +87,7 @@ void block_free(block);
 
 
 // Here's some horrible preprocessor gunk so that code
-// sequences can be contructed as BLOCK(block1, block2, block3)
+// sequences can be constructed as BLOCK(block1, block2, block3)
 
 #define BLOCK_1(b1) (b1)
 #define BLOCK_2(b1,b2) (block_join((b1),(b2)))

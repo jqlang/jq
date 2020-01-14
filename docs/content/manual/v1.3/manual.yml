@@ -1232,7 +1232,7 @@ sections:
       - title: Complex assignments
         body: |
           Lots more things are allowed on the left-hand side of a jq assignment
-          than in most langauges. We've already seen simple field accesses on
+          than in most languages. We've already seen simple field accesses on
           the left hand side, and it's no surprise that array accesses work just
           as well:
 
