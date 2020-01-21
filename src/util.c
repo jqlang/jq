@@ -1049,6 +1049,15 @@ static const char **jv2charvec(jv vec, jv *res) {
   return charvec;
 }
 
+#ifndef WIN32
+#  ifdef __APPLE__
+#    include <crt_externs.h>
+#    define environ (*_NSGetEnviron())
+#  else
+     extern char ** environ;
+#  endif
+#endif
+
 jv jq_spawn_process(jq_state *jq, jv file, jv file_actions, jv attrs, jv argv, jv env) {
   posix_spawn_file_actions_t pfacs;
   posix_spawnattr_t pattrs;

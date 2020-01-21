@@ -1159,7 +1159,12 @@ static int count_cfunctions(block b) {
 }
 
 #ifndef WIN32
-extern char **environ;
+#  ifdef __APPLE__
+#    include <crt_externs.h>
+#    define environ (*_NSGetEnviron())
+#  else
+     extern char ** environ;
+#  endif
 #endif
 
 static jv

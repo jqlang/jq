@@ -1079,7 +1079,12 @@ static jv f_error(jq_state *jq, jv input) {
 
 // FIXME Should autoconf check for this!
 #ifndef WIN32
-extern char **environ;
+#  ifdef __APPLE__
+#    include <crt_externs.h>
+#    define environ (*_NSGetEnviron())
+#  else
+     extern char ** environ;
+#  endif
 #endif
 
 static jv f_env(jq_state *jq, jv input) {
