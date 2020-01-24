@@ -100,6 +100,48 @@ static void inst_free(struct inst* i) {
   jv_mem_free(i);
 }
 
+static block block_copy(block b);
+
+static inst* inst_copy(struct inst* i) {
+  inst* o = jv_mem_alloc(sizeof(inst));
+  memcpy(o, i, sizeof(inst));
+
+  if (opcode_describe(i->op)->flags & OP_HAS_CONSTANT) {
+    o->imm.constant = jv_copy(i->imm.constant);
+  }
+  if(i->locfile) {
+    o->locfile = locfile_retain(i->locfile);
+  }
+  o->arglist = block_copy(i->arglist);
+  o->subfn = block_copy(i->subfn);
+  o->symbol =  i->symbol ? jv_mem_strdup(i->symbol) : 0;
+
+  return o;
+
+}
+
+static block block_copy(block b) {
+  block bo = {0,0};
+  struct inst *lasto = 0;
+  // this covers the case when block has last instruction with a non-zero next element
+  for (struct inst * i = b.first; i && (i->prev != b.last); i = i->next) {
+    struct inst * o = inst_copy(i);
+    o->prev = lasto;
+    if(lasto) {
+      lasto->next = o;
+    } else {
+      bo.first = o;
+      bo.first->prev = 0;
+    }
+    lasto = o;
+  }
+  if(lasto) {
+    lasto->next = 0;
+  }
+  bo.last = lasto;
+  return bo;
+}
+
 static block inst_block(inst* i) {
   block b = {i,i};
   return b;
@@ -436,15 +478,67 @@ static inst* block_take_last(block* b) {
 }
 
 void block_inline(block inlines, block body) {
+
   inst *i;
   inst *b;
-  for (i = inlines.first; i; i = i->next) {
+
+  for (i = inlines.first; i && body.first; i = i->next) {
     for (b = body.first; b; b = b->next) {
       if (b->op == CALL_JQ && !b->bound_by && strcmp(b->symbol, i->symbol) == 0 &&
-          b->nactuals == 0)
-        b->op = i->subfn.first->op;
-      block_inline(inlines, b->arglist);
-      block_inline(inlines, b->subfn);
+          b->nactuals == i->nformals) {
+
+            // first, copy all instructions
+            block copy = block_copy(i->subfn);
+
+            // now, do the parameter mapping
+            // CALL_JQ already has all its arguments prepared and wrapped in 
+            // CLOSURE_CREATE or like, so all we need to do
+            // is to find instructions of the inlined function bound by params
+            // and rebind them to the corresponding args from the arglist
+
+            for(inst* ii = copy.first; ii; ii = ii->next) {
+              if (ii->bound_by && ii->bound_by->op == CLOSURE_PARAM) {
+                // find the matching param and the corresponding argument
+                int index = 0;
+                inst *arg = b->arglist.first;
+                inst *par = i->arglist.first;
+                while(index < i->nformals && par != ii->bound_by && par && arg) {
+                  par = par->next;
+                  arg = arg->next;
+                  index ++;
+                }
+                assert(index < i->nformals && par && arg && "couldn't identify matching param");
+
+                // the magic happens here
+                ii->bound_by = arg;
+              }
+            }
+
+            // now, copy the arglist from the CALL_JQ instruction
+            // to have the subfunctions stay 
+            copy = block_join(b->arglist, copy);
+
+            // inject the inlined code 
+            // instead of the call instruction
+            copy.first->prev = b->prev;
+            copy.last->next = b->next;
+
+            if(b->prev) {
+              b->prev->next = copy.first;
+            }
+
+            if(b->next) { 
+              b->next->prev = copy.last;
+            }
+
+            // thank you CALL_JQ, you are free now.
+            // but before you go, we need your args
+            b->arglist = gen_noop();
+            inst_free(b);
+      } else {
+        block_inline(inlines, b->arglist);
+        block_inline(inlines, b->subfn);
+      }
     }
   }
 }
