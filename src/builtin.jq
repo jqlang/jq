@@ -363,7 +363,7 @@ def coeval: . as $program | null | coeval($program; {}; {});
 
 def coexp(cexp):
   . as $dot |
-  try corun(1) catch (fhwrite($dot), .);  # in parent starting a coroutine throws its handle
+  try corun(coexp) catch (fhwrite($dot), .);  # in parent starting a coroutine throws its handle
 
 def fhinterleave:
   label $out | repeat(.[] | try fhread catch if .=="EOF" then break $out else error end);
