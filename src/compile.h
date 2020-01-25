@@ -18,6 +18,7 @@ block gen_location(location, struct locfile*, block);
 
 block gen_noop();
 int block_is_noop(block b);
+block gen_marker(opcode op);
 block gen_op_simple(opcode op);
 block gen_const(jv constant);
 block gen_const_global(jv constant, const char *name);

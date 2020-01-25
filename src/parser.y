@@ -318,11 +318,14 @@ Module Imports Exp {
   //   gen_location(@$, locations, gen_call("@main", gen_noop())),
   //   OP_IS_CALL_PSEUDO);
 
-  *answer = BLOCK($1, $2, 
-      gen_op_simple(TOP), 
-      $3, // call_main
-      gen_op_simple(OUT), 
-      gen_op_simple(BACKTRACK));
+  block main_loop = BLOCK (
+    gen_op_simple(START),
+    $3, // call_main
+    gen_op_simple(OUT),
+    gen_op_simple(BACKTRACK)
+  );
+
+  *answer = BLOCK($1, $2, gen_marker(TOP), main_loop);
 } |
 Module Imports FuncDefs {
   *answer = BLOCK($1, $2, $3);

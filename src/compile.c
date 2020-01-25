@@ -197,6 +197,11 @@ int block_is_noop(block b) {
   return (b.first == 0 && b.last == 0);
 }
 
+block gen_marker(opcode op) {
+  assert(opcode_describe(op)->length == 0);
+  return inst_block(inst_new(op));
+}
+
 block gen_op_simple(opcode op) {
   assert(opcode_describe(op)->length == 1);
   return inst_block(inst_new(op));

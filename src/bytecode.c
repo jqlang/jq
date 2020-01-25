@@ -6,6 +6,7 @@
 #include "jv_alloc.h"
 
 // flags, length
+#define MARKER 0, 0
 #define NONE 0, 1
 #define CONSTANT OP_HAS_CONSTANT, 2
 #define VARIABLE (OP_HAS_VARIABLE | OP_HAS_BINDING), 3

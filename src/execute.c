@@ -514,9 +514,6 @@ jv jq_next(jq_state *jq) {
 
     switch (opcode) {
     default: assert(0 && "invalid instruction");
-
-    case TOP: break;
-
     case LOADK: {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
       assert(jv_is_valid(v));

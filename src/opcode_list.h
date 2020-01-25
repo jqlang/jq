@@ -39,12 +39,10 @@ OP(CLOSURE_REF, CLOSURE_REF_IMM, 0, 0)
 OP(CLOSURE_CREATE, DEFINITION, 0, 0)
 OP(CLOSURE_CREATE_C, DEFINITION, 0, 0)
 
-// I would love to get rid of this one in favor of START
-// but some code is depending on TOP to be 
-// the first and unique instruction
-OP(TOP, NONE, 0, 1)
+// Schroedinger's TOP is there and not there at the same time
+OP(TOP, MARKER, 0, 0)
 
-// the entry point of a coroutine, and, theoretically, main
+// the entry point of a coroutine and main
 OP(START, NONE, 0, 1)
 OP(CLOSURE_PARAM_REGULAR, DEFINITION, 0, 0)
 OP(CLOSURE_PARAM_COEXPR, DEFINITION, 0, 0)
