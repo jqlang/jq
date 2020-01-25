@@ -1828,22 +1828,33 @@ static const struct cfunction function_list[] = {
 struct bytecoded_builtin { const char* name; block code; };
 static block private_bytecoded_builtins(void) {
   block builtins = gen_noop();
+  /*
+    * The following are all special bytecoded builtins that only jq-coded
+    * builtins should be able to use.  User programs should not be able to use
+    * them, otherwise they could corrupt jq VMs.
+    *
+    * We'll inline these.
+    */
   {
-    /*
-     * The following are all special bytecoded builtins that only jq-coded
-     * builtins should be able to use.  User programs should not be able to use
-     * them, otherwise they could corrupt jq VMs.
-     *
-     * We'll inline these.
-     */
     struct bytecoded_builtin builtin_defs[] = {
       {"coeval", gen_op_simple(COEVAL)},
-      {"cocreate", gen_op_simple(COCREATE)},
-      {"cooutput", gen_op_simple(CORET)},
     };
     for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
       builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, gen_noop(),
                                               builtin_defs[i].code));
+    }
+  }
+  {
+    struct bytecoded_builtin builtin_def_1arg[] = {
+      {"corun", BLOCK(gen_op_simple(START),
+                      gen_call("arg", gen_noop()),
+                      gen_op_simple(OUT),
+                      gen_op_simple(BACKTRACK))},
+    };
+    for (unsigned i=0; i<sizeof(builtin_def_1arg)/sizeof(builtin_def_1arg[0]); i++) {
+      builtins = BLOCK(builtins, gen_function(builtin_def_1arg[i].name,
+                                              gen_param("arg"),
+                                              builtin_def_1arg[i].code));
     }
   }
   return builtins;
@@ -1861,8 +1872,8 @@ static block bind_bytecoded_builtins(block b) {
     for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
       /*
        * This results in a CALL_JQ instruction to call a function that has two
-       * instructions, the one instruction (e.g., BACKTRACK), and a RET.  So we
-       * use up to three instructions (the RET doesn't execute in the case of
+       * instructions, the one instruction (e.g., BACKTRACK), and a RET_JQ.  So we
+       * use up to three instructions (the RET_JQ doesn't execute in the case of
        * `empty`, naturally) to execute just one.
        *
        * We should inline `empty` and `unwinding` at least.

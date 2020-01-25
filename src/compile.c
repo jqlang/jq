@@ -1377,10 +1377,11 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
   errors += expand_call_arglist(&b, args, env);
-  b = BLOCK(b, gen_op_simple(RET));
+
   jv localnames = jv_array();
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
+
     int length = opcode_describe(curr->op)->length;
     if (curr->op == CALL_JQ) {
       for (inst* arg = curr->arglist.first; arg; arg = arg->next) {
@@ -1412,6 +1413,14 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
       curr->imm.intval = idx;
     }
   }
+
+  // block needs a RET_JQ unless it ends with a backtrack 
+  if (b.last->op != BACKTRACK) {
+    b = BLOCK(b, gen_op_simple(RET_JQ));
+    b.last->bytecode_pos = ++pos;
+    b.last->compiled = bc;
+  }
+
   if (pos > 0xFFFF) {
     // too long for program counter to fit in uint16_t
     locfile_locate(lf, UNKNOWN_LOCATION,

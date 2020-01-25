@@ -128,7 +128,7 @@ union frame_entry {
 struct frame {
   struct bytecode* bc;      // jq bytecode for callee
   stack_ptr env;            // jq stack address of frame to return to
-  stack_ptr retdata;        // jq stack address to unwind to on RET
+  stack_ptr retdata;        // jq stack address to unwind to on RET_JQ
   uint16_t* retaddr;        // jq bytecode return address
   union frame_entry entries[]; // nclosures + nlocals
 };
@@ -1142,7 +1142,7 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
-    case COCREATE: {
+    case START: {
       jv input = stack_pop(jq);
       if (jv_get_kind(input) == JV_KIND_NULL) {
         /* Here we're in the parent */
@@ -1187,7 +1187,7 @@ jv jq_next(jq_state *jq) {
       jv_free(input);
       break;
     }
-    case ON_BACKTRACK(COCREATE): {
+    case ON_BACKTRACK(START): {
       jv cohandle = stack_pop(jq);
       if (jv_get_kind(cohandle) == JV_KIND_TRUE) {
         /*
@@ -1325,15 +1325,24 @@ jv jq_next(jq_state *jq) {
       goto do_backtrack;
     }
 
-    case CORET: {
+    case OUT: {
       jv value = stack_pop(jq);
-      // Like a RET top-level return, yielding value
       struct stack_pos spos = stack_get_pos(jq);
-      stack_push(jq, jv_null());
       stack_save(jq, pc - 1, spos);
       return value;
     }
-    case RET: {
+    case ON_BACKTRACK(OUT): {
+      // like backtrack but 
+      // without actual backtracking
+
+      // ignore the pc here since we are moving on
+      uint16_t* unused_pc = stack_restore(jq);
+      assert(unused_pc);
+
+      break;
+    }
+
+    case RET_JQ: {
       jv value = stack_pop(jq);
       assert(jq->stk_top == frame_current(jq)->retdata);
       uint16_t* retaddr = frame_current(jq)->retaddr;
@@ -1350,11 +1359,6 @@ jv jq_next(jq_state *jq) {
       }
       stack_push(jq, value);
       break;
-    }
-    case ON_BACKTRACK(CORET):
-    case ON_BACKTRACK(RET): {
-      // resumed after top-level return
-      goto do_backtrack;
     }
     }
   }
@@ -1621,7 +1625,7 @@ void jq_teardown(jq_state **jqp) {
 }
 
 static int ret_follows(uint16_t *pc) {
-  if (*pc == RET)
+  if (*pc == RET_JQ)
     return 1;
   if (*pc++ != JUMP)
     return 0;
@@ -1647,8 +1651,8 @@ static int ret_follows(uint16_t *pc) {
  *
  * We're looking for:
  *
- * a) the next instruction is a RET or a chain of unconditional JUMPs
- * that ends in a RET, and
+ * a) the next instruction is a RET_JQ or a chain of unconditional JUMPs
+ * that ends in a RET_JQ, and
  *
  * b) none of the closures -callee included- have level == 0.
  */

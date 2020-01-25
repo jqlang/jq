@@ -307,8 +307,22 @@ static block gen_update(block object, block val, int optype) {
 
 %%
 TopLevel:
-Module Imports Exp {
-  *answer = BLOCK($1, $2, gen_op_simple(TOP), $3);
+Module Imports Exp {  
+
+  // it looks pretty when the boilerplate code calls to @main
+  // but it's counter-productive: the call introduces an unneded frame
+
+  // block main = gen_function("@main", gen_noop(), $3);
+  // block call_main = block_bind_referenced(
+  //   main,
+  //   gen_location(@$, locations, gen_call("@main", gen_noop())),
+  //   OP_IS_CALL_PSEUDO);
+
+  *answer = BLOCK($1, $2, 
+      gen_op_simple(TOP), 
+      $3, // call_main
+      gen_op_simple(OUT), 
+      gen_op_simple(BACKTRACK));
 } |
 Module Imports FuncDefs {
   *answer = BLOCK($1, $2, $3);

@@ -31,7 +31,7 @@ OP(PATH_END,   NONE, 2, 1)
 OP(CALL_BUILTIN, CFUNC, -1, 1)
 
 OP(CALL_JQ, UFUNC, 1, 1)
-OP(RET, NONE, 1, 1)
+OP(RET_JQ, NONE, 1, 1)
 OP(TAIL_CALL_JQ, UFUNC, 1, 1)
 
 OP(CLOSURE_PARAM, DEFINITION, 0, 0)
@@ -39,7 +39,13 @@ OP(CLOSURE_REF, CLOSURE_REF_IMM, 0, 0)
 OP(CLOSURE_CREATE, DEFINITION, 0, 0)
 OP(CLOSURE_CREATE_C, DEFINITION, 0, 0)
 
-OP(TOP, NONE, 0, 0)
+// I would love to get rid of this one in favor of START
+// but some code is depending on TOP to be 
+// the first and unique instruction
+OP(TOP, NONE, 0, 1)
+
+// the entry point of a coroutine, and, theoretically, main
+OP(START, NONE, 0, 1)
 OP(CLOSURE_PARAM_REGULAR, DEFINITION, 0, 0)
 OP(CLOSURE_PARAM_COEXPR, DEFINITION, 0, 0)
 OP(DEPS, CONSTANT, 0, 0)
@@ -48,7 +54,6 @@ OP(GENLABEL, NONE, 0, 1)
 
 OP(DESTRUCTURE_ALT, BRANCH, 0, 0)
 OP(STOREVN, VARIABLE, 1, 0)
-OP(COCREATE, NONE, 1, 1)
 OP(COEVAL, NONE, 1, 1)
-OP(CORET, NONE, 1, 1)
 OP(UNWINDING, NONE, 1, 1)
+OP(OUT, NONE, 1, 0)

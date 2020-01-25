@@ -362,11 +362,8 @@ def eval: . as $dot | null | eval($dot; {}; {});
 def coeval: . as $program | null | coeval($program; {}; {});
 
 def coexp(cexp):
-  null |
-  cocreate as $child |
-  if ($child == false) or $child == true
-  then null | cexp | cooutput # child;  call and output (which always backtracks!)
-  else $child end;            # parent; output the child's handle
+  . as $dot |
+  try corun(1) catch (fhwrite($dot), .);  # in parent starting a coroutine throws its handle
 
 def fhinterleave:
   label $out | repeat(.[] | try fhread catch if .=="EOF" then break $out else error end);
