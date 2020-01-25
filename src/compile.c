@@ -67,6 +67,17 @@ struct inst {
 
   int bytecode_pos; // position just after this insn
   unsigned int hidden:1;
+
+  // if this instruction is copied,
+  // the info about the copy is saved here
+  // this allows for post processing to rebind targets or such
+  // the context is used as versioning to identify 
+  // instructions which were copied whithin a particular context
+  // POLICY: assign (don't free either target or dest!)
+  struct {
+    void* context;
+    inst* dest;
+  } copy;
 };
 
 static inst* inst_new(opcode op) {
@@ -85,6 +96,8 @@ static inst* inst_new(opcode op) {
   i->source = UNKNOWN_LOCATION;
   i->locfile = 0;
   i->hidden = 0;
+  i->copy.context = 0;
+  i->copy.dest = 0;
   return i;
 }
 
@@ -100,9 +113,9 @@ static void inst_free(struct inst* i) {
   jv_mem_free(i);
 }
 
-static block block_copy(block b);
+static block block_copy(block b, void* copy_context);
 
-static inst* inst_copy(struct inst* i) {
+static inst* inst_copy(struct inst* i, void* copy_context) {
   inst* o = jv_mem_alloc(sizeof(inst));
   memcpy(o, i, sizeof(inst));
 
@@ -112,20 +125,24 @@ static inst* inst_copy(struct inst* i) {
   if(i->locfile) {
     o->locfile = locfile_retain(i->locfile);
   }
-  o->arglist = block_copy(i->arglist);
-  o->subfn = block_copy(i->subfn);
+  o->arglist = block_copy(i->arglist, copy_context);
+  o->subfn = block_copy(i->subfn, copy_context);
   o->symbol =  i->symbol ? jv_mem_strdup(i->symbol) : 0;
+
+  // thank me later :)
+  i->copy.context = copy_context;
+  i->copy.dest = o;
 
   return o;
 
 }
 
-static block block_copy(block b) {
+static block block_copy(block b, void * copy_context) {
   block bo = {0,0};
   struct inst *lasto = 0;
   // this covers the case when block has last instruction with a non-zero next element
   for (struct inst * i = b.first; i && (i->prev != b.last); i = i->next) {
-    struct inst * o = inst_copy(i);
+    struct inst * o = inst_copy(i, copy_context);
     o->prev = lasto;
     if(lasto) {
       lasto->next = o;
@@ -492,16 +509,30 @@ void block_inline(block inlines, block body) {
       if (b->op == CALL_JQ && !b->bound_by && strcmp(b->symbol, i->symbol) == 0 &&
           b->nactuals == i->nformals) {
 
-            // first, copy all instructions
-            block copy = block_copy(i->subfn);
+            void* ctx = (void*)random();
 
-            // now, do the parameter mapping
+            // first, copy all instructions
+            block copy = block_copy(i->subfn, ctx);
+
+
+            // now, do the parameter mapping and target remapping
             // CALL_JQ already has all its arguments prepared and wrapped in 
             // CLOSURE_CREATE or like, so all we need to do
             // is to find instructions of the inlined function bound by params
             // and rebind them to the corresponding args from the arglist
 
             for(inst* ii = copy.first; ii; ii = ii->next) {
+              if (opcode_describe(ii->op)->flags & OP_HAS_BRANCH) {
+                assert(ii->imm.target && "branching instruction without a target");
+                // in case the instruction had a branch to one of the other
+                // copied instructions, we need to remap it
+                if (ii->imm.target->copy.context == ctx) {
+                  // context matches, means we've just copied it
+                  // just remap it to the copy dest
+                  ii->imm.target = ii->imm.target->copy.dest;
+                }
+              }
+
               if (ii->bound_by && ii->bound_by->op == CLOSURE_PARAM) {
                 // find the matching param and the corresponding argument
                 int index = 0;
