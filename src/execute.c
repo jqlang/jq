@@ -504,13 +504,14 @@ jv jq_next(jq_state *jq) {
 
     if (jq->debug_trace_enabled) {
       dump_operation(frame_current(jq)->bc, pc);
-      printf("\t");
       const struct opcode_description* opdesc = opcode_describe(opcode);
       stack_ptr param = 0;
       if (!backtracking) {
         int stack_in = opdesc->stack_in;
         if (stack_in == -1) stack_in = pc[1];
         param = jq->stk_top;
+
+        printf("\t(( ");
         for (int i=0; i<stack_in; i++) {
           if (i != 0) {
             printf(" | ");
@@ -522,14 +523,49 @@ jv jq_next(jq_state *jq) {
           //printf(" -- ");
           //jv_dump(jv_copy(jq->path), 0);
         }
-        if (jq->debug_trace_enabled & JQ_DEBUG_TRACE_DETAIL) {
+        printf(" )) ");
+
+        if (jq->debug_trace_enabled & JQ_DEBUG_TRACE_DETAIL && param < jq->restore_limit) {
+          int first = 1;
+          if(stack_in == 0) {
+            // we haven't printed the top of the stack yet, print now
+            jv_dump(jv_copy(*(jv*)stack_block(&jq->stk, param)), JV_PRINT_REFCOUNT);
+          }
           while ((param = *stack_block_next(&jq->stk, param))) {
-            printf(" || ");
+            if (!first || !stack_in) {
+              printf(" || ");
+            } else {
+              first = 0;
+            }
             jv_dump(jv_copy(*(jv*)stack_block(&jq->stk, param)), JV_PRINT_REFCOUNT);
           }
         }
       } else {
-        printf("\t<backtracking>");
+        jv e = jv_copy(jq->error);
+        jv *pe = &e;
+
+        if (jv_is_valid(e)) {
+          printf("\t<backtracking>");
+        } else {
+          printf("\t<raising> ");
+
+          while (pe && !jv_is_valid(*pe)) {
+            printf(" E:");
+            if (jv_invalid_has_msg(jv_copy(*pe))) {
+              *pe = jv_invalid_get_msg(*pe);
+            } else {
+              jv_free(*pe);
+              pe = 0;
+            }
+          }
+
+          if (pe) {
+            jv_dump(*pe, JV_PRINT_REFCOUNT);
+          } else {
+            printf("()");
+          }
+        }
+        
       }
 
       if (jq->parent)
@@ -693,7 +729,7 @@ jv jq_next(jq_state *jq) {
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
         jv_dump(jv_copy(*var), 0);
-        printf(" (%d)\n", jv_get_refcnt(*var));
+        printf(" <%d>\n", jv_get_refcnt(*var));
       }
       jv_free(stack_pop(jq));
       stack_push(jq, jv_copy(*var));
@@ -727,7 +763,7 @@ jv jq_next(jq_state *jq) {
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
         jv_dump(jv_copy(val), 0);
-        printf(" (%d)\n", jv_get_refcnt(val));
+        printf(" <%d>\n", jv_get_refcnt(val));
       }
       jv_free(*var);
       *var = val;

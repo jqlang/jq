@@ -185,9 +185,9 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
 static void put_refcnt(struct dtoa_context* C, int refcnt, FILE *F, jv* S, int T){
   char buf[JVP_DTOA_FMT_MAX_LEN];
   put_char(' ', F, S, T);
-  put_char('(', F, S, T);
+  put_char('<', F, S, T);
   put_str(jvp_dtoa_fmt(C, buf, refcnt), F, S, T);
-  put_char(')', F, S, T);
+  put_char('>', F, S, T);
 }
 
 static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FILE* F, jv* S) {
@@ -257,11 +257,13 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     break;
   }
   case JV_KIND_STRING:
-    jvp_dump_string(x, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
     if (flags & JV_PRINT_REFCOUNT)
       put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
+    jvp_dump_string(x, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
     break;
   case JV_KIND_ARRAY: {
+    if (flags & JV_PRINT_REFCOUNT)
+      put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
     if (jv_array_length(jv_copy(x)) == 0) {
       put_str("[]", F, S, flags & JV_PRINT_ISATTY);
       break;
@@ -289,11 +291,11 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     }
     if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     put_char(']', F, S, flags & JV_PRINT_ISATTY);
-    if (flags & JV_PRINT_REFCOUNT)
-      put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
     break;
   }
   case JV_KIND_OBJECT: {
+    if (flags & JV_PRINT_REFCOUNT)
+      put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
     if (jv_object_length(jv_copy(x)) == 0) {
       put_str("{}", F, S, flags & JV_PRINT_ISATTY);
       break;
@@ -361,8 +363,6 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     }
     if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     put_char('}', F, S, flags & JV_PRINT_ISATTY);
-    if (flags & JV_PRINT_REFCOUNT)
-      put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
   }
   }
   jv_free(x);
