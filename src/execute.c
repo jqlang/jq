@@ -1930,7 +1930,8 @@ jv jq_handle_write(jq_state *jq, jv handle, jv v) {
   rh = jq->handles->handles[i];
   if (rh->vt->fhwrite)
     return rh->vt->fhwrite(jq, handle, rh->handle, v);
-  jv_free(handle);
+  else
+    jv_free(handle);
   return jv_invalid_with_msg(jv_string("Failed to write to file")); /* XXX filename would be nice */
 }
 
