@@ -1451,7 +1451,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   }
 
   // block needs a RET_JQ unless it ends with a backtrack 
-  if (b.last->op != BACKTRACK) {
+  if (!b.last || b.last->op != BACKTRACK) {
     b = BLOCK(b, gen_op_simple(RET_JQ));
     b.last->bytecode_pos = ++pos;
     b.last->compiled = bc;
