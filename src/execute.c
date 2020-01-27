@@ -434,37 +434,6 @@ static void set_error(jq_state *jq, jv value) {
 static jq_state *coinit(jq_state *, uint16_t*);
 static void co_err_cb(void *, jv);
 
-jv jq_start_input_and_fork(jq_state *jq, jv start_value) {
-  if(!jv_is_valid(start_value)) {
-    jq_input_cb cb;
-    void *data;
-    jq_get_input_cb(jq, &cb, &data);
-    if (cb == NULL)
-      start_value = jv_invalid_with_msg(jv_string("Input callback is not set up"));
-    jv v = cb(jq, data);
-    if (jv_is_valid(v) || jv_invalid_has_msg(jv_copy(v))) {
-      start_value = v;
-    }
-    else {
-      start_value = jv_invalid();
-    }
-  }
-
-  if(!jv_is_valid(start_value)) {
-    if(jq->parent) {
-      jq->halted = 1;
-      return jv_invalid_has_msg(jv_copy(start_value)) ? start_value : jv_invalid_with_msg(jv_string("EOF"));
-    } else {
-      // backward compatible way of saying "no more input"
-      stack_save(jq, jq->start_pc, stack_get_pos(jq));
-      return jv_invalid();
-    }
-  } else {
-    stack_save(jq, jq->start_pc, stack_get_pos(jq));
-    return start_value;
-  }
-}
-
 jv jq_next(jq_state *jq) {
   jv cfunc_input[MAX_CFUNCTION_ARGS];
 
@@ -1208,68 +1177,69 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
-    case START: {
-      if (!initial_execution) {
-        /* START has been executed as not the first instruction, 
-         *  so it's time to ...
-         * ... Fork a child co-routine!
-         *
-         * The child side will start happily at this same place
-         * but with initial_execution == 1
-         *
-         * coinit() makes a copy of the parent jq_state, but arranges for the
-         * child never to stack_restore() past this point.  See jq_reset().
-         *
-         * This all works because we never store pointers into the stack on the
-         * stack without first encoding them to be relative to the stack, and
-         * because the child cannot backtrack past this point, the parent will
-         * teardown the child if the parent backtracks past this point, and there
-         * is no concurrent access to the stack.
-         */
-        jq_state *child = coinit(jq, pc-1);
+    case COCREATE: {
+      /* Create a child co-routine with the following code
+       * The child side will start happily at the next instruction
+       *
+       *
+       * coinit() makes a copy of the parent jq_state, but arranges for the
+       * child never to stack_restore() past this point.  See jq_reset().
+       *
+       * This all works because we never store pointers into the stack on the
+       * stack without first encoding them to be relative to the stack, and
+       * because the child cannot backtrack past this point, the parent will
+       * teardown the child if the parent backtracks past this point, and there
+       * is no concurrent access to the stack.
+       */
+      jv input = stack_pop(jq);
 
-        // passing jv_invalid() here will try to pull the value from input
-        jq_start(child, jv_invalid(), jq->debug_trace_enabled ? JQ_DEBUG_TRACE_ALL : 0);
-        /*
-         * We push a fork point on the parent stack so we can teardown the child
-         * if we backtrack here.
-         */
-        extern struct jq_io_table jq__covt;
-        stack_push(jq, jq_handle_new(jq, "coroutine", &jq__covt, child));
-        stack_save(jq, pc - 1, stack_get_pos(jq));
-      } else {
-        initial_execution = 0;
+      uint16_t body_len = *pc++;
 
-        jv start_input = jq->start_input;
-        jq->start_input = jv_invalid();
-        
-        start_input = jq_start_input_and_fork(jq, start_input);
+      assert(*pc == START && "COCREATE must be followed by START");
+      jq_state *child = coinit(jq, pc);
+      jq_start(child, input, jq->debug_trace_enabled ? JQ_DEBUG_TRACE_ALL : 0);
 
-        if(jv_is_valid(start_input)) {
-          stack_push(jq, start_input);
-        } else {
-          return start_input;
-        }
-      }
+      // jump over the cobody
+      pc += body_len;
+
+      // and return its handle
+      extern struct jq_io_table jq__covt;
+      jv handle = jq_handle_new(jq, "coroutine", &jq__covt, child);
+      stack_push(jq, handle);
+
       break;
     }
+    case START: 
+      initial_execution = 0;
+      /* fallthrough, to the input */
     case ON_BACKTRACK(START): {
+      // we do different things for main program and for coroutines
+      // because backward compatibility is a bitch
+      //
+      // main:  if the jq->start_input is invalid, return invalid()
+      //        so that the caller may decide how to proceed
+      // coexp: if the jq_start_input is invalid, return invalid("EOF")
+      jv start_input = jq->start_input;
+      jq->start_input = jv_invalid();
 
-      if (jq->parent == 0 || pc-1 > jq->start_pc) {
-        /*
-         * We are the parent here.  Cleanup the child, and resume backtracking.
-         */
-        jv cohandle = stack_pop(jq);
-        jq_handle_close(jq, cohandle);
-        goto do_backtrack;
-      } else {
-        jv start_input = jq_start_input_and_fork(jq, jv_invalid());
-
-        if(jv_is_valid(start_input)) {
-          stack_push(jq, start_input);
+      if(!jv_is_valid(start_input)) {
+        if(jq->parent) {
+          jq->halted = 1;
+          if (jv_invalid_has_msg(jv_copy(start_input))) {
+            return start_input;
+          } else {
+            jv_free(start_input);
+            return jv_invalid_with_msg(jv_string("EOF"));
+          }
         } else {
-          return start_input;
+          // backward compatible way of saying "i want more input"
+          jv_free(start_input);
+          stack_save(jq, jq->start_pc, stack_get_pos(jq));
+          return jv_invalid();
         }
+      } else {
+        stack_save(jq, jq->start_pc, stack_get_pos(jq));
+        stack_push(jq, start_input);
       }
       break;
     }
@@ -1381,20 +1351,19 @@ jv jq_next(jq_state *jq) {
       goto do_backtrack;
     }
 
+    case TAIL_OUT: {
+      // optimized version of OUT;BACKTRACK
+      jv value = stack_pop(jq);
+      return value;
+    }
     case OUT: {
       jv value = stack_pop(jq);
-      struct stack_pos spos = stack_get_pos(jq);
-      stack_save(jq, pc - 1, spos);
+      stack_save(jq, pc - 1, stack_get_pos(jq));
       return value;
     }
     case ON_BACKTRACK(OUT): {
-      // like backtrack but 
-      // without actual backtracking
-
-      // ignore the pc here since we are moving on
-      uint16_t* unused_pc = stack_restore(jq);
-      assert(unused_pc);
-
+      // stop backtracking, 
+      // move on
       break;
     }
 
@@ -1583,6 +1552,7 @@ static jq_state *coinit(jq_state *parent, uint16_t* start_pc) {
   child->error = jv_null();
   child->attrs = jv_copy(parent->attrs);
   child->path = jv_copy(parent->path);
+  child->io_policy_data = jv_copy(parent->io_policy_data);
   child->start_input = jv_invalid();
 
   /* Share I/O handles with the parent */
@@ -1650,18 +1620,20 @@ void jq_teardown(jq_state **jqp) {
   jq_reset(jq);
   if (jq->parent)
     stack_reset(&jq->stk, jq->restore_limit);
+
   if (jq->handles == &jq->handles_s)
     jv_free(jq->handles->jhandles);
 
-  bytecode_free(jq->bc);
-  libraries_free(jq->libs);
+  if (!jq->parent) {
+    bytecode_free(jq->bc);
+    libraries_free(jq->libs);
+    if (jq->io_policy)
+      jq_teardown(&jq->io_policy);
+  }
   jv_free(jq->rnd);
   jv_free(jq->vmid);
   jv_free(jq->attrs);
   jv_free(jq->io_policy_data);
-
-  if (jq->io_policy)
-    jq_teardown(&jq->io_policy);
 
   jv_mem_free(jq);
 }

@@ -1057,6 +1057,14 @@ block gen_foreach(block source, block matcher, block init, block update, block e
   return foreach;
 }
 
+block gen_coexpression_with_param_name(const char* param) {
+  block cobody = BLOCK(gen_op_simple(START),
+                       gen_call(param, gen_noop()),
+                       gen_op_simple(TAIL_OUT));
+  block cocreate = gen_op_target(COCREATE, cobody);
+  return BLOCK(cocreate, cobody);
+}
+
 block gen_definedor(block a, block b) {
   // var found := false
   block found_var = gen_op_var_fresh(STOREV, "found");

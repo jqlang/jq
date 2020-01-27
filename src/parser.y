@@ -321,8 +321,7 @@ Module Imports Exp {
   block main_loop = BLOCK (
     gen_op_simple(START),
     $3, // call_main
-    gen_op_simple(OUT),
-    gen_op_simple(BACKTRACK)
+    gen_op_simple(TAIL_OUT)
   );
 
   *answer = BLOCK($1, $2, gen_marker(TOP), main_loop);

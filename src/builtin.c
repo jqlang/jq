@@ -1846,10 +1846,6 @@ static block private_inlines(void) {
   }
   {
     struct bytecoded_builtin builtin_def_1arg[] = {
-      {"corun", BLOCK(gen_op_simple(START),
-                      gen_call("arg", gen_noop()),
-                      gen_op_simple(OUT),
-                      gen_op_simple(BACKTRACK))},
     };
     for (unsigned i=0; i<sizeof(builtin_def_1arg)/sizeof(builtin_def_1arg[0]); i++) {
       builtins = BLOCK(builtins, gen_function(builtin_def_1arg[i].name,
@@ -1883,6 +1879,7 @@ static block public_inlines(void) {
   }
   {
     struct bytecoded_builtin builtin_def_1arg[] = {
+      {"coexp", gen_coexpression_with_param_name("arg")},
     };
     for (unsigned i=0; i<sizeof(builtin_def_1arg)/sizeof(builtin_def_1arg[0]); i++) {
       builtins = BLOCK(builtins, gen_function(builtin_def_1arg[i].name,

@@ -361,10 +361,6 @@ def eval(program; args; options):
 def eval: . as $dot | null | eval($dot; {}; {});
 def coeval: . as $program | null | coeval($program; {}; {});
 
-def coexp(cexp):
-  . as $dot |
-  try corun(cexp) catch (fhwrite($dot)|empty, .);  # in parent starting a coroutine throws its handle
-
 def fhinterleave:
   label $out | repeat(.[] | try fhread catch if .=="EOF" then break $out else error end);
 
