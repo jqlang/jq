@@ -1871,6 +1871,7 @@ static block public_inlines(void) {
       {"not", gen_condbranch(gen_const(jv_false()),
                              gen_const(jv_true()))},
       {"unwinding", gen_op_simple(UNWINDING)},
+      {"output", gen_op_simple(OUT)},
     };
     for (unsigned i=0; i<sizeof(builtin_defs)/sizeof(builtin_defs[0]); i++) {
       builtins = BLOCK(builtins, gen_function(builtin_defs[i].name, gen_noop(),
