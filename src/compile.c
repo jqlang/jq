@@ -115,8 +115,7 @@ static void inst_free(struct inst* i) {
 
 static block block_copy(block b, void* copy_context);
 
-static inst* inst_copy(struct inst* i, void* copy_context) {
-  inst* o = jv_mem_alloc(sizeof(inst));
+static inst* inst_copy_to(struct inst* o, struct inst* i, void* copy_context) {
   memcpy(o, i, sizeof(inst));
 
   if (opcode_describe(i->op)->flags & OP_HAS_CONSTANT) {
@@ -134,7 +133,6 @@ static inst* inst_copy(struct inst* i, void* copy_context) {
   i->copy.dest = o;
 
   return o;
-
 }
 
 static block block_copy(block b, void * copy_context) {
@@ -142,7 +140,8 @@ static block block_copy(block b, void * copy_context) {
   struct inst *lasto = 0;
   // this covers the case when block has last instruction with a non-zero next element
   for (struct inst * i = b.first; i && (i->prev != b.last); i = i->next) {
-    struct inst * o = inst_copy(i, copy_context);
+    struct inst * o = jv_mem_alloc(sizeof(inst));
+    inst_copy_to(o, i, copy_context);
     o->prev = lasto;
     if(lasto) {
       lasto->next = o;
@@ -511,9 +510,30 @@ void block_inline(block inlines, block body) {
 
             void* ctx = (void*)random();
 
-            // first, copy all instructions
-            block copy = block_copy(i->subfn, ctx);
+            // save the call's arglist for the mapping below
+            block call_arglist = b->arglist;
+            // save the prev and next
+            inst* prev = b->prev;
+            inst* next = b->next;
 
+            // first, copy all instructions but the last one
+            // in case it's a single instruction block then just noop
+            block subfun_no_last = { 0, 0 };
+            if (!block_is_single(i->subfn)){
+              subfun_no_last.first = i->subfn.first;
+              subfun_no_last.last = i->subfn.last->prev;
+            }
+            block copy = block_copy(subfun_no_last, ctx);
+
+            // now, reuse the current call instruction
+            // as the holder for the last instruction in the new inlined body
+            // this handles the case if any other instruction in the code
+            // had this call as the branch target.
+            // searching for such instruction would mean 
+            // that we needed to scan full code (every time) and we don't want it
+            inst_copy_to(b, i->subfn.last, ctx);
+            b->prev = 0; // for a valid inst block
+            block_append(&copy, inst_block(b));
 
             // now, do the parameter mapping and target remapping
             // CALL_JQ already has all its arguments prepared and wrapped in 
@@ -536,7 +556,7 @@ void block_inline(block inlines, block body) {
               if (ii->bound_by && ii->bound_by->op == CLOSURE_PARAM) {
                 // find the matching param and the corresponding argument
                 int index = 0;
-                inst *arg = b->arglist.first;
+                inst *arg = call_arglist.first;
                 inst *par = i->arglist.first;
                 while(index < i->nformals && par != ii->bound_by && par && arg) {
                   par = par->next;
@@ -552,25 +572,22 @@ void block_inline(block inlines, block body) {
 
             // now, copy the arglist from the CALL_JQ instruction
             // to have the subfunctions stay 
-            copy = block_join(b->arglist, copy);
+            copy = block_join(call_arglist, copy);
 
             // inject the inlined code 
             // instead of the call instruction
-            copy.first->prev = b->prev;
-            copy.last->next = b->next;
+            copy.first->prev = prev;
+            copy.last->next = next;
 
-            if(b->prev) {
-              b->prev->next = copy.first;
+            if(prev) {
+              prev->next = copy.first;
             }
 
-            if(b->next) { 
-              b->next->prev = copy.last;
-            }
+            // we've reused the call instruction as the last one
+            // so the next is already pointing to the correct inst.
 
-            // thank you CALL_JQ, you are free now.
-            // but before you go, we need your args
-            b->arglist = gen_noop();
-            inst_free(b);
+            // we've reused the call instruction
+            // so no need to free anything
       } else {
         block_inline(inlines, b->arglist);
         block_inline(inlines, b->subfn);
@@ -1458,8 +1475,8 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
     }
   }
 
-  // block needs a RET_JQ unless it ends with a backtrack 
-  if (!b.last || b.last->op != BACKTRACK) {
+  // block needs a RET_JQ unless it is empty or ends with a backtracking instruction
+  if (!b.last || !(opcode_describe(b.last->op)->flags & OP_BACKTRACKS)) {
     b = BLOCK(b, gen_op_simple(RET_JQ));
     b.last->bytecode_pos = ++pos;
     b.last->compiled = bc;
