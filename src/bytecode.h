@@ -20,13 +20,14 @@ enum {
 };
 
 enum op_flag {
-  OP_HAS_CONSTANT = 2,
-  OP_HAS_VARIABLE = 4,
-  OP_HAS_BRANCH = 8,
-  OP_HAS_CFUNC = 32,
-  OP_HAS_UFUNC = 64,
-  OP_IS_CALL_PSEUDO = 128,
-  OP_HAS_BINDING = 1024,
+  OP_HAS_CONSTANT = 1 << 1,
+  OP_HAS_VARIABLE = 1 << 2,
+  OP_HAS_BRANCH = 1 << 3,
+  OP_HAS_CFUNC = 1 << 4,
+  OP_HAS_UFUNC = 1 << 5,
+  OP_IS_CALL_PSEUDO = 1 << 6,
+  OP_HAS_BINDING = 1 << 7,
+  OP_BACKTRACKS = 1 << 8,
   // NOTE: Not actually part of any op -- a pseudo-op flag for special
   //       handling of `break`.
   OP_BIND_WILDCARD = 2048,
