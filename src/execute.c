@@ -2135,8 +2135,10 @@ jv jq_get_error_message(jq_state *jq)
 }
 
 jv jq_io_policy_check(jq_state *jq, jv req) {
-  if (!jq->io_policy)
+  if (!jq->io_policy) {
+    jv_free(req);
     return jv_copy(jq->io_policy_data);
+  }
   jq_start(jq->io_policy,
            JV_OBJECT(jv_string("io_policy"), jv_copy(jq->io_policy_data),
                      jv_string("io_request"), req), 0);
