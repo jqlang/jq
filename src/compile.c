@@ -1438,10 +1438,13 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
   errors += expand_call_arglist(&b, args, env);
+  int has_start = 0;
 
   jv localnames = jv_array();
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
+
+    has_start = has_start || (curr->op == START);
 
     int length = opcode_describe(curr->op)->length;
     if (curr->op == CALL_JQ) {
@@ -1475,8 +1478,8 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
     }
   }
 
-  // block needs a RET_JQ unless it is empty or ends with a backtracking instruction
-  if (!b.last || !(opcode_describe(b.last->op)->flags & OP_BACKTRACKS)) {
+  // block needs a RET_JQ unless it is the main block
+  if (!b.last || !has_start) {
     b = BLOCK(b, gen_op_simple(RET_JQ));
     b.last->bytecode_pos = ++pos;
     b.last->compiled = bc;
