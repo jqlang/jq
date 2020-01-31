@@ -355,14 +355,12 @@ def default_io_policy_check:
 
 def coeval(program; args; options): [program, ., args, options] | coeval;
 def eval(program; args; options):
-  label $out |
-  coeval(program; args; options) |
-  repeat(try fhread catch if .=="EOF" then break $out else error end);
+  coeval(program; args; options) | fhread;
 def eval: . as $dot | null | eval($dot; {}; {});
 def coeval: . as $program | null | coeval($program; {}; {});
 
 def fhinterleave:
-  label $out | repeat(.[] | try fhread catch if .=="EOF" then break $out else error end);
+  label $out | repeat(.[] | try [fhread] | if length==1 then .[0] else break $out end);
 
 def fhinterleave_repeat:
   repeat(.[] | . as $fh | (fhread // (fhreset | $fh | fhread)));
@@ -370,11 +368,13 @@ def fhinterleave_repeat:
 def fhinterleave_pad($pad):
   . as $all  |
   label $out | repeat(
-  .[] |
-  if fheof then
-    if $all|all(fheof) then $pad, break $out else $pad end
-  else (try fhread catch if .=="EOF" then empty else error end) // if $all|all(fheof) then $pad, break $out elif fheof then $pad else empty end
-  end);
+  .[] | [fhread] |
+  if length==1 then
+    .[]
+    elif $all|all(fheof) then $pad, break $out
+    elif fheof
+    then $pad
+    else empty end);
 
 ## We could really use vararg support here:
 #def comingle(a; b):

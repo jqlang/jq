@@ -170,7 +170,7 @@ static jv f_getline(jq_state *jq, struct io_handle *h) {
   if ((bytes = getline(&s, &n, h->f)) < 0) {
     free(s);
     if (feof(h->f))
-      return jv_invalid_with_msg(jv_string("EOF"));
+      return jv_invalid();
     if (errno)
       return jv_invalid_with_msg(jv_string(strerror(errno)));
     return jv_invalid_with_msg(jv_string("Unspecified I/O error"));
@@ -225,7 +225,7 @@ static jv f_read(jq_state *jq, jv input, void *vh) {
     if (jv_is_valid((v = jv_parser_next(h->parser))) || jv_invalid_has_msg(jv_copy(v)))
       return v;
   }
-  return jv_invalid_with_msg(jv_string("EOF"));
+  return jv_invalid();
 }
 
 static jv f_write(jq_state *jq, jv input, void *vh, jv output) {

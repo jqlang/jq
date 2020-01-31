@@ -442,13 +442,13 @@ jv jq_next(jq_state *jq) {
   if (jq->halted) {
     if (jq->debug_trace_enabled)
       printf("\t<halted>\n");
-    return jv_invalid_with_msg(jv_string("EOF"));
+    return jv_invalid();
   }
 
   if (jq->finished) {
     if (jq->debug_trace_enabled)
       printf("\t<finished>\n");
-    return jv_invalid_with_msg(jv_string("EOF"));
+    return jv_invalid();
   }
 
   int initial_execution = jq->initial_execution;
@@ -1218,7 +1218,7 @@ jv jq_next(jq_state *jq) {
       //
       // main:  if the jq->start_input is invalid, return invalid()
       //        so that the caller may decide how to proceed
-      // coexp: if the jq_start_input is invalid, return invalid("EOF")
+      // coexp: if the jq_start_input is invalid, return invalid()
       jv start_input = jq->start_input;
       jq->start_input = jv_invalid();
 
@@ -1229,7 +1229,7 @@ jv jq_next(jq_state *jq) {
             return start_input;
           } else {
             jv_free(start_input);
-            return jv_invalid_with_msg(jv_string("EOF"));
+            return jv_invalid();
           }
         } else {
           // backward compatible way of saying "i want more input"
@@ -1511,7 +1511,7 @@ static jv coinput_cb(jq_state *child, void *vjv) {
     return ret;
   }
 
-  return jv_invalid_with_msg(jv_string("EOF"));
+  return jv_invalid();
 }
 
 /* Not intended to be called by apps */

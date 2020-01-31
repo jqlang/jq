@@ -1630,8 +1630,7 @@ static jv coinput_cb(jq_state *child, void *vjv) {
     *jvp = jv_invalid();
     return ret;
   }
-  /* Hack */
-  return jv_invalid_with_msg(jv_string("EOF"));
+  return jv_invalid();
 }
 
 static jv cowrite(jq_state *parent, jv handle, void *vchild, jv v) {
@@ -1651,7 +1650,7 @@ static jv coread(jq_state *parent, jv handle, void *vchild) {
   if (child == parent)
     return jv_invalid_with_msg(jv_string("Co-routines cannot call themselves"));
   if (jq_finished(child))
-    return jv_invalid_with_msg(jv_string("EOF"));
+    return jv_invalid();
   return jq_next(child);
 }
 
