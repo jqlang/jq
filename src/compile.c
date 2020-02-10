@@ -847,9 +847,8 @@ block gen_reduce(block source, block matcher, block init, block body) {
 }
 
 block gen_foreach(block source, block matcher, block init, block update, block extract) {
-  block output = gen_op_targetlater(JUMP);
   block state_var = gen_op_var_fresh(STOREV, "foreach");
-  block loop = BLOCK(gen_op_simple(DUPN),
+  block loop = BLOCK(gen_op_simple(DUP),
                      // get a value from the source expression:
                      source,
                      // destructure the value into variable(s) for all the code
@@ -864,28 +863,11 @@ block gen_foreach(block source, block matcher, block init, block update, block e
                                         // save new state
                                         gen_op_bound(STOREV, state_var),
                                         // extract an output...
-                                        extract,
-                                        // ...and output it by jumping
-                                        // past the BACKTRACK that comes
-                                        // right after the loop body,
-                                        // which in turn is there
-                                        // because...
-                                        //
-                                        // (Incidentally, extract can also
-                                        // backtrack, e.g., if it calls
-                                        // empty, in which case we don't
-                                        // get here.)
-                                        output)));
+                                        extract)));
   block foreach = BLOCK(gen_op_simple(DUP),
                         init,
                         state_var,
-                        gen_op_target(FORK, loop),
-                        loop,
-                        // ...at this point `foreach`'s original input
-                        // will be on top of the stack, and we don't
-                        // want to output it, so we backtrack.
-                        gen_op_simple(BACKTRACK));
-  inst_set_target(output, foreach); // make that JUMP go bast the BACKTRACK at the end of the loop
+                        loop);
   return foreach;
 }
 
