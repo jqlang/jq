@@ -830,8 +830,9 @@ static block bind_alternation_matchers(block matchers, block body) {
 }
 
 block gen_reduce(block source, block matcher, block init, block body) {
-  block res_var = gen_op_var_fresh(STOREV, "reduce");
-  block loop = BLOCK(gen_op_simple(DUPN),
+  block res_var = gen_op_var_fresh(STOREV, "*reduce");
+  block dot_var = gen_op_var_fresh(STOREV, "*dot");
+  block loop = BLOCK(gen_op_simple(DUP),
                      source,
                      bind_alternation_matchers(matcher,
                                   BLOCK(gen_op_bound(LOADVN, res_var),
@@ -841,8 +842,17 @@ block gen_reduce(block source, block matcher, block init, block body) {
   return BLOCK(gen_op_simple(DUP),
                init,
                res_var,
+               BLOCK(
+                // dummy null
+                gen_op_pushk_under(jv_null()), 
+                // stores the actual input
+                dot_var
+               ),
                gen_op_target(FORK, loop),
+               //consumes dummy null and null-restores the actual input
+               gen_op_bound(LOADVN, dot_var),   
                loop,
+               //consumes dummy null and null-restores the result
                gen_op_bound(LOADVN, res_var));
 }
 
