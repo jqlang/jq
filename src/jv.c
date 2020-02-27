@@ -354,7 +354,7 @@ static const char* jvp_literal_number_literal(jv n) {
   }
 
   if (decNumberIsInfinite(pdec)) {
-    // For backward compatibiltiy.
+    // For backward compatibility.
     if (decNumberIsNegative(pdec)) {
       return DBL_MIN_STR;
     } else {
