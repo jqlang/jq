@@ -35,13 +35,21 @@ env.globals['navigation'] = ['tutorial', 'download', 'manual']
 def generate_file(env, fname='content/1.tutorial/default.yml'):
   path, base = os.path.split(fname)
   path = os.path.relpath(path, 'content')
+  if path == '.':
+    path = ''
+    slug = 'index'
+    permalink = ''
+  else:
+    slug = os.path.basename(path)
+    permalink = path + '/'
+
   output_dir = os.path.join('output', path)
   output_path = os.path.join(output_dir, 'index.html')
 
   template_name = re.sub(r".yml$", '.html.j2', base)
 
   ctx = load_yml_file(fname)
-  ctx.update(unique_ctr=itertools.count(1), permalink=path)
+  ctx.update(unique_ctr=itertools.count(1), permalink=permalink, slug=slug, navitem=path)
   os.makedirs(output_dir, exist_ok=True)
   env.get_template(template_name).stream(ctx).dump(output_path, encoding='utf-8')
 

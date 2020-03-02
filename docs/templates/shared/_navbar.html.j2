@@ -13,8 +13,8 @@
         <div class="navbar-collapse collapse" id="nav-collapse">
           <ul class="nav navbar-nav">
             {% for item in navigation %}
-              <li {% if item == permalink %} class="active" {% endif %}>
-                <a href="{{root}}/{{item}}">{{item | capitalize}}</a>
+              <li {% if item == navitem %} class="active" {% endif %}>
+                <a href="{{root}}/{{item}}/">{{item | capitalize}}</a>
               </li>
             {% endfor %}
             <li><a href="https://github.com/stedolan/jq/issues">Issues</a></li>
