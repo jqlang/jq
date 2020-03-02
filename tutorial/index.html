@@ -18,7 +18,6 @@
     <![endif]-->
   </head>
 
-
   <body id="tutorial">
     <div class="navbar navbar-default navbar-fixed-top" role="navigation">
       <div class="container">
@@ -56,15 +55,13 @@
       </div>
     </div>
 
-
     <div class="container">
       <div class="row">
         <h1>Tutorial</h1>
         
           
-            
-<p>GitHub has a JSON API, so let’s play with that. This URL gets us the last 5 commits from the jq repo.</p>
-
+            <p>GitHub has a JSON API, so let's play with that. This URL gets us the last
+5 commits from the jq repo.</p>
           
 
           
@@ -75,37 +72,37 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>curl 'https://api.github.com/repos/stedolan/jq/commits?per_page=5'</pre>
+                <pre>curl &#39;https://api.github.com/repos/stedolan/jq/commits?per_page=5&#39;</pre>
                 <a data-toggle="collapse" href="#result1">Show result</a>
               </div>
               <div id="result1" class="accordion-body collapse">
                 <pre>[
   {
-    "sha": "d25341478381063d1c76e81b3a52e0592a7c997f",
-    "commit": {
-      "author": {
-        "name": "Stephen Dolan",
-        "email": "mu@netsoc.tcd.ie",
-        "date": "2013-06-22T16:30:59Z"
+    &#34;sha&#34;: &#34;d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+    &#34;commit&#34;: {
+      &#34;author&#34;: {
+        &#34;name&#34;: &#34;Stephen Dolan&#34;,
+        &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
+        &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
       },
-      "committer": {
-        "name": "Stephen Dolan",
-        "email": "mu@netsoc.tcd.ie",
-        "date": "2013-06-22T16:30:59Z"
+      &#34;committer&#34;: {
+        &#34;name&#34;: &#34;Stephen Dolan&#34;,
+        &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
+        &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
       },
-      "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-      "tree": {
-        "sha": "6ab697a8dfb5a96e124666bf6d6213822599fb40",
-        "url": "https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40"
+      &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+      &#34;tree&#34;: {
+        &#34;sha&#34;: &#34;6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;,
+        &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;
       },
-      "url": "https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
-      "comment_count": 0
+      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+      &#34;comment_count&#34;: 0
     },
-    "url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
-    "html_url": "https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f",
-    "comments_url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments",
-    "author": {
-      "login": "stedolan",
+    &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+    &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+    &#34;comments_url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments&#34;,
+    &#34;author&#34;: {
+      &#34;login&#34;: &#34;stedolan&#34;,
 ...
 </pre>
               </div>
@@ -113,9 +110,10 @@
           
         
           
-            
-<p>GitHub returns nicely formatted JSON. For servers that don’t, it can be helpful to pipe the response through jq to pretty-print it. The simplest jq program is the expression <code>.</code>, which takes the input and produces it unchanged as output.</p>
-
+            <p>GitHub returns nicely formatted JSON. For servers that don't, it can be
+helpful to pipe the response through jq to pretty-print it. The simplest
+jq program is the expression <code>.</code>, which takes the input and produces it
+unchanged as output.</p>
           
 
           
@@ -126,37 +124,37 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>curl 'https://api.github.com/repos/stedolan/jq/commits?per_page=5' | jq '.'</pre>
+                <pre>curl &#39;https://api.github.com/repos/stedolan/jq/commits?per_page=5&#39; | jq &#39;.&#39;</pre>
                 <a data-toggle="collapse" href="#result2">Show result</a>
               </div>
               <div id="result2" class="accordion-body collapse">
                 <pre>[
   {
-    "sha": "d25341478381063d1c76e81b3a52e0592a7c997f",
-    "commit": {
-      "author": {
-        "name": "Stephen Dolan",
-        "email": "mu@netsoc.tcd.ie",
-        "date": "2013-06-22T16:30:59Z"
+    &#34;sha&#34;: &#34;d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+    &#34;commit&#34;: {
+      &#34;author&#34;: {
+        &#34;name&#34;: &#34;Stephen Dolan&#34;,
+        &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
+        &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
       },
-      "committer": {
-        "name": "Stephen Dolan",
-        "email": "mu@netsoc.tcd.ie",
-        "date": "2013-06-22T16:30:59Z"
+      &#34;committer&#34;: {
+        &#34;name&#34;: &#34;Stephen Dolan&#34;,
+        &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
+        &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
       },
-      "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-      "tree": {
-        "sha": "6ab697a8dfb5a96e124666bf6d6213822599fb40",
-        "url": "https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40"
+      &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+      &#34;tree&#34;: {
+        &#34;sha&#34;: &#34;6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;,
+        &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;
       },
-      "url": "https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
-      "comment_count": 0
+      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+      &#34;comment_count&#34;: 0
     },
-    "url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
-    "html_url": "https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f",
-    "comments_url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments",
-    "author": {
-      "login": "stedolan",
+    &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+    &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+    &#34;comments_url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments&#34;,
+    &#34;author&#34;: {
+      &#34;login&#34;: &#34;stedolan&#34;,
 ...
 </pre>
               </div>
@@ -164,9 +162,7 @@
           
         
           
-            
-<p>We can use jq to extract just the first commit.</p>
-
+            <p>We can use jq to extract just the first commit.</p>
           
 
           
@@ -177,82 +173,82 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>curl 'https://api.github.com/repos/stedolan/jq/commits?per_page=5' | jq '.[0]'</pre>
+                <pre>curl &#39;https://api.github.com/repos/stedolan/jq/commits?per_page=5&#39; | jq &#39;.[0]&#39;</pre>
                 <a data-toggle="collapse" href="#result3">Show result</a>
               </div>
               <div id="result3" class="accordion-body collapse">
                 <pre>{
-  "sha": "d25341478381063d1c76e81b3a52e0592a7c997f",
-  "commit": {
-    "author": {
-      "name": "Stephen Dolan",
-      "email": "mu@netsoc.tcd.ie",
-      "date": "2013-06-22T16:30:59Z"
+  &#34;sha&#34;: &#34;d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+  &#34;commit&#34;: {
+    &#34;author&#34;: {
+      &#34;name&#34;: &#34;Stephen Dolan&#34;,
+      &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
+      &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
     },
-    "committer": {
-      "name": "Stephen Dolan",
-      "email": "mu@netsoc.tcd.ie",
-      "date": "2013-06-22T16:30:59Z"
+    &#34;committer&#34;: {
+      &#34;name&#34;: &#34;Stephen Dolan&#34;,
+      &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
+      &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
     },
-    "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-    "tree": {
-      "sha": "6ab697a8dfb5a96e124666bf6d6213822599fb40",
-      "url": "https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40"
+    &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+    &#34;tree&#34;: {
+      &#34;sha&#34;: &#34;6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;,
+      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;
     },
-    "url": "https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
-    "comment_count": 0
+    &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+    &#34;comment_count&#34;: 0
   },
-  "url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f",
-  "html_url": "https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f",
-  "comments_url": "https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments",
-  "author": {
-    "login": "stedolan",
-    "id": 79765,
-    "avatar_url": "https://avatars.githubusercontent.com/u/79765?v=3",
-    "gravatar_id": "",
-    "url": "https://api.github.com/users/stedolan",
-    "html_url": "https://github.com/stedolan",
-    "followers_url": "https://api.github.com/users/stedolan/followers",
-    "following_url": "https://api.github.com/users/stedolan/following{/other_user}",
-    "gists_url": "https://api.github.com/users/stedolan/gists{/gist_id}",
-    "starred_url": "https://api.github.com/users/stedolan/starred{/owner}{/repo}",
-    "subscriptions_url": "https://api.github.com/users/stedolan/subscriptions",
-    "organizations_url": "https://api.github.com/users/stedolan/orgs",
-    "repos_url": "https://api.github.com/users/stedolan/repos",
-    "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
-    "received_events_url": "https://api.github.com/users/stedolan/received_events",
-    "type": "User",
-    "site_admin": false
+  &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+  &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+  &#34;comments_url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments&#34;,
+  &#34;author&#34;: {
+    &#34;login&#34;: &#34;stedolan&#34;,
+    &#34;id&#34;: 79765,
+    &#34;avatar_url&#34;: &#34;https://avatars.githubusercontent.com/u/79765?v=3&#34;,
+    &#34;gravatar_id&#34;: &#34;&#34;,
+    &#34;url&#34;: &#34;https://api.github.com/users/stedolan&#34;,
+    &#34;html_url&#34;: &#34;https://github.com/stedolan&#34;,
+    &#34;followers_url&#34;: &#34;https://api.github.com/users/stedolan/followers&#34;,
+    &#34;following_url&#34;: &#34;https://api.github.com/users/stedolan/following{/other_user}&#34;,
+    &#34;gists_url&#34;: &#34;https://api.github.com/users/stedolan/gists{/gist_id}&#34;,
+    &#34;starred_url&#34;: &#34;https://api.github.com/users/stedolan/starred{/owner}{/repo}&#34;,
+    &#34;subscriptions_url&#34;: &#34;https://api.github.com/users/stedolan/subscriptions&#34;,
+    &#34;organizations_url&#34;: &#34;https://api.github.com/users/stedolan/orgs&#34;,
+    &#34;repos_url&#34;: &#34;https://api.github.com/users/stedolan/repos&#34;,
+    &#34;events_url&#34;: &#34;https://api.github.com/users/stedolan/events{/privacy}&#34;,
+    &#34;received_events_url&#34;: &#34;https://api.github.com/users/stedolan/received_events&#34;,
+    &#34;type&#34;: &#34;User&#34;,
+    &#34;site_admin&#34;: false
   },
-  "committer": {
-    "login": "stedolan",
-    "id": 79765,
-    "avatar_url": "https://avatars.githubusercontent.com/u/79765?v=3",
-    "gravatar_id": "",
-    "url": "https://api.github.com/users/stedolan",
-    "html_url": "https://github.com/stedolan",
-    "followers_url": "https://api.github.com/users/stedolan/followers",
-    "following_url": "https://api.github.com/users/stedolan/following{/other_user}",
-    "gists_url": "https://api.github.com/users/stedolan/gists{/gist_id}",
-    "starred_url": "https://api.github.com/users/stedolan/starred{/owner}{/repo}",
-    "subscriptions_url": "https://api.github.com/users/stedolan/subscriptions",
-    "organizations_url": "https://api.github.com/users/stedolan/orgs",
-    "repos_url": "https://api.github.com/users/stedolan/repos",
-    "events_url": "https://api.github.com/users/stedolan/events{/privacy}",
-    "received_events_url": "https://api.github.com/users/stedolan/received_events",
-    "type": "User",
-    "site_admin": false
+  &#34;committer&#34;: {
+    &#34;login&#34;: &#34;stedolan&#34;,
+    &#34;id&#34;: 79765,
+    &#34;avatar_url&#34;: &#34;https://avatars.githubusercontent.com/u/79765?v=3&#34;,
+    &#34;gravatar_id&#34;: &#34;&#34;,
+    &#34;url&#34;: &#34;https://api.github.com/users/stedolan&#34;,
+    &#34;html_url&#34;: &#34;https://github.com/stedolan&#34;,
+    &#34;followers_url&#34;: &#34;https://api.github.com/users/stedolan/followers&#34;,
+    &#34;following_url&#34;: &#34;https://api.github.com/users/stedolan/following{/other_user}&#34;,
+    &#34;gists_url&#34;: &#34;https://api.github.com/users/stedolan/gists{/gist_id}&#34;,
+    &#34;starred_url&#34;: &#34;https://api.github.com/users/stedolan/starred{/owner}{/repo}&#34;,
+    &#34;subscriptions_url&#34;: &#34;https://api.github.com/users/stedolan/subscriptions&#34;,
+    &#34;organizations_url&#34;: &#34;https://api.github.com/users/stedolan/orgs&#34;,
+    &#34;repos_url&#34;: &#34;https://api.github.com/users/stedolan/repos&#34;,
+    &#34;events_url&#34;: &#34;https://api.github.com/users/stedolan/events{/privacy}&#34;,
+    &#34;received_events_url&#34;: &#34;https://api.github.com/users/stedolan/received_events&#34;,
+    &#34;type&#34;: &#34;User&#34;,
+    &#34;site_admin&#34;: false
   },
-  "parents": [
+  &#34;parents&#34;: [
     {
-      "sha": "54b9c9bdb225af5d886466d72f47eafc51acb4f7",
-      "url": "https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
-      "html_url": "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7"
+      &#34;sha&#34;: &#34;54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;,
+      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;,
+      &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;
     },
     {
-      "sha": "8b1b503609c161fea4b003a7179b3fbb2dd4345a",
-      "url": "https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
-      "html_url": "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a"
+      &#34;sha&#34;: &#34;8b1b503609c161fea4b003a7179b3fbb2dd4345a&#34;,
+      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a&#34;,
+      &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a&#34;
     }
   ]
 }
@@ -262,11 +258,10 @@
           
         
           
-            
-<p>For the rest of the examples, I’ll leave out the <code>curl</code> command - it’s not going to change.</p>
-
-<p>There’s a lot of info we don’t care about there, so we’ll restrict it down to the most interesting fields.</p>
-
+            <p>For the rest of the examples, I'll leave out the <code>curl</code> command - it's not
+going to change.</p>
+<p>There's a lot of info we don't care about there, so we'll restrict it down
+to the most interesting fields.</p>
           
 
           
@@ -277,13 +272,13 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>jq '.[0] | {message: .commit.message, name: .commit.committer.name}'</pre>
+                <pre>jq &#39;.[0] | {message: .commit.message, name: .commit.committer.name}&#39;</pre>
                 <a data-toggle="collapse" href="#result4">Show result</a>
               </div>
               <div id="result4" class="accordion-body collapse">
                 <pre>{
-  "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-  "name": "Stephen Dolan"
+  &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+  &#34;name&#34;: &#34;Stephen Dolan&#34;
 }
 </pre>
               </div>
@@ -291,11 +286,11 @@
           
         
           
-            
-<p>The <code>|</code> operator in jq feeds the output of one filter (<code>.[0]</code> which gets the first element of the array in the response) into the input of another (<code>{...}</code> which builds an object out of those fields). You can access nested attributes, such as <code>.commit.message</code>.</p>
-
-<p>Now let’s get the rest of the commits.</p>
-
+            <p>The <code>|</code> operator in jq feeds the output of one filter (<code>.[0]</code> which gets
+the first element of the array in the response) into the input of another
+(<code>{...}</code> which builds an object out of those fields). You can access
+nested attributes, such as <code>.commit.message</code>.</p>
+<p>Now let's get the rest of the commits.</p>
           
 
           
@@ -306,29 +301,29 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>jq '.[] | {message: .commit.message, name: .commit.committer.name}'</pre>
+                <pre>jq &#39;.[] | {message: .commit.message, name: .commit.committer.name}&#39;</pre>
                 <a data-toggle="collapse" href="#result5">Show result</a>
               </div>
               <div id="result5" class="accordion-body collapse">
                 <pre>{
-  "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-  "name": "Stephen Dolan"
+  &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+  &#34;name&#34;: &#34;Stephen Dolan&#34;
 }
 {
-  "message": "Reject all overlong UTF8 sequences.",
-  "name": "Stephen Dolan"
+  &#34;message&#34;: &#34;Reject all overlong UTF8 sequences.&#34;,
+  &#34;name&#34;: &#34;Stephen Dolan&#34;
 }
 {
-  "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
-  "name": "Stephen Dolan"
+  &#34;message&#34;: &#34;Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.&#34;,
+  &#34;name&#34;: &#34;Stephen Dolan&#34;
 }
 {
-  "message": "Fix example in manual for `floor`. See #155.",
-  "name": "Stephen Dolan"
+  &#34;message&#34;: &#34;Fix example in manual for `floor`. See #155.&#34;,
+  &#34;name&#34;: &#34;Stephen Dolan&#34;
 }
 {
-  "message": "Document floor",
-  "name": "Nicolas Williams"
+  &#34;message&#34;: &#34;Document floor&#34;,
+  &#34;name&#34;: &#34;Nicolas Williams&#34;
 }
 </pre>
               </div>
@@ -336,15 +331,18 @@
           
         
           
-            
-<p><code>.[]</code> returns each element of the array returned in the response, one at a time, which are all fed into <code>{message: .commit.message, name: .commit.committer.name}</code>.</p>
-
-<p>Data in jq is represented as streams of JSON values - every jq expression runs for each value in its input stream, and can produce any number of values to its output stream.</p>
-
-<p>Streams are serialised by just separating JSON values with whitespace. This is a <code>cat</code>-friendly format - you can just join two JSON streams together and get a valid JSON stream.</p>
-
-<p>If you want to get the output as a single array, you can tell jq to “collect” all of the answers by wrapping the filter in square brackets:</p>
-
+            <p><code>.[]</code> returns each element of the array returned in the response, one at a
+time, which are all fed into
+<code>{message: .commit.message, name: .commit.committer.name}</code>.</p>
+<p>Data in jq is represented as streams of JSON values - every jq
+expression runs for each value in its input stream, and can
+produce any number of values to its output stream.</p>
+<p>Streams are serialised by just separating JSON values with
+whitespace. This is a <code>cat</code>-friendly format - you can just join
+two JSON streams together and get a valid JSON stream.</p>
+<p>If you want to get the output as a single array, you can tell jq to
+"collect" all of the answers by wrapping the filter in square
+brackets:</p>
           
 
           
@@ -355,30 +353,30 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>jq '[.[] | {message: .commit.message, name: .commit.committer.name}]'</pre>
+                <pre>jq &#39;[.[] | {message: .commit.message, name: .commit.committer.name}]&#39;</pre>
                 <a data-toggle="collapse" href="#result6">Show result</a>
               </div>
               <div id="result6" class="accordion-body collapse">
                 <pre>[
   {
-    "message": "Merge pull request #163 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-    "name": "Stephen Dolan"
+    &#34;message&#34;: &#34;Merge pull request #163 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+    &#34;name&#34;: &#34;Stephen Dolan&#34;
   },
   {
-    "message": "Reject all overlong UTF8 sequences.",
-    "name": "Stephen Dolan"
+    &#34;message&#34;: &#34;Reject all overlong UTF8 sequences.&#34;,
+    &#34;name&#34;: &#34;Stephen Dolan&#34;
   },
   {
-    "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
-    "name": "Stephen Dolan"
+    &#34;message&#34;: &#34;Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.&#34;,
+    &#34;name&#34;: &#34;Stephen Dolan&#34;
   },
   {
-    "message": "Fix example in manual for `floor`. See #155.",
-    "name": "Stephen Dolan"
+    &#34;message&#34;: &#34;Fix example in manual for `floor`. See #155.&#34;,
+    &#34;name&#34;: &#34;Stephen Dolan&#34;
   },
   {
-    "message": "Document floor",
-    "name": "Nicolas Williams"
+    &#34;message&#34;: &#34;Document floor&#34;,
+    &#34;name&#34;: &#34;Nicolas Williams&#34;
   }
 ]
 </pre>
@@ -388,23 +386,25 @@
         
           
             <hr />
-<p>Next, let’s try getting the URLs of the parent commits out of the API results as well. In each commit, the GitHub API includes information about “parent” commits. There can be one or many.</p>
-
-<pre><code>&quot;parents&quot;: [
+<p>Next, let's try getting the URLs of the parent commits out of the
+API results as well. In each commit, the GitHub API includes information
+about "parent" commits. There can be one or many.</p>
+<pre><code>"parents": [
   {
-    &quot;sha&quot;: &quot;54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;,
-    &quot;url&quot;: &quot;https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;,
-    &quot;html_url&quot;: &quot;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&quot;
+    "sha": "54b9c9bdb225af5d886466d72f47eafc51acb4f7",
+    "url": "https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
+    "html_url": "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7"
   },
   {
-    &quot;sha&quot;: &quot;8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;,
-    &quot;url&quot;: &quot;https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;,
-    &quot;html_url&quot;: &quot;https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a&quot;
+    "sha": "8b1b503609c161fea4b003a7179b3fbb2dd4345a",
+    "url": "https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
+    "html_url": "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a"
   }
-]</code></pre>
-
-<p>We want to pull out all of the “html_url” fields inside that array of parent commits and make a simple list of strings to go along with the “message” and “author” fields we already have.</p>
-
+]
+</code></pre>
+<p>We want to pull out all of the "html_url" fields inside that array of parent
+commits and make a simple list of strings to go along with the
+"message" and "author" fields we already have.</p>
           
 
           
@@ -415,45 +415,45 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>jq '[.[] | {message: .commit.message, name: .commit.committer.name, parents: [.parents[].html_url]}]'</pre>
+                <pre>jq &#39;[.[] | {message: .commit.message, name: .commit.committer.name, parents: [.parents[].html_url]}]&#39;</pre>
                 <a data-toggle="collapse" href="#result7">Show result</a>
               </div>
               <div id="result7" class="accordion-body collapse">
                 <pre>[
   {
-    "message": "Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161",
-    "name": "Stephen Dolan",
-    "parents": [
-      "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
-      "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a"
+    &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+    &#34;name&#34;: &#34;Stephen Dolan&#34;,
+    &#34;parents&#34;: [
+      &#34;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;,
+      &#34;https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a&#34;
     ]
   },
   {
-    "message": "Reject all overlong UTF8 sequences.",
-    "name": "Stephen Dolan",
-    "parents": [
-      "https://github.com/stedolan/jq/commit/ff48bd6ec538b01d1057be8e93b94eef6914e9ef"
+    &#34;message&#34;: &#34;Reject all overlong UTF8 sequences.&#34;,
+    &#34;name&#34;: &#34;Stephen Dolan&#34;,
+    &#34;parents&#34;: [
+      &#34;https://github.com/stedolan/jq/commit/ff48bd6ec538b01d1057be8e93b94eef6914e9ef&#34;
     ]
   },
   {
-    "message": "Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.",
-    "name": "Stephen Dolan",
-    "parents": [
-      "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7"
+    &#34;message&#34;: &#34;Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.&#34;,
+    &#34;name&#34;: &#34;Stephen Dolan&#34;,
+    &#34;parents&#34;: [
+      &#34;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;
     ]
   },
   {
-    "message": "Fix example in manual for `floor`. See #155.",
-    "name": "Stephen Dolan",
-    "parents": [
-      "https://github.com/stedolan/jq/commit/3dcdc582ea993afea3f5503a78a77675967ecdfa"
+    &#34;message&#34;: &#34;Fix example in manual for `floor`. See #155.&#34;,
+    &#34;name&#34;: &#34;Stephen Dolan&#34;,
+    &#34;parents&#34;: [
+      &#34;https://github.com/stedolan/jq/commit/3dcdc582ea993afea3f5503a78a77675967ecdfa&#34;
     ]
   },
   {
-    "message": "Document floor",
-    "name": "Nicolas Williams",
-    "parents": [
-      "https://github.com/stedolan/jq/commit/7c4171d414f647ab08bcd20c76a4d8ed68d9c602"
+    &#34;message&#34;: &#34;Document floor&#34;,
+    &#34;name&#34;: &#34;Nicolas Williams&#34;,
+    &#34;parents&#34;: [
+      &#34;https://github.com/stedolan/jq/commit/7c4171d414f647ab08bcd20c76a4d8ed68d9c602&#34;
     ]
   }
 ]
@@ -463,17 +463,18 @@
           
         
           
-            
-<p>Here we’re making an object as before, but this time the <code>parents</code> field is being set to <code>[.parents[].html_url]</code>, which collects all of the parent commit URLs defined in the parents object.</p>
-
+            <p>Here we're making an object as before, but this time the <code>parents</code>
+field is being set to <code>[.parents[].html_url]</code>, which collects
+all of the parent commit URLs defined in the parents object.</p>
           
 
           
         
           
             <hr />
-<p>Here endeth the tutorial! There’s lots more to play with. Go read <a href="../manual/">the manual</a> if you’re interested, and <a href="../download/">download jq</a> if you haven’t already.</p>
-
+<p>Here endeth the tutorial! There's lots more to play with. Go
+read <a href="../manual/">the manual</a> if you're interested, and <a href="../download/">download
+jq</a> if you haven't already.</p>
           
 
           
@@ -483,7 +484,7 @@
 
     <footer>
       <div class="container">
-        <p>This website is made with <a href="http://www.tinytree.info">Bonsai</a> and <a href="http://getbootstrap.com">Bootstrap</a>, themed with <a href="https://bootswatch.com">Bootswatch</a>.</p>
+        <p>This website is made with <a href="http://getbootstrap.com">Bootstrap</a>, themed with <a href="https://bootswatch.com">Bootswatch</a>.</p>
         <p>jq is licensed under the MIT license (code) and the <a href="https://creativecommons.org/licenses/by/3.0/">CC-BY-3.0</a> license (docs).</p>
       </div>
     </footer>
@@ -491,6 +492,5 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha256-Sk3nkD6mLTMOF0EOpNtsIry+s1CsaqQC1rVLTAy+0yc= sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
     <script src="https://twitter.github.io/typeahead.js/releases/0.11.1/typeahead.bundle.js"></script>
-
   </body>
 </html>
