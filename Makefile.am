@@ -169,7 +169,7 @@ else
 endif
 
 jq.1: jq.1.prebuilt
-	$(AM_V_GEN) cp jq.1.prebuilt $@
+	$(AM_V_GEN) cp $(srcdir)/jq.1.prebuilt $@
 
 ### Build oniguruma
 
