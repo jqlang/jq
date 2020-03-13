@@ -101,12 +101,13 @@ jobs:
         -   &test-osx
             <<: *test-ubuntu
             os: osx
+            addons:
+              homebrew:
+                update: true
+                brewfile: true
 
             before_install:
                 - uname -s
-                - brew update
-                - brew install flex bison
-                - brew upgrade pyenv
                 - pyenv install -s 3.6.7
                 - rm src/{lexer,parser}.{c,h}
                 - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
