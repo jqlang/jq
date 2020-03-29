@@ -3056,16 +3056,16 @@ sections:
     entries:
       - title: "Update-assignment: `|=`"
         body: |
-          This is the "update" operator '|='.  It takes a filter on the
+          This is the "update" operator `|=`.  It takes a filter on the
           right-hand side and works out the new value for the property
           of `.` being assigned to by running the old value through this
-          expression. For instance, (.foo, .bar) |= .+1 will build an
+          expression. For instance, `(.foo, .bar) |= .+1` will build an
           object with the "foo" field set to the input's "foo" plus 1,
           and the "bar" field set to the input's "bar" plus 1.
 
           The left-hand side can be any general path expression; see `path()`.
 
-          Note that the left-hand side of '|=' refers to a value in `.`.
+          Note that the left-hand side of `|=` refers to a value in `.`.
           Thus `$var.foo |= . + 1` won't work as expected (`$var.foo` is
           not a valid or useful path expression in `.`); use `$var |
           .foo |= . + 1` instead.
@@ -3112,27 +3112,27 @@ sections:
 
           This example should show the difference between '=' and '|=':
 
-          Provide input '{"a": {"b": 10}, "b": 20}' to the programs:
+          Provide input `{"a": {"b": 10}, "b": 20}` to the programs:
 
-          .a = .b
+          `.a = .b`
 
-          .a |= .b
+          `.a |= .b`
 
           The former will set the "a" field of the input to the "b"
-          field of the input, and produce the output {"a": 20, "b": 20}.
+          field of the input, and produce the output `{"a": 20, "b": 20}`.
           The latter will set the "a" field of the input to the "a"
-          field's "b" field, producing {"a": 10, "b": 20}.
+          field's "b" field, producing `{"a": 10, "b": 20}`.
 
-          Another example of the difference between '=' and '|=':
+          Another example of the difference between `=` and `|=`:
 
-          null|(.a,.b)=range(3)
+          `null|(.a,.b)=range(3)`
 
-          outputs '{"a":0,"b":0}', '{"a":1,"b":1}', and '{"a":2,"b":2}',
+          outputs `{"a":0,"b":0}, {"a":1,"b":1}, {"a":2,"b":2}`,
           while
 
-          null|(.a,.b)|=range(3)
+          `null|(.a,.b)|=range(3)`
 
-          outputs just '{"a":0,"b":0}'.
+          outputs just `{"a":0,"b":0}`.
 
       - title: Complex assignments
         body: |
