@@ -413,7 +413,7 @@ sections:
           index 10 (inclusive) to index 15 (exclusive). Either index may
           be negative (in which case it counts backwards from the end of
           the array), or omitted (in which case it refers to the start
-          or end of the array).
+          or end of the array). The indexes are zero based.
 
         examples:
           - program: '.[2:4]'
