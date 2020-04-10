@@ -1476,6 +1476,18 @@ sections:
             input: '[1, "1"]'
             output: ['1', '1']
 
+      - title: "`tobool`"
+        body: |
+
+          The `tobool` function parses its input as a boolean. It
+          will convert correctly-formatted strings to their boolean
+          equivalent, leave booleans alone, and give an error on all other input.
+
+        examples:
+          - program: '.[] | tobool'
+            input: '["true", "false", true, false]'
+            output: ['true', 'false', 'true', 'false']
+
       - title: "`tostring`"
         body: |
 

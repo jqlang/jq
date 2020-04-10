@@ -1556,6 +1556,21 @@ jq \'\.[] | tonumber\'
 .
 .IP "" 0
 .
+.SS "tobool"
+The \fBtobool\fR function parses its input as a boolean\. It will convert correctly\-formatted strings to their boolean equivalent, leave booleans alone, and give an error on all other input\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'\.[] | tobool\'
+   ["true", "false", true, false]
+=> true, false, true, false
+.
+.fi
+.
+.IP "" 0
+.
 .SS "tostring"
 The \fBtostring\fR function prints its input as a string\. Strings are left unchanged, and all other values are JSON\-encoded\.
 .
