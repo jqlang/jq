@@ -48,50 +48,40 @@ static void memory_exhausted() {
 pthread_key_t nomem_handler_key;
 pthread_once_t mem_once = PTHREAD_ONCE_INIT;
 
-static void tsd_fini(void) {
-  struct nomem_handler *nomem_handler;
-  nomem_handler = pthread_getspecific(nomem_handler_key);
-  if (nomem_handler) {
-    (void) pthread_setspecific(nomem_handler_key, NULL);
-    free(nomem_handler);
-  }
+static void tsd_fini(void *data) {
+  pthread_setspecific(nomem_handler_key, NULL);
+  free(data);
 }
 
 static void tsd_init(void) {
-  if (pthread_key_create(&nomem_handler_key, NULL) != 0) {
+  if (pthread_key_create(&nomem_handler_key, tsd_fini) != 0) {
     fprintf(stderr, "jq: error: cannot create thread specific key");
-    abort();
-  }
-  if (atexit(tsd_fini) != 0) {
-    fprintf(stderr, "jq: error: cannot set an exit handler");
-    abort();
-  }
-  struct nomem_handler *nomem_handler = calloc(1, sizeof(struct nomem_handler));
-  if (pthread_setspecific(nomem_handler_key, nomem_handler) != 0) {
-    fprintf(stderr, "jq: error: cannot set thread specific data");
     abort();
   }
 }
 
-void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
+static struct nomem_handler* ensure_mem_handler(void) {
   pthread_once(&mem_once, tsd_init); // cannot fail
   struct nomem_handler *nomem_handler;
-
   nomem_handler = pthread_getspecific(nomem_handler_key);
   if (nomem_handler == NULL) {
-    handler(data);
-    fprintf(stderr, "jq: error: cannot allocate memory\n");
-    abort();
+    nomem_handler = calloc(1, sizeof(struct nomem_handler));
+    if (pthread_setspecific(nomem_handler_key, nomem_handler) != 0) {
+      fprintf(stderr, "jq: error: cannot set thread specific data");
+      abort();
+    }
   }
+  return nomem_handler;
+}
+
+void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
+  struct nomem_handler *nomem_handler = ensure_mem_handler();
   nomem_handler->handler = handler;
   nomem_handler->data = data;
 }
 
 static void memory_exhausted() {
-  struct nomem_handler *nomem_handler;
-
-  pthread_once(&mem_once, tsd_init);
-  nomem_handler = pthread_getspecific(nomem_handler_key);
+  struct nomem_handler *nomem_handler = ensure_mem_handler();
   if (nomem_handler)
     nomem_handler->handler(nomem_handler->data); // Maybe handler() will longjmp() to safety
   // Or not
