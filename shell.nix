@@ -3,6 +3,6 @@ with (import <nixpkgs> {});
 mkShell {
   name = "jq";
   buildInputs = [
-    git cacert cmake automake autoconf libtool
+    git cacert cmake automake autoconf libtool flex bison
   ];
 }
