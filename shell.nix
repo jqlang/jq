@@ -1,6 +1,6 @@
 with (import <nixpkgs> {});
 
-stdenv.mkDerivation {
+mkShell {
   name = "jq";
   buildInputs = [
     git cacert cmake automake autoconf libtool
