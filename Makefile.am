@@ -64,7 +64,7 @@ endif
 include_HEADERS = src/jv.h src/jq.h
 
 if ENABLE_UBSAN
-AM_CFLAGS += -fsanitize=undefined
+AM_CFLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
 endif
 
 AM_CPPFLAGS = -I$(srcdir)/src

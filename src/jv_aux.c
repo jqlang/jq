@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <limits.h>
 #include "jv_alloc.h"
 #include "jv_type_private.h"
 
@@ -73,12 +74,17 @@ jv jv_get(jv t, jv k) {
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
     if(jv_is_integer(k)){
-      int idx = (int)jv_number_value(k);
-      if (idx < 0)
-        idx += jv_array_length(jv_copy(t));
-      v = jv_array_get(t, idx);
-      if (!jv_is_valid(v)) {
-        jv_free(v);
+      double idx_raw = jv_number_value(k);
+      if (idx_raw < INT_MAX && idx_raw > INT_MIN) {
+        int idx = (int)jv_number_value(k);
+        if (idx < 0)
+          idx += jv_array_length(jv_copy(t));
+        v = jv_array_get(t, idx);
+        if (!jv_is_valid(v)) {
+          jv_free(v);
+          v = jv_null();
+        }
+      } else {
         v = jv_null();
       }
       jv_free(k);
