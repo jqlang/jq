@@ -2924,13 +2924,24 @@ sections:
           This is primarily useful for reductions over a program's
           inputs.
 
-      - title: "`debug`"
+      - title: "`debug`, `debug(exp)`"
         body: |
 
           Causes a debug message based on the input value to be
           produced.  The jq executable wraps the input value with
           `["DEBUG:", <input-value>]` and prints that and a newline on
-          stderr, compactly.  This may change in the future.
+          stderr, compactly.  This may change in the future. If given
+          an argument `exp`, the input is fed to `exp` before being
+          printed, but remains unchanged coming out.
+
+        examples:
+          - program: 'debug'
+            input: '1588708020'
+            output: ['["DEBUG:",1588708020]', '1588708020']
+          - program: 'debug(todate)'
+            input: '1588708020'
+            output: ['["DEBUG:","2020-05-05T19:47:00Z"]', '1588708020']
+
 
       - title: "`stderr`"
         body: |

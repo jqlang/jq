@@ -78,6 +78,8 @@ def scan(re):
       then [ .captures | .[] | .string ]
       else .string
       end ;
+def debug(f): . as $val | f | debug | $val;
+
 #
 # If input is an array, then emit a stream of successive subarrays of length n (or less),
 # and similarly for strings.
