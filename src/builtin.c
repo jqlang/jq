@@ -322,14 +322,15 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
     }
     int n;
     size_t alen = jv_string_length_bytes(jv_copy(str));
-    jv res = str;
+    jv res = jv_copy(str);
 
     for (n = jv_number_value(num) - 1; n > 0; n--)
       res = jv_string_append_buf(res, jv_string_value(str), alen);
 
+    jv_free(str);
     jv_free(num);
     if (n < 0) {
-      jv_free(str);
+      jv_free(res);
       return jv_null();
     }
     return res;
