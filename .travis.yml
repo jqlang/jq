@@ -28,6 +28,7 @@ jobs:
 
             before_install:
                 - uname -s
+                - sh -c "cd $(pyenv root) && git switch master && git pull"
                 - pyenv install -s 3.6.7
                 - rm src/{lexer,parser}.{c,h}
                 - sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
