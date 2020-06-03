@@ -114,7 +114,7 @@ jobs:
 
             install:
                 - pyenv global 3.6.7
-                - pip3 install pipenv
+                - pip3 install "pipenv==2018.11.26" # https://github.com/pypa/pipenv/issues/4273
                 - pushd docs && pipenv sync && popd
                 - if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
 
