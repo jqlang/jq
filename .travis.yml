@@ -1,4 +1,4 @@
-sudo: false
+dist: bionic
 
 language: c
 
