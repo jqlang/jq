@@ -142,7 +142,7 @@ jobs:
                 - sudo sh alpine-chroot-install -b v3.7 -a "$ARCH"
                     -p 'build-base automake autoconf bison git libtool oniguruma-dev python3 python3-dev libxml2-dev libxslt-dev'
                 - /alpine/enter-chroot pip3 install pipenv
-                - alpine sh -c 'cd docs && pipenv sync'
+                - alpine sh -c 'cd docs && pipenv sync --verbose'
 
             before_script:
                 - autoreconf -if
