@@ -125,6 +125,8 @@ struct lexer_param;
 
 [ \r\n\t]+  {}
 
+\xEF\xBB\xBF { return UTF8_BOM; }
+
 . { return INVALID_CHARACTER; }
 
 %%
