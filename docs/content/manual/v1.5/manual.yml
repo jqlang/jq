@@ -1970,6 +1970,7 @@ sections:
           STRING | FILTER( [REGEX, FLAGS] )
 
       where:
+
       * STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
       * REGEX, after string interpolation, should be a valid PCRE regex;
       * FILTER is one of `test`, `match`, or `capture`, as described below.
