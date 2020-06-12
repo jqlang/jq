@@ -11,8 +11,8 @@ import yaml
 # Prevent our markdown parser from trying to help by interpreting things in angle brackets as HTML tags.
 class EscapeHtml(Extension):
   def extendMarkdown(self, md, md_globals):
-    del md.preprocessors['html_block']
-    del md.inlinePatterns['html']
+    md.preprocessors.deregister('html_block')
+    md.inlinePatterns.deregister('html')
 
 class RoffWalker(object):
   def __init__(self, tree, output=sys.stdout):
@@ -187,7 +187,7 @@ class RoffWalker(object):
 
 def load_yml_file(fn):
   with open(fn) as f:
-    return yaml.load(f)
+    return yaml.load(f, Loader=yaml.BaseLoader)
 
 def dedent_body(body):
   lines = [re.sub(r'^  (\S)', r'\1', l) for l in body.split('\n')]

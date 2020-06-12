@@ -16,7 +16,7 @@ env = Environment(
 
 def load_yml_file(fn):
   with open(fn) as f:
-    return yaml.load(f)
+    return yaml.load(f, Loader=yaml.BaseLoader)
 
 env.filters['search_id'] = lambda input: input.replace(r'`', '')
 env.filters['section_id'] = lambda input: re.sub(r"[^a-zA-Z0-9_]", '', input)
