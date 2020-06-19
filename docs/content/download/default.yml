@@ -100,7 +100,7 @@ body:
 
       ### Windows
 
-       * Use [Chocolatey NuGet](https://chocolatey.org/) to install jq 1.5 with
+       * Use [Chocolatey NuGet](https://chocolatey.org/) to install jq 1.6 with
          `chocolatey install jq`.
 
        * jq 1.6 executables for
