@@ -28,6 +28,9 @@ void *alloca (size_t);
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
+#ifdef __APPLE__
+#define _REENTRANT
+#endif
 #include <math.h>
 #ifdef HAVE_LIBONIG
 #include <oniguruma.h>

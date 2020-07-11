@@ -74,7 +74,7 @@ cd "${builddir}/"
      HOST="${arch}-apple-darwin"
      [[ "${arch}" = "arm64" ]] && HOST="aarch64-apple-darwin"
 
-     CFLAGS="-arch ${arch} -miphoneos-version-min=9.0 -isysroot ${SYSROOT} ${CFLAGS_} -D_REENTRANT"
+     CFLAGS="-arch ${arch} -miphoneos-version-min=9.0 -isysroot ${SYSROOT} ${CFLAGS_}"
      LDFLAGS="-arch ${arch} -miphoneos-version-min=9.0 -isysroot ${SYSROOT} ${LDFLAGS_}"
      CC="${CC_} ${CFLAGS}"
 
