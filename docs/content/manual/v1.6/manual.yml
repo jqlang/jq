@@ -292,36 +292,11 @@ sections:
           program can be a useful way of formatting JSON output from,
           say, `curl`.
 
-          An important point about the identity filter is that it 
-          guarantees to preserve the literal decimal representation 
-          of values. This is particularly important when dealing with numbers 
-          which can't be losslessly converted to an IEEE754 double precision 
-          representation.
-
-          jq doesn't truncate the literal numbers to double unless there
-          is a need to make arithmetic operations with the number.
-          Comparisons are carried out over the untruncated big decimal 
-          representation of the number.
-
-          jq will also try to maintain the original decimal precision of the provided
-          number literal. See below for examples. 
-
         examples:
           - program: '.'
             input: '"Hello, world!"'
             output: ['"Hello, world!"']
 
-          - program: '. | tojson'
-            input: '12345678909876543212345'
-            output: ['"12345678909876543212345"']
-
-          - program: 'map([., . == 1]) | tojson'
-            input: '[1, 1.000, 1.0, 100e-2]'
-            output: ['"[[1,true],[1.000,true],[1.0,true],[1.00,true]]"']
-
-          - program: '. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000)'
-            input: '10000000000000000000000000000001'
-            output: ['[true, false]']
 
       - title: "Object Identifier-Index: `.foo`, `.foo.bar`"
         body: |
@@ -538,16 +513,6 @@ sections:
       expression that takes an input, ignores it, and returns 42
       instead.
 
-      Numbers in jq are internally represented by their IEEE754 double 
-      precision approximation. Any arithmetic operation with numbers, 
-      whether they are literals or results of previous filters, will 
-      produce a double precision floating point result.
-
-      However, when parsing a literal jq will store the original literal
-      string. If no mutation is applied to this value then it will make
-      to the output in its original form, even if conversion to double 
-      would result in a loss. 
-
     entries:
       - title: "Array construction: `[]`"
         body: |
@@ -665,18 +630,6 @@ sections:
       etc.). However, jq never does implicit type conversions. If you
       try to add a string to an object you'll get an error message and
       no result.
-
-      Please note that all numbers are converted to IEEE754 double precision 
-      floating point representation. Arithmetic and logical operators are working
-      with these converted doubles. Results of all such operations are also limited 
-      to the double precision. 
-
-      The only exception to this behaviour of number is a snapshot of original number 
-      literal. When a number which originally was provided as a literal is never
-      mutated until the end of the program then it is printed to the output in its 
-      original literal form. This also includes cases when the original literal 
-      would be truncated when converted to the IEEE754 double precision floating point
-      number.
 
     entries:
       - title: "Addition: `+`"
