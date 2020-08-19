@@ -22,6 +22,7 @@ AC_EXEEXT
 LT_INIT([shared static win32-dll])
 AM_PROG_CC_C_O
 
+AC_SYS_LARGEFILE # issue 2167
 
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
 dnl AC_PROG_YACC macros...
