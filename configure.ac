@@ -5,6 +5,7 @@ m4_define([jq_version],
 
 AC_INIT([jq], [jq_version], [https://github.com/stedolan/jq/issues],
              [jq], [https://stedolan.github.io/jq])
+AC_CONFIG_SRCDIR([src/jv_alloc.c])
 
 m4_include([m4/ax_compare_version.m4])
 m4_include([m4/ax_prog_bison_version.m4])

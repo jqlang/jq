@@ -2,13 +2,13 @@
 
 . "${0%/*}/setup" "$@"
 
-PATH=$JQBASEDIR:$PATH $JQBASEDIR/tests/jq-f-test.sh > /dev/null
+PATH=$JQBUILDDIR:$PATH $JQTESTDIR/jq-f-test.sh > /dev/null
 
-if [ -f "$JQBASEDIR/.libs/libinject_errors.so" ]; then
+if [ -f "$JQBUILDDIR/.libs/libinject_errors.so" ]; then
   # Do some simple error injection tests to check that we're handling
   # I/O errors correctly.
   (
-  libinject=$JQBASEDIR/.libs/libinject_errors.so
+  libinject=$JQBUILDDIR/.libs/libinject_errors.so
   cd $d
   LD_PRELOAD=$libinject $JQ . /dev/null
   touch fail_read
@@ -200,6 +200,7 @@ fi
 ## Fuzz parser
 
 ## XXX With a $(urandom) builtin we could move this test into tests/all.test
+_clean=$clean
 clean=false
 if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
     # Have a /dev/urandom, good
@@ -212,7 +213,7 @@ if dd if=/dev/urandom bs=16 count=1024 > $d/rand 2>/dev/null; then
     $VALGRIND $Q $JQ --seq . $d/rand >/dev/null 2>&1
     $VALGRIND $Q $JQ --seq --stream . $d/rand >/dev/null 2>&1
 fi
-clean=true
+clean=$_clean
 
 ## Test library/module system
 
@@ -233,13 +234,13 @@ if ! HOME="$mods/home2" $VALGRIND $Q $JQ -n 'include "g"; empty'; then
     exit 1
 fi
 
-cd "$JQBASEDIR" # so that relative library paths are guaranteed correct
+cd "$JQTESTDIR"/.. # so that relative library paths are guaranteed correct
 if ! $VALGRIND $Q $JQ -L ./tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
     echo "Issue #817 regression?" 1>&2
     exit 1
 fi
 
-cd "$JQBASEDIR"
+cd "$JQTESTDIR"/..
 if ! $VALGRIND $Q $JQ -L tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
     echo "Issue #817 regression?" 1>&2
     exit 1
@@ -279,6 +280,7 @@ if [ "$($VALGRIND $Q $JQ -n '"xyz\n"|halt_error(1)' 2>&1)" != "jq: error: xyz" ]
 fi
 
 # Check $JQ_COLORS
+unset -v JQ_COLORS || true
 $JQ -Ccn . > $d/color
 printf '\033[1;30mnull\033[0m\n' > $d/expect
 cmp $d/color $d/expect

@@ -1,3 +1,4 @@
+## Process this file with automake to produce Makefile.in.
 
 ### C source files to be built and distributed.
 
@@ -131,7 +132,16 @@ endif
 ### Tests (make check)
 
 TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
-TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
+AM_TESTS_ENVIRONMENT = \
+builddir=$(builddir); export builddir; \
+abs_builddir=$(abs_builddir); export abs_builddir; \
+top_builddir=$(top_builddir); export top_builddir; \
+top_build_prefix=$(top_build_prefix); export top_build_prefix; \
+abs_top_builddir=$(abs_top_builddir); export abs_top_builddir; \
+abs_srcdir=$(abs_srcdir); export abs_srcdir; \
+top_srcdir=$(top_srcdir); export top_srcdir; \
+abs_top_srcdir=$(abs_top_srcdir); export abs_top_srcdir; \
+NO_VALGRIND=$(NO_VALGRIND); export NO_VALGRIND;
 
 # This is a magic make variable that causes it to treat tests/man.test as a
 # DATA-type dependency for the check target. As a result, it will attempt to
