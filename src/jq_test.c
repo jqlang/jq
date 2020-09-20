@@ -42,12 +42,13 @@ static int skipline(const char* buf) {
   return 0;
 }
 
-static int checkerrormsg(const char* buf) {
-  return strcmp(buf, "%%FAIL\n") == 0;
+static int checkerrormsg(const char* buf, size_t buf_length) {
+  return strncmp(buf, "%%FAIL\n", buf_length) == 0;
 }
 
-static int checkfail(const char* buf) {
-  return strcmp(buf, "%%FAIL\n") == 0 || strcmp(buf, "%%FAIL IGNORE MSG\n") == 0;
+static int checkfail(const char* buf, size_t buf_length) {
+  return strncmp(buf, "%%FAIL\n", buf_length) == 0
+    || strncmp(buf, "%%FAIL IGNORE MSG\n", buf_length) == 0;
 }
 
 struct err_data {
@@ -67,7 +68,9 @@ static void test_err_cb(void *data, jv e) {
 
 static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int take) {
   char prog[4096];
+  size_t prog_length = 0;
   char buf[4096];
+  size_t buf_length = 0;
   struct err_data err_msg;
   int tests = 0, passed = 0, invalid = 0;
   unsigned int lineno = 0;
@@ -86,15 +89,16 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
 
   while (1) {
     if (!fgets(prog, sizeof(prog), testdata)) break;
+    prog_length = strlen(prog);
     lineno++;
     if (skipline(prog)) continue;
-    if (checkfail(prog)) {
+    if (checkfail(prog, prog_length)) {
       must_fail = 1;
-      check_msg = checkerrormsg(prog);
+      check_msg = checkerrormsg(prog, sizeof(prog));
       jq_set_error_cb(jq, test_err_cb, &err_msg);
       continue;
     }
-    if (prog[strlen(prog)-1] == '\n') prog[strlen(prog)-1] = 0;
+    if (prog[prog_length-1] == '\n') prog[--prog_length] = 0;
 
     if (skip > 0) {
       skip--;
@@ -131,8 +135,9 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
     if (must_fail) {
       jq_set_error_cb(jq, NULL, NULL);
       if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
+      buf_length = strlen(buf);
       lineno++;
-      if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = 0;
+      if (buf[buf_length-1] == '\n') buf[--buf_length] = 0;
       if (compiled) {
         printf("*** Test program compiled that should not have at line %u: %s\n", lineno, prog);
         must_fail = 0;
@@ -140,7 +145,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
         invalid++;
         continue;
       }
-      if (check_msg && strcmp(buf, err_msg.buf) != 0) {
+      if (check_msg && strncmp(buf, err_msg.buf, buf_length) != 0) {
         printf("*** Erroneous test program failed with wrong message (%s) at line %u: %s\n", err_msg.buf, lineno, prog);
         invalid++;
       } else {
@@ -377,7 +382,7 @@ static void jv_test() {
     big[sizeof(big)-1] = 0;
     jv str = jv_string_fmt("%s", big);
     assert(jv_string_length_bytes(jv_copy(str)) == sizeof(big) - 1);
-    assert(!strcmp(big, jv_string_value(str)));
+    assert(!strncmp(big, jv_string_value(str), sizeof(big)));
     jv_free(str);
   }
 
