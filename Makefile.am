@@ -13,7 +13,7 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
         src/decNumber/decContext.c src/decNumber/decNumber.c            \
         src/jv_dtoa_tsd.c                                               \
-        ${LIBJQ_INCS}
+        $(LIBJQ_INCS)
 
 ### C build options
 
@@ -52,7 +52,7 @@ AM_YFLAGS = --warnings=all -d
 ### libjq
 
 lib_LTLIBRARIES = libjq.la
-libjq_la_SOURCES = ${LIBJQ_SRC}
+libjq_la_SOURCES = $(LIBJQ_SRC)
 libjq_la_LIBADD = -lm
 libjq_la_LDFLAGS = $(onig_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
@@ -148,7 +148,7 @@ check_DATA = tests/man.test
 # don't care. But if you are, then you need to run the tests anyway.
 tests/man.test: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_mantests.py ) > $@
+	$(AM_V_GEN) ( cd $(abs_srcdir)/docs; $(PIPENV) run python build_mantests.py ) > $@
 else
 	@echo Changes to the manual.yml require docs to be enabled to run the tests
 	@false
@@ -162,7 +162,7 @@ endif
 man_MANS = jq.1
 jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_manpage.py ) > $@ || { rm -f $@; false; }
+	$(AM_V_GEN) ( cd $(abs_srcdir)/docs; $(PIPENV) run python build_manpage.py ) > $@ || { rm -f $@; false; }
 else
 	@echo Changes to the manual.yml require docs to be enabled to generate an updated manpage
 	@echo As a result, your manpage is out of date.
@@ -217,7 +217,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
 
 # README.md is expected in Github projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
-docdir = ${datadir}/doc/${PACKAGE}
+docdir = $(datadir)/doc/$(PACKAGE)
 dist_doc_DATA = README.md COPYING AUTHORS README
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -228,12 +228,12 @@ rpm: dist jq.spec
 	@echo "Packaging jq as an RPM ..."
 	mkdir -p rpm/SOURCES rpm/BUILD rpm/BUILDROOT rpm/RPMS rpm/SPECS
 	cp jq-$(VERSION).tar.gz rpm/SOURCES/
-	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "myver $(VERSION)" --define "myrel ${RELEASE}" rpm/SOURCES/jq-$(VERSION).tar.gz
+	rpmbuild -tb --define "_topdir $(PWD)/rpm" --define "_prefix /usr" --define "myver $(VERSION)" --define "myrel $(RELEASE)" rpm/SOURCES/jq-$(VERSION).tar.gz
 	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
 
 dist-clean-local:
-	rm -f ${BUILT_SOURCES}
+	rm -f $(BUILT_SOURCES)
 
 # Not sure why this doesn't get cleaned up automatically, guess
 # automake used to man pages which are hand coded?
