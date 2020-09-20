@@ -17,6 +17,13 @@ static void tsd_dtoa_ctx_dtor(struct dtoa_context *ctx) {
   }
 }
 
+// Direct tsd_dtoa_ctx_dtor use by pthread_key_create is
+// -Wincompatible-function-pointer-types.
+__attribute__((always_inline))
+inline static void tsd_dtoa_ctx_dtor_pthread(void *ptr) {
+  return tsd_dtoa_ctx_dtor((struct dtoa_context *)ptr);
+}
+
 static void tsd_dtoa_ctx_fini() {
   struct dtoa_context *ctx = pthread_getspecific(dtoa_ctx_key);
   tsd_dtoa_ctx_dtor(ctx);
@@ -24,7 +31,7 @@ static void tsd_dtoa_ctx_fini() {
 }
 
 static void tsd_dtoa_ctx_init() {
-  if (pthread_key_create(&dtoa_ctx_key, tsd_dtoa_ctx_dtor) != 0) {
+  if (pthread_key_create(&dtoa_ctx_key, &tsd_dtoa_ctx_dtor_pthread) != 0) {
     fprintf(stderr, "error: cannot create thread specific key");
     abort();
   }
