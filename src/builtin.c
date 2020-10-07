@@ -191,7 +191,7 @@ static jv f_modf(jq_state *jq, jv input) {
   return jv_array_append(ret, jv_number(i));
 }
 #endif
-#ifdef HAVE_LGAMMA_R
+#if defined(HAVE_LGAMMA_R) && !(defined(__APPLE__) && defined(__GNUC__) && !defined(_REENTRANT))
 static jv f_lgamma_r(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_NUMBER) {
     return type_error(input, "number required");
@@ -1641,7 +1641,7 @@ static const struct cfunction function_list[] = {
 #ifdef HAVE_MODF
   {(cfunction_ptr)f_modf,"modf", 1},
 #endif
-#ifdef HAVE_LGAMMA_R
+#if defined(HAVE_LGAMMA_R) && !(defined(__APPLE__) && defined(__GNUC__) && !defined(_REENTRANT))
   {(cfunction_ptr)f_lgamma_r,"lgamma_r", 1},
 #endif
   {(cfunction_ptr)f_plus, "_plus", 3},
