@@ -176,6 +176,10 @@ LIBM_DD_NO(erfc)
 #endif
 #if defined(HAVE_EXP10) && !defined(WIN32)
 LIBM_DD(exp10)
+#elif defined(HAVE___EXP10)
+#define exp10 __exp10
+LIBM_DD(exp10)
+#undef exp10
 #else
 LIBM_DD_NO(exp10)
 #endif
