@@ -1239,7 +1239,8 @@ static jv tm2jv(struct tm *tm) {
                   jv_number(tm->tm_min),
                   jv_number(tm->tm_sec),
                   jv_number(tm->tm_wday),
-                  jv_number(tm->tm_yday));
+                  jv_number(tm->tm_yday),
+                  jv_number(tm->tm_isdst));
 }
 
 #if defined(WIN32) && !defined(HAVE_SETENV)
@@ -1460,11 +1461,8 @@ static int jv2tm(jv a, struct tm *tm) {
   TO_TM_FIELD(tm->tm_sec,  a, 5);
   TO_TM_FIELD(tm->tm_wday, a, 6);
   TO_TM_FIELD(tm->tm_yday, a, 7);
+  TO_TM_FIELD(tm->tm_isdst, a, 8);
   jv_free(a);
-
-  // We use UTC everywhere (gettimeofday, gmtime) and UTC does not do DST.
-  // Setting tm_isdst to 0 is done by the memset.
-  // tm->tm_isdst = 0;
 
   // The standard permits the tm structure to contain additional members. We
   // hope it is okay to initialize them to zero, because the standard does not

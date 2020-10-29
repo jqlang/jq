@@ -1440,7 +1440,7 @@ bsearch(0,2,4)
 # strptime tests are in optional.test
 
 strftime("%Y-%m-%dT%H:%M:%SZ")
-[2015,2,5,23,51,47,4,63]
+[2015,2,5,23,51,47,4,63,0]
 "2015-03-05T23:51:47Z"
 
 strftime("%A, %B %d, %Y")
@@ -1449,7 +1449,7 @@ strftime("%A, %B %d, %Y")
 
 gmtime
 1425599507
-[2015,2,5,23,51,47,4,63]
+[2015,2,5,23,51,47,4,63,0]
 
 # module system
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
