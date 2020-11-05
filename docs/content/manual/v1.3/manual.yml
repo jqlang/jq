@@ -371,7 +371,7 @@ sections:
   - title: Builtin operators and functions
     body: |
 
-      Some jq operator (for instance, `+`) do different things
+      Some jq operators (for instance, `+`) do different things
       depending on the type of their arguments (arrays, numbers,
       etc.). However, jq never does implicit type conversions. If you
       try to add a string to an object you'll get an error message and
