@@ -34,6 +34,14 @@ body:
          [Arch](https://www.archlinux.org/packages/?sort=&q=jq&maintainer=&flagged=)
          repository.  Install using `sudo pacman -S jq`.
 
+       * jq 1.6 is in the official
+         [Nix](https://search.nixos.org/packages?query=jq)
+         repository.  Install using `nix-env -i jq`.
+
+       * jq 1.6 is in the official
+         [Guix](http://guix.gnu.org/en/packages/jq-1.6/)
+         repository.  Install using `guix install jq`.
+
        * jq 1.6 binaries for
          [64-bit](https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64)
          or
