@@ -2899,7 +2899,16 @@ sections:
       - title: "`inputs`"
         body: |
 
-          Outputs all remaining inputs, one by one.
+          Outputs all remaining inputs, one by one. For example:
+          
+          ```sh
+          $ echo 1 2 3 | jq '[., inputs]'
+          [
+            1,
+            2,
+            3
+          ]
+          ```
 
           This is primarily useful for reductions over a program's
           inputs.
