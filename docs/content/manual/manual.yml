@@ -137,9 +137,14 @@ sections:
 
       * `--null-input`/`-n`:
 
-        Don't read any input at all! Instead, the filter is run once
-        using `null` as the input. This is useful when using jq as a
-        simple calculator or to construct JSON data from scratch.
+        Execute the filter exactly once using `null` as the input
+        instead of automatically reading every input and passing it
+        through the filter. The inputs are still available to be
+        read manually using the `input` and `inputs` builtins.
+        
+        This is useful when using jq as a simple calculator, to
+        construct JSON data from scratch or to do recuctions over
+        the inputs (see `inputs`).
 
       * `--compact-output` / `-c`:
 
@@ -2899,15 +2904,13 @@ sections:
       - title: "`inputs`"
         body: |
 
-          Outputs all remaining inputs, one by one. For example:
+          Outputs all remaining inputs, one by one.
+          
+          This is usually used in conjunction with the `-n` flag For example:
           
           ```sh
-          $ echo 1 2 3 | jq '[., inputs]'
-          [
-            1,
-            2,
-            3
-          ]
+          $ echo 1 2 3 | jq -n 'reduce inputs as $i (0; . + $i)'
+          6
           ```
 
           This is primarily useful for reductions over a program's
