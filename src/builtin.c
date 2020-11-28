@@ -106,6 +106,36 @@ static jv f_plus(jq_state *jq, jv input, jv a, jv b) {
   }
 }
 
+#ifdef __APPLE__
+// macOS has a bunch of libm deprecation warnings, so let's clean those up
+#ifdef HAVE_TGAMMA
+#define gamma tgamma
+#endif
+#ifdef HAVE___EXP10
+#define exp10 __exp10
+#endif
+#ifdef HAVE_REMAINDER
+#define drem remainder
+#endif
+
+// We replace significand with our own, since there's not a rename-replacement
+#ifdef HAVE_FREXP
+#define HAVE_CUSTOM_SIGNIFICAND
+static double __jq_significand(double x) {
+  int z;
+  return 2*frexp(x, &z);
+}
+#define significand __jq_significand
+#elif defined(HAVE_SCALBN) && defined(HAVE_ILOGB)
+#define HAVE_CUSTOM_SIGNIFICAND
+static double __jq_significand(double x) {
+  return scalbn(x, -ilogb(x));
+}
+#define significand __jq_significand
+#endif
+
+#endif // ifdef __APPLE__
+
 #define LIBM_DD(name) \
 static jv f_ ## name(jq_state *jq, jv input) { \
   if (jv_get_kind(input) != JV_KIND_NUMBER) { \
@@ -167,6 +197,14 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
 #undef LIBM_DDDD
 #undef LIBM_DDD
 #undef LIBM_DD
+
+#ifdef __APPLE__ // Clean up after ourselves
+#undef HAVE_CUSTOM_SIGNIFICAND
+#undef gamma
+#undef drem
+#undef significand
+#undef exp10
+#endif
 
 #ifdef HAVE_FREXP
 static jv f_frexp(jq_state *jq, jv input) {

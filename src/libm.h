@@ -174,7 +174,7 @@ LIBM_DD(erfc)
 #else
 LIBM_DD_NO(erfc)
 #endif
-#if defined(HAVE_EXP10) && !defined(WIN32)
+#if (defined(HAVE_EXP10) && !defined(WIN32)) || (defined(__APPLE__) && defined(HAVE___EXP10))
 LIBM_DD(exp10)
 #else
 LIBM_DD_NO(exp10)
@@ -214,7 +214,7 @@ LIBM_DDD(fmod)
 #else
 LIBM_DDD_NO(fmod)
 #endif
-#ifdef HAVE_GAMMA
+#if defined(HAVE_GAMMA)
 LIBM_DD(gamma)
 #else
 LIBM_DD_NO(gamma)
@@ -274,7 +274,7 @@ LIBM_DDD(scalbln)
 #else
 LIBM_DDD_NO(scalbln)
 #endif
-#if defined(HAVE_SIGNIFICAND) && !defined(WIN32)
+#if defined(HAVE_CUSTOM_SIGNIFICAND) || (defined(HAVE_SIGNIFICAND) && !defined(WIN32))
 LIBM_DD(significand)
 #else
 LIBM_DD_NO(significand)

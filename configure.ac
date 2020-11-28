@@ -174,6 +174,7 @@ AC_CHECK_MATH_FUNC(drem)
 AC_CHECK_MATH_FUNC(erf)
 AC_CHECK_MATH_FUNC(erfc)
 AC_CHECK_MATH_FUNC(exp10)
+AC_CHECK_MATH_FUNC(__exp10) dnl macOS has an __exp10
 AC_CHECK_MATH_FUNC(exp2)
 AC_CHECK_MATH_FUNC(exp)
 AC_CHECK_MATH_FUNC(expm1)
@@ -210,6 +211,10 @@ AC_CHECK_MATH_FUNC(round)
 AC_CHECK_MATH_FUNC(scalb)
 AC_CHECK_MATH_FUNC(scalbln)
 AC_CHECK_MATH_FUNC(significand)
+dnl scalbn and ilogb are used on macos to replace significand if we don't have frexp
+AC_CHECK_MATH_FUNC(scalbn)
+AC_CHECK_MATH_FUNC(ilogb)
+
 AC_CHECK_MATH_FUNC(sin)
 AC_CHECK_MATH_FUNC(sinh)
 AC_CHECK_MATH_FUNC(sqrt)
