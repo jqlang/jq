@@ -2280,7 +2280,7 @@ sections:
 
       To match whitespace in an x pattern use an escape such as \s, e.g.
 
-      * test( "a\\sb", "x" ).
+      * test( "a\\\\sb"; "x" )
 
       Note that certain flags may also be specified within REGEX, e.g.
 
