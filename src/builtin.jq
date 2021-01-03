@@ -198,7 +198,7 @@ def repeat(exp):
 def repeat(exp ; reps):
     limit(reps ; repeat(exp))
 def repeated(exp ; reps):
-    repeat(exp ; reps) | add
+    [repeat(exp ; reps)] | add
 def inputs: try repeat(input) catch if .=="break" then empty else error end;
 # like ruby's downcase - only characters A to Z are affected
 def ascii_downcase:
