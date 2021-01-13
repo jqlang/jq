@@ -529,6 +529,36 @@ static jv escape_string(jv input, const char* escapings) {
 
 }
 
+static jv shell_format(jv input) {
+  switch (jv_get_kind(input)) {
+  case JV_KIND_NULL:
+  case JV_KIND_TRUE:
+  case JV_KIND_FALSE:
+  case JV_KIND_NUMBER:
+    return jv_dump_string(input, 0);
+
+  case JV_KIND_STRING: {
+    jv escaped = jv_string("'");
+    escaped = jv_string_concat(escaped, escape_string(input, "''\\''\0"));
+    return jv_string_append_str(escaped, "'");
+  }
+
+  default:
+    return type_error(input, "can not be escaped for shell");
+  }
+}
+
+static void shell_line_format(jv *line, jv input) {
+  jv str = shell_format(input);
+
+  if (jv_is_valid(str)) {
+    *line = jv_string_concat(*line, str);
+  } else {
+    jv_free(*line);
+    *line = str;
+  }
+}
+
 static jv f_format(jq_state *jq, jv input, jv fmt) {
   if (jv_get_kind(fmt) != JV_KIND_STRING) {
     jv_free(input);
@@ -619,33 +649,35 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     return line;
   } else if (!strcmp(fmt_s, "sh")) {
     jv_free(fmt);
-    if (jv_get_kind(input) != JV_KIND_ARRAY)
-      input = jv_array_set(jv_array(), 0, input);
     jv line = jv_string("");
-    jv_array_foreach(input, i, x) {
-      if (i) line = jv_string_append_str(line, " ");
-      switch (jv_get_kind(x)) {
-      case JV_KIND_NULL:
-      case JV_KIND_TRUE:
-      case JV_KIND_FALSE:
-      case JV_KIND_NUMBER:
-        line = jv_string_concat(line, jv_dump_string(x, 0));
-        break;
-
-      case JV_KIND_STRING: {
-        line = jv_string_append_str(line, "'");
-        line = jv_string_concat(line, escape_string(x, "''\\''\0"));
-        line = jv_string_append_str(line, "'");
-        break;
+    jv_kind input_kind = jv_get_kind(input);
+    if (input_kind == JV_KIND_ARRAY) {
+      jv_array_foreach(input, i, x) {
+	if (i) line = jv_string_append_str(line, " ");
+	shell_line_format(&line, x);
+	if (!jv_is_valid(line)) {
+	  break;
+	}
       }
-
-      default:
-        jv_free(input);
-        jv_free(line);
-        return type_error(x, "can not be escaped for shell");
+    } else if (input_kind == JV_KIND_OBJECT) {
+      jv_object_foreach(input, key, x) {
+	if (jv_string_length_bytes(jv_copy(line)) > 0) {
+	    line = jv_string_append_str(line, " ");
+	}
+	line = jv_string_append_str(line, "[");
+	line = jv_string_concat(line, key);
+	line = jv_string_append_str(line, "]=");
+	shell_line_format(&line, x);
+	if (!jv_is_valid(line)) {
+	  break;
+	}
       }
+    } else {
+      shell_line_format(&line, input);
     }
-    jv_free(input);
+    if (jv_is_valid(line)) {
+      jv_free(input);
+    }
     return line;
   } else if (!strcmp(fmt_s, "base64")) {
     jv_free(fmt);
