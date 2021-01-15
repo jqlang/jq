@@ -14,8 +14,8 @@ def _assign(paths; $value): reduce path(paths) as $p (.; setpath($p; $value));
 def _modify(paths; update): reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]));
 def map_values(f): .[] |= f;
 
-def base($a): [while(. > 0; (. / $a) | floor) % $a] | reverse;
-def unbase($a): reduce .[] as $i (0; . * $a + $i);
+def tobase($a): [while(. > 0; (. / $a) | floor) % $a];
+def frombase($a): reduce (.[] | reverse) as $i (0; . * $a + $i);
 
 # recurse
 def recurse(f): def r: ., (f | r); r;
