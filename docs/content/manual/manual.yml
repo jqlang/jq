@@ -2406,7 +2406,21 @@ sections:
           - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
             input: '"Abcabc"'
             output: '"+A-+a-"'
-
+      - title: "`tobase(base)`, `frombase(base)`"
+        body: |
+        
+          `tobase(base)` inputs an integer, and then converts the integer
+          to the specified base. The digits are returned in reverse.
+          
+          `frombase(base)` inputs an array, and then converts the array
+          from the specified base. The digits are expected to be in reverse.
+        example:
+          - program: 'tobase(2)'
+            input:   '14'
+            output:  [0, 1, 1, 1]
+          - program: '[0, 1, 1, 1] | frombase(2)'
+            input:   ''
+            output:  '14'
 
   - title: Advanced features
     body: |
