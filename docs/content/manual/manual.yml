@@ -2065,7 +2065,7 @@ sections:
           means that you'll sometimes have to be more explicit about
           the condition you want.  You can't test whether, e.g. a
           string is empty using `if .name then A else B end`, you'll
-          need something more like `if .name then A else B end` instead.
+          need something more like `if .name == "" then A else B end` instead.
 
           If the condition `A` produces multiple results, then `B` is evaluated
           once for each result that is not false or null, and `C` is evaluated
