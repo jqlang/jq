@@ -13,6 +13,50 @@ def del(f): delpaths([path(f)]);
 def _assign(paths; $value): reduce path(paths) as $p (.; setpath($p; $value));
 def _modify(paths; update): reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]));
 def map_values(f): .[] |= f;
+def _add_identifier(idName; idType):
+    if (type != "array" or (length > 0 and (.[0] | type != "object") )) then
+        error("_add_identifier/0 expected an array of objects")
+    else
+        reduce .[] as $entry (
+            [[], 0];
+            if ($entry | type != "object") then 
+                .
+            else
+                . as [$items, $count] |
+                [
+                    $items+[( $entry | .[idName]|=(
+                        if (idType == "uuid") then 
+                            getuuid
+                        else
+                            $count
+                        end
+                    ))],
+                    $count + 1
+                ]
+            end
+        ) | .[0]
+    end
+;
+def add_uuids(idName):
+    if (type != "array" or (length > 0 and (.[0] | type != "object") )) then
+        error("add_uuids/0 expected an array of objects")
+    else
+        _add_identifier(idName; "uuid")
+    end
+;
+def add_uuids:
+    add_uuids("uuid")
+;
+def add_ids(idName):
+    if (type != "array" or (length > 0 and (.[0] | type != "object") )) then
+        error("add_ids/0 expected an array of objects")
+    else
+        _add_identifier(idName; "id")
+    end
+;
+def add_ids:
+    add_ids("id")
+;
 
 # recurse
 def recurse(f): def r: ., (f | r); r;

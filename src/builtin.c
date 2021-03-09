@@ -1607,6 +1607,35 @@ static jv f_now(jq_state *jq, jv a) {
 }
 #endif
 
+static jv f_getuuid(jq_state *jq, jv a) {
+  jv_free(a);
+
+  FILE *fp;
+  unsigned char *uuid_binary_value = malloc(37);
+  char *uuid_value = malloc(37);
+  char *temp = malloc(37);
+
+  fp = fopen("/dev/urandom", "rb");
+  fread(uuid_binary_value, 1, 36, fp);
+  fclose(fp);
+
+  for (int i = 0; i < 16; ++i){
+      sprintf(temp+i*2, "%02X", uuid_binary_value[i]);
+  }
+  sprintf(
+      uuid_value, 
+      "%.8s-%.4s-%.4s-%.4s-%s", 
+      temp, 
+      temp+8, 
+      temp+12, 
+      temp+16, 
+      temp+20
+  );
+
+  return jv_string(uuid_value);
+}
+
+
 static jv f_current_filename(jq_state *jq, jv a) {
   jv_free(a);
 
@@ -1712,6 +1741,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_now, "now", 1},
   {(cfunction_ptr)f_current_filename, "input_filename", 1},
   {(cfunction_ptr)f_current_line, "input_line_number", 1},
+  {(cfunction_ptr)f_getuuid, "getuuid", 1},
 };
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
