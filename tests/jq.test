@@ -1664,7 +1664,7 @@ null
 false
 
 ## Test ability to use keywords (uncomment after eval is pushed)
-#(.[] as $kw | "\"{\($kw)} as $\($kw) | $\($kw) | {$\($kw)} | {\($kw):.\($kw)}\""|eval|empty),null
+#(.[] as $kw | "\"{\($kw)} as $\($kw) | $\($kw) | {$\($kw)} | {\($kw):.\($kw)} | {\($kw) | .}\""|eval|empty),null
 #["as","def","module","import","include","if","then","else","elif","end","reduce","foreach","and","or","try","catch","label","break","__loc__"]
 #null
 #
