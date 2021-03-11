@@ -140,11 +140,11 @@ sections:
         Execute the filter exactly once using `null` as the input
         instead of automatically reading every input and passing it
         through the filter. The inputs are still available to be
-        read manually using the `input` and `inputs` builtins.
+        read programmatically using the `input` and `inputs` builtins.
         
-        This is useful when using jq as a simple calculator, to
-        construct JSON data from scratch or to do recuctions over
-        the inputs (see `inputs`).
+        This option is useful, for example, when using jq as a simple
+        calculator, to construct JSON data from scratch or
+        to do reductions over the inputs (see `inputs`).
 
       * `--compact-output` / `-c`:
 
