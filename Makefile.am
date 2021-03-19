@@ -1,24 +1,30 @@
 
+# PYTHON3_CFLAGS = -DNDEBUG -fdebug-prefix-map=/build/python3.7-3.7.3=. -fstack-protector -fwrapv -g -I/usr/include/python3.7m -I/usr/include/x86_64-linux-gnu/python3.7m -O3 -specs=/usr/share/dpkg/no-pie-compile.specs -Wall -Werror=format-security -Wformat -Wno-unused-result -Wsign-compare
+
+# PYTHON3_LDFLAGS = -L/usr/lib -L/usr/lib/python3.7/config-3.7m-x86_64-linux-gnu -lcrypt -ldl -lm -lpthread -lpython3.7m -lutil -Wl,-Bsymbolic-functions -Wl,-O1 -Xlinker 
+
 ### C source files to be built and distributed.
 
 LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
-        src/util.h
+        src/util.h src/uuid.h
 
 LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
         src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
         src/decNumber/decContext.c src/decNumber/decNumber.c            \
-        src/jv_dtoa_tsd.c                                               \
+        src/jv_dtoa_tsd.c src/uuid.c                                    \
         ${LIBJQ_INCS}
 
 ### C build options
 
 AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers               \
-        -Wno-unused-parameter -Wno-unused-function
+        -Wno-unused-parameter -Wno-unused-function                      \
+        -Wno-cast-function-type -Wno-error=cast-function-type           \
+        -Wimplicit-fallthrough=0
 
 if WIN32
 AM_CFLAGS += -municode
@@ -119,6 +125,14 @@ bin_PROGRAMS = jq
 jq_SOURCES = src/main.c src/version.h
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
+
+
+# AM_CFLAGS += $(PYTHON3_CFLAGS)
+
+# # libinject_errors_la_LDFLAGS += $(PYTHON3_LDFLAGS)
+# # jq_LDADD += $(PYTHON3_LDFLAGS)
+# jq_LDFLAGS += $(PYTHON3_LDFLAGS)
+# # libjq_la_LDFLAGS += $(PYTHON3_LDFLAGS)
 
 if WIN32
 jq_LDADD += -lshlwapi

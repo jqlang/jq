@@ -34,6 +34,7 @@ void *alloca (size_t);
 #endif
 #include <string.h>
 #include <time.h>
+#include <uuid.h>
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -1610,31 +1611,11 @@ static jv f_now(jq_state *jq, jv a) {
 static jv f_getuuid(jq_state *jq, jv a) {
   jv_free(a);
 
-  FILE *fp;
-  unsigned char *uuid_binary_value = malloc(37);
-  char *uuid_value = malloc(37);
-  char *temp = malloc(37);
-
-  fp = fopen("/dev/urandom", "rb");
-  fread(uuid_binary_value, 1, 36, fp);
-  fclose(fp);
-
-  for (int i = 0; i < 16; ++i){
-      sprintf(temp+i*2, "%02X", uuid_binary_value[i]);
-  }
-  sprintf(
-      uuid_value, 
-      "%.8s-%.4s-%.4s-%.4s-%s", 
-      temp, 
-      temp+8, 
-      temp+12, 
-      temp+16, 
-      temp+20
-  );
-
-  return jv_string(uuid_value);
+  char* uuid_value = get_uuid();
+  jv ret = jv_string(uuid_value);
+  free(uuid_value);
+  return ret;
 }
-
 
 static jv f_current_filename(jq_state *jq, jv a) {
   jv_free(a);

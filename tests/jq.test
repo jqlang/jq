@@ -1716,3 +1716,11 @@ false
 . |= try . catch .
 1
 1
+
+getuuid | test("^[a-fA-F0-9-]{36}$")
+null
+true
+
+[range(10)] | map(getuuid) |  reduce .[] as $uuid( .; map( . != $uuid ) ) | all
+null
+true
