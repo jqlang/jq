@@ -130,7 +130,10 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
+TESTS = tests/optionaltest tests/jqtest tests/shtest tests/utf8test tests/base64test
+if WITH_ONIGURUMA
+TESTS += tests/mantest tests/onigtest
+endif
 TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
 # This is a magic make variable that causes it to treat tests/man.test as a
