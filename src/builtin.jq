@@ -21,8 +21,12 @@ def recurse: recurse(.[]?);
 def recurse_down: recurse;
 
 def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];
-def from_entries: map({(.key // .Key // .name // .Name): (if has("value") then .value else .Value end)}) | add | .//={};
-def with_entries(f): to_entries | map(f) | from_entries;
+def _from_entries_array: map(select(.key // .Key // .name // .Name >=0)) | map(if has("value") then .value elif has("Value") then .Value else empty end);
+def _from_entries_object: map({(.key // .Key // .name // .Name): (if has("value") then .value else .Value end)}) | add | .//={};
+def from_entries($type): if $type=="array" then _from_entries_array else _from_entries_object end;
+def from_entries: from_entries(if .[0].key|type=="number" then "array" else "object" end);
+def with_entries(f): type as $type | to_entries | map(f) | from_entries($type);
+
 def reverse: [.[length - 1 - range(0;length)]];
 def indices($i): if type == "array" and ($i|type) == "array" then .[$i]
   elif type == "array" then .[[$i]]
