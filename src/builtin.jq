@@ -53,10 +53,6 @@ def _flatten($x): reduce .[] as $i ([]; if $i | type == "array" and $x != 0 then
 def flatten($x): if $x < 0 then error("flatten depth must not be negative") else _flatten($x) end;
 def flatten: _flatten(-1);
 def range($x): range(0;$x);
-def fromdateiso8601: strptime("%Y-%m-%dT%H:%M:%SZ")|mktime;
-def todateiso8601: strftime("%Y-%m-%dT%H:%M:%SZ");
-def fromdate: fromdateiso8601;
-def todate: todateiso8601;
 def match(re; mode): _match_impl(re; mode; false)|.[];
 def match($val): ($val|type) as $vt | if $vt == "string" then match($val; null)
    elif $vt == "array" and ($val | length) > 1 then match($val[0]; $val[1])
@@ -78,6 +74,40 @@ def scan(re):
       then [ .captures | .[] | .string ]
       else .string
       end ;
+def fromdateiso8601:
+  capture
+      ( "^(?<year>[0-9]{4})"
+      + "-(?<month>[0-9]{2})"
+      + "-(?<day>[0-9]{2})"
+      + "T(?<hour>[0-9]{2})"
+      + ":(?<minute>[0-9]{2})"
+      + ":(?<second>[0-9]{2})"
+      + "(?<subseconds>\\.[0-9]+)?"   # Support optional subsecond precision
+      + "(Z|"                         # Support Zulu or offset
+      + "(?<offset_sign>[-+])"
+      + "(?<offset_hours>[0-9]{2})"
+      + ":?"
+      + "(?<offset_minutes>[0-9]{2})"
+      + ")$")
+
+      # Subseconds are optional, and so is the offset if Zulu time is specified
+      | .subseconds //= 0
+      | .offset_hours //= 0
+      | .offset_minutes //= 0
+      | .offset_sign //= "+"  # string math ftw
+
+      | .offset_sign += "1"  # string math ftw
+
+      | (.year, .month, .day, .hour, .minute, .second,
+         .subseconds, .offset_sign, .offset_hours, .offset_minutes) |= tonumber
+      | .offset = (.offset_hours * 3600 + .offset_minutes * 60)
+                 * .offset_sign * -1  # the Earth rotates eastward
+
+      | ([.year, .month - 1, .day, .hour, .minute, .second, 0, 0] | mktime)
+          + .offset + .subseconds;
+def todateiso8601: strftime("%Y-%m-%dT%H:%M:%SZ");
+def fromdate: fromdateiso8601;
+def todate: todateiso8601;
 #
 # If input is an array, then emit a stream of successive subarrays of length n (or less),
 # and similarly for strings.
