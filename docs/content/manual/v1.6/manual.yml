@@ -94,7 +94,7 @@ sections:
       the Powershell (`powershell.exe`) or the Powershell Core
       (`pwsh`/`pwsh.exe`), use single-quote characters around the jq
       program and backslash-escaped double-quotes (`\"`) inside the jq
-      prorgam.
+      program.
       
       Unix shells: `jq '.["foo"]'`
       Powershell: `jq '.[\"foo\"]'`
