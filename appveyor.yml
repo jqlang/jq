@@ -21,7 +21,7 @@ install:
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm --upgrade https://repo.msys2.org/msys/x86_64/zstd-1.4.7-1-x86_64.pkg.tar.xz"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm --upgrade https://repo.msys2.org/msys/x86_64/pacman-5.2.2-5-x86_64.pkg.tar.xz"
   - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Su"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Syuu"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex git"
   - C:\msys64\usr\bin\bash -lc "pip3 install --upgrade pipenv"
   - C:\msys64\usr\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER/docs && pipenv sync"
