@@ -16,12 +16,12 @@ install:
   - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
   - C:\msys64\usr\bin\bash -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
   - C:\msys64\usr\bin\bash -lc "pacman -U --noconfirm msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
-  - ps: Get-Process | Where-Object {$_.path -like 'C:\msys64*'} | Stop-Process
     # Update zstd and pacman https://github.com/msys2/MSYS2-packages/issues/2300
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm --upgrade https://repo.msys2.org/msys/x86_64/zstd-1.4.7-1-x86_64.pkg.tar.xz"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm --upgrade https://repo.msys2.org/msys/x86_64/pacman-5.2.2-5-x86_64.pkg.tar.xz"
   - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Syuu"
+  - ps: Get-Process | Where-Object {$_.path -like 'C:\msys64*'} | Stop-Process
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex git"
   - C:\msys64\usr\bin\bash -lc "pip3 install --upgrade pipenv"
   - C:\msys64\usr\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER/docs && pipenv sync"
