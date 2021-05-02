@@ -22,7 +22,7 @@ install:
   - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Syuu"
   - ps: Get-Process | Where-Object {$_.path -like 'C:\msys64*'} | Stop-Process
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex git"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy autoconf automake bison flex git"
   - C:\msys64\usr\bin\bash -lc "pip3 install --upgrade pipenv"
   - C:\msys64\usr\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER/docs && pipenv sync"
 
