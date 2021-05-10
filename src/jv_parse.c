@@ -504,14 +504,14 @@ static pfunc check_literal(struct jv_parser* p) {
 #ifdef USE_DECNUM
     jv number = jv_number_with_literal(p->tokenbuf);
     if (jv_get_kind(number) == JV_KIND_INVALID) {
-      return "Invalid numeric literal";
+      return "Unexpected bareword (expected numeric literal)";
     }
     TRY(value(p, number));
 #else
     char *end = 0;
     double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
     if (end == 0 || *end != 0) {
-      return "Invalid numeric literal";
+      return "Unexpected bareword (expected numeric literal)";
     }
     TRY(value(p, jv_number(d)));
 #endif
