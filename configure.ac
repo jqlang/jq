@@ -6,9 +6,6 @@ m4_define([jq_version],
 AC_INIT([jq], [jq_version], [https://github.com/stedolan/jq/issues],
              [jq], [https://stedolan.github.io/jq])
 
-m4_include([m4/ax_compare_version.m4])
-m4_include([m4/ax_prog_bison_version.m4])
-
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.64])
 AC_CONFIG_AUX_DIR([config])
@@ -25,6 +22,7 @@ AC_EXEEXT
 LT_INIT([shared static win32-dll])
 AM_PROG_CC_C_O
 
+AC_SYS_LARGEFILE # issue 2167
 
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
 dnl AC_PROG_YACC macros...
@@ -128,6 +126,15 @@ AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 AM_CONDITIONAL([ENABLE_ERROR_INJECTION], [test "x$enable_error_injection" = xyes])
 AM_CONDITIONAL([ENABLE_ALL_STATIC], [test "x$enable_all_static" = xyes])
 
+dnl Find pthread, if we have it. We do this first because we may set -pthread on CFLAGS
+dnl which can cause various macros to be defined (__REENTRANT on Darwin, for example)
+AX_PTHREAD([
+   AC_DEFINE([HAVE_PTHREAD], [1])
+   LIBS="$PTHREAD_LIBS $LIBS"
+   CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+   CC="$PTHREAD_CC"
+])
+
 AC_FUNC_ALLOCA
 
 AC_FIND_FUNC([isatty], [c], [#include <unistd.h>], [0])
@@ -146,9 +153,10 @@ AC_CHECK_MEMBER([struct tm.tm_gmtoff], [AC_DEFINE([HAVE_TM_TM_GMT_OFF],1,[Define
 AC_CHECK_MEMBER([struct tm.__tm_gmtoff], [AC_DEFINE([HAVE_TM___TM_GMT_OFF],1,[Define to 1 if the system has the __tm_gmt_off field in struct tm])],
                 [], [[#include <time.h>]])
 
-AC_FIND_FUNC([pthread_key_create], [pthread], [#include <pthread.h>], [NULL, NULL])
-AC_FIND_FUNC([pthread_once], [pthread], [#include <pthread.h>], [NULL, NULL])
-AC_FIND_FUNC([atexit], [pthread], [#include <stdlib.h>], [NULL])
+dnl Figure out if we have the pthread functions we actually need
+AC_FIND_FUNC_NO_LIBS([pthread_key_create], [], [#include <pthread.h>], [NULL, NULL])
+AC_FIND_FUNC_NO_LIBS([pthread_once], [], [#include <pthread.h>], [NULL, NULL])
+AC_FIND_FUNC_NO_LIBS([atexit], [], [#include <stdlib.h>], [NULL])
 
 dnl libm math.h functions
 AC_CHECK_MATH_FUNC(acos)
@@ -167,6 +175,7 @@ AC_CHECK_MATH_FUNC(drem)
 AC_CHECK_MATH_FUNC(erf)
 AC_CHECK_MATH_FUNC(erfc)
 AC_CHECK_MATH_FUNC(exp10)
+AC_CHECK_MATH_FUNC(__exp10) dnl macOS has an __exp10
 AC_CHECK_MATH_FUNC(exp2)
 AC_CHECK_MATH_FUNC(exp)
 AC_CHECK_MATH_FUNC(expm1)
@@ -203,6 +212,10 @@ AC_CHECK_MATH_FUNC(round)
 AC_CHECK_MATH_FUNC(scalb)
 AC_CHECK_MATH_FUNC(scalbln)
 AC_CHECK_MATH_FUNC(significand)
+dnl scalbn and ilogb are used on macos to replace significand if we don't have frexp
+AC_CHECK_MATH_FUNC(scalbn)
+AC_CHECK_MATH_FUNC(ilogb)
+
 AC_CHECK_MATH_FUNC(sin)
 AC_CHECK_MATH_FUNC(sinh)
 AC_CHECK_MATH_FUNC(sqrt)
@@ -280,7 +293,7 @@ AC_SUBST(onig_LDFLAGS)
 AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
-AC_CONFIG_MACRO_DIR([config/m4])
+AC_CONFIG_MACRO_DIRS([config/m4 m4])
 AC_CONFIG_FILES([Makefile libjq.pc])
 AC_OUTPUT
 
