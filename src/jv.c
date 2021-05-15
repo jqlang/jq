@@ -1362,7 +1362,7 @@ jv jv_string_implode(jv j) {
     assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
     int nv = jv_number_value(n);
     jv_free(n);
-    if (nv > 0x10FFFF)
+    if (nv < 0 || (nv >= 0xD800 && nv <= 0xDFFF) || nv > 0x10FFFF)
       nv = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
     s = jv_string_append_codepoint(s, nv);
   }
