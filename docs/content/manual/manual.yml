@@ -2040,7 +2040,6 @@ sections:
           * `@base64d`:
 
             The inverse of `@base64`, input is decoded as specified by RFC 4648.
-            Note\: If the decoded string is not UTF-8, the results are undefined.
 
           This syntax can be combined with string interpolation in a
           useful way. You can follow a `@foo` token with a string

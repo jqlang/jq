@@ -885,35 +885,63 @@ jv jv_parser_next(struct jv_parser* p) {
   }
 }
 
-jv jv_parse_sized(const char* string, int length) {
+static jv jvp_parse_sized(const char* string, int length, int extended) {
   struct jv_parser parser;
   parser_init(&parser, 0);
-  jv_parser_set_buf(&parser, string, length, 0);
-  jv value = jv_parser_next(&parser);
-  if (jv_is_valid(value)) {
-    jv next = jv_parser_next(&parser);
-    if (jv_is_valid(next)) {
-      // multiple JSON values, we only wanted one
-      jv_free(value);
-      jv_free(next);
-      value = jv_invalid_with_msg(jv_string("Unexpected extra JSON values"));
-    } else if (jv_invalid_has_msg(jv_copy(next))) {
-      // parser error after the first JSON value
-      jv_free(value);
-      value = next;
+  const char *i = string;
+  const char *end = string + length;
+  jv value = jv_invalid();
+  int count = 0;
+  while (i != NULL) {
+    const char *bytes;
+    uint32_t bytes_len;
+    if (extended) {
+      // TOOD: consider handling string values containing UTF-16 errors; this
+      // won't normally occur when using the output of eg, `tojson`, but could
+      // occur when constructing JSON manually, eg:
+      // > "\"\uD800\"" | fromjson
+      // NOTE: a simple but crude way to do this might be to replace UTF-16
+      // errors in the input with \uXXXX sequences, since UTF-16 errors should
+      // only be allowed within string literals, where escape sequences can be
+      // equivalently used
+      i = jvp_utf8_wtf_next_bytes(i, end, &bytes, &bytes_len);
     } else {
-      // a single valid JSON value
-      jv_free(next);
+      bytes = string;
+      bytes_len = length;
+      i = NULL;
     }
-  } else if (jv_invalid_has_msg(jv_copy(value))) {
-    // parse error, we'll return it
-  } else {
+    jv_parser_set_buf(&parser, bytes, bytes_len, i != NULL);
+    for (;;) {
+      jv next = jv_parser_next(&parser);
+      if (!jv_is_valid(next)) {
+        if (jv_invalid_has_msg(jv_copy(next))) {
+          // parse error, we'll return it
+          count++;
+          jv_free(value);
+          value = next;
+          i = NULL;
+        }
+        break;
+      }
+      jv_free(value);
+      if (count++ == 0) {
+        // a single valid JSON value
+        value = next;
+      } else {
+        // multiple JSON values, we only wanted one
+        jv_free(next);
+        value = jv_invalid_with_msg(jv_string("Unexpected extra JSON values"));
+        i = NULL;
+        break;
+      }
+    }
+  }
+  if (count == 0) {
     // no value at all
     jv_free(value);
     value = jv_invalid_with_msg(jv_string("Expected JSON value"));
   }
   parser_free(&parser);
-
   if (!jv_is_valid(value) && jv_invalid_has_msg(jv_copy(value))) {
     jv msg = jv_invalid_get_msg(value);
     value = jv_invalid_with_msg(jv_string_fmt("%s (while parsing '%s')",
@@ -922,6 +950,14 @@ jv jv_parse_sized(const char* string, int length) {
     jv_free(msg);
   }
   return value;
+}
+
+jv jv_parse_sized(const char* string, int length) {
+  return jvp_parse_sized(string, length, 0);
+}
+
+jv jv_parse_wtf_sized(const char* string, int length) {
+  return jvp_parse_sized(string, length, 1);
 }
 
 jv jv_parse(const char* string) {

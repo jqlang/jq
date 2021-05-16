@@ -470,7 +470,7 @@ static jv f_dump(jq_state *jq, jv input) {
 static jv f_json_parse(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_STRING)
     return type_error(input, "only strings can be parsed");
-  jv res = jv_parse_sized(jv_string_value(input),
+  jv res = jv_parse_wtf_sized(jv_string_value(input),
                           jv_string_length_bytes(jv_copy(input)));
   jv_free(input);
   return res;
@@ -520,7 +520,15 @@ static jv f_tostring(jq_state *jq, jv input) {
 static jv f_utf8bytelength(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_STRING)
     return type_error(input, "only strings have UTF-8 byte length");
-  return jv_number(jv_string_length_bytes(input));
+  const char* i = jv_string_value(input);
+  const char* end = i + jv_string_length_bytes(jv_copy(input));
+  uint32_t len = 0;
+  const char *bytes;
+  uint32_t bytes_len;
+  while ((i = jvp_utf8_wtf_next_bytes(i, end, &bytes, &bytes_len)))
+    len += bytes_len;
+  jv_free(input);
+  return jv_number(len);
 }
 
 #define CHARS_ALPHANUM "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -695,21 +703,36 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     jv_free(fmt);
     input = f_tostring(jq, input);
     jv line = jv_string("");
-    const unsigned char* data = (const unsigned char*)jv_string_value(input);
-    int len = jv_string_length_bytes(jv_copy(input));
-    for (int i=0; i<len; i+=3) {
-      uint32_t code = 0;
-      int n = len - i >= 3 ? 3 : len-i;
-      for (int j=0; j<3; j++) {
+    const char* i = jv_string_value(input);
+    const char* end = i + jv_string_length_bytes(jv_copy(input));
+    uint32_t code = 0;
+    int n = 0;
+    const char *bytes;
+    uint32_t bytes_len;
+    while ((i = jvp_utf8_wtf_next_bytes(i, end, &bytes, &bytes_len))) {
+      unsigned char *ubuf = (unsigned char *)bytes;
+      for (uint32_t x = 0; x < bytes_len; x++) {
         code <<= 8;
-        code |= j < n ? (unsigned)data[i+j] : 0;
+        code |= ubuf[x];
+        if (++n == 3) {
+          char buf[4];
+          for (int j = 0; j < 4; j++)
+            buf[j] = BASE64_ENCODE_TABLE[(code >> (18 - j*6)) & 0x3f];
+          line = jv_string_append_buf(line, buf, sizeof(buf));
+          n = 0;
+          code = 0;
+        }
       }
+    }
+    if (n > 0) {
+      assert(n < 3);
+      code <<= 8*(3 - n);
       char buf[4];
-      for (int j=0; j<4; j++) {
+      for (int j = 0; j < 4; j++)
         buf[j] = BASE64_ENCODE_TABLE[(code >> (18 - j*6)) & 0x3f];
-      }
-      if (n < 3) buf[3] = '=';
-      if (n < 2) buf[2] = '=';
+      buf[3] = '=';
+      if (n < 2)
+        buf[2] = '=';
       line = jv_string_append_buf(line, buf, sizeof(buf));
     }
     jv_free(input);
