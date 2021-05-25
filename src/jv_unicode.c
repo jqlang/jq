@@ -1,7 +1,71 @@
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 #include "jv_unicode.h"
 #include "jv_utf8_tables.h"
+
+// length of encoding of erroneous UTF-8 byte
+#define UTF8_ERR_LEN 2
+// length of encoding of erroneous UTF-16 surrogate
+#define UTF16_ERR_LEN 3
+
+#define U32(a, b, c, d) ( \
+  (uint32_t) (a) << 0 | \
+  (uint32_t) (b) << 8 | \
+  (uint32_t) (c) << 16 | \
+  (uint32_t) (d) << 24 \
+)
+
+#define BYTE(u32, n) ((uint32_t) (((u32) >> (n)*8) & 0xFF))
+
+#define B0 0x00 // 00000000
+#define B1 0x80 // 10000000
+#define B2 0xC0 // 11000000
+#define B3 0xE0 // 11100000
+#define B4 0xF0 // 11110000
+#define B5 0xF8 // 11111000
+
+// NOTE: these flags are likely to be optimised out as `decode` gets inlined
+enum decode_flags {
+  DECODE_1 = 1,
+  DECODE_2 = 2,
+  DECODE_3 = 8,
+  DECODE_4 = 16
+};
+
+// decode up to 4 bytes of "generalised UTF-8"; no checking for overlong
+// codings or out-of-range code points, works by testing all fixed bits in each
+// of the 4 coding patterns, then shifting the value bits according to the
+// pattern
+static int decode(enum decode_flags flags, uint32_t data, int* codepoint_ret) {
+  if((flags & DECODE_1) && (data & U32(B1, B0, B0, B0)) == 0){
+    *codepoint_ret = BYTE(data, 0);
+    return 1;
+  }
+  if((flags & DECODE_2) && (data & U32(B3, B2, B0, B0)) == U32(B2, B1, B0, B0)){
+    *codepoint_ret =
+      (BYTE(data, 0) & ~B3) << 6 |
+      (BYTE(data, 1) & ~B2) << 0;
+    return 2;
+  }
+  if((flags & DECODE_3) && (data & U32(B4, B2, B2, B0)) == U32(B3, B1, B1, B0)){
+    *codepoint_ret =
+      (BYTE(data, 0) & ~B4) << 12 |
+      (BYTE(data, 1) & ~B2) << 6 |
+      (BYTE(data, 2) & ~B2) << 0;
+    return 3;
+  }
+  if((flags & DECODE_4) && (data & U32(B5, B2, B2, B2)) == U32(B4, B1, B1, B1)){
+    *codepoint_ret =
+      (BYTE(data, 0) & ~B5) << 18 |
+      (BYTE(data, 1) & ~B2) << 12 |
+      (BYTE(data, 2) & ~B2) << 6 |
+      (BYTE(data, 3) & ~B2) << 0;
+    return 4;
+  }
+  *codepoint_ret = -1;
+  return 1;
+}
 
 // jvp_utf8_backtrack returns the beginning of the last codepoint in the
 // string, assuming that start is the last byte in the string.
@@ -137,62 +201,154 @@ const char* jvp_utf8_wtf_next(const char* in, const char* end, enum jvp_utf8_fla
   if (in == end) {
     return 0;
   }
-  int codepoint = -1;
-  unsigned char first = (unsigned char)in[0];
-  int length = utf8_coding_length[first];
-  if ((first & 0x80) == 0) {
+  uint32_t data = in[0] & 0xFF;
+  if ((data & B1) == 0) {
     /* Fast-path for ASCII */
-    codepoint = first;
-    length = 1;
-  } else if (length == 0 || length == UTF8_CONTINUATION_BYTE) {
-    /* Bad single byte - either an invalid byte or an out-of-place continuation byte */
-    if (flags & JVP_UTF8_ERRORS_ALL) assert(0 && "Invalid WTF-8b sequence: bad single byte");
-    length = 1;
-  } else if (in + length > end) {
-    /* String ends before UTF8 sequence ends */
-    if (flags & JVP_UTF8_ERRORS_ALL) assert(0 && "Invalid WTF-8b sequence: underrun");
-    length = end - in;
-  } else {
-    codepoint = ((unsigned)in[0]) & utf8_coding_bits[first];
-    for (int i=1; i<length; i++) {
-      unsigned ch = (unsigned char)in[i];
-      if (utf8_coding_length[ch] != UTF8_CONTINUATION_BYTE){
-        /* Invalid UTF8 sequence - not followed by the right number of continuation bytes */
-        if (flags & JVP_UTF8_ERRORS_ALL) assert(0 && "Invalid WTF-8b sequence: wrong bytes");
-        codepoint = -1;
-        length = i;
-        break;
-      }
-      codepoint = (codepoint << 6) | (ch & 0x3f);
-    }
-    if (codepoint < utf8_first_codepoint[length]) {
-      /* Overlong UTF8 sequence */
-      if ((flags & JVP_UTF8_ERRORS_UTF8) && 0x00 <= codepoint && codepoint <= 0x7F) {
-        /* UTF-8 error is emitted as a negative codepoint */
-        codepoint = -(codepoint + 0x80);
-      } else {
-        if (flags & JVP_UTF8_ERRORS_ALL) assert(0 && "Invalid WTF-8b sequence: overlong");
-        codepoint = -1;
-      }
-    }
-    if (0xD800 <= codepoint && codepoint <= 0xDFFF) {
-      /* Surrogate codepoints are allowed in WTF-8/WTF-8b */
-      if (!(flags & JVP_UTF8_ERRORS_UTF16)) {
-        /* Surrogate codepoints can't be encoded in UTF8 */
-        codepoint = -1;
-      }
-    }
-    if (codepoint > 0x10FFFF) {
-      /* Outside Unicode range */
-      if (flags & JVP_UTF8_ERRORS_ALL) assert(0 && "Invalid WTF-8b sequence: out of range");
+    *codepoint_ret = data;
+    return in + 1;
+  }
+  switch (end - in) {
+    default: // fall through
+    case 4: data |= (uint32_t)(in[3] & 0xFF) << 24; // fall through
+    case 3: data |= (uint32_t)(in[2] & 0xFF) << 16; // fall through
+    case 2: data |= (uint32_t)(in[1] & 0xFF) << 8; // fall through
+    case 1: break;
+  }
+  int codepoint;
+  int length = decode(DECODE_2 | DECODE_3 | DECODE_4, data, &codepoint);
+  if (codepoint == -1) {
+    if (flags & JVP_UTF8_ERRORS_UTF8) assert(0 && "Invalid WTF-8b sequence: no match");
+  } else if (codepoint < utf8_first_codepoint[length]) {
+    /* Overlong UTF-8 sequence */
+    if ((flags & JVP_UTF8_ERRORS_UTF8) && length == UTF8_ERR_LEN && 0x00 <= codepoint && codepoint <= 0x7F) {
+      /* UTF-8 error is emitted as a negative codepoint */
+      codepoint = -(codepoint + 0x80);
+    } else {
+      if (flags & JVP_UTF8_ERRORS_ALL) assert(0 && "Invalid WTF-8b sequence: overlong");
       codepoint = -1;
     }
+  } else if (0xD800 <= codepoint && codepoint <= 0xDFFF) {
+    /* Surrogate codepoints are allowed in WTF-8/WTF-8b */
+    if (!(flags & JVP_UTF8_ERRORS_UTF16)) {
+      /* Surrogate codepoints can't be encoded in UTF8 */
+      codepoint = -1;
+    }
+  } else if (codepoint > 0x10FFFF) {
+    /* Outside Unicode range */
+    if (flags & JVP_UTF8_ERRORS_ALL) assert(0 && "Invalid WTF-8b sequence: out of range");
+    codepoint = -1;
   }
   if (codepoint == -1 && (flags & JVP_UTF8_REPLACE))
     codepoint = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
   assert(length > 0);
   *codepoint_ret = codepoint;
   return in + length;
+}
+
+// assumes two bytes are readable from `in`
+static int decode_utf8_error(const char* in) {
+  uint32_t data = U32(in[0]  & 0xFF, in[1] & 0xFF, 0, 0);
+  int codepoint;
+  if (decode(DECODE_2, data, &codepoint) == UTF8_ERR_LEN && codepoint < 0x80)
+    return codepoint + 0x80;
+  return -1;
+}
+
+// assumes three bytes are readable from `in`
+static int decode_utf16_error(const char* in) {
+  uint32_t data = U32(in[0] & 0xFF, in[1] & 0xFF, in[2] & 0xFF, 0);
+  int codepoint;
+  if (decode(DECODE_3, data, &codepoint) == UTF16_ERR_LEN && codepoint >= 0xD800 && codepoint < 0xDFFF)
+    return codepoint;
+  return -1;
+}
+
+// jvp_utf8_wtf_join attempts to turn errors at the end of `a` and the
+// beginning of `b` into a valid code point. if a correction is possible,
+// `*alen_io`, `*bstart_io` and `*blen_io` are updated to exclude the existing
+// errors, and the UTF-8 encoding of the code point to insert is stored in
+// `out`. the number of bytes that should be inserted from `out` into the
+// middle of the strings is returned (up to 4). this will be 0 if there are no
+// bytes to insert.
+int jvp_utf8_wtf_join(const char* astart, uint32_t* alen_io, const char** bstart_io, uint32_t* blen_io, char* out) {
+  const char* aend = astart + *alen_io;
+  const char* bstart = *bstart_io;
+  const char* bend = bstart + *blen_io;
+  int bcp;
+  bstart = jvp_utf8_wtf_next(bstart, bend, JVP_UTF8_ERRORS_ALL, &bcp);
+  if (!bstart) {
+    // end of string
+    return 0;
+  }
+  if (bcp >= 0xDC00 && bcp <= 0xDFFF) {
+    // UTF-16 tail surrogate, look for lead surrogate at the end of `a`
+    assert(bstart == *bstart_io + UTF16_ERR_LEN);
+    if (aend - astart < UTF16_ERR_LEN)
+      return 0;
+    int acp = decode_utf16_error(aend - UTF16_ERR_LEN);
+    if (acp >= 0xD800 && acp <= 0xDBFF) {
+      // UTF-16 lead surrogate, decode matching UTF-16 pair
+      *alen_io -= UTF16_ERR_LEN;
+      *blen_io -= UTF16_ERR_LEN;
+      *bstart_io += UTF16_ERR_LEN;
+      int codepoint = 0x10000 + (((acp - 0xD800) << 10) | (bcp - 0xDC00));
+      return jvp_utf8_encode(codepoint, out);
+    }
+    return 0;
+  }
+  if (bcp >= -0xFF && bcp <= -0x80) {
+    // UTF-8 error, if it's a continuation byte, search backwards in `a` for the leading byte
+    bcp = -bcp;
+    assert(bstart == *bstart_io + UTF8_ERR_LEN);
+    if (utf8_coding_length[bcp] != UTF8_CONTINUATION_BYTE)
+      return 0;
+    // if there's a correctable error, we will consume up to 4 encoded error bytes total, with up to 3 bytes from each of `a` and `b`
+    unsigned char buf[6];
+    unsigned char* bufstart = buf + 3;
+    unsigned char* bufend = bufstart;
+    *bufend++ = bcp;
+    int length;
+    // search backwards in `a` for a leading byte
+    for (;;) {
+      if (aend - astart < UTF8_ERR_LEN)
+        return 0; // `a` is too short
+      int acp = decode_utf8_error(aend - UTF8_ERR_LEN);
+      if (acp == -1)
+        return 0; // not a UTF-8 error
+      aend -= UTF8_ERR_LEN;
+      length = utf8_coding_length[acp];
+      if (length == 0)
+        return 0; // not a possible UTF-8 byte
+      *--bufstart = acp;
+      if (length != UTF8_CONTINUATION_BYTE)
+        break; // found leading byte
+      if (bufstart == buf)
+        return 0; // too many continuation bytes
+    }
+    if (bufend - bufstart > length)
+      return 0; // too many continuation bytes
+    // search forwards in `b` for any more needed continuation bytes
+    while (bufend - bufstart < length) {
+      if (bend - bstart < UTF8_ERR_LEN)
+        return 0; // `b` is too short
+      bcp = decode_utf8_error(bstart);
+      if (bcp == -1 || utf8_coding_length[bcp] != UTF8_CONTINUATION_BYTE)
+        return 0; // not a UTF-8 error, didn't find enough continuation bytes
+      bstart += UTF8_ERR_LEN;
+      *bufend++ = bcp;
+    }
+    int codepoint;
+    // check that the bytes are strict UTF-8
+    jvp_utf8_wtf_next((char*)bufstart, (char*)bufend, 0, &codepoint);
+    if (codepoint != -1) {
+      memcpy(out, bufstart, 4);
+      *alen_io = aend - astart;
+      *blen_io = bend - bstart;
+      *bstart_io = bstart;
+      return bufend - bufstart;
+    }
+  }
+  return 0;
 }
 
 int jvp_utf8_is_valid(const char* in, const char* end) {

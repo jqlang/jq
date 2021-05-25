@@ -1155,20 +1155,27 @@ static jv jvp_string_append(jv string, const char* data, uint32_t len) {
   jvp_string* s = jvp_string_ptr(string);
   uint32_t currlen = jvp_string_length(s);
 
+  char join_buf[4];
+  int join_len = jvp_utf8_wtf_join(s->data, &currlen, &data, &len, join_buf);
+
   if (jvp_refcnt_unshared(string.u.ptr) &&
-      jvp_string_remaining_space(s) >= len) {
+      jvp_string_remaining_space(s) >= join_len + len) {
     // the next string fits at the end of a
+    memcpy(s->data + currlen, join_buf, join_len);
+    currlen += join_len;
     memcpy(s->data + currlen, data, len);
     s->data[currlen + len] = 0;
     s->length_hashed = (currlen + len) << 1;
     return string;
   } else {
     // allocate a bigger buffer and copy
-    uint32_t allocsz = (currlen + len) * 2;
+    uint32_t allocsz = (currlen + join_len + len) * 2;
     if (allocsz < 32) allocsz = 32;
     jvp_string* news = jvp_string_alloc(allocsz);
-    news->length_hashed = (currlen + len) << 1;
+    news->length_hashed = (currlen + join_len + len) << 1;
     memcpy(news->data, s->data, currlen);
+    memcpy(news->data + currlen, join_buf, join_len);
+    currlen += join_len;
     memcpy(news->data + currlen, data, len);
     news->data[currlen + len] = 0;
     jvp_string_free(string);

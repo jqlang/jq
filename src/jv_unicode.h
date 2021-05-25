@@ -1,6 +1,8 @@
 #ifndef JV_UNICODE_H
 #define JV_UNICODE_H
 
+#include <stdint.h>
+
 enum jvp_utf8_flags {
   /* Emit replacement character instead of -1 for errors */
   JVP_UTF8_REPLACE = 1,
@@ -15,6 +17,7 @@ const char* jvp_utf8_backtrack(const char* start, const char* min, int *missing_
 const char* jvp_utf8_wtf_next(const char* in, const char* end, enum jvp_utf8_flags flags, int* codepoint);
 const char* jvp_utf8_next(const char* in, const char* end, int* codepoint);
 const char* jvp_utf8_wtf_next_bytes(const char* in, const char* end, const char** bytes_out, uint32_t* bytes_len);
+int jvp_utf8_wtf_join(const char* astart, uint32_t* alen, const char** bstart, uint32_t* blen, char* out);
 int jvp_utf8_is_valid(const char* in, const char* end);
 
 int jvp_utf8_decode_length(char startchar);
