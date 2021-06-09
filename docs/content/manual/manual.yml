@@ -1664,6 +1664,22 @@ sections:
             input: '1'
             output: ['[1,2,4,8,16,32,64]']
 
+      - title: "`repeat(exp)`"
+        body: |
+
+          The `repeat(exp)` function allows you to repeatedly
+          apply expression `exp` to `.` until an error is raised.
+
+          Note that `repeat(exp)` is internally defined as a
+          recursive jq function.  Recursive calls within `repeat` will
+          not consume additional memory if `exp` produces at most one
+          output for each input.  See advanced topics below.
+
+        examples:
+          - program: '[repeat(.*2, error)?]'
+            input: '1'
+            output: ['[2]']
+
       - title: "`until(cond; next)`"
         body: |
 
