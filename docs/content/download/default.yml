@@ -154,7 +154,7 @@ body:
 
       If you're interested in using the lastest development version, try:
 
-          git clone https://github.com/stedolan/jq.git
+          git clone --recursive https://github.com/stedolan/jq.git
           cd jq
           autoreconf -i
           ./configure --disable-maintainer-mode
