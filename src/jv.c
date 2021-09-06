@@ -306,10 +306,10 @@ w32_service_thread_detach(void *unused)
     }
 }
 
-extern void tsd_dtoa_ctx_init();
-extern void tsd_dtoa_ctx_fini();
-static void tsd_dec_ctx_fini();
-static void tsd_dec_ctx_init();
+extern void jv_tsd_dtoa_ctx_init();
+extern void jv_tsd_dtoa_ctx_fini();
+void jv_tsd_dec_ctx_fini();
+void jv_tsd_dec_ctx_init();
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,
                     DWORD fdwReason,
@@ -318,18 +318,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
 	/*create_pt_key();*/
-	tsd_dtoa_ctx_init();
-	tsd_dec_ctx_init();
-	return 1;
+	jv_tsd_dtoa_ctx_init();
+	jv_tsd_dec_ctx_init();
+	return TRUE;
     case DLL_PROCESS_DETACH:
-	tsd_dtoa_ctx_fini();
-	tsd_dec_ctx_fini();
-	return 0;
+	jv_tsd_dtoa_ctx_fini();
+	jv_tsd_dec_ctx_fini();
+	return TRUE;
     case DLL_THREAD_ATTACH: return 0;
     case DLL_THREAD_DETACH:
         w32_service_thread_detach(NULL);
-        return 0;
-    default: return 0;
+        return TRUE;
+    default: return TRUE;
     }
 }
 
@@ -503,14 +503,14 @@ static pthread_once_t dec_ctx_once = PTHREAD_ONCE_INIT;
 
 // atexit finalizer to clean up the tsd dec contexts if main() exits
 // without having called pthread_exit()
-static void tsd_dec_ctx_fini() {
+void jv_tsd_dec_ctx_fini() {
   jv_mem_free(pthread_getspecific(dec_ctx_key));
   jv_mem_free(pthread_getspecific(dec_ctx_dbl_key));
   pthread_setspecific(dec_ctx_key, NULL);
   pthread_setspecific(dec_ctx_dbl_key, NULL);
 }
 
-static void tsd_dec_ctx_init() {
+void jv_tsd_dec_ctx_init() {
   if (pthread_key_create(&dec_ctx_key, jv_mem_free) != 0) {
     fprintf(stderr, "error: cannot create thread specific key");
     abort();
@@ -520,13 +520,13 @@ static void tsd_dec_ctx_init() {
     abort();
   }
 #ifndef WIN32
-  atexit(tsd_dec_ctx_fini);
+  atexit(jv_tsd_dec_ctx_fini);
 #endif
 }
 
 static decContext* tsd_dec_ctx_get(pthread_key_t *key) {
 #ifndef WIN32
-  pthread_once(&dec_ctx_once, tsd_dec_ctx_init); // cannot fail
+  pthread_once(&dec_ctx_once, jv_tsd_dec_ctx_init); // cannot fail
 #endif
   decContext *ctx = (decContext*)pthread_getspecific(*key);
   if (ctx) {

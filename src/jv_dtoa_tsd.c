@@ -21,7 +21,7 @@ static void tsd_dtoa_ctx_dtor(void *ctx) {
 #ifndef WIN32
 static
 #endif
-void tsd_dtoa_ctx_fini() {
+void jv_tsd_dtoa_ctx_fini() {
   struct dtoa_context *ctx = pthread_getspecific(dtoa_ctx_key);
   tsd_dtoa_ctx_dtor(ctx);
   pthread_setspecific(dtoa_ctx_key, NULL);
@@ -30,19 +30,19 @@ void tsd_dtoa_ctx_fini() {
 #ifndef WIN32
 static
 #endif
-void tsd_dtoa_ctx_init() {
+void jv_tsd_dtoa_ctx_init() {
   if (pthread_key_create(&dtoa_ctx_key, tsd_dtoa_ctx_dtor) != 0) {
     fprintf(stderr, "error: cannot create thread specific key");
     abort();
   }
 #ifndef WIN32
-  atexit(tsd_dtoa_ctx_fini);
+  atexit(jv_tsd_dtoa_ctx_fini);
 #endif
 }
 
 inline struct dtoa_context *tsd_dtoa_context_get() {
 #ifndef WIN32
-  pthread_once(&dtoa_ctx_once, tsd_dtoa_ctx_init); // cannot fail
+  pthread_once(&dtoa_ctx_once, jv_tsd_dtoa_ctx_init); // cannot fail
 #endif
   struct dtoa_context *ctx = (struct dtoa_context*)pthread_getspecific(dtoa_ctx_key);
   if (!ctx) {

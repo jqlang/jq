@@ -15,6 +15,7 @@
 #include <shellapi.h>
 #include <wchar.h>
 #include <wtypes.h>
+extern void jv_tsd_dtoa_ctx_init();
 #endif
 
 #if !defined(HAVE_ISATTY) && defined(HAVE__ISATTY)
@@ -281,6 +282,7 @@ int main(int argc, char* argv[]) {
   jv program_arguments = jv_object(); /* named arguments */
 
 #ifdef WIN32
+  jv_tsd_dtoa_ctx_init();
   fflush(stdout);
   fflush(stderr);
   _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
