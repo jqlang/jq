@@ -1226,7 +1226,7 @@ sections:
             input: '[{"foo": "bar"}, [{"foo": "baz"}]]'
             output: ['[{"foo": "bar"}, {"foo": "baz"}]']
 
-      - title: "`range(upto)`, `range(from;upto)` `range(from;upto;by)`"
+      - title: "`range(upto)`, `range(from;upto)`, `range(from;upto;by)`"
         body: |
 
           The `range` function produces a range of numbers. `range(4;10)`
@@ -1343,7 +1343,7 @@ sections:
             input: 'null'
             output: ['"number"', '"number"']
 
-      - title: "`sort, sort_by(path_expression)`"
+      - title: "`sort`, `sort_by(path_expression)`"
         body: |
 
           The `sort` functions sorts its input, which must be an
@@ -1809,13 +1809,13 @@ sections:
       - title: "`bsearch(x)`"
         body: |
 
-          bsearch(x) conducts a binary search for x in the input
+          `bsearch(x)` conducts a binary search for x in the input
           array.  If the input is sorted and contains x, then
-          bsearch(x) will return its index in the array; otherwise, if
+          `bsearch(x)` will return its index in the array; otherwise, if
           the array is sorted, it will return (-1 - ix) where ix is an
           insertion point such that the array would still be sorted
           after the insertion of x at ix.  If the array is not sorted,
-          bsearch(x) will return an integer that is probably of no
+          `bsearch(x)` will return an integer that is probably of no
           interest.
 
         examples:
@@ -1845,9 +1845,9 @@ sections:
         body: |
 
           The `tojson` and `fromjson` builtins dump values as JSON texts
-          or parse JSON texts into values, respectively.  The tojson
-          builtin differs from tostring in that tostring returns strings
-          unmodified, while tojson encodes strings as JSON strings.
+          or parse JSON texts into values, respectively.  The `tojson`
+          builtin differs from `tostring` in that `tostring` returns strings
+          unmodified, while `tojson` encodes strings as JSON strings.
 
         examples:
           - program: '[.[]|tostring]'
@@ -2428,7 +2428,7 @@ sections:
             input: '("ab,cd", "ef, gh")'
             output: ['"ab"', '"cd"', '"ef"', '"gh"']
 
-      - title: "`sub(regex; tostring)` `sub(regex; string; flags)`"
+      - title: "`sub(regex; tostring)`, `sub(regex; string; flags)`"
         body: |
 
           Emit the string obtained by replacing the first match of regex in the
@@ -3142,9 +3142,9 @@ sections:
 
           Provide input '{"a": {"b": 10}, "b": 20}' to the programs:
 
-          .a = .b
+              .a = .b
 
-          .a |= .b
+              .a |= .b
 
           The former will set the "a" field of the input to the "b"
           field of the input, and produce the output {"a": 20, "b": 20}.
@@ -3153,12 +3153,12 @@ sections:
 
           Another example of the difference between '=' and '|=':
 
-          null|(.a,.b)=range(3)
+              null|(.a,.b)=range(3)
 
           outputs '{"a":0,"b":0}', '{"a":1,"b":1}', and '{"a":2,"b":2}',
           while
 
-          null|(.a,.b)|=range(3)
+              null|(.a,.b)|=range(3)
 
           outputs just '{"a":0,"b":0}'.
 
