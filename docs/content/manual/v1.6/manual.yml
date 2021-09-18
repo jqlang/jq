@@ -189,6 +189,11 @@ sections:
         making jq filters talk to non-JSON-based systems. The output
         values will be separated by a newline (`\n` aka LF) character.
 
+        Please note a **potential security issue** when using this option.
+        Please note that if the selected data of the input JSON contains
+        newline characters then processing of jq output will incorrectly
+        split a single item containing an newline character into two items.
+
       * `--join-output` / `-j`:
 
         Like `-r` but jq won't print a newline after each output.
