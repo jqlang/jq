@@ -172,7 +172,7 @@ static jv check_object_key(block k) {
     char errbuf[15];
     return jv_string_fmt("Cannot use %s (%s) as object key",
         jv_kind_name(block_const_kind(k)),
-        jv_dump_string_trunc(jv_copy(block_const(k)), errbuf, sizeof(errbuf)));
+        jv_dump_string_trunc(block_const(k), errbuf, sizeof(errbuf)));
   }
   return jv_invalid();
 }
@@ -216,19 +216,25 @@ static block constant_fold(block a, block b, int op) {
   jv res = jv_invalid();
 
   if (block_const_kind(a) == JV_KIND_NUMBER) {
-    double na = jv_number_value(block_const(a));
-    double nb = jv_number_value(block_const(b));
+    jv jv_a = block_const(a);
+    jv jv_b = block_const(b);
+
+    double na = jv_number_value(jv_a);
+    double nb = jv_number_value(jv_b);
+
+    int cmp = jv_cmp(jv_a, jv_b);
+
     switch (op) {
     case '+': res = jv_number(na + nb); break;
     case '-': res = jv_number(na - nb); break;
     case '*': res = jv_number(na * nb); break;
     case '/': res = jv_number(na / nb); break;
-    case EQ:  res = (na == nb ? jv_true() : jv_false()); break;
-    case NEQ: res = (na != nb ? jv_true() : jv_false()); break;
-    case '<': res = (na < nb ? jv_true() : jv_false()); break;
-    case '>': res = (na > nb ? jv_true() : jv_false()); break;
-    case LESSEQ: res = (na <= nb ? jv_true() : jv_false()); break;
-    case GREATEREQ: res = (na >= nb ? jv_true() : jv_false()); break;
+    case EQ:  res = (cmp == 0 ? jv_true() : jv_false()); break;
+    case NEQ: res = (cmp != 0 ? jv_true() : jv_false()); break;
+    case '<': res = (cmp < 0 ? jv_true() : jv_false()); break;
+    case '>': res = (cmp > 0 ? jv_true() : jv_false()); break;
+    case LESSEQ: res = (cmp <= 0 ? jv_true() : jv_false()); break;
+    case GREATEREQ: res = (cmp >= 0 ? jv_true() : jv_false()); break;
     default: break;
     }
   } else if (op == '+' && block_const_kind(a) == JV_KIND_STRING) {
@@ -331,7 +337,7 @@ FuncDefs:
   $$ = gen_noop();
 } |
 FuncDef FuncDefs {
-  $$ = block_bind($1, $2, OP_IS_CALL_PSEUDO);
+  $$ = block_join($1, $2);
 }
 
 Exp:
@@ -356,6 +362,9 @@ Term "as" Patterns '|' Exp {
 
 "if" Exp "then" Exp ElseBody {
   $$ = gen_cond($2, $4, $5);
+} |
+"if" Exp "then" Exp "end" {
+  $$ = gen_cond($2, $4, gen_noop());
 } |
 "if" Exp "then" error {
   FAIL(@$, "Possibly unterminated 'if' statement");
@@ -573,7 +582,10 @@ Param:
   $$ = gen_param_regular(jv_string_value($2));
   jv_free($2);
 } |
-
+'$' Keyword {
+  $$ = gen_param_regular(jv_string_value($2));
+  jv_free($2);
+} |
 IDENT {
   $$ = gen_param(jv_string_value($1));
   jv_free($1);
@@ -682,6 +694,12 @@ Term '[' Exp ']' '?' {
 Term '[' Exp ']' %prec NONOPT {
   $$ = gen_index($1, $3);
 } |
+Term '.' '[' Exp ']' '?' {
+  $$ = gen_index_opt($1, $4);
+} |
+Term '.' '[' Exp ']' %prec NONOPT {
+  $$ = gen_index($1, $4);
+} |
 Term '[' ']' '?' {
   $$ = block_join($1, gen_op_simple(EACH_OPT));
 } |
@@ -731,12 +749,17 @@ FORMAT {
   else
     $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
 } |
-'$' LOC {
-  $$ = gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
-                           jv_string("line"), jv_number(locfile_get_line(locations, @$.start) + 1)));
-} |
 '$' IDENT {
   $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));
+  jv_free($2);
+} |
+'$' Keyword {
+  if (strcmp(jv_string_value($2), "__loc__") == 0) {
+    $$ = gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
+                             jv_string("line"), jv_number(locfile_get_line(locations, @$.start) + 1)));
+  } else {
+    $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));
+  }
   jv_free($2);
 } |
 IDENT {
@@ -928,11 +951,23 @@ IDENT ':' ExpD {
   $$ = gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
                               gen_op_simple(DUP2), gen_op_simple(INDEX)));
   }
+| '$' IDENT ':' ExpD {
+  $$ = gen_dictpair(gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))),
+                    $4);
+  }
 | '$' IDENT {
   $$ = gen_dictpair(gen_const($2),
                     gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))));
   }
+| '$' Keyword {
+  $$ = gen_dictpair(gen_const($2),
+                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))));
+  }
 | IDENT {
+  $$ = gen_dictpair(gen_const(jv_copy($1)),
+                    gen_index(gen_noop(), gen_const($1)));
+  }
+| Keyword {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
                     gen_index(gen_noop(), gen_const($1)));
   }

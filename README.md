@@ -23,7 +23,7 @@ Source tarball and built executable releases can be found on the
 homepage and on the github release page, https://github.com/stedolan/jq/releases
 
 If you're building directly from the latest git, you'll need flex,
-bison (3.0 or newer), libtool, make, and autoconf installed.
+bison (3.0 or newer), libtool, make, automake, and autoconf installed.
 To get regexp support you'll also need to install Oniguruma or clone it as a
 git submodule as per the instructions below.
 (note that jq's tests require regexp support to pass).  To build, run:
@@ -67,7 +67,9 @@ Cross-compilation requires a clean workspace, then:
     make distclean
     scripts/crosscompile <name-of-build> <configure-options>
 
-Use the --host= and --target= ./configure options to select a
-cross-compilation environment.  See also the wiki.
+Use the `--host=` and `--target=` ./configure options to select a
+cross-compilation environment.  See also 
+["Cross compilation"](https://github.com/stedolan/jq/wiki/Cross-compilation) on
+the wiki.
 
 Send questions to https://stackoverflow.com/questions/tagged/jq or to the #jq channel (http://irc.lc/freenode/%23jq/) on Freenode (https://webchat.freenode.net/).

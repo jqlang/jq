@@ -292,7 +292,7 @@ uint16_t* stack_restore(jq_state *jq){
     assert(path_len >= 0);
     jq->path = jv_array_slice(jq->path, 0, path_len);
   } else {
-    assert(path_len == 0);
+    fork->path_len = 0;
   }
   jv_free(jq->value_at_path);
   jq->value_at_path = fork->value_at_path;
@@ -509,21 +509,25 @@ jv jq_next(jq_state *jq) {
       uint16_t v = *pc++;
       jv* var = frame_local_var(jq, v, level);
       jv max = stack_pop(jq);
-      if (raising) goto do_backtrack;
+      if (raising) {
+        jv_free(max);
+        goto do_backtrack;
+      } 
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
           jv_get_kind(max) != JV_KIND_NUMBER) {
         set_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
         jv_free(max);
         goto do_backtrack;
-      } else if (jv_number_value(jv_copy(*var)) >= jv_number_value(jv_copy(max))) {
+      } else if (jv_number_value(*var) >= jv_number_value(max)) {
         /* finished iterating */
+        jv_free(max);
         goto do_backtrack;
       } else {
-        jv curr = jv_copy(*var);
+        jv curr = *var;
         *var = jv_number(jv_number_value(*var) + 1);
 
         struct stack_pos spos = stack_get_pos(jq);
-        stack_push(jq, jv_copy(max));
+        stack_push(jq, max);
         stack_save(jq, pc - 3, spos);
 
         stack_push(jq, curr);
@@ -799,21 +803,29 @@ jv jq_next(jq_state *jq) {
     }
 
     case FORK_OPT:
+    case DESTRUCTURE_ALT:
     case FORK: {
       stack_save(jq, pc - 1, stack_get_pos(jq));
       pc++; // skip offset this time
       break;
     }
 
-    case ON_BACKTRACK(FORK_OPT): {
+    case ON_BACKTRACK(FORK_OPT):
+    case ON_BACKTRACK(DESTRUCTURE_ALT): {
       if (jv_is_valid(jq->error)) {
         // `try EXP ...` backtracked here (no value, `empty`), so we backtrack more
         jv_free(stack_pop(jq));
         goto do_backtrack;
       }
       // `try EXP ...` exception caught in EXP
-      jv_free(stack_pop(jq)); // free the input
-      stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
+      // DESTRUCTURE_ALT doesn't want the error message on the stack,
+      // as we would just want to throw it away anyway.
+      if (opcode != ON_BACKTRACK(DESTRUCTURE_ALT)) {
+        jv_free(stack_pop(jq)); // free the input
+        stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
+      } else {
+        jv_free(jq->error);
+      }
       jq->error = jv_null();
       uint16_t offset = *pc++;
       pc += offset;
@@ -1002,6 +1014,9 @@ jq_state *jq_init(void) {
   jq->attrs = jv_object();
   jq->path = jv_null();
   jq->value_at_path = jv_null();
+
+  jq->nomem_handler = NULL;
+  jq->nomem_handler_data = NULL;
   return jq;
 }
 

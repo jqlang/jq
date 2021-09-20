@@ -1,4 +1,9 @@
-dnl AC_FIND_FUNC(func, arguments)
+dnl AC_CHECK_MATH_FUNC(func)
 AC_DEFUN([AC_CHECK_MATH_FUNC], [
-  AC_FIND_FUNC_NO_LIBS([$1], [m], [#include <math.h>], [$2])
+  AC_LANG(C)
+  AC_CHECK_LIB([m],[$1],[
+    eval "ac_tr_func=HAVE_[]upcase($1)"
+    AC_DEFINE_UNQUOTED($ac_tr_func)
+  ],[
+  ])
 ])

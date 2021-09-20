@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include "shared/_head.html.j2" %}
+
+  <body id="{{slug}}" data-spy="scroll" data-target="#navcolumn" data-offset="100">
+{% include "shared/_navbar.html.j2" %}
+
+    <div class="container">
+      <div class="row">
+        <div class="affix" id="navcolumn">
+          <h4>Contents</h4>
+          <ul class="nav nav-pills nav-stacked">
+            {% for section in sections %}
+              <li>
+                <a href="#{{section.title | section_id}}">{{section.title}}</a>
+              </li>
+            {% endfor %}
+          </ul>
+          <form class="form-group" onsubmit="go_to_section(); return false;">
+            <input type="text"
+                  class="form-control"
+                  placeholder="Search"
+                  autocomplete="off"
+                  id="searchbox">
+          </form>
+        </div>
+
+        <div id="manualcontent">
+          <h1>{{headline}}</h1>
+          {{ history | markdownify }}
+          {{ body | markdownify }}
+          {% for section in sections %}
+            <section id="{{section.title | section_id}}">
+              <h2>{{section.title}}</h2>
+              {{ (section.body | markdownify) if section.body }}
+              {% for entry in section.entries %}
+                <section id="{{entry.title | entry_id}}">
+                  <h3>
+                    {{entry.title | markdownify | no_paragraph }}
+                    {% if entry.subtitle %}<small>{{entry.subtitle}}</small>{% endif %}
+                  </h3>
+                  {{entry.body | markdownify}}
+
+                  {% if entry.examples %}
+                    <div>
+                      {% set exampleID = unique_id() %}
+                      <a data-toggle="collapse" href="#example{{exampleID}}">
+                        <i class="glyphicon glyphicon-chevron-right"></i>
+                        {% if entry.examples | length > 1 %}Examples{%else%}Example{%endif%}
+                      </a>
+                      <div id="example{{exampleID}}" class="manual-example collapse">
+                        {% for example in entry.examples %}
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '{{ example.program }}'</td></tr>
+                            <tr><th>Input</th><td>{{ example.input }}</td></tr>
+                            {% if not example.output[0] %}
+                              <tr>
+                                <th>Output</th>
+                                <td><i>none</i></td>
+                              </tr>
+                            {% endif %}
+                            {% for output in example.output %}
+                              <tr>
+                                {% if loop.first %}
+                                  <th>Output</th>
+                                {% else %}
+                                  <th></th>
+                                {% endif %}
+                                <td>{{ output }}</td>
+                              </tr>
+                            {% endfor %}
+                          </table>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endif %}
+                </section>
+              {% endfor %}
+            </section>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+{% include "shared/_footer.html.j2" %}
+    <script>
+      var section_map = {
+        {% for section in sections %}
+          {% for entry in section.entries %}
+            {{entry.title | search_id | tojson }} : {{entry.title | entry_id | tojson }},
+          {% endfor %}
+          {{section.title | search_id | tojson }} : {{section.title | section_id | tojson }}
+          {% if not loop.last %},{% endif %}
+        {% endfor %}
+      };
+    </script>
+    <script src="{{root}}/js/manual-search.js"></script>
+  </body>
+</html>

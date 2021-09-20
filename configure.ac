@@ -6,9 +6,6 @@ m4_define([jq_version],
 AC_INIT([jq], [jq_version], [https://github.com/stedolan/jq/issues],
              [jq], [https://stedolan.github.io/jq])
 
-m4_include([m4/ax_compare_version.m4])
-m4_include([m4/ax_prog_bison_version.m4])
-
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.64])
 AC_CONFIG_AUX_DIR([config])
@@ -25,6 +22,7 @@ AC_EXEEXT
 LT_INIT([shared static win32-dll])
 AM_PROG_CC_C_O
 
+AC_SYS_LARGEFILE # issue 2167
 
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
 dnl AC_PROG_YACC macros...
@@ -52,8 +50,9 @@ fi
 AC_CHECK_FUNCS(memmem)
 AC_CHECK_FUNCS(mkstemp)
 
-AC_CHECK_HEADER("shlwapi.h",[have_win32=1;])
-AM_CONDITIONAL([WIN32], [test "x$have_win32" = x1])
+AC_CHECK_HEADER("sys/cygwin.h", [have_cygwin=1;])
+AC_CHECK_HEADER("shlwapi.h",[have_shlwapi=1;])
+AM_CONDITIONAL([WIN32], [test \( "x$have_shlwapi" = x1 \) -a ! \( "x$have_cygwin" = x1 \)])
 
 dnl Running tests with Valgrind is slow. It is faster to iterate on
 dnl code without Valgrind until tests pass, then enable Valgrind and
@@ -74,9 +73,9 @@ dnl Code coverage
 AC_ARG_ENABLE([gcov],
    AC_HELP_STRING([--enable-gcov], [enable gcov code coverage tool]))
 
-dnl Don't attempt to build docs if there's no Ruby lying around
+dnl Don't attempt to build docs if python deps aren't installed
 AC_ARG_ENABLE([docs],
-   AC_HELP_STRING([--disable-docs], [don't build docs]))
+   AC_HELP_STRING([--disable-docs], [don't build docs]), [], [enable_docs=yes])
 
 dnl Don't attempt to build the error injection object (if there is no LD_PRELOAD support)
 AC_ARG_ENABLE([error-injection],
@@ -86,28 +85,37 @@ dnl Enable building all static
 AC_ARG_ENABLE([all-static],
    AC_HELP_STRING([--enable-all-static], [link jq with static libraries only]))
 
+dnl find pipenv
+AC_ARG_VAR([PIPENV], [pipenv command])
+AC_CHECK_PROGS([PIPENV], pipenv)
+
 AS_IF([test "x$enable_docs" != "xno"],[
-   AC_CHECK_PROGS(bundle_cmd, bundle)
+   AC_CACHE_CHECK([for Python dependencies], [jq_cv_python_deps],[
+      jq_cv_python_deps=yes
+      AS_IF([test "x$PIPENV" = "x" || \
+      ! bmsg="`cd ${srcdir}/docs; LC_ALL=$LANG "$PIPENV" --venv`"],[
+         jq_cv_python_deps=no
+      ])
+   ])
 
-   AC_CACHE_CHECK([for Ruby dependencies], [jq_cv_ruby_deps],
-     [jq_cv_ruby_deps=yes;
-        AS_IF([test "x$bundle_cmd" = "x" || \
-        ! bmsg="`cd ${srcdir}/docs; "$bundle_cmd" check 2>/dev/null`"],[
-           AC_MSG_WARN([$bmsg])
-           cat <<EOF
+   AS_IF([test "x$jq_cv_python_deps" != "xyes"], [
+      AC_MSG_WARN([Error checking python dependencies: $bmsg
 *****************************************************************
-*  Ruby dependencies for building jq documentation not found.   *
+*  Python dependencies for building jq documentation not found. *
 *  You can still build, install and hack on jq, but the manpage *
-*  will not be rebuilt and some of the tests will not run.      *
+*  will not be rebuilt and new manpage tests will not be run.   *
 *  See docs/README.md for how to install the docs dependencies. *
-*****************************************************************
-EOF
-           jq_cv_ruby_deps=no
-     ])])
+*****************************************************************])
+      enable_docs=no
+   ])
+])
 
-   if test "x$jq_cv_ruby_deps" != "xyes"; then
-     enable_docs=no
-   fi
+dnl Disable decNumber support
+AC_ARG_ENABLE([decnum],
+   AC_HELP_STRING([--disable-decnum], [disable decnum support]))
+
+AS_IF([test "x$enable_decnum" != "xno"],[
+   AC_DEFINE([USE_DECNUM],1)
 ])
 
 AM_CONDITIONAL([ENABLE_VALGRIND], [test "x$enable_valgrind" != xno])
@@ -118,12 +126,22 @@ AM_CONDITIONAL([ENABLE_DOCS], [test "x$enable_docs" != xno])
 AM_CONDITIONAL([ENABLE_ERROR_INJECTION], [test "x$enable_error_injection" = xyes])
 AM_CONDITIONAL([ENABLE_ALL_STATIC], [test "x$enable_all_static" = xyes])
 
+dnl Find pthread, if we have it. We do this first because we may set -pthread on CFLAGS
+dnl which can cause various macros to be defined (__REENTRANT on Darwin, for example)
+AX_PTHREAD([
+   AC_DEFINE([HAVE_PTHREAD], [1])
+   LIBS="$PTHREAD_LIBS $LIBS"
+   CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+   CC="$PTHREAD_CC"
+])
+
 AC_FUNC_ALLOCA
 
 AC_FIND_FUNC([isatty], [c], [#include <unistd.h>], [0])
 AC_FIND_FUNC([_isatty], [c], [#include <io.h>], [0])
 AC_FIND_FUNC([strptime], [c], [#include <time.h>], [0, 0, 0])
 AC_FIND_FUNC([strftime], [c], [#include <time.h>], [0, 0, 0, 0])
+AC_FIND_FUNC([setenv], [c], [#include <stdlib.h>], [0, 0, 0])
 AC_FIND_FUNC([timegm], [c], [#include <time.h>], [0])
 AC_FIND_FUNC([gmtime_r], [c], [#include <time.h>], [0, 0])
 AC_FIND_FUNC([gmtime], [c], [#include <time.h>], [0])
@@ -135,81 +153,79 @@ AC_CHECK_MEMBER([struct tm.tm_gmtoff], [AC_DEFINE([HAVE_TM_TM_GMT_OFF],1,[Define
 AC_CHECK_MEMBER([struct tm.__tm_gmtoff], [AC_DEFINE([HAVE_TM___TM_GMT_OFF],1,[Define to 1 if the system has the __tm_gmt_off field in struct tm])],
                 [], [[#include <time.h>]])
 
-AC_ARG_ENABLE([pthread-tls],
-              [AC_HELP_STRING([--enable-pthread-tls],
-                              [Enable use of pthread thread local storage])],
-              [],
-              [enable_pthread_tls=no])
-
-if test $enable_pthread_tls = yes; then
-    AC_FIND_FUNC([pthread_key_create], [pthread], [#include <pthread.h>], [NULL, NULL])
-    AC_FIND_FUNC([pthread_once], [pthread], [#include <pthread.h>], [NULL, NULL])
-    AC_FIND_FUNC([atexit], [pthread], [#include <stdlib.h>], [NULL])
-fi
+dnl Figure out if we have the pthread functions we actually need
+AC_FIND_FUNC_NO_LIBS([pthread_key_create], [], [#include <pthread.h>], [NULL, NULL])
+AC_FIND_FUNC_NO_LIBS([pthread_once], [], [#include <pthread.h>], [NULL, NULL])
+AC_FIND_FUNC_NO_LIBS([atexit], [], [#include <stdlib.h>], [NULL])
 
 dnl libm math.h functions
-AC_CHECK_MATH_FUNC(acos, [.5])
-AC_CHECK_MATH_FUNC(acosh, [.5])
-AC_CHECK_MATH_FUNC(asin, [.5])
-AC_CHECK_MATH_FUNC(asinh, [.5])
-AC_CHECK_MATH_FUNC(atan2, [.5,.5])
-AC_CHECK_MATH_FUNC(atan, [.5])
-AC_CHECK_MATH_FUNC(atanh, [.5])
-AC_CHECK_MATH_FUNC(cbrt, [.5])
-AC_CHECK_MATH_FUNC(ceil,[.5])
-AC_CHECK_MATH_FUNC(copysign,[.5,1.0])
-AC_CHECK_MATH_FUNC(cos, [.5])
-AC_CHECK_MATH_FUNC(cosh, [.5])
-AC_CHECK_MATH_FUNC(drem,[.5,1.0])
-AC_CHECK_MATH_FUNC(erf,[.5])
-AC_CHECK_MATH_FUNC(erfc,[.5])
-AC_CHECK_MATH_FUNC(exp10,[.5])
-AC_CHECK_MATH_FUNC(exp2, [.5])
-AC_CHECK_MATH_FUNC(exp, [.5])
-AC_CHECK_MATH_FUNC(expm1,[.5])
-AC_CHECK_MATH_FUNC(fabs,[.5])
-AC_CHECK_MATH_FUNC(fdim,[.5,1.0])
-AC_CHECK_MATH_FUNC(floor, [.5])
-AC_CHECK_MATH_FUNC(fma,[.5,1.0,1.5])
-AC_CHECK_MATH_FUNC(fmax,[.5,1.0])
-AC_CHECK_MATH_FUNC(fmin,[.5,1.0])
-AC_CHECK_MATH_FUNC(fmod,[.5,1.0])
-AC_FIND_FUNC([frexp], [m c], [#include <math.h>], [0, 0])
-AC_CHECK_MATH_FUNC(gamma,[.5])
-AC_CHECK_MATH_FUNC(hypot, [.5,.5])
-AC_CHECK_MATH_FUNC(j0, [.5])
-AC_CHECK_MATH_FUNC(j1, [.5])
-AC_CHECK_MATH_FUNC(jn, [1,.5])
-AC_CHECK_MATH_FUNC(ldexp,[.5,2])
-AC_CHECK_MATH_FUNC(lgamma,[.5])
-AC_CHECK_MATH_FUNC(log10, [.5])
-AC_CHECK_MATH_FUNC(log1p,[.5])
-AC_CHECK_MATH_FUNC(log2, [.5])
-AC_CHECK_MATH_FUNC(log, [.5])
-AC_CHECK_MATH_FUNC(logb,[.5])
-AC_CHECK_MATH_FUNC([modf], [m c], [#include <math.h>], [0, 0])
-AC_CHECK_MATH_FUNC([lgamma_r], [m c], [#include <math.h>], [0, 0])
-AC_CHECK_MATH_FUNC(nearbyint,[.5])
-AC_CHECK_MATH_FUNC(nextafter,[.5,1.0])
-AC_CHECK_MATH_FUNC(nexttoward,[.5,1.0])
-AC_CHECK_MATH_FUNC(pow10,[.5])
-AC_CHECK_MATH_FUNC(pow, [2,2])
-AC_CHECK_MATH_FUNC(remainder, [3,2])
-AC_CHECK_MATH_FUNC(rint,[.5])
-AC_CHECK_MATH_FUNC(round,[.5])
-AC_CHECK_MATH_FUNC(scalb,[.5,1.0])
-AC_CHECK_MATH_FUNC(scalbln,[.5,2])
-AC_CHECK_MATH_FUNC(significand,[.5])
-AC_CHECK_MATH_FUNC(sin, [.5])
-AC_CHECK_MATH_FUNC(sinh, [.5])
-AC_CHECK_MATH_FUNC(sqrt, [.5])
-AC_CHECK_MATH_FUNC(tan, [.5])
-AC_CHECK_MATH_FUNC(tanh, [.5])
-AC_CHECK_MATH_FUNC(tgamma, [.5])
-AC_CHECK_MATH_FUNC(trunc,[.5])
-AC_CHECK_MATH_FUNC(y0, [.5])
-AC_CHECK_MATH_FUNC(y1, [.5])
-AC_CHECK_MATH_FUNC(yn, [1,.5])
+AC_CHECK_MATH_FUNC(acos)
+AC_CHECK_MATH_FUNC(acosh)
+AC_CHECK_MATH_FUNC(asin)
+AC_CHECK_MATH_FUNC(asinh)
+AC_CHECK_MATH_FUNC(atan2)
+AC_CHECK_MATH_FUNC(atan)
+AC_CHECK_MATH_FUNC(atanh)
+AC_CHECK_MATH_FUNC(cbrt)
+AC_CHECK_MATH_FUNC(ceil)
+AC_CHECK_MATH_FUNC(copysign)
+AC_CHECK_MATH_FUNC(cos)
+AC_CHECK_MATH_FUNC(cosh)
+AC_CHECK_MATH_FUNC(drem)
+AC_CHECK_MATH_FUNC(erf)
+AC_CHECK_MATH_FUNC(erfc)
+AC_CHECK_MATH_FUNC(exp10)
+AC_CHECK_MATH_FUNC(__exp10) dnl macOS has an __exp10
+AC_CHECK_MATH_FUNC(exp2)
+AC_CHECK_MATH_FUNC(exp)
+AC_CHECK_MATH_FUNC(expm1)
+AC_CHECK_MATH_FUNC(fabs)
+AC_CHECK_MATH_FUNC(fdim)
+AC_CHECK_MATH_FUNC(floor)
+AC_CHECK_MATH_FUNC(fma)
+AC_CHECK_MATH_FUNC(fmax)
+AC_CHECK_MATH_FUNC(fmin)
+AC_CHECK_MATH_FUNC(fmod)
+AC_CHECK_MATH_FUNC(frexp)
+AC_CHECK_MATH_FUNC(gamma)
+AC_CHECK_MATH_FUNC(hypot)
+AC_CHECK_MATH_FUNC(j0)
+AC_CHECK_MATH_FUNC(j1)
+AC_CHECK_MATH_FUNC(jn)
+AC_CHECK_MATH_FUNC(ldexp)
+AC_CHECK_MATH_FUNC(lgamma)
+AC_CHECK_MATH_FUNC(log10)
+AC_CHECK_MATH_FUNC(log1p)
+AC_CHECK_MATH_FUNC(log2)
+AC_CHECK_MATH_FUNC(log)
+AC_CHECK_MATH_FUNC(logb)
+AC_CHECK_MATH_FUNC(modf)
+AC_CHECK_MATH_FUNC(lgamma_r)
+AC_CHECK_MATH_FUNC(nearbyint)
+AC_CHECK_MATH_FUNC(nextafter)
+AC_CHECK_MATH_FUNC(nexttoward)
+AC_CHECK_MATH_FUNC(pow10) # Not available with glibc version >= 2.27
+AC_CHECK_MATH_FUNC(pow)
+AC_CHECK_MATH_FUNC(remainder)
+AC_CHECK_MATH_FUNC(rint)
+AC_CHECK_MATH_FUNC(round)
+AC_CHECK_MATH_FUNC(scalb)
+AC_CHECK_MATH_FUNC(scalbln)
+AC_CHECK_MATH_FUNC(significand)
+dnl scalbn and ilogb are used on macos to replace significand if we don't have frexp
+AC_CHECK_MATH_FUNC(scalbn)
+AC_CHECK_MATH_FUNC(ilogb)
+
+AC_CHECK_MATH_FUNC(sin)
+AC_CHECK_MATH_FUNC(sinh)
+AC_CHECK_MATH_FUNC(sqrt)
+AC_CHECK_MATH_FUNC(tan)
+AC_CHECK_MATH_FUNC(tanh)
+AC_CHECK_MATH_FUNC(tgamma)
+AC_CHECK_MATH_FUNC(trunc)
+AC_CHECK_MATH_FUNC(y0)
+AC_CHECK_MATH_FUNC(y1)
+AC_CHECK_MATH_FUNC(yn)
 
 dnl Thread local storage
 have___thread=no
@@ -226,8 +242,8 @@ AC_MSG_RESULT($have___thread)
 AC_C_BIGENDIAN(
    AC_DEFINE([IEEE_MC68k], 1, [machine is bigendian]),
    AC_DEFINE([IEEE_8087], 1, [machine is littleendian]),
-   AC_MSG_ERROR(unknown endianess),
-   AC_MSG_ERROR(universial endianess not supported)
+   AC_MSG_ERROR(unknown endianness),
+   AC_MSG_ERROR(universial endianness not supported)
 )
 
 dnl Oniguruma
@@ -277,7 +293,7 @@ AC_SUBST(onig_LDFLAGS)
 AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
-AC_CONFIG_MACRO_DIR([config/m4])
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_MACRO_DIRS([config/m4 m4])
+AC_CONFIG_FILES([Makefile libjq.pc])
 AC_OUTPUT
 

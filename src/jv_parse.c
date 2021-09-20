@@ -124,14 +124,19 @@ static void parser_free(struct jv_parser* p) {
 
 static pfunc value(struct jv_parser* p, jv val) {
   if ((p->flags & JV_PARSE_STREAMING)) {
-    if (jv_is_valid(p->next) || p->last_seen == JV_LAST_VALUE)
+    if (jv_is_valid(p->next) || p->last_seen == JV_LAST_VALUE) {
+      jv_free(val);
       return "Expected separator between values";
+    }
     if (p->stacklen > 0)
       p->last_seen = JV_LAST_VALUE;
     else
       p->last_seen = JV_LAST_NONE;
   } else {
-    if (jv_is_valid(p->next)) return "Expected separator between values";
+    if (jv_is_valid(p->next)) {
+      jv_free(val);
+      return "Expected separator between values";
+    }
   }
   jv_free(p->next);
   p->next = val;
@@ -256,8 +261,12 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
     break;
 
   case ':':
-    if (p->stacklen == 0 || jv_get_kind(jv_array_get(jv_copy(p->path), p->stacklen - 1)) == JV_KIND_NUMBER)
+    last = jv_invalid();
+    if (p->stacklen == 0 || jv_get_kind(last = jv_array_get(jv_copy(p->path), p->stacklen - 1)) == JV_KIND_NUMBER) {
+      jv_free(last);
       return "':' not as part of an object";
+    }
+    jv_free(last);
     if (!jv_is_valid(p->next) || p->last_seen == JV_LAST_NONE)
       return "Expected string key before ':'";
     if (jv_get_kind(p->next) != JV_KIND_STRING)
@@ -492,11 +501,20 @@ static pfunc check_literal(struct jv_parser* p) {
   } else {
     // FIXME: better parser
     p->tokenbuf[p->tokenpos] = 0;
-    char* end = 0;
-    double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
-    if (end == 0 || *end != 0)
+#ifdef USE_DECNUM
+    jv number = jv_number_with_literal(p->tokenbuf);
+    if (jv_get_kind(number) == JV_KIND_INVALID) {
       return "Invalid numeric literal";
+    }
+    TRY(value(p, number));
+#else
+    char *end = 0;
+    double d = jvp_strtod(&p->dtoa, p->tokenbuf, &end);
+    if (end == 0 || *end != 0) {
+      return "Invalid numeric literal";
+    }
     TRY(value(p, jv_number(d)));
+#endif
   }
   p->tokenpos = 0;
   return 0;

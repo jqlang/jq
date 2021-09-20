@@ -1,4 +1,9 @@
-FROM debian:8
+FROM debian:9
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    DEBCONF_NONINTERACTIVE_SEEN=true \
+    LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8
 
 COPY . /app
 
@@ -13,29 +18,23 @@ RUN apt-get update && \
         git \
         bison \
         flex \
-        ruby \
-        wget \
-        ruby-dev && \
-    wget https://github.com/kkos/oniguruma/archive/v5.9.6.tar.gz -O onig-5.9.6.tar.gz && \
-    sha512sum onig-5.9.6.tar.gz | grep 6b048d345e148c9da38af7a8df76d4a358eb3d4db91fa7834076e511f526a63544284f212b0d56badbbd33112c8b458a5fff02bfbbda012ecfe478bc436ea679 && \
-    tar zxvf onig-5.9.6.tar.gz && \
-    (cd oniguruma-5.9.6 && \
-        touch NEWS ChangeLog && \
-        autoreconf -i && \
-        ./configure --prefix=/usr/local && \
-        make && \
-        make install ) && \
-    gem install bundler && \
-    (cd /app/docs && bundle install) && \
+        python3 \
+        python3-pip \
+        wget && \
+    pip3 install pipenv && \
+    (cd /app/docs && pipenv sync) && \
     (cd /app && \
+        git submodule init && \
+        git submodule update && \
         autoreconf -i && \
         ./configure --disable-valgrind --enable-all-static --prefix=/usr/local && \
         make -j8 && \
         make check && \
-        make install && \
-        make distclean ) && \
-    (cd oniguruma-5.9.6 && \
+        make install ) && \
+    (cd /app/modules/oniguruma && \
         make uninstall ) && \
+    (cd /app && \
+        make distclean ) && \
     apt-get purge -y \
         build-essential \
         autoconf \
@@ -43,10 +42,12 @@ RUN apt-get update && \
         bison \
         git \
         flex \
-        ruby \
-        ruby-dev && \
+        python3 \
+        python3-pip && \
     apt-get autoremove -y && \
-    rm -rf oniguruma-5.9.6 && \
+    rm -rf /app/modules/oniguruma/* && \
+    rm -rf /app/modules/oniguruma/.git && \
+    rm -rf /app/modules/oniguruma/.gitignore && \
     rm -rf /var/lib/apt/lists/* /var/lib/gems
 
 ENTRYPOINT ["/usr/local/bin/jq"]
