@@ -2277,9 +2277,10 @@ sections:
   - title: Regular expressions (PCRE)
     body: |
 
-      jq uses the Oniguruma regular expression library, as do php,
-      ruby, TextMate, Sublime Text, etc, so the description here
-      will focus on jq specifics.
+      jq uses the
+      [Oniguruma regular expression library](https://github.com/kkos/oniguruma/blob/master/doc/RE),
+      as do php, ruby, TextMate, Sublime Text, etc, so the
+      description here will focus on jq specifics.
 
       The jq regex filters are defined so that they can be used using
       one of these patterns:
