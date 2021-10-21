@@ -351,8 +351,36 @@ jv jv_setpath(jv root, jv path, jv value) {
   }
   jv pathcurr = jv_array_get(jv_copy(path), 0);
   jv pathrest = jv_array_slice(path, 1, jv_array_length(jv_copy(path)));
-  return jv_set(root, pathcurr,
-                jv_setpath(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest, value));
+
+  /*
+   * We need to be careful not to make extra copies since that leads to
+   * quadratic behavior (e.g., when growing large data structures in a
+   * reduction with `setpath/2`, i.e., with `|=`.
+   */
+  if (jv_get_kind(pathcurr) == JV_KIND_OBJECT) {
+    // Assignment to slice -- dunno yet how to avoid the extra copy
+    return jv_set(root, pathcurr,
+                  jv_setpath(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest, value));
+  }
+
+  jv subroot = jv_get(jv_copy(root), jv_copy(pathcurr));
+  if (!jv_is_valid(subroot)) {
+    jv_free(pathcurr);
+    jv_free(pathrest);
+    jv_free(value);
+    return subroot;
+  }
+
+  // To avoid the extra copy we drop the reference from `root` by setting that
+  // to null first.
+  root = jv_set(root, jv_copy(pathcurr), jv_null());
+  if (!jv_is_valid(root)) {
+    jv_free(pathcurr);
+    jv_free(pathrest);
+    jv_free(value);
+    return root;
+  }
+  return jv_set(root, pathcurr, jv_setpath(subroot, pathrest, value));
 }
 
 jv jv_getpath(jv root, jv path) {
