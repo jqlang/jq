@@ -561,7 +561,11 @@ jv jq_next(jq_state *jq) {
         printf(" (%d)\n", jv_get_refcnt(*var));
       }
       jv_free(stack_popn(jq));
+
+      // This `stack_push()` invalidates the `var` reference, so
       stack_push(jq, *var);
+      // we have to re-resolve `var` before we can set it to null
+      var = frame_local_var(jq, v, level);
       *var = jv_null();
       break;
     }
