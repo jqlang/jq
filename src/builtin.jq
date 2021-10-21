@@ -11,7 +11,25 @@ def min_by(f): _min_by_impl(map([f]));
 def add: reduce .[] as $x (null; . + $x);
 def del(f): delpaths([path(f)]);
 def _assign(paths; $value): reduce path(paths) as $p (.; setpath($p; $value));
-def _modify(paths; update): reduce path(paths) as $p (.; label $out | (setpath($p; getpath($p) | update) | ., break $out), delpaths([$p]));
+def _modify(paths; update):
+    reduce path(paths) as $p (.;
+        . as $dot
+      | null
+      | label $out
+      | ($dot | getpath($p)) as $v
+      | (
+          (   $$$$v
+            | update
+            | (., break $out) as $v
+            | $$$$dot
+            | setpath($p; $v)
+          ),
+          (
+              $$$$dot
+            | delpaths([$p])
+          )
+        )
+    );
 def map_values(f): .[] |= f;
 
 # recurse

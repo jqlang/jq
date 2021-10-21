@@ -749,6 +749,25 @@ FORMAT {
   else
     $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
 } |
+/*
+ * This `$$$$varname` hack is strictly private to jq builtins.  DO NOT USE!!
+ *
+ * This is used in `_modify`, in src/builtin.jq, to avoid holding on to a
+ * reference to `.`.
+ *
+ * We could just have the compiler emit bytecode for `_modify` so it can use
+ * LOADVN w/o needing jq syntax for LOADVN.
+ *
+ * This syntax, `$$$$varname`, violates referential transparency: it has
+ * side-effects that are surprising.
+ *
+ * DO NOT USE!!  I will break your jq code if you do use this outside
+ * src/builtin.jq.
+ */
+'$' '$' '$' '$' IDENT {
+  $$ = gen_location(@$, locations, gen_op_unbound(LOADVN, jv_string_value($5)));
+  jv_free($5);
+} |
 '$' IDENT {
   $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));
   jv_free($2);
