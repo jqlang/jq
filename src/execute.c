@@ -542,8 +542,8 @@ jv jq_next(jq_state *jq) {
       jv* var = frame_local_var(jq, v, level);
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
-        jv_dump(jv_copy(*var), 0);
-        printf(" (%d)\n", jv_get_refcnt(*var));
+        jv_dump(jv_copy(*var), JV_PRINT_REFCOUNT);
+        printf("\n");
       }
       jv_free(stack_pop(jq));
       stack_push(jq, jv_copy(*var));
@@ -557,8 +557,8 @@ jv jq_next(jq_state *jq) {
       jv* var = frame_local_var(jq, v, level);
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
-        jv_dump(jv_copy(*var), 0);
-        printf(" (%d)\n", jv_get_refcnt(*var));
+        jv_dump(jv_copy(*var), JV_PRINT_REFCOUNT);
+        printf("\n");
       }
       jv_free(stack_popn(jq));
 
