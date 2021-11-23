@@ -150,6 +150,12 @@ cmp $d/out $d/expected
 printf "[1,2][3,4]\n" | $JQ -cs add > $d/out 2>&1
 cmp $d/out $d/expected
 
+# Regression test for #2374
+printf "Line 1\nLine 2\nLine 3" > $d/a
+printf "Line 4\nLine 5" > $d/b
+echo '{"'$d/a'":{"1":"Line 1","2":"Line 2","3":"Line 3"},"'$d/b'":{"1":"Line 4","2":"Line 5"}}' > $d/expected
+$JQ -Rnc 'reduce inputs as $line ({}; .[input_filename] += {(input_line_number|tostring): $line})' $d/a $d/b > $d/out 2>&1
+cmp $d/out $d/expected
 
 ## Test streaming parser
 
