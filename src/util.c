@@ -411,6 +411,11 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
       is_last = jq_util_input_read_more(state);
       if (state->buf_valid_len == 0)
         continue;
+      if (state->current_input && feof(state->current_input))
+      {
+        state->current_line++;
+        is_last = 1;
+      }
       if (jv_is_valid(state->slurped)) {
         // Slurped raw input
         state->slurped = jv_string_concat(state->slurped, jv_string_sized(state->buf, state->buf_valid_len));
