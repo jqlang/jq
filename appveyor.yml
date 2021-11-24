@@ -1,3 +1,5 @@
+image: Visual Studio 2019
+
 environment:
   matrix:
   - MSYSTEM: MINGW64
