@@ -17,10 +17,10 @@ install:
   - C:\msys64\usr\bin\bash -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
   - C:\msys64\usr\bin\bash -lc "pacman -U --noconfirm msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
 
-  - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/bison-3.6.4-1-x86_64.pkg.tar.xz"
-  - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/bison-3.6.4-1-x86_64.pkg.tar.xz.sig"
-  - C:\msys64\usr\bin\bash -lc "pacman-key --verify bison-3.6.4-1-x86_64.pkg.tar.xz.sig"
-  - C:\msys64\usr\bin\bash -lc "pacman -U --noconfirm bison-3.6.4-1-x86_64.pkg.tar.xz"
+  - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/bison-3.6.4-1-x86_64.pkg.tar.zst"
+  - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/bison-3.6.4-1-x86_64.pkg.tar.zst.sig"
+  - C:\msys64\usr\bin\bash -lc "pacman-key --verify bison-3.6.4-1-x86_64.pkg.tar.zst.sig"
+  - C:\msys64\usr\bin\bash -lc "pacman -U --noconfirm bison-3.6.4-1-x86_64.pkg.tar.zst"
 
   - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/flex-2.6.4-1-x86_64.pkg.tar.xz"
   - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/flex-2.6.4-1-x86_64.pkg.tar.xz.sig"
