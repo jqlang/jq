@@ -19,8 +19,8 @@ install:
 
   - C:\msys64\usr\bin\bash -lc "curl -O --fail http://gnu.mirror.constant.com/bison/bison-3.5.1.tar.xz"
   - C:\msys64\usr\bin\bash -lc "curl -O --fail http://gnu.mirror.constant.com/bison/bison-3.5.1.tar.xz.sig"
-  - C:\msys64\usr\bin\bash -lc "pacman-key --verify bison-3.5.1.tar.xz"
-  - C:\msys64\usr\bin\bash -lc "pacman -U --noconfirm bison-3.5.1.tar.xz.sig"
+  - C:\msys64\usr\bin\bash -lc "pacman-key --verify bison-3.5.1.tar.xz.sig"
+  - C:\msys64\usr\bin\bash -lc "pacman -U --noconfirm bison-3.5.1.tar.xz"
 
   - C:\msys64\usr\bin\bash -lc "curl -O --fail http://repo.msys2.org/msys/x86_64/flex-2.6.4-1-x86_64.pkg.tar.xz"
   - C:\msys64\usr\bin\bash -lc "curl -O --fail http://repo.msys2.org/msys/x86_64/flex-2.6.4-1-x86_64.pkg.tar.xz.sig"
