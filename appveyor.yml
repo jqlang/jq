@@ -18,8 +18,8 @@ install:
   - C:\msys64\usr\bin\bash -lc "pacman -U --noconfirm msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
 
   # update msys2
-  - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Su"
+  - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
 
   # update dependencies
   - C:\msys64\usr\bin\bash -lc "curl -O --fail http://repo.msys2.org/msys/x86_64/bison-3.6.4-1-x86_64.pkg.tar.zst"
