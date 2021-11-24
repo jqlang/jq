@@ -11,16 +11,17 @@ clone_script:
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER && git submodule update --init --recursive"
 
 install:
-  # update msys2
-  - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Su"
-
-  # update dependencies
+  # accept new maintainers
   - C:\msys64\usr\bin\bash -lc "curl -O --fail http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
   - C:\msys64\usr\bin\bash -lc "curl -O --fail http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
   - C:\msys64\usr\bin\bash -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
   - C:\msys64\usr\bin\bash -lc "pacman -U --noconfirm msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
 
+  # update msys2
+  - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Su"
+
+  # update dependencies
   - C:\msys64\usr\bin\bash -lc "curl -O --fail http://repo.msys2.org/msys/x86_64/bison-3.6.4-1-x86_64.pkg.tar.zst"
   - C:\msys64\usr\bin\bash -lc "curl -O --fail http://repo.msys2.org/msys/x86_64/bison-3.6.4-1-x86_64.pkg.tar.zst.sig"
   - C:\msys64\usr\bin\bash -lc "pacman-key --verify bison-3.6.4-1-x86_64.pkg.tar.zst.sig"
