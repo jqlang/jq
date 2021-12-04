@@ -420,7 +420,7 @@ static inst* block_take_last(block* b) {
   return i;
 }
 
-// Binds a sequence of binders, which *must not* alrady be bound to each other,
+// Binds a sequence of binders, which *must not* already be bound to each other,
 // to body, throwing away unreferenced defs
 block block_bind_referenced(block binder, block body, int bindflags) {
   assert(block_has_only_binders(binder, bindflags));
