@@ -56,6 +56,9 @@ body:
 
       ### OS X
 
+       * Use [Fink](https://finkproject.org) to install jq 1.6 with
+         `fink install jq`.
+
        * Use [Homebrew](http://brew.sh/) to install jq 1.6 with
          `brew install jq`.
 
