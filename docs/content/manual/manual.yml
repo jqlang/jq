@@ -3084,16 +3084,16 @@ sections:
     entries:
       - title: "Update-assignment: `|=`"
         body: |
-          This is the "update" operator '|='.  It takes a filter on the
+          This is the "update" operator `|=`.  It takes a filter on the
           right-hand side and works out the new value for the property
           of `.` being assigned to by running the old value through this
-          expression. For instance, (.foo, .bar) |= .+1 will build an
-          object with the "foo" field set to the input's "foo" plus 1,
-          and the "bar" field set to the input's "bar" plus 1.
+          expression. For instance, `(.foo, .bar) |= .+1` will build an
+          object with the `foo` field set to the input's `foo` plus 1,
+          and the `bar` field set to the input's `bar` plus 1.
 
           The left-hand side can be any general path expression; see `path()`.
 
-          Note that the left-hand side of '|=' refers to a value in `.`.
+          Note that the left-hand side of `|=` refers to a value in `.`.
           Thus `$var.foo |= . + 1` won't work as expected (`$var.foo` is
           not a valid or useful path expression in `.`); use `$var |
           .foo |= . + 1` instead.
