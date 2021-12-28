@@ -3126,41 +3126,52 @@ sections:
         body: |
 
           This is the plain assignment operator.  Unlike the others, the
-          input to the right-hand-side (RHS) is the same as the input to
-          the left-hand-side (LHS) rather than the value at the LHS
+          input to the right-hand side (RHS) is the same as the input to
+          the left-hand side (LHS) rather than the value at the LHS
           path, and all values output by the RHS will be used (as shown
           below).
 
-          If the RHS of '=' produces multiple values, then for each such
+          If the RHS of `=` produces multiple values, then for each such
           value jq will set the paths on the left-hand side to the value
           and then it will output the modified `.`.  For example,
-          `(.a,.b)=range(2)` outputs `{"a":0,"b":0}`, then
+          `(.a,.b) = range(2)` outputs `{"a":0,"b":0}`, then
           `{"a":1,"b":1}`.  The "update" assignment forms (see above) do
           not do this.
 
-          This example should show the difference between '=' and '|=':
+          This example should show the difference between `=` and `|=`:
 
-          Provide input '{"a": {"b": 10}, "b": 20}' to the programs:
+          Provide input `{"a": {"b": 10}, "b": 20}` to the programs
 
-          .a = .b
+              .a = .b
 
-          .a |= .b
+          and
 
-          The former will set the "a" field of the input to the "b"
-          field of the input, and produce the output {"a": 20, "b": 20}.
-          The latter will set the "a" field of the input to the "a"
-          field's "b" field, producing {"a": 10, "b": 20}.
+              .a |= .b
 
-          Another example of the difference between '=' and '|=':
+          The former will set the `a` field of the input to the `b`
+          field of the input, and produce the output `{"a": 20, "b": 20}`.
+          The latter will set the `a` field of the input to the `a`
+          field's `b` field, producing `{"a": 10, "b": 20}`.
 
-          null|(.a,.b)=range(3)
+        examples:
+          - program: .a = .b
+            input: '{"a": {"b": 10}, "b": 20}'
+            output: '{"a":20,"b":20}'
 
-          outputs '{"a":0,"b":0}', '{"a":1,"b":1}', and '{"a":2,"b":2}',
-          while
+          - program: .a |= .b
+            input: '{"a": {"b": 10}, "b": 20}'
+            output: '{"a":10,"b":20}'
 
-          null|(.a,.b)|=range(3)
+          - program: (.a, .b) = range(3)
+            input: 'null'
+            output:
+              - '{"a":0,"b":0}'
+              - '{"a":1,"b":1}'
+              - '{"a":2,"b":2}'
 
-          outputs just '{"a":0,"b":0}'.
+          - program: (.a, .b) |= range(3)
+            input: 'null'
+            output: '{"a":0,"b":0}'
 
       - title: Complex assignments
         body: |
