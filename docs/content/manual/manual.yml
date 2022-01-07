@@ -2924,7 +2924,9 @@ sections:
       are provided for this, `input` and `inputs`, that read from the
       same sources (e.g., `stdin`, files named on the command-line) as
       jq itself.  These two builtins, and jq's own reading actions, can
-      be interleaved with each other.
+      be interleaved with each other.  They are commonly used in combination
+      with the null input option `-n` to prevent one input from being read
+      implicitly.
 
       Two builtins provide minimal output capabilities, `debug`, and
       `stderr`.  (Recall that a jq program's output values are always
@@ -2944,13 +2946,19 @@ sections:
 
           Outputs one new input.
 
+          Note that when using `input` it is generally be necessary to
+          invoke jq with the -n command-line option, otherwise
+          the first entity will be lost.
+
       - title: "`inputs`"
         body: |
 
           Outputs all remaining inputs, one by one.
 
           This is primarily useful for reductions over a program's
-          inputs.
+          inputs.  Note that when using `inputs` it is generally necessary
+          to invoke jq with the -n command-line option, otherwise
+          the first entity will be lost.
 
       - title: "`debug`"
         body: |
