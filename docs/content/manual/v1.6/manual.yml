@@ -229,8 +229,8 @@ sections:
       * `--argjson name JSON-text`:
 
         This option passes a JSON-encoded value to the jq program as a
-        predefined variable. If you run jq with `--argjson foo 123`, then
-        `$foo` is available in the program and has the value `123`.
+        predefined variable. If you run jq with `--argjson foo '{"bar": 123}'`, 
+        then `$foo["bar"]` is available in the program and has the value `123`.
 
       * `--slurpfile variable-name filename`:
 
