@@ -1039,7 +1039,7 @@ Stops the jq program with no further outputs\. The input will be printed on \fBs
 The given \fBexit_code\fR (defaulting to \fB5\fR) will be jq\'s exit status\.
 .
 .P
-For example, \fB"Error: somthing went wrong\en"|halt_error(1)\fR\.
+For example, \fB"Error: something went wrong\en"|halt_error(1)\fR\.
 .
 .SS "$__loc__"
 Produces an object with a "file" key and a "line" key, with the filename and line number where \fB$__loc__\fR occurs, as values\.
@@ -3135,7 +3135,7 @@ If an object has two fields which are arrays, \fB\.foo\fR and \fB\.bar\fR, and y
 This means that it\'s impossible to build circular values in jq (such as an array whose first element is itself)\. This is quite intentional, and ensures that anything a jq program can produce can be represented in JSON\.
 .
 .P
-All the assignment operators in jq have path expressions on the left\-hand side (LHS)\. The right\-hand side (RHS) procides values to set to the paths named by the LHS path expressions\.
+All the assignment operators in jq have path expressions on the left\-hand side (LHS)\. The right\-hand side (RHS) provides values to set to the paths named by the LHS path expressions\.
 .
 .P
 Values in jq are always immutable\. Internally, assignment works by using a reduction to compute new, replacement values for \fB\.\fR that have had all the desired assignments applied to \fB\.\fR, then outputting the modified value\. This might be made clear by this example: \fB{a:{b:{c:1}}} | (\.a\.b|=3), \.\fR\. This will output \fB{"a":{"b":3}}\fR and \fB{"a":{"b":{"c":1}}}\fR because the last sub\-expression, \fB\.\fR, sees the original value, not the modified value\.
