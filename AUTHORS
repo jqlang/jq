@@ -52,6 +52,7 @@ Mike Fletcher        <john.m.fletcher@bankofamerica.com>
 Mike McCabe          <mccabe@archive.org>             - math (libm) functions
 Nicolas Pouillard    <nicolas.pouillard@gmail.com>    - add tests
 Nicolas Williams     <nico@cryptonector.com>          - library-fication, autoconf stuff, exception handling, various
+Oğuz Ersen           <oguz@ersen.moe>                 - add bash completion
 Peter van Dijk       <peter@7bits.nl>                 - doc fixes
 Philipp Hagemeister  <phihag@phihag.de>               - doc fixes
 pkoppstein           <pkoppstein@gmail.com>           - various builtins, improvements
