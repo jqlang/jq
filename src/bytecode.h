@@ -84,9 +84,9 @@ struct bytecode {
 };
 
 void dump_disassembly(int, struct bytecode* code);
-void dump_operation(struct bytecode* bc, uint16_t* op);
+void dump_operation(struct bytecode* bc, const uint16_t* op);
 
-int bytecode_operation_length(uint16_t* codeptr);
+int bytecode_operation_length(const uint16_t* codeptr);
 void bytecode_free(struct bytecode* bc);
 
 #endif

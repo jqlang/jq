@@ -250,7 +250,7 @@ void jq_util_input_add_input(jq_util_input_state *state, const char *fname) {
   state->files[state->nfiles++] = jv_mem_strdup(fname);
 }
 
-int jq_util_input_errors(jq_util_input_state *state) {
+int jq_util_input_errors(const jq_util_input_state *state) {
   return state->failures;
 }
 

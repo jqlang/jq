@@ -27,7 +27,7 @@ jv jq_next(jq_state *);
 void jq_teardown(jq_state **);
 
 void jq_halt(jq_state *, jv, jv);
-int jq_halted(jq_state *);
+int jq_halted(const jq_state *);
 jv jq_get_exit_code(jq_state *);
 jv jq_get_error_message(jq_state *);
 
@@ -59,7 +59,7 @@ jq_util_input_state *jq_util_input_init(jq_util_msg_cb, void *);
 void jq_util_input_set_parser(jq_util_input_state *, jv_parser *, int);
 void jq_util_input_free(jq_util_input_state **);
 void jq_util_input_add_input(jq_util_input_state *, const char *);
-int jq_util_input_errors(jq_util_input_state *);
+int jq_util_input_errors(const jq_util_input_state *);
 jv jq_util_input_next_input(jq_util_input_state *);
 jv jq_util_input_next_input_cb(jq_state *, void *);
 jv jq_util_input_get_position(jq_state*);

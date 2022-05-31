@@ -275,10 +275,6 @@ int block_has_only_binders_and_imports(block binders, int bindflags) {
   return 1;
 }
 
-static int inst_is_binder(inst *i, int bindflags) {
-  return !((opcode_describe(i->op)->flags & bindflags) != bindflags && i->op != MODULEMETA);
-}
-
 int block_has_only_binders(block binders, int bindflags) {
   bindflags |= OP_HAS_BINDING;
   bindflags &= ~OP_BIND_WILDCARD;
@@ -293,7 +289,7 @@ int block_has_only_binders(block binders, int bindflags) {
 // Count a call site's actual params
 static int block_count_actuals(block b) {
   int args = 0;
-  for (inst* i = b.first; i; i = i->next) {
+  for (const inst* i = b.first; i; i = i->next) {
     switch (i->op) {
     default: assert(0 && "Unknown function type"); break;
     case CLOSURE_CREATE:
@@ -503,7 +499,7 @@ jv block_take_imports(block* body) {
 
 jv block_list_funcs(block body, int omit_underscores) {
   jv funcs = jv_object(); // Use the keys for set semantics.
-  for (inst *pos = body.first; pos != NULL; pos = pos->next) {
+  for (const inst *pos = body.first; pos != NULL; pos = pos->next) {
     if (pos->op == CLOSURE_CREATE || pos->op == CLOSURE_CREATE_C) {
       if (pos->symbol != NULL && (!omit_underscores || pos->symbol[0] != '_')) {
         funcs = jv_object_set(funcs, jv_string_fmt("%s/%i", pos->symbol, pos->nformals), jv_null());
@@ -694,7 +690,7 @@ static block gen_const_array(block expr) {
   int commas = 0;
   int normal = 1;
   jv a = jv_array();
-  for (inst *i = expr.first; i; i = i->next) {
+  for (const inst *i = expr.first; i; i = i->next) {
     if (i->op == FORK) {
       commas++;
       if (i->imm.target == NULL || i->imm.target->op != JUMP ||
@@ -922,7 +918,7 @@ block gen_definedor(block a, block b) {
 }
 
 int block_has_main(block top) {
-  for (inst *c = top.first; c; c = c->next) {
+  for (const inst *c = top.first; c; c = c->next) {
     if (c->op == TOP)
       return 1;
   }
@@ -1103,7 +1099,7 @@ block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block co
   return code;
 }
 
-static uint16_t nesting_level(struct bytecode* bc, inst* target) {
+static uint16_t nesting_level(const struct bytecode* bc, const inst* target) {
   uint16_t level = 0;
   assert(bc && target && target->compiled);
   while (bc && target->compiled != bc) {
@@ -1116,7 +1112,7 @@ static uint16_t nesting_level(struct bytecode* bc, inst* target) {
 
 static int count_cfunctions(block b) {
   int n = 0;
-  for (inst* i = b.first; i; i = i->next) {
+  for (const inst* i = b.first; i; i = i->next) {
     if (i->op == CLOSURE_CREATE_C) n++;
     n += count_cfunctions(i->subfn);
   }
@@ -1237,7 +1233,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
   return errors;
 }
 
-static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv *env) {
+static int compile(struct bytecode* bc, block b, const struct locfile* lf, jv args, jv *env) {
   int errors = 0;
   int pos = 0;
   int var_frame_idx = 0;
@@ -1370,7 +1366,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   return errors;
 }
 
-int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
+int block_compile(block b, struct bytecode** out, const struct locfile* lf, jv args) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;

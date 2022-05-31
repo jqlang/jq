@@ -74,7 +74,7 @@ static int jvp_refcnt_dec(jv_refcnt* c) {
   return c->count == 0;
 }
 
-static int jvp_refcnt_unshared(jv_refcnt* c) {
+static int jvp_refcnt_unshared(const jv_refcnt* c) {
   assert(c->count > 0);
   return c->count == 1;
 }
@@ -1138,11 +1138,11 @@ static void jvp_string_free(jv js) {
   }
 }
 
-static uint32_t jvp_string_length(jvp_string* s) {
+static uint32_t jvp_string_length(const jvp_string* s) {
   return s->length_hashed >> 1;
 }
 
-static uint32_t jvp_string_remaining_space(jvp_string* s) {
+static uint32_t jvp_string_remaining_space(const jvp_string* s) {
   assert(s->alloc_length >= jvp_string_length(s));
   uint32_t r = s->alloc_length - jvp_string_length(s);
   return r;

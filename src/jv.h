@@ -236,7 +236,7 @@ jv jv_load_file(const char *, int);
 typedef struct jv_parser jv_parser;
 jv_parser* jv_parser_new(int);
 void jv_parser_set_buf(jv_parser*, const char*, int, int);
-int jv_parser_remaining(jv_parser*);
+int jv_parser_remaining(const jv_parser*);
 jv jv_parser_next(jv_parser*);
 void jv_parser_free(jv_parser*);
 
