@@ -180,6 +180,10 @@ endif
 
 AM_CFLAGS += $(onig_CFLAGS)
 
+### utf8proc
+
+AM_CFLAGS += $(utf8proc_CFLAGS)
+
 ### Packaging
 
 docs/site.yml: configure.ac
