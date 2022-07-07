@@ -1,0 +1,102 @@
+name: Linux Build
+
+on:
+    push:
+      branches:
+         - 'master'
+      paths:
+         - '!docs/**'
+         - '!**.md'
+         - '!appveyor.yml'
+         - '!.travis.yml'
+         - '.github/workflows/linux.yml'
+
+    pull_request:
+      paths:
+         - '!docs/**'
+         - '!**.md'
+         - '!appveyor.yml'
+         - '!.travis.yml'
+         - '.github/workflows/linux.yml'
+
+jobs:
+    unix:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                name: [linux-clang, linux-gcc]
+                include:
+                    - name: linux-clang
+                      os: ubuntu-18.04
+                      compiler: clang
+                      cflags: ''
+                    - name: linux-gcc
+                      os: ubuntu-18.04
+                      compiler: gcc
+                      cflags: '-Wnonnull'
+        steps:
+            - name: Clone repository
+              uses: actions/checkout@v1
+            - name: Open Submodule(s)
+              run: |
+                git submodule update --init --recursive
+            - name: Install packages
+              if: startsWith(matrix.os, 'ubuntu')
+              run: |
+                sudo apt-get update -qq
+                sudo apt-get install -y automake autoconf bison flex gdb python valgrind
+            - name: Prep
+              run: |
+                #pyenv global 3.6.7
+                #pip3 install pipenv
+                #(cd docs && pipenv sync)
+                #if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
+                echo SHELL=$SHELL
+                echo PATH=$PATH
+                which bison
+                bison --version
+
+            - name: Build
+              env:
+                CC: ${{ matrix.compiler }}
+                MAKEVARS: ${{ matrix.makevars }}
+              run: |
+                autoreconf -fi
+                rm src/lexer.c src/lexer.h
+                rm src/parser.c src/parser.h
+                ./configure --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
+                make -j4
+                make dist
+            - name: Test
+              env:
+                CC: ${{ matrix.compiler }}
+                MAKEVARS: ${{ matrix.makevars }}
+              run: |
+                ulimit -c unlimited
+                make -j4 check
+            - name: Core dump stacks
+              run: |
+                echo "thread apply all bt" > /tmp/x
+                find . -name core -print | while read core; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done
+                if [ "$(find . -name core -print | wc -l)" -gt 0 ]; then false; fi
+            - name: Test logs
+              if: ${{ failure() }}
+              run: |
+                cat test-suite.log
+                cat tests/*.log
+            - name: Upload Install Tarball
+              uses: actions/upload-artifact@v2
+              with:
+                name: Install Tarball
+                path: '~/jq-install-linux-${{ matrix.compiler }}.tgz'
+            - name: Upload Dist Tarball
+              uses: actions/upload-artifact@v2
+              with:
+                name: Dist Tarball
+                path: 'jq-*.tar.gz'
+            - name: Upload Logs Tarball
+              uses: actions/upload-artifact@v2
+              with:
+                name: Test Logs
+                path: '~/logs-linux-${{ matrix.compiler }}.tgz'
