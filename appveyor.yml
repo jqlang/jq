@@ -19,7 +19,7 @@ install:
   - C:\msys64\usr\bin\bash -lc "
     for FP in 5F944B027F7FE2091985AA2EFA11531AA0AA7F57 4A6129F4E4B84AE46ED7F635628F528CF3053E04; do
       pacman-key --keyserver hkp://keyserver.ubuntu.com --recv-keys $FP &&
-      pacman-key --import-trustdb <<< $FP:5:
+      pacman-key --import-trustdb <<< $FP':5:';
     done
     "
   - C:\msys64\usr\bin\bash -lc "pacman-key --verify msys2-keyring-1~20201002-1-any.pkg.tar.xz.sig"
