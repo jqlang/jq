@@ -12,10 +12,10 @@ clone_script:
 
 install:
   # update msys2
-  - C:\msys64\usr\bin\bash -lc "curl ---remote-name-all https://repo.msys2.org/msys/x86_64/msys2-keyring-1~20201002-1-any.pkg.tar.xz{,.sig}"
-  - C:\msys64\usr\bin\bash -lc "curl ---remote-name-all https://repo.msys2.org/msys/x86_64/bison-3.5.4-1-x86_64.pkg.tar.xz{,.sig}"
-  - C:\msys64\usr\bin\bash -lc "curl ---remote-name-all https://repo.msys2.org/msys/x86_64/flex-2.6.4-1-x86_64.pkg.tar.xz{,.sig}"
-  #- C:\msys64\usr\bin\bash -lc "curl --remote-name-all https://repo.msys2.org/msys/x86_64/git-2.33.1-1-x86_64.pkg.tar.zst"
+  - C:\msys64\usr\bin\bash -lc "wget https://repo.msys2.org/msys/x86_64/msys2-keyring-1~20201002-1-any.pkg.tar.xz{,.sig}"
+  - C:\msys64\usr\bin\bash -lc "wget https://repo.msys2.org/msys/x86_64/bison-3.5.4-1-x86_64.pkg.tar.xz{,.sig}"
+  - C:\msys64\usr\bin\bash -lc "wget https://repo.msys2.org/msys/x86_64/flex-2.6.4-1-x86_64.pkg.tar.xz{,.sig}"
+  #- C:\msys64\usr\bin\bash -lc "wget https://repo.msys2.org/msys/x86_64/git-2.33.1-1-x86_64.pkg.tar.zst"
   - C:\msys64\usr\bin\bash -lc "pacman-key --verify msys2-keyring-1~20201002-1-any.pkg.tar.xz.sig"
   - C:\msys64\usr\bin\bash -lc "pacman -U --noconfirm msys2-keyring-1~20201002-1-any.pkg.tar.xz"
   - C:\msys64\usr\bin\bash -lc "pacman-key --verify bison-3.5.4-1-x86_64.pkg.tar.xz.sig"
