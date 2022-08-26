@@ -12,9 +12,9 @@ clone_script:
 
 install:
   # update msys2
-  - C:\msys64\usr\bin\bash -lc "pacman -U https://repo.msys2.org/msys/x86_64/msys2-keyring-1~20201002-1-any.pkg.tar.xz"
-  - C:\msys64\usr\bin\bash -lc "pacman -U https://repo.msys2.org/msys/x86_64/bison-3.8.2-3-x86_64.pkg.tar.zst"
-  - C:\msys64\usr\bin\bash -lc "pacman -U https://repo.msys2.org/msys/x86_64/flex-2.6.4-2-x86_64.pkg.tar.zst"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -U https://repo.msys2.org/msys/x86_64/msys2-keyring-1~20201002-1-any.pkg.tar.xz"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -U https://repo.msys2.org/msys/x86_64/bison-3.8.2-3-x86_64.pkg.tar.zst"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -U https://repo.msys2.org/msys/x86_64/flex-2.6.4-2-x86_64.pkg.tar.zst"
   #- C:\msys64\usr\bin\bash -lc "wget https://repo.msys2.org/msys/x86_64/git-2.33.1-1-x86_64.pkg.tar.zst"
   - ps: Get-Process | Where-Object {$_.path -like 'C:\msys64*'} | Stop-Process
   #- C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
