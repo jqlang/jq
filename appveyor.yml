@@ -12,10 +12,7 @@ clone_script:
 
 install:
   # update msys2
-  - C:\msys64\usr\bin\bash -lc "pacman-key --keyserver hkp://keyserver.ubuntu.com --recv-keys 
-      5F944B027F7FE2091985AA2EFA11531AA0AA7F57
-      4A6129F4E4B84AE46ED7F635628F528CF3053E04
-    "
+  - C:\msys64\usr\bin\bash -lc "echo 'SigLevel = Never' >> /etc/pacman.conf"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -U https://repo.msys2.org/msys/x86_64/msys2-keyring-1~20201002-1-any.pkg.tar.xz"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -U https://repo.msys2.org/msys/x86_64/bison-3.8.2-3-x86_64.pkg.tar.zst"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -U https://repo.msys2.org/msys/x86_64/flex-2.6.4-2-x86_64.pkg.tar.zst"
