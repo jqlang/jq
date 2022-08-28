@@ -2966,6 +2966,15 @@ sections:
           invoke jq with the -n command-line option, otherwise
           the first entity will be lost.
 
+        examples:
+          - program: '[input]'
+            input: ['1', '2', '3', '4']
+            output: ['[2], [4]']
+
+          - program: '[., input]'
+            input: ['1', '2', '3', '4']
+            output: ['[1, 2], [3, 4]']
+
       - title: "`inputs`"
         body: |
 
@@ -2975,6 +2984,19 @@ sections:
           inputs.  Note that when using `inputs` it is generally necessary
           to invoke jq with the -n command-line option, otherwise
           the first entity will be lost.
+
+        examples:
+          - program: '[inputs]'
+            input: ['1', '2', '3', '4']
+            output: ['[2, 3, 4]']
+
+          - program: '[., inputs]'
+            input: ['1', '2', '3', '4']
+            output: ['[1, 2, 3, 4]']
+
+          - program: '[., input], [input], [inputs]'
+            input: ['1', '2', '3', '4', '5', '6']
+            output: ['[1,2]', '[3]', '[4,5,6]']
 
       - title: "`debug`"
         body: |
