@@ -892,8 +892,12 @@ sections:
           element of the input array, and return the outputs in a new
           array. `map(.+1)` will increment each element of an array of numbers.
 
-          Similarly, `map_values(x)` will run that filter for each element,
-          but it will return an object when an object is passed.
+          To transform an object using filter `x`, use `map_values(x)`.
+          When an object is passed to `map_values(x)`,
+          it will run that filter for each value in the object,
+          leaving the keys unchanged.
+          When any other type of value is passed to it, `map_values(x)`
+          behaves the same as `map(x)`.
 
           `map(x)` is equivalent to `[.[] | x]`. In fact, this is how
           it's defined. Similarly, `map_values(x)` is defined as `.[] |= x`.
