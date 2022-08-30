@@ -1368,6 +1368,11 @@ sections:
           `sort_by(foo)` compares two elements by comparing the result of
           `foo` on each element.
 
+          Also note that `sort_by(.k1, .k2, .k3, ...)` behaves as you would
+          expect: it sorts first by comparing elements by key `k1`, then
+          comparing elements by key `k2` to "break ties" left by `k1`,
+          then comparing elements by key `k3`, and so on.
+
         examples:
           - program: 'sort'
             input: '[8,3,null,6]'
@@ -1375,6 +1380,9 @@ sections:
           - program: 'sort_by(.foo)'
             input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]'
             output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]']
+          - program: 'sort_by(.foo, .bar)'
+            input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}, {"foo":3, "bar":200}]'
+            output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":3, "bar":200}, {"foo":4, "bar":10}]']
 
       - title: "`group_by(path_expression)`"
         body: |
