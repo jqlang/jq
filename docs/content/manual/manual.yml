@@ -2984,6 +2984,17 @@ sections:
           `["DEBUG:", <input-value>]` and prints that and a newline on
           stderr, compactly.  This may change in the future.
 
+      - title: "`debug(msg)`"
+        body: |
+
+          Calls `debug/0` to print the debug `msg` to stderr, but this
+          version sends stdin to stdout without consuming it.
+
+        examples:
+          - program: 'debug("here1") | . + 1'
+            input: '1'
+            output: ['2']
+
       - title: "`stderr`"
         body: |
 
