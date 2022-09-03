@@ -393,6 +393,28 @@ sections:
           `.["foo"]` (.foo above is a shorthand version of this, but
           only for identifier-like strings).
 
+      - title: "Dig for Generic Object Index: `dig(<string>)`"
+
+        body: |
+
+          `dig("foo")` behaves almost the same as `.["foo"]` but it
+          can dig down through a sequence of keys obtained from
+          spliting `<string>` on `"."`.
+
+          ie. so `dig("foo.bar")` is equivalent to .["foo"]["bar"]`.
+          (Which is not the same as `.["foo.bar"]`)
+
+        examples:
+          - program: 'dig("a.b")'
+            input: '{"a": {"b": 42}}'
+            output: ['42']
+          - program: 'dig("a")'
+            input: '{"a": {"b": 42}}'
+            output: ['{"b": 42}']
+          - program: 'dig("a.b")'
+            input: '{"a.b": 42}'
+            output: ['null']
+
       - title: "Array Index: `.[2]`"
         body: |
 
