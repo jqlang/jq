@@ -72,7 +72,7 @@ struct lexer_param;
 ">=" { return GREATEREQ; }
 ".." { return REC; }
 "?//" { return ALTERNATION; }
-"."|"?"|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"%"|"\$"|"<"|">" { return yytext[0];}
+"."|"?"|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"%"|"\$"|"<"|">"|"!" { return yytext[0];}
 
 "["|"{"|"(" {
   return enter(yytext[0], YY_START, yyscanner);

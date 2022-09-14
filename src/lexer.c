@@ -1,6 +1,6 @@
-#line 2 "src/lexer.c"
+#line 1 "src/lexer.c"
 
-#line 4 "src/lexer.c"
+#line 3 "src/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -585,7 +585,7 @@ struct yy_trans_info
 static const flex_int16_t yy_accept[157] =
     {   0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,   51,   49,   48,   48,   49,   40,    1,   35,
+        0,    0,   51,   49,   48,   48,   35,   40,    1,   35,
        35,   36,   37,   35,   35,   35,   35,   35,   39,   35,
        35,   35,   35,   49,   46,   46,   46,   46,   46,   46,
        46,   46,   46,   46,   46,   46,   46,   46,   35,   44,
@@ -803,14 +803,14 @@ struct lexer_param;
     yyset_extra(yylloc->end, yyscanner);         \
   } while (0);
 
-#line 807 "src/lexer.c"
+#line 806 "src/lexer.c"
 
 #line 25 "src/lexer.l"
   static int enter(int opening, int state, yyscan_t yyscanner);
   static int try_exit(int closing, int state, yyscan_t yyscanner);
-#line 812 "src/lexer.c"
+#line 811 "src/lexer.c"
 #define YY_NO_INPUT 1
-#line 814 "src/lexer.c"
+#line 813 "src/lexer.c"
 
 #define INITIAL 0
 #define IN_PAREN 1
@@ -1104,7 +1104,7 @@ YY_DECL
 #line 38 "src/lexer.l"
 
 
-#line 1108 "src/lexer.c"
+#line 1107 "src/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1443,7 +1443,7 @@ YY_RULE_SETUP
 #line 130 "src/lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1447 "src/lexer.c"
+#line 1446 "src/lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(IN_PAREN):
 case YY_STATE_EOF(IN_BRACKET):

@@ -250,6 +250,17 @@ static jv f_negate(jq_state *jq, jv input) {
   return ret;
 }
 
+static jv f_not(jq_state *jq, jv input) {
+  jv ret;
+  if (jv_get_kind(input) == JV_KIND_NULL || jv_get_kind(input) == JV_KIND_FALSE) {
+    ret = jv_true();
+  } else {
+    ret = jv_false();
+  }
+  jv_free(input);
+  return ret;
+}
+
 static jv f_startswith(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING)
     return ret_error2(a, b, jv_string("startswith() requires string inputs"));
@@ -1688,6 +1699,7 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_multiply, "_multiply", 3},
   {(cfunction_ptr)f_divide, "_divide", 3},
   {(cfunction_ptr)f_mod, "_mod", 3},
+  {(cfunction_ptr)f_not, "_not", 1},
   {(cfunction_ptr)f_dump, "tojson", 1},
   {(cfunction_ptr)f_json_parse, "fromjson", 1},
   {(cfunction_ptr)f_tonumber, "tonumber", 1},

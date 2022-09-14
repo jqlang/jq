@@ -111,6 +111,8 @@ struct lexer_param;
 %precedence "try"
 %precedence "catch"
 
+%precedence '!'
+
 
 %type <blk> Exp Term
 %type <blk> MkDict MkDictPair ExpD
@@ -497,6 +499,10 @@ Exp "<=" Exp {
 
 Exp ">=" Exp {
   $$ = gen_binop($1, $3, GREATEREQ);
+} |
+
+'!' Exp {
+  $$ = BLOCK($2, gen_call("_not", gen_noop()));
 } |
 
 Term {
