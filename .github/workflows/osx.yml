@@ -1,0 +1,93 @@
+name: OS X Build
+
+on:
+    push:
+      branches:
+         - 'master'
+         - 'osx-build'
+      paths:
+         - '!docs/**'
+         - '!**.md'
+         - '!appveyor.yml'
+         - '!.travis.yml'
+         - '.github/workflows/osx.yml'
+
+    pull_request:
+      paths:
+         - '!docs/**'
+         - '!**.md'
+         - '!appveyor.yml'
+         - '!.travis.yml'
+         - '.github/workflows/osx.yml'
+
+jobs:
+    unix:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                name: [osx-clang]
+                include:
+                    - name: osx-clang
+                      os: ubuntu-18.04
+                      compiler: clang
+                      cflags: ''
+        steps:
+            - name: Clone repository
+              uses: actions/checkout@v1
+            - name: Open Submodule(s)
+              run: |
+                git submodule update --init --recursive
+            - name: Install packages
+              if: startsWith(matrix.os, 'ubuntu')
+              run: |
+                uname -s
+                brew update
+                brew install flex bison
+                brew upgrade pyenv
+                pyenv install -s 3.6.7
+                rm src/{lexer,parser}.{c,h}
+                sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
+            - name: Prep
+              run: |
+                #pyenv global 3.6.7
+                #pip3 install pipenv
+                #(cd docs && pipenv sync)
+                #if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
+                echo SHELL=$SHELL
+                echo PATH=$PATH
+                which bison
+                bison --version
+
+            - name: Build
+              env:
+                CC: ${{ matrix.compiler }}
+                MAKEVARS: ${{ matrix.makevars }}
+              run: |
+                autoreconf -fi
+                rm src/lexer.c src/lexer.h
+                rm src/parser.c src/parser.h
+                ./configure --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
+                make -j4
+            - name: Test
+              env:
+                CC: ${{ matrix.compiler }}
+                MAKEVARS: ${{ matrix.makevars }}
+              run: |
+                ulimit -c unlimited
+                make -j4 check
+            - name: Test logs
+              if: ${{ failure() }}
+              run: |
+                cat test-suite.log
+                cat tests/*.log
+            - name: Upload Install Tarball
+              uses: actions/upload-artifact@v2
+              with:
+                name: Install Tarball
+                path: '~/jq-install-osx-${{ matrix.compiler }}.tgz'
+            - name: Upload Logs Tarball
+              uses: actions/upload-artifact@v2
+              with:
+                name: Test Logs
+                path: '~/logs-osx-${{ matrix.compiler }}.tgz'
