@@ -1,0 +1,100 @@
+name: build
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get install -y gcc libtool make autoconf automake flex bison
+      - name: CI-Build
+        run: |
+          git submodule update --init
+          autoreconf -i
+          ./configure --with-oniguruma=builtin
+          make -j4
+          make check || (cat test-suite.log && exit 1)
+          cat test-suite.log
+
+  macos:
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install automake
+        run: |
+          curl -L -O https://ftp.gnu.org/gnu/automake/automake-1.16.5.tar.xz
+          tar xvf automake-1.16.5.tar.xz
+          cd automake-1.16.5
+          ./configure
+          make -j4
+          sudo make install
+      - name: Install libtool
+        run: |
+          curl -L -O https://ftp.gnu.org/gnu/libtool/libtool-2.4.7.tar.xz
+          tar xvf libtool-2.4.7.tar.xz
+          cd libtool-2.4.7
+          ./configure
+          make -j4
+          sudo make install
+      - name: Install autoconf
+        run: |
+          curl -L -O https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
+          tar xvf autoconf-2.71.tar.gz
+          cd autoconf-2.71
+          ./configure
+          make -j4
+          sudo make install
+      - name: Install bison
+        run: |
+          curl -L -O https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz
+          tar xvf bison-3.8.2.tar.xz
+          cd bison-3.8.2
+          ./configure
+          make -j4
+          sudo make install
+      - name: Install flex
+        run: |
+          curl -L -O https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz
+          tar xvf flex-2.6.4.tar.gz
+          cd flex-2.6.4
+          ./configure
+          make -j4
+          sudo make install
+      - name: CI-Build
+        run: |
+          git submodule update --init
+          autoreconf -i
+          ./configure --with-oniguruma=builtin
+          make -j4
+          make check || (cat test-suite.log && exit 1)
+          cat test-suite.log
+
+  msys2-mingw64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Set git to use LF
+        shell: cmd
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - uses: actions/checkout@v3
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: git gcc libtool make autoconf automake flex bison
+      - name: CI-Build
+        run: |
+          git submodule update --init
+          autoreconf -i
+          ./configure --with-oniguruma=builtin --disable-shared --enable-static --enable-all-static
+          make -j4
+          make check || (cat test-suite.log && exit 1)
+          cat test-suite.log
