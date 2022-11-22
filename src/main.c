@@ -81,6 +81,8 @@ static void usage(int code, int keep_it_short) {
       "  -M               monochrome (don't colorize JSON);\n"
       "  -S               sort keys of objects on output;\n"
       "  --tab            use tabs for indentation;\n"
+      "  --indent n       use $n spaces for indentation.\n"
+      "                   between -1 (default of 4 spaces) and 7;\n"
       "  --arg a v        set variable $a to value <v>;\n"
       "  --argjson a v    set variable $a to JSON value <v>;\n"
       "  --slurpfile a f  set variable $a to an array of JSON texts read from <f>;\n"
