@@ -224,6 +224,8 @@ def ascii_upcase:
 # Streaming utilities
 def truncate_stream(stream):
   . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][$n:]) else empty end;
+def truncatestream($n):
+  select(.[0] | length > $n) | .[0] |= .[$n:];
 def fromstream(i): {x: null, e: false} as $init |
   # .x = object being built; .e = emit and reset state
   foreach i as $i ($init
