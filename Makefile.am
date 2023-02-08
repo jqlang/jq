@@ -5,7 +5,9 @@ LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
-        src/util.h
+        src/util.h src/decNumber/decContext.h src/decNumber/decNumber.h \
+        src/decNumber/decNumberLocal.h src/jv_dtoa_tsd.h src/jv_thread.h \
+        src/jv_type_private.h
 
 LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
@@ -214,6 +216,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/utf8-truncate.jq tests/utf8test				\
         tests/base64.test tests/base64test 				\
         tests/jq-f-test.sh tests/shtest
+
+DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin
 
 # README.md is expected in Github projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
