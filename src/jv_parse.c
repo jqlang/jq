@@ -31,6 +31,7 @@ enum last_seen {
 };
 
 struct jv_parser {
+  pfunc (*scan)(struct jv_parser* p, char ch, jv* out);
   const char* curr_buf;
   int curr_buf_length;
   int curr_buf_pos;
@@ -65,9 +66,14 @@ struct jv_parser {
   unsigned int last_ch_was_ws:1;
 };
 
+static pfunc scan_json(struct jv_parser* p, char ch, jv* out);
+static pfunc scan_line_comment(struct jv_parser* p, char ch, jv* out);
+static pfunc scan_slash_comment(struct jv_parser* p, char ch, jv* out);
+static pfunc scan_c_comment(struct jv_parser* p, char ch, jv* out);
 
 static void parser_init(struct jv_parser* p, int flags) {
   p->flags = flags;
+  p->scan = scan_json;
   if ((p->flags & JV_PARSE_STREAMING)) {
     p->path = jv_array();
   } else {
@@ -639,12 +645,43 @@ static int stream_is_top_num(struct jv_parser* p) {
 #define is_top_num(p) \
    (((p)->flags & JV_PARSE_STREAMING) ? stream_is_top_num((p)) : parse_is_top_num((p)))
 
-static pfunc scan(struct jv_parser* p, char ch, jv* out) {
-  p->column++;
-  if (ch == '\n') {
-    p->line++;
-    p->column = 0;
+
+static pfunc scan_line_comment(struct jv_parser* p, char ch, jv* out) {
+  if(ch == '\n')
+    p->scan = scan_json;
+  return OK;
+}
+
+
+static pfunc scan_c_comment_close(struct jv_parser* p, char ch, jv* out) {
+  if(ch == '/') {
+    p->scan = scan_json;
+  } else {
+    p->scan = scan_c_comment;
   }
+  return OK;
+}
+
+static pfunc scan_c_comment(struct jv_parser* p, char ch, jv* out) {
+  if(ch == '*') {
+    p->scan = scan_c_comment_close;
+  }
+  return OK;
+}
+
+static pfunc scan_slash_comment(struct jv_parser* p, char ch, jv* out) {
+  if(ch == '/') {
+    p->scan = scan_line_comment;
+    return OK;
+  }
+  if(ch == '*') {
+    p->scan = scan_c_comment;
+    return OK;
+  }
+  return "Incomplete comment token; slash must be followed by another slash or asterisk";
+}
+
+static pfunc scan_json(struct jv_parser* p, char ch, jv* out) {
   if ((p->flags & JV_PARSE_SEQ)
       && ch == '\036' /* ASCII RS; see draft-ietf-json-sequence-07 */) {
     if (check_truncation(p)) {
@@ -662,9 +699,19 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
     *out = jv_invalid();
     return OK;
   }
+
   presult answer = 0;
   p->last_ch_was_ws = 0;
   if (p->st == JV_PARSER_NORMAL) {
+    if(ch == '#') {
+      p->scan = scan_line_comment;
+      return OK;
+    }
+    if(ch == '/') {
+      p->scan = scan_slash_comment;
+      return OK;
+    }
+
     chclass cls = classify(ch);
     if (cls == WHITESPACE)
       p->last_ch_was_ws = 1;
@@ -703,6 +750,15 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
     }
   }
   return answer;
+}
+
+static pfunc scan(struct jv_parser* p, char ch, jv* out) {
+  p->column++;
+  if (ch == '\n') {
+    p->line++;
+    p->column = 0;
+  }
+  return p->scan(p, ch, out);
 }
 
 struct jv_parser* jv_parser_new(int flags) {
