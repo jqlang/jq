@@ -74,7 +74,7 @@ static void test_err_cb(void *data, jv e) {
 }
 
 static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int take) {
-  char prog[4096];
+  char prog[4096] = {0};
   char buf[4096];
   struct err_data err_msg;
   int tests = 0, passed = 0, invalid = 0;
