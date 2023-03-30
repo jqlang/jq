@@ -75,6 +75,14 @@ gsub( "(.*)"; "";  "x")
 ""
 ""
 
+gsub(""; "_")
+"abc"
+"_a_b_c_"
+
+gsub("\\b"; "X")
+"one two three"
+"XoneX XtwoX XthreeX"
+
 [.[] | scan(", ")]
 ["a,b, c, d, e,f",", a,b, c, d, e,f, "]
 [", ",", ",", ",", ",", ",", ",", ",", "]

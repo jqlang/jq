@@ -132,20 +132,30 @@ def sub($re; s; flags):
   def subg: [explode[] | select(. != 103)] | implode;
   # "fla" should be flags with all occurrences of g removed; gs should be non-nil if flags has a g
   def sub1(fla; gs):
-    def mysub:
+    def find_first_new_match($lastzero):
+      [label $out|
+        match($re; fla + "g")|
+        if $lastzero then
+          # After a zero length match, don't return the same match again!
+          select(.offset != 0 or .length != 0)
+        else . end|
+        ., break $out
+      ];
+    def mysub($lastzero):
       . as $in
-      | [match($re; fla)]
+      | find_first_new_match($lastzero)
       | if length == 0 then $in
-        else .[0] as $edit
+        else (.[0]) as $edit
+        | ($edit | .length == 0) as $zerolength
         | ($edit | .offset + .length) as $len
         # create the "capture" object:
         | reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
             ({}; . + $pair)
         | $in[0:$edit.offset]
           + s
-          + ($in[$len:] | if length > 0 and gs then mysub else . end)
+          + ($in[$len:] | if gs then mysub($zerolength) else . end)
         end ;
-    mysub ;
+    mysub(false) ;
     (flags | index("g")) as $gs
     | (flags | if $gs then subg else . end) as $fla
     | sub1($fla; $gs);
