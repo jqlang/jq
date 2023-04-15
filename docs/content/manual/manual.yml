@@ -599,9 +599,8 @@ sections:
           If the keys are "identifier-like", then the quotes can be left
           off, as in `{a:42, b:17}`.  Variable references as key
           expressions use the value of the variable as the key.  Key
-          expressions other than constant literals, identifiers, or
-          variable references, need to be parenthesized, e.g.,
-          `{("a"+"b"):59}`.
+          expressions other than constant literals or identifiers need
+          to be parenthesized, e.g. `{("a"+"b"):59}`.
 
           The value can be any expression (although you may need to wrap
           it in parentheses if, for example, it contains colons), which
