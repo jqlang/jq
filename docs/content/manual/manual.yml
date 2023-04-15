@@ -648,7 +648,7 @@ sections:
           the key.  Without a value then the variable's name becomes the
           key and its value becomes the value,
 
-              "f o o" as $foo | "b a r" as $bar | {$foo, $bar:$foo}
+              "f o o" as $foo | "b a r" as $bar | {$foo, ($bar):$foo}
 
           produces
 
