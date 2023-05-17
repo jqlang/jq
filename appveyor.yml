@@ -12,13 +12,13 @@ clone_script:
 
 install:
   # update msys2
+  - C:\msys64\usr\bin\bash -lc "pacman-key --keyserver keyserver.ubuntu.com --refresh-keys"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Syuu"  # Core update (in case any core packages are outdated)
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Syuu"  # Normal update
   - C:\msys64\usr\bin\bash -lc "pacman -S autoconf automake bison flex git"
 #  - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
 #  - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
 
-#  - C:\msys64\usr\bin\bash -lc "pacman-key --keyserver keyserver.ubuntu.com --refresh-keys"
 #  - C:\msys64\usr\bin\bash -lc "pacman-key --init"
 #  - C:\msys64\usr\bin\bash -lc "pacman-key --populate msys2"
 
