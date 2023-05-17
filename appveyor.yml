@@ -15,7 +15,7 @@ install:
 
   - C:\msys64\usr\bin\bash -lc "rm -rf /etc/pacman.d/gnupg/* /var/lib/pacman/sync/* /etc/pacman.d/gnupg/*"
 #  - C:\msys64\usr\bin\bash -lc "pacman-key --keyserver keyserver.ubuntu.com --refresh-keys"
-  - C:\msys64\usr\bin\bash -lc "pacman-key --refresh-keys"
+#  - C:\msys64\usr\bin\bash -lc "pacman-key --refresh-keys"
   - C:\msys64\usr\bin\bash -lc "pacman-key --init"
   - C:\msys64\usr\bin\bash -lc "pacman-key --populate msys2"
 #  - C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
