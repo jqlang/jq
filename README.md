@@ -72,4 +72,8 @@ cross-compilation environment.  See also
 ["Cross compilation"](https://github.com/jqlang/jq/wiki/Cross-compilation) on
 the wiki.
 
-Send questions to https://stackoverflow.com/questions/tagged/jq or to the #jq channel (https://web.libera.chat/#jq) on Libera.Chat (https://libera.chat/).
+
+# Community
+
+* Send questions to https://stackoverflow.com/questions/tagged/jq.
+* Join our [Discord server](https://discord.gg/yg6yjNmgAC).
