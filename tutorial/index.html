@@ -2,14 +2,14 @@
 <html lang="en">
   <head>
     <script>
-      if ((window.location.host == "stedolan.github.io") && (window.location.protocol != "https:"))
+      if ((window.location.host == "jqlang.github.io") && (window.location.protocol != "https:"))
         window.location.protocol = "https";
     </script>
     <meta charset="utf-8">
     <title>Tutorial</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <link rel="canonical" href="https://stedolan.github.io/jq/tutorial/" />
+    <link rel="canonical" href="https://jqlang.github.io/jq/tutorial/" />
     <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.5/spacelab/bootstrap.min.css" rel="stylesheet" integrity="sha256-j7Dtnd7ZjexEiPNbscbopFn9+Cs0b3TLipKsWAPHZIM= sha512-RFhfi6P8zWMAJrEGU+CPjuxPh3r/UUBGqQ+/o6WKPIVZmQqeOipGotH2ihRULuQ8wsMBoK15TSZqc/7VYWyuIw==" crossorigin="anonymous">
     <link rel="stylesheet" href="/jq/css/base.css" type="text/css">
     <!--[if lt IE 9]>
@@ -46,10 +46,10 @@
                 <a href="/jq/manual/">Manual</a>
               </li>
             
-            <li><a href="https://github.com/stedolan/jq/issues">Issues</a></li>
-            <li><a href="https://github.com/stedolan/jq">Source</a></li>
+            <li><a href="https://github.com/jqlang/jq/issues">Issues</a></li>
+            <li><a href="https://github.com/jqlang/jq">Source</a></li>
             <li><a href="https://jqplay.org">Try online!</a></li>
-            <li><a href="https://raw.githubusercontent.com/stedolan/jq/master/NEWS">News</a></li>
+            <li><a href="https://raw.githubusercontent.com/jqlang/jq/master/NEWS">News</a></li>
           </ul>
         </div>
       </div>
@@ -72,37 +72,43 @@
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>curl &#39;https://api.github.com/repos/stedolan/jq/commits?per_page=5&#39;</pre>
+                <pre>curl &#39;https://api.github.com/repos/jqlang/jq/commits?per_page=5&#39;</pre>
                 <a data-toggle="collapse" href="#result1">Show result</a>
               </div>
               <div id="result1" class="accordion-body collapse">
                 <pre>[
   {
-    &#34;sha&#34;: &#34;d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+    &#34;sha&#34;: &#34;cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+    &#34;node_id&#34;: &#34;C_kwDOAE3WVdoAKGNmZjUzMzZlYzcxYjZmZWUzOTZhOTViYjBlNGJlYTM2NWUwY2QxZTg&#34;,
     &#34;commit&#34;: {
       &#34;author&#34;: {
-        &#34;name&#34;: &#34;Stephen Dolan&#34;,
-        &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
-        &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
+        &#34;name&#34;: &#34;Mattias Wadman&#34;,
+        &#34;email&#34;: &#34;mattias.wadman@gmail.com&#34;,
+        &#34;date&#34;: &#34;2021-06-09T14:02:22Z&#34;
       },
       &#34;committer&#34;: {
-        &#34;name&#34;: &#34;Stephen Dolan&#34;,
-        &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
-        &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
+        &#34;name&#34;: &#34;Nico Williams&#34;,
+        &#34;email&#34;: &#34;nico@cryptonector.com&#34;,
+        &#34;date&#34;: &#34;2022-05-26T21:04:32Z&#34;
       },
-      &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+      &#34;message&#34;: &#34;docs: Document repeat(exp)&#34;,
       &#34;tree&#34;: {
-        &#34;sha&#34;: &#34;6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;,
-        &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;
+        &#34;sha&#34;: &#34;d67d5542df1f16d1a48e1fb75749f60482cd874b&#34;,
+        &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/git/trees/d67d5542df1f16d1a48e1fb75749f60482cd874b&#34;
       },
-      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
-      &#34;comment_count&#34;: 0
+      &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/git/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+      &#34;comment_count&#34;: 0,
+      &#34;verification&#34;: {
+        &#34;verified&#34;: false,
+        &#34;reason&#34;: &#34;unsigned&#34;,
+        &#34;signature&#34;: null,
+        &#34;payload&#34;: null
+      }
     },
-    &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
-    &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
-    &#34;comments_url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments&#34;,
+    &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+    &#34;html_url&#34;: &#34;https://github.com/jqlang/jq/commit/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+    &#34;comments_url&#34;: &#34;https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8/comments&#34;,
     &#34;author&#34;: {
-      &#34;login&#34;: &#34;stedolan&#34;,
 ...
 </pre>
               </div>
@@ -124,37 +130,43 @@ unchanged as output.</p>
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>curl &#39;https://api.github.com/repos/stedolan/jq/commits?per_page=5&#39; | jq &#39;.&#39;</pre>
+                <pre>curl &#39;https://api.github.com/repos/jqlang/jq/commits?per_page=5&#39; | jq &#39;.&#39;</pre>
                 <a data-toggle="collapse" href="#result2">Show result</a>
               </div>
               <div id="result2" class="accordion-body collapse">
                 <pre>[
   {
-    &#34;sha&#34;: &#34;d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+    &#34;sha&#34;: &#34;cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+    &#34;node_id&#34;: &#34;C_kwDOAE3WVdoAKGNmZjUzMzZlYzcxYjZmZWUzOTZhOTViYjBlNGJlYTM2NWUwY2QxZTg&#34;,
     &#34;commit&#34;: {
       &#34;author&#34;: {
-        &#34;name&#34;: &#34;Stephen Dolan&#34;,
-        &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
-        &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
+        &#34;name&#34;: &#34;Mattias Wadman&#34;,
+        &#34;email&#34;: &#34;mattias.wadman@gmail.com&#34;,
+        &#34;date&#34;: &#34;2021-06-09T14:02:22Z&#34;
       },
       &#34;committer&#34;: {
-        &#34;name&#34;: &#34;Stephen Dolan&#34;,
-        &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
-        &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
+        &#34;name&#34;: &#34;Nico Williams&#34;,
+        &#34;email&#34;: &#34;nico@cryptonector.com&#34;,
+        &#34;date&#34;: &#34;2022-05-26T21:04:32Z&#34;
       },
-      &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+      &#34;message&#34;: &#34;docs: Document repeat(exp)&#34;,
       &#34;tree&#34;: {
-        &#34;sha&#34;: &#34;6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;,
-        &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;
+        &#34;sha&#34;: &#34;d67d5542df1f16d1a48e1fb75749f60482cd874b&#34;,
+        &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/git/trees/d67d5542df1f16d1a48e1fb75749f60482cd874b&#34;
       },
-      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
-      &#34;comment_count&#34;: 0
+      &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/git/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+      &#34;comment_count&#34;: 0,
+      &#34;verification&#34;: {
+        &#34;verified&#34;: false,
+        &#34;reason&#34;: &#34;unsigned&#34;,
+        &#34;signature&#34;: null,
+        &#34;payload&#34;: null
+      }
     },
-    &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
-    &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
-    &#34;comments_url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments&#34;,
+    &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+    &#34;html_url&#34;: &#34;https://github.com/jqlang/jq/commit/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+    &#34;comments_url&#34;: &#34;https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8/comments&#34;,
     &#34;author&#34;: {
-      &#34;login&#34;: &#34;stedolan&#34;,
 ...
 </pre>
               </div>
@@ -173,82 +185,86 @@ unchanged as output.</p>
             
             <div class="tutorial-example">
               <div class="accordion-heading">
-                <pre>curl &#39;https://api.github.com/repos/stedolan/jq/commits?per_page=5&#39; | jq &#39;.[0]&#39;</pre>
+                <pre>curl &#39;https://api.github.com/repos/jqlang/jq/commits?per_page=5&#39; | jq &#39;.[0]&#39;</pre>
                 <a data-toggle="collapse" href="#result3">Show result</a>
               </div>
               <div id="result3" class="accordion-body collapse">
                 <pre>{
-  &#34;sha&#34;: &#34;d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
+  &#34;sha&#34;: &#34;cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+  &#34;node_id&#34;: &#34;C_kwDOAE3WVdoAKGNmZjUzMzZlYzcxYjZmZWUzOTZhOTViYjBlNGJlYTM2NWUwY2QxZTg&#34;,
   &#34;commit&#34;: {
     &#34;author&#34;: {
-      &#34;name&#34;: &#34;Stephen Dolan&#34;,
-      &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
-      &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
+      &#34;name&#34;: &#34;Mattias Wadman&#34;,
+      &#34;email&#34;: &#34;mattias.wadman@gmail.com&#34;,
+      &#34;date&#34;: &#34;2021-06-09T14:02:22Z&#34;
     },
     &#34;committer&#34;: {
-      &#34;name&#34;: &#34;Stephen Dolan&#34;,
-      &#34;email&#34;: &#34;mu@netsoc.tcd.ie&#34;,
-      &#34;date&#34;: &#34;2013-06-22T16:30:59Z&#34;
+      &#34;name&#34;: &#34;Nico Williams&#34;,
+      &#34;email&#34;: &#34;nico@cryptonector.com&#34;,
+      &#34;date&#34;: &#34;2022-05-26T21:04:32Z&#34;
     },
-    &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
+    &#34;message&#34;: &#34;docs: Document repeat(exp)&#34;,
     &#34;tree&#34;: {
-      &#34;sha&#34;: &#34;6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;,
-      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/trees/6ab697a8dfb5a96e124666bf6d6213822599fb40&#34;
+      &#34;sha&#34;: &#34;d67d5542df1f16d1a48e1fb75749f60482cd874b&#34;,
+      &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/git/trees/d67d5542df1f16d1a48e1fb75749f60482cd874b&#34;
     },
-    &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/git/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
-    &#34;comment_count&#34;: 0
+    &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/git/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+    &#34;comment_count&#34;: 0,
+    &#34;verification&#34;: {
+      &#34;verified&#34;: false,
+      &#34;reason&#34;: &#34;unsigned&#34;,
+      &#34;signature&#34;: null,
+      &#34;payload&#34;: null
+    }
   },
-  &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
-  &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/d25341478381063d1c76e81b3a52e0592a7c997f&#34;,
-  &#34;comments_url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/d25341478381063d1c76e81b3a52e0592a7c997f/comments&#34;,
+  &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+  &#34;html_url&#34;: &#34;https://github.com/jqlang/jq/commit/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8&#34;,
+  &#34;comments_url&#34;: &#34;https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8/comments&#34;,
   &#34;author&#34;: {
-    &#34;login&#34;: &#34;stedolan&#34;,
-    &#34;id&#34;: 79765,
-    &#34;avatar_url&#34;: &#34;https://avatars.githubusercontent.com/u/79765?v=3&#34;,
+    &#34;login&#34;: &#34;wader&#34;,
+    &#34;id&#34;: 185566,
+    &#34;node_id&#34;: &#34;MDQ6VXNlcjE4NTU2Ng==&#34;,
+    &#34;avatar_url&#34;: &#34;https://avatars.githubusercontent.com/u/185566?v=4&#34;,
     &#34;gravatar_id&#34;: &#34;&#34;,
-    &#34;url&#34;: &#34;https://api.github.com/users/stedolan&#34;,
-    &#34;html_url&#34;: &#34;https://github.com/stedolan&#34;,
-    &#34;followers_url&#34;: &#34;https://api.github.com/users/stedolan/followers&#34;,
-    &#34;following_url&#34;: &#34;https://api.github.com/users/stedolan/following{/other_user}&#34;,
-    &#34;gists_url&#34;: &#34;https://api.github.com/users/stedolan/gists{/gist_id}&#34;,
-    &#34;starred_url&#34;: &#34;https://api.github.com/users/stedolan/starred{/owner}{/repo}&#34;,
-    &#34;subscriptions_url&#34;: &#34;https://api.github.com/users/stedolan/subscriptions&#34;,
-    &#34;organizations_url&#34;: &#34;https://api.github.com/users/stedolan/orgs&#34;,
-    &#34;repos_url&#34;: &#34;https://api.github.com/users/stedolan/repos&#34;,
-    &#34;events_url&#34;: &#34;https://api.github.com/users/stedolan/events{/privacy}&#34;,
-    &#34;received_events_url&#34;: &#34;https://api.github.com/users/stedolan/received_events&#34;,
+    &#34;url&#34;: &#34;https://api.github.com/users/wader&#34;,
+    &#34;html_url&#34;: &#34;https://github.com/wader&#34;,
+    &#34;followers_url&#34;: &#34;https://api.github.com/users/wader/followers&#34;,
+    &#34;following_url&#34;: &#34;https://api.github.com/users/wader/following{/other_user}&#34;,
+    &#34;gists_url&#34;: &#34;https://api.github.com/users/wader/gists{/gist_id}&#34;,
+    &#34;starred_url&#34;: &#34;https://api.github.com/users/wader/starred{/owner}{/repo}&#34;,
+    &#34;subscriptions_url&#34;: &#34;https://api.github.com/users/wader/subscriptions&#34;,
+    &#34;organizations_url&#34;: &#34;https://api.github.com/users/wader/orgs&#34;,
+    &#34;repos_url&#34;: &#34;https://api.github.com/users/wader/repos&#34;,
+    &#34;events_url&#34;: &#34;https://api.github.com/users/wader/events{/privacy}&#34;,
+    &#34;received_events_url&#34;: &#34;https://api.github.com/users/wader/received_events&#34;,
     &#34;type&#34;: &#34;User&#34;,
     &#34;site_admin&#34;: false
   },
   &#34;committer&#34;: {
-    &#34;login&#34;: &#34;stedolan&#34;,
-    &#34;id&#34;: 79765,
-    &#34;avatar_url&#34;: &#34;https://avatars.githubusercontent.com/u/79765?v=3&#34;,
+    &#34;login&#34;: &#34;nicowilliams&#34;,
+    &#34;id&#34;: 604851,
+    &#34;node_id&#34;: &#34;MDQ6VXNlcjYwNDg1MQ==&#34;,
+    &#34;avatar_url&#34;: &#34;https://avatars.githubusercontent.com/u/604851?v=4&#34;,
     &#34;gravatar_id&#34;: &#34;&#34;,
-    &#34;url&#34;: &#34;https://api.github.com/users/stedolan&#34;,
-    &#34;html_url&#34;: &#34;https://github.com/stedolan&#34;,
-    &#34;followers_url&#34;: &#34;https://api.github.com/users/stedolan/followers&#34;,
-    &#34;following_url&#34;: &#34;https://api.github.com/users/stedolan/following{/other_user}&#34;,
-    &#34;gists_url&#34;: &#34;https://api.github.com/users/stedolan/gists{/gist_id}&#34;,
-    &#34;starred_url&#34;: &#34;https://api.github.com/users/stedolan/starred{/owner}{/repo}&#34;,
-    &#34;subscriptions_url&#34;: &#34;https://api.github.com/users/stedolan/subscriptions&#34;,
-    &#34;organizations_url&#34;: &#34;https://api.github.com/users/stedolan/orgs&#34;,
-    &#34;repos_url&#34;: &#34;https://api.github.com/users/stedolan/repos&#34;,
-    &#34;events_url&#34;: &#34;https://api.github.com/users/stedolan/events{/privacy}&#34;,
-    &#34;received_events_url&#34;: &#34;https://api.github.com/users/stedolan/received_events&#34;,
+    &#34;url&#34;: &#34;https://api.github.com/users/nicowilliams&#34;,
+    &#34;html_url&#34;: &#34;https://github.com/nicowilliams&#34;,
+    &#34;followers_url&#34;: &#34;https://api.github.com/users/nicowilliams/followers&#34;,
+    &#34;following_url&#34;: &#34;https://api.github.com/users/nicowilliams/following{/other_user}&#34;,
+    &#34;gists_url&#34;: &#34;https://api.github.com/users/nicowilliams/gists{/gist_id}&#34;,
+    &#34;starred_url&#34;: &#34;https://api.github.com/users/nicowilliams/starred{/owner}{/repo}&#34;,
+    &#34;subscriptions_url&#34;: &#34;https://api.github.com/users/nicowilliams/subscriptions&#34;,
+    &#34;organizations_url&#34;: &#34;https://api.github.com/users/nicowilliams/orgs&#34;,
+    &#34;repos_url&#34;: &#34;https://api.github.com/users/nicowilliams/repos&#34;,
+    &#34;events_url&#34;: &#34;https://api.github.com/users/nicowilliams/events{/privacy}&#34;,
+    &#34;received_events_url&#34;: &#34;https://api.github.com/users/nicowilliams/received_events&#34;,
     &#34;type&#34;: &#34;User&#34;,
     &#34;site_admin&#34;: false
   },
   &#34;parents&#34;: [
     {
-      &#34;sha&#34;: &#34;54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;,
-      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;,
-      &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;
-    },
-    {
-      &#34;sha&#34;: &#34;8b1b503609c161fea4b003a7179b3fbb2dd4345a&#34;,
-      &#34;url&#34;: &#34;https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a&#34;,
-      &#34;html_url&#34;: &#34;https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a&#34;
+      &#34;sha&#34;: &#34;f2ad9517c72f6267ae317639ab56bbfd4a8653d4&#34;,
+      &#34;url&#34;: &#34;https://api.github.com/repos/jqlang/jq/commits/f2ad9517c72f6267ae317639ab56bbfd4a8653d4&#34;,
+      &#34;html_url&#34;: &#34;https://github.com/jqlang/jq/commit/f2ad9517c72f6267ae317639ab56bbfd4a8653d4&#34;
     }
   ]
 }
@@ -277,8 +293,8 @@ to the most interesting fields.</p>
               </div>
               <div id="result4" class="accordion-body collapse">
                 <pre>{
-  &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
-  &#34;name&#34;: &#34;Stephen Dolan&#34;
+  &#34;message&#34;: &#34;docs: Document repeat(exp)&#34;,
+  &#34;name&#34;: &#34;Nico Williams&#34;
 }
 </pre>
               </div>
@@ -306,24 +322,24 @@ nested attributes, such as <code>.commit.message</code>.</p>
               </div>
               <div id="result5" class="accordion-body collapse">
                 <pre>{
-  &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
-  &#34;name&#34;: &#34;Stephen Dolan&#34;
+  &#34;message&#34;: &#34;docs: Document repeat(exp)&#34;,
+  &#34;name&#34;: &#34;Nico Williams&#34;
 }
 {
-  &#34;message&#34;: &#34;Reject all overlong UTF8 sequences.&#34;,
-  &#34;name&#34;: &#34;Stephen Dolan&#34;
+  &#34;message&#34;: &#34;Mention -n in IO-section and for input/inputs&#34;,
+  &#34;name&#34;: &#34;Nico Williams&#34;
 }
 {
-  &#34;message&#34;: &#34;Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.&#34;,
-  &#34;name&#34;: &#34;Stephen Dolan&#34;
+  &#34;message&#34;: &#34;Fix iterration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happend because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.&#34;,
+  &#34;name&#34;: &#34;Nico Williams&#34;
 }
 {
-  &#34;message&#34;: &#34;Fix example in manual for `floor`. See #155.&#34;,
-  &#34;name&#34;: &#34;Stephen Dolan&#34;
+  &#34;message&#34;: &#34;docs: point to Libera.Chat instead of Freenode&#34;,
+  &#34;name&#34;: &#34;Nico Williams&#34;
 }
 {
-  &#34;message&#34;: &#34;Document floor&#34;,
-  &#34;name&#34;: &#34;Nicolas Williams&#34;
+  &#34;message&#34;: &#34;Missing \&#34;va_end\&#34; call. This was found by running the cppcheck static analysis where it shows as error.&#34;,
+  &#34;name&#34;: &#34;Nico Williams&#34;
 }
 </pre>
               </div>
@@ -359,24 +375,24 @@ brackets:</p>
               <div id="result6" class="accordion-body collapse">
                 <pre>[
   {
-    &#34;message&#34;: &#34;Merge pull request #163 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
-    &#34;name&#34;: &#34;Stephen Dolan&#34;
+    &#34;message&#34;: &#34;docs: Document repeat(exp)&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;
   },
   {
-    &#34;message&#34;: &#34;Reject all overlong UTF8 sequences.&#34;,
-    &#34;name&#34;: &#34;Stephen Dolan&#34;
+    &#34;message&#34;: &#34;Mention -n in IO-section and for input/inputs&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;
   },
   {
-    &#34;message&#34;: &#34;Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.&#34;,
-    &#34;name&#34;: &#34;Stephen Dolan&#34;
+    &#34;message&#34;: &#34;Fix iterration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happend because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;
   },
   {
-    &#34;message&#34;: &#34;Fix example in manual for `floor`. See #155.&#34;,
-    &#34;name&#34;: &#34;Stephen Dolan&#34;
+    &#34;message&#34;: &#34;docs: point to Libera.Chat instead of Freenode&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;
   },
   {
-    &#34;message&#34;: &#34;Document floor&#34;,
-    &#34;name&#34;: &#34;Nicolas Williams&#34;
+    &#34;message&#34;: &#34;Missing \&#34;va_end\&#34; call. This was found by running the cppcheck static analysis where it shows as error.&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;
   }
 ]
 </pre>
@@ -391,14 +407,9 @@ API results as well. In each commit, the GitHub API includes information
 about "parent" commits. There can be one or many.</p>
 <pre><code>"parents": [
   {
-    "sha": "54b9c9bdb225af5d886466d72f47eafc51acb4f7",
-    "url": "https://api.github.com/repos/stedolan/jq/commits/54b9c9bdb225af5d886466d72f47eafc51acb4f7",
-    "html_url": "https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7"
-  },
-  {
-    "sha": "8b1b503609c161fea4b003a7179b3fbb2dd4345a",
-    "url": "https://api.github.com/repos/stedolan/jq/commits/8b1b503609c161fea4b003a7179b3fbb2dd4345a",
-    "html_url": "https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a"
+    "sha": "f2ad9517c72f6267ae317639ab56bbfd4a8653d4",
+    "url": "https://api.github.com/repos/jqlang/jq/commits/f2ad9517c72f6267ae317639ab56bbfd4a8653d4",
+    "html_url": "https://github.com/jqlang/jq/commit/f2ad9517c72f6267ae317639ab56bbfd4a8653d4"
   }
 ]
 </code></pre>
@@ -421,39 +432,38 @@ commits and make a simple list of strings to go along with the
               <div id="result7" class="accordion-body collapse">
                 <pre>[
   {
-    &#34;message&#34;: &#34;Merge pull request #162 from stedolan/utf8-fixes\n\nUtf8 fixes. Closes #161&#34;,
-    &#34;name&#34;: &#34;Stephen Dolan&#34;,
+    &#34;message&#34;: &#34;docs: Document repeat(exp)&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;,
     &#34;parents&#34;: [
-      &#34;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;,
-      &#34;https://github.com/stedolan/jq/commit/8b1b503609c161fea4b003a7179b3fbb2dd4345a&#34;
+      &#34;https://github.com/jqlang/jq/commit/f2ad9517c72f6267ae317639ab56bbfd4a8653d4&#34;
     ]
   },
   {
-    &#34;message&#34;: &#34;Reject all overlong UTF8 sequences.&#34;,
-    &#34;name&#34;: &#34;Stephen Dolan&#34;,
+    &#34;message&#34;: &#34;Mention -n in IO-section and for input/inputs&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;,
     &#34;parents&#34;: [
-      &#34;https://github.com/stedolan/jq/commit/ff48bd6ec538b01d1057be8e93b94eef6914e9ef&#34;
+      &#34;https://github.com/jqlang/jq/commit/c4d39c4d22f2b12225ca1b311708f7e084ad9ff8&#34;
     ]
   },
   {
-    &#34;message&#34;: &#34;Fix various UTF8 parsing bugs.\n\nIn particular, parse bad UTF8 by replacing the broken bits with U+FFFD\nand resychronise correctly after broken sequences.&#34;,
-    &#34;name&#34;: &#34;Stephen Dolan&#34;,
+    &#34;message&#34;: &#34;Fix iterration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happend because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;,
     &#34;parents&#34;: [
-      &#34;https://github.com/stedolan/jq/commit/54b9c9bdb225af5d886466d72f47eafc51acb4f7&#34;
+      &#34;https://github.com/jqlang/jq/commit/174db0f93552bdb551ae1f3c5c64744df0ad8e2f&#34;
     ]
   },
   {
-    &#34;message&#34;: &#34;Fix example in manual for `floor`. See #155.&#34;,
-    &#34;name&#34;: &#34;Stephen Dolan&#34;,
+    &#34;message&#34;: &#34;docs: point to Libera.Chat instead of Freenode&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;,
     &#34;parents&#34;: [
-      &#34;https://github.com/stedolan/jq/commit/3dcdc582ea993afea3f5503a78a77675967ecdfa&#34;
+      &#34;https://github.com/jqlang/jq/commit/29cf77977ef52eec708982b19bf9d2ec17443337&#34;
     ]
   },
   {
-    &#34;message&#34;: &#34;Document floor&#34;,
-    &#34;name&#34;: &#34;Nicolas Williams&#34;,
+    &#34;message&#34;: &#34;Missing \&#34;va_end\&#34; call. This was found by running the cppcheck static analysis where it shows as error.&#34;,
+    &#34;name&#34;: &#34;Nico Williams&#34;,
     &#34;parents&#34;: [
-      &#34;https://github.com/stedolan/jq/commit/7c4171d414f647ab08bcd20c76a4d8ed68d9c602&#34;
+      &#34;https://github.com/jqlang/jq/commit/55e6e2c21829bd866bd4b18ee254b05c9020320a&#34;
     ]
   }
 ]
