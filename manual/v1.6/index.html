@@ -314,7 +314,7 @@ using some command-line options:</p>
 </ul>
 <p>This option reads in the named file and binds its contents to the given
   global variable.  If you run jq with <code>--rawfile foo bar</code>, then <code>$foo</code> is
-  available in the program and has a string whose contents are to the texs
+  available in the program and has a string whose contents are to the texts
   in the file named <code>bar</code>.</p>
 <ul>
 <li><code>--argfile variable-name filename</code>:</li>
@@ -364,24 +364,13 @@ this is the identity operator.</p>
 <p>Since jq by default pretty-prints all output, this trivial
 program can be a useful way of formatting JSON output from,
 say, <code>curl</code>.</p>
-<p>An important point about the identity filter is that it 
-guarantees to preserve the literal decimal representation 
-of values. This is particularly important when dealing with numbers 
-which can't be losslessly converted to an IEEE754 double precision 
-representation.</p>
-<p>jq doesn't truncate the literal numbers to double unless there
-is a need to make arithmetic operations with the number.
-Comparisons are carried out over the untruncated big decimal 
-representation of the number.</p>
-<p>jq will also try to maintain the original decimal precision of the provided
-number literal. See below for examples. </p>
 
                   
                     <div>
                       
                       <a data-toggle="collapse" href="#example1">
                         <i class="glyphicon glyphicon-chevron-right"></i>
-                        Examples
+                        Example
                       </a>
                       <div id="example1" class="manual-example collapse">
                         
@@ -395,48 +384,6 @@ number literal. See below for examples. </p>
                                   <th>Output</th>
                                 
                                 <td>&#34;Hello, world!&#34;</td>
-                              </tr>
-                            
-                          </table>
-                        
-                          <table>
-                            <tr><th></th><td class="jqprogram">jq '. | tojson'</td></tr>
-                            <tr><th>Input</th><td>12345678909876543212345</td></tr>
-                            
-                            
-                              <tr>
-                                
-                                  <th>Output</th>
-                                
-                                <td>&#34;12345678909876543212345&#34;</td>
-                              </tr>
-                            
-                          </table>
-                        
-                          <table>
-                            <tr><th></th><td class="jqprogram">jq 'map([., . == 1]) | tojson'</td></tr>
-                            <tr><th>Input</th><td>[1, 1.000, 1.0, 100e-2]</td></tr>
-                            
-                            
-                              <tr>
-                                
-                                  <th>Output</th>
-                                
-                                <td>&#34;[[1,true],[1.000,true],[1.0,true],[1.00,true]]&#34;</td>
-                              </tr>
-                            
-                          </table>
-                        
-                          <table>
-                            <tr><th></th><td class="jqprogram">jq '. as $big | [$big, $big + 1] | map(. &gt; 10000000000000000000000000000000)'</td></tr>
-                            <tr><th>Input</th><td>10000000000000000000000000000001</td></tr>
-                            
-                            
-                              <tr>
-                                
-                                  <th>Output</th>
-                                
-                                <td>[true, false]</td>
                               </tr>
                             
                           </table>
@@ -1051,14 +998,6 @@ in javascript. Just like everything else in jq, these simple
 values take an input and produce an output - <code>42</code> is a valid jq
 expression that takes an input, ignores it, and returns 42
 instead.</p>
-<p>Numbers in jq are internally represented by their IEEE754 double 
-precision approximation. Any arithmetic operation with numbers, 
-whether they are literals or results of previous filters, will 
-produce a double precision floating point result.</p>
-<p>However, when parsing a literal jq will store the original literal
-string. If no mutation is applied to this value then it will make
-to the output in its original form, even if conversion to double 
-would result in a loss. </p>
               
                 <section id="Arrayconstruction:[]">
                   <h3>
@@ -1267,16 +1206,6 @@ depending on the type of their arguments (arrays, numbers,
 etc.). However, jq never does implicit type conversions. If you
 try to add a string to an object you'll get an error message and
 no result.</p>
-<p>Please note that all numbers are converted to IEEE754 double precision 
-floating point representation. Arithmetic and logical operators are working
-with these converted doubles. Results of all such operations are also limited 
-to the double precision. </p>
-<p>The only exception to this behaviour of number is a snapshot of original number 
-literal. When a number which originally was provided as a literal is never
-mutated until the end of the program then it is printed to the output in its 
-original literal form. This also includes cases when the original literal 
-would be truncated when converted to the IEEE754 double precision floating point
-number.</p>
               
                 <section id="Addition:+">
                   <h3>
@@ -5497,8 +5426,8 @@ STRING | FILTER( [REGEX] )
 STRING | FILTER( [REGEX, FLAGS] )
 </code></pre>
 <p>where:
-<em> STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
-</em> REGEX, after string interpolation, should be a valid PCRE regex;
+* STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
+* REGEX, after string interpolation, should be a valid PCRE regex;
 * FILTER is one of <code>test</code>, <code>match</code>, or <code>capture</code>, as described below.</p>
 <p>FLAGS is a string consisting of one of more of the supported flags:</p>
 <ul>
@@ -5513,7 +5442,7 @@ STRING | FILTER( [REGEX, FLAGS] )
 </ul>
 <p>To match whitespace in an x pattern use an escape such as \s, e.g.</p>
 <ul>
-<li>test( "a\sb", "x" ).</li>
+<li>test( "a\\sb"; "x" )</li>
 </ul>
 <p>Note that certain flags may also be specified within REGEX, e.g.</p>
 <ul>
@@ -6850,14 +6779,14 @@ not a valid or useful path expression in <code>.</code>); use <code>$var | .foo 
                     Update-assignment: <code>|=</code>
                     
                   </h3>
-                  <p>This is the "update" operator '|='.  It takes a filter on the
+                  <p>This is the "update" operator <code>|=</code>.  It takes a filter on the
 right-hand side and works out the new value for the property
 of <code>.</code> being assigned to by running the old value through this
-expression. For instance, (.foo, .bar) |= .+1 will build an
+expression. For instance, <code>(.foo, .bar) |= .+1</code> will build an
 object with the "foo" field set to the input's "foo" plus 1,
 and the "bar" field set to the input's "bar" plus 1.</p>
 <p>The left-hand side can be any general path expression; see <code>path()</code>.</p>
-<p>Note that the left-hand side of '|=' refers to a value in <code>.</code>.
+<p>Note that the left-hand side of <code>|=</code> refers to a value in <code>.</code>.
 Thus <code>$var.foo |= . + 1</code> won't work as expected (<code>$var.foo</code> is
 not a valid or useful path expression in <code>.</code>); use <code>$var |
 .foo |= . + 1</code> instead.</p>
@@ -6949,19 +6878,19 @@ and then it will output the modified <code>.</code>.  For example,
 <code>{"a":1,"b":1}</code>.  The "update" assignment forms (see above) do
 not do this.</p>
 <p>This example should show the difference between '=' and '|=':</p>
-<p>Provide input '{"a": {"b": 10}, "b": 20}' to the programs:</p>
-<p>.a = .b</p>
-<p>.a |= .b</p>
+<p>Provide input <code>{"a": {"b": 10}, "b": 20}</code> to the programs:</p>
+<p><code>.a = .b</code></p>
+<p><code>.a |= .b</code></p>
 <p>The former will set the "a" field of the input to the "b"
-field of the input, and produce the output {"a": 20, "b": 20}.
+field of the input, and produce the output <code>{"a": 20, "b": 20}</code>.
 The latter will set the "a" field of the input to the "a"
-field's "b" field, producing {"a": 10, "b": 20}.</p>
-<p>Another example of the difference between '=' and '|=':</p>
-<p>null|(.a,.b)=range(3)</p>
-<p>outputs '{"a":0,"b":0}', '{"a":1,"b":1}', and '{"a":2,"b":2}',
+field's "b" field, producing <code>{"a": 10, "b": 20}</code>.</p>
+<p>Another example of the difference between <code>=</code> and <code>|=</code>:</p>
+<p><code>null|(.a,.b)=range(3)</code></p>
+<p>outputs <code>{"a":0,"b":0}, {"a":1,"b":1}, {"a":2,"b":2}</code>,
 while</p>
-<p>null|(.a,.b)|=range(3)</p>
-<p>outputs just '{"a":0,"b":0}'.</p>
+<p><code>null|(.a,.b)|=range(3)</code></p>
+<p>outputs just <code>{"a":0,"b":0}</code>.</p>
 
                   
                 </section>

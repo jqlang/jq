@@ -4908,8 +4908,8 @@ STRING | FILTER( [REGEX] )
 STRING | FILTER( [REGEX, FLAGS] )
 </code></pre>
 <p>where:
-<em> STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
-</em> REGEX, after string interpolation, should be a valid PCRE regex;
+* STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
+* REGEX, after string interpolation, should be a valid PCRE regex;
 * FILTER is one of <code>test</code>, <code>match</code>, or <code>capture</code>, as described below.</p>
 <p>FLAGS is a string consisting of one of more of the supported flags:</p>
 <ul>
@@ -4924,7 +4924,7 @@ STRING | FILTER( [REGEX, FLAGS] )
 </ul>
 <p>To match whitespace in an x pattern use an escape such as \s, e.g.</p>
 <ul>
-<li>test( "a\sb", "x" ).</li>
+<li>test( "a\\sb"; "x" )</li>
 </ul>
 <p>Note that certain flags may also be specified within REGEX, e.g.</p>
 <ul>

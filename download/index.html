@@ -119,6 +119,10 @@ http://download.icu-project.org/files/decNumber/decNumber-icu-368.zip.</p>
 <h3>OS X</h3>
 <ul>
 <li>
+<p>Use <a href="https://finkproject.org">Fink</a> to install jq 1.6 with
+   <code>fink install jq</code>.</p>
+</li>
+<li>
 <p>Use <a href="http://brew.sh/">Homebrew</a> to install jq 1.6 with
    <code>brew install jq</code>.</p>
 </li>
@@ -176,7 +180,7 @@ http://download.icu-project.org/files/decNumber/decNumber-icu-368.zip.</p>
 <h3>Windows</h3>
 <ul>
 <li>
-<p>Use <a href="https://chocolatey.org/">Chocolatey NuGet</a> to install jq 1.5 with
+<p>Use <a href="https://chocolatey.org/">Chocolatey NuGet</a> to install jq 1.6 with
    <code>chocolatey install jq</code>.</p>
 </li>
 <li>
@@ -230,7 +234,7 @@ the signature and running <code>gpg --verify signature.asc</code>.</p>
 <p>You can build it using the usual <code>./configure &amp;&amp; make &amp;&amp; sudo
 make install</code> rigmarole.</p>
 <p>If you're interested in using the lastest development version, try:</p>
-<pre><code>git clone https://github.com/stedolan/jq.git
+<pre><code>git clone --recursive https://github.com/stedolan/jq.git
 cd jq
 autoreconf -i
 ./configure --disable-maintainer-mode
