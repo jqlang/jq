@@ -187,7 +187,7 @@ class RoffWalker(object):
 
 def load_yml_file(fn):
   with open(fn) as f:
-    return yaml.load(f)
+    return yaml.load(f, Loader=yaml.Loader)
 
 def dedent_body(body):
   lines = [re.sub(r'^  (\S)', r'\1', l) for l in body.split('\n')]

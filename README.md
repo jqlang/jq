@@ -9,18 +9,18 @@ Windows: [![Windows build status](https://ci.appveyor.com/api/projects/status/mi
 
 
 If you want to learn to use jq, read the documentation at
-[https://stedolan.github.io/jq](https://stedolan.github.io/jq).  This
+[https://jqlang.github.io/jq](https://jqlang.github.io/jq).  This
 documentation is generated from the docs/ folder of this repository.
 You can also try it online at [jqplay.org](https://jqplay.org).
 
 If you want to hack on jq, feel free, but be warned that its internals
 are not well-documented at the moment. Bring a hard hat and a
-shovel.  Also, read the wiki: https://github.com/stedolan/jq/wiki, where
+shovel.  Also, read the wiki: https://github.com/jqlang/jq/wiki, where
 you will find cookbooks, discussion of advanced topics, internals,
 release engineering, and more.
 
 Source tarball and built executable releases can be found on the
-homepage and on the github release page, https://github.com/stedolan/jq/releases
+homepage and on the github release page, https://github.com/jqlang/jq/releases
 
 If you're building directly from the latest git, you'll need flex,
 bison (3.0 or newer), libtool, make, automake, and autoconf installed.
@@ -69,7 +69,7 @@ Cross-compilation requires a clean workspace, then:
 
 Use the `--host=` and `--target=` ./configure options to select a
 cross-compilation environment.  See also
-["Cross compilation"](https://github.com/stedolan/jq/wiki/Cross-compilation) on
+["Cross compilation"](https://github.com/jqlang/jq/wiki/Cross-compilation) on
 the wiki.
 
 Send questions to https://stackoverflow.com/questions/tagged/jq or to the #jq channel (https://web.libera.chat/#jq) on Libera.Chat (https://libera.chat/).
