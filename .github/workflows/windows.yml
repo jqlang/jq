@@ -13,6 +13,7 @@ on:
       - '**.[chly]'
       - '**/Makefile.am'
       - '.github/workflows/windows.yml'
+  workflow_dispatch:
 jobs:
   windows:
     runs-on: windows-latest
@@ -24,46 +25,35 @@ jobs:
       WIXDIR: 'c:\Program Files (x86)\Windows Installer XML v3.5'
     steps:
       - name: Clone repository
-        uses: actions/checkout@v1
-      - name: Find MSVC and run vcvarsall.bat
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: actions/checkout@v3
         with:
-          arch: amd64
+          submodules: true
       - uses: msys2/setup-msys2@v2
         with:
           update: true
           install: >-
-            base-devel git
-      #- name: Set up MinGW
-      #  uses: egor-tensin/setup-mingw@v2
-      #  with:
-      #    platform: x64
-      - name: Build and Test
-        shell: cmd
+            base-devel
+            git
+            clang
+            autoconf
+            automake
+            libtool
+            p7zip
+      - shell: msys2 {0}
         run: |
-          title jq Build %CPU% %dbg__type%
-          git submodule update --init --recursive
-          mkdir %INSTALL_DIR%
-          pacman --noconfirm -S autoconf
-          pacman --noconfirm -S automake
-          pacman --noconfirm -S bison
-          set "PATH=%PATH%;C:\msys64\usr\bin;C:\cygwin\bin"
-          set "PATH=%PATH%;C:\tools\cygwin\bin"
-          echo PATH=%PATH%
-          # Make
-          autoreconf -fi
+          autoreconf -fiv
           ./configure --disable-valgrind --with-oniguruma=builtin --disable-shared --enable-static --enable-all-static
-          make
+          make -j4
           make SUBDIRS= "TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test" check
+          7z a jq-windows.zip jq.exe
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
           name: jq artifacts
           path: |
             jq-windows.zip
-            jq.exe
       - name: Upload Test Logs
-        if: true
+        if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
           name: Test logs
