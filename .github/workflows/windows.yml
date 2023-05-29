@@ -55,7 +55,6 @@ jobs:
           ./configure --disable-valgrind --with-oniguruma=builtin --disable-shared --enable-static --enable-all-static
           make
           make SUBDIRS= "TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test" check
-          7z a jq-windows.zip jq.exe
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
