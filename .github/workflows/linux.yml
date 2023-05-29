@@ -67,7 +67,7 @@ jobs:
                 autoreconf -fi
                 rm src/lexer.c src/lexer.h
                 rm src/parser.c src/parser.h
-                ./configure --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
+                ./configure --disable-valgrind --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
                 make -j4
                 make dist
             - name: Test
