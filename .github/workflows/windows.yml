@@ -44,8 +44,9 @@ jobs:
           title jq Build %CPU% %dbg__type%
           git submodule update --init --recursive
           mkdir %INSTALL_DIR%
-          choco install gnuwin32-m4
-          choco install winflexbison
+          pacman --noconfirm -S autoconf
+          pacman --noconfirm -S automake
+          pacman --noconfirm -S bison
           set "PATH=%PATH%;C:\msys64\usr\bin;C:\cygwin\bin"
           set "PATH=%PATH%;C:\tools\cygwin\bin"
           echo PATH=%PATH%
