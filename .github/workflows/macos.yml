@@ -1,4 +1,4 @@
-name: Linux Build
+name: MacOS Build
 on:
   push:
     branches:
@@ -8,30 +8,28 @@ on:
       - '!**.md'
       - '!appveyor.yml'
       - '!.travis.yml'
-      - '.github/workflows/linux.yml'
+      - '.github/workflows/macos.yml'
   pull_request:
     paths:
       - '!docs/**'
       - '!**.md'
       - '!appveyor.yml'
       - '!.travis.yml'
-      - '.github/workflows/linux.yml'
+      - '.github/workflows/macos.yml'
 jobs:
-  linux:
+  macos:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        name: [linux-clang, linux-gcc]
+        name: [macos-12-clang, macos-13-clang]
         include:
-          - name: linux-clang
-            os: ubuntu-22.04
+          - name: macos-12-clang
+            os: macos-12
             compiler: clang
-            cflags: ''
-          - name: linux-gcc
-            os: ubuntu-22.04
-            compiler: gcc
-            cflags: '-Wnonnull'
+          - name: macos-13-clang
+            os: macos-13
+            compiler: clang
     steps:
       - name: Clone repository
         uses: actions/checkout@v1
@@ -40,15 +38,10 @@ jobs:
           git submodule update --init --recursive
       - name: Install packages
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y \
-            automake \
-            autoconf \
-            bison \
-            flex \
-            gdb \
-            python3 \
-            valgrind
+          uname -s
+          brew update
+          brew install autoconf automake libtool flex bison python3
+          sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
       - name: Build
         env:
           CC: ${{ matrix.compiler }}
@@ -57,7 +50,7 @@ jobs:
           autoreconf -fi
           rm src/lexer.c src/lexer.h
           rm src/parser.c src/parser.h
-          ./configure --disable-valgrind --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
+          ./configure --disable-valgrind --with-oniguruma=builtin YACC="$(brew --prefix)/opt/bison/bin/bison -y" $COVERAGE
           make -j4
           make dist
       - name: Test
@@ -67,11 +60,6 @@ jobs:
         run: |
           ulimit -c unlimited
           make -j4 check
-      - name: Core dump stacks
-        run: |
-          echo "thread apply all bt" > /tmp/x
-          find . -name core -print | while read core; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done
-          if [ "$(find . -name core -print | wc -l)" -gt 0 ]; then false; fi
       - name: Test logs
         if: ${{ failure() }}
         run: |
@@ -81,14 +69,9 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Install Tarball
-          path: '~/jq-install-linux-${{ matrix.compiler }}.tgz'
-      - name: Upload Dist Tarball
-        uses: actions/upload-artifact@v2
-        with:
-          name: Dist Tarball
-          path: 'jq-*.tar.gz'
+          path: '~/jq-install-osx-${{ matrix.compiler }}.tgz'
       - name: Upload Logs Tarball
         uses: actions/upload-artifact@v2
         with:
           name: Test Logs
-          path: '~/logs-linux-${{ matrix.compiler }}.tgz'
+          path: '~/logs-osx-${{ matrix.compiler }}.tgz'
