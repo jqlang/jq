@@ -44,13 +44,16 @@ jobs:
             - name: Install packages
               run: |
                 sudo apt-get update -qq
-                sudo apt-get install -y automake autoconf bison flex gdb python valgrind
+                sudo apt-get install -y \
+                  automake \
+                  autoconf \
+                  bison \
+                  flex \
+                  gdb \
+                  python3 \
+                  valgrind
             - name: Prep
               run: |
-                #pyenv global 3.6.7
-                #pip3 install pipenv
-                #(cd docs && pipenv sync)
-                #if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
                 echo SHELL=$SHELL
                 echo PATH=$PATH
                 which bison
