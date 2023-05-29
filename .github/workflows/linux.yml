@@ -42,7 +42,6 @@ jobs:
               run: |
                 git submodule update --init --recursive
             - name: Install packages
-              if: startsWith(matrix.os, 'ubuntu')
               run: |
                 sudo apt-get update -qq
                 sudo apt-get install -y automake autoconf bison flex gdb python valgrind
