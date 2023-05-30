@@ -1,2 +1,4 @@
 .gitattributes export-ignore
 .gitignore export-ignore
+*.test eol=lf
+*.jq eol=lf
