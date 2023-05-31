@@ -43,17 +43,18 @@ jobs:
           autoreconf -fiv
           ./configure --disable-valgrind --with-oniguruma=builtin --disable-shared --enable-static --enable-all-static
           make -j4
-          make SUBDIRS="TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test" check
-          7z a jq-windows.zip jq.exe
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: jq artifacts
-          path: |
-            jq-windows.zip
+          make SUBDIRS= "TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test" check
       - name: Upload Test Logs
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: Test logs
-          path: test-suite.log
+          name: test-logs
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jq-windows
+          path: |
+            jq.exe

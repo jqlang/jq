@@ -32,13 +32,11 @@ jobs:
             compiler: clang
     steps:
       - name: Clone repository
-        uses: actions/checkout@v1
-      - name: Open Submodule(s)
-        run: |
-          git submodule update --init --recursive
+        uses: actions/checkout@v3
+        with:
+          submodules: true
       - name: Install packages
         run: |
-          uname -s
           brew update
           brew install autoconf automake libtool flex bison python3
           sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
@@ -60,18 +58,17 @@ jobs:
         run: |
           ulimit -c unlimited
           make -j4 check
-      - name: Test logs
+      - name: Upload Test Logs
         if: ${{ failure() }}
-        run: |
-          cat test-suite.log
-          cat tests/*.log
-      - name: Upload Install Tarball
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: Install Tarball
-          path: '~/jq-install-osx-${{ matrix.compiler }}.tgz'
-      - name: Upload Logs Tarball
-        uses: actions/upload-artifact@v2
+          name: test-logs
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
         with:
-          name: Test Logs
-          path: '~/logs-osx-${{ matrix.compiler }}.tgz'
+          name: jq-${{ matrix.name }}
+          path: |
+            jq
