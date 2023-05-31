@@ -13,7 +13,6 @@ on:
       - '**.[chly]'
       - '**/Makefile.am'
       - '.github/workflows/windows.yml'
-  workflow_dispatch:
 jobs:
   windows:
     runs-on: windows-latest
@@ -44,7 +43,7 @@ jobs:
           autoreconf -fiv
           ./configure --disable-valgrind --with-oniguruma=builtin --disable-shared --enable-static --enable-all-static
           make -j4
-          make SUBDIRS= "TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test" check
+          make SUBDIRS="TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test" check
           7z a jq-windows.zip jq.exe
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
