@@ -1,2 +1,3 @@
 .gitattributes export-ignore
 .gitignore export-ignore
+* text=auto eol=lf

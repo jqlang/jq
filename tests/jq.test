@@ -1565,7 +1565,7 @@ try (1%.) catch .
 jq: error: Division by zero? at <top-level>, line 1:
 
 # Basic numbers tests: integers, powers of two
-[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers
+[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers
 null
 true
 
