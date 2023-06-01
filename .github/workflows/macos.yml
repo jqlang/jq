@@ -2,20 +2,8 @@ name: MacOS Build
 on:
   push:
     branches:
-      - 'master'
-    paths:
-      - '!docs/**'
-      - '!**.md'
-      - '!appveyor.yml'
-      - '!.travis.yml'
-      - '.github/workflows/macos.yml'
+      - master
   pull_request:
-    paths:
-      - '!docs/**'
-      - '!**.md'
-      - '!appveyor.yml'
-      - '!.travis.yml'
-      - '.github/workflows/macos.yml'
 jobs:
   macos:
     runs-on: ${{ matrix.os }}

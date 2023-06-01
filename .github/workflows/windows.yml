@@ -2,26 +2,11 @@ name: Windows Build
 on:
   push:
     branches:
-      - 'master'
-      - 'windows-build'
-    paths:
-      - '**.[chly]'
-      - '**/Makefile.am'
-      - '.github/workflows/windows.yml'
+      - master
   pull_request:
-    paths:
-      - '**.[chly]'
-      - '**/Makefile.am'
-      - '.github/workflows/windows.yml'
 jobs:
   windows:
     runs-on: windows-latest
-    env:
-      APPVER: '10.0'
-      CODESIGN_PKT: 0000000000000000
-      INSTALL_DIR: C:\jq
-      WINSDKVER: '10.0.22000.0'
-      WIXDIR: 'c:\Program Files (x86)\Windows Installer XML v3.5'
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
