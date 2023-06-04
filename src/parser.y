@@ -319,6 +319,10 @@ Module:
     FAIL(@$, "Module metadata must be constant");
     $$ = gen_noop();
     block_free($2);
+  } else if (block_const_kind($2) != JV_KIND_OBJECT) {
+    FAIL(@$, "Module metadata must be an object");
+    $$ = gen_noop();
+    block_free($2);
   } else {
     $$ = gen_module($2);
   }

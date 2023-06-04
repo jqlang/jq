@@ -1496,6 +1496,10 @@ module (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1:
 
 %%FAIL
+module []; 0
+jq: error: Module metadata must be an object at <top-level>, line 1:
+
+%%FAIL
 include "a" (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1:
 
