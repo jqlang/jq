@@ -360,7 +360,8 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
       num = a;
     }
     jv res = jv_null();
-    int n = jv_number_value(num);
+    double d = jv_number_value(num);
+    int n = 0.0 < d && d < 1.0 ? 1 : d;
     if (n > 0) {
       size_t alen = jv_string_length_bytes(jv_copy(str));
       res = jv_string_empty(alen * n);
