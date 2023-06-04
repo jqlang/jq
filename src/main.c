@@ -592,7 +592,7 @@ int main(int argc, char* argv[]) {
     // Default search path list
     lib_search_paths = JV_ARRAY(jv_string("~/.jq"),
                                 jv_string("$ORIGIN/../lib/jq"),
-                                jv_string("$ORIGIN/lib"));
+                                jv_string("$ORIGIN/../lib"));
   }
   jq_set_attr(jq, jv_string("JQ_LIBRARY_PATH"), lib_search_paths);
 
