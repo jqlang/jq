@@ -642,7 +642,7 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     input = f_tostring(jq, input);
 
     int unreserved[128] = {0};
-    const char* p = CHARS_ALPHANUM "-_.!~*'()";
+    const char* p = CHARS_ALPHANUM "-_.~";
     while (*p) unreserved[(int)*p++] = 1;
 
     jv line = jv_string("");
