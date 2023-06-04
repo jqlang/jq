@@ -87,6 +87,10 @@ gsub( "(.*)"; "";  "x")
 ["a,b, c, d, e,f",", a,b, c, d, e,f, "]
 [[["a,b:c, d, e,f"],["a,b:c:d:e,f"],[", ",", ",", "]],[[":a,b, c, d, e,f, "],[":a,b:c:d:e,f:"],[", ",", ",", ",", ",", "]]]
 
+[.[] | scan("b+"; "i")]
+["","bBb","abcABBBCabbbc"]
+["bBb","b","BBB","bbb"]
+
 # reference to named captures
 gsub("(?<x>.)[^a]*"; "+\(.x)-")
 "Abcabc"
