@@ -1655,6 +1655,10 @@ try (1%.) catch .
 1/0
 jq: error: Division by zero? at <top-level>, line 1:
 
+%%FAIL
+1%0
+jq: error: Remainder by zero? at <top-level>, line 1:
+
 # Basic numbers tests: integers, powers of two
 [range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers
 null

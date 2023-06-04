@@ -230,6 +230,7 @@ static block constant_fold(block a, block b, int op) {
     case '-': res = jv_number(na - nb); break;
     case '*': res = jv_number(na * nb); break;
     case '/': res = jv_number(na / nb); break;
+    case '%': res = jv_number((intmax_t)nb == 0 ? INFINITY : (intmax_t)na % (intmax_t)nb); break;
     case EQ:  res = (cmp == 0 ? jv_true() : jv_false()); break;
     case NEQ: res = (cmp != 0 ? jv_true() : jv_false()); break;
     case '<': res = (cmp < 0 ? jv_true() : jv_false()); break;
