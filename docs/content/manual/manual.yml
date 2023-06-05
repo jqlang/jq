@@ -1612,6 +1612,9 @@ sections:
 
           Splits an input string on the separator argument.
 
+          `split` can also split on regex matches when called with
+          two arguments (see the regular expressions section below).
+
         examples:
           - program: 'split(", ")'
             input: '"a, b,c,d, e, "'
@@ -2425,7 +2428,10 @@ sections:
       - title: "`split(regex; flags)`"
         body: |
 
-          For backwards compatibility, `split` splits on a string, not a regex.
+          Splits an input string on each regex match.
+
+          For backwards compatibility, when called with a single argument,
+          `split` splits on a string, not a regex.
 
         example:
           - program: 'split(", *"; null)'
