@@ -1817,13 +1817,13 @@ static const char jq_builtins[] =
 #define LIBM_DDDD_NO(name) "def " #name "(a;b;c): \"Error: " #name "/3 not found at build time\"|error;"
 #include "libm.h"
 #ifndef HAVE_FREXP
-  "def frexp: \"Error: frexp/0 not found found at build time\"|error;"
+  "def frexp: \"Error: frexp/0 not found at build time\"|error;"
 #endif
 #ifndef HAVE_MODF
-  "def modf: \"Error: modf/0 not found found at build time\"|error;"
+  "def modf: \"Error: modf/0 not found at build time\"|error;"
 #endif
 #ifndef HAVE_LGAMMA_R
-  "def lgamma_r: \"Error: lgamma_r/0 not found found at build time\"|error;"
+  "def lgamma_r: \"Error: lgamma_r/0 not found at build time\"|error;"
 #endif
 ;
 
