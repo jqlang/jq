@@ -652,7 +652,7 @@ sections:
 
           produces
 
-              {"f o o":"f o o","b a r":"f o o"}
+              {"foo":"f o o","b a r":"f o o"}
 
         examples:
           - program: '{user, title: .titles[]}'
