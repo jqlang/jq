@@ -184,7 +184,7 @@ body:
       The `--disable-maintainer-mode` flag says to use the pre-generated lexer
       and parser that come with the code. To compile the lexer and parser also
       from source, leave out this flag. You will need to install
-      [Flex](http://flex.sourceforge.net/) and
+      [Flex](https://github.com/westes/flex) and
       [Bison](https://www.gnu.org/software/bison/).
 
       #### Building the documentation
