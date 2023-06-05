@@ -180,6 +180,10 @@ http://download.icu-project.org/files/decNumber/decNumber-icu-368.zip.</p>
 <h3>Windows</h3>
 <ul>
 <li>
+<p>Use <a href="https://learn.microsoft.com/en-us/windows/package-manager/winget/">winget</a>
+   to install jq 1.6 with <code>winget install jqlang.jq</code>.</p>
+</li>
+<li>
 <p>Use <a href="https://chocolatey.org/">Chocolatey NuGet</a> to install jq 1.6 with
    <code>chocolatey install jq</code>.</p>
 </li>
@@ -259,7 +263,7 @@ by Apple. This can be found in <a href="http://brew.sh">Homebrew</a> or
 <p>The <code>--disable-maintainer-mode</code> flag says to use the pre-generated lexer
 and parser that come with the code. To compile the lexer and parser also
 from source, leave out this flag. You will need to install
-<a href="http://flex.sourceforge.net/">Flex</a> and
+<a href="https://github.com/westes/flex">Flex</a> and
 <a href="https://www.gnu.org/software/bison/">Bison</a>.</p>
 <h4>Building the documentation</h4>
 <p>jq's documentation is compiled into static HTML using Python.
