@@ -5848,7 +5848,7 @@ input string with <code>tostring</code>, after interpolation.  <code>tostring</c
 be a jq string, and may contain references to named captures. The
 named captures are, in effect, presented as a JSON object (as
 constructed by <code>capture</code>) to <code>tostring</code>, so a reference to a captured
-variable named "x" would take the form: "(.x)".</p>
+variable named "x" would take the form: <code>"\(.x)"</code>.</p>
 
                   
                 </section>
