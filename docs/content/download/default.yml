@@ -102,6 +102,8 @@ body:
          [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-solaris11-32).
 
       ### Windows
+       * Use [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/)
+         to install jq 1.6 with `winget install jqlang.jq`.
 
        * Use [Chocolatey NuGet](https://chocolatey.org/) to install jq 1.6 with
          `chocolatey install jq`.
