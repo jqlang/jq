@@ -4077,6 +4077,8 @@ codepoint numbers.</p>
                     
                   </h3>
                   <p>Splits an input string on the separator argument.</p>
+<p><code>split</code> can also split on regex matches when called with
+two arguments (see the regular expressions section below).</p>
 
                   
                     <div>
@@ -5822,7 +5824,9 @@ To capture all the matches for each input string, use the idiom
                     <code>split(regex; flags)</code>
                     
                   </h3>
-                  <p>For backwards compatibility, <code>split</code> splits on a string, not a regex.</p>
+                  <p>Splits an input string on each regex match.</p>
+<p>For backwards compatibility, when called with a single argument,
+<code>split</code> splits on a string, not a regex.</p>
 
                   
                 </section>
