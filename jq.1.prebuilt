@@ -1119,7 +1119,7 @@ Stops the jq program with no further outputs\. The input will be printed on \fBs
 The given \fBexit_code\fR (defaulting to \fB5\fR) will be jq\'s exit status\.
 .
 .P
-For example, \fB"Error: somthing went wrong\en"|halt_error(1)\fR\.
+For example, \fB"Error: something went wrong\en"|halt_error(1)\fR\.
 .
 .SS "$__loc__"
 Produces an object with a "file" key and a "line" key, with the filename and line number where \fB$__loc__\fR occurs, as values\.

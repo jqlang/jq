@@ -1019,7 +1019,7 @@ sections:
           The given `exit_code` (defaulting to `5`) will be jq's exit
           status.
 
-          For example, `"Error: somthing went wrong\n"|halt_error(1)`.
+          For example, `"Error: something went wrong\n"|halt_error(1)`.
 
       - title: "`$__loc__`"
         body: |
