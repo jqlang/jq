@@ -3,24 +3,23 @@ jq
 
 jq is a lightweight and flexible command-line JSON processor.
 
-[![Coverage Status](https://coveralls.io/repos/stedolan/jq/badge.svg?branch=master&service=github)](https://coveralls.io/github/stedolan/jq?branch=master),
-Unix: [![Build Status](https://travis-ci.org/stedolan/jq.svg?branch=master)](https://travis-ci.org/stedolan/jq),
-Windows: [![Windows build status](https://ci.appveyor.com/api/projects/status/mi816811c9e9mx29?svg=true)](https://ci.appveyor.com/project/stedolan/jq)
-
+[![Linux Build](https://github.com/jqlang/jq/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/jqlang/jq/actions/workflows/linux.yml?query=branch%3Amaster)
+[![MacOS Build](https://github.com/jqlang/jq/actions/workflows/macos.yml/badge.svg?branch=master)](https://github.com/jqlang/jq/actions/workflows/macos.yml?query=branch%3Amaster)
+[![Windows Build](https://github.com/jqlang/jq/actions/workflows/windows.yml/badge.svg?branch=master)](https://github.com/jqlang/jq/actions/workflows/windows.yml?query=branch%3Amaster)
 
 If you want to learn to use jq, read the documentation at
-[https://stedolan.github.io/jq](https://stedolan.github.io/jq).  This
+[https://jqlang.github.io/jq](https://jqlang.github.io/jq).  This
 documentation is generated from the docs/ folder of this repository.
 You can also try it online at [jqplay.org](https://jqplay.org).
 
 If you want to hack on jq, feel free, but be warned that its internals
 are not well-documented at the moment. Bring a hard hat and a
-shovel.  Also, read the wiki: https://github.com/stedolan/jq/wiki, where
+shovel.  Also, read the wiki: https://github.com/jqlang/jq/wiki, where
 you will find cookbooks, discussion of advanced topics, internals,
 release engineering, and more.
 
 Source tarball and built executable releases can be found on the
-homepage and on the github release page, https://github.com/stedolan/jq/releases
+homepage and on the github release page, https://github.com/jqlang/jq/releases
 
 If you're building directly from the latest git, you'll need flex,
 bison (3.0 or newer), libtool, make, automake, and autoconf installed.
@@ -68,8 +67,12 @@ Cross-compilation requires a clean workspace, then:
     scripts/crosscompile <name-of-build> <configure-options>
 
 Use the `--host=` and `--target=` ./configure options to select a
-cross-compilation environment.  See also 
-["Cross compilation"](https://github.com/stedolan/jq/wiki/Cross-compilation) on
+cross-compilation environment.  See also
+["Cross compilation"](https://github.com/jqlang/jq/wiki/Cross-compilation) on
 the wiki.
 
-Send questions to https://stackoverflow.com/questions/tagged/jq or to the #jq channel (http://irc.lc/freenode/%23jq/) on Freenode (https://webchat.freenode.net/).
+
+# Community
+
+* Send questions to https://stackoverflow.com/questions/tagged/jq.
+* Join our [Discord server](https://discord.gg/yg6yjNmgAC).

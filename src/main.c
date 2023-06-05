@@ -60,7 +60,7 @@ static void usage(int code, int keep_it_short) {
     "unmodified (except for formatting, but note that IEEE754 is used\n"
     "for number representation internally, with all that that implies).\n\n"
     "For more advanced filters see the jq(1) manpage (\"man jq\")\n"
-    "and/or https://stedolan.github.io/jq\n\n"
+    "and/or https://jqlang.github.io/jq\n\n"
     "Example:\n\n\t$ echo '{\"foo\": 0}' | jq .\n"
     "\t{\n\t\t\"foo\": 0\n\t}\n\n",
     JQ_VERSION, progname, progname, progname);
@@ -97,7 +97,7 @@ static void usage(int code, int keep_it_short) {
 
 static void die() {
   fprintf(stderr, "Use %s --help for help with command-line options,\n", progname);
-  fprintf(stderr, "or see the jq manpage, or online docs  at https://stedolan.github.io/jq\n");
+  fprintf(stderr, "or see the jq manpage, or online docs  at https://jqlang.github.io/jq\n");
   exit(2);
 }
 

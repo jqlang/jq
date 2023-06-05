@@ -612,6 +612,7 @@ static jv jvp_literal_number_new(const char * literal) {
   n->refcnt = JV_REFCNT_INIT;
   n->literal_data = NULL;
   decContext *ctx = DEC_CONTEXT();
+  decContextClearStatus(ctx, DEC_Conversion_syntax);
   decNumberFromString(&n->num_decimal, literal, ctx);
   n->num_double = NAN;
 

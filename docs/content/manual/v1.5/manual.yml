@@ -65,7 +65,7 @@ manpage_epilogue: |
 
   Presumably. Report them or discuss them at:
 
-      https://github.com/stedolan/jq/issues
+      https://github.com/jqlang/jq/issues
 
   ## AUTHOR
 
@@ -297,8 +297,8 @@ sections:
       - title: "`.foo?`"
         body: |
 
-          Just like `.foo`, but does not output even an error when `.`
-          is not an array or an object.
+          Just like `.foo`, but does not output an error when `.` is not an
+          object.
 
         examples:
           - program: '.foo?'
@@ -2115,7 +2115,7 @@ sections:
           be a jq string, and may contain references to named captures. The
           named captures are, in effect, presented as a JSON object (as
           constructed by `capture`) to `tostring`, so a reference to a captured
-          variable named "x" would take the form: "\(.x)".
+          variable named "x" would take the form: `"\(.x)"`.
 
         example:
           - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
@@ -2149,7 +2149,7 @@ sections:
 
       It is also possible to define functions in jq, although this is
       is a feature whose biggest use is defining jq's standard library
-      (many jq functions such as `map` and `find` are in fact written
+      (many jq functions such as `map` and `select` are in fact written
       in jq).
 
       jq has reduction operators, which are very powerful but a bit
