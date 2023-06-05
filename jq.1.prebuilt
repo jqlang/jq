@@ -1,7 +1,5 @@
-.\" generated with Ronn/v0.7.3
-.\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "JQ" "1" "December 2017" "" ""
+.TH "JQ" "1" "May 2023" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -16,7 +14,7 @@
 \fBjq\fR can accept text input as well, but by default, \fBjq\fR reads a stream of JSON entities (including numbers and other literals) from \fBstdin\fR\. Whitespace is only needed to separate entities such as 1 and 2, and true and false\. One or more \fIfiles\fR may be specified, in which case \fBjq\fR will read input from those instead\.
 .
 .P
-The \fIoptions\fR are described in the \fIINVOKING JQ\fR section; they mostly concern input and output formatting\. The \fIfilter\fR is written in the jq language and specifies how to transform the input file or document\.
+The \fIoptions\fR are described in the [INVOKING JQ] section; they mostly concern input and output formatting\. The \fIfilter\fR is written in the jq language and specifies how to transform the input file or document\.
 .
 .SH "FILTERS"
 A jq program is a "filter": it takes an input, and produces an output\. There are a lot of builtin filters for extracting a particular field of an object, or converting a number to a string, or various other standard tasks\.
@@ -42,64 +40,64 @@ Note: it is important to mind the shell\'s quoting rules\. As a general rule it\
 .P
 You can affect how jq reads and writes its input and output using some command\-line options:
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-version\fR:
 .
 .IP
 Output the jq version and exit with zero\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-seq\fR:
 .
 .IP
 Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts in jq\'s input and output\. This means that an ASCII RS (record separator) character is printed before each value on output and an ASCII LF (line feed) is printed after every output\. Input JSON texts that fail to parse are ignored (but warned about), discarding all subsequent input until the next RS\. This mode also parses the output of jq without the \fB\-\-seq\fR option\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-stream\fR:
 .
 .IP
-Parse the input in streaming fashion, outputting arrays of path and leaf values (scalars and empty arrays or empty objects)\. For example, \fB"a"\fR becomes \fB[[],"a"]\fR, and \fB[[],"a",["b"]]\fR becomes \fB[[0],[]]\fR, \fB[[1],"a"]\fR, and \fB[[1,0],"b"]\fR\.
+Parse the input in streaming fashion, outputting arrays of path and leaf values (scalars and empty arrays or empty objects)\. For example, \fB"a"\fR becomes \fB[[],"a"]\fR, and \fB[[],"a",["b"]]\fR becomes \fB[[0],[]]\fR, \fB[[1],"a"]\fR, and \fB[[2,0],"b"]\fR\.
 .
 .IP
 This is useful for processing very large inputs\. Use this in conjunction with filtering and the \fBreduce\fR and \fBforeach\fR syntax to reduce large inputs incrementally\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-slurp\fR/\fB\-s\fR:
 .
 .IP
 Instead of running the filter for each JSON object in the input, read the entire input stream into a large array and run the filter just once\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-raw\-input\fR/\fB\-R\fR:
 .
 .IP
 Don\'t parse the input as JSON\. Instead, each line of text is passed to the filter as a string\. If combined with \fB\-\-slurp\fR, then the entire input is passed to the filter as a single long string\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-null\-input\fR/\fB\-n\fR:
 .
 .IP
 Don\'t read any input at all! Instead, the filter is run once using \fBnull\fR as the input\. This is useful when using jq as a simple calculator or to construct JSON data from scratch\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-compact\-output\fR / \fB\-c\fR:
 .
 .IP
 By default, jq pretty\-prints JSON output\. Using this option will result in more compact output by instead putting each JSON object on a single line\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-tab\fR:
 .
 .IP
 Use a tab for each indentation level instead of two spaces\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-indent n\fR:
 .
 .IP
 Use the given number of spaces (no more than 7) for indentation\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-color\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
 .
 .IP
@@ -108,49 +106,61 @@ By default, jq outputs colored JSON if writing to a terminal\. You can force it 
 .IP
 Colors can be configured with the \fBJQ_COLORS\fR environment variable (see below)\.
 .
-.IP "\(bu" 4
+.TP
+\fB\-\-binary\fR / \fB\-b\fR:
+.
+.IP
+Windows users using WSL, MSYS2, or Cygwin, should use this option when using a native jq\.exe, otherwise jq will turn newlines (LFs) into carriage\-return\-then\-newline (CRLF)\.
+.
+.TP
 \fB\-\-ascii\-output\fR / \fB\-a\fR:
 .
 .IP
 jq usually outputs non\-ASCII Unicode codepoints as UTF\-8, even if the input specified them as escape sequences (like "\eu03bc")\. Using this option, you can force jq to produce pure ASCII output with every non\-ASCII character replaced with the equivalent escape sequence\.
 .
-.IP "\(bu" 4
-\fB\-\-unbuffered\fR
+.TP
+\fB\-\-unbuffered\fR:
 .
 .IP
 Flush the output after each JSON object is printed (useful if you\'re piping a slow data source into jq and piping jq\'s output elsewhere)\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-sort\-keys\fR / \fB\-S\fR:
 .
 .IP
 Output the fields of each object with the keys in sorted order\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-raw\-output\fR / \fB\-r\fR:
 .
 .IP
 With this option, if the filter\'s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes\. This can be useful for making jq filters talk to non\-JSON\-based systems\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-join\-output\fR / \fB\-j\fR:
 .
 .IP
 Like \fB\-r\fR but jq won\'t print a newline after each output\.
 .
-.IP "\(bu" 4
+.TP
+\fB\-\-nul\-output\fR / \fB\-0\fR:
+.
+.IP
+Like \fB\-r\fR but jq will print NUL instead of newline after each output\. This can be useful when the values being output can contain newlines\.
+.
+.TP
 \fB\-f filename\fR / \fB\-\-from\-file filename\fR:
 .
 .IP
 Read filter from the file rather than from a command line, like awk\'s \-f option\. You can also use \'#\' to make comments\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-Ldirectory\fR / \fB\-L directory\fR:
 .
 .IP
 Prepend \fBdirectory\fR to the search list for modules\. If this option is used then no builtin search list is used\. See the section on modules below\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-e\fR / \fB\-\-exit\-status\fR:
 .
 .IP
@@ -159,7 +169,7 @@ Sets the exit status of jq to 0 if the last output values was neither \fBfalse\f
 .IP
 Another way to set the exit status is with the \fBhalt_error\fR builtin function\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-arg name value\fR:
 .
 .IP
@@ -168,19 +178,25 @@ This option passes a value to the jq program as a predefined variable\. If you r
 .IP
 Named arguments are also available to the jq program as \fB$ARGS\.named\fR\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-argjson name JSON\-text\fR:
 .
 .IP
 This option passes a JSON\-encoded value to the jq program as a predefined variable\. If you run jq with \fB\-\-argjson foo 123\fR, then \fB$foo\fR is available in the program and has the value \fB123\fR\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-slurpfile variable\-name filename\fR:
 .
 .IP
-This option reads all the JSON texts in the named file and binds an array of the parsed JSON values to the given global variable\. If you run jq with \fB\-\-argfile foo bar\fR, then \fB$foo\fR is available in the program and has an array whose elements correspond to the texts in the file named \fBbar\fR\.
+This option reads all the JSON texts in the named file and binds an array of the parsed JSON values to the given global variable\. If you run jq with \fB\-\-slurpfile foo bar\fR, then \fB$foo\fR is available in the program and has an array whose elements correspond to the texts in the file named \fBbar\fR\.
 .
-.IP "\(bu" 4
+.TP
+\fB\-\-rawfile variable\-name filename\fR:
+.
+.IP
+This option reads in the named file and binds its contents to the given global variable\. If you run jq with \fB\-\-rawfile foo bar\fR, then \fB$foo\fR is available in the program and has a string whose contents are to the texts in the file named \fBbar\fR\.
+.
+.TP
 \fB\-\-argfile variable\-name filename\fR:
 .
 .IP
@@ -189,19 +205,19 @@ Do not use\. Use \fB\-\-slurpfile\fR instead\.
 .IP
 (This option is like \fB\-\-slurpfile\fR, but when the file has just one text, then that is used, else an array of texts is used as in \fB\-\-slurpfile\fR\.)
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-args\fR:
 .
 .IP
 Remaining arguments are positional string arguments\. These are available to the jq program as \fB$ARGS\.positional[]\fR\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-jsonargs\fR:
 .
 .IP
 Remaining arguments are positional JSON text arguments\. These are available to the jq program as \fB$ARGS\.positional[]\fR\.
 .
-.IP "\(bu" 4
+.TP
 \fB\-\-run\-tests [filename]\fR:
 .
 .IP
@@ -209,8 +225,6 @@ Runs the tests in the given file or standard input\. This must be the last optio
 .
 .IP
 Be warned that this option can change backwards\-incompatibly\.
-.
-.IP "" 0
 .
 .SH "BASIC FILTERS"
 .
@@ -220,6 +234,15 @@ The absolute simplest filter is \fB\.\fR \. This is a filter that takes its inpu
 .P
 Since jq by default pretty\-prints all output, this trivial program can be a useful way of formatting JSON output from, say, \fBcurl\fR\.
 .
+.P
+An important point about the identity filter is that it  guarantees to preserve the literal decimal representation  of values\. This is particularly important when dealing with numbers  which can\'t be losslessly converted to an IEEE754 double precision  representation\.
+.
+.P
+jq doesn\'t truncate the literal numbers to double unless there is a need to make arithmetic operations with the number\. Comparisions are carried out over the untruncated big decimal  representation of the number\.
+.
+.P
+jq will also try to maintain the original decimal precision of the provided number literal\. See below for examples\. 
+.
 .IP "" 4
 .
 .nf
@@ -227,6 +250,18 @@ Since jq by default pretty\-prints all output, this trivial program can be a use
 jq \'\.\'
    "Hello, world!"
 => "Hello, world!"
+
+jq \'\. | tojson\'
+   12345678909876543212345
+=> "12345678909876543212345"
+
+jq \'map([\., \. == 1]) | tojson\'
+   [1, 1\.000, 1\.0, 100e\-2]
+=> "[[1,true],[1\.000,true],[1\.0,true],[1\.00,true]]"
+
+jq \'\. as $big | [$big, $big + 1] | map(\. > 10000000000000000000000000000000)\'
+   10000000000000000000000000000001
+=> [true, false]
 .
 .fi
 .
@@ -242,7 +277,7 @@ A filter of the form \fB\.foo\.bar\fR is equivalent to \fB\.foo|\.bar\fR\.
 This syntax only works for simple, identifier\-like keys, that is, keys that are all made of alphanumeric characters and underscore, and which do not start with a digit\.
 .
 .P
-If the key contains special characters, you need to surround it with double quotes like this: \fB\."foo$"\fR, or else \fB\.["foo$"]\fR\.
+If the key contains special characters or starts with a digit, you need to surround it with double quotes like this: \fB\."foo$"\fR, or else \fB\.["foo$"]\fR\.
 .
 .P
 For example \fB\.["foo::bar"]\fR and \fB\.["foo\.bar"]\fR work while \fB\.foo::bar\fR does not, and \fB\.foo\.bar\fR means \fB\.["foo"]\.["bar"]\fR\.
@@ -366,7 +401,7 @@ jq \'\.[]\'
 
 jq \'\.[]\'
    []
-=>
+=> 
 
 jq \'\.[]\'
    {"a": 1, "b": 1}
@@ -447,6 +482,12 @@ jq supports the same set of datatypes as JSON \- numbers, strings, booleans, arr
 .P
 Booleans, null, strings and numbers are written the same way as in javascript\. Just like everything else in jq, these simple values take an input and produce an output \- \fB42\fR is a valid jq expression that takes an input, ignores it, and returns 42 instead\.
 .
+.P
+Numbers in jq are internally represented by their IEEE754 double  precision approximation\. Any arithmetic operation with numbers,  whether they are literals or results of previous filters, will  produce a double precision floating point result\.
+.
+.P
+However, when parsing a literal jq will store the original literal string\. If no mutation is applied to this value then it will make to the output in its original form, even if conversion to double  would result in a loss\. 
+.
 .SS "Array construction: []"
 As in JSON, \fB[]\fR is used to construct arrays, as in \fB[1,2,3]\fR\. The elements of the arrays can be any jq expression, including a pipeline\. All of the results produced by all of the expressions are collected into one big array\. You can use it to construct an array out of a known quantity of values (as in \fB[\.foo, \.bar, \.baz]\fR) or to "collect" all the results of a filter into an array (as in \fB[\.items[]\.name]\fR)
 .
@@ -476,10 +517,10 @@ jq \'[ \.[] | \. * 2]\'
 Like JSON, \fB{}\fR is for constructing objects (aka dictionaries or hashes), as in: \fB{"a": 42, "b": 17}\fR\.
 .
 .P
-If the keys are "identifier\-like", then the quotes can be left off, as in \fB{a:42, b:17}\fR\. Keys generated by expressions need to be parenthesized, e\.g\., \fB{("a"+"b"):59}\fR\.
+If the keys are "identifier\-like", then the quotes can be left off, as in \fB{a:42, b:17}\fR\. Variable references as key expressions use the value of the variable as the key\. Key expressions other than constant literals, identifiers, or variable references, need to be parenthesized, e\.g\., \fB{("a"+"b"):59}\fR\.
 .
 .P
-The value can be any expression (although you may need to wrap it in parentheses if it\'s a complicated one), which gets applied to the {} expression\'s input (remember, all filters have an input and an output)\.
+The value can be any expression (although you may need to wrap it in parentheses if, for example, it contains colons), which gets applied to the {} expression\'s input (remember, all filters have an input and an output)\.
 .
 .IP "" 4
 .
@@ -568,6 +609,32 @@ produces
 .nf
 
 {"stedolan": ["JQ Primer", "More JQ"]}
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Variable references as keys use the value of the variable as the key\. Without a value then the variable\'s name becomes the key and its value becomes the value,
+.
+.IP "" 4
+.
+.nf
+
+"f o o" as $foo | "b a r" as $bar | {$foo, $bar:$foo}
+.
+.fi
+.
+.IP "" 0
+.
+.P
+produces
+.
+.IP "" 4
+.
+.nf
+
+{"f o o":"f o o","b a r":"f o o"}
 
 jq \'{user, title: \.titles[]}\'
    {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
@@ -601,6 +668,12 @@ jq \'\.\.|\.a?\'
 .
 .SH "BUILTIN OPERATORS AND FUNCTIONS"
 Some jq operator (for instance, \fB+\fR) do different things depending on the type of their arguments (arrays, numbers, etc\.)\. However, jq never does implicit type conversions\. If you try to add a string to an object you\'ll get an error message and no result\.
+.
+.P
+Please note that all numbers are converted to IEEE754 double precision  floating point representation\. Arithmetic and logical operators are working with these converted doubles\. Results of all such operations are also limited  to the double precision\. 
+.
+.P
+The only exception to this behaviour of number is a snapshot of original number  literal\. When a number which originally was provided as a literal is never mutated until the end of the program then it is printed to the output in its  original literal form\. This also includes cases when the original literal  would be truncated when converted to the IEEE754 double precision floating point number\.
 .
 .SS "Addition: +"
 The operator \fB+\fR takes two filters, applies them both to the same input, and adds the results together\. What "adding" means depends on the types involved:
@@ -720,8 +793,15 @@ The length of an \fBobject\fR is the number of key\-value pairs\.
 .IP "\(bu" 4
 The length of \fBnull\fR is zero\.
 .
-.IP
-jq \'\.[] | length\' [[1,2], "string", {"a":2}, null] => 2, 6, 1, 0
+.IP "" 4
+.
+.nf
+
+jq \'\.[] | length\'
+   [[1,2], "string", {"a":2}, null]
+=> 2, 6, 1, 0
+.
+.fi
 .
 .IP "" 0
 .
@@ -1039,7 +1119,7 @@ Stops the jq program with no further outputs\. The input will be printed on \fBs
 The given \fBexit_code\fR (defaulting to \fB5\fR) will be jq\'s exit status\.
 .
 .P
-For example, \fB"Error: something went wrong\en"|halt_error(1)\fR\.
+For example, \fB"Error: somthing went wrong\en"|halt_error(1)\fR\.
 .
 .SS "$__loc__"
 Produces an object with a "file" key and a "line" key, with the filename and line number where \fB$__loc__\fR occurs, as values\.
@@ -1201,7 +1281,7 @@ jq \'flatten\'
 .
 .IP "" 0
 .
-.SS "range(upto), range(from;upto) range(from;upto;by)"
+.SS "range(upto), range(from;upto), range(from;upto;by)"
 The \fBrange\fR function produces a range of numbers\. \fBrange(4;10)\fR produces 6 numbers, from 4 (inclusive) to 10 (exclusive)\. The numbers are produced as separate outputs\. Use \fB[range(4;10)]\fR to get a range as an array\.
 .
 .P
@@ -1748,6 +1828,24 @@ jq \'[while(\.<100; \.*2)]\'
 .
 .IP "" 0
 .
+.SS "repeat(exp)"
+The \fBrepeat(exp)\fR function allows you to repeatedly apply expression \fBexp\fR to \fB\.\fR until an error is raised\.
+.
+.P
+Note that \fBrepeat(exp)\fR is internally defined as a recursive jq function\. Recursive calls within \fBrepeat\fR will not consume additional memory if \fBexp\fR produces at most one output for each input\. See advanced topics below\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[repeat(\.*2, error)?]\'
+   1
+=> [2]
+.
+.fi
+.
+.IP "" 0
+.
 .SS "until(cond; next)"
 The \fBuntil(cond; next)\fR function allows you to repeatedly apply the expression \fBnext\fR, initially to \fB\.\fR then to its own output, until \fBcond\fR is true\. For example, this can be used to implement a factorial function (see below)\.
 .
@@ -1893,7 +1991,7 @@ jq \'transpose\'
 .IP "" 0
 .
 .SS "bsearch(x)"
-bsearch(x) conducts a binary search for x in the input array\. If the input is sorted and contains x, then bsearch(x) will return its index in the array; otherwise, if the array is sorted, it will return (\-1 \- ix) where ix is an insertion point such that the array would still be sorted after the insertion of x at ix\. If the array is not sorted, bsearch(x) will return an integer that is probably of no interest\.
+\fBbsearch(x)\fR conducts a binary search for x in the input array\. If the input is sorted and contains x, then \fBbsearch(x)\fR will return its index in the array; otherwise, if the array is sorted, it will return (\-1 \- ix) where ix is an insertion point such that the array would still be sorted after the insertion of x at ix\. If the array is not sorted, \fBbsearch(x)\fR will return an integer that is probably of no interest\.
 .
 .IP "" 4
 .
@@ -1931,7 +2029,7 @@ jq \'"The input was \e(\.), which is one less than \e(\.+1)"\'
 .IP "" 0
 .
 .SS "Convert to/from JSON"
-The \fBtojson\fR and \fBfromjson\fR builtins dump values as JSON texts or parse JSON texts into values, respectively\. The tojson builtin differs from tostring in that tostring returns strings unmodified, while tojson encodes strings as JSON strings\.
+The \fBtojson\fR and \fBfromjson\fR builtins dump values as JSON texts or parse JSON texts into values, respectively\. The \fBtojson\fR builtin differs from \fBtostring\fR in that \fBtostring\fR returns strings unmodified, while \fBtojson\fR encodes strings as JSON strings\.
 .
 .IP "" 4
 .
@@ -2008,7 +2106,7 @@ The input is converted to base64 as specified by RFC 4648\.
 \fB@base64d\fR:
 .
 .IP
-The inverse of \fB@base64\fR, input is decoded as specified by RFC 4648\. Note: If the decoded string is not UTF\-8, the results are undefined\.
+The inverse of \fB@base64\fR, input is decoded as specified by RFC 4648\. Note\e: If the decoded string is not UTF\-8, the results are undefined\.
 .
 .P
 This syntax can be combined with string interpolation in a useful way\. You can follow a \fB@foo\fR token with a string literal\. The contents of the string literal will \fInot\fR be escaped\. However, all interpolations made inside that string literal will be escaped\. For instance,
@@ -2188,7 +2286,10 @@ jq \'\.[] == 1\'
 \fBif A then B else C end\fR will act the same as \fBB\fR if \fBA\fR produces a value other than false or null, but act the same as \fBC\fR otherwise\.
 .
 .P
-Checking for false or null is a simpler notion of "truthiness" than is found in Javascript or Python, but it means that you\'ll sometimes have to be more explicit about the condition you want: you can\'t test whether, e\.g\. a string is empty using \fBif \.name then A else B end\fR, you\'ll need something more like \fBif (\.name | length) > 0 then A else B end\fR instead\.
+\fBif A then B end\fR is the same as \fBif A then B else \.  end\fR\. That is, the \fBelse\fR branch is optional, and if absent is the same as \fB\.\fR\.
+.
+.P
+Checking for false or null is a simpler notion of "truthiness" than is found in Javascript or Python, but it means that you\'ll sometimes have to be more explicit about the condition you want\. You can\'t test whether, e\.g\. a string is empty using \fBif \.name then A else B end\fR, you\'ll need something more like \fBif \.name == "" then A else B end\fR instead\.
 .
 .P
 If the condition \fBA\fR produces multiple results, then \fBB\fR is evaluated once for each result that is not false or null, and \fBC\fR is evaluated once for each false or null\.
@@ -2200,14 +2301,13 @@ More cases can be added to an if using \fBelif A then B\fR syntax\.
 .
 .nf
 
-jq \'if \. == 0 then
+jq \'if \. == 0 then "zero" elif \. == 1 then "one" else "many" end\'
+   2
+=> "many"
 .
 .fi
 .
 .IP "" 0
-.
-.P
-"zero" elif \. == 1 then "one" else "many" end\' 2 => "many"
 .
 .SS ">, >=, <=, <"
 The comparison operators \fB>\fR, \fB>=\fR, \fB<=\fR, \fB<\fR return whether their left argument is greater than, greater than or equal to, less than or equal to or less than their right argument (respectively)\.
@@ -2413,7 +2513,18 @@ STRING | FILTER( [REGEX, FLAGS] )
 .IP "" 0
 .
 .P
-where: * STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation; * REGEX, after string interpolation, should be a valid PCRE regex; * FILTER is one of \fBtest\fR, \fBmatch\fR, or \fBcapture\fR, as described below\.
+where:
+.
+.IP "\(bu" 4
+STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
+.
+.IP "\(bu" 4
+REGEX, after string interpolation, should be a valid PCRE regex;
+.
+.IP "\(bu" 4
+FILTER is one of \fBtest\fR, \fBmatch\fR, or \fBcapture\fR, as described below\.
+.
+.IP "" 0
 .
 .P
 FLAGS is a string consisting of one of more of the supported flags:
@@ -2448,7 +2559,7 @@ FLAGS is a string consisting of one of more of the supported flags:
 To match whitespace in an x pattern use an escape such as \es, e\.g\.
 .
 .IP "\(bu" 4
-test( "a\esb", "x" )\.
+test( "a\e\esb"; "x" )
 .
 .IP "" 0
 .
@@ -2571,7 +2682,7 @@ For backwards compatibility, \fBsplit\fR splits on a string, not a regex\.
 .SS "splits(regex), splits(regex; flags)"
 These provide the same results as their \fBsplit\fR counterparts, but as a stream instead of an array\.
 .
-.SS "sub(regex; tostring) sub(regex; string; flags)"
+.SS "sub(regex; tostring), sub(regex; string; flags)"
 Emit the string obtained by replacing the first match of regex in the input string with \fBtostring\fR, after interpolation\. \fBtostring\fR should be a jq string, and may contain references to named captures\. The named captures are, in effect, presented as a JSON object (as constructed by \fBcapture\fR) to \fBtostring\fR, so a reference to a captured variable named "x" would take the form: "(\.x)"\.
 .
 .SS "gsub(regex; string), gsub(regex; string; flags)"
@@ -2657,7 +2768,7 @@ We use a variable, $names, to store the realnames object, so that we can refer t
 .
 .nf
 
-\&\.realnames as $names | \.posts[] | {title, author: $names[\.author]}
+\&.realnames as $names | \.posts[] | {title, author: $names[\.author]}
 .
 .fi
 .
@@ -2676,7 +2787,7 @@ Multiple variables may be declared using a single \fBas\fR expression by providi
 .
 .nf
 
-\&\. as {realnames: $names, posts: [$first, $second]} | \.\.\.
+\&. as {realnames: $names, posts: [$first, $second]} | \.\.\.
 .
 .fi
 .
@@ -2692,7 +2803,7 @@ Variables are scoped over the rest of the expression that defines them, so
 .
 .nf
 
-\&\.realnames as $names | (\.posts[] | {title, author: $names[\.author]})
+\&.realnames as $names | (\.posts[] | {title, author: $names[\.author]})
 .
 .fi
 .
@@ -2736,6 +2847,87 @@ jq \'\. as [$a, $b, {c: $c}] | $a + $b + $c\'
 jq \'\.[] as [$a, $b] | {a: $a, b: $b}\'
    [[0], [0, 1], [2, 1, 0]]
 => {"a":0,"b":null}, {"a":0,"b":1}, {"a":2,"b":1}
+.
+.fi
+.
+.IP "" 0
+.
+.SS "Destructuring Alternative Operator: ?//"
+The destructuring alternative operator provides a concise mechanism for destructuring an input that can take one of several forms\.
+.
+.P
+Suppose we have an API that returns a list of resources and events associated with them, and we want to get the user_id and timestamp of the first event for each resource\. The API (having been clumsily converted from XML) will only wrap the events in an array if the resource has multiple events:
+.
+.IP "" 4
+.
+.nf
+
+{"resources": [{"id": 1, "kind": "widget", "events": {"action": "create", "user_id": 1, "ts": 13}},
+               {"id": 2, "kind": "widget", "events": [{"action": "create", "user_id": 1, "ts": 14}, {"action": "destroy", "user_id": 1, "ts": 15}]}]}
+.
+.fi
+.
+.IP "" 0
+.
+.P
+We can use the destructuring alternative operator to handle this structural change simply:
+.
+.IP "" 4
+.
+.nf
+
+\&.resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$user_id, $ts}]} | {$user_id, $kind, $id, $ts}
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Or, if we aren\'t sure if the input is an array of values or an object:
+.
+.IP "" 4
+.
+.nf
+
+\&.[] as [$id, $kind, $user_id, $ts] ?// {$id, $kind, $user_id, $ts} | \.\.\.
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Each alternative need not define all of the same variables, but all named variables will be available to the subsequent expression\. Variables not matched in the alternative that succeeded will be \fBnull\fR:
+.
+.IP "" 4
+.
+.nf
+
+\&.resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$first_user_id, $first_ts}]} | {$user_id, $first_user_id, $kind, $id, $ts, $first_ts}
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Additionally, if the subsequent expression returns an error, the alternative operator will attempt to try the next binding\. Errors that occur during the final alternative are passed through\.
+.
+.IP "" 4
+.
+.nf
+
+[[3]] | \.[] as [$a] ?// [$b] | if $a != null then error("err: \e($a)") else {$a,$b} end
+
+jq \'\.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}\'
+   [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
+=> {"a":1,"b":2,"d":3,"e":4}, {"a":1,"b":2,"d":3,"e":4}
+
+jq \'\.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}\'
+   [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
+=> {"a":1,"b":2,"d":3,"e":null}, {"a":1,"b":2,"d":null,"e":4}
+
+jq \'\.[] as [$a] ?// [$b] | if $a != null then error("err: \e($a)") else {$a,$b} end\'
+   [[3]]
+=> {"a":null,"b":3}
 .
 .fi
 .
@@ -2836,7 +3028,7 @@ jq \'def addvalue(f): f as $x | map(\. + $x); addvalue(\.[0])\'
 There are two types of symbols in jq: value bindings (a\.k\.a\., "variables"), and functions\. Both are scoped lexically, with expressions being able to refer only to symbols that have been defined "to the left" of them\. The only exception to this rule is that functions can refer to themselves so as to be able to create recursive functions\.
 .
 .P
-For example, in the following expression there is a binding which is visible "to the right" of it, \fB\.\.\. | \.*3 as $times_three | [\. + $times_three] | \.\.\.\fR, but not "to the left"\. Consider this expression now, \fB\.\.\. | (\.*3 as $times_three | [\.+ $times_three]) | \.\.\.\fR: here the binding \fB$times_three\fR is \fInot\fR visible past the closing parenthesis\.
+For example, in the following expression there is a binding which is visible "to the right" of it, \fB\.\.\. | \.*3 as $times_three | [\. + $times_three] | \.\.\.\fR, but not "to the left"\. Consider this expression now, \fB\.\.\. | (\.*3 as $times_three | [\. + $times_three]) | \.\.\.\fR: here the binding \fB$times_three\fR is \fInot\fR visible past the closing parenthesis\.
 .
 .SS "Reduce"
 The \fBreduce\fR syntax in jq allows you to combine all of the results of an expression by accumulating them into a single answer\. As an example, we\'ll pass \fB[3,2,1]\fR to this expression:
@@ -3036,7 +3228,7 @@ Three\-input C math functions: \fBfma\fR\.
 See your system\'s manual for more information on each of these\.
 .
 .SH "I/O"
-At this time jq has minimal support for I/O, mostly in the form of control over when inputs are read\. Two builtins functions are provided for this, \fBinput\fR and \fBinputs\fR, that read from the same sources (e\.g\., \fBstdin\fR, files named on the command\-line) as jq itself\. These two builtins, and jq\'s own reading actions, can be interleaved with each other\.
+At this time jq has minimal support for I/O, mostly in the form of control over when inputs are read\. Two builtins functions are provided for this, \fBinput\fR and \fBinputs\fR, that read from the same sources (e\.g\., \fBstdin\fR, files named on the command\-line) as jq itself\. These two builtins, and jq\'s own reading actions, can be interleaved with each other\. They are commonly used in combination with the null input option \fB\-n\fR to prevent one input from being read implicitly\.
 .
 .P
 Two builtins provide minimal output capabilities, \fBdebug\fR, and \fBstderr\fR\. (Recall that a jq program\'s output values are always output as JSON texts on \fBstdout\fR\.) The \fBdebug\fR builtin can have application\-specific behavior, such as for executables that use the libjq C API but aren\'t the jq executable itself\. The \fBstderr\fR builtin outputs its input in raw mode to stder with no additional decoration, not even a newline\.
@@ -3047,11 +3239,14 @@ Most jq builtins are referentially transparent, and yield constant and repeatabl
 .SS "input"
 Outputs one new input\.
 .
+.P
+Note that when using \fBinput\fR it is generally be necessary to invoke jq with the \-n command\-line option, otherwise the first entity will be lost\.
+.
 .SS "inputs"
 Outputs all remaining inputs, one by one\.
 .
 .P
-This is primarily useful for reductions over a program\'s inputs\.
+This is primarily useful for reductions over a program\'s inputs\. Note that when using \fBinputs\fR it is generally necessary to invoke jq with the \-n command\-line option, otherwise the first entity will be lost\.
 .
 .SS "debug"
 Causes a debug message based on the input value to be produced\. The jq executable wraps the input value with \fB["DEBUG:", <input\-value>]\fR and prints that and a newline on stderr, compactly\. This may change in the future\.
@@ -3203,11 +3398,17 @@ This example should show the difference between \'=\' and \'|=\':
 .P
 Provide input \'{"a": {"b": 10}, "b": 20}\' to the programs:
 .
-.P
-\&\.a = \.b
+.IP "" 4
 .
-.P
-\&\.a |= \.b
+.nf
+
+\&.a = \.b
+
+\&.a |= \.b
+.
+.fi
+.
+.IP "" 0
 .
 .P
 The former will set the "a" field of the input to the "b" field of the input, and produce the output {"a": 20, "b": 20}\. The latter will set the "a" field of the input to the "a" field\'s "b" field, producing {"a": 10, "b": 20}\.
@@ -3215,14 +3416,28 @@ The former will set the "a" field of the input to the "b" field of the input, an
 .P
 Another example of the difference between \'=\' and \'|=\':
 .
-.P
+.IP "" 4
+.
+.nf
+
 null|(\.a,\.b)=range(3)
+.
+.fi
+.
+.IP "" 0
 .
 .P
 outputs \'{"a":0,"b":0}\', \'{"a":1,"b":1}\', and \'{"a":2,"b":2}\', while
 .
-.P
+.IP "" 4
+.
+.nf
+
 null|(\.a,\.b)|=range(3)
+.
+.fi
+.
+.IP "" 0
 .
 .P
 outputs just \'{"a":0,"b":0}\'\.
@@ -3234,7 +3449,7 @@ Lots more things are allowed on the left\-hand side of a jq assignment than in m
 .
 .nf
 
-\&\.posts[0]\.title = "JQ Manual"
+\&.posts[0]\.title = "JQ Manual"
 .
 .fi
 .
@@ -3247,7 +3462,7 @@ What may come as a surprise is that the expression on the left may produce multi
 .
 .nf
 
-\&\.posts[]\.comments |= \. + ["this is great"]
+\&.posts[]\.comments |= \. + ["this is great"]
 .
 .fi
 .
@@ -3266,7 +3481,7 @@ This is a very powerful operation\. Suppose we wanted to add a comment to blog p
 .
 .nf
 
-\&\.posts[] | select(\.author == "stedolan")
+\&.posts[] | select(\.author == "stedolan")
 .
 .fi
 .
@@ -3388,7 +3603,7 @@ color for objects
 .IP "" 0
 .
 .P
-The default color scheme is the same as setting \fB"JQ_COLORS=1;30:0;39:0;39:0;39:0;32:1;39:1;39"\fR\.
+The default color scheme is the same as setting \fB"JQ_COLORS=1;30:0;37:0;37:0;37:0;32:1;37:1;37"\fR\.
 .
 .P
 This is not a manual for VT100/ANSI escapes\. However, each of these color specifications should consist of two numbers separated by a semi\-colon, where the first number is one of these:
@@ -3449,7 +3664,7 @@ Presumably\. Report them or discuss them at:
 .
 .nf
 
-https://github\.com/stedolan/jq/issues
+https://github\.com/jqlang/jq/issues
 .
 .fi
 .

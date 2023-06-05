@@ -3,8 +3,8 @@ m4_define([jq_version],
                         (git describe --tags --dirty --match 'jq-*'|sed 's/^jq-//')) ||
                         echo `git rev-parse --abbrev-ref HEAD`-`git describe --always --dirty`])))
 
-AC_INIT([jq], [jq_version], [https://github.com/stedolan/jq/issues],
-             [jq], [https://stedolan.github.io/jq])
+AC_INIT([jq], [jq_version], [https://github.com/jqlang/jq/issues],
+             [jq], [https://jqlang.github.io/jq])
 
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.64])
