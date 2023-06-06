@@ -4837,7 +4837,7 @@ structures like <code>reduce</code>, <code>foreach</code>, <code>while</code>, a
 <pre><code># Repeat an expression until it raises "break" as an
 # error, then stop repeating without re-raising the error.
 # But if the error caught is not "break" then re-raise it.
-try repeat(exp) catch .=="break" then empty else error;
+try repeat(exp) catch if .=="break" then empty else error
 </code></pre>
 <p>jq has a syntax for named lexical labels to "break" or "go (back) to":</p>
 <pre><code>label $out | ... break $out ...
