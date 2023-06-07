@@ -3186,11 +3186,11 @@ sections:
         examples:
           - program: .a = .b
             input: '{"a": {"b": 10}, "b": 20}'
-            output: '{"a":20,"b":20}'
+            output: ['{"a":20,"b":20}']
 
           - program: .a |= .b
             input: '{"a": {"b": 10}, "b": 20}'
-            output: '{"a":10,"b":20}'
+            output: ['{"a":10,"b":20}']
 
           - program: (.a, .b) = range(3)
             input: 'null'
@@ -3201,7 +3201,7 @@ sections:
 
           - program: (.a, .b) |= range(3)
             input: 'null'
-            output: '{"a":0,"b":0}'
+            output: ['{"a":0,"b":0}']
 
       - title: Complex assignments
         body: |
