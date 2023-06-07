@@ -6922,14 +6922,14 @@ not a valid or useful path expression in <code>.</code>); use <code>$var | .foo 
                     Update-assignment: <code>|=</code>
                     
                   </h3>
-                  <p>This is the "update" operator '|='.  It takes a filter on the
+                  <p>This is the "update" operator <code>|=</code>.  It takes a filter on the
 right-hand side and works out the new value for the property
 of <code>.</code> being assigned to by running the old value through this
-expression. For instance, (.foo, .bar) |= .+1 will build an
-object with the "foo" field set to the input's "foo" plus 1,
-and the "bar" field set to the input's "bar" plus 1.</p>
+expression. For instance, <code>(.foo, .bar) |= .+1</code> will build an
+object with the <code>foo</code> field set to the input's <code>foo</code> plus 1,
+and the <code>bar</code> field set to the input's <code>bar</code> plus 1.</p>
 <p>The left-hand side can be any general path expression; see <code>path()</code>.</p>
-<p>Note that the left-hand side of '|=' refers to a value in <code>.</code>.
+<p>Note that the left-hand side of <code>|=</code> refers to a value in <code>.</code>.
 Thus <code>$var.foo |= . + 1</code> won't work as expected (<code>$var.foo</code> is
 not a valid or useful path expression in <code>.</code>); use <code>$var |
 .foo |= . + 1</code> instead.</p>
@@ -7010,35 +7010,389 @@ increment values, being the same as <code>|= . + 1</code>.</p>
                     
                   </h3>
                   <p>This is the plain assignment operator.  Unlike the others, the
-input to the right-hand-side (RHS) is the same as the input to
-the left-hand-side (LHS) rather than the value at the LHS
+input to the right-hand side (RHS) is the same as the input to
+the left-hand side (LHS) rather than the value at the LHS
 path, and all values output by the RHS will be used (as shown
 below).</p>
-<p>If the RHS of '=' produces multiple values, then for each such
+<p>If the RHS of <code>=</code> produces multiple values, then for each such
 value jq will set the paths on the left-hand side to the value
 and then it will output the modified <code>.</code>.  For example,
-<code>(.a,.b)=range(2)</code> outputs <code>{"a":0,"b":0}</code>, then
+<code>(.a,.b) = range(2)</code> outputs <code>{"a":0,"b":0}</code>, then
 <code>{"a":1,"b":1}</code>.  The "update" assignment forms (see above) do
 not do this.</p>
-<p>This example should show the difference between '=' and '|=':</p>
-<p>Provide input '{"a": {"b": 10}, "b": 20}' to the programs:</p>
+<p>This example should show the difference between <code>=</code> and <code>|=</code>:</p>
+<p>Provide input <code>{"a": {"b": 10}, "b": 20}</code> to the programs</p>
 <pre><code>.a = .b
+</code></pre>
+<p>and</p>
+<pre><code>.a |= .b
+</code></pre>
+<p>The former will set the <code>a</code> field of the input to the <code>b</code>
+field of the input, and produce the output <code>{"a": 20, "b": 20}</code>.
+The latter will set the <code>a</code> field of the input to the <code>a</code>
+field's <code>b</code> field, producing <code>{"a": 10, "b": 20}</code>.</p>
 
-.a |= .b
-</code></pre>
-<p>The former will set the "a" field of the input to the "b"
-field of the input, and produce the output {"a": 20, "b": 20}.
-The latter will set the "a" field of the input to the "a"
-field's "b" field, producing {"a": 10, "b": 20}.</p>
-<p>Another example of the difference between '=' and '|=':</p>
-<pre><code>null|(.a,.b)=range(3)
-</code></pre>
-<p>outputs '{"a":0,"b":0}', '{"a":1,"b":1}', and '{"a":2,"b":2}',
-while</p>
-<pre><code>null|(.a,.b)|=range(3)
-</code></pre>
-<p>outputs just '{"a":0,"b":0}'.</p>
-
+                  
+                    <div>
+                      
+                      <a data-toggle="collapse" href="#example99">
+                        <i class="glyphicon glyphicon-chevron-right"></i>
+                        Examples
+                      </a>
+                      <div id="example99" class="manual-example collapse">
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '.a = .b'</td></tr>
+                            <tr><th>Input</th><td>{&#34;a&#34;: {&#34;b&#34;: 10}, &#34;b&#34;: 20}</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>{</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>a</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>:</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>2</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>0</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>,</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>b</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>:</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>2</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>0</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>}</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '.a |= .b'</td></tr>
+                            <tr><th>Input</th><td>{&#34;a&#34;: {&#34;b&#34;: 10}, &#34;b&#34;: 20}</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>{</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>a</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>:</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>1</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>0</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>,</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>b</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>:</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>2</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>0</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>}</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '(.a, .b) = range(3)'</td></tr>
+                            <tr><th>Input</th><td>null</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>{&#34;a&#34;:0,&#34;b&#34;:0}</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>{&#34;a&#34;:1,&#34;b&#34;:1}</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>{&#34;a&#34;:2,&#34;b&#34;:2}</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '(.a, .b) |= range(3)'</td></tr>
+                            <tr><th>Input</th><td>null</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>{</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>a</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>:</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>0</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>,</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>b</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>&#34;</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>:</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>0</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>}</td>
+                              </tr>
+                            
+                          </table>
+                        
+                      </div>
+                    </div>
                   
                 </section>
               
@@ -7093,12 +7447,12 @@ in <code>.jq</code>.</p>
 path (see below).  The <code>import</code> and <code>include</code> directives allow the
 importer to alter this path.</p>
 <p>Paths in the a search path are subject to various substitutions.</p>
-<p>For paths starting with "~/", the user's home directory is
-substituted for "~".</p>
-<p>For paths starting with "$ORIGIN/", the path of the jq executable
-is substituted for "$ORIGIN".</p>
-<p>For paths starting with "./" or paths that are ".", the path of
-the including file is substituted for ".".  For top-level programs
+<p>For paths starting with <code>~/</code>, the user's home directory is
+substituted for <code>~</code>.</p>
+<p>For paths starting with <code>$ORIGIN/</code>, the path of the jq executable
+is substituted for <code>$ORIGIN</code>.</p>
+<p>For paths starting with <code>./</code> or paths that are <code>.</code>, the path of
+the including file is substituted for <code>.</code>.  For top-level programs
 given on the command-line, the current directory is used.</p>
 <p>Import directives can optionally specify a search path to which
 the default is appended.</p>
@@ -7107,16 +7461,16 @@ command-line option, else <code>["~/.jq", "$ORIGIN/../lib/jq",
 "$ORIGIN/../lib"]</code>.</p>
 <p>Null and empty string path elements terminate search path
 processing.</p>
-<p>A dependency with relative path "foo/bar" would be searched for in
-"foo/bar.jq" and "foo/bar/bar.jq" in the given search path. This
+<p>A dependency with relative path <code>foo/bar</code> would be searched for in
+<code>foo/bar.jq</code> and <code>foo/bar/bar.jq</code> in the given search path. This
 is intended to allow modules to be placed in a directory along
 with, for example, version control files, README files, and so on,
 but also to allow for single-file modules.</p>
 <p>Consecutive components with the same name are not allowed to avoid
-ambiguities (e.g., "foo/foo").</p>
+ambiguities (e.g., <code>foo/foo</code>).</p>
 <p>For example, with <code>-L$HOME/.jq</code> a module <code>foo</code> can be found in
 <code>$HOME/.jq/foo.jq</code> and <code>$HOME/.jq/foo/foo.jq</code>.</p>
-<p>If "$HOME/.jq" is a file, it is sourced into the main program.</p>
+<p>If <code>$HOME/.jq</code> is a file, it is sourced into the main program.</p>
               
                 <section id="importRelativePathStringasNAME[&lt;metadata&gt;];">
                   <h3>
@@ -7124,15 +7478,15 @@ ambiguities (e.g., "foo/foo").</p>
                     
                   </h3>
                   <p>Imports a module found at the given path relative to a
-directory in a search path.  A ".jq" suffix will be added to
+directory in a search path.  A <code>.jq</code> suffix will be added to
 the relative path string.  The module's symbols are prefixed
-with "NAME::".</p>
+with <code>NAME::</code>.</p>
 <p>The optional metadata must be a constant jq expression.  It
-should be an object with keys like "homepage" and so on.  At
-this time jq only uses the "search" key/value of the metadata.
+should be an object with keys like <code>homepage</code> and so on.  At
+this time jq only uses the <code>search</code> key/value of the metadata.
 The metadata is also made available to users via the
 <code>modulemeta</code> builtin.</p>
-<p>The "search" key in the metadata, if present, should have a
+<p>The <code>search</code> key in the metadata, if present, should have a
 string or array value (array of strings); this is the search
 path to be prefixed to the top-level search path.</p>
 
@@ -7146,12 +7500,12 @@ path to be prefixed to the top-level search path.</p>
                   </h3>
                   <p>Imports a module found at the given path relative to a
 directory in a search path as if it were included in place.  A
-".jq" suffix will be added to the relative path string.  The
+<code>.jq</code> suffix will be added to the relative path string.  The
 module's symbols are imported into the caller's namespace as
 if the module's content had been included directly.</p>
 <p>The optional metadata must be a constant jq expression.  It
-should be an object with keys like "homepage" and so on.  At
-this time jq only uses the "search" key/value of the metadata.
+should be an object with keys like <code>homepage</code> and so on.  At
+this time jq only uses the <code>search</code> key/value of the metadata.
 The metadata is also made available to users via the
 <code>modulemeta</code> builtin.</p>
 
@@ -7164,15 +7518,15 @@ The metadata is also made available to users via the
                     
                   </h3>
                   <p>Imports a JSON file found at the given path relative to a
-directory in a search path.  A ".json" suffix will be added to
+directory in a search path.  A <code>.json</code> suffix will be added to
 the relative path string.  The file's data will be available
 as <code>$NAME::NAME</code>.</p>
 <p>The optional metadata must be a constant jq expression.  It
-should be an object with keys like "homepage" and so on.  At
-this time jq only uses the "search" key/value of the metadata.
+should be an object with keys like <code>homepage</code> and so on.  At
+this time jq only uses the <code>search</code> key/value of the metadata.
 The metadata is also made available to users via the
 <code>modulemeta</code> builtin.</p>
-<p>The "search" key in the metadata, if present, should have a
+<p>The <code>search</code> key in the metadata, if present, should have a
 string or array value (array of strings); this is the search
 path to be prefixed to the top-level search path.</p>
 
@@ -7188,7 +7542,7 @@ path to be prefixed to the top-level search path.</p>
 proper operation.  It serves only the purpose of providing
 metadata that can be read with the <code>modulemeta</code> builtin.</p>
 <p>The metadata must be a constant jq expression.  It should be
-an object with keys like "homepage".  At this time jq doesn't
+an object with keys like <code>homepage</code>.  At this time jq doesn't
 use this metadata, but it is made available to users via the
 <code>modulemeta</code> builtin.</p>
 
@@ -7202,7 +7556,7 @@ use this metadata, but it is made available to users via the
                   </h3>
                   <p>Takes a module name as input and outputs the module's metadata
 as an object, with the module's imports (including metadata)
-as an array value for the "deps" key.</p>
+as an array value for the <code>deps</code> key.</p>
 <p>Programs can use this to query a module's metadata, which they
 could then use to, for example, search for, download, and
 install missing dependencies.</p>
