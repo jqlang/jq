@@ -7,7 +7,7 @@ about: Create a report to help us improve
 <!--
 READ THIS FIRST!
 
-If you have a usage question, please ask us on either Stack Overflow (https://stackoverflow.com/questions/tagged/jq) or in the #jq channel (http://irc.lc/freenode/%23jq/) on Freenode (https://webchat.freenode.net/).
+If you have a usage question, please ask us on either Stack Overflow (https://stackoverflow.com/questions/tagged/jq) or in the #jq channel (https://web.libera.chat/#jq) on Libera.Chat (https://libera.chat/).
 
 -->
 

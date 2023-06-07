@@ -72,6 +72,7 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
   }
 
   jv m1 = jv_string_vfmt(fmt, fmtargs);
+  va_end(fmtargs);
   if (!jv_is_valid(m1)) {
     jq_report_error(l->jq, m1);
     return;

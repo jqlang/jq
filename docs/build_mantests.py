@@ -2,7 +2,7 @@
 import yaml
 
 with open("content/manual/manual.yml") as f:
-  manual = yaml.load(f)
+  manual = yaml.safe_load(f)
   for section in manual.get('sections', []):
     for entry in section.get('entries', []):
       for example in entry.get('examples', []):

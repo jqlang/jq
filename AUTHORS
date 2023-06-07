@@ -33,7 +33,6 @@ i                    <isomorphisms@sdf.org>
 Ian Miell            <ian.miell@gmail.com>
 Jack Pearkes         <jackpearkes@gmail.com>          - update tutorial
 James Andariese      <james.andariese@locationlabs.com> - Dockerfile
-Jingwen Owen Ou      <jingweno@gmail.com>             - jqplay.org and link to it
 jkleint              <jkleint@gmail.com>
 Joe Littlejohn       <joe.littlejohn@nokia.com>       - bug fixes
 Joel Purra           <code+github@joelpurra.com>
@@ -52,6 +51,7 @@ Mike Fletcher        <john.m.fletcher@bankofamerica.com>
 Mike McCabe          <mccabe@archive.org>             - math (libm) functions
 Nicolas Pouillard    <nicolas.pouillard@gmail.com>    - add tests
 Nicolas Williams     <nico@cryptonector.com>          - library-fication, autoconf stuff, exception handling, various
+Owen Ou              <o@owenou.com>                   - jqplay.org and link to it
 Peter van Dijk       <peter@7bits.nl>                 - doc fixes
 Philipp Hagemeister  <phihag@phihag.de>               - doc fixes
 pkoppstein           <pkoppstein@gmail.com>           - various builtins, improvements

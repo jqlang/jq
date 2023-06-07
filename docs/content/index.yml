@@ -29,14 +29,13 @@ tail: |
 
   Ask questions on [stackoverflow](https://stackoverflow.com/) using the [jq
   tag](https://stackoverflow.com/questions/tagged/jq), or on the
-  [#jq](http://irc.lc/freenode/%23jq/) channel on
-  [Freenode](https://webchat.freenode.net/).
+  [#jq](https://web.libera.chat/#jq) channel on [Libera.Chat](https://libera.chat/).
 
 news:
   - date: 1 November 2018
     body: |
         jq 1.6 released. See installation options on the [download](/jq/download/)
-        page, and the [release notes](https://github.com/stedolan/jq/releases/tag/jq-1.6)
+        page, and the [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.6)
         for details.
 
   - date: 15 August 2015
@@ -46,20 +45,20 @@ news:
         try/catch syntax, array and object destructuring, a streaming parser,
         and a module system. See installation options on the
         [download](/jq/download/) page, and the
-        [release notes](https://github.com/stedolan/jq/releases/tag/jq-1.5)
+        [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.5)
         for details.
 
   - date: 26 July 2015
     body: |
 
       jq 1.5rc2 is available. Get it on the
-      [releases](https://github.com/stedolan/jq/releases) page.
+      [releases](https://github.com/jqlang/jq/releases) page.
 
   - date: 01 January 2015
     body: |
 
       jq 1.5rc1 is available. Get it on the
-      [releases](https://github.com/stedolan/jq/releases) page.
+      [releases](https://github.com/jqlang/jq/releases) page.
 
   - date: 09 June 2014
     body: |

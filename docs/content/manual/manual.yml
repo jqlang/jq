@@ -66,7 +66,7 @@ manpage_epilogue: |
 
   Presumably. Report them or discuss them at:
 
-      https://github.com/stedolan/jq/issues
+      https://github.com/jqlang/jq/issues
 
   ## AUTHOR
 
@@ -116,7 +116,7 @@ sections:
         Parse the input in streaming fashion, outputting arrays of path
         and leaf values (scalars and empty arrays or empty objects).
         For example, `"a"` becomes `[[],"a"]`, and `[[],"a",["b"]]`
-        becomes `[[0],[]]`, `[[1],"a"]`, and `[[1,0],"b"]`.
+        becomes `[[0],[]]`, `[[1],"a"]`, and `[[2,0],"b"]`.
 
         This is useful for processing very large inputs.  Use this in
         conjunction with filtering and the `reduce` and `foreach` syntax
@@ -256,7 +256,7 @@ sections:
 
         This option reads in the named file and binds its contents to the given
         global variable.  If you run jq with `--rawfile foo bar`, then `$foo` is
-        available in the program and has a string whose contents are to the texs
+        available in the program and has a string whose contents are to the texts
         in the file named `bar`.
 
       * `--argfile variable-name filename`:
@@ -369,8 +369,8 @@ sections:
       - title: "Optional Object Identifier-Index: `.foo?`"
         body: |
 
-          Just like `.foo`, but does not output even an error when `.`
-          is not an array or an object.
+          Just like `.foo`, but does not output an error when `.` is not an
+          object.
 
         examples:
           - program: '.foo?'
@@ -652,7 +652,7 @@ sections:
 
           produces
 
-              {"f o o":"f o o","b a r":"f o o"}
+              {"foo":"f o o","b a r":"f o o"}
 
         examples:
           - program: '{user, title: .titles[]}'
@@ -1091,7 +1091,7 @@ sections:
           The given `exit_code` (defaulting to `5`) will be jq's exit
           status.
 
-          For example, `"Error: somthing went wrong\n"|halt_error(1)`.
+          For example, `"Error: something went wrong\n"|halt_error(1)`.
 
       - title: "`$__loc__`"
         body: |
@@ -1226,7 +1226,7 @@ sections:
             input: '[{"foo": "bar"}, [{"foo": "baz"}]]'
             output: ['[{"foo": "bar"}, {"foo": "baz"}]']
 
-      - title: "`range(upto)`, `range(from;upto)` `range(from;upto;by)`"
+      - title: "`range(upto)`, `range(from;upto)`, `range(from;upto;by)`"
         body: |
 
           The `range` function produces a range of numbers. `range(4;10)`
@@ -1343,7 +1343,7 @@ sections:
             input: 'null'
             output: ['"number"', '"number"']
 
-      - title: "`sort, sort_by(path_expression)`"
+      - title: "`sort`, `sort_by(path_expression)`"
         body: |
 
           The `sort` functions sorts its input, which must be an
@@ -1612,6 +1612,9 @@ sections:
 
           Splits an input string on the separator argument.
 
+          `split` can also split on regex matches when called with
+          two arguments (see the regular expressions section below).
+
         examples:
           - program: 'split(", ")'
             input: '"a, b,c,d, e, "'
@@ -1663,6 +1666,22 @@ sections:
           - program: '[while(.<100; .*2)]'
             input: '1'
             output: ['[1,2,4,8,16,32,64]']
+
+      - title: "`repeat(exp)`"
+        body: |
+
+          The `repeat(exp)` function allows you to repeatedly
+          apply expression `exp` to `.` until an error is raised.
+
+          Note that `repeat(exp)` is internally defined as a
+          recursive jq function.  Recursive calls within `repeat` will
+          not consume additional memory if `exp` produces at most one
+          output for each input.  See advanced topics below.
+
+        examples:
+          - program: '[repeat(.*2, error)?]'
+            input: '1'
+            output: ['[2]']
 
       - title: "`until(cond; next)`"
         body: |
@@ -1809,13 +1828,13 @@ sections:
       - title: "`bsearch(x)`"
         body: |
 
-          bsearch(x) conducts a binary search for x in the input
+          `bsearch(x)` conducts a binary search for x in the input
           array.  If the input is sorted and contains x, then
-          bsearch(x) will return its index in the array; otherwise, if
+          `bsearch(x)` will return its index in the array; otherwise, if
           the array is sorted, it will return (-1 - ix) where ix is an
           insertion point such that the array would still be sorted
           after the insertion of x at ix.  If the array is not sorted,
-          bsearch(x) will return an integer that is probably of no
+          `bsearch(x)` will return an integer that is probably of no
           interest.
 
         examples:
@@ -1845,9 +1864,9 @@ sections:
         body: |
 
           The `tojson` and `fromjson` builtins dump values as JSON texts
-          or parse JSON texts into values, respectively.  The tojson
-          builtin differs from tostring in that tostring returns strings
-          unmodified, while tojson encodes strings as JSON strings.
+          or parse JSON texts into values, respectively.  The `tojson`
+          builtin differs from `tostring` in that `tostring` returns strings
+          unmodified, while `tojson` encodes strings as JSON strings.
 
         examples:
           - program: '[.[]|tostring]'
@@ -2240,7 +2259,7 @@ sections:
               # Repeat an expression until it raises "break" as an
               # error, then stop repeating without re-raising the error.
               # But if the error caught is not "break" then re-raise it.
-              try repeat(exp) catch .=="break" then empty else error;
+              try repeat(exp) catch if .=="break" then empty else error
 
           jq has a syntax for named lexical labels to "break" or "go (back) to":
 
@@ -2409,7 +2428,10 @@ sections:
       - title: "`split(regex; flags)`"
         body: |
 
-          For backwards compatibility, `split` splits on a string, not a regex.
+          Splits an input string on each regex match.
+
+          For backwards compatibility, when called with a single argument,
+          `split` splits on a string, not a regex.
 
         example:
           - program: 'split(", *"; null)'
@@ -2428,7 +2450,7 @@ sections:
             input: '("ab,cd", "ef, gh")'
             output: ['"ab"', '"cd"', '"ef"', '"gh"']
 
-      - title: "`sub(regex; tostring)` `sub(regex; string; flags)`"
+      - title: "`sub(regex; tostring)`, `sub(regex; string; flags)`"
         body: |
 
           Emit the string obtained by replacing the first match of regex in the
@@ -2436,7 +2458,7 @@ sections:
           be a jq string, and may contain references to named captures. The
           named captures are, in effect, presented as a JSON object (as
           constructed by `capture`) to `tostring`, so a reference to a captured
-          variable named "x" would take the form: "\(.x)".
+          variable named "x" would take the form: `"\(.x)"`.
 
         example:
           - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
@@ -2470,7 +2492,7 @@ sections:
 
       It is also possible to define functions in jq, although this is
       is a feature whose biggest use is defining jq's standard library
-      (many jq functions such as `map` and `find` are in fact written
+      (many jq functions such as `map` and `select` are in fact written
       in jq).
 
       jq has reduction operators, which are very powerful but a bit
@@ -2924,7 +2946,9 @@ sections:
       are provided for this, `input` and `inputs`, that read from the
       same sources (e.g., `stdin`, files named on the command-line) as
       jq itself.  These two builtins, and jq's own reading actions, can
-      be interleaved with each other.
+      be interleaved with each other.  They are commonly used in combination
+      with the null input option `-n` to prevent one input from being read
+      implicitly.
 
       Two builtins provide minimal output capabilities, `debug`, and
       `stderr`.  (Recall that a jq program's output values are always
@@ -2944,13 +2968,19 @@ sections:
 
           Outputs one new input.
 
+          Note that when using `input` it is generally be necessary to
+          invoke jq with the -n command-line option, otherwise
+          the first entity will be lost.
+
       - title: "`inputs`"
         body: |
 
           Outputs all remaining inputs, one by one.
 
           This is primarily useful for reductions over a program's
-          inputs.
+          inputs.  Note that when using `inputs` it is generally necessary
+          to invoke jq with the -n command-line option, otherwise
+          the first entity will be lost.
 
       - title: "`debug`"
         body: |
