@@ -2006,7 +2006,7 @@ sections:
 
           The `gmtime` builtin consumes a number of seconds since the
           Unix epoch and outputs a "broken down time" representation of
-          Greenwhich Meridian time as an array of numbers representing
+          Greenwich Mean Time as an array of numbers representing
           (in this order): the year, the month (zero-based), the day of
           the month (one-based), the hour of the day, the minute of the
           hour, the second of the minute, the day of the week, and the
