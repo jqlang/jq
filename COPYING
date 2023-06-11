@@ -70,7 +70,7 @@ OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
 
 
 
-jq uses parts of the open source C library "decNumber", which is distribured
+jq uses parts of the open source C library "decNumber", which is distributed
 under the following license:
 
 
