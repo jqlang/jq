@@ -1768,8 +1768,8 @@ sections:
           The expression 'a == b' will produce 'true' if the result of a and b
           are equal (that is, if they represent equivalent JSON documents) and
           'false' otherwise. In particular, strings are never considered equal
-          to numbers. If you're coming from Javascript, jq's == is like
-          Javascript's === - considering values equal only when they have the
+          to numbers. If you're coming from JavaScript, jq's == is like
+          JavaScript's === - considering values equal only when they have the
           same type as well as the same value.
 
           != is "not equal", and 'a != b' returns the opposite value of 'a == b'
@@ -1787,7 +1787,7 @@ sections:
           as `C` otherwise.
 
           Checking for false or null is a simpler notion of
-          "truthiness" than is found in Javascript or Python, but it
+          "truthiness" than is found in JavaScript or Python, but it
           means that you'll sometimes have to be more explicit about
           the condition you want: you can't test whether, e.g. a
           string is empty using `if .name then A else B end`, you'll
@@ -2620,7 +2620,7 @@ sections:
       If an object has two fields which are arrays, `.foo` and `.bar`,
       and you append something to `.foo`, then `.bar` will not get
       bigger. Even if you've just set `.bar = .foo`. If you're used to
-      programming in languages like Python, Java, Ruby, Javascript,
+      programming in languages like Python, Java, Ruby, JavaScript,
       etc. then you can think of it as though jq does a full deep copy
       of every object before it does the assignment (for performance,
       it doesn't actually do that, but that's the general idea).
@@ -2640,7 +2640,7 @@ sections:
            .foo = .bar | .foo.baz = 1
 
           will not have the side-effect of setting .bar.baz to be set
-          to 1, as the similar-looking program in Javascript, Python,
+          to 1, as the similar-looking program in JavaScript, Python,
           Ruby or other languages would. Unlike these languages (but
           like Haskell and some other functional languages), there is
           no notion of two arrays or objects being "the same array" or

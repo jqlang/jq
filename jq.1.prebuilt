@@ -2265,7 +2265,7 @@ Returns a list of all builtin functions in the format \fBname/arity\fR\. Since f
 .SH "CONDITIONALS AND COMPARISONS"
 .
 .SS "==, !="
-The expression \'a == b\' will produce \'true\' if the result of a and b are equal (that is, if they represent equivalent JSON documents) and \'false\' otherwise\. In particular, strings are never considered equal to numbers\. If you\'re coming from Javascript, jq\'s == is like Javascript\'s === \- considering values equal only when they have the same type as well as the same value\.
+The expression \'a == b\' will produce \'true\' if the result of a and b are equal (that is, if they represent equivalent JSON documents) and \'false\' otherwise\. In particular, strings are never considered equal to numbers\. If you\'re coming from JavaScript, jq\'s == is like JavaScript\'s === \- considering values equal only when they have the same type as well as the same value\.
 .
 .P
 != is "not equal", and \'a != b\' returns the opposite value of \'a == b\'
@@ -2289,7 +2289,7 @@ jq \'\.[] == 1\'
 \fBif A then B end\fR is the same as \fBif A then B else \.  end\fR\. That is, the \fBelse\fR branch is optional, and if absent is the same as \fB\.\fR\.
 .
 .P
-Checking for false or null is a simpler notion of "truthiness" than is found in Javascript or Python, but it means that you\'ll sometimes have to be more explicit about the condition you want\. You can\'t test whether, e\.g\. a string is empty using \fBif \.name then A else B end\fR, you\'ll need something more like \fBif \.name == "" then A else B end\fR instead\.
+Checking for false or null is a simpler notion of "truthiness" than is found in JavaScript or Python, but it means that you\'ll sometimes have to be more explicit about the condition you want\. You can\'t test whether, e\.g\. a string is empty using \fBif \.name then A else B end\fR, you\'ll need something more like \fBif \.name == "" then A else B end\fR instead\.
 .
 .P
 If the condition \fBA\fR produces multiple results, then \fBB\fR is evaluated once for each result that is not false or null, and \fBC\fR is evaluated once for each false or null\.
@@ -3324,7 +3324,7 @@ jq \'\. as $dot|fromstream($dot|tostream)|\.==$dot\'
 Assignment works a little differently in jq than in most programming languages\. jq doesn\'t distinguish between references to and copies of something \- two objects or arrays are either equal or not equal, without any further notion of being "the same object" or "not the same object"\.
 .
 .P
-If an object has two fields which are arrays, \fB\.foo\fR and \fB\.bar\fR, and you append something to \fB\.foo\fR, then \fB\.bar\fR will not get bigger, even if you\'ve previously set \fB\.bar = \.foo\fR\. If you\'re used to programming in languages like Python, Java, Ruby, Javascript, etc\. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance it doesn\'t actually do that, but that\'s the general idea)\.
+If an object has two fields which are arrays, \fB\.foo\fR and \fB\.bar\fR, and you append something to \fB\.foo\fR, then \fB\.bar\fR will not get bigger, even if you\'ve previously set \fB\.bar = \.foo\fR\. If you\'re used to programming in languages like Python, Java, Ruby, JavaScript, etc\. then you can think of it as though jq does a full deep copy of every object before it does the assignment (for performance it doesn\'t actually do that, but that\'s the general idea)\.
 .
 .P
 This means that it\'s impossible to build circular values in jq (such as an array whose first element is itself)\. This is quite intentional, and ensures that anything a jq program can produce can be represented in JSON\.
