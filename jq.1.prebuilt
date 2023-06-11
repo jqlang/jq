@@ -238,7 +238,7 @@ Since jq by default pretty\-prints all output, this trivial program can be a use
 An important point about the identity filter is that it  guarantees to preserve the literal decimal representation  of values\. This is particularly important when dealing with numbers  which can\'t be losslessly converted to an IEEE754 double precision  representation\.
 .
 .P
-jq doesn\'t truncate the literal numbers to double unless there is a need to make arithmetic operations with the number\. Comparisions are carried out over the untruncated big decimal  representation of the number\.
+jq doesn\'t truncate the literal numbers to double unless there is a need to make arithmetic operations with the number\. Comparisons are carried out over the untruncated big decimal  representation of the number\.
 .
 .P
 jq will also try to maintain the original decimal precision of the provided number literal\. See below for examples\. 

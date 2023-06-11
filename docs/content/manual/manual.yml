@@ -312,7 +312,7 @@ sections:
 
           jq doesn't truncate the literal numbers to double unless there
           is a need to make arithmetic operations with the number.
-          Comparisions are carried out over the untruncated big decimal 
+          Comparisons are carried out over the untruncated big decimal 
           representation of the number.
 
           jq will also try to maintain the original decimal precision of the provided
