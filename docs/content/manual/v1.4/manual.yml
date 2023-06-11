@@ -957,7 +957,7 @@ sections:
 
           The `unique_by(.foo)` function takes as input an array and produces
           an array of the same elements, in sorted order, with
-          elqements with a duplicate `.foo` field removed. Think of it as making
+          elements with a duplicate `.foo` field removed. Think of it as making
           an array by taking one element out of every group produced by
           `group_by`.
 
