@@ -372,7 +372,7 @@
 
 	Add BLOCK_8() macro
 
-	Fix `foreach` non-progation of errors
+	Fix `foreach` non-propagation of errors
 
 	Allow zero-length buffers in jv_parser_set_buf()
 
