@@ -1183,7 +1183,7 @@
 
 	Fix various UTF8 parsing bugs.
 	In particular, parse bad UTF8 by replacing the broken bits with U+FFFD
-	and resychronise correctly after broken sequences.
+	and resynchronise correctly after broken sequences.
 
 	Fix example in manual for `floor`. See #155.
 
