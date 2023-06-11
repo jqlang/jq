@@ -51,7 +51,7 @@ cwd="$(realpath ${PWD} 2>/dev/null || echo ${PWD})"
 t_exit() {
 cat << EOF
 
-A error as occured.
+A error as occurred.
     oniguruma location: ${builddir}/onig/onig-${oniguruma}
     jq location: ${cwd}
 
