@@ -4802,7 +4802,7 @@ stable interfaces in jq, particularly as to their localization
 functionality.</p>
 <p>The <code>gmtime</code> builtin consumes a number of seconds since the
 Unix epoch and outputs a "broken down time" representation of
-Greenwhich Meridian time as an array of numbers representing
+Greenwich Mean Time as an array of numbers representing
 (in this order): the year, the month (zero-based), the day of
 the month (one-based), the hour of the day, the minute of the
 hour, the second of the minute, the day of the week, and the
@@ -4954,8 +4954,8 @@ in the list.</p>
                   <p>The expression 'a == b' will produce 'true' if the result of a and b
 are equal (that is, if they represent equivalent JSON documents) and
 'false' otherwise. In particular, strings are never considered equal
-to numbers. If you're coming from Javascript, jq's == is like
-Javascript's === - considering values equal only when they have the
+to numbers. If you're coming from JavaScript, jq's == is like
+JavaScript's === - considering values equal only when they have the
 same type as well as the same value.</p>
 <p>!= is "not equal", and 'a != b' returns the opposite value of 'a == b'</p>
 
@@ -5017,7 +5017,7 @@ same type as well as the same value.</p>
 produces a value other than false or null, but act the same
 as <code>C</code> otherwise.</p>
 <p>Checking for false or null is a simpler notion of
-"truthiness" than is found in Javascript or Python, but it
+"truthiness" than is found in JavaScript or Python, but it
 means that you'll sometimes have to be more explicit about
 the condition you want: you can't test whether, e.g. a
 string is empty using <code>if .name then A else B end</code>, you'll
@@ -6746,7 +6746,7 @@ same object" or "not the same object".</p>
 and you append something to <code>.foo</code>, then <code>.bar</code> will not get
 bigger, even if you've previously set <code>.bar = .foo</code>.  If you're
 used to programming in languages like Python, Java, Ruby,
-Javascript, etc. then you can think of it as though jq does a full
+JavaScript, etc. then you can think of it as though jq does a full
 deep copy of every object before it does the assignment (for
 performance it doesn't actually do that, but that's the general
 idea).</p>
