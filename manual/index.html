@@ -5547,9 +5547,10 @@ is lexical: the label has to be "visible" from the break.</p>
           
             <section id="RegularexpressionsPCRE">
               <h2>Regular expressions (PCRE)</h2>
-              <p>jq uses the Oniguruma regular expression library, as do php,
-ruby, TextMate, Sublime Text, etc, so the description here
-will focus on jq specifics.</p>
+              <p>jq uses the
+<a href="https://github.com/kkos/oniguruma/blob/master/doc/RE">Oniguruma regular expression library</a>,
+as do php, ruby, TextMate, Sublime Text, etc, so the
+description here will focus on jq specifics.</p>
 <p>The jq regex filters are defined so that they can be used using
 one of these patterns:</p>
 <pre><code>STRING | FILTER( REGEX )
