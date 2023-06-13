@@ -346,6 +346,12 @@ using some command-line options:</p>
 <p>Remaining arguments are positional JSON text arguments.  These
   are available to the jq program as <code>$ARGS.positional[]</code>.</p>
 <ul>
+<li><code>--</code>:</li>
+</ul>
+<p>Terminates argument processing.  Remaining arguments are
+  positional, either strings, JSON texts, or input filenames,
+  according to whether <code>--args</code> or <code>--jsonargs</code> were given.</p>
+<ul>
 <li><code>--run-tests [filename]</code>:</li>
 </ul>
 <p>Runs the tests in the given file or standard input.  This must
