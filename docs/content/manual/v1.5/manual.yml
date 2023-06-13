@@ -1954,11 +1954,11 @@ sections:
             output: ['[null, 1]']
 
 
-  - title: Regular expressions (PCRE)
+  - title: Regular expressions
     body: |
 
-      jq uses the Oniguruma regular expression library, as do php,
-      ruby, TextMate, Sublime Text, etc, so the description here
+      jq uses the Oniguruma regular expression library, as do PHP,
+      Ruby, TextMate, Sublime Text, etc, so the description here
       will focus on jq specifics.
 
       The jq regex filters are defined so that they can be used using
@@ -1970,8 +1970,9 @@ sections:
           STRING | FILTER( [REGEX, FLAGS] )
 
       where:
-      * STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
-      * REGEX, after string interpolation, should be a valid PCRE regex;
+
+      * STRING, REGEX, and FLAGS are jq strings and subject to jq string interpolation;
+      * REGEX, after string interpolation, should be a valid regular expression;
       * FILTER is one of `test`, `match`, or `capture`, as described below.
 
       FLAGS is a string consisting of one of more of the supported flags:
