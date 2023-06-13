@@ -2304,10 +2304,10 @@ sections:
       The jq regex filters are defined so that they can be used using
       one of these patterns:
 
-          STRING | FILTER( REGEX )
-          STRING | FILTER( REGEX; FLAGS )
-          STRING | FILTER( [REGEX] )
-          STRING | FILTER( [REGEX, FLAGS] )
+          STRING | FILTER(REGEX)
+          STRING | FILTER(REGEX; FLAGS)
+          STRING | FILTER([REGEX])
+          STRING | FILTER([REGEX, FLAGS])
 
       where:
 
@@ -2319,22 +2319,22 @@ sections:
 
       * `g` - Global search (find all matches, not just the first)
       * `i` - Case insensitive search
-      * `m` - Multi line mode ('.' will match newlines)
+      * `m` - Multi line mode (`.` will match newlines)
       * `n` - Ignore empty matches
       * `p` - Both s and m modes are enabled
-      * `s` - Single line mode ('^' -> '\A', '$' -> '\Z')
+      * `s` - Single line mode (`^` -> `\A`, `$` -> `\Z`)
       * `l` - Find longest possible matches
       * `x` - Extended regex format (ignore whitespace and comments)
 
-      To match whitespace in an x pattern use an escape such as \s, e.g.
+      To match a whitespace with the `x` flag, use `\s`, e.g.
 
-      * test( "a\\\\sb"; "x" )
+          jq -n '"a b" | test("a\\sb"; "x")'
 
       Note that certain flags may also be specified within REGEX, e.g.
 
-      * jq -n '("test", "TEst", "teST", "TEST") | test( "(?i)te(?-i)st" )'
+          jq -n '("test", "TEst", "teST", "TEST") | test("(?i)te(?-i)st")'
 
-      evaluates to: true, true, false, false.
+      evaluates to: `true`, `true`, `false`, `false`.
 
     entries:
       - title: "`test(val)`, `test(regex; flags)`"
