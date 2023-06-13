@@ -82,7 +82,7 @@
               </li>
             
               <li>
-                <a href="#RegularexpressionsPCRE">Regular expressions (PCRE)</a>
+                <a href="#Regularexpressions">Regular expressions</a>
               </li>
             
               <li>
@@ -4895,42 +4895,42 @@ is lexical: the label has to be "visible" from the break.</p>
               
             </section>
           
-            <section id="RegularexpressionsPCRE">
-              <h2>Regular expressions (PCRE)</h2>
-              <p>jq uses the Oniguruma regular expression library, as do php,
-ruby, TextMate, Sublime Text, etc, so the description here
+            <section id="Regularexpressions">
+              <h2>Regular expressions</h2>
+              <p>jq uses the Oniguruma regular expression library, as do PHP,
+Ruby, TextMate, Sublime Text, etc, so the description here
 will focus on jq specifics.</p>
 <p>The jq regex filters are defined so that they can be used using
 one of these patterns:</p>
-<pre><code>STRING | FILTER( REGEX )
-STRING | FILTER( REGEX; FLAGS )
-STRING | FILTER( [REGEX] )
-STRING | FILTER( [REGEX, FLAGS] )
+<pre><code>STRING | FILTER(REGEX)
+STRING | FILTER(REGEX; FLAGS)
+STRING | FILTER([REGEX])
+STRING | FILTER([REGEX, FLAGS])
 </code></pre>
-<p>where:
-* STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
-* REGEX, after string interpolation, should be a valid PCRE regex;
-* FILTER is one of <code>test</code>, <code>match</code>, or <code>capture</code>, as described below.</p>
+<p>where:</p>
+<ul>
+<li>STRING, REGEX, and FLAGS are jq strings and subject to jq string interpolation;</li>
+<li>REGEX, after string interpolation, should be a valid regular expression;</li>
+<li>FILTER is one of <code>test</code>, <code>match</code>, or <code>capture</code>, as described below.</li>
+</ul>
 <p>FLAGS is a string consisting of one of more of the supported flags:</p>
 <ul>
 <li><code>g</code> - Global search (find all matches, not just the first)</li>
 <li><code>i</code> - Case insensitive search</li>
-<li><code>m</code> - Multi line mode ('.' will match newlines)</li>
+<li><code>m</code> - Multi line mode (<code>.</code> will match newlines)</li>
 <li><code>n</code> - Ignore empty matches</li>
 <li><code>p</code> - Both s and m modes are enabled</li>
-<li><code>s</code> - Single line mode ('^' -&gt; '\A', '$' -&gt; '\Z')</li>
+<li><code>s</code> - Single line mode (<code>^</code> -&gt; <code>\A</code>, <code>$</code> -&gt; <code>\Z</code>)</li>
 <li><code>l</code> - Find longest possible matches</li>
 <li><code>x</code> - Extended regex format (ignore whitespace and comments)</li>
 </ul>
-<p>To match whitespace in an x pattern use an escape such as \s, e.g.</p>
-<ul>
-<li>test( "a\\sb"; "x" )</li>
-</ul>
+<p>To match a whitespace with the <code>x</code> flag, use <code>\s</code>, e.g.</p>
+<pre><code>jq -n '"a b" | test("a\\sb"; "x")'
+</code></pre>
 <p>Note that certain flags may also be specified within REGEX, e.g.</p>
-<ul>
-<li>jq -n '("test", "TEst", "teST", "TEST") | test( "(?i)te(?-i)st" )'</li>
-</ul>
-<p>evaluates to: true, true, false, false.</p>
+<pre><code>jq -n '("test", "TEst", "teST", "TEST") | test("(?i)te(?-i)st")'
+</code></pre>
+<p>evaluates to: <code>true</code>, <code>true</code>, <code>false</code>, <code>false</code>.</p>
               
                 <section id="test(val),test(regex;flags)">
                   <h3>
@@ -6547,7 +6547,7 @@ install missing dependencies.</p>
           
             "gsub(regex; string), gsub(regex; string; flags)" : "gsub(regex;string),gsub(regex;string;flags)",
           
-          "Regular expressions (PCRE)" : "RegularexpressionsPCRE"
+          "Regular expressions" : "Regularexpressions"
           ,
         
           
