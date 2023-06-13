@@ -18,7 +18,7 @@ jobs:
                 name: [linux-clang]
                 include:
                     - name: linux-clang
-                      os: ubuntu-18.04
+                      os: ubuntu-latest
                       compiler: clang
                       cflags: ''
         steps:
@@ -31,7 +31,7 @@ jobs:
               if: startsWith(matrix.os, 'ubuntu')
               run: |
                 sudo apt-get update -qq
-                sudo apt-get install -y automake autoconf bison flex gdb python valgrind clang-tools
+                sudo apt-get install -y automake autoconf bison flex gdb python3 valgrind clang-tools
             - name: Prep
               run: |
                 #pyenv global 3.6.7
