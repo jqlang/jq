@@ -1,7 +1,4 @@
-m4_define([jq_version],
-          m4_esyscmd_s([git describe --tags --match 'jq-*' >/dev/null 2>&1 &&
-                        git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//' ||
-                        echo `git rev-parse --abbrev-ref HEAD`-`git describe --always --dirty`])))
+m4_define([jq_version], m4_esyscmd_s([scripts/version])))
 
 AC_INIT([jq], [jq_version], [https://github.com/jqlang/jq/issues],
              [jq], [https://jqlang.github.io/jq])
