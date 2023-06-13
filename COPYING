@@ -27,7 +27,7 @@ license, which can be found at:
 
          https://creativecommons.org/licenses/by/3.0/
 
-The documentation website includes a copy of Twitter's Boostrap and
+The documentation website includes a copy of Twitter's Bootstrap and
 relies on Bonsai, Liquid templates and various other projects, look
 them up for detailed licensing conditions.
 
@@ -70,7 +70,7 @@ OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
 
 
 
-jq uses parts of the open source C library "decNumber", which is distribured
+jq uses parts of the open source C library "decNumber", which is distributed
 under the following license:
 
 

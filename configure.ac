@@ -243,7 +243,7 @@ AC_C_BIGENDIAN(
    AC_DEFINE([IEEE_MC68k], 1, [machine is bigendian]),
    AC_DEFINE([IEEE_8087], 1, [machine is littleendian]),
    AC_MSG_ERROR(unknown endianness),
-   AC_MSG_ERROR(universial endianness not supported)
+   AC_MSG_ERROR(universal endianness not supported)
 )
 
 dnl Oniguruma

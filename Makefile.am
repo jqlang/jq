@@ -215,7 +215,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/base64.test tests/base64test 				\
         tests/jq-f-test.sh tests/shtest
 
-# README.md is expected in Github projects, good stuff in it, so we'll
+# README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
 docdir = ${datadir}/doc/${PACKAGE}
 dist_doc_DATA = README.md COPYING AUTHORS README

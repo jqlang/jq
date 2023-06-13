@@ -235,7 +235,7 @@ if [ $(HOME="$mods/home1" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a
 fi
 
 if ! HOME="$mods/home2" $VALGRIND $Q $JQ -n 'include "g"; empty'; then
-    echo "Mishanding directory ~/.jq" 1>&2
+    echo "Mishandling directory ~/.jq" 1>&2
     exit 1
 fi
 
