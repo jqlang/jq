@@ -276,6 +276,12 @@ sections:
 
         Remaining arguments are positional JSON text arguments.  These
         are available to the jq program as `$ARGS.positional[]`.
+        
+      * `--`:
+
+        Terminates argument processing.  Remaining arguments are
+        positional, either strings, JSON texts, or input filenames,
+        according to whether `--args` or `--jsonargs` were given.
 
       * `--run-tests [filename]`:
 
