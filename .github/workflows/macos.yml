@@ -26,7 +26,7 @@ jobs:
       - name: Install packages
         run: |
           brew update
-          brew install autoconf automake libtool flex bison python3
+          brew install autoconf automake libtool flex bison
           sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
       - name: Build
         env:
