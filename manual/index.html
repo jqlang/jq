@@ -5555,8 +5555,10 @@ is lexical: the label has to be "visible" from the break.</p>
               <h2>Regular expressions</h2>
               <p>jq uses the
 <a href="https://github.com/kkos/oniguruma/blob/master/doc/RE">Oniguruma regular expression library</a>,
-as do PHP, Ruby, TextMate, Sublime Text, etc, so the
+as do PHP, TextMate, Sublime Text, etc, so the
 description here will focus on jq specifics.</p>
+<p>Oniguruma supports several flavors of regular expression, so it is important to know
+that jq uses the <a href="https://github.com/kkos/oniguruma/blob/master/doc/SYNTAX.md">"Perl NG" (Perl with named groups)</a> flavor.</p>
 <p>The jq regex filters are defined so that they can be used using
 one of these patterns:</p>
 <pre><code>STRING | FILTER(REGEX)
@@ -5570,6 +5572,9 @@ STRING | FILTER([REGEX, FLAGS])
 <li>REGEX, after string interpolation, should be a valid regular expression;</li>
 <li>FILTER is one of <code>test</code>, <code>match</code>, or <code>capture</code>, as described below.</li>
 </ul>
+<p>Since REGEX must evaluate to a JSON string, some characters that are needed
+to form a regular expression must be escaped. For example, the regular expression
+<code>\s</code> signifying a whitespace character would be written as <code>"\\s"</code>.</p>
 <p>FLAGS is a string consisting of one of more of the supported flags:</p>
 <ul>
 <li><code>g</code> - Global search (find all matches, not just the first)</li>
