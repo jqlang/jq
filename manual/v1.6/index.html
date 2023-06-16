@@ -165,7 +165,14 @@ as <code>jq foo</code>, which will generally fail because <code>foo is not
 defined</code>.  When using the Windows command shell (cmd.exe) it's
 best to use double quotes around your jq program when given on the
 command-line (instead of the <code>-f program-file</code> option), but then
-double-quotes in the jq program need backslash escaping.</p>
+double-quotes in the jq program need backslash escaping. When using
+the Powershell (<code>powershell.exe</code>) or the Powershell Core
+(<code>pwsh</code>/<code>pwsh.exe</code>), use single-quote characters around the jq
+program and backslash-escaped double-quotes (<code>\"</code>) inside the jq
+program.</p>
+<p>Unix shells: <code>jq '.["foo"]'</code>
+Powershell: <code>jq '.[\"foo\"]'</code>
+Windows command shell: <code>jq ".[\"foo\"]"</code></p>
 <p>You can affect how jq reads and writes its input and output
 using some command-line options:</p>
 <ul>
