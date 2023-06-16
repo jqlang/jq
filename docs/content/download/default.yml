@@ -24,7 +24,7 @@ body:
          `sudo apt-get install jq`.
 
        * jq 1.5 is in the official
-         [Fedora](http://pkgs.fedoraproject.org/cgit/jq.git/) repository.
+         [Fedora](https://src.fedoraproject.org/rpms/jq) repository.
          Install using `sudo dnf install jq`.
 
        * jq 1.4 is in the official [openSUSE](https://software.opensuse.org/package/jq)
