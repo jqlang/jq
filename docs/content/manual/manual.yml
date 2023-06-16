@@ -91,7 +91,15 @@ sections:
       defined`.  When using the Windows command shell (cmd.exe) it's
       best to use double quotes around your jq program when given on the
       command-line (instead of the `-f program-file` option), but then
-      double-quotes in the jq program need backslash escaping.
+      double-quotes in the jq program need backslash escaping. When using
+      the Powershell (`powershell.exe`) or the Powershell Core
+      (`pwsh`/`pwsh.exe`), use single-quote characters around the jq
+      program and backslash-escaped double-quotes (`\"`) inside the jq
+      program.
+
+      Unix shells: `jq '.["foo"]'`
+      Powershell: `jq '.[\"foo\"]'`
+      Windows command shell: `jq ".[\"foo\"]"`
 
       You can affect how jq reads and writes its input and output
       using some command-line options:
