@@ -65,7 +65,7 @@ manpage_epilogue: |
 
   Presumably. Report them or discuss them at:
 
-      https://github.com/stedolan/jq/issues
+      https://github.com/jqlang/jq/issues
 
   ## AUTHOR
 
@@ -297,8 +297,8 @@ sections:
       - title: "`.foo?`"
         body: |
 
-          Just like `.foo`, but does not output even an error when `.`
-          is not an array or an object.
+          Just like `.foo`, but does not output an error when `.` is not an
+          object.
 
         examples:
           - program: '.foo?'
@@ -1768,8 +1768,8 @@ sections:
           The expression 'a == b' will produce 'true' if the result of a and b
           are equal (that is, if they represent equivalent JSON documents) and
           'false' otherwise. In particular, strings are never considered equal
-          to numbers. If you're coming from Javascript, jq's == is like
-          Javascript's === - considering values equal only when they have the
+          to numbers. If you're coming from JavaScript, jq's == is like
+          JavaScript's === - considering values equal only when they have the
           same type as well as the same value.
 
           != is "not equal", and 'a != b' returns the opposite value of 'a == b'
@@ -1787,7 +1787,7 @@ sections:
           as `C` otherwise.
 
           Checking for false or null is a simpler notion of
-          "truthiness" than is found in Javascript or Python, but it
+          "truthiness" than is found in JavaScript or Python, but it
           means that you'll sometimes have to be more explicit about
           the condition you want: you can't test whether, e.g. a
           string is empty using `if .name then A else B end`, you'll
@@ -1920,7 +1920,7 @@ sections:
               # Repeat an expression until it raises "break" as an
               # error, then stop repeating without re-raising the error.
               # But if the error caught is not "break" then re-raise it.
-              try repeat(exp) catch .=="break" then empty else error;
+              try repeat(exp) catch if .=="break" then empty else error
 
           jq has a syntax for named lexical labels to "break" or "go (back) to":
 
@@ -1954,46 +1954,47 @@ sections:
             output: ['[null, 1]']
 
 
-  - title: Regular expressions (PCRE)
+  - title: Regular expressions
     body: |
 
-      jq uses the Oniguruma regular expression library, as do php,
-      ruby, TextMate, Sublime Text, etc, so the description here
+      jq uses the Oniguruma regular expression library, as do PHP,
+      Ruby, TextMate, Sublime Text, etc, so the description here
       will focus on jq specifics.
 
       The jq regex filters are defined so that they can be used using
       one of these patterns:
 
-          STRING | FILTER( REGEX )
-          STRING | FILTER( REGEX; FLAGS )
-          STRING | FILTER( [REGEX] )
-          STRING | FILTER( [REGEX, FLAGS] )
+          STRING | FILTER(REGEX)
+          STRING | FILTER(REGEX; FLAGS)
+          STRING | FILTER([REGEX])
+          STRING | FILTER([REGEX, FLAGS])
 
       where:
-      * STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
-      * REGEX, after string interpolation, should be a valid PCRE regex;
+
+      * STRING, REGEX, and FLAGS are jq strings and subject to jq string interpolation;
+      * REGEX, after string interpolation, should be a valid regular expression;
       * FILTER is one of `test`, `match`, or `capture`, as described below.
 
       FLAGS is a string consisting of one of more of the supported flags:
 
       * `g` - Global search (find all matches, not just the first)
       * `i` - Case insensitive search
-      * `m` - Multi line mode ('.' will match newlines)
+      * `m` - Multi line mode (`.` will match newlines)
       * `n` - Ignore empty matches
       * `p` - Both s and m modes are enabled
-      * `s` - Single line mode ('^' -> '\A', '$' -> '\Z')
+      * `s` - Single line mode (`^` -> `\A`, `$` -> `\Z`)
       * `l` - Find longest possible matches
       * `x` - Extended regex format (ignore whitespace and comments)
 
-      To match whitespace in an x pattern use an escape such as \s, e.g.
+      To match a whitespace with the `x` flag, use `\s`, e.g.
 
-      * test( "a\\\\sb"; "x" )
+          jq -n '"a b" | test("a\\sb"; "x")'
 
       Note that certain flags may also be specified within REGEX, e.g.
 
-      * jq -n '("test", "TEst", "teST", "TEST") | test( "(?i)te(?-i)st" )'
+          jq -n '("test", "TEst", "teST", "TEST") | test("(?i)te(?-i)st")'
 
-      evaluates to: true, true, false, false.
+      evaluates to: `true`, `true`, `false`, `false`.
 
     entries:
       - title: "`test(val)`, `test(regex; flags)`"
@@ -2115,7 +2116,7 @@ sections:
           be a jq string, and may contain references to named captures. The
           named captures are, in effect, presented as a JSON object (as
           constructed by `capture`) to `tostring`, so a reference to a captured
-          variable named "x" would take the form: "\(.x)".
+          variable named "x" would take the form: `"\(.x)"`.
 
         example:
           - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
@@ -2149,7 +2150,7 @@ sections:
 
       It is also possible to define functions in jq, although this is
       is a feature whose biggest use is defining jq's standard library
-      (many jq functions such as `map` and `find` are in fact written
+      (many jq functions such as `map` and `select` are in fact written
       in jq).
 
       jq has reduction operators, which are very powerful but a bit
@@ -2620,7 +2621,7 @@ sections:
       If an object has two fields which are arrays, `.foo` and `.bar`,
       and you append something to `.foo`, then `.bar` will not get
       bigger. Even if you've just set `.bar = .foo`. If you're used to
-      programming in languages like Python, Java, Ruby, Javascript,
+      programming in languages like Python, Java, Ruby, JavaScript,
       etc. then you can think of it as though jq does a full deep copy
       of every object before it does the assignment (for performance,
       it doesn't actually do that, but that's the general idea).
@@ -2640,7 +2641,7 @@ sections:
            .foo = .bar | .foo.baz = 1
 
           will not have the side-effect of setting .bar.baz to be set
-          to 1, as the similar-looking program in Javascript, Python,
+          to 1, as the similar-looking program in JavaScript, Python,
           Ruby or other languages would. Unlike these languages (but
           like Haskell and some other functional languages), there is
           no notion of two arrays or objects being "the same array" or

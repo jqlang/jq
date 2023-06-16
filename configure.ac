@@ -1,10 +1,7 @@
-m4_define([jq_version],
-          m4_esyscmd_s([(git rev-parse --verify -q jq-1.0 > /dev/null &&
-                        (git describe --tags --dirty --match 'jq-*'|sed 's/^jq-//')) ||
-                        echo `git rev-parse --abbrev-ref HEAD`-`git describe --always --dirty`])))
+m4_define([jq_version], m4_esyscmd_s([scripts/version])))
 
-AC_INIT([jq], [jq_version], [https://github.com/stedolan/jq/issues],
-             [jq], [https://stedolan.github.io/jq])
+AC_INIT([jq], [jq_version], [https://github.com/jqlang/jq/issues],
+             [jq], [https://jqlang.github.io/jq])
 
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.64])
@@ -19,6 +16,7 @@ AC_PROG_CPP_WERROR
 AC_PROG_YACC
 AC_OBJEXT
 AC_EXEEXT
+AC_USE_SYSTEM_EXTENSIONS
 LT_INIT([shared static win32-dll])
 AM_PROG_CC_C_O
 
@@ -147,7 +145,7 @@ AC_FIND_FUNC([gmtime_r], [c], [#include <time.h>], [0, 0])
 AC_FIND_FUNC([gmtime], [c], [#include <time.h>], [0])
 AC_FIND_FUNC([localtime_r], [c], [#include <time.h>], [0, 0])
 AC_FIND_FUNC([localtime], [c], [#include <time.h>], [0])
-AC_FIND_FUNC([gettimeofday], [c], [#include <time.h>], [0, 0])
+AC_FIND_FUNC([gettimeofday], [c], [#include <sys/time.h>], [0, 0])
 AC_CHECK_MEMBER([struct tm.tm_gmtoff], [AC_DEFINE([HAVE_TM_TM_GMT_OFF],1,[Define to 1 if the system has the tm_gmt_off field in struct tm])],
                 [], [[#include <time.h>]])
 AC_CHECK_MEMBER([struct tm.__tm_gmtoff], [AC_DEFINE([HAVE_TM___TM_GMT_OFF],1,[Define to 1 if the system has the __tm_gmt_off field in struct tm])],
@@ -243,7 +241,7 @@ AC_C_BIGENDIAN(
    AC_DEFINE([IEEE_MC68k], 1, [machine is bigendian]),
    AC_DEFINE([IEEE_8087], 1, [machine is littleendian]),
    AC_MSG_ERROR(unknown endianness),
-   AC_MSG_ERROR(universial endianness not supported)
+   AC_MSG_ERROR(universal endianness not supported)
 )
 
 dnl Oniguruma

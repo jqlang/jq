@@ -150,6 +150,12 @@ cmp $d/out $d/expected
 printf "[1,2][3,4]\n" | $JQ -cs add > $d/out 2>&1
 cmp $d/out $d/expected
 
+# Regression test for -0 / --nul-output
+printf "a\0b\0" > $d/expected
+printf '["a", "b"]' | $JQ -0 .[] > $d/out 2>&1
+cmp $d/out $d/expected
+printf '["a", "b"]' | $JQ --nul-output .[] > $d/out 2>&1
+cmp $d/out $d/expected
 
 ## Test streaming parser
 
@@ -229,7 +235,7 @@ if [ $(HOME="$mods/home1" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a
 fi
 
 if ! HOME="$mods/home2" $VALGRIND $Q $JQ -n 'include "g"; empty'; then
-    echo "Mishanding directory ~/.jq" 1>&2
+    echo "Mishandling directory ~/.jq" 1>&2
     exit 1
 fi
 
