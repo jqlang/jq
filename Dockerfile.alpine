@@ -1,0 +1,39 @@
+FROM alpine:3.18 AS builder
+
+COPY . /app
+
+# get dependencies, build, and remove anything we don't need for running jq.
+
+RUN apk update && \
+    apk add --no-cache --virtual .build-deps \
+        build-base \
+        autoconf \
+        automake \
+        libtool \
+        git \
+        bison \
+        flex \
+        python3 && \
+    (cd /app/docs && \
+        python3 -m venv create /tmp/env && source /tmp/env/bin/activate && pip install pipenv && pipenv sync ) && \
+    (cd /app && \
+        git submodule update --init && \
+        autoreconf -i && \
+        ./configure --enable-all-static --prefix=/usr/local && \
+        make -j8 && \
+        make check && \
+        make install ) && \
+    (cd /app/modules/oniguruma && \
+        make uninstall ) && \
+    (cd /app && \
+        make distclean ) && \
+    apk del .build-deps && \
+    rm -rf /app/modules/oniguruma/{*,.git,.gitignore} && \
+    rm -rf /var/lib/gems
+
+FROM alpine:3.18
+
+COPY --from=builder /usr/local/bin/jq /usr/local/bin/
+
+ENTRYPOINT ["/usr/local/bin/jq"]
+CMD []
