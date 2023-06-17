@@ -23,7 +23,7 @@ jobs:
                       cflags: ''
         steps:
             - name: Clone repository
-              uses: actions/checkout@v1
+              uses: actions/checkout@v3
             - name: Open Submodule(s)
               run: |
                 git submodule update --init --recursive
@@ -71,7 +71,7 @@ jobs:
                 cat test-suite.log
                 cat tests/*.log
             - name: Upload Logs
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v3
               with:
                 name: Scan-Build Reports
                 path: '/tmp/scan-build*/'

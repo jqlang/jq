@@ -19,19 +19,19 @@ body:
 
       ### Linux
 
-       * jq 1.5 is in the official [Debian](https://packages.debian.org/jq) and
+       * jq 1.6 is in the official [Debian](https://packages.debian.org/jq) and
          [Ubuntu](http://packages.ubuntu.com/jq) repositories. Install using
          `sudo apt-get install jq`.
 
-       * jq 1.5 is in the official
+       * jq 1.6 is in the official
          [Fedora](https://src.fedoraproject.org/rpms/jq) repository.
          Install using `sudo dnf install jq`.
 
-       * jq 1.4 is in the official [openSUSE](https://software.opensuse.org/package/jq)
+       * jq 1.6 is in the official [openSUSE](https://software.opensuse.org/package/jq)
          repository. Install using `sudo zypper install jq`.
 
-       * jq 1.5 is in the official
-         [Arch](https://www.archlinux.org/packages/?sort=&q=jq&maintainer=&flagged=)
+       * jq 1.6 is in the official
+         [Arch](https://archlinux.org/packages/?sort=&q=jq&maintainer=&flagged=)
          repository.  Install using `sudo pacman -S jq`.
 
        * jq 1.6 binaries for

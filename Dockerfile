@@ -1,4 +1,4 @@
-FROM debian:9
+FROM debian:12 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive \
     DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -8,26 +8,27 @@ ENV DEBIAN_FRONTEND=noninteractive \
 COPY . /app
 
 # get dependencies, build, and remove anything we don't need for running jq.
-# valgrind seems to have trouble with pthreads TLS so it's off.
+# source command doesn't exist in dash 
+SHELL ["/bin/bash", "-c"]
 
-RUN apt-get update && \
-    apt-get install -y \
+RUN apt update && \
+    apt install -y \
         build-essential \
         autoconf \
         libtool \
         git \
         bison \
         flex \
-        python3 \
+        python3.11-minimal \
         python3-pip \
+        python3.11-venv \
         wget && \
-    pip3 install pipenv && \
-    (cd /app/docs && pipenv sync) && \
+    (cd /app/docs && \
+        python3 -m venv create /tmp/env && source $_/bin/activate && pip install pipenv && pipenv sync ) && \
     (cd /app && \
-        git submodule init && \
-        git submodule update && \
+        git submodule update --init && \
         autoreconf -i && \
-        ./configure --disable-valgrind --enable-all-static --prefix=/usr/local && \
+        ./configure --enable-all-static --prefix=/usr/local && \
         make -j8 && \
         make check && \
         make install ) && \
@@ -35,20 +36,23 @@ RUN apt-get update && \
         make uninstall ) && \
     (cd /app && \
         make distclean ) && \
-    apt-get purge -y \
+    apt purge -y \
         build-essential \
         autoconf \
         libtool \
         bison \
         git \
         flex \
-        python3 \
-        python3-pip && \
-    apt-get autoremove -y && \
-    rm -rf /app/modules/oniguruma/* && \
-    rm -rf /app/modules/oniguruma/.git && \
-    rm -rf /app/modules/oniguruma/.gitignore && \
+        python3.11-minimal \
+        python3-pip \
+        python3.11-venv && \
+    apt autoremove -y && \
+    rm -rf /app/modules/oniguruma/{*,.git,.gitignore} && \
     rm -rf /var/lib/apt/lists/* /var/lib/gems
+
+FROM debian:12
+
+COPY --from=builder /usr/local/bin/jq /usr/local/bin/
 
 ENTRYPOINT ["/usr/local/bin/jq"]
 CMD []
