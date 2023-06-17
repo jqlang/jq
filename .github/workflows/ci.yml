@@ -1,0 +1,206 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+  pull_request:
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64]
+        include:
+          - arch: x86_64
+            suffix: amd64
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            automake \
+            autoconf \
+            bison \
+            flex \
+            gdb \
+            python3
+      - name: Build
+        env:
+          CC: clang -arch ${{ matrix.arch }}
+        run: |
+          autoreconf -fi
+          ./configure --disable-dependency-tracking \
+            --disable-silent-rules \
+            --disable-maintainer-mode \
+            --disable-valgrind \
+            --with-oniguruma=builtin \
+            YACC="$(which bison) -y"
+          make
+          make dist
+          cp jq jq-linux-${{ matrix.suffix }}
+      - name: Test
+        env:
+          CC: clang -arch ${{ matrix.arch }}
+        run: |
+          make check
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs-linux-${{ matrix.arch }}
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jq-linux-${{ matrix.suffix }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            jq-linux-${{ matrix.suffix }}
+  macos:
+    runs-on: macos-13
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64]
+        include:
+          - arch: x86_64
+            suffix: amd64
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          brew update
+          brew install \
+            autoconf \
+            automake \
+            libtool \
+            flex \
+            bison
+          sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
+      - name: Build
+        env:
+          CC: clang -arch ${{ matrix.arch }}
+        run: |
+          autoreconf -fi
+          ./configure --disable-dependency-tracking \
+            --disable-silent-rules \
+            --disable-maintainer-mode \
+            --disable-valgrind \
+            --with-oniguruma=builtin \
+            YACC="$(brew --prefix)/opt/bison/bin/bison -y"
+          make
+          make dist
+          cp jq jq-macos-${{ matrix.suffix }}
+      - name: Test
+        env:
+          CC: clang -arch ${{ matrix.arch }}
+        run: |
+          make check
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs-macos-${{ matrix.arch }}
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jq-macos-${{ matrix.suffix }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            jq-macos-${{ matrix.suffix }}
+  windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64]
+        include:
+          - arch: x86_64
+            suffix: win64
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            base-devel git clang autoconf automake libtool
+      - name: Build
+        shell: msys2 {0}
+        run: |
+          autoreconf -fi
+          ./configure --disable-dependency-tracking \
+            --disable-silent-rules \
+            --disable-maintainer-mode \
+            --disable-valgrind \
+            --with-oniguruma=builtin \
+            --disable-shared \
+            --enable-static \
+            --enable-all-static
+          make
+          make dist
+          cp jq.exe jq-windows-${{ matrix.suffix }}.exe
+      - name: Test
+        shell: msys2 {0}
+        run: |
+          make SUBDIRS= "TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test" check
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs-windows-${{ matrix.arch }}
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jq-windows-${{ matrix.suffix }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            jq-windows-${{ matrix.suffix }}.exe
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: [linux, macos, windows]
+    if: startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Merge built artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+      - name: Upload release
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create $TAG_NAME --draft --title "jq ${TAG_NAME#v}" --generate-notes
+          gh release upload $TAG_NAME --clobber artifacts/jq-*/*
