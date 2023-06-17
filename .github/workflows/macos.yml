@@ -10,14 +10,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [macos-12-clang, macos-13-clang]
+        arch: [x86_64, arm64]
+        os: [macos-12, macos-13]
         include:
-          - name: macos-12-clang
-            os: macos-12
+          - os: macos-12
             compiler: clang
-          - name: macos-13-clang
-            os: macos-13
+          - os: macos-13
             compiler: clang
+          - arch: x86_64
+            suffix: amd64
+          - arch: arm64
+            suffix: arm64
+            
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -30,18 +34,19 @@ jobs:
           sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
       - name: Build
         env:
-          CC: ${{ matrix.compiler }}
+          CC: '${{ matrix.compiler }} -arch ${{ matrix.arch }}'
           MAKEVARS: ${{ matrix.makevars }}
         run: |
           autoreconf -fi
           rm src/lexer.c src/lexer.h
           rm src/parser.c src/parser.h
-          ./configure --disable-valgrind --with-oniguruma=builtin YACC="$(brew --prefix)/opt/bison/bin/bison -y" $COVERAGE
+          ./configure --disable-valgrind --with-oniguruma=builtin --host=${{ matrix.arch }}-apple-darwin$(uname -r) YACC="$(brew --prefix)/opt/bison/bin/bison -y" $COVERAGE
           make -j4
+          echo "$(file ./jq) built against host ${{ matrix.arch }}-apple-darwin$(uname -r)")
           make dist
       - name: Test
         env:
-          CC: ${{ matrix.compiler }}
+          CC: '${{ matrix.compiler }} -arch ${{ matrix.arch }}'
           MAKEVARS: ${{ matrix.makevars }}
         run: |
           ulimit -c unlimited
@@ -57,6 +62,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: jq-${{ matrix.name }}
+          # jq-macos-12-amd64, ..., jq-macos-13-arm64
+          name: jq-${{ matrix.os }}-${{ matrix.suffix }}
           path: |
             jq
