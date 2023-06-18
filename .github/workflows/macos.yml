@@ -40,9 +40,9 @@ jobs:
           autoreconf -fi
           rm src/lexer.c src/lexer.h
           rm src/parser.c src/parser.h
-          ./configure --disable-valgrind --with-oniguruma=builtin --host=${{ matrix.arch }}-apple-darwin$(uname -r) YACC="$(brew --prefix)/opt/bison/bin/bison -y" $COVERAGE
+          ./configure --disable-valgrind --with-oniguruma=builtin --target=${{ matrix.arch }}-apple-darwin$(uname -r) YACC="$(brew --prefix)/opt/bison/bin/bison -y" $COVERAGE
           make -j4
-          echo "$(file ./jq) built against host ${{ matrix.arch }}-apple-darwin$(uname -r)"
+          echo "$(file ./jq) built against target ${{ matrix.arch }}-apple-darwin$(uname -r)"
           make dist
       - name: Test
         env:
