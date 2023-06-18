@@ -1,4 +1,4 @@
-FROM debian:12 AS builder
+FROM debian:12-slim AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive \
     DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -8,8 +8,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
 COPY . /app
 
 # get dependencies, build, and remove anything we don't need for running jq.
-# source command doesn't exist in dash 
-SHELL ["/bin/bash", "-c"]
 
 RUN apt update && \
     apt install -y \
@@ -18,20 +16,14 @@ RUN apt update && \
         libtool \
         git \
         bison \
-        flex \
-        python3.11-minimal \
-        python3-pip \
-        python3.11-venv \
-        wget && \
-    (cd /app/docs && \
-        python3 -m venv create /tmp/env && source $_/bin/activate && pip install pipenv && pipenv sync ) && \
+        flex && \
     (cd /app && \
         git submodule update --init && \
-        autoreconf -i && \
-        ./configure --enable-all-static --prefix=/usr/local && \
+        autoreconf -if && \
+        ./configure --disable-docs --enable-all-static CFLAGS='-Os -static -no-pie' --prefix=/usr/local && \
         make -j8 && \
         make check && \
-        make install ) && \
+        make install-strip ) && \
     (cd /app/modules/oniguruma && \
         make uninstall ) && \
     (cd /app && \
@@ -42,17 +34,14 @@ RUN apt update && \
         libtool \
         bison \
         git \
-        flex \
-        python3.11-minimal \
-        python3-pip \
-        python3.11-venv && \
+        flex && \
     apt autoremove -y && \
     rm -rf /app/modules/oniguruma/{*,.git,.gitignore} && \
     rm -rf /var/lib/apt/lists/* /var/lib/gems
 
-FROM debian:12
+FROM scratch
 
-COPY --from=builder /usr/local/bin/jq /usr/local/bin/
+COPY --from=builder /app/AUTHORS /app/COPYING /usr/local/bin/jq /
 
-ENTRYPOINT ["/usr/local/bin/jq"]
+ENTRYPOINT ["/jq"]
 CMD []

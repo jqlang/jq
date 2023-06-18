@@ -12,17 +12,14 @@ RUN apk update && \
         libtool \
         git \
         bison \
-        flex \
-        python3 && \
-    (cd /app/docs && \
-        python3 -m venv create /tmp/env && source /tmp/env/bin/activate && pip install pipenv && pipenv sync ) && \
+        flex && \
     (cd /app && \
         git submodule update --init && \
-        autoreconf -i && \
-        ./configure --enable-all-static --prefix=/usr/local && \
+        autoreconf -if && \
+        ./configure --disable-docs --enable-all-static CFLAGS='-Os -static -no-pie' --prefix=/usr/local && \
         make -j8 && \
         make check && \
-        make install ) && \
+        make install-strip ) && \
     (cd /app/modules/oniguruma && \
         make uninstall ) && \
     (cd /app && \
@@ -31,9 +28,9 @@ RUN apk update && \
     rm -rf /app/modules/oniguruma/{*,.git,.gitignore} && \
     rm -rf /var/lib/gems
 
-FROM alpine:3.18
+FROM scratch
 
-COPY --from=builder /usr/local/bin/jq /usr/local/bin/
+COPY --from=builder /app/AUTHORS /app/COPYING /usr/local/bin/jq /
 
-ENTRYPOINT ["/usr/local/bin/jq"]
+ENTRYPOINT ["/jq"]
 CMD []
