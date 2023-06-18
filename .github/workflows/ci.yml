@@ -145,9 +145,11 @@ jobs:
         with:
           update: true
           install: >-
-            base-devel git clang autoconf automake libtool
+            base-devel git clang autoconf automake libtool bison
       - name: Build
         shell: msys2 {0}
+        env:
+          CC: clang -arch ${{ matrix.arch }}
         run: |
           autoreconf -fi
           ./configure --disable-dependency-tracking \
@@ -157,17 +159,22 @@ jobs:
             --with-oniguruma=builtin \
             --disable-shared \
             --enable-static \
-            --enable-all-static
+            --enable-all-static \
+            YACC="$(which bison) -y"
           make
           make dist
           cp jq.exe jq-windows-${{ matrix.suffix }}.exe
       - name: Test
         shell: msys2 {0}
         run: |
-          make SUBDIRS= "TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test" check
+          make -j3 SUBDIRS= 'TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test' check
+          make SUBDIRS= TESTS=tests/optionaltest check || true
+          make SUBDIRS= TRACE_TESTS=1 TESTS=tests/shtest check || true
       - name: Upload Test Logs
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
+        env:
+          CC: clang -arch ${{ matrix.arch }}
         with:
           name: test-logs-windows-${{ matrix.arch }}
           retention-days: 7
