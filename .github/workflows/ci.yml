@@ -145,7 +145,14 @@ jobs:
         with:
           update: true
           install: >-
-            base-devel git clang autoconf automake libtool bison
+            base-devel
+            git
+            clang
+            autoconf
+            automake
+            libtool
+            bison
+            flex
       - name: Build
         shell: msys2 {0}
         env:
