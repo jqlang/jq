@@ -121,37 +121,50 @@ def sub($re; s):
   | if length == 0 then $in
     else .[0]
     | . as $r
-#  # create the "capture" object:
+#   # create the "capture" object:
     | reduce ( $r | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
         ({}; . + $pair)
     | $in[0:$r.offset] + s + $in[$r.offset+$r.length:]
     end ;
 #
 # If s contains capture variables, then create a capture object and pipe it to s
+# WARNING: the "g" (gsub) flag is interpreted in a non-standard way;
+#          this is consequential if the regexp begins with "\\b".
 def sub($re; s; flags):
   def subg: [explode[] | select(. != 103)] | implode;
   # "fla" should be flags with all occurrences of g removed; gs should be non-nil if flags has a g
   def sub1(fla; gs):
     def mysub:
+      def tail: if gs and (length > 0 or $re == "") then mysub else . end;
       . as $in
       | [match($re; fla)]
       | if length == 0 then $in
         else .[0] as $edit
+        | $edit.length as $progress
         | ($edit | .offset + .length) as $len
         # create the "capture" object:
         | reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
             ({}; . + $pair)
-        | $in[0:$edit.offset]
-          + s
-          + ($in[$len:] | if length > 0 and gs then mysub else . end)
+        | ($in[:$edit.offset] + s) as $head
+        # if $edit.length is 0 (e.g. because of a lookahead), then advance by 1 if possible
+        | if $progress == 0
+          then if $len == ($in|length)
+               then $head
+               else
+                    $head + $in[$len:$len+1] + ($in[$len+1:] | tail)
+               end
+          else      $head + ($in[$len:] | tail)
+          end
         end ;
     mysub ;
-    (flags | index("g")) as $gs
-    | (flags | if $gs then subg else . end) as $fla
-    | sub1($fla; $gs);
+  (flags | index("g")) as $gs
+  | (flags | if $gs then subg else . end) as $fla
+  | if $gs and $re[:1]=="^" then sub1($fla; null)
+    else sub1($fla; $gs)
+    end;
 #
-def sub($re; s): sub($re; s; "");
 # repeated substitution of re (which may contain named captures)
+# See warning above re gsub
 def gsub($re; s; flags): sub($re; s; flags + "g");
 def gsub($re; s): sub($re; s; "g");
 

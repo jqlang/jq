@@ -2347,7 +2347,7 @@ sections:
       * `l` - Find longest possible matches
       * `x` - Extended regex format (ignore whitespace and comments)
 
-      To match a whitespace with the `x` flag, use `\s`, e.g.
+      To match a whitespace with the `x` flag, use the regex `\s`, e.g.
 
           jq -n '"a b" | test("a\\sb"; "x")'
 
@@ -2480,7 +2480,8 @@ sections:
           be a jq string, and may contain references to named captures. The
           named captures are, in effect, presented as a JSON object (as
           constructed by `capture`) to `tostring`, so a reference to a captured
-          variable named "x" would take the form: `"\(.x)"`.
+          variable named "x" would take the form: `"\(.x)"`.  See `gsub` below for
+          notes about the `g` flag.
 
         example:
           - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
@@ -2491,8 +2492,11 @@ sections:
       - title: "`gsub(regex; string)`, `gsub(regex; string; flags)`"
         body: |
 
-          `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
-          replaced by the string, after interpolation.
+          If the regex begins with `^` then `gsub` behaves like `sub(regex; f)` 
+          where `f` is the specified `flags` string after removal of all occurrences of `g`.
+          Otherwise `gsub` applies `sub` progressively in this manner on non-overlapping
+          substrings of the original string.  Non-standard behaviors of `gsub` 
+          (as well as of `sub` with the `g` option) are subject to change.
 
         example:
           - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'

@@ -75,6 +75,38 @@ gsub( "(.*)"; "";  "x")
 ""
 ""
 
+gsub( ""; "a";  "g")
+""
+"a"
+
+gsub( "^"; "";  "g")
+"a"
+"a"
+
+gsub( ""; "a";  "g")
+"a"
+"aaa"
+
+gsub( "$"; "a";  "g")
+"a"
+"aa"
+
+gsub( "^"; "a")
+""
+"a"
+
+gsub("(?=u)"; "u")
+"qux"
+"quux"
+
+gsub("^.*a"; "b")
+"aaa"
+"b"
+
+gsub("^.*?a"; "b")
+"aaa"
+"baa"
+
 [.[] | scan(", ")]
 ["a,b, c, d, e,f",", a,b, c, d, e,f, "]
 [", ",", ",", ",", ",", ",", ",", ",", "]
@@ -91,6 +123,20 @@ gsub( "(.*)"; "";  "x")
 gsub("(?<x>.)[^a]*"; "+\(.x)-")
 "Abcabc"
 "+A-+a-"
+
+gsub("(?<x>.)(?<y>[0-9])"; "\(.x|ascii_downcase)\(.y)")
+"A1 B2 CD"
+"a1 b2 CD"
+
+# The following is a regression test and should not be construed as a requirement:
+gsub("\\b(?<x>.)"; "\(.x|ascii_downcase)")
+"Abc Def"
+"abc def"
+
+# The following is a regression test and should not be construed as a requirement:
+gsub("\\b(?<x>.)"; "\(.x|ascii_upcase)")
+"Abc Def"
+"ABC DEF"
 
 # utf-8
 sub("(?<x>.)"; "\(.x)!")
