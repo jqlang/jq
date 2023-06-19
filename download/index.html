@@ -62,8 +62,8 @@
           
             <p>jq is written in C and has no runtime dependencies, so it should be
 possible to build it for nearly any platform. Prebuilt binaries are
-available for Linux, OS X and Windows.</p>
-<p>The binaries should just run, but on OS X and Linux you may need
+available for Linux, macOS and Windows.</p>
+<p>The binaries should just run, but on macOS and Linux you may need
 to make them executable first using <code>chmod +x jq</code>.</p>
 <p>jq is licensed under the MIT license. For all of the gory
 details, read the file <code>COPYING</code> in the source distribution.</p>
@@ -73,23 +73,21 @@ http://download.icu-project.org/files/decNumber/decNumber-icu-368.zip.</p>
 <h3>Linux</h3>
 <ul>
 <li>
-<p>jq 1.5 is in the official <a href="https://packages.debian.org/jq">Debian</a> and
+<p>jq is in the official <a href="https://packages.debian.org/jq">Debian</a> and
    <a href="http://packages.ubuntu.com/jq">Ubuntu</a> repositories. Install using
    <code>sudo apt-get install jq</code>.</p>
 </li>
 <li>
-<p>jq 1.5 is in the official
-   <a href="https://src.fedoraproject.org/rpms/jq">Fedora</a> repository.
+<p>jq is in the official <a href="https://src.fedoraproject.org/rpms/jq">Fedora</a> repository.
    Install using <code>sudo dnf install jq</code>.</p>
 </li>
 <li>
-<p>jq 1.4 is in the official <a href="https://software.opensuse.org/package/jq">openSUSE</a>
-   repository. Install using <code>sudo zypper install jq</code>.</p>
+<p>jq is in the official <a href="https://software.opensuse.org/package/jq">openSUSE</a> repository.
+   Install using <code>sudo zypper install jq</code>.</p>
 </li>
 <li>
-<p>jq 1.5 is in the official
-   <a href="https://www.archlinux.org/packages/?sort=&amp;q=jq&amp;maintainer=&amp;flagged=">Arch</a>
-   repository.  Install using <code>sudo pacman -S jq</code>.</p>
+<p>jq is in the official <a href="https://archlinux.org/packages/?q=jq">Arch</a> repository.
+   Install using <code>sudo pacman -S jq</code>.</p>
 </li>
 <li>
 <p>jq 1.6 binaries for
@@ -116,19 +114,16 @@ http://download.icu-project.org/files/decNumber/decNumber-icu-368.zip.</p>
    <a href="https://github.com/jqlang/jq/releases/download/jq-1.3/jq-linux-x86">32-bit</a>.</p>
 </li>
 </ul>
-<h3>OS X</h3>
+<h3>macOS</h3>
 <ul>
 <li>
-<p>Use <a href="https://finkproject.org">Fink</a> to install jq 1.6 with
-   <code>fink install jq</code>.</p>
+<p>Use <a href="http://brew.sh/">Homebrew</a> to install jq with <code>brew install jq</code>.</p>
 </li>
 <li>
-<p>Use <a href="http://brew.sh/">Homebrew</a> to install jq 1.6 with
-   <code>brew install jq</code>.</p>
+<p>Use <a href="https://www.macports.org">MacPorts</a> to install jq with <code>port install jq</code>.</p>
 </li>
 <li>
-<p>Use <a href="https://www.macports.org">MacPorts</a> to install jq 1.6 with
-   <code>port install jq</code>.</p>
+<p>Use <a href="https://finkproject.org">Fink</a> to install jq with <code>fink install jq</code>.</p>
 </li>
 <li>
 <p>jq 1.6 binary for
@@ -181,14 +176,13 @@ http://download.icu-project.org/files/decNumber/decNumber-icu-368.zip.</p>
 <ul>
 <li>
 <p>Use <a href="https://learn.microsoft.com/en-us/windows/package-manager/winget/">winget</a>
-   to install jq 1.6 with <code>winget install jqlang.jq</code>.</p>
+   to install jq with <code>winget install jqlang.jq</code>.</p>
 </li>
 <li>
-<p>Use <a href="https://scoop.sh/"><code>scoop</code></a> to install latest jq version with
-   <code>scoop install jq</code>.</p>
+<p>Use <a href="https://scoop.sh/">scoop</a> to install jq with <code>scoop install jq</code>.</p>
 </li>
 <li>
-<p>Use <a href="https://chocolatey.org/">Chocolatey NuGet</a> to install jq 1.6 with
+<p>Use <a href="https://chocolatey.org/">Chocolatey NuGet</a> to install jq with
    <code>chocolatey install jq</code>.</p>
 </li>
 <li>
@@ -234,7 +228,7 @@ The signatures for jq 1.5 are in
 <a href="https://github.com/jqlang/jq/tree/master/sig/v1.5">sig/v1.5/*.asc</a>.
 You can use <a href="https://gnupg.org/">GnuPG</a> to verify a signature by downloading
 the signature and running <code>gpg --verify signature.asc</code>.</p>
-<h3>From source on Linux, OS X, Cygwin, and other POSIX-like operating systems</h3>
+<h3>From source on Linux, macOS, Cygwin, and other POSIX-like operating systems</h3>
 <ul>
 <li><a href="https://github.com/jqlang/jq/releases/download/jq-1.6/jq-1.6.tar.gz">Source tarball for jq 1.6</a></li>
 <li><a href="https://github.com/jqlang/jq/releases/download/jq-1.5/jq-1.5.tar.gz">Source tarball for jq 1.5</a></li>
@@ -259,7 +253,7 @@ packages first:</p>
 <p>For Linux systems, these will all be in your system's package
 manager, and if you do development on the machine they're most
 likely already installed.</p>
-<p>On OS X, these are all included in Apple's command line tools, which can
+<p>On macOS, these are all included in Apple's command line tools, which can
 be installed from <a href="https://developer.apple.com/xcode/">Xcode</a>. However,
 you may find that you need a newer version of Bison than the one provided
 by Apple. This can be found in <a href="http://brew.sh">Homebrew</a> or
