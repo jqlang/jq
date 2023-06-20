@@ -736,6 +736,8 @@ sections:
             codepoints it contains (which will be the same as its
             JSON-encoded length in bytes if it's pure ASCII).
 
+          - The length of a **number** is its absolute value.
+
           - The length of an **array** is the number of elements.
 
           - The length of an **object** is the number of key-value pairs.
