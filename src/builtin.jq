@@ -99,7 +99,9 @@ def scan(re):
 #
 # If input is an array, then emit a stream of successive subarrays of length n (or less),
 # and similarly for strings.
-def _nwise(a; $n): if a|length <= $n then a else a[0:$n] , _nwise(a[$n:]; $n) end;
+def _nwise($n):
+  def n: if length <= $n then . else .[0:$n] , (.[$n:] | n) end;
+  n;
 def _nwise($n): _nwise(.; $n);
 #
 # splits/1 produces a stream; split/1 is retained for backward compatibility.
