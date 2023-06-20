@@ -744,10 +744,12 @@ sections:
 
           - The length of **null** is zero.
 
+          - It is an error to use `length` on a **boolean**
+
         examples:
           - program: '.[] | length'
-            input: '[[1,2], "string", {"a":2}, null]'
-            output: [2, 6, 1, 0]
+            input: '[[1,2], "string", {"a":2}, null, -6]'
+            output: [2, 6, 1, 0, 6]
 
 
       - title: "`utf8bytelength`"
