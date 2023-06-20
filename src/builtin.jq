@@ -127,17 +127,16 @@ def uniq(s):
 # If s contains capture variables, then create a capture object and pipe it to s
 def sub($re; s; $flags):
    . as $in
-   | [uniq(match($re; $flags))]
-   | if length == 0 then $in
-     else reduce .[] as $edit ({result: "", previous: 0, gap: ""};
+   | (reduce uniq(match($re; $flags)) as $edit
+        ({result: "", previous: 0, gap: ""};
             .gap = $in[ .previous: ($edit | .offset) ]
             # create the "capture" object
             | (reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
                  ({}; . + $pair) | s) as $insert
             | .result += .gap + $insert
 	    | .previous = ($edit | .offset + .length ) )
-          | .result + $in[.previous:]
-     end;
+          | .result + $in[.previous:] )
+      // $in;
 #
 def sub($re; s): sub($re; s; "");
 #
