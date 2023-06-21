@@ -128,12 +128,12 @@ def uniq(s):
 def sub($re; s; $flags):
    . as $in
    | (reduce uniq(match($re; $flags)) as $edit
-        ({result: "", previous: 0, gap: ""};
-            .gap = $in[ .previous: ($edit | .offset) ]
+        ({result: "", previous: 0};
+            $in[ .previous: ($edit | .offset) ] as $gap
             # create the "capture" object
             | (reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
                  ({}; . + $pair) | s) as $insert
-            | .result += .gap + $insert
+            | .result += $gap + $insert
 	    | .previous = ($edit | .offset + .length ) )
           | .result + $in[.previous:] )
       // $in;
@@ -224,7 +224,6 @@ def tostream:
   path(def r: (.[]?|r), .; r) as $p |
   getpath($p) |
   reduce path(.[]?) as $q ([$p, .]; [$p+$q]);
-
 
 # Assuming the input array is sorted, bsearch/1 returns
 # the index of the target if the target is in the input array; and otherwise
