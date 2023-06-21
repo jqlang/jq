@@ -102,7 +102,7 @@ def scan(re):
 def _nwise($n):
   def n: if length <= $n then . else .[0:$n] , (.[$n:] | n) end;
   n;
-def _nwise($n): _nwise(.; $n);
+def _nwise(a; $n): a | _nwise($n);
 #
 # splits/1 produces a stream; split/1 is retained for backward compatibility.
 def splits($re; flags): . as $s

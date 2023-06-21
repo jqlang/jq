@@ -138,3 +138,8 @@ gsub("\\b(?<x>.)"; "\(.x|ascii_downcase)")
 sub("(?<x>.)"; "\(.x)!")
 "’"
 "’!"
+
+# splits and _nwise
+[splits("")]
+"ab"
+["","a","b"]
