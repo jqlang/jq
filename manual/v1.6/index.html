@@ -170,9 +170,11 @@ the Powershell (<code>powershell.exe</code>) or the Powershell Core
 (<code>pwsh</code>/<code>pwsh.exe</code>), use single-quote characters around the jq
 program and backslash-escaped double-quotes (<code>\"</code>) inside the jq
 program.</p>
-<p>Unix shells: <code>jq '.["foo"]'</code>
-Powershell: <code>jq '.[\"foo\"]'</code>
-Windows command shell: <code>jq ".[\"foo\"]"</code></p>
+<ul>
+<li>Unix shells: <code>jq '.["foo"]'</code></li>
+<li>Powershell: <code>jq '.[\"foo\"]'</code></li>
+<li>Windows command shell: <code>jq ".[\"foo\"]"</code></li>
+</ul>
 <p>You can affect how jq reads and writes its input and output
 using some command-line options:</p>
 <ul>
@@ -196,7 +198,7 @@ using some command-line options:</p>
 <p>Parse the input in streaming fashion, outputting arrays of path
   and leaf values (scalars and empty arrays or empty objects).
   For example, <code>"a"</code> becomes <code>[[],"a"]</code>, and <code>[[],"a",["b"]]</code>
-  becomes <code>[[0],[]]</code>, <code>[[1],"a"]</code>, and <code>[[1,0],"b"]</code>.</p>
+  becomes <code>[[0],[]]</code>, <code>[[1],"a"]</code>, and <code>[[2,0],"b"]</code>.</p>
 <p>This is useful for processing very large inputs.  Use this in
   conjunction with filtering and the <code>reduce</code> and <code>foreach</code> syntax
   to reduce large inputs incrementally.</p>
@@ -250,7 +252,7 @@ using some command-line options:</p>
   ASCII output with every non-ASCII character replaced with the
   equivalent escape sequence.</p>
 <ul>
-<li><code>--unbuffered</code></li>
+<li><code>--unbuffered</code>:</li>
 </ul>
 <p>Flush the output after each JSON object is printed (useful if
   you're piping a slow data source into jq and piping jq's
@@ -284,7 +286,7 @@ using some command-line options:</p>
 <ul>
 <li><code>-e</code> / <code>--exit-status</code>:</li>
 </ul>
-<p>Sets the exit status of jq to 0 if the last output values was
+<p>Sets the exit status of jq to 0 if the last output value was
   neither <code>false</code> nor <code>null</code>, 1 if the last output value was
   either <code>false</code> or <code>null</code>, or 4 if no valid result was ever
   produced.  Normally jq exits with 2 if there was any usage
@@ -552,24 +554,24 @@ object.</p>
                   
                 </section>
               
-                <section id="GenericObjectIndex:.[&lt;string&gt;]">
+                <section id="ObjectIndex:.[&lt;string&gt;]">
                   <h3>
-                    Generic Object Index: <code>.[&lt;string&gt;]</code>
+                    Object Index: <code>.[&lt;string&gt;]</code>
                     
                   </h3>
                   <p>You can also look up fields of an object using syntax like
-<code>.["foo"]</code> (.foo above is a shorthand version of this, but
+<code>.["foo"]</code> (<code>.foo</code> above is a shorthand version of this, but
 only for identifier-like strings).</p>
 
                   
                 </section>
               
-                <section id="ArrayIndex:.[2]">
+                <section id="ArrayIndex:.[&lt;number&gt;]">
                   <h3>
-                    Array Index: <code>.[2]</code>
+                    Array Index: <code>.[&lt;number&gt;]</code>
                     
                   </h3>
-                  <p>When the index value is an integer, <code>.[&lt;value&gt;]</code> can index
+                  <p>When the index value is an integer, <code>.[&lt;number&gt;]</code> can index
 arrays.  Arrays are zero-based, so <code>.[2]</code> returns the third
 element.</p>
 <p>Negative indices are allowed, with -1 referring to the last
@@ -631,18 +633,18 @@ element, -2 referring to the next to last element, and so on.</p>
                   
                 </section>
               
-                <section id="Array/StringSlice:.[10:15]">
+                <section id="Array/StringSlice:.[&lt;number&gt;:&lt;number&gt;]">
                   <h3>
-                    Array/String Slice: <code>.[10:15]</code>
+                    Array/String Slice: <code>.[&lt;number&gt;:&lt;number&gt;]</code>
                     
                   </h3>
-                  <p>The <code>.[10:15]</code> syntax can be used to return a subarray of an
-array or substring of a string. The array returned by
-<code>.[10:15]</code> will be of length 5, containing the elements from
-index 10 (inclusive) to index 15 (exclusive). Either index may
-be negative (in which case it counts backwards from the end of
-the array), or omitted (in which case it refers to the start
-or end of the array).</p>
+                  <p>The <code>.[&lt;number&gt;:&lt;number&gt;]</code> syntax can be used to return a
+subarray of an array or substring of a string. The array
+returned by <code>.[10:15]</code> will be of length 5, containing the
+elements from index 10 (inclusive) to index 15 (exclusive).
+Either index may be negative (in which case it counts
+backwards from the end of the array), or omitted (in which
+case it refers to the start or end of the array).</p>
 
                   
                     <div>
@@ -1234,10 +1236,10 @@ to the same input, and adds the results together. What
 </li>
 <li>
 <p><strong>Objects</strong> are added by merging, that is, inserting all
-    the key-value pairs from both objects into a single
-    combined object. If both objects contain a value for the
-    same key, the object on the right of the <code>+</code> wins. (For
-    recursive merge use the <code>*</code> operator.)</p>
+  the key-value pairs from both objects into a single
+  combined object. If both objects contain a value for the
+  same key, the object on the right of the <code>+</code> wins. (For
+  recursive merge use the <code>*</code> operator.)</p>
 </li>
 </ul>
 <p><code>null</code> can be added to any value, and returns the other
@@ -1378,9 +1380,9 @@ the second array's elements from the first array.</p>
                   
                 </section>
               
-                <section id="Multiplication,division,modulo:*,/,and%">
+                <section id="Multiplication,division,modulo:*,/,%">
                   <h3>
-                    Multiplication, division, modulo: <code>*</code>, <code>/</code>, and <code>%</code>
+                    Multiplication, division, modulo: <code>*</code>, <code>/</code>, <code>%</code>
                     
                   </h3>
                   <p>These infix operators behave as expected when given two numbers.
@@ -1766,18 +1768,18 @@ of <code>has</code>.</p>
                   
                 </section>
               
-                <section id="map(x),map_values(x)">
+                <section id="map(f),map_values(f)">
                   <h3>
-                    <code>map(x)</code>, <code>map_values(x)</code>
+                    <code>map(f)</code>, <code>map_values(f)</code>
                     
                   </h3>
-                  <p>For any filter <code>x</code>, <code>map(x)</code> will run that filter for each
+                  <p>For any filter <code>f</code>, <code>map(f)</code> will run that filter for each
 element of the input array, and return the outputs in a new
 array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
-<p>Similarly, <code>map_values(x)</code> will run that filter for each element,
+<p>Similarly, <code>map_values(f)</code> will run that filter for each element,
 but it will return an object when an object is passed.</p>
-<p><code>map(x)</code> is equivalent to <code>[.[] | x]</code>. In fact, this is how
-it's defined. Similarly, <code>map_values(x)</code> is defined as <code>.[] |= x</code>.</p>
+<p><code>map(f)</code> is equivalent to <code>[.[] | f]</code>. In fact, this is how
+it's defined. Similarly, <code>map_values(f)</code> is defined as <code>.[] |= f</code>.</p>
 
                   
                     <div>
@@ -2085,20 +2087,20 @@ of strings and numbers.</p>
                   
                 </section>
               
-                <section id="to_entries,from_entries,with_entries">
+                <section id="to_entries,from_entries,with_entries(f)">
                   <h3>
-                    <code>to_entries</code>, <code>from_entries</code>, <code>with_entries</code>
+                    <code>to_entries</code>, <code>from_entries</code>, <code>with_entries(f)</code>
                     
                   </h3>
                   <p>These functions convert between an object and an array of
 key-value pairs. If <code>to_entries</code> is passed an object, then
 for each <code>k: v</code> entry in the input, the output array
 includes <code>{"key": k, "value": v}</code>.</p>
-<p><code>from_entries</code> does the opposite conversion, and
-<code>with_entries(foo)</code> is a shorthand for <code>to_entries |
-map(foo) | from_entries</code>, useful for doing some operation to
-all keys and values of an object. <code>from_entries</code> accepts key, Key,
-name, Name, value and Value as keys.</p>
+<p><code>from_entries</code> does the opposite conversion, and <code>with_entries(f)</code>
+is a shorthand for <code>to_entries | map(f) | from_entries</code>, useful for
+doing some operation to all keys and values of an object.
+<code>from_entries</code> accepts <code>"key"</code>, <code>"Key"</code>, <code>"name"</code>, <code>"Name"</code>,
+<code>"value"</code>, and <code>"Value"</code> as keys.</p>
 
                   
                     <div>
@@ -2161,8 +2163,8 @@ name, Name, value and Value as keys.</p>
                     <code>select(boolean_expression)</code>
                     
                   </h3>
-                  <p>The function <code>select(foo)</code> produces its input unchanged if
-<code>foo</code> returns true for that input, and produces no output
+                  <p>The function <code>select(f)</code> produces its input unchanged if
+<code>f</code> returns true for that input, and produces no output
 otherwise.</p>
 <p>It's useful for filtering lists: <code>[1,2,3] | map(select(. &gt;= 2))</code>
 will give you <code>[2,3]</code>.</p>
@@ -2725,14 +2727,14 @@ levels deep.</p>
                   
                 </section>
               
-                <section id="range(upto),range(from;upto)range(from;upto;by)">
+                <section id="range(upto),range(from;upto),range(from;upto;by)">
                   <h3>
-                    <code>range(upto)</code>, <code>range(from;upto)</code> <code>range(from;upto;by)</code>
+                    <code>range(upto)</code>, <code>range(from; upto)</code>, <code>range(from; upto; by)</code>
                     
                   </h3>
-                  <p>The <code>range</code> function produces a range of numbers. <code>range(4;10)</code>
+                  <p>The <code>range</code> function produces a range of numbers. <code>range(4; 10)</code>
 produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers
-are produced as separate outputs. Use <code>[range(4;10)]</code> to get a range as
+are produced as separate outputs. Use <code>[range(4; 10)]</code> to get a range as
 an array.</p>
 <p>The one argument form generates numbers from 0 to the given
 number, with an increment of 1.</p>
@@ -2751,7 +2753,7 @@ with an increment of <code>by</code>.</p>
                       <div id="example37" class="manual-example collapse">
                         
                           <table>
-                            <tr><th></th><td class="jqprogram">jq 'range(2;4)'</td></tr>
+                            <tr><th></th><td class="jqprogram">jq 'range(2; 4)'</td></tr>
                             <tr><th>Input</th><td>null</td></tr>
                             
                             
@@ -2772,7 +2774,7 @@ with an increment of <code>by</code>.</p>
                           </table>
                         
                           <table>
-                            <tr><th></th><td class="jqprogram">jq '[range(2;4)]'</td></tr>
+                            <tr><th></th><td class="jqprogram">jq '[range(2; 4)]'</td></tr>
                             <tr><th>Input</th><td>null</td></tr>
                             
                             
@@ -2800,7 +2802,7 @@ with an increment of <code>by</code>.</p>
                           </table>
                         
                           <table>
-                            <tr><th></th><td class="jqprogram">jq '[range(0;10;3)]'</td></tr>
+                            <tr><th></th><td class="jqprogram">jq '[range(0; 10; 3)]'</td></tr>
                             <tr><th>Input</th><td>null</td></tr>
                             
                             
@@ -2814,7 +2816,7 @@ with an increment of <code>by</code>.</p>
                           </table>
                         
                           <table>
-                            <tr><th></th><td class="jqprogram">jq '[range(0;10;-1)]'</td></tr>
+                            <tr><th></th><td class="jqprogram">jq '[range(0; 10; -1)]'</td></tr>
                             <tr><th>Input</th><td>null</td></tr>
                             
                             
@@ -2828,7 +2830,7 @@ with an increment of <code>by</code>.</p>
                           </table>
                         
                           <table>
-                            <tr><th></th><td class="jqprogram">jq '[range(0;-5;-1)]'</td></tr>
+                            <tr><th></th><td class="jqprogram">jq '[range(0; -5; -1)]'</td></tr>
                             <tr><th>Input</th><td>null</td></tr>
                             
                             
@@ -3122,7 +3124,7 @@ NaNs, and sub-normals do not raise errors.</p>
               
                 <section id="sort,sort_by(path_expression)">
                   <h3>
-                    <code>sort, sort_by(path_expression)</code>
+                    <code>sort</code>, <code>sort_by(path_expression)</code>
                     
                   </h3>
                   <p>The <code>sort</code> functions sorts its input, which must be an
@@ -3142,8 +3144,8 @@ sorted order), and if their keys are equal then the values
 are compared key by key.</p>
 <p><code>sort</code> may be used to sort by a particular field of an
 object, or by applying any jq filter.</p>
-<p><code>sort_by(foo)</code> compares two elements by comparing the result of
-<code>foo</code> on each element.</p>
+<p><code>sort_by(f)</code> compares two elements by comparing the result of
+<code>f</code> on each element.</p>
 
                   
                     <div>
@@ -3390,7 +3392,7 @@ produced by <code>group</code>.</p>
                     
                   </h3>
                   <p>The filter <code>contains(b)</code> will produce true if b is
-completely contained within the input. String B is
+completely contained within the input. A string B is
 contained in a string A if B is a substring of A. An array B
 is contained in an array A if all elements in B are
 contained in any element in A. An object B is contained in
@@ -4483,13 +4485,13 @@ Rows are padded with nulls so the result is always rectangular.</p>
                     <code>bsearch(x)</code>
                     
                   </h3>
-                  <p>bsearch(x) conducts a binary search for x in the input
+                  <p><code>bsearch(x)</code> conducts a binary search for x in the input
 array.  If the input is sorted and contains x, then
-bsearch(x) will return its index in the array; otherwise, if
+<code>bsearch(x)</code> will return its index in the array; otherwise, if
 the array is sorted, it will return (-1 - ix) where ix is an
 insertion point such that the array would still be sorted
 after the insertion of x at ix.  If the array is not sorted,
-bsearch(x) will return an integer that is probably of no
+<code>bsearch(x)</code> will return an integer that is probably of no
 interest.</p>
 
                   
@@ -4548,9 +4550,9 @@ interest.</p>
                   
                 </section>
               
-                <section id="Stringinterpolation-\(foo)">
+                <section id="Stringinterpolation:\(exp)">
                   <h3>
-                    String interpolation - <code>\(foo)</code>
+                    String interpolation: <code>\(exp)</code>
                     
                   </h3>
                   <p>Inside a string, you can put an expression inside parens
@@ -4591,9 +4593,9 @@ interpolated into the string.</p>
                     
                   </h3>
                   <p>The <code>tojson</code> and <code>fromjson</code> builtins dump values as JSON texts
-or parse JSON texts into values, respectively.  The tojson
-builtin differs from tostring in that tostring returns strings
-unmodified, while tojson encodes strings as JSON strings.</p>
+or parse JSON texts into values, respectively.  The <code>tojson</code>
+builtin differs from <code>tostring</code> in that <code>tostring</code> returns strings
+unmodified, while <code>tojson</code> encodes strings as JSON strings.</p>
 
                   
                     <div>
@@ -4912,17 +4914,17 @@ some systems. In particular, the <code>%u</code> and <code>%j</code> specifiers 
 <li>INDEX(stream; index_expression):</li>
 </ul>
 <p>This builtin produces an object whose keys are computed by
-   the given index expression applied to each value from the
-   given stream.</p>
+  the given index expression applied to each value from the
+  given stream.</p>
 <ul>
 <li>JOIN($idx; stream; idx_expr; join_expr):</li>
 </ul>
 <p>This builtin joins the values from the given stream to the
-   given index.  The index's keys are computed by applying the
-   given index expression to each value from the given stream.
-   An array of the value in the stream and the corresponding
-   value from the index is fed to the given join expression to
-   produce each result.</p>
+  given index.  The index's keys are computed by applying the
+  given index expression to each value from the given stream.
+  An array of the value in the stream and the corresponding
+  value from the index is fed to the given join expression to
+  produce each result.</p>
 <ul>
 <li>JOIN($idx; stream; idx_expr):</li>
 </ul>
@@ -4931,18 +4933,18 @@ some systems. In particular, the <code>%u</code> and <code>%j</code> specifiers 
 <li>JOIN($idx; idx_expr):</li>
 </ul>
 <p>This builtin joins the input <code>.</code> to the given index, applying
-   the given index expression to <code>.</code> to compute the index key.
-   The join operation is as described above.</p>
+  the given index expression to <code>.</code> to compute the index key.
+  The join operation is as described above.</p>
 <ul>
 <li>IN(s):</li>
 </ul>
 <p>This builtin outputs <code>true</code> if <code>.</code> appears in the given
-   stream, otherwise it outputs <code>false</code>.</p>
+  stream, otherwise it outputs <code>false</code>.</p>
 <ul>
 <li>IN(source; s):</li>
 </ul>
 <p>This builtin outputs <code>true</code> if any value in the source stream
-   appears in the second stream, otherwise it outputs <code>false</code>.</p>
+  appears in the second stream, otherwise it outputs <code>false</code>.</p>
 
                   
                 </section>
@@ -5028,9 +5030,9 @@ same type as well as the same value.</p>
                   
                 </section>
               
-                <section id="if-then-else">
+                <section id="if-then-else-end">
                   <h3>
-                    if-then-else
+                    if-then-else-end
                     
                   </h3>
                   <p><code>if A then B else C end</code> will act the same as <code>B</code> if <code>A</code>
@@ -5039,10 +5041,9 @@ as <code>C</code> otherwise.</p>
 <p>Checking for false or null is a simpler notion of
 "truthiness" than is found in JavaScript or Python, but it
 means that you'll sometimes have to be more explicit about
-the condition you want: you can't test whether, e.g. a
+the condition you want.  You can't test whether, e.g. a
 string is empty using <code>if .name then A else B end</code>, you'll
-need something more like <code>if (.name | length) &gt; 0 then A else
-B end</code> instead.</p>
+need something more like <code>if .name == "" then A else B end</code> instead.</p>
 <p>If the condition <code>A</code> produces multiple results, then <code>B</code> is evaluated
 once for each result that is not false or null, and <code>C</code> is evaluated
 once for each false or null.</p>
@@ -5084,7 +5085,7 @@ end'</td></tr>
               
                 <section id="&gt;,&gt;=,&lt;=,&lt;">
                   <h3>
-                    <code>&gt;, &gt;=, &lt;=, &lt;</code>
+                    <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;</code>
                     
                   </h3>
                   <p>The comparison operators <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;</code> return whether
@@ -5121,26 +5122,27 @@ to, less than or equal to or less than their right argument
                   
                 </section>
               
-                <section id="and/or/not">
+                <section id="and,or,not">
                   <h3>
-                    and/or/not
+                    <code>and</code>, <code>or</code>, <code>not</code>
                     
                   </h3>
-                  <p>jq supports the normal Boolean operators and/or/not. They have the
-same standard of truth as if expressions - false and null are
-considered "false values", and anything else is a "true value".</p>
+                  <p>jq supports the normal Boolean operators <code>and</code>, <code>or</code>, <code>not</code>. They
+have the same standard of truth as if expressions - <code>false</code> and
+<code>null</code> are considered "false values", and anything else is a "true
+value".</p>
 <p>If an operand of one of these operators produces multiple
 results, the operator itself will produce a result for each input.</p>
 <p><code>not</code> is in fact a builtin function rather than an operator,
 so it is called as a filter to which things can be piped
 rather than with special syntax, as in <code>.foo and .bar |
 not</code>.</p>
-<p>These three only produce the values "true" and "false", and
+<p>These three only produce the values <code>true</code> and <code>false</code>, and
 so are only useful for genuine Boolean operations, rather
 than the common Perl/Python/Ruby idiom of
 "value_that_may_be_null or default". If you want to use this
 form of "or", picking between two values rather than
-evaluating a condition, see the "//" operator below.</p>
+evaluating a condition, see the <code>//</code> operator below.</p>
 
                   
                     <div>
@@ -5726,9 +5728,9 @@ but as a stream instead of an array.</p>
                   
                 </section>
               
-                <section id="sub(regex;tostring)sub(regex;string;flags)">
+                <section id="sub(regex;tostring),sub(regex;string;flags)">
                   <h3>
-                    <code>sub(regex; tostring)</code> <code>sub(regex; string; flags)</code>
+                    <code>sub(regex; tostring)</code>, <code>sub(regex; string; flags)</code>
                     
                   </h3>
                   <p>Emit the string obtained by replacing the first match of regex in the
@@ -5807,14 +5809,14 @@ variables actually makes our lives easier.</p>
 <p>Suppose we have an array of blog posts, with "author" and "title"
 fields, and another object which is used to map author usernames to
 real names. Our input looks like:</p>
-<pre><code>{"posts": [{"title": "Frist psot", "author": "anon"},
+<pre><code>{"posts": [{"title": "First post", "author": "anon"},
            {"title": "A well-written article", "author": "person1"}],
  "realnames": {"anon": "Anonymous Coward",
                "person1": "Person McPherson"}}
 </code></pre>
 <p>We want to produce the posts with the author field containing a real
 name, as in:</p>
-<pre><code>{"title": "Frist psot", "author": "Anonymous Coward"}
+<pre><code>{"title": "First post", "author": "Anonymous Coward"}
 {"title": "A well-written article", "author": "Person McPherson"}
 </code></pre>
 <p>We use a variable, $names, to store the realnames object, so that we
@@ -5826,7 +5828,7 @@ can refer to it later when looking up author usernames:</p>
 with <code>$x</code> set to that value.  Thus <code>as</code> functions as something of a
 foreach loop.</p>
 <p>Just as <code>{foo}</code> is a handy way of writing <code>{foo: .foo}</code>, so
-<code>{$foo}</code> is a handy way of writing <code>{foo:$foo}</code>.</p>
+<code>{$foo}</code> is a handy way of writing <code>{foo: $foo}</code>.</p>
 <p>Multiple variables may be declared using a single <code>as</code> expression by
 providing a pattern that matches the structure of the input
 (this is known as "destructuring"):</p>
@@ -6137,9 +6139,9 @@ to this rule is that functions can refer to themselves so as
 to be able to create recursive functions.</p>
 <p>For example, in the following expression there is a binding
 which is visible "to the right" of it, <code>... | .*3 as
-$times_three | [.  + $times_three] | ...</code>, but not "to the
+$times_three | [. + $times_three] | ...</code>, but not "to the
 left".  Consider this expression now, <code>... | (.*3 as
-$times_three | [.+ $times_three]) | ...</code>: here the binding
+$times_three | [. + $times_three]) | ...</code>: here the binding
 <code>$times_three</code> is <em>not</em> visible past the closing parenthesis.</p>
 
                   
@@ -7154,11 +7156,11 @@ by a semi-colon, where the first number is one of these:</p>
           
             "Optional Object Identifier-Index: .foo?" : "OptionalObjectIdentifier-Index:.foo?",
           
-            "Generic Object Index: .[\u003cstring\u003e]" : "GenericObjectIndex:.[\u003cstring\u003e]",
+            "Object Index: .[\u003cstring\u003e]" : "ObjectIndex:.[\u003cstring\u003e]",
           
-            "Array Index: .[2]" : "ArrayIndex:.[2]",
+            "Array Index: .[\u003cnumber\u003e]" : "ArrayIndex:.[\u003cnumber\u003e]",
           
-            "Array/String Slice: .[10:15]" : "Array/StringSlice:.[10:15]",
+            "Array/String Slice: .[\u003cnumber\u003e:\u003cnumber\u003e]" : "Array/StringSlice:.[\u003cnumber\u003e:\u003cnumber\u003e]",
           
             "Array/Object Value Iterator: .[]" : "Array/ObjectValueIterator:.[]",
           
@@ -7188,7 +7190,7 @@ by a semi-colon, where the first number is one of these:</p>
           
             "Subtraction: -" : "Subtraction:-",
           
-            "Multiplication, division, modulo: *, /, and %" : "Multiplication,division,modulo:*,/,and%",
+            "Multiplication, division, modulo: *, /, %" : "Multiplication,division,modulo:*,/,%",
           
             "length" : "length",
           
@@ -7200,7 +7202,7 @@ by a semi-colon, where the first number is one of these:</p>
           
             "in" : "in",
           
-            "map(x), map_values(x)" : "map(x),map_values(x)",
+            "map(f), map_values(f)" : "map(f),map_values(f)",
           
             "path(path_expression)" : "path(path_expression)",
           
@@ -7212,7 +7214,7 @@ by a semi-colon, where the first number is one of these:</p>
           
             "delpaths(PATHS)" : "delpaths(PATHS)",
           
-            "to_entries, from_entries, with_entries" : "to_entries,from_entries,with_entries",
+            "to_entries, from_entries, with_entries(f)" : "to_entries,from_entries,with_entries(f)",
           
             "select(boolean_expression)" : "select(boolean_expression)",
           
@@ -7238,7 +7240,7 @@ by a semi-colon, where the first number is one of these:</p>
           
             "flatten, flatten(depth)" : "flatten,flatten(depth)",
           
-            "range(upto), range(from;upto) range(from;upto;by)" : "range(upto),range(from;upto)range(from;upto;by)",
+            "range(upto), range(from; upto), range(from; upto; by)" : "range(upto),range(from;upto),range(from;upto;by)",
           
             "floor" : "floor",
           
@@ -7304,7 +7306,7 @@ by a semi-colon, where the first number is one of these:</p>
           
             "bsearch(x)" : "bsearch(x)",
           
-            "String interpolation - \\(foo)" : "Stringinterpolation-\\(foo)",
+            "String interpolation: \\(exp)" : "Stringinterpolation:\\(exp)",
           
             "Convert to/from JSON" : "Convertto/fromJSON",
           
@@ -7322,11 +7324,11 @@ by a semi-colon, where the first number is one of these:</p>
           
             "==, !=" : "==,!=",
           
-            "if-then-else" : "if-then-else",
+            "if-then-else-end" : "if-then-else-end",
           
             "\u003e, \u003e=, \u003c=, \u003c" : "\u003e,\u003e=,\u003c=,\u003c",
           
-            "and/or/not" : "and/or/not",
+            "and, or, not" : "and,or,not",
           
             "Alternative operator: //" : "Alternativeoperator://",
           
@@ -7352,7 +7354,7 @@ by a semi-colon, where the first number is one of these:</p>
           
             "splits(regex), splits(regex; flags)" : "splits(regex),splits(regex;flags)",
           
-            "sub(regex; tostring) sub(regex; string; flags)" : "sub(regex;tostring)sub(regex;string;flags)",
+            "sub(regex; tostring), sub(regex; string; flags)" : "sub(regex;tostring),sub(regex;string;flags)",
           
             "gsub(regex; string), gsub(regex; string; flags)" : "gsub(regex;string),gsub(regex;string;flags)",
           
