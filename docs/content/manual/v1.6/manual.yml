@@ -736,16 +736,20 @@ sections:
             codepoints it contains (which will be the same as its
             JSON-encoded length in bytes if it's pure ASCII).
 
+          - The length of a **number** is its absolute value.
+
           - The length of an **array** is the number of elements.
 
           - The length of an **object** is the number of key-value pairs.
 
           - The length of **null** is zero.
 
+          - It is an error to use `length` on a **boolean**.
+
         examples:
           - program: '.[] | length'
-            input: '[[1,2], "string", {"a":2}, null]'
-            output: [2, 6, 1, 0]
+            input: '[[1,2], "string", {"a":2}, null, -5]'
+            output: [2, 6, 1, 0, 5]
 
 
       - title: "`utf8bytelength`"
