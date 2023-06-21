@@ -744,7 +744,7 @@ sections:
 
           - The length of **null** is zero.
 
-          - It is an error to use `length` on a **boolean**
+          - It is an error to use `length` on a **boolean**.
 
         examples:
           - program: '.[] | length'
