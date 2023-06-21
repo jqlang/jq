@@ -1585,6 +1585,9 @@ different types of value:</p>
   JSON-encoded length in bytes if it's pure ASCII).</p>
 </li>
 <li>
+<p>The length of a <strong>number</strong> is its absolute value.</p>
+</li>
+<li>
 <p>The length of an <strong>array</strong> is the number of elements.</p>
 </li>
 <li>
@@ -1592,6 +1595,9 @@ different types of value:</p>
 </li>
 <li>
 <p>The length of <strong>null</strong> is zero.</p>
+</li>
+<li>
+<p>It is an error to use <code>length</code> on a <strong>boolean</strong>.</p>
 </li>
 </ul>
 
@@ -1606,7 +1612,7 @@ different types of value:</p>
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[] | length'</td></tr>
-                            <tr><th>Input</th><td>[[1,2], &#34;string&#34;, {&#34;a&#34;:2}, null]</td></tr>
+                            <tr><th>Input</th><td>[[1,2], &#34;string&#34;, {&#34;a&#34;:2}, null, -5]</td></tr>
                             
                             
                               <tr>
@@ -1635,6 +1641,13 @@ different types of value:</p>
                                   <th></th>
                                 
                                 <td>0</td>
+                              </tr>
+                            
+                              <tr>
+                                
+                                  <th></th>
+                                
+                                <td>5</td>
                               </tr>
                             
                           </table>
