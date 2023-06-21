@@ -748,8 +748,8 @@ sections:
 
         examples:
           - program: '.[] | length'
-            input: '[[1,2], "string", {"a":2}, null, -6]'
-            output: [2, 6, 1, 0, 6]
+            input: '[[1,2], "string", {"a":2}, null, -5]'
+            output: [2, 6, 1, 0, 5]
 
 
       - title: "`utf8bytelength`"
