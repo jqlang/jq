@@ -95,10 +95,10 @@ sections:
       (`pwsh`/`pwsh.exe`), use single-quote characters around the jq
       program and backslash-escaped double-quotes (`\"`) inside the jq
       program.
-      
-      Unix shells: `jq '.["foo"]'`
-      Powershell: `jq '.[\"foo\"]'`
-      Windows command shell: `jq ".[\"foo\"]"`
+
+      * Unix shells: `jq '.["foo"]'`
+      * Powershell: `jq '.[\"foo\"]'`
+      * Windows command shell: `jq ".[\"foo\"]"`
 
       You can affect how jq reads and writes its input and output
       using some command-line options:
@@ -123,7 +123,7 @@ sections:
         Parse the input in streaming fashion, outputting arrays of path
         and leaf values (scalars and empty arrays or empty objects).
         For example, `"a"` becomes `[[],"a"]`, and `[[],"a",["b"]]`
-        becomes `[[0],[]]`, `[[1],"a"]`, and `[[1,0],"b"]`.
+        becomes `[[0],[]]`, `[[1],"a"]`, and `[[2,0],"b"]`.
 
         This is useful for processing very large inputs.  Use this in
         conjunction with filtering and the `reduce` and `foreach` syntax
@@ -179,7 +179,7 @@ sections:
         ASCII output with every non-ASCII character replaced with the
         equivalent escape sequence.
 
-      * `--unbuffered`
+      * `--unbuffered`:
 
         Flush the output after each JSON object is printed (useful if
         you're piping a slow data source into jq and piping jq's
@@ -213,7 +213,7 @@ sections:
 
       * `-e` / `--exit-status`:
 
-        Sets the exit status of jq to 0 if the last output values was
+        Sets the exit status of jq to 0 if the last output value was
         neither `false` nor `null`, 1 if the last output value was
         either `false` or `null`, or 4 if no valid result was ever
         produced.  Normally jq exits with 2 if there was any usage
@@ -357,17 +357,17 @@ sections:
             input: '[1,2]'
             output: ['[]']
 
-      - title: "Generic Object Index: `.[<string>]`"
+      - title: "Object Index: `.[<string>]`"
         body: |
 
           You can also look up fields of an object using syntax like
-          `.["foo"]` (.foo above is a shorthand version of this, but
+          `.["foo"]` (`.foo` above is a shorthand version of this, but
           only for identifier-like strings).
 
-      - title: "Array Index: `.[2]`"
+      - title: "Array Index: `.[<number>]`"
         body: |
 
-          When the index value is an integer, `.[<value>]` can index
+          When the index value is an integer, `.[<number>]` can index
           arrays.  Arrays are zero-based, so `.[2]` returns the third
           element.
 
@@ -387,16 +387,16 @@ sections:
             input: '[1,2,3]'
             output: ['2']
 
-      - title: "Array/String Slice: `.[10:15]`"
+      - title: "Array/String Slice: `.[<number>:<number>]`"
         body: |
 
-          The `.[10:15]` syntax can be used to return a subarray of an
-          array or substring of a string. The array returned by
-          `.[10:15]` will be of length 5, containing the elements from
-          index 10 (inclusive) to index 15 (exclusive). Either index may
-          be negative (in which case it counts backwards from the end of
-          the array), or omitted (in which case it refers to the start
-          or end of the array).
+          The `.[<number>:<number>]` syntax can be used to return a
+          subarray of an array or substring of a string. The array
+          returned by `.[10:15]` will be of length 5, containing the
+          elements from index 10 (inclusive) to index 15 (exclusive).
+          Either index may be negative (in which case it counts
+          backwards from the end of the array), or omitted (in which
+          case it refers to the start or end of the array).
 
         examples:
           - program: '.[2:4]'
@@ -654,10 +654,10 @@ sections:
           - **Strings** are added by being joined into a larger string.
 
           - **Objects** are added by merging, that is, inserting all
-              the key-value pairs from both objects into a single
-              combined object. If both objects contain a value for the
-              same key, the object on the right of the `+` wins. (For
-              recursive merge use the `*` operator.)
+            the key-value pairs from both objects into a single
+            combined object. If both objects contain a value for the
+            same key, the object on the right of the `+` wins. (For
+            recursive merge use the `*` operator.)
 
           `null` can be added to any value, and returns the other
           value unchanged.
@@ -694,7 +694,7 @@ sections:
             input: '["xml", "yaml", "json"]'
             output: ['["json"]']
 
-      - title: "Multiplication, division, modulo: `*`, `/`, and `%`"
+      - title: "Multiplication, division, modulo: `*`, `/`, `%`"
         body: |
 
           These infix operators behave as expected when given two numbers.
@@ -825,18 +825,18 @@ sections:
             input: '[2, 0]'
             output: ['[false, true]']
 
-      - title: "`map(x)`, `map_values(x)`"
+      - title: "`map(f)`, `map_values(f)`"
         body: |
 
-          For any filter `x`, `map(x)` will run that filter for each
+          For any filter `f`, `map(f)` will run that filter for each
           element of the input array, and return the outputs in a new
           array. `map(.+1)` will increment each element of an array of numbers.
 
-          Similarly, `map_values(x)` will run that filter for each element,
+          Similarly, `map_values(f)` will run that filter for each element,
           but it will return an object when an object is passed.
 
-          `map(x)` is equivalent to `[.[] | x]`. In fact, this is how
-          it's defined. Similarly, `map_values(x)` is defined as `.[] |= x`.
+          `map(f)` is equivalent to `[.[] | f]`. In fact, this is how
+          it's defined. Similarly, `map_values(f)` is defined as `.[] |= f`.
 
         examples:
           - program: 'map(.+1)'
@@ -935,7 +935,7 @@ sections:
             input: '{"a":{"b":1},"x":{"y":2}}'
             output: ['{"a":{},"x":{"y":2}}']
 
-      - title: "`to_entries`, `from_entries`, `with_entries`"
+      - title: "`to_entries`, `from_entries`, `with_entries(f)`"
         body: |
 
           These functions convert between an object and an array of
@@ -943,11 +943,11 @@ sections:
           for each `k: v` entry in the input, the output array
           includes `{"key": k, "value": v}`.
 
-          `from_entries` does the opposite conversion, and
-          `with_entries(foo)` is a shorthand for `to_entries |
-          map(foo) | from_entries`, useful for doing some operation to
-          all keys and values of an object. `from_entries` accepts key, Key,
-          name, Name, value and Value as keys.
+          `from_entries` does the opposite conversion, and `with_entries(f)`
+          is a shorthand for `to_entries | map(f) | from_entries`, useful for
+          doing some operation to all keys and values of an object.
+          `from_entries` accepts `"key"`, `"Key"`, `"name"`, `"Name"`,
+          `"value"`, and `"Value"` as keys.
 
         examples:
           - program: 'to_entries'
@@ -964,8 +964,8 @@ sections:
       - title: "`select(boolean_expression)`"
         body: |
 
-          The function `select(foo)` produces its input unchanged if
-          `foo` returns true for that input, and produces no output
+          The function `select(f)` produces its input unchanged if
+          `f` returns true for that input, and produces no output
           otherwise.
 
           It's useful for filtering lists: `[1,2,3] | map(select(. >= 2))`
@@ -1166,12 +1166,12 @@ sections:
             input: '[{"foo": "bar"}, [{"foo": "baz"}]]'
             output: ['[{"foo": "bar"}, {"foo": "baz"}]']
 
-      - title: "`range(upto)`, `range(from;upto)` `range(from;upto;by)`"
+      - title: "`range(upto)`, `range(from; upto)`, `range(from; upto; by)`"
         body: |
 
-          The `range` function produces a range of numbers. `range(4;10)`
+          The `range` function produces a range of numbers. `range(4; 10)`
           produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers
-          are produced as separate outputs. Use `[range(4;10)]` to get a range as
+          are produced as separate outputs. Use `[range(4; 10)]` to get a range as
           an array.
 
           The one argument form generates numbers from 0 to the given
@@ -1184,22 +1184,22 @@ sections:
           with an increment of `by`.
 
         examples:
-          - program: 'range(2;4)'
+          - program: 'range(2; 4)'
             input: 'null'
             output: ['2', '3']
-          - program: '[range(2;4)]'
+          - program: '[range(2; 4)]'
             input: 'null'
             output: ['[2,3]']
           - program: '[range(4)]'
             input: 'null'
             output: ['[0,1,2,3]']
-          - program: '[range(0;10;3)]'
+          - program: '[range(0; 10; 3)]'
             input: 'null'
             output: ['[0,3,6,9]']
-          - program: '[range(0;10;-1)]'
+          - program: '[range(0; 10; -1)]'
             input: 'null'
             output: ['[]']
-          - program: '[range(0;-5;-1)]'
+          - program: '[range(0; -5; -1)]'
             input: 'null'
             output: ['[0,-1,-2,-3,-4]']
 
@@ -1283,7 +1283,7 @@ sections:
             input: 'null'
             output: ['"number"', '"number"']
 
-      - title: "`sort, sort_by(path_expression)`"
+      - title: "`sort`, `sort_by(path_expression)`"
         body: |
 
           The `sort` functions sorts its input, which must be an
@@ -1305,8 +1305,8 @@ sections:
           `sort` may be used to sort by a particular field of an
           object, or by applying any jq filter.
 
-          `sort_by(foo)` compares two elements by comparing the result of
-          `foo` on each element.
+          `sort_by(f)` compares two elements by comparing the result of
+          `f` on each element.
 
         examples:
           - program: 'sort'
@@ -1387,7 +1387,7 @@ sections:
         body: |
 
           The filter `contains(b)` will produce true if b is
-          completely contained within the input. String B is
+          completely contained within the input. A string B is
           contained in a string A if B is a substring of A. An array B
           is contained in an array A if all elements in B are
           contained in any element in A. An object B is contained in
@@ -1749,13 +1749,13 @@ sections:
       - title: "`bsearch(x)`"
         body: |
 
-          bsearch(x) conducts a binary search for x in the input
+          `bsearch(x)` conducts a binary search for x in the input
           array.  If the input is sorted and contains x, then
-          bsearch(x) will return its index in the array; otherwise, if
+          `bsearch(x)` will return its index in the array; otherwise, if
           the array is sorted, it will return (-1 - ix) where ix is an
           insertion point such that the array would still be sorted
           after the insertion of x at ix.  If the array is not sorted,
-          bsearch(x) will return an integer that is probably of no
+          `bsearch(x)` will return an integer that is probably of no
           interest.
 
         examples:
@@ -1769,7 +1769,7 @@ sections:
             input: '[1,2,3]'
             output: ['[1,2,3,4]']
 
-      - title: "String interpolation - `\\(foo)`"
+      - title: "String interpolation: `\\(exp)`"
         body: |
 
           Inside a string, you can put an expression inside parens
@@ -1785,9 +1785,9 @@ sections:
         body: |
 
           The `tojson` and `fromjson` builtins dump values as JSON texts
-          or parse JSON texts into values, respectively.  The tojson
-          builtin differs from tostring in that tostring returns strings
-          unmodified, while tojson encodes strings as JSON strings.
+          or parse JSON texts into values, respectively.  The `tojson`
+          builtin differs from `tostring` in that `tostring` returns strings
+          unmodified, while `tojson` encodes strings as JSON strings.
 
         examples:
           - program: '[.[]|tostring]'
@@ -1878,10 +1878,6 @@ sections:
           - program: '@html'
             input: '"This works if x < y"'
             output: ['"This works if x &lt; y"']
-
-#          - program: '@html "<span>Anonymous said: \(.)</span>"'
-#            input: '"<script>alert(\"lol hax\");</script>"'
-#            output: ["<span>Anonymous said: &lt;script&gt;alert(&quot;lol hax&quot;);&lt;/script&gt;</span>"]
 
           - program: '@sh "echo \(.)"'
             input: "\"O'Hara's Ale\""
@@ -1975,40 +1971,40 @@ sections:
 
           jq provides a few SQL-style operators.
 
-           * INDEX(stream; index_expression):
+          * INDEX(stream; index_expression):
 
-             This builtin produces an object whose keys are computed by
-             the given index expression applied to each value from the
-             given stream.
+            This builtin produces an object whose keys are computed by
+            the given index expression applied to each value from the
+            given stream.
 
-           * JOIN($idx; stream; idx_expr; join_expr):
+          * JOIN($idx; stream; idx_expr; join_expr):
 
-             This builtin joins the values from the given stream to the
-             given index.  The index's keys are computed by applying the
-             given index expression to each value from the given stream.
-             An array of the value in the stream and the corresponding
-             value from the index is fed to the given join expression to
-             produce each result.
+            This builtin joins the values from the given stream to the
+            given index.  The index's keys are computed by applying the
+            given index expression to each value from the given stream.
+            An array of the value in the stream and the corresponding
+            value from the index is fed to the given join expression to
+            produce each result.
 
-           * JOIN($idx; stream; idx_expr):
+          * JOIN($idx; stream; idx_expr):
 
-             Same as `JOIN($idx; stream; idx_expr; .)`.
+            Same as `JOIN($idx; stream; idx_expr; .)`.
 
-           * JOIN($idx; idx_expr):
+          * JOIN($idx; idx_expr):
 
-             This builtin joins the input `.` to the given index, applying
-             the given index expression to `.` to compute the index key.
-             The join operation is as described above.
+            This builtin joins the input `.` to the given index, applying
+            the given index expression to `.` to compute the index key.
+            The join operation is as described above.
 
-           * IN(s):
+          * IN(s):
 
-             This builtin outputs `true` if `.` appears in the given
-             stream, otherwise it outputs `false`.
+            This builtin outputs `true` if `.` appears in the given
+            stream, otherwise it outputs `false`.
 
-           * IN(source; s):
+          * IN(source; s):
 
-             This builtin outputs `true` if any value in the source stream
-             appears in the second stream, otherwise it outputs `false`.
+            This builtin outputs `true` if any value in the source stream
+            appears in the second stream, otherwise it outputs `false`.
 
       - title: "`builtins`"
         body: |
@@ -2037,7 +2033,7 @@ sections:
             input: '[1, 1.0, "1", "banana"]'
             output: ['true', 'true', 'false', 'false']
 
-      - title: if-then-else
+      - title: if-then-else-end
         body: |
 
           `if A then B else C end` will act the same as `B` if `A`
@@ -2047,10 +2043,9 @@ sections:
           Checking for false or null is a simpler notion of
           "truthiness" than is found in JavaScript or Python, but it
           means that you'll sometimes have to be more explicit about
-          the condition you want: you can't test whether, e.g. a
+          the condition you want.  You can't test whether, e.g. a
           string is empty using `if .name then A else B end`, you'll
-          need something more like `if (.name | length) > 0 then A else
-          B end` instead.
+          need something more like `if .name == "" then A else B end` instead.
 
           If the condition `A` produces multiple results, then `B` is evaluated
           once for each result that is not false or null, and `C` is evaluated
@@ -2070,7 +2065,7 @@ sections:
             input: 2
             output: ['"many"']
 
-      - title: "`>, >=, <=, <`"
+      - title: "`>`, `>=`, `<=`, `<`"
         body: |
 
           The comparison operators `>`, `>=`, `<=`, `<` return whether
@@ -2085,12 +2080,13 @@ sections:
             input: 2
             output: ['true']
 
-      - title: and/or/not
+      - title: "`and`, `or`, `not`"
         body: |
 
-          jq supports the normal Boolean operators and/or/not. They have the
-          same standard of truth as if expressions - false and null are
-          considered "false values", and anything else is a "true value".
+          jq supports the normal Boolean operators `and`, `or`, `not`. They
+          have the same standard of truth as if expressions - `false` and
+          `null` are considered "false values", and anything else is a "true
+          value".
 
           If an operand of one of these operators produces multiple
           results, the operator itself will produce a result for each input.
@@ -2100,12 +2096,12 @@ sections:
           rather than with special syntax, as in `.foo and .bar |
           not`.
 
-          These three only produce the values "true" and "false", and
+          These three only produce the values `true` and `false`, and
           so are only useful for genuine Boolean operations, rather
           than the common Perl/Python/Ruby idiom of
           "value_that_may_be_null or default". If you want to use this
           form of "or", picking between two values rather than
-          evaluating a condition, see the "//" operator below.
+          evaluating a condition, see the `//` operator below.
 
         examples:
           - program: '42 and "a string"'
@@ -2114,9 +2110,6 @@ sections:
           - program: '(true, false) or false'
             input: 'null'
             output: ['true', 'false']
-#          - program: '(true, false) and (true, false)'
-#            input: 'null'
-#            output: ['true', 'false', 'false', 'false']
           - program: '(true, true) and (true, false)'
             input: 'null'
             output: ['true', 'false', 'true', 'false']
@@ -2366,7 +2359,7 @@ sections:
             input: '("ab,cd", "ef, gh")'
             output: ['"ab"', '"cd"', '"ef"', '"gh"']
 
-      - title: "`sub(regex; tostring)` `sub(regex; string; flags)`"
+      - title: "`sub(regex; tostring)`, `sub(regex; string; flags)`"
         body: |
 
           Emit the string obtained by replacing the first match of regex in the
@@ -2458,7 +2451,7 @@ sections:
           fields, and another object which is used to map author usernames to
           real names. Our input looks like:
 
-              {"posts": [{"title": "Frist psot", "author": "anon"},
+              {"posts": [{"title": "First post", "author": "anon"},
                          {"title": "A well-written article", "author": "person1"}],
                "realnames": {"anon": "Anonymous Coward",
                              "person1": "Person McPherson"}}
@@ -2466,7 +2459,7 @@ sections:
           We want to produce the posts with the author field containing a real
           name, as in:
 
-              {"title": "Frist psot", "author": "Anonymous Coward"}
+              {"title": "First post", "author": "Anonymous Coward"}
               {"title": "A well-written article", "author": "Person McPherson"}
 
           We use a variable, $names, to store the realnames object, so that we
@@ -2480,7 +2473,7 @@ sections:
           foreach loop.
 
           Just as `{foo}` is a handy way of writing `{foo: .foo}`, so
-          `{$foo}` is a handy way of writing `{foo:$foo}`.
+          `{$foo}` is a handy way of writing `{foo: $foo}`.
 
           Multiple variables may be declared using a single `as` expression by
           providing a pattern that matches the structure of the input
@@ -2641,9 +2634,9 @@ sections:
 
           For example, in the following expression there is a binding
           which is visible "to the right" of it, `... | .*3 as
-          $times_three | [.  + $times_three] | ...`, but not "to the
+          $times_three | [. + $times_three] | ...`, but not "to the
           left".  Consider this expression now, `... | (.*3 as
-          $times_three | [.+ $times_three]) | ...`: here the binding
+          $times_three | [. + $times_three]) | ...`: here the binding
           `$times_three` is _not_ visible past the closing parenthesis.
 
       - title: Reduce
