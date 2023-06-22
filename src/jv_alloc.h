@@ -15,6 +15,7 @@ static void jv_mem_invalidate(void* mem, size_t n) {
 #endif
 }
 
+void jv_default_nomem_handler(void*);
 void* jv_mem_alloc(size_t);
 void* jv_mem_alloc_unguarded(size_t);
 void* jv_mem_calloc(size_t, size_t);

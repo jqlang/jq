@@ -8,6 +8,10 @@ struct nomem_handler {
     void *data;
 };
 
+void jv_default_nomem_handler(void*) {
+  fprintf(stderr, "jq: error: cannot allocate memory\n");
+}
+
 #if !defined(HAVE_PTHREAD_KEY_CREATE) || \
     !defined(HAVE_PTHREAD_ONCE) || \
     !defined(HAVE_ATEXIT)
@@ -31,13 +35,15 @@ static __thread struct nomem_handler nomem_handler;
 #ifdef USE_TLS
 void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
   nomem_handler.handler = handler;
+  nomem_handler.data = data;
 }
 
 static void memory_exhausted() {
   if (nomem_handler.handler)
     nomem_handler.handler(nomem_handler.data); // Maybe handler() will longjmp() to safety
+  else
+    jv_default_nomem_handler(nomem_handler.data);
   // Or not
-  fprintf(stderr, "jq: error: cannot allocate memory\n");
   abort();
 }
 #else /* USE_TLS */
@@ -48,7 +54,7 @@ static void memory_exhausted() {
 pthread_key_t nomem_handler_key;
 pthread_once_t mem_once = PTHREAD_ONCE_INIT;
 
-static void tsd_fini(void) {
+static void tsd_fini_per_thread(void) {
   struct nomem_handler *nomem_handler;
   nomem_handler = pthread_getspecific(nomem_handler_key);
   if (nomem_handler) {
@@ -57,45 +63,50 @@ static void tsd_fini(void) {
   }
 }
 
-static void tsd_init(void) {
+static void tsd_init_key(void) {
+  // This shouldn't be called from multiple threads
   if (pthread_key_create(&nomem_handler_key, NULL) != 0) {
-    fprintf(stderr, "jq: error: cannot create thread specific key");
+    fprintf(stderr, "error: cannot create thread specific key");
     abort();
   }
-  if (atexit(tsd_fini) != 0) {
-    fprintf(stderr, "jq: error: cannot set an exit handler");
-    abort();
-  }
-  struct nomem_handler *nomem_handler = calloc(1, sizeof(struct nomem_handler));
-  if (pthread_setspecific(nomem_handler_key, nomem_handler) != 0) {
-    fprintf(stderr, "jq: error: cannot set thread specific data");
+
+  // Can only finalize the handler block for the thread the exit handler
+  // is called on, so the nomem_handler struct from any other threads is
+  // intentionally leaked for now.
+  if (atexit(tsd_fini_per_thread) != 0) {
+    fprintf(stderr, "error: cannot set an exit handler");
     abort();
   }
 }
 
-void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
-  pthread_once(&mem_once, tsd_init); // cannot fail
-  struct nomem_handler *nomem_handler;
-
-  nomem_handler = pthread_getspecific(nomem_handler_key);
+static struct nomem_handler* tsd_ensure_init_per_thread(void) {
+  pthread_once(&mem_once, tsd_init_key); // cannot fail, ensures nomem_handler_key is set.
+  struct nomem_handler *nomem_handler = pthread_getspecific(nomem_handler_key);
   if (nomem_handler == NULL) {
-    handler(data);
-    fprintf(stderr, "jq: error: cannot allocate memory\n");
-    abort();
+    nomem_handler = calloc(1, sizeof(struct nomem_handler));
+    nomem_handler->handler = jv_default_nomem_handler;
+    if (pthread_setspecific(nomem_handler_key, nomem_handler) != 0) {
+      fprintf(stderr, "error: cannot set thread specific data");
+      abort();
+    }
   }
+
+  return nomem_handler;
+}
+
+void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
+  struct nomem_handler *nomem_handler = tsd_ensure_init_per_thread();
   nomem_handler->handler = handler;
   nomem_handler->data = data;
 }
 
 static void memory_exhausted() {
-  struct nomem_handler *nomem_handler;
-
-  pthread_once(&mem_once, tsd_init);
-  nomem_handler = pthread_getspecific(nomem_handler_key);
-  if (nomem_handler)
+  struct nomem_handler *nomem_handler = tsd_ensure_init_per_thread();
+  if (nomem_handler->handler)
     nomem_handler->handler(nomem_handler->data); // Maybe handler() will longjmp() to safety
+  else
+    jv_default_nomem_handler(nomem_handler->data);
   // Or not
-  fprintf(stderr, "jq: error: cannot allocate memory\n");
   abort();
 }
 
@@ -110,7 +121,11 @@ void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
 }
 
 static void memory_exhausted() {
-  fprintf(stderr, "jq: error: cannot allocate memory\n");
+  if (nomem_handler.handler)
+    nomem_handler.handler(nomem_handler.data); // Maybe handler() will longjmp() to safety
+  else
+    jv_default_nomem_handler(nomem_handler.data);
+  // Or not
   abort();
 }
 

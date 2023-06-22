@@ -8,6 +8,9 @@
 static void jv_test();
 static void run_jq_tests(jv, int, FILE *, int, int);
 
+#ifdef HAVE_PTHREAD
+static void* run_thread(void*);
+#endif
 
 int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
   FILE *testdata = stdin;
@@ -65,6 +68,100 @@ static void test_err_cb(void *data, jv e) {
   jv_free(e);
 }
 
+#ifdef HAVE_PTHREAD
+#define NUM_THREADS 5
+#define INPUT_COUNT 10
+#include <pthread.h>
+
+struct test_thread {
+  pthread_t id;
+  long int index;
+  jv inputs[INPUT_COUNT];
+  jv outputs[INPUT_COUNT];
+};
+
+void jq_mt_test() {
+  printf("Running multi-threading tests\n");
+
+  struct test_thread threads[NUM_THREADS];
+
+  for (long int thread_index = 0; thread_index < NUM_THREADS; ++thread_index) {
+    struct test_thread* thread = &threads[thread_index];
+
+    for (int input_index = 0; input_index < INPUT_COUNT; ++input_index) {
+      thread->inputs[input_index] =
+        jv_number((thread_index * INPUT_COUNT) + input_index);
+    }
+
+    int err = pthread_create(&thread->id, NULL, run_thread, (void*)thread);
+    if (err != 0) {
+      printf("jq: mt test: pthread_create for thread with index %ld failed with error code: %d\n",
+             thread_index, err);
+      abort();
+    }
+  }
+
+  for (long int thread_index = thread_index; thread_index < NUM_THREADS; ++thread_index) {
+    void* ret;
+    int err = pthread_join(threads[thread_index].id, &ret);
+    if (err != 0) {
+      printf("jq: mt test: pthread_join for thread with index %ld failed with error code: %d\n",
+             thread_index, err);
+      abort();
+    }
+
+    for (int output_index = 0; output_index < INPUT_COUNT; ++output_index) {
+      jv output = threads[thread_index].outputs[output_index];
+      const double output_value = jv_number_value(output);
+      const double expected_value = (thread_index * INPUT_COUNT) + output_index + 1;
+      if (output_value != expected_value) {
+        printf("jq: mt test: *** Expected %f but got %f from thread with index %ld***\n",
+               expected_value, output_value, thread_index);
+        abort();
+      }
+      jv_free(output);
+    }
+  }
+
+  printf("Passed multi-threading test\n");
+}
+
+static void* run_thread(void* void_thread) {
+  struct test_thread* thread = (struct test_thread*)void_thread;
+
+  jq_state *jq = jq_init();
+  assert(jq);
+
+  jq_set_attr(jq, jv_string("JQ_LIBRARY_PATH"), jv_array());
+
+  char* prog_add_one = ". + 1";
+  assert(jq_compile(jq, prog_add_one));
+
+  for (int input_index = 0; input_index < INPUT_COUNT; ++input_index) {
+    jq_start(jq, thread->inputs[input_index], 0);
+    jv output = jq_next(jq);
+    if (jv_is_valid(output)) {
+      thread->outputs[input_index] = output;
+    } else {
+      printf("jq: mt test: missing or invalid for input index %d on thread with with index %ld\n",
+             input_index, thread->index);
+      abort();
+    }
+    jv end = jq_next(jq);
+    if (jv_is_valid(end)) {
+      jv_free(end);
+      printf("jq: mt test: extra output for input index %d thread with with index %ld\n",
+             input_index, thread->index);
+      abort();
+    }
+  }
+
+  jq_teardown(&jq);
+
+  return NULL;
+}
+#endif
+
 static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int take) {
   char prog[4096];
   char buf[4096];
@@ -105,7 +202,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
         if (buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
           break;
       }
-      
+
       must_fail = 0;
       check_msg = 0;
 
@@ -229,7 +326,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
     total_skipped = tests_to_skip - skip;
   }
 
-  printf("%d of %d tests passed (%d malformed, %d skipped)\n", 
+  printf("%d of %d tests passed (%d malformed, %d skipped)\n",
     passed, tests, invalid, total_skipped);
 
   if (skip > 0) {

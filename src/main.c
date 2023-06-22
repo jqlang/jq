@@ -36,6 +36,10 @@ extern void jv_tsd_dtoa_ctx_init();
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
 
+#ifdef HAVE_PTHREAD
+void jq_mt_test();
+#endif
+
 static const char* progname;
 
 /*
@@ -540,6 +544,12 @@ int main(int argc, char* argv[]) {
         ret = JQ_OK;
         goto out;
       }
+#ifdef HAVE_PTHREAD
+      if (isoption(argv[i], 0, "run-mt-test", &short_opts)) {
+        jq_mt_test();
+        goto out;
+      }
+#endif
       if (isoption(argv[i], 0, "run-tests", &short_opts)) {
         i++;
         // XXX Pass program_arguments, even a whole jq_state *, through;
