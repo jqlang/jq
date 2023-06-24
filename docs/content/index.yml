@@ -24,7 +24,7 @@ body3: |
 
 tail: |
 
-  Go read the [tutorial](/jq/tutorial/) for more, or the [manual](/jq/manual/)
+  Go read the [tutorial](./tutorial/) for more, or the [manual](./manual/)
   for *way* more.
 
   Have a question related to jq? You can seek answers on [Stack Overflow](https://stackoverflow.com/)
@@ -34,7 +34,7 @@ tail: |
 news:
   - date: 1 November 2018
     body: |
-      jq 1.6 released. See installation options on the [download](/jq/download/)
+      jq 1.6 released. See installation options on the [download](./download/)
       page, and the [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.6)
       for details.
 
@@ -44,7 +44,7 @@ news:
       jq 1.5 released, including new datetime, math, and regexp functions,
       try/catch syntax, array and object destructuring, a streaming parser,
       and a module system. See installation options on the
-      [download](/jq/download/) page, and the
+      [download](./download/) page, and the
       [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.5)
       for details.
 
@@ -63,7 +63,7 @@ news:
   - date: 09 June 2014
     body: |
 
-      jq 1.4 (finally) released! Get it on the [download](/jq/download/) page.
+      jq 1.4 (finally) released! Get it on the [download](./download/) page.
 
   - date: 19 May 2013
     body: |

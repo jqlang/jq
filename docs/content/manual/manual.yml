@@ -3,9 +3,8 @@ headline: jq Manual (development version)
 
 history: |
 
-  *For released versions, see [jq 1.6](/jq/manual/v1.6),
-  [jq 1.5](/jq/manual/v1.5),  [jq 1.4](/jq/manual/v1.4)
-  or [jq 1.3](/jq/manual/v1.3).*
+  *For released versions, see [jq 1.6](./v1.6/), [jq 1.5](./v1.5/),
+  [jq 1.4](./v1.4/) or [jq 1.3](./v1.3/).*
 
 body: |
 
