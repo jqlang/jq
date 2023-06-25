@@ -1,21 +1,18 @@
 name: CI
 on:
   push:
-    branches:
-      - master
-    tags:
-      - "v*"
   pull_request:
 jobs:
   linux:
-    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64]
-        include:
-          - arch: x86_64
-            suffix: amd64
+        compiler: [gcc, clang]
+        image: [ubuntu-20.04, ubuntu-22.04]
+    runs-on: ${{ matrix.image }}
+    env:
+      CC: ${{ matrix.compiler }}
+      SUFFIX: linux-${{ matrix.image}}-${{ matrix.compiler }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -32,8 +29,6 @@ jobs:
             gdb \
             python3
       - name: Build
-        env:
-          CC: clang -arch ${{ matrix.arch }}
         run: |
           autoreconf -fi
           ./configure --disable-dependency-tracking \
@@ -43,18 +38,15 @@ jobs:
             --with-oniguruma=builtin \
             YACC="$(which bison) -y"
           make
-          make dist
-          cp jq jq-linux-${{ matrix.suffix }}
+          cp jq jq-${{ env.SUFFIX }}
       - name: Test
-        env:
-          CC: clang -arch ${{ matrix.arch }}
         run: |
           make check
       - name: Upload Test Logs
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
         with:
-          name: test-logs-linux-${{ matrix.arch }}
+          name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
           path: |
             test-suite.log
@@ -62,20 +54,21 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: jq-linux-${{ matrix.suffix }}
+          name: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
           path: |
-            jq-linux-${{ matrix.suffix }}
+            jq-${{ env.SUFFIX }}
   macos:
-    runs-on: macos-13
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64]
-        include:
-          - arch: x86_64
-            suffix: amd64
+        compiler: [gcc, clang]
+        image: [macos-11, macos-12, macos-13]
+    runs-on: ${{ matrix.image }}
+    env:
+      CC: ${{ matrix.compiler }}
+      SUFFIX: macos-${{ matrix.image}}-${{ matrix.compiler }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -92,8 +85,6 @@ jobs:
             bison
           sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
       - name: Build
-        env:
-          CC: clang -arch ${{ matrix.arch }}
         run: |
           autoreconf -fi
           ./configure --disable-dependency-tracking \
@@ -103,18 +94,15 @@ jobs:
             --with-oniguruma=builtin \
             YACC="$(brew --prefix)/opt/bison/bin/bison -y"
           make
-          make dist
-          cp jq jq-macos-${{ matrix.suffix }}
+          cp jq jq-${{ env.SUFFIX }}
       - name: Test
-        env:
-          CC: clang -arch ${{ matrix.arch }}
         run: |
           make check
       - name: Upload Test Logs
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
         with:
-          name: test-logs-macos-${{ matrix.arch }}
+          name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
           path: |
             test-suite.log
@@ -122,20 +110,21 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: jq-macos-${{ matrix.suffix }}
+          name: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
           path: |
-            jq-macos-${{ matrix.suffix }}
+            jq-${{ env.SUFFIX }}
   windows:
-    runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64]
-        include:
-          - arch: x86_64
-            suffix: win64
+        compiler: [gcc]
+        image: [windows-2019, windows-2022]
+    runs-on: ${{ matrix.image }}
+    env:
+      CC: ${{ matrix.compiler }}
+      SUFFIX: windows-${{ matrix.image}}-${{ matrix.compiler }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -155,8 +144,6 @@ jobs:
             flex
       - name: Build
         shell: msys2 {0}
-        env:
-          CC: clang -arch ${{ matrix.arch }}
         run: |
           autoreconf -fi
           ./configure --disable-dependency-tracking \
@@ -169,8 +156,7 @@ jobs:
             --enable-all-static \
             YACC="$(which bison) -y"
           make
-          make dist
-          cp jq.exe jq-windows-${{ matrix.suffix }}.exe
+          cp jq.exe jq-${{ env.SUFFIX }}.exe
       - name: Test
         shell: msys2 {0}
         run: |
@@ -180,10 +166,8 @@ jobs:
       - name: Upload Test Logs
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
-        env:
-          CC: clang -arch ${{ matrix.arch }}
         with:
-          name: test-logs-windows-${{ matrix.arch }}
+          name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
           path: |
             test-suite.log
@@ -191,11 +175,11 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: jq-windows-${{ matrix.suffix }}
+          name: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
           path: |
-            jq-windows-${{ matrix.suffix }}.exe
+            jq-${{ env.SUFFIX }}.exe
   release:
     runs-on: ubuntu-latest
     permissions:
