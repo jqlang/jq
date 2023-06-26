@@ -146,6 +146,13 @@ jq: error: Cannot use number (0) as object key at <top-level>, line 1:
 {"foo": {"bar": 20}}
 20
 
+.e0, .E1, .E-1, .E+1
+{"e0": 1, "E1": 2, "E": 3}
+1
+2
+2
+4
+
 [.[]|.foo?]
 [1,[2],{"foo":3,"bar":4},{},{"foo":5}]
 [3,null,5]
