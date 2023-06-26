@@ -279,7 +279,11 @@ if [ -n "$($VALGRIND $Q $JQ -n '"xyz\n" | halt_error(1)' 2>/dev/null)" ]; then
     echo "jq halt_error(1) had unexpected output on stdout" 1>&2
     exit 1
 fi
-if [ "$($VALGRIND $Q $JQ -n '"xyz\n" | halt_error(1)' 2>&1)" != "xyz" ]; then
+if [ "$($VALGRIND $Q $JQ -n '"xy" | halt_error(1)' 2>&1 || echo "z")" != "xyz" ]; then
+    echo "jq halt_error(1) had unexpected output" 1>&2
+    exit 1
+fi
+if [ "$($VALGRIND $Q $JQ -n '"x\u0000y\u0000z" | halt_error(1)' 2>&1 | tr '\0' '.')" != "x.y.z" ]; then
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
 fi
