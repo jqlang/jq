@@ -179,23 +179,13 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
   jq_start(jq, value, flags);
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
-    if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
-      if (options & ASCII_OUTPUT) {
-        jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
-      } else {
-        fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
-      }
+    if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
+      ret = JQ_OK_NULL_KIND;
+    else
       ret = JQ_OK;
-      jv_free(result);
-    } else {
-      if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
-        ret = JQ_OK_NULL_KIND;
-      else
-        ret = JQ_OK;
-      if (options & SEQ)
-        priv_fwrite("\036", 1, stdout, dumpopts & JV_PRINT_ISATTY);
-      jv_dump(result, dumpopts);
-    }
+    if (options & SEQ)
+      priv_fwrite("\036", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+    jv_dump(result, dumpopts);
     if (!(options & RAW_NO_LF))
       priv_fwrite("\n", 1, stdout, dumpopts & JV_PRINT_ISATTY);
     if (options & RAW_NUL)
@@ -247,8 +237,13 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
 
 static void debug_cb(void *data, jv input) {
   int dumpopts = *(int *)data;
-  jv_dumpf(JV_ARRAY(jv_string("DEBUG:"), input), stderr, dumpopts & ~(JV_PRINT_PRETTY));
+  jv_dumpf(JV_ARRAY(jv_string("DEBUG:"), input), stderr, dumpopts & ~(JV_PRINT_PRETTY | JV_PRINT_RAW));
   fprintf(stderr, "\n");
+}
+
+static void stderr_cb(void *data, jv input) {
+  int dumpopts = *(int *)data;
+  jv_dumpf(input, stderr, (dumpopts & ~JV_PRINT_PRETTY) | JV_PRINT_RAW);
 }
 
 #ifdef WIN32
@@ -360,7 +355,7 @@ int main(int argc, char* argv[]) {
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'c', "compact-output", &short_opts)) {
-        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(7));
+        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(JV_PRINT_INDENT_MAX));
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'C', "color-output", &short_opts)) {
@@ -414,7 +409,7 @@ int main(int argc, char* argv[]) {
 #endif
       }
       if (isoption(argv[i], 0, "tab", &short_opts)) {
-        dumpopts &= ~JV_PRINT_INDENT_FLAGS(7);
+        dumpopts &= ~JV_PRINT_INDENT_FLAGS(JV_PRINT_INDENT_MAX);
         dumpopts |= JV_PRINT_TAB | JV_PRINT_PRETTY;
         continue;
       }
@@ -423,10 +418,11 @@ int main(int argc, char* argv[]) {
           fprintf(stderr, "%s: --indent takes one parameter\n", progname);
           die();
         }
-        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(7));
+        dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(JV_PRINT_INDENT_MAX));
         int indent = atoi(argv[i+1]);
-        if (indent < -1 || indent > 7) {
-          fprintf(stderr, "%s: --indent takes a number between -1 and 7\n", progname);
+        if (indent < -1 || indent > JV_PRINT_INDENT_MAX) {
+          fprintf(stderr,
+                  "%s: --indent takes a number between -1 and " JV_TOSTRING(JV_PRINT_INDENT_MAX) "\n", progname);
           die();
         }
         dumpopts |= JV_PRINT_INDENT_FLAGS(indent);
@@ -578,6 +574,7 @@ int main(int argc, char* argv[]) {
   }
 #endif
   if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
+  if (options & RAW_OUTPUT) dumpopts |= JV_PRINT_RAW;
   if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
   if (options & COLOR_OUTPUT) dumpopts |= JV_PRINT_COLOR;
   if (options & NO_COLOR_OUTPUT) dumpopts &= ~JV_PRINT_COLOR;
@@ -665,6 +662,9 @@ int main(int argc, char* argv[]) {
 
   // Let jq program call `debug` builtin and have that go somewhere
   jq_set_debug_cb(jq, debug_cb, &dumpopts);
+
+  // Let jq program call `stderr` builtin and have that go somewhere
+  jq_set_stderr_cb(jq, stderr_cb, &dumpopts);
 
   if (nfiles == 0)
     jq_util_input_add_input(input_state, "-");

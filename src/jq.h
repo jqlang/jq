@@ -38,6 +38,9 @@ void jq_get_input_cb(jq_state *, jq_input_cb *, void **);
 void jq_set_debug_cb(jq_state *, jq_msg_cb, void *);
 void jq_get_debug_cb(jq_state *, jq_msg_cb *, void **);
 
+void jq_set_stderr_cb(jq_state *, jq_msg_cb, void *);
+void jq_get_stderr_cb(jq_state *, jq_msg_cb *, void **);
+
 void jq_set_attrs(jq_state *, jv);
 jv jq_get_attrs(jq_state *);
 jv jq_get_jq_origin(jq_state *);

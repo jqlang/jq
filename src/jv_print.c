@@ -109,77 +109,104 @@ static void put_indent(int n, int flags, FILE* fout, jv* strout, int T) {
     while (n--)
       put_char('\t', fout, strout, T);
   } else {
-    n *= ((flags & (JV_PRINT_SPACE0 | JV_PRINT_SPACE1 | JV_PRINT_SPACE2)) >> 8);
+    n *= ((flags & (JV_PRINT_SPACE0 | JV_PRINT_SPACE1 | JV_PRINT_SPACE2)) >> JV_PRINT_INDENT_OFFSET);
     while (n--)
       put_char(' ', fout, strout, T);
   }
 }
 
-static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
-  assert(jv_get_kind(str) == JV_KIND_STRING);
-  const char* i = jv_string_value(str);
-  const char* end = i + jv_string_length_bytes(jv_copy(str));
-  const char* cstart;
-  int c = 0;
-  char buf[32];
-  put_char('"', F, S, T);
-  while ((i = jvp_utf8_next((cstart = i), end, &c))) {
-    assert(c != -1);
-    int unicode_escape = 0;
-    if (0x20 <= c && c <= 0x7E) {
-      // printable ASCII
-      if (c == '"' || c == '\\') {
-        put_char('\\', F, S, T);
-      }
-      put_char(c, F, S, T);
-    } else if (c < 0x20 || c == 0x7F) {
-      // ASCII control character
-      switch (c) {
-      case '\b':
-        put_char('\\', F, S, T);
-        put_char('b', F, S, T);
-        break;
-      case '\t':
-        put_char('\\', F, S, T);
-        put_char('t', F, S, T);
-        break;
-      case '\r':
-        put_char('\\', F, S, T);
-        put_char('r', F, S, T);
-        break;
-      case '\n':
-        put_char('\\', F, S, T);
-        put_char('n', F, S, T);
-        break;
-      case '\f':
-        put_char('\\', F, S, T);
-        put_char('f', F, S, T);
-        break;
-      default:
-        unicode_escape = 1;
-        break;
-      }
-    } else {
-      if (ascii_only) {
-        unicode_escape = 1;
-      } else {
-        put_buf(cstart, i - cstart, F, S, T);
-      }
+static const jv_kind raw_kind = JV_KIND_STRING;
+
+static void jvp_dump_char(int c, const char* cstart, const char* cend,
+    int raw, int ascii_only, char buf[static 32], FILE* F, jv* S, int T) {
+  // sizeof(buf) cannot be used, despite the size expression & guarantees
+  const int bufsize = 32;
+  assert(c != -1);
+  int unicode_escape = 0;
+  if (raw && c <= 0x7F) {
+    if (c == '\\') {
+      put_char('\\', F, S, T);
     }
-    if (unicode_escape) {
-      if (c <= 0xffff) {
-        snprintf(buf, sizeof(buf), "\\u%04x", c);
-      } else {
-        c -= 0x10000;
-        snprintf(buf, sizeof(buf), "\\u%04x\\u%04x",
-                0xD800 | ((c & 0xffc00) >> 10),
-                0xDC00 | (c & 0x003ff));
-      }
-      put_str(buf, F, S, T);
+    put_char(c, F, S, T);
+  } else if (0x20 <= c && c <= 0x7E) {
+    // printable ASCII
+    if (c == '\\' || c == '"') {
+      put_char('\\', F, S, T);
+    }
+    put_char(c, F, S, T);
+  } else if (c < 0x20 || c == 0x7F) {
+    // ASCII control character
+    switch (c) {
+    case '\b':
+      put_char('\\', F, S, T);
+      put_char('b', F, S, T);
+      break;
+    case '\t':
+      put_char('\\', F, S, T);
+      put_char('t', F, S, T);
+      break;
+    case '\r':
+      put_char('\\', F, S, T);
+      put_char('r', F, S, T);
+      break;
+    case '\n':
+      put_char('\\', F, S, T);
+      put_char('n', F, S, T);
+      break;
+    case '\f':
+      put_char('\\', F, S, T);
+      put_char('f', F, S, T);
+      break;
+    default:
+      unicode_escape = 1;
+      break;
+    }
+  } else {
+    if (ascii_only) {
+      unicode_escape = 1;
+    } else {
+      put_buf(cstart, cend - cstart, F, S, T);
     }
   }
-  assert(c != -1);
-  put_char('"', F, S, T);
+  if (unicode_escape) {
+    if (c <= 0xffff) {
+      snprintf(buf, bufsize, "\\u%04x", c);
+    } else {
+      c -= 0x10000;
+      snprintf(buf, bufsize, "\\u%04x\\u%04x",
+              0xD800 | ((c & 0xffc00) >> 10),
+              0xDC00 | (c & 0x003ff));
+    }
+    put_str(buf, F, S, T);
+  }
+}
+
+static void jvp_dump_string(jv str, int flags, FILE* F, jv* S) {
+  assert(jv_get_kind(str) == JV_KIND_STRING);
+  const int ascii_only = flags & JV_PRINT_ASCII;
+  const int raw = flags & JV_PRINT_RAW;
+  const int T = flags & JV_PRINT_ISATTY;
+  const char* i = jv_string_value(str);
+  const int len = jv_string_length_bytes(jv_copy(str));
+
+  if (raw && !ascii_only) {
+    put_buf(i, len, F, S, T);
+  } else {
+    const char* end = i + len;
+    const char* cstart;
+    int c = 0;
+    char buf[32];
+    if (!raw) {
+      put_char('"', F, S, T);
+    }
+    while ((i = jvp_utf8_next((cstart = i), end, &c))) {
+      jvp_dump_char(c, cstart, i, raw, ascii_only, buf, F, S, T);
+    }
+    assert(c != -1);
+    if (!raw) {
+      put_char('"', F, S, T);
+    }
+  }
 }
 
 static void put_refcnt(struct dtoa_context* C, int refcnt, FILE *F, jv* S, int T){
@@ -194,9 +221,14 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   char buf[JVP_DTOA_FMT_MAX_LEN];
   const char* color = 0;
   double refcnt = (flags & JV_PRINT_REFCOUNT) ? jv_get_refcnt(x) - 1 : -1;
+  const jv_kind kind = jv_get_kind(x);
+  if (!(flags & JV_PRINT_RAWCOLOR) && (flags & JV_PRINT_RAW) &&
+      kind == raw_kind) {
+    flags &= ~JV_PRINT_COLOR;
+  }
   if (flags & JV_PRINT_COLOR) {
     for (unsigned i=0; i<sizeof(color_kinds)/sizeof(color_kinds[0]); i++) {
-      if (jv_get_kind(x) == color_kinds[i]) {
+      if (kind == color_kinds[i]) {
         color = colors[i];
         put_str(color, F, S, flags & JV_PRINT_ISATTY);
         break;
@@ -205,14 +237,14 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   }
   if (indent > MAX_PRINT_DEPTH) {
     put_str("<skipped: too deep>", F, S, flags & JV_PRINT_ISATTY);
-  } else switch (jv_get_kind(x)) {
+  } else switch (kind) {
   default:
   case JV_KIND_INVALID:
     if (flags & JV_PRINT_INVALID) {
       jv msg = jv_invalid_get_msg(jv_copy(x));
       if (jv_get_kind(msg) == JV_KIND_STRING) {
         put_str("<invalid:", F, S, flags & JV_PRINT_ISATTY);
-        jvp_dump_string(msg, flags | JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+        jvp_dump_string(msg, flags | JV_PRINT_ASCII, F, S);
         put_str(">", F, S, flags & JV_PRINT_ISATTY);
       } else {
         put_str("<invalid>", F, S, flags & JV_PRINT_ISATTY);
@@ -257,7 +289,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     break;
   }
   case JV_KIND_STRING:
-    jvp_dump_string(x, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+    jvp_dump_string(x, flags, F, S);
     if (flags & JV_PRINT_REFCOUNT)
       put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
     break;
@@ -280,7 +312,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
           put_str(",", F, S, flags & JV_PRINT_ISATTY);
         }
       }
-      jv_dump_term(C, elem, flags, indent + 1, F, S);
+      jv_dump_term(C, elem, flags & ~JV_PRINT_RAW, indent + 1, F, S);
       if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     }
     if (flags & JV_PRINT_PRETTY) {
@@ -344,7 +376,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
 
       first = 0;
       if (color) put_str(FIELD_COLOR, F, S, flags & JV_PRINT_ISATTY);
-      jvp_dump_string(key, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+      jvp_dump_string(key, flags & ~JV_PRINT_RAW, F, S);
       jv_free(key);
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
@@ -352,7 +384,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       put_str((flags & JV_PRINT_PRETTY) ? ": " : ":", F, S, flags & JV_PRINT_ISATTY);
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
-      jv_dump_term(C, value, flags, indent + 1, F, S);
+      jv_dump_term(C, value, flags & ~JV_PRINT_RAW, indent + 1, F, S);
       if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
     }
     if (flags & JV_PRINT_PRETTY) {
