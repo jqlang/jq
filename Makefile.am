@@ -150,8 +150,8 @@ tests/man.test: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_mantests.py ) > $@
 else
-	@echo Changes to the manual.yml require docs to be enabled to run the tests
-	@false
+	@echo Changes to the manual.yml require docs to be enabled to update the manual test.
+	@echo As a result, the manual test is out of date.
 endif
 
 ### Building the manpage
@@ -164,8 +164,8 @@ jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_manpage.py ) > $@ || { rm -f $@; false; }
 else
-	@echo Changes to the manual.yml require docs to be enabled to generate an updated manpage
-	@echo As a result, your manpage is out of date.
+	@echo Changes to the manual.yml require docs to be enabled to update the manpage.
+	@echo As a result, the manpage is out of date.
 endif
 
 jq.1: jq.1.prebuilt
