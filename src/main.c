@@ -216,12 +216,13 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
     jv_free(exit_code);
     jv error_message = jq_get_error_message(jq);
     if (jv_get_kind(error_message) == JV_KIND_STRING) {
-      fprintf(stderr, "jq: error: %s", jv_string_value(error_message));
+      // No prefix should be added to the output of `halt_error`.
+      fprintf(stderr, "%s", jv_string_value(error_message));
     } else if (jv_get_kind(error_message) == JV_KIND_NULL) {
       // Halt with no output
     } else if (jv_is_valid(error_message)) {
       error_message = jv_dump_string(jv_copy(error_message), 0);
-      fprintf(stderr, "jq: error: %s\n", jv_string_value(error_message));
+      fprintf(stderr, "%s\n", jv_string_value(error_message));
     } // else no message on stderr; use --debug-trace to see a message
     fflush(stderr);
     jv_free(error_message);
