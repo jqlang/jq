@@ -32,6 +32,9 @@ def _modify(paths; update):
     );
 def map_values(f): .[] |= f;
 
+def tobase($a): [while(. > 0; (. / $a) | floor) % $a];
+def frombase($a): reduce (.[] | reverse) as $i (0; . * $a + $i);
+
 # recurse
 def recurse(f): def r: ., (f | r); r;
 def recurse(f; cond): def r: ., (f | select(cond) | r); r;
