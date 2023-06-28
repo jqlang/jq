@@ -26,7 +26,7 @@ struct lexer_param;
 }
 
 %locations
-%error-verbose
+%define parse.error verbose
 %define api.pure
 %union {
   jv literal;
