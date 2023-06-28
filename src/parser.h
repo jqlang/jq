@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -30,6 +31,10 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 #ifndef YY_YY_SRC_PARSER_H_INCLUDED
 # define YY_YY_SRC_PARSER_H_INCLUDED
 /* Debug traces.  */
@@ -40,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 11 "src/parser.y" /* yacc.c:1909  */
+#line 11 "src/parser.y"
 
 #include "locfile.h"
 struct lexer_param;
@@ -57,61 +62,70 @@ struct lexer_param;
     }                                           \
   } while (0)
 
-#line 61 "src/parser.h" /* yacc.c:1909  */
+#line 66 "src/parser.h"
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    INVALID_CHARACTER = 258,
-    IDENT = 259,
-    FIELD = 260,
-    LITERAL = 261,
-    FORMAT = 262,
-    REC = 263,
-    SETMOD = 264,
-    EQ = 265,
-    NEQ = 266,
-    DEFINEDOR = 267,
-    AS = 268,
-    DEF = 269,
-    MODULE = 270,
-    IMPORT = 271,
-    INCLUDE = 272,
-    IF = 273,
-    THEN = 274,
-    ELSE = 275,
-    ELSE_IF = 276,
-    REDUCE = 277,
-    FOREACH = 278,
-    END = 279,
-    AND = 280,
-    OR = 281,
-    TRY = 282,
-    CATCH = 283,
-    LABEL = 284,
-    BREAK = 285,
-    LOC = 286,
-    SETPIPE = 287,
-    SETPLUS = 288,
-    SETMINUS = 289,
-    SETMULT = 290,
-    SETDIV = 291,
-    SETDEFINEDOR = 292,
-    LESSEQ = 293,
-    GREATEREQ = 294,
-    ALTERNATION = 295,
-    QQSTRING_START = 296,
-    QQSTRING_TEXT = 297,
-    QQSTRING_INTERP_START = 298,
-    QQSTRING_INTERP_END = 299,
-    QQSTRING_END = 300,
-    FUNCDEF = 301,
-    NONOPT = 302
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    INVALID_CHARACTER = 258,       /* INVALID_CHARACTER  */
+    IDENT = 259,                   /* IDENT  */
+    FIELD = 260,                   /* FIELD  */
+    LITERAL = 261,                 /* LITERAL  */
+    FORMAT = 262,                  /* FORMAT  */
+    REC = 263,                     /* ".."  */
+    SETMOD = 264,                  /* "%="  */
+    EQ = 265,                      /* "=="  */
+    NEQ = 266,                     /* "!="  */
+    DEFINEDOR = 267,               /* "//"  */
+    AS = 268,                      /* "as"  */
+    DEF = 269,                     /* "def"  */
+    MODULE = 270,                  /* "module"  */
+    IMPORT = 271,                  /* "import"  */
+    INCLUDE = 272,                 /* "include"  */
+    IF = 273,                      /* "if"  */
+    THEN = 274,                    /* "then"  */
+    ELSE = 275,                    /* "else"  */
+    ELSE_IF = 276,                 /* "elif"  */
+    REDUCE = 277,                  /* "reduce"  */
+    FOREACH = 278,                 /* "foreach"  */
+    END = 279,                     /* "end"  */
+    AND = 280,                     /* "and"  */
+    OR = 281,                      /* "or"  */
+    TRY = 282,                     /* "try"  */
+    CATCH = 283,                   /* "catch"  */
+    LABEL = 284,                   /* "label"  */
+    BREAK = 285,                   /* "break"  */
+    LOC = 286,                     /* "__loc__"  */
+    SETPIPE = 287,                 /* "|="  */
+    SETPLUS = 288,                 /* "+="  */
+    SETMINUS = 289,                /* "-="  */
+    SETMULT = 290,                 /* "*="  */
+    SETDIV = 291,                  /* "/="  */
+    SETDEFINEDOR = 292,            /* "//="  */
+    LESSEQ = 293,                  /* "<="  */
+    GREATEREQ = 294,               /* ">="  */
+    ALTERNATION = 295,             /* "?//"  */
+    QQSTRING_START = 296,          /* QQSTRING_START  */
+    QQSTRING_TEXT = 297,           /* QQSTRING_TEXT  */
+    QQSTRING_INTERP_START = 298,   /* QQSTRING_INTERP_START  */
+    QQSTRING_INTERP_END = 299,     /* QQSTRING_INTERP_END  */
+    QQSTRING_END = 300,            /* QQSTRING_END  */
+    FUNCDEF = 301,                 /* FUNCDEF  */
+    NONOPT = 302                   /* NONOPT  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define INVALID_CHARACTER 258
 #define IDENT 259
 #define FIELD 260
@@ -160,17 +174,16 @@ struct lexer_param;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 31 "src/parser.y" /* yacc.c:1909  */
+#line 31 "src/parser.y"
 
   jv literal;
   block blk;
 
-#line 172 "src/parser.h" /* yacc.c:1909  */
-};
+#line 185 "src/parser.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -192,6 +205,8 @@ struct YYLTYPE
 
 
 
+
 int yyparse (block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr);
+
 
 #endif /* !YY_YY_SRC_PARSER_H_INCLUDED  */

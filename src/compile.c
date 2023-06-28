@@ -514,6 +514,7 @@ jv block_list_funcs(block body, int omit_underscores) {
 }
 
 block gen_module(block metadata) {
+  assert(block_is_const(metadata) && block_const_kind(metadata) == JV_KIND_OBJECT);
   inst* i = inst_new(MODULEMETA);
   i->imm.constant = block_const(metadata);
   if (jv_get_kind(i->imm.constant) != JV_KIND_OBJECT)
