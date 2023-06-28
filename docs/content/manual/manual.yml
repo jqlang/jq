@@ -2301,10 +2301,12 @@ sections:
           The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
 
         examples:
-          - program: '[.[]|(.a)?]'
+          - program: '[.[] | .a?]'
             input: '[{}, true, {"a":1}]'
             output: ['[null, 1]']
-
+          - program: '[.[] | tonumber?]'
+            input: '["1", "invalid", "3", 4]'
+            output: ['[1, 3, 4]']
 
   - title: Regular expressions
     body: |
