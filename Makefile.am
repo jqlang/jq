@@ -44,10 +44,10 @@ BUILT_SOURCES = src/builtin.inc src/version.h
 	$(AM_V_LEX) echo "NOT building lexer.c!"
 endif
 
-# Tell YACC (bison) autoconf macros that you want a header file created.
-# If the --warnings=all fails, you probably have an old version of bison
-# OSX ships an old bison, so update with homebrew or macports
-AM_YFLAGS = --warnings=all -d
+# Tell YACC (Bison) autoconf macros that you want a header file created.
+# If the --warnings=all fails, you probably have an old version of Bison
+# macOS ships an old Bison, so update with Homebrew or MacPorts.
+AM_YFLAGS = --warnings=all -Wno-yacc -d
 
 ### libjq
 
