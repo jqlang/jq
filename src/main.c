@@ -183,7 +183,8 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
       if (options & ASCII_OUTPUT) {
         jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
       } else {
-        fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
+        priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
+            stdout, dumpopts & JV_PRINT_ISATTY);
       }
       ret = JQ_OK;
       jv_free(result);
@@ -217,8 +218,8 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
     jv error_message = jq_get_error_message(jq);
     if (jv_get_kind(error_message) == JV_KIND_STRING) {
       // No prefix should be added to the output of `halt_error`.
-      fwrite(jv_string_value(error_message), 1,
-          jv_string_length_bytes(jv_copy(error_message)), stderr);
+      priv_fwrite(jv_string_value(error_message), jv_string_length_bytes(jv_copy(error_message)),
+          stderr, dumpopts & JV_PRINT_ISATTY);
     } else if (jv_get_kind(error_message) == JV_KIND_NULL) {
       // Halt with no output
     } else if (jv_is_valid(error_message)) {
