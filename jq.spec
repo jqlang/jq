@@ -52,7 +52,6 @@ rm -rf %{buildroot}
 %endif
 %{_datadir}/doc/%{name}/AUTHORS
 %{_datadir}/doc/%{name}/COPYING
-%{_datadir}/doc/%{name}/README
 %{_datadir}/doc/%{name}/README.md
 %{_datadir}/man/man1/jq.1
 %{_includedir}/jq.h
