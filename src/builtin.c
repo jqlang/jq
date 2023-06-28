@@ -1,5 +1,6 @@
-#define _BSD_SOURCE
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #ifndef __sun__
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED 1
@@ -396,9 +397,11 @@ static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
 static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    if ((intmax_t)jv_number_value(b) == 0)
+    intmax_t bi = (intmax_t)jv_number_value(b);
+    if (bi == 0)
       return type_error2(a, b, "cannot be divided (remainder) because the divisor is zero");
-    jv r = jv_number((intmax_t)jv_number_value(a) % (intmax_t)jv_number_value(b));
+    // Check if the divisor is -1 to avoid overflow when the dividend is INTMAX_MIN.
+    jv r = jv_number(bi == -1 ? 0 : (intmax_t)jv_number_value(a) % bi);
     jv_free(a);
     jv_free(b);
     return r;
@@ -1817,13 +1820,13 @@ static const char jq_builtins[] =
 #define LIBM_DDDD_NO(name) "def " #name "(a;b;c): \"Error: " #name "/3 not found at build time\"|error;"
 #include "libm.h"
 #ifndef HAVE_FREXP
-  "def frexp: \"Error: frexp/0 not found found at build time\"|error;"
+  "def frexp: \"Error: frexp/0 not found at build time\"|error;"
 #endif
 #ifndef HAVE_MODF
-  "def modf: \"Error: modf/0 not found found at build time\"|error;"
+  "def modf: \"Error: modf/0 not found at build time\"|error;"
 #endif
 #ifndef HAVE_LGAMMA_R
-  "def lgamma_r: \"Error: lgamma_r/0 not found found at build time\"|error;"
+  "def lgamma_r: \"Error: lgamma_r/0 not found at build time\"|error;"
 #endif
 ;
 

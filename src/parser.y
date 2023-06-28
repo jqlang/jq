@@ -26,7 +26,7 @@ struct lexer_param;
 }
 
 %locations
-%error-verbose
+%define parse.error verbose
 %define api.pure
 %union {
   jv literal;
@@ -317,6 +317,10 @@ Module:
 "module" Exp ';' {
   if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant");
+    $$ = gen_noop();
+    block_free($2);
+  } else if (block_const_kind($2) != JV_KIND_OBJECT) {
+    FAIL(@$, "Module metadata must be an object");
     $$ = gen_noop();
     block_free($2);
   } else {

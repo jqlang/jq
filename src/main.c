@@ -60,7 +60,7 @@ static void usage(int code, int keep_it_short) {
     "unmodified (except for formatting, but note that IEEE754 is used\n"
     "for number representation internally, with all that that implies).\n\n"
     "For more advanced filters see the jq(1) manpage (\"man jq\")\n"
-    "and/or https://stedolan.github.io/jq\n\n"
+    "and/or https://jqlang.github.io/jq\n\n"
     "Example:\n\n\t$ echo '{\"foo\": 0}' | jq .\n"
     "\t{\n\t\t\"foo\": 0\n\t}\n\n",
     JQ_VERSION, progname, progname, progname);
@@ -97,7 +97,7 @@ static void usage(int code, int keep_it_short) {
 
 static void die() {
   fprintf(stderr, "Use %s --help for help with command-line options,\n", progname);
-  fprintf(stderr, "or see the jq manpage, or online docs  at https://stedolan.github.io/jq\n");
+  fprintf(stderr, "or see the jq manpage, or online docs  at https://jqlang.github.io/jq\n");
   exit(2);
 }
 
@@ -105,7 +105,7 @@ static void die() {
 
 
 static int isoptish(const char* text) {
-  return text[0] == '-' && (text[1] == '-' || isalpha(text[1]));
+  return text[0] == '-' && (text[1] == '-' || isalpha(text[1]) || text[1] == '0');
 }
 
 static int isoption(const char* text, char shortopt, const char* longopt, size_t *short_opts) {
@@ -183,7 +183,8 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
       if (options & ASCII_OUTPUT) {
         jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
       } else {
-        fwrite(jv_string_value(result), 1, jv_string_length_bytes(jv_copy(result)), stdout);
+        priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
+            stdout, dumpopts & JV_PRINT_ISATTY);
       }
       ret = JQ_OK;
       jv_free(result);
@@ -216,12 +217,14 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts) {
     jv_free(exit_code);
     jv error_message = jq_get_error_message(jq);
     if (jv_get_kind(error_message) == JV_KIND_STRING) {
-      fprintf(stderr, "jq: error: %s", jv_string_value(error_message));
+      // No prefix should be added to the output of `halt_error`.
+      priv_fwrite(jv_string_value(error_message), jv_string_length_bytes(jv_copy(error_message)),
+          stderr, dumpopts & JV_PRINT_ISATTY);
     } else if (jv_get_kind(error_message) == JV_KIND_NULL) {
       // Halt with no output
     } else if (jv_is_valid(error_message)) {
       error_message = jv_dump_string(jv_copy(error_message), 0);
-      fprintf(stderr, "jq: error: %s\n", jv_string_value(error_message));
+      fprintf(stderr, "%s\n", jv_string_value(error_message));
     } // else no message on stderr; use --debug-trace to see a message
     fflush(stderr);
     jv_free(error_message);
