@@ -28,13 +28,13 @@
 // for how to choose these.
 static const jv_kind color_kinds[] =
   {JV_KIND_NULL,   JV_KIND_FALSE, JV_KIND_TRUE, JV_KIND_NUMBER,
-   JV_KIND_STRING, JV_KIND_ARRAY, JV_KIND_OBJECT};
+   JV_KIND_STRING, JV_KIND_ARRAY, JV_KIND_OBJECT, JV_KIND_FIELD};
 static char color_bufs[sizeof(color_kinds)/sizeof(color_kinds[0])][16];
 static const char *color_bufps[8];
 static const char* def_colors[] =
   {COL("1;30"),    COL("0;37"),      COL("0;37"),     COL("0;37"),
-   COL("0;32"),      COL("1;37"),     COL("1;37")};
-#define FIELD_COLOR COL("34;1")
+   COL("0;32"),    COL("1;37"),      COL("1;37"),     COL("1;34")};
+#define FIELD_COLOR (colors[JV_KIND_FIELD - 1])
 
 static const char **colors = def_colors;
 
