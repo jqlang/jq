@@ -5555,12 +5555,12 @@ is lexical: the label has to be "visible" from the break.</p>
                       
                       <a data-toggle="collapse" href="#example80">
                         <i class="glyphicon glyphicon-chevron-right"></i>
-                        Example
+                        Examples
                       </a>
                       <div id="example80" class="manual-example collapse">
                         
                           <table>
-                            <tr><th></th><td class="jqprogram">jq '[.[]|(.a)?]'</td></tr>
+                            <tr><th></th><td class="jqprogram">jq '[.[] | .a?]'</td></tr>
                             <tr><th>Input</th><td>[{}, true, {&#34;a&#34;:1}]</td></tr>
                             
                             
@@ -5569,6 +5569,20 @@ is lexical: the label has to be "visible" from the break.</p>
                                   <th>Output</th>
                                 
                                 <td>[null, 1]</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '[.[] | tonumber?]'</td></tr>
+                            <tr><th>Input</th><td>[&#34;1&#34;, &#34;invalid&#34;, &#34;3&#34;, 4]</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>[1, 3, 4]</td>
                               </tr>
                             
                           </table>
