@@ -1428,6 +1428,30 @@ sections:
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
 
+      - title: "`uniq(stream)`"
+        body: |
+
+          The `uniq` function produces a substream of the given stream
+          by emitting in turn the first item from each run within it.
+          No sorting takes place.
+          
+        examples:
+          - program: '[uniq(1,1,2,null,null,1)]'
+            input: 'null'
+            output: ['[1,2,null,1]']
+
+          - program: '[uniq(.[])]'
+            input: '[1,1,2,null,null,1]'
+            output: ['[1,2,null,1]']
+
+          - program: '[uniq(empty)]'
+            input: 'null'
+            output: ['[]']
+
+          - program: '[true, false | [uniq(1,1,2)]]'
+            input: null
+            output: ['[[1,2],[1,2]]']
+            
       - title: "`unique`, `unique_by(path_exp)`"
         body: |
 
@@ -2471,27 +2495,33 @@ sections:
             input: '("ab,cd", "ef, gh")'
             output: ['"ab"', '"cd"', '"ef"', '"gh"']
 
-      - title: "`sub(regex; tostring)`, `sub(regex; string; flags)`"
+      - title: "`sub(regex; tostring)`, `sub(regex; tostring; flags)`"
         body: |
 
-          Emit the string obtained by replacing the first match of regex in the
-          input string with `tostring`, after interpolation.  `tostring` should
-          be a jq string, and may contain references to named captures. The
-          named captures are, in effect, presented as a JSON object (as
-          constructed by `capture`) to `tostring`, so a reference to a captured
-          variable named "x" would take the form: `"\(.x)"`.
+          Emit the string obtained by replacing the first match of
+          regex in the input string with `tostring`, after
+          interpolation.  `tostring` should be a jq string or a stream
+          of such strings, each of which may contain references to
+          named captures. The named captures are, in effect, presented
+          as a JSON object (as constructed by `capture`) to
+          `tostring`, so a reference to a captured variable named "x"
+          would take the form: `"\(.x)"`.
 
         example:
           - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
             input: '"123abc456"'
             output: '"ZabcZabc"'
 
+          - program: '[sub("(?<a>.)"; "\(.a|ascii_upcase)", "\(.a|ascii_downcase)")]'
+            input: '"aB"'
+            output: ['["AB","aB"]']
 
-      - title: "`gsub(regex; string)`, `gsub(regex; string; flags)`"
+      - title: "`gsub(regex; tostring)`, `gsub(regex; tostring; flags)`"
         body: |
 
           `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
-          replaced by the string, after interpolation.
+          replaced by `tostring`, after interpolation. If the second argument is a stream
+          of jq strings, then `gsub` will produce a corresponding stream of JSON strings.
 
         example:
           - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
