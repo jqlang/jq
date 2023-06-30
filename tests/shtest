@@ -203,6 +203,10 @@ else
     echo "Not doing torture tests"
 fi
 
+## Regression test for issue #2378 assert when stream parse broken object pair
+echo '{"a":1,"b",' | $JQ --stream  > /dev/null 2> $d/err
+grep 'Objects must consist of key:value pairs' $d/err > /dev/null
+
 ## Fuzz parser
 
 ## XXX With a $(urandom) builtin we could move this test into tests/all.test
