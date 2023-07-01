@@ -124,6 +124,9 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
     }
 
     int pass = 1;
+#ifndef HAVE_LIBONIG
+    int skip_onig = 0;
+#endif
     tests++;
     printf("Test #%d: '%s' at line number %u\n", tests + tests_to_skip, prog, lineno);
     int compiled = jq_compile(jq, prog);
@@ -188,8 +191,24 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
       }
       jv actual = jq_next(jq);
       if (!jv_is_valid(actual)) {
+        if (jv_invalid_has_msg(jv_copy(actual))) {
+          jv msg = jv_invalid_get_msg(jv_copy(actual));
+#ifndef HAVE_LIBONIG
+          if (!strcmp(jv_string_value(msg), "jq was compiled without ONIGURUMA regex library. match/test/sub and related functions are not available.")) {
+            skip_onig = 1;
+            // skip past test data
+            while (fgets(buf, sizeof(buf), testdata)) {
+              lineno++;
+              if (buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
+                break;
+            }
+          } else
+#endif
+            printf("*** Uncaught error occurred at line number %u: %s\n", lineno, jv_string_value(msg));
+        } else {
+          printf("*** Insufficient results for test at line number %u: %s\n", lineno, prog);
+        }
         jv_free(actual);
-        printf("*** Insufficient results for test at line number %u: %s\n", lineno, prog);
         pass = 0;
         break;
       } else if (!jv_equal(jv_copy(expected), jv_copy(actual))) {
@@ -219,7 +238,10 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
         jv_free(extra);
       }
     }
-    passed+=pass;
+    passed += pass;
+#ifndef HAVE_LIBONIG
+    passed += skip_onig;
+#endif
   }
   jq_teardown(&jq);
 
