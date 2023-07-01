@@ -40,6 +40,8 @@ jobs:
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
+            --enable-static \
+            --enable-all-static \
             YACC="$(which bison) -y"
           make
       - name: Test
@@ -96,6 +98,8 @@ jobs:
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
+            --enable-static \
+            --enable-all-static \
             YACC="$(brew --prefix)/opt/bison/bin/bison -y"
           make
       - name: Test
