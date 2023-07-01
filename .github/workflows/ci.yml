@@ -89,7 +89,6 @@ jobs:
             libtool \
             flex \
             bison
-          sed -i.bak '/^AM_INIT_AUTOMAKE(\[-Wno-portability 1\.14\])$/s/14/11/' modules/oniguruma/configure.ac
       - name: Build
         run: |
           autoreconf -fi
