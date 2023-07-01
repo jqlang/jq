@@ -13,6 +13,19 @@ jobs:
       matrix:
         compiler: [gcc, clang]
         image: [ubuntu-20.04, ubuntu-22.04]
+        include:
+          - compiler: gcc
+            image: ubuntu-20.04
+            configure_flag: ''
+          - compiler: gcc
+            image: ubuntu-22.04
+            configure_flag: --enable-static --enable-all-static
+          - compiler: clang
+            image: ubuntu-20.04
+            configure_flag: ''
+          - compiler: clang
+            image: ubuntu-22.04
+            configure_flag: --enable-static --enable-all-static
     runs-on: ${{ matrix.image }}
     env:
       CC: ${{ matrix.compiler }}
@@ -40,8 +53,7 @@ jobs:
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
-            --enable-static \
-            --enable-all-static \
+            ${{ matrix.configure_flag }} \
             YACC="$(which bison) -y"
           make
       - name: Test
