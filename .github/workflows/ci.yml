@@ -38,7 +38,6 @@ jobs:
             --with-oniguruma=builtin \
             YACC="$(which bison) -y"
           make
-          cp jq jq-${{ env.SUFFIX }}
       - name: Test
         run: |
           make check
@@ -58,7 +57,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           path: |
-            jq-${{ env.SUFFIX }}
+            jq
   macos:
     strategy:
       fail-fast: false
@@ -95,7 +94,6 @@ jobs:
             --with-oniguruma=builtin \
             YACC="$(brew --prefix)/opt/bison/bin/bison -y"
           make
-          cp jq jq-${{ env.SUFFIX }}
       - name: Test
         run: |
           make check
@@ -115,7 +113,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           path: |
-            jq-${{ env.SUFFIX }}
+            jq
   windows:
     strategy:
       fail-fast: false
@@ -157,7 +155,6 @@ jobs:
             --enable-all-static \
             YACC="$(which bison) -y"
           make
-          cp jq.exe jq-${{ env.SUFFIX }}.exe
       - name: Test
         shell: msys2 {0}
         run: |
@@ -178,7 +175,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           path: |
-            jq-${{ env.SUFFIX }}.exe
+            jq.exe
   release:
     runs-on: ubuntu-latest
     permissions:
@@ -199,5 +196,10 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          mkdir release
+          cp artifacts/jq-linux-ubuntu-22.04-gcc/jq release/jq-linux-amd64
+          cp artifacts/jq-macos-macos-13-gcc/jq release/jq-macos-amd64
+          cp artifacts/jq-windows-windows-2022-gcc/jq.exe release/jq-windows-amd64.exe
+
           gh release create $TAG_NAME --draft --title "jq ${TAG_NAME#v}" --generate-notes
-          gh release upload $TAG_NAME --clobber artifacts/jq-*/*
+          gh release upload $TAG_NAME --clobber release/jq-*
