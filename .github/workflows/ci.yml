@@ -160,9 +160,7 @@ jobs:
       - name: Test
         shell: msys2 {0}
         run: |
-          make -j3 SUBDIRS= 'TESTS=tests/mantest tests/jqtest tests/onigtest tests/base64test' check
-          make SUBDIRS= TESTS=tests/optionaltest check || true
-          make SUBDIRS= TRACE_TESTS=1 TESTS=tests/shtest check || true
+          make check
       - name: Upload Test Logs
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
