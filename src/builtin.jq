@@ -127,7 +127,7 @@ def sub($re; s; $flags):
             | [reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
                  ({}; . + $pair) | s ] as $inserts
             | reduce range(0; $inserts|length) as $ix (.; .result[$ix] += $gap + $inserts[$ix])
-	    | .previous = ($edit | .offset + .length ) )
+            | .previous = ($edit | .offset + .length ) )
           | .result[] + $in[.previous:] )
       // $in;
 #
@@ -187,7 +187,7 @@ def transpose:
   | length as $length
   | reduce range(0; $max) as $j
       ([]; . + [reduce range(0;$length) as $i ([]; . + [ $in[$i][$j] ] )] )
-	        end;
+  end;
 def in(xs): . as $x | xs | has($x);
 def inside(xs): . as $x | xs | contains($x);
 def repeat(exp):
