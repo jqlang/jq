@@ -6,6 +6,7 @@ on:
     tags:
       - "v*"
   pull_request:
+
 jobs:
   linux:
     strategy:
@@ -29,7 +30,7 @@ jobs:
     runs-on: ${{ matrix.image }}
     env:
       CC: ${{ matrix.compiler }}
-      SUFFIX: linux-${{ matrix.image}}-${{ matrix.compiler }}
+      SUFFIX: linux-${{ matrix.image }}-${{ matrix.compiler }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -56,6 +57,7 @@ jobs:
             ${{ matrix.configure_flag }} \
             YACC="$(which bison) -y"
           make
+          strip jq
       - name: Test
         run: |
           make check
@@ -74,8 +76,8 @@ jobs:
           name: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
-          path: |
-            jq
+          path: jq
+
   macos:
     strategy:
       fail-fast: false
@@ -85,7 +87,7 @@ jobs:
     runs-on: ${{ matrix.image }}
     env:
       CC: ${{ matrix.compiler }}
-      SUFFIX: macos-${{ matrix.image}}-${{ matrix.compiler }}
+      SUFFIX: macos-${{ matrix.image }}-${{ matrix.compiler }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -113,6 +115,7 @@ jobs:
             --enable-all-static \
             YACC="$(brew --prefix)/opt/bison/bin/bison -y"
           make
+          strip jq
       - name: Test
         run: |
           make check
@@ -131,8 +134,8 @@ jobs:
           name: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
-          path: |
-            jq
+          path: jq
+
   windows:
     strategy:
       fail-fast: false
@@ -142,7 +145,7 @@ jobs:
     runs-on: ${{ matrix.image }}
     env:
       CC: ${{ matrix.compiler }}
-      SUFFIX: windows-${{ matrix.image}}-${{ matrix.compiler }}
+      SUFFIX: windows-${{ matrix.image }}-${{ matrix.compiler }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -174,6 +177,7 @@ jobs:
             --enable-all-static \
             YACC="$(which bison) -y"
           make
+          strip jq.exe
       - name: Test
         shell: msys2 {0}
         run: |
@@ -193,8 +197,8 @@ jobs:
           name: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
-          path: |
-            jq.exe
+          path: jq.exe
+
   release:
     runs-on: ubuntu-latest
     permissions:
