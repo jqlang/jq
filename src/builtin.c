@@ -930,7 +930,8 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
         match = jv_object_set(match, jv_string("string"), jv_string(""));
         match = jv_object_set(match, jv_string("captures"), jv_array());
         result = jv_array_append(result, match);
-        start += 1;
+	// ensure '"qux" | match("(?=u)"; "g")' matches just once
+	start = (const UChar*)(input_string+region->end[0]+1);
         continue;
       }
 

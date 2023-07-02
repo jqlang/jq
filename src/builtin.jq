@@ -116,19 +116,11 @@ def splits($re): splits($re; null);
 # split emits an array for backward compatibility
 def split($re; flags): [ splits($re; flags) ];
 #
-# stream-oriented
-def uniq(s):
-  foreach s as $x (null;
-    if . and $x == .[0] then .[1] = false
-    else [$x, true]
-    end;
-    if .[1] then .[0] else empty end);
-#
 # If s contains capture variables, then create a capture object and pipe it to s, bearing
 # in mind that s could be a stream
 def sub($re; s; $flags):
    . as $in
-   | (reduce uniq(match($re; $flags)) as $edit
+   | (reduce match($re; $flags) as $edit
         ({result: [], previous: 0};
             $in[ .previous: ($edit | .offset) ] as $gap
             # create the "capture" objects (one per item in s)

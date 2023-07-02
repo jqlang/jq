@@ -1428,30 +1428,6 @@ sections:
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
 
-      - title: "`uniq(stream)`"
-        body: |
-
-          The `uniq` function produces a substream of the given stream
-          by emitting in turn the first item from each run within it.
-          No sorting takes place.
-          
-        examples:
-          - program: '[uniq(1,1,2,null,null,1)]'
-            input: 'null'
-            output: ['[1,2,null,1]']
-
-          - program: '[uniq(.[])]'
-            input: '[1,1,2,null,null,1]'
-            output: ['[1,2,null,1]']
-
-          - program: '[uniq(empty)]'
-            input: 'null'
-            output: ['[]']
-
-          - program: '[true, false | [uniq(1,1,2)]]'
-            input: null
-            output: ['[[1,2],[1,2]]']
-            
       - title: "`unique`, `unique_by(path_exp)`"
         body: |
 
@@ -2508,9 +2484,10 @@ sections:
           would take the form: `"\(.x)"`.
 
         example:
-          - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
-            input: '"123abc456"'
-            output: '"ZabcZabc"'
+
+          - program: 'sub("[^a-z]*(?<x>[a-z]*)"; "Z\(.x)"; "g")'
+            input: '"123abc456def"'
+            output: ['"ZabcZdef"']
 
           - program: '[sub("(?<a>.)"; "\(.a|ascii_upcase)", "\(.a|ascii_downcase)")]'
             input: '"aB"'
