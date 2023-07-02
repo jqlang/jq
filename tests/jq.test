@@ -1914,3 +1914,14 @@ any(keys[]|tostring?;true)
 {"a":"1","b":"2","c":"3"}
 true
 
+
+# explode/implode
+# test replacement character (65533) for outside codepoint range and 0xd800 (55296) - 0xdfff (57343) utf16 surrogate pair range
+# 1.1 and 1.9 to test round down of non-ints
+implode|explode
+[-1,0,1,2,3,1114111,1114112,55295,55296,57343,57344,1.1,1.9]
+[65533,0,1,2,3,1114111,65533,55295,65533,65533,57344,1,1]
+
+map(try implode catch .)
+[123,["a"],[nan]]
+["implode input must be an array","string (\"a\") can't be imploded, unicode codepoint needs to be numeric","number (null) can't be imploded, unicode codepoint needs to be numeric"]
