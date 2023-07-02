@@ -1201,7 +1201,28 @@ static jv f_string_implode(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY) {
     return ret_error(a, jv_string("implode input must be an array"));
   }
-  return jv_string_implode(a);
+
+  int len = jv_array_length(jv_copy(a));
+  jv s = jv_string_empty(len);
+
+  for (int i = 0; i < len; i++) {
+    jv n = jv_array_get(jv_copy(a), i);
+    if (jv_get_kind(n) != JV_KIND_NUMBER || jvp_number_is_nan(n)) {
+      jv_free(a);
+      jv_free(s);
+      return type_error(n, "can't be imploded, unicode codepoint needs to be numeric");
+    }
+
+    int nv = jv_number_value(n);
+    jv_free(n);
+    // outside codepoint range or in utf16 surrogate pair range
+    if (nv < 0 || nv > 0x10FFFF || (nv >= 0xD800 && nv <= 0xDFFF))
+      nv = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
+    s = jv_string_append_codepoint(s, nv);
+  }
+
+  jv_free(a);
+  return s;
 }
 
 static jv f_setpath(jq_state *jq, jv a, jv b, jv c) { return jv_setpath(a, b, c); }
