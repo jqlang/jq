@@ -2503,7 +2503,11 @@ sections:
         example:
           - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
             input: '"Abcabc"'
-            output: '"+A-+a-"'
+            output: ['"+A-+a-"']
+
+          - program: '[gsub("p"; "a", "b")]'
+            input: '"p"'
+            output: ['["a","b"]']
 
 
   - title: Advanced features
