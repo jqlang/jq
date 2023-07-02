@@ -1,0 +1,224 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+  pull_request:
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        image: [ubuntu-20.04, ubuntu-22.04]
+        include:
+          - compiler: gcc
+            image: ubuntu-20.04
+            configure_flag: ''
+          - compiler: gcc
+            image: ubuntu-22.04
+            configure_flag: --enable-static --enable-all-static
+          - compiler: clang
+            image: ubuntu-20.04
+            configure_flag: ''
+          - compiler: clang
+            image: ubuntu-22.04
+            configure_flag: --enable-static --enable-all-static
+    runs-on: ${{ matrix.image }}
+    env:
+      CC: ${{ matrix.compiler }}
+      SUFFIX: linux-${{ matrix.image}}-${{ matrix.compiler }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            automake \
+            autoconf \
+            bison \
+            flex \
+            gdb \
+            python3
+      - name: Build
+        run: |
+          autoreconf -fi
+          ./configure --disable-dependency-tracking \
+            --disable-silent-rules \
+            --disable-maintainer-mode \
+            --disable-valgrind \
+            --with-oniguruma=builtin \
+            ${{ matrix.configure_flag }} \
+            YACC="$(which bison) -y"
+          make
+      - name: Test
+        run: |
+          make check
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs-${{ env.SUFFIX }}
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jq-${{ env.SUFFIX }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            jq
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        image: [macos-11, macos-12, macos-13]
+    runs-on: ${{ matrix.image }}
+    env:
+      CC: ${{ matrix.compiler }}
+      SUFFIX: macos-${{ matrix.image}}-${{ matrix.compiler }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
+          brew update || brew update-reset
+          brew install \
+            autoconf \
+            automake \
+            libtool \
+            flex \
+            bison
+      - name: Build
+        run: |
+          autoreconf -fi
+          ./configure --disable-dependency-tracking \
+            --disable-silent-rules \
+            --disable-maintainer-mode \
+            --disable-valgrind \
+            --with-oniguruma=builtin \
+            --enable-static \
+            --enable-all-static \
+            YACC="$(brew --prefix)/opt/bison/bin/bison -y"
+          make
+      - name: Test
+        run: |
+          make check
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs-${{ env.SUFFIX }}
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jq-${{ env.SUFFIX }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            jq
+  windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc]
+        image: [windows-2019, windows-2022]
+    runs-on: ${{ matrix.image }}
+    env:
+      CC: ${{ matrix.compiler }}
+      SUFFIX: windows-${{ matrix.image}}-${{ matrix.compiler }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            base-devel
+            git
+            clang
+            autoconf
+            automake
+            libtool
+            bison
+            flex
+      - name: Build
+        shell: msys2 {0}
+        run: |
+          autoreconf -fi
+          ./configure --disable-dependency-tracking \
+            --disable-silent-rules \
+            --disable-maintainer-mode \
+            --disable-valgrind \
+            --with-oniguruma=builtin \
+            --disable-shared \
+            --enable-static \
+            --enable-all-static \
+            YACC="$(which bison) -y"
+          make
+      - name: Test
+        shell: msys2 {0}
+        run: |
+          make check
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs-${{ env.SUFFIX }}
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jq-${{ env.SUFFIX }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            jq.exe
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: [linux, macos, windows]
+    if: startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Merge built artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+      - name: Upload release
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir release
+          cp artifacts/jq-linux-ubuntu-22.04-gcc/jq release/jq-linux-amd64
+          cp artifacts/jq-macos-macos-13-gcc/jq release/jq-macos-amd64
+          cp artifacts/jq-windows-windows-2022-gcc/jq.exe release/jq-windows-amd64.exe
+
+          gh release create $TAG_NAME --draft --title "jq ${TAG_NAME#v}" --generate-notes
+          gh release upload $TAG_NAME --clobber release/jq-*
