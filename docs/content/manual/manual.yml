@@ -3281,8 +3281,8 @@ sections:
       For paths starting with `~/`, the user's home directory is
       substituted for `~`.
 
-      For paths starting with `$ORIGIN/`, the path of the jq executable
-      is substituted for `$ORIGIN`.
+      For paths starting with `$ORIGIN/`, the directory where the jq
+      executable is located is substituted for `$ORIGIN`.
 
       For paths starting with `./` or paths that are `.`, the path of
       the including file is substituted for `.`.  For top-level programs
