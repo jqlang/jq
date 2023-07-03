@@ -28,7 +28,7 @@ git submodule as per the instructions below.
 (note that jq's tests require regexp support to pass).  To build, run:
 
     git submodule update --init # if building from git to get oniguruma
-    autoreconf -fi              # if building from git
+    autoreconf -i               # if building from git
     ./configure --with-oniguruma=builtin
     make -j8
     make check

@@ -48,7 +48,7 @@ jobs:
                 CC: ${{ matrix.compiler }}
                 MAKEVARS: ${{ matrix.makevars }}
               run: |
-                autoreconf -fi
+                autoreconf -i
                 rm src/lexer.c src/lexer.h
                 rm src/parser.c src/parser.h
                 ./configure --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
