@@ -710,6 +710,12 @@ Term '[' ']' '?' {
 Term '[' ']' %prec NONOPT {
   $$ = block_join($1, gen_op_simple(EACH));
 } |
+Term '.' '[' ']' '?' {
+  $$ = block_join($1, gen_op_simple(EACH_OPT));
+} |
+Term '.' '[' ']' %prec NONOPT {
+  $$ = block_join($1, gen_op_simple(EACH));
+} |
 Term '[' Exp ':' Exp ']' '?' {
   $$ = gen_slice_index($1, $3, $5, INDEX_OPT);
 } |
