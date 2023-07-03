@@ -39,12 +39,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y \
-            automake \
-            autoconf \
-            bison \
-            flex \
-            gdb
+          sudo apt-get install -y automake autoconf
       - name: Build
         run: |
           autoreconf -i
@@ -54,8 +49,7 @@ jobs:
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
-            ${{ matrix.configure_flag }} \
-            YACC="$(which bison) -y"
+            ${{ matrix.configure_flag }}
           make
           strip jq
       - name: Test
@@ -97,12 +91,7 @@ jobs:
         run: |
           # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
           brew update || brew update-reset
-          brew install \
-            autoconf \
-            automake \
-            libtool \
-            flex \
-            bison
+          brew install autoconf automake libtool
       - name: Build
         run: |
           autoreconf -i
@@ -113,8 +102,7 @@ jobs:
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
-            --enable-all-static \
-            YACC="$(brew --prefix)/opt/bison/bin/bison -y"
+            --enable-all-static
           make
           strip jq
       - name: Test
@@ -162,8 +150,6 @@ jobs:
             autoconf
             automake
             libtool
-            bison
-            flex
       - name: Build
         shell: msys2 {0}
         run: |
@@ -176,8 +162,7 @@ jobs:
             --with-oniguruma=builtin \
             --disable-shared \
             --enable-static \
-            --enable-all-static \
-            YACC="$(which bison) -y"
+            --enable-all-static
           make
           strip jq.exe
       - name: Test
@@ -211,9 +196,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y \
-            automake \
-            autoconf
+          sudo apt-get install -y automake autoconf
       - name: Create dist
         run: |
           autoreconf -i
