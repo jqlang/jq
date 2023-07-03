@@ -18,8 +18,6 @@ WORKDIR /app
 COPY . /app
 RUN autoreconf -i \
  && ./configure \
-      --disable-dependency-tracking \
-      --disable-silent-rules \
       --disable-docs \
       --disable-maintainer-mode \
       --disable-valgrind \

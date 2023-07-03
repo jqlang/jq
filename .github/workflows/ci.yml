@@ -43,8 +43,7 @@ jobs:
       - name: Build
         run: |
           autoreconf -i
-          ./configure --disable-dependency-tracking \
-            --disable-silent-rules \
+          ./configure \
             --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
@@ -96,8 +95,7 @@ jobs:
       - name: Build
         run: |
           autoreconf -i
-          ./configure --disable-dependency-tracking \
-            --disable-silent-rules \
+          ./configure \
             --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
@@ -156,8 +154,7 @@ jobs:
         shell: msys2 {0}
         run: |
           autoreconf -i
-          ./configure --disable-dependency-tracking \
-            --disable-silent-rules \
+          ./configure \
             --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
@@ -203,8 +200,7 @@ jobs:
       - name: Create dist
         run: |
           autoreconf -i
-          ./configure --disable-dependency-tracking \
-            --disable-silent-rules \
+          ./configure \
             --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
