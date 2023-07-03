@@ -1074,7 +1074,7 @@ programming language.</p>
 strings, booleans, arrays, objects (which in JSON-speak are
 hashes with only string keys), and "null".</p>
 <p>Booleans, null, strings and numbers are written the same way as
-in javascript. Just like everything else in jq, these simple
+in JSON. Just like everything else in jq, these simple
 values take an input and produce an output - <code>42</code> is a valid jq
 expression that takes an input, ignores it, and returns 42
 instead.</p>
@@ -5115,12 +5115,12 @@ in the list.</p>
                     <code>==</code>, <code>!=</code>
                     
                   </h3>
-                  <p>The expression 'a == b' will produce 'true' if the result of a and b
-are equal (that is, if they represent equivalent JSON documents) and
+                  <p>The expression 'a == b' will produce 'true' if the results of evaluating
+a and b are equal (that is, if they represent equivalent JSON values) and
 'false' otherwise. In particular, strings are never considered equal
-to numbers. If you're coming from JavaScript, jq's == is like
-JavaScript's === - considering values equal only when they have the
-same type as well as the same value.</p>
+to numbers.  In checking for the equality of JSON objects, the ordering of keys
+is irrelevant.  If you're coming from JavaScript, please note that jq's <code>==</code> is like
+JavaScript's <code>===</code>, the "strict equality" operator.</p>
 <p>!= is "not equal", and 'a != b' returns the opposite value of 'a == b'</p>
 
                   
@@ -5128,9 +5128,37 @@ same type as well as the same value.</p>
                       
                       <a data-toggle="collapse" href="#example74">
                         <i class="glyphicon glyphicon-chevron-right"></i>
-                        Example
+                        Examples
                       </a>
                       <div id="example74" class="manual-example collapse">
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '. == false'</td></tr>
+                            <tr><th>Input</th><td>null</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>false</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq '. == {&#34;b&#34;: {&#34;d&#34;: (4 + 1e-20), &#34;c&#34;: 3}, &#34;a&#34;:1}'</td></tr>
+                            <tr><th>Input</th><td>{&#34;a&#34;:1, &#34;b&#34;: {&#34;c&#34;: 3, &#34;d&#34;: 4}}</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>true</td>
+                              </tr>
+                            
+                          </table>
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq '.[] == 1'</td></tr>
@@ -5187,8 +5215,8 @@ same as <code>.</code>.</p>
 "truthiness" than is found in JavaScript or Python, but it
 means that you'll sometimes have to be more explicit about
 the condition you want.  You can't test whether, e.g. a
-string is empty using <code>if .name then A else B end</code>, you'll
-need something more like <code>if .name == "" then A else B end</code> instead.</p>
+string is empty using <code>if .name then A else B end</code>; you'll
+need something like <code>if .name == "" then A else B end</code> instead.</p>
 <p>If the condition <code>A</code> produces multiple results, then <code>B</code> is evaluated
 once for each result that is not false or null, and <code>C</code> is evaluated
 once for each false or null.</p>
