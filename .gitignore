@@ -15,8 +15,6 @@ tags
 jq
 !tests/modules/lib/jq/
 jq.1
-jq-*.tar.gz
-jq-*.zip
 
 # Generated source
 src/builtin.inc
@@ -35,6 +33,7 @@ autom4te.cache
 INSTALL
 Makefile
 jq-*.tar.gz
+jq-*.zip
 configure
 aclocal.m4
 Makefile.in
