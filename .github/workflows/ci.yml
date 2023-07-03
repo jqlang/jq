@@ -44,13 +44,13 @@ jobs:
             autoconf \
             bison \
             flex \
-            gdb \
-            python3
+            gdb
       - name: Build
         run: |
-          autoreconf -fi
+          autoreconf -i
           ./configure --disable-dependency-tracking \
             --disable-silent-rules \
+            --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
@@ -105,9 +105,10 @@ jobs:
             bison
       - name: Build
         run: |
-          autoreconf -fi
+          autoreconf -i
           ./configure --disable-dependency-tracking \
             --disable-silent-rules \
+            --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
@@ -166,9 +167,10 @@ jobs:
       - name: Build
         shell: msys2 {0}
         run: |
-          autoreconf -fi
+          autoreconf -i
           ./configure --disable-dependency-tracking \
             --disable-silent-rules \
+            --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
@@ -199,17 +201,49 @@ jobs:
           retention-days: 7
           path: jq.exe
 
-  release:
+  dist:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    needs: [linux, macos, windows]
-    if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
         with:
           submodules: true
+      - name: Install packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            automake \
+            autoconf
+      - name: Create dist
+        run: |
+          autoreconf -i
+          ./configure --disable-dependency-tracking \
+            --disable-silent-rules \
+            --disable-docs \
+            --disable-maintainer-mode \
+            --disable-valgrind \
+            --with-oniguruma=builtin
+          git diff --exit-code
+          make dist dist-zip
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jq-dist
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            jq-*.tar.gz
+            jq-*.zip
+
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: [linux, macos, windows, dist]
+    if: startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
       - name: Merge built artifacts
         uses: actions/download-artifact@v3
         with:
@@ -223,6 +257,7 @@ jobs:
           cp artifacts/jq-linux-ubuntu-22.04-gcc/jq release/jq-linux-amd64
           cp artifacts/jq-macos-macos-13-gcc/jq release/jq-macos-amd64
           cp artifacts/jq-windows-windows-2022-gcc/jq.exe release/jq-windows-amd64.exe
+          cp artifacts/jq-dist/jq-* release/
 
           gh release create $TAG_NAME --draft --title "jq ${TAG_NAME#v}" --generate-notes
           gh release upload $TAG_NAME --clobber release/jq-*
