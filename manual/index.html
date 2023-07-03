@@ -5210,7 +5210,7 @@ produces a value other than false or null, but act the same
 as <code>C</code> otherwise.</p>
 <p><code>if A then B end</code> is the same as <code>if A then B else .  end</code>.
 That is, the <code>else</code> branch is optional, and if absent is the
-same as <code>.</code>.</p>
+same as <code>.</code>. This also applies to <code>elif</code> with absent ending <code>else</code> branch.</p>
 <p>Checking for false or null is a simpler notion of
 "truthiness" than is found in JavaScript or Python, but it
 means that you'll sometimes have to be more explicit about
