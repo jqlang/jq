@@ -1116,6 +1116,13 @@ null
 7
 [7]
 
+[if false then 3 elif false then 4 end]
+7
+[7]
+
+[if false then 3 elif false then 4 else . end]
+7
+[7]
 
 [.[] | [.foo[] // .bar]]
 [{"foo":[1,2], "bar": 42}, {"foo":[1], "bar": null}, {"foo":[null,false,3], "bar": 18}, {"foo":[], "bar":42}, {"foo": [null,false,null], "bar": 41}]
