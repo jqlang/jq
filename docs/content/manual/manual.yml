@@ -2481,32 +2481,43 @@ sections:
             input: '("ab,cd", "ef, gh")'
             output: ['"ab"', '"cd"', '"ef"', '"gh"']
 
-      - title: "`sub(regex; tostring)`, `sub(regex; string; flags)`"
+      - title: "`sub(regex; tostring)`, `sub(regex; tostring; flags)`"
         body: |
 
-          Emit the string obtained by replacing the first match of regex in the
-          input string with `tostring`, after interpolation.  `tostring` should
-          be a jq string, and may contain references to named captures. The
-          named captures are, in effect, presented as a JSON object (as
-          constructed by `capture`) to `tostring`, so a reference to a captured
-          variable named "x" would take the form: `"\(.x)"`.
+          Emit the string obtained by replacing the first match of
+          regex in the input string with `tostring`, after
+          interpolation.  `tostring` should be a jq string or a stream
+          of such strings, each of which may contain references to
+          named captures. The named captures are, in effect, presented
+          as a JSON object (as constructed by `capture`) to
+          `tostring`, so a reference to a captured variable named "x"
+          would take the form: `"\(.x)"`.
 
         example:
-          - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
-            input: '"123abc456"'
-            output: '"ZabcZabc"'
 
+          - program: 'sub("[^a-z]*(?<x>[a-z]*)"; "Z\(.x)"; "g")'
+            input: '"123abc456def"'
+            output: ['"ZabcZdef"']
 
-      - title: "`gsub(regex; string)`, `gsub(regex; string; flags)`"
+          - program: '[sub("(?<a>.)"; "\(.a|ascii_upcase)", "\(.a|ascii_downcase)")]'
+            input: '"aB"'
+            output: ['["AB","aB"]']
+
+      - title: "`gsub(regex; tostring)`, `gsub(regex; tostring; flags)`"
         body: |
 
           `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
-          replaced by the string, after interpolation.
+          replaced by `tostring`, after interpolation. If the second argument is a stream
+          of jq strings, then `gsub` will produce a corresponding stream of JSON strings.
 
         example:
           - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
             input: '"Abcabc"'
-            output: '"+A-+a-"'
+            output: ['"+A-+a-"']
+
+          - program: '[gsub("p"; "a", "b")]'
+            input: '"p"'
+            output: ['["a","b"]']
 
 
   - title: Advanced features

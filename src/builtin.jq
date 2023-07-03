@@ -99,8 +99,10 @@ def scan(re):
 #
 # If input is an array, then emit a stream of successive subarrays of length n (or less),
 # and similarly for strings.
-def _nwise(a; $n): if a|length <= $n then a else a[0:$n] , _nwise(a[$n:]; $n) end;
-def _nwise($n): _nwise(.; $n);
+def _nwise($n):
+  def n: if length <= $n then . else .[0:$n] , (.[$n:] | n) end;
+  n;
+def _nwise(a; $n): a | _nwise($n);
 #
 # splits/1 produces a stream; split/1 is retained for backward compatibility.
 def splits($re; flags): . as $s
@@ -114,47 +116,26 @@ def splits($re): splits($re; null);
 # split emits an array for backward compatibility
 def split($re; flags): [ splits($re; flags) ];
 #
-# If s contains capture variables, then create a capture object and pipe it to s
-def sub($re; s):
-  . as $in
-  | [match($re)]
-  | if length == 0 then $in
-    else .[0]
-    | . as $r
-#  # create the "capture" object:
-    | reduce ( $r | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
-        ({}; . + $pair)
-    | $in[0:$r.offset] + s + $in[$r.offset+$r.length:]
-    end ;
-#
-# If s contains capture variables, then create a capture object and pipe it to s
-def sub($re; s; flags):
-  def subg: [explode[] | select(. != 103)] | implode;
-  # "fla" should be flags with all occurrences of g removed; gs should be non-nil if flags has a g
-  def sub1(fla; gs):
-    def mysub:
-      . as $in
-      | [match($re; fla)]
-      | if length == 0 then $in
-        else .[0] as $edit
-        | ($edit | .offset + .length) as $len
-        # create the "capture" object:
-        | reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
-            ({}; . + $pair)
-        | $in[0:$edit.offset]
-          + s
-          + ($in[$len:] | if length > 0 and gs then mysub else . end)
-        end ;
-    mysub ;
-    (flags | index("g")) as $gs
-    | (flags | if $gs then subg else . end) as $fla
-    | sub1($fla; $gs);
+# If s contains capture variables, then create a capture object and pipe it to s, bearing
+# in mind that s could be a stream
+def sub($re; s; $flags):
+   . as $in
+   | (reduce match($re; $flags) as $edit
+        ({result: [], previous: 0};
+            $in[ .previous: ($edit | .offset) ] as $gap
+            # create the "capture" objects (one per item in s)
+            | [reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
+                 ({}; . + $pair) | s ] as $inserts
+            | reduce range(0; $inserts|length) as $ix (.; .result[$ix] += $gap + $inserts[$ix])
+            | .previous = ($edit | .offset + .length ) )
+          | .result[] + $in[.previous:] )
+      // $in;
 #
 def sub($re; s): sub($re; s; "");
-# repeated substitution of re (which may contain named captures)
+#
 def gsub($re; s; flags): sub($re; s; flags + "g");
 def gsub($re; s): sub($re; s; "g");
-
+#
 ########################################################################
 # generic iterator/generator
 def while(cond; update):
@@ -206,7 +187,7 @@ def transpose:
   | length as $length
   | reduce range(0; $max) as $j
       ([]; . + [reduce range(0;$length) as $i ([]; . + [ $in[$i][$j] ] )] )
-	        end;
+  end;
 def in(xs): . as $x | xs | has($x);
 def inside(xs): . as $x | xs | contains($x);
 def repeat(exp):
@@ -236,7 +217,6 @@ def tostream:
   path(def r: (.[]?|r), .; r) as $p |
   getpath($p) |
   reduce path(.[]?) as $q ([$p, .]; [$p+$q]);
-
 
 # Assuming the input array is sorted, bsearch/1 returns
 # the index of the target if the target is in the input array; and otherwise
