@@ -188,6 +188,7 @@ jobs:
 
   dist:
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/jq-')
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
