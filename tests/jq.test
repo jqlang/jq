@@ -1578,6 +1578,11 @@ try (1/.) catch .
 0
 "number (1) and number (0) cannot be divided because the divisor is zero"
 
+0/0, (0 as $x | $x/0) | isnan
+0
+true
+true
+
 try (1%.) catch .
 0
 "number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
