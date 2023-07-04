@@ -4,7 +4,7 @@ on:
     branches:
       - master
     tags:
-      - "v*"
+      - "jq-*"
   pull_request:
 
 jobs:
@@ -222,7 +222,7 @@ jobs:
     permissions:
       contents: write
     needs: [linux, macos, windows, dist]
-    if: startsWith(github.event.ref, 'refs/tags/v')
+    if: startsWith(github.event.ref, 'refs/tags/jq-')
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -241,5 +241,5 @@ jobs:
           cp artifacts/jq-windows-windows-2022-gcc/jq.exe release/jq-windows-amd64.exe
           cp artifacts/jq-dist/jq-* release/
 
-          gh release create $TAG_NAME --draft --title "jq ${TAG_NAME#v}" --generate-notes
+          gh release create $TAG_NAME --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
           gh release upload $TAG_NAME --clobber release/jq-*
