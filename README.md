@@ -3,10 +3,6 @@ jq
 
 jq is a lightweight and flexible command-line JSON processor.
 
-[![Linux Build](https://github.com/jqlang/jq/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/jqlang/jq/actions/workflows/linux.yml?query=branch%3Amaster)
-[![macOS Build](https://github.com/jqlang/jq/actions/workflows/macos.yml/badge.svg?branch=master)](https://github.com/jqlang/jq/actions/workflows/macos.yml?query=branch%3Amaster)
-[![Windows Build](https://github.com/jqlang/jq/actions/workflows/windows.yml/badge.svg?branch=master)](https://github.com/jqlang/jq/actions/workflows/windows.yml?query=branch%3Amaster)
-
 If you want to learn to use jq, read the documentation at
 [https://jqlang.github.io/jq](https://jqlang.github.io/jq).  This
 documentation is generated from the docs/ folder of this repository.
