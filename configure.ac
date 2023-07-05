@@ -291,56 +291,9 @@ AC_SUBST(onig_CFLAGS)
 AC_SUBST(onig_LDFLAGS)
 
 AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
-
-dnl utf8proc
-AC_ARG_WITH([utf8proc],
-   [AS_HELP_STRING([--with-utf8proc=prefix],
-      [try this for a non-standard install prefix of the utf8proc library])], ,
-   [with_utf8proc=yes])
-
-utf8proc_CFLAGS=
-utf8proc_LDFLAGS=
-build_utf8proc=no
-AS_IF([test "x$with_utf8proc" != xno], [
-   save_CFLAGS="$CFLAGS"
-   save_LDFLAGS="$LDFLAGS"
-   AS_IF([test "x$with_utf8proc" != xyes], [
-      AS_IF([test "x$with_utf8proc" = xbuiltin], [
-          build_utf8proc=yes
-      ], [
-          utf8proc_CFLAGS="-I${with_utf8proc}/include"
-          utf8proc_LDFLAGS="-L${with_utf8proc}/lib"
-      ])
-   ])
-   AS_IF([test "x$build_utf8proc" = xno], [
-       # check for UTF8PROC library, either in /usr or where requested
-       CFLAGS="$CFLAGS $utf8proc_CFLAGS"
-       LDFLAGS="$LDFLAGS $utf8proc_LDFLAGS"
-       AC_CHECK_HEADER("utf8proc.h",
-          AC_CHECK_LIB([utf8proc],[utf8proc_version]))
-       # handle check results
-       AS_IF([test "x$ac_cv_lib_utf8proc_utf8proc_version" != "xyes"], [
-          build_utf8proc=yes
-          AC_MSG_NOTICE([utf8proc was not found. Will use the packaged utf8proc.])
-       ])
-   ])
-   AS_IF([test "x$build_utf8proc" = xyes -a -f "${srcdir}/modules/utf8proc/configure.ac" ], [
-       utf8proc_CFLAGS="-I${srcdir}/modules/utf8proc/src"
-       utf8proc_LDFLAGS="-L${srcdir}/modules/utf8proc/src -Wl,-rpath,${libdir}"
-       AC_CONFIG_SUBDIRS([modules/utf8proc])
-       AC_DEFINE([HAVE_LIBUTF8PROC],1,[Define to 1 if the system includes libutf8proc])
-   ])
-   CFLAGS="$save_CFLAGS"
-   LDFLAGS="$save_LDFLAGS"
-])
-AC_SUBST(utf8proc_CFLAGS)
-AC_SUBST(utf8proc_LDFLAGS)
-
-AM_CONDITIONAL([BUILD_UTF8PROC], [test "x$build_utf8proc" = xyes])
-
-
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 AC_CONFIG_MACRO_DIRS([config/m4 m4])
 AC_CONFIG_FILES([Makefile libjq.pc])
 AC_OUTPUT
+

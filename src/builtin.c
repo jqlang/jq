@@ -517,8 +517,7 @@ static jv f_utf8bytelength(jq_state *jq, jv input) {
   return jv_number(jv_string_length_bytes(input));
 }
 
-#ifdef HAVE_LIBUTF8PROC
-# include <utf8proc.h>
+# include "utf8proc/utf8proc.h"
 
 static utf8proc_int32_t utf8proc_codepoint_func(utf8proc_int32_t codepoint, utf8proc_int32_t (*func)(utf8proc_int32_t)) {
   return func(codepoint);
@@ -593,15 +592,13 @@ static jv f_utf8tocase(jq_state *jq, jv input, char toLower) {
   return input;
 }
 
-static jv f_utf8tolower(jq_state *jq, jv input) {
+static jv f_downcase(jq_state *jq, jv input) {
   return f_utf8tocase(jq, input, 1);
 }
 
-static jv f_utf8toupper(jq_state *jq, jv input) {
+static jv f_upcase(jq_state *jq, jv input) {
   return f_utf8tocase(jq, input, 0);
 }
-
-#endif // HAVE_LIBUTF8PROC
 
 #define CHARS_ALPHANUM "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
@@ -1801,10 +1798,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_contains, "contains", 2},
   {(cfunction_ptr)f_length, "length", 1},
   {(cfunction_ptr)f_utf8bytelength, "utf8bytelength", 1},
-#ifdef HAVE_LIBUTF8PROC
-  {(cfunction_ptr)f_utf8tolower, "utf8tolower", 1},
-  {(cfunction_ptr)f_utf8toupper, "utf8toupper", 1},
-#endif
+  {(cfunction_ptr)f_downcase, "downcase", 1},
+  {(cfunction_ptr)f_upcase, "upcase", 1},
   {(cfunction_ptr)f_type, "type", 1},
   {(cfunction_ptr)f_isinfinite, "isinfinite", 1},
   {(cfunction_ptr)f_isnan, "isnan", 1},

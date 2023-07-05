@@ -1716,3 +1716,11 @@ false
 . |= try . catch .
 1
 1
+
+downcase
+"ǄIǄA"
+"ǆiǆa"
+
+upcase
+"ǆiǆa"
+"ǄIǄA"
