@@ -63,7 +63,7 @@ manpage_epilogue: |
 
   Presumably. Report them or discuss them at:
 
-      https://github.com/stedolan/jq/issues
+      https://github.com/jqlang/jq/issues
 
   ## AUTHOR
 
@@ -142,7 +142,7 @@ sections:
         ASCII output with every non-ASCII character replaced with the
         equivalent escape sequence.
 
-      * `--unbuffered`
+      * `--unbuffered`:
 
         Flush the output after each JSON object is printed (useful if
         you're piping a slow data source into jq and piping jq's
@@ -166,7 +166,7 @@ sections:
 
       * `-e` / `--exit-status`:
 
-        Sets the exit status of jq to 0 if the last output values was
+        Sets the exit status of jq to 0 if the last output value was
         neither `false` nor `null`, 1 if the last output value was
         either `false` or `null`, or 4 if no valid result was ever
         produced.  Normally jq exits with 2 if there was any usage
@@ -231,8 +231,8 @@ sections:
       - title: "`.foo?`"
         body: |
 
-          Just like `.foo`, but does not output even an error when `.`
-          is not an array or an object.
+          Just like `.foo`, but does not output an error when `.` is not an
+          object.
 
         examples:
           - program: '.foo?'
@@ -248,11 +248,11 @@ sections:
             input: '[1,2]'
             output: ['[]']
 
-      - title: "`.[<string>]`, `.[2]`, `.[10:15]`"
+      - title: "`.[<string>]`, `.[<number>]`, `.[<number>:<number>]`"
         body: |
 
           You can also look up fields of an object using syntax like
-          `.["foo"]` (.foo above is a shorthand version of this). This
+          `.["foo"]` (`.foo` above is a shorthand version of this). This
           one works for arrays as well, if the key is an
           integer. Arrays are zero-based (like javascript), so `.[2]`
           returns the third element of the array.
@@ -381,7 +381,7 @@ sections:
       instead.
 
     entries:
-      - title: Array construction - `[]`
+      - title: "Array construction: `[]`"
         body: |
 
           As in JSON, `[]` is used to construct arrays, as in
@@ -406,7 +406,7 @@ sections:
           - program: "[.user, .projects[]]"
             input: '{"user":"stedolan", "projects": ["jq", "wikiflow"]}'
             output: ['["stedolan", "jq", "wikiflow"]']
-      - title: Objects - `{}`
+      - title: "Objects: `{}`"
         body: |
 
           Like JSON, `{}` is for constructing objects (aka
@@ -467,14 +467,14 @@ sections:
   - title: Builtin operators and functions
     body: |
 
-      Some jq operator (for instance, `+`) do different things
+      Some jq operators (for instance, `+`) do different things
       depending on the type of their arguments (arrays, numbers,
       etc.). However, jq never does implicit type conversions. If you
       try to add a string to an object you'll get an error message and
       no result.
 
     entries:
-      - title: Addition - `+`
+      - title: "Addition: `+`"
         body: |
 
           The operator `+` takes two filters, applies them both
@@ -513,7 +513,7 @@ sections:
             input: 'null'
             output: ['{"a": 42, "b": 2, "c": 3}']
 
-      - title: Subtraction - `-`
+      - title: "Subtraction: `-`"
         body: |
 
           As well as normal arithmetic subtraction on numbers, the `-`
@@ -528,7 +528,7 @@ sections:
             input: '["xml", "yaml", "json"]'
             output: ['["json"]']
 
-      - title: Multiplication, division, modulo - `*`, `/`, and `%`
+      - title: "Multiplication, division, modulo: `*`, `/`, `%`"
         body: |
 
           These operators only work on numbers, and do the expected.
@@ -632,7 +632,7 @@ sections:
             input: '["foo", "bar", "baz"]'
             output: ['["foo"]']
 
-      - title: "`to_entries`, `from_entries`, `with_entries`"
+      - title: "`to_entries`, `from_entries`, `with_entries(f)`"
         body: |
 
           These functions convert between an object and an array of
@@ -641,9 +641,9 @@ sections:
           includes `{"key": k, "value": v}`.
 
           `from_entries` does the opposite conversion, and
-          `with_entries(foo)` is a shorthand for `to_entries |
-          map(foo) | from_entries`, useful for doing some operation to
-          all keys and values of an object.
+          `with_entries(f)` is a shorthand for `to_entries | map(f) |
+          from_entries`, useful for doing some operation to all keys
+          and values of an object.
 
         examples:
           - program: 'to_entries'
@@ -700,14 +700,14 @@ sections:
             input: 'null'
             output: ['[1,2,3]']
 
-      - title: "`map(x)`"
+      - title: "`map(f)`"
         body: |
 
-          For any filter `x`, `map(x)` will run that filter for each
+          For any filter `f`, `map(f)` will run that filter for each
           element of the input array, and produce the outputs a new
           array. `map(.+1)` will increment each element of an array of numbers.
 
-          `map(x)` is equivalent to `[.[] | x]`. In fact, this is how
+          `map(f)` is equivalent to `[.[] | f]`. In fact, this is how
           it's defined.
 
         examples:
@@ -875,7 +875,7 @@ sections:
             input: '[0, false, [], {}, null, "hello"]'
             output: ['["number", "boolean", "array", "object", "null", "string"]']
 
-      - title: "`sort, sort_by`"
+      - title: "`sort`, `sort_by`"
         body: |
 
           The `sort` functions sorts its input, which must be an
@@ -957,7 +957,7 @@ sections:
 
           The `unique_by(.foo)` function takes as input an array and produces
           an array of the same elements, in sorted order, with
-          elqements with a duplicate `.foo` field removed. Think of it as making
+          elements with a duplicate `.foo` field removed. Think of it as making
           an array by taking one element out of every group produced by
           `group_by`.
 
@@ -1179,7 +1179,7 @@ sections:
             input: '[[{"a":1}]]'
             output: ['1']
 
-      - title: "String interpolation - `\\(foo)`"
+      - title: "String interpolation: `\\(exp)`"
         body: |
 
           Inside a string, you can put an expression inside parens
@@ -1274,10 +1274,6 @@ sections:
             input: '"This works if x < y"'
             output: ['"This works if x &lt; y"']
 
-#          - program: '@html "<span>Anonymous said: \(.)</span>"'
-#            input: '"<script>alert(\"lol hax\");</script>"'
-#            output: ["<span>Anonymous said: &lt;script&gt;alert(&quot;lol hax&quot;);&lt;/script&gt;</span>"]
-
           - program: '@sh "echo \(.)"'
             input: "\"O'Hara's Ale\""
             output: ["\"echo 'O'\\\\''Hara'\\\\''s Ale'\""]
@@ -1290,8 +1286,8 @@ sections:
           The expression 'a == b' will produce 'true' if the result of a and b
           are equal (that is, if they represent equivalent JSON documents) and
           'false' otherwise. In particular, strings are never considered equal
-          to numbers. If you're coming from Javascript, jq's == is like
-          Javascript's === - considering values equal only when they have the
+          to numbers. If you're coming from JavaScript, jq's == is like
+          JavaScript's === - considering values equal only when they have the
           same type as well as the same value.
 
           != is "not equal", and 'a != b' returns the opposite value of 'a == b'
@@ -1300,7 +1296,8 @@ sections:
           - program: '.[] == 1'
             input: '[1, 1.0, "1", "banana"]'
             output: ['true', 'true', 'false', 'false']
-      - title: if-then-else
+
+      - title: if-then-else-end
         body: |
 
           `if A then B else C end` will act the same as `B` if `A`
@@ -1308,7 +1305,7 @@ sections:
           as `C` otherwise.
 
           Checking for false or null is a simpler notion of
-          "truthiness" than is found in Javascript or Python, but it
+          "truthiness" than is found in JavaScript or Python, but it
           means that you'll sometimes have to be more explicit about
           the condition you want: you can't test whether, e.g. a
           string is empty using `if .name then A else B end`, you'll
@@ -1333,7 +1330,7 @@ sections:
             input: 2
             output: ['"many"']
 
-      - title: "`>, >=, <=, <`"
+      - title: "`>`, `>=`, `<=`, `<`"
         body: |
 
           The comparison operators `>`, `>=`, `<=`, `<` return whether
@@ -1348,12 +1345,13 @@ sections:
             input: 2
             output: ['true']
 
-      - title: and/or/not
+      - title: "`and`, `or`, `not`"
         body: |
 
-          jq supports the normal Boolean operators and/or/not. They have the
-          same standard of truth as if expressions - false and null are
-          considered "false values", and anything else is a "true value".
+          jq supports the normal Boolean operators `and`, `or`, `not`.
+          They have the same standard of truth as if expressions -
+          `false` and `null` are considered "false values", and
+          anything else is a "true value".
 
           If an operand of one of these operators produces multiple
           results, the operator itself will produce a result for each input.
@@ -1363,12 +1361,12 @@ sections:
           rather than with special syntax, as in `.foo and .bar |
           not`.
 
-          These three only produce the values "true" and "false", and
+          These three only produce the values `true` and `false`, and
           so are only useful for genuine Boolean operations, rather
           than the common Perl/Python/Ruby idiom of
           "value_that_may_be_null or default". If you want to use this
           form of "or", picking between two values rather than
-          evaluating a condition, see the "//" operator below.
+          evaluating a condition, see the `//` operator below.
 
         examples:
           - program: '42 and "a string"'
@@ -1377,9 +1375,6 @@ sections:
           - program: '(true, false) or false'
             input: 'null'
             output: ['true', 'false']
-#          - program: '(true, false) and (true, false)'
-#            input: 'null'
-#            output: ['true', 'false', 'false', 'false']
           - program: '(true, true) and (true, false)'
             input: 'null'
             output: ['true', 'false', 'true', 'false']
@@ -1387,7 +1382,7 @@ sections:
             input: 'null'
             output: ['[false, true]']
 
-      - title: Alternative operator - `//`
+      - title: "Alternative operator: `//`"
         body: |
 
           A filter of the form `a // b` produces the same
@@ -1422,7 +1417,7 @@ sections:
 
       It is also possible to define functions in jq, although this is
       is a feature whose biggest use is defining jq's standard library
-      (many jq functions such as `map` and `find` are in fact written
+      (many jq functions such as `map` and `select` are in fact written
       in jq).
 
       Finally, jq has a `reduce` operation, which is very powerful but a
@@ -1463,7 +1458,7 @@ sections:
           fields, and another object which is used to map author usernames to
           real names. Our input looks like:
 
-              {"posts": [{"title": "Frist psot", "author": "anon"},
+              {"posts": [{"title": "First post", "author": "anon"},
                          {"title": "A well-written article", "author": "person1"}],
                "realnames": {"anon": "Anonymous Coward",
                              "person1": "Person McPherson"}}
@@ -1471,7 +1466,7 @@ sections:
           We want to produce the posts with the author field containing a real
           name, as in:
 
-              {"title": "Frist psot", "author": "Anonymous Coward"}
+              {"title": "First post", "author": "Anonymous Coward"}
               {"title": "A well-written article", "author": "Person McPherson"}
 
           We use a variable, $names, to store the realnames object, so that we
@@ -1571,7 +1566,7 @@ sections:
       If an object has two fields which are arrays, `.foo` and `.bar`,
       and you append something to `.foo`, then `.bar` will not get
       bigger. Even if you've just set `.bar = .foo`. If you're used to
-      programming in languages like Python, Java, Ruby, Javascript,
+      programming in languages like Python, Java, Ruby, JavaScript,
       etc. then you can think of it as though jq does a full deep copy
       of every object before it does the assignment (for performance,
       it doesn't actually do that, but that's the general idea).
@@ -1588,7 +1583,7 @@ sections:
            .foo = .bar | .foo.baz = 1
 
           will not have the side-effect of setting .bar.baz to be set
-          to 1, as the similar-looking program in Javascript, Python,
+          to 1, as the similar-looking program in JavaScript, Python,
           Ruby or other languages would. Unlike these languages (but
           like Haskell and some other functional languages), there is
           no notion of two arrays or objects being "the same array" or

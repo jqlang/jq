@@ -146,6 +146,13 @@ jq: error: Cannot use number (0) as object key at <top-level>, line 1:
 {"foo": {"bar": 20}}
 20
 
+.e0, .E1, .E-1, .E+1
+{"e0": 1, "E1": 2, "E": 3}
+1
+2
+2
+4
+
 [.[]|.foo?]
 [1,[2],{"foo":3,"bar":4},{},{"foo":5}]
 [3,null,5]
@@ -539,6 +546,10 @@ null
 49732 % 472
 null
 172
+
+[(infinite, -infinite) % (1, -1)]
+null
+[0,0,0,0]
 
 1 + tonumber + ("10" | tonumber)
 4
@@ -1105,6 +1116,13 @@ null
 7
 [7]
 
+[if false then 3 elif false then 4 end]
+7
+[7]
+
+[if false then 3 elif false then 4 else . end]
+7
+[7]
 
 [.[] | [.foo[] // .bar]]
 [{"foo":[1,2], "bar": 42}, {"foo":[1], "bar": null}, {"foo":[null,false,3], "bar": 18}, {"foo":[], "bar":42}, {"foo": [null,false,null], "bar": 41}]
@@ -1485,6 +1503,10 @@ module (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1:
 
 %%FAIL
+module []; 0
+jq: error: Module metadata must be an object at <top-level>, line 1:
+
+%%FAIL
 include "a" (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1:
 
@@ -1556,6 +1578,11 @@ try (1/.) catch .
 0
 "number (1) and number (0) cannot be divided because the divisor is zero"
 
+0/0, (0 as $x | $x/0) | isnan
+0
+true
+true
+
 try (1%.) catch .
 0
 "number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
@@ -1565,7 +1592,7 @@ try (1%.) catch .
 jq: error: Division by zero? at <top-level>, line 1:
 
 # Basic numbers tests: integers, powers of two
-[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers
+[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers
 null
 true
 
@@ -1724,3 +1751,4 @@ downcase
 upcase
 "ǆiǆa"
 "ǄIǄA"
+

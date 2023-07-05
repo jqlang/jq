@@ -1,16 +1,17 @@
-#!/bin/sh
+#!/bin/bash
 
 # This script builds the website from the docs directory of
 # the current branch and copies it over to the gh-pages
 # branch.
 
-set -eu
-set -o xtrace
+set -eux
+shopt -s dotglob
 
 # build website
-scriptdir=`dirname "$0"`
+scriptdir=$(dirname "$0")
 cd "$scriptdir"/../docs
 rm -rf output
+mkdir output
 pipenv run python3 build_website.py
 cd ..
 

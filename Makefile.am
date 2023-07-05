@@ -5,7 +5,9 @@ LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
-        src/util.h
+        src/util.h src/decNumber/decContext.h src/decNumber/decNumber.h \
+        src/decNumber/decNumberLocal.h src/jv_dtoa_tsd.h src/jv_thread.h \
+        src/jv_type_private.h
 
 LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
@@ -44,10 +46,10 @@ BUILT_SOURCES = src/builtin.inc src/version.h
 	$(AM_V_LEX) echo "NOT building lexer.c!"
 endif
 
-# Tell YACC (bison) autoconf macros that you want a header file created.
-# If the --warnings=all fails, you probably have an old version of bison
-# OSX ships an old bison, so update with homebrew or macports
-AM_YFLAGS = --warnings=all -d
+# Tell YACC (Bison) autoconf macros that you want a header file created.
+# If the --warnings=all fails, you probably have an old version of Bison
+# macOS ships an old Bison, so update with Homebrew or MacPorts.
+AM_YFLAGS = --warnings=all -Wno-yacc -d
 
 ### libjq
 
@@ -150,8 +152,8 @@ tests/man.test: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_mantests.py ) > $@
 else
-	@echo Changes to the manual.yml require docs to be enabled to run the tests
-	@false
+	@echo Changes to the manual.yml require docs to be enabled to update the manual test.
+	@echo As a result, the manual test is out of date.
 endif
 
 ### Building the manpage
@@ -164,8 +166,8 @@ jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_manpage.py ) > $@ || { rm -f $@; false; }
 else
-	@echo Changes to the manual.yml require docs to be enabled to generate an updated manpage
-	@echo As a result, your manpage is out of date.
+	@echo Changes to the manual.yml require docs to be enabled to update the manpage.
+	@echo As a result, the manpage is out of date.
 endif
 
 jq.1: jq.1.prebuilt
@@ -215,10 +217,11 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/base64.test tests/base64test 				\
         tests/jq-f-test.sh tests/shtest
 
-# README.md is expected in Github projects, good stuff in it, so we'll
+DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin
+
+# README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
-docdir = ${datadir}/doc/${PACKAGE}
-dist_doc_DATA = README.md COPYING AUTHORS README
+dist_doc_DATA = README.md COPYING AUTHORS
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libjq.pc

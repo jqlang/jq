@@ -26,7 +26,7 @@ struct lexer_param;
 }
 
 %locations
-%error-verbose
+%define parse.error verbose
 %define api.pure
 %union {
   jv literal;
@@ -319,6 +319,10 @@ Module:
     FAIL(@$, "Module metadata must be constant");
     $$ = gen_noop();
     block_free($2);
+  } else if (block_const_kind($2) != JV_KIND_OBJECT) {
+    FAIL(@$, "Module metadata must be an object");
+    $$ = gen_noop();
+    block_free($2);
   } else {
     $$ = gen_module($2);
   }
@@ -362,9 +366,6 @@ Term "as" Patterns '|' Exp {
 
 "if" Exp "then" Exp ElseBody {
   $$ = gen_cond($2, $4, $5);
-} |
-"if" Exp "then" Exp "end" {
-  $$ = gen_cond($2, $4, gen_noop());
 } |
 "if" Exp "then" error {
   FAIL(@$, "Possibly unterminated 'if' statement");
@@ -621,6 +622,9 @@ ElseBody:
 } |
 "else" Exp "end" {
   $$ = $2;
+} |
+"end" {
+  $$ = gen_noop();
 }
 
 ExpD:

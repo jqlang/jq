@@ -5,7 +5,7 @@ Name: jq
 Version: %{myver}
 Release: %{myrel}%{?dist}
 Source0: jq-%{myver}.tar.gz
-URL: https://stedolan.github.io/jq
+URL: https://jqlang.github.io/jq
 License: BSD
 AutoReqProv: no
 #BuildPrereq: autoconf, libtool, automake, flex, bison, python
@@ -52,7 +52,6 @@ rm -rf %{buildroot}
 %endif
 %{_datadir}/doc/%{name}/AUTHORS
 %{_datadir}/doc/%{name}/COPYING
-%{_datadir}/doc/%{name}/README
 %{_datadir}/doc/%{name}/README.md
 %{_datadir}/man/man1/jq.1
 %{_includedir}/jq.h

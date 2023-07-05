@@ -106,7 +106,7 @@ New features in 1.4 since 1.3:
 
  - math functions
 
-    - floor, sqrt, cbrt, etetera (depends on what's available from libm)
+    - floor, sqrt, cbrt, etcetera (depends on what's available from libm)
 
  - libjq -- a C API interface to jq's JSON representation and for
    running jq programs from C applications
