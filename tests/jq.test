@@ -1744,3 +1744,7 @@ false
 1
 1
 
+# Issue #2584
+walk(select(IN({}, []) | not))
+{"a":1,"b":[]}
+{"a":1}
