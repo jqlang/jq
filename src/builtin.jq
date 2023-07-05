@@ -260,6 +260,12 @@ def walk(f):
   else f
   end;
 
+# stream should be a stream of dot-paths
+def pick(stream):
+  . as $in
+  | reduce path(stream) as $a (null;
+      setpath($a; $in|getpath($a)) );
+
 # SQL-ish operators here:
 def INDEX(stream; idx_expr):
   reduce stream as $row ({}; .[$row|idx_expr|tostring] = $row);
