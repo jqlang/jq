@@ -925,6 +925,24 @@ sections:
             input: '{"a": 1, "b": 2, "c": 3}'
             output: ['{"a": 2, "b": 3, "c": 4}']
 
+      - title: "`pick(stream)`"
+        body: |
+        
+          Emit the projection of the input object or array defined by the specified stream of
+          dot-path specifications, such that if p is one of these specifications,
+          and `(. | p)` evaluates to $x, then `pick(stream) | p` will also be $x.
+          For arrays, negative indices and .[m:n] specifications should not be used.
+
+        examples:
+          - program: 'pick(.a, .b.c, .x)'
+            input: '{"a": 1, "b": {"c": 2, "d": 3}, "e": 4}'
+            output: ['{"a":1,"b":{"c":2},"x":null}']
+
+          - program: '[1,2,3,4] | pick(.[2], .[0], .[0])'
+            input: '[1,2,3,4]'
+            output: ['[1,null,3]']
+
+
       - title: "`path(path_expression)`"
         body: |
 
