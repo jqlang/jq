@@ -260,10 +260,10 @@ def walk(f):
   else f
   end;
 
-# stream should be a stream of dot-paths
-def pick(stream):
+# pathexps could be a stream of dot-paths
+def pick(pathexps):
   . as $in
-  | reduce path(stream) as $a (null;
+  | reduce path(pathexps) as $a (null;
       setpath($a; $in|getpath($a)) );
 
 # SQL-ish operators here:
