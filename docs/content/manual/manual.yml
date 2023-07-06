@@ -508,11 +508,9 @@ sections:
       - title: "Array/Object Value Iterator (forward): `.[+]`, `.[+]?`"
         body: |
 
-          The `.[]` and `.[]?` operators default to iterating arrays from
-          the first element to the last, but in the future there will be
-          contexts where they may reverse the array iteration order.  These
-          operators, `.[+]` and `.[+]?` always iterate arrays from the first
-          element to the last.
+          Just like `.[]` and `.[]?`, but always iterating arrays from the
+          first element to the last even when invoked as part of the
+          `path_expression` argument to `path_reverse()`.
 
       - title: "Comma: `,`"
         body: |
@@ -979,6 +977,21 @@ sections:
           - program: '[path(..)]'
             input: '{"a":[{"b":1}]}'
             output: ['[[],["a"],["a",0],["a",0,"b"]]']
+
+      - title: "`path_reverse(path_expression)`"
+        body: |
+
+          Just like `path(path_expression)`, but the iteration order for
+          any `.[]` in `path_expression` is reversed, thus
+          `[[range(5)]|path_reverse(.[])]` will output
+          `[[4],[3],[2],[1],[0]]`.
+
+          For objects, however, the iteration order of `.[]` is not reversed.
+
+        examples:
+          - program: '[path_reverse(.[])]'
+            input: '[0,1,2,3,4]'
+            output: ['[[4],[3],[2],[1],[0]]']
 
       - title: "`del(path_expression)`"
         body: |

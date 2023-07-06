@@ -1789,6 +1789,18 @@ static block bind_bytecoded_builtins(block b) {
     }
   }
   {
+    struct bytecoded_builtin builtin_def_1arg[] = {
+      {"path_reverse", BLOCK(gen_op_simple(PATH_REVERSE_BEGIN),
+                     gen_call("arg", gen_noop()),
+                     gen_op_simple(PATH_END))},
+    };
+    for (unsigned i=0; i<sizeof(builtin_def_1arg)/sizeof(builtin_def_1arg[0]); i++) {
+      builtins = BLOCK(builtins, gen_function(builtin_def_1arg[i].name,
+                                              gen_param("arg"),
+                                              builtin_def_1arg[i].code));
+    }
+  }
+  {
     // Note that we can now define `range` as a jq-coded function
     block rangevar = gen_op_var_fresh(STOREV, "rangevar");
     block rangestart = gen_op_var_fresh(STOREV, "rangestart");

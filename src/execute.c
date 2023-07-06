@@ -35,6 +35,7 @@ struct jq_state {
 
   jv path;
   jv value_at_path;
+  int path_reverse;
   int subexp_nest;
   int debug_trace_enabled;
   int initial_execution;
@@ -617,6 +618,7 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case PATH_REVERSE_BEGIN:
     case PATH_BEGIN: {
       jv v = stack_pop(jq);
       stack_push(jq, jq->path);
@@ -625,11 +627,13 @@ jv jq_next(jq_state *jq) {
 
       stack_push(jq, jv_number(jq->subexp_nest));
       stack_push(jq, jq->value_at_path);
+      stack_push(jq, jq->path_reverse ? jv_true() : jv_false());
       stack_push(jq, jv_copy(v));
 
       jq->path = jv_array();
       jq->value_at_path = v; // next INDEX operation must index into v
       jq->subexp_nest = 0;
+      jq->path_reverse = !!(opcode == PATH_REVERSE_BEGIN);
       break;
     }
 
@@ -645,6 +649,10 @@ jv jq_next(jq_state *jq) {
         goto do_backtrack;
       }
       jv_free(v); // discard value, only keep path
+
+      v = stack_pop(jq);
+      jq->path_reverse == !!(jv_get_kind(v) == JV_KIND_TRUE);
+      jv_free(v);
 
       jv old_value_at_path = stack_pop(jq);
       int old_subexp_nest = (int)jv_number_value(stack_pop(jq));
@@ -663,6 +671,7 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
+    case ON_BACKTRACK(PATH_REVERSE_BEGIN):
     case ON_BACKTRACK(PATH_BEGIN):
     case ON_BACKTRACK(PATH_END): {
       jv_free(jq->path);
@@ -756,13 +765,25 @@ jv jq_next(jq_state *jq) {
         switch (opcode) {
         case EACH: case EACH_OPT:
         case EACH_FORWARD: case EACH_FORWARD_OPT:
-          idx = 0;
+          if (jq->path_reverse) {
+            idx = jv_array_length(jv_copy(container)) - 1;
+            forward = 0;
+          } else {
+            idx = 0;
+          }
           break;
         case EACH_BACKWARD: case EACH_BACKWARD_OPT:
           idx = jv_array_length(jv_copy(container)) - 1;
           forward = 0;
           break;
         case ON_BACKTRACK(EACH): case ON_BACKTRACK(EACH_OPT):
+          if (jq->path_reverse) {
+            forward = 0;
+            idx--;
+          } else {
+            idx++;
+          }
+          break;
         case ON_BACKTRACK(EACH_FORWARD): case ON_BACKTRACK(EACH_FORWARD_OPT):
           idx++;
           break;
