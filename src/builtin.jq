@@ -90,12 +90,13 @@ def capture($val): ($val|type) as $vt | if $vt == "string" then capture($val; nu
    elif $vt == "array" and ($val | length) > 1 then capture($val[0]; $val[1])
    elif $vt == "array" and ($val | length) > 0 then capture($val[0]; null)
    else error( $vt + " not a string or array") end;
-def scan(re):
-  match(re; "g")
-  |  if (.captures|length > 0)
+def scan($re; $flags):
+  match($re; "g" + $flags)
+    | if (.captures|length > 0)
       then [ .captures | .[] | .string ]
       else .string
-      end ;
+      end;
+def scan($re): scan($re; null);
 #
 # If input is an array, then emit a stream of successive subarrays of length n (or less),
 # and similarly for strings.

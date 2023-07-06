@@ -2147,7 +2147,7 @@ sections:
 
           `if A then B end` is the same as `if A then B else .  end`.
           That is, the `else` branch is optional, and if absent is the
-          same as `.`.
+          same as `.`. This also applies to `elif` with absent ending `else` branch.
 
           Checking for false or null is a simpler notion of
           "truthiness" than is found in JavaScript or Python, but it

@@ -1116,6 +1116,13 @@ null
 7
 [7]
 
+[if false then 3 elif false then 4 end]
+7
+[7]
+
+[if false then 3 elif false then 4 else . end]
+7
+[7]
 
 [.[] | [.foo[] // .bar]]
 [{"foo":[1,2], "bar": 42}, {"foo":[1], "bar": null}, {"foo":[null,false,3], "bar": 18}, {"foo":[], "bar":42}, {"foo": [null,false,null], "bar": 41}]
@@ -1570,6 +1577,11 @@ null
 try (1/.) catch .
 0
 "number (1) and number (0) cannot be divided because the divisor is zero"
+
+0/0, (0 as $x | $x/0) | isnan
+0
+true
+true
 
 try (1%.) catch .
 0

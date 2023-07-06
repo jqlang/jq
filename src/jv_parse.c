@@ -299,7 +299,7 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
         p->output = JV_ARRAY(jv_copy(p->path), p->next);
         p->next = jv_invalid();
       }
-      p->path = jv_array_set(p->path, p->stacklen - 1, jv_true()); // ready for another name:value pair
+      p->path = jv_array_set(p->path, p->stacklen - 1, jv_null()); // ready for another key:value pair
       p->last_seen = JV_LAST_COMMA;
     } else {
       assert(k == JV_KIND_NULL);

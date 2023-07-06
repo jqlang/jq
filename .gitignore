@@ -33,6 +33,7 @@ autom4te.cache
 INSTALL
 Makefile
 jq-*.tar.gz
+jq-*.zip
 configure
 aclocal.m4
 Makefile.in
