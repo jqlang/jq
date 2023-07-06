@@ -335,6 +335,7 @@ static void set_error(jq_state *jq, jv value) {
 }
 
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
+#define IS_BACKTRACK(op) ((op)>=NUM_OPCODES)
 
 jv jq_next(jq_state *jq) {
   jv cfunc_input[MAX_CFUNCTION_ARGS];
@@ -718,7 +719,11 @@ jv jq_next(jq_state *jq) {
     }
 
     case EACH:
-    case EACH_OPT: {
+    case EACH_FORWARD:
+    case EACH_BACKWARD:
+    case EACH_OPT:
+    case EACH_FORWARD_OPT:
+    case EACH_BACKWARD_OPT: {
       jv container = stack_pop(jq);
       // detect invalid path expression like path(reverse | .[])
       if (!path_intact(jq, jv_copy(container))) {
@@ -734,32 +739,69 @@ jv jq_next(jq_state *jq) {
       // fallthrough
     }
     case ON_BACKTRACK(EACH):
-    case ON_BACKTRACK(EACH_OPT): {
+    case ON_BACKTRACK(EACH_FORWARD):
+    case ON_BACKTRACK(EACH_BACKWARD):
+    case ON_BACKTRACK(EACH_OPT):
+    case ON_BACKTRACK(EACH_FORWARD_OPT):
+    case ON_BACKTRACK(EACH_BACKWARD_OPT): {
       int idx = jv_number_value(stack_pop(jq));
       jv container = stack_pop(jq);
+      int forward = 1;
 
       int keep_going, is_last = 0;
       jv key, value;
       if (jv_get_kind(container) == JV_KIND_ARRAY) {
-        if (opcode == EACH || opcode == EACH_OPT) idx = 0;
-        else idx = idx + 1;
         int len = jv_array_length(jv_copy(container));
-        keep_going = idx < len;
-        is_last = idx == len - 1;
+
+        switch (opcode) {
+        case EACH: case EACH_OPT:
+        case EACH_FORWARD: case EACH_FORWARD_OPT:
+          idx = 0;
+          break;
+        case EACH_BACKWARD: case EACH_BACKWARD_OPT:
+          idx = jv_array_length(jv_copy(container)) - 1;
+          forward = 0;
+          break;
+        case ON_BACKTRACK(EACH): case ON_BACKTRACK(EACH_OPT):
+        case ON_BACKTRACK(EACH_FORWARD): case ON_BACKTRACK(EACH_FORWARD_OPT):
+          idx++;
+          break;
+        case ON_BACKTRACK(EACH_BACKWARD): case ON_BACKTRACK(EACH_BACKWARD_OPT):
+          forward = 0;
+          idx--;
+          break;
+        }
+        if (forward) {
+          keep_going = idx < len;
+          is_last = idx == len - 1;
+        } else {
+          keep_going = idx > -1;
+          is_last = idx == 0;
+        }
         if (keep_going) {
           key = jv_number(idx);
           value = jv_array_get(jv_copy(container), idx);
         }
       } else if (jv_get_kind(container) == JV_KIND_OBJECT) {
-        if (opcode == EACH || opcode == EACH_OPT) idx = jv_object_iter(container);
-        else idx = jv_object_iter_next(container, idx);
+        switch (opcode) {
+        case EACH: case EACH_OPT:
+        case EACH_FORWARD: case EACH_FORWARD_OPT:
+        case EACH_BACKWARD: case EACH_BACKWARD_OPT:
+          idx = jv_object_iter(container);
+          break;
+        case ON_BACKTRACK(EACH): case ON_BACKTRACK(EACH_OPT):
+        case ON_BACKTRACK(EACH_FORWARD): case ON_BACKTRACK(EACH_FORWARD_OPT):
+        case ON_BACKTRACK(EACH_BACKWARD): case ON_BACKTRACK(EACH_BACKWARD_OPT):
+          idx = jv_object_iter_next(container, idx);
+          break;
+        }
         keep_going = jv_object_iter_valid(container, idx);
         if (keep_going) {
           key = jv_object_iter_key(container, idx);
           value = jv_object_iter_value(container, idx);
         }
       } else {
-        assert(opcode == EACH || opcode == EACH_OPT);
+        assert(!IS_BACKTRACK(opcode));
         if (opcode == EACH) {
           char errbuf[15];
           set_error(jq,

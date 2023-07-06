@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.8.2.  */
+/* A Bison parser, made by GNU Bison 3.7.6.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_SRC_PARSER_H_INCLUDED
-# define YY_YY_SRC_PARSER_H_INCLUDED
+#ifndef YY_YY__SRC_PARSER_H_INCLUDED
+# define YY_YY__SRC_PARSER_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 11 "src/parser.y"
+#line 11 "../src/parser.y"
 
 #include "locfile.h"
 struct lexer_param;
@@ -62,7 +62,7 @@ struct lexer_param;
     }                                           \
   } while (0)
 
-#line 66 "src/parser.h"
+#line 66 "../src/parser.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -176,12 +176,12 @@ struct lexer_param;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 31 "src/parser.y"
+#line 31 "../src/parser.y"
 
   jv literal;
   block blk;
 
-#line 185 "src/parser.h"
+#line 185 "../src/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -205,8 +205,6 @@ struct YYLTYPE
 
 
 
-
 int yyparse (block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr);
 
-
-#endif /* !YY_YY_SRC_PARSER_H_INCLUDED  */
+#endif /* !YY_YY__SRC_PARSER_H_INCLUDED  */

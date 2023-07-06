@@ -491,6 +491,29 @@ sections:
           Like `.[]`, but no errors will be output if . is not an array
           or object.
 
+      - title: "Reverse Array/Object Value Iterator: `.[-]`, `.[-]?`"
+        body: |
+
+          Just like `.[]` and `.[]?`, but when iterating an array do it
+          from the last element to the first.
+
+        examples:
+          - program: '.[-]'
+            input: '["a","b","c"][-]'
+            output:
+              - '"c"'
+              - '"b"'
+              - '"a"'
+
+      - title: "Array/Object Value Iterator (forward): `.[+]`, `.[+]?`"
+        body: |
+
+          The `.[]` and `.[]?` operators default to iterating arrays from
+          the first element to the last, but in the future there will be
+          contexts where they may reverse the array iteration order.  These
+          operators, `.[+]` and `.[+]?` always iterate arrays from the first
+          element to the last.
+
       - title: "Comma: `,`"
         body: |
 
