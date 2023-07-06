@@ -452,7 +452,7 @@ block block_bind_self(block binder, int bindflags) {
   return body;
 }
 
-static void block_mark_referenced(block body) {
+static int block_mark_referenced(block body) {
   int saw_top = 0;
   for (inst* i = body.last; i; i = i->prev) {
     if (saw_top && i->bound_by == i && !i->referenced)
@@ -467,10 +467,14 @@ static void block_mark_referenced(block body) {
     block_mark_referenced(i->arglist);
     block_mark_referenced(i->subfn);
   }
+  return saw_top;
 }
 
 block block_drop_unreferenced(block body) {
-  block_mark_referenced(body);
+  if (!block_mark_referenced(body)) {
+    block_free(body);
+    return gen_noop();
+  }
 
   block refd = gen_noop();
   inst* curr;

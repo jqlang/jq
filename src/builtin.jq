@@ -148,7 +148,7 @@ def until(cond; next):
          if cond then . else (next|_until) end;
      _until;
 def limit($n; exp):
-    if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
+    if $n > 0 then label $out | foreach exp as $item ($n; .-1; if . > 0 then $item else $item, break $out end)
     elif $n == 0 then empty
     else exp end;
 # range/3, with a `by` expression argument
@@ -164,7 +164,7 @@ def all(condition): all(.[]; condition);
 def any(condition): any(.[]; condition);
 def all: all(.[]; .);
 def any: any(.[]; .);
-def last(g): reduce g as $item (null; $item);
+def last(g): reduce . as $_ (.; g|[.]) | .[]?;
 def nth($n; g): if $n < 0 then error("nth doesn't support negative indices") else last(limit($n + 1; g)) end;
 def first: .[0];
 def last: .[-1];
