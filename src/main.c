@@ -698,12 +698,12 @@ int main(int argc, char* argv[]) {
       // Parse error
       jv msg = jv_invalid_get_msg(value);
       if (!(options & SEQ)) {
-        // --seq -> errors are not fatal
-        ret = JQ_OK_NO_OUTPUT;
+        ret = JQ_ERROR_UNKNOWN;
         fprintf(stderr, "jq: parse error: %s\n", jv_string_value(msg));
         jv_free(msg);
         break;
       }
+      // --seq -> errors are not fatal
       fprintf(stderr, "jq: ignoring parse error: %s\n", jv_string_value(msg));
       jv_free(msg);
     }
