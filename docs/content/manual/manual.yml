@@ -925,12 +925,12 @@ sections:
             input: '{"a": 1, "b": 2, "c": 3}'
             output: ['{"a": 2, "b": 3, "c": 4}']
 
-      - title: "`pick(stream)`"
+      - title: "`pick(pathexps)`"
         body: |
         
-          Emit the projection of the input object or array defined by the specified stream of
-          dot-path specifications, such that if p is one of these specifications,
-          and `(. | p)` evaluates to $x, then `pick(stream) | p` will also be $x.
+          Emit the projection of the input object or array defined by the specified 
+          sequence of path expressions, such that if p is any one of these specifications,
+          then `(. | p)` will evaluate to the same value as `(. | pick(pathexps) | p)`.
           For arrays, negative indices and .[m:n] specifications should not be used.
 
         examples:
