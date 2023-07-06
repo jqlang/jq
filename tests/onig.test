@@ -160,6 +160,50 @@ sub("(?<x>.)"; "\(.x)!")
 "aB"
 ["AB","ab","cc"]
 
+# Global options
+sub("b*"; "B"; "l")
+"aabb"
+"aaB"
+
+sub("b*"; "B")
+"aabb"
+"Baabb"
+
+# n - Ignore empty matches
+sub("b*"; "B"; "n")
+"aabb"
+"aaB"
+
+# p - . matches \n
+test("a.b";"p")
+"a\nb"
+true
+
+test("a  b";"x")
+"ab"
+true
+
+# Extended groups
+test("(?i)test" )
+"Test"
+true
+
+test("(?m:^b)")
+"a\nb"
+true
+
+test("(?m)^b")
+"a\nb"
+true
+
+test("(?s)a.b")
+"a\nb"
+true
+
+map(test("(?i)te(?i-i)st"))
+["test", "TEst", "teST", "TEST"]
+[true, true, false, false]
+
 # splits and _nwise
 [splits("")]
 "ab"
