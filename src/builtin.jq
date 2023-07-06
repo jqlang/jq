@@ -12,7 +12,7 @@ def add: reduce .[] as $x (null; . + $x);
 def del(f): delpaths([path(f)]);
 def _assign(paths; $value): reduce path(paths) as $p (.; setpath($p; $value));
 def _modify(paths; update):
-    reduce path(paths) as $p (.;
+    reduce path_reverse(paths) as $p (.;
         . as $dot
       | null
       | label $out
