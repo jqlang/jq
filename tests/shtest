@@ -152,6 +152,12 @@ elif [ $? -ne 5 ]; then
   exit 1
 fi
 
+# Regression test for #2367; make sure to call jq twice
+if ! echo '{"a": 1E9999999999}' | $JQ . | $JQ -e .a; then
+  printf 'Issue #2367 is back?\n' 1>&2
+  exit 1
+fi
+
 # Regression test for #1534
 echo "[1,2,3,4]" > $d/expected
 printf "[1,2][3,4]" | $JQ -cs add > $d/out 2>&1
