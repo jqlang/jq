@@ -2349,6 +2349,7 @@ sections:
       * `g` - Global search (find all matches, not just the first)
       * `i` - Case-insensitive search
       * `l` - Find longest possible matches
+      * `m` - Multi-line mode (. matches \n)
       * `n` - Ignore empty matches
       * `p` - . matches \n
       * `x` - Extended regex format (ignore whitespace and comments)
@@ -2369,7 +2370,7 @@ sections:
       * "-" signifies negation
       * `ON` is a non-empty string drawn from the set of letters in `imsxWDSPy`
       * `OFF` is a string drawn from the set of letters in `imsxWDSP`. 
-  
+
       Some of the commonly used extended-group options are:
 
       `i` - Case-insensitive search
