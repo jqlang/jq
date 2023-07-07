@@ -12,24 +12,24 @@ def add: reduce .[] as $x (null; . + $x);
 def del(f): delpaths([path(f)]);
 def _assign(paths; $value): reduce path(paths) as $p (.; setpath($p; $value));
 def _modify(paths; update):
-    reduce path(paths) as $p (.;
+    reduce path(paths) as $p ([., []];
         . as $dot
       | null
       | label $out
-      | ($dot | getpath($p)) as $v
+      | ($dot[0] | getpath($p)) as $v
       | (
           (   $$$$v
             | update
             | (., break $out) as $v
             | $$$$dot
-            | setpath($p; $v)
+            | setpath([0] + $p; $v)
           ),
           (
               $$$$dot
-            | delpaths([$p])
+            | setpath([1]; .[1] + [$p])
           )
         )
-    );
+    ) | . as $dot | $dot[0] | delpaths($dot[1]);
 def map_values(f): .[] |= f;
 
 # recurse
