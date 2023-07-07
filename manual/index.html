@@ -2533,9 +2533,9 @@ values.</p>
                   
                 </section>
               
-                <section id="paths,paths(node_filter),leaf_paths">
+                <section id="paths,paths(node_filter)">
                   <h3>
-                    <code>paths</code>, <code>paths(node_filter)</code>, <code>leaf_paths</code>
+                    <code>paths</code>, <code>paths(node_filter)</code>
                     
                   </h3>
                   <p><code>paths</code> outputs the paths to all the elements in its input
@@ -2544,8 +2544,6 @@ itself).</p>
 <p><code>paths(f)</code> outputs the paths to any values for which <code>f</code> is true.
 That is, <code>paths(numbers)</code> outputs the paths to all numeric
 values.</p>
-<p><code>leaf_paths</code> is an alias of <code>paths(scalars)</code>; <code>leaf_paths</code> is
-<em>deprecated</em> and will be removed in the next major release.</p>
 
                   
                     <div>
@@ -4376,9 +4374,9 @@ output for each input.  See advanced topics below.</p>
                   
                 </section>
               
-                <section id="recurse(f),recurse,recurse(f;condition),recurse_down">
+                <section id="recurse(f),recurse,recurse(f;condition)">
                   <h3>
-                    <code>recurse(f)</code>, <code>recurse</code>, <code>recurse(f; condition)</code>, <code>recurse_down</code>
+                    <code>recurse(f)</code>, <code>recurse</code>, <code>recurse(f; condition)</code>
                     
                   </h3>
                   <p>The <code>recurse(f)</code> function allows you to search through a
@@ -4407,9 +4405,6 @@ emitting . and then emits in turn .|f, .|f|f, .|f|f|f, ...  so long
 as the computed value satisfies the condition. For example,
 to generate all the integers, at least in principle, one
 could write <code>recurse(.+1; true)</code>.</p>
-<p>For legacy reasons, <code>recurse_down</code> exists as an alias to
-calling <code>recurse</code> without arguments. This alias is considered
-<em>deprecated</em> and will be removed in the next major release.</p>
 <p>The recursive calls in <code>recurse</code> will not consume additional
 memory whenever <code>f</code> produces at most a single output for each
 input.</p>
@@ -7567,7 +7562,7 @@ by a semi-colon, where the first number is one of these:</p>
           
             "$__loc__" : "$__loc__",
           
-            "paths, paths(node_filter), leaf_paths" : "paths,paths(node_filter),leaf_paths",
+            "paths, paths(node_filter)" : "paths,paths(node_filter)",
           
             "add" : "add",
           
@@ -7635,7 +7630,7 @@ by a semi-colon, where the first number is one of these:</p>
           
             "until(cond; next)" : "until(cond;next)",
           
-            "recurse(f), recurse, recurse(f; condition), recurse_down" : "recurse(f),recurse,recurse(f;condition),recurse_down",
+            "recurse(f), recurse, recurse(f; condition)" : "recurse(f),recurse,recurse(f;condition)",
           
             "walk(f)" : "walk(f)",
           
