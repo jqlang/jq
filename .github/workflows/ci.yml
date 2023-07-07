@@ -78,10 +78,11 @@ jobs:
       matrix:
         compiler: [gcc, clang]
         image: [macos-11, macos-12, macos-13]
+        arch: [x86_64, arm64]
     runs-on: ${{ matrix.image }}
     env:
-      CC: ${{ matrix.compiler }}
-      SUFFIX: macos-${{ matrix.image }}-${{ matrix.compiler }}
+      CC: ${{ matrix.compiler }} -arch ${{ matrix.arch}}
+      SUFFIX: macos-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.arch }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -101,10 +102,13 @@ jobs:
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
-            --enable-all-static
+            --enable-all-static \
+            --host=${{ matrix.arch }}-apple-darwin$(uname -r)
           make
           strip jq
       - name: Test
+        # Only run tests for x86_64 matching the CI machine arch
+        if: ${{ matrix.arch == 'x86_64' }}
         run: |
           make check
           git diff --exit-code
@@ -274,7 +278,8 @@ jobs:
         run: |
           mkdir release
           cp artifacts/jq-linux-ubuntu-22.04-gcc/jq release/jq-linux-amd64
-          cp artifacts/jq-macos-macos-13-gcc/jq release/jq-macos-amd64
+          cp artifacts/jq-macos-macos-13-gcc-x86_64/jq release/jq-macos-amd64
+          cp artifacts/jq-macos-macos-13-gcc-arm64/jq release/jq-macos-arm64
           cp artifacts/jq-windows-windows-2022-gcc/jq.exe release/jq-windows-amd64.exe
           cp artifacts/jq-dist/jq-* release/
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
