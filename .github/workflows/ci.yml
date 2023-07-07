@@ -141,12 +141,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc]
         image: [windows-2019, windows-2022]
     runs-on: ${{ matrix.image }}
     env:
-      CC: ${{ matrix.compiler }}
-      SUFFIX: windows-${{ matrix.image }}-${{ matrix.compiler }}
+      CC: gcc
+      SUFFIX: windows-${{ matrix.image }}-gcc
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
