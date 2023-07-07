@@ -132,7 +132,7 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
+TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test tests/commenttest
 TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
 
 # This is a magic make variable that causes it to treat tests/man.test as a
@@ -215,7 +215,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/optional.test tests/optionaltest				\
         tests/utf8-truncate.jq tests/utf8test				\
         tests/base64.test tests/base64test 				\
-        tests/jq-f-test.sh tests/shtest
+        tests/jq-f-test.sh tests/shtest					\
+        tests/commenttest
 
 DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin
 

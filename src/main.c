@@ -81,6 +81,7 @@ static void usage(int code, int keep_it_short) {
       "  -M               monochrome (don't colorize JSON);\n"
       "  -S               sort keys of objects on output;\n"
       "  --tab            use tabs for indentation;\n"
+      "  --strip-comments accept and strip comments from input;\n"
       "  --arg a v        set variable $a to value <v>;\n"
       "  --argjson a v    set variable $a to JSON value <v>;\n"
       "  --slurpfile a f  set variable $a to an array of JSON texts read from <f>;\n"
@@ -452,6 +453,10 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 0, "stream", &short_opts)) {
         parser_flags |= JV_PARSE_STREAMING;
+        continue;
+      }
+      if (isoption(argv[i], 0, "strip-comments", &short_opts)) {
+        parser_flags |= JV_PARSE_STRIP_COMMENTS;
         continue;
       }
       if (isoption(argv[i], 0, "stream-errors", &short_opts)) {
