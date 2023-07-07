@@ -82,13 +82,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc, clang]
         image: [macos-11, macos-12, macos-13]
         arch: [x86_64, arm64]
     runs-on: ${{ matrix.image }}
     env:
-      CC: ${{ matrix.compiler }}
-      SUFFIX: macos-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.arch }}
+      SUFFIX: macos-${{ matrix.image }}-clang-${{ matrix.arch }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -99,6 +97,9 @@ jobs:
           # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
           brew update || brew update-reset
           brew install autoconf automake libtool
+      - name: "Set CC"
+        run: |
+          echo "CC=clang -target ${{ matrix.arch }}-apple-darwin$(uname -r)" >> $GITHUB_ENV
       - name: Build
         run: |
           autoreconf -i
@@ -286,8 +287,8 @@ jobs:
           mkdir release
           cp artifacts/jq-linux-ubuntu-22.04-gcc-x86_64/jq release/jq-linux-amd64
           cp artifacts/jq-linux-ubuntu-22.04-gcc-aarch64/jq release/jq-linux-arm64
-          cp artifacts/jq-macos-macos-13-gcc-x86_64/jq release/jq-macos-amd64
-          cp artifacts/jq-macos-macos-13-gcc-arm64/jq release/jq-macos-arm64
+          cp artifacts/jq-macos-macos-13-clang-x86_64/jq release/jq-macos-amd64
+          cp artifacts/jq-macos-macos-13-clang-arm64/jq release/jq-macos-arm64
           cp artifacts/jq-windows-windows-2022-gcc/jq.exe release/jq-windows-amd64.exe
           cp artifacts/jq-dist/jq-* release/
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
