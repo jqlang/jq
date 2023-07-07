@@ -652,7 +652,6 @@ static pfunc scan_line_comment(struct jv_parser* p, char ch, jv* out) {
   return OK;
 }
 
-
 static pfunc scan_c_comment_close(struct jv_parser* p, char ch, jv* out) {
   if(ch == '/') {
     p->scan = scan_json;
@@ -703,11 +702,7 @@ static pfunc scan_json(struct jv_parser* p, char ch, jv* out) {
   presult answer = 0;
   p->last_ch_was_ws = 0;
   if (p->st == JV_PARSER_NORMAL) {
-    if(ch == '#') {
-      p->scan = scan_line_comment;
-      return OK;
-    }
-    if(ch == '/') {
+    if(ch == '/' && (p->flags & JV_PARSE_STRIP_COMMENTS)) {
       p->scan = scan_slash_comment;
       return OK;
     }

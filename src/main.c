@@ -94,6 +94,7 @@ static void usage(int code, int keep_it_short) {
       "      --stream-errors       implies --stream and report parse error as\n"
       "                            an array;\n"
       "      --seq                 parse input/output as application/json-seq;\n"
+      "      --strip-comments      accept and strip comments from input;\n"
       "  -f, --from-file file      load filter from the file;\n"
       "  -L directory              search modules from the directory;\n"
       "      --arg name value      set $name to the string value;\n"
@@ -469,6 +470,10 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 0, "stream", &short_opts)) {
         parser_flags |= JV_PARSE_STREAMING;
+        continue;
+      }
+      if (isoption(argv[i], 0, "strip-comments", &short_opts)) {
+        parser_flags |= JV_PARSE_STRIP_COMMENTS;
         continue;
       }
       if (isoption(argv[i], 0, "stream-errors", &short_opts)) {
