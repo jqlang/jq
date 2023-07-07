@@ -269,7 +269,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    needs: [linux, macos, windows, dist, docker]
+    needs: [linux, macos, windows, dist]
     if: startsWith(github.ref, 'refs/tags/jq-')
     steps:
       - name: Clone repository
