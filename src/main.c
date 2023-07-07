@@ -692,6 +692,8 @@ int main(int argc, char* argv[]) {
         ret = process(jq, value, jq_flags, dumpopts);
         if (ret <= 0 && ret != JQ_OK_NO_OUTPUT)
           last_result = (ret != JQ_OK_NULL_KIND);
+        if (jq_halted(jq))
+          break;
         continue;
       }
 
