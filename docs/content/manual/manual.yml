@@ -1141,7 +1141,7 @@ sections:
             input: 'null'
             output: ['"{\"file\":\"<top-level>\",\"line\":1}"']
 
-      - title: "`paths`, `paths(node_filter)`, `leaf_paths`"
+      - title: "`paths`, `paths(node_filter)`"
         body: |
 
           `paths` outputs the paths to all the elements in its input
@@ -1151,9 +1151,6 @@ sections:
           `paths(f)` outputs the paths to any values for which `f` is true.
           That is, `paths(numbers)` outputs the paths to all numeric
           values.
-
-          `leaf_paths` is an alias of `paths(scalars)`; `leaf_paths` is
-          *deprecated* and will be removed in the next major release.
 
         examples:
           - program: '[paths]'
@@ -1738,7 +1735,7 @@ sections:
             output: ['24']
 
 
-      - title: "`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`"
+      - title: "`recurse(f)`, `recurse`, `recurse(f; condition)`"
         body: |
 
           The `recurse(f)` function allows you to search through a
@@ -1771,10 +1768,6 @@ sections:
           as the computed value satisfies the condition. For example,
           to generate all the integers, at least in principle, one
           could write `recurse(.+1; true)`.
-
-          For legacy reasons, `recurse_down` exists as an alias to
-          calling `recurse` without arguments. This alias is considered
-          *deprecated* and will be removed in the next major release.
 
           The recursive calls in `recurse` will not consume additional
           memory whenever `f` produces at most a single output for each
