@@ -1044,6 +1044,19 @@ def inc(x): x |= .+1; inc(.[].a)
 {"a":[{"b":5}]}
 {"a":[{"c":3,"b":5}]}
 
+# #2051, deletion using assigning empty against arrays
+(.[] | select(. >= 2)) |= empty
+[1,5,3,0,7]
+[1,0]
+
+.[] |= select(. % 2 == 0)
+[0,1,2,3,4,5]
+[0,2,4]
+
+.foo[1,4,2,3] |= empty
+{"foo":[0,1,2,3,4,5]}
+{"foo":[0,5]}
+
 .[2][3] = 1
 [4]
 [4, null, [null, null, null, 1]]
