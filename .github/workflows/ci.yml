@@ -13,24 +13,26 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [gcc, clang]
-        image: [ubuntu-20.04, ubuntu-22.04]
+        image: [ubuntu-22.04]
+        arch: [x86_64, aarch64]
         include:
           - compiler: gcc
-            image: ubuntu-20.04
-            configure_flag: ''
+            arch: x86_64
+            cc: x86_64-linux-gnu-gcc
           - compiler: gcc
-            image: ubuntu-22.04
-            configure_flag: --enable-static --enable-all-static
+            arch: aarch64
+            cc: aarch64-linux-gnu-gcc
           - compiler: clang
-            image: ubuntu-20.04
-            configure_flag: ''
+            arch: x86_64
+            cc: clang -target x86_64-linux-gnu
           - compiler: clang
-            image: ubuntu-22.04
-            configure_flag: --enable-static --enable-all-static
+            arch: aarch64
+            cc: clang -target aarch64-linux-gnu
     runs-on: ${{ matrix.image }}
     env:
-      CC: ${{ matrix.compiler }}
-      SUFFIX: linux-${{ matrix.image }}-${{ matrix.compiler }}
+      CC: ${{ matrix.cc }}
+      SUFFIX: linux-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.arch }}
+      ARCH: ${{ matrix.arch }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -38,8 +40,7 @@ jobs:
           submodules: true
       - name: Install packages
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y automake autoconf
+          sudo apt-get install -y automake autoconf gcc-${ARCH/_/-}-linux-gnu
       - name: Build
         run: |
           autoreconf -i
@@ -48,10 +49,15 @@ jobs:
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
-            ${{ matrix.configure_flag }}
+            --host=${{ matrix.arch }}-linux-gnu \
+            --enable-static \
+            --enable-all-static
           make
-          strip jq
+          ${ARCH}-linux-gnu-strip jq
+          file ./jq
       - name: Test
+        # Only run tests for x86_64 matching the CI machine arch
+        if: ${{ matrix.arch == 'x86_64' }}
         run: |
           make check
           git diff --exit-code
@@ -81,7 +87,7 @@ jobs:
         arch: [x86_64, arm64]
     runs-on: ${{ matrix.image }}
     env:
-      CC: ${{ matrix.compiler }} -arch ${{ matrix.arch}}
+      CC: ${{ matrix.compiler }}
       SUFFIX: macos-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.arch }}
     steps:
       - name: Clone repository
@@ -106,6 +112,7 @@ jobs:
             --host=${{ matrix.arch }}-apple-darwin$(uname -r)
           make
           strip jq
+          file ./jq
       - name: Test
         # Only run tests for x86_64 matching the CI machine arch
         if: ${{ matrix.arch == 'x86_64' }}
@@ -277,7 +284,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir release
-          cp artifacts/jq-linux-ubuntu-22.04-gcc/jq release/jq-linux-amd64
+          cp artifacts/jq-linux-ubuntu-22.04-gcc-x86_64/jq release/jq-linux-amd64
+          cp artifacts/jq-linux-ubuntu-22.04-gcc-aarch64/jq release/jq-linux-arm64
           cp artifacts/jq-macos-macos-13-gcc-x86_64/jq release/jq-macos-amd64
           cp artifacts/jq-macos-macos-13-gcc-arm64/jq release/jq-macos-arm64
           cp artifacts/jq-windows-windows-2022-gcc/jq.exe release/jq-windows-amd64.exe
