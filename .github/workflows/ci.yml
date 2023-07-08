@@ -232,10 +232,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [windows-2019, windows-2022]
+        image:
+          [
+            windows-2022,
+          ]
+        arch:
+          [
+            amd64,
+            i386,
+          ]
+        include:
+          - arch: amd64
+            CC: "x86_64-w64-mingw32"
+            toolchain: "mingw-w64-x86_64-toolchain"
+            env: mingw64
+          - arch: i386
+            CC: "i686-w64-mingw32"
+            toolchain: "mingw-w64-i686-toolchain"
+            env: mingw32
     runs-on: ${{ matrix.image }}
     env:
-      CC: gcc
+      CHOST: ${{ matrix.CC }}
+      CC: ${{ matrix.CC }}-gcc
+      LDFLAGS: -s
       SUFFIX: windows-${{ matrix.image }}-gcc
     steps:
       - name: Clone repository
@@ -245,18 +264,20 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           update: true
+          msystem: ${{ matrix.env }}
           install: >-
             base-devel
             git
-            clang
             autoconf
             automake
             libtool
+            ${{ matrix.toolchain }}
       - name: Build
         shell: msys2 {0}
         run: |
           autoreconf -i
           ./configure \
+            --host=${{ matrix.CC }} \
             --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
@@ -264,9 +285,12 @@ jobs:
             --disable-shared \
             --enable-static \
             --enable-all-static
+          sed -i.bak -e "s/\(allow_undefined=\)yes/\1no/" libtool
           make
-          strip jq.exe
+          file ./jq.exe
       - name: Test
+        # Only run tests for amd64 matching the CI machine arch
+        if: ${{ matrix.arch == 'amd64' }}
         shell: msys2 {0}
         run: |
           make check
@@ -278,6 +302,7 @@ jobs:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
           path: |
+            config.log
             test-suite.log
             tests/*.log
       - name: Upload Artifacts
