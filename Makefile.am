@@ -12,7 +12,7 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
         src/decNumber/decContext.c src/decNumber/decNumber.c            \
-        src/jv_dtoa_tsd.c src/utf8proc/utf8proc.c                       \
+        src/jv_dtoa_tsd.c 			                        \
         ${LIBJQ_INCS}
 
 ### C build options
@@ -171,11 +171,20 @@ endif
 jq.1: jq.1.prebuilt
 	$(AM_V_GEN) cp $(srcdir)/jq.1.prebuilt $@
 
+SUBDIRS =
+
+if BUILD_UTF8PROC
+SUBDIRS += modules/utf8proc
+endif
+
+AM_CFLAGS += ${utf8proc_CFLAGS}
+jq_LDADD += ${utf8proc_LIBS}
+
 ### Build oniguruma
 
 if BUILD_ONIGURUMA
 libjq_la_LIBADD += modules/oniguruma/src/.libs/libonig.la
-SUBDIRS = modules/oniguruma
+SUBDIRS += modules/oniguruma
 endif
 
 AM_CFLAGS += $(onig_CFLAGS)
