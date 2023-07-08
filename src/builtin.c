@@ -520,7 +520,7 @@ static jv f_utf8bytelength(jq_state *jq, jv input) {
   return jv_number(jv_string_length_bytes(input));
 }
 
-# include "utf8proc/utf8proc.h"
+# include <utf8proc.h>
 
 static utf8proc_int32_t utf8proc_codepoint_func(utf8proc_int32_t codepoint, utf8proc_int32_t (*func)(utf8proc_int32_t)) {
   return func(codepoint);
