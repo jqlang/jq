@@ -214,10 +214,14 @@ jv jv_has(jv t, jv k) {
     jv_free(elem);
   } else if (jv_get_kind(t) == JV_KIND_ARRAY &&
              jv_get_kind(k) == JV_KIND_NUMBER) {
-    jv elem = jv_array_get(t, (int)jv_number_value(k));
-    ret = jv_bool(jv_is_valid(elem));
+    if (jvp_number_is_nan(k)) {
+      ret = jv_false();
+    } else {
+      jv elem = jv_array_get(t, (int)jv_number_value(k));
+      ret = jv_bool(jv_is_valid(elem));
+      jv_free(elem);
+    }
     jv_free(k);
-    jv_free(elem);
   } else {
     ret = jv_invalid_with_msg(jv_string_fmt("Cannot check whether %s has a %s key",
                                             jv_kind_name(jv_get_kind(t)),

@@ -1372,6 +1372,10 @@ map(has(2))
 [[0,1], ["a","b","c"]]
 [false, true]
 
+has(nan)
+[0,1,2]
+false
+
 keys
 [42,3,35]
 [0,1,2]
