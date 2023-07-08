@@ -222,6 +222,7 @@ enum {
 
 #include "jv_thread.h"
 #ifdef WIN32
+#ifndef __MINGW32__
 /* Copied from Heimdal: thread-specific keys; see lib/base/dll.c in Heimdal */
 
 /*
@@ -483,6 +484,9 @@ pthread_getspecific(pthread_key_t key)
         return NULL;
     return values.values[key];
 }
+#else
+#include <pthread.h>
+#endif
 #else
 #include <pthread.h>
 #endif

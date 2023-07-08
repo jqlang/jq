@@ -2,6 +2,7 @@
 #define JV_THREAD_H
 
 #ifdef WIN32
+#ifndef __MINGW32__
 #include <windows.h>
 #include <winnt.h>
 #include <errno.h>
@@ -66,6 +67,9 @@ typedef unsigned long pthread_key_t;
 int pthread_key_create(pthread_key_t *, void (*)(void *));
 int pthread_setspecific(pthread_key_t, void *);
 void *pthread_getspecific(pthread_key_t);
+#else
+#include <pthread.h>
+#endif
 #else
 #include <pthread.h>
 #endif
