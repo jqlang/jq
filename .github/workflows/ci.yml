@@ -156,8 +156,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [macos-11, macos-12, macos-13]
-        arch: [x86_64, arm64]
+        image:
+          [
+            macos-11,
+            macos-12,
+            macos-13,
+          ]
+        arch:
+          [
+            amd64,
+            arm64,
+          ]
+        include:
+          - arch: amd64
+            target: "x86_64-apple-darwin"
+          - arch: arm64
+            target: "arm64-apple-darwin"
     runs-on: ${{ matrix.image }}
     env:
       SUFFIX: macos-${{ matrix.image }}-clang-${{ matrix.arch }}
@@ -173,24 +187,24 @@ jobs:
           brew install autoconf automake libtool
       - name: "Set CC"
         run: |
-          echo "CC=clang -target ${{ matrix.arch }}-apple-darwin$(uname -r)" >> $GITHUB_ENV
+          echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> $GITHUB_ENV
       - name: Build
         run: |
           autoreconf -i
           ./configure \
+            --host=${{ matrix.target }}$(uname -r) \
             --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
-            --enable-all-static \
-            --host=${{ matrix.arch }}-apple-darwin$(uname -r)
+            --enable-all-static
           make
           strip jq
           file ./jq
       - name: Test
-        # Only run tests for x86_64 matching the CI machine arch
-        if: ${{ matrix.arch == 'x86_64' }}
+        # Only run tests for amd64 matching the CI machine arch
+        if: ${{ matrix.arch == 'amd64' }}
         run: |
           make check
           git diff --exit-code
