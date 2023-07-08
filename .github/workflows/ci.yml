@@ -12,27 +12,99 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc, clang]
-        image: [ubuntu-22.04]
-        arch: [x86_64, aarch64]
+        image:
+          [
+            ubuntu-22.04,
+          ]
+        arch:
+          [
+            amd64,
+            arm64,
+            armel,
+            armhf,
+            i386,
+            mips,
+            mips64,
+            mips64el,
+            mips64r6,
+            mips64r6el,
+            mipsel,
+            mipsr6,
+            mipsr6el,
+            powerpc,
+            ppc64el,
+            s390x,
+          ]
         include:
-          - compiler: gcc
-            arch: x86_64
-            cc: x86_64-linux-gnu-gcc
-          - compiler: gcc
-            arch: aarch64
-            cc: aarch64-linux-gnu-gcc
-          - compiler: clang
-            arch: x86_64
-            cc: clang -target x86_64-linux-gnu
-          - compiler: clang
-            arch: aarch64
-            cc: clang -target aarch64-linux-gnu
+          - arch: amd64
+            CC: "x86_64-linux-gnu"
+            binutils: "binutils-x86-64-linux-gnu"
+          - arch: arm64
+            CC: "aarch64-linux-gnu"
+            binutils: "binutils-aarch64-linux-gnu"
+          - arch: armel
+            CC: "arm-linux-gnueabi"
+            binutils: "binutils-aarch64-linux-gnu"
+          - arch: armhf
+            CC: "arm-linux-gnueabihf"
+            binutils: "binutils-arm-linux-gnueabi"
+            strip: "arm-linux-gnueabihf-strip"
+          - arch: i386
+            CC: "i686-linux-gnu"
+            binutils: "binutils-i686-linux-gnu"
+            strip: "i686-linux-gnu-strip"
+          - arch: mips
+            CC: "mips-linux-gnu"
+            binutils: "binutils-mips-linux-gnu"
+            strip: "mips-linux-gnu-strip"
+          - arch: mips64
+            CC: "mips64-linux-gnuabi64"
+            binutils: "binutils-mips64-linux-gnuabi64"
+            strip: "mips64-linux-gnuabi64-strip"
+          - arch: mips64el
+            CC: "mips64el-linux-gnuabi64"
+            binutils: "binutils-mips64el-linux-gnuabi64"
+            strip: "mips64el-linux-gnuabi64-strip"
+          - arch: mips64r6
+            CC: "mipsisa64r6-linux-gnuabi64"
+            binutils: "binutils-mipsisa64r6-linux-gnuabi64"
+            strip: "mipsisa64r6-linux-gnuabi64-strip"
+          - arch: mips64r6el
+            CC: "mipsisa64r6el-linux-gnuabi64"
+            binutils: "binutils-mipsisa64r6el-linux-gnuabi64"
+            strip: "mipsisa64r6el-linux-gnuabi64-strip"
+          - arch: mipsel
+            CC: "mipsel-linux-gnu"
+            binutils: "binutils-mipsel-linux-gnu"
+            strip: "mipsel-linux-gnu-strip"
+          - arch: mipsr6
+            CC: "mipsisa32r6-linux-gnu"
+            binutils: "binutils-mipsisa32r6-linux-gnu"
+            strip: "mipsisa32r6-linux-gnu-strip"
+          - arch: mipsr6el
+            CC: "mipsisa32r6el-linux-gnu"
+            binutils: "binutils-mipsisa32r6el-linux-gnu"
+            strip: "mipsisa32r6el-linux-gnu-strip"
+          - arch: powerpc
+            CC: "powerpc-linux-gnu"
+            binutils: "binutils-powerpc-linux-gnu"
+            strip: "powerpc-linux-gnu-strip"
+          - arch: ppc64el
+            CC: "powerpc64le-linux-gnu"
+            binutils: "binutils-powerpc64le-linux-gnu"
+            strip: "powerpc64le-linux-gnu-strip"
+          - arch: s390x
+            CC: "s390x-linux-gnu"
+            binutils: "binutils-s390x-linux-gnu"
+            strip: "s390x-linux-gnu-strip"
     runs-on: ${{ matrix.image }}
     env:
-      CC: ${{ matrix.cc }}
-      SUFFIX: linux-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.arch }}
-      ARCH: ${{ matrix.arch }}
+      AR: ${{ matrix.CC }}-ar
+      CHOST: ${{ matrix.cc }}
+      CC: ${{ matrix.cc }}-gcc
+      CPP: ${{ matrix.cc }}-cpp
+      CXX: ${{ matrix.cc }}-g++
+      SUFFIX: linux-${{ matrix.image }}-gcc-${{ matrix.arch }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -40,24 +112,26 @@ jobs:
           submodules: true
       - name: Install packages
         run: |
-          sudo apt-get install -y automake autoconf gcc-${ARCH/_/-}-linux-gnu
+          sudo apt-get update
+          sudo apt-get upgrade
+          sudo apt-get install -y automake autoconf libtool crossbuild-essential-${{ matrix.arch }} ${{ matrix.binutils }}
       - name: Build
         run: |
           autoreconf -i
           ./configure \
+            --host=${{ matrix.CC }} \
             --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
-            --host=${{ matrix.arch }}-linux-gnu \
             --enable-static \
             --enable-all-static
-          make
-          ${ARCH}-linux-gnu-strip jq
+          make -j$(nproc)
+          ${{ matrix.strip }} jq
           file ./jq
       - name: Test
-        # Only run tests for x86_64 matching the CI machine arch
-        if: ${{ matrix.arch == 'x86_64' }}
+        # Only run tests for amd64 matching the CI machine arch
+        if: ${{ matrix.arch == 'amd64' }}
         run: |
           make check
           git diff --exit-code
