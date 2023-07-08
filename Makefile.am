@@ -114,7 +114,7 @@ src/main.c: src/version.h
 
 src/builtin.inc: $(srcdir)/src/builtin.jq
 	mkdir -p src
-	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $(srcdir)/src/builtin.jq > $@
+	$(AM_V_GEN) sed -e 's/^ *#.*//' -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $(srcdir)/src/builtin.jq > $@
 src/builtin.o: src/builtin.inc
 
 bin_PROGRAMS = jq
