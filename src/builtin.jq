@@ -26,7 +26,7 @@ def _modify(paths; update):
           ),
           (
               $$$$dot
-            | setpath([1]; .[1] + [$p])
+            | setpath([1, (.[1] | length)]; $p)
           )
         )
     ) | . as $dot | $dot[0] | delpaths($dot[1]);
