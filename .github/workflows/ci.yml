@@ -372,9 +372,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir release
-          cp artifacts/jq-linux-ubuntu-22.04-gcc-x86_64/jq release/jq-linux-amd64
-          cp artifacts/jq-linux-ubuntu-22.04-gcc-aarch64/jq release/jq-linux-arm64
-          cp artifacts/jq-macos-macos-13-clang-x86_64/jq release/jq-macos-amd64
+          cp artifacts/jq-linux-ubuntu-22.04-gcc-amd64/jq release/jq-linux-amd64
+          cp artifacts/jq-linux-ubuntu-22.04-gcc-arm64/jq release/jq-linux-arm64
+          cp artifacts/jq-macos-macos-13-clang-amd64/jq release/jq-macos-amd64
           cp artifacts/jq-macos-macos-13-clang-arm64/jq release/jq-macos-arm64
           cp artifacts/jq-windows-windows-2022-gcc/jq.exe release/jq-windows-amd64.exe
           cp artifacts/jq-dist/jq-* release/
