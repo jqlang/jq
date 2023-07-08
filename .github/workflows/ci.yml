@@ -39,9 +39,11 @@ jobs:
           - arch: amd64
             CC: "x86_64-linux-gnu"
             binutils: "binutils-x86-64-linux-gnu"
+            strip: "x86_64-linux-gnu-strip"
           - arch: arm64
             CC: "aarch64-linux-gnu"
             binutils: "binutils-aarch64-linux-gnu"
+            strip: "aarch64-linux-gnu-strip"
           - arch: armel
             CC: "arm-linux-gnueabi"
             binutils: "binutils-aarch64-linux-gnu"
@@ -104,6 +106,7 @@ jobs:
       CC: ${{ matrix.cc }}-gcc
       CPP: ${{ matrix.cc }}-cpp
       CXX: ${{ matrix.cc }}-g++
+      LDFLAGS: -s
       SUFFIX: linux-${{ matrix.image }}-gcc-${{ matrix.arch }}
     steps:
       - name: Clone repository
