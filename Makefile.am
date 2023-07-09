@@ -175,12 +175,16 @@ jq.1: jq.1.prebuilt
 
 SUBDIRS =
 
+AM_CFLAGS += ${utf8proc_CFLAGS}
+jq_LDADD += ${utf8proc_LIBS}
+
+if BUNDLE_UTF8PROC
+LIBJQ_SRC += modules/utf8proc/utf8proc.c
+else
 if BUILD_UTF8PROC
 SUBDIRS += modules/utf8proc
 endif
-
-AM_CFLAGS += ${utf8proc_CFLAGS}
-jq_LDADD += ${utf8proc_LIBS}
+endif
 
 ### Build oniguruma
 
