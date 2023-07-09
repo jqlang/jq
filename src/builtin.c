@@ -359,10 +359,12 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
       str = b;
       num = a;
     }
-    jv res = jv_null();
+    jv res;
     double d = jv_number_value(num);
-    int n = 0.0 < d && d < 1.0 ? 1 : d;
-    if (n > 0) {
+    if (d < 0 || isnan(d)) {
+      res = jv_null();
+    } else {
+      int n = d;
       size_t alen = jv_string_length_bytes(jv_copy(str));
       res = jv_string_empty(alen * n);
       for (; n > 0; n--) {
