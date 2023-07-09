@@ -1002,7 +1002,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
             jv_string((char*)ebuf)));
       break;
     }
-  } while (global && start != end);
+  } while (global && start <= end);
   onig_region_free(region,1);
   region = NULL;
   if (region)
