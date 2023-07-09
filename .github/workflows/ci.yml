@@ -255,7 +255,7 @@ jobs:
       CHOST: ${{ matrix.CC }}
       CC: ${{ matrix.CC }}-gcc
       LDFLAGS: -s
-      SUFFIX: windows-${{ matrix.image }}-gcc
+      SUFFIX: windows-${{ matrix.arch }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -285,7 +285,6 @@ jobs:
             --disable-shared \
             --enable-static \
             --enable-all-static
-          sed -i.bak -e "s/\(allow_undefined=\)yes/\1no/" libtool
           make
           file ./jq.exe
       - name: Test
@@ -404,7 +403,8 @@ jobs:
           cp artifacts/jq-linux-ubuntu-22.04-gcc-arm64/jq release/jq-linux-arm64
           cp artifacts/jq-macos-macos-13-clang-amd64/jq release/jq-macos-amd64
           cp artifacts/jq-macos-macos-13-clang-arm64/jq release/jq-macos-arm64
-          cp artifacts/jq-windows-windows-2022-gcc/jq.exe release/jq-windows-amd64.exe
+          cp artifacts/jq-windows-amd64/jq.exe release/jq-windows-amd64.exe
+          cp artifacts/jq-windows-i386/jq.exe release/jq-windows-i386.exe
           cp artifacts/jq-dist/jq-* release/
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
           gh release upload "$TAG_NAME" --clobber release/jq-*
