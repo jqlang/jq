@@ -162,7 +162,7 @@ jobs:
             --with-oniguruma=builtin \
             --enable-static \
             --enable-all-static
-          make
+          make -j$(nproc)
           file ./jq
           cp ./jq jq-${{ env.SUFFIX }}
       - name: Test
@@ -241,7 +241,7 @@ jobs:
             --disable-shared \
             --enable-static \
             --enable-all-static
-          make
+          make -j$(nproc)
           file ./jq.exe
           cp ./jq.exe jq-${{ env.SUFFIX }}.exe
       - name: Test
@@ -355,7 +355,7 @@ jobs:
         run: |
           mkdir -p "release"
           for files in jq-*; do
-              cp -rf ${files}/* "release/"
+              cp -rf "${files}/*" "release/"
           done
 
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
