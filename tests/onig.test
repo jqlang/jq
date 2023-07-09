@@ -1,11 +1,15 @@
 # match builtin
 [match("( )*"; "g")]
 "abc"
-[{"offset":0, "length":0, "string":"", "captures":[]},{"offset":1, "length":0, "string":"", "captures":[]},{"offset":2, "length":0, "string":"", "captures":[]}]
+[{"offset":0, "length":0, "string":"", "captures":[]}, {"offset":1, "length":0, "string":"", "captures":[]}, {"offset":2, "length":0, "string":"", "captures":[]}, {"offset":3, "length":0, "string":"", "captures":[]}]
 
 [match("( )*"; "gn")]
 "abc"
 []
+
+[match(""; "g")]
+"ab"
+[{"offset":0,"length":0,"string":"","captures":[]},{"offset":1,"length":0,"string":"","captures":[]},{"offset":2,"length":0,"string":"","captures":[]}]
 
 [match("a"; "gi")]
 "āáàä"
@@ -71,29 +75,27 @@ gsub("a";"b")
 "aaaaa"
 "bbbbb"
 
-gsub( "(.*)"; "";  "x")
+gsub("(.*)"; ""; "x")
 ""
 ""
 
-gsub( ""; "a";  "g")
+gsub(""; "a"; "g")
 ""
 "a"
 
-gsub( "^"; "";  "g")
+gsub("^"; ""; "g")
 "a"
 "a"
 
+gsub(""; "a"; "g")
+"a"
+"aaa"
 
-# The following is a regression test and should not be construed as a requirement other than that execution should terminate:
-gsub( ""; "a";  "g")
+gsub("$"; "a"; "g")
 "a"
 "aa"
 
-gsub( "$"; "a";  "g")
-"a"
-"aa"
-
-gsub( "^"; "a")
+gsub("^"; "a")
 ""
 "a"
 
@@ -163,5 +165,5 @@ sub("(?<x>.)"; "\(.x)!")
 # splits and _nwise
 [splits("")]
 "ab"
-["","a","b"]
+["","a","b",""]
 
