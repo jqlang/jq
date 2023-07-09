@@ -258,7 +258,6 @@ jobs:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
           path: |
-            config.log
             test-suite.log
             tests/*.log
       - name: Upload Artifacts
