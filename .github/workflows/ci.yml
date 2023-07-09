@@ -243,13 +243,13 @@ jobs:
           ]
         include:
           - arch: amd64
-            CC: "x86_64-w64-mingw32"
-            toolchain: "mingw-w64-x86_64-toolchain"
-            env: mingw64
+            CC: "x86_64-pc-msys"
+            toolchain: "gcc"
+            msystem: msys
           - arch: i386
             CC: "i686-w64-mingw32"
             toolchain: "mingw-w64-i686-toolchain"
-            env: mingw32
+            msystem: mingw32
     runs-on: ${{ matrix.image }}
     env:
       CHOST: ${{ matrix.CC }}
@@ -264,7 +264,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           update: true
-          msystem: ${{ matrix.env }}
+          msystem: ${{ matrix.msystem }}
           install: >-
             base-devel
             git
