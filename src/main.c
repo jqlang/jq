@@ -74,8 +74,8 @@ static void usage(int code, int keep_it_short) {
       "  -s, --slurp               read all inputs into an array and use it as the single input value;\n"
       "  -c, --compact-output      compact instead of pretty-printed output;\n"
       "  -r, --raw-output          output strings directly without escapes and quotes;\n"
+      "      --raw-output0         implies -r and output NUL after each output;\n"
       "  -j, --join-output         implies -r and output without newline after each output;\n"
-      "  -0, --nul-output          implies -r and output NUL after each output;\n"
       "  -a, --ascii-output        output strings by only ASCII characters using escape sequences;\n"
       "  -S, --sort-keys           sort keys of each object on output;\n"
       "  -C, --color-output        colorize JSON output;\n"
@@ -111,11 +111,8 @@ static void die() {
   exit(2);
 }
 
-
-
-
 static int isoptish(const char* text) {
-  return text[0] == '-' && (text[1] == '-' || isalpha(text[1]) || text[1] == '0');
+  return text[0] == '-' && (text[1] == '-' || isalpha(text[1]));
 }
 
 static int isoption(const char* text, char shortopt, const char* longopt, size_t *short_opts) {
@@ -141,7 +138,7 @@ enum {
   RAW_INPUT             = 2,
   PROVIDE_NULL          = 4,
   RAW_OUTPUT            = 8,
-  RAW_NUL               = 16,
+  RAW_OUTPUT0           = 16,
   ASCII_OUTPUT          = 32,
   COLOR_OUTPUT          = 64,
   NO_COLOR_OUTPUT       = 128,
@@ -191,6 +188,11 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       if (options & ASCII_OUTPUT) {
         jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
+      } else if ((options & RAW_OUTPUT0) && strlen(jv_string_value(result)) != (unsigned long)jv_string_length_bytes(jv_copy(result))) {
+        jv_free(result);
+        result = jv_invalid_with_msg(jv_string(
+              "Cannot dump a string containing NUL with --raw-output0 option"));
+        break;
       } else {
         priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
             stdout, dumpopts & JV_PRINT_ISATTY);
@@ -208,7 +210,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
     }
     if (!(options & RAW_NO_LF))
       priv_fwrite("\n", 1, stdout, dumpopts & JV_PRINT_ISATTY);
-    if (options & RAW_NUL)
+    if (options & RAW_OUTPUT0)
       priv_fwrite("\0", 1, stdout, dumpopts & JV_PRINT_ISATTY);
     if (options & UNBUFFERED_OUTPUT)
       fflush(stdout);
@@ -394,6 +396,14 @@ int main(int argc, char* argv[]) {
         options |= RAW_OUTPUT;
         if (!short_opts) continue;
       }
+      if (isoption(argv[i], 0, "raw-output0", &short_opts)) {
+        options |= RAW_OUTPUT | RAW_NO_LF | RAW_OUTPUT0;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 'j', "join-output", &short_opts)) {
+        options |= RAW_OUTPUT | RAW_NO_LF;
+        if (!short_opts) continue;
+      }
       if (isoption(argv[i], 'c', "compact-output", &short_opts)) {
         dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(7));
         if (!short_opts) continue;
@@ -428,14 +438,6 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 'f', "from-file", &short_opts)) {
         options |= FROM_FILE;
-        if (!short_opts) continue;
-      }
-      if (isoption(argv[i], 'j', "join-output", &short_opts)) {
-        options |= RAW_OUTPUT | RAW_NO_LF;
-        if (!short_opts) continue;
-      }
-      if (isoption(argv[i], '0', "nul-output", &short_opts)) {
-        options |= RAW_OUTPUT | RAW_NO_LF | RAW_NUL;
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'b', "binary", &short_opts)) {

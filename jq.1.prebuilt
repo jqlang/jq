@@ -82,16 +82,16 @@ By default, jq pretty\-prints JSON output\. Using this option will result in mor
 With this option, if the filter\'s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes\. This can be useful for making jq filters talk to non\-JSON\-based systems\.
 .
 .TP
+\fB\-\-raw\-output0\fR:
+.
+.IP
+Like \fB\-r\fR but jq will print NUL instead of newline after each output\. This can be useful when the values being output can contain newlines\. When the output value contains NUL, jq exits with non\-zero code\.
+.
+.TP
 \fB\-\-join\-output\fR / \fB\-j\fR:
 .
 .IP
 Like \fB\-r\fR but jq won\'t print a newline after each output\.
-.
-.TP
-\fB\-\-nul\-output\fR / \fB\-0\fR:
-.
-.IP
-Like \fB\-r\fR but jq will print NUL instead of newline after each output\. This can be useful when the values being output can contain newlines\.
 .
 .TP
 \fB\-\-ascii\-output\fR / \fB\-a\fR:

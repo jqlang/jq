@@ -165,12 +165,20 @@ cmp $d/out $d/expected
 printf "[1,2][3,4]\n" | $JQ -cs add > $d/out 2>&1
 cmp $d/out $d/expected
 
-# Regression test for -0 / --nul-output
+# Regression test for --raw-output0
 printf "a\0b\0" > $d/expected
-printf '["a", "b"]' | $JQ -0 .[] > $d/out 2>&1
+printf '["a", "b"]' | $VALGRIND $Q $JQ --raw-output0 .[] > $d/out
 cmp $d/out $d/expected
-printf '["a", "b"]' | $JQ --nul-output .[] > $d/out 2>&1
-cmp $d/out $d/expected
+printf "a\0" > $d/expected
+if printf '["a", "c\\u0000d", "b"]' | $VALGRIND $Q $JQ --raw-output0 .[] > $d/out; then
+  echo "Should exit error on string containing NUL with --raw-output0" 1>&2
+  exit 1
+elif [ $? -ne 5 ]; then
+  echo "Invalid error code" 1>&2
+  exit 1
+else
+  cmp $d/out $d/expected
+fi
 
 ## Test streaming parser
 
