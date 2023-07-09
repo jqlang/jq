@@ -779,7 +779,7 @@ sections:
           Division by zero raises an error. `x % y` computes x modulo y.
 
           Multiplying a string by a number produces the concatenation of
-          that string that many times. `"x" * 0` produces **null**.
+          that string that many times. `"x" * 0` produces `""`.
 
           Dividing a string by another splits the first using the second
           as separators.
