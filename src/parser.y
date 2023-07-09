@@ -49,6 +49,7 @@ struct lexer_param;
 %token INVALID_CHARACTER
 %token <literal> IDENT
 %token <literal> FIELD
+%token <literal> BINDING
 %token <literal> LITERAL
 %token <literal> FORMAT
 %token REC ".."
@@ -74,7 +75,7 @@ struct lexer_param;
 %token CATCH "catch"
 %token LABEL "label"
 %token BREAK "break"
-%token LOC "__loc__"
+%token LOC "$__loc__"
 %token SETPIPE "|="
 %token SETPLUS "+="
 %token SETMINUS "-="
@@ -385,10 +386,10 @@ Term "as" Patterns '|' Exp {
   $$ = $2;
 } |
 
-"label" '$' IDENT '|' Exp {
-  jv v = jv_string_fmt("*label-%s", jv_string_value($3));
-  $$ = gen_location(@$, locations, gen_label(jv_string_value(v), $5));
-  jv_free($3);
+"label" BINDING '|' Exp {
+  jv v = jv_string_fmt("*label-%s", jv_string_value($2));
+  $$ = gen_location(@$, locations, gen_label(jv_string_value(v), $4));
+  jv_free($2);
   jv_free(v);
 } |
 
@@ -525,13 +526,13 @@ ImportWhat Exp ';' {
 }
 
 ImportWhat:
-"import" ImportFrom "as" '$' IDENT {
+"import" ImportFrom "as" BINDING {
   jv v = block_const($2);
   // XXX Make gen_import take only blocks and the int is_data so we
   // don't have to free so much stuff here
-  $$ = gen_import(jv_string_value(v), jv_string_value($5), 1);
+  $$ = gen_import(jv_string_value(v), jv_string_value($4), 1);
   block_free($2);
-  jv_free($5);
+  jv_free($4);
   jv_free(v);
 } |
 "import" ImportFrom "as" IDENT {
@@ -579,13 +580,9 @@ Params ';' Param {
 }
 
 Param:
-'$' IDENT {
-  $$ = gen_param_regular(jv_string_value($2));
-  jv_free($2);
-} |
-'$' Keyword {
-  $$ = gen_param_regular(jv_string_value($2));
-  jv_free($2);
+BINDING {
+  $$ = gen_param_regular(jv_string_value($1));
+  jv_free($1);
 } |
 IDENT {
   $$ = gen_param(jv_string_value($1));
@@ -646,13 +643,13 @@ Term:
 REC {
   $$ = gen_call("recurse", gen_noop());
 } |
-BREAK '$' IDENT {
-  jv v = jv_string_fmt("*label-%s", jv_string_value($3));     // impossible symbol
+BREAK BINDING {
+  jv v = jv_string_fmt("*label-%s", jv_string_value($2));     // impossible symbol
   $$ = gen_location(@$, locations,
                     BLOCK(gen_op_unbound(LOADV, jv_string_value(v)),
                     gen_call("error", gen_noop())));
   jv_free(v);
-  jv_free($3);
+  jv_free($2);
 } |
 BREAK error {
   FAIL(@$, "break requires a label to break to");
@@ -774,22 +771,17 @@ FORMAT {
  * DO NOT USE!!  I will break your jq code if you do use this outside
  * src/builtin.jq.
  */
-'$' '$' '$' '$' IDENT {
-  $$ = gen_location(@$, locations, gen_op_unbound(LOADVN, jv_string_value($5)));
-  jv_free($5);
+'$' '$' '$' BINDING {
+  $$ = gen_location(@$, locations, gen_op_unbound(LOADVN, jv_string_value($4)));
+  jv_free($4);
 } |
-'$' IDENT {
-  $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));
-  jv_free($2);
+BINDING {
+  $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1)));
+  jv_free($1);
 } |
-'$' Keyword {
-  if (strcmp(jv_string_value($2), "__loc__") == 0) {
-    $$ = gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
-                             jv_string("line"), jv_number(locfile_get_line(locations, @$.start) + 1)));
-  } else {
-    $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));
-  }
-  jv_free($2);
+"$__loc__" {
+  $$ = gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
+                           jv_string("line"), jv_number(locfile_get_line(locations, @$.start) + 1)));
 } |
 IDENT {
   const char *s = jv_string_value($1);
@@ -843,9 +835,9 @@ Pattern {
 }
 
 Pattern:
-'$' IDENT {
-  $$ = gen_op_unbound(STOREV, jv_string_value($2));
-  jv_free($2);
+BINDING {
+  $$ = gen_op_unbound(STOREV, jv_string_value($1));
+  jv_free($1);
 } |
 '[' ArrayPats ']' {
   $$ = BLOCK($2, gen_op_simple(POP));
@@ -871,11 +863,11 @@ ObjPats ',' ObjPat {
 }
 
 ObjPat:
-'$' IDENT {
-  $$ = gen_object_matcher(gen_const($2), gen_op_unbound(STOREV, jv_string_value($2)));
+BINDING {
+  $$ = gen_object_matcher(gen_const($1), gen_op_unbound(STOREV, jv_string_value($1)));
 } |
-'$' IDENT ':' Pattern {
-  $$ = gen_object_matcher(gen_const($2), BLOCK(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value($2)), $4));
+BINDING ':' Pattern {
+  $$ = gen_object_matcher(gen_const($1), BLOCK(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value($1)), $3));
 } |
 IDENT ':' Pattern {
   $$ = gen_object_matcher(gen_const($1), $3);
@@ -953,9 +945,6 @@ Keyword:
 } |
 "break" {
   $$ = jv_string("break");
-} |
-"__loc__" {
-  $$ = jv_string("__loc__");
 }
 
 MkDict:
@@ -980,17 +969,13 @@ IDENT ':' ExpD {
   $$ = gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
                               gen_op_simple(DUP2), gen_op_simple(INDEX)));
   }
-| '$' IDENT ':' ExpD {
-  $$ = gen_dictpair(gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))),
-                    $4);
+| BINDING ':' ExpD {
+  $$ = gen_dictpair(gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))),
+                    $3);
   }
-| '$' IDENT {
-  $$ = gen_dictpair(gen_const($2),
-                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))));
-  }
-| '$' Keyword {
-  $$ = gen_dictpair(gen_const($2),
-                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))));
+| BINDING {
+  $$ = gen_dictpair(gen_const($1),
+                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))));
   }
 | IDENT {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
