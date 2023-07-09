@@ -354,7 +354,7 @@ jobs:
         run: |
           mkdir -p "release"
           for files in jq-*; do
-              cp -rf "${files}/*" "release/"
+              cp -rf "${files}/"* "release/"
           done
 
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
