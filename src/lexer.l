@@ -60,7 +60,7 @@ struct lexer_param;
 "catch" { return CATCH; }
 "label" { return LABEL; }
 "break" { return BREAK; }
-"__loc__" { return LOC; }
+"$__loc__" { return LOC; }
 "|=" { return SETPIPE; }
 "+=" { return SETPLUS; }
 "-=" { return SETMINUS; }
@@ -122,6 +122,7 @@ struct lexer_param;
 
 ([a-zA-Z_][a-zA-Z_0-9]*::)*[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext); return IDENT;}
 \.[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return FIELD;}
+\$([a-zA-Z_][a-zA-Z_0-9]*::)*[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return BINDING;}
 
 [ \n\t]+  {}
 
