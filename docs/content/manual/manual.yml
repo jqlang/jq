@@ -705,17 +705,33 @@ sections:
       try to add a string to an object you'll get an error message and
       no result.
 
-      Please note that all numbers are converted to IEEE754 double precision
-      floating point representation. Arithmetic and logical operators are working
-      with these converted doubles. Results of all such operations are also limited
-      to the double precision.
+      Please note that jq uses IEEE754 double precision floating point
+      numbers for arithmetic computations, and that jq represents all
+      numbers internally as IEEE754 floats. The results of all
+      arithmetic operations are limited to double precision, but the
+      literal representation of integers and non-negative floats that
+      are presented to a jq program as literals without exponents ("e"
+      or "E") is retained and used for printing those numbers.
 
-      The only exception to this behaviour of number is a snapshot of original number
-      literal. When a number which originally was provided as a literal is never
-      mutated until the end of the program then it is printed to the output in its
-      original literal form. This also includes cases when the original literal
-      would be truncated when converted to the IEEE754 double precision floating point
-      number.
+      In this context, it should be noted that 'tonumber' retains a
+      snapshot of numeric strings that are exponent-free, and
+      `tostring` uses the snapshot representation, if available, as
+      illustrated by these examples:
+
+      "-1.000000000000000000000000000000000000000000000000000002" | tonumber
+
+      prints as:
+
+      -1.000000000000000000000000000000000000000000000000000002
+
+      and
+
+      1.000000000000000000000000000000000000000000000000000002 | tostring
+
+      prints as:
+
+      1.000000000000000000000000000000000000000000000000000002
+
 
     entries:
       - title: "Addition: `+`"
@@ -804,6 +820,17 @@ sections:
             output: ['1', '-1']
 
 
+      - title: "`abs`"
+        body: |
+          The builtin function `abs` is defined as: `if . < 0 then - . else . end`.
+          For numeric input, this is the absolute value, without conversion.
+          To compute the absolute value of a number as a floating point number, use `fabs`.
+
+        examples:
+          - program: 'map(abs)'
+            input: [-10, -1.1, -1e-1, 1000000000000000002, -1000000000000000002]
+            output: ['[10,1.1,1e-1,10000000000000002,1e+18]']
+
       - title: "`length`"
         body: |
 
@@ -814,13 +841,15 @@ sections:
             codepoints it contains (which will be the same as its
             JSON-encoded length in bytes if it's pure ASCII).
 
-          - The length of a **number** is its absolute value.
-
           - The length of an **array** is the number of elements.
 
           - The length of an **object** is the number of key-value pairs.
 
           - The length of **null** is zero.
+
+          - The length of a **number** is its absolute value as a
+            floating point number, but the use of `fabs` of `abs` to compute
+            a number's absolute value is recommended.
 
           - It is an error to use `length` on a **boolean**.
 
