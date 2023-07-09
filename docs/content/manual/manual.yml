@@ -136,14 +136,15 @@ sections:
         formatted as a JSON string with quotes. This can be useful for
         making jq filters talk to non-JSON-based systems.
 
-      * `--join-output` / `-j`:
-
-        Like `-r` but jq won't print a newline after each output.
-
-      * `--nul-output` / `-0`:
+      * `--raw-output0`:
 
         Like `-r` but jq will print NUL instead of newline after each output.
         This can be useful when the values being output can contain newlines.
+        When the output value contains NUL, jq exits with non-zero code.
+
+      * `--join-output` / `-j`:
+
+        Like `-r` but jq won't print a newline after each output.
 
       * `--ascii-output` / `-a`:
 
