@@ -12,10 +12,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image:
-          [
-            ubuntu-22.04,
-          ]
         arch:
           [
             amd64,
@@ -99,7 +95,7 @@ jobs:
             CC: "s390x-linux-gnu"
             binutils: "binutils-s390x-linux-gnu"
             strip: "s390x-linux-gnu-strip"
-    runs-on: ${{ matrix.image }}
+    runs-on: ubuntu-22.04
     env:
       AR: ${{ matrix.CC }}-ar
       CHOST: ${{ matrix.cc }}
@@ -107,7 +103,7 @@ jobs:
       CPP: ${{ matrix.cc }}-cpp
       CXX: ${{ matrix.cc }}-g++
       LDFLAGS: -s
-      SUFFIX: linux-${{ matrix.image }}-gcc-${{ matrix.arch }}
+      SUFFIX: linux-${{ matrix.arch }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -130,8 +126,9 @@ jobs:
             --enable-static \
             --enable-all-static
           make -j$(nproc)
-          ${{ matrix.strip }} jq
+          ${{ matrix.strip }} ./jq
           file ./jq
+          cp ./jq jq-${{ env.SUFFIX }}
       - name: Test
         # Only run tests for amd64 matching the CI machine arch
         if: ${{ matrix.arch == 'amd64' }}
@@ -151,20 +148,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jq-${{ env.SUFFIX }}
+          path: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
-          path: jq
 
   macos:
     strategy:
       fail-fast: false
       matrix:
-        image:
-          [
-            macos-11,
-            macos-12,
-            macos-13,
-          ]
         arch:
           [
             amd64,
@@ -175,9 +166,9 @@ jobs:
             target: "x86_64-apple-darwin"
           - arch: arm64
             target: "arm64-apple-darwin"
-    runs-on: ${{ matrix.image }}
+    runs-on: macos-13
     env:
-      SUFFIX: macos-${{ matrix.image }}-clang-${{ matrix.arch }}
+      SUFFIX: macos-${{ matrix.arch }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -203,8 +194,9 @@ jobs:
             --enable-static \
             --enable-all-static
           make
-          strip jq
+          strip ./jq
           file ./jq
+          cp ./jq jq-${{ env.SUFFIX }}
       - name: Test
         # Only run tests for amd64 matching the CI machine arch
         if: ${{ matrix.arch == 'amd64' }}
@@ -224,18 +216,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jq-${{ env.SUFFIX }}
+          path: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
-          path: jq
 
   windows:
     strategy:
       fail-fast: false
       matrix:
-        image:
-          [
-            windows-2022,
-          ]
         arch:
           [
             amd64,
@@ -250,7 +238,7 @@ jobs:
             CC: "i686-w64-mingw32"
             toolchain: "mingw-w64-i686-toolchain"
             msystem: mingw32
-    runs-on: ${{ matrix.image }}
+    runs-on: windows-2022
     env:
       CHOST: ${{ matrix.CC }}
       CC: ${{ matrix.CC }}-gcc
@@ -287,6 +275,7 @@ jobs:
             --enable-all-static
           make
           file ./jq.exe
+          cp ./jq.exe jq-${{ env.SUFFIX }}.exe
       - name: Test
         # Only run tests for amd64 matching the CI machine arch
         if: ${{ matrix.arch == 'amd64' }}
@@ -308,9 +297,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jq-${{ env.SUFFIX }}
+          path: jq-${{ env.SUFFIX }}.exe
           if-no-files-found: error
           retention-days: 7
-          path: jq.exe
 
   dist:
     runs-on: ubuntu-latest
@@ -391,20 +380,15 @@ jobs:
         uses: actions/checkout@v3
       - name: Merge built artifacts
         uses: actions/download-artifact@v3
-        with:
-          path: artifacts
       - name: Upload release
         env:
           TAG_NAME: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir release
-          cp artifacts/jq-linux-ubuntu-22.04-gcc-amd64/jq release/jq-linux-amd64
-          cp artifacts/jq-linux-ubuntu-22.04-gcc-arm64/jq release/jq-linux-arm64
-          cp artifacts/jq-macos-macos-13-clang-amd64/jq release/jq-macos-amd64
-          cp artifacts/jq-macos-macos-13-clang-arm64/jq release/jq-macos-arm64
-          cp artifacts/jq-windows-amd64/jq.exe release/jq-windows-amd64.exe
-          cp artifacts/jq-windows-i386/jq.exe release/jq-windows-i386.exe
-          cp artifacts/jq-dist/jq-* release/
+          mkdir -p "release"
+          for files in jq-*; do
+              cp -rf ${files}/* "release/"
+          done
+
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
           gh release upload "$TAG_NAME" --clobber release/jq-*
