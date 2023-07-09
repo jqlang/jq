@@ -2832,10 +2832,8 @@ sections:
           The `first(expr)` and `last(expr)` functions extract the first
           and last values from `expr`, respectively.
 
-          The `nth(n; expr)` function extracts the nth value output by
-          `expr`.  This can be defined as `def nth(n; expr):
-          last(limit(n + 1; expr));`.  Note that `nth(n; expr)` doesn't
-          support negative values of `n`.
+          The `nth(n; expr)` function extracts the nth value output by `expr`.
+          Note that `nth(n; expr)` doesn't support negative values of `n`.
 
         examples:
           - program: '[first(range(.)), last(range(.)), nth(./2; range(.))]'
