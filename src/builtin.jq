@@ -163,7 +163,9 @@ def any(condition): any(.[]; condition);
 def all: all(.[]; .);
 def any: any(.[]; .);
 def last(g): reduce g as $item (null; $item);
-def nth($n; g): if $n < 0 then error("nth doesn't support negative indices") else last(limit($n + 1; g)) end;
+def nth($n; g):
+  if $n < 0 then error("nth doesn't support negative indices")
+  else label $out | foreach g as $item ($n + 1; . - 1; if . <= 0 then $item, break $out else empty end) end;
 def first: .[0];
 def last: .[-1];
 def nth($n): .[$n];

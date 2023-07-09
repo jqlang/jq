@@ -319,9 +319,13 @@ null
 "badness"
 [1]
 
-[first(range(.)), last(range(.)), nth(0; range(.)), nth(5; range(.)), try nth(-1; range(.)) catch .]
+[first(range(.)), last(range(.))]
 10
-[0,9,0,5,"nth doesn't support negative indices"]
+[0,9]
+
+[nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch .]
+10
+[0,5,9,"nth doesn't support negative indices"]
 
 # Check that first(g) does not extract more than one value from g
 first(1,error("foo"))
