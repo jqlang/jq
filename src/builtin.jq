@@ -1,3 +1,4 @@
+def first(g): label $out | g | ., break $out;
 def halt_error: halt_error(5);
 def error(msg): msg|error;
 def map(f): [.[] | f];
@@ -6,6 +7,8 @@ def sort_by(f): _sort_by_impl(map([f]));
 def group_by(f): _group_by_impl(map([f]));
 def unique: group_by(.) | map(.[0]);
 def unique_by(f): group_by(f) | map(.[0]);
+def min(s): reduce s as $x (first(s); if $x < . then $x else . end);
+def max(s): reduce s as $x (first(s); if $x > . then $x else . end);
 def max_by(f): _max_by_impl(map([f]));
 def min_by(f): _min_by_impl(map([f]));
 def add: reduce .[] as $x (null; . + $x);
@@ -154,7 +157,7 @@ def range($init; $upto; $by):
     if $by > 0 then $init|while(. < $upto; . + $by)
   elif $by < 0 then $init|while(. > $upto; . + $by)
   else empty end;
-def first(g): label $out | g | ., break $out;
+
 def isempty(g): first((g|false), true);
 def all(generator; condition): isempty(generator|condition and empty);
 def any(generator; condition): isempty(generator|condition or empty)|not;
@@ -181,14 +184,7 @@ def combinations(n):
       | combinations;
 # transpose a possibly jagged matrix, quickly;
 # rows are padded with nulls so the result is always rectangular.
-def transpose:
-  if . == [] then []
-  else . as $in
-  | (map(length) | max) as $max
-  | length as $length
-  | reduce range(0; $max) as $j
-      ([]; . + [reduce range(0;$length) as $i ([]; . + [ $in[$i][$j] ] )] )
-  end;
+def transpose: [range(0; max(.[]|length)) as $i | [.[][$i]]];
 def in(xs): . as $x | xs | has($x);
 def inside(xs): . as $x | xs | contains($x);
 def repeat(exp):

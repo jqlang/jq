@@ -1426,10 +1426,13 @@ sections:
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
             output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
 
-      - title: "`min`, `max`, `min_by(path_exp)`, `max_by(path_exp)`"
+      - title: "`min`, `max`, `min(stream)`, `max(stream)`, `min_by(path_exp)`, `max_by(path_exp)`"
         body: |
 
-          Find the minimum or maximum element of the input array.
+          `min` finds the minimum element of the input array, and
+          `min(stream)` finds the minimum item in the stream.
+           
+          `max` and `max(stream)` similarly find the maximum element.
 
           The `min_by(path_exp)` and `max_by(path_exp)` functions allow
           you to specify a particular field or property to examine, e.g.
@@ -1439,10 +1442,15 @@ sections:
           - program: 'min'
             input: '[5,4,2,7]'
             output: ['2']
+
+          - program: 'min(1,2,3,0.1)'
+            input: null
+            output: ['0.1']
+
           - program: 'max_by(.foo)'
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
-
+            
       - title: "`unique`, `unique_by(path_exp)`"
         body: |
 

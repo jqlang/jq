@@ -1352,6 +1352,10 @@ unique
 []
 [null,null,null,null]
 
+min(1,2,0.1)
+null
+0.1
+
 .foo[.baz]
 {"foo":{"bar":4},"baz":"bar"}
 4
