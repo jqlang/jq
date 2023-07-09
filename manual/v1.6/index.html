@@ -2389,8 +2389,8 @@ values.</p>
                   <p><code>paths</code> outputs the paths to all the elements in its input
 (except it does not output the empty list, representing .
 itself).</p>
-<p><code>paths(f)</code> outputs the paths to any values for which <code>f</code> is true.
-That is, <code>paths(numbers)</code> outputs the paths to all numeric
+<p><code>paths(f)</code> outputs the paths to any values for which <code>f</code> is <code>true</code>.
+That is, <code>paths(type == "number")</code> outputs the paths to all numeric
 values.</p>
 <p><code>leaf_paths</code> is an alias of <code>paths(scalars)</code>; <code>leaf_paths</code> is
 <em>deprecated</em> and will be removed in the next major release.</p>
@@ -2419,7 +2419,7 @@ values.</p>
                           </table>
                         
                           <table>
-                            <tr><th></th><td class="jqprogram">jq '[paths(scalars)]'</td></tr>
+                            <tr><th></th><td class="jqprogram">jq '[paths(type == &#34;number&#34;)]'</td></tr>
                             <tr><th>Input</th><td>[1,[[],{&#34;a&#34;:2}]]</td></tr>
                             
                             
