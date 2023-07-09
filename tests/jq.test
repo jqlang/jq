@@ -1286,7 +1286,11 @@ indices(", ")
 
 [.[] * "abc"]
 [-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 3.7, 10.0]
-[null,null,null,"abc","abc","abc","abcabcabc","abcabcabcabcabcabcabcabcabcabc"]
+[null,null,"","","abc","abc","abcabcabc","abcabcabcabcabcabcabcabcabcabc"]
+
+[. * (nan,-nan)]
+"abc"
+[null,null]
 
 [.[] / ","]
 ["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
