@@ -7,8 +7,19 @@ def sort_by(f): _sort_by_impl(map([f]));
 def group_by(f): _group_by_impl(map([f]));
 def unique: group_by(.) | map(.[0]);
 def unique_by(f): group_by(f) | map(.[0]);
-def min(s): reduce s as $x (first(s); if $x < . then $x else . end);
-def max(s): reduce s as $x (first(s); if $x > . then $x else . end);
+# max(s) and min(s) use boxing technique for the sake of `input`:
+def max(s):
+  reduce (s|[.]) as $x (null;
+    if . == null then $x
+    else if $x > . then $x end # for speed
+    end )
+  | select(.)[0];
+def min(s):
+  reduce (s|[.]) as $x (null;
+    if . == null then $x
+    else if $x < . then $x end # for speed
+    end )
+  | select(.)[0];
 def max_by(f): _max_by_impl(map([f]));
 def min_by(f): _min_by_impl(map([f]));
 def add: reduce .[] as $x (null; . + $x);
@@ -157,7 +168,6 @@ def range($init; $upto; $by):
     if $by > 0 then $init|while(. < $upto; . + $by)
   elif $by < 0 then $init|while(. > $upto; . + $by)
   else empty end;
-
 def isempty(g): first((g|false), true);
 def all(generator; condition): isempty(generator|condition and empty);
 def any(generator; condition): isempty(generator|condition or empty)|not;
@@ -184,7 +194,8 @@ def combinations(n):
       | combinations;
 # transpose a possibly jagged matrix, quickly;
 # rows are padded with nulls so the result is always rectangular.
-def transpose: [range(0; max(.[]|length)) as $i | [.[][$i]]];
+# Using map(length) turns out to be faster than using max/1
+def transpose: [range(0; map(length)|max) as $i | [.[][$i]]];
 def in(xs): . as $x | xs | has($x);
 def inside(xs): . as $x | xs | contains($x);
 def repeat(exp):
