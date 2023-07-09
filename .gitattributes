@@ -1,3 +1,7 @@
 .gitattributes export-ignore
 .gitignore export-ignore
 * text=auto eol=lf
+
+# generated files
+src/lexer.[ch] linguist-generated=true
+src/parser.[ch] linguist-generated=true
