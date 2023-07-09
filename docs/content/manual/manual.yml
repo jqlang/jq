@@ -1148,15 +1148,15 @@ sections:
           (except it does not output the empty list, representing .
           itself).
 
-          `paths(f)` outputs the paths to any values for which `f` is true.
-          That is, `paths(numbers)` outputs the paths to all numeric
+          `paths(f)` outputs the paths to any values for which `f` is `true`.
+          That is, `paths(type == "number")` outputs the paths to all numeric
           values.
 
         examples:
           - program: '[paths]'
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1],[1,0],[1,1],[1,1,"a"]]']
-          - program: '[paths(scalars)]'
+          - program: '[paths(type == "number")]'
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1,1,"a"]]']
 
