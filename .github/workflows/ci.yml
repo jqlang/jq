@@ -30,6 +30,7 @@ jobs:
             powerpc,
             ppc64el,
             s390x,
+            riscv64,
           ]
         include:
           - arch: amd64
@@ -64,6 +65,8 @@ jobs:
             CC: "powerpc64le-linux-gnu"
           - arch: s390x
             CC: "s390x-linux-gnu"
+          - arch: riscv64
+            CC: "riscv64-linux-gnu"
     runs-on: ubuntu-22.04
     env:
       AR: ${{ matrix.CC }}-ar
