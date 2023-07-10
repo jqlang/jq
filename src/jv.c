@@ -1222,7 +1222,9 @@ static uint32_t jvp_string_hash(jv jstr) {
 
   switch(len & 3) {
   case 3: k1 ^= tail[2] << 16;
+          JQ_FALLTHROUGH;
   case 2: k1 ^= tail[1] << 8;
+          JQ_FALLTHROUGH;
   case 1: k1 ^= tail[0];
           k1 *= c1; k1 = rotl32(k1,15); k1 *= c2; h1 ^= k1;
   }
