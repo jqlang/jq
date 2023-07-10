@@ -13,60 +13,58 @@ jobs:
       fail-fast: false
       matrix:
         arch:
-          [
-            amd64,
-            arm64,
-            armel,
-            armhf,
-            i386,
-            mips,
-            mips64,
-            mips64el,
-            mips64r6,
-            mips64r6el,
-            mipsel,
-            mipsr6,
-            mipsr6el,
-            powerpc,
-            ppc64el,
-            s390x,
-            riscv64,
-          ]
+          - amd64
+          - arm64
+          - armel
+          - armhf
+          - i386
+          - mips
+          - mips64
+          - mips64el
+          - mips64r6
+          - mips64r6el
+          - mipsel
+          - mipsr6
+          - mipsr6el
+          - powerpc
+          - ppc64el
+          - riscv64
+          - s390x
         include:
           - arch: amd64
-            CC: "x86_64-linux-gnu"
+            CC: x86_64-linux-gnu
           - arch: arm64
-            CC: "aarch64-linux-gnu"
+            CC: aarch64-linux-gnu
           - arch: armel
-            CC: "arm-linux-gnueabi"
+            CC: arm-linux-gnueabi
           - arch: armhf
-            CC: "arm-linux-gnueabihf"
+            CC: arm-linux-gnueabihf
           - arch: i386
-            CC: "i686-linux-gnu"
+            CC: i686-linux-gnu
           - arch: mips
-            CC: "mips-linux-gnu"
+            CC: mips-linux-gnu
           - arch: mips64
-            CC: "mips64-linux-gnuabi64"
+            CC: mips64-linux-gnuabi64
           - arch: mips64el
-            CC: "mips64el-linux-gnuabi64"
+            CC: mips64el-linux-gnuabi64
           - arch: mips64r6
-            CC: "mipsisa64r6-linux-gnuabi64"
+            CC: mipsisa64r6-linux-gnuabi64
           - arch: mips64r6el
-            CC: "mipsisa64r6el-linux-gnuabi64"
+            CC: mipsisa64r6el-linux-gnuabi64
           - arch: mipsel
-            CC: "mipsel-linux-gnu"
+            CC: mipsel-linux-gnu
           - arch: mipsr6
-            CC: "mipsisa32r6-linux-gnu"
+            CC: mipsisa32r6-linux-gnu
           - arch: mipsr6el
-            CC: "mipsisa32r6el-linux-gnu"
+            CC: mipsisa32r6el-linux-gnu
           - arch: powerpc
-            CC: "powerpc-linux-gnu"
+            CC: powerpc-linux-gnu
           - arch: ppc64el
-            CC: "powerpc64le-linux-gnu"
-          - arch: s390x
-            CC: "s390x-linux-gnu"
+            CC: powerpc64le-linux-gnu
           - arch: riscv64
-            CC: "riscv64-linux-gnu"
+            CC: riscv64-linux-gnu
+          - arch: s390x
+            CC: s390x-linux-gnu
     runs-on: ubuntu-22.04
     env:
       AR: ${{ matrix.CC }}-ar
@@ -97,7 +95,7 @@ jobs:
             --with-oniguruma=builtin \
             --enable-static \
             --enable-all-static
-          make -j$(nproc)
+          make -j"$(nproc)"
           file ./jq
           cp ./jq jq-${{ env.SUFFIX }}
       - name: Test
@@ -115,10 +113,10 @@ jobs:
           path: |
             test-suite.log
             tests/*.log
-      - name: Upload Artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: jq-${{ env.SUFFIX }}
+          name: jq-linux
           path: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
@@ -128,18 +126,16 @@ jobs:
       fail-fast: false
       matrix:
         arch:
-          [
-            amd64,
-            arm64,
-          ]
+          - amd64
+          - arm64
         include:
           - arch: amd64
-            target: "x86_64-apple-darwin"
+            target: x86_64-apple-darwin
           - arch: arm64
-            target: "arm64-apple-darwin"
+            target: arm64-apple-darwin
     runs-on: macos-13
     env:
-      LDFLAGS: -s
+      LDFLAGS: -dead_strip
       SUFFIX: macos-${{ matrix.arch }}
     steps:
       - name: Clone repository
@@ -151,21 +147,22 @@ jobs:
           # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
           brew update || brew update-reset
           brew install autoconf automake libtool
-      - name: "Set CC"
+      - name: Set CC
         run: |
-          echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> $GITHUB_ENV
+          echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> "$GITHUB_ENV"
       - name: Build
         run: |
           autoreconf -i
           ./configure \
-            --host=${{ matrix.target }}$(uname -r) \
+            --host="${{ matrix.target }}$(uname -r)" \
             --disable-docs \
             --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
             --enable-all-static
-          make -j$(nproc)
+          make -j"$(nproc)"
+          strip ./jq
           file ./jq
           cp ./jq jq-${{ env.SUFFIX }}
       - name: Test
@@ -183,10 +180,10 @@ jobs:
           path: |
             test-suite.log
             tests/*.log
-      - name: Upload Artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: jq-${{ env.SUFFIX }}
+          name: jq-macos
           path: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
@@ -196,18 +193,16 @@ jobs:
       fail-fast: false
       matrix:
         arch:
-          [
-            amd64,
-            i386,
-          ]
+          - amd64
+          - i386
         include:
           - arch: amd64
-            CC: "x86_64-pc-msys"
-            toolchain: "gcc"
+            CC: x86_64-pc-msys
+            toolchain: gcc
             msystem: msys
           - arch: i386
-            CC: "i686-w64-mingw32"
-            toolchain: "mingw-w64-i686-toolchain"
+            CC: i686-w64-mingw32
+            toolchain: mingw-w64-i686-toolchain
             msystem: mingw32
     runs-on: windows-2022
     env:
@@ -263,10 +258,10 @@ jobs:
           path: |
             test-suite.log
             tests/*.log
-      - name: Upload Artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: jq-${{ env.SUFFIX }}
+          name: jq-windows
           path: jq-${{ env.SUFFIX }}.exe
           if-no-files-found: error
           retention-days: 7
@@ -293,7 +288,7 @@ jobs:
             --with-oniguruma=builtin
           make dist dist-zip
           git diff --exit-code
-      - name: Upload Artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: jq-dist
@@ -307,12 +302,35 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
+    needs: linux
     if: startsWith(github.ref, 'refs/tags/jq-')
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
+      - name: Download executables
+        uses: actions/download-artifact@v3
         with:
-          submodules: true
+          name: jq-linux
+      - name: Move executables
+        run: |
+          mkdir -p linux/{386,amd64,arm64,mips64le,ppc64le,riscv64,s390x}
+          mv jq-linux-i386 linux/386/jq
+          mv jq-linux-amd64 linux/amd64/jq
+          mv jq-linux-arm64 linux/arm64/jq
+          mv jq-linux-mips64el linux/mips64le/jq
+          mv jq-linux-ppc64el linux/ppc64le/jq
+          mv jq-linux-riscv64 linux/riscv64/jq
+          mv jq-linux-s390x linux/s390x/jq
+          chmod +x linux/*/jq
+      - name: Create Dockerfile
+        run: |
+          cat <<'EOF' >Dockerfile
+          FROM scratch
+          ARG TARGETPLATFORM
+          COPY AUTHORS COPYING $TARGETPLATFORM/jq /
+          RUN ["/jq", "--version"]
+          ENTRYPOINT ["/jq"]
+          EOF
       - name: Docker metadata
         uses: docker/metadata-action@v4
         id: metadata
@@ -335,7 +353,7 @@ jobs:
           context: .
           push: true
           provenance: false
-          platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
+          platforms: linux/386,linux/amd64,linux/arm64,linux/mips64le,linux/ppc64le,linux/riscv64,linux/s390x
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
 
@@ -348,17 +366,12 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
-      - name: Merge built artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v3
       - name: Upload release
         env:
           TAG_NAME: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p "release"
-          for files in jq-*; do
-              cp -rf "${files}/"* "release/"
-          done
-
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
-          gh release upload "$TAG_NAME" --clobber release/jq-*
+          gh release upload "$TAG_NAME" --clobber jq-*/jq-*
