@@ -5,6 +5,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#if (defined(__GNUC__) && __GNUC__ >= 7) || \
+    (defined(__clang__) && __clang_major__ >= 10)
+# define JQ_FALLTHROUGH __attribute__((fallthrough))
+#else
+# define JQ_FALLTHROUGH do {} while (0) /* fallthrough */
+#endif
+
 typedef enum {
   JV_KIND_INVALID,
   JV_KIND_NULL,

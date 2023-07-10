@@ -575,6 +575,7 @@ jv jq_next(jq_state *jq) {
 
     case STOREVN:
         stack_save(jq, pc - 1, stack_get_pos(jq));
+        JQ_FALLTHROUGH;
     case STOREV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
@@ -742,7 +743,7 @@ jv jq_next(jq_state *jq) {
       }
       stack_push(jq, container);
       stack_push(jq, jv_number(-1));
-      // fallthrough
+      JQ_FALLTHROUGH;
     }
     case ON_BACKTRACK(EACH):
     case ON_BACKTRACK(EACH_OPT): {
