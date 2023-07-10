@@ -1873,13 +1873,38 @@ of <code>has</code>.</p>
                     <code>map(f)</code>, <code>map_values(f)</code>
                     
                   </h3>
-                  <p>For any filter <code>f</code>, <code>map(f)</code> will run that filter for each
-element of the input array, and return the outputs in a new
-array. <code>map(.+1)</code> will increment each element of an array of numbers.</p>
-<p>Similarly, <code>map_values(f)</code> will run that filter for each element,
-but it will return an object when an object is passed.</p>
-<p><code>map(f)</code> is equivalent to <code>[.[] | f]</code>. In fact, this is how
-it's defined. Similarly, <code>map_values(f)</code> is defined as <code>.[] |= f</code>.</p>
+                  <p>For any filter <code>f</code>, <code>map(f)</code> and <code>map_values(f)</code> apply <code>f</code>
+to each of the values in the input array or object, that is,
+to the values of <code>.[]</code>.</p>
+<p>In the absence of errors, <code>map(f)</code> always outputs an array
+whereas <code>map_values(f)</code> outputs an array if given an array,
+or an object if given an object.</p>
+<p>When the input to <code>map_values(f)</code> is an object, the output
+object has the same keys as the input object except for
+those keys whose values when piped to <code>f</code> produce no values
+at all.</p>
+<p>The key difference between <code>map(f)</code> and <code>map_values(f)</code> is
+that the former simply forms an array from all the values of
+<code>($x|f)</code> for each value, $x, in the input array or object,
+but <code>map_values(f)</code> only uses <code>first($x|f)</code>.</p>
+<p>Specifically, for object inputs, <code>map_value(f)</code> constructs
+the output object by examining in turn the value of
+<code>first(.[$k]|f)</code> for each key, $k, of the input.  If this
+expression produces no values, then the corresponding key
+will be dropped; otherwise, the output object will have that
+value at the key, $k.</p>
+<p>Here are some examples to clarify the behavior of <code>map</code> and
+<code>map_values</code> when applied to arrays. These examples assume the
+input is <code>[1]</code> in all cases:</p>
+<p>map(.+1)          #=&gt;  [2]
+map(., .)         #=&gt;  [1,1]
+map(empty)        #=&gt;  []</p>
+<p>map_values(.+1)   #=&gt;  [2]
+map_values(., .)  #=&gt;  [1]
+map_values(empty) #=&gt;  []</p>
+<p><code>map(f)</code> is equivalent to <code>[.[] | f]</code> and
+<code>map_values(f)</code> is equivalent to <code>.[] |= f</code>.</p>
+<p>In fact, these are their implementations.</p>
 
                   
                     <div>
@@ -1914,6 +1939,34 @@ it's defined. Similarly, <code>map_values(f)</code> is defined as <code>.[] |= f
                                   <th>Output</th>
                                 
                                 <td>{&#34;a&#34;: 2, &#34;b&#34;: 3, &#34;c&#34;: 4}</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq 'map(., .)'</td></tr>
+                            <tr><th>Input</th><td>[1,2]</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>[1,1,2,2]</td>
+                              </tr>
+                            
+                          </table>
+                        
+                          <table>
+                            <tr><th></th><td class="jqprogram">jq 'map_values(. // empty)'</td></tr>
+                            <tr><th>Input</th><td>{&#34;a&#34;: null, &#34;b&#34;: true, &#34;c&#34;: false}</td></tr>
+                            
+                            
+                              <tr>
+                                
+                                  <th>Output</th>
+                                
+                                <td>{&#34;b&#34;:true}</td>
                               </tr>
                             
                           </table>
