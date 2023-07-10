@@ -135,7 +135,7 @@ jobs:
             target: arm64-apple-darwin
     runs-on: macos-13
     env:
-      LDFLAGS: -s
+      LDFLAGS: -dead_strip
       SUFFIX: macos-${{ matrix.arch }}
     steps:
       - name: Clone repository
@@ -162,6 +162,7 @@ jobs:
             --enable-static \
             --enable-all-static
           make -j"$(nproc)"
+          strip ./jq
           file ./jq
           cp ./jq jq-${{ env.SUFFIX }}
       - name: Test
