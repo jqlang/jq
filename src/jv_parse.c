@@ -649,7 +649,7 @@ static int stream_is_top_num(struct jv_parser* p) {
 static pfunc scan_line_comment(struct jv_parser* p, char ch, jv* out) {
   if(ch == '\n')
     p->scan = scan_json;
-  return OK;
+  return 0;
 }
 
 static pfunc scan_c_comment_close(struct jv_parser* p, char ch, jv* out) {
@@ -658,24 +658,24 @@ static pfunc scan_c_comment_close(struct jv_parser* p, char ch, jv* out) {
   } else {
     p->scan = scan_c_comment;
   }
-  return OK;
+  return 0;
 }
 
 static pfunc scan_c_comment(struct jv_parser* p, char ch, jv* out) {
   if(ch == '*') {
     p->scan = scan_c_comment_close;
   }
-  return OK;
+  return 0;
 }
 
 static pfunc scan_slash_comment(struct jv_parser* p, char ch, jv* out) {
   if(ch == '/') {
     p->scan = scan_line_comment;
-    return OK;
+    return 0;
   }
   if(ch == '*') {
     p->scan = scan_c_comment;
-    return OK;
+    return 0;
   }
   return "Incomplete comment token; slash must be followed by another slash or asterisk";
 }
@@ -704,7 +704,7 @@ static pfunc scan_json(struct jv_parser* p, char ch, jv* out) {
   if (p->st == JV_PARSER_NORMAL) {
     if(ch == '/' && (p->flags & JV_PARSE_STRIP_COMMENTS)) {
       p->scan = scan_slash_comment;
-      return OK;
+      return answer;
     }
 
     chclass cls = classify(ch);
