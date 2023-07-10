@@ -906,20 +906,43 @@ sections:
       - title: "`map(f)`, `map_values(f)`"
         body: |
 
-          For any filter `f`, `map(f)` will run that filter for each
-          element of the input array, and return the outputs in a new
-          array. For example, `map(.+1)` will increment each element
-          of an array of numbers, and `map(.,.)` will duplicate each
-          element of the input array.
-
-          `map(f)` is equivalent to `[.[] | f]`. In fact, this is how it's defined.
-
-          `map_values(f)` is similarly defined as `.[] |= f`.  This
-          essentially means that each value, $v, in the input array or
-          object is replaced by `first($v|f)`, it being understood
-          that if the input is an object, then keys for which this
-          expression is empty will be removed.
+          For any filter `f`, `map(f)` and `map_values(f)` apply `f`
+          to each of the values in the input array or object, that is,
+          to the values of `.[]`.
           
+          In the absence of errors, `map(f)` always outputs an array
+          whereas `map_values(f)` outputs an array or an object
+          depending on the type of the input.
+
+          One important difference is that whereas `map(f)` simply
+          forms an array from all the values of `($x|f)` for each value,
+          $x, of the input, `map_values(f)` only uses `first($x|f)`.
+
+          Specifically, for object inputs, `map_value(f)` constructs
+          the output object by examining in turn the values of
+          `first(.[$k]|f)` for each key, $k, of the input.  If this
+          expression produces no values (i.e., is equivalent to
+          `empty`), the corresponding key will be dropped; otherwise,
+          the output object will have this value at the key, $k.
+
+          Here are some examples to clarify the behavior of the two
+          filters when applied to arrays. These examples assume the
+          input is `[1]` in all cases:
+
+          map(.+1)          #=> [2]
+          map(., .)         #=>  [1,1]
+          map(empty)        #=>  []
+
+          map_values(.+1)   #=>  [2]
+          map_values(., .)  #=>  [1]
+          map_values(empty) #=>  []
+
+          `map(f)` is equivalent to `[.[] | f]` and
+          `map_values(f)` is equivalent to `.[] |= f`.
+          
+          In fact, these are their implementations.
+
+
         examples:
           - program: 'map(.+1)'
             input: '[1,2,3]'
