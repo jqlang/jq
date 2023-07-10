@@ -300,6 +300,11 @@ static block gen_update(block object, block val, int optype) {
                                                               optype)))));
 }
 
+static block gen_loc_object(location *loc, struct locfile *locations) {
+  return gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
+                             jv_string("line"), jv_number(locfile_get_line(locations, loc->start) + 1)));
+}
+
 %}
 
 %%
@@ -780,8 +785,7 @@ BINDING {
   jv_free($1);
 } |
 "$__loc__" {
-  $$ = gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
-                           jv_string("line"), jv_number(locfile_get_line(locations, @$.start) + 1)));
+  $$ = gen_loc_object(&@$, locations);
 } |
 IDENT {
   const char *s = jv_string_value($1);
@@ -980,6 +984,10 @@ IDENT ':' ExpD {
 | IDENT {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
                     gen_index(gen_noop(), gen_const($1)));
+  }
+| "$__loc__" {
+  $$ = gen_dictpair(gen_const(jv_string("__loc__")),
+                    gen_loc_object(&@$, locations));
   }
 | Keyword {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
