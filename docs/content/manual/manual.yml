@@ -911,25 +911,31 @@ sections:
           to the values of `.[]`.
           
           In the absence of errors, `map(f)` always outputs an array
-          whereas `map_values(f)` outputs an array or an object
-          depending on the type of the input.
+          whereas `map_values(f)` outputs an array if given an array,
+          or an object if given an object.
 
-          One important difference is that whereas `map(f)` simply
-          forms an array from all the values of `($x|f)` for each value,
-          $x, of the input, `map_values(f)` only uses `first($x|f)`.
+          When the input to `map_values(f)` is an object, the output
+          object has the same keys as the input object except for
+          those keys whose values when piped to `f` produce no values
+          at all.
+
+          The key difference between `map(f)` and `map_values(f)` is
+          that the former simply forms an array from all the values of
+          `($x|f)` for each value, $x, in the input array or object,
+          but `map_values(f)` only uses `first($x|f)`.
 
           Specifically, for object inputs, `map_value(f)` constructs
-          the output object by examining in turn the values of
+          the output object by examining in turn the value of
           `first(.[$k]|f)` for each key, $k, of the input.  If this
-          expression produces no values (i.e., is equivalent to
-          `empty`), the corresponding key will be dropped; otherwise,
-          the output object will have this value at the key, $k.
+          expression produces no values, then the corresponding key
+          will be dropped; otherwise, the output object will have that
+          value at the key, $k.
 
-          Here are some examples to clarify the behavior of the two
-          filters when applied to arrays. These examples assume the
+          Here are some examples to clarify the behavior of `map` and
+          `map_values` when applied to arrays. These examples assume the
           input is `[1]` in all cases:
 
-          map(.+1)          #=> [2]
+          map(.+1)          #=>  [2]
           map(., .)         #=>  [1,1]
           map(empty)        #=>  []
 
