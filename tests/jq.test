@@ -1792,3 +1792,9 @@ reduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)
 [ foreach .[] as $try (1 as $catch | $catch - 1; . + $try; .) ]
 [10,9,8,7]
 [10,19,27,34]
+
+
+# { $__loc__ } works
+{ a, $__loc__, c }
+{"a":[1,2,3],"b":"foo","c":{"hi":"hey"}}
+{"a":[1,2,3],"__loc__":{"file":"<top-level>","line":1},"c":{"hi":"hey"}}
