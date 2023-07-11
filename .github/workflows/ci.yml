@@ -373,5 +373,6 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          sha256sum jq-*/jq-* | sed 's, .*/, ,' > checksums.txt
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
-          gh release upload "$TAG_NAME" --clobber jq-*/jq-*
+          gh release upload "$TAG_NAME" --clobber jq-*/jq-* checksums.txt
