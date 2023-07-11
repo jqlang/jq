@@ -909,7 +909,7 @@ sections:
           For any filter `f`, `map(f)` and `map_values(f)` apply `f`
           to each of the values in the input array or object, that is,
           to the values of `.[]`.
-          
+
           In the absence of errors, `map(f)` always outputs an array
           whereas `map_values(f)` outputs an array if given an array,
           or an object if given an object.
@@ -945,7 +945,7 @@ sections:
 
           `map(f)` is equivalent to `[.[] | f]` and
           `map_values(f)` is equivalent to `.[] |= f`.
-          
+
           In fact, these are their implementations.
 
 
@@ -969,8 +969,8 @@ sections:
 
       - title: "`pick(pathexps)`"
         body: |
-        
-          Emit the projection of the input object or array defined by the specified 
+
+          Emit the projection of the input object or array defined by the specified
           sequence of path expressions, such that if p is any one of these specifications,
           then `(. | p)` will evaluate to the same value as `(. | pick(pathexps) | p)`.
           For arrays, negative indices and .[m:n] specifications should not be used.

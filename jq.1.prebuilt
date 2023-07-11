@@ -967,7 +967,7 @@ jq \'map_values(\. // empty)\'
 .IP "" 0
 .
 .SS "pick(pathexps)"
-Emit the projection of the input object or array defined by the specified  sequence of path expressions, such that if p is any one of these specifications, then \fB(\. | p)\fR will evaluate to the same value as \fB(\. | pick(pathexps) | p)\fR\. For arrays, negative indices and \.[m:n] specifications should not be used\.
+Emit the projection of the input object or array defined by the specified sequence of path expressions, such that if p is any one of these specifications, then \fB(\. | p)\fR will evaluate to the same value as \fB(\. | pick(pathexps) | p)\fR\. For arrays, negative indices and \.[m:n] specifications should not be used\.
 .
 .IP "" 4
 .
