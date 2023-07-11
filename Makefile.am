@@ -117,6 +117,8 @@ src/builtin.inc: $(srcdir)/src/builtin.jq
 	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $(srcdir)/src/builtin.jq > $@
 src/builtin.o: src/builtin.inc
 
+CLEANFILES = src/version.h .remake-version-h src/builtin.inc
+
 bin_PROGRAMS = jq
 jq_SOURCES = src/main.c src/version.h
 jq_LDFLAGS = -static-libtool-libs
@@ -133,7 +135,7 @@ endif
 ### Tests (make check)
 
 TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
-TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
+AM_TESTS_ENVIRONMENT = JQ=$(abs_builddir)/jq NO_VALGRIND=$(NO_VALGRIND)
 
 # This is a magic make variable that causes it to treat tests/man.test as a
 # DATA-type dependency for the check target. As a result, it will attempt to
@@ -173,6 +175,8 @@ endif
 jq.1: jq.1.prebuilt
 	$(AM_V_GEN) cp $(srcdir)/jq.1.prebuilt $@
 
+CLEANFILES += jq.1
+
 ### Build oniguruma
 
 if BUILD_ONIGURUMA
@@ -211,13 +215,12 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order1.jq                               \
         tests/modules/test_bind_order2.jq                               \
         tests/onig.supp tests/local.supp                                \
-        tests/onig.test tests/setup tests/torture/input0.json		\
-        tests/optional.test tests/optionaltest				\
-        tests/utf8-truncate.jq tests/utf8test				\
-        tests/base64.test tests/base64test 				\
-        tests/jq-f-test.sh tests/shtest
+        tests/setup tests/torture/input0.json                           \
+        tests/optional.test tests/man.test tests/jq.test                \
+        tests/onig.test tests/base64.test tests/utf8-truncate.jq        \
+        tests/jq-f-test.sh
 
-DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin
+AM_DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin
 
 # README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
@@ -234,22 +237,3 @@ rpm: dist jq.spec
 	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "myver $(VERSION)" --define "myrel ${RELEASE}" rpm/SOURCES/jq-$(VERSION).tar.gz
 	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
-
-dist-clean-local:
-	rm -f ${BUILT_SOURCES}
-
-# Not sure why this doesn't get cleaned up automatically, guess
-# automake used to man pages which are hand coded?
-# 'make clean' doesn't delete the manpage if it can't be rebuilt
-clean-local-docs:
-if ENABLE_DOCS
-	rm -f jq.1
-endif
-
-clean-local-gcov:
-	rm -f src/*.gcno src/*.gcda src/*.gcov
-
-clean-local: clean-local-docs clean-local-gcov
-	rm -f src/version.h .remake-version-h
-
-.PHONY: clean-local-docs clean-local-gcov
