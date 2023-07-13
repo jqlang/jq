@@ -6,6 +6,12 @@ on:
       - 'docs/**'
       - 'tests/man.test'
       - 'jq.1.prebuilt'
+  pull_request:
+    paths:
+      - '.github/workflows/manpage.yml'
+      - 'docs/**'
+      - 'tests/man.test'
+      - 'jq.1.prebuilt'
 
 jobs:
   manpages:
