@@ -6884,15 +6884,29 @@ the first entity will be lost.</p>
                   
                 </section>
               
-                <section id="debug">
+                <section id="debug,debug(msgs)">
                   <h3>
-                    <code>debug</code>
+                    <code>debug</code>, <code>debug(msgs)</code>
                     
                   </h3>
-                  <p>Causes a debug message based on the input value to be
-produced.  The jq executable wraps the input value with
-<code>["DEBUG:", &lt;input-value&gt;]</code> and prints that and a newline on
-stderr, compactly.  This may change in the future.</p>
+                  <p>These two filters are like <code>.</code> but have as a side-effect the
+production of one or more messages on stderr.</p>
+<p>The message produced by the <code>debug</code> filter has the form</p>
+<pre><code>["DEBUG:",&lt;input-value&gt;]
+</code></pre>
+<p>where <code>&lt;input-value&gt;</code> is a compact rendition of the input
+value.  This format may change in the future.</p>
+<p>The <code>debug(msgs)</code> filter is defined as <code>(msgs | debug | empty), .</code>
+thus allowing great flexibility in the content of the message,
+while also allowing multi-line debugging statements to be created.</p>
+<p>For example, the expression:</p>
+<pre><code>1 as $x | 2 | debug("Entering function foo with $x == \($x)", .) | (.+1)
+</code></pre>
+<p>would produce the value 3 but with the following two lines
+being written to stderr:</p>
+<pre><code>["DEBUG:","Entering function foo with $x == 1"]
+["DEBUG:",2]
+</code></pre>
 
                   
                 </section>
@@ -7783,7 +7797,7 @@ by a semi-colon, where the first number is one of these:</p>
           
             "inputs" : "inputs",
           
-            "debug" : "debug",
+            "debug, debug(msgs)" : "debug,debug(msgs)",
           
             "stderr" : "stderr",
           
