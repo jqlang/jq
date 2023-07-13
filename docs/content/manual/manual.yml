@@ -3075,13 +3075,32 @@ sections:
           to invoke jq with the -n command-line option, otherwise
           the first entity will be lost.
 
-      - title: "`debug`"
+      - title: "`debug`, `debug(msgs)`"
         body: |
 
-          Causes a debug message based on the input value to be
-          produced.  The jq executable wraps the input value with
-          `["DEBUG:", <input-value>]` and prints that and a newline on
-          stderr, compactly.  This may change in the future.
+          These two filters are like `.` but have as a side-effect the
+          production of one or more messages on stderr.
+
+          The message produced by the `debug` filter has the form
+
+              ["DEBUG:",<input-value>]
+
+          where `<input-value>` is a compact rendition of the input
+          value.  This format may change in the future.
+
+          The `debug(msgs)` filter is defined as `(msgs | debug | empty), .`
+          thus allowing great flexibility in the content of the message,
+          while also allowing multi-line debugging statements to be created.
+
+          For example, the expression:
+
+              1 as $x | 2 | debug("Entering function foo with $x == \($x)", .) | (.+1)
+
+          would produce the value 3 but with the following two lines
+          being written to stderr:
+
+              ["DEBUG:","Entering function foo with $x == 1"]
+              ["DEBUG:",2]
 
       - title: "`stderr`"
         body: |

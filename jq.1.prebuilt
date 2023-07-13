@@ -3353,8 +3353,54 @@ Outputs all remaining inputs, one by one\.
 .P
 This is primarily useful for reductions over a program\'s inputs\. Note that when using \fBinputs\fR it is generally necessary to invoke jq with the \-n command\-line option, otherwise the first entity will be lost\.
 .
-.SS "debug"
-Causes a debug message based on the input value to be produced\. The jq executable wraps the input value with \fB["DEBUG:", <input\-value>]\fR and prints that and a newline on stderr, compactly\. This may change in the future\.
+.SS "debug, debug(msgs)"
+These two filters are like \fB\.\fR but have as a side\-effect the production of one or more messages on stderr\.
+.
+.P
+The message produced by the \fBdebug\fR filter has the form
+.
+.IP "" 4
+.
+.nf
+
+["DEBUG:",<input\-value>]
+.
+.fi
+.
+.IP "" 0
+.
+.P
+where \fB<input\-value>\fR is a compact rendition of the input value\. This format may change in the future\.
+.
+.P
+The \fBdebug(msgs)\fR filter is defined as \fB(msgs | debug | empty), \.\fR thus allowing great flexibility in the content of the message, while also allowing multi\-line debugging statements to be created\.
+.
+.P
+For example, the expression:
+.
+.IP "" 4
+.
+.nf
+
+1 as $x | 2 | debug("Entering function foo with $x == \e($x)", \.) | (\.+1)
+.
+.fi
+.
+.IP "" 0
+.
+.P
+would produce the value 3 but with the following two lines being written to stderr:
+.
+.IP "" 4
+.
+.nf
+
+["DEBUG:","Entering function foo with $x == 1"]
+["DEBUG:",2]
+.
+.fi
+.
+.IP "" 0
 .
 .SS "stderr"
 Prints its input in raw and compact mode to stderr with no additional decoration, not even a newline\.

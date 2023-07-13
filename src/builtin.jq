@@ -266,6 +266,9 @@ def pick(pathexps):
   | reduce path(pathexps) as $a (null;
       setpath($a; $in|getpath($a)) );
 
+# ensure the output of debug(m1,m2) is kept together:
+def debug(msgs): (msgs | debug | empty), .;
+
 # SQL-ish operators here:
 def INDEX(stream; idx_expr):
   reduce stream as $row ({}; .[$row|idx_expr|tostring] = $row);
