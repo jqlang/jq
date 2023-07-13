@@ -779,7 +779,7 @@ sections:
           Division by zero raises an error. `x % y` computes x modulo y.
 
           Multiplying a string by a number produces the concatenation of
-          that string that many times. `"x" * 0` produces **null**.
+          that string that many times. `"x" * 0` produces `""`.
 
           Dividing a string by another splits the first using the second
           as separators.
@@ -906,15 +906,48 @@ sections:
       - title: "`map(f)`, `map_values(f)`"
         body: |
 
-          For any filter `f`, `map(f)` will run that filter for each
-          element of the input array, and return the outputs in a new
-          array. `map(.+1)` will increment each element of an array of numbers.
+          For any filter `f`, `map(f)` and `map_values(f)` apply `f`
+          to each of the values in the input array or object, that is,
+          to the values of `.[]`.
 
-          Similarly, `map_values(f)` will run that filter for each element,
-          but it will return an object when an object is passed.
+          In the absence of errors, `map(f)` always outputs an array
+          whereas `map_values(f)` outputs an array if given an array,
+          or an object if given an object.
 
-          `map(f)` is equivalent to `[.[] | f]`. In fact, this is how
-          it's defined. Similarly, `map_values(f)` is defined as `.[] |= f`.
+          When the input to `map_values(f)` is an object, the output
+          object has the same keys as the input object except for
+          those keys whose values when piped to `f` produce no values
+          at all.
+
+          The key difference between `map(f)` and `map_values(f)` is
+          that the former simply forms an array from all the values of
+          `($x|f)` for each value, $x, in the input array or object,
+          but `map_values(f)` only uses `first($x|f)`.
+
+          Specifically, for object inputs, `map_value(f)` constructs
+          the output object by examining in turn the value of
+          `first(.[$k]|f)` for each key, $k, of the input.  If this
+          expression produces no values, then the corresponding key
+          will be dropped; otherwise, the output object will have that
+          value at the key, $k.
+
+          Here are some examples to clarify the behavior of `map` and
+          `map_values` when applied to arrays. These examples assume the
+          input is `[1]` in all cases:
+
+          map(.+1)          #=>  [2]
+          map(., .)         #=>  [1,1]
+          map(empty)        #=>  []
+
+          map_values(.+1)   #=>  [2]
+          map_values(., .)  #=>  [1]
+          map_values(empty) #=>  []
+
+          `map(f)` is equivalent to `[.[] | f]` and
+          `map_values(f)` is equivalent to `.[] |= f`.
+
+          In fact, these are their implementations.
+
 
         examples:
           - program: 'map(.+1)'
@@ -924,6 +957,33 @@ sections:
           - program: 'map_values(.+1)'
             input: '{"a": 1, "b": 2, "c": 3}'
             output: ['{"a": 2, "b": 3, "c": 4}']
+
+          - program: 'map(., .)'
+            input: '[1,2]'
+            output: ['[1,1,2,2]']
+
+          - program: 'map_values(. // empty)'
+            input: '{"a": null, "b": true, "c": false}'
+            output: ['{"b":true}']
+
+
+      - title: "`pick(pathexps)`"
+        body: |
+
+          Emit the projection of the input object or array defined by the specified
+          sequence of path expressions, such that if p is any one of these specifications,
+          then `(. | p)` will evaluate to the same value as `(. | pick(pathexps) | p)`.
+          For arrays, negative indices and .[m:n] specifications should not be used.
+
+        examples:
+          - program: 'pick(.a, .b.c, .x)'
+            input: '{"a": 1, "b": {"c": 2, "d": 3}, "e": 4}'
+            output: ['{"a":1,"b":{"c":2},"x":null}']
+
+          - program: '[1,2,3,4] | pick(.[2], .[0], .[0])'
+            input: '[1,2,3,4]'
+            output: ['[1,null,3]']
+
 
       - title: "`path(path_expression)`"
         body: |
@@ -1123,25 +1183,22 @@ sections:
             input: 'null'
             output: ['"{\"file\":\"<top-level>\",\"line\":1}"']
 
-      - title: "`paths`, `paths(node_filter)`, `leaf_paths`"
+      - title: "`paths`, `paths(node_filter)`"
         body: |
 
           `paths` outputs the paths to all the elements in its input
           (except it does not output the empty list, representing .
           itself).
 
-          `paths(f)` outputs the paths to any values for which `f` is true.
-          That is, `paths(numbers)` outputs the paths to all numeric
+          `paths(f)` outputs the paths to any values for which `f` is `true`.
+          That is, `paths(type == "number")` outputs the paths to all numeric
           values.
-
-          `leaf_paths` is an alias of `paths(scalars)`; `leaf_paths` is
-          *deprecated* and will be removed in the next major release.
 
         examples:
           - program: '[paths]'
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1],[1,0],[1,1],[1,1,"a"]]']
-          - program: '[paths(scalars)]'
+          - program: '[paths(type == "number")]'
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1,1,"a"]]']
 
@@ -1720,7 +1777,7 @@ sections:
             output: ['24']
 
 
-      - title: "`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`"
+      - title: "`recurse(f)`, `recurse`, `recurse(f; condition)`"
         body: |
 
           The `recurse(f)` function allows you to search through a
@@ -1753,10 +1810,6 @@ sections:
           as the computed value satisfies the condition. For example,
           to generate all the integers, at least in principle, one
           could write `recurse(.+1; true)`.
-
-          For legacy reasons, `recurse_down` exists as an alias to
-          calling `recurse` without arguments. This alias is considered
-          *deprecated* and will be removed in the next major release.
 
           The recursive calls in `recurse` will not consume additional
           memory whenever `f` produces at most a single output for each
@@ -2821,10 +2874,8 @@ sections:
           The `first(expr)` and `last(expr)` functions extract the first
           and last values from `expr`, respectively.
 
-          The `nth(n; expr)` function extracts the nth value output by
-          `expr`.  This can be defined as `def nth(n; expr):
-          last(limit(n + 1; expr));`.  Note that `nth(n; expr)` doesn't
-          support negative values of `n`.
+          The `nth(n; expr)` function extracts the nth value output by `expr`.
+          Note that `nth(n; expr)` doesn't support negative values of `n`.
 
         examples:
           - program: '[first(range(.)), last(range(.)), nth(./2; range(.))]'

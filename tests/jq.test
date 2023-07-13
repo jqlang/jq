@@ -173,6 +173,11 @@ jq: error: Cannot use number (0) as object key at <top-level>, line 1:
 [1,null,true,false,"abcdef",{},{"a":1,"b":2},[],[1,2,3,4,5],[1,2]]
 [null,"bc",[],[2,3],[2]]
 
+# chaining/suffix-list, with and without dot
+map(try .a[] catch ., try .a.[] catch ., .a[]?, .a.[]?)
+[{"a": [1,2]}, {"a": 123}]
+[1,2,1,2,1,2,1,2,"Cannot iterate over number (123)","Cannot iterate over number (123)"]
+
 #
 # Negative array indices
 #
@@ -319,9 +324,13 @@ null
 "badness"
 [1]
 
-[first(range(.)), last(range(.)), nth(0; range(.)), nth(5; range(.)), try nth(-1; range(.)) catch .]
+[first(range(.)), last(range(.))]
 10
-[0,9,0,5,"nth doesn't support negative indices"]
+[0,9]
+
+[nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch .]
+10
+[0,5,9,"nth doesn't support negative indices"]
 
 # Check that first(g) does not extract more than one value from g
 first(1,error("foo"))
@@ -952,10 +961,6 @@ path(.a[path(.b)[0]])
 [1,[[],{"a":2}]]
 [[0],[1],[1,0],[1,1],[1,1,"a"]]
 
-[leaf_paths]
-[1,[[],{"a":2}]]
-[[0],[1,1,"a"]]
-
 ["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
 {"bar": 42, "foo": ["a", "b", "c", "d"]}
 "b"
@@ -1047,6 +1052,19 @@ def inc(x): x |= .+1; inc(.[].a)
 "Cannot index object with number"
 {"a":[{"b":5}]}
 {"a":[{"c":3,"b":5}]}
+
+# #2051, deletion using assigning empty against arrays
+(.[] | select(. >= 2)) |= empty
+[1,5,3,0,7]
+[1,0]
+
+.[] |= select(. % 2 == 0)
+[0,1,2,3,4,5]
+[0,2,4]
+
+.foo[1,4,2,3] |= empty
+{"foo":[0,1,2,3,4,5]}
+{"foo":[0,5]}
 
 .[2][3] = 1
 [4]
@@ -1275,6 +1293,14 @@ indices(", ")
 ["a", "ab", "abc"]
 ["aaa", "ababab", "abcabcabc"]
 
+[.[] * "abc"]
+[-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 3.7, 10.0]
+[null,null,"","","abc","abc","abcabcabc","abcabcabcabcabcabcabcabcabcabc"]
+
+[. * (nan,-nan)]
+"abc"
+[null,null]
+
 [.[] / ","]
 ["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
 [["a"," bc"," def"," ghij"," jklmn"," a","b"," c","d"," e","f"],["a","b","c","d"," e","f","g","h"]]
@@ -1362,6 +1388,10 @@ map(has("foo"))
 map(has(2))
 [[0,1], ["a","b","c"]]
 [false, true]
+
+has(nan)
+[0,1,2]
+false
 
 keys
 [42,3,35]
@@ -1744,6 +1774,9 @@ false
 1
 1
 
+
+# upcase, downcase
+
 downcase
 "ǄIǄA"
 "ǆiǆa"
@@ -1752,3 +1785,31 @@ upcase
 "ǆiǆa"
 "ǄIǄA"
 
+
+# Using a keyword as variable/label name
+
+123 as $label | $label
+null
+123
+
+[ label $if | range(10) | ., (select(. == 5) | break $if) ]
+null
+[0,1,2,3,4,5]
+
+reduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)
+[1,2,3]
+96
+
+1 as $foreach | 2 as $and | 3 as $or | { $foreach, $and, $or, a }
+{"a":4,"b":5}
+{"foreach":1,"and":2,"or":3,"a":4}
+
+[ foreach .[] as $try (1 as $catch | $catch - 1; . + $try; .) ]
+[10,9,8,7]
+[10,19,27,34]
+
+
+# { $__loc__ } works
+{ a, $__loc__, c }
+{"a":[1,2,3],"b":"foo","c":{"hi":"hey"}}
+{"a":[1,2,3],"__loc__":{"file":"<top-level>","line":1},"c":{"hi":"hey"}}

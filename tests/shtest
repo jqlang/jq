@@ -143,6 +143,21 @@ if $VALGRIND $Q $JQ -e . $d/input; then
   exit 2
 fi
 
+# Regression test for #2146
+if echo "foobar" | $JQ .; then
+  printf 'Issue #2146 is back?\n' 1>&2
+  exit 1
+elif [ $? -ne 5 ]; then
+  echo "Invalid input had wrong error code" 1>&2
+  exit 1
+fi
+
+# Regression test for #2367; make sure to call jq twice
+if ! echo '{"a": 1E9999999999}' | $JQ . | $JQ -e .a; then
+  printf 'Issue #2367 is back?\n' 1>&2
+  exit 1
+fi
+
 # Regression test for #1534
 echo "[1,2,3,4]" > $d/expected
 printf "[1,2][3,4]" | $JQ -cs add > $d/out 2>&1
@@ -204,8 +219,21 @@ else
 fi
 
 ## Regression test for issue #2378 assert when stream parse broken object pair
-echo '{"a":1,"b",' | $JQ --stream  > /dev/null 2> $d/err
+echo '{"a":1,"b",' | $JQ --stream  > /dev/null 2> $d/err || true
 grep 'Objects must consist of key:value pairs' $d/err > /dev/null
+
+## Regression test for issue #2572 assert when using --jsonargs and invalid JSON
+$JQ -n --jsonargs null invalid && EC=$? || EC=$?
+if [ "$EC" -ne 2 ]; then
+    echo "--jsonargs exited with wrong exit code, expected 2 got $EC" 1>&2
+    exit 1
+fi
+# this tests the args_done code path "--"
+$JQ -n --jsonargs null -- invalid && EC=$? || EC=$?
+if [ "$EC" -ne 2 ]; then
+    echo "--jsonargs exited with wrong exit code, expected 2 got $EC" 1>&2
+    exit 1
+fi
 
 ## Fuzz parser
 

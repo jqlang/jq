@@ -216,17 +216,13 @@ enum {
 #define JVP_FLAGS_NUMBER_NATIVE_STR   JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_NATIVE, 1))
 #define JVP_FLAGS_NUMBER_LITERAL      JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_DECIMAL, 1))
 
-#define STR(x) #x
-#define XSTR(x) STR(x)
-#define DBL_MAX_STR XSTR(DBL_MAX)
-#define DBL_MIN_STR "-" XSTR(DBL_MAX)
-
 // the decimal precision of binary double
 #define BIN64_DEC_PRECISION  (17)
 #define DEC_NUMBER_STRING_GUARD (14)
 
-#include <jv_thread.h>
+#include "jv_thread.h"
 #ifdef WIN32
+#ifndef __MINGW32__
 /* Copied from Heimdal: thread-specific keys; see lib/base/dll.c in Heimdal */
 
 /*
@@ -491,6 +487,9 @@ pthread_getspecific(pthread_key_t key)
 #else
 #include <pthread.h>
 #endif
+#else
+#include <pthread.h>
+#endif
 
 static pthread_key_t dec_ctx_key;
 static pthread_key_t dec_ctx_dbl_key;
@@ -658,12 +657,12 @@ static const char* jvp_literal_number_literal(jv n) {
   }
 
   if (decNumberIsInfinite(pdec)) {
-    // For backward compatibility.
-    if (decNumberIsNegative(pdec)) {
-      return DBL_MIN_STR;
-    } else {
-      return DBL_MAX_STR;
-    }
+    // We cannot preserve the literal data of numbers outside the limited
+    // range of exponent. Since `decNumberToString` returns "Infinity"
+    // (or "-Infinity"), and to reduce stack allocations as possible, we
+    // normalize infinities in the callers instead of printing the maximum
+    // (or minimum) double here.
+    return NULL;
   }
 
   if (plit->literal_data == NULL) {

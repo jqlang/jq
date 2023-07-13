@@ -12,9 +12,9 @@ import yaml
 # Prevent our markdown parser from trying to help by interpreting things in angle brackets as HTML tags.
 class EscapeHtml(Extension):
 
-    def extendMarkdown(self, md, md_globals):
-        del md.preprocessors['html_block']
-        del md.inlinePatterns['html']
+    def extendMarkdown(self, md):
+        md.preprocessors.deregister('html_block')
+        md.inlinePatterns.deregister('html')
 
 
 class RoffWalker(object):

@@ -12,31 +12,30 @@ def add: reduce .[] as $x (null; . + $x);
 def del(f): delpaths([path(f)]);
 def _assign(paths; $value): reduce path(paths) as $p (.; setpath($p; $value));
 def _modify(paths; update):
-    reduce path(paths) as $p (.;
+    reduce path(paths) as $p ([., []];
         . as $dot
       | null
       | label $out
-      | ($dot | getpath($p)) as $v
+      | ($dot[0] | getpath($p)) as $v
       | (
           (   $$$$v
             | update
             | (., break $out) as $v
             | $$$$dot
-            | setpath($p; $v)
+            | setpath([0] + $p; $v)
           ),
           (
               $$$$dot
-            | delpaths([$p])
+            | setpath([1, (.[1] | length)]; $p)
           )
         )
-    );
+    ) | . as $dot | $dot[0] | delpaths($dot[1]);
 def map_values(f): .[] |= f;
 
 # recurse
 def recurse(f): def r: ., (f | r); r;
 def recurse(f; cond): def r: ., (f | select(cond) | r); r;
 def recurse: recurse(.[]?);
-def recurse_down: recurse;
 
 def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];
 def from_entries: map({(.key // .Key // .name // .Name): (if has("value") then .value else .Value end)}) | add | .//={};
@@ -62,7 +61,6 @@ def strings: select(type == "string");
 def nulls: select(. == null);
 def values: select(. != null);
 def scalars: select(type|. != "array" and . != "object");
-def leaf_paths: paths(scalars);
 def join($x): reduce .[] as $i (null;
             (if .==null then "" else .+$x end) +
             ($i | if type=="boolean" or type=="number" then tostring else .//"" end)
@@ -165,7 +163,9 @@ def any(condition): any(.[]; condition);
 def all: all(.[]; .);
 def any: any(.[]; .);
 def last(g): reduce g as $item (null; $item);
-def nth($n; g): if $n < 0 then error("nth doesn't support negative indices") else last(limit($n + 1; g)) end;
+def nth($n; g):
+  if $n < 0 then error("nth doesn't support negative indices")
+  else label $out | foreach g as $item ($n + 1; . - 1; if . <= 0 then $item, break $out else empty end) end;
 def first: .[0];
 def last: .[-1];
 def nth($n): .[$n];
@@ -259,6 +259,12 @@ def walk(f):
   elif type == "array" then map( walk(f) ) | f
   else f
   end;
+
+# pathexps could be a stream of dot-paths
+def pick(pathexps):
+  . as $in
+  | reduce path(pathexps) as $a (null;
+      setpath($a; $in|getpath($a)) );
 
 # SQL-ish operators here:
 def INDEX(stream; idx_expr):

@@ -359,9 +359,12 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
       str = b;
       num = a;
     }
-    jv res = jv_null();
-    int n = jv_number_value(num);
-    if (n > 0) {
+    jv res;
+    double d = jv_number_value(num);
+    if (d < 0 || isnan(d)) {
+      res = jv_null();
+    } else {
+      int n = d;
       size_t alen = jv_string_length_bytes(jv_copy(str));
       res = jv_string_empty(alen * n);
       for (; n > 0; n--) {
@@ -1082,7 +1085,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
             jv_string((char*)ebuf)));
       break;
     }
-  } while (global && start != end);
+  } while (global && start <= end);
   onig_region_free(region,1);
   region = NULL;
   if (region)

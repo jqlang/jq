@@ -164,7 +164,7 @@ endif
 man_MANS = jq.1
 jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_manpage.py ) > $@ || { rm -f $@; false; }
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_manpage.py ) > $@
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manpage.
 	@echo As a result, the manpage is out of date.
