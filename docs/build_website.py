@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import glob
 import itertools
-from jinja2 import Environment, FileSystemLoader, Markup, select_autoescape, contextfunction
+from jinja2 import Environment, FileSystemLoader, select_autoescape, pass_context
 from markdown import markdown
+from markupsafe import Markup
 import os
 import os.path
 import re
@@ -26,7 +27,7 @@ env.filters['entry_id'] = lambda input: re.sub(r"[ `]", '', input)
 env.filters['markdownify'] = lambda input: Markup(markdown(input))
 env.filters['no_paragraph'] = lambda input: Markup(re.sub(r"</?p>", '', input))
 
-env.globals['unique_id'] = contextfunction(
+env.globals['unique_id'] = pass_context(
     lambda ctx: str(next(ctx['unique_ctr'])))
 
 env.globals.update(load_yml_file('site.yml'))
