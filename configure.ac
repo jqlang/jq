@@ -1,22 +1,21 @@
 m4_define([jq_version], m4_esyscmd_s([scripts/version])))
 
-AC_INIT([jq], [jq_version], [https://github.com/jqlang/jq/issues],
-             [jq], [https://jqlang.github.io/jq])
+AC_INIT([jq],[jq_version],[https://github.com/jqlang/jq/issues],[jq],[https://jqlang.github.io/jq])
 
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
-AC_PREREQ([2.64])
+AC_PREREQ([2.65])
 AC_CONFIG_AUX_DIR([config])
+AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([1.11.2 subdir-objects parallel-tests foreign -Wall])
 AM_SILENT_RULES([yes])
 AM_PROG_AR
 AM_MAINTAINER_MODE([enable])
 AC_PROG_CC
-AC_PROG_CC_STDC
+m4_version_prereq([2.70], [], [AC_PROG_CC_STDC])
 AC_PROG_CPP_WERROR
 AC_PROG_YACC
 AC_OBJEXT
 AC_EXEEXT
-AC_USE_SYSTEM_EXTENSIONS
 LT_INIT([shared static win32-dll])
 AM_PROG_CC_C_O
 
@@ -56,32 +55,32 @@ dnl Running tests with Valgrind is slow. It is faster to iterate on
 dnl code without Valgrind until tests pass, then enable Valgrind and
 dnl fix leaks.
 AC_ARG_ENABLE([valgrind],
-   AC_HELP_STRING([--disable-valgrind], [do not run tests under Valgrind]))
+   AS_HELP_STRING([--disable-valgrind],[do not run tests under Valgrind]))
 
 dnl Running tests with Valgrind is slow; address sanitizer (ASAN) is
 dnl faster.
 AC_ARG_ENABLE([asan],
-   AC_HELP_STRING([--enable-asan], [enable address sanitizer]))
+   AS_HELP_STRING([--enable-asan],[enable address sanitizer]))
 
 dnl Undefined Behavior Sanitizer
 AC_ARG_ENABLE([ubsan],
-   AC_HELP_STRING([--enable-ubsan], [enable undefined behavior sanitizer]))
+   AS_HELP_STRING([--enable-ubsan],[enable undefined behavior sanitizer]))
 
 dnl Code coverage
 AC_ARG_ENABLE([gcov],
-   AC_HELP_STRING([--enable-gcov], [enable gcov code coverage tool]))
+   AS_HELP_STRING([--enable-gcov],[enable gcov code coverage tool]))
 
 dnl Don't attempt to build docs if python deps aren't installed
 AC_ARG_ENABLE([docs],
-   AC_HELP_STRING([--disable-docs], [don't build docs]), [], [enable_docs=yes])
+   AS_HELP_STRING([--disable-docs],[do not build docs]), [], [enable_docs=yes])
 
 dnl Don't attempt to build the error injection object (if there is no LD_PRELOAD support)
 AC_ARG_ENABLE([error-injection],
-   AC_HELP_STRING([--enable-error-injection], [build and test with error injection]))
+   AS_HELP_STRING([--enable-error-injection],[build and test with error injection]))
 
 dnl Enable building all static
 AC_ARG_ENABLE([all-static],
-   AC_HELP_STRING([--enable-all-static], [link jq with static libraries only]))
+   AS_HELP_STRING([--enable-all-static],[link jq with static libraries only]))
 
 dnl find pipenv
 AC_ARG_VAR([PIPENV], [pipenv command])
@@ -110,7 +109,7 @@ AS_IF([test "x$enable_docs" != "xno"],[
 
 dnl Disable decNumber support
 AC_ARG_ENABLE([decnum],
-   AC_HELP_STRING([--disable-decnum], [disable decnum support]))
+   AS_HELP_STRING([--disable-decnum],[disable decnum support]))
 
 AS_IF([test "x$enable_decnum" != "xno"],[
    AC_DEFINE([USE_DECNUM],1)
