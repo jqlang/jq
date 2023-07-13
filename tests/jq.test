@@ -1799,6 +1799,18 @@ reduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)
 
 
 # { $__loc__ } works
+
 { a, $__loc__, c }
 {"a":[1,2,3],"b":"foo","c":{"hi":"hey"}}
 {"a":[1,2,3],"__loc__":{"file":"<top-level>","line":1},"c":{"hi":"hey"}}
+
+
+# nan is parsed as a valid NaN value from JSON
+
+fromjson | isnan
+"nan"
+true
+
+tojson | fromjson
+{"a":nan}
+{"a":null}
