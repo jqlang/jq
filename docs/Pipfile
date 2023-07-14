@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-jinja2 = "==3.0.2" # FIXME: stop using deprecated features
+jinja2 = "*"
 pyyaml = "*"
 markdown = "*"
 lxml = "*"

@@ -10,7 +10,7 @@ set -eu
 
 JQTESTDIR=$(cd "$(dirname "$0")" && pwd)
 JQBASEDIR=$JQTESTDIR/..
-JQ=$JQBASEDIR/jq
+JQ=${JQ:-$JQBASEDIR/jq}
 
 if [ -z "${NO_VALGRIND-}" ] && which valgrind > /dev/null; then
     VALGRIND="valgrind --error-exitcode=1 --leak-check=full \

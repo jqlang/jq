@@ -215,6 +215,7 @@ jv jv_has(jv t, jv k) {
   } else if (jv_get_kind(t) == JV_KIND_ARRAY &&
              jv_get_kind(k) == JV_KIND_NUMBER) {
     if (jvp_number_is_nan(k)) {
+      jv_free(t);
       ret = jv_false();
     } else {
       jv elem = jv_array_get(t, (int)jv_number_value(k));
