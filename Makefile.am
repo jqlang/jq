@@ -178,19 +178,23 @@ jq.1: jq.1.prebuilt
 SUBDIRS =
 
 AM_CFLAGS += ${utf8proc_CFLAGS}
-jq_LDADD += ${utf8proc_LIBS}
 
 if BUNDLE_UTF8PROC
 LIBJQ_SRC += modules/utf8proc/utf8proc.c
+AM_CFLAGS += -I${srcdir}/modules/utf8proc
+AM_CPPFLAGS += -I$(srcdir)/modules/utf8proc
 else
 if BUILD_UTF8PROC
-BUILT_SOURCES += modules/utf8proc/libutf8proc.a
-CLEANFILES += modules/utf8proc/libutf8proc.a
+BUILT_SOURCES += $(builddir)/libutf8proc.a
+CLEANFILES += $(builddir)/libutf8proc.a
+utf8proc_LIBS=$(builddir)/libutf8proc.a
 
-modules/utf8proc/libutf8proc.a:
-	$(MAKE) $(AM_MAKEFLAGS) -C $(srcdir)/modules/utf8proc libutf8proc.a
+$(builddir)/libutf8proc.a:
+	$(MAKE) $(AM_MAKEFLAGS) -C $(srcdir)/modules/utf8proc builddir=$(shell cd $(builddir) && pwd) libutf8proc.a
 endif
 endif
+
+jq_LDADD += ${utf8proc_LIBS}
 
 CLEANFILES += jq.1
 
@@ -238,7 +242,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/onig.test tests/base64.test tests/utf8-truncate.jq        \
         tests/jq-f-test.sh
 
-AM_DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin --with-utf8proc=builtin
+AM_DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin --with-utf8proc=bundled
 
 # README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
@@ -257,4 +261,4 @@ rpm: dist jq.spec
 	rm -rf rpm
 
 dist-hook:
-	make -C modules/utf8proc clean
+	make -C $(distdir)/modules/utf8proc clean

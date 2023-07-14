@@ -296,14 +296,13 @@ AC_ARG_WITH([utf8proc],
       [specify the location of custom-installed utf8proc library to use, 'builtin' to force built-in, 'bundled' to use built-in AND bundle into libjq, or 'auto' to use default prefix or fallback to builtin])], ,
    [with_utf8proc=auto])
 
-utf8proc_CFLAGS=
+utf8proc_CFLAGS=-DUTF8PROC_STATIC
 utf8proc_LIBS=
 build_utf8proc=yes
 bundle_utf8proc=no
 
 AS_IF([test "x$with_utf8proc" = "xbundled" ], [
    bundle_utf8proc=yes
-   utf8proc_CFLAGS="-Imodules/utf8proc -DUTF8PROC_STATIC"
 ], [
    AS_IF([test "x$with_utf8proc" = "xauto" ], [
       test_prefix=
@@ -328,7 +327,7 @@ AS_IF([test "x$with_utf8proc" = "xbundled" ], [
       save_CFLAGS="$CFLAGS"
       save_LDFLAGS="$LDFLAGS"
 
-      utf8proc_CFLAGS="-I$with_utf8proc/include -DUTF8PROC_STATIC"
+      utf8proc_CFLAGS="$utf8proc_CFLAGS -I$with_utf8proc/include"
    #   utf8proc_LIBS="-L$with_utf8proc/lib -l:libutf8proc.a" # -l: not supported by some compilers
       utf8proc_LIBS="$with_utf8proc/lib/libutf8proc.a"
 
@@ -343,10 +342,12 @@ AS_IF([test "x$with_utf8proc" = "xbundled" ], [
       LDFLAGS="$save_LDFLAGS"
    ])
    AS_IF([test "x$build_utf8proc" = xyes ], [
-      utf8proc_dir="`cd $srcdir && pwd`/modules/utf8proc"
-      utf8proc_CFLAGS="-I$utf8proc_dir -DUTF8PROC_STATIC"
-   #   utf8proc_LIBS="-L$utf8proc_dir -l:libutf8proc.a" # -l: not supported by some compilers
-      utf8proc_LIBS="$utf8proc_dir/libutf8proc.a"
+#      utf8proc_dir="cd ${srcdir} && pwd`/modules/utf8proc"
+#      utf8proc_CFLAGS="-I$utf8proc_dir -DUTF8PROC_STATIC"
+#      utf8proc_CFLAGS="$utf8proc_CFLAGS -Imodules/utf8proc"
+##      utf8proc_LIBS="-L${builddir} -l:libutf8proc.a" # -l: not supported by some compilers
+#      utf8proc_LIBS="$utf8proc_dir/libutf8proc.a"
+      utf8proc_LIBS=
    ])
 ])
 
