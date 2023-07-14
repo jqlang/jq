@@ -62,9 +62,9 @@ def nulls: select(. == null);
 def values: select(. != null);
 def scalars: select(type|. != "array" and . != "object");
 def join($x): reduce .[] as $i (null;
-            (if .==null then "" else .+$x end) +
-            ($i | if type=="boolean" or type=="number" then tostring else .//"" end)
-        ) // "";
+    (if .==null then "" else .+$x end) +
+    ($i | if type=="boolean" or type=="number" then tostring else .//"" end)
+  ) // "";
 def _flatten($x): reduce .[] as $i ([]; if $i | type == "array" and $x != 0 then . + ($i | _flatten($x-1)) else . + [$i] end);
 def flatten($x): if $x < 0 then error("flatten depth must not be negative") else _flatten($x) end;
 def flatten: _flatten(-1);
@@ -75,25 +75,25 @@ def fromdate: fromdateiso8601;
 def todate: todateiso8601;
 def match(re; mode): _match_impl(re; mode; false)|.[];
 def match($val): ($val|type) as $vt | if $vt == "string" then match($val; null)
-   elif $vt == "array" and ($val | length) > 1 then match($val[0]; $val[1])
-   elif $vt == "array" and ($val | length) > 0 then match($val[0]; null)
-   else error( $vt + " not a string or array") end;
+  elif $vt == "array" and ($val | length) > 1 then match($val[0]; $val[1])
+  elif $vt == "array" and ($val | length) > 0 then match($val[0]; null)
+  else error( $vt + " not a string or array") end;
 def test(re; mode): _match_impl(re; mode; true);
 def test($val): ($val|type) as $vt | if $vt == "string" then test($val; null)
-   elif $vt == "array" and ($val | length) > 1 then test($val[0]; $val[1])
-   elif $vt == "array" and ($val | length) > 0 then test($val[0]; null)
-   else error( $vt + " not a string or array") end;
+  elif $vt == "array" and ($val | length) > 1 then test($val[0]; $val[1])
+  elif $vt == "array" and ($val | length) > 0 then test($val[0]; null)
+  else error( $vt + " not a string or array") end;
 def capture(re; mods): match(re; mods) | reduce ( .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair ({}; . + $pair);
 def capture($val): ($val|type) as $vt | if $vt == "string" then capture($val; null)
-   elif $vt == "array" and ($val | length) > 1 then capture($val[0]; $val[1])
-   elif $vt == "array" and ($val | length) > 0 then capture($val[0]; null)
-   else error( $vt + " not a string or array") end;
+  elif $vt == "array" and ($val | length) > 1 then capture($val[0]; $val[1])
+  elif $vt == "array" and ($val | length) > 0 then capture($val[0]; null)
+  else error( $vt + " not a string or array") end;
 def scan($re; $flags):
   match($re; "g" + $flags)
-    | if (.captures|length > 0)
-      then [ .captures | .[] | .string ]
-      else .string
-      end;
+  | if (.captures|length > 0)
+    then [ .captures | .[] | .string ]
+    else .string
+    end;
 def scan($re): scan($re; null);
 #
 # If input is an array, then emit a stream of successive subarrays of length n (or less),
@@ -118,17 +118,17 @@ def split($re; flags): [ splits($re; flags) ];
 # If s contains capture variables, then create a capture object and pipe it to s, bearing
 # in mind that s could be a stream
 def sub($re; s; $flags):
-   . as $in
-   | (reduce match($re; $flags) as $edit
-        ({result: [], previous: 0};
-            $in[ .previous: ($edit | .offset) ] as $gap
-            # create the "capture" objects (one per item in s)
-            | [reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
+  . as $in
+  | (reduce match($re; $flags) as $edit
+       ({result: [], previous: 0};
+        $in[ .previous: ($edit | .offset) ] as $gap
+        # create the "capture" objects (one per item in s)
+        | [reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
                  ({}; . + $pair) | s ] as $inserts
-            | reduce range(0; $inserts|length) as $ix (.; .result[$ix] += $gap + $inserts[$ix])
-            | .previous = ($edit | .offset + .length ) )
-          | .result[] + $in[.previous:] )
-      // $in;
+          | reduce range(0; $inserts|length) as $ix (.; .result[$ix] += $gap + $inserts[$ix])
+          | .previous = ($edit | .offset + .length ) )
+     | .result[] + $in[.previous:] )
+  // $in;
 #
 def sub($re; s): sub($re; s; "");
 #
@@ -138,17 +138,17 @@ def gsub($re; s): sub($re; s; "g");
 ########################################################################
 # generic iterator/generator
 def while(cond; update):
-     def _while:
-         if cond then ., (update | _while) else empty end;
-     _while;
+  def _while:
+    if cond then ., (update | _while) else empty end;
+    _while;
 def until(cond; next):
-     def _until:
-         if cond then . else (next|_until) end;
-     _until;
+  def _until:
+    if cond then . else (next|_until) end;
+   _until;
 def limit($n; exp):
-    if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
-    elif $n == 0 then empty
-    else exp end;
+  if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
+  elif $n == 0 then empty
+  else exp end;
 # range/3, with a `by` expression argument
 def range($init; $upto; $by):
     if $by > 0 then $init|while(. < $upto; . + $by)
@@ -167,18 +167,18 @@ def nth($n; g):
   if $n < 0 then error("nth doesn't support negative indices")
   else label $out | foreach g as $item ($n + 1; . - 1; if . <= 0 then $item, break $out else empty end) end;
 def first: .[0];
-def last: .[-1];
+def last: .[length-1]; # support pick(last)
 def nth($n): .[$n];
 def combinations:
-    if length == 0 then [] else
-        .[0][] as $x
-          | (.[1:] | combinations) as $y
-          | [$x] + $y
-    end;
+  if length == 0 then []
+  else .[0][] as $x
+  | (.[1:] | combinations) as $y
+  | [$x] + $y
+  end;
 def combinations(n):
-    . as $dot
-      | [range(n) | $dot]
-      | combinations;
+  . as $dot
+  | [range(n) | $dot]
+  | combinations;
 # transpose a possibly jagged matrix, quickly;
 # rows are padded with nulls so the result is always rectangular.
 def transpose:
@@ -192,9 +192,9 @@ def transpose:
 def in(xs): . as $x | xs | has($x);
 def inside(xs): . as $x | xs | contains($x);
 def repeat(exp):
-     def _repeat:
-         exp, _repeat;
-     _repeat;
+  def _repeat:
+    exp, _repeat;
+  _repeat;
 def inputs: try repeat(input) catch if .=="break" then empty else error end;
 # like ruby's downcase - only characters A to Z are affected
 def ascii_downcase:
