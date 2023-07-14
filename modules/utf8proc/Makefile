@@ -50,6 +50,13 @@ pkgincludedir=$(includedir:$(prefix)/%=%)
 
 all: libutf8proc.a libutf8proc.$(SHLIB_EXT)
 
+distdir:
+	mkdir -p ${distdir}
+	rm -f /tmp/utf8proc.distdir.tar
+	tar cf /tmp/utf8proc.distdir.tar `git ls-files`
+	(cd ${distdir} && tar xf /tmp/utf8proc.distdir.tar)
+	rm -f /tmp/utf8proc.distdir.tar
+
 clean:
 	rm -f utf8proc.o libutf8proc.a libutf8proc.$(SHLIB_VERS_EXT) libutf8proc.$(SHLIB_EXT)
 	rm -f libutf8proc.pc
