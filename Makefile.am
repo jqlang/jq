@@ -184,7 +184,11 @@ if BUNDLE_UTF8PROC
 LIBJQ_SRC += modules/utf8proc/utf8proc.c
 else
 if BUILD_UTF8PROC
-SUBDIRS += modules/utf8proc
+BUILT_SOURCES += modules/utf8proc/libutf8proc.a
+CLEANFILES += modules/utf8proc/libutf8proc.a
+
+modules/utf8proc/libutf8proc.a:
+	$(MAKE) $(AM_MAKEFLAGS) -C $(srcdir)/modules/utf8proc libutf8proc.a
 endif
 endif
 
@@ -215,6 +219,7 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
         src/parser.h src/version.h src/builtin.jq scripts/version       \
+        modules/utf8proc                                                \
         libjq.pc                                                        \
         tests/base64.test tests/jq-f-test.sh tests/jq.test              \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
@@ -233,7 +238,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/onig.test tests/base64.test tests/utf8-truncate.jq        \
         tests/jq-f-test.sh
 
-AM_DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin
+AM_DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin --with-utf8proc=builtin
 
 # README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
@@ -250,3 +255,6 @@ rpm: dist jq.spec
 	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "myver $(VERSION)" --define "myrel ${RELEASE}" rpm/SOURCES/jq-$(VERSION).tar.gz
 	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
+
+dist-hook:
+	make -C modules/utf8proc clean
