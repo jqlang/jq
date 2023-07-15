@@ -1296,7 +1296,7 @@ jv jv_string_indexes(jv j, jv k) {
     p = jstr;
     while ((p = _jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
       a = jv_array_append(a, jv_number(p - jstr));
-      p += idxlen;
+      p++;
     }
   }
   jv_free(j);

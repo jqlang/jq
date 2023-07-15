@@ -1265,6 +1265,10 @@ split("")
 "a,bc,def,ghij,klmno"
 [1,13,[1,4,8,13]]
 
+[ index("aba"), rindex("aba"), indices("aba") ]
+"xababababax"
+[1,7,[1,3,5,7]]
+
 indices(1)
 [0,1,1,2,3,4,1,5]
 [1,2,6]
