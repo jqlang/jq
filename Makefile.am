@@ -178,6 +178,7 @@ jq.1: jq.1.prebuilt
 SUBDIRS =
 
 AM_CFLAGS += ${utf8proc_CFLAGS}
+jq_LDADD += ${utf8proc_LIBS}
 
 if BUNDLE_UTF8PROC
 LIBJQ_SRC += modules/utf8proc/utf8proc.c
@@ -187,14 +188,15 @@ else
 if BUILD_UTF8PROC
 BUILT_SOURCES += $(builddir)/libutf8proc.a
 CLEANFILES += $(builddir)/libutf8proc.a
-utf8proc_LIBS=$(builddir)/libutf8proc.a
+jq_LDADD += $(builddir)/libutf8proc.a
+
+AM_CFLAGS += -I${srcdir}/modules/utf8proc
+AM_CPPFLAGS += -I$(srcdir)/modules/utf8proc
 
 $(builddir)/libutf8proc.a:
 	$(MAKE) $(AM_MAKEFLAGS) -C $(srcdir)/modules/utf8proc builddir=$(shell cd $(builddir) && pwd) libutf8proc.a
 endif
 endif
-
-jq_LDADD += ${utf8proc_LIBS}
 
 CLEANFILES += jq.1
 
