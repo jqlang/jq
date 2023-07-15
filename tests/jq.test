@@ -1814,3 +1814,10 @@ true
 tojson | fromjson
 {"a":nan}
 {"a":null}
+
+
+# calling input/1 in a test doesn't crash jq
+
+try input catch .
+null
+"break"
