@@ -342,12 +342,8 @@ AS_IF([test "x$with_utf8proc" = "xbundled" ], [
       LDFLAGS="$save_LDFLAGS"
    ])
    AS_IF([test "x$build_utf8proc" = xyes ], [
-#      utf8proc_dir="cd ${srcdir} && pwd`/modules/utf8proc"
-#      utf8proc_CFLAGS="-I$utf8proc_dir -DUTF8PROC_STATIC"
-#      utf8proc_CFLAGS="$utf8proc_CFLAGS -Imodules/utf8proc"
-##      utf8proc_LIBS="-L${builddir} -l:libutf8proc.a" # -l: not supported by some compilers
-#      utf8proc_LIBS="$utf8proc_dir/libutf8proc.a"
-      utf8proc_LIBS=
+      # utf8proc_LIBS used only for libjq.pc
+      utf8proc_LIBS=`pwd`/libutf8proc.a
    ])
 ])
 

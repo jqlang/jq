@@ -178,7 +178,6 @@ jq.1: jq.1.prebuilt
 SUBDIRS =
 
 AM_CFLAGS += ${utf8proc_CFLAGS}
-jq_LDADD += ${utf8proc_LIBS}
 
 if BUNDLE_UTF8PROC
 LIBJQ_SRC += modules/utf8proc/utf8proc.c
@@ -195,6 +194,8 @@ AM_CPPFLAGS += -I$(srcdir)/modules/utf8proc
 
 $(builddir)/libutf8proc.a:
 	$(MAKE) $(AM_MAKEFLAGS) -C $(srcdir)/modules/utf8proc builddir=$(shell cd $(builddir) && pwd) libutf8proc.a
+else
+jq_LDADD += ${utf8proc_LIBS}
 endif
 endif
 
@@ -244,7 +245,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/onig.test tests/base64.test tests/utf8-truncate.jq        \
         tests/jq-f-test.sh
 
-AM_DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin --with-utf8proc=bundled
+AM_DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin --with-utf8proc=builtin
 
 # README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
