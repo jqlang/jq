@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -337,6 +338,8 @@ static void set_error(jq_state *jq, jv value) {
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
 jv jq_next(jq_state *jq) {
+  uint64_t tickstart, ticks, opticks[(STOREVN + 1) * 2];
+  memset(opticks, 0, sizeof(opticks));
   jv cfunc_input[MAX_CFUNCTION_ARGS];
 
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
@@ -386,8 +389,6 @@ jv jq_next(jq_state *jq) {
       } else {
         printf("\t<backtracking>");
       }
-
-      printf("\n");
     }
 
     if (backtracking) {
@@ -396,6 +397,13 @@ jv jq_next(jq_state *jq) {
       raising = !jv_is_valid(jq->error);
     }
     pc++;
+
+    {
+      unsigned optickc, optickd;
+
+      asm volatile("rdtsc" : "=a" (optickc), "=d" (optickd));
+      tickstart = (((uint64_t)optickc) | (((uint64_t)optickd) << 32));
+    }
 
     switch (opcode) {
     default: assert(0 && "invalid instruction");
@@ -543,7 +551,6 @@ jv jq_next(jq_state *jq) {
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
         jv_dump(jv_copy(*var), JV_PRINT_REFCOUNT);
-        printf("\n");
       }
       jv_free(stack_pop(jq));
       stack_push(jq, jv_copy(*var));
@@ -558,7 +565,6 @@ jv jq_next(jq_state *jq) {
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
         jv_dump(jv_copy(*var), JV_PRINT_REFCOUNT);
-        printf("\n");
       }
       jv_free(stack_popn(jq));
 
@@ -580,7 +586,7 @@ jv jq_next(jq_state *jq) {
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
         jv_dump(jv_copy(val), 0);
-        printf(" (%d)\n", jv_get_refcnt(val));
+        printf(" (%d)", jv_get_refcnt(val));
       }
       jv_free(*var);
       *var = val;
@@ -798,8 +804,12 @@ jv jq_next(jq_state *jq) {
         if (!jv_is_valid(jq->error)) {
           jv error = jq->error;
           jq->error = jv_null();
+          if (jq->debug_trace_enabled)
+            printf("\n");
           return error;
         }
+        if (jq->debug_trace_enabled)
+          printf("\n");
         return jv_invalid();
       }
       backtracking = 1;
@@ -864,7 +874,10 @@ jv jq_next(jq_state *jq) {
       case 5: top = ((func_5)function->fptr)(jq, in[0], in[1], in[2], in[3], in[4]); break;
       // FIXME: a) up to 7 arguments (input + 6), b) should assert
       // because the compiler should not generate this error.
-      default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
+      default:
+        if (jq->debug_trace_enabled)
+          printf("\n");
+        return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
       }
 
       if (jv_is_valid(top)) {
@@ -938,6 +951,8 @@ jv jq_next(jq_state *jq) {
         struct stack_pos spos = stack_get_pos(jq);
         stack_push(jq, jv_null());
         stack_save(jq, pc - 1, spos);
+        if (jq->debug_trace_enabled)
+          printf("\n");
         return value;
       }
       stack_push(jq, value);
@@ -948,6 +963,16 @@ jv jq_next(jq_state *jq) {
       goto do_backtrack;
     }
     }
+
+    {
+      unsigned optickc, optickd;
+
+      asm volatile("rdtsc" : "=a" (optickc), "=d" (optickd));
+      ticks = (((uint64_t)optickc) | (((uint64_t)optickd) << 32)) - tickstart;
+      opticks[opcode] += ticks;
+    }
+    if (jq->debug_trace_enabled)
+      printf(" %"PRIu64" cycles\n", ticks);
   }
 }
 
