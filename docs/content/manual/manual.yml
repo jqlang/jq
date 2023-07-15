@@ -1734,8 +1734,8 @@ sections:
 
         example:
           - program: 'upcase'
-            input: '"useful but not for é"'
-            output: '"USEFUL BUT NOT FOR É"'
+            input: '"useful for é"'
+            output: '"USEFUL FOR É"'
 
       - title: "`while(cond; update)`"
         body: |

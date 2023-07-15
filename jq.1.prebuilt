@@ -1881,6 +1881,9 @@ jq \'join(" ")\'
 .SS "ascii_downcase, ascii_upcase"
 Emit a copy of the input string with its alphabetic characters (a\-z and A\-Z) converted to the specified case\.
 .
+.SS "downcase, upcase"
+Emit a copy of the input string with its characters (unicode) converted to the specified case\.
+.
 .SS "while(cond; update)"
 The \fBwhile(cond; update)\fR function allows you to repeatedly apply an update to \fB\.\fR until \fBcond\fR is false\.
 .
