@@ -222,6 +222,16 @@ fi
 echo '{"a":1,"b",' | $JQ --stream  > /dev/null 2> $d/err || true
 grep 'Objects must consist of key:value pairs' $d/err > /dev/null
 
+## Regression tests for issue #2463 assert when stream parse non-scalar object key
+echo '{{"a":"b"}}' | $JQ --stream > /dev/null 2> $d/err || true
+grep "Expected string key after '{', not '{'" $d/err > /dev/null
+echo '{"x":"y",{"a":"b"}}' | $JQ --stream > /dev/null 2> $d/err || true
+grep "Expected string key after ',' in object, not '{'" $d/err > /dev/null
+echo '{["a","b"]}' | $JQ --stream > /dev/null 2> $d/err || true
+grep "Expected string key after '{', not '\\['" $d/err > /dev/null
+echo '{"x":"y",["a","b"]}' | $JQ --stream > /dev/null 2> $d/err || true
+grep "Expected string key after ',' in object, not '\\['" $d/err > /dev/null
+
 ## Regression test for issue #2572 assert when using --jsonargs and invalid JSON
 $JQ -n --jsonargs null invalid && EC=$? || EC=$?
 if [ "$EC" -ne 2 ]; then
