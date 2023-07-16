@@ -1863,6 +1863,16 @@ pick(last)
 [[10,20],30]
 [null,30]
 
+# input and inputs
+[input?]
+null
+[]
+
+[inputs]
+null
+[]
+
+# debug should emit its input
 debug
 1
 1
