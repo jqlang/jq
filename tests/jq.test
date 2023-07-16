@@ -1840,7 +1840,13 @@ tojson | fromjson
 {"a":nan}
 {"a":null}
 
-# input and inputs
+## input and inputs
+# calling input/1 in a test doesn't crash jq
+
+try input catch .
+null
+"break"
+
 [input?]
 null
 []
