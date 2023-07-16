@@ -1002,6 +1002,27 @@ del(.[1], .[-6], .[2], .[-3:9])
 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 [0, 3, 5, 6, 9]
 
+# negative index
+setpath([-1]; 1)
+[0]
+[1]
+
+pick(.a.b.c)
+null
+{"a":{"b":{"c":null}}}
+
+pick(first)
+[1,2]
+[1]
+
+pick(first|first)
+[[10,20],30]
+[[10]]
+
+pick(last)
+[[10,20],30]
+[null,30]
+
 #
 # Assignment
 #
@@ -1819,30 +1840,16 @@ tojson | fromjson
 {"a":nan}
 {"a":null}
 
-pick(.a.b.c)
+# input and inputs
+[input?]
 null
-{"a":{"b":{"c":null}}}
-
-pick(first)
-[1,2]
-[1]
-
-pick(first|first)
-[[10,20],30]
-[[10]]
-
-pick(last)
-[[10,20],30]
-[null,30]
+[]
 
 [inputs]
 null
 []
 
-[input?]
-null
-[]
-
+# debug should emit its input
 debug
 1
 1

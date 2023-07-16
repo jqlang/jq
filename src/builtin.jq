@@ -167,7 +167,7 @@ def nth($n; g):
   if $n < 0 then error("nth doesn't support negative indices")
   else label $out | foreach g as $item ($n + 1; . - 1; if . <= 0 then $item, break $out else empty end) end;
 def first: .[0];
-def last: .[length-1]; # support pick(last)
+def last: .[-1];
 def nth($n): .[$n];
 def combinations:
   if length == 0 then []
