@@ -20,8 +20,7 @@ homepage and on the github release page, https://github.com/jqlang/jq/releases
 If you're building directly from the latest git, you'll need flex,
 bison (3.0 or newer), libtool, make, automake, and autoconf installed.
 To get regexp support you'll also need to install Oniguruma or clone it as a
-git submodule as per the instructions below.
-(note that jq's tests require regexp support to pass).  To build, run:
+git submodule as per the instructions below. To build, run:
 
     git submodule update --init # if building from git to get oniguruma
     autoreconf -i               # if building from git
