@@ -288,6 +288,7 @@ AC_SUBST(onig_CFLAGS)
 AC_SUBST(onig_LDFLAGS)
 
 AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
+AM_CONDITIONAL([WITH_ONIGURUMA], [test "x$with_oniguruma" != xno])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 AC_CONFIG_MACRO_DIRS([config/m4 m4])
