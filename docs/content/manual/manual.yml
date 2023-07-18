@@ -2401,23 +2401,46 @@ sections:
       FLAGS is a string consisting of one of more of the supported flags:
 
       * `g` - Global search (find all matches, not just the first)
-      * `i` - Case insensitive search
-      * `m` - Multi line mode (`.` will match newlines)
-      * `n` - Ignore empty matches
-      * `p` - Both s and m modes are enabled
-      * `s` - Single line mode (`^` -> `\A`, `$` -> `\Z`)
+      * `i` - Case-insensitive search
       * `l` - Find longest possible matches
+      * `m` - Multi-line mode 
+            - should be: ^ matches at start or after \n; $ matches at end or before \n
+            - currently: . matches \n; ^ matches at start or after \n; $ matches at end or before \n
+      * `n` - Ignore empty matches
+      * `p` - should be: equivalent to "ms"
+            - currently: . matches \n
+      * `s` - should be supported with the meaning: . matches \n
+              currently: ineffective
       * `x` - Extended regex format (ignore whitespace and comments)
 
-      To match a whitespace with the `x` flag, use `\s`, e.g.
+      To match a whitespace codepoint with the `x` flag, use `\s`, e.g.
 
           jq -n '"a b" | test("a\\sb"; "x")'
 
-      Note that certain flags may also be specified within REGEX, e.g.
+      The above flags should not be confused with the single-character options
+      that can be specified in so-called "extended groups" within REGEX.  
+      Details about extended groups may be found in the Oniguruma documentation,
+      but in summary, an extended group takes one of the forms:
 
-          jq -n '("test", "TEst", "teST", "TEST") | test("(?i)te(?-i)st")'
+      `(?ON)` or `(?ON-OFF)` or `(?ON:subexp)` or `(?ON-OFF:subexp)`
 
-      evaluates to: `true`, `true`, `false`, `false`.
+      where:
+
+      * "-" signifies negation
+      * `ON` is a non-empty string drawn from the set of letters in `imsxWDSPy`
+      * `OFF` is a string drawn from the set of letters in `imsxWDSP`. 
+
+      Some of the commonly used extended-group options are:
+
+      * `i` - Case-insensitive search
+      * `m` - Multi-line mode (^ matches at start or after \n; and $ matches at end or before \n)
+      * `s` - Single-line mode (. can match \n)
+      * `x` - Extended regex format (ignore whitespace and comments)
+
+      Here is an example illustrating the use of an extended group:
+      
+          jq -n '"a\nb" | test("(?s)a.b")' # evaluates to `true`
+
 
     entries:
       - title: "`test(val)`, `test(regex; flags)`"
