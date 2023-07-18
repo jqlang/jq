@@ -1820,8 +1820,12 @@ tojson | fromjson
 {"a":null}
 
 
-# calling input/1 in a test doesn't crash jq
+# calling input/0, or debug/0 in a test doesn't crash jq
 
 try input catch .
 null
 "break"
+
+debug
+1
+1
