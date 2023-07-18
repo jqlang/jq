@@ -1022,6 +1022,10 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
 }
 #else /* !HAVE_LIBONIG */
 static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
+  jv_free(input);
+  jv_free(regex);
+  jv_free(modifiers);
+  jv_free(testmode);
   return jv_invalid_with_msg(jv_string("jq was compiled without ONIGURUMA regex library. match/test/sub and related functions are not available."));
 }
 #endif /* HAVE_LIBONIG */
