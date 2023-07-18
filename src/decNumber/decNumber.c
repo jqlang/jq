@@ -582,6 +582,7 @@ decNumber * decNumberFromString(decNumber *dn, const char chars[],
       Flag nege;                   // 1=negative exponent
       const char *firstexp;        // -> first significant exponent digit
       status=DEC_Conversion_syntax;// assume the worst
+      uInt expa=0;                 // accumulator for exponent
       if (*c!='e' && *c!='E') break;
       /* Found 'e' or 'E' -- now process explicit exponent */
       // 1998.07.11: sign no longer required
@@ -595,7 +596,7 @@ decNumber * decNumberFromString(decNumber *dn, const char chars[],
       firstexp=c;                            // save exponent digit place
       for (; ;c++) {
         if (*c<'0' || *c>'9') break;         // not a digit
-        exponent=X10(exponent)+(Int)*c-(Int)'0';
+        expa=X10(expa)+(Int)*c-(Int)'0';
         } // c
       // if not now on a '\0', *c must not be a digit
       if (*c!='\0') break;
@@ -604,9 +605,10 @@ decNumber * decNumberFromString(decNumber *dn, const char chars[],
       // if it was too long the exponent may have wrapped, so check
       // carefully and set it to a certain overflow if wrap possible
       if (c>=firstexp+9+1) {
-        if (c>firstexp+9+1 || *firstexp>'1') exponent=DECNUMMAXE*2;
+        if (c>firstexp+9+1 || *firstexp>'1') expa=DECNUMMAXE*2;
         // [up to 1999999999 is OK, for example 1E-1000000998]
         }
+      exponent=(Int)expa;               // save exponent
       if (nege) exponent=-exponent;     // was negative
       status=0;                         // is OK
       } // stuff after digits
