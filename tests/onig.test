@@ -1,7 +1,7 @@
 # match builtin
 [match("( )*"; "g")]
 "abc"
-[{"offset":0, "length":0, "string":"", "captures":[]}, {"offset":1, "length":0, "string":"", "captures":[]}, {"offset":2, "length":0, "string":"", "captures":[]}, {"offset":3, "length":0, "string":"", "captures":[]}]
+[{"offset":0,"length":0,"string":"","captures":[{"offset":0,"string":"","length":0,"name":null}]},{"offset":1,"length":0,"string":"","captures":[{"offset":1,"string":"","length":0,"name":null}]},{"offset":2,"length":0,"string":"","captures":[{"offset":2,"string":"","length":0,"name":null}]},{"offset":3,"length":0,"string":"","captures":[{"offset":3,"string":"","length":0,"name":null}]}]
 
 [match("( )*"; "gn")]
 "abc"
@@ -144,6 +144,10 @@ gsub("(?<x>.)(?<y>[0-9])"; "\(.x|ascii_downcase)\(.y)")
 gsub("\\b(?<x>.)"; "\(.x|ascii_downcase)")
 "ABC DEF"
 "aBC dEF"
+
+gsub("[^a-z]*(?<x>[a-z]*)"; "Z\(.x)")
+"123foo456bar"
+"ZfooZbarZ"
 
 # utf-8
 sub("(?<x>.)"; "\(.x)!")

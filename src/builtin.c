@@ -931,7 +931,17 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
         jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
         match = jv_object_set(match, jv_string("length"), jv_number(0));
         match = jv_object_set(match, jv_string("string"), jv_string(""));
-        match = jv_object_set(match, jv_string("captures"), jv_array());
+        jv captures = jv_array();
+        for (int i = 1; i < region->num_regs; ++i) {
+          jv cap = jv_object();
+          cap = jv_object_set(cap, jv_string("offset"), jv_number(idx));
+          cap = jv_object_set(cap, jv_string("string"), jv_string(""));
+          cap = jv_object_set(cap, jv_string("length"), jv_number(0));
+          cap = jv_object_set(cap, jv_string("name"), jv_null());
+          captures = jv_array_append(captures, cap);
+        }
+        onig_foreach_name(reg, f_match_name_iter, &captures);
+        match = jv_object_set(match, jv_string("captures"), captures);
         result = jv_array_append(result, match);
         // ensure '"qux" | match("(?=u)"; "g")' matches just once
         start = (const UChar*)(input_string+region->end[0]+1);
@@ -1005,8 +1015,6 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   } while (global && start <= end);
   onig_region_free(region,1);
   region = NULL;
-  if (region)
-    onig_region_free(region,1);
   onig_free(reg);
   jv_free(input);
   jv_free(regex);
