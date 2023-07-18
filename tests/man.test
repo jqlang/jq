@@ -572,6 +572,10 @@ join(" ")
 ["a",1,2.3,true,null,false]
 "a 1 2.3 true  false"
 
+ascii_upcase
+"useful but not for é"
+"USEFUL BUT NOT FOR é"
+
 [while(.<100; .*2)]
 1
 [1,2,4,8,16,32,64]

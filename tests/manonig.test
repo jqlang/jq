@@ -42,3 +42,35 @@ capture("(?<a>[a-z]+)-(?<n>[0-9]+)")
 "xyzzy-14"
 { "a": "xyzzy", "n": "14" }
 
+scan("c")
+"abcdefabc"
+"c"
+"c"
+
+split(", *"; null)
+"ab,cd, ef"
+["ab","cd","ef"]
+
+splits(", *")
+"ab,cd,   ef, gh"
+"ab"
+"cd"
+"ef"
+"gh"
+
+sub("[^a-z]*(?<x>[a-z]+)"; "Z\(.x)"; "g")
+"123abc456def"
+"ZabcZdef"
+
+[sub("(?<a>.)"; "\(.a|ascii_upcase)", "\(.a|ascii_downcase)")]
+"aB"
+["AB","aB"]
+
+gsub("(?<x>.)[^a]*"; "+\(.x)-")
+"Abcabc"
+"+A-+a-"
+
+[gsub("p"; "a", "b")]
+"p"
+["a","b"]
+

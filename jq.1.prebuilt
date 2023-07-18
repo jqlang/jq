@@ -1881,6 +1881,18 @@ jq \'join(" ")\'
 .SS "ascii_downcase, ascii_upcase"
 Emit a copy of the input string with its alphabetic characters (a\-z and A\-Z) converted to the specified case\.
 .
+.IP "" 4
+.
+.nf
+
+jq \'ascii_upcase\'
+   "useful but not for é"
+=> "USEFUL BUT NOT FOR é"
+.
+.fi
+.
+.IP "" 0
+.
 .SS "while(cond; update)"
 The \fBwhile(cond; update)\fR function allows you to repeatedly apply an update to \fB\.\fR until \fBcond\fR is false\.
 .
@@ -2778,20 +2790,88 @@ jq \'capture("(?<a>[a\-z]+)\-(?<n>[0\-9]+)")\'
 .SS "scan(regex), scan(regex; flags)"
 Emit a stream of the non\-overlapping substrings of the input that match the regex in accordance with the flags, if any have been specified\. If there is no match, the stream is empty\. To capture all the matches for each input string, use the idiom \fB[ expr ]\fR, e\.g\. \fB[ scan(regex) ]\fR\.
 .
+.IP "" 4
+.
+.nf
+
+jq \'scan("c")\'
+   "abcdefabc"
+=> "c", "c"
+.
+.fi
+.
+.IP "" 0
+.
 .SS "split(regex; flags)"
 Splits an input string on each regex match\.
 .
 .P
 For backwards compatibility, when called with a single argument, \fBsplit\fR splits on a string, not a regex\.
 .
+.IP "" 4
+.
+.nf
+
+jq \'split(", *"; null)\'
+   "ab,cd, ef"
+=> ["ab","cd","ef"]
+.
+.fi
+.
+.IP "" 0
+.
 .SS "splits(regex), splits(regex; flags)"
 These provide the same results as their \fBsplit\fR counterparts, but as a stream instead of an array\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'splits(", *")\'
+   "ab,cd,   ef, gh"
+=> "ab", "cd", "ef", "gh"
+.
+.fi
+.
+.IP "" 0
 .
 .SS "sub(regex; tostring), sub(regex; tostring; flags)"
 Emit the string obtained by replacing the first match of regex in the input string with \fBtostring\fR, after interpolation\. \fBtostring\fR should be a jq string or a stream of such strings, each of which may contain references to named captures\. The named captures are, in effect, presented as a JSON object (as constructed by \fBcapture\fR) to \fBtostring\fR, so a reference to a captured variable named "x" would take the form: \fB"\e(\.x)"\fR\.
 .
+.IP "" 4
+.
+.nf
+
+jq \'sub("[^a\-z]*(?<x>[a\-z]+)"; "Z\e(\.x)"; "g")\'
+   "123abc456def"
+=> "ZabcZdef"
+
+jq \'[sub("(?<a>\.)"; "\e(\.a|ascii_upcase)", "\e(\.a|ascii_downcase)")]\'
+   "aB"
+=> ["AB","aB"]
+.
+.fi
+.
+.IP "" 0
+.
 .SS "gsub(regex; tostring), gsub(regex; tostring; flags)"
 \fBgsub\fR is like \fBsub\fR but all the non\-overlapping occurrences of the regex are replaced by \fBtostring\fR, after interpolation\. If the second argument is a stream of jq strings, then \fBgsub\fR will produce a corresponding stream of JSON strings\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'gsub("(?<x>\.)[^a]*"; "+\e(\.x)\-")\'
+   "Abcabc"
+=> "+A\-+a\-"
+
+jq \'[gsub("p"; "a", "b")]\'
+   "p"
+=> ["a","b"]
+.
+.fi
+.
+.IP "" 0
 .
 .SH "ADVANCED FEATURES"
 Variables are an absolute necessity in most programming languages, but they\'re relegated to an "advanced feature" in jq\.
