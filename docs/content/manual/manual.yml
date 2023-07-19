@@ -331,8 +331,8 @@ sections:
           already been converted to an IEEE754 double precision
           representation will trigger a conversion to the IEEE754
           representation. Currently, though this will probably change
-          in the future, a leading minus sign will also trigger such a
-          conversion.
+          in the future, a leading minus sign will also trigger the
+          conversion of such number in a jq program.
 
           Comparisons, however, are carried out using the untruncated
           big decimal representation of numbers if available, as
