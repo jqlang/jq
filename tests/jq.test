@@ -1019,6 +1019,7 @@ pick(first|first)
 [[10,20],30]
 [[10]]
 
+# negative indices in path expressions (since last/1 is .[-1])
 pick(last)
 [[10,20],30]
 [null,30]
@@ -1840,13 +1841,29 @@ tojson | fromjson
 {"a":nan}
 {"a":null}
 
-## input and inputs
-# calling input/1 in a test doesn't crash jq
+# calling input/0, or debug/0 in a test doesn't crash jq
 
 try input catch .
 null
 "break"
 
+pick(.a.b.c)
+null
+{"a":{"b":{"c":null}}}
+
+pick(first)
+[1,2]
+[1]
+
+pick(first|first)
+[[10,20],30]
+[[10]]
+
+pick(last)
+[[10,20],30]
+[null,30]
+
+# input and inputs
 [input?]
 null
 []
@@ -1857,9 +1874,5 @@ null
 
 # debug should emit its input
 debug
-1
-1
-
-debug(.,.)
 1
 1

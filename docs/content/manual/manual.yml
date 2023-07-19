@@ -1721,10 +1721,10 @@ sections:
           Emit a copy of the input string with its alphabetic characters (a-z and A-Z)
           converted to the specified case.
 
-        example:
+        examples:
           - program: 'ascii_upcase'
             input: '"useful but not for é"'
-            output: '"USEFUL BUT NOT FOR é"'
+            output: ['"USEFUL BUT NOT FOR é"']
 
       - title: "`while(cond; update)`"
         body: |
@@ -2500,14 +2500,10 @@ sections:
           To capture all the matches for each input string, use the idiom
           `[ expr ]`, e.g. `[ scan(regex) ]`.
 
-        example:
+        examples:
           - program: 'scan("c")'
             input: '"abcdefabc"'
             output: ['"c"', '"c"']
-
-          - program: 'scan("b")'
-            input: ("", "")
-            output: ['[]', '[]']
 
       - title: "`split(regex; flags)`"
         body: |
@@ -2517,10 +2513,10 @@ sections:
           For backwards compatibility, when called with a single argument,
           `split` splits on a string, not a regex.
 
-        example:
+        examples:
           - program: 'split(", *"; null)'
             input: '"ab,cd, ef"'
-            output: ['"ab","cd","ef"']
+            output: ['["ab","cd","ef"]']
 
 
       - title: "`splits(regex)`, `splits(regex; flags)`"
@@ -2529,10 +2525,10 @@ sections:
           These provide the same results as their `split` counterparts,
           but as a stream instead of an array.
 
-        example:
+        examples:
           - program: 'splits(", *")'
-            input: '("ab,cd", "ef, gh")'
-            output: ['"ab"', '"cd"', '"ef"', '"gh"']
+            input: '"ab,cd,   ef, gh"'
+            output: ['"ab"','"cd"','"ef"','"gh"']
 
       - title: "`sub(regex; tostring)`, `sub(regex; tostring; flags)`"
         body: |
@@ -2546,9 +2542,8 @@ sections:
           `tostring`, so a reference to a captured variable named "x"
           would take the form: `"\(.x)"`.
 
-        example:
-
-          - program: 'sub("[^a-z]*(?<x>[a-z]*)"; "Z\(.x)"; "g")'
+        examples:
+          - program: 'sub("[^a-z]*(?<x>[a-z]+)"; "Z\(.x)"; "g")'
             input: '"123abc456def"'
             output: ['"ZabcZdef"']
 
@@ -2563,7 +2558,7 @@ sections:
           replaced by `tostring`, after interpolation. If the second argument is a stream
           of jq strings, then `gsub` will produce a corresponding stream of JSON strings.
 
-        example:
+        examples:
           - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
             input: '"Abcabc"'
             output: ['"+A-+a-"']
@@ -3490,9 +3485,10 @@ sections:
         - color for strings
         - color for arrays
         - color for objects
+        - color for object keys
 
       The default color scheme is the same as setting
-      `"JQ_COLORS=1;30:0;37:0;37:0;37:0;32:1;37:1;37"`.
+      `JQ_COLORS="1;30:0;37:0;37:0;37:0;32:1;37:1;37:1;34"`.
 
       This is not a manual for VT100/ANSI escapes.  However, each of
       these color specifications should consist of two numbers separated

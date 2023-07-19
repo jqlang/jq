@@ -1023,6 +1023,9 @@ jq_state *jq_init(void) {
   jq->input_cb = NULL;
   jq->input_cb_data = NULL;
 
+  jq->debug_cb = NULL;
+  jq->debug_cb_data = NULL;
+
   jq->err_cb = default_err_cb;
   jq->err_cb_data = stderr;
 
