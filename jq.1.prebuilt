@@ -112,7 +112,7 @@ Use the given number of spaces (no more than 7) for indentation\.
 \fB\-\-color\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
 .
 .IP
-By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\.
+By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\. When the \fBNO_COLOR\fR environment variable is not empty, jq disables colored output by default, but you can enable it by \fB\-C\fR\.
 .
 .IP
 Colors can be configured with the \fBJQ_COLORS\fR environment variable (see below)\.
