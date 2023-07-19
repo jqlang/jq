@@ -292,6 +292,12 @@ int main(int argc, char* argv[]) {
   _setmode(fileno(stderr), _O_TEXT | _O_U8TEXT);
 #endif
 
+#ifdef __EMSCRIPTEN__
+  /* When compiling to WebAssembly with Emscripten, reset options to ensure we can
+     call main() multiple times without reinitializing the WebAssembly module. */
+  options = 0;
+#endif
+
   if (argc) progname = argv[0];
 
   jq = jq_init();
