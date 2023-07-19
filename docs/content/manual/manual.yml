@@ -311,32 +311,48 @@ sections:
         body: |
 
           The absolute simplest filter is `.` .  This filter takes its
-          input and produces it unchanged as output.  That is, this is
-          the identity operator.
+          input and produces the same value as output.  That is, this
+          is the identity operator.
 
-          Since jq by default pretty-prints all output, this trivial
-          program can be a useful way of formatting JSON output from,
-          say, `curl`.
+          Since jq by default pretty-prints all output, a trivial
+          program consisting of nothing but `.` can be used to format
+          JSON output from, say, `curl`.
 
-          Although the identity filter never modifies its input, jq
-          processing can sometimes make it appear as though it does.
-          In particular, the parsing of JSON numbers can alter their
-          representation and even their value.  For example, although
-          jq will attempt to maintain the original decimal precision
-          of number literals, it will not always succeed, e.g. the
-          expression `1E123456789 | .` yields `1E123456789`, but
-          precision is lost if the exponent is too large.
+          Although the identity filter never modifies the value of its
+          input, jq processing can sometimes make it appear as though
+          it does.  For example, using the current implementation of
+          jq, we would see that the expression:
+          
+              `1E1234567890 | .`
 
-          Also, any arithmetic operation on a number that has not
+          produces `1.7976931348623157e+308` on at least one platform.
+          This is because, in the process of parsing the number, this
+          particular version of jq has converted it to an IEEE754
+          double-precision representation, losing precision.
+
+          The way in which jq handles numbers has changed over time
+          and further changes are likely within the parameters set by
+          the relevant JSON standards.  The following remarks are
+          therefore offered with the understanding that they are
+          intended to be descriptive of the current version of jq and
+          should not be interpreted as being prescriptive:
+
+          (1) Any arithmetic operation on a number that has not
           already been converted to an IEEE754 double precision
           representation will trigger a conversion to the IEEE754
-          representation. Currently, though this will probably change
-          in the future, a leading minus sign will also trigger the
-          conversion of such number in a jq program.
+          representation.
 
-          Comparisons, however, are carried out using the untruncated
+          (2) jq will attempt to maintain the original decimal
+          precision of number literals, but in expressions such
+          `1E1234567890`, precision will be lost if the exponent is
+          too large.
+
+          (3) In jq programs, a leading minus sign will trigger the
+          conversion of the number to an IEEE754 representation.
+
+          (4) Comparisons are carried out using the untruncated
           big decimal representation of numbers if available, as
-          illustrated in one of these examples.
+          illustrated in one of the following examples.
 
         examples:
           - program: '.'
@@ -345,15 +361,15 @@ sections:
 
           - program: '.'
             input:  '0.12345678901234567890123456789'
-            output: ['1.234567892345678923456789']
+            output: ['0.12345678901234567890123456789']
 
           - program: '[., tojson]'
             input: '12345678909876543212345'
             output: ['[12345678909876543212345,"12345678909876543212345"]']
 
           - program: '. < 0.12345678901234567890123456788'
-          - program: '0.12345678901234567890123456789'
-            input: ['false']
+            input: '0.12345678901234567890123456789'
+            output: ['false']
 
           - program: 'map([., . == 1]) | tojson'
             input: '[1, 1.000, 1.0, 100e-2]'
