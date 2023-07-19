@@ -241,7 +241,9 @@ using some command-line options:</p>
 </ul>
 <p>By default, jq outputs colored JSON if writing to a
   terminal. You can force it to produce color even if writing to
-  a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.</p>
+  a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.
+  When the <code>NO_COLOR</code> environment variable is not empty, jq disables
+  colored output by default, but you can enable it by <code>-C</code>.</p>
 <p>Colors can be configured with the <code>JQ_COLORS</code> environment
   variable (see below).</p>
 <ul>
