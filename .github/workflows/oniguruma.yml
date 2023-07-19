@@ -16,7 +16,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y automake autoconf libtool libonig-dev
+          sudo apt-get install -y automake autoconf libtool valgrind libonig-dev
       - name: Build
         run: |
           autoreconf -i
@@ -49,7 +49,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y automake autoconf libtool
+          sudo apt-get install -y automake autoconf libtool valgrind
       - name: Build
         run: |
           autoreconf -i
