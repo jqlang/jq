@@ -246,19 +246,19 @@ Be warned that this option can change backwards\-incompatibly\.
 .SH "BASIC FILTERS"
 .
 .SS "Identity: \."
-The absolute simplest filter is \fB\.\fR \. This is a filter that takes its input and produces it unchanged as output\. That is, this is the identity operator\.
+The absolute simplest filter is \fB\.\fR \. This filter takes its input and produces it unchanged as output\. That is, this is the identity operator\.
 .
 .P
 Since jq by default pretty\-prints all output, this trivial program can be a useful way of formatting JSON output from, say, \fBcurl\fR\.
 .
 .P
-An important point about the identity filter is that it guarantees to preserve the literal decimal representation of values\. This is particularly important when dealing with numbers which can\'t be losslessly converted to an IEEE754 double precision representation\.
+Although the identity filter never modifies its input, jq processing can sometimes make it appear as though it does\. In particular, the parsing of JSON numbers can alter their representation and even their value\. For example, although jq will attempt to maintain the original decimal precision of number literals, it will not always succeed, e\.g\. the expression \fB1E123456789 | \.\fR yields \fB1E123456789\fR, but precision is lost if the exponent is too large\.
 .
 .P
-jq doesn\'t truncate the literal numbers to double unless there is a need to make arithmetic operations with the number\. Comparisons are carried out over the untruncated big decimal representation of the number\.
+Also, any arithmetic operation on a number that has not already been converted to an IEEE754 double precision representation will trigger a conversion to the IEEE754 representation\. Currently, though this will probably change in the future, a leading minus sign will also trigger the conversion of such number in a jq program\.
 .
 .P
-jq will also try to maintain the original decimal precision of the provided number literal\. See below for examples\.
+Comparisons, however, are carried out using the untruncated big decimal representation of numbers if available, as illustrated in one of these examples\.
 .
 .IP "" 4
 .
@@ -268,9 +268,21 @@ jq \'\.\'
    "Hello, world!"
 => "Hello, world!"
 
-jq \'\. | tojson\'
+jq \'\.\'
+   0\.12345678901234567890123456789
+=> 1\.234567892345678923456789
+
+jq \'[\., tojson]\'
    12345678909876543212345
-=> "12345678909876543212345"
+=> [12345678909876543212345,"12345678909876543212345"]
+
+jq \'\. < 0\.12345678901234567890123456788\'
+
+=> 
+
+jq \'0\.12345678901234567890123456789\'
+   [\'false\']
+=> 
 
 jq \'map([\., \. == 1]) | tojson\'
    [1, 1\.000, 1\.0, 100e\-2]
