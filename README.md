@@ -66,6 +66,13 @@ cross-compilation environment.  See also
 ["Cross compilation"](https://github.com/jqlang/jq/wiki/Cross-compilation) on
 the wiki.
 
+To compile jq to WebAssembly, install the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html), then:
+
+    git submodule update --init # if building from git to get oniguruma
+    autoreconf -i               # if building from git
+    emconfigure ./configure --with-oniguruma=builtin --disable-maintainer-mode
+    emmake make EXEEXT=.js CFLAGS="-O2" LDFLAGS="-s EXPORTED_RUNTIME_METHODS=['callMain']"
+
 
 # Community
 

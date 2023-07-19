@@ -28,9 +28,6 @@ extern "C"
 void *alloca (size_t);
 # endif
 #endif
-#ifndef WIN32
-#include <pwd.h>
-#endif
 
 #ifdef WIN32
 #include <windows.h>
@@ -103,11 +100,7 @@ jv get_home() {
   char *home = getenv("HOME");
   if (!home) {
 #ifndef WIN32
-    struct passwd* pwd = getpwuid(getuid());
-    if (pwd)
-      ret = jv_string(pwd->pw_dir);
-    else
-      ret = jv_invalid_with_msg(jv_string("Could not find home directory."));
+    ret = jv_invalid_with_msg(jv_string("Could not find home directory."));
 #else
     home = getenv("USERPROFILE");
     if (!home) {

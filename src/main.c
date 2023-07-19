@@ -146,7 +146,6 @@ enum {
   /* debugging only */
   DUMP_DISASM           = 65536,
 };
-static int options = 0;
 
 enum {
     JQ_OK              =  0,
@@ -174,7 +173,7 @@ static const char *skip_shebang(const char *p) {
   return n+1;
 }
 
-static int process(jq_state *jq, jv value, int flags, int dumpopts) {
+static int process(jq_state *jq, jv value, int flags, int dumpopts, int options) {
   int ret = JQ_OK_NO_OUTPUT; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
   jv result;
@@ -281,6 +280,7 @@ int main(int argc, char* argv[]) {
   int nfiles = 0;
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
+  int options = 0;
   jv ARGS = jv_array(); /* positional arguments */
   jv program_arguments = jv_object(); /* named arguments */
 
@@ -688,13 +688,13 @@ int main(int argc, char* argv[]) {
     jq_util_input_add_input(input_state, "-");
 
   if (options & PROVIDE_NULL) {
-    ret = process(jq, jv_null(), jq_flags, dumpopts);
+    ret = process(jq, jv_null(), jq_flags, dumpopts, options);
   } else {
     jv value;
     while (jq_util_input_errors(input_state) == 0 &&
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
-        ret = process(jq, value, jq_flags, dumpopts);
+        ret = process(jq, value, jq_flags, dumpopts, options);
         if (ret <= 0 && ret != JQ_OK_NO_OUTPUT)
           last_result = (ret != JQ_OK_NULL_KIND);
         if (jq_halted(jq))
