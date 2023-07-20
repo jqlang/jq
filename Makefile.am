@@ -120,6 +120,7 @@ src/builtin.o: src/builtin.inc
 if MAINTAINER_MODE
 CLEANFILES = src/version.h .remake-version-h src/builtin.inc
 else
+DISTCLEANFILES = src/version.h
 CLEANFILES = .remake-version-h src/builtin.inc
 endif
 bin_PROGRAMS = jq
