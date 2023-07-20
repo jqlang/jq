@@ -325,7 +325,7 @@ sections:
           it does.  For example, using the current implementation of
           jq, we would see that the expression:
           
-              `1E1234567890 | .`
+              1E1234567890 | .
 
           produces `1.7976931348623157e+308` on at least one platform.
           This is because, in the process of parsing the number, this
@@ -384,13 +384,13 @@ sections:
       - title: "Object Identifier-Index: `.foo`, `.foo.bar`"
         body: |
 
-          The simplest *useful* filter is `.foo`. When given a
-          JSON object (aka dictionary or hash) as input, it produces
-          the value at the key "foo", or null if there's none present.
+          The simplest *useful* filter has the form `.foo`. When given a
+          JSON object (aka dictionary or hash) as input, `.foo` produces
+          the value at the key "foo" if the key is present, or null otherwise.
 
           A filter of the form `.foo.bar` is equivalent to `.foo|.bar`.
 
-          This syntax only works for simple, identifier-like keys, that
+          The `.foo` syntax only works for simple, identifier-like keys, that
           is, keys that are all made of alphanumeric characters and
           underscore, and which do not start with a digit.
 
@@ -399,15 +399,17 @@ sections:
           `."foo$"`, or else `.["foo$"]`.
 
           For example `.["foo::bar"]` and `.["foo.bar"]` work while
-          `.foo::bar` does not, and `.foo.bar` means `.["foo"].["bar"]`.
+          `.foo::bar` does not.
 
         examples:
           - program: '.foo'
             input: '{"foo": 42, "bar": "less interesting data"}'
             output: [42]
+
           - program: '.foo'
             input: '{"notfoo": true, "alsonotfoo": false}'
             output: ['null']
+
           - program: '.["foo"]'
             input: '{"foo": 42}'
             output: [42]
@@ -967,13 +969,13 @@ sections:
           `map_values` when applied to arrays. These examples assume the
           input is `[1]` in all cases:
 
-          map(.+1)          #=>  [2]
-          map(., .)         #=>  [1,1]
-          map(empty)        #=>  []
+              map(.+1)          #=>  [2]
+              map(., .)         #=>  [1,1]
+              map(empty)        #=>  []
 
-          map_values(.+1)   #=>  [2]
-          map_values(., .)  #=>  [1]
-          map_values(empty) #=>  []
+              map_values(.+1)   #=>  [2]
+              map_values(., .)  #=>  [1]
+              map_values(empty) #=>  []
 
           `map(f)` is equivalent to `[.[] | f]` and
           `map_values(f)` is equivalent to `.[] |= f`.
