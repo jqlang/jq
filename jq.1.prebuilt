@@ -258,7 +258,7 @@ Although the identity filter never modifies the value of its input, jq processin
 .
 .nf
 
-`1E1234567890 | \.`
+1E1234567890 | \.
 .
 .fi
 .
@@ -315,19 +315,19 @@ jq \'\. as $big | [$big, $big + 1] | map(\. > 10000000000000000000000000000000)\
 .IP "" 0
 .
 .SS "Object Identifier\-Index: \.foo, \.foo\.bar"
-The simplest \fIuseful\fR filter is \fB\.foo\fR\. When given a JSON object (aka dictionary or hash) as input, it produces the value at the key "foo", or null if there\'s none present\.
+The simplest \fIuseful\fR filter has the form \fB\.foo\fR\. When given a JSON object (aka dictionary or hash) as input, \fB\.foo\fR produces the value at the key "foo" if the key is present, or null otherwise\.
 .
 .P
 A filter of the form \fB\.foo\.bar\fR is equivalent to \fB\.foo|\.bar\fR\.
 .
 .P
-This syntax only works for simple, identifier\-like keys, that is, keys that are all made of alphanumeric characters and underscore, and which do not start with a digit\.
+The \fB\.foo\fR syntax only works for simple, identifier\-like keys, that is, keys that are all made of alphanumeric characters and underscore, and which do not start with a digit\.
 .
 .P
 If the key contains special characters or starts with a digit, you need to surround it with double quotes like this: \fB\."foo$"\fR, or else \fB\.["foo$"]\fR\.
 .
 .P
-For example \fB\.["foo::bar"]\fR and \fB\.["foo\.bar"]\fR work while \fB\.foo::bar\fR does not, and \fB\.foo\.bar\fR means \fB\.["foo"]\.["bar"]\fR\.
+For example \fB\.["foo::bar"]\fR and \fB\.["foo\.bar"]\fR work while \fB\.foo::bar\fR does not\.
 .
 .IP "" 4
 .
@@ -960,11 +960,21 @@ Specifically, for object inputs, \fBmap_value(f)\fR constructs the output object
 .P
 Here are some examples to clarify the behavior of \fBmap\fR and \fBmap_values\fR when applied to arrays\. These examples assume the input is \fB[1]\fR in all cases:
 .
-.P
-map(\.+1) #=> [2] map(\., \.) #=> [1,1] map(empty) #=> []
+.IP "" 4
 .
-.P
-map_values(\.+1) #=> [2] map_values(\., \.) #=> [1] map_values(empty) #=> []
+.nf
+
+map(\.+1)          #=>  [2]
+map(\., \.)         #=>  [1,1]
+map(empty)        #=>  []
+
+map_values(\.+1)   #=>  [2]
+map_values(\., \.)  #=>  [1]
+map_values(empty) #=>  []
+.
+.fi
+.
+.IP "" 0
 .
 .P
 \fBmap(f)\fR is equivalent to \fB[\.[] | f]\fR and \fBmap_values(f)\fR is equivalent to \fB\.[] |= f\fR\.
