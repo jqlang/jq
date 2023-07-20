@@ -94,11 +94,106 @@ static jv f_plus(jq_state *jq, jv input, jv a, jv b) {
     jv_free(b);
     return r;
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
+    if (jv_get_string_kind(a) != JV_STRING_KIND_UTF8 ||
+        jv_get_string_kind(b) != JV_STRING_KIND_UTF8)
+      return jv_binary_concat(a, b);
     return jv_string_concat(a, b);
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
     return jv_array_concat(a, b);
   } else if (jv_get_kind(a) == JV_KIND_OBJECT && jv_get_kind(b) == JV_KIND_OBJECT) {
     return jv_object_merge(a, b);
+  } else {
+    return type_error2(a, b, "cannot be added");
+  }
+}
+
+static jv f_concat(jq_state *jq, jv a, jv b) {
+  if (jv_get_kind(a) == JV_KIND_NULL) {
+    jv_free(a);
+    return b;
+  } else if (jv_get_kind(b) == JV_KIND_NULL) {
+    jv_free(b);
+    return a;
+  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
+    return jv_string_concat(a, b);
+  } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
+    return jv_array_concat(a, b);
+  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_NUMBER) {
+    int c = jv_number_value(b);
+    if (jv_get_string_kind(a) == JV_STRING_KIND_UTF8) {
+      if (c < 0 || c > 0x10FFFF)
+        return type_error2(a, b, "cannot add invalid Unicode codepoint to string");
+      jv_free(b);
+      return jv_string_append_codepoint(a, c);
+    }
+    if (c < 0 || c > 255)
+        return type_error2(a, b, "cannot add invalid byte value to string");
+    jv_free(b);
+    return jv_binary_append_byte(a, c);
+  } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_ARRAY) {
+    if (jv_get_string_kind(a) == JV_STRING_KIND_UTF8) {
+      jv_array_foreach(b, bi, belem) {
+        if (jv_get_kind(belem) == JV_KIND_ARRAY) {
+          a = f_concat(jq, a, belem);
+          if (!jv_is_valid(a)) {
+            jv_free(b);
+            return a;
+          }
+          continue;
+        }
+        if (jv_get_kind(belem) == JV_KIND_STRING) {
+          a = f_concat(jq, a, belem);
+          if (!jv_is_valid(a)) {
+            jv_free(b);
+            return a;
+          }
+          continue;
+        }
+        if (jv_get_kind(belem) != JV_KIND_NUMBER) {
+          jv_free(b);
+          return type_error2(a, belem, "cannot convert array of non-Unicode codepoint values to concatenate to string");
+        }
+        int c = jv_number_value(belem);
+        if (c < 0 || c > 0x10FFFF) {
+          jv_free(b);
+          return type_error2(a, belem, "cannot convert array of non-Unicode codepoint values to concatenate to string");
+        }
+        jv_free(belem);
+        a = jv_binary_append_byte(a, (unsigned char)c);
+      }
+    } else {
+      jv_array_foreach(b, bi, belem) {
+        if (jv_get_kind(belem) == JV_KIND_ARRAY) {
+          a = f_concat(jq, a, belem);
+          if (!jv_is_valid(a)) {
+            jv_free(b);
+            return a;
+          }
+          continue;
+        }
+        if (jv_get_kind(belem) == JV_KIND_STRING) {
+          a = f_concat(jq, a, belem);
+          if (!jv_is_valid(a)) {
+            jv_free(b);
+            return a;
+          }
+          continue;
+        }
+        if (jv_get_kind(belem) != JV_KIND_NUMBER) {
+          jv_free(b);
+          return type_error2(a, belem, "cannot convert array of non-byte values to concatenate to string");
+        }
+        int c = jv_number_value(belem);
+        if (c < 0 || c > 255) {
+          jv_free(b);
+          return type_error2(a, belem, "cannot convert array of non-byte values to concatenate to string");
+        }
+        jv_free(belem);
+        a = jv_binary_append_byte(a, (unsigned char)c);
+      }
+    }
+    jv_free(b);
+    return a;
   } else {
     return type_error2(a, b, "cannot be added");
   }
@@ -460,6 +555,9 @@ static jv f_contains(jq_state *jq, jv a, jv b) {
 }
 
 static jv f_dump(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_STRING &&
+      jv_get_string_kind(input) == JV_STRING_KIND_BINARY_BYTEARRAY)
+    return jv_string_from_binary(input);
   return jv_dump_string(input, 0);
 }
 
@@ -492,7 +590,9 @@ static jv f_length(jq_state *jq, jv input) {
   } else if (jv_get_kind(input) == JV_KIND_OBJECT) {
     return jv_number(jv_object_length(input));
   } else if (jv_get_kind(input) == JV_KIND_STRING) {
-    return jv_number(jv_string_length_codepoints(input));
+    if (jv_get_string_kind(input) == JV_STRING_KIND_UTF8)
+      return jv_number(jv_string_length_codepoints(input));
+    return jv_number(jv_string_length_bytes(input));
   } else if (jv_get_kind(input) == JV_KIND_NUMBER) {
     jv r = jv_number(fabs(jv_number_value(input)));
     jv_free(input);
@@ -507,7 +607,12 @@ static jv f_length(jq_state *jq, jv input) {
 
 static jv f_tostring(jq_state *jq, jv input) {
   if (jv_get_kind(input) == JV_KIND_STRING) {
-    return input;
+    switch (jv_get_string_kind(input)) {
+    case JV_STRING_KIND_UTF8:
+      return input;
+    default:
+      return jv_string_from_binary(input);
+    }
   } else {
     return jv_dump_string(input, 0);
   }
@@ -520,24 +625,6 @@ static jv f_utf8bytelength(jq_state *jq, jv input) {
 }
 
 #define CHARS_ALPHANUM "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-
-static const unsigned char BASE64_ENCODE_TABLE[64 + 1] = CHARS_ALPHANUM "+/";
-static const unsigned char BASE64_INVALID_ENTRY = 0xFF;
-static const unsigned char BASE64_DECODE_TABLE[255] = {
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-  62, // +
-  0xFF, 0xFF, 0xFF,
-  63, // /
-  52, 53, 54, 55, 56, 57, 58, 59, 60, 61, // 0-9
-  0xFF, 0xFF, 0xFF,
-  99, // =
-  0xFF, 0xFF, 0xFF,
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, // A-Z
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-  26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,  // a-z
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-};
-
 
 static jv escape_string(jv input, const char* escapings) {
 
@@ -556,7 +643,7 @@ static jv escape_string(jv input, const char* escapings) {
   const char* i = jv_string_value(input);
   const char* end = i + jv_string_length_bytes(jv_copy(input));
   const char* cstart;
-  int c = 0;
+  uint32_t c = 0;
   while ((i = jvp_utf8_next((cstart = i), end, &c))) {
     if (c < 128 && lookup[c]) {
       ret = jv_string_append_str(ret, lookup[c]);
@@ -689,70 +776,23 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     return line;
   } else if (!strcmp(fmt_s, "base64")) {
     jv_free(fmt);
-    input = f_tostring(jq, input);
-    jv line = jv_string("");
-    const unsigned char* data = (const unsigned char*)jv_string_value(input);
-    int len = jv_string_length_bytes(jv_copy(input));
-    for (int i=0; i<len; i+=3) {
-      uint32_t code = 0;
-      int n = len - i >= 3 ? 3 : len-i;
-      for (int j=0; j<3; j++) {
-        code <<= 8;
-        code |= j < n ? (unsigned)data[i+j] : 0;
-      }
-      char buf[4];
-      for (int j=0; j<4; j++) {
-        buf[j] = BASE64_ENCODE_TABLE[(code >> (18 - j*6)) & 0x3f];
-      }
-      if (n < 3) buf[3] = '=';
-      if (n < 2) buf[2] = '=';
-      line = jv_string_append_buf(line, buf, sizeof(buf));
-    }
-    jv_free(input);
-    return line;
+    return jv_binary_to_base64(f_tostring(jq, input));
   } else if (!strcmp(fmt_s, "base64d")) {
     jv_free(fmt);
-    input = f_tostring(jq, input);
-    const unsigned char* data = (const unsigned char*)jv_string_value(input);
-    int len = jv_string_length_bytes(jv_copy(input));
-    size_t decoded_len = (3 * len) / 4; // 3 usable bytes for every 4 bytes of input
-    char *result = jv_mem_calloc(decoded_len, sizeof(char));
-    memset(result, 0, decoded_len * sizeof(char));
-    uint32_t ri = 0;
-    int input_bytes_read=0;
-    uint32_t code = 0;
-    for (int i=0; i<len && data[i] != '='; i++) {
-      if (BASE64_DECODE_TABLE[data[i]] == BASE64_INVALID_ENTRY) {
-        free(result);
-        return type_error(input, "is not valid base64 data");
-      }
-
-      code <<= 6;
-      code |= BASE64_DECODE_TABLE[data[i]];
-      input_bytes_read++;
-
-      if (input_bytes_read == 4) {
-        result[ri++] = (code >> 16) & 0xFF;
-        result[ri++] = (code >> 8) & 0xFF;
-        result[ri++] = code & 0xFF;
-        input_bytes_read = 0;
-        code = 0;
-      }
-    }
-    if (input_bytes_read == 3) {
-      result[ri++] = (code >> 10) & 0xFF;
-      result[ri++] = (code >> 2) & 0xFF;
-    } else if (input_bytes_read == 2) {
-      result[ri++] = (code >> 4) & 0xFF;
-    } else if (input_bytes_read == 1) {
-      free(result);
-      return type_error(input, "trailing base64 byte found");
-    }
-
-    jv line = jv_string_sized(result, ri);
-    jv_free(input);
-    free(result);
-    return line;
+    input = jv_binary_from_base64(f_tostring(jq, input));
+    if (!jv_is_valid(input))
+      return input;
+    input.subkind = JV_STRING_KIND_BINARY_UTF8;
+    return jv_string_from_binary(input);
+  } else if (!strcmp(fmt_s, "base64dbinary")) {
+    jv_free(fmt);
+    return jv_binary_from_base64(f_tostring(jq, input));
+  } else if (!strcmp(fmt_s, "hex")) {
+    jv_free(fmt);
+    return jv_binary_to_hex(f_tostring(jq, input));
+  } else if (!strcmp(fmt_s, "hexd")) {
+    jv_free(fmt);
+    return jv_binary_from_hex(f_tostring(jq, input));
   } else {
     jv_free(input);
     return jv_invalid_with_msg(jv_string_concat(fmt, jv_string(" is not a valid format")));
@@ -1126,6 +1166,10 @@ static jv f_nan(jq_state *jq, jv input) {
 }
 
 static jv f_error(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_STRING &&
+      jv_get_string_kind(input) != JV_STRING_KIND_UTF8) {
+    return jv_invalid_with_msg(f_tostring(jq, input));
+  }
   return jv_invalid_with_msg(input);
 }
 
@@ -1625,13 +1669,24 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
 
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
-  char *buf = alloca(alloced);
+  char *buf;
+  if (alloced > 2048)
+    buf = jv_mem_alloc(alloced);
+  else
+    buf = alloca(alloced);
   size_t n = strftime(buf, alloced, fmt, &tm);
   jv_free(b);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
-  if (n == 0 || n > alloced)
+  if (n == 0 || n > alloced) {
+    if (alloced > 2048)
+      jv_mem_free(buf);
     return jv_invalid_with_msg(jv_string("strftime/1: unknown system failure"));
-  return jv_string(buf);
+  }
+  if (alloced < 2048)
+    return jv_string(buf);
+  b = jv_string(buf);
+  jv_mem_free(buf);
+  return b;
 }
 #else
 static jv f_strftime(jq_state *jq, jv a, jv b) {
@@ -1700,6 +1755,99 @@ static jv f_current_line(jq_state *jq, jv a) {
   return jq_util_input_get_current_line(jq);
 }
 
+static jv f_isbinary(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_STRING || jv_get_string_kind(a) == JV_STRING_KIND_UTF8) {
+    jv_free(a);
+    return jv_false();
+  }
+  jv_free(a);
+  return jv_true();
+}
+
+static jv f_tobinary(jq_state *jq, jv a) {
+  switch (jv_get_kind(a)) {
+  case JV_KIND_STRING:
+    if (a.subkind != JV_STRING_KIND_UTF8)
+      return a;
+    a.subkind = JV_STRING_KIND_BINARY;
+    return a;
+  case JV_KIND_ARRAY: {
+    int len = jv_array_length(jv_copy(a));
+    unsigned char *b = jv_mem_alloc(len);
+    jv_array_foreach(a, i, x) {
+      if (jv_get_kind(x) != JV_KIND_NUMBER) {
+        char errbuf[15];
+
+        jv_mem_free(b);
+        return jv_invalid_with_msg(jv_string_fmt("Not a byte value at array index %d: %s", i,
+                                                 jv_dump_string_trunc(jv_copy(x), errbuf, sizeof(errbuf))));
+      }
+      /* XXX No validation that `x' is an integer... */
+      b[i] = jv_number_value(x);
+    }
+    jv_free(a);
+    a = jv_binary_sized(b, len);
+    jv_mem_free(b);
+    return a;
+  }
+  default:
+    return ret_error(a, jv_string("Only strings and arrays of byte values can be converted to binary"));
+  }
+}
+
+static jv f_encodeas(jq_state *jq, jv a, jv b) {
+  if (jv_get_kind(a) != JV_KIND_STRING) {
+    jv_free(b);
+    return a;
+  }
+  if (jv_get_kind(b) != JV_KIND_STRING) {
+    jv_free(a);
+    return type_error(b, "encodeas encoding is not a string");
+  }
+  const char *as = jv_string_value(b);
+  if (strcmp(as, "UTF-8") == 0 || strcmp(as, "utf-8") == 0) {
+    if (jv_get_string_kind(a) == JV_STRING_KIND_UTF8) {
+      jv_free(b);
+      return a;
+    }
+    a.subkind = JV_STRING_KIND_BINARY_UTF8;
+  } else if (strcmp(as, "base64") == 0) {
+    a.subkind = JV_STRING_KIND_BINARY;
+  } else if (strcmp(as, "hex") == 0) {
+    a.subkind = JV_STRING_KIND_BINARY_HEX;
+  } else if (strcmp(as, "bytearray") == 0) {
+    a.subkind = JV_STRING_KIND_BINARY_BYTEARRAY;
+  } else {
+    jv_free(a);
+    return type_error(b, "value encoding option not supported");
+  }
+  jv_free(b);
+  return a;
+}
+
+static jv f_stringtype(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_STRING)
+    return type_error(a, "is not a string");
+  jv b = jv_string(jv_string_kind_name(jv_get_string_kind(a)));
+  jv_free(a);
+  return b;
+}
+
+static jv f_encoding(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_STRING)
+    return type_error(a, "is not a string");
+  jv_string_kind k = jv_get_string_kind(a);
+  jv_free(a);
+  switch (k) {
+  case JV_STRING_KIND_UTF8:
+  case JV_STRING_KIND_BINARY_UTF8: return jv_string("UTF-8");
+  case JV_STRING_KIND_BINARY: return jv_string("base64");
+  case JV_STRING_KIND_BINARY_HEX: return jv_string("hex");
+  case JV_STRING_KIND_BINARY_BYTEARRAY: return jv_string("bytearray");
+  default: return jv_string("<unknown>");
+  }
+}
+
 #define LIBM_DD(name) \
   {(cfunction_ptr)f_ ## name,  #name, 1},
 #define LIBM_DD_NO(name)
@@ -1723,6 +1871,7 @@ static const struct cfunction function_list[] = {
 #ifdef HAVE_LGAMMA_R
   {(cfunction_ptr)f_lgamma_r,"lgamma_r", 1},
 #endif
+  {(cfunction_ptr)f_concat, "concat", 2},
   {(cfunction_ptr)f_plus, "_plus", 3},
   {(cfunction_ptr)f_negate, "_negate", 1},
   {(cfunction_ptr)f_minus, "_minus", 3},
@@ -1791,6 +1940,11 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_now, "now", 1},
   {(cfunction_ptr)f_current_filename, "input_filename", 1},
   {(cfunction_ptr)f_current_line, "input_line_number", 1},
+  {(cfunction_ptr)f_isbinary, "isbinary", 1},
+  {(cfunction_ptr)f_tobinary, "tobinary", 1},
+  {(cfunction_ptr)f_encodeas, "encodeas", 2},
+  {(cfunction_ptr)f_stringtype, "stringtype", 1},
+  {(cfunction_ptr)f_encoding, "encoding", 1},
 };
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO

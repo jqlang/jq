@@ -113,16 +113,44 @@ static void put_indent(int n, int flags, FILE* fout, jv* strout, int T) {
   }
 }
 
-static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
+static void jvp_dump_string(struct dtoa_context *C, jv str, int ascii_only, FILE* F, jv* S, int T) {
   assert(jv_get_kind(str) == JV_KIND_STRING);
+
+#if 0
+  if (jv_get_string_kind(str) == JV_STRING_KIND_BINARY_BYTEARRAY) {
+    const unsigned char *s = (const unsigned char *)jv_string_value(str);
+    char buf[JVP_DTOA_FMT_MAX_LEN];
+    int i, len = jv_string_length_bytes(jv_copy(str));
+
+    put_char('[', F, S, T);
+    for (i = 0; i < len; i++) {
+      /* XXX This is way too slow */
+      /* XXX Need to do indentation */
+      put_str(jvp_dtoa_fmt(C, buf, s[i]), F, S, 0 /* XXX flags */);
+      if (i < len - 1)
+        put_char(',', F, S, T);
+    }
+    put_char(']', F, S, T);
+    return;
+  }
+#endif
+  if (jv_get_string_kind(str) == JV_STRING_KIND_BINARY) {
+    str = jv_binary_to_base64(jv_copy(str));
+  } else if (jv_get_string_kind(str) == JV_STRING_KIND_BINARY_HEX) {
+    str = jv_binary_to_hex(jv_copy(str));
+  } else if (jv_get_string_kind(str) == JV_STRING_KIND_BINARY_UTF8) {
+    str = jv_string_from_binary(jv_copy(str));
+  } else  {
+    str = jv_copy(str);
+  }
   const char* i = jv_string_value(str);
   const char* end = i + jv_string_length_bytes(jv_copy(str));
   const char* cstart;
-  int c = 0;
+  uint32_t c = 0;
   char buf[32];
   put_char('"', F, S, T);
   while ((i = jvp_utf8_next((cstart = i), end, &c))) {
-    assert(c != -1);
+    assert(c != (uint32_t)-1);
     int unicode_escape = 0;
     if (0x20 <= c && c <= 0x7E) {
       // printable ASCII
@@ -176,8 +204,9 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
       put_str(buf, F, S, T);
     }
   }
-  assert(c != -1);
+  assert(c != (uint32_t)-1);
   put_char('"', F, S, T);
+  jv_free(str);
 }
 
 static void put_refcnt(struct dtoa_context* C, int refcnt, FILE *F, jv* S, int T){
@@ -205,7 +234,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       jv msg = jv_invalid_get_msg(jv_copy(x));
       if (jv_get_kind(msg) == JV_KIND_STRING) {
         put_str("<invalid:", F, S, flags & JV_PRINT_ISATTY);
-        jvp_dump_string(msg, flags | JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+        jvp_dump_string(C, msg, flags | JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
         put_str(">", F, S, flags & JV_PRINT_ISATTY);
       } else {
         put_str("<invalid>", F, S, flags & JV_PRINT_ISATTY);
@@ -250,11 +279,25 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     break;
   }
   case JV_KIND_STRING:
-    jvp_dump_string(x, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+    if (jv_get_string_kind(x) == JV_STRING_KIND_BINARY_BYTEARRAY) {
+      /*
+       * XXX This is way too slow -- we don't need the full power of dtoa
+       * here, and we don't need to allocate an array of numbers!
+       *
+       * TODO: Optimize by writing '[', the bytes, and the ']', with whatever
+       *       indentation was requested.
+       */
+      x = jv_string_from_binary(x);
+      /* XXX We'll be printing the incorrect refcount! */
+      goto array;
+    } else {
+      jvp_dump_string(C, x, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+    }
     if (flags & JV_PRINT_REFCOUNT)
       put_refcnt(C, refcnt, F, S, flags & JV_PRINT_ISATTY);
     break;
   case JV_KIND_ARRAY: {
+array:
     if (jv_array_length(jv_copy(x)) == 0) {
       put_str("[]", F, S, flags & JV_PRINT_ISATTY);
       break;
@@ -337,7 +380,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
 
       first = 0;
       if (color) put_str(FIELD_COLOR, F, S, flags & JV_PRINT_ISATTY);
-      jvp_dump_string(key, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
+      jvp_dump_string(C, key, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
       jv_free(key);
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 

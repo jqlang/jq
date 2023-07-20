@@ -36,6 +36,7 @@ void *alloca (size_t);
 #include "util.h"
 #include "jq.h"
 #include "jv_alloc.h"
+#include "jv_unicode.h"
 
 #ifdef WIN32
 FILE *fopen(const char *fname, const char *mode) {
@@ -184,6 +185,7 @@ struct jq_util_input_state {
   size_t buf_valid_len;
   jv current_filename;
   size_t current_line;
+  jq_util_parser_enum flags;
 };
 
 static void fprinter(void *data, const char *fname) {
@@ -205,13 +207,16 @@ jq_util_input_state *jq_util_input_init(jq_util_msg_cb err_cb, void *err_cb_data
   return new_state;
 }
 
-void jq_util_input_set_parser(jq_util_input_state *state, jv_parser *parser, int slurp) {
+void jq_util_input_set_parser(jq_util_input_state *state,
+                              jv_parser *parser,
+                              jq_util_parser_enum flags) {
   assert(!jv_is_valid(state->slurped));
   state->parser = parser;
+  state->flags = flags;
 
-  if (parser == NULL && slurp)
+  if (parser == NULL && (flags & JQ_UTIL_PARSE_SLURP))
     state->slurped = jv_string("");
-  else if (slurp)
+  else if ((flags & JQ_UTIL_PARSE_SLURP))
     state->slurped = jv_array();
   else
     state->slurped = jv_invalid();
@@ -274,7 +279,9 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
         state->current_filename = jv_string("<stdin>");
       } else {
         state->current_input = fopen(f, "r");
-        state->current_filename = jv_string(f);
+        state->current_filename = jvp_utf8_is_valid(f, f + strlen(f)) ?
+            jv_string(f) :
+            jv_binary((const unsigned char *)f);
         if (!state->current_input) {
           state->err_cb(state->err_cb_data, f);
           state->failures++;
@@ -401,7 +408,10 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
         continue;
       if (jv_is_valid(state->slurped)) {
         // Slurped raw input
-        state->slurped = jv_string_concat(state->slurped, jv_string_sized(state->buf, state->buf_valid_len));
+        if (state->flags & JQ_UTIL_PARSE_BINARY)
+          state->slurped = jv_string_concat(state->slurped, jv_binary_sized((const unsigned char *)state->buf, state->buf_valid_len));
+        else
+          state->slurped = jv_string_concat(state->slurped, jv_string_sized(state->buf, state->buf_valid_len));
       } else {
         if (!jv_is_valid(value))
           value = jv_string("");

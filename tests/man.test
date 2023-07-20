@@ -50,6 +50,10 @@ null
 [1,2]
 []
 
+.["foo"]
+{"foo": 42}
+42
+
 .[0]
 [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
 {"name":"JSON", "good":true}
@@ -62,11 +66,27 @@ null
 [1,2,3]
 2
 
+.[0]
+"foo"
+"f"
+
+[.[2],.[3],.[4]]
+"foóbar"
+["ó","b","a"]
+
+tobinary|[.[2],.[3],.[4]]
+"foóbar"
+[195,179,98]
+
 .[2:4]
 ["a","b","c","d","e"]
 ["c", "d"]
 
 .[2:4]
+"abcdefghi"
+"cd"
+
+tobinary|.[2:4]|encodeas("UTF-8")|tostring
 "abcdefghi"
 "cd"
 
@@ -96,6 +116,25 @@ null
 {"a": 1, "b": 1}
 1
 1
+
+.[]
+"foóbar"
+"f"
+"o"
+"ó"
+"b"
+"a"
+"r"
+
+tobinary[]
+"foóbar"
+102
+111
+195
+179
+98
+97
+114
 
 .foo, .bar
 {"foo": 42, "bar": "something else", "baz": true}
@@ -142,6 +181,26 @@ null
 .. | .a?
 [[{"a":1}]]
 1
+
+.a + 1
+{"a": 7}
+8
+
+.a + .b
+{"a": [1,2], "b": [3,4]}
+[1,2,3,4]
+
+.a + null
+{"a": 1}
+1
+
+.a + 1
+{}
+1
+
+{a: 1} + {b: 2} + {c: 3} + {a: 42}
+null
+{"a": 42, "b": 2, "c": 3}
 
 .a + 1
 {"a": 7}
@@ -442,9 +501,37 @@ sqrt
 "1"
 "[1]"
 
-map(type)
-[0, false, [], {}, null, "hello"]
-["number", "boolean", "array", "object", "null", "string"]
+tobinary|tostring
+"á"
+"w6E="
+
+tobinary|concat([range(10)])|encodeas("bytearray")|tostring
+"á"
+[195,161,0,1,2,3,4,5,6,7,8,9]
+
+tobinary(["foob",0,[20,[range(1;10)|[[.],.]]],255])|encodeas("bytearray")|tostring|tobinary|encodeas("bytearray")|tostring
+null
+[102,111,111,98,0,20,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,255]
+
+tobinary|encodeas("base64")|tostring
+"á"
+"w6E="
+
+tobinary|encodeas("hex")|tostring
+"á"
+"C3A1"
+
+tobinary|encodeas("bytearray")|tostring
+"á"
+[195,161]
+
+tobinary|encodeas("UTF-8")|tostring
+"á"
+"á"
+
+[(tostring,tobinary,(tobinary|encodeas("bytearray")),(tobinary|encodeas("UTF-8")))|[type,stringtype,encoding]]
+"foo"
+[["string","UTF-8","UTF-8"],["string","binary","base64"],["string","binary","bytearray"],["string","binary","UTF-8"]]
 
 .[] | (infinite * .) < 0
 [-1, 1]
@@ -712,6 +799,14 @@ bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
 
 @base64d
 "VGhpcyBpcyBhIG1lc3NhZ2U="
+"This is a message"
+
+@hex
+"This is a message"
+"546869732069732061206D657373616765"
+
+@hexd
+"546869732069732061206D657373616765"
 "This is a message"
 
 fromdate
