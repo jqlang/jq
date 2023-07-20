@@ -2,10 +2,14 @@
 set -eu
 
 cd "$(dirname "$0")"
-if git describe --tags --match 'jq-*' >/dev/null 2>&1; then
-  git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//'
+if test -d .git; then
+  if git describe --tags --match 'jq-*' >/dev/null 2>&1; then
+    git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//'
+  else
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    commit=$(git describe --always --dirty)
+    echo "${branch}-${commit}"
+  fi
 else
-  branch=$(git rev-parse --abbrev-ref HEAD)
-  commit=$(git describe --always --dirty)
-  echo "${branch}-${commit}"
+  cat ../src/version.h |cut -d'"' -f2
 fi

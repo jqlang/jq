@@ -117,8 +117,11 @@ src/builtin.inc: $(srcdir)/src/builtin.jq
 	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $(srcdir)/src/builtin.jq > $@
 src/builtin.o: src/builtin.inc
 
+if MAINTAINER_MODE
 CLEANFILES = src/version.h .remake-version-h src/builtin.inc
-
+else
+CLEANFILES = .remake-version-h src/builtin.inc
+endif
 bin_PROGRAMS = jq
 jq_SOURCES = src/main.c src/version.h
 jq_LDFLAGS = -static-libtool-libs
