@@ -43,15 +43,61 @@ void *alloca (size_t);
 #include "jv_alloc.h"
 
 #ifdef WIN32
-FILE *fopen(const char *fname, const char *mode) {
-  size_t sz = sizeof(wchar_t) * MultiByteToWideChar(CP_UTF8, 0, fname, -1, NULL, 0);
-  wchar_t *wfname = alloca(sz + 2); // +2 is not needed, but just in case
-  MultiByteToWideChar(CP_UTF8, 0, fname, -1, wfname, sz);
+// Release memory with jv_mem_free() afterwards.
+wchar_t *utf8_to_utf16(const char *mstr) {
+  // The null-terminator will be taken into account by MultiByteToWideChar().
+  size_t mlen = (strlen(mstr) + 1);
+  size_t wlen = MultiByteToWideChar(CP_UTF8, 0, mstr, mlen, NULL, 0);
+  wchar_t *wstr = jv_mem_calloc(wlen, sizeof(wchar_t));
+  MultiByteToWideChar(CP_UTF8, 0, mstr, mlen, wstr, wlen);
+  return wstr;
+}
 
-  sz = sizeof(wchar_t) * MultiByteToWideChar(CP_UTF8, 0, mode, -1, NULL, 0);
-  wchar_t *wmode = alloca(sz + 2); // +2 is not needed, but just in case
-  MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, sz);
-  return _wfopen(wfname, wmode);
+int open(const char *fname, int mode, ...) {
+  wchar_t *wfname = utf8_to_utf16(fname);
+
+  int fd = _wopen(wfname, mode);
+
+  jv_mem_free(wfname);
+  return fd;
+}
+
+int stat(const char *fname, struct stat *stat) {
+  wchar_t *wfname = utf8_to_utf16(fname);
+
+  struct _stat wstat;
+  int res = _wstat(wfname, &wstat);
+
+  if(res == -1)
+    memset(stat, 0, sizeof(struct stat));
+  else
+  {
+    stat->st_dev   = wstat.st_dev;
+    stat->st_ino   = wstat.st_ino;
+    stat->st_mode  = wstat.st_mode;
+    stat->st_nlink = wstat.st_nlink;
+    stat->st_uid   = wstat.st_uid;
+    stat->st_gid   = wstat.st_gid;
+    stat->st_rdev  = wstat.st_rdev;
+    stat->st_size  = wstat.st_size;
+    stat->st_atime = wstat.st_atime;
+    stat->st_mtime = wstat.st_mtime;
+    stat->st_ctime = wstat.st_ctime;
+  }
+
+  jv_mem_free(wfname);
+  return res;
+}
+
+FILE *fopen(const char *fname, const char *mode) {
+  wchar_t *wfname = utf8_to_utf16(fname);
+  wchar_t *wmode = utf8_to_utf16(mode);
+
+  FILE* file = _wfopen(wfname, wmode);
+
+  jv_mem_free(wmode);
+  jv_mem_free(wfname);
+  return file;
 }
 #endif
 

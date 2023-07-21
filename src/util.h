@@ -61,4 +61,14 @@ const void *_jq_memmem(const void *haystack, size_t haystacklen,
    _a > _b ? _a : _b; })
 #endif
 
+#ifdef WIN32
+/*
+ * UTF-8 -> UTF-16 conversion function.
+ * Encapsulates MultiByteToWideChar().
+ *
+ * Memory disposal: manual, via jv_mem_free()
+ */
+wchar_t *utf8_to_utf16(const char *mstr);
+#endif
+
 #endif /* UTIL_H */
