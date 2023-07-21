@@ -122,6 +122,15 @@ fi
 cmp $d/out $d/expected
 
 
+clean=false
+# Invalid UTF-8 bytes are preserved when encoding/decoding JSON
+dd if=/dev/urandom bs=1024 count=1024 >$d/rand 2>/dev/null
+$VALGRIND $Q $JQ -sR . $d/rand >$d/out.json
+$VALGRIND $Q $JQ -j . $d/out.json >$d/out
+cmp $d/out $d/rand
+clean=true
+
+
 ## Test --exit-status
 data='{"i": 1}\n{"i": 2}\n{"i": 3}\n'
 printf "$data" | $JQ --exit-status 'select(.i==1)' > /dev/null 2>&1

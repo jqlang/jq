@@ -16,8 +16,7 @@ def print_table(type, name, t):
 def utf8info(c):
     if c < 0x80: return 1, mask(7)
     if 0x80 <= c <= 0xBF: return 255, mask(6)
-    if 0xC0 <= c <= 0xC1: return 0, 0
-    if 0xC2 <= c <= 0xDF: return 2, mask(5)
+    if 0xC0 <= c <= 0xDF: return 2, mask(5)
     if 0xE0 <= c <= 0xEF: return 3, mask(4)
     if 0xF0 <= c <= 0xF4: return 4, mask(3)
     if 0xF4 <= c <= 0xFF: return 0, 0

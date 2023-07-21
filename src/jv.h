@@ -107,6 +107,7 @@ jv jv_array_indexes(jv, jv);
 
 jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
+jv jv_string_wtf_sized(const char*, int);
 jv jv_string_empty(int len);
 int jv_string_length_bytes(jv);
 int jv_string_length_codepoints(jv);

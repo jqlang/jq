@@ -428,7 +428,7 @@ static void tokenadd(struct jv_parser* p, char c) {
   p->tokenbuf[p->tokenpos++] = c;
 }
 
-static int unhex4(char* hex) {
+static int unhex4(const char* hex) {
   int r = 0;
   for (int i=0; i<4; i++) {
     char c = *hex++;
@@ -444,15 +444,19 @@ static int unhex4(char* hex) {
 }
 
 static pfunc found_string(struct jv_parser* p) {
-  char* in = p->tokenbuf;
-  char* out = p->tokenbuf;
-  char* end = p->tokenbuf + p->tokenpos;
+  const char* in = p->tokenbuf;
+  // start by writing to tokenbuf, only allocate in case that output size is greater than input size (possible only when input has UTF-8 errors)
+  char* newbuf = NULL;
+  char* buf = p->tokenbuf;
+  char* out = buf;
+  const char* end = p->tokenbuf + p->tokenpos;
+  const char* cstart;
+  int c;
 
-  while (in < end) {
-    char c = *in++;
+  while ((in = jvp_utf8_wtf_next((cstart = in), end, 0, &c))) {
     if (c == '\\') {
       if (in >= end)
-        return "Expected escape character at end of string";
+        return jv_mem_free(newbuf), "Expected escape character at end of string";
       c = *in++;
       switch (c) {
       case '\\':
@@ -467,38 +471,61 @@ static pfunc found_string(struct jv_parser* p) {
       case 'u':
         /* ahh, the complicated case */
         if (in + 4 > end)
-          return "Invalid \\uXXXX escape";
+          return jv_mem_free(newbuf), "Invalid \\uXXXX escape";
         int hexvalue = unhex4(in);
         if (hexvalue < 0)
-          return "Invalid characters in \\uXXXX escape";
+          return jv_mem_free(newbuf), "Invalid characters in \\uXXXX escape";
         unsigned long codepoint = (unsigned long)hexvalue;
         in += 4;
+        // leading surrogate
         if (0xD800 <= codepoint && codepoint <= 0xDBFF) {
-          /* who thought UTF-16 surrogate pairs were a good idea? */
-          if (in + 6 > end || in[0] != '\\' || in[1] != 'u')
-            return "Invalid \\uXXXX\\uXXXX surrogate pair escape";
-          unsigned long surrogate = unhex4(in+2);
-          if (!(0xDC00 <= surrogate && surrogate <= 0xDFFF))
-            return "Invalid \\uXXXX\\uXXXX surrogate pair escape";
-          in += 6;
-          codepoint = 0x10000 + (((codepoint - 0xD800) << 10)
-                                 |(surrogate - 0xDC00));
+          // look ahead for trailing surrogate and decode as UTF-16, otherwise encode this lone surrogate as WTF-8
+          if (in + 6 <= end && in[0] == '\\' && in[1] == 'u') {
+            unsigned long surrogate = unhex4(in+2);
+            if (0xDC00 <= surrogate && surrogate <= 0xDFFF) {
+              in += 6;
+              codepoint = 0x10000 + (((codepoint - 0xD800) << 10)
+                                     |(surrogate - 0xDC00));
+            }
+          }
         }
-        if (codepoint > 0x10FFFF)
-          codepoint = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
+        // UTF-16 surrogates can not encode a greater codepoint
+        assert(codepoint <= 0x10FFFF);
+        // NOTE: a leading or trailing surrogate here (0xD800 <= codepoint && codepoint <= 0xDFFF) is encoded as WTF-8
         out += jvp_utf8_encode(codepoint, out);
         break;
 
       default:
-        return "Invalid escape";
+        return jv_mem_free(newbuf), "Invalid escape";
       }
     } else {
       if (c > 0 && c < 0x001f)
-        return "Invalid string: control characters from U+0000 through U+001F must be escaped";
-      *out++ = c;
+        return jv_mem_free(newbuf), "Invalid string: control characters from U+0000 through U+001F must be escaped";
+      if (c == -1) {
+        int error = (unsigned char)*cstart;
+        assert(error >= 0x80 && error <= 0xFF);
+        c = -error;
+        /* Ensure each UTF-8 error byte is consumed separately */
+        const int wtf8_length = 2;
+        assert(jvp_utf8_encode_length(c) == wtf8_length);
+        in = cstart + 1;
+        if (newbuf == NULL && out + wtf8_length > in) {
+          /* Output is about to overflow input, move output to temporary buffer */
+          int current_size = out - p->tokenbuf;
+          int remaining = end - cstart;
+          newbuf = jv_mem_alloc(current_size + remaining * wtf8_length); // worst case: all remaining bad bytes, each becomes a 2-byte overlong U+XX
+          memcpy(newbuf, buf, current_size);
+          buf = newbuf;
+          out = buf + current_size;
+        }
+      } else
+        assert(jvp_utf8_encode_length(c) == in - cstart);
+      out += jvp_utf8_encode(c, out);
     }
   }
-  TRY(value(p, jv_string_sized(p->tokenbuf, out - p->tokenbuf)));
+  jv v = jv_string_wtf_sized(buf, out - buf);
+  jv_mem_free(newbuf);
+  TRY(value(p, v));
   p->tokenpos = 0;
   return 0;
 }
