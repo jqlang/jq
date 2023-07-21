@@ -397,7 +397,7 @@ JSON output from, say, <code>curl</code>.</p>
 input, jq processing can sometimes make it appear as though
 it does.  For example, using the current implementation of
 jq, we would see that the expression:</p>
-<pre><code>`1E1234567890 | .`
+<pre><code>1E1234567890 | .
 </code></pre>
 <p>produces <code>1.7976931348623157e+308</code> on at least one platform.
 This is because, in the process of parsing the number, this
@@ -526,18 +526,18 @@ illustrated in one of the following examples.</p>
                     Object Identifier-Index: <code>.foo</code>, <code>.foo.bar</code>
                     
                   </h3>
-                  <p>The simplest <em>useful</em> filter is <code>.foo</code>. When given a
-JSON object (aka dictionary or hash) as input, it produces
-the value at the key "foo", or null if there's none present.</p>
+                  <p>The simplest <em>useful</em> filter has the form <code>.foo</code>. When given a
+JSON object (aka dictionary or hash) as input, <code>.foo</code> produces
+the value at the key "foo" if the key is present, or null otherwise.</p>
 <p>A filter of the form <code>.foo.bar</code> is equivalent to <code>.foo|.bar</code>.</p>
-<p>This syntax only works for simple, identifier-like keys, that
+<p>The <code>.foo</code> syntax only works for simple, identifier-like keys, that
 is, keys that are all made of alphanumeric characters and
 underscore, and which do not start with a digit.</p>
 <p>If the key contains special characters or starts with a digit,
 you need to surround it with double quotes like this:
 <code>."foo$"</code>, or else <code>.["foo$"]</code>.</p>
 <p>For example <code>.["foo::bar"]</code> and <code>.["foo.bar"]</code> work while
-<code>.foo::bar</code> does not, and <code>.foo.bar</code> means <code>.["foo"].["bar"]</code>.</p>
+<code>.foo::bar</code> does not.</p>
 
                   
                     <div>
@@ -1944,12 +1944,14 @@ value at the key, $k.</p>
 <p>Here are some examples to clarify the behavior of <code>map</code> and
 <code>map_values</code> when applied to arrays. These examples assume the
 input is <code>[1]</code> in all cases:</p>
-<p>map(.+1)          #=&gt;  [2]
+<pre><code>map(.+1)          #=&gt;  [2]
 map(., .)         #=&gt;  [1,1]
-map(empty)        #=&gt;  []</p>
-<p>map_values(.+1)   #=&gt;  [2]
+map(empty)        #=&gt;  []
+
+map_values(.+1)   #=&gt;  [2]
 map_values(., .)  #=&gt;  [1]
-map_values(empty) #=&gt;  []</p>
+map_values(empty) #=&gt;  []
+</code></pre>
 <p><code>map(f)</code> is equivalent to <code>[.[] | f]</code> and
 <code>map_values(f)</code> is equivalent to <code>.[] |= f</code>.</p>
 <p>In fact, these are their implementations.</p>
