@@ -26,7 +26,7 @@ RUN autoreconf -i \
       --enable-all-static \
       --prefix=/usr/local \
  && make -j$(nproc) \
- && make check \
+ && make check VERBOSE=yes \
  && make install-strip
 
 FROM scratch
