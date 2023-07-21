@@ -180,7 +180,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       if (options & ASCII_OUTPUT) {
-        jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
+        jvp_dump_string_raw(jv_copy(result), options & ASCII_OUTPUT, stdout, NULL, flags & JV_PRINT_ISATTY);
       } else {
         priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
             stdout, dumpopts & JV_PRINT_ISATTY);
