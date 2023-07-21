@@ -263,6 +263,11 @@ and parser that come with the code. To compile the lexer and parser also
 from source, leave out this flag. You will need to install
 <a href="https://github.com/westes/flex">Flex</a> and
 <a href="https://www.gnu.org/software/bison/">Bison</a>.</p>
+<h3>Docker</h3>
+<p>Docker image is available from
+<a href="https://github.com/jqlang/jq/pkgs/container/jq">GitHub Container Registry</a>.</p>
+<pre><code>docker run -i --rm ghcr.io/jqlang/jq -n 'range(3)'
+</code></pre>
 <h4>Building the documentation</h4>
 <p>jq's documentation is compiled into static HTML using Python.
 To build the docs, run <code>pipenv run python3 build_website.py</code> from
