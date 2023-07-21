@@ -657,16 +657,19 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     while (*p) unreserved[(int)*p++] = 1;
 
     jv line = jv_string("");
-    const char* s = jv_string_value(input);
-    for (int i=0; i<jv_string_length_bytes(jv_copy(input)); i++) {
-      unsigned ch = (unsigned)(unsigned char)*s;
-      if (ch < 128 && unreserved[ch]) {
-        line = jv_string_append_buf(line, s, 1);
-      } else {
-        line = jv_string_concat(line, jv_string_fmt("%%%02X", ch));
+    const char *start = jv_string_value(input);
+    const char *end = start + jv_string_length_bytes(jv_copy(input));
+    const char *bytes;
+    uint32_t bytes_len;
+    while ((start = jvp_utf8_wtf_next_bytes(start, end, &bytes, &bytes_len)))
+      for (uint32_t i = 0; i < bytes_len; i++) {
+        unsigned ch = (unsigned)(unsigned char)bytes[i];
+        if (ch < 128 && unreserved[ch]) {
+          line = jv_string_append_buf(line, &bytes[i], 1);
+        } else {
+          line = jv_string_concat(line, jv_string_fmt("%%%02X", ch));
+        }
       }
-      s++;
-    }
     jv_free(input);
     return line;
   } else if (!strcmp(fmt_s, "sh")) {
