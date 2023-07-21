@@ -683,6 +683,27 @@ sections:
               {"user":"stedolan", "title": "JQ Primer"}
               {"user":"stedolan", "title": "More JQ"}
 
+          You may also add a pipe after the short-hand to process it in-place:
+
+              {user, title | ascii_upcase}
+
+          which will produce:
+
+              {"user":"stedolan", "title": "JQ PRIMER"}
+
+          This is handy for selecting fields in a nested object.
+          If the input's
+
+              {"user": {"name": "stedolan", "awesome": true, "bio": "..."}, "misc": {}}
+
+          then the expression
+
+              {user | {name, awesome}}
+
+          will produce just the selected fields:
+
+              {"user": {"name": "stedolan", "awesome": true}}
+
           Putting parentheses around the key means it will be evaluated as an
           expression. With the same input as above,
 

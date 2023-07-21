@@ -22,6 +22,7 @@ Damian Gryski        <damian@gryski.com>
 David Fetter         <david@fetter.org>               - added --rawfile
 David Haguenauer     <ml@kurokatta.org>
 David R. MacIver     <david@drmaciver.com>            - bug fixes
+David Shlemayev      <david.shlemayev@gmail.com>      - add expression shorthand in objects
 David Tolnay         <dtolnay@gmail.com>              - destructuring, build improvements
 Doug Luce            <doug@github.con.com>            - build
 Eiichi Sato          <sato.eiichi@gmail.com>

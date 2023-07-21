@@ -102,9 +102,9 @@ null
 null
 {"a":1}
 
-{a,b,(.d):.a,e:.b}
-{"a":1, "b":2, "c":3, "d":"c"}
-{"a":1, "b":2, "c":1, "e":2}
+{a,b,(.d):.a,e:.b,f|{a},g|add}
+{"a":1, "b":2, "c":3, "d":"c", "f":{"a":4, "b":3}, "g":[1, 2, 3]}
+{"a":1, "b":2, "c":1, "e":2, "f":{"a":4}, "g":6}
 
 {"a",b,"a$\(1+1)"}
 {"a":1, "b":2, "c":3, "a$2":4}
@@ -1730,7 +1730,7 @@ null
 false
 
 ## Test ability to use keywords (uncomment after eval is pushed)
-#(.[] as $kw | "\"{\($kw)} as $\($kw) | $\($kw) | {$\($kw)} | {\($kw):.\($kw)}\""|eval|empty),null
+#(.[] as $kw | "\"{\($kw)} as $\($kw) | $\($kw) | {$\($kw)} | {\($kw):.\($kw)} | {\($kw) | .}\""|eval|empty),null
 #["as","def","module","import","include","if","then","else","elif","end","reduce","foreach","and","or","try","catch","label","break","__loc__"]
 #null
 #

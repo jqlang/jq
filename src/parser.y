@@ -993,6 +993,14 @@ IDENT ':' ExpD {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
                     gen_index(gen_noop(), gen_const($1)));
   }
+| IDENT '|' ExpD {
+  $$ = gen_dictpair(gen_const(jv_copy($1)),
+                    block_join(gen_index(gen_noop(), gen_const($1)), $3));
+  }
+| Keyword '|' ExpD {
+  $$ = gen_dictpair(gen_const(jv_copy($1)),
+                    block_join(gen_index(gen_noop(), gen_const($1)), $3));
+  }
 | '(' Exp ')' ':' ExpD {
   jv msg = check_object_key($2);
   if (jv_is_valid(msg)) {
