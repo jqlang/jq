@@ -91,11 +91,7 @@ static jv f_plus(jq_state *jq, jv input, jv a, jv b) {
     jv_free(b);
     return a;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    jv r = jv_number(jv_number_value(a) +
-                     jv_number_value(b));
-    jv_free(a);
-    jv_free(b);
-    return r;
+    return jv_number_add(a, b);
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
     return jv_string_concat(a, b);
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {

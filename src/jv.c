@@ -532,28 +532,24 @@ static decContext* tsd_dec_ctx_get(pthread_key_t *key) {
     return ctx;
   }
 
-  decContext _ctx = {
-      0,
-      DEC_MAX_EMAX,
-      DEC_MIN_EMAX,
-      DEC_ROUND_HALF_UP,
-      0, /*no errors*/
-      0, /*status*/
-      0, /*no clamping*/
-    };
-  if (key == &dec_ctx_key) {
-    _ctx.digits = DEC_MAX_DIGITS;
-  } else if (key == &dec_ctx_dbl_key) {
-    _ctx.digits = BIN64_DEC_PRECISION;
+  ctx = malloc(sizeof(decContext));
+  if (!ctx) {
+    return ctx;
   }
 
-  ctx = malloc(sizeof(decContext));
-  if (ctx) {
-    *ctx = _ctx;
-    if (pthread_setspecific(*key, ctx) != 0) {
-      fprintf(stderr, "error: cannot store thread specific data");
-      abort();
-    }
+  // Initialize the context, clear any traps
+  decContextDefault(ctx, DEC_INIT_BASE);
+  ctx->traps = 0;
+
+  if (key == &dec_ctx_key) {
+    ctx->digits = DEC_MAX_DIGITS;
+  } else if (key == &dec_ctx_dbl_key) {
+    ctx->digits = BIN64_DEC_PRECISION;
+  }
+
+  if (pthread_setspecific(*key, ctx) != 0) {
+    fprintf(stderr, "error: cannot store thread specific data");
+    abort();
   }
   return ctx;
 }
@@ -593,8 +589,9 @@ static decNumber* jvp_dec_number_ptr(jv j) {
 
 static jvp_literal_number* jvp_literal_number_alloc(unsigned literal_length) {
 
-  /* The number of units needed is ceil(DECNUMDIGITS/DECDPUN)         */
-  int units = ((literal_length+DECDPUN-1)/DECDPUN);
+  // The number of units needed is ceil(DECNUMDIGITS/DECDPUN)
+  // We already have one in the decNumber, so we subtract one from that
+  int units = ((literal_length+DECDPUN-1)/DECDPUN)-1;
 
   jvp_literal_number* n = jv_mem_alloc(
     sizeof(jvp_literal_number)
@@ -617,6 +614,7 @@ static jv jvp_literal_number_new(const char * literal) {
 
   if (ctx->status & DEC_Conversion_syntax) {
     jv_mem_free(n);
+    decContextClearStatus(ctx, DEC_Conversion_syntax);
     return JV_INVALID;
   }
 
@@ -785,6 +783,36 @@ int jvp_number_cmp(jv a, jv b) {
       return 1;
     }
   }
+}
+
+jv jv_number_add(jv a, jv b) {
+  if (jvp_number_is_literal(a) && jvp_number_is_literal(b)) {
+    decNumber *da = jvp_dec_number_ptr(a);
+    decNumber *db = jvp_dec_number_ptr(b);
+
+    unsigned digits = MAX(da->digits+da->exponent, db->digits+db->exponent) -
+                      MIN(da->exponent, db->exponent) + 1;
+    jvp_literal_number *nlit = jvp_literal_number_alloc(digits);
+    nlit->refcnt = JV_REFCNT_INIT;
+    nlit->literal_data = NULL;
+    nlit->num_double = NAN;
+
+    decContext *ctx = DEC_CONTEXT();
+    decNumberAdd(&nlit->num_decimal, da, db, ctx);
+    decNumberTrim(&nlit->num_decimal);
+    // TODO: Check context for error?
+
+    jv_free(a);
+    jv_free(b);
+
+    jv r = {JVP_FLAGS_NUMBER_LITERAL, 0, 0, JV_NUMBER_SIZE_INIT, {&nlit->refcnt}};
+    return r;
+  }
+
+  jv r = jv_number(jv_number_value(a) + jv_number_value(b));
+  jv_free(a);
+  jv_free(b);
+  return r;
 }
 
 /*
