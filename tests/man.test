@@ -418,6 +418,12 @@ sqrt
 1
 1
 
+.[] | tobool
+["true", "false", false]
+true
+false
+false
+
 .[] | tostring
 [1, "1", [1]]
 "1"
