@@ -15,7 +15,8 @@ you will find cookbooks, discussion of advanced topics, internals,
 release engineering, and more.
 
 Source tarball and built executable releases can be found on the
-homepage and on the github release page, https://github.com/jqlang/jq/releases
+homepage and on the github release page, https://github.com/jqlang/jq/releases.
+Docker image is available at https://github.com/jqlang/jq/pkgs/container/jq.
 
 If you're building directly from the latest git, you'll need flex,
 bison (3.0 or newer), libtool, make, automake, and autoconf installed.

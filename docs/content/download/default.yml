@@ -97,6 +97,7 @@ body:
          [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-solaris11-32).
 
       ### Windows
+
        * Use [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/)
          to install jq with `winget install jqlang.jq`.
 
@@ -185,6 +186,13 @@ body:
       from source, leave out this flag. You will need to install
       [Flex](https://github.com/westes/flex) and
       [Bison](https://www.gnu.org/software/bison/).
+
+      ### Docker
+
+      Docker image is available from
+      [GitHub Container Registry](https://github.com/jqlang/jq/pkgs/container/jq).
+
+          docker run -i --rm ghcr.io/jqlang/jq -n 'range(3)'
 
       #### Building the documentation
 
