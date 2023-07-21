@@ -1348,6 +1348,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
       code[pos++] = nesting_level(bc, curr->bound_by);
       uint16_t var = (uint16_t)curr->bound_by->imm.intval;
       code[pos++] = var;
+      if (var > maxvar) maxvar = var;
     } else if (op->flags & OP_HAS_CONSTANT) {
       code[pos++] = jv_array_length(jv_copy(constant_pool));
       constant_pool = jv_array_append(constant_pool, jv_copy(curr->imm.constant));
