@@ -220,9 +220,8 @@ jv jv_dump_string(jv, int flags);
 char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize);
 
 enum {
-  JV_PARSE_SEQ              = 1,
-  JV_PARSE_STREAMING        = 2,
-  JV_PARSE_STREAM_ERRORS    = 4,
+  JV_PARSE_SEQ       = 1,
+  JV_PARSE_STREAMING = 2,
 };
 
 jv jv_parse(const char* string);

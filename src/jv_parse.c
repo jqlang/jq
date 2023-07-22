@@ -72,7 +72,6 @@ static void parser_init(struct jv_parser* p, int flags) {
     p->path = jv_array();
   } else {
     p->path = jv_invalid();
-    p->flags &= ~(JV_PARSE_STREAM_ERRORS);
   }
   p->stack = 0;
   p->stacklen = p->stackpos = 0;
@@ -756,8 +755,6 @@ static jv make_error(struct jv_parser* p, const char *fmt, ...) {
   va_start(ap, fmt);
   jv e = jv_string_vfmt(fmt, ap);
   va_end(ap);
-  if ((p->flags & JV_PARSE_STREAM_ERRORS))
-    return JV_ARRAY(e, jv_copy(p->path));
   return jv_invalid_with_msg(e);
 }
 
