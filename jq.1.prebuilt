@@ -1849,7 +1849,7 @@ jq \'[\.[]|rtrimstr("foo")]\'
 .IP "" 0
 .
 .SS "explode"
-Converts an input string into an array of the string\'s codepoint numbers\.
+Converts an input string into an array of the string\'s codepoint numbers\. Ill\-formed Unicode is represented using negative numbers\.
 .
 .IP "" 4
 .

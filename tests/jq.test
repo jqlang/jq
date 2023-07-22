@@ -58,9 +58,9 @@ null
 "Aa\u000d\u000a\u0009\u0008\u000c\u03bc"
 
 # Check that unpaired surrogates are preserved in output
-"\u2200\ud800\u2203\udc00\u2205\udfff"
+"\u2200\ud800\u2203\udc00\u2205\udfff" | "\(.)\(explode | implode)"
 null
-"∀\ud800∃\udc00∅\udfff"
+"∀\ud800∃\udc00∅\udfff∀\ud800∃\udc00∅\udfff"
 
 # Check that unpaired surrogates are paired when concatenated
 add

@@ -1699,7 +1699,8 @@ sections:
         body: |
 
           Converts an input string into an array of the string's
-          codepoint numbers.
+          codepoint numbers. Ill-formed Unicode is represented using
+          negative numbers.
 
         examples:
           - program: 'explode'

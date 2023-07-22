@@ -1354,8 +1354,13 @@ jv jv_string_explode(jv j) {
   const char* end = i + len;
   jv a = jv_array_sized(len);
   int c;
-  while ((i = jvp_utf8_next(i, end, &c)))
+  while ((i = jvp_utf8_wtf_next(i, end, JVP_UTF8_ERRORS_ALL, &c))) {
+    // UTF-16 errors are emitted as negative integers to clearly distinguish them from valid Unicode text
+    // UTF-8 errors are already negated when using `JVP_UTF8_ERRORS_ALL`
+    if (c >= 0xD800 && c <= 0xDFFF)
+      c = -c;
     a = jv_array_append(a, jv_number(c));
+  }
   jv_free(j);
   return a;
 }
@@ -1373,7 +1378,13 @@ jv jv_string_implode(jv j) {
     assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
     int nv = jv_number_value(n);
     jv_free(n);
-    if (nv < 0 || (nv >= 0xD800 && nv <= 0xDFFF) || nv > 0x10FFFF)
+    // UTF-16 errors are represented as negative integers to clearly distinguish them from valid Unicode text
+    if (nv >= -0xDFFF && nv <= -0xD800) {
+      // convert negative UTF-16 errors into positive errors as expected by `jv_string_append_codepoint`
+      nv = -nv;
+    } else if (nv >= -0xFF && nv <= -0x80) {
+      // negative UTF-8 errors are already in the representation expected by `jv_string_append_codepoint`
+    } else if (nv < 0 || (nv >= 0xD800 && nv <= 0xDFFF) || nv > 0x10FFFF)
       nv = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
     s = jv_string_append_codepoint(s, nv);
   }
