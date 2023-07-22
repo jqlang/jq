@@ -232,14 +232,49 @@ grep "Expected string key after '{', not '\\['" $d/err > /dev/null
 echo '{"x":"y",["a","b"]}' | $JQ --stream > /dev/null 2> $d/err || true
 grep "Expected string key after ',' in object, not '\\['" $d/err > /dev/null
 
+# --arg, --argjson, $ARGS.named
+$VALGRIND $JQ -n -c --arg foo 1 --argjson bar 2 '{$foo, $bar} | ., . == $ARGS.named' > $d/out
+printf '{"foo":"1","bar":2}\ntrue\n' > $d/expected
+cmp $d/out $d/expected
+
+# --slurpfile, --rawfile
+$VALGRIND $JQ -n --slurpfile foo $JQBASEDIR/tests/modules/data.json \
+  --rawfile bar $JQBASEDIR/tests/modules/data.json '{$foo, $bar}' > $d/out
+cat > $d/expected <<'EOF'
+{
+  "foo": [
+    {
+      "this": "is a test",
+      "that": "is too"
+    }
+  ],
+  "bar": "{\n  \"this\": \"is a test\",\n  \"that\": \"is too\"\n}\n"
+}
+EOF
+cmp $d/out $d/expected
+
+# --args, --jsonargs, $ARGS.positional
+$VALGRIND $JQ -n -c --args '$ARGS.positional' foo bar baz > $d/out
+printf '["foo","bar","baz"]\n' > $d/expected
+cmp $d/out $d/expected
+$VALGRIND $JQ -n -c --jsonargs '$ARGS.positional' null true '[]' '{}' > $d/out
+printf '[null,true,[],{}]\n' > $d/expected
+cmp $d/out $d/expected
+$VALGRIND $JQ -n -c '$ARGS.positional' --args foo 1 --jsonargs 2 '{}' --args 3 4 > $d/out
+printf '["foo","1",2,{},"3","4"]\n' > $d/expected
+cmp $d/out $d/expected
+$VALGRIND $JQ -n -c '$ARGS.positional' --args --jsonargs > $d/out
+printf '[]\n' > $d/expected
+cmp $d/out $d/expected
+
 ## Regression test for issue #2572 assert when using --jsonargs and invalid JSON
-$JQ -n --jsonargs null invalid && EC=$? || EC=$?
+$VALGRIND $JQ -n --jsonargs null invalid && EC=$? || EC=$?
 if [ "$EC" -ne 2 ]; then
     echo "--jsonargs exited with wrong exit code, expected 2 got $EC" 1>&2
     exit 1
 fi
 # this tests the args_done code path "--"
-$JQ -n --jsonargs null -- invalid && EC=$? || EC=$?
+$VALGRIND $JQ -n --jsonargs null -- invalid && EC=$? || EC=$?
 if [ "$EC" -ne 2 ]; then
     echo "--jsonargs exited with wrong exit code, expected 2 got $EC" 1>&2
     exit 1
