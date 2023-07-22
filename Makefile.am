@@ -152,7 +152,9 @@ check_DATA = tests/man.test
 # don't care. But if you are, then you need to run the tests anyway.
 tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_mantests.py )
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
+		$(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+		$(PIPENV) run python build_mantests.py )
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manual test.
 	@echo As a result, the manual test is out of date.
@@ -166,7 +168,9 @@ endif
 man_MANS = jq.1
 jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_manpage.py ) > $@
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
+		$(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+		$(PIPENV) run python build_manpage.py ) > $@
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manpage.
 	@echo As a result, the manpage is out of date.
@@ -201,7 +205,8 @@ install-binaries: $(BUILT_SOURCES)
 
 DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
         docs/Pipfile docs/Pipfile.lock docs/build_manpage.py            \
-        docs/build_manpage.py docs/README.md jq.1.prebuilt
+        docs/build_mantests.py docs/build_website.py docs/README.md     \
+        docs/validate_manual_schema.py docs/manual_schema.yml
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
