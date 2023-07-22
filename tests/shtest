@@ -134,7 +134,7 @@ if dd if=/dev/urandom bs=1024 count=1024 >$d/rand 2>/dev/null; then
     cmp $d/out $d/rand
     $VALGRIND $Q $JQ -j 'explode | implode' $d/out.json >$d/out
     cmp $d/out $d/rand
-    base64 $d/rand | $VALGRIND $Q $JQ -R '@base64d' | $VALGRIND $Q $JQ -sj 'add' >$d/out
+    base64 <$d/rand | $VALGRIND $Q $JQ -R '@base64d' | $VALGRIND $Q $JQ -sj 'add' >$d/out
     cmp $d/out $d/rand
     $VALGRIND $Q $JQ -nj '$a' --rawfile a $d/rand >$d/out
     cmp $d/out $d/rand
