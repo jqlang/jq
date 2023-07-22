@@ -1,0 +1,63 @@
+type: object
+required:
+  - headline
+  - history
+  - body
+  - manpage_intro
+  - manpage_epilogue
+  - sections
+additionalProperties: false
+properties:
+  headline:
+    type: string
+  history:
+    type: string
+  body:
+    type: string
+  manpage_intro:
+    type: string
+  manpage_epilogue:
+    type: string
+  sections:
+    type: array
+    items:
+      type: object
+      required:
+        - title
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        entries:
+          type: array
+          items:
+            type: object
+            required:
+              - title
+              - body
+            additionalProperties: false
+            properties:
+              title:
+                type: string
+              body:
+                type: string
+              examples:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - program
+                    - input
+                    - output
+                  additionalProperties: false
+                  properties:
+                    program:
+                      type: string
+                    input:
+                      type: string
+                    output:
+                      type: array
+                      items:
+                        type: string
