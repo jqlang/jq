@@ -2,73 +2,177 @@ Created By:
 Stephen Dolan        <mu@netsoc.tcd.ie>
 
 Maintained by:
+David Tolnay         <dtolnay@gmail.com>
+Emanuele Torre       <torreemanuele6@gmail.com>
+Leonid S. Usov       <leonid@practi.net>
+Muh Muhten           <muh.muhten@gmail.com>
 Nicolas Williams     <nico@cryptonector.com>
+Owen Ou              <o@owenou.com>
 William Langford     <wlangfor@gmail.com>
+itchyny              <itchyny@cybozu.co.jp>
+pkoppstein           <pkoppstein@gmail.com>
 
 Contributions by:
+13ren                <melbourne.research@gmail.com>
+AJ Jordan            <alex@strugee.net>
 Aaron Peschel        <apeschel@zendesk.com>
 Adam Lindberg        <hello@alind.io>
+Alanscut             <wp_scut@163.com>
+Aleksey Tsalolikhin  <atsalolikhin@spokeo.com>
 Alex Chamberlain     <alex@alexchamberlain.co.uk>
-Andrew O'Brien       <obrien.andrew@gmail.com>        - docs build
-Andrew Rodland       <andrew@cleverdomain.org>        - bug fixes
-Ankur                <ankz.kothari@gmail.com>         - bug fixes
-Anthony Shortland    <anthony.shortland@me.com>       - rpmbuild target
-Assaf Gordon         <assafgordon@gmail.com>          - error handling
-Brendan Macmillan    <melbourne.research@gmail.com>   - bug fixes, load library from ~/.jq
-cdnbacon             <mike@busbud.com>
+Alex Jurkiewicz      <alex@jurkiewi.cz>
+Alex Ozdemir         <aozdemir@hmc.edu>
+Alexandre Jasmin     <ajasmin@transtex-llc.com>
+Allan Clark          <allanc@chickenandporn.com>
+Andrew O'Brien       <obrien.andrew@gmail.com>
+Andrew Rodland       <andrew@cleverdomain.org>
+Andrew Speed         <andrew.cspeed@gmail.com>
+Ankur                <ankz.kothari@gmail.com>
+Anthony Shortland    <anthony@dtosolutions.com>
+Anthony Sottile      <asottile@umich.edu>
+Assaf Gordon         <assafgordon@gmail.com>
+Attila Fülöp         <attila@fueloep.org>
+Benjamin Wuethrich   <benjamin@koho.ca>
+Benoit de Chezelles  <bew@users.noreply.github.com>
+Bernard Niset        <bernard.niset@gmail.com>
+Bradley Skaggs       <bskaggs@acm.org>
+Brendan Macmillan    <melbourne.research@gmail.com>
+Cameron Sparr        <cameronsparr@gmail.com>
+Chance Zibolski      <czibolsk@redhat.com>
 Charles Merriam      <charles.merriam@gmail.com>
+Chris Moore          <dooglus@gmail.com>
+Christopher Degawa   <ccom@randomderp.com>
+Ciaran McNamara      <1372986+ciaranmcnamara@users.noreply.github.com>
+Clément MATHIEU      <clement@unportant.info>
 Colin von Heuring    <colin@janrain.com>
 Damian Gryski        <damian@gryski.com>
-David Fetter         <david@fetter.org>               - added --rawfile
+Dan Church           <h3xx@users.noreply.github.com>
+Daniel Lange         <DLange@git.local>
+David Biesack        <David.Biesack@apiture.com>
+David Fetter         <david@fetter.org>
 David Haguenauer     <ml@kurokatta.org>
-David R. MacIver     <david@drmaciver.com>            - bug fixes
-David Tolnay         <dtolnay@gmail.com>              - destructuring, build improvements
-Doug Luce            <doug@github.con.com>            - build
+David R. MacIver     <david@drmaciver.com>
+Dawid Ferenczy Rogožan <ferenczy@users.noreply.github.com>
+Derrick Pallas       <derrick@pallas.us>
+Doug Luce            <doug@github.con.com>
 Eiichi Sato          <sato.eiichi@gmail.com>
-Eric Bréchemier      <eric@egull.co>                  - bug fix
-Filippo Giunchedi    <fgiunchedi@gmail.com>           - bug fixes
-Filippo Valsorda     <filippo.valsorda@gmail.com>     - recursive object merge (`*`)
+Eli Schwartz         <eschwartz@archlinux.org>
+Eric Bréchemier      <eric@egull.co>
+Erik Brinkman        <erik.brinkman@gmail.com>
+Eugen                <EugenGez@gmail.com>
+Evan Zacks           <zackse@gmail.com>
+Felix Wolfsteller    <felix.wolfsteller@gmail.com>
+Filippo Giunchedi    <fgiunchedi@gmail.com>
+Filippo Valsorda     <filippo.valsorda@gmail.com>
+Florian Weimer       <fweimer@redhat.com>
+Frederic Cambus      <fcambus@users.sourceforge.net>
+Gert Van Gool        <gertvangool@gmail.com>
+Gijs Kunze           <gwkunze@gmail.com>
+Gustav               <gustav@invoke.se>
+HE, Tao              <sighingnow@gmail.com>
 Hanfei Shen          <qqshfox@gmail.com>
-i                    <isomorphisms@sdf.org>
+Hanson Char          <hanson.char@gmail.com>
+Haochen Xie          <haochenx@acm.org>
+Helmut K. C. Tessarek <tessarek@evermeet.cx>
+Henré Botha          <henrebotha@gmail.com>
 Ian Miell            <ian.miell@gmail.com>
-Jack Pearkes         <jackpearkes@gmail.com>          - update tutorial
-James Andariese      <james.andariese@locationlabs.com> - Dockerfile
-jkleint              <jkleint@gmail.com>
-Joe Littlejohn       <joe.littlejohn@nokia.com>       - bug fixes
+Ikko Ashimine        <eltociear@gmail.com>
+J Phani Mahesh       <github@phanimahesh.me>
+Jack Pearkes         <jackpearkes@gmail.com>
+Jakub Jirutka        <jakub@jirutka.cz>
+Jakub Wilk           <jwilk@jwilk.net>
+James Andariese      <james.andariese@locationlabs.com>
+James Pearson Hughes <xiong.chiamiov@gmail.com>
+Jan Schulz           <jasc@gmx.net>
+Janne Cederberg      <janne.cederberg@gmail.com>
+Jason Hood           <jadoxa@yahoo.com.au>
+Jay Satiro           <raysatiro@yahoo.com>
+Jingwen Owen Ou      <jingweno@gmail.com>
+Joe Littlejohn       <joe.littlejohn@nokia.com>
+Joel Nothman         <joel.nothman@gmail.com>
 Joel Purra           <code+github@joelpurra.com>
-Juan Guerrero        <juan.guerrero.lozano@gmail.com> - bug fixes
-Kenny Shen           <kenny.shen@zalora.com>          - doc fixes
-Kim De Mey           <kim.demey@gmail.com>            - build
+Jonathan Word        <argoday@argoday.com>
+Josh Soref           <2119212+jsoref@users.noreply.github.com>
+Juan Guerrero        <juan.guerrero.lozano@gmail.com>
+Kenny Shen           <kenny.shen@zalora.com>
+Kim De Mey           <kim.demey@gmail.com>
 Kim Toms             <kim.toms@bplglobal.net>
 LCD 47               <lcd047@gmail.com>
-Lee Thompson         <stagr.lee@gmail.com>            - autoconf stuff, rpm
+Larry Aasen          <larryaasen@gmail.com>
+Lee Thompson         <stagr.lee@gmail.com>
+Loamhoof             <soeren.medard@gmail.com>
+Lucas Trzesniewski   <lucas.trzesniewski@gmail.com>
+Lukas Lansky         <lukas.lansky@suse.com>
+MCApollo             <34170230+MCApollo@users.noreply.github.com>
 Marc Abramowitz      <marc@marc-abramowitz.com>
 Marc Bruggmann       <marcbr@spotify.com>
-Markus Lanthaler     <mark_lanthaler@gmx.net>         - doc fixes
-Maxime Biais         <maxime.biais@gmail.com>         - build
-Michael Daines       <michael@mdaines.com>            - add sqrt; doc fixes
+Marcin Kłopotek      <marcin.klopotek@gmail.com>
+Mark Feit            <mfeit@internet2.edu>
+Mark McKinstry       <mmckinst@umich.edu>
+Markus Lanthaler     <mark_lanthaler@gmx.net>
+Matt Clegg           <m@cle.gg>
+Matti Åstrand        <mattiastr@gmail.com>
+Mattias Hansson      <hansson.mattias@gmail.com>
+Mattias Wadman       <mattias.wadman@gmail.com>
+Maxime Biais         <maxime.biais@gmail.com>
+Maximilian Roos      <5635139+max-sixty@users.noreply.github.com>
+Michael Daines       <michael@mdaines.com>
+Mike Daines          <mdaines@users.noreply.github.com>
 Mike Fletcher        <john.m.fletcher@bankofamerica.com>
-Mike McCabe          <mccabe@archive.org>             - math (libm) functions
-Nicolas Pouillard    <nicolas.pouillard@gmail.com>    - add tests
-Nicolas Williams     <nico@cryptonector.com>          - library-fication, autoconf stuff, exception handling, various
-Owen Ou              <o@owenou.com>                   - jqplay.org and link to it
-Peter van Dijk       <peter@7bits.nl>                 - doc fixes
-Philipp Hagemeister  <phihag@phihag.de>               - doc fixes
-pkoppstein           <pkoppstein@gmail.com>           - various builtins, improvements
-polyester            <paul@cleanclothes.org>          - automake version update
-Ryoichi KATO         <ryo1kato@gmail.com>             - doc fixes
-Rémy Léone           <remy.leone@gmail.com>           - add .travis.yml
-Santiago Lapresta    <santiago.lapresta@gmail.com>    - join, arrays, all, any, other filters
-Sebastian Freundt    <freundt@ga-group.nl>            - build
-Shaun Guth           <shaun.guth@gmail.com>           - base64d
+Mike McCabe          <mccabe@archive.org>
+Naïm Favier          <n@monade.li>
+Nicolas Pouillard    <nicolas.pouillard@gmail.com>
+Paul Chvostek        <paul+gitkraken@it.ca>
+Paul Wise            <pabs3@bonedaddy.net>
+Peter van Dijk       <peter@7bits.nl>
+Philipp Hagemeister  <phihag@phihag.de>
+Rémy Léone           <remy.leone@gmail.com>
+Ricardo Constantino  <wiiaboo@gmail.com>
+Richard Groves       <richard@noodlfroot.com>
+Richard H Lee        <richard@webdezign.co.uk>
+Riley Avron          <riley.avron@gmail.com>
+Rob Wills            <rob.wills@gmail.com>
+Robert Aboukhalil    <robert.aboukhalil@gmail.com>
+Roland C. Dowdeswell <roland.dowdeswell@twosigma.com>
+Roman Inflianskas    <rominf@users.noreply.github.com>
+Romero Malaquias     <romero.malaquias@gmail.com>
+Ryoichi KATO         <ryo1kato@gmail.com>
+Santiago Lapresta    <santiago.lapresta@gmail.com>
+Sean Wei             <me@sean.taipei>
+Sebastian Freundt    <freundt@ga-group.nl>
+Shaun Guth           <sguth@practicefusion.com>
 Shay Elkin           <shay@everything.me>
-Simon Elsbrock       <simon@iodev.org>                - Debian
+Simon Elsbrock       <simon@iodev.org>
+Stefan               <stefan.haubenthal@gmail.com>
 Stefan Seemayer      <stefan@seemayer.de>
 Stephen Roantree     <stroantree@gmail.com>
 Stephen Shaw         <stesh@netsoc.tcd.ie>
 Steven Maude         <StevenMaude@users.noreply.github.com>
-Steven Penny         <svnpenn@gmail.com>              - Windows bug fixes
-tal@whatexit.org     <tal@whatexit.org>
+Steven Penny         <svnpenn@gmail.com>
+Thomas R. Hall       <trhall@trhall.org>
+Tim McCormack        <cortex@brainonfire.net>
+Timothy John Perisho Eccleston <combinatorist@users.noreply.github.com>
+Tom Wolf             <github@incognitox.org>
+Tomas Halman         <thalman@redhat.com>
 Travis Gockel        <travis@gockelhut.com>
+W-Mark Kubacki       <wmark@hurrikane.de>
+William Chargin      <wchargin@gmail.com>
+Yasuhiro Matsumoto   <mattn.jp@gmail.com>
+Yoichi Nakayama      <yoichi.nakayama@gmail.com>
+Zhaohui Mei          <mzh.whut@gmail.com>
 Zhiming Wang         <zmwangx@gmail.com>
-13ren                <melbourne.research@gmail.com>
+calpeconsulting      <61429736+calpeconsulting@users.noreply.github.com>
+cdnbacon             <mike@busbud.com>
+dak180               <dak180@users.sf.net>
+davkor               <david@adalogics.com>
+eitsupi              <50911393+eitsupi@users.noreply.github.com>
+i                    <isomorphisms@sdf.org>
+jkleint              <jkleint@gmail.com>
+mail6543210          <mail6543210@yahoo.com.tw>
+mjarosie             <mjarosie@users.noreply.github.com>
+nmulcahey            <nmulcahey@gmail.com>
+polyester            <paul@cleanclothes.org>
+rain1                <rain1@airmail.cc>
+tal@whatexit.org     <tal@whatexit.org>
+trantor              <trantorvega@gmail.com>
+zstadler             <zeev.stadler@gmail.com>
