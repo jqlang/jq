@@ -13,7 +13,6 @@ enum jvp_utf8_flags {
   JVP_UTF8_ERRORS_ALL = JVP_UTF8_ERRORS_UTF16 | JVP_UTF8_ERRORS_UTF8
 };
 
-const char* jvp_utf8_backtrack(const char* start, const char* min, int *missing_bytes);
 const char* jvp_utf8_wtf_next(const char* in, const char* end, enum jvp_utf8_flags flags, int* codepoint);
 const char* jvp_utf8_next(const char* in, const char* end, int* codepoint);
 const char* jvp_utf8_wtf_next_bytes(const char* in, const char* end, const char** bytes_out, uint32_t* bytes_len);

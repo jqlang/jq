@@ -67,29 +67,6 @@ static int decode(enum decode_flags flags, uint32_t data, int* codepoint_ret) {
   return 1;
 }
 
-// jvp_utf8_backtrack returns the beginning of the last codepoint in the
-// string, assuming that start is the last byte in the string.
-// If the last codepoint is incomplete, returns the number of missing bytes via
-// *missing_bytes.  If there are no leading bytes or an invalid byte is
-// encountered, NULL is returned and *missing_bytes is not altered.
-const char* jvp_utf8_backtrack(const char* start, const char* min, int *missing_bytes) {
-  assert(min <= start);
-  if (min == start) {
-    return min;
-  }
-  int length = 0;
-  int seen = 1;
-  while (start >= min && (length = utf8_coding_length[(unsigned char)*start]) == UTF8_CONTINUATION_BYTE) {
-    start--;
-    seen++;
-  }
-  if (length == 0 || length == UTF8_CONTINUATION_BYTE || length - seen < 0) {
-    return NULL;
-  }
-  if (missing_bytes) *missing_bytes = length - seen;
-  return start;
-}
-
 const char* jvp_utf8_next(const char* in, const char* end, int* codepoint_ret) {
   return jvp_utf8_wtf_next(in, end, JVP_UTF8_REPLACE, codepoint_ret);
 }
