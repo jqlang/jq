@@ -57,40 +57,50 @@ static void usage(int code, int keep_it_short) {
     "its JSON text inputs and producing the filter's results as JSON on\n"
     "standard output.\n\n"
     "The simplest filter is ., which copies jq's input to its output\n"
-    "unmodified (except for formatting, but note that IEEE754 is used\n"
-    "for number representation internally, with all that that implies).\n\n"
-    "For more advanced filters see the jq(1) manpage (\"man jq\")\n"
-    "and/or https://jqlang.github.io/jq\n\n"
-    "Example:\n\n\t$ echo '{\"foo\": 0}' | jq .\n"
-    "\t{\n\t\t\"foo\": 0\n\t}\n\n",
+    "unmodified except for formatting. For more advanced filters see\n"
+    "the jq(1) manpage (\"man jq\") and/or https://jqlang.github.io/jq/.\n\n"
+    "Example:\n\n\t $ echo '{\"foo\": 0}' | jq .\n"
+    "\t{\n\t  \"foo\": 0\n\t}\n\n",
     JQ_VERSION, progname, progname, progname);
   if (keep_it_short) {
     fprintf(f,
-      "For a listing of options, use %s --help.\n",
+      "For listing the command options, use %s --help.\n",
       progname);
   } else {
     (void) fprintf(f,
-      "Some of the options include:\n"
-      "  -c               compact instead of pretty-printed output;\n"
-      "  -n               use `null` as the single input value;\n"
-      "  -e               set the exit status code based on the output;\n"
-      "  -s               read (slurp) all inputs into an array; apply filter to it;\n"
-      "  -r               output raw strings, not JSON texts;\n"
-      "  -R               read raw strings, not JSON texts;\n"
-      "  -C               colorize JSON;\n"
-      "  -M               monochrome (don't colorize JSON);\n"
-      "  -S               sort keys of objects on output;\n"
-      "  --tab            use tabs for indentation;\n"
-      "  --arg a v        set variable $a to value <v>;\n"
-      "  --argjson a v    set variable $a to JSON value <v>;\n"
-      "  --slurpfile a f  set variable $a to an array of JSON texts read from <f>;\n"
-      "  --rawfile a f    set variable $a to a string consisting of the contents of <f>;\n"
-      "  --args           remaining arguments are string arguments, not files;\n"
-      "  --jsonargs       remaining arguments are JSON arguments, not files;\n"
-      "  --               terminates argument processing;\n\n"
+      "Command options:\n"
+      "  -n, --null-input          use `null` as the single input value;\n"
+      "  -R, --raw-input           read each line as strings, not parsing as JSON;\n"
+      "  -s, --slurp               read all inputs into an array and use it as the single input value;\n"
+      "  -c, --compact-output      compact instead of pretty-printed output;\n"
+      "  -r, --raw-output          output strings directly without escapes and quotes;\n"
+      "  -j, --join-output         implies -r and output without newline after each output;\n"
+      "  -0, --nul-output          implies -r and output NUL after each output;\n"
+      "  -a, --ascii-output        output strings by only ASCII characters using escape sequences;\n"
+      "  -S, --sort-keys           sort keys of each object on output;\n"
+      "  -C, --color-output        colorize JSON output;\n"
+      "  -M, --monochrome-output   disable colored output;\n"
+      "      --tab                 use tabs for indentation;\n"
+      "      --indent n            use the given number of spaces (no more than 7) for indentation;\n"
+      "      --stream              parse the input value in streaming fashion;\n"
+      "      --stream-errors       implies --stream and report JSON parse error with an array;\n"
+      "      --unbuffered          flush output stream after each output;\n"
+      "      --seq                 parse input and output in application/json-seq MIME type scheme;\n"
+      "  -f, --from-file file      load filter from the file;\n"
+      "  -L directory              search modules from the directory;\n"
+      "      --arg name value      set variable $name to the string value;\n"
+      "      --argjson name value  set variable $name to the JSON value;\n"
+      "      --slurpfile name file set variable $name to an array of JSON values read from the file;\n"
+      "      --rawfile name file   set variable $name to a string consisting of the contents of the file;\n"
+      "      --args                consume remaining arguments as positional string values;\n"
+      "      --jsonargs            consume remaining arguments as positional JSON values;\n"
+      "  -e, --exit-status         set the exit status code based on the output;\n"
+      "  -b, --binary              open input and output streams in binary mode on Windows;\n"
+      "  -V, --version             show the version;\n"
+      "  -h, --help                show the help;\n"
+      "  --                        terminates argument processing;\n\n"
       "Named arguments are also available as $ARGS.named[], while\n"
-      "positional arguments are available as $ARGS.positional[].\n"
-      "\nSee the manpage for more options.\n");
+      "positional arguments are available as $ARGS.positional[].\n");
   }
   exit((ret < 0 && code == 0) ? 2 : code);
 }

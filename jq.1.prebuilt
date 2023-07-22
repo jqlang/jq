@@ -52,7 +52,7 @@ Windows command shell: \fBjq "\.[\e"foo\e"]"\fR
 You can affect how jq reads and writes its input and output using some command\-line options:
 .
 .TP
-\fB\-\-version\fR:
+\fB\-\-version\fR/\fB\-V\fR:
 .
 .IP
 Output the jq version and exit with zero\.
