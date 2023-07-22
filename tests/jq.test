@@ -1232,6 +1232,14 @@ null
 [null,true,{"a":1}]
 []
 
+[1,error,2]
+null
+[1,2]
+
+[1,error(null),2]
+0
+[1,2]
+
 try error("\($__loc__)") catch .
 null
 "{\"file\":\"<top-level>\",\"line\":1}"
