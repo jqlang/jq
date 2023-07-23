@@ -180,6 +180,11 @@ $VALGRIND $Q $JQ -c '. as $d|path(..) as $p|$d|getpath($p)|select((type|. != "ar
 $VALGRIND $Q $JQ --stream -c '.|select(length==2)' < "$JQTESTDIR/torture/input0.json" > $d/out1
 diff $d/out0 $d/out1
 
+printf '["Unfinished JSON term at EOF at line 1, column 1",[0]]\n' > $d/expected
+printf '[' | $VALGRIND $Q $JQ --stream-errors -c . > $d/out 2>&1
+diff $d/out $d/expected
+
+
 ## XXX This test can be moved to tests/all.test _now_
 clean=false
 if which seq > /dev/null 2>&1; then

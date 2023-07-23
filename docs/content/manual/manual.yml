@@ -130,6 +130,16 @@ sections:
         conjunction with filtering and the `reduce` and `foreach` syntax
         to reduce large inputs incrementally.
 
+      * `--stream-errors`:
+
+        Like `--stream`, but invalid JSON inputs yield array calues
+        where the first element is the error and the second is a path.
+        For example, `["a",n]` produces ["Invalid literal at line 1,
+        column 9",[1]]`.
+
+        Implies `--stream`.  Invalid JSON inputs produce no error values
+        when `--stream` without `--stream-errors`.
+
       * `--slurp`/`-s`:
 
         Instead of running the filter for each JSON object in the

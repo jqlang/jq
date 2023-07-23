@@ -455,7 +455,7 @@ int main(int argc, char* argv[]) {
         continue;
       }
       if (isoption(argv[i], 0, "stream-errors", &short_opts)) {
-        parser_flags |= JV_PARSE_STREAM_ERRORS;
+        parser_flags |= JV_PARSE_STREAMING | JV_PARSE_STREAM_ERRORS;
         continue;
       }
       if (isoption(argv[i], 'e', "exit-status", &short_opts)) {

@@ -73,6 +73,15 @@ Parse the input in streaming fashion, outputting arrays of path and leaf values 
 This is useful for processing very large inputs\. Use this in conjunction with filtering and the \fBreduce\fR and \fBforeach\fR syntax to reduce large inputs incrementally\.
 .
 .TP
+\fB\-\-stream\-errors\fR:
+.
+.IP
+Like \fB\-\-stream\fR, but invalid JSON inputs yield array calues where the first element is the error and the second is a path\. For example, \fB["a",n]\fR produces ["Invalid literal at line 1, column 9",[1]]`\.
+.
+.IP
+Implies \fB\-\-stream\fR\. Invalid JSON inputs produce no error values when \fB\-\-stream\fR without \fB\-\-stream\-errors\fR\.
+.
+.TP
 \fB\-\-slurp\fR/\fB\-s\fR:
 .
 .IP
