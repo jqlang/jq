@@ -49,6 +49,8 @@ struct jq_state {
   void *input_cb_data;
   jq_msg_cb debug_cb;
   void *debug_cb_data;
+  jq_msg_cb stderr_cb;
+  void *stderr_cb_data;
 };
 
 struct closure {
@@ -1018,6 +1020,9 @@ jq_state *jq_init(void) {
   jq->debug_cb = NULL;
   jq->debug_cb_data = NULL;
 
+  jq->stderr_cb = NULL;
+  jq->stderr_cb_data = NULL;
+
   jq->err_cb = default_err_cb;
   jq->err_cb_data = stderr;
 
@@ -1247,6 +1252,16 @@ void jq_set_debug_cb(jq_state *jq, jq_msg_cb cb, void *data) {
 void jq_get_debug_cb(jq_state *jq, jq_msg_cb *cb, void **data) {
   *cb = jq->debug_cb;
   *data = jq->debug_cb_data;
+}
+
+void jq_set_stderr_cb(jq_state *jq, jq_msg_cb cb, void *data) {
+  jq->stderr_cb = cb;
+  jq->stderr_cb_data = data;
+}
+
+void jq_get_stderr_cb(jq_state *jq, jq_msg_cb *cb, void **data) {
+  *cb = jq->stderr_cb;
+  *data = jq->stderr_cb_data;
 }
 
 void
