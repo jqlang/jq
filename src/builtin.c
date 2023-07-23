@@ -199,8 +199,7 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
 #undef LIBM_DDD
 #undef LIBM_DD
 
-#ifdef __APPLE__ // Clean up after ourselves
-#undef HAVE_CUSTOM_SIGNIFICAND
+#ifdef __APPLE__
 #undef gamma
 #undef drem
 #undef significand
@@ -1853,6 +1852,9 @@ static const char jq_builtins[] =
 #undef LIBM_DDD
 #undef LIBM_DD
 
+#ifdef __APPLE__
+#undef HAVE_CUSTOM_SIGNIFICAND
+#endif
 
 static block gen_builtin_list(block builtins) {
   jv list = jv_array_append(block_list_funcs(builtins, 1), jv_string("builtins/0"));
