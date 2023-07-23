@@ -46,10 +46,6 @@
 #include "jv_unicode.h"
 #include "util.h"
 
-#include "jv_dtoa.h"
-#include "jv_dtoa_tsd.h"
-#include "jv_type_private.h"
-
 /*
  * Internal refcounting helpers
  */
@@ -200,6 +196,9 @@ static void jvp_invalid_free(jv x) {
  */
 
 #ifdef USE_DECNUM
+#include "jv_dtoa.h"
+#include "jv_dtoa_tsd.h"
+
 // we will manage the space for the struct
 #define DECNUMDIGITS 1
 #include "decNumber/decNumber.h"
