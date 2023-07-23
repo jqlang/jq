@@ -204,6 +204,15 @@ using some command-line options:</p>
   conjunction with filtering and the <code>reduce</code> and <code>foreach</code> syntax
   to reduce large inputs incrementally.</p>
 <ul>
+<li><code>--stream-errors</code>:</li>
+</ul>
+<p>Like <code>--stream</code>, but invalid JSON inputs yield array calues
+  where the first element is the error and the second is a path.
+  For example, <code>["a",n]</code> produces ["Invalid literal at line 1,
+  column 9",[1]]`.</p>
+<p>Implies <code>--stream</code>.  Invalid JSON inputs produce no error values
+  when <code>--stream</code> without <code>--stream-errors</code>.</p>
+<ul>
 <li><code>--slurp</code>/<code>-s</code>:</li>
 </ul>
 <p>Instead of running the filter for each JSON object in the
