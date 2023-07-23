@@ -232,6 +232,16 @@ grep "Expected string key after '{', not '\\['" $d/err > /dev/null
 echo '{"x":"y",["a","b"]}' | $JQ --stream > /dev/null 2> $d/err || true
 grep "Expected string key after ',' in object, not '\\['" $d/err > /dev/null
 
+# debug, stderr
+$VALGRIND $Q $JQ -n '"test", {} | debug, stderr' >/dev/null
+$JQ -n -c -j '"hello\nworld", null, [false, 0], {"foo":["bar"]}, "\n" | stderr' >$d/out 2>$d/err
+cat > $d/expected <<'EOF'
+hello
+worldnull[false,0]{"foo":["bar"]}
+EOF
+cmp $d/out $d/expected
+cmp $d/err $d/expected
+
 # --arg, --argjson, $ARGS.named
 $VALGRIND $JQ -n -c --arg foo 1 --argjson bar 2 '{$foo, $bar} | ., . == $ARGS.named' > $d/out
 printf '{"foo":"1","bar":2}\ntrue\n' > $d/expected

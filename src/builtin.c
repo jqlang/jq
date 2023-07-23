@@ -1246,7 +1246,11 @@ static jv f_debug(jq_state *jq, jv input) {
 }
 
 static jv f_stderr(jq_state *jq, jv input) {
-  jv_dumpf(jv_copy(input), stderr, 0);
+  jq_msg_cb cb;
+  void *data;
+  jq_get_stderr_cb(jq, &cb, &data);
+  if (cb != NULL)
+    cb(data, jv_copy(input));
   return input;
 }
 

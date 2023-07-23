@@ -253,6 +253,18 @@ static void debug_cb(void *data, jv input) {
   fprintf(stderr, "\n");
 }
 
+static void stderr_cb(void *data, jv input) {
+  if (jv_get_kind(input) == JV_KIND_STRING) {
+    int dumpopts = *(int *)data;
+    priv_fwrite(jv_string_value(input), jv_string_length_bytes(jv_copy(input)),
+        stderr, dumpopts & JV_PRINT_ISATTY);
+  } else {
+    input = jv_dump_string(input, 0);
+    fprintf(stderr, "%s", jv_string_value(input));
+  }
+  jv_free(input);
+}
+
 #ifdef WIN32
 int umain(int argc, char* argv[]);
 
@@ -683,6 +695,9 @@ int main(int argc, char* argv[]) {
 
   // Let jq program call `debug` builtin and have that go somewhere
   jq_set_debug_cb(jq, debug_cb, &dumpopts);
+
+  // Let jq program call `stderr` builtin and have that go somewhere
+  jq_set_stderr_cb(jq, stderr_cb, &dumpopts);
 
   if (nfiles == 0)
     jq_util_input_add_input(input_state, "-");
