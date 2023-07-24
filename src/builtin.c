@@ -1461,6 +1461,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
     do {                                        \
       jv n = jv_array_get(jv_copy(j), (i));     \
       if (jv_get_kind(n) != (JV_KIND_NUMBER)) { \
+        jv_free(n);                             \
         jv_free(j);                             \
         return 0;                               \
       }                                         \
@@ -1630,7 +1631,7 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   }
   struct tm tm;
   if (!jv2tm(a, &tm))
-    return jv_invalid_with_msg(jv_string("strflocaltime/1 requires parsed datetime inputs"));
+    return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
   char *buf = alloca(alloced);
