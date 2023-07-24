@@ -32,7 +32,7 @@ It\'s important to remember that every filter has an input and an output\. Even 
 But that\'s getting ahead of ourselves\. :) Let\'s start with something simpler:
 .
 .SH "INVOKING JQ"
-jq filters run on a stream of JSON data\. The input to jq is parsed as a sequence of whitespace\-separated JSON values which are passed through the provided filter one at a time\. The output(s) of the filter are written to standard out, again as a sequence of whitespace\-separated JSON data\.
+jq filters run on a stream of JSON data\. The input to jq is parsed as a sequence of whitespace\-separated JSON values which are passed through the provided filter one at a time\. The output(s) of the filter are written to standard output, as a sequence of newline\-separated JSON data\.
 .
 .P
 Note: it is important to mind the shell\'s quoting rules\. As a general rule it\'s best to always quote (with single\-quote characters) the jq program, as too many characters with special meaning to jq are also shell meta\-characters\. For example, \fBjq "foo"\fR will fail on most Unix shells because that will be the same as \fBjq foo\fR, which will generally fail because \fBfoo is not defined\fR\. When using the Windows command shell (cmd\.exe) it\'s best to use double quotes around your jq program when given on the command\-line (instead of the \fB\-f program\-file\fR option), but then double\-quotes in the jq program need backslash escaping\. When using the Powershell (\fBpowershell\.exe\fR) or the Powershell Core (\fBpwsh\fR/\fBpwsh\.exe\fR), use single\-quote characters around the jq program and backslash\-escaped double\-quotes (\fB\e"\fR) inside the jq program\.
@@ -76,7 +76,7 @@ This is useful for processing very large inputs\. Use this in conjunction with f
 \fB\-\-stream\-errors\fR:
 .
 .IP
-Like \fB\-\-stream\fR, but invalid JSON inputs yield array calues where the first element is the error and the second is a path\. For example, \fB["a",n]\fR produces ["Invalid literal at line 1, column 9",[1]]`\.
+Like \fB\-\-stream\fR, but invalid JSON inputs yield array values where the first element is the error and the second is a path\. For example, \fB["a",n]\fR produces ["Invalid literal at line 1, column 9",[1]]`\.
 .
 .IP
 Implies \fB\-\-stream\fR\. Invalid JSON inputs produce no error values when \fB\-\-stream\fR without \fB\-\-stream\-errors\fR\.
@@ -327,7 +327,7 @@ jq \'\. as $big | [$big, $big + 1] | map(\. > 10000000000000000000000000000000)\
 The simplest \fIuseful\fR filter has the form \fB\.foo\fR\. When given a JSON object (aka dictionary or hash) as input, \fB\.foo\fR produces the value at the key "foo" if the key is present, or null otherwise\.
 .
 .P
-A filter of the form \fB\.foo\.bar\fR is equivalent to \fB\.foo|\.bar\fR\.
+A filter of the form \fB\.foo\.bar\fR is equivalent to \fB\.foo | \.bar\fR\.
 .
 .P
 The \fB\.foo\fR syntax only works for simple, identifier\-like keys, that is, keys that are all made of alphanumeric characters and underscore, and which do not start with a digit\.
@@ -415,7 +415,7 @@ jq \'\.[\-2]\'
 .IP "" 0
 .
 .SS "Array/String Slice: \.[<number>:<number>]"
-The \fB\.[<number>:<number>]\fR syntax can be used to return a subarray of an array or substring of a string\. The array returned by \fB\.[10:15]\fR will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive)\. Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array)\.
+The \fB\.[<number>:<number>]\fR syntax can be used to return a subarray of an array or substring of a string\. The array returned by \fB\.[10:15]\fR will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive)\. Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array)\. Indices are zero\-based\.
 .
 .IP "" 4
 .
@@ -442,7 +442,7 @@ jq \'\.[\-2:]\'
 .IP "" 0
 .
 .SS "Array/Object Value Iterator: \.[]"
-If you use the \fB\.[index]\fR syntax, but omit the index entirely, it will return \fIall\fR of the elements of an array\. Running \fB\.[]\fR with the input \fB[1,2,3]\fR will produce the numbers as three separate results, rather than as a single array\.
+If you use the \fB\.[index]\fR syntax, but omit the index entirely, it will return \fIall\fR of the elements of an array\. Running \fB\.[]\fR with the input \fB[1,2,3]\fR will produce the numbers as three separate results, rather than as a single array\. A filter of the form \fB\.foo[]\fR is equivalent to \fB\.foo | \.[]\fR\.
 .
 .P
 You can also use this on an object, and it will return all the values of the object\.
@@ -459,6 +459,10 @@ jq \'\.[]\'
    []
 => 
 
+jq \'\.foo[]\'
+   {"foo":[1,2,3]}
+=> 1, 2, 3
+
 jq \'\.[]\'
    {"a": 1, "b": 1}
 => 1, 1
@@ -468,7 +472,7 @@ jq \'\.[]\'
 .IP "" 0
 .
 .SS "\.[]?"
-Like \fB\.[]\fR, but no errors will be output if \. is not an array or object\.
+Like \fB\.[]\fR, but no errors will be output if \. is not an array or object\. A filter of the form \fB\.foo[]?\fR is equivalent to \fB\.foo | \.[]?\fR\.
 .
 .SS "Comma: ,"
 If two filters are separated by a comma, then the same input will be fed into both and the two filters\' output value streams will be concatenated in order: first, all of the outputs produced by the left expression, and then all of the outputs produced by the right\. For instance, filter \fB\.foo, \.bar\fR, produces both the "foo" fields and "bar" fields as separate outputs\.
@@ -705,7 +709,7 @@ jq \'{(\.user): \.titles}\'
 .IP "" 0
 .
 .SS "Recursive Descent: \.\."
-Recursively descends \fB\.\fR, producing every value\. This is the same as the zero\-argument \fBrecurse\fR builtin (see below)\. This is intended to resemble the XPath \fB//\fR operator\. Note that \fB\.\.a\fR does not work; use \fB\.\.|\.a\fR instead\. In the example below we use \fB\.\.|\.a?\fR to find all the values of object keys "a" in any object found "below" \fB\.\fR\.
+Recursively descends \fB\.\fR, producing every value\. This is the same as the zero\-argument \fBrecurse\fR builtin (see below)\. This is intended to resemble the XPath \fB//\fR operator\. Note that \fB\.\.a\fR does not work; use \fB\.\. | \.a\fR instead\. In the example below we use \fB\.\. | \.a?\fR to find all the values of object keys "a" in any object found "below" \fB\.\fR\.
 .
 .P
 This is particularly useful in conjunction with \fBpath(EXP)\fR (also see below) and the \fB?\fR operator\.
@@ -714,7 +718,7 @@ This is particularly useful in conjunction with \fBpath(EXP)\fR (also see below)
 .
 .nf
 
-jq \'\.\.|\.a?\'
+jq \'\.\. | \.a?\'
    [[{"a":1}]]
 => 1
 .
@@ -1226,8 +1230,27 @@ jq \'[1,2,empty,3]\'
 .
 .IP "" 0
 .
-.SS "error(message)"
-Produces an error, just like \fB\.a\fR applied to values other than null and objects would, but with the given message as the error\'s value\. Errors can be caught with try/catch; see below\.
+.SS "error, error(message)"
+Produces an error with the input value, or with the message given as the argument\. Errors can be caught with try/catch; see below\.
+.
+.P
+When the error value is \fBnull\fR, it produces nothing and works just like \fBempty\fR\. So \fB[null | error]\fR and \fB[error(null)]\fR both emit \fB[]\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'try error catch \.\'
+   "error message"
+=> "error message"
+
+jq \'try error("invalid value: \e(\.)") catch \.\'
+   42
+=> "invalid value: 42"
+.
+.fi
+.
+.IP "" 0
 .
 .SS "halt"
 Stops the jq program with no further outputs\. jq will exit with exit status \fB0\fR\.
@@ -1572,10 +1595,7 @@ objects
 The ordering for objects is a little complex: first they\'re compared by comparing their sets of keys (as arrays in sorted order), and if their keys are equal then the values are compared key by key\.
 .
 .P
-\fBsort\fR may be used to sort by a particular field of an object, or by applying any jq filter\.
-.
-.P
-\fBsort_by(f)\fR compares two elements by comparing the result of \fBf\fR on each element\.
+\fBsort_by\fR may be used to sort by a particular field of an object, or by applying any jq filter\. \fBsort_by(f)\fR compares two elements by comparing the result of \fBf\fR on each element\. When \fBf\fR produces multiple values, it firstly compares the first values, and the second values if the first values are equal, and so on\.
 .
 .IP "" 4
 .
@@ -1586,8 +1606,12 @@ jq \'sort\'
 => [null,3,6,8]
 
 jq \'sort_by(\.foo)\'
-   [{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]
-=> [{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]
+   [{"foo":4, "bar":10}, {"foo":3, "bar":10}, {"foo":2, "bar":1}]
+=> [{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":4, "bar":10}]
+
+jq \'sort_by(\.foo, \.bar)\'
+   [{"foo":4, "bar":10}, {"foo":3, "bar":20}, {"foo":2, "bar":1}, {"foo":3, "bar":10}]
+=> [{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":3, "bar":20}, {"foo":4, "bar":10}]
 .
 .fi
 .
@@ -1739,9 +1763,25 @@ jq \'index(", ")\'
    "a,b, cd, efg, hijk"
 => 3
 
+jq \'index(1)\'
+   [0,1,2,1,3,1,4]
+=> 1
+
+jq \'index([1,2])\'
+   [0,1,2,3,1,4,2,5,1,2,6,7]
+=> 1
+
 jq \'rindex(", ")\'
    "a,b, cd, efg, hijk"
 => 12
+
+jq \'rindex(1)\'
+   [0,1,2,1,3,1,4]
+=> 5
+
+jq \'rindex([1,2])\'
+   [0,1,2,3,1,4,2,5,1,2,6,7]
+=> 8
 .
 .fi
 .
@@ -2032,7 +2072,7 @@ recurse(\.children[]) | \.name
 When called without an argument, \fBrecurse\fR is equivalent to \fBrecurse(\.[]?)\fR\.
 .
 .P
-\fBrecurse(f)\fR is identical to \fBrecurse(f; \. != null)\fR and can be used without concerns about recursion depth\.
+\fBrecurse(f)\fR is identical to \fBrecurse(f; true)\fR and can be used without concerns about recursion depth\.
 .
 .P
 \fBrecurse(f; condition)\fR is a generator which begins by emitting \. and then emits in turn \.|f, \.|f|f, \.|f|f|f, \.\.\. so long as the computed value satisfies the condition\. For example, to generate all the integers, at least in principle, one could write \fBrecurse(\.+1; true)\fR\.
@@ -3264,38 +3304,6 @@ There are two types of symbols in jq: value bindings (a\.k\.a\., "variables"), a
 .P
 For example, in the following expression there is a binding which is visible "to the right" of it, \fB\.\.\. | \.*3 as $times_three | [\. + $times_three] | \.\.\.\fR, but not "to the left"\. Consider this expression now, \fB\.\.\. | (\.*3 as $times_three | [\. + $times_three]) | \.\.\.\fR: here the binding \fB$times_three\fR is \fInot\fR visible past the closing parenthesis\.
 .
-.SS "Reduce"
-The \fBreduce\fR syntax in jq allows you to combine all of the results of an expression by accumulating them into a single answer\. As an example, we\'ll pass \fB[3,2,1]\fR to this expression:
-.
-.IP "" 4
-.
-.nf
-
-reduce \.[] as $item (0; \. + $item)
-.
-.fi
-.
-.IP "" 0
-.
-.P
-For each result that \fB\.[]\fR produces, \fB\. + $item\fR is run to accumulate a running total, starting from 0\. In this example, \fB\.[]\fR produces the results 3, 2, and 1, so the effect is similar to running something like this:
-.
-.IP "" 4
-.
-.nf
-
-0 | (3 as $item | \. + $item) |
-    (2 as $item | \. + $item) |
-    (1 as $item | \. + $item)
-
-jq \'reduce \.[] as $item (0; \. + $item)\'
-   [10,2,5,3]
-=> 20
-.
-.fi
-.
-.IP "" 0
-.
 .SS "isempty(exp)"
 Returns true if \fBexp\fR produces no outputs, false otherwise\.
 .
@@ -3306,6 +3314,14 @@ Returns true if \fBexp\fR produces no outputs, false otherwise\.
 jq \'isempty(empty)\'
    null
 => true
+
+jq \'isempty(\.[])\'
+   []
+=> true
+
+jq \'isempty(\.[])\'
+   [1,2,3]
+=> false
 .
 .fi
 .
@@ -3362,22 +3378,95 @@ jq \'[range(\.)]|[first, last, nth(5)]\'
 .
 .IP "" 0
 .
-.SS "foreach"
-The \fBforeach\fR syntax is similar to \fBreduce\fR, but intended to allow the construction of \fBlimit\fR and reducers that produce intermediate results (see example)\.
-.
-.P
-The form is \fBforeach EXP as $var (INIT; UPDATE; EXTRACT)\fR\. Like \fBreduce\fR, \fBINIT\fR is evaluated once to produce a state value, then each output of \fBEXP\fR is bound to \fB$var\fR, \fBUPDATE\fR is evaluated for each output of \fBEXP\fR with the current state and with \fB$var\fR visible\. Each value output by \fBUPDATE\fR replaces the previous state\. Finally, \fBEXTRACT\fR is evaluated for each new state to extract an output of \fBforeach\fR\.
-.
-.P
-This is mostly useful only for constructing \fBreduce\fR\- and \fBlimit\fR\-like functions\. But it is much more general, as it allows for partial reductions (see the example below)\.
+.SS "reduce"
+The \fBreduce\fR syntax allows you to combine all of the results of an expression by accumulating them into a single answer\. The form is \fBreduce EXP as $var (INIT; UPDATE)\fR\. As an example, we\'ll pass \fB[1,2,3]\fR to this expression:
 .
 .IP "" 4
 .
 .nf
 
-jq \'[foreach \.[] as $item ([[],[]]; if $item == null then [[],\.[0]] else [(\.[0] + [$item]),[]] end; if $item == null then \.[1] else empty end)]\'
-   [1,2,3,4,null,"a","b",null]
-=> [[1,2,3,4],["a","b"]]
+reduce \.[] as $item (0; \. + $item)
+.
+.fi
+.
+.IP "" 0
+.
+.P
+For each result that \fB\.[]\fR produces, \fB\. + $item\fR is run to accumulate a running total, starting from 0 as the input value\. In this example, \fB\.[]\fR produces the results \fB1\fR, \fB2\fR, and \fB3\fR, so the effect is similar to running something like this:
+.
+.IP "" 4
+.
+.nf
+
+0 | 1 as $item | \. + $item |
+    2 as $item | \. + $item |
+    3 as $item | \. + $item
+
+jq \'reduce \.[] as $item (0; \. + $item)\'
+   [1,2,3,4,5]
+=> 15
+
+jq \'reduce \.[] as [$i,$j] (0; \. + $i * $j)\'
+   [[1,2],[3,4],[5,6]]
+=> 44
+
+jq \'reduce \.[] as {$x,$y} (null; \.x += $x | \.y += [$y])\'
+   [{"x":"a","y":1},{"x":"b","y":2},{"x":"c","y":3}]
+=> {"x":"abc","y":[1,2,3]}
+.
+.fi
+.
+.IP "" 0
+.
+.SS "foreach"
+The \fBforeach\fR syntax is similar to \fBreduce\fR, but intended to allow the construction of \fBlimit\fR and reducers that produce intermediate results\.
+.
+.P
+The form is \fBforeach EXP as $var (INIT; UPDATE; EXTRACT)\fR\. As an example, we\'ll pass \fB[1,2,3]\fR to this expression:
+.
+.IP "" 4
+.
+.nf
+
+foreach \.[] as $item (0; \. + $item; [$item, \. * 2])
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Like the \fBreduce\fR syntax, \fB\. + $item\fR is run for each result that \fB\.[]\fR produces, but \fB[$item, \. * 2]\fR is run for each intermediate values\. In this example, since the intermediate values are \fB1\fR, \fB3\fR, and \fB6\fR, the \fBforeach\fR expression produces \fB[1,2]\fR, \fB[2,6]\fR, and \fB[3,12]\fR\. So the effect is similar to running something like this:
+.
+.IP "" 4
+.
+.nf
+
+0 | 1 as $item | \. + $item | [$item, \. * 2],
+    2 as $item | \. + $item | [$item, \. * 2],
+    3 as $item | \. + $item | [$item, \. * 2]
+.
+.fi
+.
+.IP "" 0
+.
+.P
+When \fBEXTRACT\fR is omitted, the identity filter is used\. That is, it outputs the intermediate values as they are\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'foreach \.[] as $item (0; \. + $item)\'
+   [1,2,3,4,5]
+=> 1, 3, 6, 10, 15
+
+jq \'foreach \.[] as $item (0; \. + $item; [$item, \. * 2])\'
+   [1,2,3,4,5]
+=> [1,2], [2,6], [3,12], [4,20], [5,30]
+
+jq \'foreach \.[] as $item (0; \. + 1; {index: \., $item})\'
+   ["foo", "bar", "baz"]
+=> {"index":1,"item":"foo"}, {"index":2,"item":"bar"}, {"index":3,"item":"baz"}
 .
 .fi
 .
@@ -3474,13 +3563,33 @@ Most jq builtins are referentially transparent, and yield constant and repeatabl
 Outputs one new input\.
 .
 .P
-Note that when using \fBinput\fR it is generally be necessary to invoke jq with the \-n command\-line option, otherwise the first entity will be lost\.
+Note that when using \fBinput\fR it is generally be necessary to invoke jq with the \fB\-n\fR command\-line option, otherwise the first entity will be lost\.
+.
+.IP "" 4
+.
+.nf
+
+echo 1 2 3 4 | jq \'[\., input]\' # [1,2] [3,4]
+.
+.fi
+.
+.IP "" 0
 .
 .SS "inputs"
 Outputs all remaining inputs, one by one\.
 .
 .P
-This is primarily useful for reductions over a program\'s inputs\. Note that when using \fBinputs\fR it is generally necessary to invoke jq with the \-n command\-line option, otherwise the first entity will be lost\.
+This is primarily useful for reductions over a program\'s inputs\. Note that when using \fBinputs\fR it is generally necessary to invoke jq with the \fB\-n\fR command\-line option, otherwise the first entity will be lost\.
+.
+.IP "" 4
+.
+.nf
+
+echo 1 2 3 | jq \-n \'reduce inputs as $i (0; \. + $i)\' # 6
+.
+.fi
+.
+.IP "" 0
 .
 .SS "debug, debug(msgs)"
 These two filters are like \fB\.\fR but have as a side\-effect the production of one or more messages on stderr\.
@@ -3562,9 +3671,9 @@ Consumes a number as input and truncates the corresponding number of path elemen
 .
 .nf
 
-jq \'[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]\'
+jq \'truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])\'
    1
-=> [[[0],2],[[0]]]
+=> [[0],2], [[0]]
 .
 .fi
 .

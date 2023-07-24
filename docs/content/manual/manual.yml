@@ -79,8 +79,8 @@ sections:
       jq filters run on a stream of JSON data. The input to jq is
       parsed as a sequence of whitespace-separated JSON values which
       are passed through the provided filter one at a time. The
-      output(s) of the filter are written to standard out, again as a
-      sequence of whitespace-separated JSON data.
+      output(s) of the filter are written to standard output, as a
+      sequence of newline-separated JSON data.
 
       Note: it is important to mind the shell's quoting rules.  As a
       general rule it's best to always quote (with single-quote
@@ -132,7 +132,7 @@ sections:
 
       * `--stream-errors`:
 
-        Like `--stream`, but invalid JSON inputs yield array calues
+        Like `--stream`, but invalid JSON inputs yield array values
         where the first element is the error and the second is a path.
         For example, `["a",n]` produces ["Invalid literal at line 1,
         column 9",[1]]`.
@@ -334,7 +334,7 @@ sections:
           input, jq processing can sometimes make it appear as though
           it does.  For example, using the current implementation of
           jq, we would see that the expression:
-          
+
               1E1234567890 | .
 
           produces `1.7976931348623157e+308` on at least one platform.
@@ -372,7 +372,7 @@ sections:
             output: ['"Hello, world!"']
 
           - program: '.'
-            input:  '0.12345678901234567890123456789'
+            input: '0.12345678901234567890123456789'
             output: ['0.12345678901234567890123456789']
 
           - program: '[., tojson]'
@@ -398,7 +398,7 @@ sections:
           JSON object (aka dictionary or hash) as input, `.foo` produces
           the value at the key "foo" if the key is present, or null otherwise.
 
-          A filter of the form `.foo.bar` is equivalent to `.foo|.bar`.
+          A filter of the form `.foo.bar` is equivalent to `.foo | .bar`.
 
           The `.foo` syntax only works for simple, identifier-like keys, that
           is, keys that are all made of alphanumeric characters and
@@ -484,6 +484,7 @@ sections:
           Either index may be negative (in which case it counts
           backwards from the end of the array), or omitted (in which
           case it refers to the start or end of the array).
+          Indices are zero-based.
 
         examples:
           - program: '.[2:4]'
@@ -509,7 +510,8 @@ sections:
           entirely, it will return *all* of the elements of an
           array. Running `.[]` with the input `[1,2,3]` will produce the
           numbers as three separate results, rather than as a single
-          array.
+          array. A filter of the form `.foo[]` is equivalent to
+          `.foo | .[]`.
 
           You can also use this on an object, and it will return all
           the values of the object.
@@ -525,6 +527,10 @@ sections:
             input: '[]'
             output: []
 
+          - program: '.foo[]'
+            input: '{"foo":[1,2,3]}'
+            output: ['1','2','3']
+
           - program: '.[]'
             input: '{"a": 1, "b": 1}'
             output: ['1', '1']
@@ -533,7 +539,8 @@ sections:
         body: |
 
           Like `.[]`, but no errors will be output if . is not an array
-          or object.
+          or object. A filter of the form `.foo[]?` is equivalent to
+          `.foo | .[]?`.
 
       - title: "Comma: `,`"
         body: |
@@ -728,15 +735,15 @@ sections:
           Recursively descends `.`, producing every value.  This is the
           same as the zero-argument `recurse` builtin (see below).  This
           is intended to resemble the XPath `//` operator.  Note that
-          `..a` does not work; use `..|.a` instead.  In the example
-          below we use `..|.a?` to find all the values of object keys
+          `..a` does not work; use `.. | .a` instead.  In the example
+          below we use `.. | .a?` to find all the values of object keys
           "a" in any object found "below" `.`.
 
           This is particularly useful in conjunction with `path(EXP)`
           (also see below) and the `?` operator.
 
         examples:
-          - program: '..|.a?'
+          - program: '.. | .a?'
             input: '[[{"a":1}]]'
             output: ['1']
 
@@ -1190,12 +1197,25 @@ sections:
             input: 'null'
             output: ['[1,2,3]']
 
-      - title: "`error(message)`"
+      - title: "`error`, `error(message)`"
         body: |
 
-          Produces an error, just like `.a` applied to values other than
-          null and objects would, but with the given message as the
-          error's value.  Errors can be caught with try/catch; see below.
+          Produces an error with the input value, or with the message
+          given as the argument. Errors can be caught with try/catch;
+          see below.
+
+          When the error value is `null`, it produces nothing and works
+          just like `empty`. So `[null | error]` and `[error(null)]` both
+          emit `[]`.
+
+        examples:
+          - program: 'try error catch .'
+            input: '"error message"'
+            output: ['"error message"']
+
+          - program: 'try error("invalid value: \(.)") catch .'
+            input: '42'
+            output: ['"invalid value: 42"']
 
       - title: "`halt`"
         body: |
@@ -1481,19 +1501,25 @@ sections:
           sorted order), and if their keys are equal then the values
           are compared key by key.
 
-          `sort` may be used to sort by a particular field of an
-          object, or by applying any jq filter.
-
-          `sort_by(f)` compares two elements by comparing the result of
-          `f` on each element.
+          `sort_by` may be used to sort by a particular field of an
+          object, or by applying any jq filter. `sort_by(f)` compares
+          two elements by comparing the result of `f` on each element.
+          When `f` produces multiple values, it firstly compares the
+          first values, and the second values if the first values are
+          equal, and so on.
 
         examples:
           - program: 'sort'
             input: '[8,3,null,6]'
             output: ['[null,3,6,8]']
+
           - program: 'sort_by(.foo)'
-            input: '[{"foo":4, "bar":10}, {"foo":3, "bar":100}, {"foo":2, "bar":1}]'
-            output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":100}, {"foo":4, "bar":10}]']
+            input: '[{"foo":4, "bar":10}, {"foo":3, "bar":10}, {"foo":2, "bar":1}]'
+            output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":4, "bar":10}]']
+
+          - program: 'sort_by(.foo, .bar)'
+            input: '[{"foo":4, "bar":10}, {"foo":3, "bar":20}, {"foo":2, "bar":1}, {"foo":3, "bar":10}]'
+            output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":3, "bar":20}, {"foo":4, "bar":10}]']
 
       - title: "`group_by(path_expression)`"
         body: |
@@ -1620,9 +1646,21 @@ sections:
           - program: 'index(", ")'
             input: '"a,b, cd, efg, hijk"'
             output: ['3']
+          - program: 'index(1)'
+            input: '[0,1,2,1,3,1,4]'
+            output: ['1']
+          - program: 'index([1,2])'
+            input: '[0,1,2,3,1,4,2,5,1,2,6,7]'
+            output: ['1']
           - program: 'rindex(", ")'
             input: '"a,b, cd, efg, hijk"'
             output: ['12']
+          - program: 'rindex(1)'
+            input: '[0,1,2,1,3,1,4]'
+            output: ['5']
+          - program: 'rindex([1,2])'
+            input: '[0,1,2,3,1,4,2,5,1,2,6,7]'
+            output: ['8']
 
       - title: "`inside`"
         body: |
@@ -1846,7 +1884,7 @@ sections:
           When called without an argument, `recurse` is equivalent to
           `recurse(.[]?)`.
 
-          `recurse(f)` is identical to `recurse(f; . != null)` and can be
+          `recurse(f)` is identical to `recurse(f; true)` and can be
           used without concerns about recursion depth.
 
           `recurse(f; condition)` is a generator which begins by
@@ -2861,29 +2899,6 @@ sections:
           $times_three | [. + $times_three]) | ...`: here the binding
           `$times_three` is _not_ visible past the closing parenthesis.
 
-      - title: Reduce
-        body: |
-
-          The `reduce` syntax in jq allows you to combine all of the
-          results of an expression by accumulating them into a single
-          answer. As an example, we'll pass `[3,2,1]` to this expression:
-
-              reduce .[] as $item (0; . + $item)
-
-          For each result that `.[]` produces, `. + $item` is run to
-          accumulate a running total, starting from 0. In this
-          example, `.[]` produces the results 3, 2, and 1, so the
-          effect is similar to running something like this:
-
-              0 | (3 as $item | . + $item) |
-                  (2 as $item | . + $item) |
-                  (1 as $item | . + $item)
-
-        examples:
-          - program: 'reduce .[] as $item (0; . + $item)'
-            input: '[10,2,5,3]'
-            output: ['20']
-
       - title: "`isempty(exp)`"
         body: |
 
@@ -2893,6 +2908,14 @@ sections:
           - program: 'isempty(empty)'
             input: 'null'
             output: ['true']
+
+          - program: 'isempty(.[])'
+            input: '[]'
+            output: ['true']
+
+          - program: 'isempty(.[])'
+            input: '[1,2,3]'
+            output: ['false']
 
       - title: "`limit(n; exp)`"
         body: |
@@ -2931,32 +2954,79 @@ sections:
             input: '10'
             output: ['[0,9,5]']
 
+      - title: "`reduce`"
+        body: |
+
+          The `reduce` syntax allows you to combine all of the results of
+          an expression by accumulating them into a single answer.
+          The form is `reduce EXP as $var (INIT; UPDATE)`.
+          As an example, we'll pass `[1,2,3]` to this expression:
+
+              reduce .[] as $item (0; . + $item)
+
+          For each result that `.[]` produces, `. + $item` is run to
+          accumulate a running total, starting from 0 as the input value.
+          In this example, `.[]` produces the results `1`, `2`, and `3`,
+          so the effect is similar to running something like this:
+
+              0 | 1 as $item | . + $item |
+                  2 as $item | . + $item |
+                  3 as $item | . + $item
+
+        examples:
+          - program: 'reduce .[] as $item (0; . + $item)'
+            input: '[1,2,3,4,5]'
+            output: ['15']
+
+          - program: 'reduce .[] as [$i,$j] (0; . + $i * $j)'
+            input: '[[1,2],[3,4],[5,6]]'
+            output: ['44']
+
+          - program: 'reduce .[] as {$x,$y} (null; .x += $x | .y += [$y])'
+            input: '[{"x":"a","y":1},{"x":"b","y":2},{"x":"c","y":3}]'
+            output: ['{"x":"abc","y":[1,2,3]}']
+
       - title: "`foreach`"
         body: |
 
           The `foreach` syntax is similar to `reduce`, but intended to
           allow the construction of `limit` and reducers that produce
-          intermediate results (see example).
+          intermediate results.
 
           The form is `foreach EXP as $var (INIT; UPDATE; EXTRACT)`.
-          Like `reduce`, `INIT` is evaluated once to produce a state
-          value, then each output of `EXP` is bound to `$var`, `UPDATE`
-          is evaluated for each output of `EXP` with the current state
-          and with `$var` visible.  Each value output by `UPDATE`
-          replaces the previous state.  Finally, `EXTRACT` is evaluated
-          for each new state to extract an output of `foreach`.
+          As an example, we'll pass `[1,2,3]` to this expression:
 
-          This is mostly useful only for constructing `reduce`- and
-          `limit`-like functions.  But it is much more general, as it
-          allows for partial reductions (see the example below).
+              foreach .[] as $item (0; . + $item; [$item, . * 2])
+
+          Like the `reduce` syntax, `. + $item` is run for each result
+          that `.[]` produces, but `[$item, . * 2]` is run for each
+          intermediate values. In this example, since the intermediate
+          values are `1`, `3`, and `6`, the `foreach` expression produces
+          `[1,2]`, `[2,6]`, and `[3,12]`. So the effect is similar
+          to running something like this:
+
+              0 | 1 as $item | . + $item | [$item, . * 2],
+                  2 as $item | . + $item | [$item, . * 2],
+                  3 as $item | . + $item | [$item, . * 2]
+
+          When `EXTRACT` is omitted, the identity filter is used.
+          That is, it outputs the intermediate values as they are.
 
         examples:
-          - program: '[foreach .[] as $item
-                        ([[],[]];
-                        if $item == null then [[],.[0]] else [(.[0] + [$item]),[]] end;
-                        if $item == null then .[1] else empty end)]'
-            input: '[1,2,3,4,null,"a","b",null]'
-            output: ['[[1,2,3,4],["a","b"]]']
+          - program: 'foreach .[] as $item (0; . + $item)'
+            input: '[1,2,3,4,5]'
+            output: ['1','3','6','10','15']
+
+          - program: 'foreach .[] as $item (0; . + $item; [$item, . * 2])'
+            input: '[1,2,3,4,5]'
+            output: ['[1,2]','[2,6]','[3,12]','[4,20]','[5,30]']
+
+          - program: 'foreach .[] as $item (0; . + 1; {index: ., $item})'
+            input: '["foo", "bar", "baz"]'
+            output:
+              - '{"index":1,"item":"foo"}'
+              - '{"index":2,"item":"bar"}'
+              - '{"index":3,"item":"baz"}'
 
       - title: Recursion
         body: |
@@ -3098,8 +3168,10 @@ sections:
           Outputs one new input.
 
           Note that when using `input` it is generally be necessary to
-          invoke jq with the -n command-line option, otherwise
+          invoke jq with the `-n` command-line option, otherwise
           the first entity will be lost.
+
+              echo 1 2 3 4 | jq '[., input]' # [1,2] [3,4]
 
       - title: "`inputs`"
         body: |
@@ -3108,8 +3180,10 @@ sections:
 
           This is primarily useful for reductions over a program's
           inputs.  Note that when using `inputs` it is generally necessary
-          to invoke jq with the -n command-line option, otherwise
+          to invoke jq with the `-n` command-line option, otherwise
           the first entity will be lost.
+
+              echo 1 2 3 | jq -n 'reduce inputs as $i (0; . + $i)' # 6
 
       - title: "`debug`, `debug(msgs)`"
         body: |
@@ -3188,9 +3262,9 @@ sections:
           given streaming expression.
 
         examples:
-          - program: '[1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])]'
+          - program: 'truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])'
             input: '1'
-            output: ['[[[0],2],[[0]]]']
+            output: ['[[0],2]', '[[0]]']
 
       - title: "`fromstream(stream_expression)`"
         body: |
