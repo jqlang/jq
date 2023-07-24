@@ -48,6 +48,7 @@ jobs:
                 CC: ${{ matrix.compiler }}
                 MAKEVARS: ${{ matrix.makevars }}
               run: |
+                autoreconf -i
                 ./configure --with-oniguruma=builtin $COVERAGE
                 scan-build --keep-going make -j4
             - name: Test
