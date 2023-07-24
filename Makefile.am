@@ -134,7 +134,7 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
+TESTS = tests/optionaltest tests/mantest tests/jqtest tests/shtest tests/utf8test tests/base64test
 AM_TESTS_ENVIRONMENT = JQ=$(abs_builddir)/jq NO_VALGRIND=$(NO_VALGRIND)
 
 # This is a magic make variable that causes it to treat tests/man.test as a
@@ -150,9 +150,11 @@ check_DATA = tests/man.test
 # Making changes to the manpage without having the python deps means your
 # tests won't run. If you aren't making changes to the examples, you probably
 # don't care. But if you are, then you need to run the tests anyway.
-tests/man.test: $(srcdir)/docs/content/manual/manual.yml
+tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_mantests.py ) > $@
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
+		$(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+		$(PIPENV) run python build_mantests.py )
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manual test.
 	@echo As a result, the manual test is out of date.
@@ -166,7 +168,9 @@ endif
 man_MANS = jq.1
 jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_manpage.py ) > $@
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
+		$(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+		$(PIPENV) run python build_manpage.py ) > $@
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manpage.
 	@echo As a result, the manpage is out of date.
@@ -210,6 +214,10 @@ endif
 
 AM_CFLAGS += $(onig_CFLAGS)
 
+if WITH_ONIGURUMA
+TESTS += tests/onigtest tests/manonigtest
+endif
+
 ### Packaging
 
 docs/site.yml: configure.ac
@@ -221,7 +229,8 @@ install-binaries: $(BUILT_SOURCES)
 
 DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
         docs/Pipfile docs/Pipfile.lock docs/build_manpage.py            \
-        docs/build_manpage.py docs/README.md jq.1.prebuilt
+        docs/build_mantests.py docs/build_website.py docs/README.md     \
+        docs/validate_manual_schema.py docs/manual_schema.yml
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
@@ -241,11 +250,11 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order2.jq                               \
         tests/onig.supp tests/local.supp                                \
         tests/setup tests/torture/input0.json                           \
-        tests/optional.test tests/man.test tests/jq.test                \
-        tests/onig.test tests/base64.test tests/utf8-truncate.jq        \
-        tests/jq-f-test.sh
+        tests/optional.test tests/man.test tests/manonig.test           \
+        tests/jq.test tests/onig.test tests/base64.test                 \
+        tests/utf8-truncate.jq tests/jq-f-test.sh
 
-AM_DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin --with-utf8proc=builtin
+AM_DISTCHECK_CONFIGURE_FLAGS=--with-oniguruma=builtin --with-utf8proc=builtin
 
 # README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.

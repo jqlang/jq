@@ -15,13 +15,13 @@ you will find cookbooks, discussion of advanced topics, internals,
 release engineering, and more.
 
 Source tarball and built executable releases can be found on the
-homepage and on the github release page, https://github.com/jqlang/jq/releases
+homepage and on the github release page, https://github.com/jqlang/jq/releases.
+Docker image is available at https://github.com/jqlang/jq/pkgs/container/jq.
 
-If you're building directly from the latest git, you'll need flex,
-bison (3.0 or newer), libtool, make, automake, and autoconf installed.
+If you're building directly from the latest git, you'll need libtool, make, automake,
+and autoconf installed.
 To get regexp support you'll also need to install Oniguruma or clone it as a
-git submodule as per the instructions below.
-(note that jq's tests require regexp support to pass).  To build, run:
+git submodule as per the instructions below. To build, run:
 
     git submodule update --init # if building from git to get oniguruma
     autoreconf -i               # if building from git
@@ -29,13 +29,8 @@ git submodule as per the instructions below.
     make -j8
     make check
 
-To build without bison or flex, add `--disable-maintainer-mode` to the
-./configure invocation:
-
-    ./configure --with-oniguruma=builtin --disable-maintainer-mode
-
-(Developers must not use `--disable-maintainer-mode`, not when making
-changes to the jq parser and/or lexer.)
+Developers must `--enable-maintainer-mode` when making changes to the
+jq parser and lexer which also requires bison and flex to be installed.
 
 To build a statically linked version of jq, run:
 
@@ -66,6 +61,13 @@ Use the `--host=` and `--target=` ./configure options to select a
 cross-compilation environment.  See also
 ["Cross compilation"](https://github.com/jqlang/jq/wiki/Cross-compilation) on
 the wiki.
+
+To compile jq to WebAssembly, install the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html), then:
+
+    git submodule update --init # if building from git to get oniguruma
+    autoreconf -i               # if building from git
+    emconfigure ./configure --with-oniguruma=builtin
+    emmake make EXEEXT=.js CFLAGS="-O2" LDFLAGS="-s EXPORTED_RUNTIME_METHODS=['callMain']"
 
 
 # Community

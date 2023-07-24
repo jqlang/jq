@@ -97,6 +97,7 @@ body:
          [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-solaris11-32).
 
       ### Windows
+
        * Use [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/)
          to install jq with `winget install jqlang.jq`.
 
@@ -154,12 +155,12 @@ body:
       You can build it using the usual `./configure && make && sudo
       make install` rigmarole.
 
-      If you're interested in using the lastest development version, try:
+      If you're interested in using the latest development version, try:
 
           git clone --recursive https://github.com/jqlang/jq.git
           cd jq
           autoreconf -i
-          ./configure --disable-maintainer-mode
+          ./configure
           make
           sudo make install
 
@@ -180,11 +181,17 @@ body:
       by Apple. This can be found in [Homebrew](http://brew.sh) or
       [MacPorts](https://macports.org/).
 
-      The `--disable-maintainer-mode` flag says to use the pre-generated lexer
-      and parser that come with the code. To compile the lexer and parser also
-      from source, leave out this flag. You will need to install
+      If you want to generate the lexer and parser from source you can use the
+      `--enable-maintainer-mode` configure flag. This requires bison to be installed.
       [Flex](https://github.com/westes/flex) and
       [Bison](https://www.gnu.org/software/bison/).
+
+      ### Docker
+
+      Docker image is available from
+      [GitHub Container Registry](https://github.com/jqlang/jq/pkgs/container/jq).
+
+          docker run -i --rm ghcr.io/jqlang/jq -n 'range(3)'
 
       #### Building the documentation
 

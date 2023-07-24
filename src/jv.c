@@ -46,15 +46,6 @@
 #include "jv_unicode.h"
 #include "util.h"
 
-#include "jv_dtoa.h"
-#include "jv_dtoa_tsd.h"
-
-// this means that we will manage the space for the struct
-#define DECNUMDIGITS 1
-#include "decNumber/decNumber.h"
-
-#include "jv_type_private.h"
-
 /*
  * Internal refcounting helpers
  */
@@ -204,6 +195,14 @@ static void jvp_invalid_free(jv x) {
  * Numbers
  */
 
+#ifdef USE_DECNUM
+#include "jv_dtoa.h"
+#include "jv_dtoa_tsd.h"
+
+// we will manage the space for the struct
+#define DECNUMDIGITS 1
+#include "decNumber/decNumber.h"
+
 enum {
   JVP_NUMBER_NATIVE = 0,
   JVP_NUMBER_DECIMAL = 1
@@ -213,7 +212,6 @@ enum {
 #define JV_NUMBER_SIZE_CONVERTED (1)
 
 #define JVP_FLAGS_NUMBER_NATIVE       JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_NATIVE, 0))
-#define JVP_FLAGS_NUMBER_NATIVE_STR   JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_NATIVE, 1))
 #define JVP_FLAGS_NUMBER_LITERAL      JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_DECIMAL, 1))
 
 // the decimal precision of binary double
@@ -629,10 +627,10 @@ static double jvp_literal_number_to_double(jv j) {
 
   decNumber *p_dec_number = jvp_dec_number_ptr(j);
   decNumberDoublePrecision dec_double;
-  char literal[BIN64_DEC_PRECISION + DEC_NUMBER_STRING_GUARD + 1]; 
+  char literal[BIN64_DEC_PRECISION + DEC_NUMBER_STRING_GUARD + 1];
 
   // reduce the number to the shortest possible form
-  // while also making sure than no more than BIN64_DEC_PRECISION 
+  // while also making sure than no more than BIN64_DEC_PRECISION
   // digits are used (dec_context_to_double)
   decNumberReduce(&dec_double.number, p_dec_number, DEC_CONTEXT_TO_DOUBLE());
 
@@ -640,11 +638,6 @@ static double jvp_literal_number_to_double(jv j) {
 
   char *end;
   return jvp_strtod(tsd_dtoa_context_get(), literal, &end);
-}
-
-
-static int jvp_number_equal(jv a, jv b) {
-  return jvp_number_cmp(a, b) == 0;
 }
 
 static const char* jvp_literal_number_literal(jv n) {
@@ -671,7 +664,7 @@ static const char* jvp_literal_number_literal(jv n) {
 
     // Preserve the actual precision as we have parsed it
     // don't do decNumberTrim(pdec);
-    
+
     decNumberToString(pdec, plit->literal_data);
   }
 
@@ -693,8 +686,26 @@ const char* jv_number_get_literal(jv n) {
   }
 }
 
+jv jv_number_with_literal(const char * literal) {
+  return jvp_literal_number_new(literal);
+}
+#endif /* USE_DECNUM */
+
+jv jv_number(double x) {
+  jv j = {
+#ifdef USE_DECNUM
+    JVP_FLAGS_NUMBER_NATIVE,
+#else
+    JV_KIND_NUMBER,
+#endif
+    0, 0, 0, {.number = x}
+  };
+  return j;
+}
+
 static void jvp_number_free(jv j) {
   assert(JVP_HAS_KIND(j, JV_KIND_NUMBER));
+#ifdef USE_DECNUM
   if (JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_LITERAL) && jvp_refcnt_dec(j.u.ptr)) {
     jvp_literal_number* n = jvp_literal_number_ptr(j);
     if (n->literal_data) {
@@ -702,15 +713,7 @@ static void jvp_number_free(jv j) {
     }
     jv_mem_free(n);
   }
-}
-
-jv jv_number_with_literal(const char * literal) {
-  return jvp_literal_number_new(literal);
-}
-
-jv jv_number(double x) {
-  jv j = {JVP_FLAGS_NUMBER_NATIVE, 0, 0, 0, {.number = x}};
-  return j;
+#endif
 }
 
 double jv_number_value(jv j) {
@@ -725,16 +728,13 @@ double jv_number_value(jv j) {
     }
 
     return n->num_double;
-  } else {
-#endif
-    return j.u.number;
-#ifdef USE_DECNUM
   }
 #endif
+  return j.u.number;
 }
 
 int jv_is_integer(jv j){
-  if(!JVP_HAS_KIND(j, JV_KIND_NUMBER)){
+  if (!JVP_HAS_KIND(j, JV_KIND_NUMBER)){
     return 0;
   }
 
@@ -749,22 +749,24 @@ int jv_is_integer(jv j){
 int jvp_number_is_nan(jv n) {
   assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
 
+#ifdef USE_DECNUM
   if (JVP_HAS_FLAGS(n, JVP_FLAGS_NUMBER_LITERAL)) {
     decNumber *pdec = jvp_dec_number_ptr(n);
     return decNumberIsNaN(pdec);
-  } else {
-    return n.u.number != n.u.number;
   }
+#endif
+  return n.u.number != n.u.number;
 }
 
 int jvp_number_cmp(jv a, jv b) {
   assert(JVP_HAS_KIND(a, JV_KIND_NUMBER));
   assert(JVP_HAS_KIND(b, JV_KIND_NUMBER));
 
-  if(JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_LITERAL) && JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_LITERAL)) {
-    decNumberSingle res; 
-    decNumberCompare(&res.number, 
-                     jvp_dec_number_ptr(a), 
+#ifdef USE_DECNUM
+  if (JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_LITERAL) && JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_LITERAL)) {
+    decNumberSingle res;
+    decNumberCompare(&res.number,
+                     jvp_dec_number_ptr(a),
                      jvp_dec_number_ptr(b),
                      DEC_CONTEXT()
                      );
@@ -775,16 +777,20 @@ int jvp_number_cmp(jv a, jv b) {
     } else {
       return 1;
     }
-  } else {
-    double da = jv_number_value(a), db = jv_number_value(b);
-    if (da < db) {
-      return -1;
-    } else if (da == db) {
-      return 0;
-    } else {
-      return 1;
-    }
   }
+#endif
+  double da = jv_number_value(a), db = jv_number_value(b);
+  if (da < db) {
+    return -1;
+  } else if (da == db) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+static int jvp_number_equal(jv a, jv b) {
+  return jvp_number_cmp(a, b) == 0;
 }
 
 /*
@@ -1296,7 +1302,7 @@ jv jv_string_indexes(jv j, jv k) {
     p = jstr;
     while ((p = _jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
       a = jv_array_append(a, jv_number(p - jstr));
-      p += idxlen;
+      p++;
     }
   }
   jv_free(j);

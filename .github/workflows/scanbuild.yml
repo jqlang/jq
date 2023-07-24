@@ -49,9 +49,7 @@ jobs:
                 MAKEVARS: ${{ matrix.makevars }}
               run: |
                 autoreconf -i
-                rm src/lexer.c src/lexer.h
-                rm src/parser.c src/parser.h
-                ./configure --with-oniguruma=builtin YACC="$(which bison) -y" $COVERAGE
+                ./configure --with-oniguruma=builtin $COVERAGE
                 scan-build --keep-going make -j4
             - name: Test
               env:

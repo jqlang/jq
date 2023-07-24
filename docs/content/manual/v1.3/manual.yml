@@ -76,8 +76,8 @@ sections:
       jq filters run on a stream of JSON data. The input to jq is
       parsed as a sequence of whitespace-separated JSON values which
       are passed through the provided filter one at a time. The
-      output(s) of the filter are written to standard out, again as a
-      sequence of whitespace-separated JSON data.
+      output(s) of the filter are written to standard output, as a
+      sequence of newline-separated JSON data.
 
       You can affect how jq reads and writes its input and output
       using some command-line options:
@@ -162,7 +162,7 @@ sections:
         examples:
           - program: '.foo'
             input: '{"foo": 42, "bar": "less interesting data"}'
-            output: [42]
+            output: ['42']
           - program: '.foo'
             input: '{"notfoo": true, "alsonotfoo": false}'
             output: ['null']
@@ -172,9 +172,8 @@ sections:
 
           You can also look up fields of an object using syntax like
           `.["foo"]` (`.foo` above is a shorthand version of this). This
-          one works for arrays as well, if the key is an
-          integer. Arrays are zero-based (like javascript), so `.[2]`
-          returns the third element of the array.
+          one works for arrays as well, if the key is an integer. Arrays
+          are zero-based, so `.[2]` returns the third element of the array.
 
           The `.[10:15]` syntax can be used to return a subarray of an
           array. The array returned by `.[10:15]` will be of length 5,
@@ -279,7 +278,7 @@ sections:
       hashes with only string keys), and "null".
 
       Booleans, null, strings and numbers are written the same way as
-      in javascript. Just like everything else in jq, these simple
+      in JSON. Just like everything else in jq, these simple
       values take an input and produce an output - `42` is a valid jq
       expression that takes an input, ignores it, and returns 42
       instead.
@@ -438,8 +437,8 @@ sections:
 
         examples:
           - program: '10 / . * 3'
-            input: 5
-            output: [6]
+            input: '5'
+            output: ['6']
 
       - title: '`length`'
         body: |
@@ -460,7 +459,7 @@ sections:
         examples:
           - program: '.[] | length'
             input: '[[1,2], "string", {"a":2}, null]'
-            output: [2, 6, 1, 0]
+            output: ['2', '6', '1', '0']
 
       - title: '`keys`'
         body: |
@@ -554,7 +553,7 @@ sections:
         examples:
           - program: '1, empty, 2'
             input: 'null'
-            output: [1, 2]
+            output: ['1', '2']
           - program: '[1,2,empty,3]'
             input: 'null'
             output: ['[1,2,3]']
@@ -591,7 +590,7 @@ sections:
             output: ['"abc"']
           - program: add
             input: '[1, 2, 3]'
-            output: [6]
+            output: ['6']
           - program: add
             input: '[]'
             output: ["null"]
@@ -622,7 +621,7 @@ sections:
         examples:
           - program: '.[] | tonumber'
             input: '[1, "1"]'
-            output: [1, 1]
+            output: ['1', '1']
 
       - title: '`tostring`'
         body: |
@@ -907,7 +906,7 @@ sections:
           means that you'll sometimes have to be more explicit about
           the condition you want: you can't test whether, e.g. a
           string is empty using `if .name then A else B end`, you'll
-          need something more like `if (.name | count) > 0 then A else
+          need something more like `if (.name | length) > 0 then A else
           B end` instead.
 
           If the condition `A` produces multiple results, then `B` is evaluated
@@ -925,7 +924,7 @@ sections:
               else
                 "many"
               end
-            input: 2
+            input: '2'
             output: ['"many"']
 
       - title: "`>`, `>=`, `<=`, `<`"
@@ -940,7 +939,7 @@ sections:
 
         examples:
           - program: '. < 5'
-            input: 2
+            input: '2'
             output: ['true']
 
       - title: "`and`, `or`, `not`"
@@ -996,10 +995,10 @@ sections:
         examples:
           - program: '.foo // 42'
             input: '{"foo": 19}'
-            output: [19]
+            output: ['19']
           - program: '.foo // 42'
             input: '{}'
-            output: [42]
+            output: ['42']
 
   - title: Advanced features
     body: |
@@ -1040,7 +1039,7 @@ sections:
           produces its sum, and the `length` expression is given the array and
           produces its length.
 
-          So, there's generally a cleaner way to solve most problems in jq that
+          So, there's generally a cleaner way to solve most problems in jq than
           defining variables. Still, sometimes they do make things easier, so jq
           lets you define variables using `expression as $variable`. All
           variable names start with `$`. Here's a slightly uglier version of the
@@ -1128,29 +1127,29 @@ sections:
             input: '[[1,2],[10,20]]'
             output: ['[[1,2,1,2], [10,20,1,2]]']
 
-      - title: Reduce
+      - title: "`reduce`"
         body: |
 
-          The `reduce` syntax in jq allows you to combine all of the
-          results of an expression by accumulating them into a single
-          answer. As an example, we'll pass `[3,2,1]` to this expression:
+          The `reduce` syntax allows you to combine all of the results of
+          an expression by accumulating them into a single answer.
+          The form is `reduce EXP as $var (INIT; UPDATE)`.
+          As an example, we'll pass `[1,2,3]` to this expression:
 
               reduce .[] as $item (0; . + $item)
 
           For each result that `.[]` produces, `. + $item` is run to
-          accumulate a running total, starting from 0. In this
-          example, `.[]` produces the results 3, 2, and 1, so the
-          effect is similar to running something like this:
+          accumulate a running total, starting from 0 as the input value.
+          In this example, `.[]` produces the results `1`, `2`, and `3`,
+          so the effect is similar to running something like this:
 
-              0 | (3 as $item | . + $item) |
-                  (2 as $item | . + $item) |
-                  (1 as $item | . + $item)
+              0 | 1 as $item | . + $item |
+                  2 as $item | . + $item |
+                  3 as $item | . + $item
 
         examples:
           - program: 'reduce .[] as $item (0; . + $item)'
-            input: '[10,2,5,3]'
-            output: ['20']
-
+            input: '[1,2,3,4,5]'
+            output: ['15']
 
   - title: Assignment
     body: |

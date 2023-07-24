@@ -90,7 +90,6 @@ jobs:
           ./configure \
             --host=${{ matrix.CC }} \
             --disable-docs \
-            --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
@@ -102,7 +101,7 @@ jobs:
         # Only run tests for amd64 matching the CI machine arch
         if: ${{ matrix.arch == 'amd64' }}
         run: |
-          make check
+          make check VERBOSE=yes
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -156,7 +155,6 @@ jobs:
           ./configure \
             --host="${{ matrix.target }}$(uname -r)" \
             --disable-docs \
-            --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
@@ -169,7 +167,7 @@ jobs:
         # Only run tests for amd64 matching the CI machine arch
         if: ${{ matrix.arch == 'amd64' }}
         run: |
-          make check
+          make check VERBOSE=yes
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -233,7 +231,6 @@ jobs:
           ./configure \
             --host=${{ matrix.CC }} \
             --disable-docs \
-            --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
             --disable-shared \
@@ -247,7 +244,7 @@ jobs:
         if: ${{ matrix.arch == 'amd64' }}
         shell: msys2 {0}
         run: |
-          make check
+          make check VERBOSE=yes
           git diff --exit-code --ignore-submodules
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -282,7 +279,6 @@ jobs:
           autoreconf -i
           ./configure \
             --disable-docs \
-            --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin
           make distcheck

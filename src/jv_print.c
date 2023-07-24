@@ -25,16 +25,14 @@
 #define COLRESET (ESC "[0m")
 
 // Color table. See https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-// for how to choose these.
-static const jv_kind color_kinds[] =
-  {JV_KIND_NULL,   JV_KIND_FALSE, JV_KIND_TRUE, JV_KIND_NUMBER,
-   JV_KIND_STRING, JV_KIND_ARRAY, JV_KIND_OBJECT};
-static char color_bufs[sizeof(color_kinds)/sizeof(color_kinds[0])][16];
+// for how to choose these. The order is same as jv_kind definition, and
+// the last color is used for object keys.
+static char color_bufs[8][16];
 static const char *color_bufps[8];
 static const char* def_colors[] =
   {COL("1;30"),    COL("0;37"),      COL("0;37"),     COL("0;37"),
-   COL("0;32"),      COL("1;37"),     COL("1;37")};
-#define FIELD_COLOR COL("34;1")
+   COL("0;32"),    COL("1;37"),      COL("1;37"),     COL("1;34")};
+#define FIELD_COLOR (colors[7])
 
 static const char **colors = def_colors;
 
@@ -194,14 +192,9 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
   char buf[JVP_DTOA_FMT_MAX_LEN];
   const char* color = 0;
   double refcnt = (flags & JV_PRINT_REFCOUNT) ? jv_get_refcnt(x) - 1 : -1;
-  if (flags & JV_PRINT_COLOR) {
-    for (unsigned i=0; i<sizeof(color_kinds)/sizeof(color_kinds[0]); i++) {
-      if (jv_get_kind(x) == color_kinds[i]) {
-        color = colors[i];
-        put_str(color, F, S, flags & JV_PRINT_ISATTY);
-        break;
-      }
-    }
+  if ((flags & JV_PRINT_COLOR) && jv_get_kind(x) != JV_KIND_INVALID) {
+    color = colors[(int)jv_get_kind(x) - 1];
+    put_str(color, F, S, flags & JV_PRINT_ISATTY);
   }
   if (indent > MAX_PRINT_DEPTH) {
     put_str("<skipped: too deep>", F, S, flags & JV_PRINT_ISATTY);

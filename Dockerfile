@@ -19,14 +19,13 @@ COPY . /app
 RUN autoreconf -i \
  && ./configure \
       --disable-docs \
-      --disable-maintainer-mode \
       --disable-valgrind \
       --with-oniguruma=builtin \
       --enable-static \
       --enable-all-static \
       --prefix=/usr/local \
  && make -j$(nproc) \
- && make check \
+ && make check VERBOSE=yes \
  && make install-strip
 
 FROM scratch

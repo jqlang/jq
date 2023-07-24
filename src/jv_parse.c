@@ -246,6 +246,17 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
   case '[':
     if (jv_is_valid(p->next))
       return "Expected a separator between values";
+    if (p->last_seen == JV_LAST_OPEN_OBJECT)
+      // Looks like {["foo"]}
+      return "Expected string key after '{', not '['";
+    if (p->last_seen == JV_LAST_COMMA) {
+      last = jv_array_get(jv_copy(p->path), p->stacklen - 1);
+      k = jv_get_kind(last);
+      jv_free(last);
+      if (k != JV_KIND_NUMBER)
+        // Looks like {"x":"y",["foo"]}
+        return "Expected string key after ',' in object, not '['";
+    }
     p->path = jv_array_append(p->path, jv_number(0)); // push
     p->last_seen = JV_LAST_OPEN_ARRAY;
     p->stacklen++;
@@ -254,6 +265,17 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
   case '{':
     if (p->last_seen == JV_LAST_VALUE)
       return "Expected a separator between values";
+    if (p->last_seen == JV_LAST_OPEN_OBJECT)
+      // Looks like {{"foo":"bar"}}
+      return "Expected string key after '{', not '{'";
+    if (p->last_seen == JV_LAST_COMMA) {
+      last = jv_array_get(jv_copy(p->path), p->stacklen - 1);
+      k = jv_get_kind(last);
+      jv_free(last);
+      if (k != JV_KIND_NUMBER)
+        // Looks like {"x":"y",{"foo":"bar"}}
+        return "Expected string key after ',' in object, not '{'";
+    }
     // Push object key: null, since we don't know it yet
     p->path = jv_array_append(p->path, jv_null()); // push
     p->last_seen = JV_LAST_OPEN_OBJECT;

@@ -1,5 +1,3 @@
-
-#define _GNU_SOURCE /* for RTLD_NEXT */
 #include <assert.h>
 #include <dlfcn.h>
 #include <errno.h>

@@ -1,8 +1,3 @@
-
-#ifdef HAVE_MEMMEM
-#define _GNU_SOURCE
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -27,9 +22,6 @@ extern "C"
 #  endif
 void *alloca (size_t);
 # endif
-#endif
-#ifndef WIN32
-#include <pwd.h>
 #endif
 
 #ifdef WIN32
@@ -103,11 +95,7 @@ jv get_home() {
   char *home = getenv("HOME");
   if (!home) {
 #ifndef WIN32
-    struct passwd* pwd = getpwuid(getuid());
-    if (pwd)
-      ret = jv_string(pwd->pw_dir);
-    else
-      ret = jv_invalid_with_msg(jv_string("Could not find home directory."));
+    ret = jv_invalid_with_msg(jv_string("Could not find home directory."));
 #else
     home = getenv("USERPROFILE");
     if (!home) {

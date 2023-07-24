@@ -1,6 +1,3 @@
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE
-#endif
 #ifndef __sun__
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED 1
@@ -199,8 +196,7 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
 #undef LIBM_DDD
 #undef LIBM_DD
 
-#ifdef __APPLE__ // Clean up after ourselves
-#undef HAVE_CUSTOM_SIGNIFICAND
+#ifdef __APPLE__
 #undef gamma
 #undef drem
 #undef significand
@@ -1014,7 +1010,17 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
         jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
         match = jv_object_set(match, jv_string("length"), jv_number(0));
         match = jv_object_set(match, jv_string("string"), jv_string(""));
-        match = jv_object_set(match, jv_string("captures"), jv_array());
+        jv captures = jv_array();
+        for (int i = 1; i < region->num_regs; ++i) {
+          jv cap = jv_object();
+          cap = jv_object_set(cap, jv_string("offset"), jv_number(idx));
+          cap = jv_object_set(cap, jv_string("string"), jv_string(""));
+          cap = jv_object_set(cap, jv_string("length"), jv_number(0));
+          cap = jv_object_set(cap, jv_string("name"), jv_null());
+          captures = jv_array_append(captures, cap);
+        }
+        onig_foreach_name(reg, f_match_name_iter, &captures);
+        match = jv_object_set(match, jv_string("captures"), captures);
         result = jv_array_append(result, match);
         // ensure '"qux" | match("(?=u)"; "g")' matches just once
         start = (const UChar*)(input_string+region->end[0]+1);
@@ -1088,8 +1094,6 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   } while (global && start <= end);
   onig_region_free(region,1);
   region = NULL;
-  if (region)
-    onig_region_free(region,1);
   onig_free(reg);
   jv_free(input);
   jv_free(regex);
@@ -1097,6 +1101,10 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
 }
 #else /* !HAVE_LIBONIG */
 static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
+  jv_free(input);
+  jv_free(regex);
+  jv_free(modifiers);
+  jv_free(testmode);
   return jv_invalid_with_msg(jv_string("jq was compiled without ONIGURUMA regex library. match/test/sub and related functions are not available."));
 }
 #endif /* HAVE_LIBONIG */
@@ -1317,7 +1325,11 @@ static jv f_debug(jq_state *jq, jv input) {
 }
 
 static jv f_stderr(jq_state *jq, jv input) {
-  jv_dumpf(jv_copy(input), stderr, 0);
+  jq_msg_cb cb;
+  void *data;
+  jq_get_stderr_cb(jq, &cb, &data);
+  if (cb != NULL)
+    cb(data, jv_copy(input));
   return input;
 }
 
@@ -1532,6 +1544,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
     do {                                        \
       jv n = jv_array_get(jv_copy(j), (i));     \
       if (jv_get_kind(n) != (JV_KIND_NUMBER)) { \
+        jv_free(n);                             \
         jv_free(j);                             \
         return 0;                               \
       }                                         \
@@ -1701,7 +1714,7 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   }
   struct tm tm;
   if (!jv2tm(a, &tm))
-    return jv_invalid_with_msg(jv_string("strflocaltime/1 requires parsed datetime inputs"));
+    return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
   char *buf = alloca(alloced);
@@ -1926,6 +1939,9 @@ static const char jq_builtins[] =
 #undef LIBM_DDD
 #undef LIBM_DD
 
+#ifdef __APPLE__
+#undef HAVE_CUSTOM_SIGNIFICAND
+#endif
 
 static block gen_builtin_list(block builtins) {
   jv list = jv_array_append(block_list_funcs(builtins, 1), jv_string("builtins/0"));
