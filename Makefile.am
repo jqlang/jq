@@ -229,7 +229,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/jq.test tests/onig.test tests/base64.test                 \
         tests/utf8-truncate.jq tests/jq-f-test.sh
 
-AM_DISTCHECK_CONFIGURE_FLAGS=--disable-maintainer-mode --with-oniguruma=builtin
+AM_DISTCHECK_CONFIGURE_FLAGS=--with-oniguruma=builtin
 
 # README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.

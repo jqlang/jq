@@ -9,7 +9,7 @@ AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([1.11.2 subdir-objects parallel-tests foreign -Wall])
 AM_SILENT_RULES([yes])
 AM_PROG_AR
-AM_MAINTAINER_MODE([enable])
+AM_MAINTAINER_MODE([disable])
 AC_PROG_CC
 m4_version_prereq([2.70], [], [AC_PROG_CC_STDC])
 AC_PROG_CPP_WERROR
@@ -33,7 +33,7 @@ if test "$USE_MAINTAINER_MODE" = yes; then
   else
     AX_PROG_BISON_VERSION([3],
       [],
-      [AC_MSG_ERROR([You need bison version 3.0 or greater, or use --disable-maintainer-mode.])])
+      [AC_MSG_ERROR([You need bison version 3.0 or greater])])
   fi
 
   AC_CHECK_PROGS(LEX, flex lex)

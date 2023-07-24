@@ -22,7 +22,6 @@ jobs:
           autoreconf -i
           ./configure \
             --disable-docs \
-            --disable-maintainer-mode \
             --with-oniguruma=yes
           make -j"$(nproc)"
           file ./jq
@@ -55,7 +54,6 @@ jobs:
           autoreconf -i
           ./configure \
             --disable-docs \
-            --disable-maintainer-mode \
             --with-oniguruma=no
           make -j"$(nproc)"
           file ./jq
