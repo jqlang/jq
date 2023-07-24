@@ -1479,6 +1479,10 @@ transpose
 [[1], [2,3]]
 [[1,2],[null,3]]
 
+transpose
+[]
+[]
+
 ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"

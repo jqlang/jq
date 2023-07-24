@@ -182,7 +182,7 @@ def combinations(n):
 # transpose a possibly jagged matrix, quickly;
 # rows are padded with nulls so the result is always rectangular.
 # Using map(length) turns out to be faster than using max(stream)
-def transpose: [range(0; map(length)|max) as $i | [.[][$i]]];
+def transpose: [range(0; map(length)|max // 0) as $i | [.[][$i]]];
 def in(xs): . as $x | xs | has($x);
 def inside(xs): . as $x | xs | contains($x);
 def repeat(exp):
