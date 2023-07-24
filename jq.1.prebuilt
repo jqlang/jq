@@ -1970,9 +1970,6 @@ jq \'join(" ")\'
 .SS "ascii_downcase, ascii_upcase"
 Emit a copy of the input string with its alphabetic characters (a\-z and A\-Z) converted to the specified case\.
 .
-.SS "downcase, upcase"
-Emit a copy of the input string with its characters (unicode) converted to the specified case\.
-.
 .IP "" 4
 .
 .nf
@@ -1980,6 +1977,21 @@ Emit a copy of the input string with its characters (unicode) converted to the s
 jq \'ascii_upcase\'
    "useful but not for é"
 => "USEFUL BUT NOT FOR é"
+.
+.fi
+.
+.IP "" 0
+.
+.SS "downcase, upcase"
+Emit a copy of the input string with its characters (unicode) converted to the specified case\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'upcase\'
+   "useful for é"
+=> "USEFUL FOR É"
 .
 .fi
 .
