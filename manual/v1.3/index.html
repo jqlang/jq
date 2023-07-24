@@ -130,8 +130,8 @@ simpler:</p>
               <p>jq filters run on a stream of JSON data. The input to jq is
 parsed as a sequence of whitespace-separated JSON values which
 are passed through the provided filter one at a time. The
-output(s) of the filter are written to standard out, again as a
-sequence of whitespace-separated JSON data.</p>
+output(s) of the filter are written to standard output, as a
+sequence of newline-separated JSON data.</p>
 <p>You can affect how jq reads and writes its input and output
 using some command-line options:</p>
 <ul>
@@ -291,9 +291,8 @@ the value at the key "foo", or null if there's none present.</p>
                   </h3>
                   <p>You can also look up fields of an object using syntax like
 <code>.["foo"]</code> (<code>.foo</code> above is a shorthand version of this). This
-one works for arrays as well, if the key is an
-integer. Arrays are zero-based (like javascript), so <code>.[2]</code>
-returns the third element of the array.</p>
+one works for arrays as well, if the key is an integer. Arrays
+are zero-based, so <code>.[2]</code> returns the third element of the array.</p>
 <p>The <code>.[10:15]</code> syntax can be used to return a subarray of an
 array. The array returned by <code>.[10:15]</code> will be of length 5,
 containing the elements from index 10 (inclusive) to index
@@ -619,7 +618,7 @@ element of the input array.</p>
 strings, booleans, arrays, objects (which in JSON-speak are
 hashes with only string keys), and "null".</p>
 <p>Booleans, null, strings and numbers are written the same way as
-in javascript. Just like everything else in jq, these simple
+in JSON. Just like everything else in jq, these simple
 values take an input and produce an output - <code>42</code> is a valid jq
 expression that takes an input, ignores it, and returns 42
 instead.</p>
@@ -2240,7 +2239,7 @@ as <code>C</code> otherwise.</p>
 means that you'll sometimes have to be more explicit about
 the condition you want: you can't test whether, e.g. a
 string is empty using <code>if .name then A else B end</code>, you'll
-need something more like <code>if (.name | count) &gt; 0 then A else
+need something more like <code>if (.name | length) &gt; 0 then A else
 B end</code> instead.</p>
 <p>If the condition <code>A</code> produces multiple results, then <code>B</code> is evaluated
 once for each result that is not false or null, and <code>C</code> is evaluated
@@ -2533,7 +2532,7 @@ array, perhaps one for each element or for a loop counter. In jq, it's
 simply <code>add / length</code> - the <code>add</code> expression is given the array and
 produces its sum, and the <code>length</code> expression is given the array and
 produces its length.</p>
-<p>So, there's generally a cleaner way to solve most problems in jq that
+<p>So, there's generally a cleaner way to solve most problems in jq than
 defining variables. Still, sometimes they do make things easier, so jq
 lets you define variables using <code>expression as $variable</code>. All
 variable names start with <code>$</code>. Here's a slightly uglier version of the
@@ -2667,23 +2666,24 @@ input's <code>.foo</code> field to each element of the array.</p>
                   
                 </section>
               
-                <section id="Reduce">
+                <section id="reduce">
                   <h3>
-                    Reduce
+                    <code>reduce</code>
                     
                   </h3>
-                  <p>The <code>reduce</code> syntax in jq allows you to combine all of the
-results of an expression by accumulating them into a single
-answer. As an example, we'll pass <code>[3,2,1]</code> to this expression:</p>
+                  <p>The <code>reduce</code> syntax allows you to combine all of the results of
+an expression by accumulating them into a single answer.
+The form is <code>reduce EXP as $var (INIT; UPDATE)</code>.
+As an example, we'll pass <code>[1,2,3]</code> to this expression:</p>
 <pre><code>reduce .[] as $item (0; . + $item)
 </code></pre>
 <p>For each result that <code>.[]</code> produces, <code>. + $item</code> is run to
-accumulate a running total, starting from 0. In this
-example, <code>.[]</code> produces the results 3, 2, and 1, so the
-effect is similar to running something like this:</p>
-<pre><code>0 | (3 as $item | . + $item) |
-    (2 as $item | . + $item) |
-    (1 as $item | . + $item)
+accumulate a running total, starting from 0 as the input value.
+In this example, <code>.[]</code> produces the results <code>1</code>, <code>2</code>, and <code>3</code>,
+so the effect is similar to running something like this:</p>
+<pre><code>0 | 1 as $item | . + $item |
+    2 as $item | . + $item |
+    3 as $item | . + $item
 </code></pre>
 
                   
@@ -2697,14 +2697,14 @@ effect is similar to running something like this:</p>
                         
                           <table>
                             <tr><th></th><td class="jqprogram">jq 'reduce .[] as $item (0; . + $item)'</td></tr>
-                            <tr><th>Input</th><td>[10,2,5,3]</td></tr>
+                            <tr><th>Input</th><td>[1,2,3,4,5]</td></tr>
                             
                             
                               <tr>
                                 
                                   <th>Output</th>
                                 
-                                <td>20</td>
+                                <td>15</td>
                               </tr>
                             
                           </table>
@@ -2973,7 +2973,7 @@ that we did before:</p>
           
             "Defining Functions" : "DefiningFunctions",
           
-            "Reduce" : "Reduce",
+            "reduce" : "reduce",
           
           "Advanced features" : "Advancedfeatures"
           ,
