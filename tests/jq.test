@@ -1511,6 +1511,19 @@ gmtime
 1425599507
 [2015,2,5,23,51,47,4,63]
 
+# test invalid tm input
+try strftime("%Y-%m-%dT%H:%M:%SZ") catch .
+["a",1,2,3,4,5,6,7]
+"strftime/1 requires parsed datetime inputs"
+
+try strflocaltime("%Y-%m-%dT%H:%M:%SZ") catch .
+["a",1,2,3,4,5,6,7]
+"strflocaltime/1 requires parsed datetime inputs"
+
+try mktime catch .
+["a",1,2,3,4,5,6,7]
+"mktime requires parsed datetime inputs"
+
 # module system
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
 null
