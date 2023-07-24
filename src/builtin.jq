@@ -181,14 +181,8 @@ def combinations(n):
       | combinations;
 # transpose a possibly jagged matrix, quickly;
 # rows are padded with nulls so the result is always rectangular.
-def transpose:
-  if . == [] then []
-  else . as $in
-  | (map(length) | max) as $max
-  | length as $length
-  | reduce range(0; $max) as $j
-      ([]; . + [reduce range(0;$length) as $i ([]; . + [ $in[$i][$j] ] )] )
-  end;
+# Using map(length) turns out to be faster than using max(stream)
+def transpose: [range(0; map(length)|max) as $i | [.[][$i]]];
 def in(xs): . as $x | xs | has($x);
 def inside(xs): . as $x | xs | contains($x);
 def repeat(exp):
