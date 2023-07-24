@@ -1814,10 +1814,10 @@ sections:
           Emit a copy of the input string with its characters (unicode) converted to the
           specified case.
 
-        example:
+        examples:
           - program: 'upcase'
             input: '"useful for é"'
-            output: '"USEFUL FOR É"'
+            output: ['"USEFUL FOR É"']
 
       - title: "`while(cond; update)`"
         body: |

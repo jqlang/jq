@@ -4,6 +4,6 @@ url: https://jqlang.github.io/jq
 
 # This line is modified by the Makefile. To change the version number,
 # edit the Autoconf version number at the top of configure.ac
-jq_version: "1.6-159-gcff5336-dirty"
+jq_version: "1.6-287-g8f19800-dirty"
 
 root: '/jq'
