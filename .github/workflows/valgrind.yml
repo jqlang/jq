@@ -22,7 +22,6 @@ jobs:
         run: |
           autoreconf -i
           ./configure \
-            --disable-maintainer-mode \
             --disable-docs \
             --with-oniguruma=builtin
           make -j"$(nproc)"

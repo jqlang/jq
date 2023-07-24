@@ -90,7 +90,6 @@ jobs:
           ./configure \
             --host=${{ matrix.CC }} \
             --disable-docs \
-            --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
@@ -156,7 +155,6 @@ jobs:
           ./configure \
             --host="${{ matrix.target }}$(uname -r)" \
             --disable-docs \
-            --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
@@ -233,7 +231,6 @@ jobs:
           ./configure \
             --host=${{ matrix.CC }} \
             --disable-docs \
-            --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin \
             --disable-shared \
@@ -282,7 +279,6 @@ jobs:
           autoreconf -i
           ./configure \
             --disable-docs \
-            --disable-maintainer-mode \
             --disable-valgrind \
             --with-oniguruma=builtin
           make distcheck

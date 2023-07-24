@@ -160,7 +160,7 @@ body:
           git clone --recursive https://github.com/jqlang/jq.git
           cd jq
           autoreconf -i
-          ./configure --disable-maintainer-mode
+          ./configure
           make
           sudo make install
 
@@ -181,9 +181,8 @@ body:
       by Apple. This can be found in [Homebrew](http://brew.sh) or
       [MacPorts](https://macports.org/).
 
-      The `--disable-maintainer-mode` flag says to use the pre-generated lexer
-      and parser that come with the code. To compile the lexer and parser also
-      from source, leave out this flag. You will need to install
+      If you want to generate the lexer and parser from source you can use the
+      `--enable-maintainer-mode` configure flag. This requires bison to be installed.
       [Flex](https://github.com/westes/flex) and
       [Bison](https://www.gnu.org/software/bison/).
 
