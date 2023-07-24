@@ -188,6 +188,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
       }
       jv actual = jq_next(jq);
       if (!jv_is_valid(actual)) {
+        jv_free(expected);
         jv_free(actual);
         printf("*** Insufficient results for test at line number %u: %s\n", lineno, prog);
         pass = 0;
