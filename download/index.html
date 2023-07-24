@@ -239,7 +239,7 @@ make install</code> rigmarole.</p>
 <pre><code>git clone --recursive https://github.com/jqlang/jq.git
 cd jq
 autoreconf -i
-./configure --disable-maintainer-mode
+./configure
 make
 sudo make install
 </code></pre>
@@ -258,9 +258,8 @@ be installed from <a href="https://developer.apple.com/xcode/">Xcode</a>. Howeve
 you may find that you need a newer version of Bison than the one provided
 by Apple. This can be found in <a href="http://brew.sh">Homebrew</a> or
 <a href="https://macports.org/">MacPorts</a>.</p>
-<p>The <code>--disable-maintainer-mode</code> flag says to use the pre-generated lexer
-and parser that come with the code. To compile the lexer and parser also
-from source, leave out this flag. You will need to install
+<p>If you want to generate the lexer and parser from source you can use the
+<code>--enable-maintainer-mode</code> configure flag. This requires bison to be installed.
 <a href="https://github.com/westes/flex">Flex</a> and
 <a href="https://www.gnu.org/software/bison/">Bison</a>.</p>
 <h3>Docker</h3>
