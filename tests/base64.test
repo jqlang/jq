@@ -33,3 +33,13 @@
 . | try @base64d catch .
 "QUJDa"
 "string (\"QUJDa\") trailing base64 byte found"
+
+# random binary data
+(. | @base64d | @base64) == .
+"zns0Su1i4JjDfGiR95WOcU8iiPMOrfJTUBm9P1ot2qIMiyk04b0WSIFNTMD7w9ziMV8nSbwpPqNl3JKF1eWZrRRg24rbvh66O1e7Z1xIGPNqTqm+jdzRCkWSryR+67wXRVgD6Q=="
+true
+
+# replace lone surrogates
+@base64
+"foo\udca9\ud83dbar"
+"Zm9v77+977+9YmFy"

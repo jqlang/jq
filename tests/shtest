@@ -122,6 +122,26 @@ fi
 cmp $d/out $d/expected
 
 
+clean=false
+# Invalid UTF-8 bytes are preserved when encoding/decoding JSON and base64 and concatenating binary strings
+if dd if=/dev/urandom bs=1024 count=1024 >$d/rand 2>/dev/null; then
+    $VALGRIND $Q $JQ -sR . $d/rand >$d/out.json
+    $VALGRIND $Q $JQ -j . $d/out.json >$d/out
+    cmp $d/out $d/rand
+    $VALGRIND $Q $JQ -jR fromjson $d/out.json >$d/out
+    cmp $d/out $d/rand
+    $VALGRIND $Q $JQ -j '@base64 | @base64d' $d/out.json >$d/out
+    cmp $d/out $d/rand
+    $VALGRIND $Q $JQ -j 'explode | implode' $d/out.json >$d/out
+    cmp $d/out $d/rand
+    base64 <$d/rand | $VALGRIND $Q $JQ -R '@base64d' | $VALGRIND $Q $JQ -sj 'add' >$d/out
+    cmp $d/out $d/rand
+    $VALGRIND $Q $JQ -nj '$a' --rawfile a $d/rand >$d/out
+    cmp $d/out $d/rand
+fi
+clean=true
+
+
 ## Test --exit-status
 data='{"i": 1}\n{"i": 2}\n{"i": 3}\n'
 printf "$data" | $JQ --exit-status 'select(.i==1)' > /dev/null 2>&1

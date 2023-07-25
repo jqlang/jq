@@ -428,7 +428,7 @@ static void tokenadd(struct jv_parser* p, char c) {
   p->tokenbuf[p->tokenpos++] = c;
 }
 
-static int unhex4(char* hex) {
+static int unhex4(const char* hex) {
   int r = 0;
   for (int i=0; i<4; i++) {
     char c = *hex++;
@@ -444,15 +444,19 @@ static int unhex4(char* hex) {
 }
 
 static pfunc found_string(struct jv_parser* p) {
-  char* in = p->tokenbuf;
-  char* out = p->tokenbuf;
-  char* end = p->tokenbuf + p->tokenpos;
+  const char* in = p->tokenbuf;
+  // start by writing to tokenbuf, only allocate in case that output size is greater than input size (possible only when input has UTF-8 errors)
+  char* newbuf = NULL;
+  char* buf = p->tokenbuf;
+  char* out = buf;
+  const char* end = p->tokenbuf + p->tokenpos;
+  const char* cstart;
+  int c;
 
-  while (in < end) {
-    char c = *in++;
+  while ((in = jvp_utf8_wtf_next((cstart = in), end, 0, &c))) {
     if (c == '\\') {
       if (in >= end)
-        return "Expected escape character at end of string";
+        return jv_mem_free(newbuf), "Expected escape character at end of string";
       c = *in++;
       switch (c) {
       case '\\':
@@ -467,38 +471,61 @@ static pfunc found_string(struct jv_parser* p) {
       case 'u':
         /* ahh, the complicated case */
         if (in + 4 > end)
-          return "Invalid \\uXXXX escape";
+          return jv_mem_free(newbuf), "Invalid \\uXXXX escape";
         int hexvalue = unhex4(in);
         if (hexvalue < 0)
-          return "Invalid characters in \\uXXXX escape";
+          return jv_mem_free(newbuf), "Invalid characters in \\uXXXX escape";
         unsigned long codepoint = (unsigned long)hexvalue;
         in += 4;
+        // leading surrogate
         if (0xD800 <= codepoint && codepoint <= 0xDBFF) {
-          /* who thought UTF-16 surrogate pairs were a good idea? */
-          if (in + 6 > end || in[0] != '\\' || in[1] != 'u')
-            return "Invalid \\uXXXX\\uXXXX surrogate pair escape";
-          unsigned long surrogate = unhex4(in+2);
-          if (!(0xDC00 <= surrogate && surrogate <= 0xDFFF))
-            return "Invalid \\uXXXX\\uXXXX surrogate pair escape";
-          in += 6;
-          codepoint = 0x10000 + (((codepoint - 0xD800) << 10)
-                                 |(surrogate - 0xDC00));
+          // look ahead for trailing surrogate and decode as UTF-16, otherwise encode this lone surrogate as WTF-8
+          if (in + 6 <= end && in[0] == '\\' && in[1] == 'u') {
+            unsigned long surrogate = unhex4(in+2);
+            if (0xDC00 <= surrogate && surrogate <= 0xDFFF) {
+              in += 6;
+              codepoint = 0x10000 + (((codepoint - 0xD800) << 10)
+                                     |(surrogate - 0xDC00));
+            }
+          }
         }
-        if (codepoint > 0x10FFFF)
-          codepoint = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
+        // UTF-16 surrogates can not encode a greater codepoint
+        assert(codepoint <= 0x10FFFF);
+        // NOTE: a leading or trailing surrogate here (0xD800 <= codepoint && codepoint <= 0xDFFF) is encoded as WTF-8
         out += jvp_utf8_encode(codepoint, out);
         break;
 
       default:
-        return "Invalid escape";
+        return jv_mem_free(newbuf), "Invalid escape";
       }
     } else {
       if (c > 0 && c < 0x001f)
-        return "Invalid string: control characters from U+0000 through U+001F must be escaped";
-      *out++ = c;
+        return jv_mem_free(newbuf), "Invalid string: control characters from U+0000 through U+001F must be escaped";
+      if (c == -1) {
+        int error = (unsigned char)*cstart;
+        assert(error >= 0x80 && error <= 0xFF);
+        c = -error;
+        /* Ensure each UTF-8 error byte is consumed separately */
+        const int wtf8_length = 2;
+        assert(jvp_utf8_encode_length(c) == wtf8_length);
+        in = cstart + 1;
+        if (newbuf == NULL && out + wtf8_length > in) {
+          /* Output is about to overflow input, move output to temporary buffer */
+          int current_size = out - p->tokenbuf;
+          int remaining = end - cstart;
+          newbuf = jv_mem_alloc(current_size + remaining * wtf8_length); // worst case: all remaining bad bytes, each becomes a 2-byte overlong U+XX
+          memcpy(newbuf, buf, current_size);
+          buf = newbuf;
+          out = buf + current_size;
+        }
+      } else
+        assert(jvp_utf8_encode_length(c) == in - cstart);
+      out += jvp_utf8_encode(c, out);
     }
   }
-  TRY(value(p, jv_string_sized(p->tokenbuf, out - p->tokenbuf)));
+  jv v = jv_string_wtf_sized(buf, out - buf);
+  jv_mem_free(newbuf);
+  TRY(value(p, v));
   p->tokenpos = 0;
   return 0;
 }
@@ -858,35 +885,63 @@ jv jv_parser_next(struct jv_parser* p) {
   }
 }
 
-jv jv_parse_sized(const char* string, int length) {
+static jv jvp_parse_sized(const char* string, int length, int extended) {
   struct jv_parser parser;
   parser_init(&parser, 0);
-  jv_parser_set_buf(&parser, string, length, 0);
-  jv value = jv_parser_next(&parser);
-  if (jv_is_valid(value)) {
-    jv next = jv_parser_next(&parser);
-    if (jv_is_valid(next)) {
-      // multiple JSON values, we only wanted one
-      jv_free(value);
-      jv_free(next);
-      value = jv_invalid_with_msg(jv_string("Unexpected extra JSON values"));
-    } else if (jv_invalid_has_msg(jv_copy(next))) {
-      // parser error after the first JSON value
-      jv_free(value);
-      value = next;
+  const char *i = string;
+  const char *end = string + length;
+  jv value = jv_invalid();
+  int count = 0;
+  while (i != NULL) {
+    const char *bytes;
+    uint32_t bytes_len;
+    if (extended) {
+      // TOOD: consider handling string values containing UTF-16 errors; this
+      // won't normally occur when using the output of eg, `tojson`, but could
+      // occur when constructing JSON manually, eg:
+      // > "\"\uD800\"" | fromjson
+      // NOTE: a simple but crude way to do this might be to replace UTF-16
+      // errors in the input with \uXXXX sequences, since UTF-16 errors should
+      // only be allowed within string literals, where escape sequences can be
+      // equivalently used
+      i = jvp_utf8_wtf_next_bytes(i, end, &bytes, &bytes_len);
     } else {
-      // a single valid JSON value
-      jv_free(next);
+      bytes = string;
+      bytes_len = length;
+      i = NULL;
     }
-  } else if (jv_invalid_has_msg(jv_copy(value))) {
-    // parse error, we'll return it
-  } else {
+    jv_parser_set_buf(&parser, bytes, bytes_len, i != NULL);
+    for (;;) {
+      jv next = jv_parser_next(&parser);
+      if (!jv_is_valid(next)) {
+        if (jv_invalid_has_msg(jv_copy(next))) {
+          // parse error, we'll return it
+          count++;
+          jv_free(value);
+          value = next;
+          i = NULL;
+        }
+        break;
+      }
+      jv_free(value);
+      if (count++ == 0) {
+        // a single valid JSON value
+        value = next;
+      } else {
+        // multiple JSON values, we only wanted one
+        jv_free(next);
+        value = jv_invalid_with_msg(jv_string("Unexpected extra JSON values"));
+        i = NULL;
+        break;
+      }
+    }
+  }
+  if (count == 0) {
     // no value at all
     jv_free(value);
     value = jv_invalid_with_msg(jv_string("Expected JSON value"));
   }
   parser_free(&parser);
-
   if (!jv_is_valid(value) && jv_invalid_has_msg(jv_copy(value))) {
     jv msg = jv_invalid_get_msg(value);
     value = jv_invalid_with_msg(jv_string_fmt("%s (while parsing '%s')",
@@ -895,6 +950,14 @@ jv jv_parse_sized(const char* string, int length) {
     jv_free(msg);
   }
   return value;
+}
+
+jv jv_parse_sized(const char* string, int length) {
+  return jvp_parse_sized(string, length, 0);
+}
+
+jv jv_parse_wtf_sized(const char* string, int length) {
+  return jvp_parse_sized(string, length, 1);
 }
 
 jv jv_parse(const char* string) {

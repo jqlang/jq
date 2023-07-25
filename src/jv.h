@@ -107,6 +107,7 @@ jv jv_array_indexes(jv, jv);
 
 jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
+jv jv_string_wtf_sized(const char*, int);
 jv jv_string_empty(int len);
 int jv_string_length_bytes(jv);
 int jv_string_length_codepoints(jv);
@@ -227,6 +228,7 @@ enum {
 
 jv jv_parse(const char* string);
 jv jv_parse_sized(const char* string, int length);
+jv jv_parse_wtf_sized(const char* string, int length);
 
 typedef void (*jv_nomem_handler_f)(void *);
 void jv_nomem_handler(jv_nomem_handler_f, void *);

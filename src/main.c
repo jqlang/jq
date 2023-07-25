@@ -31,6 +31,7 @@ extern void jv_tsd_dtoa_ctx_init();
 #include "jv.h"
 #include "jq.h"
 #include "jv_alloc.h"
+#include "jv_unicode.h"
 #include "util.h"
 #include "src/version.h"
 
@@ -192,8 +193,12 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
       if (options & ASCII_OUTPUT) {
         jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
       } else {
-        priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
-            stdout, dumpopts & JV_PRINT_ISATTY);
+        const char *start = jv_string_value(result);
+        const char *end = start + jv_string_length_bytes(jv_copy(result));
+        const char *bytes;
+        uint32_t bytes_len;
+        while ((start = jvp_utf8_wtf_next_bytes(start, end, &bytes, &bytes_len)))
+          priv_fwrite(bytes, bytes_len, stdout, dumpopts & JV_PRINT_ISATTY);
       }
       ret = JQ_OK;
       jv_free(result);

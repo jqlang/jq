@@ -1904,7 +1904,7 @@ jq \'[\.[]|rtrimstr("foo")]\'
 .IP "" 0
 .
 .SS "explode"
-Converts an input string into an array of the string\'s codepoint numbers\.
+Converts an input string into an array of the string\'s codepoint numbers\. Ill\-formed Unicode is represented using negative numbers\.
 .
 .IP "" 4
 .
@@ -2281,7 +2281,7 @@ The input is converted to base64 as specified by RFC 4648\.
 \fB@base64d\fR:
 .
 .IP
-The inverse of \fB@base64\fR, input is decoded as specified by RFC 4648\. Note\e: If the decoded string is not UTF\-8, the results are undefined\.
+The inverse of \fB@base64\fR, input is decoded as specified by RFC 4648\.
 .
 .P
 This syntax can be combined with string interpolation in a useful way\. You can follow a \fB@foo\fR token with a string literal\. The contents of the string literal will \fInot\fR be escaped\. However, all interpolations made inside that string literal will be escaped\. For instance,
