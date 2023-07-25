@@ -849,8 +849,8 @@ To compute the absolute value of a number as a floating point number, you may wi
 .nf
 
 jq \'map(abs)\'
-   [\-10, \-1\.1, \-1e\-1, 1000000000000000002, \-1000000000000000002]
-=> [10,1\.1,1e\-1,10000000000000002,1e+18]
+   [\-10, \-1\.1, \-1e\-1]
+=> [10,1\.1,1e\-1]
 .
 .fi
 .
