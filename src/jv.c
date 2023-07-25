@@ -1580,20 +1580,20 @@ uint32_t jv_string_index(jv j, int idx) {
   assert(JVP_HAS_KIND(j, JV_KIND_STRING));
   const char* i = jv_string_value(j);
   const char* end = i + jv_string_length_bytes(jv_copy(j));
-  uint32_t c = 0;
+  uint32_t c = (uint32_t)-1;
   switch (jv_get_string_kind(j)) {
   case JV_STRING_KIND_UTF8:
     if (idx < 0) {
       idx += jv_string_length_codepoints(jv_copy(j));
       if (idx < 0)
-        return 0;
+        break;
     }
     while (i < end && idx >= 0) {
       i = jvp_utf8_next(i, end, &c);
       idx--;
     }
     if (i == end && idx != -1)
-      c = 0;
+      c = (uint32_t)-1;
     break;
   case JV_STRING_KIND_BINARY:
   case JV_STRING_KIND_BINARY_HEX:
@@ -1602,9 +1602,9 @@ uint32_t jv_string_index(jv j, int idx) {
     if (idx < 0)
       idx += end - i;
     if (idx < 0)
-      return 0;
+      break;
     if (i + idx >= end)
-      return 0;
+      break;
     c = ((const unsigned char *)i)[idx];
     break;
   default:
