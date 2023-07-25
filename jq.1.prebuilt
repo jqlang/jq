@@ -196,15 +196,6 @@ This option reads all the JSON texts in the named file and binds an array of the
 This option reads in the named file and binds its contents to the given global variable\. If you run jq with \fB\-\-rawfile foo bar\fR, then \fB$foo\fR is available in the program and has a string whose contents are to the texts in the file named \fBbar\fR\.
 .
 .TP
-\fB\-\-argfile variable\-name filename\fR:
-.
-.IP
-Do not use\. Use \fB\-\-slurpfile\fR instead\.
-.
-.IP
-(This option is like \fB\-\-slurpfile\fR, but when the file has just one text, then that is used, else an array of texts is used as in \fB\-\-slurpfile\fR\.)
-.
-.TP
 \fB\-\-args\fR:
 .
 .IP

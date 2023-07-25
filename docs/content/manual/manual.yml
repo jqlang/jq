@@ -257,14 +257,6 @@ sections:
         available in the program and has a string whose contents are to the texts
         in the file named `bar`.
 
-      * `--argfile variable-name filename`:
-
-        Do not use.  Use `--slurpfile` instead.
-
-        (This option is like `--slurpfile`, but when the file has just
-        one text, then that is used, else an array of texts is used as
-        in `--slurpfile`.)
-
       * `--args`:
 
         Remaining arguments are positional string arguments.  These are
