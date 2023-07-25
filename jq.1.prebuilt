@@ -52,103 +52,28 @@ Windows command shell: \fBjq "\.[\e"foo\e"]"\fR
 You can affect how jq reads and writes its input and output using some command\-line options:
 .
 .TP
-\fB\-\-version\fR/\fB\-V\fR:
+\fB\-\-null\-input\fR / \fB\-n\fR:
 .
 .IP
-Output the jq version and exit with zero\.
+Don\'t read any input at all\. Instead, the filter is run once using \fBnull\fR as the input\. This is useful when using jq as a simple calculator or to construct JSON data from scratch\.
 .
 .TP
-\fB\-\-seq\fR:
-.
-.IP
-Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts in jq\'s input and output\. This means that an ASCII RS (record separator) character is printed before each value on output and an ASCII LF (line feed) is printed after every output\. Input JSON texts that fail to parse are ignored (but warned about), discarding all subsequent input until the next RS\. This mode also parses the output of jq without the \fB\-\-seq\fR option\.
-.
-.TP
-\fB\-\-stream\fR:
-.
-.IP
-Parse the input in streaming fashion, outputting arrays of path and leaf values (scalars and empty arrays or empty objects)\. For example, \fB"a"\fR becomes \fB[[],"a"]\fR, and \fB[[],"a",["b"]]\fR becomes \fB[[0],[]]\fR, \fB[[1],"a"]\fR, and \fB[[2,0],"b"]\fR\.
-.
-.IP
-This is useful for processing very large inputs\. Use this in conjunction with filtering and the \fBreduce\fR and \fBforeach\fR syntax to reduce large inputs incrementally\.
-.
-.TP
-\fB\-\-stream\-errors\fR:
-.
-.IP
-Like \fB\-\-stream\fR, but invalid JSON inputs yield array values where the first element is the error and the second is a path\. For example, \fB["a",n]\fR produces ["Invalid literal at line 1, column 9",[1]]`\.
-.
-.IP
-Implies \fB\-\-stream\fR\. Invalid JSON inputs produce no error values when \fB\-\-stream\fR without \fB\-\-stream\-errors\fR\.
-.
-.TP
-\fB\-\-slurp\fR/\fB\-s\fR:
-.
-.IP
-Instead of running the filter for each JSON object in the input, read the entire input stream into a large array and run the filter just once\.
-.
-.TP
-\fB\-\-raw\-input\fR/\fB\-R\fR:
+\fB\-\-raw\-input\fR / \fB\-R\fR:
 .
 .IP
 Don\'t parse the input as JSON\. Instead, each line of text is passed to the filter as a string\. If combined with \fB\-\-slurp\fR, then the entire input is passed to the filter as a single long string\.
 .
 .TP
-\fB\-\-null\-input\fR/\fB\-n\fR:
+\fB\-\-slurp\fR / \fB\-s\fR:
 .
 .IP
-Don\'t read any input at all! Instead, the filter is run once using \fBnull\fR as the input\. This is useful when using jq as a simple calculator or to construct JSON data from scratch\.
+Instead of running the filter for each JSON object in the input, read the entire input stream into a large array and run the filter just once\.
 .
 .TP
 \fB\-\-compact\-output\fR / \fB\-c\fR:
 .
 .IP
 By default, jq pretty\-prints JSON output\. Using this option will result in more compact output by instead putting each JSON object on a single line\.
-.
-.TP
-\fB\-\-tab\fR:
-.
-.IP
-Use a tab for each indentation level instead of two spaces\.
-.
-.TP
-\fB\-\-indent n\fR:
-.
-.IP
-Use the given number of spaces (no more than 7) for indentation\.
-.
-.TP
-\fB\-\-color\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
-.
-.IP
-By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\. When the \fBNO_COLOR\fR environment variable is not empty, jq disables colored output by default, but you can enable it by \fB\-C\fR\.
-.
-.IP
-Colors can be configured with the \fBJQ_COLORS\fR environment variable (see below)\.
-.
-.TP
-\fB\-\-binary\fR / \fB\-b\fR:
-.
-.IP
-Windows users using WSL, MSYS2, or Cygwin, should use this option when using a native jq\.exe, otherwise jq will turn newlines (LFs) into carriage\-return\-then\-newline (CRLF)\.
-.
-.TP
-\fB\-\-ascii\-output\fR / \fB\-a\fR:
-.
-.IP
-jq usually outputs non\-ASCII Unicode codepoints as UTF\-8, even if the input specified them as escape sequences (like "\eu03bc")\. Using this option, you can force jq to produce pure ASCII output with every non\-ASCII character replaced with the equivalent escape sequence\.
-.
-.TP
-\fB\-\-unbuffered\fR:
-.
-.IP
-Flush the output after each JSON object is printed (useful if you\'re piping a slow data source into jq and piping jq\'s output elsewhere)\.
-.
-.TP
-\fB\-\-sort\-keys\fR / \fB\-S\fR:
-.
-.IP
-Output the fields of each object with the keys in sorted order\.
 .
 .TP
 \fB\-\-raw\-output\fR / \fB\-r\fR:
@@ -169,25 +94,79 @@ Like \fB\-r\fR but jq won\'t print a newline after each output\.
 Like \fB\-r\fR but jq will print NUL instead of newline after each output\. This can be useful when the values being output can contain newlines\.
 .
 .TP
+\fB\-\-ascii\-output\fR / \fB\-a\fR:
+.
+.IP
+jq usually outputs non\-ASCII Unicode codepoints as UTF\-8, even if the input specified them as escape sequences (like "\eu03bc")\. Using this option, you can force jq to produce pure ASCII output with every non\-ASCII character replaced with the equivalent escape sequence\.
+.
+.TP
+\fB\-\-sort\-keys\fR / \fB\-S\fR:
+.
+.IP
+Output the fields of each object with the keys in sorted order\.
+.
+.TP
+\fB\-\-color\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
+.
+.IP
+By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\. When the \fBNO_COLOR\fR environment variable is not empty, jq disables colored output by default, but you can enable it by \fB\-C\fR\.
+.
+.IP
+Colors can be configured with the \fBJQ_COLORS\fR environment variable (see below)\.
+.
+.TP
+\fB\-\-tab\fR:
+.
+.IP
+Use a tab for each indentation level instead of two spaces\.
+.
+.TP
+\fB\-\-indent n\fR:
+.
+.IP
+Use the given number of spaces (no more than 7) for indentation\.
+.
+.TP
+\fB\-\-unbuffered\fR:
+.
+.IP
+Flush the output after each JSON object is printed (useful if you\'re piping a slow data source into jq and piping jq\'s output elsewhere)\.
+.
+.TP
+\fB\-\-stream\fR:
+.
+.IP
+Parse the input in streaming fashion, outputting arrays of path and leaf values (scalars and empty arrays or empty objects)\. For example, \fB"a"\fR becomes \fB[[],"a"]\fR, and \fB[[],"a",["b"]]\fR becomes \fB[[0],[]]\fR, \fB[[1],"a"]\fR, and \fB[[2,0],"b"]\fR\.
+.
+.IP
+This is useful for processing very large inputs\. Use this in conjunction with filtering and the \fBreduce\fR and \fBforeach\fR syntax to reduce large inputs incrementally\.
+.
+.TP
+\fB\-\-stream\-errors\fR:
+.
+.IP
+Like \fB\-\-stream\fR, but invalid JSON inputs yield array values where the first element is the error and the second is a path\. For example, \fB["a",n]\fR produces \fB["Invalid literal at line 1, column 7",[1]]\fR\.
+.
+.IP
+Implies \fB\-\-stream\fR\. Invalid JSON inputs produce no error values when \fB\-\-stream\fR without \fB\-\-stream\-errors\fR\.
+.
+.TP
+\fB\-\-seq\fR:
+.
+.IP
+Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts in jq\'s input and output\. This means that an ASCII RS (record separator) character is printed before each value on output and an ASCII LF (line feed) is printed after every output\. Input JSON texts that fail to parse are ignored (but warned about), discarding all subsequent input until the next RS\. This mode also parses the output of jq without the \fB\-\-seq\fR option\.
+.
+.TP
 \fB\-f filename\fR / \fB\-\-from\-file filename\fR:
 .
 .IP
 Read filter from the file rather than from a command line, like awk\'s \-f option\. You can also use \'#\' to make comments\.
 .
 .TP
-\fB\-Ldirectory\fR / \fB\-L directory\fR:
+\fB\-L directory\fR:
 .
 .IP
 Prepend \fBdirectory\fR to the search list for modules\. If this option is used then no builtin search list is used\. See the section on modules below\.
-.
-.TP
-\fB\-e\fR / \fB\-\-exit\-status\fR:
-.
-.IP
-Sets the exit status of jq to 0 if the last output value was neither \fBfalse\fR nor \fBnull\fR, 1 if the last output value was either \fBfalse\fR or \fBnull\fR, or 4 if no valid result was ever produced\. Normally jq exits with 2 if there was any usage problem or system error, 3 if there was a jq program compile error, or 0 if the jq program ran\.
-.
-.IP
-Another way to set the exit status is with the \fBhalt_error\fR builtin function\.
 .
 .TP
 \fB\-\-arg name value\fR:
@@ -238,6 +217,33 @@ Remaining arguments are positional string arguments\. These are available to the
 Remaining arguments are positional JSON text arguments\. These are available to the jq program as \fB$ARGS\.positional[]\fR\.
 .
 .TP
+\fB\-\-exit\-status\fR / \fB\-e\fR:
+.
+.IP
+Sets the exit status of jq to 0 if the last output value was neither \fBfalse\fR nor \fBnull\fR, 1 if the last output value was either \fBfalse\fR or \fBnull\fR, or 4 if no valid result was ever produced\. Normally jq exits with 2 if there was any usage problem or system error, 3 if there was a jq program compile error, or 0 if the jq program ran\.
+.
+.IP
+Another way to set the exit status is with the \fBhalt_error\fR builtin function\.
+.
+.TP
+\fB\-\-binary\fR / \fB\-b\fR:
+.
+.IP
+Windows users using WSL, MSYS2, or Cygwin, should use this option when using a native jq\.exe, otherwise jq will turn newlines (LFs) into carriage\-return\-then\-newline (CRLF)\.
+.
+.TP
+\fB\-\-version\fR / \fB\-V\fR:
+.
+.IP
+Output the jq version and exit with zero\.
+.
+.TP
+\fB\-\-help\fR / \fB\-h\fR:
+.
+.IP
+Output the jq help and exit with zero\.
+.
+.TP
 \fB\-\-\fR:
 .
 .IP
@@ -247,7 +253,7 @@ Terminates argument processing\. Remaining arguments are positional, either stri
 \fB\-\-run\-tests [filename]\fR:
 .
 .IP
-Runs the tests in the given file or standard input\. This must be the last option given and does not honor all preceding options\. The input consists of comment lines, empty lines, and program lines followed by one input line, as many lines of output as are expected (one per output), and a terminating empty line\. Compilation failure tests start with a line containing only "%%FAIL", then a line containing the program to compile, then a line containing an error message to compare to the actual\.
+Runs the tests in the given file or standard input\. This must be the last option given and does not honor all preceding options\. The input consists of comment lines, empty lines, and program lines followed by one input line, as many lines of output as are expected (one per output), and a terminating empty line\. Compilation failure tests start with a line containing only \fB%%FAIL\fR, then a line containing the program to compile, then a line containing an error message to compare to the actual\.
 .
 .IP
 Be warned that this option can change backwards\-incompatibly\.
