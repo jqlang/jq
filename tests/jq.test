@@ -1808,6 +1808,18 @@ false
 1
 1
 
+# abs, fabs, length
+abs
+"abc"
+"abc"
+
+map(abs)
+[-10, -1.1, -1e-1, 1000000000000000002]
+[10,1.1,0.1,1000000000000000002]
+
+map(fabs == length) | unique[0]
+[-10, -1.1, -1e-1, 1000000000000000002, -1000000000000000002]
+true
 
 # Using a keyword as variable/label name
 
