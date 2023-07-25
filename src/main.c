@@ -521,14 +521,11 @@ int main(int argc, char* argv[]) {
         i += 2; // skip the next two arguments
         continue;
       }
-      if (isoption(argv[i], 0, "argfile", &short_opts) ||
-          isoption(argv[i], 0, "rawfile", &short_opts) ||
+      if (isoption(argv[i], 0, "rawfile", &short_opts) ||
           isoption(argv[i], 0, "slurpfile", &short_opts)) {
         int raw = isoption(argv[i], 0, "rawfile", &short_opts);
         const char *which;
-        if (isoption(argv[i], 0, "argfile", &short_opts))
-          which = "argfile";
-        else if (raw)
+        if (raw)
           which = "rawfile";
         else
           which = "slurpfile";
@@ -546,9 +543,6 @@ int main(int argc, char* argv[]) {
             ret = JQ_ERROR_SYSTEM;
             goto out;
           }
-          if (strcmp(which, "argfile") == 0 &&
-              jv_get_kind(data) == JV_KIND_ARRAY && jv_array_length(jv_copy(data)) == 1)
-              data = jv_array_get(data, 0);
           program_arguments = jv_object_set(program_arguments, jv_string(argv[i+1]), data);
         }
         i += 2; // skip the next two arguments
