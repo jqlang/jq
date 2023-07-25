@@ -835,6 +835,27 @@ jq \'\.[] | (1 / \.)?\'
 .
 .IP "" 0
 .
+.SS "abs"
+The builtin function \fBabs\fR is defined naively as: \fBif \. < 0 then \- \. else \. end\fR\.
+.
+.P
+For numeric input, this is the absolute value\. See the section on the identity filter for the implications of this definition for numeric input\.
+.
+.P
+To compute the absolute value of a number as a floating point number, you may wish use \fBfabs\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'map(abs)\'
+   [\-10, \-1\.1, \-1e\-1, 1000000000000000002, \-1000000000000000002]
+=> [10,1\.1,1e\-1,10000000000000002,1e+18]
+.
+.fi
+.
+.IP "" 0
+.
 .SS "length"
 The builtin function \fBlength\fR gets the length of various different types of value:
 .

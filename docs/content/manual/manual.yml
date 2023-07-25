@@ -850,6 +850,21 @@ sections:
             input: '[1,0,-1]'
             output: ['1', '-1']
 
+      - title: "`abs`"
+        body: |
+
+          The builtin function `abs` is defined naively as: `if . < 0 then - . else . end`.
+
+          For numeric input, this is the absolute value.  See the
+          section on the identity filter for the implications of this
+          definition for numeric input.
+
+          To compute the absolute value of a number as a floating point number, you may wish use `fabs`.
+
+        examples:
+          - program: 'map(abs)'
+            input: '[-10, -1.1, -1e-1, 1000000000000000002, -1000000000000000002]'
+            output: ['[10,1.1,1e-1,10000000000000002,1e+18]']
 
       - title: "`length`"
         body: |
