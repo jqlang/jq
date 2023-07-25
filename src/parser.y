@@ -122,6 +122,7 @@ struct lexer_param;
 %type <blk> Param Params Arg Args
 %type <blk> Patterns RepPatterns Pattern ArrayPats ObjPats ObjPat
 %type <literal> Keyword
+%type <literal> NoFormat
 %{
 #include "lexer.h"
 struct lexer_param {
@@ -593,10 +594,15 @@ IDENT {
 }
 
 
+NoFormat:
+%empty {
+  $$ = jv_string("text");
+}
+
 String:
-QQSTRING_START { $<literal>$ = jv_string("text"); } QQString QQSTRING_END {
+QQSTRING_START NoFormat QQString QQSTRING_END {
   $$ = $3;
-  jv_free($<literal>2);
+  jv_free($2);
 } |
 FORMAT QQSTRING_START { $<literal>$ = $1; } QQString QQSTRING_END {
   $$ = $4;
