@@ -165,87 +165,30 @@ double-quotes in the jq program need backslash escaping.</p>
 <p>You can affect how jq reads and writes its input and output
 using some command-line options:</p>
 <ul>
-<li><code>--version</code>/<code>-V</code>:</li>
+<li><code>--null-input</code> / <code>-n</code>:</li>
 </ul>
-<p>Output the jq version and exit with zero.</p>
+<p>Don't read any input at all. Instead, the filter is run once
+  using <code>null</code> as the input. This is useful when using jq as a
+  simple calculator or to construct JSON data from scratch.</p>
 <ul>
-<li><code>--seq</code>:</li>
-</ul>
-<p>Use the <code>application/json-seq</code> MIME type scheme for separating
-  JSON texts in jq's input and output.  This means that an ASCII
-  RS (record separator) character is printed before each value on
-  output and an ASCII LF (line feed) is printed after every
-  output.  Input JSON texts that fail to parse are ignored (but
-  warned about), discarding all subsequent input until the next
-  RS.  This mode also parses the output of jq without the <code>--seq</code>
-  option.</p>
-<ul>
-<li><code>--stream</code>:</li>
-</ul>
-<p>Parse the input in streaming fashion, outputting arrays of path
-  and leaf values (scalars and empty arrays or empty objects).
-  For example, <code>"a"</code> becomes <code>[[],"a"]</code>, and <code>[[],"a",["b"]]</code>
-  becomes <code>[[0],[]]</code>, <code>[[1],"a"]</code>, and <code>[[2,0],"b"]</code>.</p>
-<p>This is useful for processing very large inputs.  Use this in
-  conjunction with filtering and the <code>reduce</code> and <code>foreach</code> syntax
-  to reduce large inputs incrementally.</p>
-<ul>
-<li><code>--slurp</code>/<code>-s</code>:</li>
-</ul>
-<p>Instead of running the filter for each JSON object in the
-  input, read the entire input stream into a large array and run
-  the filter just once.</p>
-<ul>
-<li><code>--raw-input</code>/<code>-R</code>:</li>
+<li><code>--raw-input</code> / <code>-R</code>:</li>
 </ul>
 <p>Don't parse the input as JSON. Instead, each line of text is
   passed to the filter as a string. If combined with <code>--slurp</code>,
   then the entire input is passed to the filter as a single long
   string.</p>
 <ul>
-<li><code>--null-input</code>/<code>-n</code>:</li>
+<li><code>--slurp</code> / <code>-s</code>:</li>
 </ul>
-<p>Don't read any input at all! Instead, the filter is run once
-  using <code>null</code> as the input. This is useful when using jq as a
-  simple calculator or to construct JSON data from scratch.</p>
+<p>Instead of running the filter for each JSON object in the
+  input, read the entire input stream into a large array and run
+  the filter just once.</p>
 <ul>
 <li><code>--compact-output</code> / <code>-c</code>:</li>
 </ul>
 <p>By default, jq pretty-prints JSON output. Using this option
   will result in more compact output by instead putting each
   JSON object on a single line.</p>
-<ul>
-<li><code>--tab</code>:</li>
-</ul>
-<p>Use a tab for each indentation level instead of two spaces.</p>
-<ul>
-<li><code>--indent n</code>:</li>
-</ul>
-<p>Use the given number of spaces (no more than 7) for indentation.</p>
-<ul>
-<li><code>--color-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</li>
-</ul>
-<p>By default, jq outputs colored JSON if writing to a
-  terminal. You can force it to produce color even if writing to
-  a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.</p>
-<ul>
-<li><code>--ascii-output</code> / <code>-a</code>:</li>
-</ul>
-<p>jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
-  if the input specified them as escape sequences (like
-  "\u03bc"). Using this option, you can force jq to produce pure
-  ASCII output with every non-ASCII character replaced with the
-  equivalent escape sequence.</p>
-<ul>
-<li><code>--unbuffered</code>:</li>
-</ul>
-<p>Flush the output after each JSON object is printed (useful if
-  you're piping a slow data source into jq and piping jq's
-  output elsewhere).</p>
-<ul>
-<li><code>--sort-keys</code> / <code>-S</code>:</li>
-</ul>
-<p>Output the fields of each object with the keys in sorted order.</p>
 <ul>
 <li><code>--raw-output</code> / <code>-r</code>:</li>
 </ul>
@@ -258,25 +201,69 @@ using some command-line options:</p>
 </ul>
 <p>Like <code>-r</code> but jq won't print a newline after each output.</p>
 <ul>
+<li><code>--ascii-output</code> / <code>-a</code>:</li>
+</ul>
+<p>jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
+  if the input specified them as escape sequences (like
+  "\u03bc"). Using this option, you can force jq to produce pure
+  ASCII output with every non-ASCII character replaced with the
+  equivalent escape sequence.</p>
+<ul>
+<li><code>--sort-keys</code> / <code>-S</code>:</li>
+</ul>
+<p>Output the fields of each object with the keys in sorted order.</p>
+<ul>
+<li><code>--color-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</li>
+</ul>
+<p>By default, jq outputs colored JSON if writing to a
+  terminal. You can force it to produce color even if writing to
+  a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.</p>
+<ul>
+<li><code>--tab</code>:</li>
+</ul>
+<p>Use a tab for each indentation level instead of two spaces.</p>
+<ul>
+<li><code>--indent n</code>:</li>
+</ul>
+<p>Use the given number of spaces (no more than 7) for indentation.</p>
+<ul>
+<li><code>--unbuffered</code>:</li>
+</ul>
+<p>Flush the output after each JSON object is printed (useful if
+  you're piping a slow data source into jq and piping jq's
+  output elsewhere).</p>
+<ul>
+<li><code>--stream</code>:</li>
+</ul>
+<p>Parse the input in streaming fashion, outputting arrays of path
+  and leaf values (scalars and empty arrays or empty objects).
+  For example, <code>"a"</code> becomes <code>[[],"a"]</code>, and <code>[[],"a",["b"]]</code>
+  becomes <code>[[0],[]]</code>, <code>[[1],"a"]</code>, and <code>[[2,0],"b"]</code>.</p>
+<p>This is useful for processing very large inputs.  Use this in
+  conjunction with filtering and the <code>reduce</code> and <code>foreach</code> syntax
+  to reduce large inputs incrementally.</p>
+<ul>
+<li><code>--seq</code>:</li>
+</ul>
+<p>Use the <code>application/json-seq</code> MIME type scheme for separating
+  JSON texts in jq's input and output.  This means that an ASCII
+  RS (record separator) character is printed before each value on
+  output and an ASCII LF (line feed) is printed after every
+  output.  Input JSON texts that fail to parse are ignored (but
+  warned about), discarding all subsequent input until the next
+  RS.  This mode also parses the output of jq without the <code>--seq</code>
+  option.</p>
+<ul>
 <li><code>-f filename</code> / <code>--from-file filename</code>:</li>
 </ul>
 <p>Read filter from the file rather than from a command line, like
   awk's -f option. You can also use '#' to make comments.</p>
 <ul>
-<li><code>-Ldirectory</code> / <code>-L directory</code>:</li>
+<li><code>-L directory</code>:</li>
 </ul>
 <p>Prepend <code>directory</code> to the search list for modules.  If this
   option is used then no builtin search list is used.  See the
   section on modules below.</p>
-<ul>
-<li><code>-e</code> / <code>--exit-status</code>:</li>
-</ul>
-<p>Sets the exit status of jq to 0 if the last output value was
-  neither <code>false</code> nor <code>null</code>, 1 if the last output value was
-  either <code>false</code> or <code>null</code>, or 4 if no valid result was ever
-  produced.  Normally jq exits with 2 if there was any usage
-  problem or system error, 3 if there was a jq program compile
-  error, or 0 if the jq program ran.</p>
 <ul>
 <li><code>--arg name value</code>:</li>
 </ul>
@@ -296,7 +283,7 @@ using some command-line options:</p>
 </ul>
 <p>This option reads all the JSON texts in the named file and binds
   an array of the parsed JSON values to the given global variable.
-  If you run jq with <code>--argfile foo bar</code>, then <code>$foo</code> is available
+  If you run jq with <code>--slurpfile foo bar</code>, then <code>$foo</code> is available
   in the program and has an array whose elements correspond to the
   texts in the file named <code>bar</code>.</p>
 <ul>
@@ -307,6 +294,23 @@ using some command-line options:</p>
   one text, then that is used, else an array of texts is used as
   in <code>--slurpfile</code>.)</p>
 <ul>
+<li><code>--exit-status</code> / <code>-e</code>:</li>
+</ul>
+<p>Sets the exit status of jq to 0 if the last output value was
+  neither <code>false</code> nor <code>null</code>, 1 if the last output value was
+  either <code>false</code> or <code>null</code>, or 4 if no valid result was ever
+  produced.  Normally jq exits with 2 if there was any usage
+  problem or system error, 3 if there was a jq program compile
+  error, or 0 if the jq program ran.</p>
+<ul>
+<li><code>--version</code> / <code>-V</code>:</li>
+</ul>
+<p>Output the jq version and exit with zero.</p>
+<ul>
+<li><code>--help</code> / <code>-h</code>:</li>
+</ul>
+<p>Output the jq help and exit with zero.</p>
+<ul>
 <li><code>--run-tests [filename]</code>:</li>
 </ul>
 <p>Runs the tests in the given file or standard input.  This must
@@ -315,7 +319,7 @@ using some command-line options:</p>
   program lines followed by one input line, as many lines of
   output as are expected (one per output), and a terminating empty
   line.  Compilation failure tests start with a line containing
-  only "%%FAIL", then a line containing the program to compile,
+  only <code>%%FAIL</code>, then a line containing the program to compile,
   then a line containing an error message to compare to the
   actual.</p>
 <p>Be warned that this option can change backwards-incompatibly.</p>

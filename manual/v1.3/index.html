@@ -135,24 +135,24 @@ sequence of newline-separated JSON data.</p>
 <p>You can affect how jq reads and writes its input and output
 using some command-line options:</p>
 <ul>
-<li><code>--slurp</code>/<code>-s</code>:</li>
+<li><code>--null-input</code> / <code>-n</code>:</li>
 </ul>
-<p>Instead of running the filter for each JSON object in the
-  input, read the entire input stream into a large array and run
-  the filter just once.</p>
+<p>Don't read any input at all. Instead, the filter is run once
+  using <code>null</code> as the input. This is useful when using jq as a
+  simple calculator or to construct JSON data from scratch.</p>
 <ul>
-<li><code>--raw-input</code>/<code>-R</code>:</li>
+<li><code>--raw-input</code> / <code>-R</code>:</li>
 </ul>
 <p>Don't parse the input as JSON. Instead, each line of text is
   passed to the filter as a string. If combined with <code>--slurp</code>,
   then the entire input is passed to the filter as a single long
   string.</p>
 <ul>
-<li><code>--null-input</code>/<code>-n</code>:</li>
+<li><code>--slurp</code> / <code>-s</code>:</li>
 </ul>
-<p>Don't read any input at all! Instead, the filter is run once
-  using <code>null</code> as the input. This is useful when using jq as a
-  simple calculator or to construct JSON data from scratch.</p>
+<p>Instead of running the filter for each JSON object in the
+  input, read the entire input stream into a large array and run
+  the filter just once.</p>
 <ul>
 <li><code>--compact-output</code> / <code>-c</code>:</li>
 </ul>
@@ -160,11 +160,12 @@ using some command-line options:</p>
   will result in more compact output by instead putting each
   JSON object on a single line.</p>
 <ul>
-<li><code>--color-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</li>
+<li><code>--raw-output</code> / <code>-r</code>:</li>
 </ul>
-<p>By default, jq outputs colored JSON if writing to a
-  terminal. You can force it to produce color even if writing to
-  a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.</p>
+<p>With this option, if the filter's result is a string then it
+  will be written directly to standard output rather than being
+  formatted as a JSON string with quotes. This can be useful for
+  making jq filters talk to non-JSON-based systems.</p>
 <ul>
 <li><code>--ascii-output</code> / <code>-a</code>:</li>
 </ul>
@@ -174,12 +175,11 @@ using some command-line options:</p>
   ASCII output with every non-ASCII character replaced with the
   equivalent escape sequence.</p>
 <ul>
-<li><code>--raw-output</code> / <code>-r</code>:</li>
+<li><code>--color-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</li>
 </ul>
-<p>With this option, if the filter's result is a string then it
-  will be written directly to standard output rather than being
-  formatted as a JSON string with quotes. This can be useful for
-  making jq filters talk to non-JSON-based systems.</p>
+<p>By default, jq outputs colored JSON if writing to a
+  terminal. You can force it to produce color even if writing to
+  a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.</p>
 <ul>
 <li><code>--arg name value</code>:</li>
 </ul>

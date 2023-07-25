@@ -145,34 +145,30 @@ double-quotes in the jq program need backslash escaping.</p>
 <p>You can affect how jq reads and writes its input and output
 using some command-line options:</p>
 <ul>
-<li><code>--version</code>/<code>-V</code>:</li>
+<li><code>--null-input</code> / <code>-n</code>:</li>
 </ul>
-<p>Output the jq version and exit with zero.</p>
+<p>Don't read any input at all. Instead, the filter is run once
+  using <code>null</code> as the input. This is useful when using jq as a
+  simple calculator or to construct JSON data from scratch.</p>
 <ul>
-<li><code>--slurp</code>/<code>-s</code>:</li>
-</ul>
-<p>Instead of running the filter for each JSON object in the
-  input, read the entire input stream into a large array and run
-  the filter just once.</p>
-<ul>
-<li><code>--online-input</code>/<code>-I</code>:</li>
-</ul>
-<p>When the top-level input value is an array produce its elements
-  instead of the array.  This allows on-line processing of
-  potentially very large top-level arrays' elements.</p>
-<ul>
-<li><code>--raw-input</code>/<code>-R</code>:</li>
+<li><code>--raw-input</code> / <code>-R</code>:</li>
 </ul>
 <p>Don't parse the input as JSON. Instead, each line of text is
   passed to the filter as a string. If combined with <code>--slurp</code>,
   then the entire input is passed to the filter as a single long
   string.</p>
 <ul>
-<li><code>--null-input</code>/<code>-n</code>:</li>
+<li><code>--slurp</code> / <code>-s</code>:</li>
 </ul>
-<p>Don't read any input at all! Instead, the filter is run once
-  using <code>null</code> as the input. This is useful when using jq as a
-  simple calculator or to construct JSON data from scratch.</p>
+<p>Instead of running the filter for each JSON object in the
+  input, read the entire input stream into a large array and run
+  the filter just once.</p>
+<ul>
+<li><code>--online-input</code> / <code>-I</code>:</li>
+</ul>
+<p>When the top-level input value is an array produce its elements
+  instead of the array.  This allows on-line processing of
+  potentially very large top-level arrays' elements.</p>
 <ul>
 <li><code>--compact-output</code> / <code>-c</code>:</li>
 </ul>
@@ -180,11 +176,12 @@ using some command-line options:</p>
   will result in more compact output by instead putting each
   JSON object on a single line.</p>
 <ul>
-<li><code>--color-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</li>
+<li><code>--raw-output</code> / <code>-r</code>:</li>
 </ul>
-<p>By default, jq outputs colored JSON if writing to a
-  terminal. You can force it to produce color even if writing to
-  a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.</p>
+<p>With this option, if the filter's result is a string then it
+  will be written directly to standard output rather than being
+  formatted as a JSON string with quotes. This can be useful for
+  making jq filters talk to non-JSON-based systems.</p>
 <ul>
 <li><code>--ascii-output</code> / <code>-a</code>:</li>
 </ul>
@@ -194,36 +191,26 @@ using some command-line options:</p>
   ASCII output with every non-ASCII character replaced with the
   equivalent escape sequence.</p>
 <ul>
+<li><code>--sort-keys</code> / <code>-S</code>:</li>
+</ul>
+<p>Output the fields of each object with the keys in sorted order.</p>
+<ul>
+<li><code>--color-output</code> / <code>-C</code> and <code>--monochrome-output</code> / <code>-M</code>:</li>
+</ul>
+<p>By default, jq outputs colored JSON if writing to a
+  terminal. You can force it to produce color even if writing to
+  a pipe or a file using <code>-C</code>, and disable color with <code>-M</code>.</p>
+<ul>
 <li><code>--unbuffered</code>:</li>
 </ul>
 <p>Flush the output after each JSON object is printed (useful if
   you're piping a slow data source into jq and piping jq's
   output elsewhere).</p>
 <ul>
-<li><code>--sort-keys</code> / <code>-S</code>:</li>
-</ul>
-<p>Output the fields of each object with the keys in sorted order.</p>
-<ul>
-<li><code>--raw-output</code> / <code>-r</code>:</li>
-</ul>
-<p>With this option, if the filter's result is a string then it
-  will be written directly to standard output rather than being
-  formatted as a JSON string with quotes. This can be useful for
-  making jq filters talk to non-JSON-based systems.</p>
-<ul>
 <li><code>-f filename</code> / <code>--from-file filename</code>:</li>
 </ul>
 <p>Read filter from the file rather than from a command line, like
   awk's -f option. You can also use '#' to make comments.</p>
-<ul>
-<li><code>-e</code> / <code>--exit-status</code>:</li>
-</ul>
-<p>Sets the exit status of jq to 0 if the last output value was
-  neither <code>false</code> nor <code>null</code>, 1 if the last output value was
-  either <code>false</code> or <code>null</code>, or 4 if no valid result was ever
-  produced.  Normally jq exits with 2 if there was any usage
-  problem or system error, 3 if there was a jq program compile
-  error, or 0 if the jq program ran.</p>
 <ul>
 <li><code>--arg name value</code>:</li>
 </ul>
@@ -238,6 +225,23 @@ using some command-line options:</p>
   with <code>--argfile foo bar</code>, then <code>$foo</code> is available in the
   program and has the value resulting from parsing the content of
   the file named <code>bar</code>.</p>
+<ul>
+<li><code>--exit-status</code> / <code>-e</code>:</li>
+</ul>
+<p>Sets the exit status of jq to 0 if the last output value was
+  neither <code>false</code> nor <code>null</code>, 1 if the last output value was
+  either <code>false</code> or <code>null</code>, or 4 if no valid result was ever
+  produced.  Normally jq exits with 2 if there was any usage
+  problem or system error, 3 if there was a jq program compile
+  error, or 0 if the jq program ran.</p>
+<ul>
+<li><code>--version</code> / <code>-V</code>:</li>
+</ul>
+<p>Output the jq version and exit with zero.</p>
+<ul>
+<li><code>--help</code> / <code>-h</code>:</li>
+</ul>
+<p>Output the jq help and exit with zero.</p>
               
             </section>
           
