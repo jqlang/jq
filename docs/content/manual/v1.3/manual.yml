@@ -82,24 +82,24 @@ sections:
       You can affect how jq reads and writes its input and output
       using some command-line options:
 
-      * `--slurp`/`-s`:
+      * `--null-input` / `-n`:
 
-        Instead of running the filter for each JSON object in the
-        input, read the entire input stream into a large array and run
-        the filter just once.
+        Don't read any input at all. Instead, the filter is run once
+        using `null` as the input. This is useful when using jq as a
+        simple calculator or to construct JSON data from scratch.
 
-      * `--raw-input`/`-R`:
+      * `--raw-input` / `-R`:
 
         Don't parse the input as JSON. Instead, each line of text is
         passed to the filter as a string. If combined with `--slurp`,
         then the entire input is passed to the filter as a single long
         string.
 
-      * `--null-input`/`-n`:
+      * `--slurp` / `-s`:
 
-        Don't read any input at all! Instead, the filter is run once
-        using `null` as the input. This is useful when using jq as a
-        simple calculator or to construct JSON data from scratch.
+        Instead of running the filter for each JSON object in the
+        input, read the entire input stream into a large array and run
+        the filter just once.
 
       * `--compact-output` / `-c`:
 
@@ -107,11 +107,12 @@ sections:
         will result in more compact output by instead putting each
         JSON object on a single line.
 
-      * `--color-output` / `-C` and `--monochrome-output` / `-M`:
+      * `--raw-output` / `-r`:
 
-        By default, jq outputs colored JSON if writing to a
-        terminal. You can force it to produce color even if writing to
-        a pipe or a file using `-C`, and disable color with `-M`.
+        With this option, if the filter's result is a string then it
+        will be written directly to standard output rather than being
+        formatted as a JSON string with quotes. This can be useful for
+        making jq filters talk to non-JSON-based systems.
 
       * `--ascii-output` / `-a`:
 
@@ -121,12 +122,11 @@ sections:
         ASCII output with every non-ASCII character replaced with the
         equivalent escape sequence.
 
-      * `--raw-output` / `-r`:
+      * `--color-output` / `-C` and `--monochrome-output` / `-M`:
 
-        With this option, if the filter's result is a string then it
-        will be written directly to standard output rather than being
-        formatted as a JSON string with quotes. This can be useful for
-        making jq filters talk to non-JSON-based systems.
+        By default, jq outputs colored JSON if writing to a
+        terminal. You can force it to produce color even if writing to
+        a pipe or a file using `-C`, and disable color with `-M`.
 
       * `--arg name value`:
 
