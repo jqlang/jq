@@ -1819,21 +1819,36 @@ sections:
             input: '"useful but not for é"'
             output: ['"USEFUL BUT NOT FOR é"']
 
-      - title: "`while(cond; update)`"
+      - title: "`while(cond; update)`, `whilst(cond; update)`"
         body: |
 
-          The `while(cond; update)` function allows you to repeatedly
+          These two functions allow you to repeatedly
           apply an update to `.` until `cond` is false.
 
-          Note that `while(cond; update)` is internally defined as a
-          recursive jq function.  Recursive calls within `while` will
-          not consume additional memory if `update` produces at most one
-          output for each input.  See advanced topics below.
+          `while(cond; update)` begins by emitting its input
+          unconditionally, and then applies `update` to that value; if
+          the updated value exists and is truthy (i.e. neither `false`
+          nor `null`), then that value is applied to `while(cond;
+          update)` recursively.
+
+          `whilst(cond; update)` is similar but begins by applying
+          `update` to the input without emitting it; if the updated
+          value exists and is truthy, it is output, and then applied
+          to `whilst(cond; update)` recursively.
+          
+          Note that both `while` and `whilst` are defined as recursive
+          jq functions.  Recursive calls within these functions will
+          not consume additional memory if `update` produces at most
+          one output for each input.  See advanced topics below.
 
         examples:
           - program: '[while(.<100; .*2)]'
             input: '1'
             output: ['[1,2,4,8,16,32,64]']
+
+          - program: '[whilst(.<100; .*2)]'
+            input: '1'
+            output: ['[2,4,8,16,32,64,128]']
 
       - title: "`repeat(exp)`"
         body: |
