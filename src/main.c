@@ -153,8 +153,9 @@ enum {
   EXIT_STATUS_EXACT     = 8192,
   SEQ                   = 16384,
   RUN_TESTS             = 32768,
+  RAW_OUTPUT_BINARY     = 65536,
   /* debugging only */
-  DUMP_DISASM           = 65536,
+  DUMP_DISASM           = 131072,
 };
 
 enum {
@@ -188,8 +189,14 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
   jq_start(jq, value, flags);
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
-    if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
+    if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING &&
+        jv_get_string_kind(result) != JV_STRING_KIND_BINARY_BYTEARRAY) {
+      if (jv_get_string_kind(result) != JV_STRING_KIND_UTF8 &&
+          !(options & RAW_OUTPUT_BINARY))
+        result = jv_string_from_binary(result);
       if (options & ASCII_OUTPUT) {
+        if (jv_get_string_kind(result) != JV_STRING_KIND_UTF8)
+          result = jv_string_from_binary(result);
         jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
       } else {
         priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
@@ -198,6 +205,8 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
       ret = JQ_OK;
       jv_free(result);
     } else {
+      if (jv_get_kind(result) == JV_KIND_STRING && jv_get_string_kind(result) == JV_STRING_KIND_BINARY_BYTEARRAY)
+        result = jv_string_from_binary(result);
       if (jv_get_kind(result) == JV_KIND_FALSE || jv_get_kind(result) == JV_KIND_NULL)
         ret = JQ_OK_NULL_KIND;
       else
@@ -392,6 +401,10 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 'r', "raw-output", &short_opts)) {
         options |= RAW_OUTPUT;
+        if (!short_opts) continue;
+      }
+      if (isoption(argv[i], 0, "raw-output-binary", &short_opts)) {
+        options |= RAW_OUTPUT | RAW_OUTPUT_BINARY;
         if (!short_opts) continue;
       }
       if (isoption(argv[i], 'c', "compact-output", &short_opts)) {

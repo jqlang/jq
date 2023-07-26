@@ -136,6 +136,11 @@ sections:
         formatted as a JSON string with quotes. This can be useful for
         making jq filters talk to non-JSON-based systems.
 
+      * `--raw-output-binary`:
+
+        This is the same as `--raw-output`, but any binary values will
+        be output without encoding them in any way.
+
       * `--join-output` / `-j`:
 
         Like `-r` but jq won't print a newline after each output.
@@ -447,7 +452,12 @@ sections:
           `.["foo"]` (`.foo` above is a shorthand version of this, but
           only for identifier-like strings).
 
-      - title: "Array Index: `.[<number>]`"
+        examples:
+          - program: '.["foo"]'
+            input: '{"foo": 42}'
+            output: ['42']
+
+      - title: "Array/String Index: `.[<number>]`"
         body: |
 
           When the index value is an integer, `.[<number>]` can index
@@ -456,6 +466,11 @@ sections:
 
           Negative indices are allowed, with -1 referring to the last
           element, -2 referring to the next to last element, and so on.
+
+          For strings indexes refer to Unicode codepoints, and the
+          index operation outputs a string of one codepoint.  For
+          binary strings indexes refer to bytes, and the index
+          operation outputs an unsigned byte value.
 
         examples:
           - program: '.[0]'
@@ -470,6 +485,18 @@ sections:
             input: '[1,2,3]'
             output: ['2']
 
+          - program: '.[0]'
+            input: '"foo"'
+            output: ['"f"']
+
+          - program: '[.[2],.[3],.[4]]'
+            input: '"foóbar"'
+            output: ['["ó","b","a"]']
+
+          - program: 'tobinary|[.[2],.[3],.[4]]'
+            input: '"foóbar"'
+            output: ['[195,179,98]']
+
       - title: "Array/String Slice: `.[<number>:<number>]`"
         body: |
 
@@ -482,12 +509,23 @@ sections:
           case it refers to the start or end of the array).
           Indices are zero-based.
 
+          The slice operation on strings outputs strings, and the
+          start and end indices count Unicode codepoints.
+
+          The slice operation on binary strings outputs a binary
+          string with the same output encoding, and the start and end
+          indices count bytes.
+
         examples:
           - program: '.[2:4]'
             input: '["a","b","c","d","e"]'
             output: ['["c", "d"]']
 
           - program: '.[2:4]'
+            input: '"abcdefghi"'
+            output: ['"cd"']
+
+          - program: 'tobinary|.[2:4]|encodeas("UTF-8")|tostring'
             input: '"abcdefghi"'
             output: ['"cd"']
 
@@ -499,7 +537,7 @@ sections:
             input: '["a","b","c","d","e"]'
             output: ['["d", "e"]']
 
-      - title: "Array/Object Value Iterator: `.[]`"
+      - title: "Array/Object/String Value Iterator: `.[]`"
         body: |
 
           If you use the `.[index]` syntax, but omit the index
@@ -511,6 +549,13 @@ sections:
 
           You can also use this on an object, and it will return all
           the values of the object.
+
+          Iterating a string will output strings of one Unicode
+          codepoint each, in the sequence in which they appear in the
+          input string.
+
+          Iterating a binary string will output the numeric values of
+          the sequence of unsigned bytes making up the binary string.
 
         examples:
           - program: '.[]'
@@ -530,6 +575,14 @@ sections:
           - program: '.[]'
             input: '{"a": 1, "b": 1}'
             output: ['1', '1']
+
+          - program: '.[]'
+            input: '"foóbar"'
+            output: ['"f"','"o"','"ó"','"b"','"a"','"r"']
+
+          - program: 'tobinary[]'
+            input: '"foóbar"'
+            output: ['102','111','195','179','98','97','114']
 
       - title: "`.[]?`"
         body: |
@@ -776,7 +829,9 @@ sections:
 
           - **Arrays** are added by being concatenated into a larger array.
 
-          - **Strings** are added by being joined into a larger string.
+          - **Strings** are added by being joined into a larger
+            string.  Adding a binary string to a UTF-8 string
+            produced a binary string.
 
           - **Objects** are added by merging, that is, inserting all
             the key-value pairs from both objects into a single
@@ -785,6 +840,51 @@ sections:
             recursive merge use the `*` operator.)
 
           `null` can be added to any value, and returns the other
+          value unchanged.
+
+        examples:
+          - program: '.a + 1'
+            input: '{"a": 7}'
+            output: ['8']
+          - program: '.a + .b'
+            input: '{"a": [1,2], "b": [3,4]}'
+            output: ['[1,2,3,4]']
+          - program: '.a + null'
+            input: '{"a": 1}'
+            output: ['1']
+          - program: '.a + 1'
+            input: '{}'
+            output: ['1']
+          - program: '{a: 1} + {b: 2} + {c: 3} + {a: 42}'
+            input: 'null'
+            output: ['{"a": 42, "b": 2, "c": 3}']
+
+      - title: "Concatenation: `concat(addend)`"
+        body: |
+
+          The operator `concat` takes a filters, applies it the input,
+          and then concatenates the result to the input.  This is
+          somewhat similar to `+`, for arrays, objects, and strings.
+          Unlike `+`, numbers cannot be "concatenated".
+
+          Concatenations supported:
+
+          - **Strings** are added by being joined into a larger string.
+
+          - **Number** can be added to **strings**, where the numbers
+            represent Unicode codepoints when the strings are Unicode
+            strings, or the numbers represent unsigned byte values
+            when the strings are binary strings.
+
+          - **Array** values can be appended to **strings**, which has
+            the effect of adding all the codepoints or byte values to
+            the strings as when adding numbers to strings.
+
+          - **Arrays** are concatenated.
+
+          - **Objects** are added by merging (see `+`)
+
+          `null` can be concatenated to any value, and returns the other
           value unchanged.
 
         examples:
@@ -1448,14 +1548,99 @@ sections:
       - title: "`tostring`"
         body: |
 
-          The `tostring` function prints its input as a
-          string. Strings are left unchanged, and all other values are
-          JSON-encoded.
+          The `tostring` function prints its input as a string.
+          Binary strings are encoded according to the encoding selected
+          for them; see see `tobinary`, `encodeas`, and `encoding`).
+          If a binary string's output encoding is a `"bytearray"` then
+          `tostring` will output an array of unsigned byte values.
+          Text strings are left unchanged, and all non-text,
+          non-binary values are formatted as JSON texts.
 
         examples:
           - program: '.[] | tostring'
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
+
+      - title: "`tobinary`"
+        body: |
+
+          The `tobinary` function is like `tostring`, but its output
+          will be a binary string which when output to jq's output
+          stream will be base64-encoded, and which if added with other
+          strings will produce a binary string value.
+
+          Binary inputs are output as-is.  UTF-8 strings are converted
+          to binary strings without loss.  Arrays of unsigned byte
+          values and arrays of .. unsigned byte values are flattened
+          and converted to binary strings.
+
+          In all cases the external representation of a binary value on
+          output will be an encoding of that binary value, which may
+          be selected with the `encodeas` function.
+
+          The `length` of a binary string is always its length in
+          bytes regardless of the external encoding assigned to it.
+
+          Internally the binary string may be represented efficiently,
+          and may not be encoded until it is output or until it is
+          passed to `tostring`.  That is, applying `tostring` to a
+          binary string immediately encodes it according to its
+          assigned encoding.
+
+        examples:
+          - program: 'tobinary|tostring'
+            input: '"á"'
+            output: ['"w6E="']
+          - program: 'tobinary|concat([range(10)])|encodeas("bytearray")|tostring'
+            input: '"á"'
+            output: ['[195,161,0,1,2,3,4,5,6,7,8,9]']
+
+      - title: "`tobinary(bytes)`"
+        body: |
+
+          This function constructs a binary string value like
+          `tobinary` but consisting of the byte values output by
+          `bytes`.  `bytes` can produce unsigned byte values as well
+          as arrays; arrays can nest, but all scalar values must be
+          unsigned byte values.
+
+        examples:
+          - program: 'tobinary(["foob",0,[20,[range(1;10)|[[.],.]]],255])|encodeas("bytearray")|tostring|tobinary|encodeas("bytearray")|tostring'
+            input: 'null'
+            output: ['[102,111,111,98,0,20,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,255]']
+
+      - title: "`isbinary`"
+        body: |
+
+          This returns `true` if the input is a binary string, or
+          `false` if the input is either a UTF-8 string or not a
+          string.
+
+      - title: "`encodeas($encoding)`"
+        body: |
+
+          This function sets the encoding of any binary string input
+          to the given `$encoding`, which must be one of `"UTF-8"`
+          (apply bad character mappings), `"hex"` (encode binary as
+          hexadecimal), `"base64"` (encode binary in base64), or
+          `"bytearray"` (encode binary as an array of unsigned byte
+          values).  The result will be encoded accordingly when passed
+          to `tostring` or when finally output by jq to `stdout` or
+          `stderr`.
+
+        examples:
+          - program: 'tobinary|encodeas("base64")|tostring'
+            input: '"á"'
+            output: ['"w6E="']
+          - program: 'tobinary|encodeas("hex")|tostring'
+            input: '"á"'
+            output: ['"C3A1"']
+          - program: 'tobinary|encodeas("bytearray")|tostring'
+            input: '"á"'
+            output: ['[195,161]']
+          - program: 'tobinary|encodeas("UTF-8")|tostring'
+            input: '"á"'
+            output: ['"á"']
 
       - title: "`type`"
         body: |
@@ -1464,10 +1649,28 @@ sections:
           string, which is one of null, boolean, number, string, array
           or object.
 
+      - title: "`stringtype`"
+        body: |
+
+          Strings can be UTF-8 strings or binary strings.  The
+          `stringtype` builtin outputs `"UTF-8"` or `"binary"` when
+          given a string as input.
+
+      - title: "`encoding`"
+        body: |
+
+          Outputs the encoding set with `encodeas`.
+
         examples:
-          - program: 'map(type)'
-            input: '[0, false, [], {}, null, "hello"]'
-            output: ['["number", "boolean", "array", "object", "null", "string"]']
+          - program: 'encoding'
+            input: '"foo"'
+            output: ['"UTF-8"']
+          - program: 'tobinary|encoding'
+            input: '"foo"'
+            output: ['"base64"']
+          - program: 'encoding'
+            input: '"foo"|tobinary|encodeas("bytearray")|encoding'
+            output: ['"bytearray"']
 
       - title: "`infinite`, `nan`, `isinfinite`, `isnan`, `isfinite`, `isnormal`"
         body: |
@@ -2089,14 +2292,31 @@ sections:
             for a POSIX shell. If the input is an array, the output
             will be a series of space-separated strings.
 
+          * `@hex`:
+
+            The input is converted to hexadecimal.
+
+          * `@hexd`:
+
+            The input is converted from hexadecimal to binary with
+            `"hex"` as its output encoding.
+
           * `@base64`:
 
             The input is converted to base64 as specified by RFC 4648.
 
           * `@base64d`:
 
-            The inverse of `@base64`, input is decoded as specified by RFC 4648.
-            Note\: If the decoded string is not UTF-8, the results are undefined.
+            The inverse of `@base64`, input is decoded as specified by
+            RFC 4648.  Note that for backwards-compatibility reasons
+            this decodes to a UTF-8 string (as opposed to a binary
+            string), including bad character mappings should the
+            decoded input not be valid UTF-8.
+
+          * `@base64dbinary`:
+
+            Like `@base64d`, but decodes to a binary string with
+            `"base64"` as its output encoding.
 
           This syntax can be combined with string interpolation in a
           useful way. You can follow a `@foo` token with a string
@@ -2129,6 +2349,14 @@ sections:
 
           - program: '@base64d'
             input: '"VGhpcyBpcyBhIG1lc3NhZ2U="'
+            output: ['"This is a message"']
+
+          - program: '@hex'
+            input: '"This is a message"'
+            output: ['"546869732069732061206D657373616765"']
+
+          - program: '@hexd'
+            input: '"546869732069732061206D657373616765"'
             output: ['"This is a message"']
 
       - title: "Dates"
@@ -2758,6 +2986,10 @@ sections:
           value at the index for an array pattern element, `null` is
           bound to that variable.
 
+          Note that array patterns do not match strings.  That is, `.
+          as [$x]` will not match the first codepoint in `.` if `.` is
+          a string.
+
           Variables are scoped over the rest of the expression that defines
           them, so
 
@@ -2834,6 +3066,9 @@ sections:
           - program: '.[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end'
             input: '[[3]]'
             output: ['{"a":null,"b":3}']
+          - program: '. as [$x] ?// $x | $x'
+            input: '"abc"'
+            output: ['"abc"']
 
       - title: 'Defining Functions'
         body: |

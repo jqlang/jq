@@ -384,6 +384,60 @@ if [ "$($VALGRIND $Q $JQ -n '{"a":"xyz"} | halt_error(1)' 2>&1)" != '{"a":"xyz"}
     exit 1
 fi
 
+# Check binary (base64)
+$VALGRIND $Q $JQ -n 'tobinary("foo", 128, 129)' > $d/out
+printf '"Zm9vgIE="\n' > $d/expect
+cmp $d/out $d/expect
+
+$VALGRIND $Q $JQ -n 'tobinary("foo", 128, 129)' | $JQ -j --raw-output-binary '@base64dbinary' > $d/out
+printf 'foo\200\201' > $d/expect
+cmp $d/out $d/expect
+
+if [ "$(uname)" != "Darwin" ] && which base64; then
+  printf "Zm9vgIE=" | base64 -d > $d/expect
+  cmp $d/out $d/expect
+
+  if [ -c /dev/urandom ] && which dd; then
+    dd if=/dev/urandom of=$d/expect bs=1 count=3173
+    base64 $d/expect | $JQ -jRn --raw-output-binary '[inputs]|join("")|@base64dbinary' > $d/out
+    cmp $d/out $d/expect
+  fi
+fi
+
+# Check binary (hex)
+$VALGRIND $Q $JQ -n 'tobinary("foo", 128, 129)|encodeas("hex")' > $d/out
+printf '"666F6F8081"\n' > $d/expect
+cmp $d/out $d/expect
+
+$VALGRIND $Q $JQ -n 'tobinary("foo", 128, 129)|encodeas("hex")' | $JQ -j --raw-output-binary '@hexd' > $d/out
+printf 'foo\200\201' > $d/expect
+cmp $d/out $d/expect
+
+if which xxd; then
+  printf "666F6F8081" | xxd -r -p > $d/expect
+  cmp $d/out $d/expect
+
+  if [ -c /dev/urandom ] && which dd; then
+    dd if=/dev/urandom of=$d/expect bs=1 count=3173
+    xxd -p $d/expect | $JQ -jRn --raw-output-binary '[inputs]|join("")|@hexd' > $d/out
+    cmp $d/out $d/expect
+  fi
+fi
+
+# Check binary (bytearray)
+$VALGRIND $Q $JQ -cn '"foóbar" | tobinary  | encodeas("bytearray")' > $d/out
+$VALGRIND $Q $JQ -e '.==[102,111,195,179,98,97,114]' $d/out
+$VALGRIND $Q $JQ -cne '"foóbar" | tobinary  | encodeas("bytearray") | tostring | tobinary | encodeas("UTF-8") | tostring == "foóbar"'
+
+# Check binary (binary -> UTF-8 w/ bad char mapping)
+$VALGRIND $Q $JQ -n 'tobinary("foo", 128, 129)|encodeas("UTF-8")' > $d/out
+printf '"foo��"\n' > $d/expect
+cmp $d/out $d/expect
+
+$VALGRIND $Q $JQ -nr 'tobinary("foo", 128, 129)|encodeas("UTF-8")' > $d/out
+printf 'foo\357\277\275\357\277\275\n' > $d/expect
+cmp $d/out $d/expect
+
 # Check $JQ_COLORS
 unset JQ_COLORS
 

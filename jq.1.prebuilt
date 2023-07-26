@@ -82,6 +82,12 @@ By default, jq pretty\-prints JSON output\. Using this option will result in mor
 With this option, if the filter\'s result is a string then it will be written directly to standard output rather than being formatted as a JSON string with quotes\. This can be useful for making jq filters talk to non\-JSON\-based systems\.
 .
 .TP
+\fB\-\-raw\-output\-binary\fR:
+.
+.IP
+This is the same as \fB\-\-raw\-output\fR, but any binary values will be output without encoding them in any way\.
+.
+.TP
 \fB\-\-join\-output\fR / \fB\-j\fR:
 .
 .IP
@@ -385,11 +391,26 @@ jq \'[\.foo?]\'
 .SS "Object Index: \.[<string>]"
 You can also look up fields of an object using syntax like \fB\.["foo"]\fR (\fB\.foo\fR above is a shorthand version of this, but only for identifier\-like strings)\.
 .
-.SS "Array Index: \.[<number>]"
+.IP "" 4
+.
+.nf
+
+jq \'\.["foo"]\'
+   {"foo": 42}
+=> 42
+.
+.fi
+.
+.IP "" 0
+.
+.SS "Array/String Index: \.[<number>]"
 When the index value is an integer, \fB\.[<number>]\fR can index arrays\. Arrays are zero\-based, so \fB\.[2]\fR returns the third element\.
 .
 .P
 Negative indices are allowed, with \-1 referring to the last element, \-2 referring to the next to last element, and so on\.
+.
+.P
+For strings indexes refer to Unicode codepoints, and the index operation outputs a string of one codepoint\. For binary strings indexes refer to bytes, and the index operation outputs an unsigned byte value\.
 .
 .IP "" 4
 .
@@ -406,6 +427,18 @@ jq \'\.[2]\'
 jq \'\.[\-2]\'
    [1,2,3]
 => 2
+
+jq \'\.[0]\'
+   "foo"
+=> "f"
+
+jq \'[\.[2],\.[3],\.[4]]\'
+   "foóbar"
+=> ["ó","b","a"]
+
+jq \'tobinary|[\.[2],\.[3],\.[4]]\'
+   "foóbar"
+=> [195,179,98]
 .
 .fi
 .
@@ -413,6 +446,12 @@ jq \'\.[\-2]\'
 .
 .SS "Array/String Slice: \.[<number>:<number>]"
 The \fB\.[<number>:<number>]\fR syntax can be used to return a subarray of an array or substring of a string\. The array returned by \fB\.[10:15]\fR will be of length 5, containing the elements from index 10 (inclusive) to index 15 (exclusive)\. Either index may be negative (in which case it counts backwards from the end of the array), or omitted (in which case it refers to the start or end of the array)\. Indices are zero\-based\.
+.
+.P
+The slice operation on strings outputs strings, and the start and end indices count Unicode codepoints\.
+.
+.P
+The slice operation on binary strings outputs a binary string with the same output encoding, and the start and end indices count bytes\.
 .
 .IP "" 4
 .
@@ -423,6 +462,10 @@ jq \'\.[2:4]\'
 => ["c", "d"]
 
 jq \'\.[2:4]\'
+   "abcdefghi"
+=> "cd"
+
+jq \'tobinary|\.[2:4]|encodeas("UTF\-8")|tostring\'
    "abcdefghi"
 => "cd"
 
@@ -438,11 +481,17 @@ jq \'\.[\-2:]\'
 .
 .IP "" 0
 .
-.SS "Array/Object Value Iterator: \.[]"
+.SS "Array/Object/String Value Iterator: \.[]"
 If you use the \fB\.[index]\fR syntax, but omit the index entirely, it will return \fIall\fR of the elements of an array\. Running \fB\.[]\fR with the input \fB[1,2,3]\fR will produce the numbers as three separate results, rather than as a single array\. A filter of the form \fB\.foo[]\fR is equivalent to \fB\.foo | \.[]\fR\.
 .
 .P
 You can also use this on an object, and it will return all the values of the object\.
+.
+.P
+Iterating a string will output strings of one Unicode codepoint each, in the sequence in which they appear in the input string\.
+.
+.P
+Iterating a binary string will output the numeric values of the sequence of unsigned bytes making up the binary string\.
 .
 .IP "" 4
 .
@@ -463,6 +512,14 @@ jq \'\.foo[]\'
 jq \'\.[]\'
    {"a": 1, "b": 1}
 => 1, 1
+
+jq \'\.[]\'
+   "foóbar"
+=> "f", "o", "ó", "b", "a", "r"
+
+jq \'tobinary[]\'
+   "foóbar"
+=> 102, 111, 195, 179, 98, 97, 114
 .
 .fi
 .
@@ -742,7 +799,7 @@ The operator \fB+\fR takes two filters, applies them both to the same input, and
 \fBArrays\fR are added by being concatenated into a larger array\.
 .
 .IP "\(bu" 4
-\fBStrings\fR are added by being joined into a larger string\.
+\fBStrings\fR are added by being joined into a larger string\. Adding a binary string to a UTF\-8 string produced a binary string\.
 .
 .IP "\(bu" 4
 \fBObjects\fR are added by merging, that is, inserting all the key\-value pairs from both objects into a single combined object\. If both objects contain a value for the same key, the object on the right of the \fB+\fR wins\. (For recursive merge use the \fB*\fR operator\.)
@@ -751,6 +808,60 @@ The operator \fB+\fR takes two filters, applies them both to the same input, and
 .
 .P
 \fBnull\fR can be added to any value, and returns the other value unchanged\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'\.a + 1\'
+   {"a": 7}
+=> 8
+
+jq \'\.a + \.b\'
+   {"a": [1,2], "b": [3,4]}
+=> [1,2,3,4]
+
+jq \'\.a + null\'
+   {"a": 1}
+=> 1
+
+jq \'\.a + 1\'
+   {}
+=> 1
+
+jq \'{a: 1} + {b: 2} + {c: 3} + {a: 42}\'
+   null
+=> {"a": 42, "b": 2, "c": 3}
+.
+.fi
+.
+.IP "" 0
+.
+.SS "Concatenation: concat(addend)"
+The operator \fBconcat\fR takes a filters, applies it the input, and then concatenates the result to the input\. This is somewhat similar to \fB+\fR, for arrays, objects, and strings\. Unlike \fB+\fR, numbers cannot be "concatenated"\.
+.
+.P
+Concatenations supported:
+.
+.IP "\(bu" 4
+\fBStrings\fR are added by being joined into a larger string\.
+.
+.IP "\(bu" 4
+\fBNumber\fR can be added to \fBstrings\fR, where the numbers represent Unicode codepoints when the strings are Unicode strings, or the numbers represent unsigned byte values when the strings are binary strings\.
+.
+.IP "\(bu" 4
+\fBArray\fR values can be appended to \fBstrings\fR, which has the effect of adding all the codepoints or byte values to the strings as when adding numbers to strings\.
+.
+.IP "\(bu" 4
+\fBArrays\fR are concatenated\.
+.
+.IP "\(bu" 4
+\fBObjects\fR are added by merging (see \fB+\fR)
+.
+.IP "" 0
+.
+.P
+\fBnull\fR can be concatenated to any value, and returns the other value unchanged\.
 .
 .IP "" 4
 .
@@ -1529,7 +1640,7 @@ jq \'\.[] | tonumber\'
 .IP "" 0
 .
 .SS "tostring"
-The \fBtostring\fR function prints its input as a string\. Strings are left unchanged, and all other values are JSON\-encoded\.
+The \fBtostring\fR function prints its input as a string\. Binary strings are encoded according to the encoding selected for them; see see \fBtobinary\fR, \fBencodeas\fR, and \fBencoding\fR)\. If a binary string\'s output encoding is a \fB"bytearray"\fR then \fBtostring\fR will output an array of unsigned byte values\. Text strings are left unchanged, and all non\-text, non\-binary values are formatted as JSON texts\.
 .
 .IP "" 4
 .
@@ -1543,16 +1654,106 @@ jq \'\.[] | tostring\'
 .
 .IP "" 0
 .
-.SS "type"
-The \fBtype\fR function returns the type of its argument as a string, which is one of null, boolean, number, string, array or object\.
+.SS "tobinary"
+The \fBtobinary\fR function is like \fBtostring\fR, but its output will be a binary string which when output to jq\'s output stream will be base64\-encoded, and which if added with other strings will produce a binary string value\.
+.
+.P
+Binary inputs are output as\-is\. UTF\-8 strings are converted to binary strings without loss\. Arrays of unsigned byte values and arrays of \.\. unsigned byte values are flattened and converted to binary strings\.
+.
+.P
+In all cases the external representation of a binary value on output will be an encoding of that binary value, which may be selected with the \fBencodeas\fR function\.
+.
+.P
+The \fBlength\fR of a binary string is always its length in bytes regardless of the external encoding assigned to it\.
+.
+.P
+Internally the binary string may be represented efficiently, and may not be encoded until it is output or until it is passed to \fBtostring\fR\. That is, applying \fBtostring\fR to a binary string immediately encodes it according to its assigned encoding\.
 .
 .IP "" 4
 .
 .nf
 
-jq \'map(type)\'
-   [0, false, [], {}, null, "hello"]
-=> ["number", "boolean", "array", "object", "null", "string"]
+jq \'tobinary|tostring\'
+   "á"
+=> "w6E="
+
+jq \'tobinary|concat([range(10)])|encodeas("bytearray")|tostring\'
+   "á"
+=> [195,161,0,1,2,3,4,5,6,7,8,9]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "tobinary(bytes)"
+This function constructs a binary string value like \fBtobinary\fR but consisting of the byte values output by \fBbytes\fR\. \fBbytes\fR can produce unsigned byte values as well as arrays; arrays can nest, but all scalar values must be unsigned byte values\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'tobinary(["foob",0,[20,[range(1;10)|[[\.],\.]]],255])|encodeas("bytearray")|tostring|tobinary|encodeas("bytearray")|tostring\'
+   null
+=> [102,111,111,98,0,20,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,255]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "isbinary"
+This returns \fBtrue\fR if the input is a binary string, or \fBfalse\fR if the input is either a UTF\-8 string or not a string\.
+.
+.SS "encodeas($encoding)"
+This function sets the encoding of any binary string input to the given \fB$encoding\fR, which must be one of \fB"UTF\-8"\fR (apply bad character mappings), \fB"hex"\fR (encode binary as hexadecimal), \fB"base64"\fR (encode binary in base64), or \fB"bytearray"\fR (encode binary as an array of unsigned byte values)\. The result will be encoded accordingly when passed to \fBtostring\fR or when finally output by jq to \fBstdout\fR or \fBstderr\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'tobinary|encodeas("base64")|tostring\'
+   "á"
+=> "w6E="
+
+jq \'tobinary|encodeas("hex")|tostring\'
+   "á"
+=> "C3A1"
+
+jq \'tobinary|encodeas("bytearray")|tostring\'
+   "á"
+=> [195,161]
+
+jq \'tobinary|encodeas("UTF\-8")|tostring\'
+   "á"
+=> "á"
+.
+.fi
+.
+.IP "" 0
+.
+.SS "type"
+The \fBtype\fR function returns the type of its argument as a string, which is one of null, boolean, number, string, array or object\.
+.
+.SS "stringtype"
+Strings can be UTF\-8 strings or binary strings\. The \fBstringtype\fR builtin outputs \fB"UTF\-8"\fR or \fB"binary"\fR when given a string as input\.
+.
+.SS "encoding"
+Outputs the encoding set with \fBencodeas\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'encoding\'
+   "foo"
+=> "UTF\-8"
+
+jq \'tobinary|encoding\'
+   "foo"
+=> "base64"
+
+jq \'encoding\'
+   "foo"|tobinary|encodeas("bytearray")|encoding
+=> "bytearray"
 .
 .fi
 .
@@ -2284,6 +2485,18 @@ The input must be an array, and it is rendered as TSV (tab\-separated values)\. 
 The input is escaped suitable for use in a command\-line for a POSIX shell\. If the input is an array, the output will be a series of space\-separated strings\.
 .
 .TP
+\fB@hex\fR:
+.
+.IP
+The input is converted to hexadecimal\.
+.
+.TP
+\fB@hexd\fR:
+.
+.IP
+The input is converted from hexadecimal to binary with \fB"hex"\fR as its output encoding\.
+.
+.TP
 \fB@base64\fR:
 .
 .IP
@@ -2293,7 +2506,13 @@ The input is converted to base64 as specified by RFC 4648\.
 \fB@base64d\fR:
 .
 .IP
-The inverse of \fB@base64\fR, input is decoded as specified by RFC 4648\. Note\e: If the decoded string is not UTF\-8, the results are undefined\.
+The inverse of \fB@base64\fR, input is decoded as specified by RFC 4648\. Note that for backwards\-compatibility reasons this decodes to a UTF\-8 string (as opposed to a binary string), including bad character mappings should the decoded input not be valid UTF\-8\.
+.
+.TP
+\fB@base64dbinary\fR:
+.
+.IP
+Like \fB@base64d\fR, but decodes to a binary string with \fB"base64"\fR as its output encoding\.
 .
 .P
 This syntax can be combined with string interpolation in a useful way\. You can follow a \fB@foo\fR token with a string literal\. The contents of the string literal will \fInot\fR be escaped\. However, all interpolations made inside that string literal will be escaped\. For instance,
@@ -2342,6 +2561,14 @@ jq \'@base64\'
 
 jq \'@base64d\'
    "VGhpcyBpcyBhIG1lc3NhZ2U="
+=> "This is a message"
+
+jq \'@hex\'
+   "This is a message"
+=> "546869732069732061206D657373616765"
+
+jq \'@hexd\'
+   "546869732069732061206D657373616765"
 => "This is a message"
 .
 .fi
@@ -3089,6 +3316,9 @@ Multiple variables may be declared using a single \fBas\fR expression by providi
 The variable declarations in array patterns (e\.g\., \fB\. as [$first, $second]\fR) bind to the elements of the array in from the element at index zero on up, in order\. When there is no value at the index for an array pattern element, \fBnull\fR is bound to that variable\.
 .
 .P
+Note that array patterns do not match strings\. That is, \fB\. as [$x]\fR will not match the first codepoint in \fB\.\fR if \fB\.\fR is a string\.
+.
+.P
 Variables are scoped over the rest of the expression that defines them, so
 .
 .IP "" 4
@@ -3220,6 +3450,10 @@ jq \'\.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}\'
 jq \'\.[] as [$a] ?// [$b] | if $a != null then error("err: \e($a)") else {$a,$b} end\'
    [[3]]
 => {"a":null,"b":3}
+
+jq \'\. as [$x] ?// $x | $x\'
+   "abc"
+=> "abc"
 .
 .fi
 .

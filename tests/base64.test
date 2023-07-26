@@ -27,9 +27,9 @@
 # invalid base64 characters (whitespace)
 . | try @base64d catch .
 "Not base64 data"
-"string (\"Not base64...) is not valid base64 data"
+"Invalid base64 data (\"Not base64...)"
 
 # invalid base64 (too many bytes, QUJD = "ABCD"
 . | try @base64d catch .
 "QUJDa"
-"string (\"QUJDa\") trailing base64 byte found"
+"Invalid base64 data (trailing base64 byte found) (\"QUJDa\")"

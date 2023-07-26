@@ -55,9 +55,15 @@ jv jq_get_attr(jq_state *, jv);
  */
 typedef struct jq_util_input_state jq_util_input_state;
 typedef void (*jq_util_msg_cb)(void *, const char *);
+typedef enum {
+  JQ_UTIL_PARSE_SLURP  = 1,
+  JQ_UTIL_PARSE_BINARY = 2,
+} jq_util_parser_enum;
+
+
 
 jq_util_input_state *jq_util_input_init(jq_util_msg_cb, void *);
-void jq_util_input_set_parser(jq_util_input_state *, jv_parser *, int);
+void jq_util_input_set_parser(jq_util_input_state *, jv_parser *, jq_util_parser_enum);
 void jq_util_input_free(jq_util_input_state **);
 void jq_util_input_add_input(jq_util_input_state *, const char *);
 int jq_util_input_errors(jq_util_input_state *);

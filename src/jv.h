@@ -16,13 +16,27 @@ typedef enum {
   JV_KIND_OBJECT
 } jv_kind;
 
+typedef enum {
+  /* String subtypes */
+  JV_STRING_KIND_UTF8,
+  JV_STRING_KIND_BINARY,            /* prints as base64 */
+  JV_STRING_KIND_BINARY_HEX,        /* prints as hexadecimal */
+  JV_STRING_KIND_BINARY_BYTEARRAY,  /* prints as array of byte values */
+  JV_STRING_KIND_BINARY_UTF8,       /* prints as UTF-8 with bad character substitutions */
+  /* Maybe add empty and 1-element arrays as array subtypes to avoid allocations? */
+  /*
+   * XXX TODO MAYBE: merge with JVP_FLAGS concept, move to using kind_flags field,
+   * and/or combine the old pad_ and kind/kind_flags fields.
+   */
+} jv_string_kind;
+
 struct jv_refcnt;
 
 /* All of the fields of this struct are private.
    Really. Do not play with them. */
 typedef struct {
   unsigned char kind_flags;
-  unsigned char pad_;
+  unsigned char subkind;
   unsigned short offset;  /* array offsets */
   int size;
   union {
@@ -39,6 +53,9 @@ typedef struct {
 jv_kind jv_get_kind(jv);
 const char* jv_kind_name(jv_kind);
 static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
+
+jv_string_kind jv_get_string_kind(jv);
+const char* jv_string_kind_name(jv_string_kind);
 
 jv jv_copy(jv);
 void jv_free(jv);
@@ -106,13 +123,28 @@ jv jv_array_indexes(jv, jv);
 #endif
 
 
+jv jv_binary_sized(const unsigned char *, int);
+jv jv_binary(const unsigned char *);
+int jv_binary_length(jv);
+jv jv_binary_slice(jv, int, int);
+jv jv_binary_concat(jv, jv);
+jv jv_binary_append_byte(jv, unsigned char);
+jv jv_binary_append_buf(jv, const unsigned char *, int);
+jv jv_binary_to_base64(jv);
+jv jv_binary_from_base64(jv);
+jv jv_binary_to_hex(jv);
+jv jv_binary_from_hex(jv);
+jv jv_binary_from_string(jv);
+
 jv jv_string(const char*);
 jv jv_string_sized(const char*, int);
+jv jv_string_from_binary(jv);
 jv jv_string_empty(int len);
 int jv_string_length_bytes(jv);
 int jv_string_length_codepoints(jv);
 unsigned long jv_string_hash(jv);
 const char* jv_string_value(jv);
+uint32_t jv_string_index(jv, int);
 jv jv_string_indexes(jv j, jv k);
 jv jv_string_slice(jv j, int start, int end);
 jv jv_string_concat(jv, jv);

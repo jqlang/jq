@@ -995,7 +995,7 @@ block gen_array_matcher(block left, block curr) {
 
   // `left` goes at the end so that the const index is in a predictable place
   return BLOCK(gen_op_simple(DUP), gen_subexp(gen_const(jv_number(index))),
-               gen_op_simple(INDEX), curr, left);
+               gen_op_simple(INDEX_D), curr, left);
 }
 
 block gen_object_matcher(block name, block curr) {

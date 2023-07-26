@@ -10,6 +10,7 @@ OP(STOREV, VARIABLE, 1, 0)
 OP(STORE_GLOBAL, GLOBAL, 0, 0)
 OP(INDEX, NONE,     2, 1)
 OP(INDEX_OPT, NONE,     2, 1)
+OP(INDEX_D, NONE,     2, 1)   /* For gen_array_matcher() -- destructuring */
 OP(EACH,  NONE,     1, 1)
 OP(EACH_OPT,  NONE, 1, 1)
 OP(FORK,  BRANCH,   0, 0)

@@ -26,12 +26,12 @@ const char* jvp_utf8_backtrack(const char* start, const char* min, int *missing_
   return start;
 }
 
-const char* jvp_utf8_next(const char* in, const char* end, int* codepoint_ret) {
+const char* jvp_utf8_next(const char* in, const char* end, uint32_t *codepoint_ret) {
   assert(in <= end);
   if (in == end) {
     return 0;
   }
-  int codepoint = -1;
+  uint32_t codepoint = 0xffffffff;
   unsigned char first = (unsigned char)in[0];
   int length = utf8_coding_length[first];
   if ((first & 0x80) == 0) {
@@ -50,7 +50,7 @@ const char* jvp_utf8_next(const char* in, const char* end, int* codepoint_ret) {
       unsigned ch = (unsigned char)in[i];
       if (utf8_coding_length[ch] != UTF8_CONTINUATION_BYTE){
         /* Invalid UTF8 sequence - not followed by the right number of continuation bytes */
-        codepoint = -1;
+        codepoint = 0xffffffff;
         length = i;
         break;
       }
@@ -75,9 +75,9 @@ const char* jvp_utf8_next(const char* in, const char* end, int* codepoint_ret) {
 }
 
 int jvp_utf8_is_valid(const char* in, const char* end) {
-  int codepoint;
+  uint32_t codepoint;
   while ((in = jvp_utf8_next(in, end, &codepoint))) {
-    if (codepoint == -1) return 0;
+    if (codepoint == 0xffffffff) return 0;
   }
   return 1;
 }
@@ -90,15 +90,16 @@ int jvp_utf8_decode_length(char startchar) {
 	else return 4;                                 // 1111 ____
 }
 
-int jvp_utf8_encode_length(int codepoint) {
+int jvp_utf8_encode_length(uint32_t codepoint) {
+  assert(codepoint <= 0x10FFFF);
   if (codepoint <= 0x7F) return 1;
   else if (codepoint <= 0x7FF) return 2;
   else if (codepoint <= 0xFFFF) return 3;
   else return 4;
 }
 
-int jvp_utf8_encode(int codepoint, char* out) {
-  assert(codepoint >= 0 && codepoint <= 0x10FFFF);
+int jvp_utf8_encode(uint32_t codepoint, char* out) {
+  assert(codepoint <= 0x10FFFF);
   char* start = out;
   if (codepoint <= 0x7F) {
     *out++ = codepoint;
