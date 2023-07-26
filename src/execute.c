@@ -681,7 +681,7 @@ jv jq_next(jq_state *jq) {
       jv v;
       if (opcode != INDEX_D && jv_get_kind(t) == JV_KIND_STRING && jv_get_kind(k) == JV_KIND_NUMBER) {
         switch (jv_get_string_kind(t)) {
-        case JV_STRING_KIND_UTF8:
+        case JV_STRING_KIND_UTF8: {
           uint32_t c = jv_string_index(t, jv_number_value(k));
           if (c == (uint32_t)-1)
             v = jv_null();
@@ -689,6 +689,7 @@ jv jq_next(jq_state *jq) {
             v = jv_string_append_codepoint(jv_string(""), c);
           jv_free(k);
           break;
+        }
         case JV_STRING_KIND_BINARY:
         case JV_STRING_KIND_BINARY_HEX:
         case JV_STRING_KIND_BINARY_BYTEARRAY:
