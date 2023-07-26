@@ -674,11 +674,12 @@ jv jq_next(jq_state *jq) {
     }
 
     case INDEX:
+    case INDEX_D:
     case INDEX_OPT: {
       jv t = stack_pop(jq);
       jv k = stack_pop(jq);
       jv v;
-      if (jv_get_kind(t) == JV_KIND_STRING && jv_get_kind(k) == JV_KIND_NUMBER) {
+      if (opcode != INDEX_D && jv_get_kind(t) == JV_KIND_STRING && jv_get_kind(k) == JV_KIND_NUMBER) {
         switch (jv_get_string_kind(t)) {
         case JV_STRING_KIND_UTF8:
           uint32_t c = jv_string_index(t, jv_number_value(k));
@@ -730,7 +731,7 @@ jv jq_next(jq_state *jq) {
         stack_push(jq, v);
       } else {
         jv_free(k);
-        if (opcode == INDEX)
+        if (opcode == INDEX || opcode == INDEX_D)
           set_error(jq, v);
         else
           jv_free(v);

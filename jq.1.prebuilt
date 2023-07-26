@@ -3308,6 +3308,9 @@ Multiple variables may be declared using a single \fBas\fR expression by providi
 The variable declarations in array patterns (e\.g\., \fB\. as [$first, $second]\fR) bind to the elements of the array in from the element at index zero on up, in order\. When there is no value at the index for an array pattern element, \fBnull\fR is bound to that variable\.
 .
 .P
+Note that array patterns do not match strings\. That is, \fB\. as [$x]\fR will not match the first codepoint in \fB\.\fR if \fB\.\fR is a string\.
+.
+.P
 Variables are scoped over the rest of the expression that defines them, so
 .
 .IP "" 4
@@ -3439,6 +3442,10 @@ jq \'\.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}\'
 jq \'\.[] as [$a] ?// [$b] | if $a != null then error("err: \e($a)") else {$a,$b} end\'
    [[3]]
 => {"a":null,"b":3}
+
+jq \'\. as [$x] ?// $x | $x\'
+   "abc"
+=> "abc"
 .
 .fi
 .

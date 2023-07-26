@@ -924,6 +924,10 @@ true
 [[3]]
 {"a":null,"b":3}
 
+. as [$x] ?// $x | $x
+"abc"
+"abc"
+
 def addvalue(f): . + [f]; map(addvalue(.[0]))
 [[1,2],[10,20]]
 [[1,2,1], [10,20,10]]

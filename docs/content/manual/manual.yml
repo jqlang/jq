@@ -2983,6 +2983,10 @@ sections:
           value at the index for an array pattern element, `null` is
           bound to that variable.
 
+          Note that array patterns do not match strings.  That is, `.
+          as [$x]` will not match the first codepoint in `.` if `.` is
+          a string.
+
           Variables are scoped over the rest of the expression that defines
           them, so
 
@@ -3059,6 +3063,9 @@ sections:
           - program: '.[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end'
             input: '[[3]]'
             output: ['{"a":null,"b":3}']
+          - program: '. as [$x] ?// $x | $x'
+            input: '"abc"'
+            output: ['"abc"']
 
       - title: 'Defining Functions'
         body: |
