@@ -666,6 +666,18 @@ env.PAGER
 null
 "less"
 
+map(lpad(2))
+["", "a"]
+["  ", " a"]
+
+map(lpad(4; "- "))
+["", "a"]
+["- - ","- -a"]
+
+[range(0; 5)] | [nwise(2)]
+null
+[[0,1],[2,3],[4]]
+
 transpose
 [[1], [2,3]]
 [[1,2],[null,3]]

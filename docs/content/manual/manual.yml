@@ -1975,6 +1975,38 @@ sections:
             input: 'null'
             output: ['"less"']
 
+      - title: "`lpad($len; $fill)`, `lpad($len)`"
+        body: |
+
+          These functions can be used to pad the input string. `$len` should be a non-negative
+          integer, and `$fill` should be a non-empty string.
+
+          If the input string has length less than `$len`, then both these functions
+          will pad it using the characters in the `$fill` string to produce
+          a string of length `$len`. Typically, `$fill` is given as a string of length 1.
+
+          `lpad($len)` is equivalent to `lpad($len; " ")`.
+
+        examples:
+          - program: 'map(lpad(2))'
+            input: '["", "a"]'
+            output: ['["  ", " a"]']
+
+          - program: 'map(lpad(4; "- "))'
+            input: '["", "a"]'
+            output: ['["- - ","- -a"]']
+
+      - title: "`nwise($n)`"
+        body: |
+
+          Emit a stream of arrays created by taking $n items at a time from
+          the input array, or the remaining terms if there are fewer than $n.
+
+        examples:
+          - program: '[range(0; 5)] | [nwise(2)]'
+            input: 'null'
+            output: ['[[0,1],[2,3],[4]]']
+
       - title: "`transpose`"
         body: |
 

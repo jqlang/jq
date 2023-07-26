@@ -11,6 +11,8 @@ def min_by(f): _min_by_impl(map([f]));
 def add: reduce .[] as $x (null; . + $x);
 def del(f): delpaths([path(f)]);
 def abs: if . < 0 then - . else . end;
+def lpad($len; $fill): tostring | ($len - length) as $l | ($fill * $l)[:$l] + .;
+def lpad($len): lpad($len; " ");
 def _assign(paths; $value): reduce path(paths) as $p (.; setpath($p; $value));
 def _modify(paths; update):
     reduce path(paths) as $p ([., []];
@@ -99,9 +101,11 @@ def scan($re): scan($re; null);
 #
 # If input is an array, then emit a stream of successive subarrays of length n (or less),
 # and similarly for strings.
-def _nwise($n):
+def nwise($n):
   def n: if length <= $n then . else .[0:$n] , (.[$n:] | n) end;
   n;
+# For backward compatibility:  
+def _nwise($n): nwise($n);
 def _nwise(a; $n): a | _nwise($n);
 #
 # splits/1 produces a stream; split/1 is retained for backward compatibility.
@@ -109,7 +113,7 @@ def splits($re; flags): . as $s
 #  # multiple occurrences of "g" are acceptable
   | [ match($re; "g" + flags) | (.offset, .offset + .length) ]
   | [0] + . +[$s|length]
-  | _nwise(2)
+  | nwise(2)
   | $s[.[0]:.[1] ] ;
 def splits($re): splits($re; null);
 #
@@ -139,13 +143,12 @@ def gsub($re; s): sub($re; s; "g");
 ########################################################################
 # generic iterator/generator
 def while(cond; update):
-     def _while:
-         if cond then ., (update | _while) else empty end;
-     _while;
+  def _while: if cond then ., (update | _while) else empty end;
+    _while;
 def until(cond; next):
-     def _until:
-         if cond then . else (next|_until) end;
-     _until;
+  def _until: if cond then . else (next|_until) end;
+  _until;
+
 def limit($n; exp):
     if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
     elif $n == 0 then empty

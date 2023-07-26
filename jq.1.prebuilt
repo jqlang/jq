@@ -1,3 +1,4 @@
+pipenv run python validate_manual_schema.py content/manual/manual.yml
 .
 .TH "JQ" "1" "July 2023" "" ""
 .
@@ -2157,6 +2158,46 @@ jq \'$ENV\.PAGER\'
 jq \'env\.PAGER\'
    null
 => "less"
+.
+.fi
+.
+.IP "" 0
+.
+.SS "lpad($len; $fill), lpad($len)"
+These functions can be used to pad the input string\. \fB$len\fR should be a non\-negative integer, and \fB$fill\fR should be a non\-empty string\.
+.
+.P
+If the input string has length less than \fB$len\fR, then both these functions will pad it using the characters in the \fB$fill\fR string to produce a string of length \fB$len\fR\. Typically, \fB$fill\fR is given as a string of length 1\.
+.
+.P
+\fBlpad($len)\fR is equivalent to \fBlpad($len; " ")\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'map(lpad(2))\'
+   ["", "a"]
+=> ["  ", " a"]
+
+jq \'map(lpad(4; "\- "))\'
+   ["", "a"]
+=> ["\- \- ","\- \-a"]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "nwise($n)"
+Emit a stream of arrays created by taking $n items at a time from the input array, or the remaining terms if there are fewer than $n\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[range(0; 5)] | [nwise(2)]\'
+   null
+=> [[0,1],[2,3],[4]]
 .
 .fi
 .
