@@ -529,9 +529,17 @@ tobinary|encodeas("UTF-8")|tostring
 "á"
 "á"
 
-[(tostring,tobinary,(tobinary|encodeas("bytearray")),(tobinary|encodeas("UTF-8")))|[type,stringtype,encoding]]
+encoding
 "foo"
-[["string","UTF-8","UTF-8"],["string","binary","base64"],["string","binary","bytearray"],["string","binary","UTF-8"]]
+"UTF-8"
+
+tobinary|encoding
+"foo"
+"base64"
+
+encoding
+"foo"|tobinary|encodeas("bytearray")|encoding
+"bytearray"
 
 .[] | (infinite * .) < 0
 [-1, 1]

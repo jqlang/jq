@@ -1549,7 +1549,7 @@ sections:
         body: |
 
           The `tostring` function prints its input as a string.
-          Binary strings are encoded accoring to the encoding selected
+          Binary strings are encoded according to the encoding selected
           for them; see see `tobinary`, `encodeas`, and `encoding`).
           If a binary string's output encoding is a `"bytearray"` then
           `tostring` will output an array of unsigned byte values.
@@ -1600,9 +1600,9 @@ sections:
 
           This function constructs a binary string value like
           `tobinary` but consisting of the byte values output by
-          `bytes`.  `bytes` can produced unsigned byte values as well
-          as arrays of unsigned byte values and arrays of .. unsigned
-          byte values.
+          `bytes`.  `bytes` can produce unsigned byte values as well
+          as arrays; arrays can nest, but all scalar values must be
+          unsigned byte values.
 
         examples:
           - program: 'tobinary(["foob",0,[20,[range(1;10)|[[.],.]]],255])|encodeas("bytearray")|tostring|tobinary|encodeas("bytearray")|tostring'
@@ -1624,9 +1624,9 @@ sections:
           (apply bad character mappings), `"hex"` (encode binary as
           hexadecimal), `"base64"` (encode binary in base64), or
           `"bytearray"` (encode binary as an array of unsigned byte
-          values).  The result will be encoded accordingly when when
-          passed to `tostring` or when finally output by jq to
-          `stdout` or `stderr`.
+          values).  The result will be encoded accordingly when passed
+          to `tostring` or when finally output by jq to `stdout` or
+          `stderr`.
 
         examples:
           - program: 'tobinary|encodeas("base64")|tostring'
@@ -1659,15 +1659,18 @@ sections:
       - title: "`encoding`"
         body: |
 
-          Outputs either `"UTF-8"`, `"base64"`, or `"bytearray"`,
-          depending on whether the string is a plain text string or a
-          binary string and what output encoding was applied to the
-          binary string with `encodeas` (default is `"base64"`).
+          Outputs the encoding set with `encodeas`.
 
         examples:
-          - program: '[(tostring,tobinary,(tobinary|encodeas("bytearray")),(tobinary|encodeas("UTF-8")))|[type,stringtype,encoding]]'
+          - program: 'encoding'
             input: '"foo"'
-            output: ['[["string","UTF-8","UTF-8"],["string","binary","base64"],["string","binary","bytearray"],["string","binary","UTF-8"]]']
+            output: ['"UTF-8"']
+          - program: 'tobinary|encoding'
+            input: '"foo"'
+            output: ['"base64"']
+          - program: 'encoding'
+            input: '"foo"|tobinary|encodeas("bytearray")|encoding'
+            output: ['"bytearray"']
 
       - title: "`infinite`, `nan`, `isinfinite`, `isnan`, `isfinite`, `isnormal`"
         body: |

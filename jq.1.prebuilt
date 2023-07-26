@@ -1640,7 +1640,7 @@ jq \'\.[] | tonumber\'
 .IP "" 0
 .
 .SS "tostring"
-The \fBtostring\fR function prints its input as a string\. Binary strings are encoded accoring to the encoding selected for them; see see \fBtobinary\fR, \fBencodeas\fR, and \fBencoding\fR)\. If a binary string\'s output encoding is a \fB"bytearray"\fR then \fBtostring\fR will output an array of unsigned byte values\. Text strings are left unchanged, and all non\-text, non\-binary values are formatted as JSON texts\.
+The \fBtostring\fR function prints its input as a string\. Binary strings are encoded according to the encoding selected for them; see see \fBtobinary\fR, \fBencodeas\fR, and \fBencoding\fR)\. If a binary string\'s output encoding is a \fB"bytearray"\fR then \fBtostring\fR will output an array of unsigned byte values\. Text strings are left unchanged, and all non\-text, non\-binary values are formatted as JSON texts\.
 .
 .IP "" 4
 .
@@ -1686,7 +1686,7 @@ jq \'tobinary|concat([range(10)])|encodeas("bytearray")|tostring\'
 .IP "" 0
 .
 .SS "tobinary(bytes)"
-This function constructs a binary string value like \fBtobinary\fR but consisting of the byte values output by \fBbytes\fR\. \fBbytes\fR can produced unsigned byte values as well as arrays of unsigned byte values and arrays of \.\. unsigned byte values\.
+This function constructs a binary string value like \fBtobinary\fR but consisting of the byte values output by \fBbytes\fR\. \fBbytes\fR can produce unsigned byte values as well as arrays; arrays can nest, but all scalar values must be unsigned byte values\.
 .
 .IP "" 4
 .
@@ -1704,7 +1704,7 @@ jq \'tobinary(["foob",0,[20,[range(1;10)|[[\.],\.]]],255])|encodeas("bytearray")
 This returns \fBtrue\fR if the input is a binary string, or \fBfalse\fR if the input is either a UTF\-8 string or not a string\.
 .
 .SS "encodeas($encoding)"
-This function sets the encoding of any binary string input to the given \fB$encoding\fR, which must be one of \fB"UTF\-8"\fR (apply bad character mappings), \fB"hex"\fR (encode binary as hexadecimal), \fB"base64"\fR (encode binary in base64), or \fB"bytearray"\fR (encode binary as an array of unsigned byte values)\. The result will be encoded accordingly when when passed to \fBtostring\fR or when finally output by jq to \fBstdout\fR or \fBstderr\fR\.
+This function sets the encoding of any binary string input to the given \fB$encoding\fR, which must be one of \fB"UTF\-8"\fR (apply bad character mappings), \fB"hex"\fR (encode binary as hexadecimal), \fB"base64"\fR (encode binary in base64), or \fB"bytearray"\fR (encode binary as an array of unsigned byte values)\. The result will be encoded accordingly when passed to \fBtostring\fR or when finally output by jq to \fBstdout\fR or \fBstderr\fR\.
 .
 .IP "" 4
 .
@@ -1737,15 +1737,23 @@ The \fBtype\fR function returns the type of its argument as a string, which is o
 Strings can be UTF\-8 strings or binary strings\. The \fBstringtype\fR builtin outputs \fB"UTF\-8"\fR or \fB"binary"\fR when given a string as input\.
 .
 .SS "encoding"
-Outputs either \fB"UTF\-8"\fR, \fB"base64"\fR, or \fB"bytearray"\fR, depending on whether the string is a plain text string or a binary string and what output encoding was applied to the binary string with \fBencodeas\fR (default is \fB"base64"\fR)\.
+Outputs the encoding set with \fBencodeas\fR\.
 .
 .IP "" 4
 .
 .nf
 
-jq \'[(tostring,tobinary,(tobinary|encodeas("bytearray")),(tobinary|encodeas("UTF\-8")))|[type,stringtype,encoding]]\'
+jq \'encoding\'
    "foo"
-=> [["string","UTF\-8","UTF\-8"],["string","binary","base64"],["string","binary","bytearray"],["string","binary","UTF\-8"]]
+=> "UTF\-8"
+
+jq \'tobinary|encoding\'
+   "foo"
+=> "base64"
+
+jq \'encoding\'
+   "foo"|tobinary|encodeas("bytearray")|encoding
+=> "bytearray"
 .
 .fi
 .
