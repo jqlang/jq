@@ -107,28 +107,31 @@ static jv f_plus(jq_state *jq, jv input, jv a, jv b) {
 #ifdef __APPLE__
 // macOS has a bunch of libm deprecation warnings, so let's clean those up
 #ifdef HAVE_TGAMMA
+#define HAVE_GAMMA
 #define gamma tgamma
 #endif
 #ifdef HAVE___EXP10
+#define HAVE_EXP10
 #define exp10 __exp10
 #endif
 #ifdef HAVE_REMAINDER
+#define HAVE_DREM
 #define drem remainder
 #endif
 
 // We replace significand with our own, since there's not a rename-replacement
 #ifdef HAVE_FREXP
-#define HAVE_CUSTOM_SIGNIFICAND
 static double __jq_significand(double x) {
   int z;
   return 2*frexp(x, &z);
 }
+#define HAVE_SIGNIFICAND
 #define significand __jq_significand
 #elif defined(HAVE_SCALBN) && defined(HAVE_ILOGB)
-#define HAVE_CUSTOM_SIGNIFICAND
 static double __jq_significand(double x) {
   return scalbn(x, -ilogb(x));
 }
+#define HAVE_SIGNIFICAND
 #define significand __jq_significand
 #endif
 
@@ -1876,7 +1879,10 @@ static const char jq_builtins[] =
 #undef LIBM_DD
 
 #ifdef __APPLE__
-#undef HAVE_CUSTOM_SIGNIFICAND
+#undef HAVE_GAMMA
+#undef HAVE_EXP10
+#undef HAVE_DREM
+#undef HAVE_SIGNIFICAND
 #endif
 
 static block gen_builtin_list(block builtins) {
