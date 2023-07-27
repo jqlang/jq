@@ -211,14 +211,15 @@ using some command-line options:</p>
   formatted as a JSON string with quotes. This can be useful for
   making jq filters talk to non-JSON-based systems.</p>
 <ul>
+<li><code>--raw-output0</code>:</li>
+</ul>
+<p>Like <code>-r</code> but jq will print NUL instead of newline after each output.
+  This can be useful when the values being output can contain newlines.
+  When the output value contains NUL, jq exits with non-zero code.</p>
+<ul>
 <li><code>--join-output</code> / <code>-j</code>:</li>
 </ul>
 <p>Like <code>-r</code> but jq won't print a newline after each output.</p>
-<ul>
-<li><code>--nul-output</code> / <code>-0</code>:</li>
-</ul>
-<p>Like <code>-r</code> but jq will print NUL instead of newline after each output.
-  This can be useful when the values being output can contain newlines.</p>
 <ul>
 <li><code>--ascii-output</code> / <code>-a</code>:</li>
 </ul>
