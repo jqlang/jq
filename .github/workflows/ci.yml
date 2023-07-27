@@ -357,6 +357,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     environment: release
     needs: [linux, macos, windows, dist, docker]
     if: startsWith(github.ref, 'refs/tags/jq-')
@@ -381,6 +382,7 @@ jobs:
       - name: Update signatures
         env:
           TAG_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           sig_dir="sig/v${TAG_NAME#jq-}"
           mkdir -p "$sig_dir"
@@ -392,4 +394,4 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git commit -m "Update signatures of ${TAG_NAME#jq-}"
-          git push origin HEAD:master
+          gh pr create --title "Update signatures of ${TAG_NAME#jq-}" 
