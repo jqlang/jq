@@ -357,6 +357,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    environment: release
     needs: [linux, macos, windows, dist, docker]
     if: startsWith(github.ref, 'refs/tags/jq-')
     steps:
@@ -369,6 +370,26 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sha256sum jq-*/jq-* | sed 's, .*/, ,' > checksums.txt
+          sha256sum jq-*/jq-* | sed 's| .*/| |' > sha256sum.txt
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
-          gh release upload "$TAG_NAME" --clobber jq-*/jq-* checksums.txt
+          gh release upload "$TAG_NAME" --clobber jq-*/jq-* sha256sum.txt
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.JQ_RELEASE_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.JQ_RELEASE_GPG_PASSPHRASE }}
+      - name: Update signatures
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          sig_dir="sig/v${TAG_NAME#jq-}"
+          mkdir -p "$sig_dir"
+          mv sha256sum.txt "$sig_dir"
+          for file in jq-*/jq-*; do
+            gpg --detach-sign --armor --batch --output "${sig_dir}/${file#*/}.asc" "$file"
+          done
+          git add sig
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git commit -m "Update signatures of ${TAG_NAME#jq-}"
+          git push origin HEAD:master
