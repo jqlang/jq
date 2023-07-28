@@ -396,5 +396,5 @@ jobs:
           title="Update signatures of ${TAG_NAME#jq-}"
           git commit -m "$title"
           branch="update-signatures-${TAG_NAME#jq-}"
-          git push origin "HEAD:$branch"
+          git push origin "HEAD:refs/heads/$branch"
           gh pr create --title "$title" --body "" --head "$branch"
