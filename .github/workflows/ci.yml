@@ -394,4 +394,4 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git commit -m "Update signatures of ${TAG_NAME#jq-}"
-          gh pr create --title "Update signatures of ${TAG_NAME#jq-}" 
+          gh pr create --title "Update signatures of ${TAG_NAME#jq-}" --body ""
