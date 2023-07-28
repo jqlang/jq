@@ -872,10 +872,12 @@ ObjPats ',' ObjPat {
 
 ObjPat:
 BINDING {
-  $$ = gen_object_matcher(gen_const($1), gen_op_unbound(STOREV, jv_string_value($1)));
+  $$ = gen_op_unbound(STOREV, jv_string_value($1));
+  $$ = gen_object_matcher(gen_const($1), $$);
 } |
 BINDING ':' Pattern {
-  $$ = gen_object_matcher(gen_const($1), BLOCK(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value($1)), $3));
+  $$ = BLOCK(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value($1)), $3);
+  $$ = gen_object_matcher(gen_const($1), $$);
 } |
 IDENT ':' Pattern {
   $$ = gen_object_matcher(gen_const($1), $3);
@@ -983,20 +985,20 @@ IDENT ':' ExpD {
   jv_free($1);
   }
 | BINDING {
-  $$ = gen_dictpair(gen_const($1),
-                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))));
+  $$ = gen_op_unbound(LOADV, jv_string_value($1));
+  $$ = gen_dictpair(gen_const($1), gen_location(@$, locations, $$));
   }
 | IDENT {
-  $$ = gen_dictpair(gen_const(jv_copy($1)),
-                    gen_index(gen_noop(), gen_const($1)));
+  $$ = gen_index(gen_noop(), gen_const(jv_copy($1)));
+  $$ = gen_dictpair(gen_const($1), $$);
   }
 | "$__loc__" {
   $$ = gen_dictpair(gen_const(jv_string("__loc__")),
                     gen_loc_object(&@$, locations));
   }
 | Keyword {
-  $$ = gen_dictpair(gen_const(jv_copy($1)),
-                    gen_index(gen_noop(), gen_const($1)));
+  $$ = gen_index(gen_noop(), gen_const(jv_copy($1)));
+  $$ = gen_dictpair(gen_const($1), $$);
   }
 | '(' Exp ')' ':' ExpD {
   jv msg = check_object_key($2);
