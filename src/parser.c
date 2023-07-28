@@ -980,8 +980,8 @@ static const yytype_int16 yyrline[] =
      869,   874,   877,   880,   883,   886,   889,   897,   903,   906,
      909,   912,   915,   918,   921,   924,   927,   930,   933,   936,
      939,   942,   945,   948,   951,   954,   959,   962,   963,   964,
-     967,   970,   973,   976,   980,   984,   988,   992,   996,  1000,
-    1008
+     967,   970,   973,   976,   980,   985,   989,   993,   997,  1001,
+    1009
 };
 #endif
 
@@ -4065,48 +4065,49 @@ yyreduce:
                    {
   (yyval.blk) = gen_dictpair(gen_location((yyloc), locations, gen_op_unbound(LOADV, jv_string_value((yyvsp[-2].literal)))),
                     (yyvsp[0].blk));
+  jv_free((yyvsp[-2].literal));
   }
-#line 4070 "src/parser.c"
+#line 4071 "src/parser.c"
     break;
 
   case 165: /* MkDictPair: BINDING  */
-#line 984 "src/parser.y"
+#line 985 "src/parser.y"
           {
   (yyval.blk) = gen_dictpair(gen_const((yyvsp[0].literal)),
                     gen_location((yyloc), locations, gen_op_unbound(LOADV, jv_string_value((yyvsp[0].literal)))));
   }
-#line 4079 "src/parser.c"
+#line 4080 "src/parser.c"
     break;
 
   case 166: /* MkDictPair: IDENT  */
-#line 988 "src/parser.y"
+#line 989 "src/parser.y"
         {
   (yyval.blk) = gen_dictpair(gen_const(jv_copy((yyvsp[0].literal))),
                     gen_index(gen_noop(), gen_const((yyvsp[0].literal))));
   }
-#line 4088 "src/parser.c"
+#line 4089 "src/parser.c"
     break;
 
   case 167: /* MkDictPair: "$__loc__"  */
-#line 992 "src/parser.y"
+#line 993 "src/parser.y"
              {
   (yyval.blk) = gen_dictpair(gen_const(jv_string("__loc__")),
                     gen_loc_object(&(yyloc), locations));
   }
-#line 4097 "src/parser.c"
+#line 4098 "src/parser.c"
     break;
 
   case 168: /* MkDictPair: Keyword  */
-#line 996 "src/parser.y"
+#line 997 "src/parser.y"
           {
   (yyval.blk) = gen_dictpair(gen_const(jv_copy((yyvsp[0].literal))),
                     gen_index(gen_noop(), gen_const((yyvsp[0].literal))));
   }
-#line 4106 "src/parser.c"
+#line 4107 "src/parser.c"
     break;
 
   case 169: /* MkDictPair: '(' Exp ')' ':' ExpD  */
-#line 1000 "src/parser.y"
+#line 1001 "src/parser.y"
                        {
   jv msg = check_object_key((yyvsp[-3].blk));
   if (jv_is_valid(msg)) {
@@ -4115,20 +4116,20 @@ yyreduce:
   jv_free(msg);
   (yyval.blk) = gen_dictpair((yyvsp[-3].blk), (yyvsp[0].blk));
   }
-#line 4119 "src/parser.c"
+#line 4120 "src/parser.c"
     break;
 
   case 170: /* MkDictPair: error ':' ExpD  */
-#line 1008 "src/parser.y"
+#line 1009 "src/parser.y"
                  {
   FAIL((yyloc), "May need parentheses around object key expression");
   (yyval.blk) = (yyvsp[0].blk);
   }
-#line 4128 "src/parser.c"
+#line 4129 "src/parser.c"
     break;
 
 
-#line 4132 "src/parser.c"
+#line 4133 "src/parser.c"
 
       default: break;
     }
@@ -4357,7 +4358,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 1012 "src/parser.y"
+#line 1013 "src/parser.y"
 
 
 int jq_parse(struct locfile* locations, block* answer) {

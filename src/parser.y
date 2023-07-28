@@ -980,6 +980,7 @@ IDENT ':' ExpD {
 | BINDING ':' ExpD {
   $$ = gen_dictpair(gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))),
                     $3);
+  jv_free($1);
   }
 | BINDING {
   $$ = gen_dictpair(gen_const($1),

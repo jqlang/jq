@@ -1849,11 +1849,15 @@ reduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)
 [10,19,27,34]
 
 
-# { $__loc__ } works
+# Object construction
 
 { a, $__loc__, c }
 {"a":[1,2,3],"b":"foo","c":{"hi":"hey"}}
 {"a":[1,2,3],"__loc__":{"file":"<top-level>","line":1},"c":{"hi":"hey"}}
+
+1 as $x | "2" as $y | "3" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }
+{"as":8}
+{"x":1,"as":8,"2":4,"3":5,"if":6,"foo":7}
 
 
 # nan is parsed as a valid NaN value from JSON
