@@ -97,7 +97,7 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
     "x": null
   }
   ```
-- Adds new builtin `debug(msgs)` that works like `debug` but applies a filter on the input before writing to stderr.
+- Adds new builtin `debug(msgs)` that works like `debug` but applies a filter on the input before writing to stderr. @pkoppstein #2710
   ```sh
   $ jq -n '1 as $x | 2 | debug("Entering function foo with $x == \($x)", .) | (.+1)'
   ["DEBUG:","Entering function foo with $x == 1"]
@@ -118,7 +118,7 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
   "ab"
   "AB"
   ```
-- Adds new builtin `abs` to get absolute value. This was previously possibly using `length` or `fabs` but naming was a bit confusing. @pkoppstein #2767
+- Adds new builtin `abs` to get absolute value. This potentially allows the literal value of numbers to be preserved as `length` and `fabs` convert to float. @pkoppstein #2767
 - Allow `if` without `else`-branch. When skipped the `else`-branch will be `.` (identity). @chancez @wader #1825 #2481
   ```sh
   # convert 1 to "one" otherwise keep as is
@@ -167,7 +167,7 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
   $ jq -c '(.[] | select(. >= 2)) |= empty' <<< '[1,5,3,0,7]'
   [1,0]
   ```
-- Fix `stderr/0` to output raw without any decoration. @itchyny #2751
+- Fix `stderr/0` to output raw text without any decoration. @itchyny #2751
 - Fix `nth/2` to emit empty on index out of range. @itchyny #2674
 - Fix `implode` to not assert and instead replace invalid unicode codepoints. @wader #2646
 - Simpler and faster `transpose`. @pkoppstein #2758
