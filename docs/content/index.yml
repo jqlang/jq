@@ -27,26 +27,26 @@ tail: |
   Go read the [tutorial](/jq/tutorial/) for more, or the [manual](/jq/manual/)
   for *way* more.
 
-  Ask questions on [stackoverflow](https://stackoverflow.com/) using the [jq
-  tag](https://stackoverflow.com/questions/tagged/jq), or on the
-  [#jq](https://web.libera.chat/#jq) channel on [Libera.Chat](https://libera.chat/).
+  Have a question related to jq? You can seek answers on [Stack Overflow](https://stackoverflow.com/)
+  by using the [jq tag](https://stackoverflow.com/questions/tagged/jq). For more interactive discussions,
+  feel free to join our [Discord server](https://discord.gg/yg6yjNmgAC).
 
 news:
   - date: 1 November 2018
     body: |
-        jq 1.6 released. See installation options on the [download](/jq/download/)
-        page, and the [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.6)
-        for details.
+      jq 1.6 released. See installation options on the [download](/jq/download/)
+      page, and the [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.6)
+      for details.
 
   - date: 15 August 2015
     body: |
 
-        jq 1.5 released, including new datetime, math, and regexp functions,
-        try/catch syntax, array and object destructuring, a streaming parser,
-        and a module system. See installation options on the
-        [download](/jq/download/) page, and the
-        [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.5)
-        for details.
+      jq 1.5 released, including new datetime, math, and regexp functions,
+      try/catch syntax, array and object destructuring, a streaming parser,
+      and a module system. See installation options on the
+      [download](/jq/download/) page, and the
+      [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.5)
+      for details.
 
   - date: 26 July 2015
     body: |
@@ -69,4 +69,3 @@ news:
     body: |
 
       jq 1.3 released.
-
