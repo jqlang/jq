@@ -3002,8 +3002,8 @@ sections:
       Streaming forms include `[<path>, <leaf-value>]` (to indicate any
       scalar value, empty array, or empty object), and `[<path>]` (to
       indicate the end of an array or object).  Future versions of jq
-      run with `--stream` and `-seq` may output additional forms such as
-      `["error message"]` when an input text fails to parse.
+      run with `--stream` and `--seq` may output additional forms such
+      as `["error message"]` when an input text fails to parse.
 
     entries:
       - title: "`truncate_stream(stream_expression)`"

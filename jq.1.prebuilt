@@ -3680,7 +3680,7 @@ Several builtins are provided to make handling streams easier\.
 The examples below use the streamed form of \fB[0,[1]]\fR, which is \fB[[0],0],[[1,0],1],[[1,0]],[[1]]\fR\.
 .
 .P
-Streaming forms include \fB[<path>, <leaf\-value>]\fR (to indicate any scalar value, empty array, or empty object), and \fB[<path>]\fR (to indicate the end of an array or object)\. Future versions of jq run with \fB\-\-stream\fR and \fB\-seq\fR may output additional forms such as \fB["error message"]\fR when an input text fails to parse\.
+Streaming forms include \fB[<path>, <leaf\-value>]\fR (to indicate any scalar value, empty array, or empty object), and \fB[<path>]\fR (to indicate the end of an array or object)\. Future versions of jq run with \fB\-\-stream\fR and \fB\-\-seq\fR may output additional forms such as \fB["error message"]\fR when an input text fails to parse\.
 .
 .SS "truncate_stream(stream_expression)"
 Consumes a number as input and truncates the corresponding number of path elements from the left of the outputs of the given streaming expression\.
