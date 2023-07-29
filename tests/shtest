@@ -516,4 +516,34 @@ if command -v script >/dev/null 2>&1; then
   cmp $d/color $d/expect
 fi
 
+# #2785
+if $VALGRIND $Q $JQ -n -f "$JQTESTDIR/no-main-program.jq" > $d/out 2>&1; then
+  echo "jq -f $JQTESTDIR/no-main-program.jq succeeded"
+  exit 1
+else
+  EC=$?
+  if [ $EC -eq 1 ]; then
+    echo "jq -f $JQTESTDIR/no-main-program.jq failed with memory errors"
+    exit 1
+  fi
+  if [ $EC -ne 3 ]; then
+    echo "jq -f $JQTESTDIR/no-main-program.jq failed with wrong exit code ($EC)"
+    exit 1
+  fi
+fi
+cat > $d/expected <<EOF
+jq: error: Top-level program not given (try ".")
+
+jq: 1 compile error
+EOF
+if ! diff $d/expected $d/out; then
+  echo "jq -f $JQTESTDIR/no-main-program.jq failed but its error message is not the expected one"
+  exit 1
+fi
+
+if ! $VALGRIND $Q $JQ -n -f "$JQTESTDIR/yes-main-program.jq" > $d/out 2>&1; then
+  echo "jq -f $JQTESTDIR/yes-main-program.jq failed"
+  exit 1
+fi
+
 exit 0

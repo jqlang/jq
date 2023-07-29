@@ -222,7 +222,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/setup tests/torture/input0.json                           \
         tests/optional.test tests/man.test tests/manonig.test           \
         tests/jq.test tests/onig.test tests/base64.test                 \
-        tests/utf8-truncate.jq tests/jq-f-test.sh
+        tests/utf8-truncate.jq tests/jq-f-test.sh                       \
+        tests/no-main-program.jq tests/yes-main-program.jq
 
 AM_DISTCHECK_CONFIGURE_FLAGS=--with-oniguruma=builtin
 

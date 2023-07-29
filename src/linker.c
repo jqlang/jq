@@ -407,6 +407,12 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   if (nerrors)
     return nerrors;
 
+  if (!block_has_main(program)) {
+    jq_report_error(jq, jv_string("jq: error: Top-level program not given (try \".\")"));
+    block_free(program);
+    return 1;
+  }
+
   char* home = getenv("HOME");
   if (home) {    // silently ignore no $HOME
     /* Import ~/.jq as a library named "" found in $HOME */

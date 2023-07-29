@@ -35,7 +35,10 @@ But that\'s getting ahead of ourselves\. :) Let\'s start with something simpler:
 jq filters run on a stream of JSON data\. The input to jq is parsed as a sequence of whitespace\-separated JSON values which are passed through the provided filter one at a time\. The output(s) of the filter are written to standard output, as a sequence of newline\-separated JSON data\.
 .
 .P
-Note: it is important to mind the shell\'s quoting rules\. As a general rule it\'s best to always quote (with single\-quote characters) the jq program, as too many characters with special meaning to jq are also shell meta\-characters\. For example, \fBjq "foo"\fR will fail on most Unix shells because that will be the same as \fBjq foo\fR, which will generally fail because \fBfoo is not defined\fR\. When using the Windows command shell (cmd\.exe) it\'s best to use double quotes around your jq program when given on the command\-line (instead of the \fB\-f program\-file\fR option), but then double\-quotes in the jq program need backslash escaping\. When using the Powershell (\fBpowershell\.exe\fR) or the Powershell Core (\fBpwsh\fR/\fBpwsh\.exe\fR), use single\-quote characters around the jq program and backslash\-escaped double\-quotes (\fB\e"\fR) inside the jq program\.
+The simplest and most common filter (or jq program) is \fB\.\fR, which is the identity operator, copying the inputs of the jq processor to the output stream\. Because the default behavior of the jq processor is to read JSON texts from the input stream, and to pretty\-print outputs, the \fB\.\fR program\'s main use is to validate and pretty\-print the inputs\. The jq programming language is quite rich and allows for much more than just validation and pretty\-printing\.
+.
+.P
+Note: it is important to mind the shell\'s quoting rules\. As a general rule it\'s best to always quote (with single\-quote characters on Unix shells) the jq program, as too many characters with special meaning to jq are also shell meta\-characters\. For example, \fBjq "foo"\fR will fail on most Unix shells because that will be the same as \fBjq foo\fR, which will generally fail because \fBfoo is not defined\fR\. When using the Windows command shell (cmd\.exe) it\'s best to use double quotes around your jq program when given on the command\-line (instead of the \fB\-f program\-file\fR option), but then double\-quotes in the jq program need backslash escaping\. When using the Powershell (\fBpowershell\.exe\fR) or the Powershell Core (\fBpwsh\fR/\fBpwsh\.exe\fR), use single\-quote characters around the jq program and backslash\-escaped double\-quotes (\fB\e"\fR) inside the jq program\.
 .
 .IP "\(bu" 4
 Unix shells: \fBjq \'\.["foo"]\'\fR
@@ -47,6 +50,9 @@ Powershell: \fBjq \'\.[\e"foo\e"]\'\fR
 Windows command shell: \fBjq "\.[\e"foo\e"]"\fR
 .
 .IP "" 0
+.
+.P
+Note: jq allows user\-defined functions, but every jq program must have a top\-level expression\.
 .
 .P
 You can affect how jq reads and writes its input and output using some command\-line options:

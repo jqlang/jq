@@ -81,9 +81,18 @@ sections:
       output(s) of the filter are written to standard output, as a
       sequence of newline-separated JSON data.
 
+      The simplest and most common filter (or jq program) is `.`,
+      which is the identity operator, copying the inputs of the jq
+      processor to the output stream.  Because the default behavior of
+      the jq processor is to read JSON texts from the input stream,
+      and to pretty-print outputs, the `.` program's main use is to
+      validate and pretty-print the inputs.  The jq programming
+      language is quite rich and allows for much more than just
+      validation and pretty-printing.
+
       Note: it is important to mind the shell's quoting rules.  As a
       general rule it's best to always quote (with single-quote
-      characters) the jq program, as too many characters with special
+      characters on Unix shells) the jq program, as too many characters with special
       meaning to jq are also shell meta-characters.  For example, `jq
       "foo"` will fail on most Unix shells because that will be the same
       as `jq foo`, which will generally fail because `foo is not
@@ -99,6 +108,9 @@ sections:
       * Unix shells: `jq '.["foo"]'`
       * Powershell: `jq '.[\"foo\"]'`
       * Windows command shell: `jq ".[\"foo\"]"`
+
+      Note: jq allows user-defined functions, but every jq program
+      must have a top-level expression.
 
       You can affect how jq reads and writes its input and output
       using some command-line options:
