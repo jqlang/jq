@@ -777,6 +777,14 @@ null
 {}
 42
 
+[empty // (42, 43)]
+{}
+[42,43]
+
+[(false, 1, null, 2) // 42]
+null
+[1,2]
+
 try .a catch ". is not an object"
 true
 ". is not an object"

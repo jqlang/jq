@@ -1,3 +1,4 @@
+pipenv run python validate_manual_schema.py content/manual/manual.yml
 .
 .TH "JQ" "1" "July 2023" "" ""
 .
@@ -2565,7 +2566,7 @@ jq \'[true, false | not]\'
 .IP "" 0
 .
 .SS "Alternative operator: //"
-A filter of the form \fBa // b\fR produces the same results as \fBa\fR, if \fBa\fR produces results other than \fBfalse\fR and \fBnull\fR\. Otherwise, \fBa // b\fR produces the same results as \fBb\fR\.
+A filter of the form \fBa // b\fR produces the same results as \fBselect(a)\fR, if \fBa\fR produces results other than \fBfalse\fR and \fBnull\fR\. Otherwise, \fBa // b\fR produces the same results as \fBb\fR\.
 .
 .P
 This is useful for providing defaults: \fB\.foo // 1\fR will evaluate to \fB1\fR if there\'s no \fB\.foo\fR element in the input\. It\'s similar to how \fBor\fR is sometimes used in Python (jq\'s \fBor\fR operator is reserved for strictly Boolean operations)\.
@@ -2581,6 +2582,14 @@ jq \'\.foo // 42\'
 jq \'\.foo // 42\'
    {}
 => 42
+
+jq \'[empty // (42, 43)]\'
+   {}
+=> [42,43]
+
+jq \'[(false, 1, null, 2) // 42]\'
+   null
+=> [1,2]
 .
 .fi
 .

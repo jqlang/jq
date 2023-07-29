@@ -2374,7 +2374,7 @@ sections:
         body: |
 
           A filter of the form `a // b` produces the same
-          results as `a`, if `a` produces results other than `false`
+          results as `select(a)`, if `a` produces results other than `false`
           and `null`. Otherwise, `a // b` produces the same results as `b`.
 
           This is useful for providing defaults: `.foo // 1` will
@@ -2390,6 +2390,14 @@ sections:
           - program: '.foo // 42'
             input: '{}'
             output: ['42']
+          - program: '[empty // (42, 43)]'
+            input: '{}'
+            output: ['[42,43]']
+          - program: '[(false, 1, null, 2) // 42]'
+            input: 'null'
+            output: ['[1,2]']
+
+
 
       - title: try-catch
         body: |
