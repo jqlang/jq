@@ -4,9 +4,10 @@ After a five year hiatus we're back with a GitHub organization, with new admins 
 
 Since the last stable release many things have happened:
 
-- jq now lives at https://github.com/jqlang
+- jq now lives at <https://github.com/jqlang>
 - New maintainers, admins, and owners have been recruited.
-- CI, scan builds, release builds etc now use GitHub actions.
+  - A list of [current maintainers](https://github.com/jqlang/jq/blob/70bbd10b0b58e797d03963264fc934879bb44454/AUTHORS#L4-L13)
+- CI, scan builds, release builds etc now use GitHub actions. @owenthereal #2596 #2620
 - Lots of documentation improvements and fixes.
 - Web site updated with new auto complete, better section ids for linking, dark mode, etc. @itchyny #2628
 - Release builds for:
@@ -14,14 +15,16 @@ Since the last stable release many things have happened:
   - macOS `amd64` and `arm64`
   - Windows `i386` and  `amd64`
   - Docker `linux/386`, `linux/amd64`, `linux/arm64`, `linux/mips64le`, `linux/ppc64le`, `linux/riscv64` and `linux/s390x`
-- Docker images are now available from `ghcr.io/jqlang/jq` instead of docker hub.
-- OSS-fuzz.
+  - More details see @owenthereal #2665
+- Docker images are now available from `ghcr.io/jqlang/jq` instead of docker hub. @itchyny #2652
+- OSS-fuzz. @DavidKorczynski #2760 #2762
 
-Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq-1.7 but here are some highlights:
+Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...jq-1.7> but here are some highlights:
 
 ## CLI changes
 
 - Make object key color configurable using `JQ_COLORS` environment variable. @itchyny @haguenau @ericpruitt #2703
+
   ```sh
   # this would make "field" yellow (33, the last value)
   $ JQ_COLORS="1;30:0;37:0;37:0;37:0;32:1;37:1;37:1;33" ./jq -n '{field: 123}'
@@ -29,9 +32,11 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
     "field": 123
   }
   ```
-- Respect `NO_COLOR` environment variable to disable color output. See https://no-color.org for details. @itchyny #2728
+
+- Respect `NO_COLOR` environment variable to disable color output. See <https://no-color.org> for details. @itchyny #2728
 - Improved `--help` output. Now mentions all options and nicer order. @itchyny #2747 #2766
 - Last output value can now control exit code using `--exit-code`/`-e`. @ryo1kato #1697
+
   ```sh
   # true-ish last output value exits with zero
   $ jq -ne true ; echo $?
@@ -45,8 +50,10 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
   $ jq -ne empty ; echo $?
   4
   ```
+
 - Add `--binary`/`-b` on Windows for binary output. To get `\n` instead of `\r\n` line endings. 0dab2b1 @nicowilliams
 - Add `--raw-output0` for NUL (zero byte) separated output. @asottile @pabs3 @itchyny #1990 #2235 #2684
+
   ```sh
   # will output a zero byte after each output
   $ jq -n --raw-output0 '1,2,3' | xxd
@@ -69,12 +76,14 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
   $ jq -n --raw-output0 '"\u0000"'
   jq: error (at <unknown>): Cannot dump a string containing NUL with --raw-output0 option
   ```
+
 - Fix assert crash and validate JSON for `--jsonarg`. @wader #2658
 - Remove deprecated `--argfile` option. @itchyny #2768
 
 ## Language changes
 
 - Use decimal number literals to preserve precision. Comparison operations respects precision but arithmetic operations might truncate. @leonid-s-usov #1752
+
   ```sh
   # precision is preserved
   $ jq -n '100000000000000000'
@@ -86,7 +95,9 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
   $ jq -n '100000000000000000+10'
   100000000000000020
   ```
+
 - Adds new builtin `pick(stream)` to emit a projection of the input object or array. @pkoppstein #2656
+
   ```sh
   $ jq -n '{"a": 1, "b": {"c": 2, "d": 3}, "e": 4} | pick(.a, .b.c, .x)'
   {
@@ -97,7 +108,9 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
     "x": null
   }
   ```
+
 - Adds new builtin `debug(msgs)` that works like `debug` but applies a filter on the input before writing to stderr. @pkoppstein #2710
+
   ```sh
   $ jq -n '1 as $x | 2 | debug("Entering function foo with $x == \($x)", .) | (.+1)'
   ["DEBUG:","Entering function foo with $x == 1"]
@@ -111,15 +124,19 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
     "c": 3
   }
   ```
+
 - Adds new builtin `scan($re; $flags)`. Was documented but not implemented. @itchyny #1961
+
   ```sh
   # look for pattern "ab" in "abAB" ignoring casing
   $ jq -n '"abAB" | scan("ab"; "i")'
   "ab"
   "AB"
   ```
+
 - Adds new builtin `abs` to get absolute value. This potentially allows the literal value of numbers to be preserved as `length` and `fabs` convert to float. @pkoppstein #2767
 - Allow `if` without `else`-branch. When skipped the `else`-branch will be `.` (identity). @chancez @wader #1825 #2481
+
   ```sh
   # convert 1 to "one" otherwise keep as is
   $ jq -n '1,2 | if . == 1 then "one" end'
@@ -135,7 +152,9 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
   "two"
   3
   ```
+
 - Allow use of `$binding` as key in object literals. 8ea4a55 @nicowilliams
+
   ```sh
   $ jq -n '"a" as $key | {$key: 123}'
   {
@@ -147,7 +166,9 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
     "a": 123
   }
   ```
+
 - Allow dot between chained indexes when using `.["index"]` @nicowilliams #1168
+
   ```sh
   $ jq -n '{"a": {"b": 123}} | .a["b"]'
   123
@@ -155,6 +176,7 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
   $ jq -n '{"a": {"b": 123}} | .a.["b"]'
   123
   ```
+
 - Fix try/catch catches more than it should. @nicowilliams #2750
 - Speed up and refactor some builtins, also remove `scalars_or_empty/0`. @muhmuhten #1845
 - Now `halt` and `halt_error` exit immediately instead of continuing to the next input. @emanuele6 #2667
@@ -162,11 +184,13 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
 - Make 0 divided by 0 result in NaN consistently. @itchyny #2253
 - Fix issue representing large numbers on some platforms causing invalid JSON output. @itchyny #2661
 - Fix deletion using assigning empty against arrays. @itchyny #2133
+
   ```sh
   # now this works as expected, filter out all values over 2 by assigning empty
   $ jq -c '(.[] | select(. >= 2)) |= empty' <<< '[1,5,3,0,7]'
   [1,0]
   ```
+
 - Fix `stderr/0` to output raw text without any decoration. @itchyny #2751
 - Fix `nth/2` to emit empty on index out of range. @itchyny #2674
 - Fix `implode` to not assert and instead replace invalid unicode codepoints. @wader #2646
@@ -181,113 +205,112 @@ Full commit log can be found at https://github.com/jqlang/jq/compare/jq-1.6...jq
 
 Release history
 
- * jq version 1.6 was released on Fri Nov 2 2018
- * jq version 1.5 was released on Sat Aug 15 2015
- * jq version 1.4 was released on Mon Jun 9 2014
- * jq version 1.3 was released on Sun May 19 2013
- * jq version 1.2 was released on Thu Dec 20 2012
- * jq version 1.1 was released on Sun Oct 21 2012
- * jq version 1.0 was released on Sun Oct 21 2012
+- jq version 1.6 was released on Fri Nov 2 2018
+- jq version 1.5 was released on Sat Aug 15 2015
+- jq version 1.4 was released on Mon Jun 9 2014
+- jq version 1.3 was released on Sun May 19 2013
+- jq version 1.2 was released on Thu Dec 20 2012
+- jq version 1.1 was released on Sun Oct 21 2012
+- jq version 1.0 was released on Sun Oct 21 2012
 
 New features in 1.6 since 1.5:
 
- - Destructuring Alternation
+- Destructuring Alternation
 
- - New Builtins:
-   - builtins/0
-   - stderr/0
-   - halt/0, halt_error/1
-   - isempty/1
-   - walk/1
-   - utf8bytelength/1
-   - localtime/0, strflocaltime/1
-   - SQL-style builtins
-   - and more!
+- New Builtins:
+  - builtins/0
+  - stderr/0
+  - halt/0, halt_error/1
+  - isempty/1
+  - walk/1
+  - utf8bytelength/1
+  - localtime/0, strflocaltime/1
+  - SQL-style builtins
+  - and more!
 
- - Add support for ASAN and UBSAN
+- Add support for ASAN and UBSAN
 
- - Make it easier to use jq with shebangs (8f6f28c)
+- Make it easier to use jq with shebangs (8f6f28c)
 
- - Add $ENV builtin variable to access environment
+- Add $ENV builtin variable to access environment
 
- - Add JQ_COLORS env var for configuring the output colors
+- Add JQ_COLORS env var for configuring the output colors
 
 New features in 1.5 since 1.4:
 
- - regular expressions (with Oniguruma)
+- regular expressions (with Oniguruma)
 
- - a library/module system
+- a library/module system
 
- - many new builtins
+- many new builtins
 
-    - datetime builtins
-    - math builtins
-    - regexp-related builtins
-    - stream-related builtins (e.g., all/1, any/1)
-    - minimal I/O builtins (`inputs`, `debug`)
+  - datetime builtins
+  - math builtins
+  - regexp-related builtins
+  - stream-related builtins (e.g., all/1, any/1)
+  - minimal I/O builtins (`inputs`, `debug`)
 
- - new syntactic features, including:
+- new syntactic features, including:
 
-    - destructuring (`. as [$first, $second] | ...`)
-    - try/catch, generalized `?` operator, and label/break
-    - `foreach`
-    - multiple definitions of a function with different numbers of
+  - destructuring (`. as [$first, $second] | ...`)
+  - try/catch, generalized `?` operator, and label/break
+  - `foreach`
+  - multiple definitions of a function with different numbers of
       arguments
 
- - command-line arguments
+- command-line arguments
 
-    - --join-lines / -j for raw output
-    - --argjson and --slurpfile
-    - --tab and --indent
-    - --stream (streaming JSON parser)
-    - --seq (RFC7464 JSON text sequence)
-    - --run-tests improvements
+  - --join-lines / -j for raw output
+  - --argjson and --slurpfile
+  - --tab and --indent
+  - --stream (streaming JSON parser)
+  - --seq (RFC7464 JSON text sequence)
+  - --run-tests improvements
 
- - optimizations:
+- optimizations:
 
-    - tail-call optimization
-    - reduce and foreach no longer leak a reference to .
+  - tail-call optimization
+  - reduce and foreach no longer leak a reference to .
 
 New features in 1.4 since 1.3:
 
- - command-line arguments
+- command-line arguments
 
-    - jq --arg-file variable file
-    - jq --unbuffered
-    - jq -e / --exit-status (set exit status based on outputs)
-    - jq -S / --sort-keys (now jq no longer sorts object keys by
+  - jq --arg-file variable file
+  - jq --unbuffered
+  - jq -e / --exit-status (set exit status based on outputs)
+  - jq -S / --sort-keys (now jq no longer sorts object keys by
       default
 
- - syntax
+- syntax
 
-    - .. -> like // in XPath (recursive traversal)
-    - question mark (e.g., .a?) to suppress errors
-    - ."foo" syntax (equivalent to .["foo"])
-    - better error handling for .foo
-    - added % operator (modulo)
-    - allow negation without requiring extra parenthesis
-    - more function arguments (up to six)
+  - .. -> like // in XPath (recursive traversal)
+  - question mark (e.g., .a?) to suppress errors
+  - ."foo" syntax (equivalent to .["foo"])
+  - better error handling for .foo
+  - added % operator (modulo)
+  - allow negation without requiring extra parenthesis
+  - more function arguments (up to six)
 
- - filters:
+- filters:
 
-    - any, all
-    - iterables, arrays, objects, scalars, nulls, booleans, numbers,
+  - any, all
+  - iterables, arrays, objects, scalars, nulls, booleans, numbers,
       strings, values
 
- - string built-ins:
+- string built-ins:
 
-    - split
-    - join (join an array of strings with a given separator string)
-    - ltrimstr, rtrimstr
-    - startswith, endswith
-    - explode, implode
-    - fromjson, tojson
-    - index, rindex, indices
+  - split
+  - join (join an array of strings with a given separator string)
+  - ltrimstr, rtrimstr
+  - startswith, endswith
+  - explode, implode
+  - fromjson, tojson
+  - index, rindex, indices
 
- - math functions
+- math functions
 
-    - floor, sqrt, cbrt, etcetera (depends on what's available from libm)
+  - floor, sqrt, cbrt, etcetera (depends on what's available from libm)
 
- - libjq -- a C API interface to jq's JSON representation and for
+- libjq -- a C API interface to jq's JSON representation and for
    running jq programs from C applications
-
