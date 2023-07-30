@@ -522,6 +522,89 @@ static jv f_utf8bytelength(jq_state *jq, jv input) {
   return jv_number(jv_string_length_bytes(input));
 }
 
+# include <utf8proc.h>
+
+static utf8proc_int32_t utf8proc_codepoint_func(utf8proc_int32_t codepoint, utf8proc_int32_t (*func)(utf8proc_int32_t)) {
+  return func(codepoint);
+}
+
+static unsigned char *utf8_func(const unsigned char *str, size_t *len, utf8proc_int32_t (*func)(utf8proc_int32_t)) {
+  utf8proc_uint8_t *output;
+  /* options = UTF8PROC_COMPOSE | UTF8PROC_COMPAT
+  | UTF8PROC_CASEFOLD | UTF8PROC_IGNORE | UTF8PROC_STRIPMARK | UTF8PROC_STRIPCC | UTF8PROC_STRIPNA;
+  */
+  utf8proc_option_t options = UTF8PROC_STRIPNA;
+
+  // utf8proc_map_custom allocates new mem
+  *len = (size_t) utf8proc_map_custom((const utf8proc_uint8_t *)str, *len, &output,
+                                      options,
+                                      (utf8proc_custom_func)utf8proc_codepoint_func, (void *)func);
+  return (unsigned char *)output;
+}
+
+static unsigned char *utf8_toCase(const unsigned char *str, size_t *lenp, int *was_malformed, utf8proc_int32_t (*func)(utf8proc_int32_t)) {
+  size_t len_orig = *lenp;
+  unsigned char *new_s = utf8_func(str, lenp, func);
+  if(!new_s && len_orig) { // malformed
+    unsigned char *tmp_s = malloc(len_orig + 1);
+    if(tmp_s) {
+      *was_malformed = 1;
+      memcpy(tmp_s, str, len_orig);
+      tmp_s[len_orig] = '\0';
+      new_s = utf8_func(tmp_s, lenp, func);
+      free(tmp_s);
+    }
+  }
+  return new_s;
+}
+
+/**
+ * utf8_toLowerCase, utf8_toUpperCase
+ * @param str  string to convert
+ * @param lenp returns length of newly-allocated string
+ * @param was_malformed returns 1 if the input data was malformed
+ * @return newly-allocated lower-case string (caller must free)
+ */
+static unsigned char *utf8_toLowerCase(const unsigned char *str, size_t *lenp, int *was_malformed) {
+  return utf8_toCase(str, lenp, was_malformed, utf8proc_tolower);
+}
+
+static unsigned char *utf8_toUpperCase(const unsigned char *str, size_t *lenp, int *was_malformed) {
+  return utf8_toCase(str, lenp, was_malformed, utf8proc_toupper);
+}
+
+static jv f_utf8tocase(jq_state *jq, jv input, char toLower) {
+  unsigned char *(*changeCase)(const unsigned char *, size_t *, int *) =
+    toLower ? utf8_toLowerCase : utf8_toUpperCase;
+  if(jv_get_kind(input) != JV_KIND_STRING) {
+    return input;
+  } else {
+    const char *jstr = jv_string_value(input);
+    size_t len = jv_string_length_bytes(jv_copy(input));
+    if(len) {
+      int malformed = 0;
+      unsigned char *changed = changeCase((const unsigned char *)jstr, &len, &malformed);
+      if(malformed || !len)
+        free(changed);
+      else {
+        jv_free(input);
+        jv output_changed = jv_string_sized((const char *)changed, len);
+        free(changed);
+        return output_changed;
+      }
+    }
+  }
+  return input;
+}
+
+static jv f_downcase(jq_state *jq, jv input) {
+  return f_utf8tocase(jq, input, 1);
+}
+
+static jv f_upcase(jq_state *jq, jv input) {
+  return f_utf8tocase(jq, input, 0);
+}
+
 #define CHARS_ALPHANUM "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
 static const unsigned char BASE64_ENCODE_TABLE[64 + 1] = CHARS_ALPHANUM "+/";
@@ -1759,6 +1842,8 @@ static const struct cfunction function_list[] = {
   {(cfunction_ptr)f_contains, "contains", 2},
   {(cfunction_ptr)f_length, "length", 1},
   {(cfunction_ptr)f_utf8bytelength, "utf8bytelength", 1},
+  {(cfunction_ptr)f_downcase, "downcase", 1},
+  {(cfunction_ptr)f_upcase, "upcase", 1},
   {(cfunction_ptr)f_type, "type", 1},
   {(cfunction_ptr)f_isinfinite, "isinfinite", 1},
   {(cfunction_ptr)f_isnan, "isnan", 1},

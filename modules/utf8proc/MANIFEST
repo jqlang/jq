@@ -1,0 +1,9 @@
+include/
+include/utf8proc.h
+lib/
+lib/libutf8proc.a
+lib/libutf8proc.so -> libutf8proc.so.2.6.0
+lib/libutf8proc.so.2 -> libutf8proc.so.2.6.0
+lib/libutf8proc.so.2.6.0
+lib/pkgconfig/
+lib/pkgconfig/libutf8proc.pc

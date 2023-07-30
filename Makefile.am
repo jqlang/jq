@@ -14,7 +14,7 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
         src/decNumber/decContext.c src/decNumber/decNumber.c            \
-        src/jv_dtoa_tsd.c                                               \
+        src/jv_dtoa_tsd.c 			                        \
         ${LIBJQ_INCS}
 
 ### C build options
@@ -180,13 +180,37 @@ endif
 jq.1: jq.1.prebuilt
 	$(AM_V_GEN) cp $(srcdir)/jq.1.prebuilt $@
 
+SUBDIRS =
+
+AM_CFLAGS += ${utf8proc_CFLAGS}
+
+if BUNDLE_UTF8PROC
+LIBJQ_SRC += modules/utf8proc/utf8proc.c
+AM_CFLAGS += -I${srcdir}/modules/utf8proc
+AM_CPPFLAGS += -I$(srcdir)/modules/utf8proc
+else
+if BUILD_UTF8PROC
+BUILT_SOURCES += $(builddir)/libutf8proc.a
+CLEANFILES += $(builddir)/libutf8proc.a
+jq_LDADD += $(builddir)/libutf8proc.a
+
+AM_CFLAGS += -I${srcdir}/modules/utf8proc
+AM_CPPFLAGS += -I$(srcdir)/modules/utf8proc
+
+$(builddir)/libutf8proc.a:
+	$(MAKE) $(AM_MAKEFLAGS) -C $(srcdir)/modules/utf8proc builddir=$(shell cd $(builddir) && pwd) libutf8proc.a
+else
+jq_LDADD += ${utf8proc_LIBS}
+endif
+endif
+
 CLEANFILES += jq.1
 
 ### Build oniguruma
 
 if BUILD_ONIGURUMA
 libjq_la_LIBADD += modules/oniguruma/src/.libs/libonig.la
-SUBDIRS = modules/oniguruma
+SUBDIRS += modules/oniguruma
 endif
 
 AM_CFLAGS += $(onig_CFLAGS)
@@ -212,6 +236,7 @@ DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
         src/parser.h src/version.h src/builtin.jq scripts/version       \
+        modules/utf8proc                                                \
         libjq.pc                                                        \
         tests/base64.test tests/jq-f-test.sh tests/jq.test              \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
@@ -230,7 +255,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/jq.test tests/onig.test tests/base64.test                 \
         tests/utf8-truncate.jq tests/jq-f-test.sh
 
-AM_DISTCHECK_CONFIGURE_FLAGS=--with-oniguruma=builtin
+AM_DISTCHECK_CONFIGURE_FLAGS=--with-oniguruma=builtin --with-utf8proc=builtin
 
 # README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
@@ -247,3 +272,6 @@ rpm: dist jq.spec
 	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "myver $(VERSION)" --define "myrel ${RELEASE}" rpm/SOURCES/jq-$(VERSION).tar.gz
 	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
+
+dist-hook:
+	make -C $(distdir)/modules/utf8proc clean

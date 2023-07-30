@@ -1848,6 +1848,17 @@ map(abs)
 [0.1,1000000000000000002]
 [1e-1, 1000000000000000002]
 
+# upcase, downcase
+
+downcase
+"ǄIǄA"
+"ǆiǆa"
+
+upcase
+"ǆiǆa"
+"ǄIǄA"
+
+
 # Using a keyword as variable/label name
 
 123 as $label | $label

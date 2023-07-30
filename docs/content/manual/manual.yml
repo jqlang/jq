@@ -1820,6 +1820,17 @@ sections:
             input: '"useful but not for é"'
             output: ['"USEFUL BUT NOT FOR é"']
 
+      - title: "`downcase`, `upcase`"
+        body: |
+
+          Emit a copy of the input string with its characters (unicode) converted to the
+          specified case.
+
+        examples:
+          - program: 'upcase'
+            input: '"useful for é"'
+            output: ['"USEFUL FOR É"']
+
       - title: "`while(cond; update)`"
         body: |
 

@@ -288,10 +288,73 @@ AC_SUBST(onig_CFLAGS)
 AC_SUBST(onig_LDFLAGS)
 
 AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
+
+dnl utf8proc
+AC_ARG_WITH([utf8proc],
+   [AS_HELP_STRING([--with-utf8proc=prefix],
+      [specify the location of custom-installed utf8proc library to use, 'builtin' to force built-in, 'bundled' to use built-in AND bundle into libjq, or 'auto' to use default prefix or fallback to builtin])], ,
+   [with_utf8proc=auto])
+
+utf8proc_CFLAGS=-DUTF8PROC_STATIC
+utf8proc_LIBS=
+build_utf8proc=yes
+bundle_utf8proc=no
+
+AS_IF([test "x$with_utf8proc" = "xbundled" ], [
+   bundle_utf8proc=yes
+], [
+   AS_IF([test "x$with_utf8proc" = "xauto" ], [
+      test_prefix=
+      if test "x$prefix" != xNONE ; then
+         test_prefix=$prefix
+      elif test "x$ac_default_prefix" != x ; then
+         test_prefix=$ac_default_prefix
+      fi
+      if test "x$test_prefix" != "" ; then
+         save_CFLAGS="$CFLAGS"
+         CFLAGS="$CFLAGS -I$test_prefix/include"
+         AC_CHECK_HEADER("utf8proc.h", [
+           with_utf8proc=$test_prefix
+           AC_MSG_NOTICE([utf8proc.h found in $test_prefix])
+         ], [
+            with_utf8proc=builtin
+         ])
+         CFLAGS="$save_CFLAGS"
+      fi
+   ])
+   AS_IF([test "x$with_utf8proc" != xyes -a "x$with_utf8proc" != xbuiltin -a "x$with_utf8proc" != "x" ], [
+      save_CFLAGS="$CFLAGS"
+      save_LDFLAGS="$LDFLAGS"
+
+      utf8proc_CFLAGS="$utf8proc_CFLAGS -I$with_utf8proc/include"
+   #   utf8proc_LIBS="-L$with_utf8proc/lib -l:libutf8proc.a" # -l: not supported by some compilers
+      utf8proc_LIBS="$with_utf8proc/lib/libutf8proc.a"
+
+      CFLAGS="$CFLAGS $utf8proc_CFLAGS"
+      AC_CHECK_HEADER("utf8proc.h", [
+        build_utf8proc=no
+      ], [
+        AC_MSG_NOTICE([utf8proc.h not found in $with_utf8proc. Will use the packaged utf8proc.])
+      ])
+
+      CFLAGS="$save_CFLAGS"
+      LDFLAGS="$save_LDFLAGS"
+   ])
+   AS_IF([test "x$build_utf8proc" = xyes ], [
+      # utf8proc_LIBS used only for libjq.pc
+      utf8proc_LIBS=`pwd`/libutf8proc.a
+   ])
+])
+
+AC_SUBST(utf8proc_CFLAGS)
+AC_SUBST(utf8proc_LIBS)
+
+AM_CONDITIONAL([BUILD_UTF8PROC], [test "x$build_utf8proc" = xyes])
+AM_CONDITIONAL([BUNDLE_UTF8PROC], [test "x$bundle_utf8proc" = xyes])
+
 AM_CONDITIONAL([WITH_ONIGURUMA], [test "x$with_oniguruma" != xno])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 AC_CONFIG_MACRO_DIRS([config/m4 m4])
 AC_CONFIG_FILES([Makefile libjq.pc])
 AC_OUTPUT
-

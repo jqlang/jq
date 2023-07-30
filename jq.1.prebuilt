@@ -2000,6 +2000,21 @@ jq \'ascii_upcase\'
 .
 .IP "" 0
 .
+.SS "downcase, upcase"
+Emit a copy of the input string with its characters (unicode) converted to the specified case\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'upcase\'
+   "useful for é"
+=> "USEFUL FOR É"
+.
+.fi
+.
+.IP "" 0
+.
 .SS "while(cond; update)"
 The \fBwhile(cond; update)\fR function allows you to repeatedly apply an update to \fB\.\fR until \fBcond\fR is false\.
 .
