@@ -2571,14 +2571,24 @@ jq \'[true, false | not]\'
 .IP "" 0
 .
 .SS "Alternative operator: //"
-A filter of the form \fBa // b\fR produces the same results as \fBa\fR, if \fBa\fR produces results other than \fBfalse\fR and \fBnull\fR\. Otherwise, \fBa // b\fR produces the same results as \fBb\fR\.
+The \fB//\fR operator produces all the values of its left\-hand side that are neither \fBfalse\fR nor \fBnull\fR, or, if the left\-hand side produces no values other than \fBfalse\fR or \fBtrue\fR, then \fB//\fR produces all the values of its right\-hand side\.
+.
+.P
+A filter of the form \fBa // b\fR produces all the results of \fBa\fR that are not \fBfalse\fR or \fBnull\fR\. If \fBa\fR produces no results, or no results other than \fBfalse\fR or \fBnull\fR, then \fBa // b\fR produces the results of \fBb\fR\.
 .
 .P
 This is useful for providing defaults: \fB\.foo // 1\fR will evaluate to \fB1\fR if there\'s no \fB\.foo\fR element in the input\. It\'s similar to how \fBor\fR is sometimes used in Python (jq\'s \fBor\fR operator is reserved for strictly Boolean operations)\.
 .
+.P
+Note: \fBsome_generator // defaults_here\fR is not the same as \fBsome_generator | \. // defaults_here\fR\. The latter will produce default values for all non\-\fBfalse\fR, non\-\fBnull\fR values of the left\-hand side, while the former will not\. Precedence rules can make this confusing\. For example, in \fBfalse, 1 // 2\fR the left\-hand side of \fB//\fR is \fB1\fR, not \fBfalse, 1\fR \-\- \fBfalse, 1 // 2\fR parses the same way as \fBfalse, (1 // 2)\fR\. In \fB(false, null, 1) | \. // 42\fR the left\-hand side of \fB//\fR is \fB\.\fR, which always produces just one value, while in \fB(false, null, 1) // 42\fR the left\-hand side is a generator of three values, and since it produces a value other \fBfalse\fR and \fBnull\fR, the default \fB42\fR is not produced\.
+.
 .IP "" 4
 .
 .nf
+
+jq \'empty // 42\'
+   null
+=> 42
 
 jq \'\.foo // 42\'
    {"foo": 19}
@@ -2587,6 +2597,14 @@ jq \'\.foo // 42\'
 jq \'\.foo // 42\'
    {}
 => 42
+
+jq \'(false, null, 1) // 42\'
+   null
+=> 1
+
+jq \'(false, null, 1) | \. // 42\'
+   null
+=> 42, 42, 1
 .
 .fi
 .

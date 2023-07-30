@@ -769,6 +769,10 @@ false
 null
 [false, true]
 
+empty // 42
+null
+42
+
 .foo // 42
 {"foo": 19}
 19
@@ -776,6 +780,16 @@ null
 .foo // 42
 {}
 42
+
+(false, null, 1) // 42
+null
+1
+
+(false, null, 1) | . // 42
+null
+42
+42
+1
 
 try .a catch ". is not an object"
 true
