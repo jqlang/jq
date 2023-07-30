@@ -2373,9 +2373,16 @@ sections:
       - title: "Alternative operator: `//`"
         body: |
 
-          A filter of the form `a // b` produces the same
-          results as `a`, if `a` produces results other than `false`
-          and `null`. Otherwise, `a // b` produces the same results as `b`.
+          The `//` operator produces all the values of its left-hand
+          side that are neither `false` nor `null`, or, if the
+          left-hand side produces no values other than `false` or
+          `true`, then `//` produces all the values of its right-hand
+          side.
+
+          A filter of the form `a // b` produces all the results of
+          `a` that are not `false` or `null`.  If `a` produces no
+          results, or no results other than `false` or `null`, then `a
+          // b` produces the results of `b`.
 
           This is useful for providing defaults: `.foo // 1` will
           evaluate to `1` if there's no `.foo` element in the
@@ -2383,13 +2390,36 @@ sections:
           (jq's `or` operator is reserved for strictly Boolean
           operations).
 
+          Note: `some_generator // defaults_here` is not the same
+          as `some_generator | . // defaults_here`.  The latter will
+          produce default values for all non-`false`, non-`null`
+          values of the left-hand side, while the former will not.
+          Precedence rules can make this confusing.  For example, in
+          `false, 1 // 2` the left-hand side of `//` is `1`, not
+          `false, 1` -- `false, 1 // 2` parses the same way as `false,
+          (1 // 2)`.  In `(false, null, 1) | . // 42` the left-hand
+          side of `//` is `.`, which always produces just one value,
+          while in `(false, null, 1) // 42` the left-hand side is a
+          generator of three values, and since it produces a
+          value other `false` and `null`, the default `42` is not
+          produced.
+
         examples:
+          - program: 'empty // 42'
+            input: 'null'
+            output: ['42']
           - program: '.foo // 42'
             input: '{"foo": 19}'
             output: ['19']
           - program: '.foo // 42'
             input: '{}'
             output: ['42']
+          - program: '(false, null, 1) // 42'
+            input: 'null'
+            output: ['1']
+          - program: '(false, null, 1) | . // 42'
+            input: 'null'
+            output: ['42', '42', '1']
 
       - title: try-catch
         body: |
