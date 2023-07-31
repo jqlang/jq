@@ -92,7 +92,8 @@ jobs:
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
-            --enable-all-static
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
           make -j"$(nproc)"
           file ./jq
           cp ./jq jq-${{ env.SUFFIX }}
@@ -157,7 +158,8 @@ jobs:
             --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
-            --enable-all-static
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
           make -j"$(nproc)"
           strip ./jq
           file ./jq
@@ -234,7 +236,8 @@ jobs:
             --with-oniguruma=builtin \
             --disable-shared \
             --enable-static \
-            --enable-all-static
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
           make -j$(nproc)
           file ./jq.exe
           cp ./jq.exe jq-${{ env.SUFFIX }}.exe
