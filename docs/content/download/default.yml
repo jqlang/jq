@@ -196,9 +196,9 @@ body:
       #### Building the documentation
 
       jq's documentation is compiled into static HTML using Python.
-      To build the docs, run `pipenv run python3 build_website.py` from
-      the docs/ subdirectory. To serve them locally, you can run
-      `python3 -m SimpleHTTPServer`. You'll need a few Python dependencies,
+      To build the docs, run `pipenv run python3 build_website.py --root /output`
+      in the `docs/` directory. To serve them locally, you can run
+      `python3 -m http.server`. You'll need a few Python dependencies,
       which can be installed by following the instructions in `docs/README.md`.
 
       The man page is built by `make jq.1`, or just `make`, also from

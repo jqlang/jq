@@ -197,14 +197,10 @@ endif
 
 ### Packaging
 
-docs/site.yml: configure.ac
-	sed 's/^jq_version: .*/jq_version: "$(VERSION)"/' $@ > $@.new
-	mv $@.new $@
-
 install-binaries: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec
 
-DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
+DOC_FILES = docs/content docs/public docs/templates                     \
         docs/Pipfile docs/Pipfile.lock docs/build_manpage.py            \
         docs/build_mantests.py docs/build_website.py docs/README.md     \
         docs/validate_manual_schema.py docs/manual_schema.yml

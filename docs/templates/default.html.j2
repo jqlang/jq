@@ -2,32 +2,29 @@
 <html lang="en">
 {% include "shared/_head.html.j2" %}
 
-  <body id="{{slug}}">
+  <body>
 {% include "shared/_navbar.html.j2" %}
 
-    <div class="container">
-      <div class="row">
-        <h1>{{headline}}</h1>
-        {% for item in body %}
-          {% if item.text %}
-            {{ item.text | replace('$JQ_VERSION', jq_version) | markdownify }}
-          {% endif %}
+    <main id="main" class="container-lg">
+      <h1>{{ headline }}</h1>
+      {%- for item in body %}
+      {%- if item.text %}
+      {{ item.text | markdownify }}
+      {%- endif %}
 
-          {% if item.command %}
-            {% set resultID = unique_id() %}
-            <div class="tutorial-example">
-              <div class="accordion-heading">
-                <pre>{{item.command}}</pre>
-                <a data-toggle="collapse" href="#result{{resultID}}">Show result</a>
-              </div>
-              <div id="result{{resultID}}" class="accordion-body collapse">
-                <pre>{{item.result}}</pre>
-              </div>
-            </div>
-          {% endif %}
-        {% endfor %}
+      {%- if item.command %}
+      {%- set resultID = unique_id() %}
+      <div class="tutorial-example mb-3">
+        <div class="d-flex accordion-heading me-2">
+          <pre class="flex-grow-1 me-0 mb-0" tabindex="0">{{ item.command }}</pre>
+          <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-secondary-subtle link-body-emphasis flex-shrink-0 d-flex align-items-center border border-start-0 d-print-none"
+            data-bs-toggle="collapse" data-bs-target="#result{{ resultID }}" aria-expanded="false" aria-controls="result{{ resultID }}">Show result</button>
+        </div>
+        <pre id="result{{ resultID }}" class="accordion-body collapse p-3 border-top-0 d-print-block" tabindex="0">{{ item.result }}</pre>
       </div>
-    </div>
+      {%- endif %}
+      {%- endfor %}
+    </main>
 
 {% include "shared/_footer.html.j2" %}
   </body>

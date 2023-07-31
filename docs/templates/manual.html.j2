@@ -2,98 +2,109 @@
 <html lang="en">
 {% include "shared/_head.html.j2" %}
 
-  <body id="{{slug}}" data-spy="scroll" data-target="#navcolumn" data-offset="100">
+  <body>
 {% include "shared/_navbar.html.j2" %}
 
-    <div class="container">
-      <div class="row">
-        <div class="affix" id="navcolumn">
+    <div class="container-lg row align-items-start mx-auto p-3">
+
+      <button type="button" class="d-md-none w-auto position-fixed bottom-0 end-0 p-2 m-3 bg-body-secondary border-0 text-body d-print-none"
+        data-bs-toggle="offcanvas" data-bs-target="#contents" aria-controls="contents" aria-expanded="false" aria-label="Toggle table of contents">
+        <span class="bi bi-list" aria-hidden="true"></span>
+      </button>
+      <nav id="contents" class="col-md-3 sticky-md-top p-3 overflow-y-auto offcanvas-md offcanvas-end d-print-none" style="top:4.5rem; height:calc(100dvh - 5.5rem);" aria-label="Table of contents">
+        <div class="d-flex justify-content-between">
           <h4>Contents</h4>
-          <ul class="nav nav-pills nav-stacked">
-            {% for section in sections %}
-              <li>
-                <a href="#{{section.title | section_id}}">{{section.title}}</a>
-              </li>
-            {% endfor %}
-          </ul>
-          <form class="form-group" onsubmit="go_to_section(); return false;">
-            <input type="text"
-                  class="form-control"
-                  placeholder="Search"
-                  autocomplete="off"
-                  id="searchbox">
-          </form>
+          <button type="button" class="btn-close d-md-none" data-bs-dismiss="offcanvas" data-bs-target="#contents" aria-label="Close table of contents"></button>
         </div>
+        <ul class="offcanvas-md-body nav nav-pills flex-column">
+          {%- for section in sections %}
+          <li class="nav-item" data-bs-dismiss="offcanvas" data-bs-target="#contents">
+            <a class="nav-link" href="#{{ section.title | section_id }}">{{ section.title }}</a>
+          </li>
+          {%- endfor %}
+        </ul>
+      </nav>
+      {%- set section_ids = {} %}
+      {%- macro check_section_id(id) -%}
+        {%- if section_ids.__contains__(id) %}
+          {{- raise('Duplicate section id: ' ~ id) }}
+        {%- endif %}
+        {%- set _ = section_ids.__setitem__(id, true) %}
+      {%- endmacro %}
+      <main id="main" class="col-md-9" data-bs-spy="scroll" data-bs-target="#contents" data-bs-threshold="0,1" data-bs-root-margin="-30% 0% -70%">
+        <h1>{{ headline }}</h1>
+        {{ history | markdownify }}
+        {{ body | markdownify }}
+        {%- for section in sections %}
+        <section id="{{ section.title | section_id }}">{{ check_section_id(section.title | section_id) }}
+          <h2>{{ section.title }} <a href="#{{ section.title | section_id }}" class="icon-link" aria-label="Link to this section: {{ section.title }}"><span class="bi bi-link-45deg" aria-hidden="true"></span></a></h2>
+          {{ section.body | markdownify if section.body }}
+          {%- for entry in section.entries %}
+          <section id="{{ entry.title | entry_id }}">{{ check_section_id(entry.title | entry_id) }}
+            <h3>
+              {{ entry.title | markdownify | no_paragraph }}
+              <a href="#{{ entry.title | entry_id }}" class="icon-link" aria-label="Link to this section: {{ entry.title }}"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
+            </h3>
+            {{ entry.body | markdownify }}
+            {%- if entry.examples %}
+            <div class="pb-3">
+              {%- set exampleID = unique_id() %}
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example{{ exampleID }}" aria-expanded="false" aria-controls="example{{ exampleID }}">
+                <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example{% if entry.examples | length > 1 %}s{% endif %}
+              </button>
+              <div id="example{{ exampleID }}" class="collapse mx-3 small d-print-block">
+                {%- for example in entry.examples %}
+                <table class="table table-borderless table-sm w-auto">
+                  <tr>
+                    <th class="pe-3">Command</th>
+                    <td class="font-monospace">jq '{{ example.program }}'</td>
+                  </tr>
+                  <tr>
+                    <th>Input</th>
+                    <td class="font-monospace">{{ example.input }}</td>
+                  </tr>
+                  {%- if not example.output[0] %}
+                  <tr>
+                    <th>Output</th>
+                    <td class="fst-italic">none</td>
+                  </tr>
+                  {%- endif %}
+                  {%- for output in example.output %}
+                  <tr>
+                    <th>{% if loop.first %}Output{% endif %}</th>
+                    <td class="font-monospace">{{ output }}</td>
+                  </tr>
+                  {%- endfor %}
+                  <tr class="d-print-none">
+                    <th><a href="https://jqplay.org/jq?q={{ example.program | urlencode }}&j={{ example.input | urlencode }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <td></td>
+                  </tr>
+                </table>
+                {%- endfor %}
+              </div>
+            </div>
+            {%- endif %}
+          </section>
+          {%- endfor %}
+        </section>
+        {%- endfor %}
+      </main>
 
-        <div id="manualcontent">
-          <h1>{{headline}}</h1>
-          {{ history | markdownify }}
-          {{ body | markdownify }}
-          {% for section in sections %}
-            <section id="{{section.title | section_id}}">
-              <h2>{{section.title}}</h2>
-              {{ (section.body | markdownify) if section.body }}
-              {% for entry in section.entries %}
-                <section id="{{entry.title | entry_id}}">
-                  <h3>
-                    {{entry.title | markdownify | no_paragraph }}
-                    {% if entry.subtitle %}<small>{{entry.subtitle}}</small>{% endif %}
-                  </h3>
-                  {{entry.body | markdownify}}
-
-                  {% if entry.examples %}
-                    <div>
-                      {% set exampleID = unique_id() %}
-                      <a data-toggle="collapse" href="#example{{exampleID}}">
-                        <i class="glyphicon glyphicon-chevron-right"></i>
-                        {% if entry.examples | length > 1 %}Examples{%else%}Example{%endif%}
-                      </a>
-                      <div id="example{{exampleID}}" class="manual-example collapse">
-                        {% for example in entry.examples %}
-                          <table>
-                            <tr><th></th><td class="jqprogram">jq '{{ example.program }}'</td></tr>
-                            <tr><th>Input</th><td>{{ example.input }}</td></tr>
-                            {% if not example.output[0] %}
-                              <tr>
-                                <th>Output</th>
-                                <td><i>none</i></td>
-                              </tr>
-                            {% endif %}
-                            {% for output in example.output %}
-                              <tr>
-                                {% if loop.first %}
-                                  <th>Output</th>
-                                {% else %}
-                                  <th></th>
-                                {% endif %}
-                                <td>{{ output }}</td>
-                              </tr>
-                            {% endfor %}
-                          </table>
-                        {% endfor %}
-                      </div>
-                    </div>
-                  {% endif %}
-                </section>
-              {% endfor %}
-            </section>
-          {% endfor %}
-        </div>
-      </div>
     </div>
 
 {% include "shared/_footer.html.j2" %}
-    <script>
-      var section_map = {
-        {% for section in sections %}
-          {% for entry in section.entries %}
-            {{entry.title | search_id | tojson }} : {{entry.title | entry_id | tojson }},
-          {% endfor %}
-          {{section.title | search_id | tojson }} : {{section.title | section_id | tojson }}
-          {% if not loop.last %},{% endif %}
-        {% endfor %}
-      };
+    <script src="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/autoComplete.min.js"
+      integrity="sha384-xbzjoN6H5XHmAqoSSR42hZVRninPGx85y+XZQGlWxVu2y91lTmr/oD80i5cjeUBv" crossorigin="anonymous"></script>
+    <script id="section-ids" type="application/json">
+      {
+        {%- for section in sections %}
+        {%- for entry in section.entries %}
+        {{ entry.title | search_id | tojson }}: {{ entry.title | entry_id | tojson }},
+        {%- endfor %}
+        {{ section.title | search_id | tojson }}: {{ section.title | section_id | tojson }}{{ "," if not loop.last }}
+        {%- endfor %}
+      }
     </script>
-    <script src="{{root}}/js/manual-search.js"></script>
+    <script src="{{ root }}/js/manual-search.js"></script>
   </body>
 </html>
