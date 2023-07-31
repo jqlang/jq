@@ -6,17 +6,18 @@ Since the last stable release many things have happened:
 
 - jq now lives at <https://github.com/jqlang>
 - New maintainers, admins, and owners have been recruited.
-  - A list of [current maintainers](https://github.com/jqlang/jq/blob/70bbd10b0b58e797d03963264fc934879bb44454/AUTHORS#L4-L13)
-- CI, scan builds, release builds etc now use GitHub actions. @owenthereal #2596 #2620
+  - A list of [current maintainers](https://github.com/jqlang/jq/blob/jq-1.7/AUTHORS#L4-L14)
+- NEWS file is replaced by NEWS.md with Markdown format. @wader #2599
+- CI, scan builds, release, website builds etc now use GitHub actions. @owenthereal @wader @itchyny #2596 #2603 #2620 #2723
 - Lots of documentation improvements and fixes.
-- Web site updated with new auto complete, better section ids for linking, dark mode, etc. @itchyny #2628
+- Website updated with new section search box, better section ids for linking, dark mode, etc. @itchyny #2628
 - Release builds for:
   - Linux `amd64`, `arm64`, `armel`, `armhf`, `i386`, `mips`, `mips64`, `mips64el`, `mips64r6`, `mips64r6el`, `mipsel`, `mipsr6`, `mipsr6el`, `powerpc`, `ppc64el`, `riscv64` and `s390x`
   - macOS `amd64` and `arm64`
-  - Windows `i386` and  `amd64`
+  - Windows `i386` and `amd64`
   - Docker `linux/386`, `linux/amd64`, `linux/arm64`, `linux/mips64le`, `linux/ppc64le`, `linux/riscv64` and `linux/s390x`
   - More details see @owenthereal #2665
-- Docker images are now available from `ghcr.io/jqlang/jq` instead of docker hub. @itchyny #2652
+- Docker images are now available from `ghcr.io/jqlang/jq` instead of Docker Hub. @itchyny #2652 #2686
 - OSS-fuzz. @DavidKorczynski #2760 #2762
 
 Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...jq-1.7> but here are some highlights:
@@ -33,9 +34,10 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
   }
   ```
 
+- Change the default color of null to Bright Black. @itchyny #2824
 - Respect `NO_COLOR` environment variable to disable color output. See <https://no-color.org> for details. @itchyny #2728
-- Improved `--help` output. Now mentions all options and nicer order. @itchyny #2747 #2766
-- Last output value can now control exit code using `--exit-code`/`-e`. @ryo1kato #1697
+- Improved `--help` output. Now mentions all options and nicer order. @itchyny @wader #2747 #2766 #2799
+- Fix multiple issues of exit code using `--exit-code`/`-e` option. @ryo1kato #1697
 
   ```sh
   # true-ish last output value exits with zero
@@ -51,7 +53,7 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
   4
   ```
 
-- Add `--binary`/`-b` on Windows for binary output. To get `\n` instead of `\r\n` line endings. 0dab2b1 @nicowilliams
+- Add `--binary`/`-b` on Windows for binary output. To get `\n` instead of `\r\n` line endings. @nicowilliams 0dab2b1
 - Add `--raw-output0` for NUL (zero byte) separated output. @asottile @pabs3 @itchyny #1990 #2235 #2684
 
   ```sh
@@ -63,9 +65,11 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
   a
   b
   c
-  $ jq -n --raw-output0 '"a b c", "d\ne\nf"' | xargs -0 printf '%q\n'
-  'a b c'
-  'd'$'\n''e'$'\n''f'
+  $ jq -n --raw-output0 '"a b c", "d\ne\nf"' | xargs -0 printf '[%s]\n'
+  [a b c]
+  [d
+  e
+  f]
   # can be used with read -d ''
   $ while IFS= read -r -d '' json; do
   >   jq '.name' <<< "$json"
@@ -79,6 +83,7 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
 
 - Fix assert crash and validate JSON for `--jsonarg`. @wader #2658
 - Remove deprecated `--argfile` option. @itchyny #2768
+- Enable stack protection. @nicowilliams #2801
 
 ## Language changes
 
@@ -86,17 +91,20 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
 
   ```sh
   # precision is preserved
-  $ jq -n '100000000000000000'
+  $ echo '100000000000000000' | jq .
   100000000000000000
   # comparison respects precision (this is false in JavaScript)
   $ jq -n '100000000000000000 < 100000000000000001'
   true
+  # sort/0 works
+  $ jq -n -c '[100000000000000001, 100000000000000003, 100000000000000004, 100000000000000002] | sort'
+  [100000000000000001,100000000000000002,100000000000000003,100000000000000004]
   # arithmetic operations might truncate (same as JavaScript)
-  $ jq -n '100000000000000000+10'
+  $ jq -n '100000000000000000 + 10'
   100000000000000020
   ```
 
-- Adds new builtin `pick(stream)` to emit a projection of the input object or array. @pkoppstein #2656
+- Adds new builtin `pick(stream)` to emit a projection of the input object or array. @pkoppstein #2656 #2779
 
   ```sh
   $ jq -n '{"a": 1, "b": {"c": 2, "d": 3}, "e": 4} | pick(.a, .b.c, .x)'
@@ -153,7 +161,7 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
   3
   ```
 
-- Allow use of `$binding` as key in object literals. 8ea4a55 @nicowilliams
+- Allow use of `$binding` as key in object literals. @nicowilliams 8ea4a55
 
   ```sh
   $ jq -n '"a" as $key | {$key: 123}'
@@ -172,8 +180,18 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
   ```sh
   $ jq -n '{"a": {"b": 123}} | .a["b"]'
   123
-  # now this works also
+  # now this also works
   $ jq -n '{"a": {"b": 123}} | .a.["b"]'
+  123
+  ```
+
+- Allow dot for chained value iterator `.[]`, `.[]?` @wader #2650
+
+  ```sh
+  $ jq -n '{"a": [123]} | .a[]'
+  123
+  # now this also works
+  $ jq -n '{"a": [123]} | .a.[]'
   123
   ```
 
@@ -181,7 +199,6 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
 - Speed up and refactor some builtins, also remove `scalars_or_empty/0`. @muhmuhten #1845
 - Now `halt` and `halt_error` exit immediately instead of continuing to the next input. @emanuele6 #2667
 - Fix issue converting string to number after previous convert error. @thalman #2400
-- Make 0 divided by 0 result in NaN consistently. @itchyny #2253
 - Fix issue representing large numbers on some platforms causing invalid JSON output. @itchyny #2661
 - Fix deletion using assigning empty against arrays. @itchyny #2133
 
@@ -191,16 +208,25 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
   [1,0]
   ```
 
+- Allow keywords to be used as binding name in more places. @emanuele6 #2681
+- Allow using `nan` as NaN in JSON. @emanuele6 #2712
+- Expose a module's function names in `modulemeta`. @mrwilson #2837
+- Fix `contains/1` to handle strings with NUL. @nicowilliams 61cd6db
 - Fix `stderr/0` to output raw text without any decoration. @itchyny #2751
 - Fix `nth/2` to emit empty on index out of range. @itchyny #2674
 - Fix `implode` to not assert and instead replace invalid unicode codepoints. @wader #2646
-- Simpler and faster `transpose`. @pkoppstein #2758
-- Allow keywords to be used as binding name in more places. @emanuele6 #2681
-- Allow using `nan` as NaN in JSON. @emanuele6 #2712
-- Fix indices/1 and rindex/1 in case of overlapping matches in strings. @emanuele6 #2718
-- Enable `significand/0`, `gamma/0` and `drem/2` on macOS. @itchyny #2756 #2775
+- Fix `indices/1` and `rindex/1` in case of overlapping matches in strings. @emanuele6 #2718
+- Fix `sub/3` to resolve issues involving global search-and-replace (gsub) operations. @pkoppstein #2641
+- Fix `significand/0`, `gamma/0` and `drem/2` to be available on macOS. @itchyny #2756 #2775
+- Fix empty regular expression matches. @itchyny #2677
+- Fix overflow exception of the modulo operator. @itchyny #2629
+- Fix string multiplication by 0 (and less than 1) to emit empty string. @itchyny #2142
 - Fix segfault when using libjq and threads. @thalman #2546
-- Fix sub/3 to resolve issues involving global search-and-replace (gsub) operations. @pkoppstein #2641 
+- Fix constant folding of division and reminder with zero divisor. @itchyny #2797
+- Fix `error/0`, `error/1` to throw null error. @emanuele6 #2823
+- Simpler and faster `transpose`. @pkoppstein #2758
+- Simple and efficient implementation of `walk/1`. @pkoppstein #2795
+- Remove deprecated filters `leaf_paths`, `recurse_down`. @itchyny #2666
 
 # Previous releases
 
