@@ -102,8 +102,9 @@ def scan($re): scan($re; null);
 # If input is an array, then emit a stream of successive subarrays of length $n (or less),
 # and similarly for strings.
 def nwise($n):
-  def n: if length <= $n then . else .[0:$n] , (.[$n:] | n) end;
-  n;
+  def _n: if length <= $n then . else .[:$n] , (.[$n:] | _n) end;
+  if $n <= 0 then "nwise: argument should be non-negative" else _n end;
+
 # nwise($n; s) emits a stream of arrays of length $n except possibly for the last.
 # s is a stream from which items are selected, $n at a time.
 def nwise($n; s):

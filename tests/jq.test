@@ -1860,6 +1860,10 @@ nwise(2)
 null
 []
 
+try nwise(0) catch .
+[1]
+"nwise: argument should be non-negative"
+
 map(lpad(4))
 ["","a"]
 ["    ","   a"]
