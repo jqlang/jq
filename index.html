@@ -1,176 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <script>
-      if ((window.location.host == "jqlang.github.io") && (window.location.protocol != "https:"))
-        window.location.protocol = "https";
-    </script>
     <meta charset="utf-8">
     <title>jq</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <link rel="canonical" href="https://jqlang.github.io/jq/" />
-    <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.5/spacelab/bootstrap.min.css" rel="stylesheet" integrity="sha256-j7Dtnd7ZjexEiPNbscbopFn9+Cs0b3TLipKsWAPHZIM= sha512-RFhfi6P8zWMAJrEGU+CPjuxPh3r/UUBGqQ+/o6WKPIVZmQqeOipGotH2ihRULuQ8wsMBoK15TSZqc/7VYWyuIw==" crossorigin="anonymous">
-    <link rel="stylesheet" href="/jq/css/base.css" type="text/css">
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
+    <link rel="icon" href="/jq/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/jq/icon.png" type="image/png">
+    <link rel="canonical" href="https://jqlang.github.io/jq/">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.1/dist/cosmo/bootstrap.min.css"
+      integrity="sha384-dulfW0vmzZ638jigSgZXvDxMmd70GCnIv6oa+riKq6Kk4E0MKf7qmBfwP02wltv5" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      integrity="sha384-Ay26V7L8bsJTsX9Sxclnvsn+hkdiwRnrjZJXqKmkIDobPgIIWBOVguEcQQLDuhfN" crossorigin="anonymous">
+    <link rel="stylesheet" href="/jq/css/style.css" type="text/css">
+    <script>
+      (function() {
+        function setTheme(mediaQuery) {
+          document.documentElement.setAttribute('data-bs-theme',
+            document.documentElement.style.colorScheme = mediaQuery.matches ? 'dark' : 'light');
+        }
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        setTheme(mediaQuery); mediaQuery.addEventListener('change', setTheme);
+      })();
+    </script>
   </head>
 
-  <body id="index">
-    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#nav-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="/jq/">jq</a>
-        </div>
-
-        <div class="navbar-collapse collapse" id="nav-collapse">
-          <ul class="nav navbar-nav">
-            
-              <li >
-                <a href="/jq/tutorial/">Tutorial</a>
-              </li>
-            
-              <li >
-                <a href="/jq/download/">Download</a>
-              </li>
-            
-              <li >
-                <a href="/jq/manual/">Manual</a>
-              </li>
-            
-            <li><a href="https://github.com/jqlang/jq/issues">Issues</a></li>
-            <li><a href="https://github.com/jqlang/jq">Source</a></li>
-            <li><a href="https://jqplay.org">Try online!</a></li>
-            <li><a href="https://raw.githubusercontent.com/jqlang/jq/master/NEWS.md">News</a></li>
+  <body>
+    <div class="container visually-hidden-focusable">
+      <a class="d-inline-flex p-2" href="#main">Skip to main content</a>
+    </div>
+    <header class="navbar navbar-expand-md sticky-top bg-body-tertiary d-print-none">
+      <nav class="container-lg" aria-label="Page navigation">
+        <button type="button" class="navbar-toggler" data-bs-toggle="offcanvas" data-bs-target="#navbar-collapse"
+          aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle page navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="/jq/" aria-label="Top page"><img src="/jq/jq.svg" alt="jq logo" style="height:1.5rem"></a>
+        <div id="navbar-collapse" class="offcanvas offcanvas-start navbar-collapse w-auto" aria-labelledby="navbar-title">
+          <div class="offcanvas-header">
+            <h3 id="navbar-title" class="me-3">jq</h3>
+            <button type="button" class="d-md-none btn-close" data-bs-dismiss="offcanvas" aria-label="Close page navigation"></button>
+          </div>
+          <ul class="offcanvas-body navbar-nav me-auto text-nowrap">
+            <li class="nav-item d-md-none"><a class="nav-link active" aria-current="page" href="/jq/">Top page</a></li>
+            <li class="nav-item"><a class="nav-link" href="/jq/tutorial/">Tutorial</a></li>
+            <li class="nav-item"><a class="nav-link" href="/jq/download/">Download</a></li>
+            <li class="nav-item"><a class="nav-link" href="/jq/manual/">Manual</a></li>
+            <li class="nav-item"><a class="nav-link" href="https://github.com/jqlang/jq" target="_blank" rel="noopener">GitHub</a></li>
+            <li class="nav-item"><a class="nav-link" href="https://github.com/jqlang/jq/issues" target="_blank" rel="noopener">Issues</a></li>
+            <li class="nav-item"><a class="nav-link" href="https://jqplay.org" target="_blank" rel="noopener">Try online!</a></li>
+            <li class="nav-item"><a class="nav-link" href="https://raw.githubusercontent.com/jqlang/jq/master/NEWS.md" target="_blank" rel="noopener">News</a></li>
           </ul>
         </div>
-      </div>
-    </div>
+        <a class="d-md-none bi bi-github fs-4 text-body" href="https://github.com/jqlang/jq" target="_blank" rel="noopener" aria-label="GitHub"></a>
+      </nav>
+    </header>
 
-    <div class="container">
+    <main id="main" class="container-lg">
       <div class="row">
-        <div class="jumbotron">
-          <div class="row">
-            <div class="col-sm-6">
-              <img src="/jq/jq.png" class="img-responsive" alt="jq logo"
-                  width="400" height="220">
-            </div>
-            <div class="col-sm-6">
-              <div id="blurb">
-                <p>jq is a lightweight and flexible command-line JSON processor.</p>
-
-                <div class="btn-toolbar" role="toolbar">
-                  <div class="btn-group" role="group">
-                    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
-                      Download jq 1.6
-                      <span class="caret"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                      <li><a href="https://github.com/jqlang/jq/releases/download/jq-1.6/jq-linux64">Linux (64-bit)</a></li>
-                      <li><a href="https://github.com/jqlang/jq/releases/download/jq-1.6/jq-osx-amd64">macOS (64-bit)</a></li>
-                      <li><a href="https://github.com/jqlang/jq/releases/download/jq-1.6/jq-win64.exe">Windows (64-bit)</a></li>
-                      <li><a href="/jq/download/">Other platforms, older versions, and source</a></li>
-                    </ul>
-                  </div>
-
-                  <div class="btn-group">
-                    <a class="btn btn-primary" href="https://jqplay.org">
-                      Try online at jqplay.org!
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div class="col-md-6 text-center p-3">
+          <h1><img src="/jq/jq.svg" class="img-fluid" alt="jq" width="400" height="220"></h1>
+        </div>
+        <div class="col-md-6 d-flex flex-column justify-content-center text-center align-items-center">
+          <h2 class="px-1" style="width:16em">
+jq is a lightweight and flexible command-line JSON processor.
+</h2>
+          <div class="btn-group d-print-none" role="group">
+            <button type="button" class="btn btn-primary dropdown-toggle text-nowrap" data-bs-toggle="dropdown" aria-expanded="false">
+              Download jq 1.6
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="https://github.com/jqlang/jq/releases/download/jq-1.6/jq-linux64" aria-label="Link to download executable: Linux (64-bit)"><span class="bi bi-download me-2" aria-hidden="true"></span>Linux (64-bit)</a></li>
+              <li><a class="dropdown-item" href="https://github.com/jqlang/jq/releases/download/jq-1.6/jq-osx-amd64" aria-label="Link to download executable: macOS (64-bit)"><span class="bi bi-download me-2" aria-hidden="true"></span>macOS (64-bit)</a></li>
+              <li><a class="dropdown-item" href="https://github.com/jqlang/jq/releases/download/jq-1.6/jq-win64.exe" aria-label="Link to download executable: Windows (64-bit)"><span class="bi bi-download me-2" aria-hidden="true"></span>Windows (64-bit)</a></li>
+              <li><a class="dropdown-item" href="/jq/download/">Other platforms, older versions, and source</a></li>
+            </ul>
+            <a class="btn btn-primary text-nowrap" href="https://jqplay.org" target="_blank" rel="noopener">
+              Try online at jqplay.org!<span class="bi bi-box-arrow-up-right ms-1" aria-hidden="true"></span>
+            </a>
           </div>
         </div>
       </div>
 
-      <div class="row" id="multiblurb">
-        <div class="col-sm-4"><p>jq is like <code>sed</code> for JSON data - you can use it to slice and filter
+      <div class="row my-3">
+        <div class="col-md-4"><p>jq is like <code>sed</code> for JSON data - you can use it to slice and filter
 and map and transform structured data with the same ease that <code>sed</code>,
 <code>awk</code>, <code>grep</code> and friends let you play with text.</p></div>
-        <div class="col-sm-4"><p>jq is written in portable C, and it has zero runtime
+        <div class="col-md-4"><p>jq is written in portable C, and it has zero runtime
 dependencies. You can download a single binary, <code>scp</code> it to a far away
 machine of the same type, and expect it to work.</p></div>
-        <div class="col-sm-4"><p>jq can mangle the data format that you have into the one that you
+        <div class="col-md-4"><p>jq can mangle the data format that you have into the one that you
 want with very little effort, and the program to do so is often
 shorter and simpler than you'd expect.</p></div>
       </div>
 
-      <div class="row" style="text-align:center; margin-top: 30px">
-        <p>Go read the <a href="/jq/tutorial/">tutorial</a> for more, or the <a href="/jq/manual/">manual</a>
+      <div class="text-center my-3">
+        <p>Go read the <a href="./tutorial/">tutorial</a> for more, or the <a href="./manual/">manual</a>
 for <em>way</em> more.</p>
 <p>Have a question related to jq? You can seek answers on <a href="https://stackoverflow.com/">Stack Overflow</a>
 by using the <a href="https://stackoverflow.com/questions/tagged/jq">jq tag</a>, or in the <a href="https://web.libera.chat/#jq">#jq channel</a>
 on <a href="https://libera.chat/">Libera.Chat</a>. For more interactive discussions, feel free to join our <a href="https://discord.gg/yg6yjNmgAC">Discord server</a>.</p>
       </div>
 
-      <div class="row">
-        <h2>News</h2>
-        <div id="news">
-          <ul>
-            
-              <li>
-                <span class="date">1 November 2018</span>
-                <p>jq 1.6 released. See installation options on the <a href="/jq/download/">download</a>
+      <h2>News</h2>
+      <ul>
+        <li>
+          <span class="fst-italic">1 November 2018</span>
+          <p>jq 1.6 released. See installation options on the <a href="./download/">download</a>
 page, and the <a href="https://github.com/jqlang/jq/releases/tag/jq-1.6">release notes</a>
 for details.</p>
-              </li>
-            
-              <li>
-                <span class="date">15 August 2015</span>
-                <p>jq 1.5 released, including new datetime, math, and regexp functions,
+        </li>
+        <li>
+          <span class="fst-italic">15 August 2015</span>
+          <p>jq 1.5 released, including new datetime, math, and regexp functions,
 try/catch syntax, array and object destructuring, a streaming parser,
 and a module system. See installation options on the
-<a href="/jq/download/">download</a> page, and the
+<a href="./download/">download</a> page, and the
 <a href="https://github.com/jqlang/jq/releases/tag/jq-1.5">release notes</a>
 for details.</p>
-              </li>
-            
-              <li>
-                <span class="date">26 July 2015</span>
-                <p>jq 1.5rc2 is available. Get it on the
+        </li>
+        <li>
+          <span class="fst-italic">26 July 2015</span>
+          <p>jq 1.5rc2 is available. Get it on the
 <a href="https://github.com/jqlang/jq/releases">releases</a> page.</p>
-              </li>
-            
-              <li>
-                <span class="date">01 January 2015</span>
-                <p>jq 1.5rc1 is available. Get it on the
+        </li>
+        <li>
+          <span class="fst-italic">01 January 2015</span>
+          <p>jq 1.5rc1 is available. Get it on the
 <a href="https://github.com/jqlang/jq/releases">releases</a> page.</p>
-              </li>
-            
-              <li>
-                <span class="date">09 June 2014</span>
-                <p>jq 1.4 (finally) released! Get it on the <a href="/jq/download/">download</a> page.</p>
-              </li>
-            
-              <li>
-                <span class="date">19 May 2013</span>
-                <p>jq 1.3 released.</p>
-              </li>
-            
-          </ul>
-        </div>
-      </div>
-    </div>
+        </li>
+        <li>
+          <span class="fst-italic">09 June 2014</span>
+          <p>jq 1.4 (finally) released! Get it on the <a href="./download/">download</a> page.</p>
+        </li>
+        <li>
+          <span class="fst-italic">19 May 2013</span>
+          <p>jq 1.3 released.</p>
+        </li>
+      </ul>
+    </main>
 
-    <footer>
-      <div class="container">
-        <p>This website is made with <a href="http://getbootstrap.com">Bootstrap</a>, themed with <a href="https://bootswatch.com">Bootswatch</a>.</p>
-        <p>jq is licensed under the MIT license (code) and the <a href="https://creativecommons.org/licenses/by/3.0/">CC-BY-3.0</a> license (docs).</p>
+    <footer class="bd-footer bg-body-tertiary">
+      <div class="py-3 text-center">
+        <p>
+          This website is made with <a href="https://getbootstrap.com" target="_blank" rel="noopener">Bootstrap</a>,
+          themed with <a href="https://bootswatch.com" target="_blank" rel="noopener">Bootswatch</a>.
+        </p>
+        <p>
+          jq is licensed under the MIT license (code) and the
+          <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC-BY-3.0</a> license (docs).
+        </p>
       </div>
     </footer>
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha256-Sk3nkD6mLTMOF0EOpNtsIry+s1CsaqQC1rVLTAy+0yc= sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
-    <script src="https://twitter.github.io/typeahead.js/releases/0.11.1/typeahead.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
   </body>
 </html>
