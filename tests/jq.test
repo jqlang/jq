@@ -556,9 +556,13 @@ null
 null
 172
 
-[(infinite, -infinite) % (1, -1)]
+[(infinite, -infinite) % (1, -1, infinite)]
 null
-[0,0,0,0]
+[0,0,0,0,0,-1]
+
+[nan % 1, 1 % nan | isnan]
+null
+[true,true]
 
 1 + tonumber + ("10" | tonumber)
 4
@@ -1664,18 +1668,21 @@ try (1/.) catch .
 0
 "number (1) and number (0) cannot be divided because the divisor is zero"
 
-0/0, (0 as $x | $x/0) | isnan
+try (1/0) catch .
 0
-true
-true
+"number (1) and number (0) cannot be divided because the divisor is zero"
+
+try (0/0) catch .
+0
+"number (0) and number (0) cannot be divided because the divisor is zero"
 
 try (1%.) catch .
 0
 "number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
 
-%%FAIL
-1/0
-jq: error: Division by zero? at <top-level>, line 1:
+try (1%0) catch .
+0
+"number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
 
 # Basic numbers tests: integers, powers of two
 [range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers

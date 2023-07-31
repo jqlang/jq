@@ -22,7 +22,6 @@ block gen_op_simple(opcode op);
 block gen_const(jv constant);
 block gen_const_global(jv constant, const char *name);
 int block_is_const(block b);
-int block_is_const_inf(block b);
 jv_kind block_const_kind(block b);
 jv block_const(block b);
 block gen_op_target(opcode op, block target);
