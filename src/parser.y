@@ -230,7 +230,16 @@ static block constant_fold(block a, block b, int op) {
     case '+': res = jv_number(na + nb); break;
     case '-': res = jv_number(na - nb); break;
     case '*': res = jv_number(na * nb); break;
-    case '/': res = jv_number(na / nb); break;
+    case '/':
+      if (nb == 0.0) return gen_noop();
+      res = jv_number(na / nb);
+      break;
+    case '%':
+#define is_unsafe_to_int_cast(n) (isnan(n) || (n) < INTMAX_MIN || -(n) < INTMAX_MIN)
+      if (is_unsafe_to_int_cast(na) || is_unsafe_to_int_cast(nb) || (intmax_t)nb == 0) return gen_noop();
+#undef is_unsafe_to_int_cast
+      res = jv_number((intmax_t)na % (intmax_t)nb);
+      break;
     case EQ:  res = (cmp == 0 ? jv_true() : jv_false()); break;
     case NEQ: res = (cmp != 0 ? jv_true() : jv_false()); break;
     case '<': res = (cmp < 0 ? jv_true() : jv_false()); break;
@@ -463,14 +472,10 @@ Exp "*=" Exp {
 
 Exp '/' Exp {
   $$ = gen_binop($1, $3, '/');
-  if (block_is_const_inf($$))
-    FAIL(@$, "Division by zero?");
 } |
 
 Exp '%' Exp {
   $$ = gen_binop($1, $3, '%');
-  if (block_is_const_inf($$))
-    FAIL(@$, "Remainder by zero?");
 } |
 
 Exp "/=" Exp {

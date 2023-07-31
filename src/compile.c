@@ -172,12 +172,6 @@ int block_is_const(block b) {
   return (block_is_single(b) && (b.first->op == LOADK || b.first->op == PUSHK_UNDER));
 }
 
-int block_is_const_inf(block b) {
-  return (block_is_single(b) && b.first->op == LOADK &&
-          jv_get_kind(b.first->imm.constant) == JV_KIND_NUMBER &&
-          isinf(jv_number_value(b.first->imm.constant)));
-}
-
 jv_kind block_const_kind(block b) {
   assert(block_is_const(b));
   return jv_get_kind(b.first->imm.constant);

@@ -383,7 +383,7 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
 static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    if (jv_number_value(b) == 0.0 && jv_number_value(a) != 0.0)
+    if (jv_number_value(b) == 0.0)
       return type_error2(a, b, "cannot be divided because the divisor is zero");
     jv r = jv_number(jv_number_value(a) / jv_number_value(b));
     jv_free(a);
@@ -396,14 +396,22 @@ static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
   }
 }
 
+#define dtoi(n) ((n) < INTMAX_MIN ? INTMAX_MIN : -(n) < INTMAX_MIN ? INTMAX_MAX : (intmax_t)(n))
 static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    intmax_t bi = (intmax_t)jv_number_value(b);
+    double na = jv_number_value(a);
+    double nb = jv_number_value(b);
+    if (isnan(na) || isnan(nb)) {
+      jv_free(a);
+      jv_free(b);
+      return jv_number(NAN);
+    }
+    intmax_t bi = dtoi(nb);
     if (bi == 0)
       return type_error2(a, b, "cannot be divided (remainder) because the divisor is zero");
     // Check if the divisor is -1 to avoid overflow when the dividend is INTMAX_MIN.
-    jv r = jv_number(bi == -1 ? 0 : (intmax_t)jv_number_value(a) % bi);
+    jv r = jv_number(bi == -1 ? 0 : dtoi(na) % bi);
     jv_free(a);
     jv_free(b);
     return r;
@@ -411,6 +419,7 @@ static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
     return type_error2(a, b, "cannot be divided (remainder)");
   }
 }
+#undef dtoi
 
 static jv f_equal(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
