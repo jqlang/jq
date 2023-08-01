@@ -1,76 +1,65 @@
 jq
 ==
 
-jq is a lightweight and flexible command-line JSON processor.
+## Introduction
 
-If you want to learn to use jq, read the documentation at
-[https://jqlang.github.io/jq](https://jqlang.github.io/jq).  This
-documentation is generated from the docs/ folder of this repository.
-You can also try it online at [jqplay.org](https://jqplay.org).
+**jq** is a lightweight and flexible command-line JSON processor akin to `sed`, `awk`, `grep`, and friends for JSON data. It's written in portable C and has zero runtime dependencies, allowing you to easily slice, filter, map, and transform structured data.
 
-If you want to hack on jq, feel free, but be warned that its internals
-are not well-documented at the moment. Bring a hard hat and a
-shovel.  Also, read the wiki: https://github.com/jqlang/jq/wiki, where
-you will find cookbooks, discussion of advanced topics, internals,
-release engineering, and more.
+## Getting Started
 
-Source tarball and built executable releases can be found on the
-homepage and on the github release page, https://github.com/jqlang/jq/releases.
-Docker image is available at https://github.com/jqlang/jq/pkgs/container/jq.
+### Documentation
 
-If you're building directly from the latest git, you'll need libtool, make, automake,
-and autoconf installed.
-To get regexp support you'll also need to install Oniguruma or clone it as a
-git submodule as per the instructions below. To build, run:
+- **Official Documentation**: [jqlang.github.io/jq](https://jqlang.github.io/jq)
+- **Try jq Online**: [jqplay.org](https://jqplay.org)
 
-    git submodule update --init # if building from git to get oniguruma
-    autoreconf -i               # if building from git
-    ./configure --with-oniguruma=builtin
-    make -j8
-    make check
+## Installation
 
-Developers must `--enable-maintainer-mode` when making changes to the
-jq parser and lexer which also requires bison and flex to be installed.
+### Prebuilt Binaries
 
-To build a statically linked version of jq, run:
+Download the latest releases from the [GitHub release page](https://github.com/jqlang/jq/releases).
 
-    make LDFLAGS=-all-static
+### Docker Image
 
-After make finishes, you'll be able to use `./jq`.  You can also
-install it using:
+Pull the [jq image](https://github.com/jqlang/jq/pkgs/container/jq) to start quickly with Docker.
 
-    sudo make install
+### Building from source
 
-If you're not using the latest git version but instead building a
-released tarball (available on the website), then you won't need to
-run `autoreconf` (and shouldn't), and you won't need flex or bison.
+#### Dependencies
 
-To cross-compile for OS X and Windows, see docs/Rakefile's build task
-and scripts/crosscompile.  You'll need a cross-compilation environment,
-such as Mingw for cross-compiling for Windows.
+- libtool
+- make
+- automake
+- autoconf
 
-Cross-compilation requires a clean workspace, then:
+#### Instructions
 
-    # git clean ...
-    autoreconf -i
-    ./configure
-    make distclean
-    scripts/crosscompile <name-of-build> <configure-options>
+```console
+git submodule update --init # if building from git to get oniguruma
+autoreconf -i               # if building from git
+./configure --with-oniguruma=builtin
+make -j8
+make check
+sudo make install
+```
 
-Use the `--host=` and `--target=` ./configure options to select a
-cross-compilation environment.  See also
-["Cross compilation"](https://github.com/jqlang/jq/wiki/Cross-compilation) on
-the wiki.
+Build a statically linked version:
 
-To compile jq to WebAssembly, install the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html), then:
+```console
+make LDFLAGS=-all-static
+```
 
-    git submodule update --init # if building from git to get oniguruma
-    autoreconf -i               # if building from git
-    emconfigure ./configure --with-oniguruma=builtin
-    emmake make EXEEXT=.js CFLAGS="-O2" LDFLAGS="-s EXPORTED_RUNTIME_METHODS=['callMain']"
+To build from a released tarball (available on the release page), skip the `autoreconf` step, and flex or bison won't be needed.
 
+##### Cross-Compilation
 
-# Community
+For details on cross-compliation, check out the [GitHub Actions file](.github/workflows/ci.yml) and the [cross-compliation wiki page](https://github.com/jqlang/jq/wiki/Cross-compilation).
 
-* Send questions to https://stackoverflow.com/questions/tagged/jq.
-* Join our [Discord server](https://discord.gg/yg6yjNmgAC).
+## Community & Support
+
+- Questions & Help: [Stack Overflow (jq tag)](https://stackoverflow.com/questions/tagged/jq)
+- Chat & Community: [Join us on Discord](https://discord.gg/yg6yjNmgAC)
+- Wiki & Advanced Topics: [Explore the Wiki](https://github.com/jqlang/jq/wiki)
+
+## License
+
+`jq` is released under the [MIT License](COPYING).
