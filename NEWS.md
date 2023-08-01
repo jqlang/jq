@@ -200,6 +200,7 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
 - Fix indices/1 and rindex/1 in case of overlapping matches in strings. @emanuele6 #2718
 - Enable `significand/0`, `gamma/0` and `drem/2` on macOS. @itchyny #2756 #2775
 - Fix segfault when using libjq and threads. @thalman #2546
+- Fix sub/3 to resolve issues involving global search-and-replace (gsub) operations. @pkoppstein #2641 
 
 # Previous releases
 
