@@ -215,8 +215,9 @@ enum {
 #define JVP_FLAGS_NUMBER_LITERAL      JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_DECIMAL, 1))
 
 // the decimal precision of binary double
-#define BIN64_DEC_PRECISION  (17)
-#define DEC_NUMBER_STRING_GUARD (14)
+#define DEC_NUBMER_DOUBLE_PRECISION   (16)
+#define DEC_NUMBER_STRING_GUARD       (14)
+#define DEC_NUBMER_DOUBLE_EXTRA_UNITS ((DEC_NUBMER_DOUBLE_PRECISION - DECNUMDIGITS + DECDPUN - 1)/DECDPUN)
 
 #include "jv_thread.h"
 #ifdef WIN32
@@ -530,24 +531,20 @@ static decContext* tsd_dec_ctx_get(pthread_key_t *key) {
     return ctx;
   }
 
-  decContext _ctx = {
-      0,
-      DEC_MAX_EMAX,
-      DEC_MIN_EMAX,
-      DEC_ROUND_HALF_UP,
-      0, /*no errors*/
-      0, /*status*/
-      0, /*no clamping*/
-    };
-  if (key == &dec_ctx_key) {
-    _ctx.digits = DEC_MAX_DIGITS;
-  } else if (key == &dec_ctx_dbl_key) {
-    _ctx.digits = BIN64_DEC_PRECISION;
-  }
-
   ctx = malloc(sizeof(decContext));
   if (ctx) {
-    *ctx = _ctx;
+    if (key == &dec_ctx_key)
+    {
+      decContextDefault(ctx, DEC_INIT_BASE);
+      ctx->digits = DEC_MAX_DIGITS;
+      ctx->traps = 0; /*no errors*/
+    }
+    else if (key == &dec_ctx_dbl_key)
+    {
+      decContextDefault(ctx, DEC_INIT_DECIMAL64);
+      // just to make sure we got this right
+      assert(ctx->digits <= DEC_NUBMER_DOUBLE_PRECISION);
+    }
     if (pthread_setspecific(*key, ctx) != 0) {
       fprintf(stderr, "error: cannot store thread specific data");
       abort();
@@ -565,12 +562,7 @@ typedef struct {
 
 typedef struct {
   decNumber number;
-  decNumberUnit units[1];
-} decNumberSingle;
-
-typedef struct {
-  decNumber number;
-  decNumberUnit units[BIN64_DEC_PRECISION];
+  decNumberUnit units[DEC_NUBMER_DOUBLE_EXTRA_UNITS];
 } decNumberDoublePrecision;
 
 
@@ -627,11 +619,10 @@ static double jvp_literal_number_to_double(jv j) {
 
   decNumber *p_dec_number = jvp_dec_number_ptr(j);
   decNumberDoublePrecision dec_double;
-  char literal[BIN64_DEC_PRECISION + DEC_NUMBER_STRING_GUARD + 1];
+  char literal[DEC_NUBMER_DOUBLE_PRECISION + DEC_NUMBER_STRING_GUARD + 1];
 
   // reduce the number to the shortest possible form
-  // while also making sure than no more than BIN64_DEC_PRECISION
-  // digits are used (dec_context_to_double)
+  // that fits into the 64 bit floating point representation
   decNumberReduce(&dec_double.number, p_dec_number, DEC_CONTEXT_TO_DOUBLE());
 
   decNumberToString(&dec_double.number, literal);
@@ -764,15 +755,15 @@ int jvp_number_cmp(jv a, jv b) {
 
 #ifdef USE_DECNUM
   if (JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_LITERAL) && JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_LITERAL)) {
-    decNumberSingle res;
-    decNumberCompare(&res.number,
+    decNumber res;
+    decNumberCompare(&res,
                      jvp_dec_number_ptr(a),
                      jvp_dec_number_ptr(b),
                      DEC_CONTEXT()
                      );
-    if (decNumberIsZero(&res.number)) {
+    if (decNumberIsZero(&res)) {
       return 0;
-    } else if (decNumberIsNegative(&res.number)) {
+    } else if (decNumberIsNegative(&res)) {
       return -1;
     } else {
       return 1;
