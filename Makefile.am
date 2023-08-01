@@ -19,8 +19,7 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
 
 ### C build options
 
-AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers               \
-	-Wno-unused-parameter -Wno-unused-function
+AM_CFLAGS = -Wextra -Wall -Wno-unused-parameter -Wno-unused-function
 
 if WIN32
 AM_CFLAGS += -municode
