@@ -502,9 +502,9 @@ static block constant_fold(block a, block b, int op) {
       res = jv_number(na / nb);
       break;
     case '%':
-#define is_unsafe_double(n) (isnan(n) || (n) < INTMAX_MIN || -(n) < INTMAX_MIN)
-      if (is_unsafe_double(na) || is_unsafe_double(nb) || (intmax_t)nb == 0) return gen_noop();
-#undef is_unsafe_double
+#define is_unsafe_to_int_cast(n) (isnan(n) || (n) < INTMAX_MIN || -(n) < INTMAX_MIN)
+      if (is_unsafe_to_int_cast(na) || is_unsafe_to_int_cast(nb) || (intmax_t)nb == 0) return gen_noop();
+#undef is_unsafe_to_int_cast
       res = jv_number((intmax_t)na % (intmax_t)nb);
       break;
     case EQ:  res = (cmp == 0 ? jv_true() : jv_false()); break;
