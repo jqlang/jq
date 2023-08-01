@@ -68,10 +68,9 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       AR: ${{ matrix.CC }}-ar
-      CHOST: ${{ matrix.cc }}
-      CC: ${{ matrix.cc }}-gcc
-      CPP: ${{ matrix.cc }}-cpp
-      CXX: ${{ matrix.cc }}-g++
+      CHOST: ${{ matrix.CC }}
+      CC: ${{ matrix.CC }}-gcc
+      CPP: ${{ matrix.CC }}-cpp
       LDFLAGS: -s
       SUFFIX: linux-${{ matrix.arch }}
     steps:
