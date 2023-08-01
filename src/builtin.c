@@ -396,7 +396,7 @@ static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
   }
 }
 
-#define dtoi(n) ((n) < INTMAX_MIN ? INTMAX_MIN : -(n) < INTMAX_MIN ? INTMAX_MAX : (intmax_t)(n))
+#define dtoi(n) ((n) < INTMAX_MIN ? INTMAX_MIN : -(n) <= INTMAX_MIN ? INTMAX_MAX : (intmax_t)(n))
 static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
   jv_free(input);
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
