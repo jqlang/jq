@@ -1,13 +1,8 @@
-jq
-==
+# jq
 
-## Introduction
+`jq` is a lightweight and flexible command-line JSON processor akin to`sed`,`awk`,`grep`, and friends for JSON data. It's written in portable C and has zero runtime dependencies, allowing you to easily slice, filter, map, and transform structured data.
 
-**jq** is a lightweight and flexible command-line JSON processor akin to `sed`, `awk`, `grep`, and friends for JSON data. It's written in portable C and has zero runtime dependencies, allowing you to easily slice, filter, map, and transform structured data.
-
-## Getting Started
-
-### Documentation
+## Documentation
 
 - **Official Documentation**: [jqlang.github.io/jq](https://jqlang.github.io/jq)
 - **Try jq Online**: [jqplay.org](https://jqplay.org)
