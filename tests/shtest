@@ -533,7 +533,6 @@ else
 fi
 cat > $d/expected <<EOF
 jq: error: Top-level program not given (try ".")
-
 jq: 1 compile error
 EOF
 if ! diff $d/expected $d/out; then
