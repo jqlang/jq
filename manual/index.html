@@ -147,9 +147,17 @@ parsed as a sequence of whitespace-separated JSON values which
 are passed through the provided filter one at a time. The
 output(s) of the filter are written to standard output, as a
 sequence of newline-separated JSON data.</p>
+<p>The simplest and most common filter (or jq program) is <code>.</code>,
+which is the identity operator, copying the inputs of the jq
+processor to the output stream.  Because the default behavior of
+the jq processor is to read JSON texts from the input stream,
+and to pretty-print outputs, the <code>.</code> program's main use is to
+validate and pretty-print the inputs.  The jq programming
+language is quite rich and allows for much more than just
+validation and pretty-printing.</p>
 <p>Note: it is important to mind the shell's quoting rules.  As a
 general rule it's best to always quote (with single-quote
-characters) the jq program, as too many characters with special
+characters on Unix shells) the jq program, as too many characters with special
 meaning to jq are also shell meta-characters.  For example, <code>jq
 "foo"</code> will fail on most Unix shells because that will be the same
 as <code>jq foo</code>, which will generally fail because <code>foo is not
@@ -166,6 +174,8 @@ program.</p>
 <li>Powershell: <code>jq '.[\"foo\"]'</code></li>
 <li>Windows command shell: <code>jq ".[\"foo\"]"</code></li>
 </ul>
+<p>Note: jq allows user-defined functions, but every jq program
+must have a top-level expression.</p>
 <p>You can affect how jq reads and writes its input and output
 using some command-line options:</p>
 <ul>
