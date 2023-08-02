@@ -235,6 +235,12 @@ Windows users using WSL, MSYS2, or Cygwin, should use this option when using a n
 Output the jq version and exit with zero\.
 .
 .TP
+\fB\-\-build\-configuration\fR:
+.
+.IP
+Output the build configuration of jq and exit with zero\. This output has no supported format or structure and may change without notice in future releases\.
+.
+.TP
 \fB\-\-help\fR / \fB\-h\fR:
 .
 .IP
@@ -2145,6 +2151,12 @@ jq \'walk( if type == "object" then with_entries( \.key |= sub( "^_+"; "") ) els
 .fi
 .
 .IP "" 0
+.
+.SS "$JQ_BUILD_CONFIGURATION"
+This builtin binding shows the jq executable\'s build configuration\. Its value has no particular format, but it can be expected to be at least the \fB\./configure\fR command\-line arguments, and may be enriched in the future to include the version strings for the build tooling used\.
+.
+.P
+Note that this can be overriden in the command\-line with \fB\-\-arg\fR and related options\.
 .
 .SS "$ENV, env"
 \fB$ENV\fR is an object representing the environment variables as set when the jq program started\.
