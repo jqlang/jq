@@ -33,6 +33,7 @@ extern void jv_tsd_dtoa_ctx_init();
 #include "jv_alloc.h"
 #include "util.h"
 #include "src/version.h"
+#include "src/config_opts.inc"
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
 
@@ -106,6 +107,7 @@ static void usage(int code, int keep_it_short) {
       "  -b, --binary              open input/output streams in binary mode;\n"
 #endif
       "  -V, --version             show the version;\n"
+      "  --build-configuration     show jq's build configuration;\n"
       "  -h, --help                show the help;\n"
       "  --                        terminates argument processing;\n\n"
       "Named arguments are also available as $ARGS.named[], while\n"
@@ -580,6 +582,11 @@ int main(int argc, char* argv[]) {
         ret = JQ_OK;
         goto out;
       }
+      if (isoption(argv[i], 0, "build-configuration", &short_opts)) {
+        printf("%s\n", JQ_CONFIG);
+        ret = JQ_OK;
+        goto out;
+      }
       if (isoption(argv[i], 0, "run-tests", &short_opts)) {
         i++;
         // XXX Pass program_arguments, even a whole jq_state *, through;
@@ -677,6 +684,10 @@ int main(int argc, char* argv[]) {
     ARGS = JV_OBJECT(jv_string("positional"), ARGS,
                      jv_string("named"), jv_copy(program_arguments));
     program_arguments = jv_object_set(program_arguments, jv_string("ARGS"), jv_copy(ARGS));
+    if (!jv_object_has(jv_copy(program_arguments), jv_string("JQ_BUILD_CONFIGURATION")))
+      program_arguments = jv_object_set(program_arguments,
+                                        jv_string("JQ_BUILD_CONFIGURATION"),
+                                        jv_string(JQ_CONFIG)); /* named arguments */
     compiled = jq_compile_args(jq, skip_shebang(jv_string_value(data)), jv_copy(program_arguments));
     free(program_origin);
     jv_free(data);
@@ -685,6 +696,10 @@ int main(int argc, char* argv[]) {
     ARGS = JV_OBJECT(jv_string("positional"), ARGS,
                      jv_string("named"), jv_copy(program_arguments));
     program_arguments = jv_object_set(program_arguments, jv_string("ARGS"), jv_copy(ARGS));
+    if (!jv_object_has(jv_copy(program_arguments), jv_string("JQ_BUILD_CONFIGURATION")))
+      program_arguments = jv_object_set(program_arguments,
+                                        jv_string("JQ_BUILD_CONFIGURATION"),
+                                        jv_string(JQ_CONFIG)); /* named arguments */
     compiled = jq_compile_args(jq, program, jv_copy(program_arguments));
   }
   if (!compiled){

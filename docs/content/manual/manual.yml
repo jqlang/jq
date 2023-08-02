@@ -301,6 +301,12 @@ sections:
 
         Output the jq version and exit with zero.
 
+      * `--build-configuration`:
+
+        Output the build configuration of jq and exit with zero.
+        This output has no supported format or structure and may change
+        without notice in future releases.
+
       * `--help` / `-h`:
 
         Output the jq help and exit with zero.
@@ -1967,6 +1973,19 @@ sections:
             input: '[ { "_a": { "__b": 2 } } ]'
             output:
               - '[{"a":{"b":2}}]'
+
+      - title: "`$JQ_BUILD_CONFIGURATION`"
+        body: |
+
+          This builtin binding shows the jq executable's build
+          configuration.  Its value has no particular format, but
+          it can be expected to be at least the `./configure`
+          command-line arguments, and may be enriched in the
+          future to include the version strings for the build
+          tooling used.
+
+          Note that this can be overriden in the command-line
+          with `--arg` and related options.
 
       - title: "`$ENV`, `env`"
         body: |
