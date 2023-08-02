@@ -43,7 +43,7 @@ Build a statically linked version:
 make LDFLAGS=-all-static
 ```
 
-To build from a released tarball (available on the release page), skip the `autoreconf` step, and flex or bison won't be needed.
+If you're not using the latest git version but instead building a released tarball (available on the release page), skip the `autoreconf` step, and flex or bison won't be needed.
 
 ##### Cross-Compilation
 
