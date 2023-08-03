@@ -45,6 +45,15 @@ void *alloca (size_t);
 #include "jv_alloc.h"
 
 
+#define BINOP(name) \
+static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
+  jv_free(input); \
+  return binop_ ## name(a, b); \
+}
+BINOPS
+#undef BINOP
+
+
 static jv type_error(jv bad, const char* msg) {
   char errbuf[15];
   jv err = jv_invalid_with_msg(jv_string_fmt("%s (%s) %s",
@@ -79,8 +88,7 @@ static inline jv ret_error2(jv bad1, jv bad2, jv msg) {
   return jv_invalid_with_msg(msg);
 }
 
-static jv f_plus(jq_state *jq, jv input, jv a, jv b) {
-  jv_free(input);
+jv binop_plus(jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NULL) {
     jv_free(a);
     return b;
@@ -312,8 +320,7 @@ static jv f_rtrimstr(jq_state *jq, jv input, jv right) {
   return input;
 }
 
-static jv f_minus(jq_state *jq, jv input, jv a, jv b) {
-  jv_free(input);
+jv binop_minus(jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     jv r = jv_number(jv_number_value(a) - jv_number_value(b));
     jv_free(a);
@@ -341,10 +348,9 @@ static jv f_minus(jq_state *jq, jv input, jv a, jv b) {
   }
 }
 
-static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
+jv binop_multiply(jv a, jv b) {
   jv_kind ak = jv_get_kind(a);
   jv_kind bk = jv_get_kind(b);
-  jv_free(input);
   if (ak == JV_KIND_NUMBER && bk == JV_KIND_NUMBER) {
     jv r = jv_number(jv_number_value(a) * jv_number_value(b));
     jv_free(a);
@@ -380,8 +386,7 @@ static jv f_multiply(jq_state *jq, jv input, jv a, jv b) {
   }
 }
 
-static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
-  jv_free(input);
+jv binop_divide(jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     if (jv_number_value(b) == 0.0)
       return type_error2(a, b, "cannot be divided because the divisor is zero");
@@ -397,8 +402,7 @@ static jv f_divide(jq_state *jq, jv input, jv a, jv b) {
 }
 
 #define dtoi(n) ((n) < INTMAX_MIN ? INTMAX_MIN : -(n) < INTMAX_MIN ? INTMAX_MAX : (intmax_t)(n))
-static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
-  jv_free(input);
+jv binop_mod(jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     double na = jv_number_value(a);
     double nb = jv_number_value(b);
@@ -421,13 +425,11 @@ static jv f_mod(jq_state *jq, jv input, jv a, jv b) {
 }
 #undef dtoi
 
-static jv f_equal(jq_state *jq, jv input, jv a, jv b) {
-  jv_free(input);
+jv binop_equal(jv a, jv b) {
   return jv_bool(jv_equal(a, b));
 }
 
-static jv f_notequal(jq_state *jq, jv input, jv a, jv b) {
-  jv_free(input);
+jv binop_notequal(jv a, jv b) {
   return jv_bool(!jv_equal(a, b));
 }
 
@@ -438,8 +440,7 @@ enum cmp_op {
   CMP_OP_GREATEREQ
 };
 
-static jv order_cmp(jv input, jv a, jv b, enum cmp_op op) {
-  jv_free(input);
+static jv order_cmp(jv a, jv b, enum cmp_op op) {
   int r = jv_cmp(a, b);
   return jv_bool((op == CMP_OP_LESS && r < 0) ||
                  (op == CMP_OP_LESSEQ && r <= 0) ||
@@ -447,20 +448,20 @@ static jv order_cmp(jv input, jv a, jv b, enum cmp_op op) {
                  (op == CMP_OP_GREATER && r > 0));
 }
 
-static jv f_less(jq_state *jq, jv input, jv a, jv b) {
-  return order_cmp(input, a, b, CMP_OP_LESS);
+jv binop_less(jv a, jv b) {
+  return order_cmp(a, b, CMP_OP_LESS);
 }
 
-static jv f_greater(jq_state *jq, jv input, jv a, jv b) {
-  return order_cmp(input, a, b, CMP_OP_GREATER);
+jv binop_greater(jv a, jv b) {
+  return order_cmp(a, b, CMP_OP_GREATER);
 }
 
-static jv f_lesseq(jq_state *jq, jv input, jv a, jv b) {
-  return order_cmp(input, a, b, CMP_OP_LESSEQ);
+jv binop_lesseq(jv a, jv b) {
+  return order_cmp(a, b, CMP_OP_LESSEQ);
 }
 
-static jv f_greatereq(jq_state *jq, jv input, jv a, jv b) {
-  return order_cmp(input, a, b, CMP_OP_GREATEREQ);
+jv binop_greatereq(jv a, jv b) {
+  return order_cmp(a, b, CMP_OP_GREATEREQ);
 }
 
 static jv f_contains(jq_state *jq, jv a, jv b) {
@@ -1735,12 +1736,10 @@ static const struct cfunction function_list[] = {
 #ifdef HAVE_LGAMMA_R
   {f_lgamma_r,"lgamma_r", 1},
 #endif
-  {f_plus, "_plus", 3},
   {f_negate, "_negate", 1},
-  {f_minus, "_minus", 3},
-  {f_multiply, "_multiply", 3},
-  {f_divide, "_divide", 3},
-  {f_mod, "_mod", 3},
+#define BINOP(name) {f_ ## name, "_" #name, 3},
+BINOPS
+#undef BINOP
   {f_dump, "tojson", 1},
   {f_json_parse, "fromjson", 1},
   {f_tonumber, "tonumber", 1},
@@ -1759,12 +1758,6 @@ static const struct cfunction function_list[] = {
   {f_getpath, "getpath", 2},
   {f_delpaths, "delpaths", 2},
   {f_has, "has", 2},
-  {f_equal, "_equal", 3},
-  {f_notequal, "_notequal", 3},
-  {f_less, "_less", 3},
-  {f_greater, "_greater", 3},
-  {f_lesseq, "_lesseq", 3},
-  {f_greatereq, "_greatereq", 3},
   {f_contains, "contains", 2},
   {f_length, "length", 1},
   {f_utf8bytelength, "utf8bytelength", 1},

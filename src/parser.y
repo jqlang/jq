@@ -5,6 +5,7 @@
 #include <string.h>
 #include "compile.h"
 #include "jv_alloc.h"
+#include "builtin.h"
 #define YYMALLOC jv_mem_alloc
 #define YYFREE jv_mem_free
 %}
@@ -202,64 +203,31 @@ static block constant_fold(block a, block b, int op) {
   if (!block_is_single(a) || !block_is_const(a) ||
       !block_is_single(b) || !block_is_const(b))
     return gen_noop();
-  if (op == '+') {
-    if (block_const_kind(a) == JV_KIND_NULL) {
-      block_free(a);
-      return b;
-    }
-    if (block_const_kind(b) == JV_KIND_NULL) {
-      block_free(b);
-      return a;
-    }
-  }
-  if (block_const_kind(a) != block_const_kind(b))
-    return gen_noop();
+
+  jv jv_a = block_const(a);
+  block_free(a);
+  jv jv_b = block_const(b);
+  block_free(b);
 
   jv res = jv_invalid();
-
-  if (block_const_kind(a) == JV_KIND_NUMBER) {
-    jv jv_a = block_const(a);
-    jv jv_b = block_const(b);
-
-    double na = jv_number_value(jv_a);
-    double nb = jv_number_value(jv_b);
-
-    int cmp = jv_cmp(jv_a, jv_b);
-
-    switch (op) {
-    case '+': res = jv_number(na + nb); break;
-    case '-': res = jv_number(na - nb); break;
-    case '*': res = jv_number(na * nb); break;
-    case '/':
-      if (nb == 0.0) return gen_noop();
-      res = jv_number(na / nb);
-      break;
-    case '%':
-#define is_unsafe_to_int_cast(n) (isnan(n) || (n) < INTMAX_MIN || -(n) < INTMAX_MIN)
-      if (is_unsafe_to_int_cast(na) || is_unsafe_to_int_cast(nb) || (intmax_t)nb == 0) return gen_noop();
-#undef is_unsafe_to_int_cast
-      res = jv_number((intmax_t)na % (intmax_t)nb);
-      break;
-    case EQ:  res = (cmp == 0 ? jv_true() : jv_false()); break;
-    case NEQ: res = (cmp != 0 ? jv_true() : jv_false()); break;
-    case '<': res = (cmp < 0 ? jv_true() : jv_false()); break;
-    case '>': res = (cmp > 0 ? jv_true() : jv_false()); break;
-    case LESSEQ: res = (cmp <= 0 ? jv_true() : jv_false()); break;
-    case GREATEREQ: res = (cmp >= 0 ? jv_true() : jv_false()); break;
-    default: break;
-    }
-  } else if (op == '+' && block_const_kind(a) == JV_KIND_STRING) {
-    res = jv_string_concat(block_const(a),  block_const(b));
-  } else {
-    return gen_noop();
+  switch (op) {
+  case '+': res = binop_plus(jv_a, jv_b); break;
+  case '-': res = binop_minus(jv_a, jv_b); break;
+  case '*': res = binop_multiply(jv_a, jv_b); break;
+  case '/': res = binop_divide(jv_a, jv_b); break;
+  case '%': res = binop_mod(jv_a, jv_b); break;
+  case EQ: res = binop_equal(jv_a, jv_b); break;
+  case NEQ: res = binop_notequal(jv_a, jv_b); break;
+  case '<': res = binop_less(jv_a, jv_b); break;
+  case '>': res = binop_greater(jv_a, jv_b); break;
+  case LESSEQ: res = binop_lesseq(jv_a, jv_b); break;
+  case GREATEREQ: res = binop_greatereq(jv_a, jv_b); break;
   }
 
-  if (jv_get_kind(res) == JV_KIND_INVALID)
-    return gen_noop();
+  if (jv_is_valid(res))
+    return gen_const(res);
 
-  block_free(a);
-  block_free(b);
-  return gen_const(res);
+  return gen_error(jv_invalid_get_msg(res));
 }
 
 static block gen_binop(block a, block b, int op) {
