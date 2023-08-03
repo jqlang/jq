@@ -70,7 +70,6 @@ jv jv_number(double);
 jv jv_number_with_literal(const char*);
 double jv_number_value(jv);
 int jv_is_integer(jv);
-int jvp_number_is_nan(jv);
 
 int jv_number_has_literal(jv n);
 const char* jv_number_get_literal(jv);

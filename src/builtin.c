@@ -43,6 +43,7 @@ void *alloca (size_t);
 #include "locfile.h"
 #include "jv_unicode.h"
 #include "jv_alloc.h"
+#include "jv_private.h"
 #include "util.h"
 
 
