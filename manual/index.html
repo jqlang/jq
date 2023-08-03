@@ -895,6 +895,7 @@ array. A filter of the form <code>.foo[]</code> is equivalent to
 <code>.foo | .[]</code>.</p>
 <p>You can also use this on an object, and it will return all
 the values of the object.</p>
+<p>Note that the iterator operator is a generator of values.</p>
             <div class="pb-3">
               <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example6" aria-expanded="false" aria-controls="example6">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
@@ -1012,6 +1013,7 @@ outputs produced by the left expression, and then all of the
 outputs produced by the right. For instance, filter <code>.foo,
 .bar</code>, produces both the "foo" fields and "bar" fields as
 separate outputs.</p>
+<p>The <code>,</code> operator is one way to contruct generators.</p>
             <div class="pb-3">
               <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example7" aria-expanded="false" aria-controls="example7">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
@@ -1097,12 +1099,12 @@ separate outputs.</p>
             </h3>
             <p>The | operator combines two filters by feeding the output(s) of
 the one on the left into the input of the one on the right. It's
-pretty much the same as the Unix shell's pipe, if you're used to
-that.</p>
+similar to the Unix shell's pipe, if you're used to that.</p>
 <p>If the one on the left produces multiple results, the one on
 the right will be run for each of those results. So, the
 expression <code>.[] | .foo</code> retrieves the "foo" field of each
-element of the input array.</p>
+element of the input array.  This is a cartesian product,
+which can be surprising.</p>
 <p>Note that <code>.a.b.c</code> is the same as <code>.a | .b | .c</code>.</p>
 <p>Note too that <code>.</code> is the input value at the particular stage
 in a "pipeline", specifically: where the <code>.</code> expression appears.
@@ -5798,19 +5800,56 @@ evaluating a condition, see the <code>//</code> operator below.</p>
               Alternative operator: <code>//</code>
               <a href="#alternative-operator" class="icon-link" aria-label="Link to this section: Alternative operator: `//`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
             </h3>
-            <p>A filter of the form <code>a // b</code> produces the same
-results as <code>a</code>, if <code>a</code> produces results other than <code>false</code>
-and <code>null</code>. Otherwise, <code>a // b</code> produces the same results as <code>b</code>.</p>
+            <p>The <code>//</code> operator produces all the values of its left-hand
+side that are neither <code>false</code> nor <code>null</code>, or, if the
+left-hand side produces no values other than <code>false</code> or
+<code>true</code>, then <code>//</code> produces all the values of its right-hand
+side.</p>
+<p>A filter of the form <code>a // b</code> produces all the results of
+<code>a</code> that are not <code>false</code> or <code>null</code>.  If <code>a</code> produces no
+results, or no results other than <code>false</code> or <code>null</code>, then <code>a
+// b</code> produces the results of <code>b</code>.</p>
 <p>This is useful for providing defaults: <code>.foo // 1</code> will
 evaluate to <code>1</code> if there's no <code>.foo</code> element in the
 input. It's similar to how <code>or</code> is sometimes used in Python
 (jq's <code>or</code> operator is reserved for strictly Boolean
 operations).</p>
+<p>Note: <code>some_generator // defaults_here</code> is not the same
+as <code>some_generator | . // defaults_here</code>.  The latter will
+produce default values for all non-<code>false</code>, non-<code>null</code>
+values of the left-hand side, while the former will not.
+Precedence rules can make this confusing.  For example, in
+<code>false, 1 // 2</code> the left-hand side of <code>//</code> is <code>1</code>, not
+<code>false, 1</code> -- <code>false, 1 // 2</code> parses the same way as <code>false,
+(1 // 2)</code>.  In <code>(false, null, 1) | . // 42</code> the left-hand
+side of <code>//</code> is <code>.</code>, which always produces just one value,
+while in <code>(false, null, 1) // 42</code> the left-hand side is a
+generator of three values, and since it produces a
+value other <code>false</code> and <code>null</code>, the default <code>42</code> is not
+produced.</p>
             <div class="pb-3">
               <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example82" aria-expanded="false" aria-controls="example82">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
               <div id="example82" class="collapse mx-3 small d-print-block">
+                <table class="table table-borderless table-sm w-auto">
+                  <tr>
+                    <th class="pe-3">Command</th>
+                    <td class="font-monospace">jq 'empty // 42'</td>
+                  </tr>
+                  <tr>
+                    <th>Input</th>
+                    <td class="font-monospace">null</td>
+                  </tr>
+                  <tr>
+                    <th>Output</th>
+                    <td class="font-monospace">42</td>
+                  </tr>
+                  <tr class="d-print-none">
+                    <th><a href="https://jqplay.org/jq?q=empty%20//%2042&j=null" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <td></td>
+                  </tr>
+                </table>
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5844,6 +5883,50 @@ operations).</p>
                   </tr>
                   <tr class="d-print-none">
                     <th><a href="https://jqplay.org/jq?q=.foo%20//%2042&j=%7B%7D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <td></td>
+                  </tr>
+                </table>
+                <table class="table table-borderless table-sm w-auto">
+                  <tr>
+                    <th class="pe-3">Command</th>
+                    <td class="font-monospace">jq '(false, null, 1) // 42'</td>
+                  </tr>
+                  <tr>
+                    <th>Input</th>
+                    <td class="font-monospace">null</td>
+                  </tr>
+                  <tr>
+                    <th>Output</th>
+                    <td class="font-monospace">1</td>
+                  </tr>
+                  <tr class="d-print-none">
+                    <th><a href="https://jqplay.org/jq?q=%28false%2C%20null%2C%201%29%20//%2042&j=null" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <td></td>
+                  </tr>
+                </table>
+                <table class="table table-borderless table-sm w-auto">
+                  <tr>
+                    <th class="pe-3">Command</th>
+                    <td class="font-monospace">jq '(false, null, 1) | . // 42'</td>
+                  </tr>
+                  <tr>
+                    <th>Input</th>
+                    <td class="font-monospace">null</td>
+                  </tr>
+                  <tr>
+                    <th>Output</th>
+                    <td class="font-monospace">42</td>
+                  </tr>
+                  <tr>
+                    <th></th>
+                    <td class="font-monospace">42</td>
+                  </tr>
+                  <tr>
+                    <th></th>
+                    <td class="font-monospace">1</td>
+                  </tr>
+                  <tr class="d-print-none">
+                    <th><a href="https://jqplay.org/jq?q=%28false%2C%20null%2C%201%29%20%7C%20.%20//%2042&j=null" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
                     <td></td>
                   </tr>
                 </table>
@@ -7298,17 +7381,17 @@ languages that have generators.  For example, <code>.[]</code>
 generates all the values in its input (which must be an
 array or an object), <code>range(0; 10)</code> generates the integers
 between 0 and 10, and so on.</p>
-<p>Even the comma operator is a generator, generating first the
-values generated by the expression to the left of the comma,
-then for each of those, the values generate by the
-expression on the right of the comma.</p>
+<p>Even the comma operator is a generator, generating first
+the values generated by the expression to the left of the
+comma, then the values generated by the expression on the
+right of the comma.</p>
 <p>The <code>empty</code> builtin is the generator that produces zero
 outputs.  The <code>empty</code> builtin backtracks to the preceding
 generator expression.</p>
 <p>All jq functions can be generators just by using builtin
-generators.  It is also possible to define new generators
-using only recursion and the comma operator.  If the
-recursive call(s) is(are) "in tail position" then the
+generators.  It is also possible to construct new generators
+using only recursion and the comma operator.  If
+recursive calls are "in tail position" then the
 generator will be efficient.  In the example below the
 recursive call by <code>_range</code> to itself is in tail position.
 The example shows off three advanced topics: tail recursion,
