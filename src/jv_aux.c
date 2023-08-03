@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "jv_alloc.h"
-#include "jv_type_private.h"
+#include "jv_private.h"
 
 // making this static verbose function here
 // until we introduce a less confusing naming scheme
