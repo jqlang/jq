@@ -536,7 +536,7 @@ static decContext* tsd_dec_ctx_get(pthread_key_t *key) {
     if (key == &dec_ctx_key)
     {
       decContextDefault(ctx, DEC_INIT_BASE);
-      ctx->digits = DEC_MAX_DIGITS;
+      ctx->digits = DEC_MAX_DIGITS - 1;
       ctx->traps = 0; /*no errors*/
     }
     else if (key == &dec_ctx_dbl_key)
