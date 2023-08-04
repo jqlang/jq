@@ -147,8 +147,6 @@ typedef struct {
 } jvp_invalid;
 
 jv jv_invalid_with_msg(jv err) {
-  if (JVP_HAS_KIND(err, JV_KIND_NULL))
-    return JV_INVALID;
   jvp_invalid* i = jv_mem_alloc(sizeof(jvp_invalid));
   i->refcnt = JV_REFCNT_INIT;
   i->errmsg = err;
