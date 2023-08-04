@@ -2024,3 +2024,61 @@ walk(1)
 walk(select(IN({}, []) | not))
 {"a":1,"b":[]}
 {"a":1}
+
+# #2815
+[range(10)] | .[1.2:3.5]
+null
+[1,2,3]
+
+[range(10)] | .[1.5:3.5]
+null
+[1,2,3]
+
+[range(10)] | .[1.7:3.5]
+null
+[1,2,3]
+
+[range(10)] | .[1.7:4294967295]
+null
+[1,2,3,4,5,6,7,8,9]
+
+[range(10)] | .[1.7:-4294967296]
+null
+[]
+
+[[range(10)] | .[1.1,1.5,1.7]]
+null
+[1,1,1]
+
+[range(5)] | .[1.1] = 5
+null
+[0,5,2,3,4]
+
+[range(3)] | .[nan:1]
+null
+[0]
+
+[range(3)] | .[1:nan]
+null
+[1,2]
+
+[range(3)] | .[nan]
+null
+null
+
+try ([range(3)] | .[nan] = 9) catch .
+null
+"Cannot set array element at NaN index"
+
+try ("foobar" | .[1.5:3.5] = "xyz") catch .
+null
+"Cannot update string slices"
+
+try ([range(10)] | .[1.5:3.5] = ["xyz"]) catch .
+null
+[0,"xyz",4,5,6,7,8,9]
+
+try ("foobar" | .[1.5]) catch .
+null
+"Cannot index string with number"
+
