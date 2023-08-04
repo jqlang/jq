@@ -2577,7 +2577,7 @@ jq \'[true, false | not]\'
 .IP "" 0
 .
 .SS "Alternative operator: //"
-The \fB//\fR operator produces all the values of its left\-hand side that are neither \fBfalse\fR nor \fBnull\fR, or, if the left\-hand side produces no values other than \fBfalse\fR or \fBtrue\fR, then \fB//\fR produces all the values of its right\-hand side\.
+The \fB//\fR operator produces all the values of its left\-hand side that are neither \fBfalse\fR nor \fBnull\fR, or, if the left\-hand side produces no values other than \fBfalse\fR or \fBnull\fR, then \fB//\fR produces all the values of its right\-hand side\.
 .
 .P
 A filter of the form \fBa // b\fR produces all the results of \fBa\fR that are not \fBfalse\fR or \fBnull\fR\. If \fBa\fR produces no results, or no results other than \fBfalse\fR or \fBnull\fR, then \fBa // b\fR produces the results of \fBb\fR\.

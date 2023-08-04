@@ -2391,7 +2391,7 @@ sections:
           The `//` operator produces all the values of its left-hand
           side that are neither `false` nor `null`, or, if the
           left-hand side produces no values other than `false` or
-          `true`, then `//` produces all the values of its right-hand
+          `null`, then `//` produces all the values of its right-hand
           side.
 
           A filter of the form `a // b` produces all the results of
