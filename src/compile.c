@@ -144,6 +144,13 @@ block gen_op_simple(opcode op) {
 }
 
 
+block gen_error(jv constant) {
+  assert(opcode_describe(ERRORK)->flags & OP_HAS_CONSTANT);
+  inst *i = inst_new(ERRORK);
+  i->imm.constant = constant;
+  return inst_block(i);
+}
+
 block gen_const(jv constant) {
   assert(opcode_describe(LOADK)->flags & OP_HAS_CONSTANT);
   inst* i = inst_new(LOADK);
