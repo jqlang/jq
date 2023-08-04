@@ -1231,10 +1231,6 @@ sections:
           given as the argument. Errors can be caught with try/catch;
           see below.
 
-          When the error value is `null`, it produces nothing and works
-          just like `empty`. So `[null | error]` and `[error(null)]` both
-          emit `[]`.
-
         examples:
           - program: 'try error catch .'
             input: '"error message"'

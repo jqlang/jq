@@ -1270,13 +1270,11 @@ null
 [null,true,{"a":1}]
 []
 
-[1,error,2]
+.[] | try error catch .
+[1,null,2]
+1
 null
-[1,2]
-
-[1,error(null),2]
-0
-[1,2]
+2
 
 try error("\($__loc__)") catch .
 null

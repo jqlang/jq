@@ -1263,9 +1263,6 @@ jq \'[1,2,empty,3]\'
 .SS "error, error(message)"
 Produces an error with the input value, or with the message given as the argument\. Errors can be caught with try/catch; see below\.
 .
-.P
-When the error value is \fBnull\fR, it produces nothing and works just like \fBempty\fR\. So \fB[null | error]\fR and \fB[error(null)]\fR both emit \fB[]\fR\.
-.
 .IP "" 4
 .
 .nf
