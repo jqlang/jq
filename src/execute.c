@@ -405,6 +405,12 @@ jv jq_next(jq_state *jq) {
 
     case TOP: break;
 
+    case ERRORK: {
+      jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
+      set_error(jq, jv_invalid_with_msg(v));
+      goto do_backtrack;
+    }
+
     case LOADK: {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
       assert(jv_is_valid(v));
