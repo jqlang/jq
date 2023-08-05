@@ -26,8 +26,8 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
 - Make object key color configurable using `JQ_COLORS` environment variable. @itchyny @haguenau @ericpruitt #2703
 
   ```sh
-  # this would make "field" yellow (33, the last value)
-  $ JQ_COLORS="1;30:0;37:0;37:0;37:0;32:1;37:1;37:1;33" ./jq -n '{field: 123}'
+  # this would make "field" bold yellow (`1;33`, the last value)
+  $ JQ_COLORS="0;90:0;37:0;37:0;37:0;32:1;37:1;37:1;33" ./jq -n '{field: 123}'
   {
     "field": 123
   }
