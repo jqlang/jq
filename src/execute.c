@@ -695,19 +695,22 @@ jv jq_next(jq_state *jq) {
         goto do_backtrack;
       }
       // $array | .[-1]
+      jv norm_k;
       if (jv_get_kind(k) == JV_KIND_NUMBER && jv_get_kind(t) == JV_KIND_ARRAY) {
         int idx = jv_number_value(k);
-        if (idx < 0) {
-          jv_free(k);
-          k = jv_number(jv_array_length(jv_copy(t)) + idx);
-        }
+        if (idx < 0)
+          norm_k = jv_number(jv_array_length(jv_copy(t)) + idx);
+        else
+          norm_k = jv_copy(k);
+      } else {
+        norm_k = jv_copy(k);
       }
-      jv v = jv_get(t, jv_copy(k));
+      jv v = jv_get(t, k);
       if (jv_is_valid(v)) {
-        path_append(jq, k, jv_copy(v));
+        path_append(jq, norm_k, jv_copy(v));
         stack_push(jq, v);
       } else {
-        jv_free(k);
+        jv_free(norm_k);
         if (opcode == INDEX)
           set_error(jq, v);
         else
