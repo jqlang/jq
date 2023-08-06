@@ -2098,8 +2098,14 @@ sections:
           * `@sh`:
 
             The input is escaped suitable for use in a command-line
-            for a POSIX shell. If the input is an array, the output
-            will be a series of space-separated strings.
+            for a POSIX shell using `eval`. If the input is an array,
+            the output will be a series of space-separated strings.
+            If the input is an object, the output will be a series of
+            space-separated variable assignments for all the keys in
+            the object that are valid shell variable names (other keys
+            will be ignored).
+
+            E.g., `eval $(jq -r '@sh' f.json)`
 
           * `@base64`:
 
@@ -2134,6 +2140,14 @@ sections:
           - program: '@sh "echo \(.)"'
             input: "\"O'Hara's Ale\""
             output: ["\"echo 'O'\\\\''Hara'\\\\''s Ale'\""]
+
+          - program: '@sh'
+            input: '["a b", "c d"]'
+            output: ["\"'a b' 'c d'\""]
+
+          - program: '@sh'
+            input: '{"foo":"a b", "bar":"c d", "x y":"ignored"}'
+            output: ["\"foo='a b' bar='c d'\""]
 
           - program: '@base64'
             input: '"This is a message"'
