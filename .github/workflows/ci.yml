@@ -196,19 +196,16 @@ jobs:
           - i386
         include:
           - arch: amd64
-            CC: x86_64-pc-msys
-            toolchain: gcc
-            msystem: msys
+            msystem: UCRT64
           - arch: i386
-            CC: i686-w64-mingw32
-            toolchain: mingw-w64-i686-toolchain
-            msystem: mingw32
+            msystem: MINGW32
     runs-on: windows-2022
     env:
-      CHOST: ${{ matrix.CC }}
-      CC: ${{ matrix.CC }}-gcc
       LDFLAGS: -s
       SUFFIX: windows-${{ matrix.arch }}
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -224,13 +221,12 @@ jobs:
             autoconf
             automake
             libtool
-            ${{ matrix.toolchain }}
+          pacboy: >-
+            toolchain:p
       - name: Build
-        shell: msys2 {0}
         run: |
           autoreconf -i
           ./configure \
-            --host=${{ matrix.CC }} \
             --disable-docs \
             --disable-valgrind \
             --with-oniguruma=builtin \
@@ -242,9 +238,6 @@ jobs:
           file ./jq.exe
           cp ./jq.exe jq-${{ env.SUFFIX }}.exe
       - name: Test
-        # Only run tests for amd64 matching the CI machine arch
-        if: ${{ matrix.arch == 'amd64' }}
-        shell: msys2 {0}
         run: |
           make check VERBOSE=yes
           git diff --exit-code --ignore-submodules
