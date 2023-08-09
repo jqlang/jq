@@ -1161,7 +1161,7 @@ jq \'setpath([0,"a"]; 1)\'
 .IP "" 0
 .
 .SS "delpaths(PATHS)"
-The builtin function \fBdelpaths\fR sets the \fBPATHS\fR in \fB\.\fR\. \fBPATHS\fR must be an array of paths, where each path is an array of strings and numbers\.
+The builtin function \fBdelpaths\fR deletes the \fBPATHS\fR in \fB\.\fR\. \fBPATHS\fR must be an array of paths, where each path is an array of strings and numbers\.
 .
 .IP "" 4
 .

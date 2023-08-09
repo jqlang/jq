@@ -1142,7 +1142,7 @@ sections:
       - title: "`delpaths(PATHS)`"
         body: |
 
-          The builtin function `delpaths` sets the `PATHS` in `.`.
+          The builtin function `delpaths` deletes the `PATHS` in `.`.
           `PATHS` must be an array of paths, where each path is an array
           of strings and numbers.
 
