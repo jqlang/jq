@@ -6,9 +6,7 @@
 #include "jv_dtoa.h"
 #include "jv_alloc.h"
 
-#ifndef WIN32
 static pthread_once_t dtoa_ctx_once = PTHREAD_ONCE_INIT;
-#endif
 
 static pthread_key_t dtoa_ctx_key;
 static void tsd_dtoa_ctx_dtor(void *ctx) {
@@ -35,15 +33,11 @@ void jv_tsd_dtoa_ctx_init() {
     fprintf(stderr, "error: cannot create thread specific key");
     abort();
   }
-#ifndef WIN32
   atexit(jv_tsd_dtoa_ctx_fini);
-#endif
 }
 
 inline struct dtoa_context *tsd_dtoa_context_get() {
-#ifndef WIN32
   pthread_once(&dtoa_ctx_once, jv_tsd_dtoa_ctx_init); // cannot fail
-#endif
   struct dtoa_context *ctx = (struct dtoa_context*)pthread_getspecific(dtoa_ctx_key);
   if (!ctx) {
     ctx = malloc(sizeof(struct dtoa_context));
