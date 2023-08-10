@@ -490,9 +490,7 @@ pthread_getspecific(pthread_key_t key)
 
 static pthread_key_t dec_ctx_key;
 static pthread_key_t dec_ctx_dbl_key;
-#ifndef WIN32
 static pthread_once_t dec_ctx_once = PTHREAD_ONCE_INIT;
-#endif
 
 #define DEC_CONTEXT() tsd_dec_ctx_get(&dec_ctx_key)
 #define DEC_CONTEXT_TO_DOUBLE() tsd_dec_ctx_get(&dec_ctx_dbl_key)
@@ -515,15 +513,11 @@ void jv_tsd_dec_ctx_init() {
     fprintf(stderr, "error: cannot create thread specific key");
     abort();
   }
-#ifndef WIN32
   atexit(jv_tsd_dec_ctx_fini);
-#endif
 }
 
 static decContext* tsd_dec_ctx_get(pthread_key_t *key) {
-#ifndef WIN32
   pthread_once(&dec_ctx_once, jv_tsd_dec_ctx_init); // cannot fail
-#endif
   decContext *ctx = (decContext*)pthread_getspecific(*key);
   if (ctx) {
     return ctx;
