@@ -43,6 +43,7 @@ void *alloca (size_t);
 #include "locfile.h"
 #include "jv_unicode.h"
 #include "jv_alloc.h"
+#include "util.h"
 
 
 #define BINOP(name) \
@@ -1417,25 +1418,6 @@ static void set_tm_yday(struct tm *tm) {
   tm->tm_yday = yday;
 }
 
-#ifndef HAVE_STRPTIME
-static char *strptime(const char *s, const char *format, struct tm *tm) {
-  if (strcmp(format, "%Y-%m-%dT%H:%M:%SZ"))
-    return NULL;
-
-  int count, end;
-  count = sscanf(s, "%d-%d-%dT%d:%d:%d%n",
-                    &tm->tm_year, &tm->tm_mon, &tm->tm_mday,
-                    &tm->tm_hour, &tm->tm_min, &tm->tm_sec,
-                    &end );
-  if (count == 6 && s[end] == 'Z') {
-    tm->tm_year -= 1900;
-    tm->tm_mon--;
-    return (char*)s + end + 1;
-  }
-  return NULL;
-}
-#endif
-
 static jv f_strptime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING || jv_get_kind(b) != JV_KIND_STRING) {
     return ret_error2(a, b, jv_string("strptime/1 requires string inputs and arguments"));
@@ -1478,6 +1460,8 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
    */
   set_tm_wday(&tm);
   set_tm_yday(&tm);
+#elif defined(WIN32)
+  set_tm_wday(&tm);
 #else
   if (tm.tm_wday == 8 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)
     set_tm_wday(&tm);
