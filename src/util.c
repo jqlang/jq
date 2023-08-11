@@ -349,7 +349,6 @@ jv jq_util_input_get_position(jq_state *jq) {
   jq_input_cb cb = NULL;
   void *cb_data = NULL;
   jq_get_input_cb(jq, &cb, &cb_data);
-  assert(cb == jq_util_input_next_input_cb);
   if (cb != jq_util_input_next_input_cb)
     return jv_invalid_with_msg(jv_string("Invalid jq_util_input API usage"));
   jq_util_input_state *s = (jq_util_input_state *)cb_data;
