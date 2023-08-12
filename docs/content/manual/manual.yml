@@ -3633,7 +3633,8 @@ sections:
 
           Takes a module name as input and outputs the module's metadata
           as an object, with the module's imports (including metadata)
-          as an array value for the `deps` key.
+          as an array value for the `deps` key and the module's defined
+          functions as an array value for the `defs` key.
 
           Programs can use this to query a module's metadata, which they
           could then use to, for example, search for, download, and
