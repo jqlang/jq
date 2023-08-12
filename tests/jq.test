@@ -1624,11 +1624,15 @@ jq: error: Import path must be constant at <top-level>, line 1:
 
 modulemeta
 "c"
-{"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}
+{"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}],"defs":["a/0","c/0"]}
 
-modulemeta | .deps |= length
+modulemeta | .deps | length
 "c"
-{"whatever":null,"deps":6}
+6
+
+modulemeta | .defs | length
+"c"
+2
 
 %%FAIL IGNORE MSG
 import "syntaxerror" as e; .

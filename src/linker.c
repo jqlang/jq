@@ -390,6 +390,7 @@ jv load_module_meta(jq_state *jq, jv mod_relpath) {
       if (jv_get_kind(meta) == JV_KIND_NULL)
         meta = jv_object();
       meta = jv_object_set(meta, jv_string("deps"), block_take_imports(&program));
+      meta = jv_object_set(meta, jv_string("defs"), block_list_funcs(program, 0));
     }
     locfile_free(src);
     block_free(program);
