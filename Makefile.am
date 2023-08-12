@@ -133,7 +133,10 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/optionaltest tests/mantest tests/jqtest tests/shtest tests/utf8test tests/base64test
+TESTS = tests/mantest tests/jqtest tests/shtest tests/utf8test tests/base64test
+if !WIN32
+TESTS += tests/optionaltest
+endif
 AM_TESTS_ENVIRONMENT = JQ=$(abs_builddir)/jq NO_VALGRIND=$(NO_VALGRIND)
 
 # This is a magic make variable that causes it to treat tests/man.test as a
