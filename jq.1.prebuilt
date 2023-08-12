@@ -4011,7 +4011,7 @@ This directive is entirely optional\. It\'s not required for proper operation\. 
 The metadata must be a constant jq expression\. It should be an object with keys like \fBhomepage\fR\. At this time jq doesn\'t use this metadata, but it is made available to users via the \fBmodulemeta\fR builtin\.
 .
 .SS "modulemeta"
-Takes a module name as input and outputs the module\'s metadata as an object, with the module\'s imports (including metadata) as an array value for the \fBdeps\fR key\.
+Takes a module name as input and outputs the module\'s metadata as an object, with the module\'s imports (including metadata) as an array value for the \fBdeps\fR key and the module\'s defined functions as an array value for the \fBdefs\fR key\.
 .
 .P
 Programs can use this to query a module\'s metadata, which they could then use to, for example, search for, download, and install missing dependencies\.
