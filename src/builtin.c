@@ -1355,6 +1355,7 @@ static time_t my_mktime(struct tm *tm) {
   tz = (tz = getenv("TZ")) != NULL ? strdup(tz) : NULL;
   if (tz != NULL)
     setenv("TZ", "", 1);
+	tm->is_dst = 0;
   time_t t = mktime(tm);
   if (tz != NULL)
     setenv("TZ", tz, 1);
@@ -1891,3 +1892,4 @@ int builtins_bind(jq_state *jq, block* bb) {
   *bb = block_bind_referenced(builtins, *bb, OP_IS_CALL_PSEUDO);
   return nerrors;
 }
+
