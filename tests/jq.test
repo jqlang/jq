@@ -248,9 +248,9 @@ null
 2
 3
 
-.[-2]
+[.[-4,-3,-2,-1,0,1,2,3]]
 [1,2,3]
-2
+[null,1,2,3,1,2,3,null]
 
 [range(0;10)]
 null
@@ -1052,9 +1052,9 @@ pick(first|first)
 [[10]]
 
 # negative indices in path expressions (since last/1 is .[-1])
-pick(last)
-[[10,20],30]
-[null,30]
+try pick(last) catch .
+[1,2]
+"Out of bounds negative array index"
 
 #
 # Assignment
