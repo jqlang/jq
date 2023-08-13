@@ -694,14 +694,6 @@ jv jq_next(jq_state *jq) {
         set_error(jq, jv_invalid_with_msg(msg));
         goto do_backtrack;
       }
-      // $array | .[-1]
-      if (jv_get_kind(k) == JV_KIND_NUMBER && jv_get_kind(t) == JV_KIND_ARRAY) {
-        int idx = jv_number_value(k);
-        if (idx < 0) {
-          jv_free(k);
-          k = jv_number(jv_array_length(jv_copy(t)) + idx);
-        }
-      }
       jv v = jv_get(t, jv_copy(k));
       if (jv_is_valid(v)) {
         path_append(jq, k, jv_copy(v));
