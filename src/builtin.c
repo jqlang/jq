@@ -1355,7 +1355,7 @@ static time_t my_mktime(struct tm *tm) {
   tz = (tz = getenv("TZ")) != NULL ? strdup(tz) : NULL;
   if (tz != NULL)
     setenv("TZ", "", 1);
-	tm->is_dst = 0;
+  tm->is_dst = 0;
   time_t t = mktime(tm);
   if (tz != NULL)
     setenv("TZ", tz, 1);
