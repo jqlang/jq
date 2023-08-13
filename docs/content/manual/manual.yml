@@ -1048,10 +1048,11 @@ sections:
       - title: "`pick(pathexps)`"
         body: |
 
-          Emit the projection of the input object or array defined by the specified
-          sequence of path expressions, such that if p is any one of these specifications,
-          then `(. | p)` will evaluate to the same value as `(. | pick(pathexps) | p)`.
-          For arrays, negative indices and .[m:n] specifications should not be used.
+          Emit the projection of the input object or array defined by the
+          specified sequence of path expressions, such that if `p` is any
+          one of these specifications, then `(. | p)` will evaluate to the
+          same value as `(. | pick(pathexps) | p)`. For arrays, negative
+          indices and `.[m:n]` specifications should not be used.
 
         examples:
           - program: 'pick(.a, .b.c, .x)'
