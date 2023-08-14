@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "jv.h"
+#include "locfile.h"
 
 typedef enum {
 #define OP(name, imm, in, out) name,
@@ -80,12 +81,17 @@ struct bytecode {
   struct bytecode* parent;
 
   jv debuginfo;
+  jv fname;
+  jv program;
+  int32_t *location_offsets;
 };
 
 void dump_disassembly(int, struct bytecode* code);
 void dump_operation(struct bytecode* bc, uint16_t* op);
+jv get_location(struct bytecode *, uint16_t *);
 
 int bytecode_operation_length(uint16_t* codeptr);
+struct bytecode *bytecode_alloc(struct locfile *);
 void bytecode_free(struct bytecode* bc);
 
 #endif
