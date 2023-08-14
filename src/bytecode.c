@@ -94,17 +94,27 @@ static struct bytecode* getlevel(struct bytecode* bc, int level) {
 }
 
 jv get_location(struct bytecode *bc, uint16_t *codeptr) {
-  char n[20];
-  int i = codeptr - bc->code;
+  char buf[41];
+  int32_t offset = -1;
+  int32_t i = codeptr - bc->code;
+  int lineno = 0, column = 0;
 
   do {
-    if (bc->location_offsets[i] != -1)
-      break;
-  } while (i--);
-  if (i < 0 || bc->location_offsets[i] == -1)
+    offset = bc->location_offsets[i];
+  } while (offset == -1 && i--);
+  if (offset == -1)
     return jv_copy(bc->fname);
-  (void) snprintf(n, sizeof(n), "%d", bc->location_offsets[i]);
-  return JV_STRING(jv_copy(bc->fname), jv_string(":"), jv_string(n));
+  const char *prog = jv_string_value(bc->program);
+  for (i = 0; i < offset; i++) {
+    if (prog[i] == '\n') {
+      lineno++;
+      column = 0;
+    } else {
+      column++;
+    }
+  }
+  (void) snprintf(buf, sizeof(buf), "%d:%d", lineno, column);
+  return JV_STRING(jv_copy(bc->fname), jv_string(":"), jv_string(buf));
 }
 
 void dump_operation(struct bytecode* bc, uint16_t* codeptr) {

@@ -1318,8 +1318,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
     const struct opcode_description* op = opcode_describe(curr->op);
     if (op->length == 0)
       continue;
-    if (curr->source.start != -1)
-      bc->location_offsets[pos] = curr->source.start;
+    bc->location_offsets[pos] = curr->source.start;
     code[pos++] = curr->op;
     assert(curr->op != CLOSURE_REF && curr->op != CLOSURE_PARAM);
     if (curr->op == CALL_BUILTIN) {
