@@ -321,7 +321,18 @@ static void jq_reset(jq_state *jq) {
   jq->path = jv_null();
   jv_free(jq->value_at_path);
   jq->value_at_path = jv_null();
-  jq->subexp_nest = 0;
+
+  /*
+   * jq->subexp_nest == 0 -> we can only be executing inside path/1, therefore
+   *                         we must be executing a path expression (possibly
+   *                         as part of an assignment, possibly not).
+   *
+   * If jq->subexp_nest != 0 then we could be executing any kind of expression,
+   *                         including one that could be considered a path
+   *                         expression, but since we're not inside `path/1`
+   *                         we can't be assigning to the path expression.
+   */
+  jq->subexp_nest = 1;
 }
 
 void jq_report_error(jq_state *jq, jv value) {
@@ -415,6 +426,10 @@ jv jq_next(jq_state *jq) {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
       assert(jv_is_valid(v));
       jv_free(stack_pop(jq));
+      if (jq->subexp_nest == 0) {
+        set_error(jq, jv_invalid_with_msg(jv_string("Invalid path expression ($binding is not a path expression)")));
+        goto do_backtrack;
+      }
       stack_push(jq, v);
       break;
     }
@@ -555,6 +570,10 @@ jv jq_next(jq_state *jq) {
         printf("\n");
       }
       jv_free(stack_pop(jq));
+      if (jq->subexp_nest == 0) {
+        set_error(jq, jv_invalid_with_msg(jv_string("Invalid path expression ($binding is not a path expression)")));
+        goto do_backtrack;
+      }
       stack_push(jq, jv_copy(*var));
       break;
     }
@@ -570,6 +589,10 @@ jv jq_next(jq_state *jq) {
         printf("\n");
       }
       jv_free(stack_popn(jq));
+      if (jq->subexp_nest == 0) {
+        set_error(jq, jv_invalid_with_msg(jv_string("Invalid path expression ($binding is not a path expression)")));
+        goto do_backtrack;
+      }
 
       // This `stack_push()` invalidates the `var` reference, so
       stack_push(jq, *var);
