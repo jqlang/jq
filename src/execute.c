@@ -1259,10 +1259,14 @@ args2obj(jv args)
 }
 
 int jq_compile_args(jq_state *jq, const char* str, jv args) {
+  return jq_compile_args2(jq, "<top-level>", str, args);
+}
+
+int jq_compile_args2(jq_state *jq, const char *fname, const char *str, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   assert(jv_get_kind(args) == JV_KIND_ARRAY || jv_get_kind(args) == JV_KIND_OBJECT);
   struct locfile* locations;
-  locations = locfile_init(jq, "<top-level>", str, strlen(str));
+  locations = locfile_init(jq, fname, str, strlen(str));
   block program;
   jq_reset(jq);
   if (jq->bc) {
