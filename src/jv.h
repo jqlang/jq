@@ -131,6 +131,32 @@ jv jv_string_split(jv j, jv sep);
 jv jv_string_explode(jv j);
 jv jv_string_implode(jv j);
 
+#define JV_STRING_1(e) (jv_string_concat(jv_string(""),e))
+#define JV_STRING_2(e1,e2) (jv_string_concat(JV_STRING_1(e1),e2))
+#define JV_STRING_3(e1,e2,e3) (jv_string_concat(JV_STRING_2(e1,e2),e3))
+#define JV_STRING_4(e1,e2,e3,e4) (jv_string_concat(JV_STRING_3(e1,e2,e3),e4))
+#define JV_STRING_5(e1,e2,e3,e4,e5) (jv_string_concat(JV_STRING_4(e1,e2,e3,e4),e5))
+#define JV_STRING_6(e1,e2,e3,e4,e5,e6) (jv_string_concat(JV_STRING_5(e1,e2,e3,e4,e5),e6))
+#define JV_STRING_7(e1,e2,e3,e4,e5,e6,e7) (jv_string_concat(JV_STRING_6(e1,e2,e3,e4,e5,e6),e7))
+#define JV_STRING_8(e1,e2,e3,e4,e5,e6,e7,e8) (jv_string_concat(JV_STRING_7(e1,e2,e3,e4,e5,e6,e7),e8))
+#define JV_STRING_9(e1,e2,e3,e4,e5,e6,e7,e8,e9) (jv_string_concat(JV_STRING_8(e1,e2,e3,e4,e5,e6,e7,e8),e9))
+#define JV_STRING_IDX(_1,_2,_3,_4,_5,_6,_7,_8,_9,NAME,...) NAME
+#define JV_STRING(...) \
+  JV_STRING_IDX(__VA_ARGS__, JV_STRING_9, JV_STRING_8, JV_STRING_7, JV_STRING_6, JV_STRING_5, JV_STRING_4, JV_STRING_3, JV_STRING_2, JV_STRING_1, dummy)(__VA_ARGS__)
+
+#define JV_CSTRING_1(e) (jv_string_concat(jv_string(""),jv_string(e)))
+#define JV_CSTRING_2(e1,e2) (jv_string_concat(JV_CSTRING_1(e1),jv_string(e2)))
+#define JV_CSTRING_3(e1,e2,e3) (jv_string_concat(JV_CSTRING_2(e1,e2),jv_string(e3)))
+#define JV_CSTRING_4(e1,e2,e3,e4) (jv_string_concat(JV_CSTRING_3(e1,e2,e3),jv_string(e4)))
+#define JV_CSTRING_5(e1,e2,e3,e4,e5) (jv_string_concat(JV_CSTRING_4(e1,e2,e3,e4),jv_string(e5)))
+#define JV_CSTRING_6(e1,e2,e3,e4,e5,e6) (jv_string_concat(JV_CSTRING_5(e1,e2,e3,e4,e5),jv_string(e6)))
+#define JV_CSTRING_7(e1,e2,e3,e4,e5,e6,e7) (jv_string_concat(JV_CSTRING_6(e1,e2,e3,e4,e5,e6),jv_string(e7)))
+#define JV_CSTRING_8(e1,e2,e3,e4,e5,e6,e7,e8) (jv_string_concat(JV_CSTRING_7(e1,e2,e3,e4,e5,e6,e7),jv_string(e8)))
+#define JV_CSTRING_9(e1,e2,e3,e4,e5,e6,e7,e8,e9) (jv_string_concat(JV_CSTRING_8(e1,e2,e3,e4,e5,e6,e7,e8),jv_string(e9)))
+#define JV_CSTRING_IDX(_1,_2,_3,_4,_5,_6,_7,_8,_9,NAME,...) NAME
+#define JV_CSTRING(...) \
+  JV_CSTRING_IDX(__VA_ARGS__, JV_CSTRING_9, JV_CSTRING_8, JV_CSTRING_7, JV_CSTRING_6, JV_CSTRING_5, JV_CSTRING_4, JV_CSTRING_3, JV_CSTRING_2, JV_CSTRING_1, dummy)(__VA_ARGS__)
+
 jv jv_object(void);
 jv jv_object_get(jv object, jv key);
 int jv_object_has(jv object, jv key);
