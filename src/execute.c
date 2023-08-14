@@ -498,6 +498,16 @@ jv jq_next(jq_state *jq) {
       jv v = stack_pop(jq);
       uint16_t level = *pc++;
       uint16_t vidx = *pc++;
+#if 0
+      /*
+       * This is dead code as it never executes because `[.] = 1`
+       * does a LOADK of an empty array before ever getting to APPEND.
+       */
+      if (jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression (arrays are not path expressions)")));
+        goto do_backtrack;
+      }
+#endif
       jv* var = frame_local_var(jq, vidx, level);
       assert(jv_get_kind(*var) == JV_KIND_ARRAY);
       *var = jv_array_append(*var, v);
@@ -510,14 +520,20 @@ jv jq_next(jq_state *jq) {
       jv k = stack_pop(jq);
       jv objv = stack_pop(jq);
       assert(jv_get_kind(objv) == JV_KIND_OBJECT);
+      /* This is not dead code, unlike the APPEND case */
+      if (jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression (objects are not path expressions)")));
+        goto do_backtrack;
+      }
       if (jv_get_kind(k) == JV_KIND_STRING) {
         stack_push(jq, jv_object_set(objv, k, v));
         stack_push(jq, stktop);
       } else {
         char errbuf[15];
-        set_error(jq, pc, jv_invalid_with_msg(jv_string_fmt("Cannot use %s (%s) as object key",
-                                                        jv_kind_name(jv_get_kind(k)),
-                                                        jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf)))));
+        set_error(jq, pc,
+                  jv_invalid_with_msg(jv_string_fmt("Cannot use %s (%s) as object key",
+                                                    jv_kind_name(jv_get_kind(k)),
+                                                    jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf)))));
         jv_free(stktop);
         jv_free(v);
         jv_free(k);
@@ -537,6 +553,16 @@ jv jq_next(jq_state *jq) {
         jv_free(max);
         goto do_backtrack;
       } 
+#if 0
+      /*
+       * This is dead code as it never executes because `range(5) = 1`
+       * does LOADs before ever getting to RANGE.
+       */
+      if (opcode == RANGE && jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression (range(...) is not a not path expression)")));
+        goto do_backtrack;
+      }
+#endif
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
           jv_get_kind(max) != JV_KIND_NUMBER) {
         set_error(jq, pc, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
