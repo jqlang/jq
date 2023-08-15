@@ -347,7 +347,11 @@ void jq_report_error(jq_state *jq, jv value) {
 static void set_error(jq_state *jq, uint16_t *pc, jv value) {
   // Record so try/catch can find it.
   jv_free(jq->error);
-  jq->error = jv_invalid_with_msg(JV_STRING(jv_invalid_get_msg(value), jv_string(" at "), get_location(frame_current(jq)->bc, pc)));
+  char errbuf[15];
+  value = jv_invalid_get_msg(value);
+  if (jv_get_kind(value) != JV_KIND_STRING)
+    value = jv_string(jv_dump_string_trunc(value, errbuf, sizeof(errbuf)));
+  jq->error = jv_invalid_with_msg(JV_STRING(value, jv_string(" at "), get_location(frame_current(jq)->bc, pc)));
 }
 
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
