@@ -310,16 +310,19 @@ static void jq_reset(jq_state *jq) {
   assert(jq->fork_top == 0);
   assert(jq->curr_frame == 0);
   stack_reset(&jq->stk);
-  jv_free(jq->error);
-  jq->error = jv_null();
 
   jq->halted = 0;
+
+  jv_free(jq->error);
   jv_free(jq->exit_code);
   jv_free(jq->error_message);
-  if (jv_get_kind(jq->path) != JV_KIND_INVALID)
-    jv_free(jq->path);
-  jq->path = jv_null();
+  jv_free(jq->path);
   jv_free(jq->value_at_path);
+
+  jq->error = jv_null();
+  jq->exit_code = jv_invalid();
+  jq->error_message = jv_invalid();
+  jq->path = jv_null();
   jq->value_at_path = jv_null();
 
   /*
