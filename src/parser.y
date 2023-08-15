@@ -734,9 +734,11 @@ FORMAT {
 '{' MkDict '}' {
   block o = gen_const_object($2);
   if (o.first != NULL)
-    $$ = o;
+    $$ = gen_location(@$, locations, o);
   else
-    $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
+    $$ = gen_location(@$, locations,
+                      BLOCK(gen_subexp(gen_const(jv_object())),
+                            $2, gen_op_simple(POP)));
 } |
 /*
  * This `$$$$varname` hack is strictly private to jq builtins.  DO NOT USE!!
@@ -932,23 +934,26 @@ MkDict:
 %empty {
   $$=gen_noop();
 } |
- MkDictPair { $$ = $1; }
-| MkDictPair ',' MkDict { $$=block_join($1, $3); }
-| error ',' MkDict { $$ = $3; }
+MkDictPair {
+  $$ = gen_location(@$, locations, $1);
+} | MkDictPair ',' MkDict {
+  $$ = gen_location(@$, locations, block_join($1, $3));
+} | error ',' MkDict { $$ = $3; }
 
 MkDictPair:
 IDENT ':' ExpD {
-  $$ = gen_dictpair(gen_const($1), $3);
+  $$ = gen_location(@$, locations, gen_dictpair(gen_const($1), $3));
  }
 | Keyword ':' ExpD {
-  $$ = gen_dictpair(gen_const($1), $3);
+  $$ = gen_location(@$, locations, gen_dictpair(gen_const($1), $3));
   }
 | String ':' ExpD {
-  $$ = gen_dictpair($1, $3);
+  $$ = gen_location(@$, locations, gen_dictpair($1, $3));
   }
 | String {
-  $$ = gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
-                              gen_op_simple(DUP2), gen_op_simple(INDEX)));
+  $$ = gen_location(@$, locations,
+                    gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
+                                 gen_op_simple(DUP2), gen_op_simple(INDEX))));
   }
 | BINDING ':' ExpD {
   $$ = gen_dictpair(gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))),
@@ -960,16 +965,18 @@ IDENT ':' ExpD {
                     gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))));
   }
 | IDENT {
-  $$ = gen_dictpair(gen_const(jv_copy($1)),
-                    gen_index(gen_noop(), gen_const($1)));
+  $$ = gen_location(@$, locations,
+                    gen_dictpair(gen_const(jv_copy($1)),
+                                 gen_index(gen_noop(), gen_const($1))));
   }
 | "$__loc__" {
   $$ = gen_dictpair(gen_const(jv_string("__loc__")),
                     gen_loc_object(&@$, locations));
   }
 | Keyword {
-  $$ = gen_dictpair(gen_const(jv_copy($1)),
-                    gen_index(gen_noop(), gen_const($1)));
+  $$ = gen_location(@$, locations,
+                    gen_dictpair(gen_const(jv_copy($1)),
+                                 gen_index(gen_noop(), gen_const($1))));
   }
 | '(' Exp ')' ':' ExpD {
   jv msg = check_object_key($2);
@@ -977,7 +984,7 @@ IDENT ':' ExpD {
     FAIL(@$, jv_string_value(msg));
   }
   jv_free(msg);
-  $$ = gen_dictpair($2, $5);
+  $$ = gen_location(@$, locations, gen_dictpair($2, $5));
   }
 | error ':' ExpD {
   FAIL(@$, "May need parentheses around object key expression");
