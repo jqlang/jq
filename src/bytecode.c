@@ -105,7 +105,8 @@ jv get_location(struct bytecode *bc, uint16_t *codeptr) {
   if (offset == -1)
     return jv_copy(bc->fname);
   const char *prog = jv_string_value(bc->program);
-  for (i = 0; i < offset; i++) {
+  int len = jv_string_length_bytes(jv_copy(bc->program));
+  for (i = 0; i < offset && i < len; i++) {
     if (prog[i] == '\n') {
       lineno++;
       column = 0;
