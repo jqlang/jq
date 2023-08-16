@@ -491,6 +491,10 @@ jv jq_next(jq_state *jq) {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
       assert(jv_is_valid(v));
       jv v2 = stack_pop(jq);
+      if (jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression")));
+        goto do_backtrack;
+      }
       stack_push(jq, v);
       stack_push(jq, v2);
       break;
