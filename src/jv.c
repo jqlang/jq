@@ -528,7 +528,9 @@ static decContext* tsd_dec_ctx_get(pthread_key_t *key) {
     if (key == &dec_ctx_key)
     {
       decContextDefault(ctx, DEC_INIT_BASE);
-      ctx->digits = INT32_MAX - (ctx->emax - ctx->emin - 1);
+      // make sure (Int)D2U(rhs->exponent-lhs->exponent) does not overflow
+      ctx->digits = MIN(DEC_MAX_DIGITS,
+          INT32_MAX - (DECDPUN - 1) - (ctx->emax - ctx->emin - 1));
       ctx->traps = 0; /*no errors*/
     }
     else if (key == &dec_ctx_dbl_key)
