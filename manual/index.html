@@ -2129,10 +2129,11 @@ map_values(empty) #=&gt;  []
               <code>pick(pathexps)</code>
               <a href="#pick" class="icon-link" aria-label="Link to this section: `pick(pathexps)`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
             </h3>
-            <p>Emit the projection of the input object or array defined by the specified
-sequence of path expressions, such that if p is any one of these specifications,
-then <code>(. | p)</code> will evaluate to the same value as <code>(. | pick(pathexps) | p)</code>.
-For arrays, negative indices and .[m:n] specifications should not be used.</p>
+            <p>Emit the projection of the input object or array defined by the
+specified sequence of path expressions, such that if <code>p</code> is any
+one of these specifications, then <code>(. | p)</code> will evaluate to the
+same value as <code>(. | pick(pathexps) | p)</code>. For arrays, negative
+indices and <code>.[m:n]</code> specifications should not be used.</p>
             <div class="pb-3">
               <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example23" aria-expanded="false" aria-controls="example23">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
