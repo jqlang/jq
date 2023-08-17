@@ -1286,7 +1286,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
     bc->subfunctions = jv_mem_calloc(sizeof(struct bytecode*), bc->nsubfunctions);
     for (inst* curr = b.first; curr; curr = curr->next) {
       if (curr->op == CLOSURE_CREATE) {
-        struct bytecode* subfn = jv_mem_alloc(sizeof(struct bytecode));
+        struct bytecode* subfn = bytecode_alloc(b.first->locfile ? b.first->locfile : lf);
         bc->subfunctions[curr->imm.intval] = subfn;
         subfn->globals = bc->globals;
         subfn->parent = bc;
@@ -1310,6 +1310,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   }
   uint16_t* code = jv_mem_calloc(sizeof(uint16_t), bc->codelen);
   bc->code = code;
+  bc->location_offsets = jv_mem_calloc(sizeof(uint32_t), bc->codelen);
   pos = 0;
   jv constant_pool = jv_array();
   int maxvar = -1;
@@ -1317,6 +1318,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
     const struct opcode_description* op = opcode_describe(curr->op);
     if (op->length == 0)
       continue;
+    bc->location_offsets[pos] = curr->source.start;
     code[pos++] = curr->op;
     assert(curr->op != CLOSURE_REF && curr->op != CLOSURE_PARAM);
     if (curr->op == CALL_BUILTIN) {
@@ -1368,7 +1370,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
 }
 
 int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
-  struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
+  struct bytecode* bc = bytecode_alloc(lf);
   bc->parent = 0;
   bc->nclosures = 0;
   bc->globals = jv_mem_alloc(sizeof(struct symbol_table));

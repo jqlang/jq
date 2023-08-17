@@ -253,11 +253,11 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
     jv msg = jv_invalid_get_msg(jv_copy(result));
     jv input_pos = jq_util_input_get_position(jq);
     if (jv_get_kind(msg) == JV_KIND_STRING) {
-      fprintf(stderr, "jq: error (at %s): %s\n",
+      fprintf(stderr, "jq: error (input at %s): %s\n",
               jv_string_value(input_pos), jv_string_value(msg));
     } else {
       msg = jv_dump_string(msg, 0);
-      fprintf(stderr, "jq: error (at %s) (not a string): %s\n",
+      fprintf(stderr, "jq: error (input at %s) (not a string): %s\n",
               jv_string_value(input_pos), jv_string_value(msg));
     }
     ret = JQ_ERROR_UNKNOWN;
@@ -677,7 +677,7 @@ int main(int argc, char* argv[]) {
     ARGS = JV_OBJECT(jv_string("positional"), ARGS,
                      jv_string("named"), jv_copy(program_arguments));
     program_arguments = jv_object_set(program_arguments, jv_string("ARGS"), jv_copy(ARGS));
-    compiled = jq_compile_args(jq, skip_shebang(jv_string_value(data)), jv_copy(program_arguments));
+    compiled = jq_compile_args2(jq, program, skip_shebang(jv_string_value(data)), jv_copy(program_arguments));
     free(program_origin);
     jv_free(data);
   } else {

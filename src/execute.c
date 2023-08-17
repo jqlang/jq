@@ -310,18 +310,32 @@ static void jq_reset(jq_state *jq) {
   assert(jq->fork_top == 0);
   assert(jq->curr_frame == 0);
   stack_reset(&jq->stk);
-  jv_free(jq->error);
-  jq->error = jv_null();
 
   jq->halted = 0;
+
+  jv_free(jq->error);
   jv_free(jq->exit_code);
   jv_free(jq->error_message);
-  if (jv_get_kind(jq->path) != JV_KIND_INVALID)
-    jv_free(jq->path);
-  jq->path = jv_null();
+  jv_free(jq->path);
   jv_free(jq->value_at_path);
+
+  jq->error = jv_null();
+  jq->exit_code = jv_invalid();
+  jq->error_message = jv_invalid();
+  jq->path = jv_null();
   jq->value_at_path = jv_null();
-  jq->subexp_nest = 0;
+
+  /*
+   * jq->subexp_nest == 0 -> we can only be executing inside path/1, therefore
+   *                         we must be executing a path expression (possibly
+   *                         as part of an assignment, possibly not).
+   *
+   * If jq->subexp_nest != 0 then we could be executing any kind of expression,
+   *                         including one that could be considered a path
+   *                         expression, but since we're not inside `path/1`
+   *                         we can't be assigning to the path expression.
+   */
+  jq->subexp_nest = 1;
 }
 
 void jq_report_error(jq_state *jq, jv value) {
@@ -330,10 +344,14 @@ void jq_report_error(jq_state *jq, jv value) {
   jq->err_cb(jq->err_cb_data, value);
 }
 
-static void set_error(jq_state *jq, jv value) {
+static void set_error(jq_state *jq, uint16_t *pc, jv value) {
   // Record so try/catch can find it.
   jv_free(jq->error);
-  jq->error = value;
+  char errbuf[15];
+  value = jv_invalid_get_msg(value);
+  if (jv_get_kind(value) != JV_KIND_STRING)
+    value = jv_string(jv_dump_string_trunc(value, errbuf, sizeof(errbuf)));
+  jq->error = jv_invalid_with_msg(JV_STRING(value, jv_string(" at "), get_location(frame_current(jq)->bc, pc)));
 }
 
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
@@ -407,7 +425,7 @@ jv jq_next(jq_state *jq) {
 
     case ERRORK: {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
-      set_error(jq, jv_invalid_with_msg(v));
+      set_error(jq, pc, jv_invalid_with_msg(v));
       goto do_backtrack;
     }
 
@@ -415,6 +433,10 @@ jv jq_next(jq_state *jq) {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
       assert(jv_is_valid(v));
       jv_free(stack_pop(jq));
+      if (jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression ($binding is not a path expression)")));
+        goto do_backtrack;
+      }
       stack_push(jq, v);
       break;
     }
@@ -469,6 +491,10 @@ jv jq_next(jq_state *jq) {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
       assert(jv_is_valid(v));
       jv v2 = stack_pop(jq);
+      if (jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression")));
+        goto do_backtrack;
+      }
       stack_push(jq, v);
       stack_push(jq, v2);
       break;
@@ -483,6 +509,16 @@ jv jq_next(jq_state *jq) {
       jv v = stack_pop(jq);
       uint16_t level = *pc++;
       uint16_t vidx = *pc++;
+#if 0
+      /*
+       * This is dead code as it never executes because `[.] = 1`
+       * does a LOADK of an empty array before ever getting to APPEND.
+       */
+      if (jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression (arrays are not path expressions)")));
+        goto do_backtrack;
+      }
+#endif
       jv* var = frame_local_var(jq, vidx, level);
       assert(jv_get_kind(*var) == JV_KIND_ARRAY);
       *var = jv_array_append(*var, v);
@@ -495,14 +531,20 @@ jv jq_next(jq_state *jq) {
       jv k = stack_pop(jq);
       jv objv = stack_pop(jq);
       assert(jv_get_kind(objv) == JV_KIND_OBJECT);
+      /* This is not dead code, unlike the APPEND case */
+      if (jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression (objects are not path expressions)")));
+        goto do_backtrack;
+      }
       if (jv_get_kind(k) == JV_KIND_STRING) {
         stack_push(jq, jv_object_set(objv, k, v));
         stack_push(jq, stktop);
       } else {
         char errbuf[15];
-        set_error(jq, jv_invalid_with_msg(jv_string_fmt("Cannot use %s (%s) as object key",
-                                                        jv_kind_name(jv_get_kind(k)),
-                                                        jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf)))));
+        set_error(jq, pc,
+                  jv_invalid_with_msg(jv_string_fmt("Cannot use %s (%s) as object key",
+                                                    jv_kind_name(jv_get_kind(k)),
+                                                    jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf)))));
         jv_free(stktop);
         jv_free(v);
         jv_free(k);
@@ -522,9 +564,19 @@ jv jq_next(jq_state *jq) {
         jv_free(max);
         goto do_backtrack;
       } 
+#if 0
+      /*
+       * This is dead code as it never executes because `range(5) = 1`
+       * does LOADs before ever getting to RANGE.
+       */
+      if (opcode == RANGE && jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression (range(...) is not a not path expression)")));
+        goto do_backtrack;
+      }
+#endif
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
           jv_get_kind(max) != JV_KIND_NUMBER) {
-        set_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
+        set_error(jq, pc, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
         jv_free(max);
         goto do_backtrack;
       } else if (jv_number_value(*var) >= jv_number_value(max)) {
@@ -555,6 +607,10 @@ jv jq_next(jq_state *jq) {
         printf("\n");
       }
       jv_free(stack_pop(jq));
+      if (jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression ($binding is not a path expression)")));
+        goto do_backtrack;
+      }
       stack_push(jq, jv_copy(*var));
       break;
     }
@@ -570,6 +626,10 @@ jv jq_next(jq_state *jq) {
         printf("\n");
       }
       jv_free(stack_popn(jq));
+      if (jq->subexp_nest == 0) {
+        set_error(jq, pc, jv_invalid_with_msg(jv_string("Invalid path expression ($binding is not a path expression)")));
+        goto do_backtrack;
+      }
 
       // This `stack_push()` invalidates the `var` reference, so
       stack_push(jq, *var);
@@ -650,7 +710,7 @@ jv jq_next(jq_state *jq) {
         jv msg = jv_string_fmt(
             "Invalid path expression with result %s",
             jv_dump_string_trunc(v, errbuf, sizeof(errbuf)));
-        set_error(jq, jv_invalid_with_msg(msg));
+        set_error(jq, pc, jv_invalid_with_msg(msg));
         goto do_backtrack;
       }
       jv_free(v); // discard value, only keep path
@@ -691,7 +751,7 @@ jv jq_next(jq_state *jq) {
             "Invalid path expression near attempt to access element %s of %s",
             jv_dump_string_trunc(k, keybuf, sizeof(keybuf)),
             jv_dump_string_trunc(t, objbuf, sizeof(objbuf)));
-        set_error(jq, jv_invalid_with_msg(msg));
+        set_error(jq, pc, jv_invalid_with_msg(msg));
         goto do_backtrack;
       }
       jv v = jv_get(t, jv_copy(k));
@@ -701,7 +761,7 @@ jv jq_next(jq_state *jq) {
       } else {
         jv_free(k);
         if (opcode == INDEX)
-          set_error(jq, v);
+          set_error(jq, pc, v);
         else
           jv_free(v);
         goto do_backtrack;
@@ -736,7 +796,7 @@ jv jq_next(jq_state *jq) {
         jv msg = jv_string_fmt(
             "Invalid path expression near attempt to iterate through %s",
             jv_dump_string_trunc(container, errbuf, sizeof(errbuf)));
-        set_error(jq, jv_invalid_with_msg(msg));
+        set_error(jq, pc, jv_invalid_with_msg(msg));
         goto do_backtrack;
       }
       stack_push(jq, container);
@@ -772,7 +832,7 @@ jv jq_next(jq_state *jq) {
         assert(opcode == EACH || opcode == EACH_OPT);
         if (opcode == EACH) {
           char errbuf[15];
-          set_error(jq,
+          set_error(jq, pc,
                     jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s (%s)",
                                                       jv_kind_name(jv_get_kind(container)),
                                                       jv_dump_string_trunc(jv_copy(container), errbuf, sizeof(errbuf)))));
@@ -845,7 +905,7 @@ jv jq_next(jq_state *jq) {
        */
       jv e = jv_invalid_get_msg(jv_copy(jq->error));
       if (!jv_is_valid(e) && jv_invalid_has_msg(jv_copy(e))) {
-        set_error(jq, e);
+        set_error(jq, pc, e);
         goto do_backtrack;
       }
       jv_free(e);
@@ -866,7 +926,7 @@ jv jq_next(jq_state *jq) {
     case ON_BACKTRACK(TRY_END):
       // Wrap the error so the matching TRY_BEGIN doesn't catch it
       if (raising)
-        set_error(jq, jv_invalid_with_msg(jv_copy(jq->error)));
+        set_error(jq, pc, jv_invalid_with_msg(jv_copy(jq->error)));
       goto do_backtrack;
 
     case DESTRUCTURE_ALT:
@@ -926,7 +986,7 @@ jv jq_next(jq_state *jq) {
       if (jv_is_valid(top)) {
         stack_push(jq, top);
       } else if (jv_invalid_has_msg(jv_copy(top))) {
-        set_error(jq, top);
+        set_error(jq, pc, top);
         goto do_backtrack;
       } else {
         // C-coded function returns invalid w/o msg? -> backtrack, as if
@@ -1228,10 +1288,14 @@ args2obj(jv args)
 }
 
 int jq_compile_args(jq_state *jq, const char* str, jv args) {
+  return jq_compile_args2(jq, "<top-level>", str, args);
+}
+
+int jq_compile_args2(jq_state *jq, const char *fname, const char *str, jv args) {
   jv_nomem_handler(jq->nomem_handler, jq->nomem_handler_data);
   assert(jv_get_kind(args) == JV_KIND_ARRAY || jv_get_kind(args) == JV_KIND_OBJECT);
   struct locfile* locations;
-  locations = locfile_init(jq, "<top-level>", str, strlen(str));
+  locations = locfile_init(jq, fname, str, strlen(str));
   block program;
   jq_reset(jq);
   if (jq->bc) {

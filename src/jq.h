@@ -21,6 +21,7 @@ jv jq_format_error(jv msg);
 void jq_report_error(jq_state *, jv);
 int jq_compile(jq_state *, const char*);
 int jq_compile_args(jq_state *, const char*, jv);
+int jq_compile_args2(jq_state *, const char *, const char *, jv);
 void jq_dump_disassembly(jq_state *, int);
 void jq_start(jq_state *, jv value, int);
 jv jq_next(jq_state *);

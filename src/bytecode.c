@@ -4,6 +4,7 @@
 
 #include "bytecode.h"
 #include "jv_alloc.h"
+#include "locfile.h"
 
 // flags, length
 #define NONE 0, 1
@@ -92,6 +93,31 @@ static struct bytecode* getlevel(struct bytecode* bc, int level) {
   return bc;
 }
 
+jv get_location(struct bytecode *bc, uint16_t *codeptr) {
+  char buf[41];
+  int32_t offset = -1;
+  int32_t i = codeptr - bc->code;
+  int lineno = 0, column = 0;
+
+  do {
+    offset = bc->location_offsets[i];
+  } while (offset == -1 && i--);
+  if (offset == -1)
+    return jv_copy(bc->fname);
+  const char *prog = jv_string_value(bc->program);
+  int len = jv_string_length_bytes(jv_copy(bc->program));
+  for (i = 0; i < offset && i < len; i++) {
+    if (prog[i] == '\n') {
+      lineno++;
+      column = 0;
+    } else {
+      column++;
+    }
+  }
+  (void) snprintf(buf, sizeof(buf), "%d:%d", lineno, column);
+  return JV_STRING(jv_copy(bc->fname), jv_string(":"), jv_string(buf));
+}
+
 void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
   int pc = codeptr - bc->code;
   printf("%04d ", pc);
@@ -146,6 +172,13 @@ void dump_operation(struct bytecode* bc, uint16_t* codeptr) {
   }
 }
 
+struct bytecode *bytecode_alloc(struct locfile *lf) {
+  struct bytecode* bc = jv_mem_calloc(1, sizeof(struct bytecode));
+  bc->fname = jv_copy(lf->fname);
+  bc->program = jv_string_sized(lf->data, lf->length);
+  return bc;
+}
+
 void bytecode_free(struct bytecode* bc) {
   if (!bc)
     return;
@@ -157,5 +190,8 @@ void bytecode_free(struct bytecode* bc) {
     symbol_table_free(bc->globals);
   jv_mem_free(bc->subfunctions);
   jv_free(bc->debuginfo);
+  jv_free(bc->fname);
+  jv_free(bc->program);
+  jv_mem_free(bc->location_offsets);
   jv_mem_free(bc);
 }
