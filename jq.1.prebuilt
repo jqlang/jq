@@ -1,3 +1,4 @@
+pipenv run python validate_manual_schema.py content/manual/manual.yml
 .
 .TH "JQ" "1" "August 2023" "" ""
 .
@@ -2547,7 +2548,7 @@ If an operand of one of these operators produces multiple results, the operator 
 \fBnot\fR is in fact a builtin function rather than an operator, so it is called as a filter to which things can be piped rather than with special syntax, as in \fB\.foo and \.bar | not\fR\.
 .
 .P
-These three only produce the values \fBtrue\fR and \fBfalse\fR, and so are only useful for genuine Boolean operations, rather than the common Perl/Python/Ruby idiom of "value_that_may_be_null or default"\. If you want to use this form of "or", picking between two values rather than evaluating a condition, see the \fB//\fR operator below\.
+These three only produce the values \fBtrue\fR and \fBfalse\fR, and so are only useful for genuine Boolean operations, rather than the common Perl/Python/Ruby idiom of "value_that_may_be_null or default"\. If you want to use this form of "or", choosing between two values rather than evaluating a condition, see the \fB//\fR operator below\.
 .
 .IP "" 4
 .
