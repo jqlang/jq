@@ -2365,7 +2365,7 @@ sections:
           so are only useful for genuine Boolean operations, rather
           than the common Perl/Python/Ruby idiom of
           "value_that_may_be_null or default". If you want to use this
-          form of "or", picking between two values rather than
+          form of "or", choosing between two values rather than
           evaluating a condition, see the `//` operator below.
 
         examples:
