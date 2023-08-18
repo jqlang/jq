@@ -1,4 +1,3 @@
-pipenv run python validate_manual_schema.py content/manual/manual.yml
 .
 .TH "JQ" "1" "August 2023" "" ""
 .
