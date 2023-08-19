@@ -360,6 +360,12 @@ using some command-line options:</p>
 </ul>
 <p>Output the jq version and exit with zero.</p>
 <ul>
+<li><code>--build-configuration</code>:</li>
+</ul>
+<p>Output the build configuration of jq and exit with zero.
+  This output has no supported format or structure and may change
+  without notice in future releases.</p>
+<ul>
 <li><code>--help</code> / <code>-h</code>:</li>
 </ul>
 <p>Output the jq help and exit with zero.</p>
@@ -4913,6 +4919,20 @@ input can be considered for alteration.</p>
               </div>
             </div>
           </section>
+          <section id="$jq_build_configuration">
+            <h3>
+              <code>$JQ_BUILD_CONFIGURATION</code>
+              <a href="#$jq_build_configuration" class="icon-link" aria-label="Link to this section: `$JQ_BUILD_CONFIGURATION`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
+            </h3>
+            <p>This builtin binding shows the jq executable's build
+configuration.  Its value has no particular format, but
+it can be expected to be at least the <code>./configure</code>
+command-line arguments, and may be enriched in the
+future to include the version strings for the build
+tooling used.</p>
+<p>Note that this can be overriden in the command-line
+with <code>--arg</code> and related options.</p>
+          </section>
           <section id="$env-env">
             <h3>
               <code>$ENV</code>, <code>env</code>
@@ -8217,6 +8237,7 @@ by a semi-colon, where the first number is one of these:</p>
         "until(cond; next)": "until",
         "recurse(f), recurse, recurse(f; condition)": "recurse",
         "walk(f)": "walk",
+        "$JQ_BUILD_CONFIGURATION": "$jq_build_configuration",
         "$ENV, env": "$env-env",
         "transpose": "transpose",
         "bsearch(x)": "bsearch",
