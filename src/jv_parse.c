@@ -463,6 +463,7 @@ static pfunc found_string(struct jv_parser* p) {
       case 't': *out++ = '\t'; break;
       case 'n': *out++ = '\n'; break;
       case 'r': *out++ = '\r'; break;
+      case '\n': break;
 
       case 'u':
         /* ahh, the complicated case */

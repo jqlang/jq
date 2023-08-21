@@ -99,6 +99,7 @@ struct lexer_param;
   "\\(" {
     return enter(QQSTRING_INTERP_START, YY_START, yyscanner);
   }
+  "\\\n" { }
   "\"" {
     yy_pop_state(yyscanner);
     return QQSTRING_END;
