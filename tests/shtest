@@ -144,6 +144,23 @@ if printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out; then
 fi
 cmp $d/out $d/expected
 
+# Multi line string literals
+
+data='"foo
+bar"'
+cat > $d/expected <<EOF
+"foo\nbar"
+EOF
+$JQ -n "$data" > $d/out
+cmp $d/out $d/expected
+
+data='"Hello\
+ World"'
+cat > $d/expected <<EOF
+"Hello World"
+EOF
+$JQ -n "$data" > $d/out
+cmp $d/out $d/expected
 
 ## Test --exit-status
 data='{"i": 1}\n{"i": 2}\n{"i": 3}\n'
