@@ -2024,3 +2024,11 @@ walk(1)
 walk(select(IN({}, []) | not))
 {"a":1,"b":[]}
 {"a":1}
+
+assert(length > 0; "empty array")
+[1]
+[1]
+
+try assert(length == 0; "non-empty array") catch .
+[1]
+"assertion error: non-empty array"
