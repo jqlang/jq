@@ -658,6 +658,14 @@ walk(if type == "array" then sort else . end)
 [[4, 1, 7], [8, 5, 2], [3, 6, 9]]
 [[1,4,7],[2,5,8],[3,6,9]]
 
+assert(length > 0; "must not be empty")
+[1,2,3,4]
+[1,2,3,4]
+
+try assert(values | add >= 10 ; "values must total at least 10") catch .
+{"a": 1, "b": 2 }
+"assertion error: values must total at least 10"
+
 $ENV.PAGER
 null
 "less"
