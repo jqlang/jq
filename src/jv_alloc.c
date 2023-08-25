@@ -111,7 +111,7 @@ static void memory_exhausted() {
   tsd_init_nomem_handler();
 
   nomem_handler = pthread_getspecific(nomem_handler_key);
-  if (nomem_handler)
+  if (nomem_handler && nomem_handler->handler)
     nomem_handler->handler(nomem_handler->data); // Maybe handler() will longjmp() to safety
   // Or not
   fprintf(stderr, "jq: error: cannot allocate memory\n");
