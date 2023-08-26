@@ -136,16 +136,22 @@ static jv jv_basename(jv name) {
 static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv jq_origin, jv lib_origin) {
   if (!jv_is_valid(rel_path)) {
     jv_free(search);
+    jv_free(jq_origin);
+    jv_free(lib_origin);
     return rel_path;
   }
   if (jv_get_kind(rel_path) != JV_KIND_STRING) {
     jv_free(rel_path);
     jv_free(search);
+    jv_free(jq_origin);
+    jv_free(lib_origin);
     return jv_invalid_with_msg(jv_string_fmt("Module path must be a string"));
   }
   if (jv_get_kind(search) != JV_KIND_ARRAY) {
     jv_free(rel_path);
     jv_free(search);
+    jv_free(jq_origin);
+    jv_free(lib_origin);
     return jv_invalid_with_msg(jv_string_fmt("Module search path must be an array"));
   }
 
