@@ -256,7 +256,7 @@ def walk(f):
   w;
 
 # compact removes nulls from an array or an object
-def compact: del(..|nulls);
+def compact: del(.. | nulls);
 
 # pathexps could be a stream of dot-paths
 def pick(pathexps):
