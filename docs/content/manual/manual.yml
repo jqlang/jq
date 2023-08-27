@@ -1119,7 +1119,7 @@ sections:
       - title: "`compact`"
         body: |
 
-          The builtin function `compact` removes nulls from an object.
+          The builtin function `compact` removes nulls from an object or an array recursively.
 
         examples:
           - program: "compact"

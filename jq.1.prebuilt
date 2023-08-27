@@ -1125,7 +1125,7 @@ jq \'del(\.[1, 2])\'
 .IP "" 0
 .
 .SS "compact"
-The builtin function \fBcompact\fR removes nulls from an object\.
+The builtin function \fBcompact\fR removes nulls from an object or an array recursively\.
 .
 .IP "" 4
 .
