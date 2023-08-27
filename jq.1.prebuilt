@@ -1124,6 +1124,25 @@ jq \'del(\.[1, 2])\'
 .
 .IP "" 0
 .
+.SS "compact"
+The builtin function \fBcompact\fR removes nulls from an object\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'compact\'
+   {"foo": null, "bar": "baz"}
+=> {"bar": "baz"}
+
+jq \'compact\'
+   ["foo", "bar", null]
+=> ["foo", "bar"]
+.
+.fi
+.
+.IP "" 0
+.
 .SS "getpath(PATHS)"
 The builtin function \fBgetpath\fR outputs the values in \fB\.\fR found at each path in \fBPATHS\fR\.
 .
