@@ -2152,6 +2152,28 @@ jq \'walk( if type == "object" then with_entries( \.key |= sub( "^_+"; "") ) els
 .
 .IP "" 0
 .
+.SS "assert(test; $message)"
+The \fBassert(test; $message)\fR function applies the test to the input entity\. If the test passes (returns true) then the output is the original input\. If the test fails then JQ throws an error containing the message passed in\.
+.
+.P
+This can be used to short\-circuit pipelines in scripts such as when you want to stop if there is a missing key, or the input is an empty array\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'assert(length > 0; "must not be empty")\'
+   [1,2,3,4]
+=> [1,2,3,4]
+
+jq \'try assert(values | add >= 10 ; "values must total at least 10") catch \.\'
+   {"a": 1, "b": 2 }
+=> "assertion error: values must total at least 10"
+.
+.fi
+.
+.IP "" 0
+.
 .SS "$JQ_BUILD_CONFIGURATION"
 This builtin binding shows the jq executable\'s build configuration\. Its value has no particular format, but it can be expected to be at least the \fB\./configure\fR command\-line arguments, and may be enriched in the future to include the version strings for the build tooling used\.
 .

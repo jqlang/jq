@@ -264,6 +264,11 @@ def pick(pathexps):
 # ensure the output of debug(m1,m2) is kept together:
 def debug(msgs): (msgs | debug | empty), .;
 
+# assert property with message
+# success passes the original input through
+# failure raises an error with the original error message
+def assert(test; $message): if test then . else error("assertion error: \($message)") end;
+
 # SQL-ish operators here:
 def INDEX(stream; idx_expr):
   reduce stream as $row ({}; .[$row|idx_expr|tostring] = $row);

@@ -1974,6 +1974,29 @@ sections:
             output:
               - '[{"a":{"b":2}}]'
 
+      - title: "`assert(test; $message)`"
+        body: |
+          
+          The `assert(test; $message)` function applies the test to the
+          input entity. If the test passes (returns true) then the output
+          is the original input. If the test fails then JQ throws an error
+          containing the message passed in.
+          
+          This can be used to short-circuit pipelines in scripts such as when
+          you want to stop if there is a missing key, or the input is an empty
+          array.
+
+        examples:
+          - program: 'assert(length > 0; "must not be empty")'
+            input: '[1,2,3,4]'
+            output:
+              - '[1,2,3,4]'
+
+          - program: 'try assert(values | add >= 10 ; "values must total at least 10") catch .'
+            input: '{"a": 1, "b": 2 }'
+            output:
+              - '"assertion error: values must total at least 10"'
+
       - title: "`$JQ_BUILD_CONFIGURATION`"
         body: |
 
