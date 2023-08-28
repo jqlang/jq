@@ -1502,7 +1502,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
       jv_free(n);                               \
     } while (0)
 
-static int jv2tm(jv a, struct tm *tm, char **freeme) {
+static int jv2tm(jv a, struct tm *tm, double *frac, char **freeme) {
   int ret = 1;
 
   *freeme = NULL;
@@ -1514,6 +1514,11 @@ static int jv2tm(jv a, struct tm *tm, char **freeme) {
   TO_TM_FIELD(tm->tm_hour, a, 3);
   TO_TM_FIELD(tm->tm_min,  a, 4);
   TO_TM_FIELD(tm->tm_sec,  a, 5);
+  if (frac) {
+    double d = jv_number_value(jv_array_get(jv_copy(a), 5));
+
+    *frac = d - floor(d);
+  }
   TO_TM_FIELD(tm->tm_wday, a, 6);
   TO_TM_FIELD(tm->tm_yday, a, 7);
   jv v = jv_array_get(jv_copy(a), 8);
@@ -1568,9 +1573,10 @@ static jv f_mktime(jq_state *jq, jv a) {
     return ret_error(a, jv_string("mktime requires array inputs"));
   if (jv_array_length(jv_copy(a)) < 6)
     return ret_error(a, jv_string("mktime requires parsed datetime inputs"));
+  double frac;
   struct tm tm;
   char *freeme;
-  if (!jv2tm(a, &tm, &freeme))
+  if (!jv2tm(a, &tm, &frac, &freeme))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
   time_t t = my_mktime(&tm);
   free(freeme);
@@ -1578,7 +1584,7 @@ static jv f_mktime(jq_state *jq, jv a) {
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
   if (t == (time_t)-2)
     return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
-  return jv_number(t);
+  return jv_number(t + frac);
 }
 
 #ifdef HAVE_GMTIME_R
@@ -1670,7 +1676,7 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   }
   struct tm tm;
   char *freeme;
-  if (!jv2tm(a, &tm, &freeme))
+  if (!jv2tm(a, &tm, NULL, &freeme))
     return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
 
   const char *fmt = jv_string_value(b);
@@ -1707,7 +1713,7 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   }
   struct tm tm;
   char *freeme;
-  if (!jv2tm(a, &tm, &freeme))
+  if (!jv2tm(a, &tm, NULL, &freeme))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
