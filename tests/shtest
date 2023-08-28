@@ -579,4 +579,19 @@ if ( ! $msys && ! $mingw ) && locale -a > /dev/null; then
   fi
 fi
 
+# #2863
+if ! TZ=CST+6CDT $VALGRIND $Q $JQ -cne '
+    1693243637
+  | localtime
+  | (.[9]  |= if .==null then -18000 else . end)
+  | (.[10] |= if .==null then "CDT" else . end)
+  | [.,mktime,timegm,timelocal,timegm - timelocal]
+  | debug
+  | (.[1] == .[2])
+    and
+    (. == [[2023,7,28,12,27,17,1,239,true,-18000,"CDT"],1693225637,1693225637,1693243637,-18000])'; then
+  echo "Time functions not working correctly"
+  exit 1
+fi
+
 exit 0

@@ -2187,10 +2187,11 @@ sections:
 
           Low-level jq interfaces to the C-library time functions are
           also provided: `strptime`, `strftime`, `strflocaltime`,
-          `mktime`, `gmtime`, and `localtime`.  Refer to your host
-          operating system's documentation for the format strings used
-          by `strptime` and `strftime`.  Note: these are not necessarily
-          stable interfaces in jq, particularly as to their localization
+          `mktime`, `gmtime`, `localtime`, `timegm`, and
+          `timelocal`.  Refer to your host operating system's
+          documentation for the format strings used by `strptime`
+          and `strftime`.  Note: these are not necessarily stable
+          interfaces in jq, particularly as to their localization
           functionality.
 
           The `gmtime` builtin consumes a number of seconds since the
@@ -2210,8 +2211,16 @@ sections:
           The `localtime` builtin works like the `gmtime` builtin, but
           using the local timezone setting.
 
-          The `mktime` builtin consumes "broken down time"
-          representations of time output by `gmtime` and `strptime`.
+          The `mktime`, `timegm` and `timelocal` builtins do the
+          opposite of `gmtime` and `localtime`, respectively: they
+          consume "broken down time" representations of time
+          output by `gmtime`, `localtime`, and `strptime`, and
+          output a number of seconds since the Unix epoch.
+
+          Note that the C `mktime()` function interprets its broken
+          down time input as local time, while the jq `mktime`
+          function interpretes its broken down time as UTC.  It is
+          better to use `timelocal` and `timegm` to avoid confusion.
 
           The `strptime(fmt)` builtin parses input strings matching the
           `fmt` argument.  The output is in the "broken down time"
@@ -2238,7 +2247,7 @@ sections:
             input: '"2015-03-05T23:51:47Z"'
             output: ['[2015,2,5,23,51,47,4,63]']
 
-          - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")|mktime'
+          - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")|timegm'
             input: '"2015-03-05T23:51:47Z"'
             output: ['1425599507']
 

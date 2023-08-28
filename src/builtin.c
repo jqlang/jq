@@ -1332,50 +1332,6 @@ static int setenv(const char *var, const char *val, int ovr)
 }
 #endif
 
-/*
- * mktime() has side-effects and anyways, returns time in the local
- * timezone, not UTC.  We want timegm(), which isn't standard.
- *
- * To make things worse, mktime() tells you what the timezone
- * adjustment is, but you have to #define _BSD_SOURCE to get this
- * field of struct tm on some systems.
- *
- * This is all to blame on POSIX, of course.
- *
- * Our wrapper tries to use timegm() if available, or mktime() and
- * correct for its side-effects if possible.
- *
- * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
- */
-static time_t my_mktime(struct tm *tm) {
-#ifdef HAVE_TIMEGM
-  return timegm(tm);
-#elif HAVE_TM_TM_GMT_OFF
-
-  time_t t = mktime(tm);
-  if (t == (time_t)-1)
-    return t;
-  return t + tm->tm_gmtoff;
-#elif HAVE_TM___TM_GMT_OFF
-  time_t t = mktime(tm);
-  if (t == (time_t)-1)
-    return t;
-  return t + tm->__tm_gmtoff;
-#elif WIN32
-  return _mkgmtime(tm);
-#else
-  char *tz;
-
-  tz = (tz = getenv("TZ")) != NULL ? strdup(tz) : NULL;
-  if (tz != NULL)
-    setenv("TZ", "", 1);
-  time_t t = mktime(tm);
-  if (tz != NULL)
-    setenv("TZ", tz, 1);
-  return t;
-#endif
-}
-
 /* Compute and set tm_wday */
 static void set_tm_wday(struct tm *tm) {
   /*
@@ -1571,19 +1527,76 @@ static int jv2tm(jv a, struct tm *tm, double *frac, char **freeme) {
 static jv f_mktime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY)
     return ret_error(a, jv_string("mktime requires array inputs"));
-  if (jv_array_length(jv_copy(a)) < 6)
-    return ret_error(a, jv_string("mktime requires parsed datetime inputs"));
   double frac;
   struct tm tm;
   char *freeme;
   if (!jv2tm(a, &tm, &frac, &freeme))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
-  time_t t = my_mktime(&tm);
+  /*
+   * mktime() has side-effects and anyways, returns time in the local
+   * timezone, not UTC.  Does timelocal() have side-effects?
+   *
+   * We try to use timegm() if available, else mktime().
+   */
+#if HAVE_TIMEGM
+  time_t t = timegm(&tm);
+#elif defined(WIN32)
+  time_t t = _mkgmtime(&tm);
+#else
+  time_t t = mktime(&tm);
+#ifdef HAVE_TM_TM_GMTOFF
+  t += tm.tm_gmtoff;
+#else
+  /* Bah, what can we do? */
+#endif
+#endif
   free(freeme);
   if (t == (time_t)-1)
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
   if (t == (time_t)-2)
     return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
+  return jv_number(t + frac);
+}
+
+static jv f_timelocal(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_ARRAY)
+    return ret_error(a, jv_string("timelocal requires array inputs"));
+  double frac;
+  struct tm tm;
+  char *freeme;
+  if (!jv2tm(a, &tm, &frac, &freeme))
+    return jv_invalid_with_msg(jv_string("timelocal requires parsed datetime inputs"));
+#ifdef HAVE_TIMELOCAL
+  time_t t = timelocal(&tm);
+#else
+  time_t t = mktime(&tm);
+#endif
+  free(freeme);
+  if (t == (time_t)-1)
+    return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
+  return jv_number(t + frac);
+}
+
+static jv f_timegm(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_ARRAY)
+    return ret_error(a, jv_string("timegm requires array inputs"));
+  double frac;
+  struct tm tm;
+  char *freeme;
+  if (!jv2tm(a, &tm, &frac, &freeme))
+    return jv_invalid_with_msg(jv_string("timegm requires parsed datetime inputs"));
+#ifdef HAVE_TIMEGM
+  time_t t = timegm(&tm);
+  free(freeme);
+#elif defined(HAVE__MKGMTIME)
+  time_t t = _mkgmtime(&tm); // Windows has _mkgmtime()
+  free(freeme);
+#else
+  free(freeme);
+  return jv_invalid_with_msg(jv_string("timegm is not supported"));
+#endif
+  if (t == (time_t)-1)
+    return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
   return jv_number(t + frac);
 }
 
@@ -1843,6 +1856,8 @@ BINOPS
   {f_mktime, "mktime", 1},
   {f_gmtime, "gmtime", 1},
   {f_localtime, "localtime", 1},
+  {f_timegm, "timegm", 1},
+  {f_timelocal, "timelocal", 1},
   {f_now, "now", 1},
   {f_current_filename, "input_filename", 1},
   {f_current_line, "input_line_number", 1},
