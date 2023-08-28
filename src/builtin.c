@@ -1287,14 +1287,28 @@ static jv f_stderr(jq_state *jq, jv input) {
 }
 
 static jv tm2jv(struct tm *tm) {
-  return JV_ARRAY(jv_number(tm->tm_year + 1900),
+  jv a = JV_ARRAY(jv_number(tm->tm_year + 1900),
                   jv_number(tm->tm_mon),
                   jv_number(tm->tm_mday),
                   jv_number(tm->tm_hour),
                   jv_number(tm->tm_min),
                   jv_number(tm->tm_sec),
                   jv_number(tm->tm_wday),
-                  jv_number(tm->tm_yday));
+                  jv_number(tm->tm_yday),
+                  tm->tm_isdst ? jv_true() : jv_false());
+  // JV_ARRAY() only handles up to 9 arguments
+#ifdef HAVE_TM_TM_GMTOFF
+  a = jv_array_append(a, jv_number(tm->tm_gmtoff));
+#else
+  a = jv_array_append(a, jv_null());
+#endif
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+  if (tm->tm_zone)
+    return jv_array_append(a, jv_string(tm->tm_zone));
+#else
+  a = jv_array_append(a, jv_null());
+#endif
+  return a;
 }
 
 #if defined(WIN32) && !defined(HAVE_SETENV)
@@ -1488,7 +1502,10 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
       jv_free(n);                               \
     } while (0)
 
-static int jv2tm(jv a, struct tm *tm) {
+static int jv2tm(jv a, struct tm *tm, char **freeme) {
+  int ret = 1;
+
+  *freeme = NULL;
   memset(tm, 0, sizeof(*tm));
   TO_TM_FIELD(tm->tm_year, a, 0);
   tm->tm_year -= 1900;
@@ -1499,6 +1516,34 @@ static int jv2tm(jv a, struct tm *tm) {
   TO_TM_FIELD(tm->tm_sec,  a, 5);
   TO_TM_FIELD(tm->tm_wday, a, 6);
   TO_TM_FIELD(tm->tm_yday, a, 7);
+  jv v = jv_array_get(jv_copy(a), 8);
+  switch (jv_get_kind(v)) {
+  case JV_KIND_INVALID: break;
+  case JV_KIND_FALSE: break;
+  case JV_KIND_TRUE: tm->tm_isdst = 1; break;
+  case JV_KIND_NUMBER: tm->tm_isdst = !!(int)jv_number_value(v); break;
+  default: ret = 0; break;
+  }
+  jv_free(v);
+#ifdef HAVE_TM_TM_GMTOFF
+  v = jv_array_get(jv_copy(a), 9);
+  if (jv_get_kind(v) == JV_KIND_NUMBER)
+    tm->tm_gmtoff = jv_number_value(v);
+  else if (jv_is_valid(v))
+    ret = 0;
+  jv_free(v);
+#endif
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+  v = jv_array_get(jv_copy(a), 10);
+  if (jv_get_kind(v) == JV_KIND_STRING) {
+    tm->tm_zone = *freeme = strdup(jv_string_value(v));
+    if (tm->tm_zone == NULL)
+      ret = 0;
+  } else if (jv_is_valid(v)) {
+    ret = 0;
+  }
+#endif
+  jv_free(v);
   jv_free(a);
 
   // We use UTC everywhere (gettimeofday, gmtime) and UTC does not do DST.
@@ -1509,7 +1554,11 @@ static int jv2tm(jv a, struct tm *tm) {
   // hope it is okay to initialize them to zero, because the standard does not
   // provide an alternative.
 
-  return 1;
+  if (!ret) {
+    free(*freeme);
+    *freeme = NULL;
+  }
+  return ret;
 }
 
 #undef TO_TM_FIELD
@@ -1520,9 +1569,11 @@ static jv f_mktime(jq_state *jq, jv a) {
   if (jv_array_length(jv_copy(a)) < 6)
     return ret_error(a, jv_string("mktime requires parsed datetime inputs"));
   struct tm tm;
-  if (!jv2tm(a, &tm))
+  char *freeme;
+  if (!jv2tm(a, &tm, &freeme))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
   time_t t = my_mktime(&tm);
+  free(freeme);
   if (t == (time_t)-1)
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
   if (t == (time_t)-2)
@@ -1618,7 +1669,8 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
     return ret_error2(a, b, jv_string("strftime/1 requires a string format"));
   }
   struct tm tm;
-  if (!jv2tm(a, &tm))
+  char *freeme;
+  if (!jv2tm(a, &tm, &freeme))
     return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
 
   const char *fmt = jv_string_value(b);
@@ -1626,6 +1678,7 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   char *buf = alloca(alloced);
   size_t n = strftime(buf, alloced, fmt, &tm);
   jv_free(b);
+  free(freeme);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
   if (n == 0 || n > alloced)
     return jv_invalid_with_msg(jv_string("strftime/1: unknown system failure"));
@@ -1643,19 +1696,25 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
 static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER) {
     a = f_localtime(jq, a);
+    if (!jv_is_valid(a)) {
+      jv_free(b);
+      return a;
+    }
   } else if (jv_get_kind(a) != JV_KIND_ARRAY) {
     return ret_error2(a, b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   } else if (jv_get_kind(b) != JV_KIND_STRING) {
     return ret_error2(a, b, jv_string("strflocaltime/1 requires a string format"));
   }
   struct tm tm;
-  if (!jv2tm(a, &tm))
+  char *freeme;
+  if (!jv2tm(a, &tm, &freeme))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
   char *buf = alloca(alloced);
   size_t n = strftime(buf, alloced, fmt, &tm);
   jv_free(b);
+  free(freeme);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
   if (n == 0 || n > alloced)
     return jv_invalid_with_msg(jv_string("strflocaltime/1: unknown system failure"));

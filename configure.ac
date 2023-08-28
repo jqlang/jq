@@ -145,9 +145,12 @@ AC_FIND_FUNC([gmtime], [c], [#include <time.h>], [0])
 AC_FIND_FUNC([localtime_r], [c], [#include <time.h>], [0, 0])
 AC_FIND_FUNC([localtime], [c], [#include <time.h>], [0])
 AC_FIND_FUNC([gettimeofday], [c], [#include <sys/time.h>], [0, 0])
-AC_CHECK_MEMBER([struct tm.tm_gmtoff], [AC_DEFINE([HAVE_TM_TM_GMT_OFF],1,[Define to 1 if the system has the tm_gmt_off field in struct tm])],
+AC_STRUCT_TIMEZONE
+AC_CHECK_MEMBER([struct tm.tm_gmtoff], [AC_DEFINE([HAVE_TM_TM_GMTOFF],1,[Define to 1 if the system has the tm_gmtoff field in struct tm])],
                 [], [[#include <time.h>]])
-AC_CHECK_MEMBER([struct tm.__tm_gmtoff], [AC_DEFINE([HAVE_TM___TM_GMT_OFF],1,[Define to 1 if the system has the __tm_gmt_off field in struct tm])],
+AC_CHECK_MEMBER([struct tm.__tm_gmtoff], [AC_DEFINE([HAVE_TM___TM_GMTOFF],1,[Define to 1 if the system has the __tm_gmtoff field in struct tm])],
+                [], [[#include <time.h>]])
+AC_CHECK_MEMBER([struct tm.tm_zone], [AC_DEFINE([HAVE_TM_TM_ZONE],1,[Define to 1 if the system has the tm_zone field in struct tm])],
                 [], [[#include <time.h>]])
 AC_FIND_FUNC([setlocale], [c], [#include <locale.h>], [0,0])
 

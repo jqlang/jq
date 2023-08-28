@@ -2199,9 +2199,13 @@ sections:
           (in this order): the year, the month (zero-based), the day of
           the month (one-based), the hour of the day, the minute of the
           hour, the second of the minute, the day of the week, and the
-          day of the year -- all one-based unless otherwise stated.  The
-          day of the week number may be wrong on some systems for dates
-          before March 1st 1900, or after December 31 2099.
+          day of the year -all one-based unless otherwise stated-
+          followed by (depending on platform support) a boolean
+          indicating whether the time is in a daylight savings
+          timezone, followed by the offset to UTC, followed by the
+          name of the timezone.  The day of the week number may be
+          wrong on some systems for dates before March 1st 1900, or
+          after December 31 2099.
 
           The `localtime` builtin works like the `gmtime` builtin, but
           using the local timezone setting.
@@ -2230,7 +2234,7 @@ sections:
             input: '"2015-03-05T23:51:47Z"'
             output: ['1425599507']
 
-          - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")'
+          - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")[0:8]'
             input: '"2015-03-05T23:51:47Z"'
             output: ['[2015,2,5,23,51,47,4,63]']
 

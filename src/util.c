@@ -550,7 +550,7 @@ static const unsigned char *find_string(const unsigned char *, int *, const char
 #define strncasecmp         _strnicmp
 #endif
 
-#ifdef TM_ZONE
+#ifdef HAVE_STRUCT_TM_TM_ZONE
 static char* utc = "UTC";
 #endif
 /* RFC-822/RFC-2822 */
@@ -630,12 +630,12 @@ fromzone(const unsigned char **bp, struct tm *tm, int mandatory)
 
     *bp = rp;
     tm->tm_isdst = 0;	/* XXX */
-#ifdef TM_GMTOFF
-    tm->TM_GMTOFF = tzgetgmtoff(tz, tm->tm_isdst);
+#ifdef HAVE_TM_TM_GMTOFF
+    tm->tm_gmtoff = tzgetgmtoff(tz, tm->tm_isdst);
 #endif
-#ifdef TM_ZONE
+#ifdef HAVE_STRUCT_TM_TM_ZONE
     // Can't use tzgetname() here because we are going to free()
-    tm->TM_ZONE = NULL; /* XXX */
+    tm->tm_zone = NULL; /* XXX */
 #endif
 //    tzfree(tz);
     return 1;
@@ -993,11 +993,11 @@ recurse:
                 if (!delim(*bp))
                     goto namedzone;
                 tm->tm_isdst = 0;
-#ifdef TM_GMTOFF
-                tm->TM_GMTOFF = 0;
+#ifdef HAVE_TM_TM_GMTOFF
+                tm->tm_gmtoff = 0;
 #endif
-#ifdef TM_ZONE
-                tm->TM_ZONE = utc;
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+                tm->tm_zone = utc;
 #endif
                 continue;
             case '+':
@@ -1014,30 +1014,30 @@ namedzone:
                 if (delim(bp[1]) &&
                     ((*bp >= 'A' && *bp <= 'I') ||
                      (*bp >= 'L' && *bp <= 'Y'))) {
-#ifdef TM_GMTOFF
+#ifdef HAVE_TM_TM_GMTOFF
                     /* Argh! No 'J'! */
                     if (*bp >= 'A' && *bp <= 'I')
-                        tm->TM_GMTOFF =
+                        tm->tm_gmtoff =
                             (int)*bp - ('A' - 1);
                     else if (*bp >= 'L' && *bp <= 'M')
-                        tm->TM_GMTOFF = (int)*bp - 'A';
+                        tm->tm_gmtoff = (int)*bp - 'A';
                     else if (*bp >= 'N' && *bp <= 'Y')
-                        tm->TM_GMTOFF = 'M' - (int)*bp;
-                    tm->TM_GMTOFF *= SECSPERHOUR;
+                        tm->tm_gmtoff = 'M' - (int)*bp;
+                    tm->tm_gmtoff *= SECSPERHOUR;
 #endif
-#ifdef TM_ZONE
-                    tm->TM_ZONE = NULL; /* XXX */
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+                    tm->tm_zone = NULL; /* XXX */
 #endif
                     bp++;
                     continue;
                 }
                 /* 'J' is local time */
                 if (delim(bp[1]) && *bp == 'J') {
-#ifdef TM_GMTOFF
-                    tm->TM_GMTOFF = -timezone;
+#ifdef HAVE_TM_TM_GMTOFF
+                    tm->tm_gmtoff = -timezone;
 #endif
-#ifdef TM_ZONE
-                    tm->TM_ZONE = NULL; /* XXX */
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+                    tm->tm_zone = NULL; /* XXX */
 #endif
                     bp++;
                     continue;
@@ -1052,11 +1052,11 @@ namedzone:
                     goto loadzone;
                 ep = find_string(bp, &i, nast, NULL, 4);
                 if (ep != NULL) {
-#ifdef TM_GMTOFF
-                    tm->TM_GMTOFF = (-5 - i) * SECSPERHOUR;
+#ifdef HAVE_TM_TM_GMTOFF
+                    tm->tm_gmtoff = (-5 - i) * SECSPERHOUR;
 #endif
-#ifdef TM_ZONE
-                    tm->TM_ZONE = __UNCONST(nast[i]);
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+                    tm->tm_zone = __UNCONST(nast[i]);
 #endif
                     bp = ep;
                     continue;
@@ -1064,11 +1064,11 @@ namedzone:
                 ep = find_string(bp, &i, nadt, NULL, 4);
                 if (ep != NULL) {
                     tm->tm_isdst = 1;
-#ifdef TM_GMTOFF
-                    tm->TM_GMTOFF = (-4 - i) * SECSPERHOUR;
+#ifdef HAVE_TM_TM_GMTOFF
+                    tm->tm_gmtoff = (-4 - i) * SECSPERHOUR;
 #endif
-#ifdef TM_ZONE
-                    tm->TM_ZONE = __UNCONST(nadt[i]);
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+                    tm->tm_zone = __UNCONST(nadt[i]);
 #endif
                     bp = ep;
                     continue;
@@ -1081,11 +1081,11 @@ namedzone:
                               NULL, 2);
                 if (ep != NULL) {
                     tm->tm_isdst = i;
-#ifdef TM_GMTOFF
-                    tm->TM_GMTOFF = -timezone;
+#ifdef HAVE_TM_TM_GMTOFF
+                    tm->tm_gmtoff = -timezone;
 #endif
-#ifdef TM_ZONE
-                    tm->TM_ZONE = tzname[i];
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+                    tm->tm_zone = tzname[i];
 #endif
                     bp = ep;
                     continue;
@@ -1138,11 +1138,11 @@ out:
             if (neg)
                 offs = -offs;
             tm->tm_isdst = 0;	/* XXX */
-#ifdef TM_GMTOFF
-            tm->TM_GMTOFF = offs;
+#ifdef HAVE_TM_TM_GMTOFF
+            tm->tm_gmtoff = offs;
 #endif
-#ifdef TM_ZONE
-            tm->TM_ZONE = NULL;	/* XXX */
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+            tm->tm_zone = NULL;	/* XXX */
 #endif
             continue;
 
