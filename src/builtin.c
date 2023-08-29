@@ -1446,65 +1446,108 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   return r;
 }
 
-#define TO_TM_FIELD(t, j, i)                    \
-    do {                                        \
-      jv n = jv_array_get(jv_copy(j), (i));     \
-      if (jv_get_kind(n) != (JV_KIND_NUMBER)) { \
-        jv_free(n);                             \
-        jv_free(j);                             \
-        return 0;                               \
-      }                                         \
-      t = jv_number_value(n);                   \
-      jv_free(n);                               \
-    } while (0)
+/*
+ * Utility function for jv2tm() that returns `ifnan` if `v` is not a number in
+ * any way, and clamps the value range of `v` to `imin` and `imax`.
+ */
+static int toint(jv v, int imin, int imax, int ifnan) {
+  if (jv_get_kind(v) != (JV_KIND_NUMBER) || jvp_number_is_nan(v)) {
+    jv_free(v);
+    return ifnan;
+  }
+  double n = jv_number_value(v);
+  jv_free(v);
+  if (isinf(n)) {
+    if (n < 0.0)
+      return imin;
+    return imax;
+  }
+  if (n < imin)
+    return imin;
+  if (n > imax)
+    return imax;
+  return (int)n;
+}
 
 static int jv2tm(jv a, struct tm *tm, double *frac, char **freeme) {
   int ret = 1;
 
   *freeme = NULL;
   memset(tm, 0, sizeof(*tm));
-  TO_TM_FIELD(tm->tm_year, a, 0);
-  tm->tm_year -= 1900;
-  TO_TM_FIELD(tm->tm_mon,  a, 1);
-  TO_TM_FIELD(tm->tm_mday, a, 2);
-  TO_TM_FIELD(tm->tm_hour, a, 3);
-  TO_TM_FIELD(tm->tm_min,  a, 4);
-  TO_TM_FIELD(tm->tm_sec,  a, 5);
-  if (frac) {
-    double d = jv_number_value(jv_array_get(jv_copy(a), 5));
-
-    *frac = d - floor(d);
+  if (   (tm->tm_year = toint(jv_array_get(jv_copy(a), 0),
+                              0, 10000, 0))                             < 1
+      ||  tm->tm_year                                                   > 9999
+      || (tm->tm_mon  = toint(jv_array_get(jv_copy(a), 1), -1, 12,  -1)) < 0
+      ||  tm->tm_mon                                                    > 11
+      || (tm->tm_mday = toint(jv_array_get(jv_copy(a), 2),  0, 32,   0)) < 1
+      ||  tm->tm_mday                                                   > 31
+      || (tm->tm_hour = toint(jv_array_get(jv_copy(a), 3), -1, 24,  -1)) < 0
+      ||  tm->tm_hour                                                   > 23
+      || (tm->tm_min  = toint(jv_array_get(jv_copy(a), 4), -1, 60,  -1)) < 0
+      ||  tm->tm_min                                                    > 59
+      || (tm->tm_sec  = toint(jv_array_get(jv_copy(a), 5), -1, 61,  -1)) < 0
+      ||  tm->tm_sec                                                    > 60
+      || (tm->tm_wday = toint(jv_array_get(jv_copy(a), 6), -1, 7,   -1)) < 0
+      ||  tm->tm_wday                                                   > 6
+      || (tm->tm_yday = toint(jv_array_get(jv_copy(a), 7), -1, 366, -1)) < 0
+      ||  tm->tm_yday                                                   > 365) {
+    jv_free(a);
+    return 0;
   }
-  TO_TM_FIELD(tm->tm_wday, a, 6);
-  TO_TM_FIELD(tm->tm_yday, a, 7);
+  tm->tm_year -= 1900;
+  if (frac) {
+    // We already know this is a number, not a NaN, and in range.  We would
+    // have returned already otherwise.
+    jv n = jv_array_get(jv_copy(a), 5);
+    double d = jv_number_value(n);
+    jv_free(n);
+    *frac = d - tm->tm_sec;
+  }
   jv v = jv_array_get(jv_copy(a), 8);
   switch (jv_get_kind(v)) {
-  case JV_KIND_INVALID: break;
+  case JV_KIND_INVALID: break;  // Optional field not present
   case JV_KIND_FALSE: break;
   case JV_KIND_TRUE: tm->tm_isdst = 1; break;
-  case JV_KIND_NUMBER: tm->tm_isdst = !!(int)jv_number_value(v); break;
+  case JV_KIND_NUMBER: tm->tm_isdst = toint(v, 0, 1, 0); break;
   default: ret = 0; break;
   }
   jv_free(v);
-#ifdef HAVE_TM_TM_GMTOFF
   v = jv_array_get(jv_copy(a), 9);
-  if (jv_get_kind(v) == JV_KIND_NUMBER)
-    tm->tm_gmtoff = jv_number_value(v);
-  else if (jv_is_valid(v))
-    ret = 0;
-  jv_free(v);
-#endif
-#ifdef HAVE_STRUCT_TM_TM_ZONE
-  v = jv_array_get(jv_copy(a), 10);
-  if (jv_get_kind(v) == JV_KIND_STRING) {
-    tm->tm_zone = *freeme = strdup(jv_string_value(v));
-    if (tm->tm_zone == NULL)
+  int gmtoff;
+  switch (jv_get_kind(v)) {
+  case JV_KIND_NULL: break;     // See tm2jv()
+  case JV_KIND_INVALID: break;  // Optional field not present
+  default:
+    gmtoff = toint(jv_array_get(jv_copy(a), 9), -12 * 3600 - 1, 12 * 3600 + 1, 0);
+    if (gmtoff < -12 * 3600 || gmtoff > 12 * 3600)
       ret = 0;
-  } else if (jv_is_valid(v)) {
-    ret = 0;
-  }
+#ifdef HAVE_TM_TM_GMTOFF
+    tm->tm_gmtoff = gmtoff;
 #endif
+    break;
+  }
   jv_free(v);
+  v = jv_array_get(jv_copy(a), 10);
+  switch (jv_get_kind(v)) {
+  case JV_KIND_NULL: break;     // See tm2jv()
+  case JV_KIND_INVALID: break;  // Optional field not present
+  case JV_KIND_STRING:
+    if (jv_get_kind(v) == JV_KIND_STRING) {
+      if ((*freeme = strdup(jv_string_value(v))) == NULL)
+        ret = 0;
+    } else if (jv_is_valid(v)) {
+      ret = 0;
+    }
+    break;
+  default:
+    ret = 0;
+    break;
+  }
+  jv_free(v);
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+  tm->tm_zone = *freeme;
+#endif
+
   jv_free(a);
 
   // We use UTC everywhere (gettimeofday, gmtime) and UTC does not do DST.
@@ -1521,8 +1564,6 @@ static int jv2tm(jv a, struct tm *tm, double *frac, char **freeme) {
   }
   return ret;
 }
-
-#undef TO_TM_FIELD
 
 static jv f_mktime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY)
