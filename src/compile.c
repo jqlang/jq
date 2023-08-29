@@ -1282,7 +1282,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   }
   bc->codelen = pos;
   bc->debuginfo = jv_object_set(bc->debuginfo, jv_string("locals"), localnames);
-  if (bc->nsubfunctions) {
+  if (bc->nsubfunctions && !errors) {
     bc->subfunctions = jv_mem_calloc(sizeof(struct bytecode*), bc->nsubfunctions);
     for (inst* curr = b.first; curr; curr = curr->next) {
       if (curr->op == CLOSURE_CREATE) {
@@ -1306,6 +1306,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
       }
     }
   } else {
+    bc->nsubfunctions = 0;
     bc->subfunctions = 0;
   }
   uint16_t* code = jv_mem_calloc(sizeof(uint16_t), bc->codelen);
