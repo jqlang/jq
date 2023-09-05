@@ -1,6 +1,6 @@
 # 1.7
 
-After a five year hiatus we're back with a GitHub organization, with new admins and new maintainers who have brought a great deal of energy to make a long-awaited and long-needed new release.
+After a five year hiatus we're back with a GitHub organization, with new admins and new maintainers who have brought a great deal of energy to make a long-awaited and long-needed new release.  We're very grateful for all the new owners, admins, and maintainers.  Special thanks go to Owen Ou (@owenthereal) for pushing to set up a new GitHub organization for jq, Stephen Dolan (@stedolan) for transferring the jq repository to the new organization, @itchyny for doing a great deal of work to get the release done, Mattias Wadman (@wader) and Emanuele Torre (@emanuele6) for many PRs and code reviews.  Many others also contributed PRs, issues, and code reviews as well, and you can find their contributions in the Git log and on the [closed issues and PRs page](https://github.com/jqlang/jq/issues?q=is%3Aclosed+sort%3Aupdated-desc).
 
 Since the last stable release many things have happened:
 
