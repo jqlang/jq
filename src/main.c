@@ -2,6 +2,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
+#ifdef HAVE_SETLOCALE
+#include <locale.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -318,6 +321,10 @@ int main(int argc, char* argv[]) {
   int options = 0;
   jv ARGS = jv_array(); /* positional arguments */
   jv program_arguments = jv_object(); /* named arguments */
+
+#ifdef HAVE_SETLOCALE
+  (void) setlocale(LC_ALL, "");
+#endif
 
 #ifdef WIN32
   jv_tsd_dtoa_ctx_init();
