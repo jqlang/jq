@@ -2,6 +2,13 @@
 
 . "${0%/*}/setup" "$@"
 
+msys=false
+mingw=false
+case "$(uname -s)" in
+MSYS*)  msys=true;;
+MINGW*) mingw=true;;
+esac
+
 JQ_NO_B=$JQ
 JQ="$JQ -b"
 
@@ -496,11 +503,9 @@ cmp $d/color $d/expect
 cmp $d/warning $d/expect_warning
 
 # Check $NO_COLOR
-case "$(uname -s)" in
-MSYS*)  test_no_color=false;;
-MINGW*) test_no_color=false;;
-*)      test_no_color=true;;
-esac
+test_no_color=true
+$msys  && test_no_color=false
+$mingw && test_no_color=false
 if $test_no_color && command -v script >/dev/null 2>&1; then
   unset NO_COLOR
   if script -qc echo /dev/null >/dev/null 2>&1; then
@@ -559,6 +564,19 @@ fi
 if ! $VALGRIND $Q $JQ -n -f "$JQTESTDIR/yes-main-program.jq" > $d/out 2>&1; then
   echo "jq -f $JQTESTDIR/yes-main-program.jq failed"
   exit 1
+fi
+
+if ( ! $msys && ! $mingw ) && locale -a > /dev/null; then
+  locale=$(locale -a | egrep -v '^(C|LANG|POSIX|en)' | egrep -i 'utf8|utf-8' | head -1)
+  if [ -z "$locale" ]; then
+    echo "WARNING: Not testing localization"
+  else
+    date=$(LC_ALL="$locale" date +"%a %d %b %Y at %H:%M:%S")
+    if ! LC_ALL="$locale" ./jq -nRe --arg date "$date" '$date|strptime("%a %d %b %Y at %H:%M:%S")? // false'; then
+      echo "jq does not honor LC_ALL environment variable"
+      exit 1;
+    fi
+  fi
 fi
 
 exit 0
