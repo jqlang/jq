@@ -160,8 +160,6 @@ body:
       [sig/v1.x/\*.asc](https://github.com/jqlang/jq/tree/master/sig).
       The signatures for jq 1.7 are in
       [sig/v1.7/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.7).
-      The signatures for jq 1.7rc are in
-      [sig/v1.7rc1/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.7rc1).
       The signatures for jq 1.6 are in
       [sig/v1.6/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.6).
       The signatures for jq 1.5 are in
