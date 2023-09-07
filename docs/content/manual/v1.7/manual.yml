@@ -1,10 +1,10 @@
 ---
-headline: jq Manual (development version)
+headline: jq 1.7 Manual
 
 history: |
 
-  *For released versions, see [jq 1.7](./v1.7/), [jq 1.6](./v1.6/), [jq 1.5](./v1.5/),
-  [jq 1.4](./v1.4/) or [jq 1.3](./v1.3/).*
+  *The manual for the development version of jq can be found
+  [here](../).*
 
 body: |
 
@@ -381,29 +381,29 @@ sections:
           illustrated in one of the following examples.
 
         examples:
-          - program: '.'
+          - program: "."
             input: '"Hello, world!"'
             output: ['"Hello, world!"']
 
-          - program: '.'
-            input: '0.12345678901234567890123456789'
-            output: ['0.12345678901234567890123456789']
+          - program: "."
+            input: "0.12345678901234567890123456789"
+            output: ["0.12345678901234567890123456789"]
 
-          - program: '[., tojson]'
-            input: '12345678909876543212345'
+          - program: "[., tojson]"
+            input: "12345678909876543212345"
             output: ['[12345678909876543212345,"12345678909876543212345"]']
 
-          - program: '. < 0.12345678901234567890123456788'
-            input: '0.12345678901234567890123456789'
-            output: ['false']
+          - program: ". < 0.12345678901234567890123456788"
+            input: "0.12345678901234567890123456789"
+            output: ["false"]
 
-          - program: 'map([., . == 1]) | tojson'
-            input: '[1, 1.000, 1.0, 100e-2]'
+          - program: "map([., . == 1]) | tojson"
+            input: "[1, 1.000, 1.0, 100e-2]"
             output: ['"[[1,true],[1.000,true],[1.0,true],[1.00,true]]"']
 
-          - program: '. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000)'
-            input: '10000000000000000000000000000001'
-            output: ['[true, false]']
+          - program: ". as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000)"
+            input: "10000000000000000000000000000001"
+            output: ["[true, false]"]
 
       - title: "Object Identifier-Index: `.foo`, `.foo.bar`"
         body: |
@@ -426,17 +426,17 @@ sections:
           `.foo::bar` does not.
 
         examples:
-          - program: '.foo'
+          - program: ".foo"
             input: '{"foo": 42, "bar": "less interesting data"}'
-            output: ['42']
+            output: ["42"]
 
-          - program: '.foo'
+          - program: ".foo"
             input: '{"notfoo": true, "alsonotfoo": false}'
-            output: ['null']
+            output: ["null"]
 
           - program: '.["foo"]'
             input: '{"foo": 42}'
-            output: ['42']
+            output: ["42"]
 
       - title: "Optional Object Identifier-Index: `.foo?`"
         body: |
@@ -445,18 +445,18 @@ sections:
           object.
 
         examples:
-          - program: '.foo?'
+          - program: ".foo?"
             input: '{"foo": 42, "bar": "less interesting data"}'
-            output: ['42']
-          - program: '.foo?'
+            output: ["42"]
+          - program: ".foo?"
             input: '{"notfoo": true, "alsonotfoo": false}'
-            output: ['null']
+            output: ["null"]
           - program: '.["foo"]?'
             input: '{"foo": 42}'
-            output: ['42']
-          - program: '[.foo?]'
-            input: '[1,2]'
-            output: ['[]']
+            output: ["42"]
+          - program: "[.foo?]"
+            input: "[1,2]"
+            output: ["[]"]
 
       - title: "Object Index: `.[<string>]`"
         body: |
@@ -476,17 +476,17 @@ sections:
           element, -2 referring to the next to last element, and so on.
 
         examples:
-          - program: '.[0]'
+          - program: ".[0]"
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output: ['{"name":"JSON", "good":true}']
 
-          - program: '.[2]'
+          - program: ".[2]"
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
-            output: ['null']
+            output: ["null"]
 
-          - program: '.[-2]'
-            input: '[1,2,3]'
-            output: ['2']
+          - program: ".[-2]"
+            input: "[1,2,3]"
+            output: ["2"]
 
       - title: "Array/String Slice: `.[<number>:<number>]`"
         body: |
@@ -501,19 +501,19 @@ sections:
           Indices are zero-based.
 
         examples:
-          - program: '.[2:4]'
+          - program: ".[2:4]"
             input: '["a","b","c","d","e"]'
             output: ['["c", "d"]']
 
-          - program: '.[2:4]'
+          - program: ".[2:4]"
             input: '"abcdefghi"'
             output: ['"cd"']
 
-          - program: '.[:3]'
+          - program: ".[:3]"
             input: '["a","b","c","d","e"]'
             output: ['["a", "b", "c"]']
 
-          - program: '.[-2:]'
+          - program: ".[-2:]"
             input: '["a","b","c","d","e"]'
             output: ['["d", "e"]']
 
@@ -533,23 +533,23 @@ sections:
           Note that the iterator operator is a generator of values.
 
         examples:
-          - program: '.[]'
+          - program: ".[]"
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output:
               - '{"name":"JSON", "good":true}'
               - '{"name":"XML", "good":false}'
 
-          - program: '.[]'
-            input: '[]'
+          - program: ".[]"
+            input: "[]"
             output: []
 
-          - program: '.foo[]'
+          - program: ".foo[]"
             input: '{"foo":[1,2,3]}'
-            output: ['1','2','3']
+            output: ["1", "2", "3"]
 
-          - program: '.[]'
+          - program: ".[]"
             input: '{"a": 1, "b": 1}'
-            output: ['1', '1']
+            output: ["1", "1"]
 
       - title: "`.[]?`"
         body: |
@@ -572,15 +572,15 @@ sections:
           The `,` operator is one way to contruct generators.
 
         examples:
-          - program: '.foo, .bar'
+          - program: ".foo, .bar"
             input: '{"foo": 42, "bar": "something else", "baz": true}'
-            output: ['42', '"something else"']
+            output: ["42", '"something else"']
 
           - program: ".user, .projects[]"
             input: '{"user":"stedolan", "projects": ["jq", "wikiflow"]}'
             output: ['"stedolan"', '"jq"', '"wikiflow"']
 
-          - program: '.[4,2]'
+          - program: ".[4,2]"
             input: '["a","b","c","d","e"]'
             output: ['"e"', '"c"']
 
@@ -605,7 +605,7 @@ sections:
           middle refers to whatever value `.a` produced.
 
         examples:
-          - program: '.[] | .name'
+          - program: ".[] | .name"
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output: ['"JSON"', '"XML"']
 
@@ -616,9 +616,9 @@ sections:
           programming language.
 
         examples:
-          - program: '(. + 2) * 5'
-            input: '1'
-            output: ['15']
+          - program: "(. + 2) * 5"
+            input: "1"
+            output: ["15"]
 
   - title: Types and Values
     body: |
@@ -670,8 +670,8 @@ sections:
             input: '{"user":"stedolan", "projects": ["jq", "wikiflow"]}'
             output: ['["stedolan", "jq", "wikiflow"]']
           - program: "[ .[] | . * 2]"
-            input: '[1, 2, 3]'
-            output: ['[2, 4, 6]']
+            input: "[1, 2, 3]"
+            output: ["[2, 4, 6]"]
 
       - title: "Object Construction: `{}`"
         body: |
@@ -738,12 +738,12 @@ sections:
               {"foo":"f o o","b a r":"f o o"}
 
         examples:
-          - program: '{user, title: .titles[]}'
+          - program: "{user, title: .titles[]}"
             input: '{"user":"stedolan","titles":["JQ Primer", "More JQ"]}'
             output:
               - '{"user":"stedolan", "title": "JQ Primer"}'
               - '{"user":"stedolan", "title": "More JQ"}'
-          - program: '{(.user): .titles}'
+          - program: "{(.user): .titles}"
             input: '{"user":"stedolan","titles":["JQ Primer", "More JQ"]}'
             output: ['{"stedolan": ["JQ Primer", "More JQ"]}']
 
@@ -761,9 +761,9 @@ sections:
           (also see below) and the `?` operator.
 
         examples:
-          - program: '.. | .a?'
+          - program: ".. | .a?"
             input: '[[{"a":1}]]'
-            output: ['1']
+            output: ["1"]
 
   - title: Builtin operators and functions
     body: |
@@ -810,20 +810,20 @@ sections:
           value unchanged.
 
         examples:
-          - program: '.a + 1'
+          - program: ".a + 1"
             input: '{"a": 7}'
-            output: ['8']
-          - program: '.a + .b'
+            output: ["8"]
+          - program: ".a + .b"
             input: '{"a": [1,2], "b": [3,4]}'
-            output: ['[1,2,3,4]']
-          - program: '.a + null'
+            output: ["[1,2,3,4]"]
+          - program: ".a + null"
             input: '{"a": 1}'
-            output: ['1']
-          - program: '.a + 1'
-            input: '{}'
-            output: ['1']
-          - program: '{a: 1} + {b: 2} + {c: 3} + {a: 42}'
-            input: 'null'
+            output: ["1"]
+          - program: ".a + 1"
+            input: "{}"
+            output: ["1"]
+          - program: "{a: 1} + {b: 2} + {c: 3} + {a: 42}"
+            input: "null"
             output: ['{"a": 42, "b": 2, "c": 3}']
 
       - title: "Subtraction: `-`"
@@ -834,9 +834,9 @@ sections:
           the second array's elements from the first array.
 
         examples:
-          - program: '4 - .a'
+          - program: "4 - .a"
             input: '{"a":3}'
-            output: ['1']
+            output: ["1"]
           - program: . - ["xml", "yaml"]
             input: '["xml", "yaml", "json"]'
             output: ['["json"]']
@@ -859,18 +859,18 @@ sections:
           the same strategy.
 
         examples:
-          - program: '10 / . * 3'
-            input: '5'
-            output: ['6']
+          - program: "10 / . * 3"
+            input: "5"
+            output: ["6"]
           - program: '. / ", "'
             input: '"a, b,c,d, e"'
             output: ['["a","b,c,d","e"]']
           - program: '{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}'
-            input: 'null'
+            input: "null"
             output: ['{"k": {"a": 0, "b": 2, "c": 3}}']
-          - program: '.[] | (1 / .)?'
-            input: '[1,0,-1]'
-            output: ['1', '-1']
+          - program: ".[] | (1 / .)?"
+            input: "[1,0,-1]"
+            output: ["1", "-1"]
 
       - title: "`abs`"
         body: |
@@ -884,9 +884,9 @@ sections:
           To compute the absolute value of a number as a floating point number, you may wish use `fabs`.
 
         examples:
-          - program: 'map(abs)'
-            input: '[-10, -1.1, -1e-1]'
-            output: ['[10,1.1,1e-1]']
+          - program: "map(abs)"
+            input: "[-10, -1.1, -1e-1]"
+            output: ["[10,1.1,1e-1]"]
 
       - title: "`length`"
         body: |
@@ -909,10 +909,9 @@ sections:
           - It is an error to use `length` on a **boolean**.
 
         examples:
-          - program: '.[] | length'
+          - program: ".[] | length"
             input: '[[1,2], "string", {"a":2}, null, -5]'
-            output: ['2', '6', '1', '0', '5']
-
+            output: ["2", "6", "1", "0", "5"]
 
       - title: "`utf8bytelength`"
         body: |
@@ -921,9 +920,9 @@ sections:
           bytes used to encode a string in UTF-8.
 
         examples:
-          - program: 'utf8bytelength'
+          - program: "utf8bytelength"
             input: '"\u03bc"'
-            output: ['2']
+            output: ["2"]
 
       - title: "`keys`, `keys_unsorted`"
         body: |
@@ -945,12 +944,12 @@ sections:
           instead the keys will roughly be in insertion order.
 
         examples:
-          - program: 'keys'
+          - program: "keys"
             input: '{"abc": 1, "abcd": 2, "Foo": 3}'
             output: ['["Foo", "abc", "abcd"]']
-          - program: 'keys'
-            input: '[42,3,35]'
-            output: ['[0,1,2]']
+          - program: "keys"
+            input: "[42,3,35]"
+            output: ["[0,1,2]"]
 
       - title: "`has(key)`"
         body: |
@@ -966,10 +965,10 @@ sections:
         examples:
           - program: 'map(has("foo"))'
             input: '[{"foo": 42}, {}]'
-            output: ['[true, false]']
-          - program: 'map(has(2))'
+            output: ["[true, false]"]
+          - program: "map(has(2))"
             input: '[[0,1], ["a","b","c"]]'
-            output: ['[false, true]']
+            output: ["[false, true]"]
 
       - title: "`in`"
         body: |
@@ -982,10 +981,10 @@ sections:
         examples:
           - program: '.[] | in({"foo": 42})'
             input: '["foo", "bar"]'
-            output: ['true', 'false']
-          - program: 'map(in([0,1]))'
-            input: '[2, 0]'
-            output: ['[false, true]']
+            output: ["true", "false"]
+          - program: "map(in([0,1]))"
+            input: "[2, 0]"
+            output: ["[false, true]"]
 
       - title: "`map(f)`, `map_values(f)`"
         body: |
@@ -1032,24 +1031,22 @@ sections:
 
           In fact, these are their implementations.
 
-
         examples:
-          - program: 'map(.+1)'
-            input: '[1,2,3]'
-            output: ['[2,3,4]']
+          - program: "map(.+1)"
+            input: "[1,2,3]"
+            output: ["[2,3,4]"]
 
-          - program: 'map_values(.+1)'
+          - program: "map_values(.+1)"
             input: '{"a": 1, "b": 2, "c": 3}'
             output: ['{"a": 2, "b": 3, "c": 4}']
 
-          - program: 'map(., .)'
-            input: '[1,2]'
-            output: ['[1,1,2,2]']
+          - program: "map(., .)"
+            input: "[1,2]"
+            output: ["[1,1,2,2]"]
 
-          - program: 'map_values(. // empty)'
+          - program: "map_values(. // empty)"
             input: '{"a": null, "b": true, "c": false}'
             output: ['{"b":true}']
-
 
       - title: "`pick(pathexps)`"
         body: |
@@ -1061,14 +1058,13 @@ sections:
           indices and `.[m:n]` specifications should not be used.
 
         examples:
-          - program: 'pick(.a, .b.c, .x)'
+          - program: "pick(.a, .b.c, .x)"
             input: '{"a": 1, "b": {"c": 2, "d": 3}, "e": 4}'
             output: ['{"a":1,"b":{"c":2},"x":null}']
 
-          - program: '[1,2,3,4] | pick(.[2], .[0], .[0])'
-            input: '[1,2,3,4]'
-            output: ['[1,null,3]']
-
+          - program: "[1,2,3,4] | pick(.[2], .[0], .[0])"
+            input: "[1,2,3,4]"
+            output: ["[1,null,3]"]
 
       - title: "`path(path_expression)`"
         body: |
@@ -1095,10 +1091,10 @@ sections:
           boolean values in `.`, and only those paths.
 
         examples:
-          - program: 'path(.a[0].b)'
-            input: 'null'
+          - program: "path(.a[0].b)"
+            input: "null"
             output: ['["a",0,"b"]']
-          - program: '[path(..)]'
+          - program: "[path(..)]"
             input: '{"a":[{"b":1}]}'
             output: ['[[],["a"],["a",0],["a",0,"b"]]']
 
@@ -1109,10 +1105,10 @@ sections:
           value from an object.
 
         examples:
-          - program: 'del(.foo)'
+          - program: "del(.foo)"
             input: '{"foo": 42, "bar": 9001, "baz": 42}'
             output: ['{"bar": 9001, "baz": 42}']
-          - program: 'del(.[1, 2])'
+          - program: "del(.[1, 2])"
             input: '["foo", "bar", "baz"]'
             output: ['["foo"]']
 
@@ -1124,11 +1120,11 @@ sections:
 
         examples:
           - program: 'getpath(["a","b"])'
-            input: 'null'
-            output: ['null']
+            input: "null"
+            output: ["null"]
           - program: '[getpath(["a","b"], ["a","c"])]'
             input: '{"a":{"b":0, "c":1}}'
-            output: ['[0, 1]']
+            output: ["[0, 1]"]
 
       - title: "`setpath(PATHS; VALUE)`"
         body: |
@@ -1137,13 +1133,13 @@ sections:
 
         examples:
           - program: 'setpath(["a","b"]; 1)'
-            input: 'null'
+            input: "null"
             output: ['{"a": {"b": 1}}']
           - program: 'setpath(["a","b"]; 1)'
             input: '{"a":{"b":0}}'
             output: ['{"a": {"b": 1}}']
           - program: 'setpath([0,"a"]; 1)'
-            input: 'null'
+            input: "null"
             output: ['[{"a":1}]']
 
       - title: "`delpaths(PATHS)`"
@@ -1173,16 +1169,15 @@ sections:
           `"value"`, and `"Value"` as keys.
 
         examples:
-          - program: 'to_entries'
+          - program: "to_entries"
             input: '{"a": 1, "b": 2}'
             output: ['[{"key":"a", "value":1}, {"key":"b", "value":2}]']
-          - program: 'from_entries'
+          - program: "from_entries"
             input: '[{"key":"a", "value":1}, {"key":"b", "value":2}]'
             output: ['{"a": 1, "b": 2}']
           - program: 'with_entries(.key |= "KEY_" + .)'
             input: '{"a": 1, "b": 2}'
             output: ['{"KEY_a": 1, "KEY_b": 2}']
-
 
       - title: "`select(boolean_expression)`"
         body: |
@@ -1195,13 +1190,12 @@ sections:
           will give you `[2,3]`.
 
         examples:
-          - program: 'map(select(. >= 2))'
-            input: '[1,5,3,0,7]'
-            output: ['[5,3,7]']
+          - program: "map(select(. >= 2))"
+            input: "[1,5,3,0,7]"
+            output: ["[5,3,7]"]
           - program: '.[] | select(.id == "second")'
             input: '[{"id": "first", "val": 1}, {"id": "second", "val": 2}]'
             output: ['{"id": "second", "val": 2}']
-
 
       - title: "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `normals`, `finites`, `strings`, `nulls`, `values`, `scalars`"
         body: |
@@ -1212,9 +1206,9 @@ sections:
           non-iterables, respectively.
 
         examples:
-          - program: '.[]|numbers'
+          - program: ".[]|numbers"
             input: '[[],{},1,"foo",null,true,false]'
-            output: ['1']
+            output: ["1"]
 
       - title: "`empty`"
         body: |
@@ -1224,12 +1218,12 @@ sections:
           It's useful on occasion. You'll know if you need it :)
 
         examples:
-          - program: '1, empty, 2'
-            input: 'null'
-            output: ['1', '2']
-          - program: '[1,2,empty,3]'
-            input: 'null'
-            output: ['[1,2,3]']
+          - program: "1, empty, 2"
+            input: "null"
+            output: ["1", "2"]
+          - program: "[1,2,empty,3]"
+            input: "null"
+            output: ["[1,2,3]"]
 
       - title: "`error`, `error(message)`"
         body: |
@@ -1239,12 +1233,12 @@ sections:
           see below.
 
         examples:
-          - program: 'try error catch .'
+          - program: "try error catch ."
             input: '"error message"'
             output: ['"error message"']
 
           - program: 'try error("invalid value: \(.)") catch .'
-            input: '42'
+            input: "42"
             output: ['"invalid value: 42"']
 
       - title: "`halt`"
@@ -1274,7 +1268,7 @@ sections:
 
         examples:
           - program: 'try error("\($__loc__)") catch .'
-            input: 'null'
+            input: "null"
             output: ['"{\"file\":\"<top-level>\",\"line\":1}"']
 
       - title: "`paths`, `paths(node_filter)`"
@@ -1289,7 +1283,7 @@ sections:
           values.
 
         examples:
-          - program: '[paths]'
+          - program: "[paths]"
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1],[1,0],[1,1],[1,1,"a"]]']
           - program: '[paths(type == "number")]'
@@ -1312,10 +1306,10 @@ sections:
             input: '["a","b","c"]'
             output: ['"abc"']
           - program: add
-            input: '[1, 2, 3]'
-            output: ['6']
+            input: "[1, 2, 3]"
+            output: ["6"]
           - program: add
-            input: '[]'
+            input: "[]"
             output: ["null"]
 
       - title: "`any`, `any(condition)`, `any(generator; condition)`"
@@ -1335,13 +1329,13 @@ sections:
 
         examples:
           - program: any
-            input: '[true, false]'
+            input: "[true, false]"
             output: ["true"]
           - program: any
-            input: '[false, false]'
+            input: "[false, false]"
             output: ["false"]
           - program: any
-            input: '[]'
+            input: "[]"
             output: ["false"]
 
       - title: "`all`, `all(condition)`, `all(generator; condition)`"
@@ -1361,13 +1355,13 @@ sections:
 
         examples:
           - program: all
-            input: '[true, false]'
+            input: "[true, false]"
             output: ["false"]
           - program: all
-            input: '[true, true]'
+            input: "[true, true]"
             output: ["true"]
           - program: all
-            input: '[]'
+            input: "[]"
             output: ["true"]
 
       - title: "`flatten`, `flatten(depth)`"
@@ -1383,13 +1377,13 @@ sections:
 
         examples:
           - program: flatten
-            input: '[1, [2], [[3]]]'
+            input: "[1, [2], [[3]]]"
             output: ["[1, 2, 3]"]
           - program: flatten(1)
-            input: '[1, [2], [[3]]]'
+            input: "[1, [2], [[3]]]"
             output: ["[1, 2, [3]]"]
           - program: flatten
-            input: '[[]]'
+            input: "[[]]"
             output: ["[]"]
           - program: flatten
             input: '[{"foo": "bar"}, [{"foo": "baz"}]]'
@@ -1413,24 +1407,24 @@ sections:
           with an increment of `by`.
 
         examples:
-          - program: 'range(2; 4)'
-            input: 'null'
-            output: ['2', '3']
-          - program: '[range(2; 4)]'
-            input: 'null'
-            output: ['[2,3]']
-          - program: '[range(4)]'
-            input: 'null'
-            output: ['[0,1,2,3]']
-          - program: '[range(0; 10; 3)]'
-            input: 'null'
-            output: ['[0,3,6,9]']
-          - program: '[range(0; 10; -1)]'
-            input: 'null'
-            output: ['[]']
-          - program: '[range(0; -5; -1)]'
-            input: 'null'
-            output: ['[0,-1,-2,-3,-4]']
+          - program: "range(2; 4)"
+            input: "null"
+            output: ["2", "3"]
+          - program: "[range(2; 4)]"
+            input: "null"
+            output: ["[2,3]"]
+          - program: "[range(4)]"
+            input: "null"
+            output: ["[0,1,2,3]"]
+          - program: "[range(0; 10; 3)]"
+            input: "null"
+            output: ["[0,3,6,9]"]
+          - program: "[range(0; 10; -1)]"
+            input: "null"
+            output: ["[]"]
+          - program: "[range(0; -5; -1)]"
+            input: "null"
+            output: ["[0,-1,-2,-3,-4]"]
 
       - title: "`floor`"
         body: |
@@ -1438,9 +1432,9 @@ sections:
           The `floor` function returns the floor of its numeric input.
 
         examples:
-          - program: 'floor'
-            input: '3.14159'
-            output: ['3']
+          - program: "floor"
+            input: "3.14159"
+            output: ["3"]
 
       - title: "`sqrt`"
         body: |
@@ -1448,9 +1442,9 @@ sections:
           The `sqrt` function returns the square root of its numeric input.
 
         examples:
-          - program: 'sqrt'
-            input: '9'
-            output: ['3']
+          - program: "sqrt"
+            input: "9"
+            output: ["3"]
 
       - title: "`tonumber`"
         body: |
@@ -1460,9 +1454,9 @@ sections:
           equivalent, leave numbers alone, and give an error on all other input.
 
         examples:
-          - program: '.[] | tonumber'
+          - program: ".[] | tonumber"
             input: '[1, "1"]'
-            output: ['1', '1']
+            output: ["1", "1"]
 
       - title: "`tostring`"
         body: |
@@ -1472,7 +1466,7 @@ sections:
           JSON-encoded.
 
         examples:
-          - program: '.[] | tostring'
+          - program: ".[] | tostring"
             input: '[1, "1", [1]]'
             output: ['"1"', '"1"', '"[1]"']
 
@@ -1484,9 +1478,10 @@ sections:
           or object.
 
         examples:
-          - program: 'map(type)'
+          - program: "map(type)"
             input: '[0, false, [], {}, null, "hello"]'
-            output: ['["number", "boolean", "array", "object", "null", "string"]']
+            output:
+              ['["number", "boolean", "array", "object", "null", "string"]']
 
       - title: "`infinite`, `nan`, `isinfinite`, `isnan`, `isfinite`, `isnormal`"
         body: |
@@ -1505,11 +1500,11 @@ sections:
           NaNs, and sub-normals do not raise errors.
 
         examples:
-          - program: '.[] | (infinite * .) < 0'
-            input: '[-1, 1]'
-            output: ['true', 'false']
-          - program: 'infinite, nan | type'
-            input: 'null'
+          - program: ".[] | (infinite * .) < 0"
+            input: "[-1, 1]"
+            output: ["true", "false"]
+          - program: "infinite, nan | type"
+            input: "null"
             output: ['"number"', '"number"']
 
       - title: "`sort`, `sort_by(path_expression)`"
@@ -1539,17 +1534,21 @@ sections:
           equal, and so on.
 
         examples:
-          - program: 'sort'
-            input: '[8,3,null,6]'
-            output: ['[null,3,6,8]']
+          - program: "sort"
+            input: "[8,3,null,6]"
+            output: ["[null,3,6,8]"]
 
-          - program: 'sort_by(.foo)'
+          - program: "sort_by(.foo)"
             input: '[{"foo":4, "bar":10}, {"foo":3, "bar":10}, {"foo":2, "bar":1}]'
-            output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":4, "bar":10}]']
+            output:
+              ['[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":4, "bar":10}]']
 
-          - program: 'sort_by(.foo, .bar)'
+          - program: "sort_by(.foo, .bar)"
             input: '[{"foo":4, "bar":10}, {"foo":3, "bar":20}, {"foo":2, "bar":1}, {"foo":3, "bar":10}]'
-            output: ['[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":3, "bar":20}, {"foo":4, "bar":10}]']
+            output:
+              [
+                '[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":3, "bar":20}, {"foo":4, "bar":10}]',
+              ]
 
       - title: "`group_by(path_expression)`"
         body: |
@@ -1564,9 +1563,12 @@ sections:
           in the `sort` function above.
 
         examples:
-          - program: 'group_by(.foo)'
+          - program: "group_by(.foo)"
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
-            output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
+            output:
+              [
+                '[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]',
+              ]
 
       - title: "`min`, `max`, `min_by(path_exp)`, `max_by(path_exp)`"
         body: |
@@ -1578,10 +1580,10 @@ sections:
           `min_by(.foo)` finds the object with the smallest `foo` field.
 
         examples:
-          - program: 'min'
-            input: '[5,4,2,7]'
-            output: ['2']
-          - program: 'max_by(.foo)'
+          - program: "min"
+            input: "[5,4,2,7]"
+            output: ["2"]
+          - program: "max_by(.foo)"
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']
 
@@ -1598,13 +1600,13 @@ sections:
           produced by `group`.
 
         examples:
-          - program: 'unique'
-            input: '[1,2,5,3,5,3,1,3]'
-            output: ['[1,2,3,5]']
-          - program: 'unique_by(.foo)'
+          - program: "unique"
+            input: "[1,2,5,3,5,3,1,3]"
+            output: ["[1,2,3,5]"]
+          - program: "unique_by(.foo)"
             input: '[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]'
             output: ['[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]']
-          - program: 'unique_by(length)'
+          - program: "unique_by(length)"
             input: '["chunky", "bacon", "kitten", "cicada", "asparagus"]'
             output: ['["bacon", "chunky", "asparagus"]']
 
@@ -1614,9 +1616,9 @@ sections:
           This function reverses an array.
 
         examples:
-          - program: 'reverse'
-            input: '[1,2,3,4]'
-            output: ['[4,3,2,1]']
+          - program: "reverse"
+            input: "[1,2,3,4]"
+            output: ["[4,3,2,1]"]
 
       - title: "`contains(element)`"
         body: |
@@ -1633,19 +1635,19 @@ sections:
         examples:
           - program: 'contains("bar")'
             input: '"foobar"'
-            output: ['true']
+            output: ["true"]
           - program: 'contains(["baz", "bar"])'
             input: '["foobar", "foobaz", "blarp"]'
-            output: ['true']
+            output: ["true"]
           - program: 'contains(["bazzzzz", "bar"])'
             input: '["foobar", "foobaz", "blarp"]'
-            output: ['false']
-          - program: 'contains({foo: 12, bar: [{barp: 12}]})'
+            output: ["false"]
+          - program: "contains({foo: 12, bar: [{barp: 12}]})"
             input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
-            output: ['true']
-          - program: 'contains({foo: 12, bar: [{barp: 15}]})'
+            output: ["true"]
+          - program: "contains({foo: 12, bar: [{barp: 15}]})"
             input: '{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}'
-            output: ['false']
+            output: ["false"]
 
       - title: "`indices(s)`"
         body: |
@@ -1658,13 +1660,13 @@ sections:
         examples:
           - program: 'indices(", ")'
             input: '"a,b, cd, efg, hijk"'
-            output: ['[3,7,12]']
-          - program: 'indices(1)'
-            input: '[0,1,2,1,3,1,4]'
-            output: ['[1,3,5]']
-          - program: 'indices([1,2])'
-            input: '[0,1,2,3,1,4,2,5,1,2,6,7]'
-            output: ['[1,8]']
+            output: ["[3,7,12]"]
+          - program: "indices(1)"
+            input: "[0,1,2,1,3,1,4]"
+            output: ["[1,3,5]"]
+          - program: "indices([1,2])"
+            input: "[0,1,2,3,1,4,2,5,1,2,6,7]"
+            output: ["[1,8]"]
 
       - title: "`index(s)`, `rindex(s)`"
         body: |
@@ -1675,22 +1677,22 @@ sections:
         examples:
           - program: 'index(", ")'
             input: '"a,b, cd, efg, hijk"'
-            output: ['3']
-          - program: 'index(1)'
-            input: '[0,1,2,1,3,1,4]'
-            output: ['1']
-          - program: 'index([1,2])'
-            input: '[0,1,2,3,1,4,2,5,1,2,6,7]'
-            output: ['1']
+            output: ["3"]
+          - program: "index(1)"
+            input: "[0,1,2,1,3,1,4]"
+            output: ["1"]
+          - program: "index([1,2])"
+            input: "[0,1,2,3,1,4,2,5,1,2,6,7]"
+            output: ["1"]
           - program: 'rindex(", ")'
             input: '"a,b, cd, efg, hijk"'
-            output: ['12']
-          - program: 'rindex(1)'
-            input: '[0,1,2,1,3,1,4]'
-            output: ['5']
-          - program: 'rindex([1,2])'
-            input: '[0,1,2,3,1,4,2,5,1,2,6,7]'
-            output: ['8']
+            output: ["12"]
+          - program: "rindex(1)"
+            input: "[0,1,2,1,3,1,4]"
+            output: ["5"]
+          - program: "rindex([1,2])"
+            input: "[0,1,2,3,1,4,2,5,1,2,6,7]"
+            output: ["8"]
 
       - title: "`inside`"
         body: |
@@ -1702,19 +1704,19 @@ sections:
         examples:
           - program: 'inside("foobar")'
             input: '"bar"'
-            output: ['true']
+            output: ["true"]
           - program: 'inside(["foobar", "foobaz", "blarp"])'
             input: '["baz", "bar"]'
-            output: ['true']
+            output: ["true"]
           - program: 'inside(["foobar", "foobaz", "blarp"])'
             input: '["bazzzzz", "bar"]'
-            output: ['false']
+            output: ["false"]
           - program: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
             input: '{"foo": 12, "bar": [{"barp": 12}]}'
-            output: ['true']
+            output: ["true"]
           - program: 'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})'
             input: '{"foo": 12, "bar": [{"barp": 15}]}'
-            output: ['false']
+            output: ["false"]
 
       - title: "`startswith(str)`"
         body: |
@@ -1724,7 +1726,7 @@ sections:
         examples:
           - program: '[.[]|startswith("foo")]'
             input: '["fo", "foo", "barfoo", "foobar", "barfoob"]'
-            output: ['[false, true, false, true, false]']
+            output: ["[false, true, false, true, false]"]
 
       - title: "`endswith(str)`"
         body: |
@@ -1734,7 +1736,7 @@ sections:
         examples:
           - program: '[.[]|endswith("foo")]'
             input: '["foobar", "barfoo"]'
-            output: ['[false, true]']
+            output: ["[false, true]"]
 
       - title: "`combinations`, `combinations(n)`"
         body: |
@@ -1744,12 +1746,12 @@ sections:
           of `n` repetitions of the input array.
 
         examples:
-          - program: 'combinations'
-            input: '[[1,2], [3, 4]]'
-            output: ['[1, 3]', '[1, 4]', '[2, 3]', '[2, 4]']
-          - program: 'combinations(2)'
-            input: '[0, 1]'
-            output: ['[0, 0]', '[0, 1]', '[1, 0]', '[1, 1]']
+          - program: "combinations"
+            input: "[[1,2], [3, 4]]"
+            output: ["[1, 3]", "[1, 4]", "[2, 3]", "[2, 4]"]
+          - program: "combinations(2)"
+            input: "[0, 1]"
+            output: ["[0, 0]", "[0, 1]", "[1, 0]", "[1, 1]"]
 
       - title: "`ltrimstr(str)`"
         body: |
@@ -1780,9 +1782,9 @@ sections:
           codepoint numbers.
 
         examples:
-          - program: 'explode'
+          - program: "explode"
             input: '"foobar"'
-            output: ['[102,111,111,98,97,114]']
+            output: ["[102,111,111,98,97,114]"]
 
       - title: "`implode`"
         body: |
@@ -1790,8 +1792,8 @@ sections:
           The inverse of explode.
 
         examples:
-          - program: 'implode'
-            input: '[65, 66, 67]'
+          - program: "implode"
+            input: "[65, 66, 67]"
             output: ['"ABC"']
 
       - title: "`split(str)`"
@@ -1834,7 +1836,7 @@ sections:
           converted to the specified case.
 
         examples:
-          - program: 'ascii_upcase'
+          - program: "ascii_upcase"
             input: '"useful but not for é"'
             output: ['"USEFUL BUT NOT FOR é"']
 
@@ -1850,9 +1852,9 @@ sections:
           output for each input.  See advanced topics below.
 
         examples:
-          - program: '[while(.<100; .*2)]'
-            input: '1'
-            output: ['[1,2,4,8,16,32,64]']
+          - program: "[while(.<100; .*2)]"
+            input: "1"
+            output: ["[1,2,4,8,16,32,64]"]
 
       - title: "`repeat(exp)`"
         body: |
@@ -1866,9 +1868,9 @@ sections:
           output for each input.  See advanced topics below.
 
         examples:
-          - program: '[repeat(.*2, error)?]'
-            input: '1'
-            output: ['[2]']
+          - program: "[repeat(.*2, error)?]"
+            input: "1"
+            output: ["[2]"]
 
       - title: "`until(cond; next)`"
         body: |
@@ -1884,10 +1886,9 @@ sections:
           output for each input.  See advanced topics below.
 
         examples:
-          - program: '[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]'
-            input: '4'
-            output: ['24']
-
+          - program: "[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]"
+            input: "4"
+            output: ["24"]
 
       - title: "`recurse(f)`, `recurse`, `recurse(f; condition)`"
         body: |
@@ -1928,7 +1929,7 @@ sections:
           input.
 
         examples:
-          - program: 'recurse(.foo[])'
+          - program: "recurse(.foo[])"
             input: '{"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}'
             output:
               - '{"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}'
@@ -1936,17 +1937,17 @@ sections:
               - '{"foo":[{"foo":[]}]}'
               - '{"foo":[]}'
 
-          - program: 'recurse'
+          - program: "recurse"
             input: '{"a":0,"b":[1]}'
             output:
               - '{"a":0,"b":[1]}'
-              - '0'
-              - '[1]'
-              - '1'
+              - "0"
+              - "[1]"
+              - "1"
 
-          - program: 'recurse(. * .; . < 20)'
-            input: '2'
-            output: ['2', '4', '16']
+          - program: "recurse(. * .; . < 20)"
+            input: "2"
+            output: ["2", "4", "16"]
 
       - title: "`walk(f)`"
         body: |
@@ -1965,9 +1966,9 @@ sections:
 
         examples:
           - program: 'walk(if type == "array" then sort else . end)'
-            input: '[[4, 1, 7], [8, 5, 2], [3, 6, 9]]'
+            input: "[[4, 1, 7], [8, 5, 2], [3, 6, 9]]"
             output:
-              - '[[1,4,7],[2,5,8],[3,6,9]]'
+              - "[[1,4,7],[2,5,8],[3,6,9]]"
 
           - program: 'walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . end )'
             input: '[ { "_a": { "__b": 2 } } ]'
@@ -1999,12 +2000,12 @@ sections:
           variables.
 
         examples:
-          - program: '$ENV.PAGER'
-            input: 'null'
+          - program: "$ENV.PAGER"
+            input: "null"
             output: ['"less"']
 
-          - program: 'env.PAGER'
-            input: 'null'
+          - program: "env.PAGER"
+            input: "null"
             output: ['"less"']
 
       - title: "`transpose`"
@@ -2014,9 +2015,9 @@ sections:
           Rows are padded with nulls so the result is always rectangular.
 
         examples:
-          - program: 'transpose'
-            input: '[[1], [2,3]]'
-            output: ['[[1,2],[null,3]]']
+          - program: "transpose"
+            input: "[[1], [2,3]]"
+            output: ["[[1,2],[null,3]]"]
 
       - title: "`bsearch(x)`"
         body: |
@@ -2031,15 +2032,15 @@ sections:
           interest.
 
         examples:
-          - program: 'bsearch(0)'
-            input: '[0,1]'
-            output: ['0']
-          - program: 'bsearch(0)'
-            input: '[1,2,3]'
-            output: ['-1']
-          - program: 'bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end'
-            input: '[1,2,3]'
-            output: ['[1,2,3,4]']
+          - program: "bsearch(0)"
+            input: "[0,1]"
+            output: ["0"]
+          - program: "bsearch(0)"
+            input: "[1,2,3]"
+            output: ["-1"]
+          - program: "bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end"
+            input: "[1,2,3]"
+            output: ["[1,2,3,4]"]
 
       - title: "String interpolation: `\\(exp)`"
         body: |
@@ -2050,7 +2051,7 @@ sections:
 
         examples:
           - program: '"The input was \(.), which is one less than \(.+1)"'
-            input: '42'
+            input: "42"
             output: ['"The input was 42, which is one less than 43"']
 
       - title: "Convert to/from JSON"
@@ -2062,13 +2063,13 @@ sections:
           unmodified, while `tojson` encodes strings as JSON strings.
 
         examples:
-          - program: '[.[]|tostring]'
+          - program: "[.[]|tostring]"
             input: '[1, "foo", ["foo"]]'
             output: ['["1","foo","[\"foo\"]"]']
-          - program: '[.[]|tojson]'
+          - program: "[.[]|tojson]"
             input: '[1, "foo", ["foo"]]'
             output: ['["1","\"foo\"","[\"foo\"]"]']
-          - program: '[.[]|tojson|fromjson]'
+          - program: "[.[]|tojson|fromjson]"
             input: '[1, "foo", ["foo"]]'
             output: ['[1,"foo",["foo"]]']
 
@@ -2147,19 +2148,19 @@ sections:
           not escaped, as they were part of the string literal.
 
         examples:
-          - program: '@html'
+          - program: "@html"
             input: '"This works if x < y"'
             output: ['"This works if x &lt; y"']
 
           - program: '@sh "echo \(.)"'
-            input: "\"O'Hara's Ale\""
+            input: '"O''Hara''s Ale"'
             output: ["\"echo 'O'\\\\''Hara'\\\\''s Ale'\""]
 
-          - program: '@base64'
+          - program: "@base64"
             input: '"This is a message"'
             output: ['"VGhpcyBpcyBhIG1lc3NhZ2U="']
 
-          - program: '@base64d'
+          - program: "@base64d"
             input: '"VGhpcyBpcyBhIG1lc3NhZ2U="'
             output: ['"This is a message"']
 
@@ -2226,17 +2227,17 @@ sections:
           `strptime(fmt)` are not supported on macOS.
 
         examples:
-          - program: 'fromdate'
+          - program: "fromdate"
             input: '"2015-03-05T23:51:47Z"'
-            output: ['1425599507']
+            output: ["1425599507"]
 
           - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")'
             input: '"2015-03-05T23:51:47Z"'
-            output: ['[2015,2,5,23,51,47,4,63]']
+            output: ["[2015,2,5,23,51,47,4,63]"]
 
           - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")|mktime'
             input: '"2015-03-05T23:51:47Z"'
-            output: ['1425599507']
+            output: ["1425599507"]
 
       - title: "SQL-Style Operators"
         body: |
@@ -2301,17 +2302,17 @@ sections:
           != is "not equal", and 'a != b' returns the opposite value of 'a == b'
 
         examples:
-          - program: '. == false'
-            input: 'null'
-            output: ['false']
+          - program: ". == false"
+            input: "null"
+            output: ["false"]
 
           - program: '. == {"b": {"d": (4 + 1e-20), "c": 3}, "a":1}'
             input: '{"a":1, "b": {"c": 3, "d": 4}}'
-            output: ['true']
+            output: ["true"]
 
-          - program: '.[] == 1'
+          - program: ".[] == 1"
             input: '[1, 1.0, "1", "banana"]'
-            output: ['true', 'true', 'false', 'false']
+            output: ["true", "true", "false", "false"]
 
       - title: if-then-else-end
         body: |
@@ -2346,7 +2347,7 @@ sections:
               else
                 "many"
               end
-            input: '2'
+            input: "2"
             output: ['"many"']
 
       - title: "`>`, `>=`, `<=`, `<`"
@@ -2360,9 +2361,9 @@ sections:
           The ordering is the same as that described for `sort`, above.
 
         examples:
-          - program: '. < 5'
-            input: '2'
-            output: ['true']
+          - program: ". < 5"
+            input: "2"
+            output: ["true"]
 
       - title: "`and`, `or`, `not`"
         body: |
@@ -2389,17 +2390,17 @@ sections:
 
         examples:
           - program: '42 and "a string"'
-            input: 'null'
-            output: ['true']
-          - program: '(true, false) or false'
-            input: 'null'
-            output: ['true', 'false']
-          - program: '(true, true) and (true, false)'
-            input: 'null'
-            output: ['true', 'false', 'true', 'false']
-          - program: '[true, false | not]'
-            input: 'null'
-            output: ['[false, true]']
+            input: "null"
+            output: ["true"]
+          - program: "(true, false) or false"
+            input: "null"
+            output: ["true", "false"]
+          - program: "(true, true) and (true, false)"
+            input: "null"
+            output: ["true", "false", "true", "false"]
+          - program: "[true, false | not]"
+            input: "null"
+            output: ["[false, true]"]
 
       - title: "Alternative operator: `//`"
         body: |
@@ -2436,21 +2437,21 @@ sections:
           produced.
 
         examples:
-          - program: 'empty // 42'
-            input: 'null'
-            output: ['42']
-          - program: '.foo // 42'
+          - program: "empty // 42"
+            input: "null"
+            output: ["42"]
+          - program: ".foo // 42"
             input: '{"foo": 19}'
-            output: ['19']
-          - program: '.foo // 42'
-            input: '{}'
-            output: ['42']
-          - program: '(false, null, 1) // 42'
-            input: 'null'
-            output: ['1']
-          - program: '(false, null, 1) | . // 42'
-            input: 'null'
-            output: ['42', '42', '1']
+            output: ["19"]
+          - program: ".foo // 42"
+            input: "{}"
+            output: ["42"]
+          - program: "(false, null, 1) // 42"
+            input: "null"
+            output: ["1"]
+          - program: "(false, null, 1) | . // 42"
+            input: "null"
+            output: ["42", "42", "1"]
 
       - title: try-catch
         body: |
@@ -2465,13 +2466,13 @@ sections:
 
         examples:
           - program: 'try .a catch ". is not an object"'
-            input: 'true'
+            input: "true"
             output: ['". is not an object"']
-          - program: '[.[]|try .a]'
+          - program: "[.[]|try .a]"
             input: '[{}, true, {"a":1}]'
-            output: ['[null, 1]']
+            output: ["[null, 1]"]
           - program: 'try error("some exception") catch .'
-            input: 'true'
+            input: "true"
             output: ['"some exception"']
 
       - title: Breaking out of control structures
@@ -2514,12 +2515,12 @@ sections:
           The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
 
         examples:
-          - program: '[.[] | .a?]'
+          - program: "[.[] | .a?]"
             input: '[{}, true, {"a":1}]'
-            output: ['[null, 1]']
-          - program: '[.[] | tonumber?]'
+            output: ["[null, 1]"]
+          - program: "[.[] | tonumber?]"
             input: '["1", "invalid", "3", 4]'
-            output: ['[1, 3, 4]']
+            output: ["[1, 3, 4]"]
 
   - title: Regular expressions
     body: |
@@ -2581,10 +2582,10 @@ sections:
         examples:
           - program: 'test("foo")'
             input: '"foo"'
-            output: ['true']
+            output: ["true"]
           - program: '.[] | test("a b c # spaces are ignored"; "ix")'
             input: '["xabcd", "ABC"]'
-            output: ['true', 'true']
+            output: ["true", "true"]
 
       - title: "`match(val)`, `match(regex; flags)`"
         body: |
@@ -2610,33 +2611,33 @@ sections:
           - program: 'match("(abc)+"; "g")'
             input: '"abc abc"'
             output:
-             - '{"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}'
-             - '{"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}'
+              - '{"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}'
+              - '{"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}'
           - program: 'match("foo")'
             input: '"foo bar foo"'
-            output: ['{"offset": 0, "length": 3, "string": "foo", "captures": []}']
+            output:
+              ['{"offset": 0, "length": 3, "string": "foo", "captures": []}']
           - program: 'match(["foo", "ig"])'
             input: '"foo bar FOO"'
             output:
-             - '{"offset": 0, "length": 3, "string": "foo", "captures": []}'
-             - '{"offset": 8, "length": 3, "string": "FOO", "captures": []}'
+              - '{"offset": 0, "length": 3, "string": "foo", "captures": []}'
+              - '{"offset": 8, "length": 3, "string": "FOO", "captures": []}'
           - program: 'match("foo (?<bar123>bar)? foo"; "ig")'
             input: '"foo bar foo foo  foo"'
             output:
-             - '{"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}'
-             - '{"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}'
+              - '{"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}'
+              - '{"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}'
 
           - program: '[ match("."; "g")] | length'
             input: '"abc"'
-            output: ['3']
-
+            output: ["3"]
 
       - title: "`capture(val)`, `capture(regex; flags)`"
         body: |
 
-         Collects the named captures in a JSON object, with the name
-         of each capture as the key, and the matched string as the
-         corresponding value.
+          Collects the named captures in a JSON object, with the name
+          of each capture as the key, and the matched string as the
+          corresponding value.
 
         examples:
           - program: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
@@ -2670,7 +2671,6 @@ sections:
             input: '"ab,cd, ef"'
             output: ['["ab","cd","ef"]']
 
-
       - title: "`splits(regex)`, `splits(regex; flags)`"
         body: |
 
@@ -2680,7 +2680,7 @@ sections:
         examples:
           - program: 'splits(", *")'
             input: '"ab,cd,   ef, gh"'
-            output: ['"ab"','"cd"','"ef"','"gh"']
+            output: ['"ab"', '"cd"', '"ef"', '"gh"']
 
       - title: "`sub(regex; tostring)`, `sub(regex; tostring; flags)`"
         body: |
@@ -2718,7 +2718,6 @@ sections:
           - program: '[gsub("p"; "a", "b")]'
             input: '"p"'
             output: ['["a","b"]']
-
 
   - title: Advanced features
     body: |
@@ -2838,20 +2837,20 @@ sections:
           will not be visible where the old one was.
 
         examples:
-          - program: '.bar as $x | .foo | . + $x'
+          - program: ".bar as $x | .foo | . + $x"
             input: '{"foo":10, "bar":200}'
-            output: ['210']
-          - program: '. as $i|[(.*2|. as $i| $i), $i]'
-            input: '5'
-            output: ['[10,5]']
-          - program: '. as [$a, $b, {c: $c}] | $a + $b + $c'
+            output: ["210"]
+          - program: ". as $i|[(.*2|. as $i| $i), $i]"
+            input: "5"
+            output: ["[10,5]"]
+          - program: ". as [$a, $b, {c: $c}] | $a + $b + $c"
             input: '[2, 3, {"c": 4, "d": 5}]'
-            output: ['9']
-          - program: '.[] as [$a, $b] | {a: $a, b: $b}'
-            input: '[[0], [0, 1], [2, 1, 0]]'
+            output: ["9"]
+          - program: ".[] as [$a, $b] | {a: $a, b: $b}"
+            input: "[[0], [0, 1], [2, 1, 0]]"
             output: ['{"a":0,"b":null}', '{"a":0,"b":1}', '{"a":2,"b":1}']
 
-      - title: 'Destructuring Alternative Operator: `?//`'
+      - title: "Destructuring Alternative Operator: `?//`"
         body: |
 
           The destructuring alternative operator provides a concise mechanism
@@ -2887,17 +2886,18 @@ sections:
               [[3]] | .[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end
 
         examples:
-          - program: '.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}'
+          - program: ".[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}"
             input: '[{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]'
             output: ['{"a":1,"b":2,"d":3,"e":4}', '{"a":1,"b":2,"d":3,"e":4}']
-          - program: '.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}'
+          - program: ".[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}"
             input: '[{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]'
-            output: ['{"a":1,"b":2,"d":3,"e":null}', '{"a":1,"b":2,"d":null,"e":4}']
+            output:
+              ['{"a":1,"b":2,"d":3,"e":null}', '{"a":1,"b":2,"d":null,"e":4}']
           - program: '.[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end'
-            input: '[[3]]'
+            input: "[[3]]"
             output: ['{"a":null,"b":3}']
 
-      - title: 'Defining Functions'
+      - title: "Defining Functions"
         body: |
 
           You can give a filter a name using "def" syntax:
@@ -2948,14 +2948,14 @@ sections:
           See also the section below on scoping.
 
         examples:
-          - program: 'def addvalue(f): . + [f]; map(addvalue(.[0]))'
-            input: '[[1,2],[10,20]]'
-            output: ['[[1,2,1], [10,20,10]]']
-          - program: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
-            input: '[[1,2],[10,20]]'
-            output: ['[[1,2,1,2], [10,20,1,2]]']
+          - program: "def addvalue(f): . + [f]; map(addvalue(.[0]))"
+            input: "[[1,2],[10,20]]"
+            output: ["[[1,2,1], [10,20,10]]"]
+          - program: "def addvalue(f): f as $x | map(. + $x); addvalue(.[0])"
+            input: "[[1,2],[10,20]]"
+            output: ["[[1,2,1,2], [10,20,1,2]]"]
 
-      - title: 'Scoping'
+      - title: "Scoping"
         body: |
 
           There are two types of symbols in jq: value bindings (a.k.a.,
@@ -2978,17 +2978,17 @@ sections:
           Returns true if `exp` produces no outputs, false otherwise.
 
         examples:
-          - program: 'isempty(empty)'
-            input: 'null'
-            output: ['true']
+          - program: "isempty(empty)"
+            input: "null"
+            output: ["true"]
 
-          - program: 'isempty(.[])'
-            input: '[]'
-            output: ['true']
+          - program: "isempty(.[])"
+            input: "[]"
+            output: ["true"]
 
-          - program: 'isempty(.[])'
-            input: '[1,2,3]'
-            output: ['false']
+          - program: "isempty(.[])"
+            input: "[1,2,3]"
+            output: ["false"]
 
       - title: "`limit(n; exp)`"
         body: |
@@ -2996,9 +2996,9 @@ sections:
           The `limit` function extracts up to `n` outputs from `exp`.
 
         examples:
-          - program: '[limit(3;.[])]'
-            input: '[0,1,2,3,4,5,6,7,8,9]'
-            output: ['[0,1,2]']
+          - program: "[limit(3;.[])]"
+            input: "[0,1,2,3,4,5,6,7,8,9]"
+            output: ["[0,1,2]"]
 
       - title: "`first(expr)`, `last(expr)`, `nth(n; expr)`"
         body: |
@@ -3010,9 +3010,9 @@ sections:
           Note that `nth(n; expr)` doesn't support negative values of `n`.
 
         examples:
-          - program: '[first(range(.)), last(range(.)), nth(./2; range(.))]'
-            input: '10'
-            output: ['[0,9,5]']
+          - program: "[first(range(.)), last(range(.)), nth(./2; range(.))]"
+            input: "10"
+            output: ["[0,9,5]"]
 
       - title: "`first`, `last`, `nth(n)`"
         body: |
@@ -3023,9 +3023,9 @@ sections:
           The `nth(n)` function extracts the nth value of any array at `.`.
 
         examples:
-          - program: '[range(.)]|[first, last, nth(5)]'
-            input: '10'
-            output: ['[0,9,5]']
+          - program: "[range(.)]|[first, last, nth(5)]"
+            input: "10"
+            output: ["[0,9,5]"]
 
       - title: "`reduce`"
         body: |
@@ -3047,15 +3047,15 @@ sections:
                   3 as $item | . + $item
 
         examples:
-          - program: 'reduce .[] as $item (0; . + $item)'
-            input: '[1,2,3,4,5]'
-            output: ['15']
+          - program: "reduce .[] as $item (0; . + $item)"
+            input: "[1,2,3,4,5]"
+            output: ["15"]
 
-          - program: 'reduce .[] as [$i,$j] (0; . + $i * $j)'
-            input: '[[1,2],[3,4],[5,6]]'
-            output: ['44']
+          - program: "reduce .[] as [$i,$j] (0; . + $i * $j)"
+            input: "[[1,2],[3,4],[5,6]]"
+            output: ["44"]
 
-          - program: 'reduce .[] as {$x,$y} (null; .x += $x | .y += [$y])'
+          - program: "reduce .[] as {$x,$y} (null; .x += $x | .y += [$y])"
             input: '[{"x":"a","y":1},{"x":"b","y":2},{"x":"c","y":3}]'
             output: ['{"x":"abc","y":[1,2,3]}']
 
@@ -3086,15 +3086,15 @@ sections:
           That is, it outputs the intermediate values as they are.
 
         examples:
-          - program: 'foreach .[] as $item (0; . + $item)'
-            input: '[1,2,3,4,5]'
-            output: ['1','3','6','10','15']
+          - program: "foreach .[] as $item (0; . + $item)"
+            input: "[1,2,3,4,5]"
+            output: ["1", "3", "6", "10", "15"]
 
-          - program: 'foreach .[] as $item (0; . + $item; [$item, . * 2])'
-            input: '[1,2,3,4,5]'
-            output: ['[1,2]','[2,6]','[3,12]','[4,20]','[5,30]']
+          - program: "foreach .[] as $item (0; . + $item; [$item, . * 2])"
+            input: "[1,2,3,4,5]"
+            output: ["[1,2]", "[2,6]", "[3,12]", "[4,20]", "[5,30]"]
 
-          - program: 'foreach .[] as $item (0; . + 1; {index: ., $item})'
+          - program: "foreach .[] as $item (0; . + 1; {index: ., $item})"
             input: '["foo", "bar", "baz"]'
             output:
               - '{"index":1,"item":"foo"}'
@@ -3130,52 +3130,52 @@ sections:
       - title: Generators and iterators
         body: |
 
-            Some jq operators and functions are actually generators in
-            that they can produce zero, one, or more values for each
-            input, just as one might expect in other programming
-            languages that have generators.  For example, `.[]`
-            generates all the values in its input (which must be an
-            array or an object), `range(0; 10)` generates the integers
-            between 0 and 10, and so on.
+          Some jq operators and functions are actually generators in
+          that they can produce zero, one, or more values for each
+          input, just as one might expect in other programming
+          languages that have generators.  For example, `.[]`
+          generates all the values in its input (which must be an
+          array or an object), `range(0; 10)` generates the integers
+          between 0 and 10, and so on.
 
-            Even the comma operator is a generator, generating first
-            the values generated by the expression to the left of the
-            comma, then the values generated by the expression on the
-            right of the comma.
+          Even the comma operator is a generator, generating first
+          the values generated by the expression to the left of the
+          comma, then the values generated by the expression on the
+          right of the comma.
 
-            The `empty` builtin is the generator that produces zero
-            outputs.  The `empty` builtin backtracks to the preceding
-            generator expression.
+          The `empty` builtin is the generator that produces zero
+          outputs.  The `empty` builtin backtracks to the preceding
+          generator expression.
 
-            All jq functions can be generators just by using builtin
-            generators.  It is also possible to construct new generators
-            using only recursion and the comma operator.  If
-            recursive calls are "in tail position" then the
-            generator will be efficient.  In the example below the
-            recursive call by `_range` to itself is in tail position.
-            The example shows off three advanced topics: tail recursion,
-            generator construction, and sub-functions.
+          All jq functions can be generators just by using builtin
+          generators.  It is also possible to construct new generators
+          using only recursion and the comma operator.  If
+          recursive calls are "in tail position" then the
+          generator will be efficient.  In the example below the
+          recursive call by `_range` to itself is in tail position.
+          The example shows off three advanced topics: tail recursion,
+          generator construction, and sub-functions.
 
         examples:
-          - program: 'def range(init; upto; by):
-                    def _range:
-                        if (by > 0 and . < upto) or (by < 0 and . > upto)
-                        then ., ((.+by)|_range)
-                        else . end;
-                    if by == 0 then init else init|_range end |
-                    select((by > 0 and . < upto) or (by < 0 and . > upto));
-                range(0; 10; 3)'
-            input: 'null'
-            output: ['0', '3', '6', '9']
-          - program: 'def while(cond; update):
-                    def _while:
-                        if cond then ., (update | _while) else empty end;
-                    _while;
-                [while(.<100; .*2)]'
-            input: '1'
-            output: ['[1,2,4,8,16,32,64]']
+          - program: "def range(init; upto; by):
+              def _range:
+              if (by > 0 and . < upto) or (by < 0 and . > upto)
+              then ., ((.+by)|_range)
+              else . end;
+              if by == 0 then init else init|_range end |
+              select((by > 0 and . < upto) or (by < 0 and . > upto));
+              range(0; 10; 3)"
+            input: "null"
+            output: ["0", "3", "6", "9"]
+          - program: "def while(cond; update):
+              def _while:
+              if cond then ., (update | _while) else empty end;
+              _while;
+              [while(.<100; .*2)]"
+            input: "1"
+            output: ["[1,2,4,8,16,32,64]"]
 
-  - title: 'Math'
+  - title: "Math"
     body: |
 
       jq currently only has IEEE754 double-precision (64-bit) floating
@@ -3210,7 +3210,7 @@ sections:
 
       See your system's manual for more information on each of these.
 
-  - title: 'I/O'
+  - title: "I/O"
     body: |
 
       At this time jq has minimal support for I/O, mostly in the
@@ -3303,7 +3303,7 @@ sections:
 
           Returns the line number of the input currently being filtered.
 
-  - title: 'Streaming'
+  - title: "Streaming"
     body: |
 
       With the `--stream` option jq can parse input texts in a streaming
@@ -3335,9 +3335,9 @@ sections:
           given streaming expression.
 
         examples:
-          - program: 'truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])'
-            input: '1'
-            output: ['[[0],2]', '[[0]]']
+          - program: "truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])"
+            input: "1"
+            output: ["[[0],2]", "[[0]]"]
 
       - title: "`fromstream(stream_expression)`"
         body: |
@@ -3346,9 +3346,9 @@ sections:
           outputs.
 
         examples:
-          - program: 'fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))'
-            input: 'null'
-            output: ['[2]']
+          - program: "fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))"
+            input: "null"
+            output: ["[2]"]
 
       - title: "`tostream`"
         body: |
@@ -3356,9 +3356,9 @@ sections:
           The `tostream` builtin outputs the streamed form of its input.
 
         examples:
-          - program: '. as $dot|fromstream($dot|tostream)|.==$dot'
+          - program: ". as $dot|fromstream($dot|tostream)|.==$dot"
             input: '[0,[1,{"a":1},{"b":2}]]'
-            output: ['true']
+            output: ["true"]
 
   - title: Assignment
     body: |
@@ -3432,8 +3432,8 @@ sections:
 
         examples:
           - program: '(..|select(type=="boolean")) |= if . then 1 else 0 end'
-            input: '[true,false,[5,true,[true,[false]],false]]'
-            output: ['[1,0,[5,1,[1,[0]],0]]']
+            input: "[true,false,[5,true,[true,[false]],false]]"
+            output: ["[1,0,[5,1,[1,[0]],0]]"]
 
       - title: "Arithmetic update-assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`"
         body: |
@@ -3488,14 +3488,14 @@ sections:
             output: ['{"a":10,"b":20}']
 
           - program: (.a, .b) = range(3)
-            input: 'null'
+            input: "null"
             output:
               - '{"a":0,"b":0}'
               - '{"a":1,"b":1}'
               - '{"a":2,"b":2}'
 
           - program: (.a, .b) |= range(3)
-            input: 'null'
+            input: "null"
             output: ['{"a":0,"b":0}']
 
       - title: Complex assignments

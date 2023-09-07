@@ -32,6 +32,13 @@ tail: |
   on [Libera.Chat](https://libera.chat/). For more interactive discussions, feel free to join our [Discord server](https://discord.gg/yg6yjNmgAC).
 
 news:
+  - date: 7 September 2023
+    body: |
+      After a five-year hiatus, we've returned with a revitalized [GitHub organization](https://github.com/jqlang)
+      and a much-anticipated 1.7 release, thanks to our new admins and maintainers.
+      Check out the [download](./download/) page for installation options and see the
+      [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.7) for details.
+
   - date: 1 November 2018
     body: |
       jq 1.6 released. See installation options on the [download](./download/)

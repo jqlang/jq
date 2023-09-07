@@ -32,25 +32,32 @@ body:
        * jq is in the official [Arch](https://archlinux.org/packages/?q=jq) repository.
          Install using `sudo pacman -S jq`.
 
-       * jq 1.6 binaries for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-linux64)
+       * jq 1.7 binaries for
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-linux-amd64)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-linux32).
+         [ARM64](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-linux-arm64)
+         or
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-linux-i386).
+
+       * jq 1.6 binaries for
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-linux64)
+         or
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-linux32).
 
        * jq 1.5 binaries for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-linux64)
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-linux64)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-linux32).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-linux32).
 
        * jq 1.4 binaries for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-linux-x86_64)
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-linux-x86_64)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-linux-x86).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-linux-x86).
 
        * jq 1.3 binaries for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-linux-x86_64)
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-linux-x86_64)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-linux-x86).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-linux-x86).
 
       ### macOS
 
@@ -60,21 +67,26 @@ body:
 
        * Use [Fink](https://finkproject.org) to install jq with `fink install jq`.
 
+       * jq 1.7 binaries for
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-macos-amd64)
+         or
+         [ARM64](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-macos-arm64).
+
        * jq 1.6 binary for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-osx-amd64).
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-osx-amd64).
 
        * jq 1.5 binary for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-osx-amd64).
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-osx-amd64).
 
        * jq 1.4 binaries for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-osx-x86_64)
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-osx-x86_64)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-osx-x86).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-osx-x86).
 
        * jq 1.3 binaries for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-osx-x86_64)
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-osx-x86_64)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-osx-x86).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-osx-x86).
 
       ### FreeBSD
 
@@ -92,9 +104,9 @@ body:
          10+, Sparc and x86.
 
        * jq 1.4 binaries for Solaris 11
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-solaris11-64)
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-solaris11-64)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-solaris11-32).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-solaris11-32).
 
       ### Windows
 
@@ -106,31 +118,38 @@ body:
        * Use [Chocolatey NuGet](https://chocolatey.org/) to install jq with
          `chocolatey install jq`.
 
-       * jq 1.6 executables for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-win64.exe)
+       * jq 1.7 executables for
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-windows-amd64.exe)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-win32.exe).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-windows-i386.exe).
+
+       * jq 1.6 executables for
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-win64.exe)
+         or
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-win32.exe).
 
        * jq 1.5 executables for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-win64.exe)
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-win64.exe)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-win32.exe).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-win32.exe).
 
        * jq 1.4 executables for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-win64.exe)
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-win64.exe)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-win32.exe).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.4/jq-win32.exe).
 
        * jq 1.3 executables for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-win64.exe)
+         [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-win64.exe)
          or
-         [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-win32.exe).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-win32.exe).
 
       ### Checksums and signatures
 
       SHA-256 checksums are provided for all release and pre-release binaries.
       They can be found under
       [sig/v1.x/sha256sum.txt](https://github.com/jqlang/jq/tree/master/sig).
+      The checksums for jq 1.7 are in
+      [sig/v1.7/sha256sum.txt](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.7/sha256sum.txt).
       The checksums for jq 1.6 are in
       [sig/v1.6/sha256sum.txt](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.6/sha256sum.txt).
       The checksums for jq 1.5 are in
@@ -139,8 +158,8 @@ body:
       Additionally, all release artifacts are signed by a jq release key.  We have two release keys, [one for 1.6 and older releases](https://raw.githubusercontent.com/jqlang/jq/master/sig/jq-release-old.key), and [one for 1.7 and newer releases](https://raw.githubusercontent.com/jqlang/jq/master/sig/jq-release-new.key).
       Signatures can be found under
       [sig/v1.x/\*.asc](https://github.com/jqlang/jq/tree/master/sig).
-      The signatures for jq 1.7rc are in
-      [sig/v1.7rc1/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.7rc1).
+      The signatures for jq 1.7 are in
+      [sig/v1.7/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.7).
       The signatures for jq 1.6 are in
       [sig/v1.6/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.6).
       The signatures for jq 1.5 are in
@@ -150,6 +169,7 @@ body:
 
       ### From source on Linux, macOS, Cygwin, and other POSIX-like operating systems
 
+       * [Source tarball for jq 1.7](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-1.7.tar.gz)
        * [Source tarball for jq 1.6](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-1.6.tar.gz)
        * [Source tarball for jq 1.5](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-1.5.tar.gz)
 
