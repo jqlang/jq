@@ -32,7 +32,6 @@ def _modify(paths; update):
         )
     ) | . as $dot | $dot[0] | delpaths($dot[1]);
 def map_values(f): .[] |= f;
-def map_keys(f): walk(if type == "object" then with_entries(.key |= f) else . end);
 
 # recurse
 def recurse(f): def r: ., (f | r); r;
@@ -255,6 +254,8 @@ def walk(f):
     end
     | f;
   w;
+
+def map_keys(f): walk(if type == "object" then with_entries(.key |= f) else . end);
 
 # pathexps could be a stream of dot-paths
 def pick(pathexps):
