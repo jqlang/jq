@@ -637,6 +637,10 @@ map_values(.+1)
 [0,1,2]
 [1,2,3]
 
+map_keys(split("_")|map((.[:1] | ascii_upcase) +.[1:])|join(""))
+{"test_alpha": 1, "test_beta": {"test_gamma": 3}}
+{"TestAlpha": 1, "TestBeta": {"TestGamma": 3}}
+
 #
 # User-defined functions
 # Oh god.
