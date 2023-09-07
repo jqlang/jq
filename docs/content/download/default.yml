@@ -119,7 +119,7 @@ body:
          `chocolatey install jq`.
 
        * jq 1.7 executables for
-         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-windows-amd64.exe).
+         [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-windows-amd64.exe)
          or
          [32-bit](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-windows-i386.exe).
 
