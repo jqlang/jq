@@ -72,7 +72,7 @@ body:
          or
          [ARM 64-bit](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-macos-arm64).
 
-       * jq 1.6 binaries for
+       * jq 1.6 binary for
          [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-osx-amd64).
 
        * jq 1.5 binary for
