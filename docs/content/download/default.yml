@@ -68,7 +68,7 @@ body:
        * Use [Fink](https://finkproject.org) to install jq with `fink install jq`.
 
        * jq 1.7 binaries for
-         [AMD 64-bit](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-macos-amd64).
+         [AMD 64-bit](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-macos-amd64)
          or
          [ARM 64-bit](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-macos-arm64).
 
