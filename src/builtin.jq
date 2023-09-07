@@ -169,6 +169,8 @@ def nth($n; g):
   else label $out | foreach g as $item ($n + 1; . - 1; if . <= 0 then $item, break $out else empty end) end;
 def first: .[0];
 def last: .[-1];
+def head: select(length >0) | .[:1] | if type == "array" then .[] end;
+def tail: .[1:];
 def nth($n): .[$n];
 def combinations:
     if length == 0 then [] else

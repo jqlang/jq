@@ -1994,6 +1994,45 @@ any(keys[]|tostring?;true)
 {"a":"1","b":"2","c":"3"}
 true
 
+[head, tail]
+[ 1, 2, 3 ]
+[ 1, [ 2, 3 ] ]
+
+[head, tail]
+[ 1 ]
+[ 1, [] ]
+
+[head, tail]
+[]
+[ [] ]
+
+[head, tail]
+"abc"
+[ "a", "bc" ]
+
+[head, tail]
+[ "a" ]
+[ "a", "" ]
+
+[head] + tail
+[ 1, 2, 3 ]
+[ 1, 2, 3 ]
+
+[head] + tail
+[ 1 ]
+[ 1 ]
+
+[head] + tail
+[]
+[]
+
+head + tail
+"abc"
+"abc"
+
+head + tail
+"a"
+"a"
 
 # explode/implode
 # test replacement character (65533) for outside codepoint range and 0xd800 (55296) - 0xdfff (57343) utf16 surrogate pair range
