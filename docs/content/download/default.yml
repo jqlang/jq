@@ -37,7 +37,7 @@ body:
          or
          [ARM 64-bit](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-linux-arm64)
          or
-         [AMD 32-bit](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-linux-i386).
+         [i386](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-linux-i386).
 
        * jq 1.6 binaries for
          [64-bit](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-linux64)
