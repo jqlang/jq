@@ -207,6 +207,9 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
+      - name: Prepare git config
+        run: git config --system core.autocrlf false
+        shell: bash
       - name: Clone repository
         uses: actions/checkout@v3
         with:
@@ -240,7 +243,7 @@ jobs:
       - name: Test
         run: |
           make check VERBOSE=yes
-          git diff --exit-code --ignore-submodules
+          git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
