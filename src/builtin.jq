@@ -255,7 +255,7 @@ def walk(f):
     | f;
   w;
 
-def map_keys(f): walk(if type == "object" then with_entries(.key |= f) else . end);
+def rename_keys(f): walk(if type == "object" then with_entries(.key |= f) else . end);
 
 # pathexps could be a stream of dot-paths
 def pick(pathexps):
