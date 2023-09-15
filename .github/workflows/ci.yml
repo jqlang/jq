@@ -373,7 +373,7 @@ jobs:
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
           gh release upload "$TAG_NAME" --clobber jq-*/jq-* sha256sum.txt
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v5
+        uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.JQ_RELEASE_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.JQ_RELEASE_GPG_PASSPHRASE }}
