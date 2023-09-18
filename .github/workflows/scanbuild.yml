@@ -23,7 +23,7 @@ jobs:
                       cflags: ''
         steps:
             - name: Clone repository
-              uses: actions/checkout@v1
+              uses: actions/checkout@v4
             - name: Open Submodule(s)
               run: |
                 git submodule update --init --recursive
