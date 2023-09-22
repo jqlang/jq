@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "August 2023" "" ""
+.TH "JQ" "1" "September 2023" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -4058,7 +4058,7 @@ color for object keys
 .IP "" 0
 .
 .P
-The default color scheme is the same as setting \fBJQ_COLORS="0;90:0;37:0;37:0;37:0;32:1;37:1;37:1;34"\fR\.
+The default color scheme is the same as setting \fBJQ_COLORS="0;90:0;39:0;39:0;39:0;32:1;39:1;39:1;34"\fR\.
 .
 .P
 This is not a manual for VT100/ANSI escapes\. However, each of these color specifications should consist of two numbers separated by a semi\-colon, where the first number is one of these:

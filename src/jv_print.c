@@ -30,8 +30,8 @@
 static char color_bufs[8][16];
 static const char *color_bufps[8];
 static const char* def_colors[] =
-  {COL("0;90"),    COL("0;37"),      COL("0;37"),     COL("0;37"),
-   COL("0;32"),    COL("1;37"),      COL("1;37"),     COL("1;34")};
+  {COL("0;90"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
+   COL("0;32"),    COL("1;39"),      COL("1;39"),     COL("1;34")};
 #define FIELD_COLOR (colors[7])
 
 static const char **colors = def_colors;
