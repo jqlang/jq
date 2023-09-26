@@ -47,7 +47,7 @@ If you're not using the latest git version but instead building a released tarba
 
 ##### Cross-Compilation
 
-For details on cross-compliation, check out the [GitHub Actions file](.github/workflows/ci.yml) and the [cross-compliation wiki page](https://github.com/jqlang/jq/wiki/Cross-compilation).
+For details on cross-compilation, check out the [GitHub Actions file](.github/workflows/ci.yml) and the [cross-compilation wiki page](https://github.com/jqlang/jq/wiki/Cross-compilation).
 
 ## Community & Support
 
