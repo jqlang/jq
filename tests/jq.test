@@ -1563,9 +1563,9 @@ strftime("%A, %B %d, %Y")
 1435677542.822351
 "Tuesday, June 30, 2015"
 
-gmtime
+gmtime|(.[9] |= if .==null then 0 else . end)|(.[10] |= if (.=="UTC") or (.==null) then "GMT" else . end)
 1425599507
-[2015,2,5,23,51,47,4,63]
+[2015,2,5,23,51,47,4,63,false,0,"GMT"]
 
 # test invalid tm input
 try strftime("%Y-%m-%dT%H:%M:%SZ") catch .
@@ -1579,6 +1579,15 @@ try strflocaltime("%Y-%m-%dT%H:%M:%SZ") catch .
 try mktime catch .
 ["a",1,2,3,4,5,6,7]
 "mktime requires parsed datetime inputs"
+
+# #2863
+[.[]|try (timegm | error) catch .]|[length,unique[]]
+[[0000],[10000],[1970,-1],[1970,12],[1970,11,0],[1970,11,32],[1970,11,30,-1],[1970,11,30,24],[1970,11,30,23,-1],[1970,11,31,23,60],[1970,11,30,23,59,-1],[1970,11,30,23,59,61],[1970,11,30,23,59,60,-1],[1970,11,30,23,59,60,7],[1970,11,30,23,59,60,4],[1970,11,30,23,59,60,4,-1],[1970,11,30,23,59,60,4,366],[1970,11,30,23,59,60,4,364,true,-43201],[1970,11,30,23,59,60,4,364,true,43201],[1970,11,30,23,59,60,4,364,true,0,true]]
+[20,"timegm requires parsed datetime inputs"]
+
+[.[]|timegm]|length
+[[1970,11,30,23,59,60,4,364],[1970,11,30,23,59,60,4,364,true,-43200],[1970,11,30,23,59,60,4,364,true,43200],[1970,11,30,23,59,60,4,364,true,43200,"EDT"]]
+4
 
 # module system
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]

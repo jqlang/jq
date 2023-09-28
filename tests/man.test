@@ -718,11 +718,11 @@ fromdate
 "2015-03-05T23:51:47Z"
 1425599507
 
-strptime("%Y-%m-%dT%H:%M:%SZ")
+strptime("%Y-%m-%dT%H:%M:%SZ")[0:8]
 "2015-03-05T23:51:47Z"
 [2015,2,5,23,51,47,4,63]
 
-strptime("%Y-%m-%dT%H:%M:%SZ")|mktime
+strptime("%Y-%m-%dT%H:%M:%SZ")|timegm
 "2015-03-05T23:51:47Z"
 1425599507
 

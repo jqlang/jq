@@ -1287,14 +1287,28 @@ static jv f_stderr(jq_state *jq, jv input) {
 }
 
 static jv tm2jv(struct tm *tm) {
-  return JV_ARRAY(jv_number(tm->tm_year + 1900),
+  jv a = JV_ARRAY(jv_number(tm->tm_year + 1900),
                   jv_number(tm->tm_mon),
                   jv_number(tm->tm_mday),
                   jv_number(tm->tm_hour),
                   jv_number(tm->tm_min),
                   jv_number(tm->tm_sec),
                   jv_number(tm->tm_wday),
-                  jv_number(tm->tm_yday));
+                  jv_number(tm->tm_yday),
+                  tm->tm_isdst ? jv_true() : jv_false());
+  // JV_ARRAY() only handles up to 9 arguments
+#ifdef HAVE_TM_TM_GMTOFF
+  a = jv_array_append(a, jv_number(tm->tm_gmtoff));
+#else
+  a = jv_array_append(a, jv_null());
+#endif
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+  if (tm->tm_zone)
+    return jv_array_append(a, jv_string(tm->tm_zone));
+#else
+  a = jv_array_append(a, jv_null());
+#endif
+  return a;
 }
 
 #if defined(WIN32) && !defined(HAVE_SETENV)
@@ -1317,50 +1331,6 @@ static int setenv(const char *var, const char *val, int ovr)
   return 1;
 }
 #endif
-
-/*
- * mktime() has side-effects and anyways, returns time in the local
- * timezone, not UTC.  We want timegm(), which isn't standard.
- *
- * To make things worse, mktime() tells you what the timezone
- * adjustment is, but you have to #define _BSD_SOURCE to get this
- * field of struct tm on some systems.
- *
- * This is all to blame on POSIX, of course.
- *
- * Our wrapper tries to use timegm() if available, or mktime() and
- * correct for its side-effects if possible.
- *
- * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
- */
-static time_t my_mktime(struct tm *tm) {
-#ifdef HAVE_TIMEGM
-  return timegm(tm);
-#elif HAVE_TM_TM_GMT_OFF
-
-  time_t t = mktime(tm);
-  if (t == (time_t)-1)
-    return t;
-  return t + tm->tm_gmtoff;
-#elif HAVE_TM___TM_GMT_OFF
-  time_t t = mktime(tm);
-  if (t == (time_t)-1)
-    return t;
-  return t + tm->__tm_gmtoff;
-#elif WIN32
-  return _mkgmtime(tm);
-#else
-  char *tz;
-
-  tz = (tz = getenv("TZ")) != NULL ? strdup(tz) : NULL;
-  if (tz != NULL)
-    setenv("TZ", "", 1);
-  time_t t = mktime(tm);
-  if (tz != NULL)
-    setenv("TZ", tz, 1);
-  return t;
-#endif
-}
 
 /* Compute and set tm_wday */
 static void set_tm_wday(struct tm *tm) {
@@ -1476,29 +1446,108 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   return r;
 }
 
-#define TO_TM_FIELD(t, j, i)                    \
-    do {                                        \
-      jv n = jv_array_get(jv_copy(j), (i));     \
-      if (jv_get_kind(n) != (JV_KIND_NUMBER)) { \
-        jv_free(n);                             \
-        jv_free(j);                             \
-        return 0;                               \
-      }                                         \
-      t = jv_number_value(n);                   \
-      jv_free(n);                               \
-    } while (0)
+/*
+ * Utility function for jv2tm() that returns `ifnan` if `v` is not a number in
+ * any way, and clamps the value range of `v` to `imin` and `imax`.
+ */
+static int toint(jv v, int imin, int imax, int ifnan) {
+  if (jv_get_kind(v) != (JV_KIND_NUMBER) || jvp_number_is_nan(v)) {
+    jv_free(v);
+    return ifnan;
+  }
+  double n = jv_number_value(v);
+  jv_free(v);
+  if (isinf(n)) {
+    if (n < 0.0)
+      return imin;
+    return imax;
+  }
+  if (n < imin)
+    return imin;
+  if (n > imax)
+    return imax;
+  return (int)n;
+}
 
-static int jv2tm(jv a, struct tm *tm) {
+static int jv2tm(jv a, struct tm *tm, double *frac, char **freeme) {
+  int ret = 1;
+
+  *freeme = NULL;
   memset(tm, 0, sizeof(*tm));
-  TO_TM_FIELD(tm->tm_year, a, 0);
+  if (   (tm->tm_year = toint(jv_array_get(jv_copy(a), 0),
+                              0, 10000, 0))                             < 1
+      ||  tm->tm_year                                                   > 9999
+      || (tm->tm_mon  = toint(jv_array_get(jv_copy(a), 1), -1, 12,  -1)) < 0
+      ||  tm->tm_mon                                                    > 11
+      || (tm->tm_mday = toint(jv_array_get(jv_copy(a), 2),  0, 32,   0)) < 1
+      ||  tm->tm_mday                                                   > 31
+      || (tm->tm_hour = toint(jv_array_get(jv_copy(a), 3), -1, 24,  -1)) < 0
+      ||  tm->tm_hour                                                   > 23
+      || (tm->tm_min  = toint(jv_array_get(jv_copy(a), 4), -1, 60,  -1)) < 0
+      ||  tm->tm_min                                                    > 59
+      || (tm->tm_sec  = toint(jv_array_get(jv_copy(a), 5), -1, 61,  -1)) < 0
+      ||  tm->tm_sec                                                    > 60
+      || (tm->tm_wday = toint(jv_array_get(jv_copy(a), 6), -1, 7,   -1)) < 0
+      ||  tm->tm_wday                                                   > 6
+      || (tm->tm_yday = toint(jv_array_get(jv_copy(a), 7), -1, 366, -1)) < 0
+      ||  tm->tm_yday                                                   > 365) {
+    jv_free(a);
+    return 0;
+  }
   tm->tm_year -= 1900;
-  TO_TM_FIELD(tm->tm_mon,  a, 1);
-  TO_TM_FIELD(tm->tm_mday, a, 2);
-  TO_TM_FIELD(tm->tm_hour, a, 3);
-  TO_TM_FIELD(tm->tm_min,  a, 4);
-  TO_TM_FIELD(tm->tm_sec,  a, 5);
-  TO_TM_FIELD(tm->tm_wday, a, 6);
-  TO_TM_FIELD(tm->tm_yday, a, 7);
+  if (frac) {
+    // We already know this is a number, not a NaN, and in range.  We would
+    // have returned already otherwise.
+    jv n = jv_array_get(jv_copy(a), 5);
+    double d = jv_number_value(n);
+    jv_free(n);
+    *frac = d - tm->tm_sec;
+  }
+  jv v = jv_array_get(jv_copy(a), 8);
+  switch (jv_get_kind(v)) {
+  case JV_KIND_INVALID: break;  // Optional field not present
+  case JV_KIND_FALSE: break;
+  case JV_KIND_TRUE: tm->tm_isdst = 1; break;
+  case JV_KIND_NUMBER: tm->tm_isdst = toint(v, 0, 1, 0); break;
+  default: ret = 0; break;
+  }
+  jv_free(v);
+  v = jv_array_get(jv_copy(a), 9);
+  int gmtoff;
+  switch (jv_get_kind(v)) {
+  case JV_KIND_NULL: break;     // See tm2jv()
+  case JV_KIND_INVALID: break;  // Optional field not present
+  default:
+    gmtoff = toint(jv_array_get(jv_copy(a), 9), -12 * 3600 - 1, 12 * 3600 + 1, 0);
+    if (gmtoff < -12 * 3600 || gmtoff > 12 * 3600)
+      ret = 0;
+#ifdef HAVE_TM_TM_GMTOFF
+    tm->tm_gmtoff = gmtoff;
+#endif
+    break;
+  }
+  jv_free(v);
+  v = jv_array_get(jv_copy(a), 10);
+  switch (jv_get_kind(v)) {
+  case JV_KIND_NULL: break;     // See tm2jv()
+  case JV_KIND_INVALID: break;  // Optional field not present
+  case JV_KIND_STRING:
+    if (jv_get_kind(v) == JV_KIND_STRING) {
+      if ((*freeme = strdup(jv_string_value(v))) == NULL)
+        ret = 0;
+    } else if (jv_is_valid(v)) {
+      ret = 0;
+    }
+    break;
+  default:
+    ret = 0;
+    break;
+  }
+  jv_free(v);
+#ifdef HAVE_STRUCT_TM_TM_ZONE
+  tm->tm_zone = *freeme;
+#endif
+
   jv_free(a);
 
   // We use UTC everywhere (gettimeofday, gmtime) and UTC does not do DST.
@@ -1509,25 +1558,87 @@ static int jv2tm(jv a, struct tm *tm) {
   // hope it is okay to initialize them to zero, because the standard does not
   // provide an alternative.
 
-  return 1;
+  if (!ret) {
+    free(*freeme);
+    *freeme = NULL;
+  }
+  return ret;
 }
-
-#undef TO_TM_FIELD
 
 static jv f_mktime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY)
     return ret_error(a, jv_string("mktime requires array inputs"));
-  if (jv_array_length(jv_copy(a)) < 6)
-    return ret_error(a, jv_string("mktime requires parsed datetime inputs"));
+  double frac;
   struct tm tm;
-  if (!jv2tm(a, &tm))
+  char *freeme;
+  if (!jv2tm(a, &tm, &frac, &freeme))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
-  time_t t = my_mktime(&tm);
+  /*
+   * mktime() has side-effects and anyways, returns time in the local
+   * timezone, not UTC.  Does timelocal() have side-effects?
+   *
+   * We try to use timegm() if available, else mktime().
+   */
+#if HAVE_TIMEGM
+  time_t t = timegm(&tm);
+#elif defined(WIN32)
+  time_t t = _mkgmtime(&tm);
+#else
+  time_t t = mktime(&tm);
+#ifdef HAVE_TM_TM_GMTOFF
+  t += tm.tm_gmtoff;
+#else
+  /* Bah, what can we do? */
+#endif
+#endif
+  free(freeme);
   if (t == (time_t)-1)
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
   if (t == (time_t)-2)
     return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
-  return jv_number(t);
+  return jv_number(t + frac);
+}
+
+static jv f_timelocal(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_ARRAY)
+    return ret_error(a, jv_string("timelocal requires array inputs"));
+  double frac;
+  struct tm tm;
+  char *freeme;
+  if (!jv2tm(a, &tm, &frac, &freeme))
+    return jv_invalid_with_msg(jv_string("timelocal requires parsed datetime inputs"));
+#ifdef HAVE_TIMELOCAL
+  time_t t = timelocal(&tm);
+#else
+  time_t t = mktime(&tm);
+#endif
+  free(freeme);
+  if (t == (time_t)-1)
+    return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
+  return jv_number(t + frac);
+}
+
+static jv f_timegm(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_ARRAY)
+    return ret_error(a, jv_string("timegm requires array inputs"));
+  double frac;
+  struct tm tm;
+  char *freeme;
+  if (!jv2tm(a, &tm, &frac, &freeme))
+    return jv_invalid_with_msg(jv_string("timegm requires parsed datetime inputs"));
+#ifdef HAVE_TIMEGM
+  time_t t = timegm(&tm);
+  free(freeme);
+#elif defined(HAVE__MKGMTIME)
+  time_t t = _mkgmtime(&tm); // Windows has _mkgmtime()
+  free(freeme);
+#else
+  free(freeme);
+  return jv_invalid_with_msg(jv_string("timegm is not supported"));
+#endif
+  if (t == (time_t)-1)
+    return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
+  return jv_number(t + frac);
 }
 
 #ifdef HAVE_GMTIME_R
@@ -1618,7 +1729,8 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
     return ret_error2(a, b, jv_string("strftime/1 requires a string format"));
   }
   struct tm tm;
-  if (!jv2tm(a, &tm))
+  char *freeme;
+  if (!jv2tm(a, &tm, NULL, &freeme))
     return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
 
   const char *fmt = jv_string_value(b);
@@ -1626,6 +1738,7 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   char *buf = alloca(alloced);
   size_t n = strftime(buf, alloced, fmt, &tm);
   jv_free(b);
+  free(freeme);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
   if (n == 0 || n > alloced)
     return jv_invalid_with_msg(jv_string("strftime/1: unknown system failure"));
@@ -1643,19 +1756,25 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
 static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER) {
     a = f_localtime(jq, a);
+    if (!jv_is_valid(a)) {
+      jv_free(b);
+      return a;
+    }
   } else if (jv_get_kind(a) != JV_KIND_ARRAY) {
     return ret_error2(a, b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   } else if (jv_get_kind(b) != JV_KIND_STRING) {
     return ret_error2(a, b, jv_string("strflocaltime/1 requires a string format"));
   }
   struct tm tm;
-  if (!jv2tm(a, &tm))
+  char *freeme;
+  if (!jv2tm(a, &tm, NULL, &freeme))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
   char *buf = alloca(alloced);
   size_t n = strftime(buf, alloced, fmt, &tm);
   jv_free(b);
+  free(freeme);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
   if (n == 0 || n > alloced)
     return jv_invalid_with_msg(jv_string("strflocaltime/1: unknown system failure"));
@@ -1778,6 +1897,8 @@ BINOPS
   {f_mktime, "mktime", 1},
   {f_gmtime, "gmtime", 1},
   {f_localtime, "localtime", 1},
+  {f_timegm, "timegm", 1},
+  {f_timelocal, "timelocal", 1},
   {f_now, "now", 1},
   {f_current_filename, "input_filename", 1},
   {f_current_line, "input_line_number", 1},

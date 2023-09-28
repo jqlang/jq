@@ -70,7 +70,7 @@ def _flatten($x): reduce .[] as $i ([]; if $i | type == "array" and $x != 0 then
 def flatten($x): if $x < 0 then error("flatten depth must not be negative") else _flatten($x) end;
 def flatten: _flatten(-1);
 def range($x): range(0;$x);
-def fromdateiso8601: strptime("%Y-%m-%dT%H:%M:%SZ")|mktime;
+def fromdateiso8601: strptime("%Y-%m-%dT%H:%M:%SZ")|timegm;
 def todateiso8601: strftime("%Y-%m-%dT%H:%M:%SZ");
 def fromdate: fromdateiso8601;
 def todate: todateiso8601;
