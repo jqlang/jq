@@ -353,7 +353,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
          * terminating '\0'. This only works because we previously memset our
          * buffer with something nonzero.
          */
-        for (p = state->buf, i = sizeof(state->buf) - 1; i > 0; i--) {
+        for (i = sizeof(state->buf) - 1; i > 0; i--) {
           if (state->buf[i] == '\0')
             break;
         }

@@ -127,7 +127,6 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
       take--;
     } else if (take == 0) {
       printf("Hit the number of tests limit (%d), breaking\n", tests_to_take);
-      take = -1;
       break;
     }
 
