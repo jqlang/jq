@@ -95,7 +95,7 @@ jv jv_get(jv t, jv k) {
       } else {
         if (didx < INT_MIN) didx = INT_MIN;
         if (didx > INT_MAX) didx = INT_MAX;
-        int idx = (int)jv_number_value(k);
+        int idx = (int)didx;
         if (idx < 0)
           idx += jv_array_length(jv_copy(t));
         v = jv_array_get(t, idx);
