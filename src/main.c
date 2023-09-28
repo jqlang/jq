@@ -161,7 +161,6 @@ enum {
   RAW_NO_LF             = 1024,
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
-  EXIT_STATUS_EXACT     = 8192,
   SEQ                   = 16384,
   RUN_TESTS             = 32768,
   /* debugging only */
@@ -231,7 +230,6 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
   }
   if (jq_halted(jq)) {
     // jq program invoked `halt` or `halt_error`
-    options |= EXIT_STATUS_EXACT;
     jv exit_code = jq_get_exit_code(jq);
     if (!jv_is_valid(exit_code))
       ret = JQ_OK;
@@ -783,7 +781,7 @@ out:
   jq_util_input_free(&input_state);
   jq_teardown(&jq);
 
-  if (options & (EXIT_STATUS|EXIT_STATUS_EXACT)) {
+  if (options & EXIT_STATUS) {
     if (ret != JQ_OK_NO_OUTPUT)
       jq_exit_with_status(ret);
     else
