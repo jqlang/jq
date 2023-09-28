@@ -372,7 +372,6 @@ static block block_bind(block binder, block body, int bindflags) {
 
 block block_bind_library(block binder, block body, int bindflags, const char *libname) {
   bindflags |= OP_HAS_BINDING;
-  int nrefs = 0;
   int matchlen = (libname == NULL) ? 0 : strlen(libname);
   char *matchname = jv_mem_alloc(matchlen+2+1);
   matchname[0] = '\0';
@@ -395,7 +394,7 @@ block block_bind_library(block binder, block body, int bindflags, const char *li
 
     // This mutation is ugly, even if we undo it
     curr->symbol = tname;
-    nrefs += block_bind_subblock(inst_block(curr), body, bindflags2, 0);
+    block_bind_subblock(inst_block(curr), body, bindflags2, 0);
     curr->symbol = cname;
     free(tname);
   }
