@@ -2166,7 +2166,7 @@ indices and <code>.[m:n]</code> specifications should not be used.</p>
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
-                    <td class="font-monospace">jq '[1,2,3,4] | pick(.[2], .[0], .[0])'</td>
+                    <td class="font-monospace">jq 'pick(.[2], .[0], .[0])'</td>
                   </tr>
                   <tr>
                     <th>Input</th>
@@ -2177,7 +2177,7 @@ indices and <code>.[m:n]</code> specifications should not be used.</p>
                     <td class="font-monospace">[1,null,3]</td>
                   </tr>
                   <tr class="d-print-none">
-                    <th><a href="https://jqplay.org/jq?q=%5B1%2C2%2C3%2C4%5D%20%7C%20pick%28.%5B2%5D%2C%20.%5B0%5D%2C%20.%5B0%5D%29&j=%5B1%2C2%2C3%2C4%5D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <th><a href="https://jqplay.org/jq?q=pick%28.%5B2%5D%2C%20.%5B0%5D%2C%20.%5B0%5D%29&j=%5B1%2C2%2C3%2C4%5D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
                     <td></td>
                   </tr>
                 </table>
