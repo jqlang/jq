@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "September 2023" "" ""
+.TH "JQ" "1" "October 2023" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -1066,7 +1066,7 @@ jq \'pick(\.a, \.b\.c, \.x)\'
    {"a": 1, "b": {"c": 2, "d": 3}, "e": 4}
 => {"a":1,"b":{"c":2},"x":null}
 
-jq \'[1,2,3,4] | pick(\.[2], \.[0], \.[0])\'
+jq \'pick(\.[2], \.[0], \.[0])\'
    [1,2,3,4]
 => [1,null,3]
 .
