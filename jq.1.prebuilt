@@ -250,7 +250,7 @@ Output the jq help and exit with zero\.
 \fB\-\-\fR:
 .
 .IP
-Terminates argument processing\. Remaining arguments are positional, either strings, JSON texts, or input filenames, according to whether \fB\-\-args\fR or \fB\-\-jsonargs\fR were given\.
+Terminates argument processing\. Remaining arguments are not interpreted as options\.
 .
 .TP
 \fB\-\-run\-tests [filename]\fR:
