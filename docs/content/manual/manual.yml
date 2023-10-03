@@ -1065,7 +1065,7 @@ sections:
             input: '{"a": 1, "b": {"c": 2, "d": 3}, "e": 4}'
             output: ['{"a":1,"b":{"c":2},"x":null}']
 
-          - program: '[1,2,3,4] | pick(.[2], .[0], .[0])'
+          - program: 'pick(.[2], .[0], .[0])'
             input: '[1,2,3,4]'
             output: ['[1,null,3]']
 
