@@ -579,4 +579,14 @@ if ( ! $msys && ! $mingw ) && locale -a > /dev/null; then
   fi
 fi
 
+# Allow passing the inline jq script before -- #2919
+if ! r=$($JQ --args -rn -- '$ARGS.positional[0]' bar) || [ "$r" != bar ]; then
+    echo "passing the inline script after -- didn't work"
+    exit 1
+fi
+if ! r=$($JQ --args -rn 1 -- '$ARGS.positional[0]' bar) || [ "$r" != 1 ]; then
+    echo "passing the inline script before -- didn't work"
+    exit 1
+fi
+
 exit 0

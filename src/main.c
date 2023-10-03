@@ -353,8 +353,10 @@ int main(int argc, char* argv[]) {
   size_t short_opts = 0;
   jv lib_search_paths = jv_null();
   for (int i=1; i<argc; i++, short_opts = 0) {
-    if (args_done) {
-      if (further_args_are_strings) {
+    if (args_done || !isoptish(argv[i])) {
+      if (!program) {
+        program = argv[i];
+      } else if (further_args_are_strings) {
         ARGS = jv_array_append(ARGS, jv_string(argv[i]));
       } else if (further_args_are_json) {
         jv v =  jv_parse(argv[i]);
@@ -368,26 +370,7 @@ int main(int argc, char* argv[]) {
         nfiles++;
       }
     } else if (!strcmp(argv[i], "--")) {
-      if (!program) usage(2, 1);
       args_done = 1;
-    } else if (!isoptish(argv[i])) {
-      if (program) {
-        if (further_args_are_strings) {
-          ARGS = jv_array_append(ARGS, jv_string(argv[i]));
-        } else if (further_args_are_json) {
-          jv v =  jv_parse(argv[i]);
-          if (!jv_is_valid(v)) {
-            fprintf(stderr, "%s: invalid JSON text passed to --jsonargs\n", progname);
-            die();
-          }
-          ARGS = jv_array_append(ARGS, v);
-        } else {
-          jq_util_input_add_input(input_state, argv[i]);
-          nfiles++;
-        }
-      } else {
-        program = argv[i];
-      }
     } else {
       if (argv[i][1] == 'L') {
         if (jv_get_kind(lib_search_paths) == JV_KIND_NULL)
