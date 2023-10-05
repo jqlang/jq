@@ -517,23 +517,23 @@ if $test_no_color && command -v script >/dev/null 2>&1; then
 
   faketty $JQ_NO_B -n . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
-  od -tc $d/expect
-  od -tc $d/color
+  od -c $d/expect
+  od -c $d/color
   cmp $d/color $d/expect
   NO_COLOR= faketty $JQ_NO_B -n . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
-  od -tc $d/expect
-  od -tc $d/color
+  od -c $d/expect
+  od -c $d/color
   cmp $d/color $d/expect
   NO_COLOR=1 faketty $JQ_NO_B -n . > $d/color
   printf 'null\r\n' > $d/expect
-  od -tc $d/expect
-  od -tc $d/color
+  od -c $d/expect
+  od -c $d/color
   cmp $d/color $d/expect
   NO_COLOR=1 faketty $JQ_NO_B -Cn . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
-  od -tc $d/expect
-  od -tc $d/color
+  od -c $d/expect
+  od -c $d/color
   cmp $d/color $d/expect
 fi
 
