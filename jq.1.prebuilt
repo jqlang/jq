@@ -2738,10 +2738,12 @@ jq \'[\.[] | tonumber?]\'
 .IP "" 0
 .
 .SH "REGULAR EXPRESSIONS"
-jq uses the 
+jq uses the Oniguruma regular expression library, as do PHP, TextMate, Sublime Text, etc, so the description here will focus on jq specifics\.
+
 .
 .P
-Oniguruma supports several flavors of regular expression, so it is important to know that jq uses the 
+Oniguruma supports several flavors of regular expression, so it is important to know that jq uses the "Perl NG" (Perl with named groups) flavor\.
+
 .
 .P
 The jq regex filters are defined so that they can be used using one of these patterns:

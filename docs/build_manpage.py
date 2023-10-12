@@ -86,6 +86,9 @@ class RoffWalker(object):
                     self.__write_cmd('.P')
                 self._write_element(root, ensure_newline=(parent_tag != 'li'))
 
+            elif root.tag == 'a':
+                self._write_element(root, ensure_newline=(parent_tag != 'li'))
+
             elif root.tag == 'ul':
                 if self._ul_is_special(root):
                     li = root[0]
