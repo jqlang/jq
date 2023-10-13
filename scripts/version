@@ -2,7 +2,15 @@
 set -eu
 
 cd "$(dirname "$0")/../"
-test -d .git || exit 1
+if ! [ -d .git ]; then
+  # Building from default GitHub tarball, or building from dist after running
+  # autoreconf unnecessarily.  This is something we can fail to update, but
+  # it's been generating a lot of questions.
+  #
+  # Now we'll have to make `Release jq-<version>` commits that change this:
+  echo "jq-1.7-misconfigured"
+  exit 0
+fi
 
 if git describe --tags --match 'jq-*' >/dev/null 2>&1; then
   git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//'
