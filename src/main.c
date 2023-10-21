@@ -324,6 +324,13 @@ int main(int argc, char* argv[]) {
   (void) setlocale(LC_ALL, "");
 #endif
 
+#ifdef __OpenBSD__
+  if (pledge("stdio rpath", NULL) == -1) {
+    perror("pledge");
+    exit(JQ_ERROR_SYSTEM);
+  }
+#endif
+
 #ifdef WIN32
   jv_tsd_dtoa_ctx_init();
   fflush(stdout);
