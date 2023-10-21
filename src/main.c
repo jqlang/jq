@@ -317,8 +317,6 @@ int main(int argc, char* argv[]) {
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
   int options = 0;
-  jv ARGS = jv_array(); /* positional arguments */
-  jv program_arguments = jv_object(); /* named arguments */
 
 #ifdef HAVE_SETLOCALE
   (void) setlocale(LC_ALL, "");
@@ -338,6 +336,9 @@ int main(int argc, char* argv[]) {
   _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
   _setmode(fileno(stderr), _O_TEXT | _O_U8TEXT);
 #endif
+
+  jv ARGS = jv_array(); /* positional arguments */
+  jv program_arguments = jv_object(); /* named arguments */
 
   if (argc) progname = argv[0];
 
