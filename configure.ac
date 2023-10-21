@@ -45,7 +45,6 @@ if test "x$valgrind_cmd" = "x" ; then
     AC_MSG_WARN([valgrind is required to test jq.])
 fi
 AC_CHECK_FUNCS(memmem)
-AC_CHECK_FUNCS(mkstemp)
 
 AC_CHECK_HEADER("sys/cygwin.h", [have_cygwin=1;])
 AC_CHECK_HEADER("shlwapi.h",[have_shlwapi=1;])
