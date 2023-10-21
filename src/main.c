@@ -310,6 +310,7 @@ int umain(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
 #endif
   jq_state *jq = NULL;
+  jq_util_input_state *input_state = NULL;
   int ret = JQ_OK_NO_OUTPUT;
   int compiled = 0;
   int parser_flags = 0;
@@ -344,7 +345,7 @@ int main(int argc, char* argv[]) {
 
   jq = jq_init();
   if (jq == NULL) {
-    perror("malloc");
+    perror("jq_init");
     ret = JQ_ERROR_SYSTEM;
     goto out;
   }
@@ -352,7 +353,7 @@ int main(int argc, char* argv[]) {
   int dumpopts = JV_PRINT_INDENT_FLAGS(2);
   const char* program = 0;
 
-  jq_util_input_state *input_state = jq_util_input_init(NULL, NULL); // XXX add err_cb
+  input_state = jq_util_input_init(NULL, NULL); // XXX add err_cb
 
   int further_args_are_strings = 0;
   int further_args_are_json = 0;
