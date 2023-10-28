@@ -1729,10 +1729,9 @@ static int jvp_object_contains(jv a, jv b) {
   int r = 1;
 
   jv_object_foreach(b, key, b_val) {
-    jv a_val = jv_object_get(jv_copy(a), jv_copy(key));
+    jv a_val = jv_object_get(jv_copy(a), key);
 
     r = jv_contains(a_val, b_val);
-    jv_free(key);
 
     if (!r) break;
   }
