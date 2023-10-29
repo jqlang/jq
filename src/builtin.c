@@ -58,24 +58,23 @@ BINOPS
 
 static jv type_error(jv bad, const char* msg) {
   char errbuf[15];
-  jv err = jv_invalid_with_msg(jv_string_fmt("%s (%s) %s",
-                                             jv_kind_name(jv_get_kind(bad)),
-                                             jv_dump_string_trunc(jv_copy(bad), errbuf, sizeof(errbuf)),
+  const char *badkind = jv_kind_name(jv_get_kind(bad));
+  jv err = jv_invalid_with_msg(jv_string_fmt("%s (%s) %s", badkind,
+                                             jv_dump_string_trunc(bad, errbuf, sizeof(errbuf)),
                                              msg));
-  jv_free(bad);
   return err;
 }
 
 static jv type_error2(jv bad1, jv bad2, const char* msg) {
   char errbuf1[15],errbuf2[15];
+  const char *badkind1 = jv_kind_name(jv_get_kind(bad1));
+  const char *badkind2 = jv_kind_name(jv_get_kind(bad2));
   jv err = jv_invalid_with_msg(jv_string_fmt("%s (%s) and %s (%s) %s",
-                                             jv_kind_name(jv_get_kind(bad1)),
-                                             jv_dump_string_trunc(jv_copy(bad1), errbuf1, sizeof(errbuf1)),
-                                             jv_kind_name(jv_get_kind(bad2)),
-                                             jv_dump_string_trunc(jv_copy(bad2), errbuf2, sizeof(errbuf2)),
+                                             badkind1,
+                                             jv_dump_string_trunc(bad1, errbuf1, sizeof(errbuf1)),
+                                             badkind2,
+                                             jv_dump_string_trunc(bad2, errbuf2, sizeof(errbuf2)),
                                              msg));
-  jv_free(bad1);
-  jv_free(bad2);
   return err;
 }
 
@@ -283,7 +282,7 @@ static jv f_endswith(jq_state *jq, jv a, jv b) {
   const char *bstr = jv_string_value(b);
   size_t alen = jv_string_length_bytes(jv_copy(a));
   size_t blen = jv_string_length_bytes(jv_copy(b));
-  jv ret;;
+  jv ret;
 
   if (alen < blen ||
      memcmp(astr + (alen - blen), bstr, blen) != 0)
