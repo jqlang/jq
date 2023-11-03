@@ -579,6 +579,36 @@ if ( ! $msys && ! $mingw ) && locale -a > /dev/null; then
   fi
 fi
 
+# Comments!
+if ! x=$($JQ -n '123 # comment') || [ "$x" != 123 ]; then
+  echo 'comment did not work'
+  exit 1
+fi
+
+cr=$(printf \\r)
+if ! x=$($JQ -n "1 # foo$cr + 2") || [ "$x" != 1 ]; then
+  echo 'regression: carriage return terminates comment'
+  exit 1
+fi
+
+if ! x=$($JQ -cn '[
+  1,
+  # foo \
+  2,
+  # bar \\
+  3,
+  4, # baz \\\
+  5, \
+  6,
+  7
+  # comment \
+    comment \
+    comment
+]') || [ "$x" != '[1,3,4,7]' ]; then
+  echo 'multiline comment was not handled correctly'
+  exit 1
+fi
+
 # Allow passing the inline jq script before -- #2919
 if ! r=$($JQ --args -rn -- '$ARGS.positional[0]' bar) || [ "$r" != bar ]; then
     echo "passing the inline script after -- didn't work"
