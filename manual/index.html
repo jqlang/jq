@@ -108,6 +108,9 @@
             <a class="nav-link" href="#assignment">Assignment</a>
           </li>
           <li class="nav-item" data-bs-dismiss="offcanvas" data-bs-target="#contents">
+            <a class="nav-link" href="#comments">Comments</a>
+          </li>
+          <li class="nav-item" data-bs-dismiss="offcanvas" data-bs-target="#contents">
             <a class="nav-link" href="#modules">Modules</a>
           </li>
           <li class="nav-item" data-bs-dismiss="offcanvas" data-bs-target="#contents">
@@ -290,7 +293,7 @@ using some command-line options:</p>
 <li><code>-f filename</code> / <code>--from-file filename</code>:</li>
 </ul>
 <p>Read filter from the file rather than from a command line, like
-  awk's -f option. You can also use '#' to make comments.</p>
+  awk's -f option.</p>
 <ul>
 <li><code>-L directory</code>:</li>
 </ul>
@@ -7986,6 +7989,61 @@ that we did before:</p>
 </code></pre>
           </section>
         </section>
+        <section id="comments">
+          <h2>Comments <a href="#comments" class="icon-link" aria-label="Link to this section: Comments"><span class="bi bi-link-45deg" aria-hidden="true"></span></a></h2>
+          <p>You can write comments in your jq filters using <code>#</code>.</p>
+<p>A <code>#</code> character (not part of a string) starts a comment.
+All characters from <code>#</code> to the end of the line are ignored.</p>
+<p>If the end of the line is preceded by an odd number of backslash
+characters, the following line is also considered part of the
+comment and is ignored.</p>
+<p>For example, the following code outputs <code>[1,3,4,7]</code></p>
+<pre><code>[
+  1,
+  # foo \
+  2,
+  # bar \\
+  3,
+  4, # baz \\\
+  5, \
+  6,
+  7
+  # comment \
+    comment \
+    comment
+]
+</code></pre>
+<p>Backslash continuing the comment on the next line can be useful
+when writing the "shebang" for a jq script:</p>
+<pre><code>#!/bin/sh --
+# sum - Output the sum of the given arguments (or stdin)
+# usage: sum [numbers...]
+# \
+exec jq --args -MRnf "$0" -- "$@"
+
+$ARGS.positional |
+reduce (
+  if . == []
+    then inputs
+    else .[]
+  end |
+  . as $dot |
+  try tonumber catch false |
+  if not or isnan then
+    @json "sum: Invalid number \($dot).\n" | halt_error(1)
+  end
+) as $n (0; . + $n)
+</code></pre>
+<p>The <code>exec</code> line is considered a comment by jq, so it is ignored.
+But it is not ignored by <code>sh</code>, since in <code>sh</code> a backslash at the
+end of the line does not continue the comment.
+With this trick, when the script is invoked as <code>sum 1 2</code>,
+<code>/bin/sh -- /path/to/sum 1 2</code> will be run, and <code>sh</code> will then
+run <code>exec jq --args -MRnf /path/to/sum -- 1 2</code> replacing itself
+with a <code>jq</code> interpreter invoked with the specified options (<code>-M</code>,
+<code>-R</code>, <code>-n</code>, <code>--args</code>), that evaluates the current file (<code>$0</code>),
+with the arguments (<code>$@</code>) that were passed to <code>sh</code>.</p>
+        </section>
         <section id="modules">
           <h2>Modules <a href="#modules" class="icon-link" aria-label="Link to this section: Modules"><span class="bi bi-link-45deg" aria-hidden="true"></span></a></h2>
           <p>jq has a library/module system.  Modules are files whose names end
@@ -8295,6 +8353,7 @@ by a semi-colon, where the first number is one of these:</p>
         "Plain assignment: =": "plain-assignment",
         "Complex assignments": "complex-assignments",
         "Assignment": "assignment",
+        "Comments": "comments",
         "import RelativePathString as NAME [\u003cmetadata\u003e];": "import-relativepathstring-as-name",
         "include RelativePathString [\u003cmetadata\u003e];": "include-relativepathstring",
         "import RelativePathString as $NAME [\u003cmetadata\u003e];": "import-relativepathstring-as-$name",
