@@ -1553,6 +1553,10 @@ bsearch(0,2,4)
 1
 -4
 
+bsearch({x:1})
+[{ "x": 0 },{ "x": 1 },{ "x": 2 }]
+1
+
 # strptime tests are in optional.test
 
 strftime("%Y-%m-%dT%H:%M:%SZ")

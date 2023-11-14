@@ -46,7 +46,6 @@ void *alloca (size_t);
 #include "jv_private.h"
 #include "util.h"
 
-
 #define BINOP(name) \
 static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
   jv_free(input); \
@@ -778,6 +777,61 @@ static jv f_sort_by_impl(jq_state *jq, jv input, jv keys) {
   } else {
     return type_error2(input, keys, "cannot be sorted, as they are not both arrays");
   }
+}
+
+/* Assuming the input array is sorted, bsearch/1 returns */
+/* the index of the target if the target is in the input array; and otherwise */
+/*  (-1 - ix), where ix is the insertion point that would leave the array sorted. */
+/* If the input is not sorted, bsearch will terminate but with irrelevant results. */
+static jv f_bsearch(jq_state *jq, jv input, jv target) {
+    assert(jv_get_kind(input) == JV_KIND_ARRAY);
+    int len = jv_array_length(jv_copy(input));
+    if (len == 0) {
+        jv_free(input);
+        jv_free(target);
+        return jv_number(-1);
+    } else if (len == 1) {
+        int result = jv_cmp(target, jv_array_get(input, 0));
+        if (result == 0 ) {
+            return jv_number(0);
+        } else if (result > 0) {
+            return jv_number(-2);
+        } else {
+            return jv_number(-1);
+        }
+    }
+
+    int start = 0;
+    int end = len - 1;
+    jv answer = jv_null();
+    while (start <end) {
+        int mid = (start + end) / 2;
+        int result = jv_cmp(jv_copy(target), jv_array_get(jv_copy(input), mid));
+        if (result == 0) {
+            answer = jv_number(mid);
+            break;
+        } else if (start == end ) {
+            answer = jv_number(-1);
+            break;
+        } else if (result < 0 ) {
+            end = mid -1;
+        } else {
+            start = mid +1;
+        }
+    }
+    if (jv_get_kind(answer) == JV_KIND_NULL) {
+        int result = jv_cmp(target, jv_array_get(jv_copy(input), start));
+        if (result < 0) {
+            answer =  jv_number(-1 - start);
+        }else {
+            answer =  jv_number(-2 - start);
+        }
+    } else {
+        jv_free(target);
+    }
+
+    jv_free(input);
+    return answer;
 }
 
 static jv f_group_by_impl(jq_state *jq, jv input, jv keys) {
@@ -1718,6 +1772,7 @@ BINOPS
   {f_sort, "sort", 1},
   {f_sort_by_impl, "_sort_by_impl", 2},
   {f_group_by_impl, "_group_by_impl", 2},
+  {f_bsearch, "bsearch", 2},
   {f_min, "min", 1},
   {f_max, "max", 1},
   {f_min_by_impl, "_min_by_impl", 2},
