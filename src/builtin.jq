@@ -48,8 +48,8 @@ def indices($i): if type == "array" and ($i|type) == "array" then .[$i]
   else .[$i] end;
 def index($i):   indices($i) | .[0];       # TODO: optimize
 def rindex($i):  indices($i) | .[-1:][0];  # TODO: optimize
-def paths: path(recurse(if (type|. == "array" or . == "object") then .[] else empty end))|select(length > 0);
-def paths(node_filter): . as $dot|paths|select(. as $p|$dot|getpath($p)|node_filter);
+def paths: path(recurse)|select(length > 0);
+def paths(node_filter): path(recurse|select(node_filter))|select(length > 0);
 def isfinite: type == "number" and (isinfinite | not);
 def arrays: select(type == "array");
 def objects: select(type == "object");
