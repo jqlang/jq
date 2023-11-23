@@ -213,7 +213,7 @@ enum {
 #define JVP_FLAGS_NUMBER_LITERAL      JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_DECIMAL, 1))
 
 // the decimal precision of binary double
-#define DEC_NUBMER_DOUBLE_PRECISION   (16)
+#define DEC_NUBMER_DOUBLE_PRECISION   (17)
 #define DEC_NUMBER_STRING_GUARD       (14)
 #define DEC_NUBMER_DOUBLE_EXTRA_UNITS ((DEC_NUBMER_DOUBLE_PRECISION - DECNUMDIGITS + DECDPUN - 1)/DECDPUN)
 
@@ -489,27 +489,19 @@ pthread_getspecific(pthread_key_t key)
 #endif
 
 static pthread_key_t dec_ctx_key;
-static pthread_key_t dec_ctx_dbl_key;
 static pthread_once_t dec_ctx_once = PTHREAD_ONCE_INIT;
 
 #define DEC_CONTEXT() tsd_dec_ctx_get(&dec_ctx_key)
-#define DEC_CONTEXT_TO_DOUBLE() tsd_dec_ctx_get(&dec_ctx_dbl_key)
 
 // atexit finalizer to clean up the tsd dec contexts if main() exits
 // without having called pthread_exit()
 void jv_tsd_dec_ctx_fini() {
   jv_mem_free(pthread_getspecific(dec_ctx_key));
-  jv_mem_free(pthread_getspecific(dec_ctx_dbl_key));
   pthread_setspecific(dec_ctx_key, NULL);
-  pthread_setspecific(dec_ctx_dbl_key, NULL);
 }
 
 void jv_tsd_dec_ctx_init() {
   if (pthread_key_create(&dec_ctx_key, jv_mem_free) != 0) {
-    fprintf(stderr, "error: cannot create thread specific key");
-    abort();
-  }
-  if (pthread_key_create(&dec_ctx_dbl_key, jv_mem_free) != 0) {
     fprintf(stderr, "error: cannot create thread specific key");
     abort();
   }
@@ -532,12 +524,6 @@ static decContext* tsd_dec_ctx_get(pthread_key_t *key) {
       ctx->digits = MIN(DEC_MAX_DIGITS,
           INT32_MAX - (DECDPUN - 1) - (ctx->emax - ctx->emin - 1));
       ctx->traps = 0; /*no errors*/
-    }
-    else if (key == &dec_ctx_dbl_key)
-    {
-      decContextDefault(ctx, DEC_INIT_DECIMAL64);
-      // just to make sure we got this right
-      assert(ctx->digits <= DEC_NUBMER_DOUBLE_PRECISION);
     }
     if (pthread_setspecific(*key, ctx) != 0) {
       fprintf(stderr, "error: cannot store thread specific data");
@@ -610,6 +596,11 @@ static jv jvp_literal_number_new(const char * literal) {
 
 static double jvp_literal_number_to_double(jv j) {
   assert(JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_LITERAL));
+  decContext dblCtx;
+
+  // init as decimal64 but change digits to allow conversion to binary64 (double)
+  decContextDefault(&dblCtx, DEC_INIT_DECIMAL64);
+  dblCtx.digits = DEC_NUBMER_DOUBLE_PRECISION;
 
   decNumber *p_dec_number = jvp_dec_number_ptr(j);
   decNumberDoublePrecision dec_double;
@@ -617,7 +608,7 @@ static double jvp_literal_number_to_double(jv j) {
 
   // reduce the number to the shortest possible form
   // that fits into the 64 bit floating point representation
-  decNumberReduce(&dec_double.number, p_dec_number, DEC_CONTEXT_TO_DOUBLE());
+  decNumberReduce(&dec_double.number, p_dec_number, &dblCtx);
 
   decNumberToString(&dec_double.number, literal);
 
