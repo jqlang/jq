@@ -25,9 +25,10 @@ int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   jv res = jv_parse_custom_flags(null_terminated, fuzz_flags);
   if (jv_is_valid(res)) {
     jv_dump(res, dump_flags);
+  } else {
+    jv_free(res);
   }
-  jv_free(res);
-  
+
   // Free the null-terminated string
   free(null_terminated);
 
