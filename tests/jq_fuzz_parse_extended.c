@@ -5,11 +5,14 @@
 #include "jv.h"
 
 int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
-  if (size < 4) {
+  if (size < 8) {
     return 0;
   }
 
   int fuzz_flags = *(int*)data;
+  data += 4;
+  size -= 4;
+  int dump_flags = *(int*)data;
   data += 4;
   size -= 4;
 
@@ -20,6 +23,9 @@ int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
 
   // Fuzzer entrypoint
   jv res = jv_parse_custom_flags(null_terminated, fuzz_flags);
+  if (jv_is_valid(res)) {
+    jv_dump(res, dump_flags);
+  }
   jv_free(res);
   
   // Free the null-terminated string
