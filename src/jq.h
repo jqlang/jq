@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include "jv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
   JQ_DEBUG_TRACE = 1,
   JQ_DEBUG_TRACE_DETAIL = 2,
@@ -68,5 +72,9 @@ jv jq_util_input_get_current_filename(jq_state*);
 jv jq_util_input_get_current_line(jq_state*);
 
 int jq_set_colors(const char *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !JQ_H */
