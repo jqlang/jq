@@ -14,7 +14,9 @@ int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   jq_state *jq = NULL;
   jq = jq_init();
   if (jq != NULL) {
-    jq_compile(jq, null_terminated);
+    if (jq_compile(jq, null_terminated)) {
+      jq_dump_disassembly(jq, 2);
+    }
   }
   jq_teardown(&jq);
 
