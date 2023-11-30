@@ -1,10 +1,8 @@
 #include <fuzzer/FuzzedDataProvider.h>
 #include <string>
 
-extern "C" {
 #include "jq.h"
 #include "jv.h"
-}
 
 // Fuzzer inspired by /src/jq_test.c
 // The goal is to have the fuzzer execute the functions:
