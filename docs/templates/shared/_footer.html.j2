@@ -9,6 +9,27 @@
           <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC-BY-3.0</a> license (docs).
         </p>
       </div>
+      <button id="scrollToTopBtn">↑</button>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+    <script>
+      var scrollToTopBtn = document.getElementById("scrollToTopBtn");
+
+      window.onscroll = function() {
+        var scrollHeight = document.documentElement.scrollHeight;
+        var clientHeight = document.documentElement.clientHeight;
+        var scrollPosition = window.scrollY || window.pageYOffset || document.body.scrollTop + (document.documentElement.scrollTop || 0);
+
+        if (scrollPosition + clientHeight >= scrollHeight - 50) {
+          scrollToTopBtn.style.display = "block";
+        } else {
+          scrollToTopBtn.style.display = "none";
+        }
+      };
+      
+      scrollToTopBtn.addEventListener("click", function() {
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+      });
+    </script>
