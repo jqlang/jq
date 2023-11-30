@@ -199,27 +199,27 @@ def ascii_upcase:
 
 # inverse of @uri in jq
 def url_decode:
-  # The helper function converts the input string written in the given
-  # "base" to an integer
-  def to_i(base):
-    explode
-    | reverse
-    | map(if 65 <= . and . <= 90 then . + 32  else . end)   # downcase
-    | map(if . > 96  then . - 87 else . - 48 end)  # "a" ~ 97 => 10 ~ 87
-    | reduce .[] as $c
-        # base: [power, ans]
-        ([1,0]; (.[0] * base) as $b | [$b, .[1] + (.[0] * $c)]) | .[1];
+  def unhex:
+    if 48 <= . and . <= 57 then . - 48 elif 65 <= . and . <= 70 then . - 55 else . - 87 end;
 
-  .  as $in
-  | length as $length
-  | [0, ""]  # i, answer
-  | until ( .[0] >= $length;
-      .[0] as $i
-      |  if $in[$i:$i+1] == "%"
-         then [ $i + 3, .[1] + ([$in[$i+1:$i+3] | to_i(16)] | implode) ]
-         else [ $i + 1, .[1] + $in[$i:$i+1] ]
-         end)
-  | .[1];  # answer
+  def bytes:
+    def loop($i):
+      if $i >= length then empty else 16 * (.[$i+1] | unhex) + (.[$i+2] | unhex), loop($i+3) end;
+    [loop(0)];
+
+  def codepoints:
+    def loop($i):
+      if $i >= length then empty
+      elif .[$i] >= 240 then (.[$i+3]-128) + 64*(.[$i+2]-128) + 4096*(.[$i+1]-128) + 262144*(.[$i]-240), loop($i+4)
+      elif .[$i] >= 224 then (.[$i+2]-128) + 64*(.[$i+1]-128) + 4096*(.[$i]-224), loop($i+3)
+      elif .[$i] >= 192 then (.[$i+1]-128) + 64*(.[$i]-192), loop($i+2)
+      else .[$i], loop($i+1)
+      end;
+    [loop(0)];
+
+  # Note that URL-encoding implies percent-encoded UTF-8 octets, so we have to
+  # manually reassemble these into codepoints for implode
+  gsub("(?<m>(?:%[0-9a-fA-F]{2})+)"; .m | explode | bytes | codepoints | implode);
 
 # reimplementation of @uri in jq to maintain a similar name to url_decode
 def url_encode:

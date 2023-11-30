@@ -2100,6 +2100,10 @@ url_encode
 "á"
 "%C3%A1"
 
+url_encode | url_decode
+"á"
+"á"
+
 url_decode
 "http%3A%2F%2Ffoo%20bar%2F"
 "http://foo bar/"
@@ -2107,3 +2111,7 @@ url_decode
 (@uri | url_decode) == (url_encode | url_decode)
 "http://foo bar/"
 true
+
+@uri | url_decode | url_encode
+"è"
+"%C3%A8"
