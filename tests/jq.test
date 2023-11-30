@@ -2091,3 +2091,19 @@ try ("foobar" | .[1.5]) catch .
 null
 "Cannot index string with number"
 
+# url_encode/url_decode
+url_encode
+"="
+"%3D"
+
+url_encode
+"á"
+"%C3%A1"
+
+url_decode
+"http%3A%2F%2Ffoo%20bar%2F"
+"http://foo bar/"
+
+(@uri | url_decode) == (url_encode | url_decode)
+"http://foo bar/"
+true
