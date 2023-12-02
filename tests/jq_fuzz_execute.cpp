@@ -27,8 +27,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
           jv_free(actual);
         }
         jv_free(next);
-      }
-      else {
+      } else {
         // Only free if input as invalid as otherwise jq_teardown
         // frees it.
         jv_free(input);
