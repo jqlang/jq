@@ -16,6 +16,8 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   jq_state *jq = NULL;
   jq = jq_init();
   if (jq != NULL) {
+    jq_set_attr(jq, jv_string("JQ_ORIGIN"), jv_string("/tmp/"));
+
     if (jq_compile(jq, prog_payload.c_str())) {
       // Process to jv_parse and then jv_next
       jv input = jv_parse(parse_payload1.c_str());
