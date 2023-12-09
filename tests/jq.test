@@ -2115,3 +2115,19 @@ try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"
 {"hey":[]}
 "ok"
 "ok"
+
+# ltrimstr/1 and rtrimstr/1 return an error for non-strings. #2969
+
+.[] as [$x, $y] | try ["ok", ($x | ltrimstr($y))] catch ["ko", .]
+[["hi",1],[1,"hi"],["hi","hi"],[1,1]]
+["ko","startswith() requires string inputs"]
+["ko","startswith() requires string inputs"]
+["ok",""]
+["ko","startswith() requires string inputs"]
+
+.[] as [$x, $y] | try ["ok", ($x | rtrimstr($y))] catch ["ko", .]
+[["hi",1],[1,"hi"],["hi","hi"],[1,1]]
+["ko","endswith() requires string inputs"]
+["ko","endswith() requires string inputs"]
+["ok",""]
+["ko","endswith() requires string inputs"]
