@@ -294,37 +294,6 @@ static jv f_endswith(jq_state *jq, jv a, jv b) {
   return ret;
 }
 
-static jv f_ltrimstr(jq_state *jq, jv input, jv left) {
-  jv startswith = f_startswith(jq, jv_copy(input), jv_copy(left));
-  if (jv_get_kind(startswith) != JV_KIND_TRUE) {
-    jv_free(startswith);
-    jv_free(left);
-    return input;
-  }
-  /*
-   * FIXME It'd be better to share the suffix with the original input --
-   * that we could do, we just can't share prefixes.
-   */
-  int prefixlen = jv_string_length_bytes(left);
-  jv res = jv_string_sized(jv_string_value(input) + prefixlen,
-                           jv_string_length_bytes(jv_copy(input)) - prefixlen);
-  jv_free(input);
-  return res;
-}
-
-static jv f_rtrimstr(jq_state *jq, jv input, jv right) {
-  jv endswith = f_endswith(jq, jv_copy(input), jv_copy(right));
-  if (jv_get_kind(endswith) == JV_KIND_TRUE) {
-    jv res = jv_string_sized(jv_string_value(input),
-                             jv_string_length_bytes(jv_copy(input)) - jv_string_length_bytes(right));
-    jv_free(input);
-    return res;
-  }
-  jv_free(endswith);
-  jv_free(right);
-  return input;
-}
-
 jv binop_minus(jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     jv r = jv_number(jv_number_value(a) - jv_number_value(b));
@@ -1736,8 +1705,6 @@ BINOPS
   {f_keys_unsorted, "keys_unsorted", 1},
   {f_startswith, "startswith", 2},
   {f_endswith, "endswith", 2},
-  {f_ltrimstr, "ltrimstr", 2},
-  {f_rtrimstr, "rtrimstr", 2},
   {f_string_split, "split", 2},
   {f_string_explode, "explode", 1},
   {f_string_implode, "implode", 1},
