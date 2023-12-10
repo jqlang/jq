@@ -44,7 +44,7 @@ const char *jq_progs[] = {
     ".[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}",
     ".[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, "
     "$d, $e}",
-    ".[] as [$a] ?// [$b] | if $a != null then error(\"err: \($a)\") else "
+    ".[] as [$a] ?// [$b] | if $a != null then error(\"err: \\($a)\") else "
     "{$a,$b} end",
     ". as $big | [$big, $big + 1] | map(. > "
     "10000000000000000000000000000000)",
@@ -103,22 +103,22 @@ const char *jq_progs[] = {
     "[.[] | gsub(\", \"; \":\")]",
     "gsub(\"$\"; \"a\"; \"g\")",
     "gsub(\"^\"; \"a\")",
-    "[gsub(\"(?<a>.)\"; \"\(.a|ascii_upcase)\", \"\(.a|ascii_downcase)\", "
+    "[gsub(\"(?<a>.)\"; \"\\(.a|ascii_upcase)\", \"\\(.a|ascii_downcase)\", "
     "\"c\")]",
     "gsub(\"^.*?a\"; \"b\")",
     "gsub(\"^.*a\"; \"b\")",
     "gsub(\"a\";\"b\")",
     "gsub(\"\"; \"a\"; \"g\")",
     "gsub(\"\"; \"a\"; \"g\")",
-    "gsub(\"[^a-z]*(?<x>[a-z]*)\"; \"Z\(.x)\")",
-    "gsub(\"\\b(?<x>.)\"; \"\(.x|ascii_downcase)\")",
-    "gsub(\"(?<d>\\d)\"; \":\(.d);\")",
+    "gsub(\"[^a-z]*(?<x>[a-z]*)\"; \"Z\\(.x)\")",
+    "gsub(\"\\b(?<x>.)\"; \"\\(.x|ascii_downcase)\")",
+    "gsub(\"(?<d>\\d)\"; \":\\(.d);\")",
     "gsub(\"^\"; \"\"; \"g\")",
     "[gsub(\"p\"; \"a\", \"b\")]",
     "gsub(\"(?=u)\"; \"u\")",
     "gsub(\"(.*)\"; \"\"; \"x\")",
-    "gsub(\"(?<x>.)[^a]*\"; \"+\(.x)-\")",
-    "gsub(\"(?<x>.)(?<y>[0-9])\"; \"\(.x|ascii_downcase)\(.y)\")",
+    "gsub(\"(?<x>.)[^a]*\"; \"+\\(.x)-\")",
+    "gsub(\"(?<x>.)(?<y>[0-9])\"; \"\\(.x|ascii_downcase)\\(.y)\")",
     "@html",
     "if . == 0 then   \"zero\" elif . == 1 then   \"one\" else   \"many\" "
     "end",
@@ -206,7 +206,7 @@ const char *jq_progs[] = {
     "setpath([0,\"a\"]; 1)",
     "setpath([\"a\",\"b\"]; 1)",
     "setpath([\"a\",\"b\"]; 1)",
-    "@sh \"echo \(.)\"",
+    "@sh \"echo \\(.)\"",
     "sort",
     "sort_by(.foo)",
     "sort_by(.foo, .bar)",
@@ -216,14 +216,14 @@ const char *jq_progs[] = {
     "[.[]|startswith(\"foo\")]",
     "strptime(\"%Y-%m-%dT%H:%M:%SZ\")",
     "strptime(\"%Y-%m-%dT%H:%M:%SZ\")|mktime",
-    "[sub(\"(?<a>.)\"; \"\(.a|ascii_upcase)\", \"\(.a|ascii_downcase)\")]",
-    "[sub(\"(?<a>.)\"; \"\(.a|ascii_upcase)\", \"\(.a|ascii_downcase)\", "
+    "[sub(\"(?<a>.)\"; \"\\(.a|ascii_upcase)\", \"\\(.a|ascii_downcase)\")]",
+    "[sub(\"(?<a>.)\"; \"\\(.a|ascii_upcase)\", \"\\(.a|ascii_downcase)\", "
     "\"c\")]",
     "[sub(\"a\"; \"b\", \"c\")]",
-    "sub(\"[^a-z]*(?<x>[a-z]+)\"; \"Z\(.x)\"; \"g\")",
+    "sub(\"[^a-z]*(?<x>[a-z]+)\"; \"Z\\(.x)\"; \"g\")",
     "[.[]|[[sub(\", *\";\":\")], [gsub(\", *\";\":\")], [scan(\", *\")]]]",
     "[.[]|[[sub(\", +\";\":\")], [gsub(\", +\";\":\")], [scan(\", +\")]]]",
-    "sub(\"^(?<head>.)\"; \"Head=\(.head) Tail=\")",
+    "sub(\"^(?<head>.)\"; \"Head=\\(.head) Tail=\")",
     "[test(\"ā\")]",
     ".[] | test(\"a b c # spaces are ignored\"; \"ix\")",
     "test(\"foo\")",
