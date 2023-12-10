@@ -2091,3 +2091,7 @@ try ("foobar" | .[1.5]) catch .
 null
 "Cannot index string with number"
 
+# setpath/2 does not leak the input after an invalid get #2967
+try ["ok", setpath([1]; 1)] catch ["ko", .]
+{"hi":"hello"}
+["ko","Cannot index object with number"]
