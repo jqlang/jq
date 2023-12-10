@@ -408,6 +408,7 @@ jv jv_setpath(jv root, jv path, jv value) {
 
   jv subroot = jv_get(jv_copy(root), jv_copy(pathcurr));
   if (!jv_is_valid(subroot)) {
+    jv_free(root);
     jv_free(pathcurr);
     jv_free(pathrest);
     jv_free(value);
