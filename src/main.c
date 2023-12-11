@@ -11,13 +11,8 @@
 #include <unistd.h>
 
 #ifdef WIN32
-#include <windows.h>
 #include <io.h>
 #include <fcntl.h>
-#include <processenv.h>
-#include <shellapi.h>
-#include <wchar.h>
-#include <wtypes.h>
 extern void jv_tsd_dtoa_ctx_init();
 #endif
 
@@ -37,6 +32,7 @@ extern void jv_tsd_dtoa_ctx_init();
 #include "util.h"
 #include "src/version.h"
 #include "src/config_opts.inc"
+#include "main-win32.h"
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
 
@@ -274,26 +270,7 @@ static void stderr_cb(void *data, jv input) {
   jv_free(input);
 }
 
-#ifdef WIN32
-int umain(int argc, char* argv[]);
-
-int wmain(int argc, wchar_t* wargv[]) {
-  size_t arg_sz;
-  char **argv = alloca(argc * sizeof(wchar_t*));
-  for (int i = 0; i < argc; i++) {
-    argv[i] = alloca((arg_sz = WideCharToMultiByte(CP_UTF8,
-                                                   0,
-                                                   wargv[i],
-                                                   -1, 0, 0, 0, 0)));
-    WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, argv[i], arg_sz, 0, 0);
-  }
-  return umain(argc, argv);
-}
-
-int umain(int argc, char* argv[]) {
-#else /*}*/
-int main(int argc, char* argv[]) {
-#endif
+DEFINE_MAIN(int argc, char *argv[]) {
   jq_state *jq = NULL;
   jq_util_input_state *input_state = NULL;
   int ret = JQ_OK_NO_OUTPUT;
