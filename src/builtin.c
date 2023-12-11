@@ -41,6 +41,7 @@ void *alloca (size_t);
 #include "bytecode.h"
 #include "linker.h"
 #include "locfile.h"
+#include "math-macos.h"
 #include "jv_unicode.h"
 #include "jv_alloc.h"
 #include "jv_private.h"
@@ -113,39 +114,6 @@ jv binop_plus(jv a, jv b) {
   }
 }
 
-#ifdef __APPLE__
-// macOS has a bunch of libm deprecation warnings, so let's clean those up
-#ifdef HAVE_TGAMMA
-#define HAVE_GAMMA
-#define gamma tgamma
-#endif
-#ifdef HAVE___EXP10
-#define HAVE_EXP10
-#define exp10 __exp10
-#endif
-#ifdef HAVE_REMAINDER
-#define HAVE_DREM
-#define drem remainder
-#endif
-
-// We replace significand with our own, since there's not a rename-replacement
-#ifdef HAVE_FREXP
-static double __jq_significand(double x) {
-  int z;
-  return 2*frexp(x, &z);
-}
-#define HAVE_SIGNIFICAND
-#define significand __jq_significand
-#elif defined(HAVE_SCALBN) && defined(HAVE_ILOGB)
-static double __jq_significand(double x) {
-  return scalbn(x, -ilogb(x));
-}
-#define HAVE_SIGNIFICAND
-#define significand __jq_significand
-#endif
-
-#endif // ifdef __APPLE__
-
 #define LIBM_DD(name) \
 static jv f_ ## name(jq_state *jq, jv input) { \
   if (jv_get_kind(input) != JV_KIND_NUMBER) { \
@@ -207,13 +175,6 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
 #undef LIBM_DDDD
 #undef LIBM_DDD
 #undef LIBM_DD
-
-#ifdef __APPLE__
-#undef gamma
-#undef drem
-#undef significand
-#undef exp10
-#endif
 
 #ifdef HAVE_FREXP
 static jv f_frexp(jq_state *jq, jv input) {
@@ -1863,13 +1824,6 @@ static const char jq_builtins[] =
 #undef LIBM_DDDD
 #undef LIBM_DDD
 #undef LIBM_DD
-
-#ifdef __APPLE__
-#undef HAVE_GAMMA
-#undef HAVE_EXP10
-#undef HAVE_DREM
-#undef HAVE_SIGNIFICAND
-#endif
 
 static block gen_builtin_list(block builtins) {
   jv list = jv_array_append(block_list_funcs(builtins, 1), jv_string("builtins/0"));

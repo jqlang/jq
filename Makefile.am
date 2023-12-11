@@ -7,7 +7,7 @@ LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
         src/util.h src/decNumber/decContext.h src/decNumber/decNumber.h \
         src/decNumber/decNumberLocal.h src/jv_dtoa_tsd.h src/jv_thread.h \
-        src/jv_private.h
+        src/jv_private.h src/math-macos.h
 
 LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
