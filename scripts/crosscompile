@@ -32,7 +32,7 @@ esac
 rm -rf "$plat/tmp"
 mkdir "$plat/tmp"
 cd "$plat/tmp"
-../../../configure "$@"
+../../../configure "HOSTCC=${HOSTCC:-c99}" "$@"
 make "$jobs" DESTDIR=$plat install
 set -x
 for jq in `find . -type f \( -name jq -o -name jq.exe \) -print`; do

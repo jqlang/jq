@@ -1798,32 +1798,7 @@ static block bind_bytecoded_builtins(block b) {
 static const char jq_builtins[] =
 /* Include jq-coded builtins */
 #include "src/builtin.inc"
-
-/* Include unsupported math functions next */
-#define LIBM_DD(name)
-#define LIBM_DDD(name)
-#define LIBM_DDDD(name)
-#define LIBM_DD_NO(name) "def " #name ": \"Error: " #name "/0 not found at build time\"|error;"
-#define LIBM_DDD_NO(name) "def " #name "(a;b): \"Error: " #name "/2 not found at build time\"|error;"
-#define LIBM_DDDD_NO(name) "def " #name "(a;b;c): \"Error: " #name "/3 not found at build time\"|error;"
-#include "libm.h"
-#ifndef HAVE_FREXP
-  "def frexp: \"Error: frexp/0 not found at build time\"|error;"
-#endif
-#ifndef HAVE_MODF
-  "def modf: \"Error: modf/0 not found at build time\"|error;"
-#endif
-#ifndef HAVE_LGAMMA_R
-  "def lgamma_r: \"Error: lgamma_r/0 not found at build time\"|error;"
-#endif
 ;
-
-#undef LIBM_DDDD_NO
-#undef LIBM_DDD_NO
-#undef LIBM_DD_NO
-#undef LIBM_DDDD
-#undef LIBM_DDD
-#undef LIBM_DD
 
 static block gen_builtin_list(block builtins) {
   jv list = jv_array_append(block_list_funcs(builtins, 1), jv_string("builtins/0"));

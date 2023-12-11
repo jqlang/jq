@@ -19,10 +19,13 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
 
 ### C build options
 
-AM_CFLAGS = -Wextra -Wall -Wno-unused-parameter -Wno-unused-function
+AM_CFLAGS = -Wextra -Wall -Woverlength-strings
+
+AM_CFLAGS += -Wno-unused-parameter -Wno-unused-function
 
 if WIN32
 AM_CFLAGS += -municode
+HOSTCFLAGS += -municode
 endif
 
 ACLOCAL_AMFLAGS = -I config/m4
@@ -117,12 +120,17 @@ src/config_opts.inc:
 	fi | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/"/' -e 's/^/#define JQ_CONFIG /' > $@
 src/main.c: src/version.h src/config_opts.inc
 
-src/builtin.inc: $(srcdir)/src/builtin.jq
-	mkdir -p src
-	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $(srcdir)/src/builtin.jq > $@
+src/gen_jq_builtins: $(srcdir)/src/gen_jq_builtins.c
+	@mkdir -p src
+	@printf '  HOSTCC   %s\n' $@
+	@$(HOSTCC) $(HOSTCFLAGS) $(DEFS) -o $@ $<
+src/builtin.inc: src/gen_jq_builtins $(srcdir)/src/builtin.jq
+	@mkdir -p src
+	$(AM_V_GEN)src/gen_jq_builtins $(srcdir)/src/builtin.jq > $@
 src/builtin.o: src/builtin.inc
 
-CLEANFILES = src/version.h .remake-version-h src/builtin.inc src/config_opts.inc
+CLEANFILES = src/version.h .remake-version-h src/config_opts.inc \
+	     src/gen_jq_builtins src/builtin.inc
 
 bin_PROGRAMS = jq
 jq_SOURCES = src/main.c src/version.h
@@ -232,7 +240,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/optional.test tests/man.test tests/manonig.test           \
         tests/jq.test tests/onig.test tests/base64.test                 \
         tests/utf8-truncate.jq tests/jq-f-test.sh                       \
-        tests/no-main-program.jq tests/yes-main-program.jq
+        tests/no-main-program.jq tests/yes-main-program.jq              \
+        src/gen_jq_builtins.c
 
 AM_DISTCHECK_CONFIGURE_FLAGS=--with-oniguruma=builtin
 

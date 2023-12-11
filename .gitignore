@@ -16,6 +16,9 @@ jq
 !tests/modules/lib/jq/
 jq.1
 
+# Generator programs
+src/gen_jq_builtins
+
 # Generated source
 src/builtin.inc
 src/config_opts.inc

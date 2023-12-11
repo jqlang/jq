@@ -21,6 +21,12 @@ AM_PROG_CC_C_O
 
 AC_SYS_LARGEFILE # issue 2167
 
+AC_ARG_VAR([HOSTCC], [Host compiler; necessary to build gen_jq_builtins when cross-compiling])
+AC_ARG_VAR([HOSTCFLAGS], [Host compiler flags])
+HOSTCC=${HOSTCC:-$CC}
+AC_DEFINE([HOSTCC], ["$HOSTCC"])
+AC_DEFINE([HOSTCC], ["$HOSTCFLAGS"])
+
 dnl couldn't use AM_PROG_LEX as it doesn't support header files like the
 dnl AC_PROG_YACC macros...
 

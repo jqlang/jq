@@ -80,15 +80,15 @@ cd "${builddir}/"
 
      # ./configure; make install
      cd "${builddir}/onig-${oniguruma}"
-     CC=${CC} LDFLAGS=${LDFLAGS} \
+     HOSTCC=${HOSTCC:-c99} CC=${CC} LDFLAGS=${LDFLAGS} \
      ./configure --host=${HOST} --build=$(./config.guess) --enable-shared=no --enable-static=yes --prefix=/
      make -j${MAKEJOBS} install DESTDIR="${cwd}/ios/onig/${arch}"
      make clean
-     
+
      # Jump back to JQ.
      cd ${cwd}
      [[ ! -f ./configure ]] && autoreconf -ivf
-     CC=${CC} LDFLAGS=${LDFLAGS} \
+     HOSTCC=${HOSTCC:-c99} CC=${CC} LDFLAGS=${LDFLAGS} \
      ./configure --host=${HOST} --build=$(./config/config.guess) --enable-docs=no --enable-shared=no --enable-static=yes --prefix=/ --with-oniguruma=${cwd}/ios/onig/${arch} $(test -z ${BISON+x} || echo '--enable-maintainer-mode')
      make -j${MAKEJOBS} install DESTDIR="${cwd}/ios/jq/${arch}"
      make clean

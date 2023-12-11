@@ -93,6 +93,7 @@ jobs:
             --with-oniguruma=builtin \
             --enable-static \
             --enable-all-static \
+            HOSTCC=c99 \
             CFLAGS="-O2 -pthread -fstack-protector-all"
           make -j"$(nproc)"
           file ./jq
@@ -159,6 +160,7 @@ jobs:
             --with-oniguruma=builtin \
             --enable-static \
             --enable-all-static \
+            HOSTCC=c99 \
             CFLAGS="-O2 -pthread -fstack-protector-all"
           make -j"$(sysctl -n hw.logicalcpu)"
           strip ./jq
