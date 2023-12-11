@@ -129,10 +129,6 @@ jq_SOURCES = src/main.c src/version.h
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
 
-if WIN32
-jq_LDADD += -lshlwapi
-endif
-
 if ENABLE_ALL_STATIC
 jq_LDFLAGS += -all-static
 endif
