@@ -107,10 +107,10 @@ generate_ver = ver="`{ $(srcdir)/scripts/version || echo '$(VERSION)' ; } | sed 
 .remake-version-h: .FORCE
 	@ $(generate_ver); test "x`cat src/version.h 2>/dev/null`" = "x$$ver" || touch .remake-version-h
 src/version.h: .remake-version-h
-	mkdir -p src
+	@mkdir -p src
 	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
 src/config_opts.inc:
-	mkdir -p src
+	@mkdir -p src
 	$(AM_V_GEN) if test -x ./config.status; then \
 	  ./config.status --config; \
 	else echo "(unknown)"; \
