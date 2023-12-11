@@ -566,15 +566,18 @@ if ! $VALGRIND $Q $JQ -n -f "$JQTESTDIR/yes-main-program.jq" > $d/out 2>&1; then
   exit 1
 fi
 
-if ( ! $msys && ! $mingw ) && locale -a > /dev/null; then
-  locale=$(locale -a | egrep -v '^(C|LANG|POSIX|en)' | egrep -i 'utf8|utf-8' | head -1)
-  if [ -z "$locale" ]; then
+if ! $msys && ! $mingw && locales=$(locale -a); then
+  { l=$(grep -Ev '^(C|LANG|POSIX|en)' | grep -Ei '\.utf-?8$' | head -n1) ;} \
+<<EOF
+$locales
+EOF
+  if [ -z "$l" ]; then
     echo "WARNING: Not testing localization"
   else
-    date=$(LC_ALL="$locale" date +"%a %d %b %Y at %H:%M:%S")
-    if ! LC_ALL="$locale" ./jq -nRe --arg date "$date" '$date|strptime("%a %d %b %Y at %H:%M:%S")? // false'; then
+    date=$(LC_ALL=$l date +'%a %d %b %Y at %H:%M:%S')
+    if ! LC_ALL=$l $JQ -nR --arg date "$date" '$date|strptime("%a %d %b %Y at %H:%M:%S")'; then
       echo "jq does not honor LC_ALL environment variable"
-      exit 1;
+      exit 1
     fi
   fi
 fi
