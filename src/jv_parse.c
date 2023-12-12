@@ -514,6 +514,10 @@ static pfunc check_literal(struct jv_parser* p) {
   case 'f': pattern = "false"; plen = 5; v = jv_false(); break;
   case '\'':
     return "Invalid string literal; expected \", but got '";
+  case '/':
+  case '*':
+  case '&':
+    return "Invalid literal";
   case 'n':
     // if it starts with 'n', it could be a literal "nan"
     if (p->tokenpos != 3) {

@@ -2094,3 +2094,15 @@ null
 try fromjson catch .
 "{'a': 123}"
 "Invalid string literal; expected \", but got ' at line 1, column 5 (while parsing '{'a': 123}')"
+
+try fromjson catch .
+"{\"a\": /}"
+"Invalid literal at line 1, column 8 (while parsing '{\"a\": /}')"
+
+try fromjson catch .
+"{\"a\": *}"
+"Invalid literal at line 1, column 8 (while parsing '{\"a\": *}')"
+
+try fromjson catch .
+"{\"a\": &}"
+"Invalid literal at line 1, column 8 (while parsing '{\"a\": &}')"
