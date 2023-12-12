@@ -2091,3 +2091,6 @@ try ("foobar" | .[1.5]) catch .
 null
 "Cannot index string with number"
 
+try fromjson catch .
+"{'a': 123}"
+"Invalid string literal; expected \", but got ' at line 1, column 5 (while parsing '{'a': 123}')"
