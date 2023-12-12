@@ -160,7 +160,7 @@ jobs:
             --enable-static \
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all"
-          make -j"$(nproc)"
+          make -j"$(sysctl -n hw.logicalcpu)"
           strip ./jq
           file ./jq
           cp ./jq jq-${{ env.SUFFIX }}

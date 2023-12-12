@@ -408,6 +408,7 @@ jv jv_setpath(jv root, jv path, jv value) {
 
   jv subroot = jv_get(jv_copy(root), jv_copy(pathcurr));
   if (!jv_is_valid(subroot)) {
+    jv_free(root);
     jv_free(pathcurr);
     jv_free(pathrest);
     jv_free(value);
@@ -552,7 +553,7 @@ jv jv_keys_unsorted(jv x) {
 jv jv_keys(jv x) {
   if (jv_get_kind(x) == JV_KIND_OBJECT) {
     int nkeys = jv_object_length(jv_copy(x));
-    jv* keys = jv_mem_calloc(sizeof(jv), nkeys);
+    jv* keys = jv_mem_calloc(nkeys, sizeof(jv));
     int kidx = 0;
     jv_object_foreach(x, key, value) {
       keys[kidx++] = key;
@@ -673,7 +674,7 @@ static struct sort_entry* sort_items(jv objects, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
   int n = jv_array_length(jv_copy(objects));
-  struct sort_entry* entries = jv_mem_calloc(sizeof(struct sort_entry), n);
+  struct sort_entry* entries = jv_mem_calloc(n, sizeof(struct sort_entry));
   for (int i=0; i<n; i++) {
     entries[i].object = jv_array_get(jv_copy(objects), i);
     entries[i].key = jv_array_get(jv_copy(keys), i);

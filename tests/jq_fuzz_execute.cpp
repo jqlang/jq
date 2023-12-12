@@ -16,6 +16,8 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   jq_state *jq = NULL;
   jq = jq_init();
   if (jq != NULL) {
+    jq_set_attr(jq, jv_string("JQ_ORIGIN"), jv_string("/tmp/"));
+
     if (jq_compile(jq, prog_payload.c_str())) {
       // Process to jv_parse and then jv_next
       jv input = jv_parse(parse_payload1.c_str());
@@ -27,9 +29,11 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
           jv_free(actual);
         }
         jv_free(next);
+      } else {
+        // Only free if input is invalid as otherwise jq_teardown
+        // frees it.
+        jv_free(input);
       }
-
-      // Do not free "input" as this is handled by jq_teardown.
     }
   }
   jq_teardown(&jq);

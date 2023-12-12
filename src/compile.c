@@ -1282,7 +1282,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   bc->codelen = pos;
   bc->debuginfo = jv_object_set(bc->debuginfo, jv_string("locals"), localnames);
   if (bc->nsubfunctions && !errors) {
-    bc->subfunctions = jv_mem_calloc(sizeof(struct bytecode*), bc->nsubfunctions);
+    bc->subfunctions = jv_mem_calloc(bc->nsubfunctions, sizeof(struct bytecode*));
     for (inst* curr = b.first; curr; curr = curr->next) {
       if (curr->op == CLOSURE_CREATE) {
         struct bytecode* subfn = jv_mem_alloc(sizeof(struct bytecode));
@@ -1308,7 +1308,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
     bc->nsubfunctions = 0;
     bc->subfunctions = 0;
   }
-  uint16_t* code = jv_mem_calloc(sizeof(uint16_t), bc->codelen);
+  uint16_t* code = jv_mem_calloc(bc->codelen, sizeof(uint16_t));
   bc->code = code;
   pos = 0;
   jv constant_pool = jv_array();
@@ -1374,7 +1374,7 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
   bc->globals = jv_mem_alloc(sizeof(struct symbol_table));
   int ncfunc = count_cfunctions(b);
   bc->globals->ncfunctions = 0;
-  bc->globals->cfunctions = jv_mem_calloc(sizeof(struct cfunction), ncfunc);
+  bc->globals->cfunctions = jv_mem_calloc(ncfunc, sizeof(struct cfunction));
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
   jv env = jv_invalid();

@@ -2404,7 +2404,7 @@ sections:
         body: |
 
           The `//` operator produces all the values of its left-hand
-          side that are neither `false` nor `null`, or, if the
+          side that are neither `false` nor `null`. If the
           left-hand side produces no values other than `false` or
           `null`, then `//` produces all the values of its right-hand
           side.

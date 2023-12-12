@@ -48,7 +48,7 @@ AC_CHECK_FUNCS(memmem)
 
 AC_CHECK_HEADER("sys/cygwin.h", [have_cygwin=1;])
 AC_CHECK_HEADER("shlwapi.h",[have_shlwapi=1;])
-AM_CONDITIONAL([WIN32], [test \( "x$have_shlwapi" = x1 \) -a ! \( "x$have_cygwin" = x1 \)])
+AM_CONDITIONAL([WIN32], [test "x$have_shlwapi" = x1 && test ! "x$have_cygwin" = x1])
 
 dnl Running tests with Valgrind is slow. It is faster to iterate on
 dnl code without Valgrind until tests pass, then enable Valgrind and
@@ -275,7 +275,7 @@ AS_IF([test "x$with_oniguruma" != xno], [
           AC_MSG_NOTICE([Oniguruma was not found. Will use the packaged oniguruma.])
        ])
    ])
-   AS_IF([test "x$build_oniguruma" = xyes -a -f "${srcdir}/modules/oniguruma/configure.ac" ], [
+   AS_IF([test "x$build_oniguruma" = xyes && test -f "${srcdir}/modules/oniguruma/configure.ac" ], [
        onig_CFLAGS="-I${srcdir}/modules/oniguruma/src"
        onig_LDFLAGS="-L${srcdir}/modules/oniguruma/src -Wl,-rpath,${libdir}"
        AC_CONFIG_SUBDIRS([modules/oniguruma])
