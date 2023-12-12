@@ -21,7 +21,6 @@ struct lexer_param;
 %s IN_BRACE
 %s IN_QQINTERP
 %x IN_QQSTRING
-%x IN_COMMENT
 %{
   static int enter(int opening, int state, yyscan_t yyscanner);
   static int try_exit(int closing, int state, yyscan_t yyscanner);
@@ -38,12 +37,7 @@ struct lexer_param;
 
 %%
 
-"#" { yy_push_state(IN_COMMENT, yyscanner); }
-<IN_COMMENT>{
-  \\[\\\n]|. { }
-  \n { yy_pop_state(yyscanner); }
-}
-<IN_COMMENT><<EOF>> { yy_pop_state(yyscanner); }
+"#"[^\n]* { /* comments */ }
 
 "!=" { return NEQ; }
 "==" { return EQ; }

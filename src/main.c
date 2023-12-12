@@ -178,6 +178,21 @@ enum {
 #define jq_exit_with_status(r)  exit(abs(r))
 #define jq_exit(r)              exit( r > 0 ? r : 0 )
 
+static const char *skip_shebang(const char *p) {
+  if (strncmp(p, "#!", sizeof("#!") - 1) != 0)
+    return p;
+  const char *n = strchr(p, '\n');
+  if (n == NULL || n[1] != '#')
+    return p;
+  n = strchr(n + 1, '\n');
+  if (n == NULL || n[1] == '#' || n[1] == '\0' || n[-1] != '\\' || n[-2] == '\\')
+    return p;
+  n = strchr(n + 1, '\n');
+  if (n == NULL)
+    return p;
+  return n+1;
+}
+
 static int process(jq_state *jq, jv value, int flags, int dumpopts, int options) {
   int ret = JQ_OK_NO_OUTPUT; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
@@ -670,7 +685,7 @@ int main(int argc, char* argv[]) {
       program_arguments = jv_object_set(program_arguments,
                                         jv_string("JQ_BUILD_CONFIGURATION"),
                                         jv_string(JQ_CONFIG)); /* named arguments */
-    compiled = jq_compile_args(jq, jv_string_value(data), jv_copy(program_arguments));
+    compiled = jq_compile_args(jq, skip_shebang(jv_string_value(data)), jv_copy(program_arguments));
     free(program_origin);
     jv_free(data);
   } else {
