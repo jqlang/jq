@@ -740,15 +740,19 @@ int jvp_number_cmp(jv a, jv b) {
 
 #ifdef USE_DECNUM
   if (JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_LITERAL) && JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_LITERAL)) {
-    decNumber res;
-    decNumberCompare(&res,
+    struct {
+      decNumber number;
+      decNumberUnit units[1];
+    } res;
+
+    decNumberCompare(&res.number,
                      jvp_dec_number_ptr(a),
                      jvp_dec_number_ptr(b),
                      DEC_CONTEXT()
                      );
-    if (decNumberIsZero(&res)) {
+    if (decNumberIsZero(&res.number)) {
       return 0;
-    } else if (decNumberIsNegative(&res)) {
+    } else if (decNumberIsNegative(&res.number)) {
       return -1;
     } else {
       return 1;
