@@ -295,7 +295,9 @@ static jv f_endswith(jq_state *jq, jv a, jv b) {
 }
 
 static jv f_ltrimstr(jq_state *jq, jv input, jv left) {
-  if (jv_get_kind(f_startswith(jq, jv_copy(input), jv_copy(left))) != JV_KIND_TRUE) {
+  jv startswith = f_startswith(jq, jv_copy(input), jv_copy(left));
+  if (jv_get_kind(startswith) != JV_KIND_TRUE) {
+    jv_free(startswith);
     jv_free(left);
     return input;
   }
@@ -311,12 +313,14 @@ static jv f_ltrimstr(jq_state *jq, jv input, jv left) {
 }
 
 static jv f_rtrimstr(jq_state *jq, jv input, jv right) {
-  if (jv_get_kind(f_endswith(jq, jv_copy(input), jv_copy(right))) == JV_KIND_TRUE) {
+  jv endswith = f_endswith(jq, jv_copy(input), jv_copy(right));
+  if (jv_get_kind(endswith) == JV_KIND_TRUE) {
     jv res = jv_string_sized(jv_string_value(input),
                              jv_string_length_bytes(jv_copy(input)) - jv_string_length_bytes(right));
     jv_free(input);
     return res;
   }
+  jv_free(endswith);
   jv_free(right);
   return input;
 }
