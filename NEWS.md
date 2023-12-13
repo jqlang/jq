@@ -1,6 +1,11 @@
 # 1.7.1
 
-# CLI changes
+## Security
+
+- CVE-2023-50246: ....
+- CVE-2023-50268: ....
+
+## CLI changes
 
 - Make the default background color more suitable for bright backgrounds. @mjarosie @taoky @nicowilliams @itchyny #2904
 - Allow passing the inline jq script after `--`. @emanuele6 #2919
@@ -13,12 +18,15 @@
 - Reject `U+001F` in string literals. @torsten-schenk @itchyny @wader #2911
 - Remove unused nref accumulator in `block_bind_library`. @emanuele6 #2914
 - Remove a bunch of unused variables, and useless assignments. @emanuele6 #2914
-- main.c: Remove unused EXIT_STATUS_EXACT option. @emanuele6 #2915
+- main.c: Remove unused EXIT\_STATUS\_EXACT option. @emanuele6 #2915
 - Actually use the number correctly casted from double to int as index. @emanuele6 #2916
-- src/builtin.c: remove unnecessary jv_copy-s in type_error/type_error2. @emanuele6 #2937
+- src/builtin.c: remove unnecessary jv\_copy-s in type\_error/type\_error2. @emanuele6 #2937
 - Remove undefined behavior caught by LLVM 10 UBSAN. @Gaelan @emanuele6 #2926
 - Convert decnum to binary64 (double) instead of decimal64. This makes jq behave like the JSON specification suggests and more similar to other languages. @wader @leonid-s-usov #2949
-- Fix memory leaks on invalid input for `setpath/2`, `ltrimstr/1` and `rtrimstr/1` . @emanuele6 #2970 #2977
+- Fix memory leaks on invalid input for `ltrimstr/1` and `rtrimstr/1`. @emanuele6 #2977
+- Fix memory leak on failed get for `setpath/2`. @emanuele6 #2970
+- Fix nan from json parsing also for nans with payload that start with 'n'. @emanuele6 #2985
+- Allow carriage return characters in comments. @emanuele6 #2942 #2984
 
 ## Documentation changes
 
