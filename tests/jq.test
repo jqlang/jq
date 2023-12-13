@@ -1938,6 +1938,11 @@ tojson | fromjson
 {"a":nan}
 {"a":null}
 
+# also "nan with payload" #2985
+fromjson | isnan
+"nan1234"
+true
+
 
 # calling input/0, or debug/0 in a test doesn't crash jq
 

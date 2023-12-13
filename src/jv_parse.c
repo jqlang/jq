@@ -514,7 +514,7 @@ static pfunc check_literal(struct jv_parser* p) {
   case 'f': pattern = "false"; plen = 5; v = jv_false(); break;
   case 'n':
     // if it starts with 'n', it could be a literal "nan"
-    if (p->tokenpos != 3) {
+    if (p->tokenbuf[1] == 'u') {
       pattern = "null"; plen = 4; v = jv_null();
     }
   }
