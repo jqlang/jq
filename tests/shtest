@@ -609,4 +609,9 @@ if ! r=$($JQ --args -rn 1 -- '$ARGS.positional[0]' bar) || [ "$r" != 1 ]; then
     exit 1
 fi
 
+# CVE-2023-50246: No heap overflow for '-10E-1000000001'
+$VALGRIND $Q $JQ . <<\NUM
+-10E-1000000001
+NUM
+
 exit 0

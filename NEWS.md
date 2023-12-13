@@ -2,7 +2,7 @@
 
 ## Security
 
-- CVE-2023-50246: ....
+- CVE-2023-50246: Fix heap buffer overflow in jvp\_literal\_number\_literal
 - CVE-2023-50268: fix stack-buffer-overflow if comparing nan with payload
 
 ## CLI changes

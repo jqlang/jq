@@ -635,7 +635,7 @@ static const char* jvp_literal_number_literal(jv n) {
   }
 
   if (plit->literal_data == NULL) {
-    int len = jvp_dec_number_ptr(n)->digits + 14;
+    int len = jvp_dec_number_ptr(n)->digits + 15 /* 14 + NUL */;
     plit->literal_data = jv_mem_alloc(len);
 
     // Preserve the actual precision as we have parsed it
