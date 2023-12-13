@@ -594,6 +594,24 @@ if ! x=$($JQ -n "1 # foo$cr + 2") || [ "$x" != 1 ]; then
   exit 1
 fi
 
+if ! x=$($JQ -cn '[
+  1,
+  # foo \
+  2,
+  # bar \\
+  3,
+  4, # baz \\\
+  5, \
+  6,
+  7
+  # comment \
+    comment \
+    comment
+]') || [ "$x" != '[1,3,4,7]' ]; then
+  echo 'multiline comment was not handled correctly'
+  exit 1
+fi
+
 # CVE-2023-50268: No stack overflow comparing a nan with a large payload
 $VALGRIND $Q $JQ '1 != .' <<\EOF >/dev/null
 Nan4000

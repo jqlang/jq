@@ -166,7 +166,7 @@ Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts i
 \fB\-f filename\fR / \fB\-\-from\-file filename\fR:
 .
 .IP
-Read filter from the file rather than from a command line, like awk\'s \-f option\. You can also use \'#\' to make comments\.
+Read filter from the file rather than from a command line, like awk\'s \-f option\.
 .
 .TP
 \fB\-L directory\fR:
@@ -3954,6 +3954,74 @@ The paths provided by this operation point to each of the posts that "stedolan" 
 .fi
 .
 .IP "" 0
+.
+.SH "COMMENTS"
+You can write comments in your jq filters using \fB#\fR\.
+.
+.P
+A \fB#\fR character (not part of a string) starts a comment\. All characters from \fB#\fR to the end of the line are ignored\.
+.
+.P
+If the end of the line is preceded by an odd number of backslash characters, the following line is also considered part of the comment and is ignored\.
+.
+.P
+For example, the following code outputs \fB[1,3,4,7]\fR
+.
+.IP "" 4
+.
+.nf
+
+[
+  1,
+  # foo \e
+  2,
+  # bar \e\e
+  3,
+  4, # baz \e\e\e
+  5, \e
+  6,
+  7
+  # comment \e
+    comment \e
+    comment
+]
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Backslash continuing the comment on the next line can be useful when writing the "shebang" for a jq script:
+.
+.IP "" 4
+.
+.nf
+
+#!/bin/sh \-\-
+# sum \- Output the sum of the given arguments (or stdin)
+# usage: sum [numbers\.\.\.]
+# \e
+exec jq \-\-args \-MRnf "$0" \-\- "$@"
+
+$ARGS\.positional |
+reduce (
+  if \. == []
+    then inputs
+    else \.[]
+  end |
+  \. as $dot |
+  try tonumber catch false |
+  if not or isnan then
+    @json "sum: Invalid number \e($dot)\.\en" | halt_error(1)
+  end
+) as $n (0; \. + $n)
+.
+.fi
+.
+.IP "" 0
+.
+.P
+The \fBexec\fR line is considered a comment by jq, so it is ignored\. But it is not ignored by \fBsh\fR, since in \fBsh\fR a backslash at the end of the line does not continue the comment\. With this trick, when the script is invoked as \fBsum 1 2\fR, \fB/bin/sh \-\- /path/to/sum 1 2\fR will be run, and \fBsh\fR will then run \fBexec jq \-\-args \-MRnf /path/to/sum \-\- 1 2\fR replacing itself with a \fBjq\fR interpreter invoked with the specified options (\fB\-M\fR, \fB\-R\fR, \fB\-n\fR, \fB\-\-args\fR), that evaluates the current file (\fB$0\fR), with the arguments (\fB$@\fR) that were passed to \fBsh\fR\.
 .
 .SH "MODULES"
 jq has a library/module system\. Modules are files whose names end in \fB\.jq\fR\.
