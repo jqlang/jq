@@ -1938,6 +1938,11 @@ tojson | fromjson
 {"a":nan}
 {"a":null}
 
+# also "nan with payload" #2985
+fromjson | isnan
+"nan1234"
+true
+
 
 # calling input/0, or debug/0 in a test doesn't crash jq
 
@@ -2091,7 +2096,9 @@ try ("foobar" | .[1.5]) catch .
 null
 "Cannot index string with number"
 
+
 # setpath/2 does not leak the input after an invalid get #2970
+
 try ["ok", setpath([1]; 1)] catch ["ko", .]
 {"hi":"hello"}
 ["ko","Cannot index object with number"]
@@ -2099,3 +2106,15 @@ try ["ok", setpath([1]; 1)] catch ["ko", .]
 try fromjson catch .
 "{'a': 123}"
 "Invalid string literal; expected \", but got ' at line 1, column 5 (while parsing '{'a': 123}')"
+
+# ltrimstr/1 rtrimstr/1 don't leak on invalid input #2977
+
+try ltrimstr(1) catch "x", try rtrimstr(1) catch "x" | "ok"
+"hi"
+"ok"
+"ok"
+
+try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"
+{"hey":[]}
+"ok"
+"ok"
