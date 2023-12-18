@@ -32,7 +32,7 @@ jobs:
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-logs-valgrind-linux
           retention-days: 7
