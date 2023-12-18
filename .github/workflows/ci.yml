@@ -302,7 +302,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
       - name: Download executables
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jq-linux
       - name: Move executables
@@ -363,7 +363,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: Upload release
         env:
           TAG_NAME: ${{ github.ref_name }}
