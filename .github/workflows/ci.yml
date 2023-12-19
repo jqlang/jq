@@ -297,12 +297,11 @@ jobs:
     permissions:
       packages: write
     needs: linux
-    if: startsWith(github.ref, 'refs/tags/jq-')
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
       - name: Download executables
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: jq-linux
       - name: Move executables
@@ -330,7 +329,9 @@ jobs:
         id: metadata
         with:
           images: ghcr.io/${{ github.repository }}
-          tags: type=match,pattern=jq-(.*),group=1,value=${{ github.ref_name }}
+          tags: ${{ startsWith(github.ref, 'refs/tags/jq-')
+            && format('type=match,pattern=jq-(.*),group=1,value={0}', github.ref_name)
+            || 'type=sha,format=long' }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -345,7 +346,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
+          push: ${{ startsWith(github.ref, 'refs/tags/jq-') }}
           provenance: false
           platforms: linux/386,linux/amd64,linux/arm64,linux/mips64le,linux/ppc64le,linux/riscv64,linux/s390x
           tags: ${{ steps.metadata.outputs.tags }}
@@ -363,7 +364,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
       - name: Upload release
         env:
           TAG_NAME: ${{ github.ref_name }}
