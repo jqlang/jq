@@ -2491,7 +2491,7 @@ sections:
               label $out | ... break $out ...
 
           The `break $label_name` expression will cause the program to
-          to act as though the nearest (to the left) `label $label_name`
+          act as though the nearest (to the left) `label $label_name`
           produced `empty`.
 
           The relationship between the `break` and corresponding `label`
