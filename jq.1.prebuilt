@@ -2684,7 +2684,7 @@ label $out | \.\.\. break $out \.\.\.
 .IP "" 0
 .
 .P
-The \fBbreak $label_name\fR expression will cause the program to to act as though the nearest (to the left) \fBlabel $label_name\fR produced \fBempty\fR\.
+The \fBbreak $label_name\fR expression will cause the program to act as though the nearest (to the left) \fBlabel $label_name\fR produced \fBempty\fR\.
 .
 .P
 The relationship between the \fBbreak\fR and corresponding \fBlabel\fR is lexical: the label has to be "visible" from the break\.
