@@ -6040,7 +6040,7 @@ try repeat(exp) catch if .=="break" then empty else error
 <pre><code>label $out | ... break $out ...
 </code></pre>
 <p>The <code>break $label_name</code> expression will cause the program to
-to act as though the nearest (to the left) <code>label $label_name</code>
+act as though the nearest (to the left) <code>label $label_name</code>
 produced <code>empty</code>.</p>
 <p>The relationship between the <code>break</code> and corresponding <code>label</code>
 is lexical: the label has to be "visible" from the break.</p>
