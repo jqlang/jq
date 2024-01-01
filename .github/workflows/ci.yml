@@ -105,7 +105,7 @@ jobs:
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
@@ -113,7 +113,7 @@ jobs:
             test-suite.log
             tests/*.log
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jq-linux
           path: jq-${{ env.SUFFIX }}
@@ -172,7 +172,7 @@ jobs:
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
@@ -180,7 +180,7 @@ jobs:
             test-suite.log
             tests/*.log
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jq-macos
           path: jq-${{ env.SUFFIX }}
@@ -246,7 +246,7 @@ jobs:
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
@@ -254,7 +254,7 @@ jobs:
             test-suite.log
             tests/*.log
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jq-windows
           path: jq-${{ env.SUFFIX }}.exe
@@ -283,7 +283,7 @@ jobs:
           make dist dist-zip
           git diff --exit-code
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jq-dist
           if-no-files-found: error
@@ -301,7 +301,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
       - name: Download executables
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jq-linux
       - name: Move executables
@@ -364,7 +364,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: Upload release
         env:
           TAG_NAME: ${{ github.ref_name }}
