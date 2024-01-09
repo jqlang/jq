@@ -69,7 +69,7 @@ jobs:
                 cat test-suite.log
                 cat tests/*.log
             - name: Upload Logs
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                 name: Scan-Build Reports
                 path: '/tmp/scan-build*/'
