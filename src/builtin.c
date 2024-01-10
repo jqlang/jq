@@ -1464,7 +1464,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
    */
   set_tm_wday(&tm);
   set_tm_yday(&tm);
-#elif defined(WIN32)
+#elif defined(WIN32) || !defined(HAVE_STRPTIME)
   set_tm_wday(&tm);
 #else
   if (tm.tm_wday == 8 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)

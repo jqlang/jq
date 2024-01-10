@@ -451,7 +451,7 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
   return value;
 }
 
-#if defined(WIN32) && !defined(HAVE_STRPTIME)
+#ifndef HAVE_STRPTIME
 /* http://cvsweb.netbsd.org/bsdweb.cgi/~checkout~/src/lib/libc/time/strptime.c?only_with_tag=HEAD
  * NetBSD implementation strptime().
  * Format description: https://netbsd.gw.com/cgi-bin/man-cgi?strptime+3+NetBSD-current
