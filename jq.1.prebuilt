@@ -4030,7 +4030,7 @@ jq has a library/module system\. Modules are files whose names end in \fB\.jq\fR
 Modules imported by a program are searched for in a default search path (see below)\. The \fBimport\fR and \fBinclude\fR directives allow the importer to alter this path\.
 .
 .P
-Paths in the a search path are subject to various substitutions\.
+Paths in the search path are subject to various substitutions\.
 .
 .P
 For paths starting with \fB~/\fR, the user\'s home directory is substituted for \fB~\fR\.
