@@ -2821,7 +2821,7 @@ sections:
       path (see below).  The `import` and `include` directives allow the
       importer to alter this path.
 
-      Paths in the a search path are subject to various substitutions.
+      Paths in the search path are subject to various substitutions.
 
       For paths starting with "~/", the user's home directory is
       substituted for "~".
