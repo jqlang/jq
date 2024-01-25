@@ -568,7 +568,7 @@ sections:
           .bar`, produces both the "foo" fields and "bar" fields as
           separate outputs.
 
-          The `,` operator is one way to contruct generators.
+          The `,` operator is one way to construct generators.
 
         examples:
           - program: '.foo, .bar'
