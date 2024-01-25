@@ -490,7 +490,7 @@ Like \fB\.[]\fR, but no errors will be output if \. is not an array or object\. 
 If two filters are separated by a comma, then the same input will be fed into both and the two filters\' output value streams will be concatenated in order: first, all of the outputs produced by the left expression, and then all of the outputs produced by the right\. For instance, filter \fB\.foo, \.bar\fR, produces both the "foo" fields and "bar" fields as separate outputs\.
 .
 .P
-The \fB,\fR operator is one way to contruct generators\.
+The \fB,\fR operator is one way to construct generators\.
 .
 .IP "" 4
 .
