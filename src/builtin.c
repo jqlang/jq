@@ -216,69 +216,38 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
   return ret_error2(input, a, error); \
 }
 
+#define LIBM_DA(name, type) \
+static jv f_ ## name(jq_state *jq, jv input) { \
+  if (jv_get_kind(input) != JV_KIND_NUMBER) { \
+    return type_error(input, "number required"); \
+  } \
+  type value; \
+  double d = name(jv_number_value(input), &value); \
+  jv ret = JV_ARRAY(jv_number(d), jv_number(value)); \
+  jv_free(input); \
+  return ret; \
+}
+#define LIBM_DA_NO(name, type) \
+static jv f_ ## name(jq_state *jq, jv input) { \
+  jv error = jv_string("Error: " #name "/0 not found at build time"); \
+  return ret_error(input, error); \
+}
+
 #include "libm.h"
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
 #undef LIBM_DD_NO
+#undef LIBM_DA_NO
 #undef LIBM_DDDD
 #undef LIBM_DDD
 #undef LIBM_DD
+#undef LIBM_DA
 
 #ifdef __APPLE__
 #undef gamma
 #undef drem
 #undef significand
 #undef exp10
-#endif
-
-#ifdef HAVE_FREXP
-static jv f_frexp(jq_state *jq, jv input) {
-  if (jv_get_kind(input) != JV_KIND_NUMBER) {
-    return type_error(input, "number required");
-  }
-  int exp;
-  double d = frexp(jv_number_value(input), &exp);
-  jv ret = JV_ARRAY(jv_number(d), jv_number(exp));
-  jv_free(input);
-  return ret;
-}
-#else
-static jv f_frexp(jq_state *jq, jv input) {
-  jv error = jv_string("Error: frexp/0 not found at build time");
-  return ret_error(input, error);
-}
-#endif
-#ifdef HAVE_MODF
-static jv f_modf(jq_state *jq, jv input) {
-  if (jv_get_kind(input) != JV_KIND_NUMBER) {
-    return type_error(input, "number required");
-  }
-  double i;
-  jv ret = JV_ARRAY(jv_number(modf(jv_number_value(input), &i)));
-  jv_free(input);
-  return jv_array_append(ret, jv_number(i));
-}
-#else
-static jv f_modf(jq_state *jq, jv input) {
-  jv error = jv_string("Error: modf/0 not found at build time");
-  return ret_error(input, error);
-}
-#endif
-#ifdef HAVE_LGAMMA_R
-static jv f_lgamma_r(jq_state *jq, jv input) {
-  if (jv_get_kind(input) != JV_KIND_NUMBER) {
-    return type_error(input, "number required");
-  }
-  int sign;
-  jv ret = JV_ARRAY(jv_number(lgamma_r(jv_number_value(input), &sign)));
-  jv_free(input);
-  return jv_array_append(ret, jv_number(sign));
-}
-#else
-static jv f_lgamma_r(jq_state *jq, jv input) {
-  jv error = jv_string("Error: lgamma_r/0 not found at build time");
-  return ret_error(input, error);
-}
 #endif
 
 static jv f_negate(jq_state *jq, jv input) {
@@ -1702,8 +1671,10 @@ static jv f_current_line(jq_state *jq, jv a) {
 }
 
 #define LIBM_DD(name) \
-  {f_ ## name,  #name, 1},
+  {f_ ## name, #name, 1},
 #define LIBM_DD_NO(name) LIBM_DD(name)
+#define LIBM_DA(name, type) LIBM_DD(name)
+#define LIBM_DA_NO(name, type) LIBM_DD(name)
 
 #define LIBM_DDD(name) \
   {f_ ## name, #name, 3},
@@ -1715,9 +1686,6 @@ static jv f_current_line(jq_state *jq, jv a) {
 
 static const struct cfunction function_list[] = {
 #include "libm.h"
-  {f_frexp,"frexp", 1},
-  {f_modf,"modf", 1},
-  {f_lgamma_r,"lgamma_r", 1},
   {f_negate, "_negate", 1},
 #define BINOP(name) {f_ ## name, "_" #name, 3},
 BINOPS
@@ -1780,9 +1748,11 @@ BINOPS
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
 #undef LIBM_DD_NO
+#undef LIBM_DA_NO
 #undef LIBM_DDDD
 #undef LIBM_DDD
 #undef LIBM_DD
+#undef LIBM_DA
 
 struct bytecoded_builtin { const char* name; block code; };
 static block bind_bytecoded_builtins(block b) {

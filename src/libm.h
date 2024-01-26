@@ -289,3 +289,18 @@ LIBM_DDD(ldexp)
 #else
 LIBM_DDD_NO(ldexp)
 #endif
+#ifdef HAVE_MODF
+LIBM_DA(modf, double)
+#else
+LIBM_DA_NO(modf, double)
+#endif
+#ifdef HAVE_FREXP
+LIBM_DA(frexp, int)
+#else
+LIBM_DA_NO(frexp, int)
+#endif
+#ifdef HAVE_LGAMMA_R
+LIBM_DA(lgamma_r, int)
+#else
+LIBM_DA_NO(lgamma_r, int)
+#endif
