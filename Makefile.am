@@ -19,7 +19,8 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
 
 ### C build options
 
-AM_CFLAGS = -Wextra -Wall -Wno-unused-parameter -Wno-unused-function
+AM_CFLAGS = -Wextra -Wall -Wno-unused-parameter -Wno-unused-function \
+            -Woverlength-strings
 
 if WIN32
 AM_CFLAGS += -municode
@@ -119,7 +120,12 @@ src/main.c: src/version.h src/config_opts.inc
 
 src/builtin.inc: $(srcdir)/src/builtin.jq
 	mkdir -p src
-	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $(srcdir)/src/builtin.jq > $@
+	$(AM_V_GEN) od -v -A n -t o1 -- $< | \
+	sed -e 's/$$/ /' \
+	    -e 's/\([0123456789]\) /\1, /g' \
+	    -e 's/ $$//' \
+	    -e 's/ 0/  0/g' \
+	    -e 's/ \([123456789]\)/ 0\1/g' > $@
 src/builtin.o: src/builtin.inc
 
 CLEANFILES = src/version.h .remake-version-h src/builtin.inc src/config_opts.inc
