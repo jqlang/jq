@@ -32,8 +32,8 @@ ACLOCAL_AMFLAGS = -I config/m4
 # While there is some autoconf macro support for lex/flex, it doesn't support
 # header file creation so we'll use good old make
 if MAINTAINER_MODE
-BUILT_SOURCES = src/lexer.h src/lexer.c src/parser.h src/parser.c 	\
-		src/builtin.inc src/config_opts.inc src/version.h
+BUILT_SOURCES = src/lexer.h src/lexer.c src/parser.h src/parser.c \
+                src/builtin.inc src/config_opts.inc src/version.h
 src/lexer.c: src/lexer.l
 	$(AM_V_LEX) flex -o src/lexer.c --header-file=src/lexer.h $<
 src/lexer.h: src/lexer.c
@@ -157,8 +157,8 @@ check_DATA = tests/man.test
 tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
-		$(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
-		$(PIPENV) run python build_mantests.py )
+	  $(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+	  $(PIPENV) run python build_mantests.py )
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manual test.
 	@echo As a result, the manual test is out of date.
@@ -173,8 +173,8 @@ man_MANS = jq.1
 jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
-		$(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
-		$(PIPENV) run python build_manpage.py ) > $@
+	  $(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+	  $(PIPENV) run python build_manpage.py ) > $@
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manpage.
 	@echo As a result, the manpage is out of date.
