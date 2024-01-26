@@ -155,7 +155,11 @@ static jv f_ ## name(jq_state *jq, jv input) { \
   jv_free(input); \
   return ret; \
 }
-#define LIBM_DD_NO(name)
+#define LIBM_DD_NO(name) \
+static jv f_ ## name(jq_state *jq, jv input) { \
+  jv error = jv_string("Error: " #name "/0 not found at build time"); \
+  return ret_error(input, error); \
+}
 
 #define LIBM_DDD(name) \
 static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
@@ -173,7 +177,12 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
   jv_free(b); \
   return ret; \
 }
-#define LIBM_DDD_NO(name)
+#define LIBM_DDD_NO(name) \
+static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
+  jv_free(b); \
+  jv error = jv_string("Error: " #name "/2 not found at build time"); \
+  return ret_error2(input, a, error); \
+}
 
 #define LIBM_DDDD(name) \
 static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
@@ -199,7 +208,14 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
   jv_free(c); \
   return ret; \
 }
-#define LIBM_DDDD_NO(name)
+#define LIBM_DDDD_NO(name) \
+static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
+  jv_free(c) \
+  jv_free(b); \
+  jv error = jv_string("Error: " #name "/3 not found at build time"); \
+  return ret_error2(input, a, error); \
+}
+
 #include "libm.h"
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
@@ -226,6 +242,11 @@ static jv f_frexp(jq_state *jq, jv input) {
   jv_free(input);
   return ret;
 }
+#else
+static jv f_frexp(jq_state *jq, jv input) {
+  jv error = jv_string("Error: frexp/0 not found at build time");
+  return ret_error(input, error);
+}
 #endif
 #ifdef HAVE_MODF
 static jv f_modf(jq_state *jq, jv input) {
@@ -237,6 +258,11 @@ static jv f_modf(jq_state *jq, jv input) {
   jv_free(input);
   return jv_array_append(ret, jv_number(i));
 }
+#else
+static jv f_modf(jq_state *jq, jv input) {
+  jv error = jv_string("Error: modf/0 not found at build time");
+  return ret_error(input, error);
+}
 #endif
 #ifdef HAVE_LGAMMA_R
 static jv f_lgamma_r(jq_state *jq, jv input) {
@@ -247,6 +273,11 @@ static jv f_lgamma_r(jq_state *jq, jv input) {
   jv ret = JV_ARRAY(jv_number(lgamma_r(jv_number_value(input), &sign)));
   jv_free(input);
   return jv_array_append(ret, jv_number(sign));
+}
+#else
+static jv f_lgamma_r(jq_state *jq, jv input) {
+  jv error = jv_string("Error: lgamma_r/0 not found at build time");
+  return ret_error(input, error);
 }
 #endif
 
@@ -1672,27 +1703,21 @@ static jv f_current_line(jq_state *jq, jv a) {
 
 #define LIBM_DD(name) \
   {f_ ## name,  #name, 1},
-#define LIBM_DD_NO(name)
+#define LIBM_DD_NO(name) LIBM_DD(name)
 
 #define LIBM_DDD(name) \
   {f_ ## name, #name, 3},
-#define LIBM_DDD_NO(name)
+#define LIBM_DDD_NO(name) LIBM_DDD(name)
 
 #define LIBM_DDDD(name) \
   {f_ ## name, #name, 4},
-#define LIBM_DDDD_NO(name)
+#define LIBM_DDDD_NO(name) LIBM_DDDD(name)
 
 static const struct cfunction function_list[] = {
 #include "libm.h"
-#ifdef HAVE_FREXP
   {f_frexp,"frexp", 1},
-#endif
-#ifdef HAVE_MODF
   {f_modf,"modf", 1},
-#endif
-#ifdef HAVE_LGAMMA_R
   {f_lgamma_r,"lgamma_r", 1},
-#endif
   {f_negate, "_negate", 1},
 #define BINOP(name) {f_ ## name, "_" #name, 3},
 BINOPS
@@ -1805,42 +1830,11 @@ static block bind_bytecoded_builtins(block b) {
   return BLOCK(builtins, b);
 }
 
-static const char jq_builtins[] =
+static const char jq_builtins[] = {
 /* Include jq-coded builtins */
 #include "src/builtin.inc"
-
-/* Include unsupported math functions next */
-#define LIBM_DD(name)
-#define LIBM_DDD(name)
-#define LIBM_DDDD(name)
-#define LIBM_DD_NO(name) "def " #name ": \"Error: " #name "/0 not found at build time\"|error;"
-#define LIBM_DDD_NO(name) "def " #name "(a;b): \"Error: " #name "/2 not found at build time\"|error;"
-#define LIBM_DDDD_NO(name) "def " #name "(a;b;c): \"Error: " #name "/3 not found at build time\"|error;"
-#include "libm.h"
-#ifndef HAVE_FREXP
-  "def frexp: \"Error: frexp/0 not found at build time\"|error;"
-#endif
-#ifndef HAVE_MODF
-  "def modf: \"Error: modf/0 not found at build time\"|error;"
-#endif
-#ifndef HAVE_LGAMMA_R
-  "def lgamma_r: \"Error: lgamma_r/0 not found at build time\"|error;"
-#endif
-;
-
-#undef LIBM_DDDD_NO
-#undef LIBM_DDD_NO
-#undef LIBM_DD_NO
-#undef LIBM_DDDD
-#undef LIBM_DDD
-#undef LIBM_DD
-
-#ifdef __APPLE__
-#undef HAVE_GAMMA
-#undef HAVE_EXP10
-#undef HAVE_DREM
-#undef HAVE_SIGNIFICAND
-#endif
+  '\0',
+};
 
 static block gen_builtin_list(block builtins) {
   jv list = jv_array_append(block_list_funcs(builtins, 1), jv_string("builtins/0"));
