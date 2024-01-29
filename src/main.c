@@ -63,7 +63,7 @@ static void usage(int code, int keep_it_short) {
     "The simplest filter is ., which copies jq's input to its output\n"
     "unmodified except for formatting. For more advanced filters see\n"
     "the jq(1) manpage (\"man jq\") and/or https://jqlang.github.io/jq/.\n\n"
-    "Example:\n\n\t$ echo '{\"foo\": 0}' | jq .\n"
+    "Example:\n\n\t$ echo '{\"foo\": 0}' | jq\n"
     "\t{\n\t  \"foo\": 0\n\t}\n\n",
     JQ_VERSION, progname, progname, progname);
   if (keep_it_short) {
