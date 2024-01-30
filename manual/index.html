@@ -8016,8 +8016,8 @@ comment and is ignored.</p>
 <p>Backslash continuing the comment on the next line can be useful
 when writing the "shebang" for a jq script:</p>
 <pre><code>#!/bin/sh --
-# sum - Output the sum of the given arguments (or stdin)
-# usage: sum [numbers...]
+# total - Output the sum of the given arguments (or stdin)
+# usage: total [numbers...]
 # \
 exec jq --args -MRnf "$0" -- "$@"
 
@@ -8030,16 +8030,16 @@ reduce (
   . as $dot |
   try tonumber catch false |
   if not or isnan then
-    @json "sum: Invalid number \($dot).\n" | halt_error(1)
+    @json "total: Invalid number \($dot).\n" | halt_error(1)
   end
 ) as $n (0; . + $n)
 </code></pre>
 <p>The <code>exec</code> line is considered a comment by jq, so it is ignored.
 But it is not ignored by <code>sh</code>, since in <code>sh</code> a backslash at the
 end of the line does not continue the comment.
-With this trick, when the script is invoked as <code>sum 1 2</code>,
-<code>/bin/sh -- /path/to/sum 1 2</code> will be run, and <code>sh</code> will then
-run <code>exec jq --args -MRnf /path/to/sum -- 1 2</code> replacing itself
+With this trick, when the script is invoked as <code>total 1 2</code>,
+<code>/bin/sh -- /path/to/total 1 2</code> will be run, and <code>sh</code> will then
+run <code>exec jq --args -MRnf /path/to/total -- 1 2</code> replacing itself
 with a <code>jq</code> interpreter invoked with the specified options (<code>-M</code>,
 <code>-R</code>, <code>-n</code>, <code>--args</code>), that evaluates the current file (<code>$0</code>),
 with the arguments (<code>$@</code>) that were passed to <code>sh</code>.</p>
