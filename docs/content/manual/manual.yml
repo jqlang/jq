@@ -3571,8 +3571,8 @@ sections:
       when writing the "shebang" for a jq script:
 
           #!/bin/sh --
-          # sum - Output the sum of the given arguments (or stdin)
-          # usage: sum [numbers...]
+          # total - Output the sum of the given arguments (or stdin)
+          # usage: total [numbers...]
           # \
           exec jq --args -MRnf "$0" -- "$@"
 
@@ -3585,16 +3585,16 @@ sections:
             . as $dot |
             try tonumber catch false |
             if not or isnan then
-              @json "sum: Invalid number \($dot).\n" | halt_error(1)
+              @json "total: Invalid number \($dot).\n" | halt_error(1)
             end
           ) as $n (0; . + $n)
 
       The `exec` line is considered a comment by jq, so it is ignored.
       But it is not ignored by `sh`, since in `sh` a backslash at the
       end of the line does not continue the comment.
-      With this trick, when the script is invoked as `sum 1 2`,
-      `/bin/sh -- /path/to/sum 1 2` will be run, and `sh` will then
-      run `exec jq --args -MRnf /path/to/sum -- 1 2` replacing itself
+      With this trick, when the script is invoked as `total 1 2`,
+      `/bin/sh -- /path/to/total 1 2` will be run, and `sh` will then
+      run `exec jq --args -MRnf /path/to/total -- 1 2` replacing itself
       with a `jq` interpreter invoked with the specified options (`-M`,
       `-R`, `-n`, `--args`), that evaluates the current file (`$0`),
       with the arguments (`$@`) that were passed to `sh`.
