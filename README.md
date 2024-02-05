@@ -57,4 +57,7 @@ For details on cross-compilation, check out the [GitHub Actions file](.github/wo
 
 ## License
 
-`jq` is released under the [MIT License](COPYING).
+`jq` is released under the [MIT License](COPYING). `jq`'s documentation is
+licensed under the [Creative Commons CC BY 3.0](COPYING).
+`jq` uses parts of the open source C library "decNumber", which is distributed
+under [ICU License](COPYING)
