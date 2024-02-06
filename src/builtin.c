@@ -210,7 +210,7 @@ static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
 }
 #define LIBM_DDDD_NO(name) \
 static jv f_ ## name(jq_state *jq, jv input, jv a, jv b, jv c) { \
-  jv_free(c) \
+  jv_free(c); \
   jv_free(b); \
   jv error = jv_string("Error: " #name "/3 not found at build time"); \
   return ret_error2(input, a, error); \
