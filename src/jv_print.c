@@ -334,8 +334,11 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
 
       if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
-      put_str((flags & JV_PRINT_PRETTY) ? ": " : ":", F, S, flags & JV_PRINT_ISATTY);
+      put_char(':', F, S, flags & JV_PRINT_ISATTY);
       if (color) put_str(COLRESET, F, S, flags & JV_PRINT_ISATTY);
+      if (flags & JV_PRINT_PRETTY) {
+        put_char(' ', F, S, flags & JV_PRINT_ISATTY);
+      }
 
       jv_dump_term(C, value, flags, indent + 1, F, S);
     }
