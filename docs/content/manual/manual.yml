@@ -1007,7 +1007,7 @@ sections:
           `($x|f)` for each value, $x, in the input array or object,
           but `map_values(f)` only uses `first($x|f)`.
 
-          Specifically, for object inputs, `map_value(f)` constructs
+          Specifically, for object inputs, `map_values(f)` constructs
           the output object by examining in turn the value of
           `first(.[$k]|f)` for each key, $k, of the input.  If this
           expression produces no values, then the corresponding key
