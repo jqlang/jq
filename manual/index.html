@@ -2032,7 +2032,7 @@ at all.</p>
 that the former simply forms an array from all the values of
 <code>($x|f)</code> for each value, $x, in the input array or object,
 but <code>map_values(f)</code> only uses <code>first($x|f)</code>.</p>
-<p>Specifically, for object inputs, <code>map_value(f)</code> constructs
+<p>Specifically, for object inputs, <code>map_values(f)</code> constructs
 the output object by examining in turn the value of
 <code>first(.[$k]|f)</code> for each key, $k, of the input.  If this
 expression produces no values, then the corresponding key
