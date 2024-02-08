@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "January 2024" "" ""
+.TH "JQ" "1" "February 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -1004,7 +1004,7 @@ When the input to \fBmap_values(f)\fR is an object, the output object has the sa
 The key difference between \fBmap(f)\fR and \fBmap_values(f)\fR is that the former simply forms an array from all the values of \fB($x|f)\fR for each value, $x, in the input array or object, but \fBmap_values(f)\fR only uses \fBfirst($x|f)\fR\.
 .
 .P
-Specifically, for object inputs, \fBmap_value(f)\fR constructs the output object by examining in turn the value of \fBfirst(\.[$k]|f)\fR for each key, $k, of the input\. If this expression produces no values, then the corresponding key will be dropped; otherwise, the output object will have that value at the key, $k\.
+Specifically, for object inputs, \fBmap_values(f)\fR constructs the output object by examining in turn the value of \fBfirst(\.[$k]|f)\fR for each key, $k, of the input\. If this expression produces no values, then the corresponding key will be dropped; otherwise, the output object will have that value at the key, $k\.
 .
 .P
 Here are some examples to clarify the behavior of \fBmap\fR and \fBmap_values\fR when applied to arrays\. These examples assume the input is \fB[1]\fR in all cases:
