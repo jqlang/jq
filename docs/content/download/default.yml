@@ -128,7 +128,7 @@ body:
        * Use [scoop](https://scoop.sh/) to install jq with `scoop install jq`.
 
        * Use [Chocolatey NuGet](https://chocolatey.org/) to install jq with
-         `chocolatey install jq`.
+         `choco install jq`.
 
        * jq 1.7.1 executables for
          [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe)
