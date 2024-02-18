@@ -33,7 +33,8 @@ struct jv_refcnt;
    Really. Do not play with them. */
 typedef struct {
   unsigned char kind_flags;
-  unsigned char pad_;
+  unsigned char pad_:7;
+  unsigned char borrowed:1;
   unsigned short offset;  /* array offsets */
   int size;
   union {
@@ -51,8 +52,13 @@ jv_kind jv_get_kind(jv);
 const char* jv_kind_name(jv_kind);
 static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
 
-jv jv_copy(jv);
-void jv_free(jv);
+void jv__free(jv);
+jv jv__copy(jv);
+
+static inline jv jv_copy(jv a){if(a.borrowed) return a; return jv__copy(a);}
+static inline void jv_free(jv a){if(!a.borrowed) jv__free(a);}
+
+static inline jv jv_borrow(jv a){a.borrowed = 1; return a;}
 
 int jv_get_refcnt(jv);
 
@@ -69,6 +75,8 @@ jv jv_null(void);
 jv jv_true(void);
 jv jv_false(void);
 jv jv_bool(int);
+
+static inline jv jv_is_borrowed(jv a){if(a.borrowed) return jv_true(); return jv_false();}
 
 jv jv_number(double);
 jv jv_number_with_literal(const char*);
