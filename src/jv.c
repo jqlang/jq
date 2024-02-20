@@ -164,7 +164,7 @@ jv jv_invalid_get_msg(jv inv) {
 
   jv x;
   if (JVP_HAS_FLAGS(inv, JVP_FLAGS_INVALID_MSG)) {
-    x = jv_copy(((jvp_invalid*)inv.u.ptr)->errmsg);
+    x = jv_unborrow(((jvp_invalid*)inv.u.ptr)->errmsg);
   }
   else {
     x = jv_null();
@@ -862,7 +862,7 @@ static jv* jvp_array_write(jv* a, int i) {
     int j;
     for (j = 0; j < jvp_array_length(*a); j++) {
       new_array->elements[j] =
-        jv_copy(array->elements[j + jvp_array_offset(*a)]);
+        jv_unborrow(array->elements[j + jvp_array_offset(*a)]);
     }
     for (; j < new_length; j++) {
       new_array->elements[j] = JV_NULL;
@@ -974,7 +974,7 @@ jv jv_array_get(jv j, int idx) {
   jv* slot = jvp_array_read(j, idx);
   jv val;
   if (slot) {
-    val = jv_copy(*slot);
+    val = jv_unborrow(*slot);
   } else {
     val = jv_invalid();
   }
@@ -1636,8 +1636,8 @@ static jv jvp_object_unshare(jv object) {
     struct object_slot* new_slot = jvp_object_get_slot(new_object, i);
     *new_slot = *old_slot;
     if (jv_get_kind(old_slot->string) != JV_KIND_NULL) {
-      new_slot->string = jv_copy(old_slot->string);
-      new_slot->value = jv_copy(old_slot->value);
+      new_slot->string = jv_unborrow(old_slot->string);
+      new_slot->value = jv_unborrow(old_slot->value);
     }
   }
 
