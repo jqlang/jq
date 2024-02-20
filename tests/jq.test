@@ -1023,6 +1023,10 @@ try delpaths(0) catch .
 {}
 "Paths must be specified as an array"
 
+map(delpaths([[6], [7], [8], [9], [10]]))
+[[0, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5]]
+[[0, 1, 2, 3, 4, 5]]
+
 del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)
 {"foo": [0,1,2,3,4], "bar": [0,1]}
 null
