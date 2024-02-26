@@ -151,6 +151,8 @@ jv jv_get(jv t, jv k) {
     jv_free(t);
     jv_free(k);
   }
+
+  if(jv_is_borrowed(v)) return jv_unborrow(v);
   return v;
 }
 
@@ -158,6 +160,7 @@ jv jv_set(jv t, jv k, jv v) {
   if (!jv_is_valid(v)) {
     jv_free(t);
     jv_free(k);
+    if(jv_is_borrowed(v)) return jv_unborrow(v);
     return v;
   }
   int isnull = jv_get_kind(t) == JV_KIND_NULL;
@@ -233,6 +236,7 @@ jv jv_set(jv t, jv k, jv v) {
     jv_free(v);
     t = err;
   }
+  if(jv_is_borrowed(t)) return jv_unborrow(t);
   return t;
 }
 

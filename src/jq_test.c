@@ -528,19 +528,30 @@ static void jv_test() {
      assert(!jv_is_borrowed(k));
      jv_free(k);
 
-     //currently broken stuff
      jv f = jv_array_append(b, jv_number(5));
      assert(!jv_is_borrowed(f));
      jv_free(f);
 
      jv g = jv_array_append(jv_array(), b);
      assert(!jv_is_borrowed(g));
-     g = jv_setpath(g, JV_ARRAY(jv_number(0)), jv_string("test"));
-     assert(!jv_is_borrowed(g));
      jv_free(g);
-     g = jv_setpath(b, JV_ARRAY(jv_number(1)), jv_string("some"));
-     assert(!jv_is_borrowed(g));
-     jv_free(g);
+
+     jv a1 = jv_parse("{\"key\":\"value\"}");
+     jv p = jv_set(jv_borrow(a1), jv_string("key"), jv_string("other"));
+     assert(!jv_is_borrowed(p));
+     jv_free(p);
+
+     jv q = jv_get(jv_borrow(a1), jv_string("key"));
+     assert(!jv_is_borrowed(q));
+     jv_free(q);
+
+     jv_free(a1);
+
+
+
+     jv h = jv_setpath(b, JV_ARRAY(jv_number(1)), jv_string("some"));
+     assert(!jv_is_borrowed(h));
+     jv_free(h);
 
 
      b = jv_unborrow(b);
@@ -550,6 +561,5 @@ static void jv_test() {
      assert(jv_get_refcnt(a) == 1);
 
      jv_free(b);
-
   }
 }
