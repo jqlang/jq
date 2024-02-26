@@ -1775,6 +1775,7 @@ jv jv_object_set(jv object, jv key, jv value) {
   jv* slot = jvp_object_write(&object, key);
   jv_free(*slot);
   *slot = value;
+  if(jv_is_borrowed(object)) return jv_unborrow(object);
   return object;
 }
 
@@ -1783,6 +1784,7 @@ jv jv_object_delete(jv object, jv key) {
   assert(JVP_HAS_KIND(key, JV_KIND_STRING));
   jvp_object_delete(&object, key);
   jv_free(key);
+  if(jv_is_borrowed(object)) return jv_unborrow(object);
   return object;
 }
 

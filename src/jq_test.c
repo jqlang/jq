@@ -508,7 +508,6 @@ static void jv_test() {
      assert(!jv_is_borrowed(c2));
      assert(jv_cmp(jv_borrow(c), jv_borrow(c2)) == 0);
      jv_free(c);
-     jv_free(d);
      jv_free(c2);
 
      jv b = jv_borrow(a);
@@ -518,7 +517,6 @@ static void jv_test() {
 
      assert(jv_equal(jv_copy(a), b));
 
-     //subject of potential debate
      jv e = jv_array_concat(b, JV_ARRAY(jv_number(5)));
      assert(!jv_is_borrowed(e));
      jv_free(e);
@@ -547,7 +545,9 @@ static void jv_test() {
 
      jv_free(a1);
 
-
+     jv res = jv_array_get(b, 1);
+     assert(!jv_is_borrowed(res));
+     jv_free(res);
 
      jv h = jv_setpath(b, JV_ARRAY(jv_number(1)), jv_string("some"));
      assert(!jv_is_borrowed(h));
@@ -561,5 +561,6 @@ static void jv_test() {
      assert(jv_get_refcnt(a) == 1);
 
      jv_free(b);
+     jv_free(d);
   }
 }

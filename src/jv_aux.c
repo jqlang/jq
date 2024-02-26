@@ -389,11 +389,13 @@ jv jv_setpath(jv root, jv path, jv value) {
   if (!jv_is_valid(root)){
     jv_free(value);
     jv_free(path);
+    if(jv_is_borrowed(root)) return jv_unborrow(root);
     return root;
   }
   if (jv_array_length(jv_copy(path)) == 0) {
     jv_free(path);
     jv_free(root);
+    if(jv_is_borrowed(value)) return jv_unborrow(value);
     return value;
   }
   jv pathcurr = jv_array_get(jv_copy(path), 0);
