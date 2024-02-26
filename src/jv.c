@@ -996,6 +996,7 @@ jv jv_array_set(jv j, int idx, jv val) {
   jv* slot = jvp_array_write(&j, idx);
   jv_free(*slot);
   *slot = val;
+  if(jv_is_borrowed(j)) return jv_unborrow(j);
   return j;
 }
 
@@ -1013,6 +1014,7 @@ jv jv_array_concat(jv a, jv b) {
     a = jv_array_append(a, elem);
   }
   jv_free(b);
+  if(jv_is_borrowed(a)) return jv_unborrow(a);
   return a;
 }
 
