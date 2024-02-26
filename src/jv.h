@@ -77,7 +77,7 @@ jv jv_true(void);
 jv jv_false(void);
 jv jv_bool(int);
 
-static inline jv jv_is_borrowed(jv a){if(a.borrowed) return jv_true(); return jv_false();}
+static inline int jv_is_borrowed(jv a){return a.borrowed;}
 
 jv jv_number(double);
 jv jv_number_with_literal(const char*);

@@ -490,4 +490,66 @@ static void jv_test() {
     //jv_dump(jv_copy(o2), 0); printf("\n");
     jv_free(o2);
   }
+
+  /// Borrowing
+  {
+     jv d = jv_string("b");
+     jv a = JV_ARRAY(jv_string("a"), jv_borrow(d));
+
+     jv i = jv_invalid_with_msg(jv_borrow(d));
+     jv m = jv_invalid_get_msg(i);
+     assert(!jv_is_borrowed(m));
+     jv_free(m);
+
+     jv c = jv_array_get(jv_borrow(a), 1);
+     assert(!jv_is_borrowed(c));
+
+     jv c2 = jv_getpath(jv_borrow(a), JV_ARRAY(jv_number(1)));
+     assert(!jv_is_borrowed(c2));
+     assert(jv_cmp(jv_borrow(c), jv_borrow(c2)) == 0);
+     jv_free(c);
+     jv_free(d);
+     jv_free(c2);
+
+     jv b = jv_borrow(a);
+     assert(jv_is_borrowed(b));
+     jv_free(b);
+     jv_free(b);
+
+     assert(jv_equal(jv_copy(a), b));
+
+     //subject of potential debate
+     jv e = jv_array_concat(b, JV_ARRAY(jv_number(5)));
+     assert(!jv_is_borrowed(e));
+     jv_free(e);
+
+     jv_array_length(b);
+     jv k = jv_keys(b);
+     assert(!jv_is_borrowed(k));
+     jv_free(k);
+
+     //currently broken stuff
+     jv f = jv_array_append(b, jv_number(5));
+     assert(!jv_is_borrowed(f));
+     jv_free(f);
+
+     jv g = jv_array_append(jv_array(), b);
+     assert(!jv_is_borrowed(g));
+     g = jv_setpath(g, JV_ARRAY(jv_number(0)), jv_string("test"));
+     assert(!jv_is_borrowed(g));
+     jv_free(g);
+     g = jv_setpath(b, JV_ARRAY(jv_number(1)), jv_string("some"));
+     assert(!jv_is_borrowed(g));
+     jv_free(g);
+
+
+     b = jv_unborrow(b);
+
+     jv_free(a);
+
+     assert(jv_get_refcnt(a) == 1);
+
+     jv_free(b);
+
+  }
 }
