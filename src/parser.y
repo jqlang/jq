@@ -109,7 +109,7 @@ struct lexer_param;
 %left '*' '/' '%'
 %precedence NONOPT /* non-optional; rules for which a specialized
                       '?' rule should be preferred over Exp '?' */
-%precedence '?'
+%precedence '?' '.' '[' FIELD "as"
 %precedence "try"
 %precedence "catch"
 
@@ -336,46 +336,12 @@ FuncDef Exp %prec FUNCDEF {
 Term "as" Patterns '|' Exp {
   $$ = gen_destructure($1, $3, $5);
 } |
-"reduce" Term "as" Patterns '(' Exp ';' Exp ')' {
-  $$ = gen_reduce($2, $4, $6, $8);
-} |
-
-"foreach" Term "as" Patterns '(' Exp ';' Exp ';' Exp ')' {
-  $$ = gen_foreach($2, $4, $6, $8, $10);
-} |
-
-"foreach" Term "as" Patterns '(' Exp ';' Exp ')' {
-  $$ = gen_foreach($2, $4, $6, $8, gen_noop());
-} |
-
-"if" Exp "then" Exp ElseBody {
-  $$ = gen_cond($2, $4, $5);
-} |
-"if" Exp "then" error {
-  FAIL(@$, "Possibly unterminated 'if' statement");
-  $$ = $2;
-} |
-
-"try" Exp "catch" Exp {
-  $$ = gen_try($2, $4);
-} |
-"try" Exp {
-  $$ = gen_try($2, gen_op_simple(BACKTRACK));
-} |
-"try" Exp "catch" error {
-  FAIL(@$, "Possibly unterminated 'try' statement");
-  $$ = $2;
-} |
 
 "label" BINDING '|' Exp {
   jv v = jv_string_fmt("*label-%s", jv_string_value($2));
   $$ = gen_location(@$, locations, gen_label(jv_string_value(v), $4));
   jv_free($2);
   jv_free(v);
-} |
-
-Exp '?' {
-  $$ = gen_try($1, gen_op_simple(BACKTRACK));
 } |
 
 Exp '=' Exp {
@@ -416,10 +382,6 @@ Exp '+' Exp {
 
 Exp "+=" Exp {
   $$ = gen_update($1, $3, '+');
-} |
-
-'-' Exp {
-  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
 } |
 
 Exp '-' Exp {
@@ -478,7 +440,7 @@ Exp ">=" Exp {
   $$ = gen_binop($1, $3, GREATEREQ);
 } |
 
-Term {
+Term %prec NONOPT {
   $$ = $1;
 }
 
@@ -610,9 +572,6 @@ ExpD:
 ExpD '|' ExpD {
   $$ = block_join($1, $3);
 } |
-'-' ExpD {
-  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
-} |
 Term {
   $$ = $1;
 }
@@ -713,6 +672,9 @@ Term '[' Exp ':' ']' %prec NONOPT {
 Term '[' ':' Exp ']' %prec NONOPT {
   $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX);
 } |
+Term '?' {
+  $$ = gen_try($1, gen_op_simple(BACKTRACK));
+} |
 LITERAL {
   $$ = gen_const($1);
 } |
@@ -721,6 +683,9 @@ String {
 } |
 FORMAT {
   $$ = gen_format(gen_noop(), $1);
+} |
+'-' Term {
+  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
 } |
 '(' Exp ')' {
   $$ = $2;
@@ -737,6 +702,32 @@ FORMAT {
     $$ = o;
   else
     $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
+} |
+"reduce" Term "as" Patterns '(' Exp ';' Exp ')' {
+  $$ = gen_reduce($2, $4, $6, $8);
+} |
+"foreach" Term "as" Patterns '(' Exp ';' Exp ';' Exp ')' {
+  $$ = gen_foreach($2, $4, $6, $8, $10);
+} |
+"foreach" Term "as" Patterns '(' Exp ';' Exp ')' {
+  $$ = gen_foreach($2, $4, $6, $8, gen_noop());
+} |
+"if" Exp "then" Exp ElseBody {
+  $$ = gen_cond($2, $4, $5);
+} |
+"if" Exp "then" error {
+  FAIL(@$, "Possibly unterminated 'if' statement");
+  $$ = $2;
+} |
+"try" Exp "catch" Exp {
+  $$ = gen_try($2, $4);
+} |
+"try" Exp "catch" error {
+  FAIL(@$, "Possibly unterminated 'try' statement");
+  $$ = $2;
+} |
+"try" Exp {
+  $$ = gen_try($2, gen_op_simple(BACKTRACK));
 } |
 /*
  * This `$$$$varname` hack is strictly private to jq builtins.  DO NOT USE!!

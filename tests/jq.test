@@ -36,9 +36,11 @@ null
 null
 []
 
-{x: -1}
-null
-{"x": -1}
+{x:-1},{x:-.},{x:-.|abs}
+1
+{"x":-1}
+{"x":-1}
+{"x":1}
 
 # The input line starts with a 0xFEFF (byte order mark) codepoint
 # No, there is no reason to have a byte order mark in UTF8 text.
@@ -322,6 +324,10 @@ null
 [{"a":1}, {"b":2}, {"a":3, "b":4}]
 [-1, -1, -4]
 
+[-foreach -.[] as $x (0; . + $x)]
+[1,2,3]
+[1,3,6]
+
 [foreach range(5) as $x (0; .+$x | select($x!=2); [$x,.])]
 null
 [[0,0],[1,1],[3,4],[4,8]]
@@ -578,6 +584,10 @@ null
 1
 [2,4]
 
+[-1 as $x | 1,$x]
+null
+[1,-1]
+
 [10 * 20, 20 / .]
 4
 [200, 5]
@@ -823,6 +833,10 @@ reduce .[] as [$i, {j:$j}] (0; . + $i - $j)
 reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)
 null
 14
+
+[-reduce -.[] as $x (0; . + $x)]
+[1,2,3]
+[6]
 
 # This, while useless, should still compile.
 reduce . as $n (.; .)
@@ -1255,6 +1269,14 @@ null
 7
 [7]
 
+[-if true then 1 else 2 end]
+null
+[-1]
+
+{x: if true then 1 else 2 end}
+null
+{"x":1}
+
 [.[] | [.foo[] // .bar]]
 [{"foo":[1,2], "bar": 42}, {"foo":[1], "bar": null}, {"foo":[null,false,3], "bar": 18}, {"foo":[], "bar":42}, {"foo": [null,false,null], "bar": 41}]
 [[1,2], [1], [3], [42], [41]]
@@ -1344,6 +1366,22 @@ null
 [[.[]|[.a,.a]]?]
 [null,true,{"a":1}]
 []
+
+[if error then 1 else 2 end?]
+"foo"
+[]
+
+try -.? catch .
+"foo"
+"string (\"foo\") cannot be negated"
+
+[-try .]
+1
+[-1]
+
+{x: try 1, y: try error catch 2, z: if true then 3 end}
+null
+{"x":1,"y":2,"z":3}
 
 .[] | try error catch .
 [1,null,2]
