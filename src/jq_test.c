@@ -495,6 +495,7 @@ static void jv_test() {
   {
      jv d = jv_string("b");
      jv a = JV_ARRAY(jv_string("a"), jv_borrow(d));
+     jv_free(d);
 
      jv i = jv_invalid_with_msg(jv_borrow(d));
      jv m = jv_invalid_get_msg(i);
@@ -561,6 +562,5 @@ static void jv_test() {
      assert(jv_get_refcnt(a) == 1);
 
      jv_free(b);
-     jv_free(d);
   }
 }

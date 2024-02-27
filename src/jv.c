@@ -995,7 +995,11 @@ jv jv_array_set(jv j, int idx, jv val) {
   // copy/free of val,j coalesced
   jv* slot = jvp_array_write(&j, idx);
   jv_free(*slot);
-  *slot = val;
+  if(jv_is_borrowed(val)){
+    *slot = jv_unborrow(val);
+  }else{
+    *slot = val;
+  }
   if(jv_is_borrowed(j)) return jv_unborrow(j);
   return j;
 }
@@ -1774,7 +1778,11 @@ jv jv_object_set(jv object, jv key, jv value) {
   // copy/free of object, key, value coalesced
   jv* slot = jvp_object_write(&object, key);
   jv_free(*slot);
-  *slot = value;
+  if(jv_is_borrowed(value)){
+    *slot = jv_unborrow(value);
+  }else{
+     *slot = value;
+  }
   if(jv_is_borrowed(object)) return jv_unborrow(object);
   return object;
 }
