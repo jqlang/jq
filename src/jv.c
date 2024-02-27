@@ -1717,8 +1717,7 @@ static int jvp_object_equal(jv o1, jv o2) {
     if (jv_get_kind(slot->string) == JV_KIND_NULL) continue;
     jv* slot2 = jvp_object_read(o2, slot->string);
     if (!slot2) return 0;
-    // FIXME: do less refcounting here
-    if (!jv_equal(jv_copy(slot->value), jv_copy(*slot2))) return 0;
+    if (!jv_equal(jv_borrow(slot->value), jv_borrow(*slot2))) return 0;
     len1++;
   }
   return len1 == len2;
