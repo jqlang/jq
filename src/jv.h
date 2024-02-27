@@ -60,6 +60,7 @@ static inline void jv_free(jv a){if(!a.borrowed) jv__free(a);}
 
 static inline jv jv_borrow(jv a){a.borrowed = 1; return a;}
 static inline jv jv_unborrow(jv a){a.borrowed = 0; return jv_copy(a);}
+static inline jv jv_return(jv a){if(a.borrowed) return jv_unborrow(a); return a;}
 
 int jv_get_refcnt(jv);
 
