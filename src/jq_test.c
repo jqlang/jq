@@ -581,5 +581,10 @@ static void jv_test() {
      jv object_set = jv_object_set(jv_borrow(object), jv_string("some"), jv_string("other"));
      assert(jv_equal(object, JV_OBJECT(jv_string("some"), jv_string("value"))));
      jv_free(object_set);
+
+     jv string = jv_string("value");
+     jv other = jv_string_append_buf(jv_borrow(string), "test", 4);
+     assert(jv_equal(string, jv_string("value")));
+     assert(jv_equal(other, jv_string("valuetest")));
 }
 }

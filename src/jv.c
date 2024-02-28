@@ -1437,7 +1437,9 @@ jv jv_string_concat(jv a, jv b) {
   return a;
 }
 
-jv jv_string_append_buf(jv a, const char* buf, int len) {
+jv jv_string_append_buf(jv input, const char* buf, int len) {
+  jv a = jv_return(input);
+
   if (jvp_utf8_is_valid(buf, buf+len)) {
     a = jvp_string_append(a, buf, len);
   } else {
@@ -1447,7 +1449,9 @@ jv jv_string_append_buf(jv a, const char* buf, int len) {
   return a;
 }
 
-jv jv_string_append_codepoint(jv a, uint32_t c) {
+jv jv_string_append_codepoint(jv input, uint32_t c) {
+  jv a = jv_return(input);
+
   char buf[5];
   int len = jvp_utf8_encode(c, buf);
   a = jvp_string_append(a, buf, len);
