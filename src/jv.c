@@ -149,7 +149,12 @@ typedef struct {
 jv jv_invalid_with_msg(jv err) {
   jvp_invalid* i = jv_mem_alloc(sizeof(jvp_invalid));
   i->refcnt = JV_REFCNT_INIT;
-  i->errmsg = err;
+
+  if(jv_is_borrowed(err)){
+    i->errmsg = jv_unborrow(err);
+  }else{
+    i->errmsg = err;
+  }
 
   jv x = {JVP_FLAGS_INVALID_MSG, 0, 0, 0, 0, {&i->refcnt}};
   return x;
@@ -164,7 +169,7 @@ jv jv_invalid_get_msg(jv inv) {
 
   jv x;
   if (JVP_HAS_FLAGS(inv, JVP_FLAGS_INVALID_MSG)) {
-    x = jv_unborrow(((jvp_invalid*)inv.u.ptr)->errmsg);
+    x = jv_copy(((jvp_invalid*)inv.u.ptr)->errmsg);
   }
   else {
     x = jv_null();
@@ -974,7 +979,7 @@ jv jv_array_get(jv j, int idx) {
   jv* slot = jvp_array_read(j, idx);
   jv val;
   if (slot) {
-    val = jv_unborrow(*slot);
+    val = jv_copy(*slot);
   } else {
     val = jv_invalid();
   }
@@ -1018,7 +1023,6 @@ jv jv_array_concat(jv a, jv b) {
     a = jv_array_append(a, elem);
   }
   jv_free(b);
-  if(jv_is_borrowed(a)) return jv_unborrow(a);
   return a;
 }
 
@@ -1642,8 +1646,8 @@ static jv jvp_object_unshare(jv object) {
     struct object_slot* new_slot = jvp_object_get_slot(new_object, i);
     *new_slot = *old_slot;
     if (jv_get_kind(old_slot->string) != JV_KIND_NULL) {
-      new_slot->string = jv_unborrow(old_slot->string);
-      new_slot->value = jv_unborrow(old_slot->value);
+      new_slot->string = jv_copy(old_slot->string);
+      new_slot->value = jv_copy(old_slot->value);
     }
   }
 
@@ -1786,12 +1790,13 @@ jv jv_object_set(jv object, jv key, jv value) {
   return object;
 }
 
-jv jv_object_delete(jv object, jv key) {
-  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
+jv jv_object_delete(jv input, jv key) {
+  assert(JVP_HAS_KIND(input, JV_KIND_OBJECT));
   assert(JVP_HAS_KIND(key, JV_KIND_STRING));
+  jv object = jv_unborrow(input);
+  jv_free(input);
   jvp_object_delete(&object, key);
   jv_free(key);
-  if(jv_is_borrowed(object)) return jv_unborrow(object);
   return object;
 }
 

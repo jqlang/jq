@@ -562,5 +562,11 @@ static void jv_test() {
      assert(jv_get_refcnt(a) == 1);
 
      jv_free(b);
+
+     jv o = JV_OBJECT(jv_string("some"), jv_string("value"));
+     jv od = jv_object_delete(jv_borrow(o), jv_string("some"));
+     jv ov = jv_getpath(o, JV_ARRAY(jv_string("some")));
+     assert(jv_equal(ov, jv_string("value")));
+     jv_free(od);
   }
 }
