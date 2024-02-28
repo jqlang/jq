@@ -236,7 +236,6 @@ jv jv_set(jv t, jv k, jv v) {
     jv_free(v);
     t = err;
   }
-  if(jv_is_borrowed(t)) return jv_unborrow(t);
   return t;
 }
 
