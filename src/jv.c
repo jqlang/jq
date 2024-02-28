@@ -1775,9 +1775,12 @@ int jv_object_has(jv object, jv key) {
   return res;
 }
 
-jv jv_object_set(jv object, jv key, jv value) {
-  assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
+jv jv_object_set(jv input, jv key, jv value) {
+  assert(JVP_HAS_KIND(input, JV_KIND_OBJECT));
   assert(JVP_HAS_KIND(key, JV_KIND_STRING));
+
+  jv object = jv_unborrow(input);
+  jv_free(input);
   // copy/free of object, key, value coalesced
   jv* slot = jvp_object_write(&object, key);
   jv_free(*slot);
@@ -1786,7 +1789,6 @@ jv jv_object_set(jv object, jv key, jv value) {
   }else{
      *slot = value;
   }
-  if(jv_is_borrowed(object)) return jv_unborrow(object);
   return object;
 }
 

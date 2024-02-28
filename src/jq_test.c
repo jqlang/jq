@@ -564,7 +564,7 @@ static void jv_test() {
      jv_free(b);
 
      jv object = JV_OBJECT(jv_string("some"), jv_string("value"));
-     jv object_deleted = jv_object_delete(jv_borrow(o), jv_string("some"));
+     jv object_deleted = jv_object_delete(jv_borrow(object), jv_string("some"));
      jv object_value = jv_getpath(object, JV_ARRAY(jv_string("some")));
      assert(jv_equal(object_value, jv_string("value")));
      jv_free(object_deleted);
@@ -573,5 +573,13 @@ static void jv_test() {
      jv new_array = jv_array_slice(jv_borrow(array), 0, 1);
      assert(jv_equal(array, JV_ARRAY(jv_string("some"), jv_string("value"))));
      jv_free(new_array);
-  }
+
+
+     jv test = jv_string("value");
+     object = JV_OBJECT(jv_string("some"), jv_borrow(test));
+     jv_free(test);
+     jv object_set = jv_object_set(jv_borrow(object), jv_string("some"), jv_string("other"));
+     assert(jv_equal(object, JV_OBJECT(jv_string("some"), jv_string("value"))));
+     jv_free(object_set);
+}
 }
