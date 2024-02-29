@@ -166,7 +166,7 @@ void stack_push(jq_state *jq, jv val) {
   assert(jv_is_valid(val));
   jq->stk_top = stack_push_block(&jq->stk, jq->stk_top, sizeof(jv));
   jv* sval = stack_block(&jq->stk, jq->stk_top);
-  *sval = val;
+  *sval = jv_return(val);
 }
 
 jv stack_pop(jq_state *jq) {
@@ -1274,7 +1274,7 @@ jv jq_get_lib_dirs(jq_state *jq) {
 void jq_set_attrs(jq_state *jq, jv attrs) {
   assert(jv_get_kind(attrs) == JV_KIND_OBJECT);
   jv_free(jq->attrs);
-  jq->attrs = attrs;
+  jq->attrs = jv_return(attrs);
 }
 
 void jq_set_attr(jq_state *jq, jv attr, jv val) {
@@ -1324,8 +1324,8 @@ jq_halt(jq_state *jq, jv exit_code, jv error_message)
 {
   assert(!jq->halted);
   jq->halted = 1;
-  jq->exit_code = exit_code;
-  jq->error_message = error_message;
+  jq->exit_code = jv_return(exit_code);
+  jq->error_message = jv_return(error_message);
 }
 
 int
