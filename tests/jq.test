@@ -1559,6 +1559,10 @@ bsearch({x:1})
 [{ "x": 0 },{ "x": 1 },{ "x": 2 }]
 1
 
+try ["OK", bsearch(0)] catch ["KO",.]
+"aa"
+["KO","string (\"aa\") cannot be searched from"]
+
 # strptime tests are in optional.test
 
 strftime("%Y-%m-%dT%H:%M:%SZ")

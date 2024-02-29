@@ -46,6 +46,7 @@ void *alloca (size_t);
 #include "jv_private.h"
 #include "util.h"
 
+
 #define BINOP(name) \
 static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
   jv_free(input); \
@@ -785,13 +786,14 @@ static jv f_sort_by_impl(jq_state *jq, jv input, jv keys) {
 /* If the input is not sorted, bsearch will terminate but with irrelevant results. */
 static jv f_bsearch(jq_state *jq, jv input, jv target) {
   if (jv_get_kind(input) != JV_KIND_ARRAY) {
+    jv_free(target);
     return type_error(input, "cannot be searched from");
   }
   int start = 0;
   int end = jv_array_length(jv_copy(input));
   jv answer = jv_invalid();
   while (start < end) {
-    int mid = (start + end) / 2;
+    int mid = start + (end - start) / 2;
     int result = jv_cmp(jv_copy(target), jv_array_get(jv_copy(input), mid));
     if (result == 0) {
       answer = jv_number(mid);
