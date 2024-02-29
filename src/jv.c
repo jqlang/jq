@@ -867,7 +867,7 @@ static jv* jvp_array_write(jv* a, int i) {
     int j;
     for (j = 0; j < jvp_array_length(*a); j++) {
       new_array->elements[j] =
-        jv_unborrow(array->elements[j + jvp_array_offset(*a)]);
+        jv_copy(array->elements[j + jvp_array_offset(*a)]);
     }
     for (; j < new_length; j++) {
       new_array->elements[j] = JV_NULL;
@@ -989,6 +989,8 @@ jv jv_array_get(jv j, int idx) {
 
 jv jv_array_set(jv j, int idx, jv val) {
   assert(JVP_HAS_KIND(j, JV_KIND_ARRAY));
+
+  j = jv_return(j);
 
   if (idx < 0)
     idx = jvp_array_length(j) + idx;

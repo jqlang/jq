@@ -586,5 +586,11 @@ static void jv_test() {
      jv other = jv_string_append_buf(jv_borrow(string), "test", 4);
      assert(jv_equal(string, jv_string("value")));
      assert(jv_equal(other, jv_string("valuetest")));
+
+     array = JV_ARRAY(jv_string("test"));
+     jv array_out = jv_array_set(jv_borrow(array), 0, jv_string("value"));
+     assert(jv_equal(array, JV_ARRAY(jv_string("test"))));
+     assert(!jv_is_borrowed(array_out));
+     jv_free(array_out);
 }
 }
