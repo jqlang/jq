@@ -43,6 +43,8 @@ void *alloca (size_t);
 #include "locfile.h"
 #include "jv_unicode.h"
 #include "jv_alloc.h"
+#include "jv_dtoa.h"
+#include "jv_dtoa_tsd.h"
 #include "jv_private.h"
 #include "util.h"
 
@@ -464,11 +466,22 @@ static jv f_tonumber(jq_state *jq, jv input) {
     return input;
   }
   if (jv_get_kind(input) == JV_KIND_STRING) {
-    jv parsed = jv_parse(jv_string_value(input));
-    if (!jv_is_valid(parsed) || jv_get_kind(parsed) == JV_KIND_NUMBER) {
-      jv_free(input);
-      return parsed;
+    const char* s = jv_string_value(input);
+#ifdef USE_DECNUM
+    jv number = jv_number_with_literal(s);
+    if (jv_get_kind(number) == JV_KIND_INVALID) {
+      return type_error(input, "cannot be parsed as a number");
     }
+#else
+    char *end = 0;
+    double d = jvp_strtod(tsd_dtoa_context_get(), s, &end);
+    if (end == 0 || *end != 0) {
+      return type_error(input, "cannot be parsed as a number");
+    }
+    jv number = jv_number(d);
+#endif
+    jv_free(input);
+    return number;
   }
   return type_error(input, "cannot be parsed as a number");
 }
