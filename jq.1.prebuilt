@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "February 2024" "" ""
+.TH "JQ" "1" "March 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -1925,6 +1925,30 @@ Outputs its input with the given suffix string removed, if it ends with it\.
 jq \'[\.[]|rtrimstr("foo")]\'
    ["fo", "foo", "barfoo", "foobar", "foob"]
 => ["fo","","bar","foobar","foob"]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "trim, ltrim, rtrim"
+\fBtrim\fR trims both leading and trailing whitespace\.
+.
+.P
+\fBltrim\fR trims only leading (left side) whitespace\.
+.
+.P
+\fBrtrim\fR trims only trailing (right side) whitespace\.
+.
+.P
+Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"\fR and also all characters in the Unicode character database with the whitespace property\. Note that what considers whitespace might change in the future\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'trim, ltrim, rtrim\'
+   " abc "
+=> "abc", "abc ", " abc"
 .
 .fi
 .
