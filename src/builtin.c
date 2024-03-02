@@ -1762,7 +1762,7 @@ BINOPS
   {f_env, "env", 1},
   {f_expand_path, "expand_path", 1},
   {f_get_home, "get_home", 1},
-  {f_get_abspath, "jq_realpath", 1},
+  {f_get_abspath, "get_abspath", 1},
   {f_halt, "halt", 1},
   {f_halt_error, "halt_error", 2},
   {f_get_search_list, "get_search_list", 1},
