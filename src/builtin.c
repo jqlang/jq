@@ -1151,8 +1151,7 @@ static jv f_env(jq_state *jq, jv input) {
 
 static jv f_expand_path(jq_state *jq, jv input) {
     if (jv_get_kind(input) != JV_KIND_STRING) {
-        jv_free(input);
-        return type_error(input, "expand_path/1: string required");
+        return type_error(input, "expand_path/0: string required");
     }
     return expand_path(input);
 }
@@ -1164,8 +1163,7 @@ static jv f_get_home(jq_state *jq, jv input) {
 
 static jv f_get_abspath(jq_state *jq, jv input) {
     if (jv_get_kind(input) != JV_KIND_STRING) {
-        jv_free(input);
-        return type_error(input, "get_abspath/1: string required");
+        return type_error(input, "get_abspath/0: string required");
     }
     return jq_realpath(input);
 }
