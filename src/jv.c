@@ -150,11 +150,7 @@ jv jv_invalid_with_msg(jv err) {
   jvp_invalid* i = jv_mem_alloc(sizeof(jvp_invalid));
   i->refcnt = JV_REFCNT_INIT;
 
-  if(jv_is_borrowed(err)){
-    i->errmsg = jv_unborrow(err);
-  }else{
-    i->errmsg = err;
-  }
+  i->errmsg = jv_return(err);
 
   jv x = {JVP_FLAGS_INVALID_MSG, 0, 0, 0, 0, {&i->refcnt}};
   return x;
@@ -1002,13 +998,8 @@ jv jv_array_set(jv j, int idx, jv val) {
   // copy/free of val,j coalesced
   jv* slot = jvp_array_write(&j, idx);
   jv_free(*slot);
-  if(jv_is_borrowed(val)){
-    *slot = jv_unborrow(val);
-  }else{
-    *slot = val;
-  }
-  if(jv_is_borrowed(j)) return jv_unborrow(j);
-  return j;
+  *slot = jv_return(val);
+  return jv_return(j);
 }
 
 jv jv_array_append(jv j, jv val) {
@@ -1433,19 +1424,15 @@ jv jv_string_slice(jv j, int start, int end) {
 }
 
 jv jv_string_concat(jv a, jv b) {
-  a = jv_return(a);
-  b = jv_return(b);
-  a = jvp_string_append(a, jv_string_value(b),
+  a = jvp_string_append(jv_return(a), jv_string_value(b),
                         jvp_string_length(jvp_string_ptr(b)));
   jv_free(b);
   return a;
 }
 
-jv jv_string_append_buf(jv input, const char* buf, int len) {
-  jv a = jv_return(input);
-
+jv jv_string_append_buf(jv a, const char* buf, int len) {
   if (jvp_utf8_is_valid(buf, buf+len)) {
-    a = jvp_string_append(a, buf, len);
+    a = jvp_string_append(jv_return(a), buf, len);
   } else {
     jv b = jvp_string_copy_replace_bad(buf, len);
     a = jv_string_concat(a, b);
@@ -1453,12 +1440,10 @@ jv jv_string_append_buf(jv input, const char* buf, int len) {
   return a;
 }
 
-jv jv_string_append_codepoint(jv input, uint32_t c) {
-  jv a = jv_return(input);
-
+jv jv_string_append_codepoint(jv a, uint32_t c) {
   char buf[5];
   int len = jvp_utf8_encode(c, buf);
-  a = jvp_string_append(a, buf, len);
+  a = jvp_string_append(jv_return(a), buf, len);
   return a;
 }
 
@@ -1798,11 +1783,10 @@ jv jv_object_set(jv input, jv key, jv value) {
 jv jv_object_delete(jv input, jv key) {
   assert(JVP_HAS_KIND(input, JV_KIND_OBJECT));
   assert(JVP_HAS_KIND(key, JV_KIND_STRING));
-  jv object = jv_unborrow(input);
-  jv_free(input);
-  jvp_object_delete(&object, key);
+  input = jv_return(input);
+  jvp_object_delete(&input, key);
   jv_free(key);
-  return object;
+  return input;
 }
 
 int jv_object_length(jv object) {
