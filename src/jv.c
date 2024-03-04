@@ -1433,6 +1433,8 @@ jv jv_string_slice(jv j, int start, int end) {
 }
 
 jv jv_string_concat(jv a, jv b) {
+  a = jv_return(a);
+  b = jv_return(b);
   a = jvp_string_append(a, jv_string_value(b),
                         jvp_string_length(jvp_string_ptr(b)));
   jv_free(b);
@@ -1785,17 +1787,12 @@ jv jv_object_set(jv input, jv key, jv value) {
   assert(JVP_HAS_KIND(input, JV_KIND_OBJECT));
   assert(JVP_HAS_KIND(key, JV_KIND_STRING));
 
-  jv object = jv_unborrow(input);
-  jv_free(input);
+  input = jv_return(input);
   // copy/free of object, key, value coalesced
-  jv* slot = jvp_object_write(&object, key);
+  jv* slot = jvp_object_write(&input, jv_return(key));
   jv_free(*slot);
-  if(jv_is_borrowed(value)){
-    *slot = jv_unborrow(value);
-  }else{
-     *slot = value;
-  }
-  return object;
+  *slot = jv_return(value);
+  return input;
 }
 
 jv jv_object_delete(jv input, jv key) {
