@@ -141,13 +141,18 @@ def gsub($re; s): sub($re; s; "g");
 ########################################################################
 # generic iterator/generator
 def while(cond; update):
-     def _while:
-         if cond then ., (update | _while) else empty end;
-     _while;
+  def _while:
+    if cond then ., (update | _while) else empty end;
+    _while;
+    # like while/2 but emit the final term rather than the first one
+def whilst(cond; update):
+  def _whilst: if cond then update | (., _whilst) else empty end;
+  _whilst;
 def until(cond; next):
-     def _until:
-         if cond then . else (next|_until) end;
-     _until;
+  def _until:
+  if cond then . else (next|_until) end;
+  _until;
+
 def limit($n; exp):
     if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
     elif $n == 0 then empty
