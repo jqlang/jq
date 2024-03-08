@@ -376,7 +376,7 @@ static decFloat * decFinalize(decFloat *df, bcdnum *num,
             UBFROMUI(ub-3, 0);               // to 00000000
             }
           // [note ub could now be to left of msd, and it is not safe
-          // to write to the the left of the msd]
+          // to write to the left of the msd]
           // now at most 3 digits left to non-9 (usually just the one)
           for (; ub>=umsd; *ub=0, ub--) {
             if (*ub==9) continue;            // carry
