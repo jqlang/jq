@@ -43,7 +43,7 @@
 - Remove `-dirty` version suffix for windows release build. @itchyny #2888
 - Make use of `od` in tests more compatible. @nabijaczleweli @emanuele6 @nicowilliams #2922
 - Add dependabot. @yeikel #2889
-- Extend fuzzing setup to fuzz parser and and JSON serializer. @DavidKorczynski @emanuele6 #2952
+- Extend fuzzing setup to fuzz parser and JSON serializer. @DavidKorczynski @emanuele6 #2952
 - Keep releasing executables with legacy names. @itchyny #2951
 
 # 1.7
