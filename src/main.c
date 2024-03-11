@@ -101,7 +101,7 @@ static void usage(int code, int keep_it_short) {
       "      --slurpfile name file set $name to an array of JSON values read\n"
       "                            from the file;\n"
       "      --rawfile name file   set $name to string contents of file;\n"
-      "      --depth n             set parser maxdepth to n (0 for unbounded; default %d\n);"
+      "      --depth n             set parser maxdepth to n (0 for unbounded);\n"
       "      --args                consume remaining arguments as positional\n"
       "                            string values;\n"
       "      --jsonargs            consume remaining arguments as positional\n"
@@ -115,8 +115,7 @@ static void usage(int code, int keep_it_short) {
       "  -h, --help                show the help;\n"
       "  --                        terminates argument processing;\n\n"
       "Named arguments are also available as $ARGS.named[], while\n"
-      "positional arguments are available as $ARGS.positional[].\n",
-      DEFAULT_MAX_PARSING_DEPTH);
+      "positional arguments are available as $ARGS.positional[].\n");
   }
   exit((ret < 0 && code == 0) ? 2 : code);
 }
