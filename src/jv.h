@@ -246,10 +246,13 @@ jv jv_parse_custom_flags(const char* string, int flags);
 typedef void (*jv_nomem_handler_f)(void *);
 void jv_nomem_handler(jv_nomem_handler_f, void *);
 
-jv jv_load_file(const char *, int);
+jv jv_load_file(const char *, int, int);
 
+#ifndef DEFAULT_MAX_PARSING_DEPTH
+#define DEFAULT_MAX_PARSING_DEPTH (256)
+#endif
 typedef struct jv_parser jv_parser;
-jv_parser* jv_parser_new(int);
+jv_parser* jv_parser_new(int, int);
 void jv_parser_set_buf(jv_parser*, const char*, int, int);
 int jv_parser_remaining(jv_parser*);
 jv jv_parser_next(jv_parser*);
