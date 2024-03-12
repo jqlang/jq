@@ -154,13 +154,13 @@ static void push(struct jv_parser* p, jv v) {
 static pfunc parse_token(struct jv_parser* p, char ch) {
   switch (ch) {
   case '[':
-    if (p->maxdepth > 0 && p->stackpos >= p->maxdepth) return "Exceeds depth limit for parsing";
+    if (p->maxdepth > 0 && p->stackpos >= p->maxdepth) return "Exceeds depth limit for parsing (set with --depth)";
     if (jv_is_valid(p->next)) return "Expected separator between values";
     push(p, jv_array());
     break;
 
   case '{':
-    if (p->maxdepth > 0 && p->stackpos >= p->maxdepth) return "Exceeds depth limit for parsing";
+    if (p->maxdepth > 0 && p->stackpos >= p->maxdepth) return "Exceeds depth limit for parsing (set with --depth)";
     if (jv_is_valid(p->next)) return "Expected separator between values";
     push(p, jv_object());
     break;
