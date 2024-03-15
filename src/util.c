@@ -818,40 +818,47 @@ recurse:
             LEGAL_ALT(ALT_O);
             continue;
 
-#ifndef TIME_MAX
-#define TIME_MAX	INT64_MAX
-#endif
-        case 's':	/* seconds since the epoch */
-            {
-                time_t sse = 0;
-                uint64_t rulim = TIME_MAX;
-
-                if (*bp < '0' || *bp > '9') {
-                    bp = NULL;
-                    continue;
-                }
-
-                do {
-                    sse *= 10;
-                    sse += *bp++ - '0';
-                    rulim /= 10;
-                } while ((sse * 10 <= TIME_MAX) &&
-                     rulim && *bp >= '0' && *bp <= '9');
-
-                if (sse < 0 || (uint64_t)sse > TIME_MAX) {
-                    bp = NULL;
-                    continue;
-                }
+        case 's': {     /* seconds since the epoch */
 #ifdef _WIN32
-                if (localtime_s(tm, &sse) == 0)
+            const time_t TIME_MAX = INT32_MAX;
 #else
-                if (localtime_r(&sse, tm))
+            const time_t TIME_MAX = INT64_MAX;
 #endif
-                    state |= S_YDAY | S_WDAY | S_MON | S_MDAY | S_YEAR;
-                else
-                    bp = NULL;
+            time_t sse;
+            time_t d;
+
+            if (*bp < '0' || *bp > '9') {
+                bp = NULL;
+                continue;
             }
+
+            sse = *bp++ - '0';
+            while (*bp >= '0' && *bp <= '9') {
+                d = *bp++ - '0';
+                if (sse > TIME_MAX/10) {
+                    bp = NULL;
+                    break;
+                }
+                sse *= 10;
+                if (sse > TIME_MAX - d) {
+                    bp = NULL;
+                    break;
+                }
+                sse += d;
+            }
+            if (bp == NULL)
+                continue;
+
+#ifdef _WIN32
+            if (localtime_s(tm, &sse))
+#else
+            if (localtime_r(&sse, tm) == NULL)
+#endif
+                bp = NULL;
+            else
+                state |= S_YDAY | S_WDAY | S_MON | S_MDAY | S_YEAR;
             continue;
+            }
 
         case 'U':	/* The week of year, beginning on sunday. */
         case 'W':	/* The week of year, beginning on monday. */
