@@ -1599,9 +1599,9 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
     }
   } else if (jv_get_kind(a) != JV_KIND_ARRAY) {
     return ret_error2(a, b, jv_string("strftime/1 requires parsed datetime inputs"));
-  } else if (jv_get_kind(b) != JV_KIND_STRING) {
-    return ret_error2(a, b, jv_string("strftime/1 requires a string format"));
   }
+  if (jv_get_kind(b) != JV_KIND_STRING)
+    return ret_error2(a, b, jv_string("strftime/1 requires a string format"));
   struct tm tm;
   if (!jv2tm(a, &tm))
     return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
@@ -1630,9 +1630,9 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
     a = f_localtime(jq, a);
   } else if (jv_get_kind(a) != JV_KIND_ARRAY) {
     return ret_error2(a, b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
-  } else if (jv_get_kind(b) != JV_KIND_STRING) {
-    return ret_error2(a, b, jv_string("strflocaltime/1 requires a string format"));
   }
+  if (jv_get_kind(b) != JV_KIND_STRING)
+    return ret_error2(a, b, jv_string("strflocaltime/1 requires a string format"));
   struct tm tm;
   if (!jv2tm(a, &tm))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));

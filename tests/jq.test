@@ -1580,6 +1580,15 @@ try mktime catch .
 ["a",1,2,3,4,5,6,7]
 "mktime requires parsed datetime inputs"
 
+# oss-fuzz #67403: non-string argument with number input fails assert
+try ["OK", strftime([])] catch ["KO", .]
+0
+["KO","strftime/1 requires a string format"]
+
+try ["OK", strflocaltime({})] catch ["KO", .]
+0
+["KO","strflocaltime/1 requires a string format"]
+
 # module system
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
 null
