@@ -178,6 +178,11 @@ map(try .a[] catch ., try .a.[] catch ., .a[]?, .a.[]?)
 [{"a": [1,2]}, {"a": 123}]
 [1,2,1,2,1,2,1,2,"Cannot iterate over number (123)","Cannot iterate over number (123)"]
 
+# oss-fuzz #66070: objects[] leaks if a non-last element throws an error
+try ["OK", (.[] | error)] catch ["KO", .]
+{"a":["b"],"c":["d"]}
+["KO",["b"]]
+
 #
 # Negative array indices
 #

@@ -781,8 +781,10 @@ jv jq_next(jq_state *jq) {
       }
 
       if (!keep_going || raising) {
-        if (keep_going)
+        if (keep_going) {
+          jv_free(key);
           jv_free(value);
+        }
         jv_free(container);
         goto do_backtrack;
       } else if (is_last) {
