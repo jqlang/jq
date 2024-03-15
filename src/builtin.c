@@ -1461,30 +1461,35 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   return r;
 }
 
-#define TO_TM_FIELD(t, j, i)                    \
-    do {                                        \
-      jv n = jv_array_get(jv_copy(j), (i));     \
-      if (jv_get_kind(n) != (JV_KIND_NUMBER)) { \
-        jv_free(n);                             \
-        jv_free(j);                             \
-        return 0;                               \
-      }                                         \
-      t = jv_number_value(n);                   \
-      jv_free(n);                               \
-    } while (0)
-
 static int jv2tm(jv a, struct tm *tm) {
   memset(tm, 0, sizeof(*tm));
-  TO_TM_FIELD(tm->tm_year, a, 0);
-  tm->tm_year -= 1900;
-  TO_TM_FIELD(tm->tm_mon,  a, 1);
-  TO_TM_FIELD(tm->tm_mday, a, 2);
-  TO_TM_FIELD(tm->tm_hour, a, 3);
-  TO_TM_FIELD(tm->tm_min,  a, 4);
-  TO_TM_FIELD(tm->tm_sec,  a, 5);
-  TO_TM_FIELD(tm->tm_wday, a, 6);
-  TO_TM_FIELD(tm->tm_yday, a, 7);
-  jv_free(a);
+  static size_t offsets[] = {
+    offsetof(struct tm, tm_year),
+    offsetof(struct tm, tm_mon),
+    offsetof(struct tm, tm_mday),
+    offsetof(struct tm, tm_hour),
+    offsetof(struct tm, tm_min),
+    offsetof(struct tm, tm_sec),
+    offsetof(struct tm, tm_wday),
+    offsetof(struct tm, tm_yday),
+  };
+
+  for (size_t i = 0; i < (sizeof offsets / sizeof *offsets); ++i) {
+    jv n = jv_array_get(jv_copy(a), i);
+    if (!jv_is_valid(n))
+      break;
+    if (jv_get_kind(n) != JV_KIND_NUMBER || jvp_number_is_nan(n)) {
+      jv_free(a);
+      jv_free(n);
+      return 0;
+    }
+    double d = jv_number_value(n);
+    if (i == 0) /* year */
+      d -= 1900;
+    *(int *)((void *)tm + offsets[i]) = d < INT_MIN ? INT_MIN :
+                                        d > INT_MAX ? INT_MAX : (int)d;
+    jv_free(n);
+  }
 
   // We use UTC everywhere (gettimeofday, gmtime) and UTC does not do DST.
   // Setting tm_isdst to 0 is done by the memset.
@@ -1494,6 +1499,7 @@ static int jv2tm(jv a, struct tm *tm) {
   // hope it is okay to initialize them to zero, because the standard does not
   // provide an alternative.
 
+  jv_free(a);
   return 1;
 }
 
