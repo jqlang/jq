@@ -824,8 +824,7 @@ recurse:
 #else
             const time_t TIME_MAX = INT64_MAX;
 #endif
-            time_t sse;
-            time_t d;
+            time_t sse, d;
 
             if (*bp < '0' || *bp > '9') {
                 bp = NULL;
