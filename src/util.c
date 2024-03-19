@@ -533,32 +533,32 @@ static const unsigned char *find_string(const unsigned char *, int *, const char
 static char* utc = "UTC";
 #endif
 /* RFC-822/RFC-2822 */
-static const char* const nast[] = {
+static const char *const nast[] = {
        "EST",    "CST",    "MST",    "PST",    "\0\0\0"
 };
-static const char* const nadt[] = {
+static const char *const nadt[] = {
        "EDT",    "CDT",    "MDT",    "PDT",    "\0\0\0"
 };
-static const char* weekday_name[] =
+static const char *const weekday_name[] =
 {
     "Sunday", "Monday", "Tuesday", "Wednesday",
     "Thursday", "Friday", "Saturday"
 };
-static const char* ab_weekday_name[] =
+static const char *const ab_weekday_name[] =
 {
     "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
-static const char* month_name[] =
+static const char *const month_name[] =
 {
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
 };
-static const char* ab_month_name[] =
+static const char *const ab_month_name[] =
 {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
-static const char* am_pm[] = {"AM", "PM"};
+static const char *const am_pm[] = {"AM", "PM"};
 
 
 /*

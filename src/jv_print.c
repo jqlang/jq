@@ -29,12 +29,12 @@
 // the last color is used for object keys.
 static char color_bufs[8][16];
 static const char *color_bufps[8];
-static const char* def_colors[] =
+static const char *const def_colors[] =
   {COL("0;90"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
    COL("0;32"),    COL("1;39"),      COL("1;39"),     COL("1;34")};
 #define FIELD_COLOR (colors[7])
 
-static const char **colors = def_colors;
+static const char *const *colors = def_colors;
 
 int
 jq_set_colors(const char *c)

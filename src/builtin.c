@@ -1463,7 +1463,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
 
 static int jv2tm(jv a, struct tm *tm) {
   memset(tm, 0, sizeof(*tm));
-  static size_t offsets[] = {
+  static const size_t offsets[] = {
     offsetof(struct tm, tm_year),
     offsetof(struct tm, tm_mon),
     offsetof(struct tm, tm_mday),
