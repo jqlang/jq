@@ -657,6 +657,48 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     }
     jv_free(input);
     return line;
+  } else if (!strcmp(fmt_s, "sh") && jv_get_kind(input) == JV_KIND_OBJECT) {
+    jv_free(fmt);
+    jv line = jv_string("");
+    int first = 1;
+    jv_object_foreach(input, k, x) {
+      if (strspn(jv_string_value(k),
+                 "abcdefghijklmnopqrstuvwxyz"
+                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                 "0123456789_") != (size_t)jv_string_length_bytes(jv_copy(k)) ||
+          strspn(jv_string_value(k), "0123456789") != 0) {
+        /* Not a valid shell variable name; we don't support assignments to array variables */
+        jv_free(k);
+        jv_free(x);
+        continue;
+      }
+      if (!first) line = jv_string_append_str(line, " ");
+      first = 0;
+      line = jv_string_concat(line, k);
+      line = jv_string_append_str(line, "=");
+      switch (jv_get_kind(x)) {
+      case JV_KIND_NULL:
+      case JV_KIND_TRUE:
+      case JV_KIND_FALSE:
+      case JV_KIND_NUMBER:
+        line = jv_string_concat(line, jv_dump_string(x, 0));
+        break;
+
+      case JV_KIND_STRING: {
+        line = jv_string_append_str(line, "'");
+        line = jv_string_concat(line, escape_string(x, "''\\''\0"));
+        line = jv_string_append_str(line, "'");
+        break;
+      }
+
+      default:
+        jv_free(input);
+        jv_free(line);
+        return type_error(x, "can not be escaped for shell");
+      }
+    }
+    jv_free(input);
+    return line;
   } else if (!strcmp(fmt_s, "sh")) {
     jv_free(fmt);
     if (jv_get_kind(input) != JV_KIND_ARRAY)
