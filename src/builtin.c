@@ -1197,6 +1197,58 @@ static jv f_string_indexes(jq_state *jq, jv a, jv b) {
   return jv_string_indexes(a, b);
 }
 
+enum trim_op {
+  TRIM_LEFT  = 1 << 0,
+  TRIM_RIGHT = 1 << 1
+};
+
+static jv string_trim(jv a, int op) {
+  if (jv_get_kind(a) != JV_KIND_STRING) {
+    return ret_error(a, jv_string("trim input must be a string"));
+  }
+
+  int len = jv_string_length_bytes(jv_copy(a));
+  const char *start = jv_string_value(a);
+  const char *trim_start = start;
+  const char *end = trim_start + len;
+  const char *trim_end = end;
+  int c;
+
+  if (op & TRIM_LEFT) {
+    for (;;) {
+      const char *ns = jvp_utf8_next(trim_start, end, &c);
+      if (!ns || !jvp_codepoint_is_whitespace(c))
+        break;
+      trim_start = ns;
+    }
+  }
+
+  // make sure not empty string or start trim has trimmed everything
+  if ((op & TRIM_RIGHT) && trim_end > trim_start) {
+    for (;;) {
+      const char *ns = jvp_utf8_backtrack(trim_end-1, trim_start, NULL);
+      jvp_utf8_next(ns, trim_end, &c);
+      if (!jvp_codepoint_is_whitespace(c))
+        break;
+      trim_end = ns;
+      if (ns == trim_start)
+        break;
+    }
+  }
+
+  // no new string needed if there is nothing to trim
+  if (trim_start == start && trim_end == end)
+    return a;
+
+  jv ts = jv_string_sized(trim_start, trim_end - trim_start);
+  jv_free(a);
+  return ts;
+}
+
+static jv f_string_trim(jq_state *jq, jv a)  { return string_trim(a, TRIM_LEFT | TRIM_RIGHT); }
+static jv f_string_ltrim(jq_state *jq, jv a) { return string_trim(a, TRIM_LEFT); }
+static jv f_string_rtrim(jq_state *jq, jv a) { return string_trim(a, TRIM_RIGHT); }
+
 static jv f_string_implode(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY) {
     return ret_error(a, jv_string("implode input must be an array"));
@@ -1721,6 +1773,9 @@ BINOPS
   {f_string_explode, "explode", 1},
   {f_string_implode, "implode", 1},
   {f_string_indexes, "_strindices", 2},
+  {f_string_trim, "trim", 1},
+  {f_string_ltrim, "ltrim", 1},
+  {f_string_rtrim, "rtrim", 1},
   {f_setpath, "setpath", 3}, // FIXME typechecking
   {f_getpath, "getpath", 2},
   {f_delpaths, "delpaths", 2},

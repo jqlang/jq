@@ -1930,6 +1930,30 @@ jq \'[\.[]|rtrimstr("foo")]\'
 .
 .IP "" 0
 .
+.SS "trim, ltrim, rtrim"
+\fBtrim\fR trims both leading and trailing whitespace\.
+.
+.P
+\fBltrim\fR trims only leading (left side) whitespace\.
+.
+.P
+\fBrtrim\fR trims only trailing (right side) whitespace\.
+.
+.P
+Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"\fR and also all characters in the Unicode character database with the whitespace property\. Note that what considers whitespace might change in the future\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'trim, ltrim, rtrim\'
+   " abc "
+=> "abc", "abc ", " abc"
+.
+.fi
+.
+.IP "" 0
+.
 .SS "explode"
 Converts an input string into an array of the string\'s codepoint numbers\.
 .
