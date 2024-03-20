@@ -4432,6 +4432,52 @@ ends with it.</p>
               </div>
             </div>
           </section>
+          <section id="trim-ltrim-rtrim">
+            <h3>
+              <code>trim</code>, <code>ltrim</code>, <code>rtrim</code>
+              <a href="#trim-ltrim-rtrim" class="icon-link" aria-label="Link to this section: `trim`, `ltrim`, `rtrim`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
+            </h3>
+            <p><code>trim</code> trims both leading and trailing whitespace.</p>
+<p><code>ltrim</code> trims only leading (left side) whitespace.</p>
+<p><code>rtrim</code> trims only trailing (right side) whitespace.</p>
+<p>Whitespace characters are the usual <code>" "</code>, <code>"\n"</code> <code>"\t"</code>, <code>"\r"</code>
+and also all characters in the Unicode character database with the
+whitespace property. Note that what considers whitespace might
+change in the future.</p>
+            <div class="pb-3">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example61" aria-expanded="false" aria-controls="example61">
+                <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
+              </button>
+              <div id="example61" class="collapse mx-3 small d-print-block">
+                <table class="table table-borderless table-sm w-auto">
+                  <tr>
+                    <th class="pe-3">Command</th>
+                    <td class="font-monospace">jq 'trim, ltrim, rtrim'</td>
+                  </tr>
+                  <tr>
+                    <th>Input</th>
+                    <td class="font-monospace">&#34; abc &#34;</td>
+                  </tr>
+                  <tr>
+                    <th>Output</th>
+                    <td class="font-monospace">&#34;abc&#34;</td>
+                  </tr>
+                  <tr>
+                    <th></th>
+                    <td class="font-monospace">&#34;abc &#34;</td>
+                  </tr>
+                  <tr>
+                    <th></th>
+                    <td class="font-monospace">&#34; abc&#34;</td>
+                  </tr>
+                  <tr class="d-print-none">
+                    <th><a href="https://jqplay.org/jq?q=trim%2C%20ltrim%2C%20rtrim&j=%22%20abc%20%22" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <td></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </section>
           <section id="explode">
             <h3>
               <code>explode</code>
@@ -4440,10 +4486,10 @@ ends with it.</p>
             <p>Converts an input string into an array of the string's
 codepoint numbers.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example61" aria-expanded="false" aria-controls="example61">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example62" aria-expanded="false" aria-controls="example62">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example61" class="collapse mx-3 small d-print-block">
+              <div id="example62" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4472,10 +4518,10 @@ codepoint numbers.</p>
             </h3>
             <p>The inverse of explode.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example62" aria-expanded="false" aria-controls="example62">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example63" aria-expanded="false" aria-controls="example63">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example62" class="collapse mx-3 small d-print-block">
+              <div id="example63" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4506,10 +4552,10 @@ codepoint numbers.</p>
 <p><code>split</code> can also split on regex matches when called with
 two arguments (see the regular expressions section below).</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example63" aria-expanded="false" aria-controls="example63">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example64" aria-expanded="false" aria-controls="example64">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example63" class="collapse mx-3 small d-print-block">
+              <div id="example64" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4544,10 +4590,10 @@ returns said input string.</p>
 Null values are treated as empty strings. Arrays and objects
 in the input are not supported.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example64" aria-expanded="false" aria-controls="example64">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example65" aria-expanded="false" aria-controls="example65">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example64" class="collapse mx-3 small d-print-block">
+              <div id="example65" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4595,10 +4641,10 @@ in the input are not supported.</p>
             <p>Emit a copy of the input string with its alphabetic characters (a-z and A-Z)
 converted to the specified case.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example65" aria-expanded="false" aria-controls="example65">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example66" aria-expanded="false" aria-controls="example66">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example65" class="collapse mx-3 small d-print-block">
+              <div id="example66" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4632,10 +4678,10 @@ recursive jq function.  Recursive calls within <code>while</code> will
 not consume additional memory if <code>update</code> produces at most one
 output for each input.  See advanced topics below.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example66" aria-expanded="false" aria-controls="example66">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example67" aria-expanded="false" aria-controls="example67">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example66" class="collapse mx-3 small d-print-block">
+              <div id="example67" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4669,10 +4715,10 @@ recursive jq function.  Recursive calls within <code>repeat</code> will
 not consume additional memory if <code>exp</code> produces at most one
 output for each input.  See advanced topics below.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example67" aria-expanded="false" aria-controls="example67">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example68" aria-expanded="false" aria-controls="example68">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example67" class="collapse mx-3 small d-print-block">
+              <div id="example68" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4708,10 +4754,10 @@ recursive jq function.  Recursive calls within <code>until()</code> will
 not consume additional memory if <code>next</code> produces at most one
 output for each input.  See advanced topics below.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example68" aria-expanded="false" aria-controls="example68">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example69" aria-expanded="false" aria-controls="example69">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example68" class="collapse mx-3 small d-print-block">
+              <div id="example69" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4768,10 +4814,10 @@ could write <code>recurse(.+1; true)</code>.</p>
 memory whenever <code>f</code> produces at most a single output for each
 input.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example69" aria-expanded="false" aria-controls="example69">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example70" aria-expanded="false" aria-controls="example70">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example69" class="collapse mx-3 small d-print-block">
+              <div id="example70" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4878,10 +4924,10 @@ array of arrays before processing the array itself.  The second
 example shows how all the keys of all the objects within the
 input can be considered for alteration.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example70" aria-expanded="false" aria-controls="example70">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example71" aria-expanded="false" aria-controls="example71">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example70" class="collapse mx-3 small d-print-block">
+              <div id="example71" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4946,10 +4992,10 @@ set when the jq program started.</p>
 <p>At the moment there is no builtin for setting environment
 variables.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example71" aria-expanded="false" aria-controls="example71">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example72" aria-expanded="false" aria-controls="example72">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example71" class="collapse mx-3 small d-print-block">
+              <div id="example72" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -4997,10 +5043,10 @@ variables.</p>
             <p>Transpose a possibly jagged matrix (an array of arrays).
 Rows are padded with nulls so the result is always rectangular.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example72" aria-expanded="false" aria-controls="example72">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example73" aria-expanded="false" aria-controls="example73">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example72" class="collapse mx-3 small d-print-block">
+              <div id="example73" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5036,10 +5082,10 @@ after the insertion of x at ix.  If the array is not sorted,
 <code>bsearch(x)</code> will return an integer that is probably of no
 interest.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example73" aria-expanded="false" aria-controls="example73">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example74" aria-expanded="false" aria-controls="example74">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example73" class="collapse mx-3 small d-print-block">
+              <div id="example74" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5106,10 +5152,10 @@ interest.</p>
 after a backslash. Whatever the expression returns will be
 interpolated into the string.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example74" aria-expanded="false" aria-controls="example74">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example75" aria-expanded="false" aria-controls="example75">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example74" class="collapse mx-3 small d-print-block">
+              <div id="example75" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5141,10 +5187,10 @@ or parse JSON texts into values, respectively.  The <code>tojson</code>
 builtin differs from <code>tostring</code> in that <code>tostring</code> returns strings
 unmodified, while <code>tojson</code> encodes strings as JSON strings.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example75" aria-expanded="false" aria-controls="example75">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example76" aria-expanded="false" aria-controls="example76">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example75" class="collapse mx-3 small d-print-block">
+              <div id="example76" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5275,10 +5321,10 @@ literal will be escaped. For instance,</p>
 <p>Note that the slashes, question mark, etc. in the URL are
 not escaped, as they were part of the string literal.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example76" aria-expanded="false" aria-controls="example76">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example77" aria-expanded="false" aria-controls="example77">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example76" class="collapse mx-3 small d-print-block">
+              <div id="example77" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5406,10 +5452,10 @@ in typical C library documentation.  The format string for ISO
 some systems. In particular, the <code>%u</code> and <code>%j</code> specifiers for
 <code>strptime(fmt)</code> are not supported on macOS.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example77" aria-expanded="false" aria-controls="example77">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example78" aria-expanded="false" aria-controls="example78">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example77" class="collapse mx-3 small d-print-block">
+              <div id="example78" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5536,10 +5582,10 @@ is irrelevant.  If you're coming from JavaScript, please note that jq's <code>==
 JavaScript's <code>===</code>, the "strict equality" operator.</p>
 <p>!= is "not equal", and 'a != b' returns the opposite value of 'a == b'</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example78" aria-expanded="false" aria-controls="example78">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example79" aria-expanded="false" aria-controls="example79">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example78" class="collapse mx-3 small d-print-block">
+              <div id="example79" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5631,10 +5677,10 @@ once for each result that is not false or null, and <code>C</code> is evaluated
 once for each false or null.</p>
 <p>More cases can be added to an if using <code>elif A then B</code> syntax.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example79" aria-expanded="false" aria-controls="example79">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example80" aria-expanded="false" aria-controls="example80">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example79" class="collapse mx-3 small d-print-block">
+              <div id="example80" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5673,10 +5719,10 @@ to, less than or equal to or less than their right argument
 (respectively).</p>
 <p>The ordering is the same as that described for <code>sort</code>, above.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example80" aria-expanded="false" aria-controls="example80">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example81" aria-expanded="false" aria-controls="example81">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example80" class="collapse mx-3 small d-print-block">
+              <div id="example81" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5720,10 +5766,10 @@ than the common Perl/Python/Ruby idiom of
 form of "or", picking between two values rather than
 evaluating a condition, see the <code>//</code> operator below.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example81" aria-expanded="false" aria-controls="example81">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example82" aria-expanded="false" aria-controls="example82">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example81" class="collapse mx-3 small d-print-block">
+              <div id="example82" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5848,10 +5894,10 @@ generator of three values, and since it produces a
 value other <code>false</code> and <code>null</code>, the default <code>42</code> is not
 produced.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example82" aria-expanded="false" aria-controls="example82">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example83" aria-expanded="false" aria-controls="example83">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example82" class="collapse mx-3 small d-print-block">
+              <div id="example83" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -5965,10 +6011,10 @@ if any, is output as if it had been the output of the
 expression to try.</p>
 <p>The <code>try EXP</code> form uses <code>empty</code> as the exception handler.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example83" aria-expanded="false" aria-controls="example83">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example84" aria-expanded="false" aria-controls="example84">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example83" class="collapse mx-3 small d-print-block">
+              <div id="example84" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6062,10 +6108,10 @@ is lexical: the label has to be "visible" from the break.</p>
             </h3>
             <p>The <code>?</code> operator, used as <code>EXP?</code>, is shorthand for <code>try EXP</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example84" aria-expanded="false" aria-controls="example84">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example85" aria-expanded="false" aria-controls="example85">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example84" class="collapse mx-3 small d-print-block">
+              <div id="example85" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6156,10 +6202,10 @@ to form a regular expression must be escaped. For example, the regular expressio
             <p>Like <code>match</code>, but does not return match objects, only <code>true</code> or <code>false</code>
 for whether or not the regex matches the input.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example85" aria-expanded="false" aria-controls="example85">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example86" aria-expanded="false" aria-controls="example86">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example85" class="collapse mx-3 small d-print-block">
+              <div id="example86" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6225,10 +6271,10 @@ the following fields:</p>
 </ul>
 <p>Capturing groups that did not match anything return an offset of -1</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example86" aria-expanded="false" aria-controls="example86">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example87" aria-expanded="false" aria-controls="example87">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example86" class="collapse mx-3 small d-print-block">
+              <div id="example87" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6343,10 +6389,10 @@ the following fields:</p>
 of each capture as the key, and the matched string as the
 corresponding value.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example87" aria-expanded="false" aria-controls="example87">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example88" aria-expanded="false" aria-controls="example88">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example87" class="collapse mx-3 small d-print-block">
+              <div id="example88" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6379,10 +6425,10 @@ have been specified.  If there is no match, the stream is empty.
 To capture all the matches for each input string, use the idiom
 <code>[ expr ]</code>, e.g. <code>[ scan(regex) ]</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example88" aria-expanded="false" aria-controls="example88">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example89" aria-expanded="false" aria-controls="example89">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example88" class="collapse mx-3 small d-print-block">
+              <div id="example89" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6417,10 +6463,10 @@ To capture all the matches for each input string, use the idiom
 <p>For backwards compatibility, when called with a single argument,
 <code>split</code> splits on a string, not a regex.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example89" aria-expanded="false" aria-controls="example89">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example90" aria-expanded="false" aria-controls="example90">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example89" class="collapse mx-3 small d-print-block">
+              <div id="example90" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6450,10 +6496,10 @@ To capture all the matches for each input string, use the idiom
             <p>These provide the same results as their <code>split</code> counterparts,
 but as a stream instead of an array.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example90" aria-expanded="false" aria-controls="example90">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example91" aria-expanded="false" aria-controls="example91">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example90" class="collapse mx-3 small d-print-block">
+              <div id="example91" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6501,10 +6547,10 @@ as a JSON object (as constructed by <code>capture</code>) to
 <code>tostring</code>, so a reference to a captured variable named "x"
 would take the form: <code>"\(.x)"</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example91" aria-expanded="false" aria-controls="example91">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example92" aria-expanded="false" aria-controls="example92">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example91" class="collapse mx-3 small d-print-block">
+              <div id="example92" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6553,10 +6599,10 @@ would take the form: <code>"\(.x)"</code>.</p>
 replaced by <code>tostring</code>, after interpolation. If the second argument is a stream
 of jq strings, then <code>gsub</code> will produce a corresponding stream of JSON strings.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example92" aria-expanded="false" aria-controls="example92">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example93" aria-expanded="false" aria-controls="example93">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example92" class="collapse mx-3 small d-print-block">
+              <div id="example93" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6693,10 +6739,10 @@ particular there's no way to change the value of a binding;
 one can only setup a new binding with the same name, but which
 will not be visible where the old one was.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example93" aria-expanded="false" aria-controls="example93">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example94" aria-expanded="false" aria-controls="example94">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example93" class="collapse mx-3 small d-print-block">
+              <div id="example94" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6812,10 +6858,10 @@ that occur during the final alternative are passed through.</p>
 <pre><code>[[3]] | .[] as [$a] ?// [$b] | if $a != null then error("err: \($a)") else {$a,$b} end
 </code></pre>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example94" aria-expanded="false" aria-controls="example94">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example95" aria-expanded="false" aria-controls="example95">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example94" class="collapse mx-3 small d-print-block">
+              <div id="example95" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6926,10 +6972,10 @@ number of function arguments, but only for references from
 functions (or main program) subsequent to the re-definition.
 See also the section below on scoping.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example95" aria-expanded="false" aria-controls="example95">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example96" aria-expanded="false" aria-controls="example96">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example95" class="collapse mx-3 small d-print-block">
+              <div id="example96" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -6994,10 +7040,10 @@ $times_three | [. + $times_three]) | ...</code>: here the binding
             </h3>
             <p>Returns true if <code>exp</code> produces no outputs, false otherwise.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example96" aria-expanded="false" aria-controls="example96">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example97" aria-expanded="false" aria-controls="example97">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example96" class="collapse mx-3 small d-print-block">
+              <div id="example97" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7062,10 +7108,10 @@ $times_three | [. + $times_three]) | ...</code>: here the binding
             </h3>
             <p>The <code>limit</code> function extracts up to <code>n</code> outputs from <code>exp</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example97" aria-expanded="false" aria-controls="example97">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example98" aria-expanded="false" aria-controls="example98">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example97" class="collapse mx-3 small d-print-block">
+              <div id="example98" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7097,10 +7143,10 @@ and last values from <code>expr</code>, respectively.</p>
 <p>The <code>nth(n; expr)</code> function extracts the nth value output by <code>expr</code>.
 Note that <code>nth(n; expr)</code> doesn't support negative values of <code>n</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example98" aria-expanded="false" aria-controls="example98">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example99" aria-expanded="false" aria-controls="example99">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example98" class="collapse mx-3 small d-print-block">
+              <div id="example99" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7131,10 +7177,10 @@ Note that <code>nth(n; expr)</code> doesn't support negative values of <code>n</
 and last values from any array at <code>.</code>.</p>
 <p>The <code>nth(n)</code> function extracts the nth value of any array at <code>.</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example99" aria-expanded="false" aria-controls="example99">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example100" aria-expanded="false" aria-controls="example100">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example99" class="collapse mx-3 small d-print-block">
+              <div id="example100" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7176,10 +7222,10 @@ so the effect is similar to running something like this:</p>
     3 as $item | . + $item
 </code></pre>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example100" aria-expanded="false" aria-controls="example100">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example101" aria-expanded="false" aria-controls="example101">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example100" class="collapse mx-3 small d-print-block">
+              <div id="example101" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7262,10 +7308,10 @@ to running something like this:</p>
 <p>When <code>EXTRACT</code> is omitted, the identity filter is used.
 That is, it outputs the intermediate values as they are.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example101" aria-expanded="false" aria-controls="example101">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example102" aria-expanded="false" aria-controls="example102">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example101" class="collapse mx-3 small d-print-block">
+              <div id="example102" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7417,10 +7463,10 @@ recursive call by <code>_range</code> to itself is in tail position.
 The example shows off three advanced topics: tail recursion,
 generator construction, and sub-functions.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example102" aria-expanded="false" aria-controls="example102">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example103" aria-expanded="false" aria-controls="example103">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example102" class="collapse mx-3 small d-print-block">
+              <div id="example103" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7621,10 +7667,10 @@ as <code>["error message"]</code> when an input text fails to parse.</p>
 number of path elements from the left of the outputs of the
 given streaming expression.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example103" aria-expanded="false" aria-controls="example103">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example104" aria-expanded="false" aria-controls="example104">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example103" class="collapse mx-3 small d-print-block">
+              <div id="example104" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7658,10 +7704,10 @@ given streaming expression.</p>
             <p>Outputs values corresponding to the stream expression's
 outputs.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example104" aria-expanded="false" aria-controls="example104">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example105" aria-expanded="false" aria-controls="example105">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example104" class="collapse mx-3 small d-print-block">
+              <div id="example105" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7690,10 +7736,10 @@ outputs.</p>
             </h3>
             <p>The <code>tostream</code> builtin outputs the streamed form of its input.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example105" aria-expanded="false" aria-controls="example105">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example106" aria-expanded="false" aria-controls="example106">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example105" class="collapse mx-3 small d-print-block">
+              <div id="example106" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7776,10 +7822,10 @@ the left-hand side path will be deleted, as with <code>del(path)</code>.</p>
 one will be used (COMPATIBILITY NOTE: in jq 1.5 and earlier
 releases, it used to be that only the last one was used).</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example106" aria-expanded="false" aria-controls="example106">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example107" aria-expanded="false" aria-controls="example107">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example106" class="collapse mx-3 small d-print-block">
+              <div id="example107" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7810,10 +7856,10 @@ releases, it used to be that only the last one was used).</p>
 equivalent to <code>a |= . op b</code>. So, <code>+= 1</code> can be used to
 increment values, being the same as <code>|= . + 1</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example107" aria-expanded="false" aria-controls="example107">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example108" aria-expanded="false" aria-controls="example108">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example107" class="collapse mx-3 small d-print-block">
+              <div id="example108" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7863,10 +7909,10 @@ field of the input, and produce the output <code>{"a": 20, "b": 20}</code>.
 The latter will set the <code>a</code> field of the input to the <code>a</code>
 field's <code>b</code> field, producing <code>{"a": 10, "b": 20}</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example108" aria-expanded="false" aria-controls="example108">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example109" aria-expanded="false" aria-controls="example109">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example108" class="collapse mx-3 small d-print-block">
+              <div id="example109" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -8284,6 +8330,7 @@ by a semi-colon, where the first number is one of these:</p>
         "combinations, combinations(n)": "combinations",
         "ltrimstr(str)": "ltrimstr",
         "rtrimstr(str)": "rtrimstr",
+        "trim, ltrim, rtrim": "trim-ltrim-rtrim",
         "explode": "explode",
         "implode": "implode",
         "split(str)": "split-1",
