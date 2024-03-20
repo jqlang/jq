@@ -201,7 +201,6 @@ AC_CHECK_MATH_FUNC(lgamma_r)
 AC_CHECK_MATH_FUNC(nearbyint)
 AC_CHECK_MATH_FUNC(nextafter)
 AC_CHECK_MATH_FUNC(nexttoward)
-AC_CHECK_MATH_FUNC(pow10) # Not available with glibc version >= 2.27
 AC_CHECK_MATH_FUNC(pow)
 AC_CHECK_MATH_FUNC(remainder)
 AC_CHECK_MATH_FUNC(rint)

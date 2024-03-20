@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "February 2024" "" ""
+.TH "JQ" "1" "March 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -3598,7 +3598,7 @@ Besides simple arithmetic operators such as \fB+\fR, jq also has most standard m
 Availability of standard math functions depends on the availability of the corresponding math functions in your operating system and C math library\. Unavailable math functions will be defined but will raise an error\.
 .
 .P
-One\-input C math functions: \fBacos\fR \fBacosh\fR \fBasin\fR \fBasinh\fR \fBatan\fR \fBatanh\fR \fBcbrt\fR \fBceil\fR \fBcos\fR \fBcosh\fR \fBerf\fR \fBerfc\fR \fBexp\fR \fBexp10\fR \fBexp2\fR \fBexpm1\fR \fBfabs\fR \fBfloor\fR \fBgamma\fR \fBj0\fR \fBj1\fR \fBlgamma\fR \fBlog\fR \fBlog10\fR \fBlog1p\fR \fBlog2\fR \fBlogb\fR \fBnearbyint\fR \fBpow10\fR \fBrint\fR \fBround\fR \fBsignificand\fR \fBsin\fR \fBsinh\fR \fBsqrt\fR \fBtan\fR \fBtanh\fR \fBtgamma\fR \fBtrunc\fR \fBy0\fR \fBy1\fR\.
+One\-input C math functions: \fBacos\fR \fBacosh\fR \fBasin\fR \fBasinh\fR \fBatan\fR \fBatanh\fR \fBcbrt\fR \fBceil\fR \fBcos\fR \fBcosh\fR \fBerf\fR \fBerfc\fR \fBexp\fR \fBexp10\fR \fBexp2\fR \fBexpm1\fR \fBfabs\fR \fBfloor\fR \fBgamma\fR \fBj0\fR \fBj1\fR \fBlgamma\fR \fBlog\fR \fBlog10\fR \fBlog1p\fR \fBlog2\fR \fBlogb\fR \fBnearbyint\fR \fBrint\fR \fBround\fR \fBsignificand\fR \fBsin\fR \fBsinh\fR \fBsqrt\fR \fBtan\fR \fBtanh\fR \fBtgamma\fR \fBtrunc\fR \fBy0\fR \fBy1\fR\.
 .
 .P
 Two\-input C math functions: \fBatan2\fR \fBcopysign\fR \fBdrem\fR \fBfdim\fR \fBfmax\fR \fBfmin\fR \fBfmod\fR \fBfrexp\fR \fBhypot\fR \fBjn\fR \fBldexp\fR \fBmodf\fR \fBnextafter\fR \fBnexttoward\fR \fBpow\fR \fBremainder\fR \fBscalb\fR \fBscalbln\fR \fByn\fR\.

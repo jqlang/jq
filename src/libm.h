@@ -249,11 +249,6 @@ LIBM_DDD(nexttoward)
 #else
 LIBM_DDD_NO(nexttoward)
 #endif
-#if defined(HAVE_POW10) && !defined(WIN32)
-LIBM_DD(pow10)
-#else
-LIBM_DD_NO(pow10)
-#endif
 #ifdef HAVE_RINT
 LIBM_DD(rint)
 #else
