@@ -1,0 +1,15 @@
+#!/bin/sh
+
+. "${0%/*}/setup" "$@"
+
+if [ "$(echo '{"hi":"there"/*comment*/}' | $VALGRIND $Q $JQ --strip-comments '.hi')" != '"there"' ]; then
+	echo "C-style comment test failed"
+	exit 1
+fi
+
+if [ "$(printf '{"hi"://comment\n"there"}' | $VALGRIND $Q $JQ --strip-comments '.hi')" != '"there"' ]; then
+	echo "C++-style comment test failed"
+	exit 1
+fi
+
+exit 0
