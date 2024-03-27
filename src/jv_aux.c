@@ -151,6 +151,7 @@ jv jv_get(jv t, jv k) {
     jv_free(t);
     jv_free(k);
   }
+
   return v;
 }
 
@@ -158,7 +159,7 @@ jv jv_set(jv t, jv k, jv v) {
   if (!jv_is_valid(v)) {
     jv_free(t);
     jv_free(k);
-    return v;
+    return jv_return(v);
   }
   int isnull = jv_get_kind(t) == JV_KIND_NULL;
   if (jv_get_kind(k) == JV_KIND_STRING &&
@@ -385,12 +386,12 @@ jv jv_setpath(jv root, jv path, jv value) {
   if (!jv_is_valid(root)){
     jv_free(value);
     jv_free(path);
-    return root;
+    return jv_return(root);
   }
   if (jv_array_length(jv_copy(path)) == 0) {
     jv_free(path);
     jv_free(root);
-    return value;
+    return jv_return(value);
   }
   jv pathcurr = jv_array_get(jv_copy(path), 0);
   jv pathrest = jv_array_slice(path, 1, jv_array_length(jv_copy(path)));
@@ -435,11 +436,11 @@ jv jv_getpath(jv root, jv path) {
   }
   if (!jv_is_valid(root)) {
     jv_free(path);
-    return root;
+    return jv_return(root);
   }
   if (jv_array_length(jv_copy(path)) == 0) {
     jv_free(path);
-    return root;
+    return jv_return(root);
   }
   jv pathcurr = jv_array_get(jv_copy(path), 0);
   jv pathrest = jv_array_slice(path, 1, jv_array_length(jv_copy(path)));
@@ -491,7 +492,7 @@ static jv delpaths_sorted(jv object, jv paths, int start) {
     object = jv_dels(object, delkeys);
   else
     jv_free(delkeys);
-  return object;
+  return jv_return(object);
 }
 
 jv jv_delpaths(jv object, jv paths) {
@@ -515,7 +516,7 @@ jv jv_delpaths(jv object, jv paths) {
   if (jv_array_length(jv_copy(paths)) == 0) {
     // nothing is being deleted
     jv_free(paths);
-    return object;
+    return jv_return(object);
   }
   if (jv_array_length(jv_array_get(jv_copy(paths), 0)) == 0) {
     // everything is being deleted

@@ -490,4 +490,59 @@ static void jv_test() {
     //jv_dump(jv_copy(o2), 0); printf("\n");
     jv_free(o2);
   }
+
+  /// Borrowing
+  {
+    jv input = jv_string("some");
+    jv_copy(jv_borrow(input));
+    jv_free(jv_borrow(input));
+    jv_free(jv_unborrow(jv_borrow(input)));
+    jv_free(jv_unborrow(input));
+    jv_free(input);
+
+    jv key = jv_string("key");
+    jv val = jv_string("value");
+    jv object = JV_OBJECT(jv_borrow(key), jv_borrow(val));
+    jv_free(key);
+    jv_free(val);
+    jv modified = jv_object_set(jv_borrow(object), jv_string("key"), jv_string("other"));
+    assert(!jv_is_borrowed(modified));
+    jv original_value = jv_getpath(object, JV_ARRAY(jv_string("key")));
+    assert(jv_equal(original_value, jv_string("value")));
+    jv modified_value = jv_getpath(modified, JV_ARRAY(jv_string("key")));
+    assert(!jv_is_borrowed(modified_value));
+    assert(jv_equal(modified_value, jv_string("other")));
+
+    jv array_value = jv_string("value");
+    jv array = JV_ARRAY(jv_borrow(array_value));
+    jv_free(array_value);
+    jv modified_array = jv_array_set(jv_borrow(array), 0, jv_string("other"));
+    assert(!jv_is_borrowed(modified_array));
+    jv original_array_value = jv_array_get(array, 0);
+    assert(jv_equal(original_array_value, jv_string("value")));
+    jv modified_array_value = jv_array_get(modified_array, 0);
+    assert(!jv_is_borrowed(modified_array_value));
+    assert(jv_equal(modified_array_value, jv_string("other")));
+
+    jv invalid_msg = jv_string("message");
+    jv invalid = jv_invalid_with_msg(jv_borrow(invalid_msg));
+    jv_free(invalid_msg);
+    jv obtained_msg = jv_invalid_get_msg(invalid);
+    assert(!jv_is_borrowed(obtained_msg));
+    assert(jv_equal(obtained_msg, jv_string("message")));
+
+    jv input_string = jv_string("test");
+    jv modified_string = jv_string_append_buf(jv_borrow(input_string), "ing", 3);
+    assert(!jv_is_borrowed(input_string));
+    assert(jv_equal(modified_string, jv_string("testing")));
+    jv_free(input_string);
+
+    jv string_a = jv_string("some");
+    jv string_b = jv_string("thing");
+    jv concat_string = jv_string_concat(jv_borrow(string_a), jv_borrow(string_b));
+    jv_free(string_a);
+    jv_free(string_b);
+    assert(!jv_is_borrowed(concat_string));
+    assert(jv_equal(concat_string, jv_string("something")));
+  }
 }
