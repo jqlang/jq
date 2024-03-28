@@ -81,7 +81,6 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get upgrade
           sudo apt-get install -y automake autoconf libtool crossbuild-essential-${{ matrix.arch }}
       - name: Build
         run: |
