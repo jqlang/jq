@@ -314,7 +314,7 @@ static jv jv_dels(jv t, jv keys) {
     int neg_idx = 0;
     int nonneg_idx = 0;
     int len = jv_array_length(jv_copy(t));
-    jv_array_foreach(t, i, elem) {
+    for (int i = 0; i < len; ++i) {
       int del = 0;
       while (neg_idx < jv_array_length(jv_copy(neg_keys))) {
         int delidx = len + (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(neg_keys), neg_idx));
@@ -343,9 +343,7 @@ static jv jv_dels(jv t, jv keys) {
         }
       }
       if (!del)
-        new_array = jv_array_append(new_array, elem);
-      else
-        jv_free(elem);
+        new_array = jv_array_append(new_array, jv_array_get(jv_copy(t), i));
     }
   arr_out:
     jv_free(neg_keys);
