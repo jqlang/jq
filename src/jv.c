@@ -1025,14 +1025,13 @@ jv jv_array_slice(jv a, int start, int end) {
 jv jv_array_indexes(jv a, jv b) {
   jv res = jv_array();
   int idx = -1;
-  jv_array_foreach(a, ai, aelem) {
-    jv_free(aelem);
+  int alen = jv_array_length(jv_copy(a));
+  for (int ai = 0; ai < alen; ++ai) {
     jv_array_foreach(b, bi, belem) {
-      if (!jv_equal(jv_array_get(jv_copy(a), ai + bi), jv_copy(belem)))
+      if (!jv_equal(jv_array_get(jv_copy(a), ai + bi), belem))
         idx = -1;
       else if (bi == 0 && idx == -1)
         idx = ai;
-      jv_free(belem);
     }
     if (idx > -1)
       res = jv_array_append(res, jv_number(idx));
