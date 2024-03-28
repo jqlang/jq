@@ -417,6 +417,7 @@ jv jv_setpath(jv root, jv path, jv value) {
   // to null first.
   root = jv_set(root, jv_copy(pathcurr), jv_null());
   if (!jv_is_valid(root)) {
+    jv_free(subroot);
     jv_free(pathcurr);
     jv_free(pathrest);
     jv_free(value);

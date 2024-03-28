@@ -2169,3 +2169,10 @@ try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"
 ["ko","endswith() requires string inputs"]
 ["ok",""]
 ["ko","endswith() requires string inputs"]
+
+
+# oss-fuzz #66061: setpath/2 leaks when indexing array with array
+
+try ["OK", setpath([[1]]; 1)] catch ["KO", .]
+[]
+["KO","Cannot update field at array index of array"]
