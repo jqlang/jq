@@ -251,6 +251,15 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
     i--;
     jv dep = jv_array_get(jv_copy(deps), i);
 
+    // Loading dependencies is not allowed when running in sandbox mode.
+    if (jq_is_sandbox(jq)) {
+      jq_report_error(jq, jv_string("jq: error: Loading dependencies (with import or include) is not allowed in sandbox mode"));
+      jv_free(deps);
+      jv_free(jq_origin);
+      jv_free(lib_origin);
+      return 1;
+    }
+
     const char *as_str = NULL;
     int is_data = jv_get_kind(jv_object_get(jv_copy(dep), jv_string("is_data"))) == JV_KIND_TRUE;
     int raw = 0;
@@ -420,14 +429,16 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
     return 1;
   }
 
-  char* home = getenv("HOME");
-  if (home) {    // silently ignore no $HOME
-    /* Import ~/.jq as a library named "" found in $HOME */
-    block import = gen_import_meta(gen_import("", NULL, 0),
-        gen_const(JV_OBJECT(
-            jv_string("optional"), jv_true(),
-            jv_string("search"), jv_string(home))));
-    program = BLOCK(import, program);
+  if (!jq_is_sandbox(jq)) {
+    char* home = getenv("HOME");
+    if (home) {    // silently ignore no $HOME
+      /* Import ~/.jq as a library named "" found in $HOME */
+      block import = gen_import_meta(gen_import("", NULL, 0),
+          gen_const(JV_OBJECT(
+              jv_string("optional"), jv_true(),
+              jv_string("search"), jv_string(home))));
+      program = BLOCK(import, program);
+    }
   }
 
   nerrors = process_dependencies(jq, jq_get_jq_origin(jq), jq_get_prog_origin(jq), &program, &lib_state);

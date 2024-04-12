@@ -291,6 +291,12 @@ sections:
         Another way to set the exit status is with the `halt_error`
         builtin function.
 
+      * `--sandbox`:
+
+        Prevent the use of modules (`import`/`include`) or any other file
+        operations that would allow the filter code to access data other
+        than the input data that is explicitly specified in the invocation.
+
       * `--binary` / `-b`:
 
         Windows users using WSL, MSYS2, or Cygwin, should use this option

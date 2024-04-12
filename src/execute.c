@@ -41,6 +41,7 @@ struct jq_state {
   unsigned next_label;
 
   int halted;
+  int sandbox;
   jv exit_code;
   jv error_message;
 
@@ -1066,6 +1067,7 @@ jq_state *jq_init(void) {
   jq->curr_frame = 0;
   jq->error = jv_null();
 
+  jq->sandbox = 0;
   jq->halted = 0;
   jq->exit_code = jv_invalid();
   jq->error_message = jv_invalid();
@@ -1319,6 +1321,14 @@ void jq_set_stderr_cb(jq_state *jq, jq_msg_cb cb, void *data) {
 void jq_get_stderr_cb(jq_state *jq, jq_msg_cb *cb, void **data) {
   *cb = jq->stderr_cb;
   *data = jq->stderr_cb_data;
+}
+
+void jq_set_sandbox(jq_state *jq) {
+  jq->sandbox = 1;
+}
+
+int jq_is_sandbox(jq_state *jq) {
+  return jq->sandbox;
 }
 
 void

@@ -30,6 +30,8 @@ void jq_start(jq_state *, jv value, int);
 jv jq_next(jq_state *);
 void jq_teardown(jq_state **);
 
+void jq_set_sandbox(jq_state *);
+int jq_is_sandbox(jq_state *);
 void jq_halt(jq_state *, jv, jv);
 int jq_halted(jq_state *);
 jv jq_get_exit_code(jq_state *);

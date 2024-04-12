@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "March 2024" "" ""
+.TH "JQ" "1" "April 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -221,6 +221,12 @@ Sets the exit status of jq to 0 if the last output value was neither \fBfalse\fR
 .
 .IP
 Another way to set the exit status is with the \fBhalt_error\fR builtin function\.
+.
+.TP
+\fB\-\-sandbox\fR:
+.
+.IP
+Prevent the use of modules (\fBimport\fR/\fBinclude\fR) or any other file operations that would allow the filter code to access data other than the input data that is explicitly specified in the invocation\.
 .
 .TP
 \fB\-\-binary\fR / \fB\-b\fR:
