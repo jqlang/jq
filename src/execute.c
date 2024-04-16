@@ -1246,7 +1246,7 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   if (nerrors == 0) {
     nerrors = builtins_bind(jq, &program);
     if (nerrors == 0) {
-      nerrors = block_compile(program, &jq->bc, locations, args2obj(args));
+      nerrors = block_compile(program, &jq->bc, locations, args2obj(args), jq_is_sandbox(jq));
     }
   } else
     jv_free(args);

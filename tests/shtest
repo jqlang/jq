@@ -396,6 +396,28 @@ if $VALGRIND $Q $JQ -L ./tests/modules --sandbox -n 'import "a" as a; empty'; th
     exit 1
 fi
 
+## Test environment variable access
+
+if [ "$(FOO=foo $VALGRIND $Q $JQ -nr '$ENV.FOO')" != foo ]; then
+    echo "couldn't read an environment variable via \$ENV" 1>&2
+    exit 1
+fi
+
+if [ "$(FOO=foo $VALGRIND $Q $JQ --sandbox -nr '$ENV.FOO')" != null ]; then
+    echo "\$ENV should have been empty due to the sandbox flag" 1>&2
+    exit 1
+fi
+
+if [ "$(FOO=foo $VALGRIND $Q $JQ -nr 'env.FOO')" != foo ]; then
+    echo "couldn't read an environment variable via env" 1>&2
+    exit 1
+fi
+
+if [ "$(FOO=foo $VALGRIND $Q $JQ --sandbox -nr 'env.FOO')" != null ]; then
+    echo "env should have been empty due to the sandbox flag" 1>&2
+    exit 1
+fi
+
 ## Halt
 
 if ! $VALGRIND $Q $JQ -n halt; then

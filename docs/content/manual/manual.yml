@@ -297,6 +297,11 @@ sections:
         operations that would allow the filter code to access data other
         than the input data that is explicitly specified in the invocation.
 
+        This flag also hides all environment variables from the enviroment
+        where jq was run by setting `$ENV` and `env` to be an empty object.
+        If you need to pass named arguments to a sandboxed jq filter, use the
+        `--arg` and/or `--argjson` options to pass them explicitly.
+
       * `--binary` / `-b`:
 
         Windows users using WSL, MSYS2, or Cygwin, should use this option
@@ -2018,6 +2023,9 @@ sections:
           set when the jq program started.
 
           `env` outputs an object representing jq's current environment.
+
+          `$ENV` and `env` will be an empty object if jq was run with the
+          `--sandbox` flag.
 
           At the moment there is no builtin for setting environment
           variables.
