@@ -59,7 +59,7 @@ const void *_jq_memmem(const void *haystack, size_t haystacklen,
 
 #include <time.h>
 
-#if defined(WIN32) && !defined(HAVE_STRPTIME)
+#ifndef HAVE_STRPTIME
 char* strptime(const char *buf, const char *fmt, struct tm *tm);
 #endif
 
