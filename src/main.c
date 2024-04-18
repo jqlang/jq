@@ -479,7 +479,6 @@ int main(int argc, char* argv[]) {
         options |= EXIT_STATUS;
         if (!short_opts) continue;
       }
-      // FIXME: For --arg* we should check that the varname is acceptable
       if (isoption(argv[i], 0, "args", &short_opts)) {
         further_args_are_strings = 1;
         further_args_are_json = 0;
