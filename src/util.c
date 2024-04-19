@@ -708,7 +708,7 @@ recurse:
             continue;
 
         case 'x':	/* The date, using the locale's format. */
-            /* fall throug */
+            /* fall through */
 
         case 'D':	/* The date as "%y/%m/%d". */
         {
