@@ -107,12 +107,12 @@ jv get_home() {
 #else
     home = getenv("USERPROFILE");
     if (!home) {
-      char *hd = getenv("HOMEDRIVE");
-      if (!hd) hd = "";
       home = getenv("HOMEPATH");
       if (!home) {
         ret = jv_invalid_with_msg(jv_string("Could not find home directory."));
       } else {
+        const char *hd = getenv("HOMEDRIVE");
+        if (!hd) hd = "";
         ret = jv_string_fmt("%s%s",hd,home);
       }
     } else {

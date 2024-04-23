@@ -206,7 +206,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       if (jv_get_kind(msg) == JV_KIND_STRING) {
         put_str("<invalid:", F, S, flags & JV_PRINT_ISATTY);
         jvp_dump_string(msg, flags | JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
-        put_str(">", F, S, flags & JV_PRINT_ISATTY);
+        put_char('>', F, S, flags & JV_PRINT_ISATTY);
       } else {
         put_str("<invalid>", F, S, flags & JV_PRINT_ISATTY);
       }
@@ -259,7 +259,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       put_str("[]", F, S, flags & JV_PRINT_ISATTY);
       break;
     }
-    put_str("[", F, S, flags & JV_PRINT_ISATTY);
+    put_char('[', F, S, flags & JV_PRINT_ISATTY);
     jv_array_foreach(x, i, elem) {
       if (i!=0) {
         if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);
