@@ -11,8 +11,8 @@ if test -d .git; then
     commit=$(git describe --always --dirty)
     echo "${branch}-${commit}"
   fi
-elif [[ "$(basename $(pwd))" =~ ^jq-jq-([0-9]+\.[0-9]+(\.[0-9]+)?)$ ]]; then
-  echo ${BASH_REMATCH[1]}
+elif [[ "$(basename $(pwd))" =~ ^jq-(jq-)?([0-9]+\.[0-9]+(\.[0-9]+)?)$ ]]; then
+  echo ${BASH_REMATCH[2]}
 else
   exit 1
 fi
