@@ -756,7 +756,7 @@ static void decFiniteMultiply(bcdnum *num, uByte *bcdacc,
   #endif
 
   /* Effect the multiplication */
-  // The multiplcation proceeds using MFC's lazy-carry resolution
+  // The multiplication proceeds using MFC's lazy-carry resolution
   // algorithm from decNumber.  First, the multiplication is
   // effected, allowing accumulation of the partial products (which
   // are in base-billion at each column position) into 64 bits
