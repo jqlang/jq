@@ -2,12 +2,17 @@
 set -eu
 
 cd "$(dirname "$0")/../"
-test -d .git || exit 1
 
-if git describe --tags --match 'jq-*' >/dev/null 2>&1; then
-  git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//'
+if test -d .git; then
+  if git describe --tags --match 'jq-*' >/dev/null 2>&1; then
+    git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//'
+  else
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    commit=$(git describe --always --dirty)
+    echo "${branch}-${commit}"
+  fi
+elif [[ "$(basename $(pwd))" =~ ^jq-jq-([0-9]+\.[0-9]+(\.[0-9]+)?)$ ]]; then
+  echo ${BASH_REMATCH[1]}
 else
-  branch=$(git rev-parse --abbrev-ref HEAD)
-  commit=$(git describe --always --dirty)
-  echo "${branch}-${commit}"
+  exit 1
 fi
