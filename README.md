@@ -18,7 +18,7 @@ Download the latest releases from the [GitHub release page](https://github.com/j
 Pull the [jq image](https://github.com/jqlang/jq/pkgs/container/jq) to start quickly with Docker.
 
 
-### Run with Docker
+#### Run with Docker
 ##### Example: Extracting the version from a `package.json` file
 ```bash
 docker run --rm -i ghcr.io/jqlang/jq:latest < package.json '.version'
