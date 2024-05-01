@@ -25,7 +25,7 @@ docker run --rm -i ghcr.io/jqlang/jq:latest < package.json '.version'
 ```
 ##### Example: Extracting the version from a `package.json` file with a mounted volume
 ```bash
-docker run --rm -i -v "${PWD}":/pwd -w /pwd ghcr.io/jqlang/jq:latest '.version' package.json
+docker run --rm -i -v "$PWD:$PWD" -w "$PWD" ghcr.io/jqlang/jq:latest '.version' package.json
 ```
 
 ### Building from source
