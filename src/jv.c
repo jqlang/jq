@@ -1862,6 +1862,63 @@ jv jv_object_iter_value(jv object, int iter) {
 /*
  * Memory management
  */
+jv jv_new(jv input){
+	switch(jv_get_kind(input)){
+		case JV_KIND_INVALID:
+			if(!jv_invalid_has_msg(jv_copy(input))){
+				jv_free(input);
+				return jv_invalid();
+			}
+			return jv_invalid_with_msg(jv_new(jv_invalid_get_msg(jv_copy(input))));
+		case JV_KIND_OBJECT:
+		case JV_KIND_ARRAY:
+			jv keys = jv_keys(jv_copy(input));
+			size_t keys_length = jv_array_length(jv_copy(keys));
+			
+			jv output_object;
+			if(jv_get_kind(input) == JV_KIND_OBJECT){
+				output_object = jv_object();
+			}else{
+				output_object = jv_array();
+			}
+			
+			for(size_t i = 0; i < keys_length; i++){
+				jv key = JV_ARRAY(jv_new(jv_array_get(jv_copy(keys), i)));
+
+				output_object = jv_setpath(
+					output_object,key,
+					jv_new(
+						jv_getpath(jv_copy(output_object), jv_copy(key))
+					)
+				);
+			}
+
+			jv_free(keys);
+			jv_free(input);
+
+			return output_object;
+		case JV_KIND_STRING:
+			jv output_string = jv_string(jv_string_value(input));
+			jv_free(input);
+			return output_string;
+		case JV_KIND_NUMBER:
+			double val = jv_number_value(input);
+			jv_free(input);
+			return jv_number(val);
+		case JV_KIND_TRUE:
+			jv_free(input);
+			return jv_true();
+		case JV_KIND_FALSE:
+			jv_free(input);
+			return jv_false();
+		case JV_KIND_NULL:
+			jv_free(input);
+			return jv_null();
+		default:
+			return jv_invalid();
+	}
+}
+
 jv jv_copy(jv j) {
   if (JVP_IS_ALLOCATED(j)) {
     jvp_refcnt_inc(j.u.ptr);

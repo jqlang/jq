@@ -490,4 +490,26 @@ static void jv_test() {
     //jv_dump(jv_copy(o2), 0); printf("\n");
     jv_free(o2);
   }
+
+  {
+	jv input = jv_parse("{\"key\":[{\"this\":{\"some\":\"thing\"}}, 1, [true]]}");
+	jv output = jv_paths(jv_copy(input));
+	jv_dump(input, JV_PRINT_TAB);
+	jv_dump(output, JV_PRINT_TAB);
+  }
+
+  {
+	jv input = jv_parse("{\"key\":{\"some\":{\"test\":\"value\"}, \"other\":\"thing\"}}");
+	jv add = jv_parse("{\"some\":{\"test\":\"other\"}, \"added\":\"thing\"}");
+	jv output = jv_addpath(jv_copy(input), JV_ARRAY(jv_string("key")), jv_copy(add));
+	jv_dump(input, JV_PRINT_TAB);
+	jv_dump(add, JV_PRINT_TAB);
+	jv_dump(output, JV_PRINT_TAB);
+  }
+
+  {
+	jv output = jv_new(jv_parse("{\"test\":[{\"some\":\"value\"}, 1, true, false, null]}"));
+
+	jv_free(output);
+  }
 }
