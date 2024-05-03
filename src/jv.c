@@ -1862,14 +1862,14 @@ jv jv_object_iter_value(jv object, int iter) {
 /*
  * Memory management
  */
-jv jv_new(jv input){
+jv jv_clone(jv input){
 	switch(jv_get_kind(input)){
 		case JV_KIND_INVALID:
 			if(!jv_invalid_has_msg(jv_copy(input))){
 				jv_free(input);
 				return jv_invalid();
 			}
-			return jv_invalid_with_msg(jv_new(jv_invalid_get_msg(jv_copy(input))));
+			return jv_invalid_with_msg(jv_clone(jv_invalid_get_msg(jv_copy(input))));
 		case JV_KIND_OBJECT:
 		case JV_KIND_ARRAY:
 			{
@@ -1884,11 +1884,11 @@ jv jv_new(jv input){
 				}
 				
 				for(size_t i = 0; i < keys_length; i++){
-					jv key = JV_ARRAY(jv_new(jv_array_get(jv_copy(keys), i)));
+					jv key = JV_ARRAY(jv_clone(jv_array_get(jv_copy(keys), i)));
 
 					output_object = jv_setpath(
 						output_object,key,
-						jv_new(
+						jv_clone(
 							jv_getpath(jv_copy(output_object), jv_copy(key))
 						)
 					);

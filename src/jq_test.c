@@ -508,7 +508,7 @@ static void jv_test() {
   }
 
   {
-	jv output = jv_new(jv_parse("{\"test\":[{\"some\":\"value\"}, 1, true, false, null]}"));
+	jv output = jv_clone(jv_parse("{\"test\":[{\"some\":\"value\"}, 1, true, false, null]}"));
 
 	jv_free(output);
   }
