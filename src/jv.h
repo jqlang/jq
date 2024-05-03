@@ -51,8 +51,8 @@ jv_kind jv_get_kind(jv);
 const char* jv_kind_name(jv_kind);
 static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
 
-//jv_clone() creates a deep copy of the input aka the content of the output will be identical to the input, but no shared memory exists between them
-jv jv_clone(jv);
+//jv_unshare() creates a deep copy of the input aka the content of the output will be identical to the input, but no shared memory exists between them
+jv jv_unshare(jv);
 jv jv_copy(jv);
 void jv_free(jv);
 
