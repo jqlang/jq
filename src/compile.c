@@ -1367,7 +1367,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   return errors;
 }
 
-int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
+int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args, int is_sandbox) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
@@ -1377,7 +1377,13 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
   bc->globals->cfunctions = jv_mem_calloc(ncfunc, sizeof(struct cfunction));
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
-  jv env = jv_invalid();
+
+  // When sandboxed, we don't want to expose environment vars to the program,
+  // so we create an empty object which is already valid. This prevents a
+  // later step from creating a populated `$ENV` object, because that step
+  // only does so if the current value for `env` is invalid.
+  jv env = is_sandbox ? jv_object() : jv_invalid();
+
   int nerrors = compile(bc, b, lf, args, &env);
   jv_free(args);
   jv_free(env);

@@ -381,6 +381,43 @@ if ! $VALGRIND $Q $JQ -L tests/modules -ne 'import "test_bind_order" as check; c
     exit 1
 fi
 
+if HOME="$mods/home1" $VALGRIND $Q $JQ --sandbox -nr fg; then
+    echo "home module was loaded when it should have been prevented by sandbox flag" 1>&2
+    exit 1
+fi
+
+if HOME="$mods/home2" $VALGRIND $Q $JQ --sandbox -n 'include "g"; empty'; then
+    echo "module was included when it should have been prevented by sandbox flag" 1>&2
+    exit 1
+fi
+
+if $VALGRIND $Q $JQ -L ./tests/modules --sandbox -n 'import "a" as a; empty'; then
+    echo "module was imported when it should have been prevented by sandbox flag" 1>&2
+    exit 1
+fi
+
+## Test environment variable access
+
+if [ "$(FOO=foo $VALGRIND $Q $JQ -nr '$ENV.FOO')" != foo ]; then
+    echo "couldn't read an environment variable via \$ENV" 1>&2
+    exit 1
+fi
+
+if [ "$(FOO=foo $VALGRIND $Q $JQ --sandbox -nr '$ENV.FOO')" != null ]; then
+    echo "\$ENV should have been empty due to the sandbox flag" 1>&2
+    exit 1
+fi
+
+if [ "$(FOO=foo $VALGRIND $Q $JQ -nr 'env.FOO')" != foo ]; then
+    echo "couldn't read an environment variable via env" 1>&2
+    exit 1
+fi
+
+if [ "$(FOO=foo $VALGRIND $Q $JQ --sandbox -nr 'env.FOO')" != null ]; then
+    echo "env should have been empty due to the sandbox flag" 1>&2
+    exit 1
+fi
+
 ## Halt
 
 if ! $VALGRIND $Q $JQ -n halt; then

@@ -1137,6 +1137,11 @@ extern char **environ;
 static jv f_env(jq_state *jq, jv input) {
   jv_free(input);
   jv env = jv_object();
+
+  // A sandboxed filter doesn't have access to environment variables,
+  // so in such a case we return the empty object without using environ.
+  if (jq_is_sandbox(jq)) return env;
+
   const char *var, *val;
   for (char **e = environ; *e != NULL; e++) {
     var = e[0];

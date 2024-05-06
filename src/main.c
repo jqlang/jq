@@ -106,6 +106,7 @@ static void usage(int code, int keep_it_short) {
       "      --jsonargs            consume remaining arguments as positional\n"
       "                            JSON values;\n"
       "  -e, --exit-status         set exit status code based on the output;\n"
+      "      --sandbox             prevent dynamic access to other files/data;\n"
 #ifdef WIN32
       "  -b, --binary              open input/output streams in binary mode;\n"
 #endif
@@ -473,6 +474,10 @@ int main(int argc, char* argv[]) {
       }
       if (isoption(argv[i], 0, "stream-errors", &short_opts)) {
         parser_flags |= JV_PARSE_STREAMING | JV_PARSE_STREAM_ERRORS;
+        continue;
+      }
+      if (isoption(argv[i], 0, "sandbox", &short_opts)) {
+        jq_set_sandbox(jq);
         continue;
       }
       if (isoption(argv[i], 'e', "exit-status", &short_opts)) {
