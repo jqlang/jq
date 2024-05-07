@@ -1871,32 +1871,51 @@ jv jv_unshare(jv input){
 			}
 			return jv_invalid_with_msg(jv_unshare(jv_invalid_get_msg(jv_copy(input))));
 		case JV_KIND_OBJECT:
-		case JV_KIND_ARRAY:
 			{
 				jv keys = jv_keys(jv_copy(input));
 				size_t keys_length = jv_array_length(jv_copy(keys));
-				
-				jv output_object;
-				if(jv_get_kind(input) == JV_KIND_OBJECT){
-					output_object = jv_object();
-				}else{
-					output_object = jv_array();
-				}
-				
-				for(size_t i = 0; i < keys_length; i++){
-					jv key = JV_ARRAY(jv_unshare(jv_array_get(jv_copy(keys), i)));
 
-					output_object = jv_setpath(
-						output_object,key,
-						jv_unshare(
-							jv_getpath(jv_copy(output_object), jv_copy(key))
-						)
-					);
+				jv output_object = jv_object();
+
+				for(size_t i = 0; i < keys_length; i++){
+					jv key = jv_array_get(jv_copy(keys), i);
+					output_object = jv_object_set(
+							output_object, jv_unshare(key),
+							jv_unshare(
+								jv_object_get(
+									jv_copy(input),
+									jv_copy(key)
+								)
+							)
+						);
 				}
 
 				jv_free(keys);
 				jv_free(input);
 				return output_object;
+			}
+		case JV_KIND_ARRAY:
+			{
+				size_t amount = jv_array_length(jv_copy(input));
+
+				jv output_array = jv_array_sized(amount);
+
+				for(size_t i = 0; i < amount; i++){
+					output_array = jv_array_set(
+							output_array,
+							i,
+							jv_unshare(
+								jv_array_get(
+									jv_copy(input),
+									i
+								)
+							)
+						);
+				}
+
+				jv_free(input);
+
+				return output_array;
 			}
 		case JV_KIND_STRING:
 			{
