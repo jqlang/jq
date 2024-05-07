@@ -3691,7 +3691,8 @@ sections:
       For example, with `-L$HOME/.jq` a module `foo` can be found in
       `$HOME/.jq/foo.jq` and `$HOME/.jq/foo/foo.jq`.
 
-      If `$HOME/.jq` is a file, it is sourced into the main program.
+      If `.jq` exists in the user's home directory, and is a file (not a
+      directory), it is automatically sourced into the main program.
 
     entries:
       - title: "`import RelativePathString as NAME [<metadata>];`"

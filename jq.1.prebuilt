@@ -4109,7 +4109,7 @@ Consecutive components with the same name are not allowed to avoid ambiguities (
 For example, with \fB\-L$HOME/\.jq\fR a module \fBfoo\fR can be found in \fB$HOME/\.jq/foo\.jq\fR and \fB$HOME/\.jq/foo/foo\.jq\fR\.
 .
 .P
-If \fB$HOME/\.jq\fR is a file, it is sourced into the main program\.
+If \fB\.jq\fR exists in the user\'s home directory, and is a file (not a directory), it is automatically sourced into the main program\.
 .
 .SS "import RelativePathString as NAME [<metadata>];"
 Imports a module found at the given path relative to a directory in a search path\. A \fB\.jq\fR suffix will be added to the relative path string\. The module\'s symbols are prefixed with \fBNAME::\fR\.
