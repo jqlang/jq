@@ -1,0 +1,40 @@
+name: valgrind
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y automake autoconf libtool valgrind
+      - name: Build
+        run: |
+          autoreconf -i
+          ./configure \
+            --disable-docs \
+            --with-oniguruma=builtin
+          make -j"$(nproc)"
+          file ./jq
+      - name: Test
+        run: |
+          make check VERBOSE=yes
+          git diff --exit-code
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-valgrind-linux
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log

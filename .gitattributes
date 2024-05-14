@@ -1,2 +1,14 @@
 .gitattributes export-ignore
 .gitignore export-ignore
+* text=auto eol=lf
+
+# vendored files
+src/decNumber/** linguist-vendored
+
+# generated files
+src/lexer.[ch] linguist-generated=true
+src/parser.[ch] linguist-generated=true
+tests/man.test linguist-generated=true
+tests/manonig.test linguist-generated=true
+jq.1.prebuilt linguist-generated=true
+docs/Pipfile.lock linguist-generated=true

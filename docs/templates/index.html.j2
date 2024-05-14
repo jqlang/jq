@@ -2,71 +2,56 @@
 <html lang="en">
 {% include "shared/_head.html.j2" %}
 
-  <body id="{{ slug }}">
+  <body>
 {% include "shared/_navbar.html.j2" %}
 
-    <div class="container">
+    <main id="main" class="container-lg">
       <div class="row">
-        <div class="jumbotron">
-          <div class="row">
-            <div class="col-sm-6">
-              <img src="{{root}}/jq.png" class="img-responsive" alt="jq logo"
-                  width="400" height="220">
-            </div>
-            <div class="col-sm-6">
-              <div id="blurb">
-                {{blurb | markdownify}}
-
-                <div class="btn-toolbar" role="toolbar">
-                  <div class="btn-group" role="group">
-                    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
-                      Download jq 1.6
-                      <span class="caret"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64">Linux (64-bit)</a></li>
-                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64">OS X (64-bit)</a></li>
-                      <li><a href="https://github.com/stedolan/jq/releases/download/jq-1.6/jq-win64.exe">Windows (64-bit)</a></li>
-                      <li><a href="{{root}}/download/">Other platforms, older versions, and source</a></li>
-                    </ul>
-                  </div>
-
-                  <div class="btn-group">
-                    <a class="btn btn-primary" href="https://jqplay.org">
-                      Try online at jqplay.org!
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div class="col-md-6 text-center p-3">
+          <h1><img src="{{ root }}/jq.svg" class="img-fluid" alt="jq" width="400" height="220"></h1>
+        </div>
+        <div class="col-md-6 d-flex flex-column justify-content-center text-center align-items-center">
+          <h2 class="px-1" style="width:16em">{{ blurb }}</h2>
+          <div class="btn-group d-print-none" role="group">
+            <button type="button" class="btn btn-primary dropdown-toggle text-nowrap" data-bs-toggle="dropdown" aria-expanded="false">
+              Download jq 1.7.1
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" aria-label="Link to download executable: Linux (AMD64)"><span class="bi bi-download me-2" aria-hidden="true"></span>Linux (AMD64)</a></li>
+              <li><a class="dropdown-item" href="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-arm64" aria-label="Link to download executable: Linux (ARM64)"><span class="bi bi-download me-2" aria-hidden="true"></span>Linux (ARM64)</a></li>
+              <li><a class="dropdown-item" href="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64" aria-label="Link to download executable: macOS (AMD64)"><span class="bi bi-download me-2" aria-hidden="true"></span>macOS (AMD64)</a></li>
+              <li><a class="dropdown-item" href="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64" aria-label="Link to download executable: macOS (ARM64)"><span class="bi bi-download me-2" aria-hidden="true"></span>macOS (ARM64)</a></li>
+              <li><a class="dropdown-item" href="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe" aria-label="Link to download executable: Windows (AMD64)"><span class="bi bi-download me-2" aria-hidden="true"></span>Windows (AMD64)</a></li>
+              <li><a class="dropdown-item" href="{{ root }}/download/">Other platforms, older versions, and source</a></li>
+            </ul>
+            <a class="btn btn-primary text-nowrap" href="https://jqplay.org" target="_blank" rel="noopener">
+              Try online at jqplay.org!<span class="bi bi-box-arrow-up-right ms-1" aria-hidden="true"></span>
+            </a>
           </div>
         </div>
       </div>
 
-      <div class="row" id="multiblurb">
-        <div class="col-sm-4">{{body1 | markdownify}}</div>
-        <div class="col-sm-4">{{body2 | markdownify}}</div>
-        <div class="col-sm-4">{{body3 | markdownify}}</div>
+      <div class="row my-3">
+        <div class="col-md-4">{{ body1 | markdownify }}</div>
+        <div class="col-md-4">{{ body2 | markdownify }}</div>
+        <div class="col-md-4">{{ body3 | markdownify }}</div>
       </div>
 
-      <div class="row" style="text-align:center; margin-top: 30px">
-        {{tail | markdownify}}
+      <div class="text-center my-3">
+        {{ tail | markdownify }}
       </div>
 
-      <div class="row">
-        <h2>News</h2>
-        <div id="news">
-          <ul>
-            {% for item in news %}
-              <li>
-                <span class="date">{{item.date}}</span>
-                {{item.body | markdownify}}
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    </div>
+      <h2>News</h2>
+      <ul>
+        {%- for item in news %}
+        <li>
+          <span class="fst-italic">{{ item.date }}</span>
+          {{ item.body | markdownify }}
+        </li>
+        {%- endfor %}
+      </ul>
+    </main>
 
 {% include "shared/_footer.html.j2" %}
   </body>

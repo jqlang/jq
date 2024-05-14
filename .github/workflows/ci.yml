@@ -1,0 +1,404 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "jq-*"
+  pull_request:
+
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64
+          - armel
+          - armhf
+          - i386
+          - mips
+          - mips64
+          - mips64el
+          - mips64r6
+          - mips64r6el
+          - mipsel
+          - mipsr6
+          - mipsr6el
+          - powerpc
+          - ppc64el
+          - riscv64
+          - s390x
+        include:
+          - arch: amd64
+            CC: x86_64-linux-gnu
+          - arch: arm64
+            CC: aarch64-linux-gnu
+          - arch: armel
+            CC: arm-linux-gnueabi
+          - arch: armhf
+            CC: arm-linux-gnueabihf
+          - arch: i386
+            CC: i686-linux-gnu
+          - arch: mips
+            CC: mips-linux-gnu
+          - arch: mips64
+            CC: mips64-linux-gnuabi64
+          - arch: mips64el
+            CC: mips64el-linux-gnuabi64
+          - arch: mips64r6
+            CC: mipsisa64r6-linux-gnuabi64
+          - arch: mips64r6el
+            CC: mipsisa64r6el-linux-gnuabi64
+          - arch: mipsel
+            CC: mipsel-linux-gnu
+          - arch: mipsr6
+            CC: mipsisa32r6-linux-gnu
+          - arch: mipsr6el
+            CC: mipsisa32r6el-linux-gnu
+          - arch: powerpc
+            CC: powerpc-linux-gnu
+          - arch: ppc64el
+            CC: powerpc64le-linux-gnu
+          - arch: riscv64
+            CC: riscv64-linux-gnu
+          - arch: s390x
+            CC: s390x-linux-gnu
+    runs-on: ubuntu-22.04
+    env:
+      AR: ${{ matrix.CC }}-ar
+      CHOST: ${{ matrix.CC }}
+      CC: ${{ matrix.CC }}-gcc
+      CPP: ${{ matrix.CC }}-cpp
+      LDFLAGS: -s
+      SUFFIX: linux-${{ matrix.arch }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y automake autoconf libtool crossbuild-essential-${{ matrix.arch }}
+      - name: Build
+        run: |
+          autoreconf -i
+          ./configure \
+            --host=${{ matrix.CC }} \
+            --disable-docs \
+            --disable-valgrind \
+            --with-oniguruma=builtin \
+            --enable-static \
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
+          make -j"$(nproc)"
+          file ./jq
+          cp ./jq jq-${{ env.SUFFIX }}
+      - name: Test
+        # Only run tests for amd64 matching the CI machine arch
+        if: ${{ matrix.arch == 'amd64' }}
+        run: |
+          make check VERBOSE=yes
+          git diff --exit-code
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ env.SUFFIX }}
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jq-${{ env.SUFFIX }}
+          path: jq-${{ env.SUFFIX }}
+          if-no-files-found: error
+          retention-days: 7
+
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64
+        include:
+          - arch: amd64
+            target: x86_64-apple-darwin
+          - arch: arm64
+            target: arm64-apple-darwin
+    runs-on: macos-13
+    env:
+      LDFLAGS: -dead_strip
+      SUFFIX: macos-${{ matrix.arch }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
+          brew update || brew update-reset
+          brew install autoconf automake libtool
+      - name: Set CC
+        run: |
+          echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> "$GITHUB_ENV"
+      - name: Build
+        run: |
+          autoreconf -i
+          ./configure \
+            --host="${{ matrix.target }}$(uname -r)" \
+            --disable-docs \
+            --disable-valgrind \
+            --with-oniguruma=builtin \
+            --enable-static \
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
+          make -j"$(sysctl -n hw.logicalcpu)"
+          strip ./jq
+          file ./jq
+          cp ./jq jq-${{ env.SUFFIX }}
+      - name: Test
+        # Only run tests for amd64 matching the CI machine arch
+        if: ${{ matrix.arch == 'amd64' }}
+        run: |
+          make check VERBOSE=yes
+          git diff --exit-code
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ env.SUFFIX }}
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jq-${{ env.SUFFIX }}
+          path: jq-${{ env.SUFFIX }}
+          if-no-files-found: error
+          retention-days: 7
+
+  windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - i386
+        include:
+          - arch: amd64
+            msystem: UCRT64
+          - arch: i386
+            msystem: MINGW32
+    runs-on: windows-2022
+    env:
+      LDFLAGS: -s
+      SUFFIX: windows-${{ matrix.arch }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Prepare git config
+        run: git config --system core.autocrlf false
+        shell: bash
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: ${{ matrix.msystem }}
+          install: >-
+            base-devel
+            git
+            autoconf
+            automake
+            libtool
+          pacboy: >-
+            toolchain:p
+      - name: Build
+        run: |
+          autoreconf -i
+          ./configure \
+            --disable-docs \
+            --disable-valgrind \
+            --with-oniguruma=builtin \
+            --disable-shared \
+            --enable-static \
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
+          make -j$(nproc)
+          file ./jq.exe
+          cp ./jq.exe jq-${{ env.SUFFIX }}.exe
+      - name: Test
+        run: |
+          make check VERBOSE=yes
+          git diff --exit-code
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ env.SUFFIX }}
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jq-${{ env.SUFFIX }}
+          path: jq-${{ env.SUFFIX }}.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  dist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y automake autoconf
+      - name: Create dist
+        run: |
+          autoreconf -i
+          ./configure \
+            --disable-docs \
+            --disable-valgrind \
+            --with-oniguruma=builtin
+          make distcheck
+          make dist dist-zip
+          git diff --exit-code
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jq-dist
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            jq-*.tar.gz
+            jq-*.zip
+
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    needs: linux
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Download executables
+        uses: actions/download-artifact@v4
+        with:
+          pattern: jq-linux-*
+          merge-multiple: true
+      - name: Move executables
+        run: |
+          mkdir -p linux/{386,amd64,arm64,mips64le,ppc64le,riscv64,s390x}
+          mv jq-linux-i386 linux/386/jq
+          mv jq-linux-amd64 linux/amd64/jq
+          mv jq-linux-arm64 linux/arm64/jq
+          mv jq-linux-mips64el linux/mips64le/jq
+          mv jq-linux-ppc64el linux/ppc64le/jq
+          mv jq-linux-riscv64 linux/riscv64/jq
+          mv jq-linux-s390x linux/s390x/jq
+          chmod +x linux/*/jq
+      - name: Create Dockerfile
+        run: |
+          cat <<'EOF' >Dockerfile
+          FROM scratch
+          ARG TARGETPLATFORM
+          COPY AUTHORS COPYING $TARGETPLATFORM/jq /
+          RUN ["/jq", "--version"]
+          ENTRYPOINT ["/jq"]
+          EOF
+      - name: Docker metadata
+        uses: docker/metadata-action@v5
+        id: metadata
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: ${{ startsWith(github.ref, 'refs/tags/jq-')
+            && format('type=match,pattern=jq-(.*),group=1,value={0}', github.ref_name)
+            || 'type=sha,format=long' }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and release Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ startsWith(github.ref, 'refs/tags/jq-') }}
+          provenance: false
+          platforms: linux/386,linux/amd64,linux/arm64,linux/mips64le,linux/ppc64le,linux/riscv64,linux/s390x
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    environment: release
+    needs: [linux, macos, windows, dist, docker]
+    if: startsWith(github.ref, 'refs/tags/jq-')
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: Upload release
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp jq-linux-amd64 jq-linux64
+          cp jq-macos-amd64 jq-osx-amd64
+          cp jq-windows-amd64.exe jq-win64.exe
+          sha256sum jq-* > sha256sum.txt
+          gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
+          gh release upload "$TAG_NAME" --clobber jq-* sha256sum.txt
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.JQ_RELEASE_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.JQ_RELEASE_GPG_PASSPHRASE }}
+      - name: Update signatures
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sig_dir="sig/v${TAG_NAME#jq-}"
+          mkdir -p "$sig_dir"
+          mv sha256sum.txt "$sig_dir"
+          for file in jq-*; do
+            gpg --detach-sign --armor --batch --output "${sig_dir}/${file#*/}.asc" "$file"
+          done
+          git add sig
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          title="Update signatures of ${TAG_NAME#jq-}"
+          git commit -m "$title"
+          branch="update-signatures-${TAG_NAME#jq-}"
+          git push origin "HEAD:refs/heads/$branch"
+          gh pr create --title "$title" --body "" --head "$branch"

@@ -7,7 +7,7 @@ about: Create a report to help us improve
 <!--
 READ THIS FIRST!
 
-If you have a usage question, please ask us on either Stack Overflow (https://stackoverflow.com/questions/tagged/jq) or in the #jq channel (http://irc.lc/freenode/%23jq/) on Freenode (https://webchat.freenode.net/).
+If you have a usage question, please ask us on [Stack Overflow](https://stackoverflow.com/questions/tagged/jq), in the [#jq channel](https://web.libera.chat/#jq) on [Libera.Chat](https://libera.chat/), or in our [Discord server](https://discord.gg/yg6yjNmgAC).
 
 -->
 
@@ -22,8 +22,9 @@ If the input is large, either attach it as a file, or [create a gist](https://gi
 A clear and concise description of what you expected to happen.
 
 **Environment (please complete the following information):**
- - OS and Version: [e.g. macOS, Windows, Linux (please specify distro)]
- - jq version [e.g. 1.5]
+
+- OS and Version: [e.g. macOS, Windows, Linux (please specify distro)]
+- jq version [e.g. 1.5]
 
 **Additional context**
 Add any other context about the problem here.

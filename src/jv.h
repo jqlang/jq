@@ -5,6 +5,17 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if (defined(__GNUC__) && __GNUC__ >= 7) || \
+    (defined(__clang__) && __clang_major__ >= 10)
+# define JQ_FALLTHROUGH __attribute__((fallthrough))
+#else
+# define JQ_FALLTHROUGH do {} while (0) /* fallthrough */
+#endif
+
 typedef enum {
   JV_KIND_INVALID,
   JV_KIND_NULL,
@@ -227,6 +238,7 @@ enum {
 
 jv jv_parse(const char* string);
 jv jv_parse_sized(const char* string, int length);
+jv jv_parse_custom_flags(const char* string, int flags);
 
 typedef void (*jv_nomem_handler_f)(void *);
 void jv_nomem_handler(jv_nomem_handler_f, void *);
@@ -252,6 +264,9 @@ int jv_cmp(jv, jv);
 jv jv_group(jv, jv);
 jv jv_sort(jv, jv);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

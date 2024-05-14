@@ -61,8 +61,10 @@ static void stack_init(struct stack* s) {
 
 static void stack_reset(struct stack* s) {
   assert(s->limit == 0 && "stack freed while not empty");
-  char* mem_start = s->mem_end - ( -s->bound + ALIGNMENT);
-  free(mem_start);
+  if(s->mem_end != NULL) {
+    char* mem_start = s->mem_end - ( -s->bound + ALIGNMENT);
+    free(mem_start);
+  }
   stack_init(s);
 }
 
@@ -80,7 +82,7 @@ static stack_ptr* stack_block_next(struct stack* s, stack_ptr p) {
 
 static void stack_reallocate(struct stack* s, size_t sz) {
   int old_mem_length = -(s->bound) + ALIGNMENT;
-  char* old_mem_start = s->mem_end - old_mem_length;
+  char* old_mem_start = (s->mem_end != NULL) ? (s->mem_end - old_mem_length) : NULL;
 
   int new_mem_length = align_round_up((old_mem_length + sz + 256) * 2);
   char* new_mem_start = jv_mem_realloc(old_mem_start, new_mem_length);

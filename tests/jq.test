@@ -61,17 +61,17 @@ null
 null
 "interpolation"
 
-@text,@json,([1,.] | (@csv, @tsv)),@html,@uri,@sh,@base64,(@base64 | @base64d)
-"<>&'\"\t"
-"<>&'\"\t"
-"\"<>&'\\\"\\t\""
-"1,\"<>&'\"\"\t\""
-"1\t<>&'\"\\t"
-"&lt;&gt;&amp;&apos;&quot;\t"
-"%3C%3E%26'%22%09"
-"'<>&'\\''\"\t'"
-"PD4mJyIJ"
-"<>&'\"\t"
+@text,@json,([1,.]|@csv,@tsv),@html,@uri,@sh,(@base64|.,@base64d)
+"!()<>&'\"\t"
+"!()<>&'\"\t"
+"\"!()<>&'\\\"\\t\""
+"1,\"!()<>&'\"\"\t\""
+"1\t!()<>&'\"\\t"
+"!()&lt;&gt;&amp;&apos;&quot;\t"
+"%21%28%29%3C%3E%26%27%22%09"
+"'!()<>&'\\''\"\t'"
+"ISgpPD4mJyIJ"
+"!()<>&'\"\t"
 
 # regression test for #436
 @base64
@@ -146,6 +146,13 @@ jq: error: Cannot use number (0) as object key at <top-level>, line 1:
 {"foo": {"bar": 20}}
 20
 
+.e0, .E1, .E-1, .E+1
+{"e0": 1, "E1": 2, "E": 3}
+1
+2
+2
+4
+
 [.[]|.foo?]
 [1,[2],{"foo":3,"bar":4},{},{"foo":5}]
 [3,null,5]
@@ -165,6 +172,16 @@ jq: error: Cannot use number (0) as object key at <top-level>, line 1:
 [.[]|.[1:3]?]
 [1,null,true,false,"abcdef",{},{"a":1,"b":2},[],[1,2,3,4,5],[1,2]]
 [null,"bc",[],[2,3],[2]]
+
+# chaining/suffix-list, with and without dot
+map(try .a[] catch ., try .a.[] catch ., .a[]?, .a.[]?)
+[{"a": [1,2]}, {"a": 123}]
+[1,2,1,2,1,2,1,2,"Cannot iterate over number (123)","Cannot iterate over number (123)"]
+
+# oss-fuzz #66070: objects[] leaks if a non-last element throws an error
+try ["OK", (.[] | error)] catch ["KO", .]
+{"a":["b"],"c":["d"]}
+["KO",["b"]]
 
 #
 # Negative array indices
@@ -236,9 +253,9 @@ null
 2
 3
 
-.[-2]
+[.[-4,-3,-2,-1,0,1,2,3]]
 [1,2,3]
-2
+[null,1,2,3,1,2,3,null]
 
 [range(0;10)]
 null
@@ -312,9 +329,13 @@ null
 "badness"
 [1]
 
-[first(range(.)), last(range(.)), nth(0; range(.)), nth(5; range(.)), try nth(-1; range(.)) catch .]
+[first(range(.)), last(range(.))]
 10
-[0,9,0,5,"nth doesn't support negative indices"]
+[0,9]
+
+[nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch .]
+10
+[0,5,9,"nth doesn't support negative indices"]
 
 # Check that first(g) does not extract more than one value from g
 first(1,error("foo"))
@@ -532,6 +553,34 @@ null
 null
 [2, 8, 10, 14]
 
+1e-19 + 1e-20 - 5e-21
+null
+1.05e-19
+
+1 / 1e-17
+null
+1e+17
+
+9E999999999, 9999999999E999999990, 1E-999999999, 0.000000001E-999999990
+null
+9E+999999999
+9.999999999E+999999999
+1E-999999999
+1E-999999999
+
+5E500000000 > 5E-5000000000, 10000E500000000 > 10000E-5000000000
+null
+true
+true
+
+# #2825
+(1e999999999, 10e999999999) > (1e-1147483646, 0.1e-1147483646)
+null
+true
+true
+true
+true
+
 25 % 7
 null
 4
@@ -539,6 +588,14 @@ null
 49732 % 472
 null
 172
+
+[(infinite, -infinite) % (1, -1, infinite)]
+null
+[0,0,0,0,0,-1]
+
+[nan % 1, 1 % nan | isnan]
+null
+[true,true]
 
 1 + tonumber + ("10" | tonumber)
 4
@@ -941,10 +998,6 @@ path(.a[path(.b)[0]])
 [1,[[],{"a":2}]]
 [[0],[1],[1,0],[1,1],[1,1,"a"]]
 
-[leaf_paths]
-[1,[[],{"a":2}]]
-[[0],[1,1,"a"]]
-
 ["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
 {"bar": 42, "foo": ["a", "b", "c", "d"]}
 "b"
@@ -985,6 +1038,28 @@ null
 del(.[1], .[-6], .[2], .[-3:9])
 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 [0, 3, 5, 6, 9]
+
+# negative index
+setpath([-1]; 1)
+[0]
+[1]
+
+pick(.a.b.c)
+null
+{"a":{"b":{"c":null}}}
+
+pick(first)
+[1,2]
+[1]
+
+pick(first|first)
+[[10,20],30]
+[[10]]
+
+# negative indices in path expressions (since last/1 is .[-1])
+try pick(last) catch .
+[1,2]
+"Out of bounds negative array index"
 
 #
 # Assignment
@@ -1036,6 +1111,19 @@ def inc(x): x |= .+1; inc(.[].a)
 "Cannot index object with number"
 {"a":[{"b":5}]}
 {"a":[{"c":3,"b":5}]}
+
+# #2051, deletion using assigning empty against arrays
+(.[] | select(. >= 2)) |= empty
+[1,5,3,0,7]
+[1,0]
+
+.[] |= select(. % 2 == 0)
+[0,1,2,3,4,5]
+[0,2,4]
+
+.foo[1,4,2,3] |= empty
+{"foo":[0,1,2,3,4,5]}
+{"foo":[0,5]}
 
 .[2][3] = 1
 [4]
@@ -1105,6 +1193,13 @@ null
 7
 [7]
 
+[if false then 3 elif false then 4 end]
+7
+[7]
+
+[if false then 3 elif false then 4 else . end]
+7
+[7]
 
 [.[] | [.foo[] // .bar]]
 [{"foo":[1,2], "bar": 42}, {"foo":[1], "bar": null}, {"foo":[null,false,3], "bar": 18}, {"foo":[], "bar":42}, {"foo": [null,false,null], "bar": 41}]
@@ -1196,6 +1291,12 @@ null
 [null,true,{"a":1}]
 []
 
+.[] | try error catch .
+[1,null,2]
+1
+null
+2
+
 try error("\($__loc__)") catch .
 null
 "{\"file\":\"<top-level>\",\"line\":1}"
@@ -1229,6 +1330,30 @@ split("")
 "a,bc,def,ghij,klmno"
 [1,13,[1,4,8,13]]
 
+[ index("aba"), rindex("aba"), indices("aba") ]
+"xababababax"
+[1,7,[1,3,5,7]]
+
+# trim
+# \u000b is vertical tab (\v not supported by json)
+map(trim), map(ltrim), map(rtrim)
+[" \n\t\r\f\u000b", "","  ", "a", " a ", "abc", "  abc  ", "  abc", "abc  "]
+["", "", "", "a", "a", "abc", "abc", "abc", "abc"]
+["", "", "", "a", "a ", "abc", "abc  ", "abc", "abc  "]
+["", "", "", "a", " a", "abc", "  abc", "  abc", "abc"]
+
+trim, ltrim, rtrim
+"\u0009\u000A\u000B\u000C\u000D\u0020\u0085\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u2028\u2029\u202F\u205F\u3000abc\u0009\u000A\u000B\u000C\u000D\u0020\u0085\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u2028\u2029\u202F\u205F\u3000"
+"abc"
+"abc\u0009\u000A\u000B\u000C\u000D\u0020\u0085\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u2028\u2029\u202F\u205F\u3000"
+"\u0009\u000A\u000B\u000C\u000D\u0020\u0085\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u2028\u2029\u202F\u205F\u3000abc"
+
+try trim catch ., try ltrim catch ., try rtrim catch .
+123
+"trim input must be a string"
+"trim input must be a string"
+"trim input must be a string"
+
 indices(1)
 [0,1,1,2,3,4,1,5]
 [1,2,6]
@@ -1256,6 +1381,14 @@ indices(", ")
 [.[] * 3]
 ["a", "ab", "abc"]
 ["aaa", "ababab", "abcabcabc"]
+
+[.[] * "abc"]
+[-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 3.7, 10.0]
+[null,null,"","","abc","abc","abcabcabc","abcabcabcabcabcabcabcabcabcabc"]
+
+[. * (nan,-nan)]
+"abc"
+[null,null]
 
 [.[] / ","]
 ["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
@@ -1345,6 +1478,10 @@ map(has(2))
 [[0,1], ["a","b","c"]]
 [false, true]
 
+has(nan)
+[0,1,2]
+false
+
 keys
 [42,3,35]
 [0,1,2]
@@ -1427,6 +1564,10 @@ transpose
 [[1], [2,3]]
 [[1,2],[null,3]]
 
+transpose
+[]
+[]
+
 ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"
@@ -1447,9 +1588,35 @@ strftime("%A, %B %d, %Y")
 1435677542.822351
 "Tuesday, June 30, 2015"
 
+strftime("%Y-%m-%dT%H:%M:%SZ")
+[2024,2,15]
+"2024-03-15T00:00:00Z"
+
 gmtime
 1425599507
 [2015,2,5,23,51,47,4,63]
+
+# test invalid tm input
+try strftime("%Y-%m-%dT%H:%M:%SZ") catch .
+["a",1,2,3,4,5,6,7]
+"strftime/1 requires parsed datetime inputs"
+
+try strflocaltime("%Y-%m-%dT%H:%M:%SZ") catch .
+["a",1,2,3,4,5,6,7]
+"strflocaltime/1 requires parsed datetime inputs"
+
+try mktime catch .
+["a",1,2,3,4,5,6,7]
+"mktime requires parsed datetime inputs"
+
+# oss-fuzz #67403: non-string argument with number input fails assert
+try ["OK", strftime([])] catch ["KO", .]
+0
+["KO","strftime/1 requires a string format"]
+
+try ["OK", strflocaltime({})] catch ["KO", .]
+0
+["KO","strflocaltime/1 requires a string format"]
 
 # module system
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
@@ -1468,6 +1635,11 @@ import "data" as $e; import "data" as $d; [$d[].this,$e[].that,$d::d[].this,$e::
 null
 "is a test;is too;is a test;is too"
 
+# Regression test for #2000
+import "data" as $a; import "data" as $b; def f: {$a, $b}; f
+null
+{"a":[{"this":"is a test","that":"is too"}],"b":[{"this":"is a test","that":"is too"}]}
+
 include "shadow1"; e
 null
 2
@@ -1483,6 +1655,10 @@ null
 %%FAIL
 module (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1:
+
+%%FAIL
+module []; 0
+jq: error: Module metadata must be an object at <top-level>, line 1:
 
 %%FAIL
 include "a" (.+1); 0
@@ -1502,11 +1678,15 @@ jq: error: Import path must be constant at <top-level>, line 1:
 
 modulemeta
 "c"
-{"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}]}
+{"whatever":null,"deps":[{"as":"foo","is_data":false,"relpath":"a"},{"search":"./","as":"d","is_data":false,"relpath":"d"},{"search":"./","as":"d2","is_data":false,"relpath":"d"},{"search":"./../lib/jq","as":"e","is_data":false,"relpath":"e"},{"search":"./../lib/jq","as":"f","is_data":false,"relpath":"f"},{"as":"d","is_data":true,"relpath":"data"}],"defs":["a/0","c/0"]}
 
-modulemeta | .deps |= length
+modulemeta | .deps | length
 "c"
-{"whatever":null,"deps":6}
+6
+
+modulemeta | .defs | length
+"c"
+2
 
 %%FAIL IGNORE MSG
 import "syntaxerror" as e; .
@@ -1556,16 +1736,24 @@ try (1/.) catch .
 0
 "number (1) and number (0) cannot be divided because the divisor is zero"
 
+try (1/0) catch .
+0
+"number (1) and number (0) cannot be divided because the divisor is zero"
+
+try (0/0) catch .
+0
+"number (0) and number (0) cannot be divided because the divisor is zero"
+
 try (1%.) catch .
 0
 "number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
 
-%%FAIL
-1/0
-jq: error: Division by zero? at <top-level>, line 1:
+try (1%0) catch .
+0
+"number (1) and number (0) cannot be divided (remainder) because the divisor is zero"
 
 # Basic numbers tests: integers, powers of two
-[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2] == $powers
+[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers
 null
 true
 

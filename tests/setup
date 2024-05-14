@@ -10,7 +10,11 @@ set -eu
 
 JQTESTDIR=$(cd "$(dirname "$0")" && pwd)
 JQBASEDIR=$JQTESTDIR/..
-JQ=$JQBASEDIR/jq
+JQ=${JQ:-$JQBASEDIR/jq}
+
+# Some tests have locale-dependent output; use C locale.  Fixes #3038
+LC_ALL=C
+export LC_ALL
 
 if [ -z "${NO_VALGRIND-}" ] && which valgrind > /dev/null; then
     VALGRIND="valgrind --error-exitcode=1 --leak-check=full \

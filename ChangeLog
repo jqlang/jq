@@ -372,7 +372,7 @@
 
 	Add BLOCK_8() macro
 
-	Fix `foreach` non-progation of errors
+	Fix `foreach` non-propagation of errors
 
 	Allow zero-length buffers in jv_parser_set_buf()
 
@@ -1183,7 +1183,7 @@
 
 	Fix various UTF8 parsing bugs.
 	In particular, parse bad UTF8 by replacing the broken bits with U+FFFD
-	and resychronise correctly after broken sequences.
+	and resynchronise correctly after broken sequences.
 
 	Fix example in manual for `floor`. See #155.
 

@@ -1,27 +1,40 @@
-    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#nav-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="{{root}}/">jq</a>
-        </div>
-
-        <div class="navbar-collapse collapse" id="nav-collapse">
-          <ul class="nav navbar-nav">
-            {% for item in navigation %}
-              <li {% if item == navitem %} class="active" {% endif %}>
-                <a href="{{root}}/{{item}}/">{{item | capitalize}}</a>
-              </li>
-            {% endfor %}
-            <li><a href="https://github.com/stedolan/jq/issues">Issues</a></li>
-            <li><a href="https://github.com/stedolan/jq">Source</a></li>
-            <li><a href="https://jqplay.org">Try online!</a></li>
-            <li><a href="https://raw.githubusercontent.com/stedolan/jq/master/NEWS">News</a></li>
+    <div class="container visually-hidden-focusable">
+      <a class="d-inline-flex p-2" href="#main">Skip to main content</a>
+      {%- if navitem.startswith('manual') %}
+      <a class="d-inline-flex p-2 m-1" href="#contents">Skip to table of contents</a>
+      {%- endif %}
+    </div>
+    <header class="navbar navbar-expand-md sticky-top bg-body-tertiary d-print-none">
+      <nav class="container-lg" aria-label="Page navigation">
+        <button type="button" class="navbar-toggler" data-bs-toggle="offcanvas" data-bs-target="#navbar-collapse"
+          aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle page navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="{{ root }}/" aria-label="Top page"><img src="{{ root }}/jq.svg" alt="jq logo" style="height:1.5rem"></a>
+        <div id="navbar-collapse" class="offcanvas offcanvas-start navbar-collapse w-auto" aria-labelledby="navbar-title">
+          <div class="offcanvas-header">
+            <h3 id="navbar-title" class="me-3">jq</h3>
+            <button type="button" class="d-md-none btn-close" data-bs-dismiss="offcanvas" aria-label="Close page navigation"></button>
+          </div>
+          <ul class="offcanvas-body navbar-nav me-auto text-nowrap">
+            <li class="nav-item d-md-none"><a class="nav-link{% if not navitem %} active{% endif %}"{% if not navitem %} aria-current="page"{% endif %} href="{{ root }}/">Top page</a></li>
+            {%- for item in ['tutorial', 'download', 'manual'] %}
+            <li class="nav-item"><a class="nav-link{% if item == navitem %} active{% endif %}"{% if item == navitem %} aria-current="page"{% endif %} href="{{ root }}/{{ item }}/">{{ item | capitalize }}</a></li>
+            {%- endfor %}
+            <li class="nav-item"><a class="nav-link" href="https://github.com/jqlang/jq" target="_blank" rel="noopener">GitHub</a></li>
+            <li class="nav-item"><a class="nav-link" href="https://github.com/jqlang/jq/issues" target="_blank" rel="noopener">Issues</a></li>
+            <li class="nav-item"><a class="nav-link" href="https://jqplay.org" target="_blank" rel="noopener">Try online!</a></li>
+            <li class="nav-item"><a class="nav-link" href="https://raw.githubusercontent.com/jqlang/jq/master/NEWS.md" target="_blank" rel="noopener">News</a></li>
           </ul>
         </div>
-      </div>
-    </div>
+        {%- if navitem.startswith('manual') %}
+        <div class="container-searchbox form-control p-0 d-none d-md-flex d-print-none border" style="width:16rem">
+          <span class="bi bi-search my-auto ms-2 me-1" aria-hidden="true"></span>
+          <input type="text" id="searchbox" class="form-control border-0 px-1" placeholder="Search manual" role="combobox"
+            aria-label="Search manual" aria-keyshortcuts="/" aria-expanded="false" autocomplete="off" spellcheck="false">
+          <kbd class="mx-1 my-auto text-body bg-body rounded border" style="padding:.1rem .2rem" aria-hidden="true">/</kbd>
+        </div>
+        {%- endif %}
+        <a class="d-md-none bi bi-github fs-4 text-body" href="https://github.com/jqlang/jq" target="_blank" rel="noopener" aria-label="GitHub"></a>
+      </nav>
+    </header>

@@ -1,0 +1,51 @@
+name: Building man page, man.test, manonig.test
+on:
+  push:
+    paths:
+      - '.github/workflows/manpage.yml'
+      - 'docs/**'
+      - 'tests/man.test'
+      - 'tests/manonig.test'
+      - 'jq.1.prebuilt'
+  pull_request:
+    paths:
+      - '.github/workflows/manpage.yml'
+      - 'docs/**'
+      - 'tests/man.test'
+      - 'tests/manonig.test'
+      - 'jq.1.prebuilt'
+
+jobs:
+  manpages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pipenv
+      - name: Install pipenv
+        run: pip install pipenv
+      - name: Install dependencies
+        run: pipenv sync
+        working-directory: docs
+      - name: Validate manual schema
+        run: pipenv run python3 validate_manual_schema.py content/manual/**/*.yml
+        working-directory: docs
+      - name: Configure
+        run: |
+          autoreconf -i
+          ./configure --enable-docs
+      - name: Build man page, man.test, manonig.test
+        run: |
+          mv jq.1.prebuilt jq.1.old
+          rm -f tests/man.test manonig.test
+          make jq.1.prebuilt tests/man.test tests/manonig.test
+      - name: Make sure that jq.1.prebuilt, man.test, manonig.test are up to date
+        run: |
+          git diff --exit-code tests/man.test tests/manonig.test
+          # skip build date in jq.1.prebuilt
+          test -s jq.1.prebuilt
+          diff -- <(tail -n +3 jq.1.old) <(tail -n +3 jq.1.prebuilt)

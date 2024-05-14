@@ -1,75 +1,74 @@
-jq
-==
+# jq
 
-jq is a lightweight and flexible command-line JSON processor.
+`jq` is a lightweight and flexible command-line JSON processor akin to `sed`,`awk`,`grep`, and friends for JSON data. It's written in portable C and has zero runtime dependencies, allowing you to easily slice, filter, map, and transform structured data.
 
-[![Coverage Status](https://coveralls.io/repos/stedolan/jq/badge.svg?branch=master&service=github)](https://coveralls.io/github/stedolan/jq?branch=master),
-Unix: [![Build Status](https://travis-ci.org/stedolan/jq.svg?branch=master)](https://travis-ci.org/stedolan/jq),
-Windows: [![Windows build status](https://ci.appveyor.com/api/projects/status/mi816811c9e9mx29?svg=true)](https://ci.appveyor.com/project/stedolan/jq)
+## Documentation
+
+- **Official Documentation**: [jqlang.github.io/jq](https://jqlang.github.io/jq)
+- **Try jq Online**: [jqplay.org](https://jqplay.org)
+
+## Installation
+
+### Prebuilt Binaries
+
+Download the latest releases from the [GitHub release page](https://github.com/jqlang/jq/releases).
+
+### Docker Image
+
+Pull the [jq image](https://github.com/jqlang/jq/pkgs/container/jq) to start quickly with Docker.
 
 
-If you want to learn to use jq, read the documentation at
-[https://stedolan.github.io/jq](https://stedolan.github.io/jq).  This
-documentation is generated from the docs/ folder of this repository.
-You can also try it online at [jqplay.org](https://jqplay.org).
+#### Run with Docker
+##### Example: Extracting the version from a `package.json` file
+```bash
+docker run --rm -i ghcr.io/jqlang/jq:latest < package.json '.version'
+```
+##### Example: Extracting the version from a `package.json` file with a mounted volume
+```bash
+docker run --rm -i -v "$PWD:$PWD" -w "$PWD" ghcr.io/jqlang/jq:latest '.version' package.json
+```
 
-If you want to hack on jq, feel free, but be warned that its internals
-are not well-documented at the moment. Bring a hard hat and a
-shovel.  Also, read the wiki: https://github.com/stedolan/jq/wiki, where
-you will find cookbooks, discussion of advanced topics, internals,
-release engineering, and more.
+### Building from source
 
-Source tarball and built executable releases can be found on the
-homepage and on the github release page, https://github.com/stedolan/jq/releases
+#### Dependencies
 
-If you're building directly from the latest git, you'll need flex,
-bison (3.0 or newer), libtool, make, automake, and autoconf installed.
-To get regexp support you'll also need to install Oniguruma or clone it as a
-git submodule as per the instructions below.
-(note that jq's tests require regexp support to pass).  To build, run:
+- libtool
+- make
+- automake
+- autoconf
 
-    git submodule update --init # if building from git to get oniguruma
-    autoreconf -fi              # if building from git
-    ./configure --with-oniguruma=builtin
-    make -j8
-    make check
+#### Instructions
 
-To build without bison or flex, add `--disable-maintainer-mode` to the
-./configure invocation:
+```console
+git submodule update --init # if building from git to get oniguruma
+autoreconf -i               # if building from git
+./configure --with-oniguruma=builtin
+make -j8
+make check
+sudo make install
+```
 
-    ./configure --with-oniguruma=builtin --disable-maintainer-mode
+Build a statically linked version:
 
-(Developers must not use `--disable-maintainer-mode`, not when making
-changes to the jq parser and/or lexer.)
+```console
+make LDFLAGS=-all-static
+```
 
-To build a statically linked version of jq, run:
+If you're not using the latest git version but instead building a released tarball (available on the release page), skip the `autoreconf` step, and flex or bison won't be needed.
 
-    make LDFLAGS=-all-static
+##### Cross-Compilation
 
-After make finishes, you'll be able to use `./jq`.  You can also
-install it using:
+For details on cross-compilation, check out the [GitHub Actions file](.github/workflows/ci.yml) and the [cross-compilation wiki page](https://github.com/jqlang/jq/wiki/Cross-compilation).
 
-    sudo make install
+## Community & Support
 
-If you're not using the latest git version but instead building a
-released tarball (available on the website), then you won't need to
-run `autoreconf` (and shouldn't), and you won't need flex or bison.
+- Questions & Help: [Stack Overflow (jq tag)](https://stackoverflow.com/questions/tagged/jq)
+- Chat & Community: [Join us on Discord](https://discord.gg/yg6yjNmgAC)
+- Wiki & Advanced Topics: [Explore the Wiki](https://github.com/jqlang/jq/wiki)
 
-To cross-compile for OS X and Windows, see docs/Rakefile's build task
-and scripts/crosscompile.  You'll need a cross-compilation environment,
-such as Mingw for cross-compiling for Windows.
+## License
 
-Cross-compilation requires a clean workspace, then:
-
-    # git clean ...
-    autoreconf -i
-    ./configure
-    make distclean
-    scripts/crosscompile <name-of-build> <configure-options>
-
-Use the `--host=` and `--target=` ./configure options to select a
-cross-compilation environment.  See also 
-["Cross compilation"](https://github.com/stedolan/jq/wiki/Cross-compilation) on
-the wiki.
-
-Send questions to https://stackoverflow.com/questions/tagged/jq or to the #jq channel (http://irc.lc/freenode/%23jq/) on Freenode (https://webchat.freenode.net/).
+`jq` is released under the [MIT License](COPYING). `jq`'s documentation is
+licensed under the [Creative Commons CC BY 3.0](COPYING).
+`jq` uses parts of the open source C library "decNumber", which is distributed
+under [ICU License](COPYING)

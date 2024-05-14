@@ -21,6 +21,7 @@ struct lexer_param;
 %s IN_BRACE
 %s IN_QQINTERP
 %x IN_QQSTRING
+%x IN_COMMENT
 %{
   static int enter(int opening, int state, yyscan_t yyscanner);
   static int try_exit(int closing, int state, yyscan_t yyscanner);
@@ -37,7 +38,12 @@ struct lexer_param;
 
 %%
 
-"#"[^\r\n]* { /* comments */ }
+"#" { yy_push_state(IN_COMMENT, yyscanner); }
+<IN_COMMENT>{
+  \\[\\\n]|. { }
+  \n { yy_pop_state(yyscanner); }
+}
+<IN_COMMENT><<EOF>> { yy_pop_state(yyscanner); }
 
 "!=" { return NEQ; }
 "==" { return EQ; }
@@ -60,7 +66,7 @@ struct lexer_param;
 "catch" { return CATCH; }
 "label" { return LABEL; }
 "break" { return BREAK; }
-"__loc__" { return LOC; }
+"$__loc__" { return LOC; }
 "|=" { return SETPIPE; }
 "+=" { return SETPLUS; }
 "-=" { return SETMINUS; }
@@ -86,7 +92,7 @@ struct lexer_param;
   yylval->literal = jv_string_sized(yytext + 1, yyleng - 1); return FORMAT;
 }
 
-[0-9.]+([eE][+-]?[0-9]+)? {
+([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][+-]?[0-9]+)? {
    yylval->literal = jv_parse_sized(yytext, yyleng); return LITERAL;
 }
 
@@ -122,6 +128,7 @@ struct lexer_param;
 
 ([a-zA-Z_][a-zA-Z_0-9]*::)*[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext); return IDENT;}
 \.[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return FIELD;}
+\$([a-zA-Z_][a-zA-Z_0-9]*::)*[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return BINDING;}
 
 [ \n\t]+  {}
 

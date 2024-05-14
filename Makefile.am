@@ -9,7 +9,10 @@ LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
-        src/util.h src/uuid.h
+        src/util.h src/decNumber/decContext.h src/decNumber/decNumber.h \
+        src/decNumber/decNumberLocal.h src/jv_dtoa_tsd.h src/jv_thread.h \
+        src/jv_private.h \
+        src/uuid.h
 
 LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
@@ -21,10 +24,10 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
 
 ### C build options
 
-AM_CFLAGS = -Wextra -Wall -Wno-missing-field-initializers               \
-        -Wno-unused-parameter -Wno-unused-function                      \
-        -Wno-cast-function-type -Wno-error=cast-function-type           \
-        -Wimplicit-fallthrough=0
+AM_CFLAGS = -Wextra -Wall -Wno-unused-parameter -Wno-unused-function \
+            -Woverlength-strings                                     \
+            -Wno-cast-function-type -Wno-error=cast-function-type    \
+            -Wimplicit-fallthrough=0
 
 if WIN32
 AM_CFLAGS += -municode
@@ -37,23 +40,23 @@ ACLOCAL_AMFLAGS = -I config/m4
 # While there is some autoconf macro support for lex/flex, it doesn't support
 # header file creation so we'll use good old make
 if MAINTAINER_MODE
-BUILT_SOURCES = src/lexer.h src/lexer.c src/parser.h src/parser.c 	\
-		src/builtin.inc src/version.h
+BUILT_SOURCES = src/lexer.h src/lexer.c src/parser.h src/parser.c \
+                src/builtin.inc src/config_opts.inc src/version.h
 src/lexer.c: src/lexer.l
 	$(AM_V_LEX) flex -o src/lexer.c --header-file=src/lexer.h $<
 src/lexer.h: src/lexer.c
 else
-BUILT_SOURCES = src/builtin.inc src/version.h
+BUILT_SOURCES = src/builtin.inc src/config_opts.inc src/version.h
 .y.c:
 	$(AM_V_YACC) echo "NOT building parser.c!"
 .l.c:
 	$(AM_V_LEX) echo "NOT building lexer.c!"
 endif
 
-# Tell YACC (bison) autoconf macros that you want a header file created.
-# If the --warnings=all fails, you probably have an old version of bison
-# OSX ships an old bison, so update with homebrew or macports
-AM_YFLAGS = --warnings=all -d
+# Tell YACC (Bison) autoconf macros that you want a header file created.
+# If the --warnings=all fails, you probably have an old version of Bison
+# macOS ships an old Bison, so update with Homebrew or MacPorts.
+AM_YFLAGS = --warnings=all -Wno-yacc -d
 
 ### libjq
 
@@ -114,29 +117,30 @@ generate_ver = ver="`{ $(srcdir)/scripts/version || echo '$(VERSION)' ; } | sed 
 src/version.h: .remake-version-h
 	mkdir -p src
 	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
-src/main.c: src/version.h
+src/config_opts.inc:
+	mkdir -p src
+	$(AM_V_GEN) if test -x ./config.status; then \
+	  ./config.status --config; \
+	else echo "(unknown)"; \
+	fi | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/"/' -e 's/^/#define JQ_CONFIG /' > $@
+src/main.c: src/version.h src/config_opts.inc
 
 src/builtin.inc: $(srcdir)/src/builtin.jq
 	mkdir -p src
-	$(AM_V_GEN) sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $(srcdir)/src/builtin.jq > $@
+	$(AM_V_GEN) od -v -A n -t o1 -- $< | \
+	sed -e 's/$$/ /' \
+	    -e 's/\([0123456789]\) /\1, /g' \
+	    -e 's/ $$//' \
+	    -e 's/ 0/  0/g' \
+	    -e 's/ \([123456789]\)/ 0\1/g' > $@
 src/builtin.o: src/builtin.inc
+
+CLEANFILES = src/version.h .remake-version-h src/builtin.inc src/config_opts.inc
 
 bin_PROGRAMS = jq
 jq_SOURCES = src/main.c src/version.h
 jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
-
-
-# AM_CFLAGS += $(PYTHON3_CFLAGS)
-
-# # libinject_errors_la_LDFLAGS += $(PYTHON3_LDFLAGS)
-# # jq_LDADD += $(PYTHON3_LDFLAGS)
-# jq_LDFLAGS += $(PYTHON3_LDFLAGS)
-# # libjq_la_LDFLAGS += $(PYTHON3_LDFLAGS)
-
-if WIN32
-jq_LDADD += -lshlwapi
-endif
 
 if ENABLE_ALL_STATIC
 jq_LDFLAGS += -all-static
@@ -144,8 +148,11 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/optionaltest tests/mantest tests/jqtest tests/onigtest tests/shtest tests/utf8test tests/base64test
-TESTS_ENVIRONMENT = NO_VALGRIND=$(NO_VALGRIND)
+TESTS = tests/mantest tests/jqtest tests/shtest tests/utf8test tests/base64test
+if !WIN32
+TESTS += tests/optionaltest
+endif
+AM_TESTS_ENVIRONMENT = JQ=$(abs_builddir)/jq NO_VALGRIND=$(NO_VALGRIND)
 
 # This is a magic make variable that causes it to treat tests/man.test as a
 # DATA-type dependency for the check target. As a result, it will attempt to
@@ -160,12 +167,14 @@ check_DATA = tests/man.test
 # Making changes to the manpage without having the python deps means your
 # tests won't run. If you aren't making changes to the examples, you probably
 # don't care. But if you are, then you need to run the tests anyway.
-tests/man.test: $(srcdir)/docs/content/manual/manual.yml
+tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_mantests.py ) > $@
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
+	  $(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+	  $(PIPENV) run python build_mantests.py )
 else
-	@echo Changes to the manual.yml require docs to be enabled to run the tests
-	@false
+	@echo Changes to the manual.yml require docs to be enabled to update the manual test.
+	@echo As a result, the manual test is out of date.
 endif
 
 ### Building the manpage
@@ -176,14 +185,18 @@ endif
 man_MANS = jq.1
 jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs; $(PIPENV) run python build_manpage.py ) > $@ || { rm -f $@; false; }
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
+	  $(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+	  $(PIPENV) run python build_manpage.py ) > $@
 else
-	@echo Changes to the manual.yml require docs to be enabled to generate an updated manpage
-	@echo As a result, your manpage is out of date.
+	@echo Changes to the manual.yml require docs to be enabled to update the manpage.
+	@echo As a result, the manpage is out of date.
 endif
 
 jq.1: jq.1.prebuilt
 	$(AM_V_GEN) cp $(srcdir)/jq.1.prebuilt $@
+
+CLEANFILES += jq.1
 
 ### Build oniguruma
 
@@ -194,18 +207,19 @@ endif
 
 AM_CFLAGS += $(onig_CFLAGS)
 
-### Packaging
+if WITH_ONIGURUMA
+TESTS += tests/onigtest tests/manonigtest
+endif
 
-docs/site.yml: configure.ac
-	sed 's/^jq_version: .*/jq_version: "$(VERSION)"/' $@ > $@.new
-	mv $@.new $@
+### Packaging
 
 install-binaries: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec
 
-DOC_FILES = docs/content docs/public docs/templates docs/site.yml       \
+DOC_FILES = docs/content docs/public docs/templates                     \
         docs/Pipfile docs/Pipfile.lock docs/build_manpage.py            \
-        docs/build_manpage.py docs/README.md jq.1.prebuilt
+        docs/build_mantests.py docs/build_website.py docs/README.md     \
+        docs/validate_manual_schema.py docs/manual_schema.yml
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
@@ -223,16 +237,17 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order1.jq                               \
         tests/modules/test_bind_order2.jq                               \
         tests/onig.supp tests/local.supp                                \
-        tests/onig.test tests/setup tests/torture/input0.json		\
-        tests/optional.test tests/optionaltest				\
-        tests/utf8-truncate.jq tests/utf8test				\
-        tests/base64.test tests/base64test 				\
-        tests/jq-f-test.sh tests/shtest
+        tests/setup tests/torture/input0.json                           \
+        tests/optional.test tests/man.test tests/manonig.test           \
+        tests/jq.test tests/onig.test tests/base64.test                 \
+        tests/utf8-truncate.jq tests/jq-f-test.sh                       \
+        tests/no-main-program.jq tests/yes-main-program.jq
 
-# README.md is expected in Github projects, good stuff in it, so we'll
+AM_DISTCHECK_CONFIGURE_FLAGS=--with-oniguruma=builtin
+
+# README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.
-docdir = ${datadir}/doc/${PACKAGE}
-dist_doc_DATA = README.md COPYING AUTHORS README
+dist_doc_DATA = README.md NEWS.md COPYING AUTHORS
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libjq.pc
@@ -245,22 +260,3 @@ rpm: dist jq.spec
 	rpmbuild -tb --define "_topdir ${PWD}/rpm" --define "_prefix /usr" --define "myver $(VERSION)" --define "myrel ${RELEASE}" rpm/SOURCES/jq-$(VERSION).tar.gz
 	find rpm/RPMS/ -name "*.rpm" -exec mv {} ./ \;
 	rm -rf rpm
-
-dist-clean-local:
-	rm -f ${BUILT_SOURCES}
-
-# Not sure why this doesn't get cleaned up automatically, guess
-# automake used to man pages which are hand coded?
-# 'make clean' doesn't delete the manpage if it can't be rebuilt
-clean-local-docs:
-if ENABLE_DOCS
-	rm -f jq.1
-endif
-
-clean-local-gcov:
-	rm -f src/*.gcno src/*.gcda src/*.gcov
-
-clean-local: clean-local-docs clean-local-gcov
-	rm -f src/version.h .remake-version-h
-
-.PHONY: clean-local-docs clean-local-gcov

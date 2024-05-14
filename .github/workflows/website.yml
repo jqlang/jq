@@ -1,0 +1,40 @@
+name: Update website
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs/**'
+concurrency: website
+permissions:
+  contents: write
+
+jobs:
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pipenv
+      - name: Install pipenv
+        run: pip install pipenv
+      - name: Install dependencies
+        run: pipenv sync
+        working-directory: docs
+      - name: Update website
+        run: scripts/update-website
+      - name: Commit changes
+        run: |
+          if ! git diff --quiet; then
+            git add --all
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git commit -m 'Update website'
+            git push origin gh-pages
+          fi

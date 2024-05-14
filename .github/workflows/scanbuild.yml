@@ -1,0 +1,75 @@
+name: Linux Clang scan-build Static Analyzer Build
+
+on:
+    # Don't do this for PRs.  It eats up minutes.
+    push:
+      branches:
+         - 'master'
+         - 'scan-build'
+      paths:
+         - '.github/workflows/scanbuild.yml'
+
+jobs:
+    unix:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                name: [linux-clang]
+                include:
+                    - name: linux-clang
+                      os: ubuntu-latest
+                      compiler: clang
+                      cflags: ''
+        steps:
+            - name: Clone repository
+              uses: actions/checkout@v4
+            - name: Open Submodule(s)
+              run: |
+                git submodule update --init --recursive
+            - name: Install packages
+              if: startsWith(matrix.os, 'ubuntu')
+              run: |
+                sudo apt-get update -qq
+                sudo apt-get install -y automake autoconf bison flex gdb python3 valgrind clang-tools
+            - name: Prep
+              run: |
+                #pyenv global 3.6.7
+                #pip3 install pipenv
+                #(cd docs && pipenv sync)
+                #if [ -n "$COVERAGE" ]; then pip install --user cpp-coveralls; fi
+                echo SHELL=$SHELL
+                echo PATH=$PATH
+                which bison
+                bison --version
+
+            - name: Build
+              env:
+                CC: ${{ matrix.compiler }}
+                MAKEVARS: ${{ matrix.makevars }}
+              run: |
+                autoreconf -i
+                ./configure --with-oniguruma=builtin $COVERAGE
+                scan-build --keep-going make -j4
+            - name: Test
+              env:
+                CC: ${{ matrix.compiler }}
+                MAKEVARS: ${{ matrix.makevars }}
+              run: |
+                ulimit -c unlimited
+                scan-build --keep-going make -j4 check
+            - name: Core dump stacks
+              run: |
+                echo "thread apply all bt" > /tmp/x
+                find . -name core -print | while read core; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done
+                if [ "$(find . -name core -print | wc -l)" -gt 0 ]; then false; fi
+            - name: Test logs
+              if: ${{ failure() }}
+              run: |
+                cat test-suite.log
+                cat tests/*.log
+            - name: Upload Logs
+              uses: actions/upload-artifact@v4
+              with:
+                name: Scan-Build Reports
+                path: '/tmp/scan-build*/'

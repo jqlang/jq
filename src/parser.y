@@ -5,6 +5,7 @@
 #include <string.h>
 #include "compile.h"
 #include "jv_alloc.h"
+#include "builtin.h"
 #define YYMALLOC jv_mem_alloc
 #define YYFREE jv_mem_free
 %}
@@ -26,7 +27,7 @@ struct lexer_param;
 }
 
 %locations
-%error-verbose
+%define parse.error verbose
 %define api.pure
 %union {
   jv literal;
@@ -49,6 +50,7 @@ struct lexer_param;
 %token INVALID_CHARACTER
 %token <literal> IDENT
 %token <literal> FIELD
+%token <literal> BINDING
 %token <literal> LITERAL
 %token <literal> FORMAT
 %token REC ".."
@@ -74,7 +76,7 @@ struct lexer_param;
 %token CATCH "catch"
 %token LABEL "label"
 %token BREAK "break"
-%token LOC "__loc__"
+%token LOC "$__loc__"
 %token SETPIPE "|="
 %token SETPLUS "+="
 %token SETMINUS "-="
@@ -121,6 +123,7 @@ struct lexer_param;
 %type <blk> Param Params Arg Args
 %type <blk> Patterns RepPatterns Pattern ArrayPats ObjPats ObjPat
 %type <literal> Keyword
+%type <literal> StringStart
 %{
 #include "lexer.h"
 struct lexer_param {
@@ -200,55 +203,31 @@ static block constant_fold(block a, block b, int op) {
   if (!block_is_single(a) || !block_is_const(a) ||
       !block_is_single(b) || !block_is_const(b))
     return gen_noop();
-  if (op == '+') {
-    if (block_const_kind(a) == JV_KIND_NULL) {
-      block_free(a);
-      return b;
-    }
-    if (block_const_kind(b) == JV_KIND_NULL) {
-      block_free(b);
-      return a;
-    }
-  }
-  if (block_const_kind(a) != block_const_kind(b))
-    return gen_noop();
+
+  jv jv_a = block_const(a);
+  block_free(a);
+  jv jv_b = block_const(b);
+  block_free(b);
 
   jv res = jv_invalid();
-
-  if (block_const_kind(a) == JV_KIND_NUMBER) {
-    jv jv_a = block_const(a);
-    jv jv_b = block_const(b);
-
-    double na = jv_number_value(jv_a);
-    double nb = jv_number_value(jv_b);
-
-    int cmp = jv_cmp(jv_a, jv_b);
-
-    switch (op) {
-    case '+': res = jv_number(na + nb); break;
-    case '-': res = jv_number(na - nb); break;
-    case '*': res = jv_number(na * nb); break;
-    case '/': res = jv_number(na / nb); break;
-    case EQ:  res = (cmp == 0 ? jv_true() : jv_false()); break;
-    case NEQ: res = (cmp != 0 ? jv_true() : jv_false()); break;
-    case '<': res = (cmp < 0 ? jv_true() : jv_false()); break;
-    case '>': res = (cmp > 0 ? jv_true() : jv_false()); break;
-    case LESSEQ: res = (cmp <= 0 ? jv_true() : jv_false()); break;
-    case GREATEREQ: res = (cmp >= 0 ? jv_true() : jv_false()); break;
-    default: break;
-    }
-  } else if (op == '+' && block_const_kind(a) == JV_KIND_STRING) {
-    res = jv_string_concat(block_const(a),  block_const(b));
-  } else {
-    return gen_noop();
+  switch (op) {
+  case '+': res = binop_plus(jv_a, jv_b); break;
+  case '-': res = binop_minus(jv_a, jv_b); break;
+  case '*': res = binop_multiply(jv_a, jv_b); break;
+  case '/': res = binop_divide(jv_a, jv_b); break;
+  case '%': res = binop_mod(jv_a, jv_b); break;
+  case EQ: res = binop_equal(jv_a, jv_b); break;
+  case NEQ: res = binop_notequal(jv_a, jv_b); break;
+  case '<': res = binop_less(jv_a, jv_b); break;
+  case '>': res = binop_greater(jv_a, jv_b); break;
+  case LESSEQ: res = binop_lesseq(jv_a, jv_b); break;
+  case GREATEREQ: res = binop_greatereq(jv_a, jv_b); break;
   }
 
-  if (jv_get_kind(res) == JV_KIND_INVALID)
-    return gen_noop();
+  if (jv_is_valid(res))
+    return gen_const(res);
 
-  block_free(a);
-  block_free(b);
-  return gen_const(res);
+  return gen_error(jv_invalid_get_msg(res));
 }
 
 static block gen_binop(block a, block b, int op) {
@@ -299,6 +278,11 @@ static block gen_update(block object, block val, int optype) {
                                                               optype)))));
 }
 
+static block gen_loc_object(location *loc, struct locfile *locations) {
+  return gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
+                             jv_string("line"), jv_number(locfile_get_line(locations, loc->start) + 1)));
+}
+
 %}
 
 %%
@@ -317,6 +301,10 @@ Module:
 "module" Exp ';' {
   if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant");
+    $$ = gen_noop();
+    block_free($2);
+  } else if (block_const_kind($2) != JV_KIND_OBJECT) {
+    FAIL(@$, "Module metadata must be an object");
     $$ = gen_noop();
     block_free($2);
   } else {
@@ -363,20 +351,15 @@ Term "as" Patterns '|' Exp {
 "if" Exp "then" Exp ElseBody {
   $$ = gen_cond($2, $4, $5);
 } |
-"if" Exp "then" Exp "end" {
-  $$ = gen_cond($2, $4, gen_noop());
-} |
 "if" Exp "then" error {
   FAIL(@$, "Possibly unterminated 'if' statement");
   $$ = $2;
 } |
 
 "try" Exp "catch" Exp {
-  //$$ = BLOCK(gen_op_target(FORK_OPT, $2), $2, $4);
-  $$ = gen_try($2, gen_try_handler($4));
+  $$ = gen_try($2, $4);
 } |
 "try" Exp {
-  //$$ = BLOCK(gen_op_target(FORK_OPT, $2), $2, gen_op_simple(BACKTRACK));
   $$ = gen_try($2, gen_op_simple(BACKTRACK));
 } |
 "try" Exp "catch" error {
@@ -384,10 +367,10 @@ Term "as" Patterns '|' Exp {
   $$ = $2;
 } |
 
-"label" '$' IDENT '|' Exp {
-  jv v = jv_string_fmt("*label-%s", jv_string_value($3));
-  $$ = gen_location(@$, locations, gen_label(jv_string_value(v), $5));
-  jv_free($3);
+"label" BINDING '|' Exp {
+  jv v = jv_string_fmt("*label-%s", jv_string_value($2));
+  $$ = gen_location(@$, locations, gen_label(jv_string_value(v), $4));
+  jv_free($2);
   jv_free(v);
 } |
 
@@ -457,14 +440,10 @@ Exp "*=" Exp {
 
 Exp '/' Exp {
   $$ = gen_binop($1, $3, '/');
-  if (block_is_const_inf($$))
-    FAIL(@$, "Division by zero?");
 } |
 
 Exp '%' Exp {
   $$ = gen_binop($1, $3, '%');
-  if (block_is_const_inf($$))
-    FAIL(@$, "Remainder by zero?");
 } |
 
 Exp "/=" Exp {
@@ -524,13 +503,13 @@ ImportWhat Exp ';' {
 }
 
 ImportWhat:
-"import" ImportFrom "as" '$' IDENT {
+"import" ImportFrom "as" BINDING {
   jv v = block_const($2);
   // XXX Make gen_import take only blocks and the int is_data so we
   // don't have to free so much stuff here
-  $$ = gen_import(jv_string_value(v), jv_string_value($5), 1);
+  $$ = gen_import(jv_string_value(v), jv_string_value($4), 1);
   block_free($2);
-  jv_free($5);
+  jv_free($4);
   jv_free(v);
 } |
 "import" ImportFrom "as" IDENT {
@@ -578,13 +557,9 @@ Params ';' Param {
 }
 
 Param:
-'$' IDENT {
-  $$ = gen_param_regular(jv_string_value($2));
-  jv_free($2);
-} |
-'$' Keyword {
-  $$ = gen_param_regular(jv_string_value($2));
-  jv_free($2);
+BINDING {
+  $$ = gen_param_regular(jv_string_value($1));
+  jv_free($1);
 } |
 IDENT {
   $$ = gen_param(jv_string_value($1));
@@ -592,15 +567,20 @@ IDENT {
 }
 
 
-String:
-QQSTRING_START { $<literal>$ = jv_string("text"); } QQString QQSTRING_END {
-  $$ = $3;
-  jv_free($<literal>2);
+StringStart:
+FORMAT QQSTRING_START {
+  $$ = $1;
 } |
-FORMAT QQSTRING_START { $<literal>$ = $1; } QQString QQSTRING_END {
-  $$ = $4;
-  jv_free($<literal>3);
+QQSTRING_START {
+  $$ = jv_string("text");
 }
+
+
+String:
+StringStart QQString QQSTRING_END {
+  $$ = $2;
+  jv_free($1);
+};
 
 
 QQString:
@@ -621,6 +601,9 @@ ElseBody:
 } |
 "else" Exp "end" {
   $$ = $2;
+} |
+"end" {
+  $$ = gen_noop();
 }
 
 ExpD:
@@ -642,13 +625,13 @@ Term:
 REC {
   $$ = gen_call("recurse", gen_noop());
 } |
-BREAK '$' IDENT {
-  jv v = jv_string_fmt("*label-%s", jv_string_value($3));     // impossible symbol
+BREAK BINDING {
+  jv v = jv_string_fmt("*label-%s", jv_string_value($2));     // impossible symbol
   $$ = gen_location(@$, locations,
                     BLOCK(gen_op_unbound(LOADV, jv_string_value(v)),
                     gen_call("error", gen_noop())));
   jv_free(v);
-  jv_free($3);
+  jv_free($2);
 } |
 BREAK error {
   FAIL(@$, "break requires a label to break to");
@@ -706,6 +689,12 @@ Term '[' ']' '?' {
 Term '[' ']' %prec NONOPT {
   $$ = block_join($1, gen_op_simple(EACH));
 } |
+Term '.' '[' ']' '?' {
+  $$ = block_join($1, gen_op_simple(EACH_OPT));
+} |
+Term '.' '[' ']' %prec NONOPT {
+  $$ = block_join($1, gen_op_simple(EACH));
+} |
 Term '[' Exp ':' Exp ']' '?' {
   $$ = gen_slice_index($1, $3, $5, INDEX_OPT);
 } |
@@ -749,18 +738,31 @@ FORMAT {
   else
     $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
 } |
-'$' IDENT {
-  $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));
-  jv_free($2);
+/*
+ * This `$$$$varname` hack is strictly private to jq builtins.  DO NOT USE!!
+ *
+ * This is used in `_modify`, in src/builtin.jq, to avoid holding on to a
+ * reference to `.`.
+ *
+ * We could just have the compiler emit bytecode for `_modify` so it can use
+ * LOADVN w/o needing jq syntax for LOADVN.
+ *
+ * This syntax, `$$$$varname`, violates referential transparency: it has
+ * side-effects that are surprising.
+ *
+ * DO NOT USE!!  I will break your jq code if you do use this outside
+ * src/builtin.jq.
+ */
+'$' '$' '$' BINDING {
+  $$ = gen_location(@$, locations, gen_op_unbound(LOADVN, jv_string_value($4)));
+  jv_free($4);
 } |
-'$' Keyword {
-  if (strcmp(jv_string_value($2), "__loc__") == 0) {
-    $$ = gen_const(JV_OBJECT(jv_string("file"), jv_copy(locations->fname),
-                             jv_string("line"), jv_number(locfile_get_line(locations, @$.start) + 1)));
-  } else {
-    $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2)));
-  }
-  jv_free($2);
+BINDING {
+  $$ = gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1)));
+  jv_free($1);
+} |
+"$__loc__" {
+  $$ = gen_loc_object(&@$, locations);
 } |
 IDENT {
   const char *s = jv_string_value($1);
@@ -814,9 +816,9 @@ Pattern {
 }
 
 Pattern:
-'$' IDENT {
-  $$ = gen_op_unbound(STOREV, jv_string_value($2));
-  jv_free($2);
+BINDING {
+  $$ = gen_op_unbound(STOREV, jv_string_value($1));
+  jv_free($1);
 } |
 '[' ArrayPats ']' {
   $$ = BLOCK($2, gen_op_simple(POP));
@@ -842,11 +844,11 @@ ObjPats ',' ObjPat {
 }
 
 ObjPat:
-'$' IDENT {
-  $$ = gen_object_matcher(gen_const($2), gen_op_unbound(STOREV, jv_string_value($2)));
+BINDING {
+  $$ = gen_object_matcher(gen_const($1), gen_op_unbound(STOREV, jv_string_value($1)));
 } |
-'$' IDENT ':' Pattern {
-  $$ = gen_object_matcher(gen_const($2), BLOCK(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value($2)), $4));
+BINDING ':' Pattern {
+  $$ = gen_object_matcher(gen_const($1), BLOCK(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value($1)), $3));
 } |
 IDENT ':' Pattern {
   $$ = gen_object_matcher(gen_const($1), $3);
@@ -924,9 +926,6 @@ Keyword:
 } |
 "break" {
   $$ = jv_string("break");
-} |
-"__loc__" {
-  $$ = jv_string("__loc__");
 }
 
 MkDict:
@@ -951,21 +950,22 @@ IDENT ':' ExpD {
   $$ = gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
                               gen_op_simple(DUP2), gen_op_simple(INDEX)));
   }
-| '$' IDENT ':' ExpD {
-  $$ = gen_dictpair(gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))),
-                    $4);
+| BINDING ':' ExpD {
+  $$ = gen_dictpair(gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))),
+                    $3);
+  jv_free($1);
   }
-| '$' IDENT {
-  $$ = gen_dictpair(gen_const($2),
-                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))));
-  }
-| '$' Keyword {
-  $$ = gen_dictpair(gen_const($2),
-                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($2))));
+| BINDING {
+  $$ = gen_dictpair(gen_const($1),
+                    gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))));
   }
 | IDENT {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
                     gen_index(gen_noop(), gen_const($1)));
+  }
+| "$__loc__" {
+  $$ = gen_dictpair(gen_const(jv_string("__loc__")),
+                    gen_loc_object(&@$, locations));
   }
 | Keyword {
   $$ = gen_dictpair(gen_const(jv_copy($1)),

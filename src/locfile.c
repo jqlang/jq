@@ -21,7 +21,7 @@ struct locfile* locfile_init(jq_state *jq, const char *fname, const char* data, 
   for (int i=0; i<length; i++) {
     if (data[i] == '\n') l->nlines++;
   }
-  l->linemap = jv_mem_calloc(sizeof(int), (l->nlines + 1));
+  l->linemap = jv_mem_calloc(l->nlines + 1, sizeof(int));
   l->linemap[0] = 0;
   int line = 1;
   for (int i=0; i<length; i++) {
@@ -72,6 +72,7 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
   }
 
   jv m1 = jv_string_vfmt(fmt, fmtargs);
+  va_end(fmtargs);
   if (!jv_is_valid(m1)) {
     jq_report_error(l->jq, m1);
     return;

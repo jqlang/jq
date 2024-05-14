@@ -51,7 +51,7 @@ cwd="$(realpath ${PWD} 2>/dev/null || echo ${PWD})"
 t_exit() {
 cat << EOF
 
-A error as occured.
+A error as occurred.
     oniguruma location: ${builddir}/onig/onig-${oniguruma}
     jq location: ${cwd}
 
@@ -89,7 +89,7 @@ cd "${builddir}/"
      cd ${cwd}
      [[ ! -f ./configure ]] && autoreconf -ivf
      CC=${CC} LDFLAGS=${LDFLAGS} \
-     ./configure --host=${HOST} --build=$(./config/config.guess) --enable-docs=no --enable-shared=no --enable-static=yes --prefix=/ --with-oniguruma=${cwd}/ios/onig/${arch} $(test -z ${BISON+x} && echo '--disable-maintainer-mode')
+     ./configure --host=${HOST} --build=$(./config/config.guess) --enable-docs=no --enable-shared=no --enable-static=yes --prefix=/ --with-oniguruma=${cwd}/ios/onig/${arch} $(test -z ${BISON+x} || echo '--enable-maintainer-mode')
      make -j${MAKEJOBS} install DESTDIR="${cwd}/ios/jq/${arch}"
      make clean
  done

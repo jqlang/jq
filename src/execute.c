@@ -49,6 +49,8 @@ struct jq_state {
   void *input_cb_data;
   jq_msg_cb debug_cb;
   void *debug_cb_data;
+  jq_msg_cb stderr_cb;
+  void *stderr_cb_data;
 };
 
 struct closure {
@@ -346,6 +348,7 @@ jv jq_next(jq_state *jq) {
 
   int raising;
   int backtracking = !jq->initial_execution;
+
   jq->initial_execution = 0;
   assert(jv_get_kind(jq->error) == JV_KIND_NULL);
   while (1) {
@@ -401,6 +404,12 @@ jv jq_next(jq_state *jq) {
     default: assert(0 && "invalid instruction");
 
     case TOP: break;
+
+    case ERRORK: {
+      jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
+      set_error(jq, jv_invalid_with_msg(v));
+      goto do_backtrack;
+    }
 
     case LOADK: {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
@@ -542,8 +551,8 @@ jv jq_next(jq_state *jq) {
       jv* var = frame_local_var(jq, v, level);
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
-        jv_dump(jv_copy(*var), 0);
-        printf(" (%d)\n", jv_get_refcnt(*var));
+        jv_dump(jv_copy(*var), JV_PRINT_REFCOUNT);
+        printf("\n");
       }
       jv_free(stack_pop(jq));
       stack_push(jq, jv_copy(*var));
@@ -557,17 +566,22 @@ jv jq_next(jq_state *jq) {
       jv* var = frame_local_var(jq, v, level);
       if (jq->debug_trace_enabled) {
         printf("V%d = ", v);
-        jv_dump(jv_copy(*var), 0);
-        printf(" (%d)\n", jv_get_refcnt(*var));
+        jv_dump(jv_copy(*var), JV_PRINT_REFCOUNT);
+        printf("\n");
       }
       jv_free(stack_popn(jq));
+
+      // This `stack_push()` invalidates the `var` reference, so
       stack_push(jq, *var);
+      // we have to re-resolve `var` before we can set it to null
+      var = frame_local_var(jq, v, level);
       *var = jv_null();
       break;
     }
 
     case STOREVN:
         stack_save(jq, pc - 1, stack_get_pos(jq));
+        JQ_FALLTHROUGH;
     case STOREV: {
       uint16_t level = *pc++;
       uint16_t v = *pc++;
@@ -727,7 +741,7 @@ jv jq_next(jq_state *jq) {
       }
       stack_push(jq, container);
       stack_push(jq, jv_number(-1));
-      // fallthrough
+      JQ_FALLTHROUGH;
     }
     case ON_BACKTRACK(EACH):
     case ON_BACKTRACK(EACH_OPT): {
@@ -767,8 +781,10 @@ jv jq_next(jq_state *jq) {
       }
 
       if (!keep_going || raising) {
-        if (keep_going)
+        if (keep_going) {
+          jv_free(key);
           jv_free(value);
+        }
         jv_free(container);
         goto do_backtrack;
       } else if (is_last) {
@@ -802,7 +818,59 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
-    case FORK_OPT:
+    case TRY_BEGIN:
+      stack_save(jq, pc - 1, stack_get_pos(jq));
+      pc++; // skip handler offset this time
+      break;
+
+    case TRY_END:
+      stack_save(jq, pc - 1, stack_get_pos(jq));
+      break;
+
+    case ON_BACKTRACK(TRY_BEGIN): {
+      if (!raising) {
+        /*
+         * `try EXP ...` -- EXP backtracked (e.g., EXP was `empty`), so we
+         * backtrack more:
+         */
+        jv_free(stack_pop(jq));
+        goto do_backtrack;
+      }
+
+      /*
+       * Else `(try EXP ... ) | EXP2` raised an error.
+       *
+       * If the error was wrapped in another error, then that means EXP2 raised
+       * the error.  We unwrap it and re-raise it as it wasn't raised by EXP.
+       *
+       * See commentary in gen_try().
+       */
+      jv e = jv_invalid_get_msg(jv_copy(jq->error));
+      if (!jv_is_valid(e) && jv_invalid_has_msg(jv_copy(e))) {
+        set_error(jq, e);
+        goto do_backtrack;
+      }
+      jv_free(e);
+
+      /*
+       * Else we caught an error containing a non-error value, so we jump to
+       * the handler.
+       *
+       * See commentary in gen_try().
+       */
+      uint16_t offset = *pc++;
+      jv_free(stack_pop(jq)); // free the input
+      stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
+      jq->error = jv_null();
+      pc += offset;
+      break;
+    }
+    case ON_BACKTRACK(TRY_END):
+      // Wrap the error so the matching TRY_BEGIN doesn't catch it
+      if (raising)
+        set_error(jq, jv_invalid_with_msg(jv_copy(jq->error)));
+      goto do_backtrack;
+
     case DESTRUCTURE_ALT:
     case FORK: {
       stack_save(jq, pc - 1, stack_get_pos(jq));
@@ -810,7 +878,6 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
-    case ON_BACKTRACK(FORK_OPT):
     case ON_BACKTRACK(DESTRUCTURE_ALT): {
       if (jv_is_valid(jq->error)) {
         // `try EXP ...` backtracked here (no value, `empty`), so we backtrack more
@@ -847,17 +914,12 @@ jv jq_next(jq_state *jq) {
         in[i] = stack_pop(jq);
       }
       struct cfunction* function = &frame_current(jq)->bc->globals->cfunctions[*pc++];
-      typedef jv (*func_1)(jq_state*,jv);
-      typedef jv (*func_2)(jq_state*,jv,jv);
-      typedef jv (*func_3)(jq_state*,jv,jv,jv);
-      typedef jv (*func_4)(jq_state*,jv,jv,jv,jv);
-      typedef jv (*func_5)(jq_state*,jv,jv,jv,jv,jv);
       switch (function->nargs) {
-      case 1: top = ((func_1)function->fptr)(jq, in[0]); break;
-      case 2: top = ((func_2)function->fptr)(jq, in[0], in[1]); break;
-      case 3: top = ((func_3)function->fptr)(jq, in[0], in[1], in[2]); break;
-      case 4: top = ((func_4)function->fptr)(jq, in[0], in[1], in[2], in[3]); break;
-      case 5: top = ((func_5)function->fptr)(jq, in[0], in[1], in[2], in[3], in[4]); break;
+      case 1: top = ((jv (*)(jq_state *, jv))function->fptr)(jq, in[0]); break;
+      case 2: top = ((jv (*)(jq_state *, jv, jv))function->fptr)(jq, in[0], in[1]); break;
+      case 3: top = ((jv (*)(jq_state *, jv, jv, jv))function->fptr)(jq, in[0], in[1], in[2]); break;
+      case 4: top = ((jv (*)(jq_state *, jv, jv, jv, jv))function->fptr)(jq, in[0], in[1], in[2], in[3]); break;
+      case 5: top = ((jv (*)(jq_state *, jv, jv, jv, jv, jv))function->fptr)(jq, in[0], in[1], in[2], in[3], in[4]); break;
       // FIXME: a) up to 7 arguments (input + 6), b) should assert
       // because the compiler should not generate this error.
       default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
@@ -1007,6 +1069,15 @@ jq_state *jq_init(void) {
   jq->halted = 0;
   jq->exit_code = jv_invalid();
   jq->error_message = jv_invalid();
+
+  jq->input_cb = NULL;
+  jq->input_cb_data = NULL;
+
+  jq->debug_cb = NULL;
+  jq->debug_cb_data = NULL;
+
+  jq->stderr_cb = NULL;
+  jq->stderr_cb_data = NULL;
 
   jq->err_cb = default_err_cb;
   jq->err_cb_data = stderr;
@@ -1173,7 +1244,7 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   if (nerrors == 0) {
     nerrors = builtins_bind(jq, &program);
     if (nerrors == 0) {
-      nerrors = block_compile(program, &jq->bc, locations, args = args2obj(args));
+      nerrors = block_compile(program, &jq->bc, locations, args2obj(args));
     }
   } else
     jv_free(args);
@@ -1198,7 +1269,8 @@ jv jq_get_prog_origin(jq_state *jq) {
 }
 
 jv jq_get_lib_dirs(jq_state *jq) {
-  return jq_get_attr(jq, jv_string("JQ_LIBRARY_PATH"));
+  jv lib_dirs = jq_get_attr(jq, jv_string("JQ_LIBRARY_PATH"));
+  return jv_is_valid(lib_dirs) ? lib_dirs : jv_array();
 }
 
 void jq_set_attrs(jq_state *jq, jv attrs) {
@@ -1237,6 +1309,16 @@ void jq_set_debug_cb(jq_state *jq, jq_msg_cb cb, void *data) {
 void jq_get_debug_cb(jq_state *jq, jq_msg_cb *cb, void **data) {
   *cb = jq->debug_cb;
   *data = jq->debug_cb_data;
+}
+
+void jq_set_stderr_cb(jq_state *jq, jq_msg_cb cb, void *data) {
+  jq->stderr_cb = cb;
+  jq->stderr_cb_data = data;
+}
+
+void jq_get_stderr_cb(jq_state *jq, jq_msg_cb *cb, void **data) {
+  *cb = jq->stderr_cb;
+  *data = jq->stderr_cb_data;
 }
 
 void

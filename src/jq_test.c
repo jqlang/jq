@@ -2,12 +2,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
 #include "jv.h"
 #include "jq.h"
 
 static void jv_test();
 static void run_jq_tests(jv, int, FILE *, int, int);
-
+#ifdef HAVE_PTHREAD
+static void run_jq_pthread_tests();
+#endif
 
 int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
   FILE *testdata = stdin;
@@ -32,6 +37,9 @@ int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
     }
   }
   run_jq_tests(libdirs, verbose, testdata, skip, take);
+#ifdef HAVE_PTHREAD
+  run_jq_pthread_tests();
+#endif
   return 0;
 }
 
@@ -66,7 +74,7 @@ static void test_err_cb(void *data, jv e) {
 }
 
 static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int take) {
-  char prog[4096];
+  char prog[4096] = {0};
   char buf[4096];
   struct err_data err_msg;
   int tests = 0, passed = 0, invalid = 0;
@@ -105,7 +113,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
         if (buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
           break;
       }
-      
+
       must_fail = 0;
       check_msg = 0;
 
@@ -119,7 +127,6 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
       take--;
     } else if (take == 0) {
       printf("Hit the number of tests limit (%d), breaking\n", tests_to_take);
-      take = -1;
       break;
     }
 
@@ -188,6 +195,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
       }
       jv actual = jq_next(jq);
       if (!jv_is_valid(actual)) {
+        jv_free(expected);
         jv_free(actual);
         printf("*** Insufficient results for test at line number %u: %s\n", lineno, prog);
         pass = 0;
@@ -229,7 +237,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
     total_skipped = tests_to_skip - skip;
   }
 
-  printf("%d of %d tests passed (%d malformed, %d skipped)\n", 
+  printf("%d of %d tests passed (%d malformed, %d skipped)\n",
     passed, tests, invalid, total_skipped);
 
   if (skip > 0) {
@@ -239,6 +247,88 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
 
   if (passed != tests) exit(1);
 }
+
+
+/// pthread regression test
+#ifdef HAVE_PTHREAD
+#define NUMBER_OF_THREADS 3
+struct test_pthread_data {
+    int result;
+};
+
+static int test_pthread_jq_parse(jq_state *jq, struct jv_parser *parser)
+{
+    int rv = 0;
+    jv value;
+
+    value = jv_parser_next(parser);
+    while (jv_is_valid(value)) {
+        jq_start(jq, value, 0);
+        jv result = jq_next(jq);
+
+        while (jv_is_valid(result)) {
+            jv_free(result);
+            result = jq_next(jq);
+        }
+        jv_free(result);
+        value = jv_parser_next(parser);
+    }
+    jv_free(value);
+    return rv;
+}
+
+static void *test_pthread_run(void *ptr) {
+    int rv;
+    jq_state *jq;
+    const char *prg = ".data";
+    const char *buf = "{ \"data\": 1 }";
+    struct test_pthread_data *data = ptr;
+
+    jq = jq_init();
+    if (jq_compile(jq, prg) == 0) {
+        jq_teardown(&jq);
+        return NULL;
+    }
+
+    struct jv_parser *parser = jv_parser_new(0);
+    jv_parser_set_buf(parser, buf, strlen(buf), 0);
+    rv = test_pthread_jq_parse(jq, parser);
+
+    data->result = rv;
+
+    jv_parser_free(parser);
+    jq_teardown(&jq);
+    return NULL;
+}
+
+static void run_jq_pthread_tests() {
+    pthread_t threads[NUMBER_OF_THREADS];
+    struct test_pthread_data data[NUMBER_OF_THREADS];
+    int createerror;
+    int a;
+
+    memset(&threads, 0, sizeof(threads));
+    memset(&data, 0, sizeof(data));
+
+    // Create all threads
+    for (a = 0; a < NUMBER_OF_THREADS; ++a) {
+        createerror = pthread_create(&threads[a], NULL, test_pthread_run, &data[a]);
+        assert(createerror == 0);
+    }
+
+    // wait for all threads
+    for(a = 0; a < NUMBER_OF_THREADS; ++a) {
+        if (threads[a] != 0) {
+            pthread_join(threads[a], NULL);
+        }
+    }
+
+    // check results
+    for(a = 0; a < NUMBER_OF_THREADS; ++a) {
+        assert(data[a].result == 0);
+    }
+}
+#endif // HAVE_PTHREAD
 
 
 static void jv_test() {

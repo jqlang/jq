@@ -1,0 +1,73 @@
+name: oniguruma
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+# Since builtin oniguruma is tested in the CI workflow,
+# we test other options for --with-oniguruma here.
+jobs:
+  installed:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y automake autoconf libtool valgrind libonig-dev
+      - name: Build
+        run: |
+          autoreconf -i
+          ./configure \
+            --disable-docs \
+            --with-oniguruma=yes
+          make -j"$(nproc)"
+          file ./jq
+      - name: Test
+        run: |
+          ./jq -n '"" | test("")'
+          make check VERBOSE=yes
+          git diff --exit-code
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-oniguruma-installed
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
+
+  disabled:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y automake autoconf libtool valgrind
+      - name: Build
+        run: |
+          autoreconf -i
+          ./configure \
+            --disable-docs \
+            --with-oniguruma=no
+          make -j"$(nproc)"
+          file ./jq
+      - name: Test
+        run: |
+          ! ./jq -n '"" | test("")'
+          make check VERBOSE=yes
+          git diff --exit-code
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-oniguruma-disabled
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log

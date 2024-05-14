@@ -136,16 +136,22 @@ static jv jv_basename(jv name) {
 static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv jq_origin, jv lib_origin) {
   if (!jv_is_valid(rel_path)) {
     jv_free(search);
+    jv_free(jq_origin);
+    jv_free(lib_origin);
     return rel_path;
   }
   if (jv_get_kind(rel_path) != JV_KIND_STRING) {
     jv_free(rel_path);
     jv_free(search);
+    jv_free(jq_origin);
+    jv_free(lib_origin);
     return jv_invalid_with_msg(jv_string_fmt("Module path must be a string"));
   }
   if (jv_get_kind(search) != JV_KIND_ARRAY) {
     jv_free(rel_path);
     jv_free(search);
+    jv_free(jq_origin);
+    jv_free(lib_origin);
     return jv_invalid_with_msg(jv_string_fmt("Module search path must be an array"));
   }
 
@@ -390,6 +396,7 @@ jv load_module_meta(jq_state *jq, jv mod_relpath) {
       if (jv_get_kind(meta) == JV_KIND_NULL)
         meta = jv_object();
       meta = jv_object_set(meta, jv_string("deps"), block_take_imports(&program));
+      meta = jv_object_set(meta, jv_string("defs"), block_list_funcs(program, 0));
     }
     locfile_free(src);
     block_free(program);
@@ -406,6 +413,12 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   nerrors = jq_parse(src, &program);
   if (nerrors)
     return nerrors;
+
+  if (!block_has_main(program)) {
+    jq_report_error(jq, jv_string("jq: error: Top-level program not given (try \".\")"));
+    block_free(program);
+    return 1;
+  }
 
   char* home = getenv("HOME");
   if (home) {    // silently ignore no $HOME

@@ -1,0 +1,76 @@
+split(", ")
+"a, b,c,d, e, "
+["a","b,c,d","e",""]
+
+walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . end )
+[ { "_a": { "__b": 2 } } ]
+[{"a":{"b":2}}]
+
+test("foo")
+"foo"
+true
+
+.[] | test("a b c # spaces are ignored"; "ix")
+["xabcd", "ABC"]
+true
+true
+
+match("(abc)+"; "g")
+"abc abc"
+{"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}
+{"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
+
+match("foo")
+"foo bar foo"
+{"offset": 0, "length": 3, "string": "foo", "captures": []}
+
+match(["foo", "ig"])
+"foo bar FOO"
+{"offset": 0, "length": 3, "string": "foo", "captures": []}
+{"offset": 8, "length": 3, "string": "FOO", "captures": []}
+
+match("foo (?<bar123>bar)? foo"; "ig")
+"foo bar foo foo  foo"
+{"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}
+{"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}
+
+[ match("."; "g")] | length
+"abc"
+3
+
+capture("(?<a>[a-z]+)-(?<n>[0-9]+)")
+"xyzzy-14"
+{ "a": "xyzzy", "n": "14" }
+
+scan("c")
+"abcdefabc"
+"c"
+"c"
+
+split(", *"; null)
+"ab,cd, ef"
+["ab","cd","ef"]
+
+splits(", *")
+"ab,cd,   ef, gh"
+"ab"
+"cd"
+"ef"
+"gh"
+
+sub("[^a-z]*(?<x>[a-z]+)"; "Z\(.x)"; "g")
+"123abc456def"
+"ZabcZdef"
+
+[sub("(?<a>.)"; "\(.a|ascii_upcase)", "\(.a|ascii_downcase)")]
+"aB"
+["AB","aB"]
+
+gsub("(?<x>.)[^a]*"; "+\(.x)-")
+"Abcabc"
+"+A-+a-"
+
+[gsub("p"; "a", "b")]
+"p"
+["a","b"]
+

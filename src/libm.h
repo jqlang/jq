@@ -214,7 +214,7 @@ LIBM_DDD(fmod)
 #else
 LIBM_DDD_NO(fmod)
 #endif
-#ifdef HAVE_GAMMA
+#if defined(HAVE_GAMMA)
 LIBM_DD(gamma)
 #else
 LIBM_DD_NO(gamma)
@@ -248,11 +248,6 @@ LIBM_DDD_NO(nextafter)
 LIBM_DDD(nexttoward)
 #else
 LIBM_DDD_NO(nexttoward)
-#endif
-#if defined(HAVE_POW10) && !defined(WIN32)
-LIBM_DD(pow10)
-#else
-LIBM_DD_NO(pow10)
 #endif
 #ifdef HAVE_RINT
 LIBM_DD(rint)
@@ -288,4 +283,19 @@ LIBM_DD_NO(trunc)
 LIBM_DDD(ldexp)
 #else
 LIBM_DDD_NO(ldexp)
+#endif
+#ifdef HAVE_MODF
+LIBM_DA(modf, double)
+#else
+LIBM_DA_NO(modf, double)
+#endif
+#ifdef HAVE_FREXP
+LIBM_DA(frexp, int)
+#else
+LIBM_DA_NO(frexp, int)
+#endif
+#ifdef HAVE_LGAMMA_R
+LIBM_DA(lgamma_r, int)
+#else
+LIBM_DA_NO(lgamma_r, int)
 #endif

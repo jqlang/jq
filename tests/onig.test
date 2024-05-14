@@ -1,11 +1,15 @@
 # match builtin
 [match("( )*"; "g")]
 "abc"
-[{"offset":0, "length":0, "string":"", "captures":[]},{"offset":1, "length":0, "string":"", "captures":[]},{"offset":2, "length":0, "string":"", "captures":[]}]
+[{"offset":0,"length":0,"string":"","captures":[{"offset":0,"string":"","length":0,"name":null}]},{"offset":1,"length":0,"string":"","captures":[{"offset":1,"string":"","length":0,"name":null}]},{"offset":2,"length":0,"string":"","captures":[{"offset":2,"string":"","length":0,"name":null}]},{"offset":3,"length":0,"string":"","captures":[{"offset":3,"string":"","length":0,"name":null}]}]
 
 [match("( )*"; "gn")]
 "abc"
 []
+
+[match(""; "g")]
+"ab"
+[{"offset":0,"length":0,"string":"","captures":[]},{"offset":1,"length":0,"string":"","captures":[]},{"offset":2,"length":0,"string":"","captures":[]}]
 
 [match("a"; "gi")]
 "āáàä"
@@ -71,9 +75,46 @@ gsub("a";"b")
 "aaaaa"
 "bbbbb"
 
-gsub( "(.*)"; "";  "x")
+gsub("(.*)"; ""; "x")
 ""
 ""
+
+gsub(""; "a"; "g")
+""
+"a"
+
+gsub("^"; ""; "g")
+"a"
+"a"
+
+gsub(""; "a"; "g")
+"a"
+"aaa"
+
+gsub("$"; "a"; "g")
+"a"
+"aa"
+
+gsub("^"; "a")
+""
+"a"
+
+gsub("(?=u)"; "u")
+"qux"
+"quux"
+
+gsub("^.*a"; "b")
+"aaa"
+"b"
+
+gsub("^.*?a"; "b")
+"aaa"
+"baa"
+
+# The following is for regression testing and should not be construed as a requirement:
+[gsub("a"; "b", "c")]
+"a"
+["b","c"]
 
 [.[] | scan(", ")]
 ["a,b, c, d, e,f",", a,b, c, d, e,f, "]
@@ -87,12 +128,46 @@ gsub( "(.*)"; "";  "x")
 ["a,b, c, d, e,f",", a,b, c, d, e,f, "]
 [[["a,b:c, d, e,f"],["a,b:c:d:e,f"],[", ",", ",", "]],[[":a,b, c, d, e,f, "],[":a,b:c:d:e,f:"],[", ",", ",", ",", ",", "]]]
 
+[.[] | scan("b+"; "i")]
+["","bBb","abcABBBCabbbc"]
+["bBb","b","BBB","bbb"]
+
 # reference to named captures
 gsub("(?<x>.)[^a]*"; "+\(.x)-")
 "Abcabc"
 "+A-+a-"
 
+gsub("(?<x>.)(?<y>[0-9])"; "\(.x|ascii_downcase)\(.y)")
+"A1 B2 CD"
+"a1 b2 CD"
+
+gsub("\\b(?<x>.)"; "\(.x|ascii_downcase)")
+"ABC DEF"
+"aBC dEF"
+
+gsub("[^a-z]*(?<x>[a-z]*)"; "Z\(.x)")
+"123foo456bar"
+"ZfooZbarZ"
+
 # utf-8
 sub("(?<x>.)"; "\(.x)!")
 "’"
 "’!"
+
+[sub("a"; "b", "c")]
+"a"
+["b","c"]
+
+[sub("(?<a>.)"; "\(.a|ascii_upcase)", "\(.a|ascii_downcase)", "c")]
+"aB"
+["AB","aB","cB"]
+
+[gsub("(?<a>.)"; "\(.a|ascii_upcase)", "\(.a|ascii_downcase)", "c")]
+"aB"
+["AB","ab","cc"]
+
+# splits and _nwise
+[splits("")]
+"ab"
+["","a","b",""]
+

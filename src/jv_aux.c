@@ -1,8 +1,10 @@
+#include <assert.h>
+#include <limits.h>
+#include <math.h>
 #include <string.h>
 #include <stdlib.h>
-#include <assert.h>
 #include "jv_alloc.h"
-#include "jv_type_private.h"
+#include "jv_private.h"
 
 // making this static verbose function here
 // until we introduce a less confusing naming scheme
@@ -13,7 +15,7 @@ static double jv_number_get_value_and_consume(jv number) {
   return value;
 }
 
-static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
+static jv parse_slice(jv j, jv slice, int* pstart, int* pend) {
   // Array slices
   jv start_jv = jv_object_get(jv_copy(slice), jv_string("start"));
   jv end_jv = jv_object_get(slice, jv_string("end"));
@@ -27,8 +29,14 @@ static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
   } else if (jv_get_kind(j) == JV_KIND_STRING) {
     len = jv_string_length_codepoints(j);
   } else {
+    /*
+     * XXX This should be dead code because callers shouldn't call this
+     * function if `j' is neither an array nor a string.
+     */
     jv_free(j);
-    return 0;
+    jv_free(start_jv);
+    jv_free(end_jv);
+    return jv_invalid_with_msg(jv_string("Only arrays and strings can be sliced"));
   }
   if (jv_get_kind(end_jv) == JV_KIND_NULL) {
     jv_free(end_jv);
@@ -38,29 +46,34 @@ static int parse_slice(jv j, jv slice, int* pstart, int* pend) {
       jv_get_kind(end_jv) != JV_KIND_NUMBER) {
     jv_free(start_jv);
     jv_free(end_jv);
-    return 0;
-  } else {
-    double dstart = jv_number_value(start_jv);
-    double dend = jv_number_value(end_jv);
-    jv_free(start_jv);
-    jv_free(end_jv);
-    if (dstart < 0) dstart += len;
-    if (dend < 0) dend += len;
-    if (dstart < 0) dstart = 0;
-    if (dstart > len) dstart = len;
-
-    int start = (int)dstart;
-    int end = (dend > len) ? len : (int)dend;
-    // Ends are exclusive but e.g. 1 < 1.5 so :1.5 should be :2 not :1
-    if(end < dend) end += 1;
-
-    if (end > len) end = len;
-    if (end < start) end = start;
-    assert(0 <= start && start <= end && end <= len);
-    *pstart = start;
-    *pend = end;
-    return 1;
+    return jv_invalid_with_msg(jv_string("Array/string slice indices must be integers"));
   }
+
+  double dstart = jv_number_value(start_jv);
+  double dend = jv_number_value(end_jv);
+  int start, end;
+
+  jv_free(start_jv);
+  jv_free(end_jv);
+  if (isnan(dstart)) dstart = 0;
+  if (dstart < 0)    dstart += len;
+  if (dstart < 0)    dstart = 0;
+  if (dstart > len)  dstart = len;
+  start = dstart > INT_MAX ? INT_MAX : (int)dstart; // Rounds down
+
+  if (isnan(dend))   dend = len;
+  if (dend < 0)      dend += len;
+  if (dend < 0)      dend  = start;
+  end = dend > INT_MAX ? INT_MAX : (int)dend;
+  if (end > len)     end = len;
+  if (end < len)     end += end < dend ? 1 : 0; // We round start down
+                                                // but round end up
+
+  if (end < start) end = start;
+  assert(0 <= start && start <= end && end <= len);
+  *pstart = start;
+  *pend = end;
+  return jv_true();
 }
 
 jv jv_get(jv t, jv k) {
@@ -72,36 +85,44 @@ jv jv_get(jv t, jv k) {
       v = jv_null();
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_NUMBER) {
-    if(jv_is_integer(k)){
-      int idx = (int)jv_number_value(k);
-      if (idx < 0)
-        idx += jv_array_length(jv_copy(t));
-      v = jv_array_get(t, idx);
-      if (!jv_is_valid(v)) {
-        jv_free(v);
-        v = jv_null();
-      }
-      jv_free(k);
-    } else {
+    if (jvp_number_is_nan(k)) {
       jv_free(t);
-      jv_free(k);
       v = jv_null();
+    } else {
+      double didx = jv_number_value(k);
+      if (jvp_number_is_nan(k)) {
+        v = jv_null();
+      } else {
+        if (didx < INT_MIN) didx = INT_MIN;
+        if (didx > INT_MAX) didx = INT_MAX;
+        int idx = (int)didx;
+        if (idx < 0)
+          idx += jv_array_length(jv_copy(t));
+        v = jv_array_get(t, idx);
+        if (!jv_is_valid(v)) {
+          jv_free(v);
+          v = jv_null();
+        }
+      }
     }
+    jv_free(k);
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_OBJECT) {
     int start, end;
-    if (parse_slice(jv_copy(t), k, &start, &end)) {
+    jv e = parse_slice(jv_copy(t), k, &start, &end);
+    if (jv_get_kind(e) == JV_KIND_TRUE) {
       v = jv_array_slice(t, start, end);
     } else {
       jv_free(t);
-      v = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
+      v = e;
     }
   } else if (jv_get_kind(t) == JV_KIND_STRING && jv_get_kind(k) == JV_KIND_OBJECT) {
     int start, end;
-    if (parse_slice(jv_copy(t), k, &start, &end)) {
+    jv e = parse_slice(jv_copy(t), k, &start, &end);
+    if (jv_get_kind(e) == JV_KIND_TRUE) {
       v = jv_string_slice(t, start, end);
     } else {
-      v = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an string slice must be numbers"));
       jv_free(t);
+      v = e;
     }
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_ARRAY) {
     v = jv_array_indexes(t, k);
@@ -146,14 +167,24 @@ jv jv_set(jv t, jv k, jv v) {
     t = jv_object_set(t, k, v);
   } else if (jv_get_kind(k) == JV_KIND_NUMBER &&
              (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
-    if (isnull) t = jv_array();
-    t = jv_array_set(t, (int)jv_number_value(k), v);
-    jv_free(k);
+    if (jvp_number_is_nan(k)) {
+      jv_free(t);
+      jv_free(k);
+      t = jv_invalid_with_msg(jv_string("Cannot set array element at NaN index"));
+    } else {
+      double didx = jv_number_value(k);
+      if (didx < INT_MIN) didx = INT_MIN;
+      if (didx > INT_MAX) didx = INT_MAX;
+      if (isnull) t = jv_array();
+      t = jv_array_set(t, (int)didx, v);
+      jv_free(k);
+    }
   } else if (jv_get_kind(k) == JV_KIND_OBJECT &&
              (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
     if (isnull) t = jv_array();
     int start, end;
-    if (parse_slice(jv_copy(t), k, &start, &end)) {
+    jv e = parse_slice(jv_copy(t), k, &start, &end);
+    if (jv_get_kind(e) == JV_KIND_TRUE) {
       if (jv_get_kind(v) == JV_KIND_ARRAY) {
         int array_len = jv_array_length(jv_copy(t));
         assert(0 <= start && start <= end && end <= array_len);
@@ -185,8 +216,14 @@ jv jv_set(jv t, jv k, jv v) {
     } else {
       jv_free(t);
       jv_free(v);
-      t = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
+      t = e;
     }
+  } else if (jv_get_kind(k) == JV_KIND_OBJECT && jv_get_kind(t) == JV_KIND_STRING) {
+    jv_free(t);
+    jv_free(k);
+    jv_free(v);
+    /* Well, why not?  We should implement this... */
+    t = jv_invalid_with_msg(jv_string_fmt("Cannot update string slices"));
   } else {
     jv err = jv_invalid_with_msg(jv_string_fmt("Cannot update field at %s index of %s",
                                                jv_kind_name(jv_get_kind(k)),
@@ -214,10 +251,15 @@ jv jv_has(jv t, jv k) {
     jv_free(elem);
   } else if (jv_get_kind(t) == JV_KIND_ARRAY &&
              jv_get_kind(k) == JV_KIND_NUMBER) {
-    jv elem = jv_array_get(t, (int)jv_number_value(k));
-    ret = jv_bool(jv_is_valid(elem));
+    if (jvp_number_is_nan(k)) {
+      jv_free(t);
+      ret = jv_false();
+    } else {
+      jv elem = jv_array_get(t, (int)jv_number_value(k));
+      ret = jv_bool(jv_is_valid(elem));
+      jv_free(elem);
+    }
     jv_free(k);
-    jv_free(elem);
   } else {
     ret = jv_invalid_with_msg(jv_string_fmt("Cannot check whether %s has a %s key",
                                             jv_kind_name(jv_get_kind(t)),
@@ -250,13 +292,14 @@ static jv jv_dels(jv t, jv keys) {
         }
       } else if (jv_get_kind(key) == JV_KIND_OBJECT) {
         int start, end;
-        if (parse_slice(jv_copy(t), key, &start, &end)) {
+        jv e = parse_slice(jv_copy(t), key, &start, &end);
+        if (jv_get_kind(e) == JV_KIND_TRUE) {
           starts = jv_array_append(starts, jv_number(start));
           ends = jv_array_append(ends, jv_number(end));
         } else {
           jv_free(new_array);
           jv_free(key);
-          new_array = jv_invalid_with_msg(jv_string_fmt("Start and end indices of an array slice must be numbers"));
+          new_array = e;
           goto arr_out;
         }
       } else {
@@ -271,7 +314,7 @@ static jv jv_dels(jv t, jv keys) {
     int neg_idx = 0;
     int nonneg_idx = 0;
     int len = jv_array_length(jv_copy(t));
-    jv_array_foreach(t, i, elem) {
+    for (int i = 0; i < len; ++i) {
       int del = 0;
       while (neg_idx < jv_array_length(jv_copy(neg_keys))) {
         int delidx = len + (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(neg_keys), neg_idx));
@@ -300,9 +343,7 @@ static jv jv_dels(jv t, jv keys) {
         }
       }
       if (!del)
-        new_array = jv_array_append(new_array, elem);
-      else
-        jv_free(elem);
+        new_array = jv_array_append(new_array, jv_array_get(jv_copy(t), i));
     }
   arr_out:
     jv_free(neg_keys);
@@ -351,8 +392,38 @@ jv jv_setpath(jv root, jv path, jv value) {
   }
   jv pathcurr = jv_array_get(jv_copy(path), 0);
   jv pathrest = jv_array_slice(path, 1, jv_array_length(jv_copy(path)));
-  return jv_set(root, pathcurr,
-                jv_setpath(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest, value));
+
+  /*
+   * We need to be careful not to make extra copies since that leads to
+   * quadratic behavior (e.g., when growing large data structures in a
+   * reduction with `setpath/2`, i.e., with `|=`.
+   */
+  if (jv_get_kind(pathcurr) == JV_KIND_OBJECT) {
+    // Assignment to slice -- dunno yet how to avoid the extra copy
+    return jv_set(root, pathcurr,
+                  jv_setpath(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest, value));
+  }
+
+  jv subroot = jv_get(jv_copy(root), jv_copy(pathcurr));
+  if (!jv_is_valid(subroot)) {
+    jv_free(root);
+    jv_free(pathcurr);
+    jv_free(pathrest);
+    jv_free(value);
+    return subroot;
+  }
+
+  // To avoid the extra copy we drop the reference from `root` by setting that
+  // to null first.
+  root = jv_set(root, jv_copy(pathcurr), jv_null());
+  if (!jv_is_valid(root)) {
+    jv_free(subroot);
+    jv_free(pathcurr);
+    jv_free(pathrest);
+    jv_free(value);
+    return root;
+  }
+  return jv_set(root, pathcurr, jv_setpath(subroot, pathrest, value));
 }
 
 jv jv_getpath(jv root, jv path) {
@@ -481,7 +552,7 @@ jv jv_keys_unsorted(jv x) {
 jv jv_keys(jv x) {
   if (jv_get_kind(x) == JV_KIND_OBJECT) {
     int nkeys = jv_object_length(jv_copy(x));
-    jv* keys = jv_mem_calloc(sizeof(jv), nkeys);
+    jv* keys = jv_mem_calloc(nkeys, sizeof(jv));
     int kidx = 0;
     jv_object_foreach(x, key, value) {
       keys[kidx++] = key;
@@ -602,7 +673,7 @@ static struct sort_entry* sort_items(jv objects, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
   int n = jv_array_length(jv_copy(objects));
-  struct sort_entry* entries = jv_mem_calloc(sizeof(struct sort_entry), n);
+  struct sort_entry* entries = jv_mem_calloc(n, sizeof(struct sort_entry));
   for (int i=0; i<n; i++) {
     entries[i].object = jv_array_get(jv_copy(objects), i);
     entries[i].key = jv_array_get(jv_copy(keys), i);

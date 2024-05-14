@@ -45,9 +45,8 @@ const struct opcode_description* opcode_describe(opcode op);
 
 
 #define MAX_CFUNCTION_ARGS 10
-typedef void (*cfunction_ptr)();
 struct cfunction {
-  cfunction_ptr fptr;
+  jv (*fptr)();
   const char* name;
   int nargs;
 };

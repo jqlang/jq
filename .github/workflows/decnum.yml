@@ -1,0 +1,32 @@
+name: decnum
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  disabled:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y automake autoconf libtool
+      - name: Build
+        run: |
+          autoreconf -i
+          ./configure \
+            --disable-docs \
+            --disable-maintainer-mode \
+            --disable-decnum
+          make -j"$(nproc)"
+          file ./jq
+      - name: Test
+        run: |
+          diff <(echo 100000000000000000000 | ./jq) <(echo 1e+20)
+          git diff --exit-code
