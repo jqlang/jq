@@ -2177,10 +2177,38 @@ try ["OK", setpath([[1]]; 1)] catch ["KO", .]
 []
 ["KO","Cannot update field at array index of array"]
 
-getuuid | test("^[a-fA-F0-9-]{36}$")
+# getuuid/0 returns a string of 36 characters
+
+getuuid | type == "string"
+null
+true
+
+getuuid | length == 36
+null
+true
+
+getuuid | "\(.[8:9])\(.[13:14])\(.[18:19])\(.[23:24])" == "----"
+null
+true
+
+getuuid | split("") | map(. as $c | "ABCDEF0123456789-" | split("") | contains([$c])) | all
 null
 true
 
 [range(10)] | map(getuuid) |  reduce .[] as $uuid( .; map( . != $uuid ) ) | all
+null
+true
+
+# add_uuids/1 uses a unique value for each object
+
+[range(10)] | map({ value: . }) | add_uuids("id") | map(.id) | sort | unique | length == 10
+null
+true
+
+[range(20)] | map({ value: . }) | add_ids("key") | map(.key) | sort | unique | length == 20
+null
+true
+
+try ([range(20)] | add_uuids("id") | map(.id) | sort | unique | length == 10) catch . == "add_uuids/0 expected an array of objects"
 null
 true
