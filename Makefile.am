@@ -1,8 +1,3 @@
-
-# PYTHON3_CFLAGS = -DNDEBUG -fdebug-prefix-map=/build/python3.7-3.7.3=. -fstack-protector -fwrapv -g -I/usr/include/python3.7m -I/usr/include/x86_64-linux-gnu/python3.7m -O3 -specs=/usr/share/dpkg/no-pie-compile.specs -Wall -Werror=format-security -Wformat -Wno-unused-result -Wsign-compare
-
-# PYTHON3_LDFLAGS = -L/usr/lib -L/usr/lib/python3.7/config-3.7m-x86_64-linux-gnu -lcrypt -ldl -lm -lpthread -lpython3.7m -lutil -Wl,-Bsymbolic-functions -Wl,-O1 -Xlinker 
-
 ### C source files to be built and distributed.
 
 LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \

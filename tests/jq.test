@@ -1905,6 +1905,278 @@ false
 1
 1
 
+# decnum to double conversion
+.[] as $n | $n+0 | [., tostring, . == $n]
+[-9007199254740993, -9007199254740992, 9007199254740992, 9007199254740993, 13911860366432393]
+[-9007199254740992,"-9007199254740992",true]
+[-9007199254740992,"-9007199254740992",true]
+[9007199254740992,"9007199254740992",true]
+[9007199254740992,"9007199254740992",true]
+[13911860366432392,"13911860366432392",true]
+
+# abs, fabs, length
+abs
+"abc"
+"abc"
+
+map(abs)
+[-0, 0, -10, -1.1]
+[0,0,10,1.1]
+
+map(fabs == length) | unique
+[-10, -1.1, -1e-1, 1000000000000000002]
+[true]
+
+# The following is NOT prescriptive:
+map(abs)
+[0.1,1000000000000000002]
+[1e-1, 1000000000000000002]
+
+# Using a keyword as variable/label name
+
+123 as $label | $label
+null
+123
+
+[ label $if | range(10) | ., (select(. == 5) | break $if) ]
+null
+[0,1,2,3,4,5]
+
+reduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)
+[1,2,3]
+96
+
+1 as $foreach | 2 as $and | 3 as $or | { $foreach, $and, $or, a }
+{"a":4,"b":5}
+{"foreach":1,"and":2,"or":3,"a":4}
+
+[ foreach .[] as $try (1 as $catch | $catch - 1; . + $try; .) ]
+[10,9,8,7]
+[10,19,27,34]
+
+
+# Object construction
+
+{ a, $__loc__, c }
+{"a":[1,2,3],"b":"foo","c":{"hi":"hey"}}
+{"a":[1,2,3],"__loc__":{"file":"<top-level>","line":1},"c":{"hi":"hey"}}
+
+1 as $x | "2" as $y | "3" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }
+{"as":8}
+{"x":1,"as":8,"2":4,"3":5,"if":6,"foo":7}
+
+
+# nan is parsed as a valid NaN value from JSON
+
+fromjson | isnan
+"nan"
+true
+
+tojson | fromjson
+{"a":nan}
+{"a":null}
+
+# also "nan with payload" #2985
+fromjson | isnan
+"nan1234"
+true
+
+
+# calling input/0, or debug/0 in a test doesn't crash jq
+
+try input catch .
+null
+"break"
+
+debug
+1
+1
+
+# try/catch catches more than it should #1859
+"foo" | try ((try . catch "caught too much") | error) catch "caught just right"
+null
+"caught just right"
+
+.[]|(try (if .=="hi" then . else error end) catch empty) | "\(.) there!"
+["hi","ho"]
+"hi there!"
+
+try (["hi","ho"]|.[]|(try . catch (if .=="ho" then "BROKEN"|error else empty end)) | if .=="ho" then error else "\(.) there!" end) catch "caught outside \(.)"
+null
+"hi there!"
+"caught outside ho"
+
+.[]|(try . catch (if .=="ho" then "BROKEN"|error else empty end)) | if .=="ho" then error else "\(.) there!" end
+["hi","ho"]
+"hi there!"
+
+try (try error catch "inner catch \(.)") catch "outer catch \(.)"
+"foo"
+"inner catch foo"
+
+try ((try error catch "inner catch \(.)")|error) catch "outer catch \(.)"
+"foo"
+"outer catch inner catch foo"
+
+# Also #1859, but from #1885
+first(.?,.?)
+null
+null
+
+# Also #1859, but from #2140
+{foo: "bar"} | .foo |= .?
+null
+{"foo": "bar"}
+
+# Also #1859, but from #2220
+. |= try 2
+1
+2
+
+. |= try 2 catch 3
+1
+2
+
+.[] |= try tonumber
+["1", "2a", "3", " 4 ", "5.67", ".89", "-876", "+5.43", 21]
+[1, 3, 5.67, 0.89, -876, 5.43, 21]
+
+# Also 1859, but from 2073
+any(keys[]|tostring?;true)
+{"a":"1","b":"2","c":"3"}
+true
+
+
+# explode/implode
+# test replacement character (65533) for outside codepoint range and 0xd800 (55296) - 0xdfff (57343) utf16 surrogate pair range
+# 1.1 and 1.9 to test round down of non-ints
+implode|explode
+[-1,0,1,2,3,1114111,1114112,55295,55296,57343,57344,1.1,1.9]
+[65533,0,1,2,3,1114111,65533,55295,65533,65533,57344,1,1]
+
+map(try implode catch .)
+[123,["a"],[nan]]
+["implode input must be an array","string (\"a\") can't be imploded, unicode codepoint needs to be numeric","number (null) can't be imploded, unicode codepoint needs to be numeric"]
+
+# walk
+walk(.)
+{"x":0}
+{"x":0}
+
+walk(1)
+{"x":0}
+1
+
+# The following is a regression test, not a requirement:
+[walk(.,1)]
+{"x":0}
+[{"x":0},1]
+
+# Issue #2584
+walk(select(IN({}, []) | not))
+{"a":1,"b":[]}
+{"a":1}
+
+# #2815
+[range(10)] | .[1.2:3.5]
+null
+[1,2,3]
+
+[range(10)] | .[1.5:3.5]
+null
+[1,2,3]
+
+[range(10)] | .[1.7:3.5]
+null
+[1,2,3]
+
+[range(10)] | .[1.7:4294967295]
+null
+[1,2,3,4,5,6,7,8,9]
+
+[range(10)] | .[1.7:-4294967296]
+null
+[]
+
+[[range(10)] | .[1.1,1.5,1.7]]
+null
+[1,1,1]
+
+[range(5)] | .[1.1] = 5
+null
+[0,5,2,3,4]
+
+[range(3)] | .[nan:1]
+null
+[0]
+
+[range(3)] | .[1:nan]
+null
+[1,2]
+
+[range(3)] | .[nan]
+null
+null
+
+try ([range(3)] | .[nan] = 9) catch .
+null
+"Cannot set array element at NaN index"
+
+try ("foobar" | .[1.5:3.5] = "xyz") catch .
+null
+"Cannot update string slices"
+
+try ([range(10)] | .[1.5:3.5] = ["xyz"]) catch .
+null
+[0,"xyz",4,5,6,7,8,9]
+
+try ("foobar" | .[1.5]) catch .
+null
+"Cannot index string with number"
+
+
+# setpath/2 does not leak the input after an invalid get #2970
+
+try ["ok", setpath([1]; 1)] catch ["ko", .]
+{"hi":"hello"}
+["ko","Cannot index object with number"]
+
+
+# ltrimstr/1 rtrimstr/1 don't leak on invalid input #2977
+
+try ltrimstr(1) catch "x", try rtrimstr(1) catch "x" | "ok"
+"hi"
+"ok"
+"ok"
+
+try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"
+{"hey":[]}
+"ok"
+"ok"
+
+# ltrimstr/1 and rtrimstr/1 return an error for non-strings. #2969
+
+.[] as [$x, $y] | try ["ok", ($x | ltrimstr($y))] catch ["ko", .]
+[["hi",1],[1,"hi"],["hi","hi"],[1,1]]
+["ko","startswith() requires string inputs"]
+["ko","startswith() requires string inputs"]
+["ok",""]
+["ko","startswith() requires string inputs"]
+
+.[] as [$x, $y] | try ["ok", ($x | rtrimstr($y))] catch ["ko", .]
+[["hi",1],[1,"hi"],["hi","hi"],[1,1]]
+["ko","endswith() requires string inputs"]
+["ko","endswith() requires string inputs"]
+["ok",""]
+["ko","endswith() requires string inputs"]
+
+
+# oss-fuzz #66061: setpath/2 leaks when indexing array with array
+
+try ["OK", setpath([[1]]; 1)] catch ["KO", .]
+[]
+["KO","Cannot update field at array index of array"]
+
 getuuid | test("^[a-fA-F0-9-]{36}$")
 null
 true
