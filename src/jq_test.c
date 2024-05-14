@@ -492,24 +492,96 @@ static void jv_test() {
   }
 
   {
-	jv input = jv_parse("{\"key\":[{\"this\":{\"some\":\"thing\"}}, 1, [true]]}");
-	jv output = jv_paths(jv_copy(input));
-	jv_dump(input, JV_PRINT_TAB);
-	jv_dump(output, JV_PRINT_TAB);
+	assert(jv_equal(
+			jv_paths(
+				jv_parse("{"
+					"\"key\":["
+						"{\"this\":{\"some\":true}},"
+						"false,"
+						"null,"
+						"10,"
+						"[true]"
+					"]"
+				"}")
+			),
+			jv_parse("["
+				"[\"key\"],"
+				"[\"key\", 0],"
+				"[\"key\", 0, \"this\"],"
+				"[\"key\", 0, \"this\", \"some\"],"
+				"[\"key\", 1],"
+				"[\"key\", 2],"
+				"[\"key\", 3],"
+				"[\"key\", 4],"
+				"[\"key\", 4, 0]"
+			"]")
+		));
+
   }
 
   {
-	jv input = jv_parse("{\"key\":{\"some\":{\"test\":\"value\"}, \"other\":\"thing\"}}");
-	jv add = jv_parse("{\"some\":{\"test\":\"other\"}, \"added\":\"thing\"}");
-	jv output = jv_addpath(jv_copy(input), JV_ARRAY(jv_string("key")), jv_copy(add));
-	jv_dump(input, JV_PRINT_TAB);
-	jv_dump(add, JV_PRINT_TAB);
-	jv_dump(output, JV_PRINT_TAB);
+	assert(jv_equal(
+			jv_addpath(
+				jv_parse("{"
+					"\"key\":{"
+						"\"some\":{"
+							"\"test\":\"value\""
+						"},"
+						"\"other\":\"thing\""
+					"}"
+				"}"),
+				JV_ARRAY(jv_string("key")),
+				jv_parse("{"
+					"\"some\":{"
+						"\"test\":\"other\""
+					"},"
+					"\"added\":\"thing\""
+				"}")
+			),
+			jv_parse("{"
+				"\"key\":{"
+					"\"some\":{"
+						"\"test\":\"other\""
+					"},"
+					"\"other\":\"thing\","
+					"\"added\":\"thing\""
+				"}"
+			"}")
+		)
+	);
+
   }
 
   {
-	jv output = jv_unshare(jv_parse("{\"test\":[{\"some\":\"value\"}, 1, true, false, null]}"));
+	jv initial = jv_parse("{\"test\":[{\"some\":\"value\"}, 1, true, false, null]}");
+	jv new = jv_unshare(jv_copy(initial));
 
-	jv_free(output);
+	assert(jv_equal(jv_copy(initial), jv_copy(new)));
+	assert(!jv_identical(jv_copy(initial), jv_copy(new)));
+
+	jv paths = jv_paths(jv_copy(initial));
+
+	size_t paths_length = jv_array_length(jv_copy(paths));
+
+	for(size_t i = 0; i < paths_length; i++){
+		jv path_i = jv_array_get(jv_copy(paths), i);
+		assert(!jv_identical(
+			jv_getpath(
+				jv_copy(initial),
+				jv_copy(path_i)
+			),
+			jv_getpath(
+				jv_copy(new),
+				jv_copy(path_i)
+			)
+		));
+
+		jv_free(path_i);
+	}
+
+	jv_free(initial);
+	jv_free(new);
+	jv_free(paths);
+
   }
 }
