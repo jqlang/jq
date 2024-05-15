@@ -514,6 +514,22 @@ static jv f_tostring(jq_state *jq, jv input) {
   }
 }
 
+static jv f_toarray(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_ARRAY) {
+    return input;
+  } else {
+    return jv_array_set(jv_array(), 0, input);
+  }
+}
+
+static jv f_toobject(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_OBJECT) {
+    return input;
+  } else {
+    return jv_object_set(jv_object(), jv_string("value"), input);
+  }
+}
+
 static jv f_utf8bytelength(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_STRING)
     return type_error(input, "only strings have UTF-8 byte length");
@@ -1775,6 +1791,8 @@ BINOPS
   {f_json_parse, "fromjson", 1},
   {f_tonumber, "tonumber", 1},
   {f_tostring, "tostring", 1},
+  {f_toarray, "toarray", 1},
+  {f_toobject, "toobject", 1},
   {f_keys, "keys", 1},
   {f_keys_unsorted, "keys_unsorted", 1},
   {f_startswith, "startswith", 2},
