@@ -417,23 +417,31 @@ particular version of jq has converted it to an IEEE754
 double-precision representation, losing precision.</p>
 <p>The way in which jq handles numbers has changed over time
 and further changes are likely within the parameters set by
-the relevant JSON standards.  The following remarks are
-therefore offered with the understanding that they are
-intended to be descriptive of the current version of jq and
-should not be interpreted as being prescriptive:</p>
+the relevant JSON standards.  Moreover, build configuration
+options can alter how jq processes numbers.</p>
+<p>The following remarks are therefore offered with the
+understanding that they are intended to be descriptive of the
+current version of jq and should not be interpreted as being
+prescriptive:</p>
 <p>(1) Any arithmetic operation on a number that has not
 already been converted to an IEEE754 double precision
 representation will trigger a conversion to the IEEE754
 representation.</p>
 <p>(2) jq will attempt to maintain the original decimal
-precision of number literals, but in expressions such
-<code>1E1234567890</code>, precision will be lost if the exponent is
-too large.</p>
+precision of number literals (if the <code>--disable-decnum</code>
+build configuration option was not used), but in expressions
+such <code>1E1234567890</code>, precision will be lost if the exponent
+is too large.</p>
 <p>(3) In jq programs, a leading minus sign will trigger the
 conversion of the number to an IEEE754 representation.</p>
 <p>(4) Comparisons are carried out using the untruncated
 big decimal representation of numbers if available, as
 illustrated in one of the following examples.</p>
+<p>The examples below use the builtin function <code>have_decnum</code> in
+order to demonstrate the expected effects of using / not
+using the <code>--disable-decnum</code> build configuration option, and
+also to allow automated tests derived from these examples to
+pass regardless of whether that option is used.</p>
             <div class="pb-3">
               <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example1" aria-expanded="false" aria-controls="example1">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
@@ -478,7 +486,7 @@ illustrated in one of the following examples.</p>
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
-                    <td class="font-monospace">jq '[., tojson]'</td>
+                    <td class="font-monospace">jq '[., tojson] | . == if have_decnum then [12345678909876543212345,&#34;12345678909876543212345&#34;] else [12345678909876543000000,&#34;12345678909876543000000&#34;] end'</td>
                   </tr>
                   <tr>
                     <th>Input</th>
@@ -486,10 +494,10 @@ illustrated in one of the following examples.</p>
                   </tr>
                   <tr>
                     <th>Output</th>
-                    <td class="font-monospace">[12345678909876543212345,&#34;12345678909876543212345&#34;]</td>
+                    <td class="font-monospace">true</td>
                   </tr>
                   <tr class="d-print-none">
-                    <th><a href="https://jqplay.org/jq?q=%5B.%2C%20tojson%5D&j=12345678909876543212345" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <th><a href="https://jqplay.org/jq?q=%5B.%2C%20tojson%5D%20%7C%20.%20%3D%3D%20if%20have_decnum%20then%20%5B12345678909876543212345%2C%2212345678909876543212345%22%5D%20else%20%5B12345678909876543000000%2C%2212345678909876543000000%22%5D%20end&j=12345678909876543212345" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
                     <td></td>
                   </tr>
                 </table>
@@ -514,7 +522,7 @@ illustrated in one of the following examples.</p>
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
-                    <td class="font-monospace">jq 'map([., . == 1]) | tojson'</td>
+                    <td class="font-monospace">jq 'map([., . == 1]) | tojson | . == if have_decnum then &#34;[[1,true],[1.000,true],[1.0,true],[1.00,true]]&#34; else &#34;[[1,true],[1,true],[1,true],[1,true]]&#34; end'</td>
                   </tr>
                   <tr>
                     <th>Input</th>
@@ -522,17 +530,17 @@ illustrated in one of the following examples.</p>
                   </tr>
                   <tr>
                     <th>Output</th>
-                    <td class="font-monospace">&#34;[[1,true],[1.000,true],[1.0,true],[1.00,true]]&#34;</td>
+                    <td class="font-monospace">true</td>
                   </tr>
                   <tr class="d-print-none">
-                    <th><a href="https://jqplay.org/jq?q=map%28%5B.%2C%20.%20%3D%3D%201%5D%29%20%7C%20tojson&j=%5B1%2C%201.000%2C%201.0%2C%20100e-2%5D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <th><a href="https://jqplay.org/jq?q=map%28%5B.%2C%20.%20%3D%3D%201%5D%29%20%7C%20tojson%20%7C%20.%20%3D%3D%20if%20have_decnum%20then%20%22%5B%5B1%2Ctrue%5D%2C%5B1.000%2Ctrue%5D%2C%5B1.0%2Ctrue%5D%2C%5B1.00%2Ctrue%5D%5D%22%20else%20%22%5B%5B1%2Ctrue%5D%2C%5B1%2Ctrue%5D%2C%5B1%2Ctrue%5D%2C%5B1%2Ctrue%5D%5D%22%20end&j=%5B1%2C%201.000%2C%201.0%2C%20100e-2%5D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
                     <td></td>
                   </tr>
                 </table>
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
-                    <td class="font-monospace">jq '. as $big | [$big, $big + 1] | map(. &gt; 10000000000000000000000000000000)'</td>
+                    <td class="font-monospace">jq '. as $big | [$big, $big + 1] | map(. &gt; 10000000000000000000000000000000) | . == if have_decnum then [true, false] else [false, false] end'</td>
                   </tr>
                   <tr>
                     <th>Input</th>
@@ -540,10 +548,10 @@ illustrated in one of the following examples.</p>
                   </tr>
                   <tr>
                     <th>Output</th>
-                    <td class="font-monospace">[true, false]</td>
+                    <td class="font-monospace">true</td>
                   </tr>
                   <tr class="d-print-none">
-                    <th><a href="https://jqplay.org/jq?q=.%20as%20%24big%20%7C%20%5B%24big%2C%20%24big%20%2B%201%5D%20%7C%20map%28.%20%3E%2010000000000000000000000000000000%29&j=10000000000000000000000000000001" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <th><a href="https://jqplay.org/jq?q=.%20as%20%24big%20%7C%20%5B%24big%2C%20%24big%20%2B%201%5D%20%7C%20map%28.%20%3E%2010000000000000000000000000000000%29%20%7C%20.%20%3D%3D%20if%20have_decnum%20then%20%5Btrue%2C%20false%5D%20else%20%5Bfalse%2C%20false%5D%20end&j=10000000000000000000000000000001" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
                     <td></td>
                   </tr>
                 </table>
@@ -4967,6 +4975,23 @@ input can be considered for alteration.</p>
               </div>
             </div>
           </section>
+          <section id="have_literal_numbers">
+            <h3>
+              <code>have_literal_numbers</code>
+              <a href="#have_literal_numbers" class="icon-link" aria-label="Link to this section: `have_literal_numbers`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
+            </h3>
+            <p>This builtin returns true if jq's build configuration
+includes support for preservation of input number literals.</p>
+          </section>
+          <section id="have_decnum">
+            <h3>
+              <code>have_decnum</code>
+              <a href="#have_decnum" class="icon-link" aria-label="Link to this section: `have_decnum`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
+            </h3>
+            <p>This builtin returns true if jq was built with "decnum",
+which is the current literal number preserving numeric
+backend implementation for jq.</p>
+          </section>
           <section id="$jq_build_configuration">
             <h3>
               <code>$JQ_BUILD_CONFIGURATION</code>
@@ -8341,6 +8366,8 @@ by a semi-colon, where the first number is one of these:</p>
         "until(cond; next)": "until",
         "recurse(f), recurse, recurse(f; condition)": "recurse",
         "walk(f)": "walk",
+        "have_literal_numbers": "have_literal_numbers",
+        "have_decnum": "have_decnum",
         "$JQ_BUILD_CONFIGURATION": "$jq_build_configuration",
         "$ENV, env": "$env-env",
         "transpose": "transpose",
