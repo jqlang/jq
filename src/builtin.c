@@ -1767,6 +1767,15 @@ static jv f_current_line(jq_state *jq, jv a) {
   return jq_util_input_get_current_line(jq);
 }
 
+static jv f_have_decnum(jq_state *jq, jv a) {
+  jv_free(a);
+#ifdef USE_DECNUM
+  return jv_true();
+#else
+  return jv_false();
+#endif
+}
+
 #define LIBM_DD(name) \
   {f_ ## name, #name, 1},
 #define LIBM_DD_NO(name) LIBM_DD(name)
@@ -1846,6 +1855,8 @@ BINOPS
   {f_now, "now", 1},
   {f_current_filename, "input_filename", 1},
   {f_current_line, "input_line_number", 1},
+  {f_have_decnum, "have_decnum", 1},
+  {f_have_decnum, "have_literal_numbers", 1},
   {f_getuuid, "getuuid", 1},
 };
 #undef LIBM_DDDD_NO

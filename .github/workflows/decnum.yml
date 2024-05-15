@@ -25,6 +25,7 @@ jobs:
             --disable-maintainer-mode \
             --disable-decnum
           make -j"$(nproc)"
+          make check
           file ./jq
       - name: Test
         run: |

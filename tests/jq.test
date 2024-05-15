@@ -1874,17 +1874,17 @@ map(. == 1)
 
 # When no arithmetic is involved jq should preserve the literal value
 
-.[0] | tostring
+.[0] | tostring | . == if have_decnum then "13911860366432393" else "13911860366432392" end
 [13911860366432393]
-"13911860366432393"
+true
 
-.x | tojson
+.x | tojson | . == if have_decnum then "13911860366432393" else "13911860366432392" end
 {"x":13911860366432393}
-"13911860366432393"
+true
 
-13911860366432393 == 13911860366432392
+(13911860366432393 == 13911860366432392) | . == if have_decnum then false else true end
 null
-false
+true
 
 
 # Applying arithmetic to the value will truncate the result to double
@@ -1977,7 +1977,7 @@ tojson | fromjson
 {"a":null}
 
 # also "nan with payload" #2985
-fromjson | isnan
+if have_decnum then fromjson else nan end | isnan
 "nan1234"
 true
 
