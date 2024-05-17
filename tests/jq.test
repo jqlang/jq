@@ -2176,3 +2176,15 @@ try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"
 try ["OK", setpath([[1]]; 1)] catch ["KO", .]
 []
 ["KO","Cannot update field at array index of array"]
+
+$data|map(select(type=="object"))|map(.this|select(type=="string"))
+null
+["is a test"]
+
+$raw | try ({type:type,slice:.[16:22]}) catch .
+null
+{"type":"string","slice":"a test"}
+
+.+($data|map(select(.this|type=="string"))|.[0])
+{"foo":"bar"}
+{"foo":"bar","this":"is a test","that":"is too"}

@@ -9,12 +9,12 @@
 #include "jq.h"
 
 static void jv_test();
-static void run_jq_tests(jv, int, FILE *, int, int);
+static void run_jq_tests(jv, jv, int, FILE *, int, int);
 #ifdef HAVE_PTHREAD
 static void run_jq_pthread_tests();
 #endif
 
-int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
+int jq_testsuite(jv progargs, jv libdirs, int verbose, int argc, char* argv[]) {
   FILE *testdata = stdin;
   int skip = -1;
   int take = -1;
@@ -36,7 +36,7 @@ int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
       }
     }
   }
-  run_jq_tests(libdirs, verbose, testdata, skip, take);
+  run_jq_tests(progargs, libdirs, verbose, testdata, skip, take);
 #ifdef HAVE_PTHREAD
   run_jq_pthread_tests();
 #endif
@@ -73,7 +73,7 @@ static void test_err_cb(void *data, jv e) {
   jv_free(e);
 }
 
-static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int take) {
+static void run_jq_tests(jv prog_args, jv lib_dirs, int verbose, FILE *testdata, int skip, int take) {
   char prog[4096] = {0};
   char buf[4096];
   struct err_data err_msg;
@@ -133,7 +133,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
     int pass = 1;
     tests++;
     printf("Test #%d: '%s' at line number %u\n", tests + tests_to_skip, prog, lineno);
-    int compiled = jq_compile(jq, prog);
+    int compiled = jq_compile_args(jq, prog, jv_copy(prog_args));
 
     if (must_fail) {
       jq_set_error_cb(jq, NULL, NULL);

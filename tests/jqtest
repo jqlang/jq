@@ -2,4 +2,4 @@
 
 . "${0%/*}/setup" "$@"
 
-$VALGRIND $Q $JQ -L "$mods" --run-tests $JQTESTDIR/jq.test
+$VALGRIND $Q $JQ -L "$mods" --slurpfile data "$slurpfile" --rawfile raw "$rawfile" --run-tests $JQTESTDIR/jq.test
