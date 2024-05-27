@@ -1,11 +1,6 @@
 ---
 headline: jq 1.3 Manual
 
-history: |
-
-  *The manual for the development version of jq can be found
-  [here](../).*
-
 body: |
 
   A jq program is a "filter": it takes an input, and produces an
