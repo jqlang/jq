@@ -34,6 +34,10 @@ void *alloca (size_t);
 #include <time.h>
 #ifdef WIN32
 #include <windows.h>
+#else
+#include <spawn.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #endif
 #include "builtin.h"
 #include "compile.h"
@@ -1750,6 +1754,161 @@ static jv f_have_decnum(jq_state *jq, jv a) {
 #endif
 }
 
+#ifdef WIN32
+static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
+	jv_free(input), jv_free(path), jv_free(args);
+  return jv_invalid_with_msg(jv_string("exec not supported on this platform"));
+}
+#else
+static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
+	int ret = 0;
+
+	/* argument validation */
+	if (jv_get_kind(path) != JV_KIND_STRING) {
+		jv_free(input), jv_free(path), jv_free(args);
+		return type_error(path, "exec/2: path must be string");
+	}
+
+	// extract args into const char ** on the stack
+	if (jv_get_kind(args) != JV_KIND_ARRAY) {
+		jv_free(input), jv_free(path), jv_free(args);
+		return type_error(args, "exec/2: args must be array");
+	}
+
+	// validate args array before using it to avoid having to clean up
+	// a partially populated argv
+	jv_array_foreach(args, i, s) {
+		if (jv_get_kind(s) != JV_KIND_STRING) ret++;
+		jv_free(s);
+	}
+	if (ret) {
+		jv_free(input), jv_free(path), jv_free(args);
+		return type_error(args, "exec/2: args must only contain strings");
+	}
+
+	const size_t argc = jv_array_length(jv_copy(args)) + 1;
+	// this can't be a * const because of how we initialize it
+	char * argv[argc + 1];
+	jv_array_foreach(args, i, s) {
+		argv[i + 1] = strdup(jv_string_value(s));
+		jv_free(s);
+	}
+	argv[0] = strdup(jv_string_value(path));
+	argv[argc] = 0;
+	jv_free(path);
+
+	/* setting up pipes */
+	int fin[2] = {0, 0}, fout[2] = {0, 0};
+	posix_spawn_file_actions_t fda;
+	if ((ret = posix_spawn_file_actions_init(&fda))) {
+		jv_free(args), jv_free(input);
+		return jv_invalid_with_msg(jv_string("exec/2: could not initialize fd actions"));
+	}
+
+	// TODO: better error reporting
+	if ((ret = pipe(fin))) {
+		jv_free(args), jv_free(input);
+		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+	}
+	if ((ret = posix_spawn_file_actions_addclose(&fda, fin[1]))) {
+		jv_free(args), jv_free(input);
+		close(fin[0]), close(fin[1]);
+		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+	}
+	if ((ret = posix_spawn_file_actions_adddup2(&fda, fin[0], 0))) {
+		jv_free(args), jv_free(input);
+		close(fin[0]), close(fin[1]);
+		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+	}
+	if ((ret = posix_spawn_file_actions_addclose(&fda, fin[0]))) {
+		jv_free(args), jv_free(input);
+		close(fin[0]), close(fin[1]);
+		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+	}
+
+	// TODO: better error reporting
+	if ((ret = pipe(fout))) {
+		jv_free(args), jv_free(input);
+		close(fin[0]), close(fin[1]);
+		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+	}
+	if ((ret = posix_spawn_file_actions_addclose(&fda, fout[0]))) {
+		jv_free(args), jv_free(input);
+		close(fin[0]), close(fin[1]);
+		close(fout[0]), close(fout[1]);
+		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+	}
+	if ((ret = posix_spawn_file_actions_adddup2(&fda, fout[1], 1))) {
+		jv_free(args), jv_free(input);
+		close(fin[0]), close(fin[1]);
+		close(fout[0]), close(fout[1]);
+		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+	}
+	if ((ret = posix_spawn_file_actions_addclose(&fda, fout[1]))) {
+		jv_free(args), jv_free(input);
+		close(fin[0]), close(fin[1]);
+		close(fout[0]), close(fout[1]);
+		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+	}
+
+	/* execute */
+	pid_t pid;
+	// NOTE: the warning on argv should be fine, posix_spawnp doesn't mutate those to my knowledge
+	if (posix_spawnp(&pid, argv[0], &fda,
+				NULL, argv, NULL)) {
+		close(fin[0]), close(fin[1]);
+		close(fout[0]), close(fout[1]);
+		jv_free(input);
+		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+	}
+	for (size_t i = 0; i < argc; i++) {
+		free(argv[i]);
+	}
+	close(fin[0]), close(fout[1]);
+	jv_free(args);
+	if ((ret = posix_spawn_file_actions_destroy(&fda))) {
+		// TODO: what should we do here? this is technically harmless
+	}
+
+	/* send and receive data */
+	// TODO: error checking on the writes
+	switch (jv_get_kind(input)) {
+		case JV_KIND_INVALID:
+		case JV_KIND_NULL:
+			close(fin[1]);
+			jv_free(input);
+			break; // do not pipe invalid / null
+		case JV_KIND_STRING:
+			write(fin[1], jv_string_value(input), jv_string_length_bytes(jv_copy(input)));
+			close(fin[1]);
+			jv_free(input);
+			break;
+		default: {
+			jv s = jv_dump_string(input, 0);
+			write(fin[1], jv_string_value(s), jv_string_length_bytes(jv_copy(s)));
+			close(fin[1]);
+			jv_free(s);
+			break;
+		}
+	}
+
+	jv output = jv_string_empty(0);
+	char *buf = malloc(1024);
+	ssize_t bytes;
+	while ((bytes = read(fout[0], buf, 1024)) > 0) {
+		output = jv_string_append_buf(output, buf, bytes);
+	}
+	close(fout[0]);
+	free(buf);
+
+	// TODO: parse output into json? probably not.
+
+	// TODO: check waitpid output
+	waitpid(pid, &ret, 0);
+	return output;
+}
+#endif
+
 #define LIBM_DD(name) \
   {f_ ## name, #name, 1},
 #define LIBM_DD_NO(name) LIBM_DD(name)
@@ -1829,6 +1988,7 @@ BINOPS
   {f_current_line, "input_line_number", 1},
   {f_have_decnum, "have_decnum", 1},
   {f_have_decnum, "have_literal_numbers", 1},
+  {f_exec, "exec", 3},
 };
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
