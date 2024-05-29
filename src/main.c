@@ -440,8 +440,8 @@ int main(int argc, char* argv[]) {
         _setmode(fileno(stdin),  _O_BINARY);
         _setmode(fileno(stdout), _O_BINARY);
         _setmode(fileno(stderr), _O_BINARY);
-        if (!short_opts) continue;
 #endif
+        if (!short_opts) continue;
       }
       if (isoption(argv[i], 0, "tab", &short_opts)) {
         dumpopts &= ~JV_PRINT_INDENT_FLAGS(7);
