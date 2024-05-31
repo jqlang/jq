@@ -2064,7 +2064,7 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 	} else {
 		// POSIX guarantees that this is WIFSIGNALED(ret)
 		obj = jv_object_set(obj, jv_string("status"), jv_number(-1));
-		obj = jv_object_set(obj, jv_string("signal"), jv_number(WSTOPSIG(ret)));
+		obj = jv_object_set(obj, jv_string("signal"), jv_number(WTERMSIG(ret)));
 	}
 	obj = jv_object_set(obj, jv_string("out"), sout);
 	obj = jv_object_set(obj, jv_string("err"), serr);
