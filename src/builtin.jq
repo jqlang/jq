@@ -280,3 +280,5 @@ def IN(s): any(s == .; .);
 def IN(src; s): any(src == s; .);
 
 def exec(path): exec(path; []);
+def system(path; args): exec(path; args) | .out | rtrim ;
+def system(path): system(path; []);
