@@ -712,6 +712,14 @@ bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
 "O'Hara's Ale"
 "echo 'O'\\''Hara'\\''s Ale'"
 
+@sh
+["a b", "c d"]
+"'a b' 'c d'"
+
+@sh
+{"foo":"a b", "bar":"c d", "x y":"ignored"}
+"foo='a b' bar='c d'"
+
 @base64
 "This is a message"
 "VGhpcyBpcyBhIG1lc3NhZ2U="

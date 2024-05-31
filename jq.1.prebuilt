@@ -2338,7 +2338,10 @@ The input must be an array, and it is rendered as TSV (tab\-separated values)\. 
 \fB@sh\fR:
 .
 .IP
-The input is escaped suitable for use in a command\-line for a POSIX shell\. If the input is an array, the output will be a series of space\-separated strings\.
+The input is escaped suitable for use in a command\-line for a POSIX shell using \fBeval\fR\. If the input is an array, the output will be a series of space\-separated strings\. If the input is an object, the output will be a series of space\-separated variable assignments for all the keys in the object that are valid shell variable names (other keys will be ignored)\.
+.
+.IP
+E\.g\., \fBeval $(jq \-r \'@sh\' f\.json)\fR
 .
 .TP
 \fB@base64\fR:
@@ -2392,6 +2395,14 @@ jq \'@html\'
 jq \'@sh "echo \e(\.)"\'
    "O\'Hara\'s Ale"
 => "echo \'O\'\e\e\'\'Hara\'\e\e\'\'s Ale\'"
+
+jq \'@sh\'
+   ["a b", "c d"]
+=> "\'a b\' \'c d\'"
+
+jq \'@sh\'
+   {"foo":"a b", "bar":"c d", "x y":"ignored"}
+=> "foo=\'a b\' bar=\'c d\'"
 
 jq \'@base64\'
    "This is a message"
