@@ -3652,7 +3652,7 @@ At this time jq has minimal support for I/O, mostly in the form of control over 
 Two builtins provide minimal output capabilities, \fBdebug\fR, and \fBstderr\fR\. (Recall that a jq program\'s output values are always output as JSON texts on \fBstdout\fR\.) The \fBdebug\fR builtin can have application\-specific behavior, such as for executables that use the libjq C API but aren\'t the jq executable itself\. The \fBstderr\fR builtin outputs its input in raw mode to stder with no additional decoration, not even a newline\.
 .
 .P
-Additionally, jq has support for executing "external filters" provided by other executables\. This functionality is provided by \fBexec\fR, but may not be available on all platforms, and does not necessarily integrate well with other jq features\. It is intended to perform smaller processing that is otherwise impossible to perform in jq itself\.
+Additionally, jq has support for executing "external filters" provided by other executables\. This functionality is provided by \fBexec\fR and related filters viz\. \fBsystem\fR, but may not be available on all platforms, and does not necessarily integrate well with other jq features\. It is intended to perform smaller processing that is otherwise impossible to perform in jq itself\.
 .
 .P
 Most jq builtins are referentially transparent, and yield constant and repeatable value streams when applied to constant inputs\. This is not true of I/O builtins\.
@@ -3748,7 +3748,10 @@ Returns the name of the file whose input is currently being filtered\. Note that
 Returns the line number of the input currently being filtered\.
 .
 .SS "exec(path), exec(path; [args…])"
-Spawns a new process of path with arguments args\. Pipes its input converted to a string as the stdin of the process\. The output of the process is coalesced and outputted as a string\. Note that this output will include any terminating newlines, so you may want to add an rtrim after this filter, or use a wrapper\.
+Spawns a new process of path with arguments args\. Pipes its input converted to a string as the stdin of the process\. Outputs an object like \fB{\'out\': "", "err": "", "status": 0}\fR, containing the stdout, stderr, and exit code of the process respectively\. If the process exits abnormally due to an unhandled signal, it will have a status of "\-1" and a "signal" parameter giving the numeric value of the signal that caused the process to terminate\.
+.
+.SS "system(path), system(path; [args…])"
+Exactly equivalent to an \fBexec\fR call with the same arguments, followed by \fB| \.out | rtrim\fR\.
 .
 .SH "STREAMING"
 With the \fB\-\-stream\fR option jq can parse input texts in a streaming fashion, allowing jq programs to start processing large JSON texts immediately rather than after the parse completes\. If you have a single JSON text that is 1GB in size, streaming it will allow you to process it much more quickly\.

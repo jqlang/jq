@@ -3272,10 +3272,11 @@ sections:
       decoration, not even a newline.
 
       Additionally, jq has support for executing "external filters" provided by
-      other executables. This functionality is provided by `exec`, but may not
-      be available on all platforms, and does not necessarily integrate well
-      with other jq features. It is intended to perform smaller processing that
-      is otherwise impossible to perform in jq itself.
+      other executables. This functionality is provided by `exec` and related
+      filters viz. `system`, but may not be available on all platforms, and does
+      not necessarily integrate well with other jq features. It is intended to
+      perform smaller processing that is otherwise impossible to perform in jq
+      itself.
 
       Most jq builtins are referentially transparent, and yield constant
       and repeatable value streams when applied to constant inputs.
@@ -3354,10 +3355,18 @@ sections:
         body: |
 
           Spawns a new process of path with arguments args. Pipes its input
-          converted to a string as the stdin of the process. The output of the
-          process is coalesced and outputted as a string. Note that this output
-          will include any terminating newlines, so you may want to add an
-          rtrim after this filter, or use a wrapper.
+          converted to a string as the stdin of the process. Outputs an object
+          like `{'out': "", "err": "", "status": 0}`, containing the stdout,
+          stderr, and exit code of the process respectively. If the process
+          exits abnormally due to an unhandled signal, it will have a status of
+          "-1" and a "signal" parameter giving the numeric value of the signal
+          that caused the process to terminate.
+
+      - title: "`system(path)`, `system(path; [args…])`"
+        body: |
+
+          Exactly equivalent to an `exec` call with the same arguments, followed
+          by `| .out | rtrim`.
 
   - title: 'Streaming'
     body: |
