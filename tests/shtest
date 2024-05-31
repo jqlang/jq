@@ -689,4 +689,19 @@ $VALGRIND $Q $JQ . <<\NUM
 -10E-1000000001
 NUM
 
+# exec is tested by executing jq
+if ! $msys && ! $mingw; then
+	now=$(date +%s)
+	if ! r=$($VALGRIND $Q $JQ -rn 'exec("'"$JQ_NO_B"'"; ["-rn", "'"$now"'"]) | trim') ||
+		[ "$r" != "$now" ] ; then
+		echo "exec didn't pipe stdout correctly: expected $now but got $r"
+		exit 1
+	fi
+	if ! r=$(echo "$now" | $VALGRIND $Q $JQ -r 'exec("'"$JQ_NO_B"'"; ["-r", "."]) | trim') ||
+		[ "$r" != "$now" ]; then
+		echo "exec didn't pipe input correctly: expected $now but got $r"
+		exit 1
+	fi
+fi
+
 exit 0
