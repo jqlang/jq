@@ -3350,7 +3350,7 @@ sections:
 
           Returns the line number of the input currently being filtered.
 
-      - title: "`exec(path; [args…])`"
+      - title: "`exec(path)`, `exec(path; [args…])`"
         body: |
 
           Spawns a new process of path with arguments args. Pipes its input

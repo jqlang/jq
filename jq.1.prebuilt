@@ -3747,7 +3747,7 @@ Returns the name of the file whose input is currently being filtered\. Note that
 .SS "input_line_number"
 Returns the line number of the input currently being filtered\.
 .
-.SS "exec(path; [args…])"
+.SS "exec(path), exec(path; [args…])"
 Spawns a new process of path with arguments args\. Pipes its input converted to a string as the stdin of the process\. The output of the process is coalesced and outputted as a string\. Note that this output will include any terminating newlines, so you may want to add an rtrim after this filter, or use a wrapper\.
 .
 .SH "STREAMING"
