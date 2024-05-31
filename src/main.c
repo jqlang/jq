@@ -38,7 +38,7 @@ extern void jv_tsd_dtoa_ctx_init();
 #include "src/version.h"
 #include "src/config_opts.inc"
 
-int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
+int jq_testsuite(jv prog_args, jv lib_dirs, int verbose, int argc, char* argv[]);
 
 static const char* progname;
 
@@ -573,7 +573,7 @@ int main(int argc, char* argv[]) {
         i++;
         // XXX Pass program_arguments, even a whole jq_state *, through;
         // could be useful for testing
-        ret = jq_testsuite(lib_search_paths,
+        ret = jq_testsuite(program_arguments, lib_search_paths,
                            (options & DUMP_DISASM) || (jq_flags & JQ_DEBUG_TRACE),
                            argc - i, argv + i);
         goto out;

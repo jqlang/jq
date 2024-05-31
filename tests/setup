@@ -29,6 +29,8 @@ else
 fi
 
 mods=$JQTESTDIR/modules
+rawfile=$mods/data.json
+slurpfile=$mods/data.json
 
 clean=true
 d=
