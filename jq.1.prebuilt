@@ -1,3 +1,4 @@
+pipenv run python validate_manual_schema.py content/manual/manual.yml
 .
 .TH "JQ" "1" "May 2024" "" ""
 .
@@ -2045,11 +2046,17 @@ jq \'ascii_upcase\'
 .
 .IP "" 0
 .
-.SS "while(cond; update)"
-The \fBwhile(cond; update)\fR function allows you to repeatedly apply an update to \fB\.\fR until \fBcond\fR is false\.
+.SS "while(cond; update), whilst(cond; update)"
+These two functions allow you to repeatedly apply an update to \fB\.\fR until \fBcond\fR is false\.
 .
 .P
-Note that \fBwhile(cond; update)\fR is internally defined as a recursive jq function\. Recursive calls within \fBwhile\fR will not consume additional memory if \fBupdate\fR produces at most one output for each input\. See advanced topics below\.
+\fBwhile(cond; update)\fR begins by emitting its input unconditionally, and then applies \fBupdate\fR to that value; if the updated value exists and is truthy (i\.e\. neither \fBfalse\fR nor \fBnull\fR), then that value is applied to \fBwhile(cond; update)\fR recursively\.
+.
+.P
+\fBwhilst(cond; update)\fR is similar but begins by applying \fBupdate\fR to the input without emitting it; if the updated value exists and is truthy, it is output, and then applied to \fBwhilst(cond; update)\fR recursively\.
+.
+.P
+Note that both \fBwhile\fR and \fBwhilst\fR are defined as recursive jq functions\. Recursive calls within these functions will not consume additional memory if \fBupdate\fR produces at most one output for each input\. See advanced topics below\.
 .
 .IP "" 4
 .
@@ -2058,6 +2065,10 @@ Note that \fBwhile(cond; update)\fR is internally defined as a recursive jq func
 jq \'[while(\.<100; \.*2)]\'
    1
 => [1,2,4,8,16,32,64]
+
+jq \'[whilst(\.<100; \.*2)]\'
+   1
+=> [2,4,8,16,32,64,128]
 .
 .fi
 .
