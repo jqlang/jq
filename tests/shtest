@@ -692,12 +692,12 @@ NUM
 # exec is tested by executing jq
 if ! $msys && ! $mingw; then
 	now=$(date +%s)
-	if ! r=$($VALGRIND $Q $JQ -rn 'exec("'"$JQ_NO_B"'"; ["-rn", "'"$now"'"]) | trim') ||
+	if ! r=$($VALGRIND $Q $JQ -rn 'exec("'"$JQ_NO_B"'"; ["-rn", "'"$now"'"]) | .out | rtrim') ||
 		[ "$r" != "$now" ] ; then
 		echo "exec didn't pipe stdout correctly: expected $now but got $r"
 		exit 1
 	fi
-	if ! r=$(echo "$now" | $VALGRIND $Q $JQ -r 'exec("'"$JQ_NO_B"'"; ["-r", "."]) | trim') ||
+	if ! r=$(echo "$now" | $VALGRIND $Q $JQ -r 'system("'"$JQ_NO_B"'"; ["-r", "."])') ||
 		[ "$r" != "$now" ]; then
 		echo "exec didn't pipe input correctly: expected $now but got $r"
 		exit 1
