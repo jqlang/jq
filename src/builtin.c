@@ -1790,10 +1790,10 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 	const size_t argc = jv_array_length(jv_copy(args)) + 1;
 	char * argv[argc + 1];
 	jv_array_foreach(args, i, s) {
-		argv[i + 1] = strdup(jv_string_value(s));
+		argv[i + 1] = jv_mem_strdup(jv_string_value(s));
 		jv_free(s);
 	}
-	argv[0] = strdup(jv_string_value(path));
+	argv[0] = jv_mem_strdup(jv_string_value(path));
 	argv[argc] = 0;
 	jv_free(path);
 
@@ -1936,7 +1936,7 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 		}
 	}
 	for (size_t i = 0; i < argc; i++) {
-		free(argv[i]);
+		jv_mem_free(argv[i]);
 	}
 	close(fin[0]), close(fout[1]);
 	jv_free(args);
@@ -1969,14 +1969,14 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 	}
 
 	jv output = jv_string_empty(0);
-	char *buf = malloc(1024);
+	char *buf = jv_mem_alloc(1024);
 	ssize_t bytes;
 	while ((bytes = read(fout[0], buf, 1024)) > 0) {
 		output = jv_string_append_buf(output, buf, bytes);
 	}
 	// NOTE: if we want to check the read for failures, it'd be done here
 	close(fout[0]);
-	free(buf);
+	jv_mem_free(buf);
 
 	// NOTE: if we want to check waitpid for failures, be careful since
 	// it may be short-lived
