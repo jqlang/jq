@@ -35,6 +35,7 @@ void *alloca (size_t);
 #ifdef WIN32
 #include <windows.h>
 #else
+#include <errno.h>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -1766,13 +1767,13 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 	/* argument validation */
 	if (jv_get_kind(path) != JV_KIND_STRING) {
 		jv_free(input), jv_free(path), jv_free(args);
-		return type_error(path, "exec/2: path must be string");
+		return type_error(path, "exec/2 requires a string path");
 	}
 
 	// extract args into const char ** on the stack
 	if (jv_get_kind(args) != JV_KIND_ARRAY) {
 		jv_free(input), jv_free(path), jv_free(args);
-		return type_error(args, "exec/2: args must be array");
+		return type_error(args, "exec/2 requires an array of arguments");
 	}
 
 	// validate args array before using it to avoid having to clean up
@@ -1783,11 +1784,10 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 	}
 	if (ret) {
 		jv_free(input), jv_free(path), jv_free(args);
-		return type_error(args, "exec/2: args must only contain strings");
+		return type_error(args, "exec/2 only supports string arguments");
 	}
 
 	const size_t argc = jv_array_length(jv_copy(args)) + 1;
-	// this can't be a * const because of how we initialize it
 	char * argv[argc + 1];
 	jv_array_foreach(args, i, s) {
 		argv[i + 1] = strdup(jv_string_value(s));
@@ -1802,54 +1802,123 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 	posix_spawn_file_actions_t fda;
 	if ((ret = posix_spawn_file_actions_init(&fda))) {
 		jv_free(args), jv_free(input);
-		return jv_invalid_with_msg(jv_string("exec/2: could not initialize fd actions"));
+		return jv_invalid_with_msg(jv_string("exec/2 could not initialize fd actions"));
 	}
 
-	// TODO: better error reporting
+	/** stdin **/
 	if ((ret = pipe(fin))) {
 		jv_free(args), jv_free(input);
-		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+		switch (errno) {
+			case EMFILE:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't pipe() because of a per-process limit"));
+			case ENFILE:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't pipe() because of a system-wide limit"));
+			default:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't pipe()"));
+		}
 	}
 	if ((ret = posix_spawn_file_actions_addclose(&fda, fin[1]))) {
 		jv_free(args), jv_free(input);
 		close(fin[0]), close(fin[1]);
-		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+		switch (errno) {
+			case EBADF:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to close an invalid file descriptor"));
+			case EINVAL:
+				return jv_invalid_with_msg(jv_string("exec/2 tried to operate on an invalid file_actions object"));
+			case ENOMEM:
+				return jv_invalid_with_msg(jv_string("exec/2 ran out of memory while instructing the process to close a file descriptor"));
+			default:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to close a file descriptor"));
+		}
 	}
 	if ((ret = posix_spawn_file_actions_adddup2(&fda, fin[0], 0))) {
 		jv_free(args), jv_free(input);
 		close(fin[0]), close(fin[1]);
-		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+		switch (errno) {
+			case EBADF:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to dup2 an invalid file descriptor"));
+			case ENOMEM:
+				return jv_invalid_with_msg(jv_string("exec/2 ran out of memory while instructing the process to dup2 a file descriptor"));
+			case EINVAL:
+				return jv_invalid_with_msg(jv_string("exec/2 tried to operate on an invalid file_actions object"));
+			default:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to dup2 a file descriptor"));
+		}
 	}
 	if ((ret = posix_spawn_file_actions_addclose(&fda, fin[0]))) {
 		jv_free(args), jv_free(input);
 		close(fin[0]), close(fin[1]);
-		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+		switch (errno) {
+			case EBADF:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to close an invalid file descriptor"));
+			case EINVAL:
+				return jv_invalid_with_msg(jv_string("exec/2 tried to operate on an invalid file_actions object"));
+			case ENOMEM:
+				return jv_invalid_with_msg(jv_string("exec/2 ran out of memory while instructing the process to close a file descriptor"));
+			default:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to close a file descriptor"));
+		}
 	}
 
-	// TODO: better error reporting
+	/** stdout **/
 	if ((ret = pipe(fout))) {
 		jv_free(args), jv_free(input);
 		close(fin[0]), close(fin[1]);
-		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+		switch (errno) {
+			case EMFILE:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't pipe() because of a per-process limit"));
+			case ENFILE:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't pipe() because of a system-wide limit"));
+			default:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't pipe()"));
+		}
 	}
 	if ((ret = posix_spawn_file_actions_addclose(&fda, fout[0]))) {
 		jv_free(args), jv_free(input);
 		close(fin[0]), close(fin[1]);
 		close(fout[0]), close(fout[1]);
-		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+		switch (errno) {
+			case EBADF:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to close an invalid file descriptor"));
+			case EINVAL:
+				return jv_invalid_with_msg(jv_string("exec/2 tried to operate on an invalid file_actions object"));
+			case ENOMEM:
+				return jv_invalid_with_msg(jv_string("exec/2 ran out of memory while instructing the process to close a file descriptor"));
+			default:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to close a file descriptor"));
+		}
 	}
 	if ((ret = posix_spawn_file_actions_adddup2(&fda, fout[1], 1))) {
 		jv_free(args), jv_free(input);
 		close(fin[0]), close(fin[1]);
 		close(fout[0]), close(fout[1]);
-		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+		switch (errno) {
+			case EBADF:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to dup2 an invalid file descriptor"));
+			case ENOMEM:
+				return jv_invalid_with_msg(jv_string("exec/2 ran out of memory while instructing the process to dup2 a file descriptor"));
+			case EINVAL:
+				return jv_invalid_with_msg(jv_string("exec/2 tried to operate on an invalid file_actions object"));
+			default:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to dup2 a file descriptor"));
+		}
 	}
 	if ((ret = posix_spawn_file_actions_addclose(&fda, fout[1]))) {
 		jv_free(args), jv_free(input);
 		close(fin[0]), close(fin[1]);
 		close(fout[0]), close(fout[1]);
-		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+		switch (errno) {
+			case EBADF:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to close an invalid file descriptor"));
+			case EINVAL:
+				return jv_invalid_with_msg(jv_string("exec/2 tried to operate on an invalid file_actions object"));
+			case ENOMEM:
+				return jv_invalid_with_msg(jv_string("exec/2 ran out of memory while instructing the process to close a file descriptor"));
+			default:
+				return jv_invalid_with_msg(jv_string("exec/2 couldn't instruct the process to close a file descriptor"));
+		}
 	}
+	// TODO: also set up an stderr pipe and pipe it into null, so it can be used later
 
 	/* execute */
 	pid_t pid;
@@ -1859,7 +1928,12 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 		close(fin[0]), close(fin[1]);
 		close(fout[0]), close(fout[1]);
 		jv_free(input);
-		return jv_invalid_with_msg(jv_string("exec/2: PLACEHOLDER"));
+		switch (errno) {
+			case EINVAL:
+				return jv_invalid_with_msg(jv_string("exec/2 failed to run posix_spawn due to an invalid file_actions object"));
+			default:
+				return jv_invalid_with_msg(jv_string("exec/2 failed to run posix_spawn"));
+		}
 	}
 	for (size_t i = 0; i < argc; i++) {
 		free(argv[i]);
@@ -1867,11 +1941,11 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 	close(fin[0]), close(fout[1]);
 	jv_free(args);
 	if ((ret = posix_spawn_file_actions_destroy(&fda))) {
-		// TODO: what should we do here? this is technically harmless
+		// NOTE: posix_spawn_file_actions_destroy isn't checked for errors
+		// because it's non-fatal
 	}
 
 	/* send and receive data */
-	// TODO: error checking on the writes
 	switch (jv_get_kind(input)) {
 		case JV_KIND_INVALID:
 		case JV_KIND_NULL:
@@ -1879,12 +1953,14 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 			jv_free(input);
 			break; // do not pipe invalid / null
 		case JV_KIND_STRING:
+			// NOTE: write isn't checked for errors because it's non-fatal
 			write(fin[1], jv_string_value(input), jv_string_length_bytes(jv_copy(input)));
 			close(fin[1]);
 			jv_free(input);
 			break;
 		default: {
 			jv s = jv_dump_string(input, 0);
+			// NOTE: write isn't checked for errors because it's non-fatal
 			write(fin[1], jv_string_value(s), jv_string_length_bytes(jv_copy(s)));
 			close(fin[1]);
 			jv_free(s);
@@ -1898,12 +1974,12 @@ static jv f_exec(jq_state *jq, jv input, jv path, jv args) {
 	while ((bytes = read(fout[0], buf, 1024)) > 0) {
 		output = jv_string_append_buf(output, buf, bytes);
 	}
+	// NOTE: if we want to check the read for failures, it'd be done here
 	close(fout[0]);
 	free(buf);
 
-	// TODO: parse output into json? probably not.
-
-	// TODO: check waitpid output
+	// NOTE: if we want to check waitpid for failures, be careful since
+	// it may be short-lived
 	waitpid(pid, &ret, 0);
 	return output;
 }
