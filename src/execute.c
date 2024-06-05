@@ -315,7 +315,9 @@ static void jq_reset(jq_state *jq) {
 
   jq->halted = 0;
   jv_free(jq->exit_code);
+  jq->exit_code = jv_invalid();
   jv_free(jq->error_message);
+  jq->error_message = jv_invalid();
   if (jv_get_kind(jq->path) != JV_KIND_INVALID)
     jv_free(jq->path);
   jq->path = jv_null();
