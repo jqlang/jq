@@ -12,24 +12,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - amd64
-          - arm64
-          - armel
-          - armhf
-          - i386
-          - mips
-          - mips64
-          - mips64el
-          - mips64r6
-          - mips64r6el
-          - mipsel
-          - mipsr6
-          - mipsr6el
-          - powerpc
-          - ppc64el
-          - riscv64
-          - s390x
         include:
           - arch: amd64
             CC: x86_64-linux-gnu
@@ -123,9 +105,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - amd64
-          - arm64
         include:
           - arch: amd64
             target: x86_64-apple-darwin
@@ -190,9 +169,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - amd64
-          - i386
         include:
           - arch: amd64
             msystem: UCRT64
