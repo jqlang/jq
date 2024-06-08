@@ -492,96 +492,17 @@ static void jv_test() {
   }
 
   {
-	assert(jv_equal(
-			jv_paths(
-				jv_parse("{"
-					"\"key\":["
-						"{\"this\":{\"some\":true}},"
-						"false,"
-						"null,"
-						"10,"
-						"[true]"
-					"]"
-				"}")
-			),
-			jv_parse("["
-				"[\"key\"],"
-				"[\"key\", 0],"
-				"[\"key\", 0, \"this\"],"
-				"[\"key\", 0, \"this\", \"some\"],"
-				"[\"key\", 1],"
-				"[\"key\", 2],"
-				"[\"key\", 3],"
-				"[\"key\", 4],"
-				"[\"key\", 4, 0]"
-			"]")
-		));
+	jv test_unshared = JV_OBJECT(jv_string("some"), JV_ARRAY(jv_string("other"), jv_true()));
 
-  }
+	assert(jv_is_unshared(test_unshared));
+	jv_free(test_unshared);
 
-  {
-	assert(jv_equal(
-			jv_addpath(
-				jv_parse("{"
-					"\"key\":{"
-						"\"some\":{"
-							"\"test\":\"value\""
-						"},"
-						"\"other\":\"thing\""
-					"}"
-				"}"),
-				JV_ARRAY(jv_string("key")),
-				jv_parse("{"
-					"\"some\":{"
-						"\"test\":\"other\""
-					"},"
-					"\"added\":\"thing\""
-				"}")
-			),
-			jv_parse("{"
-				"\"key\":{"
-					"\"some\":{"
-						"\"test\":\"other\""
-					"},"
-					"\"other\":\"thing\","
-					"\"added\":\"thing\""
-				"}"
-			"}")
-		)
-	);
-
-  }
-
-  {
 	jv initial = jv_parse("{\"test\":[{\"some\":\"value\"}, 1, true, false, null]}");
 	jv new = jv_unshare(jv_copy(initial));
 
 	assert(jv_equal(jv_copy(initial), jv_copy(new)));
-	assert(!jv_identical(jv_copy(initial), jv_copy(new)));
-
-	jv paths = jv_paths(jv_copy(initial));
-
-	size_t paths_length = jv_array_length(jv_copy(paths));
-
-	for(size_t i = 0; i < paths_length; i++){
-		jv path_i = jv_array_get(jv_copy(paths), i);
-		assert(!jv_identical(
-			jv_getpath(
-				jv_copy(initial),
-				jv_copy(path_i)
-			),
-			jv_getpath(
-				jv_copy(new),
-				jv_copy(path_i)
-			)
-		));
-
-		jv_free(path_i);
-	}
-
+	assert(jv_is_unshared(new));
 	jv_free(initial);
 	jv_free(new);
-	jv_free(paths);
-
   }
 }

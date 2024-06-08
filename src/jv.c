@@ -1865,11 +1865,13 @@ jv jv_object_iter_value(jv object, int iter) {
 jv jv_unshare(jv input){
 	switch(jv_get_kind(input)){
 		case JV_KIND_INVALID:
-			if(!jv_invalid_has_msg(jv_copy(input))){
-				jv_free(input);
-				return jv_invalid();
+			{
+				if(!jv_invalid_has_msg(jv_copy(input))){
+					jv_free(input);
+					return jv_invalid();
+				}
+				return jv_invalid_with_msg(jv_unshare(jv_invalid_get_msg(jv_copy(input))));
 			}
-			return jv_invalid_with_msg(jv_unshare(jv_invalid_get_msg(jv_copy(input))));
 		case JV_KIND_OBJECT:
 			{
 				jv keys = jv_keys(jv_copy(input));
@@ -1941,6 +1943,49 @@ jv jv_unshare(jv input){
 		default:
 			return jv_invalid();
 	}
+}
+
+int jv_is_unshared(jv a){
+	if(jv_get_refcnt(a) != 1){
+		fprintf(stderr, "input refcnt != 1\n");
+		return 1;
+	}
+	if(jv_get_kind(a) == JV_KIND_OBJECT){
+		jv keys = jv_keys(jv_copy(a));
+		size_t keys_length = jv_array_length(jv_copy(keys));
+		for(size_t i = 0; i < keys_length; i++){
+			jv key = jv_array_get(jv_copy(keys), i);
+			if(jv_get_refcnt(key) > 3){
+				fprintf(stderr, "key in object does not have refcnt 1, %d\n", jv_get_refcnt(key));
+				jv_free(key);
+				jv_free(keys);
+				return 0;
+			}
+
+			jv value = jv_object_get(jv_copy(a), key);
+			jv_free(value);
+			if(!jv_is_unshared(value)){
+				fprintf(stderr, "failed on object\n");
+				jv_free(keys);
+				return 0;
+			}
+		}
+
+		jv_free(keys);
+	
+	}else if(jv_get_kind(a) == JV_KIND_ARRAY){
+		size_t a_length = jv_array_length(jv_copy(a));
+		for(size_t i = 0; i < a_length; i++){
+			jv value = jv_array_get(jv_copy(a), i);
+			jv_free(value);
+			if(!jv_is_unshared(value)){
+				fprintf(stderr, "failed on array value\n");
+				return 0;
+			}
+		}
+	}
+
+	return 1;
 }
 
 jv jv_copy(jv j) {

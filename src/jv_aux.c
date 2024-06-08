@@ -427,69 +427,7 @@ jv jv_setpath(jv root, jv path, jv value) {
   return jv_set(root, pathcurr, jv_setpath(subroot, pathrest, value));
 }
 
-jv jv_addpath(jv root, jv path, jv add){
-	if(jv_get_kind(path) != JV_KIND_ARRAY || !jv_is_valid(add)){
-		jv_free(root);
-		jv_free(path);
-		jv_free(add);
-		return jv_invalid();
-	}
 
-	if(jv_get_kind(root) != JV_KIND_OBJECT && jv_get_kind(root) != JV_KIND_ARRAY){
-		jv_free(root);
-
-		if(!jv_equal(jv_copy(path), jv_array())){
-			jv_free(path);
-			jv_free(add);
-			return jv_invalid();
-		}
-
-		jv_free(path);
-
-		return add;
-	}
-
-	if(!jv_equal(jv_copy(path), jv_array())){
-		return jv_setpath(root, path, jv_addpath(jv_getpath(jv_copy(root), jv_copy(path)), jv_array(), add));
-	}
-
-	jv root_paths = jv_paths(jv_copy(root));
-	jv add_paths = jv_paths(jv_copy(add));
-
-	size_t add_paths_length = jv_array_length(jv_copy(add_paths));
-
-	for(size_t i = 0; i < add_paths_length; i++){
-		jv add_path = jv_array_get(jv_copy(add_paths), i);
-		jv add_path_value = jv_getpath(jv_copy(add), jv_copy(add_path));
-
-		if(!jv_is_valid(add_path_value) || jv_get_kind(add_path_value) == JV_KIND_NULL){
-			jv_free(root);
-			jv_free(path);
-			jv_free(add);
-			jv_free(root_paths);
-			jv_free(add_paths);
-			jv_free(add_path);
-			jv_free(add_path_value);
-			return jv_invalid();
-		}
-
-		if(jv_get_kind(add_path_value) == JV_KIND_OBJECT || jv_get_kind(add_path_value) == JV_KIND_ARRAY){
-			jv_free(add_path);
-			jv_free(add_path_value);
-			continue;
-		}
-
-		root = jv_setpath(root, add_path, add_path_value);
-	}
-
-	jv_free(path);
-	jv_free(add);
-
-	jv_free(root_paths);
-	jv_free(add_paths);
-
-	return root;
-}
 
 jv jv_getpath(jv root, jv path) {
   if (jv_get_kind(path) != JV_KIND_ARRAY) {
@@ -602,46 +540,6 @@ static int string_cmp(const void* pa, const void* pb){
   return r;
 }
 
-jv jv_paths(jv input){
-	if(jv_get_kind(input) != JV_KIND_OBJECT && jv_get_kind(input) != JV_KIND_ARRAY){
-		jv_free(input);
-		return jv_invalid();
-	}
-
-	jv keys = jv_keys(jv_copy(input));
-
-	size_t keys_length = jv_array_length(jv_copy(keys));
-
-	jv output = jv_array();
-
-	for(size_t i = 0; i < keys_length; i++){
-		jv key = jv_array_get(jv_copy(keys), i);
-		jv insert_paths = jv_paths(jv_getpath(jv_copy(input), JV_ARRAY(jv_copy(key))));
-
-		output = jv_array_append(output, JV_ARRAY(jv_copy(key)));
-
-		if(jv_get_kind(insert_paths) == JV_KIND_INVALID){
-			jv_free(insert_paths);
-			jv_free(key);
-
-			continue;
-		}
-
-		size_t paths_length = jv_array_length(jv_copy(insert_paths));
-
-		for(size_t j = 0; j < paths_length; j++){
-			output = jv_array_append(output, jv_array_concat(JV_ARRAY(jv_copy(key)), jv_array_get(jv_copy(insert_paths), j)));
-		}
-
-		jv_free(key);
-		jv_free(insert_paths);
-	}
-	
-	jv_free(input);
-	jv_free(keys);
-
-	return output;
-}
 
 jv jv_keys_unsorted(jv x) {
   if (jv_get_kind(x) != JV_KIND_OBJECT)

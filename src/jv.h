@@ -53,6 +53,7 @@ static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
 
 //jv_unshare() creates a deep copy of the input aka the content of the output will be identical to the input, but no shared memory exists between them
 jv jv_unshare(jv);
+int jv_is_unshared(jv);
 jv jv_copy(jv);
 void jv_free(jv);
 
@@ -258,10 +259,8 @@ jv jv_get(jv, jv);
 jv jv_set(jv, jv, jv);
 jv jv_has(jv, jv);
 jv jv_setpath(jv, jv, jv);
-jv jv_addpath(jv, jv, jv);
 jv jv_getpath(jv, jv);
 jv jv_delpaths(jv, jv);
-jv jv_paths(jv);
 jv jv_keys(jv /*object or array*/);
 jv jv_keys_unsorted(jv /*object or array*/);
 int jv_cmp(jv, jv);
