@@ -814,8 +814,8 @@ true
 [null, 1]
 
 [.[] | tonumber?]
-["1", "invalid", "3", 4]
-[1, 3, 4]
+["1", "invalid", "3", 4, true, false]
+[1, 3, 4, 1, 0]
 
 .bar as $x | .foo | . + $x
 {"foo":10, "bar":200}
