@@ -1056,8 +1056,12 @@ pick(first|first)
 [[10,20],30]
 [[10]]
 
-# negative indices in path expressions (since last/1 is .[-1])
-try pick(last) catch .
+pick(last)
+[1,2]
+[null,2]
+
+# negative indices in path expressions are disallowed
+try pick(.[-1]) catch .
 [1,2]
 "Out of bounds negative array index"
 
