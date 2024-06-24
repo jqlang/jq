@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2024" "" ""
+.TH "JQ" "1" "July 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -1340,11 +1340,14 @@ jq \'[paths(type == "number")]\'
 .
 .IP "" 0
 .
-.SS "add"
+.SS "add, add(generator)"
 The filter \fBadd\fR takes as input an array, and produces as output the elements of the array added together\. This might mean summed, concatenated or merged depending on the types of the elements of the input array \- the rules are the same as those for the \fB+\fR operator (described above)\.
 .
 .P
 If the input is an empty array, \fBadd\fR returns \fBnull\fR\.
+.
+.P
+\fBadd(generator)\fR operates on the given generator rather than the input\.
 .
 .IP "" 4
 .
@@ -1361,6 +1364,10 @@ jq \'add\'
 jq \'add\'
    []
 => null
+
+jq \'add(\.[]\.a)\'
+   [{"a":3}, {"a":5}, {"b":6}]
+=> 8
 .
 .fi
 .
