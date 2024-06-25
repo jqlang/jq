@@ -1125,6 +1125,19 @@ sections:
             input: '["foo", "bar", "baz"]'
             output: ['["foo"]']
 
+      - title: "`compact`"
+        body: |
+
+          The builtin function `compact` removes nulls from an object or an array recursively.
+
+        examples:
+          - program: "compact"
+            input: '{"foo": null, "bar": "baz"}'
+            output: ['{"bar": "baz"}']
+          - program: "compact"
+            input: '["foo", "bar", null]'
+            output: ['["foo", "bar"]']
+
       - title: "`getpath(PATHS)`"
         body: |
 

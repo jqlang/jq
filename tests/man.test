@@ -269,6 +269,14 @@ del(.[1, 2])
 ["foo", "bar", "baz"]
 ["foo"]
 
+compact
+{"foo": null, "bar": "baz"}
+{"bar": "baz"}
+
+compact
+["foo", "bar", null]
+["foo", "bar"]
+
 getpath(["a","b"])
 null
 null
