@@ -33,7 +33,17 @@
       {%- endmacro %}
       <main id="main" class="col-md-9" data-bs-spy="scroll" data-bs-target="#contents" data-bs-threshold="0,1" data-bs-root-margin="-30% 0% -70%">
         <h1>{{ headline }}</h1>
-        {{ history | markdownify }}
+        <p>
+          <em>
+            For other versions, see
+            <a href="{{ root }}/manual/v1.7/">1.7</a>,
+            <a href="{{ root }}/manual/v1.6/">1.6</a>,
+            <a href="{{ root }}/manual/v1.5/">1.5</a>,
+            <a href="{{ root }}/manual/v1.4/">1.4</a>,
+            <a href="{{ root }}/manual/v1.3/">1.3</a> or
+            <a href="{{ root }}/manual/dev/">development version</a>.
+          </em>
+        </p>
         {{ body | markdownify }}
         {%- for section in sections %}
         <section id="{{ section.title | section_id }}">{{ check_section_id(section.title | section_id) }}

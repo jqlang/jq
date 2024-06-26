@@ -5,7 +5,7 @@ import re
 regex_program_pattern = re.compile(
     r'\b(?:test|match|capture|scan|split|splits|sub|gsub)\s*\(')
 
-with open('content/manual/manual.yml') as source, \
+with open('content/manual/dev/manual.yml') as source, \
         open('../tests/man.test', 'w') as man, \
         open('../tests/manonig.test', 'w') as manonig:
     manual = yaml.safe_load(source)
