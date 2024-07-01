@@ -1932,6 +1932,30 @@ map(abs)
 [0.1,1000000000000000002]
 [1e-1, 1000000000000000002]
 
+nwise(2)
+null
+null
+
+nwise(2)
+[]
+[]
+
+[nwise(2; empty)]
+null
+[]
+
+try nwise(0) catch .
+[1]
+"nwise: argument should be non-negative"
+
+map(lpad(4))
+["","a"]
+["    ","   a"]
+
+[range(0; 5)] | [nwise(2)]
+null
+[[0,1],[2,3],[4]]
+
 # Using a keyword as variable/label name
 
 123 as $label | $label
