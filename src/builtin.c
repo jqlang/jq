@@ -1474,7 +1474,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   }
 #endif
   const char *end = strptime(input, fmt, &tm);
-  if (end == NULL || (*end != '\0' && !isspace(*end))) {
+  if (end == NULL || (*end != '\0' && !isspace((unsigned char)*end))) {
     return ret_error2(a, b, jv_string_fmt("date \"%s\" does not match format \"%s\"", input, fmt));
   }
   jv_free(b);

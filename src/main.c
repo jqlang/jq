@@ -126,7 +126,7 @@ static void die() {
 }
 
 static int isoptish(const char* text) {
-  return text[0] == '-' && (text[1] == '-' || isalpha(text[1]));
+  return text[0] == '-' && (text[1] == '-' || isalpha((unsigned char)text[1]));
 }
 
 static int isoption(const char* text, char shortopt, const char* longopt, size_t *short_opts) {
