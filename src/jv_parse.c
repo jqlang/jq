@@ -512,6 +512,8 @@ static pfunc check_literal(struct jv_parser* p) {
   switch (p->tokenbuf[0]) {
   case 't': pattern = "true"; plen = 4; v = jv_true(); break;
   case 'f': pattern = "false"; plen = 5; v = jv_false(); break;
+  case '\'':
+    return "Invalid string literal; expected \", but got '";
   case 'n':
     // if it starts with 'n', it could be a literal "nan"
     if (p->tokenbuf[1] == 'u') {
