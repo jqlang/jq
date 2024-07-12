@@ -209,7 +209,7 @@ def dedent_body(body):
 
 def convert_manual_to_markdown():
     f = StringIO()
-    manual = load_yml_file("content/manual/manual.yml")
+    manual = load_yml_file("content/manual/dev/manual.yml")
     f.write(manual.get('manpage_intro', '\n'))
     f.write(dedent_body(manual.get('body', '\n')))
     for section in manual.get('sections', []):
