@@ -18,6 +18,7 @@ def _modify(paths; update):
       | null
       | label $out
       | ($dot[0] | getpath($p)) as $v
+      | setpath([0] + $p; null)
       | (
           (   $$$$v
             | update
