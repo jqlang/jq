@@ -1300,7 +1300,7 @@ sections:
             input: '[1,[[],{"a":2}]]'
             output: ['[[0],[1,1,"a"]]']
 
-      - title: "`add`"
+      - title: "`add`, `add(generator)`"
         body: |
 
           The filter `add` takes as input an array, and produces as
@@ -1310,6 +1310,9 @@ sections:
           as those for the `+` operator (described above).
 
           If the input is an empty array, `add` returns `null`.
+
+          `add(generator)` operates on the given generator rather than
+          the input.
 
         examples:
           - program: add
@@ -1321,6 +1324,9 @@ sections:
           - program: add
             input: '[]'
             output: ["null"]
+          - program: add(.[].a)
+            input: '[{"a":3}, {"a":5}, {"b":6}]'
+            output: ['8']
 
       - title: "`any`, `any(condition)`, `any(generator; condition)`"
         body: |
