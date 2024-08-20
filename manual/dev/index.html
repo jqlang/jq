@@ -2855,8 +2855,8 @@ values.</p>
           </section>
           <section id="add">
             <h3>
-              <code>add</code>
-              <a href="#add" class="icon-link" aria-label="Link to this section: `add`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
+              <code>add</code>, <code>add(generator)</code>
+              <a href="#add" class="icon-link" aria-label="Link to this section: `add`, `add(generator)`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
             </h3>
             <p>The filter <code>add</code> takes as input an array, and produces as
 output the elements of the array added together. This might
@@ -2864,6 +2864,8 @@ mean summed, concatenated or merged depending on the types
 of the elements of the input array - the rules are the same
 as those for the <code>+</code> operator (described above).</p>
 <p>If the input is an empty array, <code>add</code> returns <code>null</code>.</p>
+<p><code>add(generator)</code> operates on the given generator rather than
+the input.</p>
             <div class="pb-3">
               <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example36" aria-expanded="false" aria-controls="example36">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
@@ -2920,6 +2922,24 @@ as those for the <code>+</code> operator (described above).</p>
                   </tr>
                   <tr class="d-print-none">
                     <th><a href="https://jqplay.org/jq?q=add&j=%5B%5D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <td></td>
+                  </tr>
+                </table>
+                <table class="table table-borderless table-sm w-auto">
+                  <tr>
+                    <th class="pe-3">Command</th>
+                    <td class="font-monospace">jq 'add(.[].a)'</td>
+                  </tr>
+                  <tr>
+                    <th>Input</th>
+                    <td class="font-monospace">[{&#34;a&#34;:3}, {&#34;a&#34;:5}, {&#34;b&#34;:6}]</td>
+                  </tr>
+                  <tr>
+                    <th>Output</th>
+                    <td class="font-monospace">8</td>
+                  </tr>
+                  <tr class="d-print-none">
+                    <th><a href="https://jqplay.org/jq?q=add%28.%5B%5D.a%29&j=%5B%7B%22a%22%3A3%7D%2C%20%7B%22a%22%3A5%7D%2C%20%7B%22b%22%3A6%7D%5D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
                     <td></td>
                   </tr>
                 </table>
@@ -8339,7 +8359,7 @@ by a semi-colon, where the first number is one of these:</p>
         "halt_error, halt_error(exit_code)": "halt_error",
         "$__loc__": "$__loc__",
         "paths, paths(node_filter)": "paths",
-        "add": "add",
+        "add, add(generator)": "add",
         "any, any(condition), any(generator; condition)": "any",
         "all, all(condition), all(generator; condition)": "all",
         "flatten, flatten(depth)": "flatten",
