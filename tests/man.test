@@ -358,6 +358,10 @@ add
 []
 null
 
+add(.[].a)
+[{"a":3}, {"a":5}, {"b":6}]
+8
+
 any
 [true, false]
 true

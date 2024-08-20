@@ -642,6 +642,19 @@ map_values(.+1)
 [0,1,2]
 [1,2,3]
 
+[add(null), add(range(range(10))), add(empty), add(10,range(10))]
+null
+[null,120,null,55]
+
+# Real-world use case for add(empty)
+.sum = add(.arr[])
+{"arr":[]}
+{"arr":[],"sum":null}
+
+add({(.[]):1}) | keys
+["a","a","b","a","d","b","d","a","d"]
+["a","b","d"]
+
 #
 # User-defined functions
 # Oh god.
