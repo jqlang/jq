@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "July 2024" "" ""
+.TH "JQ" "1" "August 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -2328,6 +2328,12 @@ Applies HTML/XML escaping, by mapping the characters \fB<>&\'"\fR to their entit
 .
 .IP
 Applies percent\-encoding, by mapping all reserved URI characters to a \fB%XX\fR sequence\.
+.
+.TP
+\fB@urid\fR:
+.
+.IP
+The inverse of \fB@uri\fR, applies percent\-decoding, by mapping all \fB%XX\fR sequences to their corresponding URI characters\.
 .
 .TP
 \fB@csv\fR:

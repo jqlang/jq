@@ -657,6 +657,48 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     }
     jv_free(input);
     return line;
+  } else if (!strcmp(fmt_s, "urid")) {
+    jv_free(fmt);
+    input = f_tostring(jq, input);
+
+    jv line = jv_string("");
+    const char *errmsg =  "is not a valid uri encoding";
+    const char *s = jv_string_value(input);
+    while (*s) {
+      if (*s != '%') {
+        line = jv_string_append_buf(line, s++, 1);
+      } else {
+        unsigned char unicode[4] = {0};
+        int b = 0;
+        // check leading bits of first octet to determine length of unicode character
+        // (https://datatracker.ietf.org/doc/html/rfc3629#section-3)
+        while (b == 0 || (b < 4 && unicode[0] >> 7 & 1 && unicode[0] >> (7-b) & 1)) {
+          if (*(s++) != '%') {
+            jv_free(line);
+            return type_error(input, errmsg);
+          }
+          for (int i=0; i<2; i++) {
+            unicode[b] <<= 4;
+            char c = *(s++);
+            if ('0' <= c && c <= '9') unicode[b] |= c - '0';
+            else if ('a' <= c && c <= 'f') unicode[b] |= c - 'a' + 10;
+            else if ('A' <= c && c <= 'F') unicode[b] |= c - 'A' + 10;
+            else {
+              jv_free(line);
+              return type_error(input, errmsg);
+            }
+          }
+          b++;
+        }
+        if (!jvp_utf8_is_valid((const char *)unicode, (const char *)unicode+b)) {
+          jv_free(line);
+          return type_error(input, errmsg);
+        }
+        line = jv_string_append_buf(line, (const char *)unicode, b);
+      }
+    }
+    jv_free(input);
+    return line;
   } else if (!strcmp(fmt_s, "sh")) {
     jv_free(fmt);
     if (jv_get_kind(input) != JV_KIND_ARRAY)

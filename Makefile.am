@@ -141,7 +141,7 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/mantest tests/jqtest tests/shtest tests/utf8test tests/base64test
+TESTS = tests/mantest tests/jqtest tests/shtest tests/utf8test tests/base64test tests/uritest
 if !WIN32
 TESTS += tests/optionaltest
 endif
@@ -218,7 +218,6 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
         src/parser.h src/version.h src/builtin.jq scripts/version       \
         libjq.pc                                                        \
-        tests/base64.test tests/jq-f-test.sh tests/jq.test              \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
         tests/modules/home1/.jq tests/modules/home2/.jq/g.jq            \
@@ -232,7 +231,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/onig.supp tests/local.supp                                \
         tests/setup tests/torture/input0.json                           \
         tests/optional.test tests/man.test tests/manonig.test           \
-        tests/jq.test tests/onig.test tests/base64.test                 \
+        tests/jq.test tests/onig.test tests/base64.test tests/uri.test  \
         tests/utf8-truncate.jq tests/jq-f-test.sh                       \
         tests/no-main-program.jq tests/yes-main-program.jq
 
