@@ -1,0 +1,38 @@
+# Tests are groups of three lines: program, input, expected output
+# Blank lines and lines starting with # are ignored
+
+@uri
+"<>&'\"\t"
+"%3C%3E%26%27%22%09"
+
+# decoding encoded output results in same text
+(@uri|@urid)
+"<>&'\"\t"
+"<>&'\"\t"
+
+# testing variable length unicode characters
+@uri
+"a \u03bc \u2230 \ud83d\ude0e"
+"a%20%CE%BC%20%E2%88%B0%20%F0%9F%98%8E"
+
+@urid
+"a%20%CE%BC%20%E2%88%B0%20%F0%9F%98%8E"
+"a \u03bc \u2230 \ud83d\ude0e"
+
+### invalid uri strings
+
+# unicode character should be length 4 (not 3)
+. | try @urid catch .
+"%F0%93%81"
+"string (\"%F0%93%81\") is not a valid uri encoding"
+
+# invalid hex value ('FX')
+. | try @urid catch .
+"%FX%9F%98%8E"
+"string (\"%FX%9F%98%8E\") is not a valid uri encoding"
+
+# trailing utf-8 octets must be formatted like 10xxxxxx
+# 'C0' = 11000000 invalid
+. | try @urid catch .
+"%F0%C0%81%8E"
+"string (\"%F0%C0%81%8E\") is not a valid uri encoding"

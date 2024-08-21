@@ -2141,6 +2141,11 @@ sections:
             Applies percent-encoding, by mapping all reserved URI
             characters to a `%XX` sequence.
 
+          * `@urid`:
+
+            The inverse of `@uri`, applies percent-decoding, by mapping
+            all `%XX` sequences to their corresponding URI characters.
+
           * `@csv`:
 
             The input must be an array, and it is rendered as CSV

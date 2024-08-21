@@ -61,7 +61,7 @@ null
 null
 "interpolation"
 
-@text,@json,([1,.]|@csv,@tsv),@html,@uri,@sh,(@base64|.,@base64d)
+@text,@json,([1,.]|@csv,@tsv),@html,(@uri|.,@urid),@sh,(@base64|.,@base64d)
 "!()<>&'\"\t"
 "!()<>&'\"\t"
 "\"!()<>&'\\\"\\t\""
@@ -69,6 +69,7 @@ null
 "1\t!()<>&'\"\\t"
 "!()&lt;&gt;&amp;&apos;&quot;\t"
 "%21%28%29%3C%3E%26%27%22%09"
+"!()<>&'\"\t"
 "'!()<>&'\\''\"\t'"
 "ISgpPD4mJyIJ"
 "!()<>&'\"\t"
@@ -85,6 +86,10 @@ null
 @uri
 "\u03bc"
 "%CE%BC"
+
+@urid
+"%CE%BC"
+"\u03bc"
 
 @html "<b>\(.)</b>"
 "<script>hax</script>"
