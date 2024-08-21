@@ -1602,8 +1602,6 @@ static int jv2tm(jv a, struct tm *tm) {
 static jv f_mktime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY)
     return ret_error(a, jv_string("mktime requires array inputs"));
-  if (jv_array_length(jv_copy(a)) < 6)
-    return ret_error(a, jv_string("mktime requires parsed datetime inputs"));
   struct tm tm;
   if (!jv2tm(a, &tm))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
