@@ -359,6 +359,17 @@ if [ "$(HOME="$mods/home1" $VALGRIND $Q $JQ -nr fg)" != foobar ]; then
     exit 1
 fi
 
+if $msys || $mingw; then
+    HOME_BAK=$HOME
+    unset HOME
+    if [ "$(USERPROFILE="$mods/home1" $VALGRIND $Q $JQ -nr foo)" != baz ]; then
+        echo "Bug #3104 regressed (sourcing %USERPROFILE%/.jq on Windows)" 1>&2
+        exit 1
+    fi
+    export HOME=$HOME_BAK
+    unset HOME_BAK
+fi
+
 if [ $(HOME="$mods/home1" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l) -ne 3 ]; then
     echo "Binding too many defs into program" 1>&2
     exit 1
