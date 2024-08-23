@@ -8180,7 +8180,8 @@ but also to allow for single-file modules.</p>
 ambiguities (e.g., <code>foo/foo</code>).</p>
 <p>For example, with <code>-L$HOME/.jq</code> a module <code>foo</code> can be found in
 <code>$HOME/.jq/foo.jq</code> and <code>$HOME/.jq/foo/foo.jq</code>.</p>
-<p>If <code>$HOME/.jq</code> is a file, it is sourced into the main program.</p>
+<p>If <code>.jq</code> exists in the user's home directory, and is a file (not a
+directory), it is automatically sourced into the main program.</p>
           <section id="import-relativepathstring-as-name">
             <h3>
               <code>import RelativePathString as NAME [&lt;metadata&gt;];</code>
