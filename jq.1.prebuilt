@@ -2446,7 +2446,7 @@ The \fBlocaltime\fR builtin works like the \fBgmtime\fR builtin, but using the l
 The \fBmktime\fR builtin consumes "broken down time" representations of time output by \fBgmtime\fR and \fBstrptime\fR\.
 .
 .P
-The \fBstrptime(fmt)\fR builtin parses input strings matching the \fBfmt\fR argument\. The output is in the "broken down time" representation consumed by \fBgmtime\fR and output by \fBmktime\fR\.
+The \fBstrptime(fmt)\fR builtin parses input strings matching the \fBfmt\fR argument\. The output is in the "broken down time" representation consumed by \fBmktime\fR and output by \fBgmtime\fR\.
 .
 .P
 The \fBstrftime(fmt)\fR builtin formats a time (GMT) with the given format\. The \fBstrflocaltime\fR does the same, but using the local timezone setting\.
