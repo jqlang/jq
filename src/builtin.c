@@ -1346,7 +1346,38 @@ static jv f_input(jq_state *jq, jv input) {
     return v;
   return jv_invalid_with_msg(jv_string("break"));
 }
+static jv f_snapshot(jq_state *jq, jv input, jv filename, jv data) {
+  if (jv_get_kind(filename) != JV_KIND_STRING)
+    return ret_error(filename, jv_string("filename must be a string"));
 
+  const char *name_str = jv_string_value(filename);
+  int sandbox = 1;
+  {
+    // TODO: replace this when --sandbox is implemented
+    const char *disable_sandbox = getenv("JQ_ENABLE_SNAPSHOT");
+    if (disable_sandbox && *disable_sandbox)
+      sandbox = 0;
+  }
+  if (sandbox) {
+    fprintf(stderr, "jq: dry run: %s (set JQ_ENABLE_SNAPSHOT=1)\n", name_str);
+  } else {
+    FILE *fp = fopen(name_str, "wb");
+    if (!fp) {
+      //perror("fopen");
+      fprintf(stderr, "jq: error: could not open %s for writing\n", name_str);
+    } else {
+      if (jv_get_kind(data) == JV_KIND_STRING)
+        priv_fwrite(jv_string_value(data), jv_string_length_bytes(jv_copy(data)), fp, 0);
+      else
+        jv_dumpf(jv_copy(data), fp, JV_PRINT_ASCII);
+      fclose(fp);
+    }
+  }
+
+  jv_free(filename);
+  jv_free(data);
+  return input;
+}
 static jv f_debug(jq_state *jq, jv input) {
   jq_msg_cb cb;
   void *data;
@@ -1856,6 +1887,7 @@ BINOPS
   {f_match, "_match_impl", 4},
   {f_modulemeta, "modulemeta", 1},
   {f_input, "input", 1},
+  {f_snapshot, "_experimental_snapshot", 3},
   {f_debug, "debug", 1},
   {f_stderr, "stderr", 1},
   {f_strptime, "strptime", 2},

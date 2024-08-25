@@ -275,6 +275,28 @@ grep "Expected string key after '{', not '\\['" $d/err > /dev/null
 echo '{"x":"y",["a","b"]}' | $JQ --stream > /dev/null 2> $d/err || true
 grep "Expected string key after ',' in object, not '\\['" $d/err > /dev/null
 
+## Test IO
+
+# snapshot
+cat <<EOF | (cd $d; JQ_ENABLE_SNAPSHOT=1 $VALGRIND $Q $JQ -r 'to_entries[] | _experimental_snapshot(.key;.value) | .key' >keys)
+{
+  "a.txt": "aaa",
+  "b/b.json": "invalid",
+  "c/c.json": ["not","valid"],
+  "d.json": {"e":10},
+  "f.json": 8
+}
+EOF
+(cd $d; ! cat $(cat keys) keys >out)
+cat > $d/expected <<'EOF'
+aaa{"e":10}8a.txt
+b/b.json
+c/c.json
+d.json
+f.json
+EOF
+cmp $d/out $d/expected
+
 # debug, stderr
 $VALGRIND $Q $JQ -n '"test", {} | debug, stderr' >/dev/null
 $JQ -n -c -j '"hello\nworld", null, [false, 0], {"foo":["bar"]}, "\n" | stderr' >$d/out 2>$d/err
