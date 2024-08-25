@@ -340,8 +340,13 @@ int main(int argc, char* argv[]) {
 
   input_state = jq_util_input_init(NULL, NULL); // XXX add err_cb
 
-  int further_args_are_strings = 0;
-  int further_args_are_json = 0;
+  enum {
+    FURTHER_ARGS_ARE_STRINGS = 1001,
+    FURTHER_ARGS_ARE_JSON    = 1002,
+    FURTHER_ARGS_ARE_FILES   = 1003,
+  };
+  int further_args = 0;
+
   int args_done = 0;
   int jq_flags = 0;
   size_t short_opts = 0;
@@ -350,15 +355,25 @@ int main(int argc, char* argv[]) {
     if (args_done || !isoptish(argv[i])) {
       if (!program) {
         program = argv[i];
-      } else if (further_args_are_strings) {
+      } else if (further_args == FURTHER_ARGS_ARE_STRINGS) {
         ARGS = jv_array_append(ARGS, jv_string(argv[i]));
-      } else if (further_args_are_json) {
+      } else if (further_args == FURTHER_ARGS_ARE_JSON) {
         jv v =  jv_parse(argv[i]);
         if (!jv_is_valid(v)) {
           fprintf(stderr, "%s: invalid JSON text passed to --jsonargs\n", progname);
           die();
         }
         ARGS = jv_array_append(ARGS, v);
+      } else if (further_args == FURTHER_ARGS_ARE_FILES) {
+        jv data = jv_load_file(argv[i], 0);
+        if (!jv_is_valid(data)) {
+          data = jv_invalid_get_msg(data);
+          fprintf(stderr, "%s: Bad JSON in %s: %s\n", progname, argv[i], jv_string_value(data));
+          jv_free(data);
+          ret = JQ_ERROR_SYSTEM;
+          goto out;
+        }
+        program_arguments = jv_object_set(program_arguments, jv_string(argv[i]), data);
       } else {
         jq_util_input_add_input(input_state, argv[i]);
         nfiles++;
@@ -479,17 +494,19 @@ int main(int argc, char* argv[]) {
         options |= EXIT_STATUS;
         if (!short_opts) continue;
       }
-      // FIXME: For --arg* we should check that the varname is acceptable
       if (isoption(argv[i], 0, "args", &short_opts)) {
-        further_args_are_strings = 1;
-        further_args_are_json = 0;
+        further_args = FURTHER_ARGS_ARE_STRINGS;
         continue;
       }
       if (isoption(argv[i], 0, "jsonargs", &short_opts)) {
-        further_args_are_strings = 0;
-        further_args_are_json = 1;
+        further_args = FURTHER_ARGS_ARE_JSON;
         continue;
       }
+      if (isoption(argv[i], 0, "experimental-fileargs", &short_opts)) {
+        further_args = FURTHER_ARGS_ARE_FILES;
+        continue;
+      }
+      // FIXME: For --arg* we should check that the varname is acceptable
       if (isoption(argv[i], 0, "arg", &short_opts)) {
         if (i >= argc - 2) {
           fprintf(stderr, "%s: --arg takes two parameters (e.g. --arg varname value)\n", progname);

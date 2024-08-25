@@ -297,6 +297,15 @@ f.json
 EOF
 cmp $d/out $d/expected
 
+# fileargs
+(cd $d; JQ_ENABLE_SNAPSHOT=1 $VALGRIND $Q $JQ -n 'range(3) | _experimental_snapshot(tostring+"-ff.json"; .*2) | empty')
+(cd $d; JQ_ENABLE_SNAPSHOT=1 $VALGRIND $Q $JQ -n --experimental-fileargs '$ARGS.named | add(keys[]),add(.[][])' ?-ff.json >out)
+cat > $d/expected <<'EOF'
+"0-ff.json1-ff.json2-ff.json"
+6
+EOF
+cmp $d/out $d/expected
+
 # debug, stderr
 $VALGRIND $Q $JQ -n '"test", {} | debug, stderr' >/dev/null
 $JQ -n -c -j '"hello\nworld", null, [false, 0], {"foo":["bar"]}, "\n" | stderr' >$d/out 2>$d/err
@@ -352,6 +361,12 @@ fi
 $VALGRIND $JQ -n --jsonargs null -- invalid && EC=$? || EC=$?
 if [ "$EC" -ne 2 ]; then
     echo "--jsonargs exited with wrong exit code, expected 2 got $EC" 1>&2
+    exit 1
+fi
+# fileargs with nonexistent json file
+$VALGRIND $JQ -n --experimental-fileargs null non/existent/file.json && EC=$? || EC=$?
+if [ "$EC" -ne 2 ]; then
+    echo "--fileargs exited with wrong exit code, expected 2 got $EC" 1>&2
     exit 1
 fi
 
