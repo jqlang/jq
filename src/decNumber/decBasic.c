@@ -113,7 +113,7 @@ static decFloat * decCanonical(decFloat *result, const decFloat *df) {
   #endif
   } // block
 
-  // Loop to repair a non-canonical coefficient, as needed
+  // Loop to repair a non-canonical coefficent, as needed
   inword=DECWORDS-1;               // current input word
   uoff=0;                          // bit offset of declet
   encode=DFWORD(result, inword);
@@ -168,7 +168,7 @@ static decFloat * decDivide(decFloat *result, const decFloat *dfl,
                             const decFloat *dfr, decContext *set, uInt op) {
   decFloat quotient;               // for remainders
   bcdnum num;                      // for final conversion
-  uInt   acc[DIVACCLEN];           // coefficient in base-billion ..
+  uInt   acc[DIVACCLEN];           // coefficent in base-billion ..
   uInt   div[DIVOPLEN];            // divisor in base-billion ..
   uInt   quo[DIVOPLEN+1];          // quotient in base-billion ..
   uByte  bcdacc[(DIVOPLEN+1)*9+2]; // for quotient in BCD, +1, +1
@@ -245,7 +245,7 @@ static decFloat * decDivide(decFloat *result, const decFloat *dfl,
     } // 0/x
   // [here, both operands are known to be finite and non-zero]
 
-  // extract the operand coefficients into 'units' which are
+  // extract the operand coefficents into 'units' which are
   // base-billion; the lhs is high-aligned in acc and the msu of both
   // acc and div is at the right-hand end of array (offset length-1);
   // the quotient can need one more unit than the operands as digits
@@ -716,7 +716,7 @@ static void decFiniteMultiply(bcdnum *num, uByte *bcdacc,
   #if DECUSE64
   uLong  accl[MULACCLEN];          // lazy accumulator (base-billion+)
   uLong  *pl;                      // work -> lazy accumulator
-  uInt   acc[MULACCLEN];           // coefficient in base-billion ..
+  uInt   acc[MULACCLEN];           // coefficent in base-billion ..
   #else
   uInt   acc[MULACCLEN*2];         // accumulator in base-billion ..
   #endif
@@ -2660,7 +2660,7 @@ decFloat * decFloatMultiply(decFloat *result,
                             const decFloat *dfl, const decFloat *dfr,
                             decContext *set) {
   bcdnum num;                      // for final conversion
-  uByte  bcdacc[DECPMAX9*18+1];    // for coefficient in BCD
+  uByte  bcdacc[DECPMAX9*18+1];    // for coefficent in BCD
 
   if (DFISSPECIAL(dfl) || DFISSPECIAL(dfr)) { // either is special?
     // NaNs are handled as usual
@@ -2700,7 +2700,7 @@ decFloat * decFloatNextMinus(decFloat *result, const decFloat *dfl,
     DFSETNMAX(result);
     return result;                      // [no status to set]
     }
-  // other cases are effected by subtracting a tiny delta -- this
+  // other cases are effected by sutracting a tiny delta -- this
   // should be done in a wider format as the delta is unrepresentable
   // here (but can be done with normal add if the sign of zero is
   // treated carefully, because no Inexactitude is interesting);
@@ -2744,7 +2744,7 @@ decFloat * decFloatNextPlus(decFloat *result, const decFloat *dfl,
     DFWORD(result, 0)|=DECFLOAT_Sign;   // make negative
     return result;                      // [no status to set]
     }
-  // other cases are effected by subtracting a tiny delta -- this
+  // other cases are effected by sutracting a tiny delta -- this
   // should be done in a wider format as the delta is unrepresentable
   // here (but can be done with normal add if the sign of zero is
   // treated carefully, because no Inexactitude is interesting);
@@ -3071,7 +3071,7 @@ decFloat * decFloatQuantize(decFloat *result,
       } // inexact rounding
 
     // now clear zeros to the left so exactly DECPMAX digits will be
-    // available in the coefficient -- the first word to the left was
+    // available in the coefficent -- the first word to the left was
     // cleared earlier for safe carry; now add any more needed
     if (drop>4) {
       UBFROMUI(BUFOFF-8, 0);                 // must be at least 5
@@ -3090,7 +3090,7 @@ decFloat * decFloatQuantize(decFloat *result,
       ulsd=BUFOFF+DECPMAX-1;
       }
      else { // padding will fit (but may still be too long)
-      // final-word mask depends on endianness
+      // final-word mask depends on endianess
       #if DECLITEND
       static const uInt dmask[]={0, 0x000000ff, 0x0000ffff, 0x00ffffff};
       #else
@@ -3832,7 +3832,7 @@ static uInt decToInt32(const decFloat *df, decContext *set,
     set->status|=DEC_Invalid_operation; // Invalid or out of range
     return 0;
     }
-  // get last twelve digits of the coefficient into hi & ho, base
+  // get last twelve digits of the coefficent into hi & ho, base
   // 10**9 (see GETCOEFFBILL):
   sourlo=DFWORD(&result, DECWORDS-1);
   lo=DPD2BIN0[sourlo&0x3ff]

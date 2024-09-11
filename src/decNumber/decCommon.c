@@ -240,7 +240,7 @@ static decFloat * decFinalize(decFloat *df, bcdnum *num,
   #if DECCHECK
   Int clen=ulsd-umsd+1;
   #if QUAD
-    #define COEXTRA 2                        // extra-long coefficient
+    #define COEXTRA 2                        // extra-long coefficent
   #else
     #define COEXTRA 0
   #endif
@@ -701,7 +701,7 @@ decFloat * decFloatFromPacked(decFloat *df, Int exp, const uByte *packed) {
 /*  returns df, which will be canonical or NULL if any of the         */
 /*    requirements are not met (if this case df is unchanged); that   */
 /*    is, the input data must be as returned by decFloatToPacked,     */
-/*    except that all six sign codes are accepted.                   */
+/*    except that all six sign codes are acccepted.                   */
 /*                                                                    */
 /* No status will be set.                                             */
 /* ------------------------------------------------------------------ */
@@ -783,7 +783,7 @@ decFloat * decFloatFromString(decFloat *result, const char *string,
   uInt   uiwork;                   // for macros
   bcdnum num;                      // collects data for finishing
   uInt   error=DEC_Conversion_syntax;      // assume the worst
-  uByte  buffer[ROUNDUP(DECSTRING+11, 8)]; // room for most coefficients,
+  uByte  buffer[ROUNDUP(DECSTRING+11, 8)]; // room for most coefficents,
                                            // some common rounding, +3, & pad
   #if DECTRACE
   // printf("FromString %s ...\n", string);

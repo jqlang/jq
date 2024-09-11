@@ -8097,7 +8097,7 @@ static void *decMalloc(size_t n) {
   uInt  uiwork;                    // for macros
 
   alloc=malloc(size);              // -> allocated storage
-  if (alloc==NULL) return NULL;    // out of storage
+  if (alloc==NULL) return NULL;    // out of strorage
   b0=(uByte *)alloc;               // as bytes
   decAllocBytes+=n;                // account for storage
   UBFROMUI(alloc, n);              // save n
