@@ -157,7 +157,7 @@ uInt decContextGetStatus(decContext *context) {
 /*  newstatus is the source for the bits to be restored               */
 /*  mask indicates the bits to be restored (the status bit that       */
 /*    corresponds to each 1 bit in the mask is set to the value of    */
-/*    the correspnding bit in newstatus)                              */
+/*    the corresponding bit in newstatus)                             */
 /*  returns context                                                   */
 /*                                                                    */
 /* No error is possible.                                              */

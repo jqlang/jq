@@ -2026,7 +2026,7 @@ sections:
           future to include the version strings for the build
           tooling used.
 
-          Note that this can be overriden in the command-line
+          Note that this can be overridden in the command-line
           with `--arg` and related options.
 
       - title: "`$ENV`, `env`"

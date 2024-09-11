@@ -207,7 +207,7 @@ body:
         "name": "Nico Williams"
       }
       {
-        "message": "Fix iterration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happend because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.",
+        "message": "Fix iteration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happend because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.",
         "name": "Nico Williams"
       }
       {
@@ -249,7 +249,7 @@ body:
           "name": "Nico Williams"
         },
         {
-          "message": "Fix iterration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happend because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.",
+          "message": "Fix iteration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happend because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.",
           "name": "Nico Williams"
         },
         {
@@ -300,7 +300,7 @@ body:
           ]
         },
         {
-          "message": "Fix iterration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happend because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.",
+          "message": "Fix iteration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happend because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.",
           "name": "Nico Williams",
           "parents": [
             "https://github.com/jqlang/jq/commit/174db0f93552bdb551ae1f3c5c64744df0ad8e2f"

@@ -213,9 +213,9 @@ enum {
 #define JVP_FLAGS_NUMBER_LITERAL      JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_DECIMAL, 1))
 
 // the decimal precision of binary double
-#define DEC_NUBMER_DOUBLE_PRECISION   (17)
+#define DEC_NUMBER_DOUBLE_PRECISION   (17)
 #define DEC_NUMBER_STRING_GUARD       (14)
-#define DEC_NUBMER_DOUBLE_EXTRA_UNITS ((DEC_NUBMER_DOUBLE_PRECISION - DECNUMDIGITS + DECDPUN - 1)/DECDPUN)
+#define DEC_NUMBER_DOUBLE_EXTRA_UNITS ((DEC_NUMBER_DOUBLE_PRECISION - DECNUMDIGITS + DECDPUN - 1)/DECDPUN)
 
 #include "jv_thread.h"
 #ifdef WIN32
@@ -542,7 +542,7 @@ typedef struct {
 
 typedef struct {
   decNumber number;
-  decNumberUnit units[DEC_NUBMER_DOUBLE_EXTRA_UNITS];
+  decNumberUnit units[DEC_NUMBER_DOUBLE_EXTRA_UNITS];
 } decNumberDoublePrecision;
 
 
@@ -600,11 +600,11 @@ static double jvp_literal_number_to_double(jv j) {
 
   // init as decimal64 but change digits to allow conversion to binary64 (double)
   decContextDefault(&dblCtx, DEC_INIT_DECIMAL64);
-  dblCtx.digits = DEC_NUBMER_DOUBLE_PRECISION;
+  dblCtx.digits = DEC_NUMBER_DOUBLE_PRECISION;
 
   decNumber *p_dec_number = jvp_dec_number_ptr(j);
   decNumberDoublePrecision dec_double;
-  char literal[DEC_NUBMER_DOUBLE_PRECISION + DEC_NUMBER_STRING_GUARD + 1];
+  char literal[DEC_NUMBER_DOUBLE_PRECISION + DEC_NUMBER_STRING_GUARD + 1];
 
   // reduce the number to the shortest possible form
   // that fits into the 64 bit floating point representation

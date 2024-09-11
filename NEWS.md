@@ -262,7 +262,7 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.6...j
 - Fix `contains/1` to handle strings with NUL. @nicowilliams 61cd6db
 - Fix `stderr/0` to output raw text without any decoration. @itchyny #2751
 - Fix `nth/2` to emit empty on index out of range. @itchyny #2674
-- Fix `implode` to not assert and instead replace invalid unicode codepoints. @wader #2646
+- Fix `implode` to not assert and instead replace invalid Unicode codepoints. @wader #2646
 - Fix `indices/1` and `rindex/1` in case of overlapping matches in strings. @emanuele6 #2718
 - Fix `sub/3` to resolve issues involving global search-and-replace (gsub) operations. @pkoppstein #2641
 - Fix `significand/0`, `gamma/0` and `drem/2` to be available on macOS. @itchyny #2756 #2775
