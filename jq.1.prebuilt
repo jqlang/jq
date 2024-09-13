@@ -2199,7 +2199,7 @@ This builtin returns true if jq was built with "decnum", which is the current li
 This builtin binding shows the jq executable\'s build configuration\. Its value has no particular format, but it can be expected to be at least the \fB\./configure\fR command\-line arguments, and may be enriched in the future to include the version strings for the build tooling used\.
 .
 .P
-Note that this can be overriden in the command\-line with \fB\-\-arg\fR and related options\.
+Note that this can be overridden in the command\-line with \fB\-\-arg\fR and related options\.
 .
 .SS "$ENV, env"
 \fB$ENV\fR is an object representing the environment variables as set when the jq program started\.
