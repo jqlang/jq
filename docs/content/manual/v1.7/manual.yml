@@ -3017,10 +3017,16 @@ sections:
 
           The `nth(n)` function extracts the nth value of any array at `.`.
 
+          `first` and `nth` output `empty` if the generator has insufficient
+          elements. `last` returns `null` instead.
+
         examples:
           - program: "[range(.)]|[first, last, nth(5)]"
             input: "10"
             output: ["[0,9,5]"]
+          - program: "[range(.)]|[[first], [last], [nth(5)]]"
+            input: "0"
+            output: ["[[],[null],[]]"]
 
       - title: "`reduce`"
         body: |
