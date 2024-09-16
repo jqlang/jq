@@ -3004,7 +3004,7 @@ sections:
           The `nth(n; expr)` function extracts the nth value output by `expr`.
           Note that `nth(n; expr)` doesn't support negative values of `n`.
 
-          `first` and `nth` output `empty` if the generator has insufficient
+          `first` and `nth` produce no values if the generator has insufficient
           elements. `last` returns `null` instead.
 
         examples:
