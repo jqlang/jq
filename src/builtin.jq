@@ -170,7 +170,6 @@ def all(condition): all(.[]; condition);
 def any(condition): any(.[]; condition);
 def all: all(.[]; .);
 def any: any(.[]; .);
-def last(g): reduce g as $item (null; $item);
 def nth($n; g):
   if $n < 0 then error("nth doesn't support negative indices")
   else first(skip($n; g)) end;
