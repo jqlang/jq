@@ -1207,6 +1207,21 @@ sections:
             output: ['{"id": "second", "val": 2}']
 
 
+      - title: "`filter(boolean_expression)`"
+        body: |
+
+          The function `filter(f)` takes an array and returns an array
+          with only the elements for which `f` returns true for that element.
+
+          The behavior is identical to map(select(`f`)) but it's more user
+          friendly.
+
+        examples:
+          - program: 'filter(. >= 2)'
+            input: '[1,5,3,0,7]'
+            output: ['[5,3,7]']
+
+
       - title: "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `normals`, `finites`, `strings`, `nulls`, `values`, `scalars`"
         body: |
 

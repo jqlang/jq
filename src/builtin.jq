@@ -2,6 +2,7 @@ def halt_error: halt_error(5);
 def error(msg): msg|error;
 def map(f): [.[] | f];
 def select(f): if f then . else empty end;
+def filter(f): map(select(f));
 def sort_by(f): _sort_by_impl(map([f]));
 def group_by(f): _group_by_impl(map([f]));
 def unique: group_by(.) | map(.[0]);
