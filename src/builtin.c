@@ -32,6 +32,7 @@ void *alloca (size_t);
 #endif
 #include <string.h>
 #include <time.h>
+#include <uuid.h>
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -510,6 +511,22 @@ static jv f_tostring(jq_state *jq, jv input) {
     return input;
   } else {
     return jv_dump_string(input, 0);
+  }
+}
+
+static jv f_toarray(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_ARRAY) {
+    return input;
+  } else {
+    return jv_array_set(jv_array(), 0, input);
+  }
+}
+
+static jv f_toobject(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_OBJECT) {
+    return input;
+  } else {
+    return jv_object_set(jv_object(), jv_string("value"), input);
   }
 }
 
@@ -1767,6 +1784,15 @@ static jv f_now(jq_state *jq, jv a) {
 }
 #endif
 
+static jv f_getuuid(jq_state *jq, jv a) {
+  jv_free(a);
+
+  char* uuid_value = get_uuid();
+  jv ret = jv_string(uuid_value);
+  free(uuid_value);
+  return ret;
+}
+
 static jv f_current_filename(jq_state *jq, jv a) {
   jv_free(a);
 
@@ -1814,6 +1840,8 @@ BINOPS
   {f_json_parse, "fromjson", 1},
   {f_tonumber, "tonumber", 1},
   {f_tostring, "tostring", 1},
+  {f_toarray, "toarray", 1},
+  {f_toobject, "toobject", 1},
   {f_keys, "keys", 1},
   {f_keys_unsorted, "keys_unsorted", 1},
   {f_startswith, "startswith", 2},
@@ -1869,6 +1897,7 @@ BINOPS
   {f_current_line, "input_line_number", 1},
   {f_have_decnum, "have_decnum", 1},
   {f_have_decnum, "have_literal_numbers", 1},
+  {f_getuuid, "getuuid", 1},
 };
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO

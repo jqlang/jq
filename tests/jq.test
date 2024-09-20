@@ -2198,3 +2198,75 @@ try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"
 try ["OK", setpath([[1]]; 1)] catch ["KO", .]
 []
 ["KO","Cannot update field at array index of array"]
+
+map(try toarray catch .)
+[{"name":"a"},["a"],"a",42,true,null]
+[[{"name":"a"}],["a"],["a"],[42],[true],[null]]
+
+map(try toobject catch .)
+[{"name":"a"},["a"],"a",42,true,null]
+[{"name":"a"},{"value":["a"]},{"value":"a"},{"value":42},{"value":true},{"value":null}]
+
+# getuuid/0 returns a string of 36 characters
+
+getuuid | type == "string"
+null
+true
+
+getuuid | length == 36
+null
+true
+
+getuuid | "\(.[8:9])\(.[13:14])\(.[18:19])\(.[23:24])" == "----"
+null
+true
+
+getuuid | split("") | map(. as $c | "abcdefABCDEF0123456789-" | split("") | contains([$c])) | all
+null
+true
+
+# add_ids/0 adds a key "id" to each item in an array
+add_ids | map("\(.id).\(.name)") | join(",")
+[{"name":"a"},{"name":"b"},{"name":"c"}]
+"0.a,1.b,2.c"
+
+map([range(.)] | map({ value: . }) | add_ids | map(.id) | sort | unique | length)
+[10, 20, 50]
+[10, 20, 50]
+
+# add_ids/0 converts input into an array of objects
+map(try add_ids catch .)
+[[{"name":"a"}],["a"],"a",42,true,null]
+[[{"name":"a","id":0}],[{"value":"a","id":0}],[{"value":"a","id":0}],[{"value":42,"id":0}],[{"value":true,"id":0}],[{"value":null,"id":0}]]
+
+# add_ids/1 can specify a custom key name
+add_ids("someid") | map("\(.someid).\(.name)") | join(",") 
+[{"name":"a"},{"name":"b"},{"name":"c"}]
+"0.a,1.b,2.c"
+
+map((try add_ids(.) catch .) == "add_ids/1 expected idName to be a string")
+["a",{"name":"a"},["a"],42,true,null]
+[false,true,true,true,true,true]
+
+# add_uuids/0 adds a key "uuid" to each item in an array
+add_uuids | map("\(.uuid|length).\(.name)") | join(",")
+[{"name":"a"},{"name":"b"},{"name":"c"}]
+"36.a,36.b,36.c"
+
+add_uuids | map(.uuid|=(split("") | map(. as $c | "abcdefABCDEF0123456789-" | split("") | contains([$c])) | all)) 
+[{"name":"a"},{"name":"b"},{"name":"c"}]
+[{"name":"a","uuid":true},{"name":"b","uuid":true},{"name":"c","uuid":true}]
+
+# add_uuids/0 converts input into an array of objects
+map(try (add_uuids|map(.uuid|=(length))) catch .)
+[[{"name":"a"}],["a"],"a",42,true,null]
+[[{"name":"a","uuid":36}],[{"value":"a","uuid":36}],[{"value":"a","uuid":36}],[{"value":42,"uuid":36}],[{"value":true,"uuid":36}],[{"value":null,"uuid":36}]]
+
+# add_uuids/1 can specify a custom key name
+add_uuids("someid") | map("\(.someid|length).\(.name)") | join(",") 
+[{"name":"a"},{"name":"b"},{"name":"c"}]
+"36.a,36.b,36.c"
+
+map((try add_uuids(.) catch .) == "add_uuids/1 expected idName to be a string")
+["a",{"name":"a"},["a"],42,true,null]
+[false,true,true,true,true,true]

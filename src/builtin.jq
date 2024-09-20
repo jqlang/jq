@@ -279,3 +279,32 @@ def JOIN($idx; stream; idx_expr; join_expr):
   stream | [., $idx[idx_expr]] | join_expr;
 def IN(s): any(s == .; .);
 def IN(src; s): any(src == s; .);
+
+# add a uuid to be the id for each object in the array
+def add_uuids(idName):
+    if (idName | type != "string") then
+        error("add_uuids/1 expected idName to be a string")
+    else
+        toarray |
+        map(
+            toobject |
+            .[idName]|=(getuuid)
+        )
+    end
+;
+def add_uuids: add_uuids("uuid");
+
+# add an integer to be the id for each object in the array
+def add_ids(idName):
+    if (idName | type != "string") then
+        error("add_ids/1 expected idName to be a string")
+    else
+        toarray |
+        map(toobject) |
+        to_entries |
+        map(
+            .value + { (idName): .key }
+        )
+    end
+;
+def add_ids: add_ids("id");
