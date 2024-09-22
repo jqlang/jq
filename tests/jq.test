@@ -334,6 +334,30 @@ null
 "badness"
 [1]
 
+try limit(-1; error) catch .
+null
+"limit doesn't support negative count"
+
+[skip(3; .[])]
+[1,2,3,4,5,6,7,8,9]
+[4,5,6,7,8,9]
+
+[skip(0,2,3,4; .[])]
+[1,2,3]
+[1,2,3,3]
+
+[skip(3; .[])]
+[]
+[]
+
+try skip(-1; error) catch .
+null
+"skip doesn't support negative count"
+
+nth(1; 0,1,error("foo"))
+null
+1
+
 [first(range(.)), last(range(.))]
 10
 [0,9]

@@ -149,10 +149,14 @@ def until(cond; next):
      def _until:
          if cond then . else (next|_until) end;
      _until;
-def limit($n; exp):
-    if $n > 0 then label $out | foreach exp as $item ($n; .-1; $item, if . <= 0 then break $out else empty end)
-    elif $n == 0 then empty
-    else exp end;
+def limit($n; expr):
+  if $n > 0 then label $out | foreach expr as $item ($n; . - 1; $item, if . <= 0 then break $out else empty end)
+  elif $n == 0 then empty
+  else error("limit doesn't support negative count") end;
+def skip($n; expr):
+  if $n > 0 then foreach expr as $item ($n; . - 1; if . < 0 then $item else empty end)
+  elif $n == 0 then expr
+  else error("skip doesn't support negative count") end;
 # range/3, with a `by` expression argument
 def range($init; $upto; $by):
     if $by > 0 then $init|while(. < $upto; . + $by)
@@ -169,7 +173,7 @@ def any: any(.[]; .);
 def last(g): reduce g as $item (null; $item);
 def nth($n; g):
   if $n < 0 then error("nth doesn't support negative indices")
-  else label $out | foreach g as $item ($n + 1; . - 1; if . <= 0 then $item, break $out else empty end) end;
+  else first(skip($n; g)) end;
 def first: .[0];
 def last: .[-1];
 def nth($n): .[$n];
