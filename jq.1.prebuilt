@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "November 2024" "" ""
+.TH "JQ" "1" "January 2025" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -1007,10 +1007,10 @@ In the absence of errors, \fBmap(f)\fR always outputs an array whereas \fBmap_va
 When the input to \fBmap_values(f)\fR is an object, the output object has the same keys as the input object except for those keys whose values when piped to \fBf\fR produce no values at all\.
 .
 .P
-The key difference between \fBmap(f)\fR and \fBmap_values(f)\fR is that the former simply forms an array from all the values of \fB($x|f)\fR for each value, $x, in the input array or object, but \fBmap_values(f)\fR only uses \fBfirst($x|f)\fR\.
+The key difference between \fBmap(f)\fR and \fBmap_values(f)\fR is that the former simply forms an array from all the values of \fB($x|f)\fR for each value, \fB$x\fR, in the input array or object, but \fBmap_values(f)\fR only uses \fBfirst($x|f)\fR\.
 .
 .P
-Specifically, for object inputs, \fBmap_values(f)\fR constructs the output object by examining in turn the value of \fBfirst(\.[$k]|f)\fR for each key, $k, of the input\. If this expression produces no values, then the corresponding key will be dropped; otherwise, the output object will have that value at the key, $k\.
+Specifically, for object inputs, \fBmap_values(f)\fR constructs the output object by examining in turn the value of \fBfirst(\.[$k]|f)\fR for each key, \fB$k\fR, of the input\. If this expression produces no values, then the corresponding key will be dropped; otherwise, the output object will have that value at the key, \fB$k\fR\.
 .
 .P
 Here are some examples to clarify the behavior of \fBmap\fR and \fBmap_values\fR when applied to arrays\. These examples assume the input is \fB[1]\fR in all cases:
@@ -2481,37 +2481,37 @@ jq \'strptime("%Y\-%m\-%dT%H:%M:%SZ")|mktime\'
 jq provides a few SQL\-style operators\.
 .
 .TP
-INDEX(stream; index_expression):
+\fBINDEX(stream; index_expression)\fR:
 .
 .IP
 This builtin produces an object whose keys are computed by the given index expression applied to each value from the given stream\.
 .
 .TP
-JOIN($idx; stream; idx_expr; join_expr):
+\fBJOIN($idx; stream; idx_expr; join_expr)\fR:
 .
 .IP
 This builtin joins the values from the given stream to the given index\. The index\'s keys are computed by applying the given index expression to each value from the given stream\. An array of the value in the stream and the corresponding value from the index is fed to the given join expression to produce each result\.
 .
 .TP
-JOIN($idx; stream; idx_expr):
+\fBJOIN($idx; stream; idx_expr)\fR:
 .
 .IP
 Same as \fBJOIN($idx; stream; idx_expr; \.)\fR\.
 .
 .TP
-JOIN($idx; idx_expr):
+\fBJOIN($idx; idx_expr)\fR:
 .
 .IP
 This builtin joins the input \fB\.\fR to the given index, applying the given index expression to \fB\.\fR to compute the index key\. The join operation is as described above\.
 .
 .TP
-IN(s):
+\fBIN(s)\fR:
 .
 .IP
 This builtin outputs \fBtrue\fR if \fB\.\fR appears in the given stream, otherwise it outputs \fBfalse\fR\.
 .
 .TP
-IN(source; s):
+\fBIN(source; s)\fR:
 .
 .IP
 This builtin outputs \fBtrue\fR if any value in the source stream appears in the second stream, otherwise it outputs \fBfalse\fR\.
@@ -3144,7 +3144,7 @@ We want to produce the posts with the author field containing a real name, as in
 .IP "" 0
 .
 .P
-We use a variable, $names, to store the realnames object, so that we can refer to it later when looking up author usernames:
+We use a variable, \fB$names\fR, to store the realnames object, so that we can refer to it later when looking up author usernames:
 .
 .IP "" 4
 .
