@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install Pandoc
-        uses: pandoc/actions/setup@{main}
+        uses: pandoc/actions/setup@main
         with:
           version: 3.4
       - name: Setup Python

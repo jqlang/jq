@@ -22,7 +22,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install Pandoc
-        uses: pandoc/actions/setup@{main}
+        uses: pandoc/actions/setup@main
         with:
           version: 3.4
       - name: Configure
