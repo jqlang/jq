@@ -2,9 +2,11 @@ Documentation
 =============
 
 The jq website, manpages and some of the tests are generated from this
-directory. The manual is a YAML file in `content/manual`.
+directory. The manual is a Markdown file in `content/manual/manual.md`.
 
-To build the documentation (including building the jq manpage), you'll
+To build the jq manpage and the tests contained in it, you'll
+need `pandoc` (at least version 3.0).
+To build the website, you'll additionally
 need `python3` and `pipenv`. You can install `pipenv` like so:
 
     pip install pipenv

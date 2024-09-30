@@ -17,6 +17,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install Pandoc
+        uses: pandoc/actions/setup@{main}
+        with:
+          version: 3.4
       - name: Setup Python
         uses: actions/setup-python@v5
         with:

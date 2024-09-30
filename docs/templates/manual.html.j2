@@ -17,6 +17,13 @@
           <button type="button" class="btn-close d-md-none" data-bs-dismiss="offcanvas" data-bs-target="#contents" aria-label="Close table of contents"></button>
         </div>
         <ul class="offcanvas-md-body nav nav-pills flex-column">
+          {%- for section in toc %}
+          {%- if section.level == 1 %}
+          <li class="nav-item" data-bs-dismiss="offcanvas" data-bs-target="#contents">
+            <a class="nav-link" href="#{{ section.id }}">{{ section.title }}</a>
+          </li>
+          {%- endif %}
+          {%- endfor %}
           {%- for section in sections %}
           <li class="nav-item" data-bs-dismiss="offcanvas" data-bs-target="#contents">
             <a class="nav-link" href="#{{ section.title | section_id }}">{{ section.title }}</a>
@@ -107,6 +114,9 @@
       integrity="sha384-xbzjoN6H5XHmAqoSSR42hZVRninPGx85y+XZQGlWxVu2y91lTmr/oD80i5cjeUBv" crossorigin="anonymous"></script>
     <script id="section-ids" type="application/json">
       {
+        {%- for section in toc %}
+        {{ section.title | tojson }}: {{ section.id | tojson }}{{ "," if not loop.last }}
+        {%- endfor %}
         {%- for section in sections %}
         {%- for entry in section.entries %}
         {{ entry.title | search_id | tojson }}: {{ entry.title | entry_id | tojson }},
