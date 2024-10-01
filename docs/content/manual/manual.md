@@ -739,7 +739,7 @@ true
 
 ## Concatenation: `,`
 
-When we have two filters `f` and `g`, then
+Given two filters `f` and `g`, their concatenation
 `f, g` first returns the outputs of `f`, then the outputs of `g`,
 feeding the original input to both `f` and `g`.
 For instance, the filter `.foo, .bar` produces both
@@ -773,7 +773,7 @@ the "foo" fields and "bar" fields as separate outputs.
 
 ## Composition: `|`
 
-When we have two filters `f` and `g`, then
+Given two filters `f` and `g`, their composition
 `f | g` feeds the original input to `f`, and
 for every output of `f`, it feeds it to `g` and returns its outputs.
 It's similar to the Unix shell's pipe, if you're used to that.
@@ -1004,14 +1004,16 @@ null
 
 ## Equality: `==`, `!=`
 
-The expression 'a == b' will produce 'true' if the results of evaluating
-a and b are equal (that is, if they represent equivalent JSON values) and
-'false' otherwise. In particular, strings are never considered equal
-to numbers.  In checking for the equality of JSON objects, the ordering of keys
-is irrelevant.  If you're coming from JavaScript, please note that jq's `==` is like
+The expression `a == b` produces
+`true` if the results of evaluating `a` and `b` are equal
+(that is, if they represent equivalent JSON values) and
+`false` otherwise.
+In particular, strings are never considered equal to numbers.
+In checking for the equality of JSON objects, the ordering of keys is irrelevant.
+If you're coming from JavaScript, please note that jq's `==` is like
 JavaScript's `===`, the "strict equality" operator.
 
-!= is "not equal", and 'a != b' returns the opposite value of 'a == b'
+The expression `a != b` returns `false` if `a == b` returns `true`, else `true`.
 
 ::: Examples
 
@@ -1175,7 +1177,8 @@ input. It's similar to how `or` is sometimes used in Python
 (jq's `or` operator is reserved for strictly Boolean
 operations).
 
-Note: `some_generator // defaults_here` is not the same
+::: Note
+`some_generator // defaults_here` is not the same
 as `some_generator | . // defaults_here`.  The latter will
 produce default values for all non-`false`, non-`null`
 values of the left-hand side, while the former will not.
@@ -1188,6 +1191,7 @@ while in `(false, null, 1) // 42` the left-hand side is a
 generator of three values, and since it produces a
 value other `false` and `null`, the default `42` is not
 produced.
+:::
 
 ::: Examples
 
@@ -1606,35 +1610,6 @@ foreach loop.
 Just as `{foo}` is a handy way of writing `{foo: .foo}`, so
 `{$foo}` is a handy way of writing `{foo: $foo}`.
 
-Multiple variables may be declared using a single `as` expression by
-providing a pattern that matches the structure of the input
-(this is known as "destructuring"):
-
-    . as {realnames: $names, posts: [$first, $second]} | ...
-
-The variable declarations in array patterns (e.g., `. as
-[$first, $second]`) bind to the elements of the array in from
-the element at index zero on up, in order.  When there is no
-value at the index for an array pattern element, `null` is
-bound to that variable.
-
-Variables are scoped over the rest of the expression that defines
-them, so
-
-    .realnames as $names | (.posts[] | {title, author: $names[.author]})
-
-will work, but
-
-    (.realnames as $names | .posts[]) | {title, author: $names[.author]}
-
-won't.
-
-For programming language theorists, it's more accurate to
-say that jq variables are lexically-scoped bindings.  In
-particular there's no way to change the value of a binding;
-one can only setup a new binding with the same name, but which
-will not be visible where the old one was.
-
 ::: Examples
 
 ~~~
@@ -1648,6 +1623,49 @@ will not be visible where the old one was.
 5
 [10,5]
 ~~~
+
+:::
+
+## Scoping
+
+There are two types of symbols in jq:
+value bindings (a.k.a. "variables"), and [functions](#definitions).
+Both are scoped lexically, with expressions being able to refer only to
+symbols that have been defined "to the left" of them.
+The only exception to this rule is that functions can
+refer to themselves so as to be able to create [recursive functions](#recursion).
+Furthermore, there is no way to change the value of a binding;
+one can only create a new binding with the same name,
+but this will not be visible where the old one was.
+
+For example, in the filter
+
+    .realnames as $names | (.posts[] | {title, author: $names[.author]})
+
+the binding `$names` is visible "to the right" of it, but in the filter
+
+    (.realnames as $names | .posts[]) | {title, author: $names[.author]}
+
+the binding `$names` is _not_ visible past the closing parenthesis,
+so the filter is not well-formed.
+
+## Destructuring
+
+Multiple variables may be declared using a single `as` expression by
+providing a pattern that matches the structure of the input:
+
+    . as {realnames: $names, posts: [$first, $second]} | ...
+
+The variable declarations in array patterns (e.g., `. as [$first, $second]`)
+bind the elements of the array from the element at index zero on up, in order.
+When there is no value at the index for an array pattern element,
+`null` is bound to that variable.
+
+::: Compatibility
+jaq does not support destructuring.
+:::
+
+::: Examples
 
 ~~~
 . as [$a, $b, {c: $c}] | $a + $b + $c
@@ -1688,7 +1706,8 @@ has multiple events:
 
 We can use the destructuring alternative operator to handle this structural change simply:
 
-    .resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$user_id, $ts}]} | {$user_id, $kind, $id, $ts}
+    .resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$user_id, $ts}]} |
+    {$user_id, $kind, $id, $ts}
 
 Or, if we aren't sure if the input is an array of values or an object:
 
@@ -1698,7 +1717,8 @@ Each alternative need not define all of the same variables, but all named
 variables will be available to the subsequent expression. Variables not
 matched in the alternative that succeeded will be `null`:
 
-    .resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$first_user_id, $first_ts}]} | {$user_id, $first_user_id, $kind, $id, $ts, $first_ts}
+    .resources[] as {$id, $kind, events: {$user_id, $ts}} ?// {$id, $kind, events: [{$first_user_id, $first_ts}]} |
+    {$user_id, $first_user_id, $kind, $id, $ts, $first_ts}
 
 Additionally, if the subsequent expression returns an error, the
 alternative operator will attempt to try the next binding. Errors
@@ -1906,22 +1926,6 @@ def addvalue(f): f as $x | map(. + $x); addvalue(.[0])
 ~~~
 
 :::
-
-## Scoping
-
-There are two types of symbols in jq: value bindings (a.k.a.,
-"variables"), and functions.  Both are scoped lexically,
-with expressions being able to refer only to symbols that
-have been defined "to the left" of them.  The only exception
-to this rule is that functions can refer to themselves so as
-to be able to create recursive functions.
-
-For example, in the following expression there is a binding
-which is visible "to the right" of it, `... | .*3 as
-$times_three | [. + $times_three] | ...`, but not "to the
-left".  Consider this expression now, `... | (.*3 as
-$times_three | [. + $times_three]) | ...`: here the binding
-`$times_three` is _not_ visible past the closing parenthesis.
 
 
 ## Recursion
@@ -3698,7 +3702,10 @@ The input is converted to base64 as specified by RFC 4648.
 ### `@base64d`
 
 The inverse of `@base64`, input is decoded as specified by RFC 4648.
-Note\: If the decoded string is not UTF-8, the results are undefined.
+
+::: Note
+If the decoded string is not UTF-8, the results are undefined.
+:::
 
 ## Recursion functions
 
@@ -4103,6 +4110,8 @@ jq provides some basic date handling functionality, with some
 high-level and low-level builtins.  In all cases these
 builtins deal exclusively with time in UTC.
 
+### High-level date functions
+
 The `fromdateiso8601` builtin parses datetimes in the ISO 8601
 format to a number of seconds since the Unix epoch
 (1970-01-01T00:00:00Z).  The `todateiso8601` builtin does the
@@ -4117,6 +4126,18 @@ The `todate` builtin is an alias for `todateiso8601`.
 
 The `now` builtin outputs the current time, in seconds since
 the Unix epoch.
+
+::: Examples
+
+~~~
+fromdate
+"2015-03-05T23:51:47Z"
+1425599507
+~~~
+
+:::
+
+### Low-level date functions
 
 Low-level jq interfaces to the C-library time functions are
 also provided: `strptime`, `strftime`, `strflocaltime`,
@@ -4158,13 +4179,11 @@ jq may not support some or all of this date functionality on
 some systems. In particular, the `%u` and `%j` specifiers for
 `strptime(fmt)` are not supported on macOS.
 
-::: Examples
+::: Compatibility
+jaq does not provide any of the given low-level date functions.
+:::
 
-~~~
-fromdate
-"2015-03-05T23:51:47Z"
-1425599507
-~~~
+::: Examples
 
 ~~~
 strptime("%Y-%m-%dT%H:%M:%SZ")
