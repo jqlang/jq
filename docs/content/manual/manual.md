@@ -843,7 +843,7 @@ For example, the following code outputs `[1,3,4,7]`
     ]
 
 ::: Note
-Backslash continuing the comment on the next line can be useful
+A backslash continuing the comment on the next line can be useful
 when writing the "shebang" for a jq script:
 
     #!/bin/sh --
