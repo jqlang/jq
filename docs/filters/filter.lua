@@ -49,7 +49,14 @@ function Div(el)
       }
     end
     return el.content
+  elseif el.classes:includes'Note' then
+    el.classes = {"alert", "alert-primary"}
+    table.insert(el.content, 1, pandoc.Span("Note", {class = "block-start"}))
+  elseif el.classes:includes'Compatibility' then
+    el.classes = {"alert", "alert-primary"}
+    table.insert(el.content, 1, pandoc.Span("Compatibility", {class = "block-start"}))
   end
+  return el
 end
 
 function example(test)
