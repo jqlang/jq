@@ -8,7 +8,7 @@ jq -- Command-line JSON processor
 
 # SYNOPSIS
 
-`jq` [<options>...] <filter> [<files>...]
+**jq** `[`_OPTION_`]`... _FILTER_ `[`_FILE_`]`...
 
 `jq` can transform JSON in various ways, by selecting, iterating,
 reducing and otherwise mangling JSON documents. For instance,
@@ -21,10 +21,10 @@ stream of JSON entities (including numbers and other literals) from
 and 2, and true and false.  One or more <files> may be specified, in
 which case `jq` will read input from those instead.
 
-The <options> are described in the [INVOKING JQ] section; they
-mostly concern input and output formatting. The <filter> is written
-in the jq language and specifies how to transform the input
-file or document.
+Each _OPTION_ is described in the [INVOKING JQ](#invoking-jq) section;
+they mostly concern input and output formatting.
+The _FILTER_ is written in the jq language and specifies
+how to transform the input file or document.
 
 # FILTERS
 

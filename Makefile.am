@@ -174,7 +174,7 @@ endif
 # manpage, then we'll end up using the cached version. Otherwise, we need to
 # rebuild it.
 man_MANS = jq.1
-jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.md
+jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.md $(srcdir)/docs/man/*
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && ./build_manpage.sh ) > $@
 else
