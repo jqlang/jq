@@ -75,6 +75,8 @@ This manual tries to point out when these implementations
 diverge from the reference implementation.
 :::
 
+## Command-line options
+
 You can affect how jq reads and writes its input and output
 using some command-line options:
 
@@ -361,6 +363,72 @@ using some command-line options:
 
   This option can change backwards-incompatibly.
 
+## Comments
+
+You can write comments in your jq programs using `#`.
+
+A `#` character (not part of a string) starts a comment.
+All characters from `#` to the end of the line are ignored.
+
+If the end of the line is preceded by an odd number of backslash
+characters, the following line is also considered part of the
+comment and is ignored.
+
+For example, the following code outputs `[1,3,4,7]`
+
+    [
+      1,
+      # foo \
+      2,
+      # bar \\
+      3,
+      4, # baz \\\
+      5, \
+      6,
+      7
+      # comment \
+        comment \
+        comment
+    ]
+
+::: Note
+A backslash continuing the comment on the next line can be useful
+when writing the "shebang" for a jq script:
+
+    #!/bin/sh --
+    # total - Output the sum of the given arguments (or stdin)
+    # usage: total [numbers...]
+    # \
+    exec jq --args -MRnf "$0" -- "$@"
+
+    $ARGS.positional |
+    reduce (
+      if . == []
+        then inputs
+        else .[]
+      end |
+      . as $dot |
+      try tonumber catch false |
+      if not or isnan then
+        @json "total: Invalid number \($dot).\n" | halt_error(1)
+      end
+    ) as $n (0; . + $n)
+
+The `exec` line is considered a comment by jq, so it is ignored.
+But it is not ignored by `sh`, since in `sh` a backslash at the
+end of the line does not continue the comment.
+With this trick, when the script is invoked as `total 1 2`,
+`/bin/sh -- /path/to/total 1 2` will be run, and `sh` will then
+run `exec jq --args -MRnf /path/to/total -- 1 2` replacing itself
+with a `jq` interpreter invoked with the specified options (`-M`,
+`-R`, `-n`, `--args`), that evaluates the current file (`$0`),
+with the arguments (`$@`) that were passed to `sh`.
+:::
+
+::: Compatibility
+jaq ignores backslashes at the end of comment lines.
+:::
+
 ## Colors
 
 To configure alternative colors just set the `JQ_COLORS`
@@ -423,10 +491,6 @@ ignores it, and returns 42.
 ## Booleans
 
 The booleans can be produced by the filters `true` and `false`.
-Every value can be converted to a boolean --- in particular,
-the values `false` and `null` have the boolean value `false`,
-all other values have the boolean value `true`.
-This is used to evaluate [if-then-else expressions](#if-then-else).
 
 ::: Note
 The booleans can be defined by:
@@ -746,7 +810,6 @@ true
 
 :::
 
-
 ## Concatenation: `,`
 
 Given two filters `f` and `g`, their concatenation
@@ -874,187 +937,6 @@ programming language.
 
 :::
 
-## Comments: `#`
-
-You can write comments in your jq filters using `#`.
-
-A `#` character (not part of a string) starts a comment.
-All characters from `#` to the end of the line are ignored.
-
-If the end of the line is preceded by an odd number of backslash
-characters, the following line is also considered part of the
-comment and is ignored.
-
-For example, the following code outputs `[1,3,4,7]`
-
-    [
-      1,
-      # foo \
-      2,
-      # bar \\
-      3,
-      4, # baz \\\
-      5, \
-      6,
-      7
-      # comment \
-        comment \
-        comment
-    ]
-
-::: Note
-A backslash continuing the comment on the next line can be useful
-when writing the "shebang" for a jq script:
-
-    #!/bin/sh --
-    # total - Output the sum of the given arguments (or stdin)
-    # usage: total [numbers...]
-    # \
-    exec jq --args -MRnf "$0" -- "$@"
-
-    $ARGS.positional |
-    reduce (
-      if . == []
-        then inputs
-        else .[]
-      end |
-      . as $dot |
-      try tonumber catch false |
-      if not or isnan then
-        @json "total: Invalid number \($dot).\n" | halt_error(1)
-      end
-    ) as $n (0; . + $n)
-
-The `exec` line is considered a comment by jq, so it is ignored.
-But it is not ignored by `sh`, since in `sh` a backslash at the
-end of the line does not continue the comment.
-With this trick, when the script is invoked as `total 1 2`,
-`/bin/sh -- /path/to/total 1 2` will be run, and `sh` will then
-run `exec jq --args -MRnf /path/to/total -- 1 2` replacing itself
-with a `jq` interpreter invoked with the specified options (`-M`,
-`-R`, `-n`, `--args`), that evaluates the current file (`$0`),
-with the arguments (`$@`) that were passed to `sh`.
-:::
-
-## if-then-else-end {#if-then-else}
-
-Given three filters `i`, `t`, and `e`,
-the expression `if i then t else e end` runs `i` on its input.
-For every value `y` that is output by `i`,
-if `y` has the [boolean value](#booleans) `true`
-(that means, if `y` is neither `false` nor `null`),
-the output of `t` on the original input is produced, else
-the output of `e` on the original input is produced.
-
-::: Note
-Checking for false or null is a simpler notion of
-"truthiness" than is found in JavaScript or Python, but it
-means that you'll sometimes have to be more explicit about
-the condition you want.  You can't test whether, e.g. a
-string is empty using `if .name then A else B end`; you'll
-need something like `if .name == "" then A else B end` instead.
-:::
-
-More cases can be added to an if using `elif A then B` syntax.
-
-`if A then B end` is shorthand for `if A then B else .  end`.
-That is, the `else` branch is optional, and if absent, it is the same as `.`.
-This also applies to `elif` with absent ending `else` branch.
-
-::: Examples
-
-~~~
-if . == 0 then "zero" elif . == 1 then "one" else "many" end
-2
-"many"
-~~~
-
-~~~
-.[] | if . then ., .+1 else . end
-[false, 1, null]
-false
-1
-2
-null
-~~~
-
-:::
-
-## `and`, `or`, `not`
-
-jq supports the normal Boolean operators `and`, `or`, `not`.
-They have the same standard of truth as if expressions ---
-`false` and `null` are considered "false values", and
-anything else is a "true value".
-
-If an operand of one of these operators produces multiple
-results, the operator itself will produce a result for each input.
-
-`not` is in fact a builtin function rather than an operator,
-so it is called as a filter to which things can be piped
-rather than with special syntax, as in `.foo and .bar | not`.
-
-These three only produce the values `true` and `false`, and
-so are only useful for genuine Boolean operations, rather
-than the common Perl/Python/Ruby idiom of
-"value_that_may_be_null or default". If you want to use this
-form of "or", picking between two values rather than
-evaluating a condition, see the `//` operator below.
-
-::: Note
-The expressions `f and g` and `f or g` can be considered
-"syntactic sugar" around if-then-else.
-To show this, we can define filters
-`and_(f)` and `or_(f)` such that
-`f and g` is equivalent to `and_(f; g)` and
-`f  or g` is equivalent to  `or_(f; g)`:
-
-~~~
-def bool: if . then true else false end;
-def and_(f; g): if f then g | bool else false end;
-def  or_(f; g): if f then true  else g | bool end;
-
-[true, false] |
-[.[] and .[]] == [and_(.[]; .[])],
-[.[]  or .[]] == [ or_(.[]; .[])]
-~~~
-
-This yields twice `true` to certify the equivalence.
-:::
-
-::: Examples
-
-~~~
-42 and "a string"
-null
-true
-~~~
-
-~~~
-(true, false) or false
-null
-true
-false
-~~~
-
-~~~
-(true, true) and (true, false)
-null
-true
-false
-true
-false
-~~~
-
-~~~
-[true, false | not]
-null
-[false, true]
-~~~
-
-:::
-
-
 ## Recursive descent: `..`
 
 Recursively descends `.`, producing every value.  This is the
@@ -1065,7 +947,8 @@ In the example below we use `.. | .a?` to find
 all the values of object keys "a" in any object found "below" `.`.
 
 This is particularly useful in conjunction with
-[`path(EXP)`](#path) and [the `?` operator](#error-suppression).
+[`path(EXP)`](#path) and the
+[`?` operator](#error-suppression).
 
 ::: Examples
 
@@ -1077,6 +960,316 @@ This is particularly useful in conjunction with
 
 :::
 
+
+# Paths
+
+In this section, we will show three very frequently used operators, namely for
+[iteration](#iteration-operator),
+[indexing](#indexing-operator), and
+[slicing](#slicing-operator).
+These operators serve to obtain parts of values.
+Furthermore, we will see how to [combine these operators](#combining-path-operators).
+
+## Iteration operator: `.[]` {#iteration-operator}
+
+If the input is an array, then `.[]` returns all elements of the array, and
+if the input is an object, `.[]` returns all the values of the object.
+For example, running `.[]` with the input `[1,2,3]` produces the
+numbers `1 2 3` as three separate results, rather than as a single array.
+
+::: Examples
+
+~~~
+.[]
+[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
+{"name":"JSON", "good":true}
+{"name":"XML", "good":false}
+~~~
+
+~~~
+.[]
+[]
+
+~~~
+
+~~~
+.foo[]
+{"foo":[1,2,3]}
+1
+2
+3
+~~~
+
+~~~
+.[]
+{"a": 1, "b": 1}
+1
+1
+~~~
+
+:::
+
+## Indexing operator: `.[f]` {#indexing-operator}
+
+When given a JSON object as input, `.[k]` produces the value
+at the key `k` if it is present in the object, or `null` otherwise.
+For example, given the object `{name: "Anna", age: 24}`, the filter
+`.["name"]` produces `"Anna"`,
+`.["age"]` produces `24`, and
+`.["address"]` produces `null`.
+
+We say that a key is identifier-like when it
+does not start with a digit and
+consists only of alphanumeric characters and underscores;
+for example, `"foo"` is identifier-like.
+For identifier-like keys like `"foo"`, you can also look up
+the field `"foo"` of an object using the shorthand syntax `.foo`.
+For example, we could have written `.name`, `.age`, and `.address` above, whereas
+we cannot use this shorthand syntax for `.["foo::bar"]` and `.["foo.bar"]`.
+
+When given an array as input, `.[n]` produces the `n`-th element of the array.
+For example, given the array `[2, 4, 6]`, the filter `.[1]` returns `4`.
+Arrays are zero-based, so `.[2]` returns the third element.
+
+Negative indices are allowed, with -1 referring to the last
+element, -2 referring to the next to last element, and so on.
+
+::: Compatibility
+In jq, when given `null` input, `.["a"]` and `.[0]` yield `null`, but `.[]` yields an error.
+jaq yields an error in all cases to prevent accidental indexing of `null` values.
+To obtain the same behaviour in jq and jaq, you can use
+`.["a"]? // null` or `.[0]? // null` instead.
+:::
+
+::: Examples
+
+~~~
+.foo
+{"foo": 42, "bar": "less interesting data"}
+42
+~~~
+
+~~~
+.foo
+{"notfoo": true, "alsonotfoo": false}
+null
+~~~
+
+~~~
+.["foo"]
+{"foo": 42}
+42
+~~~
+
+~~~
+.[0]
+[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
+{"name":"JSON", "good":true}
+~~~
+
+~~~
+.[2]
+[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
+null
+~~~
+
+~~~
+.[-2]
+[1,2,3]
+2
+~~~
+
+:::
+
+## Slicing operator: `.[f:g]` {#slicing-operator}
+
+The operator `.[f:g]` returns a slice of an array or a string.
+For example, when given an array,
+`.[10:15]` returns an array of length 5, containing the
+elements from index 10 (inclusive) to index 15 (exclusive).
+Either index may be negative, in which case it counts
+backwards from the end of the array.
+If `f` is omitted, it is assumed to be `0`, and
+if `g` is omitted, it is assumed to be `length`.
+Indices are zero-based.
+
+::: Examples
+
+~~~
+.[2:4]
+["a","b","c","d","e"]
+["c", "d"]
+~~~
+
+~~~
+.[2:4]
+"abcdefghi"
+"cd"
+~~~
+
+~~~
+.[:3]
+["a","b","c","d","e"]
+["a", "b", "c"]
+~~~
+
+~~~
+.[-2:]
+["a","b","c","d","e"]
+["d", "e"]
+~~~
+
+:::
+
+## Combining path operators
+
+Frequently, when using the path operators given above,
+we find ourselves combining them with the
+[`|`](#composition) and
+[`?`](#error-suppression) operators.
+Therefore, jq provides shorthand syntax for these combinations.
+For example:
+
+* `.key[]` for `.key | .[]`,
+* `.[].key?` for `.[] | .key?`,
+* `.[]?[]` for `.[]? | .[]`,
+* `.a.b` for `.a | .b`,
+* `.a.b.c` for `.a | .b | .c`, and so on.
+
+We call such a combination a _path expression_.
+
+The rules for what constitutes a path expression are surprisingly complex.
+Therefore, we define it via a formal grammar in
+[EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form):
+
+~~~ ebnf
+path = atomic, part
+     | ".", ident
+     | path, part
+     | path, part, "?"
+     ;
+
+part = ".", ident
+     | "[",            "]"
+     | "[",     t,     "]"
+     | "[", t, ":", t, "]"
+     | "[", t, ":",    "]"
+     | "[",    ":", t, "]"
+     ;
+~~~
+
+Here,
+`ident` refers to an [identifier-like key](#indexing-operator),
+`t` refers to a filter, and
+`atomic` refers to an _atomic_ filter, such as
+`.` (identity), function call, and parenthesis.
+This grammar defines `path` expressions as
+a sequence of path parts,
+potentially prefixed by an atomic root.
+A path `part` is any of the operators previously introduced in this section.
+
+::: Example
+
+The following is a path expression:
+
+    add[].posts[0]?.sections[]["title"]?
+
+We can decompose it into its different parts:
+
+~~~
+add          # atomic (function call)
+[]           # iteration
+.posts       # indexing
+[0]?         # indexing
+.sections    # indexing
+[]           # iteration
+["title"]?   # indexing
+~~~
+
+We can transform this into an equivalent filter:
+
+~~~
+  add
+| .[]
+| .posts
+| .[0]?
+| .sections
+| .[]
+| .["title"]?
+~~~
+
+:::
+
+Filters inside a part of the path expression,
+such as `f` and `g` in `.[f][:g]`,
+are run with the _input given to the whole path_.
+
+::: Example
+
+When we run the filter `.arr[][.key]` on the input
+`{key: "a", arr: [{a: 1, b: 2}, {a: 3}]}`, then
+`.key` is run on the original input,
+not on the current value returned by `.arr[]`!
+To see the difference, let us first consider a **wrong** transformation:
+
+~~~
+  .arr          # --> [{a: 1, b: 2}, {a: 3}]
+| .[]           # -->  {a: 1, b: 2}, {a: 3}
+| .[.key]       # -->  error  (because .key is run with input {a: 1, b: 2} and yields null)
+~~~
+
+Now, let us consider a **correct** transformation:
+
+~~~
+  .key as $x    # --> "a"
+| .arr          # --> [{a: 1, b: 2}, {a: 3}]
+| .[]           # -->  {a: 1, b: 2}, {a: 3}
+| .[$x]         # -->  1, 3
+~~~
+
+:::
+
+::: Note
+Surprisingly, the filter `.[f]?` is **not** equivalent to `(.[f])?`.
+To see this, let us transform `.[f]?` to an equivalent filter like above:
+
+~~~
+  f as $x
+| .[$x]?
+~~~
+
+The difference shows when `f` causes an error --- in that case,
+ `.[f]?`  will raise the error, whereas
+`(.[f])?` will not raise _any_ error.
+:::
+
+::: Examples
+
+~~~
+.foo?
+{"foo": 42, "bar": "less interesting data"}
+42
+~~~
+
+~~~
+.foo?
+{"notfoo": true, "alsonotfoo": false}
+null
+~~~
+
+~~~
+.["foo"]?
+{"foo": 42}
+42
+~~~
+
+~~~
+[.foo?]
+[1,2]
+[]
+~~~
+
+:::
 
 # Arithmetic and Comparison
 
@@ -1302,351 +1495,175 @@ true
 
 :::
 
+# Boolean filters
 
-# Paths
+Every value can be converted to a boolean --- in particular,
+the values `false` and `null` have the _boolean value_ `false`,
+all other values have the boolean value `true`.
+This section describes several filters that analyze the boolean value of values.
 
-In this section, we will show three very frequently used operators, namely for
-[iteration](#iteration-operator),
-[indexing](#indexing-operator), and
-[slicing](#slicing-operator).
-These operators serve to obtain parts of values.
-Furthermore, we will see how to [combine these operators](#combining-path-operators).
+You can negate the boolean value of a value with the builtin function [`not`](#not).
+It is called as a filter to which things can be piped
+rather than with special syntax, as in `.foo and .bar | not`.
 
-## Iteration operator: `.[]` {#iteration-operator}
 
-If the input is an array, then `.[]` returns all elements of the array, and
-if the input is an object, `.[]` returns all the values of the object.
-For example, running `.[]` with the input `[1,2,3]` produces the
-numbers `1 2 3` as three separate results, rather than as a single array.
+## if-then-else-end {#if-then-else}
+
+Given three filters `i`, `t`, and `e`,
+the expression `if i then t else e end` runs `i` on its input.
+For every value `y` that is output by `i`,
+if `y` has the boolean value `true`
+(that means, if `y` is neither `false` nor `null`),
+the output of `t` on the original input is produced, else
+the output of `e` on the original input is produced.
+
+::: Note
+Checking for false or null is a simpler notion of
+"truthiness" than is found in JavaScript or Python, but it
+means that you'll sometimes have to be more explicit about
+the condition you want.  You can't test whether, e.g. a
+string is empty using `if .name then A else B end`; you'll
+need something like `if .name == "" then A else B end` instead.
+:::
+
+More cases can be added to an if using `elif A then B` syntax.
+
+`if A then B end` is shorthand for `if A then B else .  end`.
+That is, the `else` branch is optional, and if absent, it is the same as `.`.
+This also applies to `elif` with absent ending `else` branch.
 
 ::: Examples
 
 ~~~
-.[]
-[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
-{"name":"JSON", "good":true}
-{"name":"XML", "good":false}
+if . == 0 then "zero" elif . == 1 then "one" else "many" end
+2
+"many"
 ~~~
 
 ~~~
-.[]
-[]
-
-~~~
-
-~~~
-.foo[]
-{"foo":[1,2,3]}
+.[] | if . then ., .+1 else . end
+[false, 1, null]
+false
 1
 2
-3
-~~~
-
-~~~
-.[]
-{"a": 1, "b": 1}
-1
-1
-~~~
-
-:::
-
-## Indexing operator: `.[f]` {#indexing-operator}
-
-When given a JSON object as input, `.[k]` produces the value
-at the key `k` if it is present in the object, or `null` otherwise.
-For example, given the object `{name: "Anna", age: 24}`, the filter
-`.["name"]` produces `"Anna"`,
-`.["age"]` produces `24`, and
-`.["address"]` produces `null`.
-
-We say that a key is identifier-like when it
-does not start with a digit and
-consists only of alphanumeric characters and underscores;
-for example, `"foo"` is identifier-like.
-For identifier-like keys like `"foo"`, you can also look up
-the field `"foo"` of an object using the shorthand syntax `.foo`.
-For example, we could have written `.name`, `.age`, and `.address` above, whereas
-we cannot use this shorthand syntax for `.["foo::bar"]` and `.["foo.bar"]`.
-
-When given an array as input, `.[n]` produces the `n`-th element of the array.
-For example, given the array `[2, 4, 6]`, the filter `.[1]` returns `4`.
-Arrays are zero-based, so `.[2]` returns the third element.
-
-Negative indices are allowed, with -1 referring to the last
-element, -2 referring to the next to last element, and so on.
-
-::: Compatibility
-In jq, when given `null` input, `.["a"]` and `.[0]` yield `null`, but `.[]` yields an error.
-jaq yields an error in all cases to prevent accidental indexing of `null` values.
-To obtain the same behaviour in jq and jaq, you can use
-`.["a"]? // null` or `.[0]? // null` instead.
-:::
-
-::: Examples
-
-~~~
-.foo
-{"foo": 42, "bar": "less interesting data"}
-42
-~~~
-
-~~~
-.foo
-{"notfoo": true, "alsonotfoo": false}
 null
 ~~~
 
-~~~
-.["foo"]
-{"foo": 42}
-42
-~~~
-
-~~~
-.[0]
-[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
-{"name":"JSON", "good":true}
-~~~
-
-~~~
-.[2]
-[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
-null
-~~~
-
-~~~
-.[-2]
-[1,2,3]
-2
-~~~
-
 :::
 
-## Slicing operator: `.[f:g]` {#slicing-operator}
+## `and`, `or`
 
-The operator `.[f:g]` returns a slice of an array or a string.
-For example, when given an array,
-`.[10:15]` returns an array of length 5, containing the
-elements from index 10 (inclusive) to index 15 (exclusive).
-Either index may be negative, in which case it counts
-backwards from the end of the array.
-If `f` is omitted, it is assumed to be `0`, and
-if `g` is omitted, it is assumed to be `length`.
-Indices are zero-based.
+Given two filters `f` and `g`,
+their conjunction `f and g` and
+their disjunction `f  or g`
+run `f` on the input,
+and for every output `y` of `f`, they analyze
+the [boolean value](#boolean-filters) `y` of the output:
 
-::: Examples
-
-~~~
-.[2:4]
-["a","b","c","d","e"]
-["c", "d"]
-~~~
-
-~~~
-.[2:4]
-"abcdefghi"
-"cd"
-~~~
-
-~~~
-.[:3]
-["a","b","c","d","e"]
-["a", "b", "c"]
-~~~
-
-~~~
-.[-2:]
-["a","b","c","d","e"]
-["d", "e"]
-~~~
-
-:::
-
-## Combining path operators
-
-Frequently, when using the path operators given above,
-we find ourselves combining them with the
-[`|`](#composition) and
-[`?`](#error-suppression) operators.
-Therefore, jq provides shorthand syntax for these combinations.
-For example:
-
-* `.key[]` for `.key | .[]`,
-* `.[].key?` for `.[] | .key?`,
-* `.[]?[]` for `.[]? | .[]`,
-* `.a.b` for `.a | .b`,
-* `.a.b.c` for `.a | .b | .c`, and so on.
-
-We call such a combination a _path expression_.
-
-The rules for what constitutes a path expression are surprisingly complex.
-Therefore, we define it via a formal grammar in
-[EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form):
-
-~~~ ebnf
-path = atomic, part
-     | ".", ident
-     | path, part
-     | path, part, "?"
-     ;
-
-part = ".", ident
-     | "[",            "]"
-     | "[",     t,     "]"
-     | "[", t, ":", t, "]"
-     | "[", t, ":",    "]"
-     | "[",    ":", t, "]"
-     ;
-~~~
-
-Here,
-`ident` refers to an [identifier-like key](#indexing-operator),
-`t` refers to a filter, and
-`atomic` refers to an _atomic_ filter, such as
-`.` (identity), function call, and parenthesis.
-This grammar defines `path` expressions as
-a sequence of path `part`s,
-potentially prefixed by an atomic root.
+* `f and g` yields `false` if `y` is `false`, otherwise
+  it runs `g` with the original input and yields the boolean values of its outputs.
+* `f or g` yields `true` if `y` is `true`, otherwise
+  it runs `g` with the original input and yields the boolean values of its outputs.
 
 ::: Example
-
-The following is a path expression:
-
-    add[].posts[0]?.sections[]["title"]?
-
-We can decompose it into its different parts:
-
-~~~
-add          # atomic (function call)
-[]           # iteration
-.posts       # indexing
-[0]?         # indexing
-.sections    # indexing
-[]           # iteration
-["title"]?   # indexing
-~~~
-
-We can transform this into an equivalent filter:
-
-~~~
-  add
-| .[]
-| .posts
-| .[0]?
-| .sections
-| .[]
-| .["title"]?
-~~~
-
-:::
-
-Filters inside a part of the path expression,
-such as `f` and `g` in `.[f][:g]`,
-are run with the _input given to the whole path_.
-
-::: Example
-
-When we run the filter `.arr[][.key]` on the input
-`{key: "a", arr: [{a: 1, b: 2}, {a: 3}]}`, then
-`.key` is run on the original input,
-not on the current value returned by `.arr[]`!
-To see the difference, let us first consider a **wrong** transformation:
-
-~~~
-  .arr          # --> [{a: 1, b: 2}, {a: 3}]
-| .[]           # -->  {a: 1, b: 2}, {a: 3}
-| .[.key]       # -->  error  (because .key is run with input {a: 1, b: 2} and yields null)
-~~~
-
-Now, let us consider a **correct** transformation:
-
-~~~
-  .key as $x    # --> "a"
-| .arr          # --> [{a: 1, b: 2}, {a: 3}]
-| .[]           # -->  {a: 1, b: 2}, {a: 3}
-| .[$x]         # -->  1, 3
-~~~
-
+The filter `true and false` returns `false`, whereas `true or false` returns `true`.
 :::
 
 ::: Note
-Surprisingly, the filter `.[f]?` is **not** equivalent to `(.[f])?`.
-To see this, let us transform `.[f]?` to an equivalent filter like above:
+These filters only produce the values `true` and `false`, and
+so are only useful for genuine Boolean operations, rather
+than the common Perl/Python/Ruby idiom of
+"value_that_may_be_null or default". If you want to use this
+form of "or", picking between two values rather than
+evaluating a condition, see the [`//` operator](#alternative-operator) below.
+:::
+
+::: Note
+The expressions `f and g` and `f or g` can be considered
+"syntactic sugar" around if-then-else.
+To show this, we can define filters
+`and_(f)` and `or_(f)` such that
+`f and g` is equivalent to `and_(f; g)` and
+`f  or g` is equivalent to  `or_(f; g)`:
 
 ~~~
-  f as $x
-| .[$x]?
+def bool: if . then true else false end;
+def and_(f; g): if f then g | bool else false end;
+def  or_(f; g): if f then true  else g | bool end;
+
+[true, false] |
+[.[] and .[]] == [and_(.[]; .[])],
+[.[]  or .[]] == [ or_(.[]; .[])]
 ~~~
 
-The difference shows when `f` causes an error --- in that case,
- `.[f]?`  will raise the error, whereas
-`(.[f])?` will not raise _any_ error.
+This yields twice `true` to certify the equivalence.
 :::
 
 ::: Examples
 
 ~~~
-.foo?
-{"foo": 42, "bar": "less interesting data"}
-42
-~~~
-
-~~~
-.foo?
-{"notfoo": true, "alsonotfoo": false}
+42 and "a string"
 null
+true
 ~~~
 
 ~~~
-.["foo"]?
-{"foo": 42}
-42
+(true, false) or false
+null
+true
+false
 ~~~
 
 ~~~
-[.foo?]
-[1,2]
-[]
+(true, true) and (true, false)
+null
+true
+false
+true
+false
+~~~
+
+~~~
+[true, false | not]
+null
+[false, true]
 ~~~
 
 :::
-
-# Error handling
 
 ## Alternative operator: `//`
 
-The `//` operator produces all the values of its left-hand
-side that are neither `false` nor `null`. If the
-left-hand side produces no values other than `false` or
-`null`, then `//` produces all the values of its right-hand
-side.
+Given two filters `f` and `g`,
+the filter `f // g` runs `f` on the input and
+yields all of its outputs whose boolean value is `true`.
+If the boolean values of all outputs of `f` are `false`
+(which is also the case if `f` does not yield any output at all),
+then `f // g` runs `g` with the original input and yields its outputs.
 
-A filter of the form `a // b` produces all the results of
-`a` that are not `false` or `null`.  If `a` produces no
-results, or no results other than `false` or `null`, then `a
-// b` produces the results of `b`.
-
-This is useful for providing defaults: `.foo // 1` will
-evaluate to `1` if there's no `.foo` element in the
-input. It's similar to how `or` is sometimes used in Python
-(jq's `or` operator is reserved for strictly Boolean
-operations).
+This is useful for providing defaults:
+`.foo // 1` evaluates to `1` if there's no `.foo` element in the input.
+It's similar to how `or` is sometimes used in Python
+(jq's `or` operator is reserved for strictly Boolean operations).
 
 ::: Note
-`some_generator // defaults_here` is not the same
-as `some_generator | . // defaults_here`.  The latter will
-produce default values for all non-`false`, non-`null`
-values of the left-hand side, while the former will not.
-Precedence rules can make this confusing.  For example, in
-`false, 1 // 2` the left-hand side of `//` is `1`, not
-`false, 1` -- `false, 1 // 2` parses the same way as `false,
-(1 // 2)`.  In `(false, null, 1) | . // 42` the left-hand
-side of `//` is `.`, which always produces just one value,
-while in `(false, null, 1) // 42` the left-hand side is a
-generator of three values, and since it produces a
-value other `false` and `null`, the default `42` is not
-produced.
+`f // g` is not the same as `f | (. // g)`
+(which can be written more compactly as `f | . // g`).
+The latter produces default values for *all*
+outputs of `f` whose boolean value is `false`,
+while the former does not.
+:::
+
+::: Example
+The filter `(false, null, 1) | . // 42` yields the outputs `42, 42, 1`, whereas
+the filter `(false, null, 1) // 42` yields just `1`.
+:::
+
+::: Note
+Mind the precedence rules.
+For example, in `false, 1 // 2`
+the left-hand side of `//` is `1`, not `false, 1`.
+This is because `false, 1 // 2` parses
+the same way as `false, (1 // 2)`.
 :::
 
 ::: Examples
@@ -1684,6 +1701,9 @@ null
 ~~~
 
 :::
+
+# Error handling
+
 
 ## try-catch
 
@@ -2767,6 +2787,13 @@ with_entries(.key |= "KEY_" + .)
 ~~~
 
 :::
+
+## `not`
+
+The function `not` negates the [boolean value](#boolean-filters) of its input.
+It is defined as:
+
+    def not: if . then false else true;
 
 ## `select(boolean_expression)` {#select}
 
