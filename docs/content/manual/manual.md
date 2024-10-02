@@ -1505,6 +1505,9 @@ Here,
 `t` refers to a filter, and
 `atomic` refers to an _atomic_ filter, such as
 `.` (identity), function call, and parenthesis.
+This grammar defines `path` expressions as
+a sequence of path `part`s,
+potentially prefixed by an atomic root.
 
 ::: Example
 
