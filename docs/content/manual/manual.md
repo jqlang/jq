@@ -752,8 +752,10 @@ true
 Given two filters `f` and `g`, their concatenation
 `f, g` first returns the outputs of `f`, then the outputs of `g`,
 feeding the original input to both `f` and `g`.
-For instance, the filter `.foo, .bar` produces both
-the "foo" fields and "bar" fields as separate outputs.
+
+::: Example
+The filter `.foo, .bar` produces both the "foo" fields and "bar" fields as separate outputs.
+:::
 
 ::: Examples
 
@@ -788,10 +790,9 @@ Given two filters `f` and `g`, their composition
 for every output of `f`, it feeds it to `g` and returns its outputs.
 It's similar to the Unix shell's pipe, if you're used to that.
 
-If `f` produces multiple results, then `g` is run for each of those results.
-So, the expression `.[] | .foo` retrieves the "foo" field of each
-element of the input array.
-This is a Cartesian product, which may be surprising.
+::: Example
+The expression `.[] | .foo` retrieves the "foo" field of each element of the input array.
+:::
 
 Note too that `.` is the input value at the particular stage
 in a "pipeline", specifically: where the `.` expression appears.
@@ -938,7 +939,7 @@ with the arguments (`$@`) that were passed to `sh`.
 ## if-then-else-end {#if-then-else}
 
 Given three filters `i`, `t`, and `e`,
-the expression `if i then t else e` runs `i` on its input.
+the expression `if i then t else e end` runs `i` on its input.
 For every value `y` that is output by `i`,
 if `y` has the [boolean value](#booleans) `true`
 (that means, if `y` is neither `false` nor `null`),
@@ -1077,7 +1078,7 @@ This is particularly useful in conjunction with
 :::
 
 
-# Arithmetic & comparison
+# Arithmetic and Comparison
 
 We are now going to introduce operators for
 arithmetic (`+`, `-` `*`, `/`, `%`),
@@ -1359,9 +1360,12 @@ For example, given the object `{name: "Anna", age: 24}`, the filter
 `.["age"]` produces `24`, and
 `.["address"]` produces `null`.
 
-When your key does not start with a digit and consists only of
-alphanumeric characters and underscores, for example `"foo"`,
-then you can also look up the field `"foo"` of an object using the shorthand syntax `.foo`.
+We say that a key is identifier-like when it
+does not start with a digit and
+consists only of alphanumeric characters and underscores;
+for example, `"foo"` is identifier-like.
+For identifier-like keys like `"foo"`, you can also look up
+the field `"foo"` of an object using the shorthand syntax `.foo`.
 For example, we could have written `.name`, `.age`, and `.address` above, whereas
 we cannot use this shorthand syntax for `.["foo::bar"]` and `.["foo.bar"]`.
 
@@ -1461,10 +1465,27 @@ Indices are zero-based.
 
 ## Combining path operators
 
-We can combine path operators to create a _path_ in the following way:
+Frequently, when using the path operators given above,
+we find ourselves combining them with the
+[`|`](#composition) and
+[`?`](#error-suppression) operators.
+Therefore, jq provides shorthand syntax for these combinations.
+For example:
+
+* `.key[]` for `.key | .[]`,
+* `.[].key?` for `.[] | .key?`,
+* `.[]?[]` for `.[]? | .[]`,
+* `.a.b` for `.a | .b`,
+* `.a.b.c` for `.a | .b | .c`, and so on.
+
+We call such a combination a _path expression_.
+
+The rules for what constitutes a path expression are surprisingly complex.
+Therefore, we define it via a formal grammar in
+[EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form):
 
 ~~~ ebnf
-path = atomic
+path = atomic, part
      | ".", ident
      | path, part
      | path, part, "?"
@@ -1479,16 +1500,22 @@ part = ".", ident
      ;
 ~~~
 
+Here,
+`ident` refers to an [identifier-like key](#indexing-operator),
+`t` refers to a filter, and
+`atomic` refers to an _atomic_ filter, such as
+`.` (identity), function call, and parenthesis.
+
 ::: Example
 
-Consider the following path:
+The following is a path expression:
 
     add[].posts[0]?.sections[]["title"]?
 
 We can decompose it into its different parts:
 
 ~~~
-add          # atomic
+add          # atomic (function call)
 []           # iteration
 .posts       # indexing
 [0]?         # indexing
@@ -1500,7 +1527,7 @@ add          # atomic
 We can transform this into an equivalent filter:
 
 ~~~
-add
+  add
 | .[]
 | .posts
 | .[0]?
@@ -1511,16 +1538,17 @@ add
 
 :::
 
-Filters inside a path, such as `f` and `g` in `.[f][:g]`,
+Filters inside a part of the path expression,
+such as `f` and `g` in `.[f][:g]`,
 are run with the _input given to the whole path_.
-
 
 ::: Example
 
 When we run the filter `.arr[][.key]` on the input
 `{key: "a", arr: [{a: 1, b: 2}, {a: 3}]}`, then
-`.key` is run on the original input, not on the current value returned by `.arr[]`!
-To see the difference, let us first consider a wrong transformation:
+`.key` is run on the original input,
+not on the current value returned by `.arr[]`!
+To see the difference, let us first consider a **wrong** transformation:
 
 ~~~
   .arr          # --> [{a: 1, b: 2}, {a: 3}]
@@ -1528,26 +1556,30 @@ To see the difference, let us first consider a wrong transformation:
 | .[.key]       # -->  error  (because .key is run with input {a: 1, b: 2} and yields null)
 ~~~
 
-Now, let us consider a correct transformation:
+Now, let us consider a **correct** transformation:
 
 ~~~
-. as $i
+  .key as $x    # --> "a"
 | .arr          # --> [{a: 1, b: 2}, {a: 3}]
 | .[]           # -->  {a: 1, b: 2}, {a: 3}
-| .[$i | .key]  # -->  1, 3   (because $i | .key --> "a")
+| .[$x]         # -->  1, 3
 ~~~
 
 :::
 
-A filter of the form `.foo.bar` is equivalent to `.foo | .bar`.
-A filter of the form `.foo[]` is equivalent to `.foo | .[]`.
-Note that `.a.b.c` is the same as `.a | .b | .c`.
+::: Note
+Surprisingly, the filter `.[f]?` is **not** equivalent to `(.[f])?`.
+To see this, let us transform `.[f]?` to an equivalent filter like above:
 
-`.foo?` is like `.foo`, but does not output an error when `.` is not an
-object.
+~~~
+  f as $x
+| .[$x]?
+~~~
 
-`.[]?` is like `.[]`, but no errors will be output if the input is not an array or object.
-A filter of the form `.foo[]?` is equivalent to `.foo | .[]?`.
+The difference shows when `f` causes an error --- in that case,
+ `.[f]?`  will raise the error, whereas
+`(.[f])?` will not raise _any_ error.
+:::
 
 ::: Examples
 
