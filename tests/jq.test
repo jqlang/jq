@@ -338,6 +338,10 @@ null
 10
 [0,9]
 
+[first(range(.)), last(range(.))]
+0
+[]
+
 [nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch .]
 10
 [0,5,9,"nth doesn't support negative indices"]

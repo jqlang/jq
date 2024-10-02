@@ -3057,9 +3057,12 @@ sections:
           Note that `nth(n; expr)` doesn't support negative values of `n`.
 
         examples:
-          - program: '[first(range(.)), last(range(.)), nth(./2; range(.))]'
+          - program: '[first(range(.)), last(range(.)), nth(5; range(.))]'
             input: '10'
             output: ['[0,9,5]']
+          - program: '[first(empty), last(empty), nth(5; empty)]'
+            input: 'null'
+            output: ['[]']
 
       - title: "`first`, `last`, `nth(n)`"
         body: |

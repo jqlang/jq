@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "August 2024" "" ""
+.TH "JQ" "1" "September 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -3460,9 +3460,13 @@ The \fBnth(n; expr)\fR function extracts the nth value output by \fBexpr\fR\. No
 .
 .nf
 
-jq \'[first(range(\.)), last(range(\.)), nth(\./2; range(\.))]\'
+jq \'[first(range(\.)), last(range(\.)), nth(5; range(\.))]\'
    10
 => [0,9,5]
+
+jq \'[first(empty), last(empty), nth(5; empty)]\'
+   null
+=> []
 .
 .fi
 .

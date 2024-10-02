@@ -877,9 +877,13 @@ false
 [0,1,2,3,4,5,6,7,8,9]
 [0,1,2]
 
-[first(range(.)), last(range(.)), nth(./2; range(.))]
+[first(range(.)), last(range(.)), nth(5; range(.))]
 10
 [0,9,5]
+
+[first(empty), last(empty), nth(5; empty)]
+null
+[]
 
 [range(.)]|[first, last, nth(5)]
 10
