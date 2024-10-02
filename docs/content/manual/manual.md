@@ -1513,9 +1513,13 @@ add
 
 Filters inside a path, such as `f` and `g` in `.[f][:g]`,
 are run with the _input given to the whole path_.
-That means that if we run the filter `.arr[][.key]` on the input
+
+
+::: Example
+
+When we run the filter `.arr[][.key]` on the input
 `{key: "a", arr: [{a: 1, b: 2}, {a: 3}]}`, then
-`.key` is run on the whole input, not on the current value returned by `.arr[]`!
+`.key` is run on the original input, not on the current value returned by `.arr[]`!
 To see the difference, let us first consider a wrong transformation:
 
 ~~~
@@ -1533,6 +1537,7 @@ Now, let us consider a correct transformation:
 | .[$i | .key]  # -->  1, 3   (because $i | .key --> "a")
 ~~~
 
+:::
 
 A filter of the form `.foo.bar` is equivalent to `.foo | .bar`.
 A filter of the form `.foo[]` is equivalent to `.foo | .[]`.
