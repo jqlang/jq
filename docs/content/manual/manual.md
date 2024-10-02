@@ -428,6 +428,14 @@ the values `false` and `null` have the boolean value `false`,
 all other values have the boolean value `true`.
 This is used to evaluate [if-then-else expressions](#if-then-else).
 
+::: Note
+The booleans can be defined by:
+
+    def  true: 0 == 0;
+    def false: 0 != 0;
+:::
+
+
 ## Numbers
 
 Numbers in jq are internally represented by their IEEE754 double
@@ -555,6 +563,8 @@ array of four elements.
 ~~~
 
 :::
+
+
 
 ## Objects: `{}`
 
@@ -799,6 +809,55 @@ middle refers to whatever value `.a` produced.
 
 :::
 
+## Function call
+
+jq disposes of [many builtin functions](#builtin-functions) for a variety of tasks,
+and you can also [define your own functions](#definitions).
+
+Each function has an _arity_ that specifies how many _arguments_ that function takes.
+For example,
+the function [`length`](#length) does not take any argument, so its arity is 0, whereas
+the function [`contains`](#contains) takes one argument, so its arity is 1.
+There may be several functions that have the same name, but different arities;
+for example, there exist two functions called `add`, taking zero and one arguments, respectively.
+To unambiguously identify a function `f` with arity `n`, we write `f/n`,
+e.g. `length/0`, `contains/1`, `add/0`, and `add/1`.
+
+To call a function `f` with no arguments (arity 0), we write `f`.
+To call a function `f` with `n` arguments (arity greater than zero), we write `f(a1; ...; an)`.
+
+::: Examples
+
+The first example calls the function [`length/0`](#length):
+
+~~~
+length
+[1, 1, 2, 3]
+4
+~~~
+
+The next example calls
+[`range/2`](#range) and
+[`add/1`](#add):
+
+~~~
+add(range(0; .))
+2
+3
+~~~
+
+The last example calls [`while/2`](#while):
+
+~~~
+while(length < 3; . + "a")
+""
+""
+"a"
+"aa"
+~~~
+
+:::
+
 ## Parenthesis
 
 Parenthesis work as a grouping operator just as in any typical
@@ -876,14 +935,184 @@ with a `jq` interpreter invoked with the specified options (`-M`,
 with the arguments (`$@`) that were passed to `sh`.
 :::
 
-## Arithmetic operations
+## if-then-else-end {#if-then-else}
+
+Given three filters `i`, `t`, and `e`,
+the expression `if i then t else e` runs `i` on its input.
+For every value `y` that is output by `i`,
+if `y` has the [boolean value](#booleans) `true`
+(that means, if `y` is neither `false` nor `null`),
+the output of `t` on the original input is produced, else
+the output of `e` on the original input is produced.
+
+::: Note
+Checking for false or null is a simpler notion of
+"truthiness" than is found in JavaScript or Python, but it
+means that you'll sometimes have to be more explicit about
+the condition you want.  You can't test whether, e.g. a
+string is empty using `if .name then A else B end`; you'll
+need something like `if .name == "" then A else B end` instead.
+:::
+
+More cases can be added to an if using `elif A then B` syntax.
+
+`if A then B end` is shorthand for `if A then B else .  end`.
+That is, the `else` branch is optional, and if absent, it is the same as `.`.
+This also applies to `elif` with absent ending `else` branch.
+
+::: Examples
+
+~~~
+if . == 0 then "zero" elif . == 1 then "one" else "many" end
+2
+"many"
+~~~
+
+~~~
+.[] | if . then ., .+1 else . end
+[false, 1, null]
+false
+1
+2
+null
+~~~
+
+:::
+
+## `and`, `or`, `not`
+
+jq supports the normal Boolean operators `and`, `or`, `not`.
+They have the same standard of truth as if expressions ---
+`false` and `null` are considered "false values", and
+anything else is a "true value".
+
+If an operand of one of these operators produces multiple
+results, the operator itself will produce a result for each input.
+
+`not` is in fact a builtin function rather than an operator,
+so it is called as a filter to which things can be piped
+rather than with special syntax, as in `.foo and .bar | not`.
+
+These three only produce the values `true` and `false`, and
+so are only useful for genuine Boolean operations, rather
+than the common Perl/Python/Ruby idiom of
+"value_that_may_be_null or default". If you want to use this
+form of "or", picking between two values rather than
+evaluating a condition, see the `//` operator below.
+
+::: Note
+The expressions `f and g` and `f or g` can be considered
+"syntactic sugar" around if-then-else.
+To show this, we can define filters
+`and_(f)` and `or_(f)` such that
+`f and g` is equivalent to `and_(f; g)` and
+`f  or g` is equivalent to  `or_(f; g)`:
+
+~~~
+def bool: if . then true else false end;
+def and_(f; g): if f then g | bool else false end;
+def  or_(f; g): if f then true  else g | bool end;
+
+[true, false] |
+[.[] and .[]] == [and_(.[]; .[])],
+[.[]  or .[]] == [ or_(.[]; .[])]
+~~~
+
+This yields twice `true` to certify the equivalence.
+:::
+
+::: Examples
+
+~~~
+42 and "a string"
+null
+true
+~~~
+
+~~~
+(true, false) or false
+null
+true
+false
+~~~
+
+~~~
+(true, true) and (true, false)
+null
+true
+false
+true
+false
+~~~
+
+~~~
+[true, false | not]
+null
+[false, true]
+~~~
+
+:::
+
+
+## Recursive descent: `..`
+
+Recursively descends `.`, producing every value.  This is the
+same as [the zero-argument `recurse` function](#recurse).
+This is intended to resemble the XPath `//` operator.
+Note that `..a` does not work; use `.. | .a` instead.
+In the example below we use `.. | .a?` to find
+all the values of object keys "a" in any object found "below" `.`.
+
+This is particularly useful in conjunction with
+[`path(EXP)`](#path) and [the `?` operator](#error-suppression).
+
+::: Examples
+
+~~~
+.. | .a?
+[[{"a":1}]]
+1
+~~~
+
+:::
+
+
+# Arithmetic & comparison
+
+We are now going to introduce operators for
+arithmetic (`+`, `-` `*`, `/`, `%`),
+equality (`==`, `!=`), and
+ordering (`<`, `<=`, `>`, `>=`).
+
+Given two filters `f` and `g`, we can write
+`f + g`, `f == g`, `f < g` and so on
+to perform the desired operation on
+the outputs of the filters `f` and `g`.
+When `f` or `g` outputs multiple values, then
+all combinations of the operation are performed.
+
+::: Example
+Suppose that
+`f` outputs the values `1, 2` and
+`g` outputs the values `3, 4`.
+Then `f * g` outputs the values `3, 6, 4, 8`.
+:::
+
+::: Compatibility
+For any operator in this section such as `+`,
+in jq , `f + g` is equivalent to `g as $y | f as $x | $x + $y`, whereas
+in jaq, `f + g` is equivalent to `f as $x | g as $y | $x + $y`.
+That means that in the above example, jaq outputs the values
+`3, 4, 6, 8` instead of `3, 6, 4, 8`.
+Note that this difference shows only when both `f` and `g` produce multiple values.
+:::
 
 Some jq operators (for instance, `+`) do different things
 depending on the type of their arguments (arrays, numbers,
 etc.). However, jq never does implicit type conversions.
 Trying to add a string to an object results in an error.
 
-### Addition: `+`
+## Addition: `+`
 
 The operator `+` takes two filters, applies them both
 to the same input, and adds the results together.
@@ -935,7 +1164,7 @@ null
 
 :::
 
-### Subtraction: `-`
+## Subtraction: `-`
 
 As well as normal arithmetic subtraction on numbers, the `-`
 operator can be used on arrays to remove all occurrences of
@@ -957,7 +1186,7 @@ the second array's elements from the first array.
 
 :::
 
-### Multiplication, division, modulo: `*`, `/`, `%`
+## Multiplication, division, modulo: `*`, `/`, `%`
 
 These infix operators behave as expected when given two numbers.
 Division by zero raises an error. `x % y` computes x modulo y.
@@ -1042,7 +1271,7 @@ false
 
 ## Ordering: `>`, `>=`, `<=`, `<` {#ordering}
 
-The comparison operators `>`, `>=`, `<=`, `<` return whether
+The ordering operators `>`, `>=`, `<=`, `<` return whether
 their left argument is greater than, greater than or equal
 to, less than or equal to or less than their right argument
 (respectively).
@@ -1068,271 +1297,6 @@ are compared key by key.
 . < 5
 2
 true
-~~~
-
-:::
-
-## if-then-else-end {#if-then-else}
-
-`if A then B else C end` will act the same as `B` if `A`
-produces a value other than false or null, but act the same
-as `C` otherwise.
-
-`if A then B end` is the same as `if A then B else .  end`.
-That is, the `else` branch is optional, and if absent is the
-same as `.`. This also applies to `elif` with absent ending `else` branch.
-
-Checking for false or null is a simpler notion of
-"truthiness" than is found in JavaScript or Python, but it
-means that you'll sometimes have to be more explicit about
-the condition you want.  You can't test whether, e.g. a
-string is empty using `if .name then A else B end`; you'll
-need something like `if .name == "" then A else B end` instead.
-
-If the condition `A` produces multiple results, then `B` is evaluated
-once for each result that is not false or null, and `C` is evaluated
-once for each false or null.
-
-More cases can be added to an if using `elif A then B` syntax.
-
-::: Examples
-
-~~~
-if . == 0 then   "zero" elif . == 1 then   "one" else   "many" end
-2
-"many"
-~~~
-
-:::
-
-## `and`, `or`, `not`
-
-jq supports the normal Boolean operators `and`, `or`, `not`.
-They have the same standard of truth as if expressions ---
-`false` and `null` are considered "false values", and
-anything else is a "true value".
-
-If an operand of one of these operators produces multiple
-results, the operator itself will produce a result for each input.
-
-`not` is in fact a builtin function rather than an operator,
-so it is called as a filter to which things can be piped
-rather than with special syntax, as in `.foo and .bar | not`.
-
-These three only produce the values `true` and `false`, and
-so are only useful for genuine Boolean operations, rather
-than the common Perl/Python/Ruby idiom of
-"value_that_may_be_null or default". If you want to use this
-form of "or", picking between two values rather than
-evaluating a condition, see the `//` operator below.
-
-::: Examples
-
-~~~
-42 and "a string"
-null
-true
-~~~
-
-~~~
-(true, false) or false
-null
-true
-false
-~~~
-
-~~~
-(true, true) and (true, false)
-null
-true
-false
-true
-false
-~~~
-
-~~~
-[true, false | not]
-null
-[false, true]
-~~~
-
-:::
-
-## Alternative operator: `//`
-
-The `//` operator produces all the values of its left-hand
-side that are neither `false` nor `null`. If the
-left-hand side produces no values other than `false` or
-`null`, then `//` produces all the values of its right-hand
-side.
-
-A filter of the form `a // b` produces all the results of
-`a` that are not `false` or `null`.  If `a` produces no
-results, or no results other than `false` or `null`, then `a
-// b` produces the results of `b`.
-
-This is useful for providing defaults: `.foo // 1` will
-evaluate to `1` if there's no `.foo` element in the
-input. It's similar to how `or` is sometimes used in Python
-(jq's `or` operator is reserved for strictly Boolean
-operations).
-
-::: Note
-`some_generator // defaults_here` is not the same
-as `some_generator | . // defaults_here`.  The latter will
-produce default values for all non-`false`, non-`null`
-values of the left-hand side, while the former will not.
-Precedence rules can make this confusing.  For example, in
-`false, 1 // 2` the left-hand side of `//` is `1`, not
-`false, 1` -- `false, 1 // 2` parses the same way as `false,
-(1 // 2)`.  In `(false, null, 1) | . // 42` the left-hand
-side of `//` is `.`, which always produces just one value,
-while in `(false, null, 1) // 42` the left-hand side is a
-generator of three values, and since it produces a
-value other `false` and `null`, the default `42` is not
-produced.
-:::
-
-::: Examples
-
-~~~
-empty // 42
-null
-42
-~~~
-
-~~~
-.foo // 42
-{"foo": 19}
-19
-~~~
-
-~~~
-.foo // 42
-{}
-42
-~~~
-
-~~~
-(false, null, 1) // 42
-null
-1
-~~~
-
-~~~
-(false, null, 1) | . // 42
-null
-42
-42
-1
-~~~
-
-:::
-
-## try-catch
-
-Errors can be caught by using `try EXP catch EXP`.  The first
-expression is executed, and if it fails then the second is
-executed with the error message.  The output of the handler,
-if any, is output as if it had been the output of the
-expression to try.
-
-The `try EXP` form uses `empty` as the exception handler.
-
-::: Examples
-
-~~~
-try .a catch ". is not an object"
-true
-". is not an object"
-~~~
-
-~~~
-[.[]|try .a]
-[{}, true, {"a":1}]
-[null, 1]
-~~~
-
-~~~
-try error("some exception") catch .
-true
-"some exception"
-~~~
-
-:::
-
-## Error suppression: `?`
-
-The `?` operator, used as `f?`, is shorthand for `try f`.
-
-::: Examples
-
-~~~
-[.[] | .a?]
-[{}, true, {"a":1}]
-[null, 1]
-~~~
-
-~~~
-[.[] | tonumber?]
-["1", "invalid", "3", 4]
-[1, 3, 4]
-~~~
-
-:::
-
-## label-break
-
-A convenient use of try/catch is to break out of control
-structures like `reduce`, `foreach`, `while`, and so on.
-
-For example:
-
-    # Repeat an expression until it raises "break" as an
-    # error, then stop repeating without re-raising the error.
-    # But if the error caught is not "break" then re-raise it.
-    try repeat(exp) catch if .=="break" then empty else error
-
-jq has a syntax for named lexical labels to "break" or "go (back) to":
-
-    label $out | ... break $out ...
-
-The `break $label_name` expression will cause the program to
-act as though the nearest (to the left) `label $label_name`
-produced `empty`.
-
-The relationship between the `break` and corresponding `label`
-is lexical: the label has to be "visible" from the break.
-
-To break out of a `reduce`, for example:
-
-    label $out | reduce .[] as $item (null; if .==false then break $out else ... end)
-
-The following jq program produces a syntax error:
-
-    break $out
-
-because no label `$out` is visible.
-
-
-## Recursive descent: `..`
-
-Recursively descends `.`, producing every value.  This is the
-same as [the zero-argument `recurse` function](#recurse).
-This is intended to resemble the XPath `//` operator.
-Note that `..a` does not work; use `.. | .a` instead.
-In the example below we use `.. | .a?` to find
-all the values of object keys "a" in any object found "below" `.`.
-
-This is particularly useful in conjunction with
-[`path(EXP)`](#path) and [the `?` operator](#error-suppression).
-
-::: Examples
-
-~~~
-.. | .a?
-[[{"a":1}]]
-1
 ~~~
 
 :::
@@ -1497,6 +1461,79 @@ Indices are zero-based.
 
 ## Combining path operators
 
+We can combine path operators to create a _path_ in the following way:
+
+~~~ ebnf
+path = atomic
+     | ".", ident
+     | path, part
+     | path, part, "?"
+     ;
+
+part = ".", ident
+     | "[",            "]"
+     | "[",     t,     "]"
+     | "[", t, ":", t, "]"
+     | "[", t, ":",    "]"
+     | "[",    ":", t, "]"
+     ;
+~~~
+
+::: Example
+
+Consider the following path:
+
+    add[].posts[0]?.sections[]["title"]?
+
+We can decompose it into its different parts:
+
+~~~
+add          # atomic
+[]           # iteration
+.posts       # indexing
+[0]?         # indexing
+.sections    # indexing
+[]           # iteration
+["title"]?   # indexing
+~~~
+
+We can transform this into an equivalent filter:
+
+~~~
+add
+| .[]
+| .posts
+| .[0]?
+| .sections
+| .[]
+| .["title"]?
+~~~
+
+:::
+
+Filters inside a path, such as `f` and `g` in `.[f][:g]`,
+are run with the _input given to the whole path_.
+That means that if we run the filter `.arr[][.key]` on the input
+`{key: "a", arr: [{a: 1, b: 2}, {a: 3}]}`, then
+`.key` is run on the whole input, not on the current value returned by `.arr[]`!
+To see the difference, let us first consider a wrong transformation:
+
+~~~
+  .arr          # --> [{a: 1, b: 2}, {a: 3}]
+| .[]           # -->  {a: 1, b: 2}, {a: 3}
+| .[.key]       # -->  error  (because .key is run with input {a: 1, b: 2} and yields null)
+~~~
+
+Now, let us consider a correct transformation:
+
+~~~
+. as $i
+| .arr          # --> [{a: 1, b: 2}, {a: 3}]
+| .[]           # -->  {a: 1, b: 2}, {a: 3}
+| .[$i | .key]  # -->  1, 3   (because $i | .key --> "a")
+~~~
+
+
 A filter of the form `.foo.bar` is equivalent to `.foo | .bar`.
 A filter of the form `.foo[]` is equivalent to `.foo | .[]`.
 Note that `.a.b.c` is the same as `.a | .b | .c`.
@@ -1534,6 +1571,164 @@ null
 ~~~
 
 :::
+
+# Error handling
+
+## Alternative operator: `//`
+
+The `//` operator produces all the values of its left-hand
+side that are neither `false` nor `null`. If the
+left-hand side produces no values other than `false` or
+`null`, then `//` produces all the values of its right-hand
+side.
+
+A filter of the form `a // b` produces all the results of
+`a` that are not `false` or `null`.  If `a` produces no
+results, or no results other than `false` or `null`, then `a
+// b` produces the results of `b`.
+
+This is useful for providing defaults: `.foo // 1` will
+evaluate to `1` if there's no `.foo` element in the
+input. It's similar to how `or` is sometimes used in Python
+(jq's `or` operator is reserved for strictly Boolean
+operations).
+
+::: Note
+`some_generator // defaults_here` is not the same
+as `some_generator | . // defaults_here`.  The latter will
+produce default values for all non-`false`, non-`null`
+values of the left-hand side, while the former will not.
+Precedence rules can make this confusing.  For example, in
+`false, 1 // 2` the left-hand side of `//` is `1`, not
+`false, 1` -- `false, 1 // 2` parses the same way as `false,
+(1 // 2)`.  In `(false, null, 1) | . // 42` the left-hand
+side of `//` is `.`, which always produces just one value,
+while in `(false, null, 1) // 42` the left-hand side is a
+generator of three values, and since it produces a
+value other `false` and `null`, the default `42` is not
+produced.
+:::
+
+::: Examples
+
+~~~
+empty // 42
+null
+42
+~~~
+
+~~~
+.foo // 42
+{"foo": 19}
+19
+~~~
+
+~~~
+.foo // 42
+{}
+42
+~~~
+
+~~~
+(false, null, 1) // 42
+null
+1
+~~~
+
+~~~
+(false, null, 1) | . // 42
+null
+42
+42
+1
+~~~
+
+:::
+
+## try-catch
+
+Errors can be caught by using `try EXP catch EXP`.  The first
+expression is executed, and if it fails then the second is
+executed with the error message.  The output of the handler,
+if any, is output as if it had been the output of the
+expression to try.
+
+The `try EXP` form uses `empty` as the exception handler.
+
+::: Examples
+
+~~~
+try .a catch ". is not an object"
+true
+". is not an object"
+~~~
+
+~~~
+[.[]|try .a]
+[{}, true, {"a":1}]
+[null, 1]
+~~~
+
+~~~
+try error("some exception") catch .
+true
+"some exception"
+~~~
+
+:::
+
+## Error suppression: `?`
+
+The `?` operator, used as `f?`, is shorthand for `try f`.
+
+::: Examples
+
+~~~
+[.[] | .a?]
+[{}, true, {"a":1}]
+[null, 1]
+~~~
+
+~~~
+[.[] | tonumber?]
+["1", "invalid", "3", 4]
+[1, 3, 4]
+~~~
+
+:::
+
+## label-break
+
+A convenient use of try/catch is to break out of control
+structures like `reduce`, `foreach`, `while`, and so on.
+
+For example:
+
+    # Repeat an expression until it raises "break" as an
+    # error, then stop repeating without re-raising the error.
+    # But if the error caught is not "break" then re-raise it.
+    try repeat(exp) catch if .=="break" then empty else error
+
+jq has a syntax for named lexical labels to "break" or "go (back) to":
+
+    label $out | ... break $out ...
+
+The `break $label_name` expression will cause the program to
+act as though the nearest (to the left) `label $label_name`
+produced `empty`.
+
+The relationship between the `break` and corresponding `label`
+is lexical: the label has to be "visible" from the break.
+
+To break out of a `reduce`, for example:
+
+    label $out | reduce .[] as $item (null; if .==false then break $out else ... end)
+
+The following jq program produces a syntax error:
+
+    break $out
+
+because no label `$out` is visible.
 
 
 
@@ -2593,7 +2788,7 @@ non-iterables, respectively.
 
 ## Membership functions
 
-### `contains(element)`
+### `contains(element)` {#contains}
 
 The filter `contains(b)` will produce true if b is
 completely contained within the input. A string B is
