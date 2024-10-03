@@ -1,70 +1,31 @@
-A jq program is called a _filter_.
-Each filter takes an input value and produces a stream of output values.
+jq is a tool to transform structured data such as JSON
+in various ways, such as selecting, iterating, and reducing.
+For instance, running the command `jq 'map(.price) | add'`
+takes an array of JSON objects as input and
+returns the sum of their "price" fields.
 
-Filters can be combined in various ways.
-For example, you can
-[feed the output of one filter to another filter](#composition), or
-[collect the output of a filter into an array](#arrays).
+Here, `'map(.price) | add'` is a _filter_
+written in the jq programming language,
+specifying how to transform input data.
+The simplest filter (or jq program) is
+[identity `.`](#identity), which simply outputs its input.
+Because the default behavior of jq is to pretty-print outputs,
+you can use `jq '.'` to validate and pretty-print JSON input.
+However, the jq programming language is quite rich and
+allows for much more than just validation and pretty-printing.
 
-There are many filters for various standard tasks, such as
-[extracting a particular field of an object](#indexing-operator), or
-[converting a number to a string](#tostring).
+By default, jq reads a stream of JSON values
+(including numbers and other literals) from
+a list of files (or `stdin` if no files are given),
+Whitespace is only needed to separate
+numbers (such as 1 and 2) and booleans (true and false).
+Using `--raw-input`, jq accepts arbitrary text as input.
+jq runs the given filter on each input value,
+and writes all output values of the filter to standard output,
+as a sequence of newline-separated JSON values.
 
-Some filters produce multiple results, for instance,
-[`.[]`](#iteration-operator) produces all the elements of its input array.
-Piping that filter into a second runs the second filter for each element of the array.
-Generally, things that would be done with loops and iteration
-in other languages are just done by gluing filters together in jq.
 
-Even literals like `"hello"` or `42` are filters ---
-they take an input and produce the same literal as output.
-Operations that combine two filters, like addition,
-generally feed the same input to both and combine the results.
-So, you can implement an averaging filter as `add / length` ---
-this feeds the input both to the `add` filter and the `length` filter,
-then performs the division of their results.
-
-But that's getting ahead of ourselves. :) Let's start with something
-simpler:
-
-# Invoking jq
-
-jq filters run on a stream of JSON data. The input to jq is
-parsed as a sequence of whitespace-separated JSON values which
-are passed through the provided filter one at a time. The
-output(s) of the filter are written to standard output, as a
-sequence of newline-separated JSON data.
-
-The simplest and most common filter (or jq program) is
-[the identity operator `.`](#identity), which
-copies the inputs of the jq processor to the output stream.
-Because the default behavior of the jq processor is to
-read JSON texts from the input stream,
-and to pretty-print outputs, the `.` program's main use is to
-validate and pretty-print the inputs.  The jq programming
-language is quite rich and allows for much more than just
-validation and pretty-printing.
-
-::: Note
-It is important to mind the shell's quoting rules.  As a
-general rule it's best to always quote (with single-quote
-characters on Unix shells) the jq program, as too many characters with special
-meaning to jq are also shell meta-characters.  For example, `jq
-"foo"` will fail on most Unix shells because that will be the same
-as `jq foo`, which will generally fail because `foo is not
-defined`.  When using the Windows command shell (cmd.exe) it's
-best to use double quotes around your jq program when given on the
-command-line (instead of the `-f program-file` option), but then
-double-quotes in the jq program need backslash escaping. When using
-the Powershell (`powershell.exe`) or the Powershell Core
-(`pwsh`/`pwsh.exe`), use single-quote characters around the jq
-program and backslash-escaped double-quotes (`\"`) inside the jq
-program.
-
-* Unix shells: `jq '.["foo"]'`
-* Powershell: `jq '.[\"foo\"]'`
-* Windows command shell: `jq ".[\"foo\"]"`
-:::
+# Command-line options
 
 ::: Compatibility
 There exist several compilers/interpreters for the jq language;
@@ -75,10 +36,48 @@ This manual tries to point out when these implementations
 diverge from the reference implementation.
 :::
 
-## Command-line options
 
 You can affect how jq reads and writes its input and output
 using some command-line options:
+
+## General options
+
+* `-f filename` / `--from-file filename`:
+
+  Read filter from the file rather than from a command line, like awk's `-f` option.
+
+* `-L directory`:
+
+  Prepend `directory` to the search list for modules.
+  If this option is used then no builtin search list is used.
+  See the [modules section](#modules) for details.
+
+* `--exit-status` / `-e`:
+
+  Sets the exit status of jq to 0 if the last output value was
+  neither `false` nor `null`, 1 if the last output value was
+  either `false` or `null`, or 4 if no valid result was ever
+  produced.  Normally jq exits with 2 if there was any usage
+  problem or system error, 3 if there was a jq program compile
+  error, or 0 if the jq program ran.
+
+  Another way to set the exit status is with the `halt_error`
+  builtin function.
+
+* `--version` / `-V`:
+
+  Output the jq version and exit with zero.
+
+* `--help` / `-h`:
+
+  Output the jq help and exit with zero.
+
+* `--`:
+
+  Terminates argument processing.  Remaining arguments are not
+  interpreted as options.
+
+## Input options
 
 * `--null-input` / `-n`:
 
@@ -110,6 +109,37 @@ using some command-line options:
   `jq -s . a b`, you may use
   `jaq -s . <(cat a b)`.
   :::
+
+* `--stream`:
+
+  Parse the input in streaming fashion, outputting arrays of path
+  and leaf values (scalars and empty arrays or empty objects).
+  For example, `"a"` becomes `[[],"a"]`, and `[[],"a",["b"]]`
+  becomes `[[0],[]]`, `[[1],"a"]`, and `[[2,0],"b"]`.
+
+  This is useful for processing large inputs incrementally,
+  in particular in conjunction with filtering and
+  the [`reduce` and `foreach` filters](#reduction).
+
+  ::: Compatibility
+  jaq does not support this option.
+  :::
+
+* `--stream-errors`:
+
+  Like `--stream`, but invalid JSON inputs yield array values
+  where the first element is the error and the second is a path.
+  For example, `["a",n]` produces `["Invalid literal at line 1,
+  column 7",[1]]`.
+
+  Implies `--stream`.  Invalid JSON inputs produce no error values
+  when `--stream` without `--stream-errors`.
+
+  ::: Compatibility
+  jaq does not support this option.
+  :::
+
+## Output options
 
 * `--compact-output` / `-c`:
 
@@ -199,35 +229,6 @@ using some command-line options:
   jaq does not support this option.
   :::
 
-* `--stream`:
-
-  Parse the input in streaming fashion, outputting arrays of path
-  and leaf values (scalars and empty arrays or empty objects).
-  For example, `"a"` becomes `[[],"a"]`, and `[[],"a",["b"]]`
-  becomes `[[0],[]]`, `[[1],"a"]`, and `[[2,0],"b"]`.
-
-  This is useful for processing very large inputs.  Use this in
-  conjunction with filtering and the `reduce` and `foreach` syntax
-  to reduce large inputs incrementally.
-
-  ::: Compatibility
-  jaq does not support this option.
-  :::
-
-* `--stream-errors`:
-
-  Like `--stream`, but invalid JSON inputs yield array values
-  where the first element is the error and the second is a path.
-  For example, `["a",n]` produces `["Invalid literal at line 1,
-  column 7",[1]]`.
-
-  Implies `--stream`.  Invalid JSON inputs produce no error values
-  when `--stream` without `--stream-errors`.
-
-  ::: Compatibility
-  jaq does not support this option.
-  :::
-
 * `--seq`:
 
   Use the `application/json-seq` MIME type scheme for separating
@@ -243,16 +244,17 @@ using some command-line options:
   jaq does not support this option.
   :::
 
-* `-f filename` / `--from-file filename`:
+* `--binary` / `-b`:
 
-  Read filter from the file rather than from a command line, like
-  awk's -f option.
+  Windows users using WSL, MSYS2, or Cygwin, should use this option
+  when using a native jq.exe, otherwise jq will turn newlines (LFs)
+  into carriage-return-then-newline (CRLF).
 
-* `-L directory`:
+  ::: Compatibility
+  jaq does not support this option.
+  :::
 
-  Prepend `directory` to the search list for modules.
-  If this option is used then no builtin search list is used.
-  See the [modules section](#modules) for details.
+## Variable bindings
 
 * `--arg name value`:
 
@@ -304,31 +306,7 @@ using some command-line options:
   jaq does not support this option.
   :::
 
-* `--exit-status` / `-e`:
-
-  Sets the exit status of jq to 0 if the last output value was
-  neither `false` nor `null`, 1 if the last output value was
-  either `false` or `null`, or 4 if no valid result was ever
-  produced.  Normally jq exits with 2 if there was any usage
-  problem or system error, 3 if there was a jq program compile
-  error, or 0 if the jq program ran.
-
-  Another way to set the exit status is with the `halt_error`
-  builtin function.
-
-* `--binary` / `-b`:
-
-  Windows users using WSL, MSYS2, or Cygwin, should use this option
-  when using a native jq.exe, otherwise jq will turn newlines (LFs)
-  into carriage-return-then-newline (CRLF).
-
-  ::: Compatibility
-  jaq does not support this option.
-  :::
-
-* `--version` / `-V`:
-
-  Output the jq version and exit with zero.
+## Development options
 
 * `--build-configuration`:
 
@@ -339,15 +317,6 @@ using some command-line options:
   ::: Compatibility
   jaq does not support this option.
   :::
-
-* `--help` / `-h`:
-
-  Output the jq help and exit with zero.
-
-* `--`:
-
-  Terminates argument processing.  Remaining arguments are not
-  interpreted as options.
 
 * `--run-tests [filename]`:
 
@@ -362,6 +331,100 @@ using some command-line options:
   actual.
 
   This option can change backwards-incompatibly.
+
+## Colors
+
+To configure alternative colors, you may set the `JQ_COLORS`
+environment variable to colon-delimited list of partial terminal
+escape sequences like `"1;31"`, in this order:
+
+- color for `null`
+- color for `false`
+- color for `true`
+- color for numbers
+- color for strings
+- color for arrays
+- color for objects
+- color for object keys
+
+The default color scheme is the same as setting
+`JQ_COLORS="0;90:0;39:0;39:0;39:0;32:1;39:1;39:1;34"`.
+
+This is not a manual for VT100/ANSI escapes.
+However, each of these color specifications should consist of
+two numbers separated by a semi-colon.
+The first number is one of these:
+
+- 1 (bright)
+- 2 (dim)
+- 4 (underscore)
+- 5 (blink)
+- 7 (reverse)
+- 8 (hidden)
+
+The second number is one of these:
+
+- 30 (black)
+- 31 (red)
+- 32 (green)
+- 33 (yellow)
+- 34 (blue)
+- 35 (magenta)
+- 36 (cyan)
+- 37 (white)
+
+::: Compatibility
+jaq does not consider `JQ_COLORS`.
+:::
+
+
+# The jq programming language
+
+A jq program is called a _filter_.
+Each filter takes an input value and produces a stream of output values.
+For instance, when the input value is an array,
+the filter [`.[]`](#iteration-operator) yields all the elements of the array.
+Even literals like `"hello"` or `42` are filters ---
+they take an input and produce the same literal as output.
+
+There are many filters for various standard tasks, such as
+[extracting a particular field of an object](#indexing-operator), or
+[converting a number to a string](#tostring).
+
+Filters can be combined in various ways.
+For example, you can
+[feed the output of one filter to another filter](#composition), or
+[collect the output of a filter into an array](#arrays).
+Generally, things that would be done with loops and iteration
+in other languages are just done by gluing filters together in jq.
+
+We can run a filter `FILTER` using `jq FILTER`, e.g. `jq .foo`.
+For large filters, it may be more convenient to
+write it into some `FILE` and to
+run it with `jq -f FILE`, e.g. `jq -f filter.jq`.
+
+::: Note
+When using `jq FILTER`, it is important to mind the shell's quoting rules.
+As a general rule, it's best to always quote the jq program, because
+many characters with special meaning to jq are also shell meta-characters.
+For example, `jq "foo"` will fail on most Unix shells because
+that will be the same as `jq foo`, which will generally fail because
+`foo is not defined`.
+
+The quoting rules depend on your shell:
+When using a Unix shell,
+use single quotes around your jq program,
+When using the Windows command shell (`cmd.exe`),
+use _double quotes_ around your jq program and
+escape double quotes in the jq program with backslashes.
+When using the Powershell (`powershell.exe`) or the Powershell Core (`pwsh`/`pwsh.exe`),
+use _single quotes_ around your jq program and
+escape double-quotes in the jq program with backslashes (`\"`).
+
+* Unix shells: `jq '.["foo"]'`
+* Powershell: `jq '.[\"foo\"]'`
+* Windows command shell: `jq ".[\"foo\"]"`
+:::
 
 ## Comments
 
@@ -427,51 +490,6 @@ with the arguments (`$@`) that were passed to `sh`.
 
 ::: Compatibility
 jaq ignores backslashes at the end of comment lines.
-:::
-
-## Colors
-
-To configure alternative colors just set the `JQ_COLORS`
-environment variable to colon-delimited list of partial terminal
-escape sequences like `"1;31"`, in this order:
-
-- color for `null`
-- color for `false`
-- color for `true`
-- color for numbers
-- color for strings
-- color for arrays
-- color for objects
-- color for object keys
-
-The default color scheme is the same as setting
-`JQ_COLORS="0;90:0;39:0;39:0;39:0;32:1;39:1;39:1;34"`.
-
-This is not a manual for VT100/ANSI escapes.
-However, each of these color specifications should consist of
-two numbers separated by a semi-colon.
-The first number is one of these:
-
-- 1 (bright)
-- 2 (dim)
-- 4 (underscore)
-- 5 (blink)
-- 7 (reverse)
-- 8 (hidden)
-
-The second number is one of these:
-
-- 30 (black)
-- 31 (red)
-- 32 (green)
-- 33 (yellow)
-- 34 (blue)
-- 35 (magenta)
-- 36 (cyan)
-- 37 (white)
-
-::: Compatibility
-jaq does not consider `JQ_COLORS`.
 :::
 
 
@@ -812,9 +830,11 @@ true
 
 ## Concatenation: `,`
 
+The `,` operator serves to concatenate the outputs of two filters.
+
 Given two filters `f` and `g`, their concatenation
-`f, g` first returns the outputs of `f`, then the outputs of `g`,
-feeding the original input to both `f` and `g`.
+`f, g` first returns the outputs of `f`, then the outputs of `g`.
+The input of `f, g` is fed to both `f` and `g`.
 
 ::: Example
 The filter `.foo, .bar` produces both the "foo" fields and "bar" fields as separate outputs.
@@ -848,10 +868,12 @@ The filter `.foo, .bar` produces both the "foo" fields and "bar" fields as separ
 
 ## Composition: `|`
 
-Given two filters `f` and `g`, their composition
-`f | g` feeds the original input to `f`, and
-for every output of `f`, it feeds it to `g` and returns its outputs.
+The `|` operator serves to feed the output of one filter to another filter.
 It's similar to the Unix shell's pipe, if you're used to that.
+
+Given two filters `f` and `g`, their composition
+`f | g` feeds the input of `f | g` to `f`, and
+for every output of `f`, feeds it to `g` and returns its outputs.
 
 ::: Example
 The expression `.[] | .foo` retrieves the "foo" field of each element of the input array.
@@ -889,6 +911,11 @@ e.g. `length/0`, `contains/1`, `add/0`, and `add/1`.
 
 To call a function `f` with no arguments (arity 0), we write `f`.
 To call a function `f` with `n` arguments (arity greater than zero), we write `f(a1; ...; an)`.
+
+::: Note
+Function calls use semicolons `;` instead of commas `,` to separate arguments,
+because `,` is already used for [concatenation](#concatenation).
+:::
 
 ::: Examples
 
@@ -972,6 +999,8 @@ Furthermore, we will see how to [combine these operators](#combining-path-operat
 
 ## Iteration operator: `.[]` {#iteration-operator}
 
+The operator `.[]` returns the values contained inside the input value.
+
 If the input is an array, then `.[]` returns all elements of the array, and
 if the input is an object, `.[]` returns all the values of the object.
 For example, running `.[]` with the input `[1,2,3]` produces the
@@ -1011,6 +1040,12 @@ numbers `1 2 3` as three separate results, rather than as a single array.
 
 ## Indexing operator: `.[f]` {#indexing-operator}
 
+When given an array as input, `.[n]` produces the `n`-th element of the array.
+For example, given the array `[2, 4, 6]`, the filter `.[1]` returns `4`.
+Arrays are zero-based, so `.[2]` returns the third element.
+Negative indices are allowed, with -1 referring to the last
+element, -2 referring to the next to last element, and so on.
+
 When given a JSON object as input, `.[k]` produces the value
 at the key `k` if it is present in the object, or `null` otherwise.
 For example, given the object `{name: "Anna", age: 24}`, the filter
@@ -1018,7 +1053,7 @@ For example, given the object `{name: "Anna", age: 24}`, the filter
 `.["age"]` produces `24`, and
 `.["address"]` produces `null`.
 
-We say that a key is identifier-like when it
+We say that a key is _identifier-like_ when it
 does not start with a digit and
 consists only of alphanumeric characters and underscores;
 for example, `"foo"` is identifier-like.
@@ -1026,13 +1061,6 @@ For identifier-like keys like `"foo"`, you can also look up
 the field `"foo"` of an object using the shorthand syntax `.foo`.
 For example, we could have written `.name`, `.age`, and `.address` above, whereas
 we cannot use this shorthand syntax for `.["foo::bar"]` and `.["foo.bar"]`.
-
-When given an array as input, `.[n]` produces the `n`-th element of the array.
-For example, given the array `[2, 4, 6]`, the filter `.[1]` returns `4`.
-Arrays are zero-based, so `.[2]` returns the third element.
-
-Negative indices are allowed, with -1 referring to the last
-element, -2 referring to the next to last element, and so on.
 
 ::: Compatibility
 In jq, when given `null` input, `.["a"]` and `.[0]` yield `null`, but `.[]` yields an error.
@@ -1167,6 +1195,8 @@ This grammar defines `path` expressions as
 a sequence of path parts,
 potentially prefixed by an atomic root.
 A path `part` is any of the operators previously introduced in this section.
+(Note that `part` does not include the leading `.`
+for all operators except for `.ident`.)
 
 ::: Example
 
@@ -1277,6 +1307,13 @@ We are now going to introduce operators for
 arithmetic (`+`, `-` `*`, `/`, `%`),
 equality (`==`, `!=`), and
 ordering (`<`, `<=`, `>`, `>=`).
+
+All operators in this section
+feed their input to both arguments and
+combine their results.
+This allows us to implement an averaging filter as `add / length` ---
+this feeds the input both to the `add` filter and the `length` filter,
+then performs the division of their results.
 
 Given two filters `f` and `g`, we can write
 `f + g`, `f == g`, `f < g` and so on
