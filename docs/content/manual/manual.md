@@ -1,5 +1,5 @@
-jq is a tool to transform structured data such as JSON
-in various ways, such as selecting, iterating, and reducing.
+jq is a tool to transform JSON data in various ways,
+such as selecting, iterating, and reducing.
 For instance, running the command `jq 'map(.price) | add'`
 takes an array of JSON objects as input and
 returns the sum of their "price" fields.
@@ -36,7 +36,6 @@ This manual tries to point out when these implementations
 diverge from the reference implementation.
 :::
 
-
 You can affect how jq reads and writes its input and output
 using some command-line options:
 
@@ -48,21 +47,21 @@ using some command-line options:
 
 * `-L directory`:
 
-  Prepend `directory` to the search list for modules.
-  If this option is used then no builtin search list is used.
-  See the [modules section](#modules) for details.
+  Prepend `directory` to the [search path for modules](#search-path).
+  If this option is used then no builtin search path is used.
 
 * `--exit-status` / `-e`:
 
-  Sets the exit status of jq to 0 if the last output value was
-  neither `false` nor `null`, 1 if the last output value was
-  either `false` or `null`, or 4 if no valid result was ever
-  produced.  Normally jq exits with 2 if there was any usage
-  problem or system error, 3 if there was a jq program compile
-  error, or 0 if the jq program ran.
+  Sets the exit status of jq to
+  0 if the last output value was neither `false` nor `null`,
+  1 if the last output value was either `false` or `null`, or
+  4 if no valid result was ever produced.
+  Normally jq exits with
+  2 if there was any usage problem or system error,
+  3 if there was a jq program compile error, or
+  0 if the jq program ran.
 
-  Another way to set the exit status is with the `halt_error`
-  builtin function.
+  You can also set the exit status with the [`halt_error`](#halt-error) function.
 
 * `--version` / `-V`:
 
@@ -254,7 +253,7 @@ using some command-line options:
   jaq does not support this option.
   :::
 
-## Variable bindings
+## Variable options
 
 * `--arg name value`:
 
@@ -424,72 +423,6 @@ escape double-quotes in the jq program with backslashes (`\"`).
 * Unix shells: `jq '.["foo"]'`
 * Powershell: `jq '.[\"foo\"]'`
 * Windows command shell: `jq ".[\"foo\"]"`
-:::
-
-## Comments
-
-You can write comments in your jq programs using `#`.
-
-A `#` character (not part of a string) starts a comment.
-All characters from `#` to the end of the line are ignored.
-
-If the end of the line is preceded by an odd number of backslash
-characters, the following line is also considered part of the
-comment and is ignored.
-
-For example, the following code outputs `[1,3,4,7]`
-
-    [
-      1,
-      # foo \
-      2,
-      # bar \\
-      3,
-      4, # baz \\\
-      5, \
-      6,
-      7
-      # comment \
-        comment \
-        comment
-    ]
-
-::: Note
-A backslash continuing the comment on the next line can be useful
-when writing the "shebang" for a jq script:
-
-    #!/bin/sh --
-    # total - Output the sum of the given arguments (or stdin)
-    # usage: total [numbers...]
-    # \
-    exec jq --args -MRnf "$0" -- "$@"
-
-    $ARGS.positional |
-    reduce (
-      if . == []
-        then inputs
-        else .[]
-      end |
-      . as $dot |
-      try tonumber catch false |
-      if not or isnan then
-        @json "total: Invalid number \($dot).\n" | halt_error(1)
-      end
-    ) as $n (0; . + $n)
-
-The `exec` line is considered a comment by jq, so it is ignored.
-But it is not ignored by `sh`, since in `sh` a backslash at the
-end of the line does not continue the comment.
-With this trick, when the script is invoked as `total 1 2`,
-`/bin/sh -- /path/to/total 1 2` will be run, and `sh` will then
-run `exec jq --args -MRnf /path/to/total -- 1 2` replacing itself
-with a `jq` interpreter invoked with the specified options (`-M`,
-`-R`, `-n`, `--args`), that evaluates the current file (`$0`),
-with the arguments (`$@`) that were passed to `sh`.
-:::
-
-::: Compatibility
-jaq ignores backslashes at the end of comment lines.
 :::
 
 
@@ -964,7 +897,7 @@ programming language.
 
 :::
 
-## Recursive descent: `..`
+## Recursive descent: `..` {#recursive-descent}
 
 Recursively descends `.`, producing every value.  This is the
 same as [the zero-argument `recurse` function](#recurse).
@@ -2491,120 +2424,162 @@ that we did before:
 
 
 
-# Modules
+# Managing large programs
+
+## Comments
+
+You can write comments in your jq programs using `#`.
+
+A `#` character (not part of a string) starts a comment.
+All characters from `#` to the end of the line are ignored.
+
+If the end of the line is preceded by an odd number of backslash
+characters, the following line is also considered part of the
+comment and is ignored.
+
+For example, the following code outputs `[1,3,4,7]`
+
+    [
+      1,
+      # foo \
+      2,
+      # bar \\
+      3,
+      4, # baz \\\
+      5, \
+      6,
+      7
+      # comment \
+        comment \
+        comment
+    ]
+
+::: Note
+A backslash continuing the comment on the next line can be useful
+when writing the "shebang" for a jq script:
+
+    #!/bin/sh --
+    # total - Output the sum of the given arguments (or stdin)
+    # usage: total [numbers...]
+    # \
+    exec jq --args -MRnf "$0" -- "$@"
+
+    $ARGS.positional |
+    reduce (
+      if . == []
+        then inputs
+        else .[]
+      end |
+      . as $dot |
+      try tonumber catch false |
+      if not or isnan then
+        @json "total: Invalid number \($dot).\n" | halt_error(1)
+      end
+    ) as $n (0; . + $n)
+
+The `exec` line is considered a comment by jq, so it is ignored.
+But it is not ignored by `sh`, since in `sh` a backslash at the
+end of the line does not continue the comment.
+With this trick, when the script is invoked as `total 1 2`,
+`/bin/sh -- /path/to/total 1 2` will be run, and `sh` will then
+run `exec jq --args -MRnf /path/to/total -- 1 2` replacing itself
+with a `jq` interpreter invoked with the specified options (`-M`,
+`-R`, `-n`, `--args`), that evaluates the current file (`$0`),
+with the arguments (`$@`) that were passed to `sh`.
+:::
+
+::: Compatibility
+jaq ignores backslashes at the end of comment lines.
+:::
+
+## Modules
 
 jq has a library/module system. Modules are files whose names end in `.jq`.
 
-Modules imported by a program are searched for in a default search
-path (see below).  The `import` and `include` directives allow the
-importer to alter this path.
 
-Paths in the search path are subject to various substitutions.
+### Importing / including modules {#importing-modules}
 
-For paths starting with `~/`, the user's home directory is
-substituted for `~`.
+The directives
 
-For paths starting with `$ORIGIN/`, the directory where the jq
-executable is located is substituted for `$ORIGIN`.
+    import RelativePathString as NAME [<metadata>];
+    include RelativePathString [<metadata>];
 
-For paths starting with `./` or paths that are `.`, the path of
-the including file is substituted for `.`.  For top-level programs
-given on the command-line, the current directory is used.
+import a module found at the given path relative to a directory in a search path.
+A `.jq` suffix will be added to the relative path string.
+If `import` is used, the module's symbols are prefixed with `NAME::`.
+If `include` is used, the module's symbols are imported into the caller's namespace.
 
-Import directives can optionally specify a search path to which
-the default is appended.
-
-The default search path is the search path given to the `-L`
-command-line option, else `["~/.jq", "$ORIGIN/../lib/jq",
-"$ORIGIN/../lib"]`.
-
-Null and empty string path elements terminate search path
-processing.
-
-A dependency with relative path `foo/bar` would be searched for in
-`foo/bar.jq` and `foo/bar/bar.jq` in the given search path. This
-is intended to allow modules to be placed in a directory along
-with, for example, version control files, README files, and so on,
-but also to allow for single-file modules.
-
-Consecutive components with the same name are not allowed to avoid
-ambiguities (e.g., `foo/foo`).
-
-For example, with `-L$HOME/.jq` a module `foo` can be found in
-`$HOME/.jq/foo.jq` and `$HOME/.jq/foo/foo.jq`.
-
-If `.jq` exists in the user's home directory, and is a file (not a
-directory), it is automatically sourced into the main program.
-
-## `import RelativePathString as NAME [<metadata>];`
-
-Imports a module found at the given path relative to a
-directory in a search path.  A `.jq` suffix will be added to
-the relative path string.  The module's symbols are prefixed
-with `NAME::`.
-
-The optional metadata must be a constant jq expression.  It
-should be an object with keys like `homepage` and so on.  At
-this time jq only uses the `search` key/value of the metadata.
-The metadata is also made available to users via the
-`modulemeta` builtin.
+The optional metadata must be a constant jq expression.
+It should be an object with keys like `homepage` and so on.
+At this time jq only uses the `search` key/value of the metadata.
+The metadata is also made available to users via the [`modulemeta`](#modulemeta) builtin.
 
 The `search` key in the metadata, if present, should have a
 string or array value (array of strings); this is the search
 path to be prefixed to the top-level search path.
 
-## `include RelativePathString [<metadata>];`
+### Importing data
 
-Imports a module found at the given path relative to a
-directory in a search path as if it were included in place.  A
-`.jq` suffix will be added to the relative path string.  The
-module's symbols are imported into the caller's namespace as
-if the module's content had been included directly.
+The directive
 
-The optional metadata must be a constant jq expression.  It
-should be an object with keys like `homepage` and so on.  At
-this time jq only uses the `search` key/value of the metadata.
-The metadata is also made available to users via the
-`modulemeta` builtin.
+    import RelativePathString as $NAME [<metadata>];
 
-## `import RelativePathString as $NAME [<metadata>];`
+imports a JSON file found at the given path relative to a directory in a search path.
+A `.json` suffix will be added to the relative path string.
+The file's data will be available as `$NAME::NAME`.
 
-Imports a JSON file found at the given path relative to a
-directory in a search path.  A `.json` suffix will be added to
-the relative path string.  The file's data will be available
-as `$NAME::NAME`.
+The optional metadata is considered the same way as [module imports](#importing-modules).
 
-The optional metadata must be a constant jq expression.  It
-should be an object with keys like `homepage` and so on.  At
-this time jq only uses the `search` key/value of the metadata.
-The metadata is also made available to users via the
-`modulemeta` builtin.
+### Providing module metadata
 
-The `search` key in the metadata, if present, should have a
-string or array value (array of strings); this is the search
-path to be prefixed to the top-level search path.
+The directive
 
-## `module <metadata>;`
+    module <metadata>;
 
-This directive is entirely optional.  It's not required for
-proper operation.  It serves only the purpose of providing
-metadata that can be read with the `modulemeta` builtin.
+may be put at the beginning of a module file.
+It is entirely optional and serves only the purpose of providing
+metadata that can be read with the [`modulemeta`](#modulemeta) builtin.
 
 The metadata must be a constant jq expression.  It should be
 an object with keys like `homepage`.  At this time jq doesn't
 use this metadata, but it is made available to users via the
 `modulemeta` builtin.
 
-## `modulemeta`
+### Search paths
 
-Takes a module name as input and outputs the module's metadata
-as an object, with the module's imports (including metadata)
-as an array value for the `deps` key and the module's defined
-functions as an array value for the `defs` key.
+Modules imported by a program are searched for in a default search path (see below).
+The `import` and `include` directives allow the importer to alter this path.
 
-Programs can use this to query a module's metadata, which they
-could then use to, for example, search for, download, and
-install missing dependencies.
+Paths in the search path are subject to various substitutions:
+
+* For paths starting with `~/`, the user's home directory is substituted for `~`.
+* For paths starting with `$ORIGIN/`,
+  the directory where the jq executable is located is substituted for `$ORIGIN`.
+* For paths starting with `./` or paths that are `.`,
+  the path of the including file is substituted for `.`.
+  For top-level programs given on the command-line, the current directory is used.
+
+Import directives can optionally specify a search path to which
+the default is appended.
+
+The default search path is the search path given to the `-L` command-line option,
+else `["~/.jq", "$ORIGIN/../lib/jq", "$ORIGIN/../lib"]`.
+
+Null and empty string path elements terminate search path processing.
+
+A dependency with relative path `foo/bar` would be searched for in
+`foo/bar.jq` and `foo/bar/bar.jq` in the given search path.
+This is intended to allow modules to be placed in a directory along with, for example,
+version control files, README files, and so on, but also to allow for single-file modules.
+
+Consecutive components with the same name are
+not allowed to avoid ambiguities (e.g., `foo/foo`).
+
+For example, with `-L$HOME/.jq` a module `foo` can be found in
+`$HOME/.jq/foo.jq` and `$HOME/.jq/foo/foo.jq`.
+
+If `.jq` exists in the user's home directory, and is a file (not a directory),
+it is automatically sourced into the main program.
 
 
 
@@ -2613,7 +2588,9 @@ install missing dependencies.
 This section documents all named filter functions that are
 available by default in any jq program.
 
-## `empty`
+## Basic functions
+
+### `empty`
 
 `empty` returns no results. None at all. Not even `null`.
 
@@ -2636,7 +2613,7 @@ null
 
 :::
 
-## `error`, `error(message)`
+### `error`, `error(message)`
 
 Produces an error with the input value, or with the message given as the argument.
 Errors can be caught with [try/catch](#try-catch).
@@ -2657,7 +2634,7 @@ try error("invalid value: \(.)") catch .
 
 :::
 
-## `length`
+### `length`
 
 The `length` function gets the length of various different types of values:
 
@@ -2684,7 +2661,7 @@ The `length` function gets the length of various different types of values:
 
 :::
 
-## `keys`, `keys_unsorted`
+### `keys`, `keys_unsorted`
 
 The builtin function `keys`, when given an object, returns
 its keys in an array.
@@ -2718,7 +2695,7 @@ keys
 
 :::
 
-## `map(f)`, `map_values(f)` {#map}
+### `map(f)`, `map_values(f)` {#map}
 
 For any filter `f`, `map(f)` and `map_values(f)` apply `f`
 to each of the values in the input array or object, that is,
@@ -2790,7 +2767,7 @@ map_values(. // empty)
 
 :::
 
-## `to_entries`, `from_entries`, `with_entries(f)`
+### `to_entries`, `from_entries`, `with_entries(f)`
 
 These functions convert between an object and an array of
 key-value pairs. If `to_entries` is passed an object, then
@@ -2825,14 +2802,14 @@ with_entries(.key |= "KEY_" + .)
 
 :::
 
-## `not`
+### `not`
 
 The function `not` negates the [boolean value](#boolean-filters) of its input.
 It is defined as:
 
     def not: if . then false else true;
 
-## `select(boolean_expression)` {#select}
+### `select(boolean_expression)` {#select}
 
 The function `select(f)` produces its input unchanged if
 `f` returns true for that input, and produces no output
@@ -2857,7 +2834,7 @@ map(select(. >= 2))
 
 :::
 
-## `type`
+### `type`
 
 The `type` function returns the type of its argument as a
 string, which is one of null, boolean, number, string, array
@@ -2873,7 +2850,7 @@ map(type)
 
 :::
 
-## `arrays`, `objects`, `iterables`, `booleans`, `numbers`, `normals`, `finites`, `strings`, `nulls`, `values`, `scalars`
+### `arrays`, `objects`, `iterables`, `booleans`, `numbers`, `normals`, `finites`, `strings`, `nulls`, `values`, `scalars`
 
 These built-ins select only inputs that are arrays, objects,
 iterables (arrays or objects), booleans, numbers, normal
@@ -4905,26 +4882,6 @@ Returns the line number of the input currently being filtered.
 jaq does not provide this function.
 :::
 
-### `$__loc__`
-
-Produces an object with a "file" key and a "line" key, with
-the filename and line number where `$__loc__` occurs, as
-values.
-
-::: Compatibility
-jaq does not provide this variable.
-:::
-
-::: Examples
-
-~~~
-try error("\($__loc__)") catch .
-null
-"{\"file\":\"<top-level>\",\"line\":1}"
-~~~
-
-:::
-
 
 ## Streaming functions
 
@@ -4999,11 +4956,49 @@ true
 
 :::
 
-## Build configuration constants
+## Miscellaneous
 
 ::: Compatibility
-jaq does not provide any of the functions in this subsection.
+jaq does not provide any of the symbols in this subsection.
 :::
+
+### `modulemeta`
+
+Takes a module name as input and outputs the module's metadata
+as an object, with the module's imports (including metadata)
+as an array value for the `deps` key and the module's defined
+functions as an array value for the `defs` key.
+
+Programs can use this to query a module's metadata, which they
+could then use to, for example, search for, download, and
+install missing dependencies.
+
+### `$__loc__`
+
+Produces an object with a "file" key and a "line" key, with
+the filename and line number where `$__loc__` occurs, as
+values.
+
+::: Compatibility
+jaq does not provide this variable.
+:::
+
+::: Examples
+
+~~~
+try error("\($__loc__)") catch .
+null
+"{\"file\":\"<top-level>\",\"line\":1}"
+~~~
+
+:::
+
+### `builtins`
+
+Returns a list of all builtin functions in the format `name/arity`.
+Since functions with the same name but different arities are considered
+separate functions, `all/0`, `all/1`, and `all/2` would all be present
+in the list.
 
 ### `have_literal_numbers`
 
@@ -5015,13 +5010,6 @@ includes support for preservation of input number literals.
 This builtin returns true if jq was built with "decnum",
 which is the current literal number preserving numeric
 backend implementation for jq.
-
-### `builtins`
-
-Returns a list of all builtin functions in the format `name/arity`.
-Since functions with the same name but different arities are considered
-separate functions, `all/0`, `all/1`, and `all/2` would all be present
-in the list.
 
 ### `$JQ_BUILD_CONFIGURATION`
 
