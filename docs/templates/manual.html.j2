@@ -12,10 +12,7 @@
         <span class="bi bi-list" aria-hidden="true"></span>
       </button>
       <nav id="contents" class="col-md-3 sticky-md-top p-3 overflow-y-auto offcanvas-md offcanvas-end d-print-none" style="top:4.5rem; height:calc(100dvh - 5.5rem);" aria-label="Table of contents">
-        <div class="d-flex justify-content-between">
-          <h4>Contents</h4>
-          <button type="button" class="btn-close d-md-none" data-bs-dismiss="offcanvas" data-bs-target="#contents" aria-label="Close table of contents"></button>
-        </div>
+        <h4>Contents</h4>
         {%- if toc %}
         <div class="accordion accordion-flush">
           {%- for section in toc %}
