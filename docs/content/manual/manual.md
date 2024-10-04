@@ -4,15 +4,58 @@ For instance, running the command `jq 'map(.price) | add'`
 takes an array of JSON objects as input and
 returns the sum of their "price" fields.
 
-Here, `'map(.price) | add'` is a _filter_
-written in the jq programming language,
-specifying how to transform input data.
+A jq program, such as `map(.price) | add`, is called a _filter_.
+Each filter takes an input value and produces a _stream_ of output values.
+For instance, when the input value is an array,
+the filter [`.[]`](#iteration-operator) yields all the elements of the array.
+Even literals like `"hello"` or `42` are filters ---
+they take an input and produce the same literal as output.
+
 The simplest filter (or jq program) is
 [identity `.`](#identity), which simply outputs its input.
-Because the default behavior of jq is to pretty-print outputs,
+Because the default behavior of jq is to pretty-print all outputs,
 you can use `jq '.'` to validate and pretty-print JSON input.
 However, the jq programming language is quite rich and
 allows for much more than just validation and pretty-printing.
+
+There are many filters for various standard tasks, such as
+[extracting a particular field of an object](#indexing-operator), or
+[converting a number to a string](#tostring).
+
+Filters can be combined in various ways.
+For example, you can
+[feed the output of one filter to another filter](#composition), or
+[collect the output of a filter into an array](#arrays).
+Generally, things that would be done with loops and iteration
+in other languages are just done by gluing filters together in jq.
+
+We can run a filter `FILTER` using `jq FILTER`, e.g. `jq .foo`.
+For large filters, it may be more convenient to
+write it into some `FILE` and to
+run it with `jq -f FILE`, e.g. `jq -f filter.jq`.
+
+::: Note
+When using `jq FILTER`, it is important to mind the shell's quoting rules.
+As a general rule, it's best to always quote the jq program, because
+many characters with special meaning to jq are also shell meta-characters.
+For example, `jq "foo"` will fail on most Unix shells because
+that will be the same as `jq foo`, which will generally fail because
+`foo is not defined`.
+
+The quoting rules depend on your shell:
+When using a Unix shell,
+use single quotes around your jq program,
+When using the Windows command shell (`cmd.exe`),
+use _double quotes_ around your jq program and
+escape double quotes in the jq program with backslashes.
+When using the Powershell (`powershell.exe`) or the Powershell Core (`pwsh`/`pwsh.exe`),
+use _single quotes_ around your jq program and
+escape double-quotes in the jq program with backslashes (`\"`).
+
+* Unix shells: `jq '.["foo"]'`
+* Powershell: `jq '.[\"foo\"]'`
+* Windows command shell: `jq ".[\"foo\"]"`
+:::
 
 By default, jq reads a stream of JSON values
 (including numbers and other literals) from
@@ -377,55 +420,6 @@ jaq does not consider `JQ_COLORS`.
 :::
 
 
-# The jq programming language
-
-A jq program is called a _filter_.
-Each filter takes an input value and produces a stream of output values.
-For instance, when the input value is an array,
-the filter [`.[]`](#iteration-operator) yields all the elements of the array.
-Even literals like `"hello"` or `42` are filters ---
-they take an input and produce the same literal as output.
-
-There are many filters for various standard tasks, such as
-[extracting a particular field of an object](#indexing-operator), or
-[converting a number to a string](#tostring).
-
-Filters can be combined in various ways.
-For example, you can
-[feed the output of one filter to another filter](#composition), or
-[collect the output of a filter into an array](#arrays).
-Generally, things that would be done with loops and iteration
-in other languages are just done by gluing filters together in jq.
-
-We can run a filter `FILTER` using `jq FILTER`, e.g. `jq .foo`.
-For large filters, it may be more convenient to
-write it into some `FILE` and to
-run it with `jq -f FILE`, e.g. `jq -f filter.jq`.
-
-::: Note
-When using `jq FILTER`, it is important to mind the shell's quoting rules.
-As a general rule, it's best to always quote the jq program, because
-many characters with special meaning to jq are also shell meta-characters.
-For example, `jq "foo"` will fail on most Unix shells because
-that will be the same as `jq foo`, which will generally fail because
-`foo is not defined`.
-
-The quoting rules depend on your shell:
-When using a Unix shell,
-use single quotes around your jq program,
-When using the Windows command shell (`cmd.exe`),
-use _double quotes_ around your jq program and
-escape double quotes in the jq program with backslashes.
-When using the Powershell (`powershell.exe`) or the Powershell Core (`pwsh`/`pwsh.exe`),
-use _single quotes_ around your jq program and
-escape double-quotes in the jq program with backslashes (`\"`).
-
-* Unix shells: `jq '.["foo"]'`
-* Powershell: `jq '.[\"foo\"]'`
-* Windows command shell: `jq ".[\"foo\"]"`
-:::
-
-
 # Types and Values
 
 jq supports the same set of datatypes as JSON ---
@@ -449,7 +443,6 @@ The booleans can be defined by:
     def  true: 0 == 0;
     def false: 0 != 0;
 :::
-
 
 ## Numbers
 
