@@ -2,7 +2,7 @@
 set -eu
 
 cd "$(dirname "$0")/../"
-test -d .git || exit 1
+test -e .git || exit 1
 
 if git describe --tags --match 'jq-*' >/dev/null 2>&1; then
   git describe --tags --match 'jq-*' --dirty | sed 's/^jq-//'

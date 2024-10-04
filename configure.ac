@@ -111,7 +111,7 @@ AC_ARG_ENABLE([decnum],
    AS_HELP_STRING([--disable-decnum],[disable decnum support]))
 
 AS_IF([test "x$enable_decnum" != "xno"],[
-   AC_DEFINE([USE_DECNUM],1)
+   AC_DEFINE([USE_DECNUM], 1, [Define to enable decnum support.])
 ])
 
 AM_CONDITIONAL([ENABLE_VALGRIND], [test "x$enable_valgrind" != xno])
@@ -125,7 +125,7 @@ AM_CONDITIONAL([ENABLE_ALL_STATIC], [test "x$enable_all_static" = xyes])
 dnl Find pthread, if we have it. We do this first because we may set -pthread on CFLAGS
 dnl which can cause various macros to be defined (__REENTRANT on Darwin, for example)
 AX_PTHREAD([
-   AC_DEFINE([HAVE_PTHREAD], [1])
+   AC_DEFINE([HAVE_PTHREAD], [1], [Define to enable POSIX threads support.])
    LIBS="$PTHREAD_LIBS $LIBS"
    CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
    CC="$PTHREAD_CC"
@@ -242,6 +242,9 @@ AC_C_BIGENDIAN(
    AC_MSG_ERROR(universal endianness not supported)
 )
 
+AC_DEFINE_UNQUOTED([JQ_CONFIG], ["$ac_cs_config"], [The options jq was configured with.])
+AH_BOTTOM([#define JQ_VERSION PACKAGE_VERSION])
+
 dnl Oniguruma
 AC_ARG_WITH([oniguruma],
    [AS_HELP_STRING([--with-oniguruma=prefix],
@@ -291,6 +294,8 @@ AM_CONDITIONAL([WITH_ONIGURUMA], [test "x$with_oniguruma" != xno])
 AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 AC_CONFIG_MACRO_DIRS([config/m4 m4])
+AC_CONFIG_HEADERS([src/config.h])
+CFLAGS="$CFLAGS --include src/config.h"
 AC_CONFIG_FILES([Makefile libjq.pc])
 AC_OUTPUT
 
