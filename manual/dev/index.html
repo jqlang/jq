@@ -7162,10 +7162,10 @@ $times_three | [. + $times_three]) | ...</code>: here the binding
           </section>
           <section id="limit">
             <h3>
-              <code>limit(n; exp)</code>
-              <a href="#limit" class="icon-link" aria-label="Link to this section: `limit(n; exp)`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
+              <code>limit(n; expr)</code>
+              <a href="#limit" class="icon-link" aria-label="Link to this section: `limit(n; expr)`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
             </h3>
-            <p>The <code>limit</code> function extracts up to <code>n</code> outputs from <code>exp</code>.</p>
+            <p>The <code>limit</code> function extracts up to <code>n</code> outputs from <code>expr</code>.</p>
             <div class="pb-3">
               <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example98" aria-expanded="false" aria-controls="example98">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
@@ -7174,7 +7174,7 @@ $times_three | [. + $times_three]) | ...</code>: here the binding
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
-                    <td class="font-monospace">jq '[limit(3;.[])]'</td>
+                    <td class="font-monospace">jq '[limit(3; .[])]'</td>
                   </tr>
                   <tr>
                     <th>Input</th>
@@ -7185,7 +7185,39 @@ $times_three | [. + $times_three]) | ...</code>: here the binding
                     <td class="font-monospace">[0,1,2]</td>
                   </tr>
                   <tr class="d-print-none">
-                    <th><a href="https://jqplay.org/jq?q=%5Blimit%283%3B.%5B%5D%29%5D&j=%5B0%2C1%2C2%2C3%2C4%2C5%2C6%2C7%2C8%2C9%5D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <th><a href="https://jqplay.org/jq?q=%5Blimit%283%3B%20.%5B%5D%29%5D&j=%5B0%2C1%2C2%2C3%2C4%2C5%2C6%2C7%2C8%2C9%5D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <td></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </section>
+          <section id="skip">
+            <h3>
+              <code>skip(n; expr)</code>
+              <a href="#skip" class="icon-link" aria-label="Link to this section: `skip(n; expr)`"><span class="bi bi-link-45deg" aria-hidden="true"></span></a>
+            </h3>
+            <p>The <code>skip</code> function skips the first <code>n</code> outputs from <code>expr</code>.</p>
+            <div class="pb-3">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example99" aria-expanded="false" aria-controls="example99">
+                <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
+              </button>
+              <div id="example99" class="collapse mx-3 small d-print-block">
+                <table class="table table-borderless table-sm w-auto">
+                  <tr>
+                    <th class="pe-3">Command</th>
+                    <td class="font-monospace">jq '[skip(3; .[])]'</td>
+                  </tr>
+                  <tr>
+                    <th>Input</th>
+                    <td class="font-monospace">[0,1,2,3,4,5,6,7,8,9]</td>
+                  </tr>
+                  <tr>
+                    <th>Output</th>
+                    <td class="font-monospace">[3,4,5,6,7,8,9]</td>
+                  </tr>
+                  <tr class="d-print-none">
+                    <th><a href="https://jqplay.org/jq?q=%5Bskip%283%3B%20.%5B%5D%29%5D&j=%5B0%2C1%2C2%2C3%2C4%2C5%2C6%2C7%2C8%2C9%5D" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
                     <td></td>
                   </tr>
                 </table>
@@ -7202,10 +7234,10 @@ and last values from <code>expr</code>, respectively.</p>
 <p>The <code>nth(n; expr)</code> function extracts the nth value output by <code>expr</code>.
 Note that <code>nth(n; expr)</code> doesn't support negative values of <code>n</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example99" aria-expanded="false" aria-controls="example99">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example100" aria-expanded="false" aria-controls="example100">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example99" class="collapse mx-3 small d-print-block">
+              <div id="example100" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7236,10 +7268,10 @@ Note that <code>nth(n; expr)</code> doesn't support negative values of <code>n</
 and last values from any array at <code>.</code>.</p>
 <p>The <code>nth(n)</code> function extracts the nth value of any array at <code>.</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example100" aria-expanded="false" aria-controls="example100">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example101" aria-expanded="false" aria-controls="example101">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example100" class="collapse mx-3 small d-print-block">
+              <div id="example101" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7281,10 +7313,10 @@ so the effect is similar to running something like this:</p>
     3 as $item | . + $item
 </code></pre>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example101" aria-expanded="false" aria-controls="example101">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example102" aria-expanded="false" aria-controls="example102">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example101" class="collapse mx-3 small d-print-block">
+              <div id="example102" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7367,10 +7399,10 @@ to running something like this:</p>
 <p>When <code>EXTRACT</code> is omitted, the identity filter is used.
 That is, it outputs the intermediate values as they are.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example102" aria-expanded="false" aria-controls="example102">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example103" aria-expanded="false" aria-controls="example103">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example102" class="collapse mx-3 small d-print-block">
+              <div id="example103" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7522,10 +7554,10 @@ recursive call by <code>_range</code> to itself is in tail position.
 The example shows off three advanced topics: tail recursion,
 generator construction, and sub-functions.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example103" aria-expanded="false" aria-controls="example103">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example104" aria-expanded="false" aria-controls="example104">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example103" class="collapse mx-3 small d-print-block">
+              <div id="example104" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7726,10 +7758,10 @@ as <code>["error message"]</code> when an input text fails to parse.</p>
 number of path elements from the left of the outputs of the
 given streaming expression.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example104" aria-expanded="false" aria-controls="example104">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example105" aria-expanded="false" aria-controls="example105">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example104" class="collapse mx-3 small d-print-block">
+              <div id="example105" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7763,10 +7795,10 @@ given streaming expression.</p>
             <p>Outputs values corresponding to the stream expression's
 outputs.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example105" aria-expanded="false" aria-controls="example105">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example106" aria-expanded="false" aria-controls="example106">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example105" class="collapse mx-3 small d-print-block">
+              <div id="example106" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7795,10 +7827,10 @@ outputs.</p>
             </h3>
             <p>The <code>tostream</code> builtin outputs the streamed form of its input.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example106" aria-expanded="false" aria-controls="example106">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example107" aria-expanded="false" aria-controls="example107">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example106" class="collapse mx-3 small d-print-block">
+              <div id="example107" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7881,10 +7913,10 @@ the left-hand side path will be deleted, as with <code>del(path)</code>.</p>
 one will be used (COMPATIBILITY NOTE: in jq 1.5 and earlier
 releases, it used to be that only the last one was used).</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example107" aria-expanded="false" aria-controls="example107">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example108" aria-expanded="false" aria-controls="example108">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example107" class="collapse mx-3 small d-print-block">
+              <div id="example108" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7915,10 +7947,10 @@ releases, it used to be that only the last one was used).</p>
 equivalent to <code>a |= . op b</code>. So, <code>+= 1</code> can be used to
 increment values, being the same as <code>|= . + 1</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example108" aria-expanded="false" aria-controls="example108">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example109" aria-expanded="false" aria-controls="example109">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
               </button>
-              <div id="example108" class="collapse mx-3 small d-print-block">
+              <div id="example109" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -7968,10 +8000,10 @@ field of the input, and produce the output <code>{"a": 20, "b": 20}</code>.
 The latter will set the <code>a</code> field of the input to the <code>a</code>
 field's <code>b</code> field, producing <code>{"a": 10, "b": 20}</code>.</p>
             <div class="pb-3">
-              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example109" aria-expanded="false" aria-controls="example109">
+              <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example110" aria-expanded="false" aria-controls="example110">
                 <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
-              <div id="example109" class="collapse mx-3 small d-print-block">
+              <div id="example110" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
@@ -8437,7 +8469,8 @@ by a semi-colon, where the first number is one of these:</p>
         "Defining Functions": "defining-functions",
         "Scoping": "scoping",
         "isempty(exp)": "isempty",
-        "limit(n; exp)": "limit",
+        "limit(n; expr)": "limit",
+        "skip(n; expr)": "skip",
         "first(expr), last(expr), nth(n; expr)": "first-last-nth-2",
         "first, last, nth(n)": "first-last-nth-1",
         "reduce": "reduce",
