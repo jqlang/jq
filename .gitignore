@@ -18,7 +18,8 @@ jq.1
 
 # Generated source
 src/builtin.inc
-src/config_opts.inc
+src/config.h.in
+src/config.h
 *.pc
 
 # Autotools junk
@@ -38,8 +39,6 @@ jq-*.zip
 configure
 aclocal.m4
 Makefile.in
-version.h
-.remake-version-h
 config.cache
 *.rpm
 m4/libtool.m4
