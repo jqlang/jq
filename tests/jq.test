@@ -2187,6 +2187,9 @@ try ["ok", setpath([1]; 1)] catch ["ko", .]
 {"hi":"hello"}
 ["ko","Cannot index object with number"]
 
+try fromjson catch .
+"{'a': 123}"
+"Invalid string literal; expected \", but got ' at line 1, column 5 (while parsing '{'a': 123}')"
 
 # ltrimstr/1 rtrimstr/1 don't leak on invalid input #2977
 
