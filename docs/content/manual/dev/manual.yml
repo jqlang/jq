@@ -3037,15 +3037,25 @@ sections:
             input: '[1,2,3]'
             output: ['false']
 
-      - title: "`limit(n; exp)`"
+      - title: "`limit(n; expr)`"
         body: |
 
-          The `limit` function extracts up to `n` outputs from `exp`.
+          The `limit` function extracts up to `n` outputs from `expr`.
 
         examples:
-          - program: '[limit(3;.[])]'
+          - program: '[limit(3; .[])]'
             input: '[0,1,2,3,4,5,6,7,8,9]'
             output: ['[0,1,2]']
+
+      - title: "`skip(n; expr)`"
+        body: |
+
+          The `skip` function skips the first `n` outputs from `expr`.
+
+        examples:
+          - program: '[skip(3; .[])]'
+            input: '[0,1,2,3,4,5,6,7,8,9]'
+            output: ['[3,4,5,6,7,8,9]']
 
       - title: "`first(expr)`, `last(expr)`, `nth(n; expr)`"
         body: |

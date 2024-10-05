@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "August 2024" "" ""
+.TH "JQ" "1" "September 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -3435,16 +3435,31 @@ jq \'isempty(\.[])\'
 .
 .IP "" 0
 .
-.SS "limit(n; exp)"
-The \fBlimit\fR function extracts up to \fBn\fR outputs from \fBexp\fR\.
+.SS "limit(n; expr)"
+The \fBlimit\fR function extracts up to \fBn\fR outputs from \fBexpr\fR\.
 .
 .IP "" 4
 .
 .nf
 
-jq \'[limit(3;\.[])]\'
+jq \'[limit(3; \.[])]\'
    [0,1,2,3,4,5,6,7,8,9]
 => [0,1,2]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "skip(n; expr)"
+The \fBskip\fR function skips the first \fBn\fR outputs from \fBexpr\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[skip(3; \.[])]\'
+   [0,1,2,3,4,5,6,7,8,9]
+=> [3,4,5,6,7,8,9]
 .
 .fi
 .
