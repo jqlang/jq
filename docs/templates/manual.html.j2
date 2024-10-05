@@ -18,18 +18,23 @@
           {%- for section in toc %}
           {%- if section.level == 1 %}
           {%- if not loop.first %}
+              </ul>
             </details>
           </li>
           {%- endif %}
-          <li class="nav nav-item">
+          <li>
             <details>
               <summary>
-                <a href="#{{ section.id }}" class="nav-link p-2">{{ section.title }}</a>
+                <a href="#{{ section.id }}" class="text-decoration-none py-2">{{ section.title }}</a>
               </summary>
+              <ul>
           {%- elif section.level == 2 %}
-              <a href="#{{ section.id }}" class="nav-link ps-5">{{ section.title }}</a>
+                <li class="py-2 ps-4">
+                  <a href="#{{ section.id }}" class="text-decoration-none">{{ section.title }}</a>
+                </li>
           {%- endif %}
           {%- if loop.last %}
+              </ul>
             </details>
           </li>
           {%- endif %}

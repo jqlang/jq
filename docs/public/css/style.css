@@ -53,8 +53,11 @@ section[id] {
 details > summary {
   /* disable default marker */
   list-style: none;
-  /* align arrow with text vertically */
   display: flex;
+  /* distance between arrow and text */
+  gap: 5px;
+  /* align arrow with text vertically */
+  align-items: center;
 }
 
 details > summary:before  {
