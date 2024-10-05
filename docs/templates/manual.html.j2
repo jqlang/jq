@@ -14,25 +14,27 @@
       <nav id="contents" class="col-md-3 sticky-md-top p-3 overflow-y-auto offcanvas-md offcanvas-end d-print-none" style="top:4.5rem; height:calc(100dvh - 5.5rem);" aria-label="Table of contents">
         <h4>Contents</h4>
         {%- if toc %}
-        <div class="accordion accordion-flush">
+        <ul class="ps-0">
           {%- for section in toc %}
           {%- if section.level == 1 %}
           {%- if not loop.first %}
-          </div>
+            </details>
+          </li>
           {%- endif %}
-          <div class="accordion-header d-flex align-items-center">
-            <button class="accordion-button collapsed bg-transparent shadow-none w-auto p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ section.id }}"></button>
-            <a href="#{{ section.id }}" class="nav nav-link">{{ section.title }}</a>
-          </div>
-          <div id="collapse-{{ section.id }}" class="accordion-collapse collapse">
+          <li class="nav nav-item">
+            <details>
+              <summary>
+                <a href="#{{ section.id }}" class="nav-link p-2">{{ section.title }}</a>
+              </summary>
           {%- elif section.level == 2 %}
-            <a class="nav nav-link ps-5" href="#{{ section.id }}">{{ section.title }}</a>
+              <a href="#{{ section.id }}" class="nav-link ps-5">{{ section.title }}</a>
           {%- endif %}
           {%- if loop.last %}
-          </div>
+            </details>
+          </li>
           {%- endif %}
           {%- endfor %}
-        </div>
+        </ul>
         {%- else %}
         <ul class="offcanvas-md-body nav nav-pills flex-column">
           {%- for section in sections %}
