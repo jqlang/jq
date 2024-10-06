@@ -10,10 +10,6 @@
 
 typedef const char* presult;
 
-#ifndef MAX_PARSING_DEPTH
-#define MAX_PARSING_DEPTH (256)
-#endif
-
 #define TRY(x) do {presult msg__ = (x); if (msg__) return msg__; } while(0)
 #ifdef __GNUC__
 #define pfunc __attribute__((warn_unused_result)) presult
@@ -39,6 +35,7 @@ struct jv_parser {
   unsigned bom_strip_position;
 
   int flags;
+  int maxdepth;
 
   jv* stack;                   // parser
   int stackpos;                // parser
@@ -66,7 +63,7 @@ struct jv_parser {
 };
 
 
-static void parser_init(struct jv_parser* p, int flags) {
+static void parser_init(struct jv_parser* p, int flags, int maxdepth) {
   p->flags = flags;
   if ((p->flags & JV_PARSE_STREAMING)) {
     p->path = jv_array();
@@ -74,6 +71,7 @@ static void parser_init(struct jv_parser* p, int flags) {
     p->path = jv_invalid();
     p->flags &= ~(JV_PARSE_STREAM_ERRORS);
   }
+  p->maxdepth = maxdepth;
   p->stack = 0;
   p->stacklen = p->stackpos = 0;
   p->last_seen = JV_LAST_NONE;
@@ -156,13 +154,13 @@ static void push(struct jv_parser* p, jv v) {
 static pfunc parse_token(struct jv_parser* p, char ch) {
   switch (ch) {
   case '[':
-    if (p->stackpos >= MAX_PARSING_DEPTH) return "Exceeds depth limit for parsing";
+    if (p->maxdepth > 0 && p->stackpos >= p->maxdepth) return "Exceeds depth limit for parsing (set with --depth)";
     if (jv_is_valid(p->next)) return "Expected separator between values";
     push(p, jv_array());
     break;
 
   case '{':
-    if (p->stackpos >= MAX_PARSING_DEPTH) return "Exceeds depth limit for parsing";
+    if (p->maxdepth > 0 && p->stackpos >= p->maxdepth) return "Exceeds depth limit for parsing (set with --depth)";
     if (jv_is_valid(p->next)) return "Expected separator between values";
     push(p, jv_object());
     break;
@@ -707,9 +705,9 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   return answer;
 }
 
-struct jv_parser* jv_parser_new(int flags) {
+struct jv_parser* jv_parser_new(int flags, int maxdepth) {
   struct jv_parser* p = jv_mem_alloc(sizeof(struct jv_parser));
-  parser_init(p, flags);
+  parser_init(p, flags, maxdepth);
   p->flags = flags;
   return p;
 }
@@ -861,9 +859,9 @@ jv jv_parser_next(struct jv_parser* p) {
   }
 }
 
-jv jv_parse_sized_custom_flags(const char* string, int length, int flags) {
+jv jv_parse_sized_custom_flags(const char* string, int length, int flags, int maxdepth) {
   struct jv_parser parser;
-  parser_init(&parser, flags);
+  parser_init(&parser, flags, maxdepth);
   jv_parser_set_buf(&parser, string, length, 0);
   jv value = jv_parser_next(&parser);
   if (jv_is_valid(value)) {
@@ -901,7 +899,7 @@ jv jv_parse_sized_custom_flags(const char* string, int length, int flags) {
 }
 
 jv jv_parse_sized(const char* string, int length) {
-  return jv_parse_sized_custom_flags(string, length, 0);
+  return jv_parse_sized_custom_flags(string, length, 0, DEFAULT_MAX_PARSING_DEPTH);
 }
 
 jv jv_parse(const char* string) {
@@ -909,5 +907,5 @@ jv jv_parse(const char* string) {
 }
 
 jv jv_parse_custom_flags(const char* string, int flags) {
-  return jv_parse_sized_custom_flags(string, strlen(string), flags);
+  return jv_parse_sized_custom_flags(string, strlen(string), flags, DEFAULT_MAX_PARSING_DEPTH);
 }
