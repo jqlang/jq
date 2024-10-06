@@ -1235,6 +1235,24 @@ jq \'\.[] | select(\.id == "second")\'
 .
 .IP "" 0
 .
+.SS "filter(boolean_expression)"
+The function \fBfilter(f)\fR takes an array and returns an array with only the elements for which \fBf\fR returns true for that element\.
+.
+.P
+The behavior is identical to map(select(\fBf\fR)) but it\'s more user friendly\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'filter(\. >= 2)\'
+   [1,5,3,0,7]
+=> [5,3,7]
+.
+.fi
+.
+.IP "" 0
+.
 .SS "arrays, objects, iterables, booleans, numbers, normals, finites, strings, nulls, values, scalars"
 These built\-ins select only inputs that are arrays, objects, iterables (arrays or objects), booleans, numbers, normal numbers, finite numbers, strings, null, non\-null values, and non\-iterables, respectively\.
 .
