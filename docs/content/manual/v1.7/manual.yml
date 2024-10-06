@@ -3004,10 +3004,17 @@ sections:
           The `nth(n; expr)` function extracts the nth value output by `expr`.
           Note that `nth(n; expr)` doesn't support negative values of `n`.
 
+          `first` and `nth` produce no values if the generator has insufficient
+          elements. `last` currently returns `null` instead. `last` might be
+          modified to produce no values in the future.
+
         examples:
           - program: "[first(range(.)), last(range(.)), nth(./2; range(.))]"
             input: "10"
             output: ["[0,9,5]"]
+          - program: "[[first(range(.))], [last(range(.))], [nth(5; range(.))]]"
+            input: "0"
+            output: ["[[],[null],[]]"]
 
       - title: "`first`, `last`, `nth(n)`"
         body: |
