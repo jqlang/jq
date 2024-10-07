@@ -1864,7 +1864,8 @@ Furthermore, there is no way to change the value of a binding;
 one can only create a new binding with the same name,
 but this will not be visible where the old one was.
 
-For example, in the filter
+::: Example
+In the filter
 
     .realnames as $names | (.posts[] | {title, author: $names[.author]})
 
@@ -1874,6 +1875,7 @@ the binding `$names` is visible "to the right" of it, but in the filter
 
 the binding `$names` is _not_ visible past the closing parenthesis,
 so the filter is not well-formed.
+:::
 
 ## Destructuring
 
@@ -2142,13 +2144,34 @@ foreach .[] as $item (0; . + 1; {index: ., $item})
 
 # Definitions
 
-You can give a filter a name using "def" syntax:
+When you have a filter `g`, you can give it a name `f` as follows:
 
-    def increment: . + 1;
+    def f: g;
 
-From then on, `increment` is usable as a filter just like a builtin function ---
-in fact, this is how many of the builtins are defined.
-A function may take arguments:
+This is called a _function definition_.
+Many [builtin functions](#builtin-functions) are implemented by definition.
+
+::: Example
+The definition `def increment: . + 1;` gives the filter `. + 1` the name `increment`.
+:::
+
+A function definition `def f: g;` that is followed by a filter `h`
+is a filter in which `h` may refer to `f`.
+
+::: Example
+The filter `def increment: . + 1; 2 | increment` is equivalent to `2 | . + 1`.
+:::
+
+::: Note
+In jq, you can write definitions wherever you can write a filter.
+That allows definitions in places that might be considered
+rather unorthodox in other programming languages.
+For example, you can write
+`1 + def a: 2; a * a`, which is equivalent to
+`1 + 2 * 2`, or
+:::
+
+A function may take arguments, for example:
 
     def map(f): [.[] | f];
 
@@ -2156,31 +2179,33 @@ Arguments are passed as _filters_ (functions with no arguments), _not_ as values
 The same argument may be referenced multiple times with different inputs; for example,
 in `map`, the argument `f` is run for each element of the input array.
 Arguments to a function work more like callbacks than like value arguments.
-This is important to understand. Consider:
+This is important to understand.
+
+::: Example
+Consider the following filter:
 
     def foo(f): f|f;
     5|foo(.*2)
 
 The result will be 20 because `f` is `.*2`, and during the
 first invocation of `f` `.` will be 5, and the second time it
-will be 10 (5 * 2), so the result will be 20.  Function
-arguments are filters, and filters expect an input when
-invoked.
+will be 10 (5 * 2), so the result will be 20.
+:::
 
-If you want the value-argument behaviour for defining simple
-functions, you can just use a variable:
+If you want to pass an argument by value, you can prefix its name with `$`.
 
-    def addvalue(f): f as $f | map(. + $f);
+::: Example
+The definition
 
-Or use the short-hand:
+    def addvalue($f): map(. + $f);
 
-    def addvalue($f): ...;
+is equivalent to
 
-With either definition, `addvalue(.foo)` will add the current
-input's `.foo` field to each element of the array.  Do note
-that calling `addvalue(.[])` will cause the `map(. + $f)` part
-to be evaluated once per value in the value of `.` at the call
-site.
+    def addvalue(f): f as $f | map(. + $f);`
+
+With either definition, `addvalue(.foo)` adds
+the current input's `.foo` field to each element of the input.
+:::
 
 Multiple definitions using the same function name are allowed.
 Each re-definition replaces the previous one for the same
@@ -2207,28 +2232,47 @@ def addvalue(f): f as $x | map(. + $x); addvalue(.[0])
 
 ## Recursion
 
-As previously described, [`recurse`](#recurse) uses recursion, and
-any jq function can be recursive.
-The [`while`](#while) function is also implemented in terms of recursion.
+Any jq function can be recursive.
+The subsection on [recursion functions](#recursion-functions)
+gives a few examples, such as [`recurse`](#recurse).
 
 Tail calls are optimized whenever the expression to the left of
 the recursive call outputs its last value.  In practice this
 means that the expression to the left of the recursive call
 should not produce more than one output for each input.
 
-For example:
+::: Example
+The builtin function [`repeat`](#repeat) can be
+naively implemented like `repeat1` below.
+It is tail-recursive, however, it binds `f` to a new argument
+whenever `repeat1` is called recursively.
+This makes `f` more costly to call with every recursion step.
+For that reason, `repeat` is implemented like below, where
+`f` is bound only once, and
+the recursive call does not have to perform any binding.
 
-    def recurse(f): def r: ., (f | select(. != null) | r); r;
+    def repeat1(f):
+        f, repeat1(f);
 
-    def while(cond; update):
-      def _while:
-        if cond then ., (update | _while) else empty end;
-      _while;
-
-    def repeat(exp):
+    def repeat(f):
       def _repeat:
-        exp, _repeat;
+        f, _repeat;
       _repeat;
+:::
+
+::: Example
+The builtin function [`while`](#while) is also implemented recursively.
+We apply a similar transformation as above for `repeat`
+to keep the cost of calls to `cond` and `update` constant:
+
+    def while1(cond; update):
+        if cond then ., (update | while1(cond; update)) else empty end;
+
+    def while (cond; update):
+      def _while:
+        if cond then ., (update | _while              ) else empty end;
+      _while
+:::
 
 ## Generators and iterators
 
@@ -4037,7 +4081,7 @@ If the decoded string is not UTF-8, the results are undefined.
 
 ## Recursion functions
 
-### `repeat(f)`
+### `repeat(f)` {#repeat}
 
 The function `repeat(f)` repeatedly runs `f` on the original input.
 It could be naively defined via:
