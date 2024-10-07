@@ -35,8 +35,9 @@ function CodeBlock(block)
 end
 
 function Div(el)
-  if el.classes:includes'Examples' then
-    local el = el:walk{CodeBlock = function(block) return example(block.text) end}
+  local class = el.classes[1]
+  if class == "Examples" then
+    el = el:walk{CodeBlock = function(block) return example(block.text) end}
 
     if FORMAT == "html" then
       local summary = pandoc.Plain{
@@ -48,10 +49,10 @@ function Div(el)
         pandoc.RawBlock("html", '</details>')
       }
     end
-    return el.content
   end
-  if #el.classes == 1 then
-    local class = el.classes[1]
+  if FORMAT == "man" then
+    el = pandoc.DefinitionList({{pandoc.Emph(class), el.content}})
+  elseif FORMAT == "html" then
     el.classes = {"alert", "alert-primary"}
     table.insert(el.content, 1, pandoc.Span(class, {class = "block-start"}))
   end
