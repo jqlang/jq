@@ -2006,6 +2006,24 @@ so the effect is similar to running something like this:
         2 as $item | . + $item |
         3 as $item | . + $item
 
+::: Compatibility
+When `UPDATE` yields multiple outputs,
+jq only considers the _last_ one for the next iteration, whereas
+jaq considers _all_ of them.
+For example, the filter
+
+    reduce (0, 1) as $x ([]; . + (["a", $x], ["b", $x]))
+
+yields `["b",0,"b",1]` in jq, whereas in jaq, it yields:
+
+~~~
+["a",0,"a",1]
+["a",0,"b",1]
+["b",0,"a",1]
+["b",0,"b",1]
+~~~
+:::
+
 ::: Examples
 
 ~~~
@@ -2055,6 +2073,39 @@ That is, it outputs the intermediate values as they are.
 
 ::: Compatibility
 jaq does not provide `foreach/3`, but it does provide `foreach/2`.
+
+Furthermore, similarly as for `reduce`,
+jq considers only the _last_ output of `UPDATE` for the next iteration, whereas
+jq considers _all_ of them.
+For example, the filter
+
+    foreach (0, 1) as $x ([]; . + (["a", $x], ["b", $x]))
+
+yields
+
+~~~ json
+["a",0]
+["b",0]
+["b",0,"a",1]
+["b",0,"b",1]
+~~~
+
+in jq.
+Here, we can see that jq actually yields both outputs of `UPDATE`, namely
+`["a",0]` and `["b",0]`, but it only uses the last of them, namely `["b",0]`,
+for the second iteration.
+
+In contrast, jaq yields:
+
+~~~ json
+["a",0]
+["a",0,"a",1]
+["a",0,"b",1]
+["b",0]
+["b",0,"a",1]
+["b",0,"b",1]
+~~~
+
 :::
 
 ::: Examples
