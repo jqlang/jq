@@ -756,7 +756,7 @@ true
 
 ## Concatenation: `,`
 
-The `,` operator serves to concatenate the outputs of two filters.
+The `,` operator concatenates the outputs of two filters.
 
 Given two filters `f` and `g`, their concatenation
 `f, g` first returns the outputs of `f`, then the outputs of `g`.
@@ -794,7 +794,7 @@ The filter `.foo, .bar` produces both the "foo" fields and "bar" fields as separ
 
 ## Composition: `|`
 
-The `|` operator serves to feed the output of one filter to another filter.
+The `|` operator feeds the output of one filter to another filter.
 It's similar to the Unix shell's pipe, if you're used to that.
 
 Given two filters `f` and `g`, their composition
@@ -1472,6 +1472,10 @@ rather than with special syntax, as in `.foo and .bar | not`.
 
 ## if-then-else-end {#if-then-else}
 
+The filter `if i then t else e end`
+runs `t` when `i` returns an output with boolean value `true`, otherwise, it
+runs `e`.
+
 Given three filters `i`, `t`, and `e`,
 the expression `if i then t else e end` runs `i` on its input.
 For every value `y` that is output by `i`,
@@ -1515,6 +1519,10 @@ null
 :::
 
 ## `and`, `or`
+
+The filter `f and g` returns true if both `f` and `g` return an output with boolean value `true`.
+The filter `f or g` returns true if either `f` or `g` return an output with boolean value `true`.
+Otherwise, both filters return `false`.
 
 Given two filters `f` and `g`,
 their conjunction `f and g` and
@@ -1772,7 +1780,7 @@ used pervasively to define jq's standard library.
 (In fact, many jq functions such as [`map`](#map) and [`select`](#select)
 are written in jq.)
 
-## Variable binding: `f as $identifier | g`
+## Variable binding: `f as $x | g`
 
 In jq, all filters have an input and an output, so manual
 plumbing is not necessary to pass a value from one part of a program
@@ -1788,11 +1796,11 @@ simply `add / length` - the `add` expression is given the array and
 produces its sum, and the `length` expression is given the array and
 produces its length.
 
-So, there's generally a cleaner way to solve most problems in jq than
-defining variables. Still, sometimes they do make things easier, so jq
-lets you define variables using `expression as $variable`. All
-variable names start with `$`. Here's a slightly uglier version of the
-array-averaging example:
+So, there's generally a cleaner way to solve most problems in jq than defining variables.
+Still, sometimes they do make things easier, so
+jq lets you define variables using `f as $x`.
+All variable names start with `$`.
+Here's a slightly uglier version of the array-averaging example:
 
     length as $array_length | add / $array_length
 
@@ -1820,10 +1828,10 @@ can refer to it later when looking up author usernames:
 
     .realnames as $names | .posts[] | {title, author: $names[.author]}
 
-The expression `exp as $x | ...` means: for each value of expression
-`exp`, run the rest of the pipeline with the entire original input, and
-with `$x` set to that value.  Thus `as` functions as something of a
-foreach loop.
+The filter `f as $x | g` runs `f` on its input, and
+for each output `y` produced by `f`,
+it runs `g` with the original input and with `$x` set to `y`.
+Thus `as` functions as something of a foreach loop.
 
 Just as `{foo}` is a handy way of writing `{foo: .foo}`, so
 `{$foo}` is a handy way of writing `{foo: $foo}`.
