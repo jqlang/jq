@@ -1191,6 +1191,26 @@ static jv f_env(jq_state *jq, jv input) {
   return env;
 }
 
+static jv f_expand_path(jq_state *jq, jv input) {
+    if (jv_get_kind(input) != JV_KIND_STRING) {
+        return type_error(input, "expand_path/0: string required");
+    }
+    return expand_path(input);
+}
+
+static jv f_get_home(jq_state *jq, jv input) {
+    jv_free(input);
+    return get_home();
+}
+
+static jv f_get_abspath(jq_state *jq, jv input) {
+    if (jv_get_kind(input) != JV_KIND_STRING) {
+        return type_error(input, "get_abspath/0: string required");
+    }
+    return jq_realpath(input);
+}
+
+
 static jv f_halt(jq_state *jq, jv input) {
   jv_free(input);
   jq_halt(jq, jv_invalid(), jv_invalid());
@@ -1848,6 +1868,9 @@ BINOPS
   {f_error, "error", 1},
   {f_format, "format", 2},
   {f_env, "env", 1},
+  {f_expand_path, "expand_path", 1},
+  {f_get_home, "get_home", 1},
+  {f_get_abspath, "get_abspath", 1},
   {f_halt, "halt", 1},
   {f_halt_error, "halt_error", 2},
   {f_get_search_list, "get_search_list", 1},
