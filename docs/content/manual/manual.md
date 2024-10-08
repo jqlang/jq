@@ -2343,53 +2343,47 @@ def while(cond; update): def _while: if cond then ., (update | _while) else empt
 
 # Assignment
 
-Assignment works a little differently in jq than in most
-programming languages. jq doesn't distinguish between references
-to and copies of something - two objects or arrays are either
-equal or not equal, without any further notion of being "the
-same object" or "not the same object".
+jq provides a number of binary assignment operators, such as `|=` and `=`.
+These replace parts of the input at positions
+given by the  left-hand side with outputs
+given by the right-hand side, then return the updated input.
 
-If an object has two fields which are arrays, `.foo` and `.bar`,
-and you append something to `.foo`, then `.bar` will not get
-bigger, even if you've previously set `.bar = .foo`.  If you're
-used to programming in languages like Python, Java, Ruby,
-JavaScript, etc. then you can think of it as though jq does a full
-deep copy of every object before it does the assignment (for
-performance it doesn't actually do that, but that's the general
-idea).
+::: Example
+The filter `{a: 1, b: 2} | (.a |= 3)` outputs `{a: 3, b: 2}`.
+Here, we replaced the value at position `.a` with 3.
+:::
 
-This means that it's impossible to build circular values in jq
-(such as an array whose first element is itself). This is quite
-intentional, and ensures that anything a jq program can produce
-can be represented in JSON.
+All values in jq are immutable.
+That means that the input to an assignment is not actually changed;
+instead, you can think of an assignment
+creating a _copy_ of its input before changing it, then
+returning the changed copy.
+The original input remains the same.
 
-All the assignment operators in jq have path expressions on the
-left-hand side (LHS).  The right-hand side (RHS) provides values
-to set to the paths named by the LHS path expressions.
+::: Example
+The filter `{a:{b:{c:1}}} | (.a.b|=3), .` outputs
+`{"a":{"b":3}}` and
+`{"a":{"b":{"c":1}}}`, because
+the last sub-expression, `.`, sees
+the original value, not the modified value.
+:::
 
-Values in jq are always immutable.  Internally, assignment works
-by using a reduction to compute new, replacement values for `.` that
-have had all the desired assignments applied to `.`, then
-outputting the modified value.  This might be made clear by this
-example: `{a:{b:{c:1}}} | (.a.b|=3), .`.  This will output
-`{"a":{"b":3}}` and `{"a":{"b":{"c":1}}}` because the last
-sub-expression, `.`, sees the original value, not the modified
-value.
+::: Note
+The LHS of assignment operators refers to a value in `.`.
+Thus `$var.foo = 1` won't work as expected
+(`$var.foo` is not a valid or useful path expression in `.`);
+use `$var | .foo = 1` instead.
+:::
 
-Most users will want to use modification assignment operators,
-such as `|=` or `+=`, rather than `=`.
-
-Note that the LHS of assignment operators refers to a value in
-`.`.  Thus `$var.foo = 1` won't work as expected (`$var.foo` is
-not a valid or useful path expression in `.`); use `$var | .foo =
-1` instead.
-
-Note too that `.a,.b=0` does not set `.a` and `.b`, but
-`(.a,.b)=0` sets both.
+::: Note
+Due to precedence rules, `.a,.b=0` does not set `.a` and `.b`,
+because it is equivalent to `.a, (.b=0)`.
+The filter `(.a,.b)=0` sets both.
+:::
 
 ## Update assignment: `|=`
 
-This is the "update" operator `|=`.  It takes a filter on the
+The "update" operator `|=` takes a filter on the
 right-hand side and works out the new value for the property
 of `.` being assigned to by running the old value through this
 expression. For instance, `(.foo, .bar) |= .+1` will build an
@@ -2425,7 +2419,7 @@ In jq 1.5 and earlier releases, only the last one was used.
 ## Arithmetic update assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`
 
 jq has a few operators of the form `a op= b`, which are all
-equivalent to `a |= . op b`. So, `+= 1` can be used to
+equivalent to `b as $x | a |= . op $x`. So, `+= 1` can be used to
 increment values, being the same as `|= . + 1`.
 
 ::: Examples
@@ -2467,6 +2461,28 @@ The former will set the `a` field of the input to the `b`
 field of the input, and produce the output `{"a": 20, "b": 20}`.
 The latter will set the `a` field of the input to the `a`
 field's `b` field, producing `{"a": 10, "b": 20}`.
+
+::: Note
+Assignment works a little differently in jq than in most programming languages.
+jq doesn't distinguish between references to and copies of something ---
+two objects or arrays are either equal or not equal,
+without any further notion of being "the same object" or "not the same object".
+
+If an object has two fields, `.foo` and `.bar`, and you set `.bar = .foo`,
+then changing `.foo` does not impact `.bar`.
+If you're used to programming in languages like Python, Java, Ruby, JavaScript, etc.,
+then you can think of it as though jq does
+a full deep copy of every object before it does the assignment
+(for performance it doesn't actually do that, but that's the general idea).
+
+This means that it's impossible to build circular values in jq
+(such as an array whose first element is itself).
+This is quite intentional, and ensures that
+anything a jq program produces can be represented in JSON.
+:::
+
+Most users will want to use modification assignment operators,
+such as `|=` or `+=`, rather than `=`.
 
 ::: Examples
 
