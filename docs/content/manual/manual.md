@@ -921,7 +921,7 @@ In this section, we will show three very frequently used operators, namely for
 [indexing](#indexing-operator), and
 [slicing](#slicing-operator).
 These operators serve to obtain parts of values.
-Furthermore, we will see how to [combine these operators](#combining-path-operators).
+Furthermore, we will see how to [combine these operators](#complex-paths).
 
 ## Iteration operator: `.[]` {#iteration-operator}
 
@@ -1075,7 +1075,7 @@ Indices are zero-based.
 
 :::
 
-## Combining path operators
+## Complex paths
 
 Frequently, when using the path operators given above,
 we find ourselves combining them with the
@@ -2349,7 +2349,7 @@ given by the  left-hand side with outputs
 given by the right-hand side, then return the updated input.
 
 ::: Example
-The filter `{a: 1, b: 2} | (.a |= 3)` outputs `{a: 3, b: 2}`.
+The filter `{a: 1, b: 2} | (.a = 3)` outputs `{a: 3, b: 2}`.
 Here, we replaced the value at position `.a` with 3.
 :::
 
@@ -2361,19 +2361,18 @@ returning the changed copy.
 The original input remains the same.
 
 ::: Example
-The filter `{a:{b:{c:1}}} | (.a.b|=3), .` outputs
+The filter `{a:{b:{c:1}}} | (.a.b = 3), .` outputs
 `{"a":{"b":3}}` and
 `{"a":{"b":{"c":1}}}`, because
 the last sub-expression, `.`, sees
 the original value, not the modified value.
 :::
 
-::: Note
-The LHS of assignment operators refers to a value in `.`.
-Thus `$var.foo = 1` won't work as expected
-(`$var.foo` is not a valid or useful path expression in `.`);
-use `$var | .foo = 1` instead.
-:::
+We can use any kind of [path expression](#complex-paths) that starts with `.`
+on the left-hand side of an assignment, such as
+`.[].a` or `.[0]`.
+We'll discuss usage of other filters on the left-hand side
+in [complex assignments](#complex-assignments).
 
 ::: Note
 Due to precedence rules, `.a,.b=0` does not set `.a` and `.b`,
@@ -2383,27 +2382,35 @@ The filter `(.a,.b)=0` sets both.
 
 ## Update assignment: `|=`
 
-The "update" operator `|=` takes a filter on the
-right-hand side and works out the new value for the property
-of `.` being assigned to by running the old value through this
-expression. For instance, `(.foo, .bar) |= .+1` will build an
-object with the `foo` field set to the input's `foo` plus 1,
-and the `bar` field set to the input's `bar` plus 1.
+For every position returned by `p`, the update operator `p |= f`
+replaces the value `v` at that position by the output of `f` applied to `v`.
 
-The left-hand side can be any general path expression; see `path()`.
-
-Note that the left-hand side of `|=` refers to a value in `.`.
-Thus `$var.foo |= . + 1` won't work as expected (`$var.foo` is
-not a valid or useful path expression in `.`); use `$var |
-.foo |= . + 1` instead.
+::: Example
+The filter `{foo: 1, bar: 3} | .foo |= .+1`
+builds an object with the `foo` field set to the input's `foo` plus 1,
+resulting in the output `{foo: 2, bar: 3}`.
+:::
 
 If the right-hand side outputs no values (i.e., `empty`), then
-the left-hand side path will be deleted, as with `del(path)`.
+the value at the current position is deleted, as with `del(path)`.
 
-If the right-hand side outputs multiple values, only the first one is used.
+::: Example
+The filter `{a: 1, b: 2} | .a |= empty` returns `{b: 2}`.
+:::
+
+::: Example
+The filter `[1, 2, 3, 4] | .[] |= select(. % 2 == 0)` returns `[2, 4]`.
+That means that we can use assignments to filter values.
+:::
+
+If the right-hand side outputs multiple values, only the first output is used.
+
+::: Example
+The filter `{a: 1} | .a |= (2, 3)` yields `{a: 2}`.
+:::
 
 ::: Compatibility
-In jq 1.5 and earlier releases, only the last one was used.
+In jq 1.5 and earlier releases, only the last output was used.
 :::
 
 ::: Examples
@@ -2416,55 +2423,36 @@ In jq 1.5 and earlier releases, only the last one was used.
 
 :::
 
-## Arithmetic update assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`
-
-jq has a few operators of the form `a op= b`, which are all
-equivalent to `b as $x | a |= . op $x`. So, `+= 1` can be used to
-increment values, being the same as `|= . + 1`.
-
-::: Examples
-
-~~~
-.foo += 1
-{"foo": 42}
-{"foo": 43}
-~~~
-
-:::
-
 ## Plain assignment: `=`
 
-This is the plain assignment operator.  Unlike the others, the
-input to the right-hand side (RHS) is the same as the input to
-the left-hand side (LHS) rather than the value at the LHS
-path, and all values output by the RHS will be used (as shown
-below).
+The plain assignment operator `=` differs from `|=` in two main points:
+First, the input to the right-hand side is the same as the input to
+the left-hand side, not the current value returned by the left-hand side.
+Second, when the right-hand side returns multiple values, then
+the operation is performed for each of these values.
 
-If the RHS of `=` produces multiple values, then for each such
-value jq will set the paths on the left-hand side to the value
-and then it will output the modified `.`.  For example,
-`(.a,.b) = range(2)` outputs `{"a":0,"b":0}`, then
-`{"a":1,"b":1}`.  The "update" assignment forms (see above) do
-not do this.
+::: Example
+To see the difference between `=` and `|=`, let us provide the input
+`{"a": {"b": 10}, "b": 20}` to the programs `.a = .b` and `.a |= .b`.
+The former sets the `a` field of the input to the `b` field of the input,
+producing the output `{"a": 20, "b": 20}`.
+The latter sets the `a` field of the input to the `a` field's `b` field,
+producing `{"a": 10, "b": 20}`.
+:::
 
-This example should show the difference between `=` and `|=`:
+::: Example
+The filter `{a: 1} | .a = (2, 3)` yields two outputs, namely
+`{a: 2}` and
+`{a: 3}`.
+:::
 
-Provide input `{"a": {"b": 10}, "b": 20}` to the programs
-
-    .a = .b
-
-and
-
-    .a |= .b
-
-The former will set the `a` field of the input to the `b`
-field of the input, and produce the output `{"a": 20, "b": 20}`.
-The latter will set the `a` field of the input to the `a`
-field's `b` field, producing `{"a": 10, "b": 20}`.
+::: Note
+The filter `a = b` is equivalent to `b as $x | a |= b`.
+:::
 
 ::: Note
 Assignment works a little differently in jq than in most programming languages.
-jq doesn't distinguish between references to and copies of something ---
+jq does not distinguish between references to and copies of something ---
 two objects or arrays are either equal or not equal,
 without any further notion of being "the same object" or "not the same object".
 
@@ -2514,6 +2502,44 @@ null
 
 :::
 
+## Arithmetic update assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`
+
+jq has a few operators of the form `a op= b`.
+So, `+= 1` can be used to increment values, being the same as `|= . + 1`.
+
+Like `=`, the right-hand side of an arithmetic update operator
+receives the same input as the left-hand side, and
+when the right-hand side returns multiple values, then
+the operation is performed for each of these values.
+
+::: Example
+The filter `{a: 1, b: 2} | .a += .b` yields `{a: 3, b: 2}`,
+because `.b` was executed on the original input (`{a: 1, b: 2}`),
+not on the value that it updated (`1`).
+In contrast, `{a: 1, b: 2} | .a |= . + .b` yields an error,
+because `.b` is executed on the value `1` found at the position `.a`.
+:::
+
+::: Example
+The filter `{a: 1} | .a += (1, 2)` yields two outputs, namely
+`{a: 2}` and `{a: 3}`.
+:::
+
+::: Note
+For any arithmetic operation `op`, the filter `a op= b`
+is equivalent to `b as $x | a |= . op $x`.
+:::
+
+::: Examples
+
+~~~
+.foo += 1
+{"foo": 42}
+{"foo": 43}
+~~~
+
+:::
+
 ## Complex assignments
 
 Lots more things are allowed on the left-hand side of a jq assignment
@@ -2554,6 +2580,19 @@ that we did before:
     (.posts[] | select(.author == "stedolan") | .comments) |=
         . + ["terrible."]
 
+::: Note
+The left-hand side of assignment operators has to
+return values that are contained somewhere within its input.
+Thus `$var.foo = 1` yields an error, because
+`$var.foo` is not contained within `.`.
+You can use `$var | .foo = 1` instead.
+:::
+
+::: Example
+The filter `{foo: 1, bar: 2} | (.foo, .bar) |= .+1`
+builds an object with the `foo` field set to the input's `foo` plus 1,
+and the `bar` field set to the input's `bar` plus 1.
+:::
 
 
 # Managing large programs
