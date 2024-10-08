@@ -1854,12 +1854,12 @@ Just as `{foo}` is a handy way of writing `{foo: .foo}`, so
 
 ## Scoping
 
-There are two types of symbols in jq:
-value bindings (a.k.a. "variables"), and [functions](#definitions).
-Both are scoped lexically, with expressions being able to refer only to
+There are three types of symbols in jq:
+[variables](#variables),
+[labels](#label-break), and
+[functions](#definitions).
+All of these symbols are scoped lexically, with filters being able to refer only to
 symbols that have been defined "to the left" of them.
-The only exception to this rule is that functions can
-refer to themselves so as to be able to create [recursive functions](#recursion).
 Furthermore, there is no way to change the value of a binding;
 one can only create a new binding with the same name,
 but this will not be visible where the old one was.
@@ -1875,6 +1875,25 @@ the binding `$names` is visible "to the right" of it, but in the filter
 
 the binding `$names` is _not_ visible past the closing parenthesis,
 so the filter is not well-formed.
+:::
+
+::: Example
+The filter `1 as $x | (2 as $x | $x), $x` returns the values `2, 1`.
+First,
+it introduces a variable `$x` via `1 as $x`, then
+it introduces a variable `$x` via `2 as $x`  that _shadows_ the previous `$x`.
+However, because we limit the scope of `2 as $x` with parentheses,
+the final `$x` refers to the original `1 as $x` again.
+:::
+
+::: Note
+Labels and variables look alike, yet they live in different worlds.
+To see this, consider the filter `1 as $x | label $x | $x, break $x, 2`.
+If the variable `$x` and the label `$x` would live in the same world,
+then the label `$x` would shadow the variable `$x`.
+However, because they live in different worlds,
+they do not shadow each other, therefore
+this filter is syntactically correct and returns `1`.
 :::
 
 ## Destructuring
@@ -2156,7 +2175,8 @@ The definition `def increment: . + 1;` gives the filter `. + 1` the name `increm
 :::
 
 A function definition `def f: g;` that is followed by a filter `h`
-is a filter in which `h` may refer to `f`.
+is a filter in which both `g` and `h` may [call](#function-call) `f`.
+(Calls of `f` in `g` are [recursive calls](#recursion).)
 
 ::: Example
 The filter `def increment: . + 1; 2 | increment` is equivalent to `2 | . + 1`.
@@ -2167,8 +2187,8 @@ In jq, you can write definitions wherever you can write a filter.
 That allows definitions in places that might be considered
 rather unorthodox in other programming languages.
 For example, you can write
-`1 + def a: 2; a * a`, which is equivalent to
-`1 + 2 * 2`, or
+`1 + def a: 2; def b: 3; a * b`, which is equivalent to
+`1 + 2 * 3`.
 :::
 
 A function may take arguments, for example:
