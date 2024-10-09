@@ -2544,7 +2544,8 @@ The filter `.posts[].comments += ["this is great"]` appends the string
 :::
 
 In general, on the left-hand side of an assignment, we can use
-filters that evaluate to a _concatenation of complex paths_ that start with `.`.
+filters that evaluate to a _concatenation of complex paths_, where
+each of these complex paths must start with `.`.
 We call such filters [_path expressions_](#path-expressions).
 
 When jq evaluates an assignment, it tries to evaluate
@@ -2566,18 +2567,18 @@ We can therefore use this on the left-hand side of an assignment, such as:
     (.posts[] | select(.author == "stedolan") | .comments) += ["terrible."]
 :::
 
-::: Note
-The left-hand side of assignment operators has to
-return values that are contained somewhere within its input.
-Thus `$var.foo = 1` yields an error, because
-`$var.foo` is not contained within `.`.
+::: Example
+The filter `$var.foo = 1` yields an error, because
+`$var.foo` is a complex path that starts with `$var`, not with `.`.
+Therefore, this path does not point to the input of the assignment.
 You can use `$var | .foo = 1` instead.
 :::
 
 ::: Example
-The filter `{foo: 1, bar: 2} | (.foo, .bar) |= .+1`
-builds an object with the `foo` field set to the input's `foo` plus 1,
-and the `bar` field set to the input's `bar` plus 1.
+The filter `{foo: 1, bar: 2} | (.foo, .bar) |= .+1` builds an object with
+the `foo` field set to the input's `foo` plus 1, and
+the `bar` field set to the input's `bar` plus 1.
+Its output is `{foo: 2, bar: 3}`.
 :::
 
 ::: Note
@@ -2626,6 +2627,7 @@ The following filters are path expressions:
 * `f as $x | g`: if `g` is a path expression
 * `f, g`: if `f` and `g` are path expressions
 * `f | g`: if `f` and `g` are path expressions
+* `f // g`: if `f` and `g` are path expressions
 * `f?`: if `f` is a path expression
 * `label $x | f`: if `f` is a path expression
 * `break $x`
@@ -2649,6 +2651,19 @@ For example, this is the case for [select](#select)) and [recurse](#recurse).
 However, most [builtin functions](#builtin-functions) return
 outputs that do not point to a part of their input,
 so calls to them are no path expressions.
+
+::: Note
+This characterisation of path expressions is an _underapproximation_;
+that is, there are filters that do not correspond to these criteria,
+yet they can be used on the left-hand side of assignments.
+For example, our criteria do not say that the filter
+`if true then empty else 0 end` is a path expression,
+because `0` is not a path expression.
+Despite this, we can happily use this filter on the left-hand side of an assignment.
+Such an assignment will always return its input, because
+`if true then empty else 0 end` always evaluates to `empty`,
+so jq does not attempt to evaluate `0` as path.
+:::
 
 ::: Compatibility
 jaq uses a different approach than jq and gojq to run assignments,
