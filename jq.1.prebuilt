@@ -4342,8 +4342,8 @@ $ echo \[aq][ { \[dq]_a\[dq]: { \[dq]__b\[dq]: 2 } } ]\[aq] \[rs]
 [{\[dq]a\[dq]:{\[dq]b\[dq]:2}}]
 .EE
 .SS Stream processing functions
-.SS \f[CR]isempty(exp)\f[R]
-Returns true if \f[CR]exp\f[R] produces no outputs, false otherwise.
+.SS \f[CR]isempty(expr)\f[R]
+Returns true if \f[CR]expr\f[R] produces no outputs, false otherwise.
 .TP
 \f[I]Examples\f[R]
 .IP
@@ -4364,9 +4364,9 @@ $ echo \[aq][1,2,3]\[aq] \[rs]
   | jq \[aq]isempty(.[])\[aq]
 false
 .EE
-.SS \f[CR]limit(n; exp)\f[R]
+.SS \f[CR]limit(n; expr)\f[R]
 The \f[CR]limit\f[R] function extracts up to \f[CR]n\f[R] outputs from
-\f[CR]exp\f[R].
+\f[CR]expr\f[R].
 .TP
 \f[I]Examples\f[R]
 .IP
@@ -4374,6 +4374,17 @@ The \f[CR]limit\f[R] function extracts up to \f[CR]n\f[R] outputs from
 $ echo \[aq][0,1,2,3,4,5,6,7,8,9]\[aq] \[rs]
   | jq \[aq][limit(3;.[])]\[aq]
 [0,1,2]
+.EE
+.SS \f[CR]skip(n; expr)\f[R]
+The \f[CR]skip\f[R] function skips the first \f[CR]n\f[R] outputs from
+\f[CR]expr\f[R].
+.TP
+\f[I]Examples\f[R]
+.IP
+.EX
+$ echo \[aq][0,1,2,3,4,5,6,7,8,9]\[aq] \[rs]
+  | jq \[aq][skip(3; .[])]\[aq]
+[3,4,5,6,7,8,9]
 .EE
 .SS \f[CR]first(expr)\f[R], \f[CR]last(expr)\f[R], \f[CR]nth(n; expr)\f[R]
 The \f[CR]first(expr)\f[R] and \f[CR]last(expr)\f[R] functions extract
