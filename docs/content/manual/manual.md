@@ -4472,9 +4472,9 @@ walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . en
 
 ## Stream processing functions
 
-### `isempty(exp)`
+### `isempty(expr)`
 
-Returns true if `exp` produces no outputs, false otherwise.
+Returns true if `expr` produces no outputs, false otherwise.
 
 ::: Examples
 
@@ -4498,9 +4498,9 @@ false
 
 :::
 
-### `limit(n; exp)`
+### `limit(n; expr)`
 
-The `limit` function extracts up to `n` outputs from `exp`.
+The `limit` function extracts up to `n` outputs from `expr`.
 
 ::: Examples
 
@@ -4508,6 +4508,20 @@ The `limit` function extracts up to `n` outputs from `exp`.
 [limit(3;.[])]
 [0,1,2,3,4,5,6,7,8,9]
 [0,1,2]
+~~~
+
+:::
+
+### `skip(n; expr)`
+
+The `skip` function skips the first `n` outputs from `expr`.
+
+::: Examples
+
+~~~
+[skip(3; .[])]
+[0,1,2,3,4,5,6,7,8,9]
+[3,4,5,6,7,8,9]
 ~~~
 
 :::
