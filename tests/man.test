@@ -1,3 +1,40 @@
+"The input was \(.), which is one less than \(.+1)"
+42
+"The input was 42, which is one less than 43"
+
+@html
+"This works if x < y"
+"This works if x &lt; y"
+
+@sh "echo \(.)"
+"O'Hara's Ale"
+"echo 'O'\\''Hara'\\''s Ale'"
+
+@base64
+"This is a message"
+"VGhpcyBpcyBhIG1lc3NhZ2U="
+
+@base64d
+"VGhpcyBpcyBhIG1lc3NhZ2U="
+"This is a message"
+
+[.user, .projects[]]
+{"user":"stedolan", "projects": ["jq", "wikiflow"]}
+["stedolan", "jq", "wikiflow"]
+
+[ .[] | . * 2]
+[1, 2, 3]
+[2, 4, 6]
+
+{user, title: .titles[]}
+{"user":"stedolan","titles":["JQ Primer", "More JQ"]}
+{"user":"stedolan", "title": "JQ Primer"}
+{"user":"stedolan", "title": "More JQ"}
+
+{(.user): .titles}
+{"user":"stedolan","titles":["JQ Primer", "More JQ"]}
+{"stedolan": ["JQ Primer", "More JQ"]}
+
 .
 "Hello, world!"
 "Hello, world!"
@@ -22,6 +59,69 @@ true
 10000000000000000000000000000001
 true
 
+.foo, .bar
+{"foo": 42, "bar": "something else", "baz": true}
+42
+"something else"
+
+.user, .projects[]
+{"user":"stedolan", "projects": ["jq", "wikiflow"]}
+"stedolan"
+"jq"
+"wikiflow"
+
+.[4,2]
+["a","b","c","d","e"]
+"e"
+"c"
+
+.[] | .name
+[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
+"JSON"
+"XML"
+
+length
+[1, 1, 2, 3]
+4
+
+add(range(0; .))
+2
+3
+
+while(length < 3; . + "a")
+""
+""
+"a"
+"aa"
+
+(. + 2) * 5
+1
+15
+
+.. | .a?
+[[{"a":1}]]
+1
+
+.[]
+[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
+{"name":"JSON", "good":true}
+{"name":"XML", "good":false}
+
+.[]
+[]
+
+
+.foo[]
+{"foo":[1,2,3]}
+1
+2
+3
+
+.[]
+{"a": 1, "b": 1}
+1
+1
+
 .foo
 {"foo": 42, "bar": "less interesting data"}
 42
@@ -33,22 +133,6 @@ null
 .["foo"]
 {"foo": 42}
 42
-
-.foo?
-{"foo": 42, "bar": "less interesting data"}
-42
-
-.foo?
-{"notfoo": true, "alsonotfoo": false}
-null
-
-.["foo"]?
-{"foo": 42}
-42
-
-[.foo?]
-[1,2]
-[]
 
 .[0]
 [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
@@ -78,71 +162,21 @@ null
 ["a","b","c","d","e"]
 ["d", "e"]
 
-.[]
-[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
-{"name":"JSON", "good":true}
-{"name":"XML", "good":false}
-
-.[]
-[]
-
-
-.foo[]
-{"foo":[1,2,3]}
-1
-2
-3
-
-.[]
-{"a": 1, "b": 1}
-1
-1
-
-.foo, .bar
-{"foo": 42, "bar": "something else", "baz": true}
+.foo?
+{"foo": 42, "bar": "less interesting data"}
 42
-"something else"
 
-.user, .projects[]
-{"user":"stedolan", "projects": ["jq", "wikiflow"]}
-"stedolan"
-"jq"
-"wikiflow"
+.foo?
+{"notfoo": true, "alsonotfoo": false}
+null
 
-.[4,2]
-["a","b","c","d","e"]
-"e"
-"c"
+.["foo"]?
+{"foo": 42}
+42
 
-.[] | .name
-[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
-"JSON"
-"XML"
-
-(. + 2) * 5
-1
-15
-
-[.user, .projects[]]
-{"user":"stedolan", "projects": ["jq", "wikiflow"]}
-["stedolan", "jq", "wikiflow"]
-
-[ .[] | . * 2]
-[1, 2, 3]
-[2, 4, 6]
-
-{user, title: .titles[]}
-{"user":"stedolan","titles":["JQ Primer", "More JQ"]}
-{"user":"stedolan", "title": "JQ Primer"}
-{"user":"stedolan", "title": "More JQ"}
-
-{(.user): .titles}
-{"user":"stedolan","titles":["JQ Primer", "More JQ"]}
-{"stedolan": ["JQ Primer", "More JQ"]}
-
-.. | .a?
-[[{"a":1}]]
-1
+[.foo?]
+[1,2]
+[]
 
 .a + 1
 {"a": 7}
@@ -189,554 +223,6 @@ null
 1
 -1
 
-map(abs)
-[-10, -1.1, -1e-1]
-[10,1.1,1e-1]
-
-.[] | length
-[[1,2], "string", {"a":2}, null, -5]
-2
-6
-1
-0
-5
-
-utf8bytelength
-"\u03bc"
-2
-
-keys
-{"abc": 1, "abcd": 2, "Foo": 3}
-["Foo", "abc", "abcd"]
-
-keys
-[42,3,35]
-[0,1,2]
-
-map(has("foo"))
-[{"foo": 42}, {}]
-[true, false]
-
-map(has(2))
-[[0,1], ["a","b","c"]]
-[false, true]
-
-.[] | in({"foo": 42})
-["foo", "bar"]
-true
-false
-
-map(in([0,1]))
-[2, 0]
-[false, true]
-
-map(.+1)
-[1,2,3]
-[2,3,4]
-
-map_values(.+1)
-{"a": 1, "b": 2, "c": 3}
-{"a": 2, "b": 3, "c": 4}
-
-map(., .)
-[1,2]
-[1,1,2,2]
-
-map_values(. // empty)
-{"a": null, "b": true, "c": false}
-{"b":true}
-
-pick(.a, .b.c, .x)
-{"a": 1, "b": {"c": 2, "d": 3}, "e": 4}
-{"a":1,"b":{"c":2},"x":null}
-
-pick(.[2], .[0], .[0])
-[1,2,3,4]
-[1,null,3]
-
-path(.a[0].b)
-null
-["a",0,"b"]
-
-[path(..)]
-{"a":[{"b":1}]}
-[[],["a"],["a",0],["a",0,"b"]]
-
-del(.foo)
-{"foo": 42, "bar": 9001, "baz": 42}
-{"bar": 9001, "baz": 42}
-
-del(.[1, 2])
-["foo", "bar", "baz"]
-["foo"]
-
-getpath(["a","b"])
-null
-null
-
-[getpath(["a","b"], ["a","c"])]
-{"a":{"b":0, "c":1}}
-[0, 1]
-
-setpath(["a","b"]; 1)
-null
-{"a": {"b": 1}}
-
-setpath(["a","b"]; 1)
-{"a":{"b":0}}
-{"a": {"b": 1}}
-
-setpath([0,"a"]; 1)
-null
-[{"a":1}]
-
-delpaths([["a","b"]])
-{"a":{"b":1},"x":{"y":2}}
-{"a":{},"x":{"y":2}}
-
-to_entries
-{"a": 1, "b": 2}
-[{"key":"a", "value":1}, {"key":"b", "value":2}]
-
-from_entries
-[{"key":"a", "value":1}, {"key":"b", "value":2}]
-{"a": 1, "b": 2}
-
-with_entries(.key |= "KEY_" + .)
-{"a": 1, "b": 2}
-{"KEY_a": 1, "KEY_b": 2}
-
-map(select(. >= 2))
-[1,5,3,0,7]
-[5,3,7]
-
-.[] | select(.id == "second")
-[{"id": "first", "val": 1}, {"id": "second", "val": 2}]
-{"id": "second", "val": 2}
-
-.[]|numbers
-[[],{},1,"foo",null,true,false]
-1
-
-1, empty, 2
-null
-1
-2
-
-[1,2,empty,3]
-null
-[1,2,3]
-
-try error catch .
-"error message"
-"error message"
-
-try error("invalid value: \(.)") catch .
-42
-"invalid value: 42"
-
-try error("\($__loc__)") catch .
-null
-"{\"file\":\"<top-level>\",\"line\":1}"
-
-[paths]
-[1,[[],{"a":2}]]
-[[0],[1],[1,0],[1,1],[1,1,"a"]]
-
-[paths(type == "number")]
-[1,[[],{"a":2}]]
-[[0],[1,1,"a"]]
-
-add
-["a","b","c"]
-"abc"
-
-add
-[1, 2, 3]
-6
-
-add
-[]
-null
-
-add(.[].a)
-[{"a":3}, {"a":5}, {"b":6}]
-8
-
-any
-[true, false]
-true
-
-any
-[false, false]
-false
-
-any
-[]
-false
-
-all
-[true, false]
-false
-
-all
-[true, true]
-true
-
-all
-[]
-true
-
-flatten
-[1, [2], [[3]]]
-[1, 2, 3]
-
-flatten(1)
-[1, [2], [[3]]]
-[1, 2, [3]]
-
-flatten
-[[]]
-[]
-
-flatten
-[{"foo": "bar"}, [{"foo": "baz"}]]
-[{"foo": "bar"}, {"foo": "baz"}]
-
-range(2; 4)
-null
-2
-3
-
-[range(2; 4)]
-null
-[2,3]
-
-[range(4)]
-null
-[0,1,2,3]
-
-[range(0; 10; 3)]
-null
-[0,3,6,9]
-
-[range(0; 10; -1)]
-null
-[]
-
-[range(0; -5; -1)]
-null
-[0,-1,-2,-3,-4]
-
-floor
-3.14159
-3
-
-sqrt
-9
-3
-
-.[] | tonumber
-[1, "1"]
-1
-1
-
-.[] | tostring
-[1, "1", [1]]
-"1"
-"1"
-"[1]"
-
-map(type)
-[0, false, [], {}, null, "hello"]
-["number", "boolean", "array", "object", "null", "string"]
-
-.[] | (infinite * .) < 0
-[-1, 1]
-true
-false
-
-infinite, nan | type
-null
-"number"
-"number"
-
-sort
-[8,3,null,6]
-[null,3,6,8]
-
-sort_by(.foo)
-[{"foo":4, "bar":10}, {"foo":3, "bar":10}, {"foo":2, "bar":1}]
-[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":4, "bar":10}]
-
-sort_by(.foo, .bar)
-[{"foo":4, "bar":10}, {"foo":3, "bar":20}, {"foo":2, "bar":1}, {"foo":3, "bar":10}]
-[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":3, "bar":20}, {"foo":4, "bar":10}]
-
-group_by(.foo)
-[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]
-[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]
-
-min
-[5,4,2,7]
-2
-
-max_by(.foo)
-[{"foo":1, "bar":14}, {"foo":2, "bar":3}]
-{"foo":2, "bar":3}
-
-unique
-[1,2,5,3,5,3,1,3]
-[1,2,3,5]
-
-unique_by(.foo)
-[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]
-[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]
-
-unique_by(length)
-["chunky", "bacon", "kitten", "cicada", "asparagus"]
-["bacon", "chunky", "asparagus"]
-
-reverse
-[1,2,3,4]
-[4,3,2,1]
-
-contains("bar")
-"foobar"
-true
-
-contains(["baz", "bar"])
-["foobar", "foobaz", "blarp"]
-true
-
-contains(["bazzzzz", "bar"])
-["foobar", "foobaz", "blarp"]
-false
-
-contains({foo: 12, bar: [{barp: 12}]})
-{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}
-true
-
-contains({foo: 12, bar: [{barp: 15}]})
-{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}
-false
-
-indices(", ")
-"a,b, cd, efg, hijk"
-[3,7,12]
-
-indices(1)
-[0,1,2,1,3,1,4]
-[1,3,5]
-
-indices([1,2])
-[0,1,2,3,1,4,2,5,1,2,6,7]
-[1,8]
-
-index(", ")
-"a,b, cd, efg, hijk"
-3
-
-index(1)
-[0,1,2,1,3,1,4]
-1
-
-index([1,2])
-[0,1,2,3,1,4,2,5,1,2,6,7]
-1
-
-rindex(", ")
-"a,b, cd, efg, hijk"
-12
-
-rindex(1)
-[0,1,2,1,3,1,4]
-5
-
-rindex([1,2])
-[0,1,2,3,1,4,2,5,1,2,6,7]
-8
-
-inside("foobar")
-"bar"
-true
-
-inside(["foobar", "foobaz", "blarp"])
-["baz", "bar"]
-true
-
-inside(["foobar", "foobaz", "blarp"])
-["bazzzzz", "bar"]
-false
-
-inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})
-{"foo": 12, "bar": [{"barp": 12}]}
-true
-
-inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})
-{"foo": 12, "bar": [{"barp": 15}]}
-false
-
-[.[]|startswith("foo")]
-["fo", "foo", "barfoo", "foobar", "barfoob"]
-[false, true, false, true, false]
-
-[.[]|endswith("foo")]
-["foobar", "barfoo"]
-[false, true]
-
-combinations
-[[1,2], [3, 4]]
-[1, 3]
-[1, 4]
-[2, 3]
-[2, 4]
-
-combinations(2)
-[0, 1]
-[0, 0]
-[0, 1]
-[1, 0]
-[1, 1]
-
-[.[]|ltrimstr("foo")]
-["fo", "foo", "barfoo", "foobar", "afoo"]
-["fo","","barfoo","bar","afoo"]
-
-[.[]|rtrimstr("foo")]
-["fo", "foo", "barfoo", "foobar", "foob"]
-["fo","","bar","foobar","foob"]
-
-trim, ltrim, rtrim
-" abc "
-"abc"
-"abc "
-" abc"
-
-explode
-"foobar"
-[102,111,111,98,97,114]
-
-implode
-[65, 66, 67]
-"ABC"
-
-join(", ")
-["a","b,c,d","e"]
-"a, b,c,d, e"
-
-join(" ")
-["a",1,2.3,true,null,false]
-"a 1 2.3 true  false"
-
-ascii_upcase
-"useful but not for é"
-"USEFUL BUT NOT FOR é"
-
-[while(.<100; .*2)]
-1
-[1,2,4,8,16,32,64]
-
-[repeat(.*2, error)?]
-1
-[2]
-
-[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]
-4
-24
-
-recurse(.foo[])
-{"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}
-{"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}
-{"foo":[]}
-{"foo":[{"foo":[]}]}
-{"foo":[]}
-
-recurse
-{"a":0,"b":[1]}
-{"a":0,"b":[1]}
-0
-[1]
-1
-
-recurse(. * .; . < 20)
-2
-2
-4
-16
-
-walk(if type == "array" then sort else . end)
-[[4, 1, 7], [8, 5, 2], [3, 6, 9]]
-[[1,4,7],[2,5,8],[3,6,9]]
-
-$ENV.PAGER
-null
-"less"
-
-env.PAGER
-null
-"less"
-
-transpose
-[[1], [2,3]]
-[[1,2],[null,3]]
-
-bsearch(0)
-[0,1]
-0
-
-bsearch(0)
-[1,2,3]
--1
-
-bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
-[1,2,3]
-[1,2,3,4]
-
-"The input was \(.), which is one less than \(.+1)"
-42
-"The input was 42, which is one less than 43"
-
-[.[]|tostring]
-[1, "foo", ["foo"]]
-["1","foo","[\"foo\"]"]
-
-[.[]|tojson]
-[1, "foo", ["foo"]]
-["1","\"foo\"","[\"foo\"]"]
-
-[.[]|tojson|fromjson]
-[1, "foo", ["foo"]]
-[1,"foo",["foo"]]
-
-@html
-"This works if x < y"
-"This works if x &lt; y"
-
-@sh "echo \(.)"
-"O'Hara's Ale"
-"echo 'O'\\''Hara'\\''s Ale'"
-
-@base64
-"This is a message"
-"VGhpcyBpcyBhIG1lc3NhZ2U="
-
-@base64d
-"VGhpcyBpcyBhIG1lc3NhZ2U="
-"This is a message"
-
-fromdate
-"2015-03-05T23:51:47Z"
-1425599507
-
-strptime("%Y-%m-%dT%H:%M:%SZ")
-"2015-03-05T23:51:47Z"
-[2015,2,5,23,51,47,4,63]
-
-strptime("%Y-%m-%dT%H:%M:%SZ")|mktime
-"2015-03-05T23:51:47Z"
-1425599507
-
 . == false
 null
 false
@@ -752,13 +238,20 @@ true
 false
 false
 
-if . == 0 then   "zero" elif . == 1 then   "one" else   "many" end
-2
-"many"
-
 . < 5
 2
 true
+
+if . == 0 then "zero" elif . == 1 then "one" else "many" end
+2
+"many"
+
+.[] | if . then ., .+1 else . end
+[false, 1, null]
+false
+1
+2
+null
 
 42 and "a string"
 null
@@ -854,38 +347,6 @@ true
 [[3]]
 {"a":null,"b":3}
 
-def addvalue(f): . + [f]; map(addvalue(.[0]))
-[[1,2],[10,20]]
-[[1,2,1], [10,20,10]]
-
-def addvalue(f): f as $x | map(. + $x); addvalue(.[0])
-[[1,2],[10,20]]
-[[1,2,1,2], [10,20,1,2]]
-
-isempty(empty)
-null
-true
-
-isempty(.[])
-[]
-true
-
-isempty(.[])
-[1,2,3]
-false
-
-[limit(3;.[])]
-[0,1,2,3,4,5,6,7,8,9]
-[0,1,2]
-
-[first(range(.)), last(range(.)), nth(./2; range(.))]
-10
-[0,9,5]
-
-[range(.)]|[first, last, nth(5)]
-10
-[0,9,5]
-
 reduce .[] as $item (0; . + $item)
 [1,2,3,4,5]
 15
@@ -920,6 +381,14 @@ foreach .[] as $item (0; . + 1; {index: ., $item})
 {"index":2,"item":"bar"}
 {"index":3,"item":"baz"}
 
+def addvalue(f): . + [f]; map(addvalue(.[0]))
+[[1,2],[10,20]]
+[[1,2,1], [10,20,10]]
+
+def addvalue(f): f as $x | map(. + $x); addvalue(.[0])
+[[1,2],[10,20]]
+[[1,2,1,2], [10,20,1,2]]
+
 def range(init; upto; by): def _range: if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto)); range(0; 10; 3)
 null
 0
@@ -930,6 +399,580 @@ null
 def while(cond; update): def _while: if cond then ., (update | _while) else empty end; _while; [while(.<100; .*2)]
 1
 [1,2,4,8,16,32,64]
+
+.a = .b
+{"a": {"b": 10}, "b": 20}
+{"a":20,"b":20}
+
+.a |= .b
+{"a": {"b": 10}, "b": 20}
+{"a":10,"b":20}
+
+.foo += 1
+{"foo": 42}
+{"foo": 43}
+
+(..|select(type=="boolean")) |= if . then 1 else 0 end
+[true,false,[5,true,[true,[false]],false]]
+[1,0,[5,1,[1,[0]],0]]
+
+(.a, .b) = range(3)
+{}
+{"a":0,"b":0}
+{"a":1,"b":1}
+{"a":2,"b":2}
+
+(.a, .b) |= range(3)
+{}
+{"a":0,"b":0}
+
+1, empty, 2
+null
+1
+2
+
+[1,2,empty,3]
+null
+[1,2,3]
+
+try error catch .
+"error message"
+"error message"
+
+try error("invalid value: \(.)") catch .
+42
+"invalid value: 42"
+
+.[] | length
+[[1,2], "string", {"a":2}, null, -5]
+2
+6
+1
+0
+5
+
+keys
+{"abc": 1, "abcd": 2, "Foo": 3}
+["Foo", "abc", "abcd"]
+
+keys
+[42,3,35]
+[0,1,2]
+
+map(.+1)
+[1,2,3]
+[2,3,4]
+
+map_values(.+1)
+{"a": 1, "b": 2, "c": 3}
+{"a": 2, "b": 3, "c": 4}
+
+map(., .)
+[1,2]
+[1,1,2,2]
+
+map_values(. // empty)
+{"a": null, "b": true, "c": false}
+{"b":true}
+
+to_entries
+{"a": 1, "b": 2}
+[{"key":"a", "value":1}, {"key":"b", "value":2}]
+
+from_entries
+[{"key":"a", "value":1}, {"key":"b", "value":2}]
+{"a": 1, "b": 2}
+
+with_entries(.key |= "KEY_" + .)
+{"a": 1, "b": 2}
+{"KEY_a": 1, "KEY_b": 2}
+
+map(select(. >= 2))
+[1,5,3,0,7]
+[5,3,7]
+
+.[] | select(.id == "second")
+[{"id": "first", "val": 1}, {"id": "second", "val": 2}]
+{"id": "second", "val": 2}
+
+map(type)
+[0, false, [], {}, null, "hello"]
+["number", "boolean", "array", "object", "null", "string"]
+
+.[]|numbers
+[[],{},1,"foo",null,true,false]
+1
+
+contains("bar")
+"foobar"
+true
+
+contains(["baz", "bar"])
+["foobar", "foobaz", "blarp"]
+true
+
+contains(["bazzzzz", "bar"])
+["foobar", "foobaz", "blarp"]
+false
+
+contains({foo: 12, bar: [{barp: 12}]})
+{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}
+true
+
+contains({foo: 12, bar: [{barp: 15}]})
+{"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}
+false
+
+indices(", ")
+"a,b, cd, efg, hijk"
+[3,7,12]
+
+indices(1)
+[0,1,2,1,3,1,4]
+[1,3,5]
+
+indices([1,2])
+[0,1,2,3,1,4,2,5,1,2,6,7]
+[1,8]
+
+index(", ")
+"a,b, cd, efg, hijk"
+3
+
+index(1)
+[0,1,2,1,3,1,4]
+1
+
+index([1,2])
+[0,1,2,3,1,4,2,5,1,2,6,7]
+1
+
+rindex(", ")
+"a,b, cd, efg, hijk"
+12
+
+rindex(1)
+[0,1,2,1,3,1,4]
+5
+
+rindex([1,2])
+[0,1,2,3,1,4,2,5,1,2,6,7]
+8
+
+inside("foobar")
+"bar"
+true
+
+inside(["foobar", "foobaz", "blarp"])
+["baz", "bar"]
+true
+
+inside(["foobar", "foobaz", "blarp"])
+["bazzzzz", "bar"]
+false
+
+inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})
+{"foo": 12, "bar": [{"barp": 12}]}
+true
+
+inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})
+{"foo": 12, "bar": [{"barp": 15}]}
+false
+
+map(has("foo"))
+[{"foo": 42}, {}]
+[true, false]
+
+map(has(2))
+[[0,1], ["a","b","c"]]
+[false, true]
+
+.[] | in({"foo": 42})
+["foo", "bar"]
+true
+false
+
+map(in([0,1]))
+[2, 0]
+[false, true]
+
+bsearch(0)
+[0,1]
+0
+
+bsearch(0)
+[1,2,3]
+-1
+
+bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
+[1,2,3]
+[1,2,3,4]
+
+path(.a[0].b)
+null
+["a",0,"b"]
+
+[path(..)]
+{"a":[{"b":1}]}
+[[],["a"],["a",0],["a",0,"b"]]
+
+del(.foo)
+{"foo": 42, "bar": 9001, "baz": 42}
+{"bar": 9001, "baz": 42}
+
+del(.[1, 2])
+["foo", "bar", "baz"]
+["foo"]
+
+pick(.a, .b.c, .x)
+{"a": 1, "b": {"c": 2, "d": 3}, "e": 4}
+{"a":1,"b":{"c":2},"x":null}
+
+pick(.[2], .[0], .[0])
+[1,2,3,4]
+[1,null,3]
+
+[paths]
+[1,[[],{"a":2}]]
+[[0],[1],[1,0],[1,1],[1,1,"a"]]
+
+[paths(type == "number")]
+[1,[[],{"a":2}]]
+[[0],[1,1,"a"]]
+
+getpath(["a","b"])
+null
+null
+
+[getpath(["a","b"], ["a","c"])]
+{"a":{"b":0, "c":1}}
+[0, 1]
+
+setpath(["a","b"]; 1)
+null
+{"a": {"b": 1}}
+
+setpath(["a","b"]; 1)
+{"a":{"b":0}}
+{"a": {"b": 1}}
+
+setpath([0,"a"]; 1)
+null
+[{"a":1}]
+
+delpaths([["a","b"]])
+{"a":{"b":1},"x":{"y":2}}
+{"a":{},"x":{"y":2}}
+
+add
+["a","b","c"]
+"abc"
+
+add
+[1, 2, 3]
+6
+
+add
+[]
+null
+
+add(.[].a)
+[{"a":3}, {"a":5}, {"b":6}]
+8
+
+any
+[true, false]
+true
+
+any
+[false, false]
+false
+
+any
+[]
+false
+
+all
+[true, false]
+false
+
+all
+[true, true]
+true
+
+all
+[]
+true
+
+map(abs)
+[-10, -1.1, -1e-1]
+[10,1.1,1e-1]
+
+floor
+3.14159
+3
+
+sqrt
+9
+3
+
+.[] | (infinite * .) < 0
+[-1, 1]
+true
+false
+
+infinite, nan | type
+null
+"number"
+"number"
+
+sort
+[8,3,null,6]
+[null,3,6,8]
+
+sort_by(.foo)
+[{"foo":4, "bar":10}, {"foo":3, "bar":10}, {"foo":2, "bar":1}]
+[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":4, "bar":10}]
+
+sort_by(.foo, .bar)
+[{"foo":4, "bar":10}, {"foo":3, "bar":20}, {"foo":2, "bar":1}, {"foo":3, "bar":10}]
+[{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":3, "bar":20}, {"foo":4, "bar":10}]
+
+group_by(.foo)
+[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]
+[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]
+
+min
+[5,4,2,7]
+2
+
+max_by(.foo)
+[{"foo":1, "bar":14}, {"foo":2, "bar":3}]
+{"foo":2, "bar":3}
+
+unique
+[1,2,5,3,5,3,1,3]
+[1,2,3,5]
+
+unique_by(.foo)
+[{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]
+[{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]
+
+unique_by(length)
+["chunky", "bacon", "kitten", "cicada", "asparagus"]
+["bacon", "chunky", "asparagus"]
+
+reverse
+[1,2,3,4]
+[4,3,2,1]
+
+combinations
+[[1,2], [3, 4]]
+[1, 3]
+[1, 4]
+[2, 3]
+[2, 4]
+
+combinations(2)
+[0, 1]
+[0, 0]
+[0, 1]
+[1, 0]
+[1, 1]
+
+transpose
+[[1], [2,3]]
+[[1,2],[null,3]]
+
+flatten
+[1, [2], [[3]]]
+[1, 2, 3]
+
+flatten(1)
+[1, [2], [[3]]]
+[1, 2, [3]]
+
+flatten
+[[]]
+[]
+
+flatten
+[{"foo": "bar"}, [{"foo": "baz"}]]
+[{"foo": "bar"}, {"foo": "baz"}]
+
+utf8bytelength
+"\u03bc"
+2
+
+[.[]|startswith("foo")]
+["fo", "foo", "barfoo", "foobar", "barfoob"]
+[false, true, false, true, false]
+
+[.[]|endswith("foo")]
+["foobar", "barfoo"]
+[false, true]
+
+[.[]|ltrimstr("foo")]
+["fo", "foo", "barfoo", "foobar", "afoo"]
+["fo","","barfoo","bar","afoo"]
+
+[.[]|rtrimstr("foo")]
+["fo", "foo", "barfoo", "foobar", "foob"]
+["fo","","bar","foobar","foob"]
+
+trim, ltrim, rtrim
+" abc "
+"abc"
+"abc "
+" abc"
+
+explode
+"foobar"
+[102,111,111,98,97,114]
+
+implode
+[65, 66, 67]
+"ABC"
+
+join(", ")
+["a","b,c,d","e"]
+"a, b,c,d, e"
+
+join(" ")
+["a",1,2.3,true,null,false]
+"a 1 2.3 true  false"
+
+ascii_upcase
+"useful but not for é"
+"USEFUL BUT NOT FOR é"
+
+[repeat(.*2, error)?]
+1
+[2]
+
+range(2; 4)
+null
+2
+3
+
+[range(2; 4)]
+null
+[2,3]
+
+[range(4)]
+null
+[0,1,2,3]
+
+[range(0; 10; 3)]
+null
+[0,3,6,9]
+
+[range(0; 10; -1)]
+null
+[]
+
+[range(0; -5; -1)]
+null
+[0,-1,-2,-3,-4]
+
+[while(.<100; .*2)]
+1
+[1,2,4,8,16,32,64]
+
+[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]
+4
+24
+
+recurse(.foo[])
+{"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}
+{"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}
+{"foo":[]}
+{"foo":[{"foo":[]}]}
+{"foo":[]}
+
+recurse
+{"a":0,"b":[1]}
+{"a":0,"b":[1]}
+0
+[1]
+1
+
+recurse(. * .; . < 20)
+2
+2
+4
+16
+
+walk(if type == "array" then sort else . end)
+[[4, 1, 7], [8, 5, 2], [3, 6, 9]]
+[[1,4,7],[2,5,8],[3,6,9]]
+
+isempty(empty)
+null
+true
+
+isempty(.[])
+[]
+true
+
+isempty(.[])
+[1,2,3]
+false
+
+[limit(3;.[])]
+[0,1,2,3,4,5,6,7,8,9]
+[0,1,2]
+
+[first(range(.)), last(range(.)), nth(./2; range(.))]
+10
+[0,9,5]
+
+[range(.)]|[first, last, nth(5)]
+10
+[0,9,5]
+
+[.[]|tostring]
+[1, "foo", ["foo"]]
+["1","foo","[\"foo\"]"]
+
+[.[]|tojson]
+[1, "foo", ["foo"]]
+["1","\"foo\"","[\"foo\"]"]
+
+[.[]|tojson|fromjson]
+[1, "foo", ["foo"]]
+[1,"foo",["foo"]]
+
+.[] | tostring
+[1, "1", [1]]
+"1"
+"1"
+"[1]"
+
+.[] | tonumber
+[1, "1"]
+1
+1
+
+fromdate
+"2015-03-05T23:51:47Z"
+1425599507
+
+strptime("%Y-%m-%dT%H:%M:%SZ")
+"2015-03-05T23:51:47Z"
+[2015,2,5,23,51,47,4,63]
+
+strptime("%Y-%m-%dT%H:%M:%SZ")|mktime
+"2015-03-05T23:51:47Z"
+1425599507
+
+$ENV.PAGER
+null
+"less"
+
+env.PAGER
+null
+"less"
 
 truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])
 1
@@ -944,29 +987,7 @@ null
 [0,[1,{"a":1},{"b":2}]]
 true
 
-(..|select(type=="boolean")) |= if . then 1 else 0 end
-[true,false,[5,true,[true,[false]],false]]
-[1,0,[5,1,[1,[0]],0]]
-
-.foo += 1
-{"foo": 42}
-{"foo": 43}
-
-.a = .b
-{"a": {"b": 10}, "b": 20}
-{"a":20,"b":20}
-
-.a |= .b
-{"a": {"b": 10}, "b": 20}
-{"a":10,"b":20}
-
-(.a, .b) = range(3)
+try error("\($__loc__)") catch .
 null
-{"a":0,"b":0}
-{"a":1,"b":1}
-{"a":2,"b":2}
-
-(.a, .b) |= range(3)
-null
-{"a":0,"b":0}
+"{\"file\":\"<top-level>\",\"line\":1}"
 
