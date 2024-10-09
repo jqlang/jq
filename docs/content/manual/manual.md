@@ -1229,6 +1229,7 @@ null
 
 :::
 
+
 # Arithmetic and Comparison
 
 We are now going to introduce operators for
@@ -1460,6 +1461,7 @@ true
 
 :::
 
+
 # Boolean filters
 
 Every value can be converted to a boolean --- in particular,
@@ -1470,7 +1472,6 @@ This section describes several filters that analyze the boolean value of values.
 You can negate the boolean value of a value with the builtin function [`not`](#not).
 It is called as a filter to which things can be piped
 rather than with special syntax, as in `.foo and .bar | not`.
-
 
 ## if-then-else-end {#if-then-else}
 
@@ -1675,8 +1676,8 @@ null
 
 :::
 
-# Error handling
 
+# Error handling
 
 ## try-catch
 
@@ -1762,7 +1763,6 @@ The following jq program produces a syntax error:
     break $out
 
 because no label `$out` is visible.
-
 
 
 # Variables
