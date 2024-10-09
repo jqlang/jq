@@ -163,6 +163,8 @@ using some command-line options:
   in particular in conjunction with filtering and
   the [`reduce` and `foreach` filters](#reduction).
 
+  [Several builtin functions](#streaming-functions) help processing streaming input.
+
   ::: Compatibility
   jaq does not support this option.
   :::
@@ -3364,13 +3366,15 @@ bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
 
 :::
 
-## Path functions
+## Path expression functions
+
+The following functions all take a [path expression](#path-expressions).
 
 ### `path(path_expression)` {#path}
 
-Outputs array representations of the given path expression
-in `.`.  The outputs are arrays of strings (object keys)
-and/or numbers (array indices).
+Outputs array representations of the given path expression in `.`.
+The outputs are arrays of strings (object keys) and/or numbers (array indices).
+The outputs of this function can be processed with [path functions](#path-functions).
 
 Path expressions are jq expressions like `.a`, but also `.[]`.
 There are two types of path expressions: ones that can match
@@ -3401,32 +3405,6 @@ null
 [path(..)]
 {"a":[{"b":1}]}
 [[],["a"],["a",0],["a",0,"b"]]
-~~~
-
-:::
-
-### `paths`, `paths(node_filter)`
-
-`paths` outputs the paths to all the elements in its input
-(except it does not output the empty list, representing .
-itself).
-
-`paths(f)` outputs the paths to any values for which `f` is `true`.
-That is, `paths(type == "number")` outputs the paths to all numeric
-values.
-
-::: Examples
-
-~~~
-[paths]
-[1,[[],{"a":2}]]
-[[0],[1],[1,0],[1,1],[1,1,"a"]]
-~~~
-
-~~~
-[paths(type == "number")]
-[1,[[],{"a":2}]]
-[[0],[1,1,"a"]]
 ~~~
 
 :::
@@ -3472,6 +3450,37 @@ pick(.a, .b.c, .x)
 pick(.[2], .[0], .[0])
 [1,2,3,4]
 [1,null,3]
+~~~
+
+:::
+
+## Path functions
+
+The following functions all produce or process paths
+in the format output by the [`path`](#path) function.
+
+### `paths`, `paths(node_filter)`
+
+`paths` outputs the paths to all the elements in its input
+(except it does not output the empty list, representing .
+itself).
+
+`paths(f)` outputs the paths to any values for which `f` is `true`.
+That is, `paths(type == "number")` outputs the paths to all numeric
+values.
+
+::: Examples
+
+~~~
+[paths]
+[1,[[],{"a":2}]]
+[[0],[1],[1,0],[1,1],[1,1,"a"]]
+~~~
+
+~~~
+[paths(type == "number")]
+[1,[[],{"a":2}]]
+[[0],[1,1,"a"]]
 ~~~
 
 :::
@@ -4463,9 +4472,6 @@ walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . en
 
 ## Stream processing functions
 
-It may not be obvious at first, but jq is all about streams.
-Some utilities are provided to help deal with streams.
-
 ### `isempty(exp)`
 
 Returns true if `exp` produces no outputs, false otherwise.
@@ -4537,32 +4543,6 @@ The `nth(n)` function extracts the nth value of any array at `.`.
 [range(.)]|[first, last, nth(5)]
 10
 [0,9,5]
-~~~
-
-:::
-
-### `$ENV`, `env`
-
-`$ENV` is an object representing the environment variables as
-set when the jq program started.
-
-`env` outputs an object representing jq's current environment.
-
-At the moment there is no builtin for setting environment
-variables.
-
-::: Examples
-
-~~~
-$ENV.PAGER
-null
-"less"
-~~~
-
-~~~
-env.PAGER
-null
-"less"
 ~~~
 
 :::
@@ -5135,6 +5115,31 @@ Returns the line number of the input currently being filtered.
 jaq does not provide this function.
 :::
 
+### `$ENV`, `env`
+
+`$ENV` is an object representing the environment variables as
+set when the jq program started.
+
+`env` outputs an object representing jq's current environment.
+
+At the moment there is no builtin for setting environment
+variables.
+
+::: Examples
+
+~~~
+$ENV.PAGER
+null
+"less"
+~~~
+
+~~~
+env.PAGER
+null
+"less"
+~~~
+
+:::
 
 ## Streaming functions
 
@@ -5231,10 +5236,6 @@ install missing dependencies.
 Produces an object with a "file" key and a "line" key, with
 the filename and line number where `$__loc__` occurs, as
 values.
-
-::: Compatibility
-jaq does not provide this variable.
-:::
 
 ::: Examples
 
