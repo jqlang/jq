@@ -1090,9 +1090,9 @@ For example:
 * `.a.b` for `.a | .b`,
 * `.a.b.c` for `.a | .b | .c`, and so on.
 
-We call such a combination a _path expression_.
+We call such a combination a _complex path_.
 
-The rules for what constitutes a path expression are surprisingly complex.
+The rules for what constitutes a complex path are surprisingly complex.
 Therefore, we define it via a formal grammar in
 [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form):
 
@@ -1117,7 +1117,7 @@ Here,
 `t` refers to a filter, and
 `atomic` refers to an _atomic_ filter, such as
 `.` (identity), function call, and parenthesis.
-This grammar defines `path` expressions as
+This grammar defines a complex `path` as
 a sequence of path parts,
 potentially prefixed by an atomic root.
 A path `part` is any of the operators previously introduced in this section.
@@ -1126,7 +1126,7 @@ for all operators except for `.ident`.)
 
 ::: Example
 
-The following is a path expression:
+The following is a complex path:
 
     add[].posts[0]?.sections[]["title"]?
 
@@ -1156,7 +1156,7 @@ We can transform this into an equivalent filter:
 
 :::
 
-Filters inside a part of the path expression,
+Filters inside a part of a complex path,
 such as `f` and `g` in `.[f][:g]`,
 are run with the _input given to the whole path_.
 
@@ -2161,6 +2161,7 @@ foreach .[] as $item (0; . + 1; {index: ., $item})
 
 :::
 
+
 # Definitions
 
 When you have a filter `g`, you can give it a name `f` as follows:
@@ -2341,6 +2342,7 @@ def while(cond; update): def _while: if cond then ., (update | _while) else empt
 
 :::
 
+
 # Assignment
 
 jq provides a number of binary assignment operators, such as `|=` and `=`.
@@ -2374,12 +2376,6 @@ on the left-hand side of an assignment, such as
 We'll discuss usage of other filters on the left-hand side
 in [complex assignments](#complex-assignments).
 
-::: Note
-Due to precedence rules, `.a,.b=0` does not set `.a` and `.b`,
-because it is equivalent to `.a, (.b=0)`.
-The filter `(.a,.b)=0` sets both.
-:::
-
 ## Update assignment: `|=`
 
 For every position returned by `p`, the update operator `p |= f`
@@ -2391,6 +2387,12 @@ builds an object with the `foo` field set to the input's `foo` plus 1,
 resulting in the output `{foo: 2, bar: 3}`.
 :::
 
+::: Example
+The filter `[1, 2, 3] | .[] |= . + 1` returns `[2, 3, 4]`.
+Here, `.[]` returns multiple positions, and
+the values at each of these positions are updated with `. + 1`.
+:::
+
 If the right-hand side outputs no values (i.e., `empty`), then
 the value at the current position is deleted, as with `del(path)`.
 
@@ -2399,8 +2401,12 @@ The filter `{a: 1, b: 2} | .a |= empty` returns `{b: 2}`.
 :::
 
 ::: Example
+The filter `[1, 2, 3] | .[0] |= empty` returns `[2, 3]`.
+:::
+
+::: Example
 The filter `[1, 2, 3, 4] | .[] |= select(. % 2 == 0)` returns `[2, 4]`.
-That means that we can use assignments to filter values.
+That means that we can use assignments to filter values from arrays and objects.
 :::
 
 If the right-hand side outputs multiple values, only the first output is used.
@@ -2411,16 +2417,6 @@ The filter `{a: 1} | .a |= (2, 3)` yields `{a: 2}`.
 
 ::: Compatibility
 In jq 1.5 and earlier releases, only the last output was used.
-:::
-
-::: Examples
-
-~~~
-(..|select(type=="boolean")) |= if . then 1 else 0 end
-[true,false,[5,true,[true,[false]],false]]
-[1,0,[5,1,[1,[0]],0]]
-~~~
-
 :::
 
 ## Plain assignment: `=`
@@ -2486,20 +2482,6 @@ such as `|=` or `+=`, rather than `=`.
 {"a":10,"b":20}
 ~~~
 
-~~~
-(.a, .b) = range(3)
-null
-{"a":0,"b":0}
-{"a":1,"b":1}
-{"a":2,"b":2}
-~~~
-
-~~~
-(.a, .b) |= range(3)
-null
-{"a":0,"b":0}
-~~~
-
 :::
 
 ## Arithmetic update assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`
@@ -2542,43 +2524,47 @@ is equivalent to `b as $x | a |= . op $x`.
 
 ## Complex assignments
 
-Lots more things are allowed on the left-hand side of a jq assignment
-than in most languages. We've already seen simple field accesses on
-the left hand side, and it's no surprise that array accesses work just
-as well:
+jq accepts far more expressions on the left-hand side of assignments than most languages.
+So far, we have seen assignments using
+simple path operators such as
+`.[0]` and `.a` on the left-hand side.
+We are now going to show more complex filters on the left-hand side.
 
-    .posts[0].title = "JQ Manual"
+First, we can write any [complex path](#complex-paths)
+on the left-hand side of an update.
 
-What may come as a surprise is that the expression on the left may
-produce multiple results, referring to different points in the input
-document:
+::: Example
+Suppose that the input is an object with a field "posts" which is an array of posts.
+The filter `.posts[0].title = "JQ Manual"` sets the "title" field of the first post.
+:::
 
-    .posts[].comments |= . + ["this is great"]
+::: Example
+The filter `.posts[].comments += ["this is great"]` appends the string
+"this is great" to the "comments" array of _each_ post in the input.
+:::
 
-That example appends the string "this is great" to the "comments"
-array of each post in the input (where the input is an object with a
-field "posts" which is an array of posts).
+In general, on the left-hand side of an assignment, we can use
+filters that evaluate to a _concatenation of complex paths_ that start with `.`.
+We call such filters [_path expressions_](#path-expressions).
 
-When jq encounters an assignment like 'a = b', it records the "path"
-taken to select a part of the input document while executing a. This
-path is then used to find which part of the input to change while
-executing the assignment. Any filter may be used on the
-left-hand side of an equals - whichever paths it selects from the
-input will be where the assignment is performed.
+When jq evaluates an assignment, it tries to evaluate
+its left-hand side to a concatenation of complex paths.
+If it succeeds, it updates the values at the positions corresponding to these paths.
 
-This is a very powerful operation. Suppose we wanted to add a comment
-to blog posts, using the same "blog" input above. This time, we only
-want to comment on the posts written by "stedolan". We can find those
-posts using the "select" function described earlier:
+::: Example
+Suppose we want to add a comment to blog posts, using the same "blog" input as above.
+This time, we only want to comment on the posts written by "stedolan".
+We can find the comments for these posts using the "select" function described earlier:
 
-    .posts[] | select(.author == "stedolan")
+    .posts[] | select(.author == "stedolan") | .comments
 
-The paths provided by this operation point to each of the posts that
-"stedolan" wrote, and we can comment on each of them in the same way
-that we did before:
+We can evaluate this to a concatenation of complex paths --- for example,
+if the 3rd and 42th post were written by "stedolan", this would yield
+`.posts[3].comments, .posts[42].comments`.
+We can therefore use this on the left-hand side of an assignment, such as:
 
-    (.posts[] | select(.author == "stedolan") | .comments) |=
-        . + ["terrible."]
+    (.posts[] | select(.author == "stedolan") | .comments) += ["terrible."]
+:::
 
 ::: Note
 The left-hand side of assignment operators has to
@@ -2592,6 +2578,87 @@ You can use `$var | .foo = 1` instead.
 The filter `{foo: 1, bar: 2} | (.foo, .bar) |= .+1`
 builds an object with the `foo` field set to the input's `foo` plus 1,
 and the `bar` field set to the input's `bar` plus 1.
+:::
+
+::: Note
+Due to precedence rules, `.a,.b=0` does not set `.a` and `.b`,
+because it is equivalent to `.a, (.b=0)`.
+The filter `(.a,.b)=0` sets both.
+:::
+
+::: Examples
+
+~~~
+(..|select(type=="boolean")) |= if . then 1 else 0 end
+[true,false,[5,true,[true,[false]],false]]
+[1,0,[5,1,[1,[0]],0]]
+~~~
+
+~~~
+(.a, .b) = range(3)
+null
+{"a":0,"b":0}
+{"a":1,"b":1}
+{"a":2,"b":2}
+~~~
+
+~~~
+(.a, .b) |= range(3)
+null
+{"a":0,"b":0}
+~~~
+
+:::
+
+## Path expressions
+
+We now show which kinds of filters are path expressions, i.e.
+which filters can be used on the left-hand side of assignments.
+
+The following filters are path expressions:
+
+* `.` (identity)
+* `..` (recursive descent)
+* complex path: if it starts with some `f`, then `f` must be a path expression
+  * (`.[]` is a path expression because it starts with `.`, which is a path expression)
+  * (`{}[]` is _not_ a path expression, because it starts with `{}`, which is no path expression)
+* `if i then t else e end`: if `i` and `e` are path expressions
+* `f as $x | g`: if `g` is a path expression
+* `f, g`: if `f` and `g` are path expressions
+* `f | g`: if `f` and `g` are path expressions
+* `f?`: if `f` is a path expression
+* `label $x | f`: if `f` is a path expression
+* `break $x`
+* `def f: g; h` (function definition): if `h` is a path expression
+
+On the contrary, the following filters output values which do
+_not_ point to a part of their input, therefore they are
+_no_ path expressions:
+
+* [new values](#types-and-values), e.g. `1`, "Hello world", `[1, 2]`, `{a: 1}`
+* [arithmetic and comparison operations](#arithmetic-and-comparison), e.g. `. + 1`
+* `and`, `or`
+* `$x` (variable)
+* assignment (`|=`, `=`, `+=`, ...)
+
+For function calls, it depends on the function:
+If the function is implemented by definition and
+its definition is a path expression, then
+the function call is a path expression as well.
+For example, this is the case for [select](#select)) and [recurse](#recurse).
+However, most [builtin functions](#builtin-functions) return
+outputs that do not point to a part of their input,
+so calls to them are no path expressions.
+
+::: Compatibility
+jaq uses a different approach than jq and gojq to run assignments,
+which does not construct complex paths during assignments.
+Due to this, jaq's approach is generally more performant,
+but in certain scenarios, it can yield different outputs than jq,
+in particular when using `f |= empty`.
+However, for the examples in this section, jq and jaq yield the same outputs.
+Furthermore, jaq does not allow for certain filters
+on the left-hand side of assignments, in particular `f?` and `label $x | f`.
 :::
 
 
