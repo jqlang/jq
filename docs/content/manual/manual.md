@@ -428,6 +428,7 @@ jq supports the same set of datatypes as JSON ---
 booleans, numbers, strings, arrays, objects
 (JSON-speak for hashes with only string keys), and
 `null`.
+This section covers how to create values in jq.
 
 `null`, booleans, numbers, and strings are written the same way as in JSON.
 Just like everything else in jq, these simple values
@@ -438,13 +439,6 @@ ignores it, and returns 42.
 ## Booleans
 
 The booleans can be produced by the filters `true` and `false`.
-
-::: Note
-The booleans can be defined by:
-
-    def  true: 0 == 0;
-    def false: 0 != 0;
-:::
 
 ## Numbers
 
@@ -698,7 +692,7 @@ representation.
 (2) jq will attempt to maintain the original decimal
 precision of number literals (if the `--disable-decnum`
 build configuration option was not used), but in expressions
-such `1E1234567890`, precision will be lost if the exponent
+such as `1E1234567890`, precision will be lost if the exponent
 is too large.
 
 (3) In jq programs, a leading minus sign will trigger the
@@ -825,7 +819,7 @@ middle refers to whatever value `.a` produced.
 
 ## Function call
 
-jq disposes of [many builtin functions](#builtin-functions) for a variety of tasks,
+jq provides [many builtin functions](#builtin-functions) for a variety of tasks,
 and you can also [define your own functions](#definitions).
 
 Each function has an _arity_ that specifies how many _arguments_ that function takes.
@@ -879,8 +873,7 @@ while(length < 3; . + "a")
 
 ## Parenthesis
 
-Parenthesis work as a grouping operator just as in any typical
-programming language.
+Parentheses act as a grouping operator just as in any typical programming language.
 
 ::: Examples
 
@@ -923,7 +916,7 @@ In this section, we will show three very frequently used operators, namely for
 [indexing](#indexing-operator), and
 [slicing](#slicing-operator).
 These operators serve to obtain parts of values.
-Furthermore, we will see how to [combine these operators](#complex-paths).
+Furthermore, we will see how to [combine these operators](#compound-paths).
 
 ## Iteration operator: `.[]` {#iteration-operator}
 
@@ -1077,7 +1070,7 @@ Indices are zero-based.
 
 :::
 
-## Complex paths
+## Compound paths
 
 Frequently, when using the path operators given above,
 we find ourselves combining them with the
@@ -1092,9 +1085,9 @@ For example:
 * `.a.b` for `.a | .b`,
 * `.a.b.c` for `.a | .b | .c`, and so on.
 
-We call such a combination a _complex path_.
+We call such a combination a _compound path_.
 
-The rules for what constitutes a complex path are surprisingly complex.
+The rules for what constitutes a compound path are surprisingly complex.
 Therefore, we define it via a formal grammar in
 [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form):
 
@@ -1119,7 +1112,7 @@ Here,
 `t` refers to a filter, and
 `atomic` refers to an _atomic_ filter, such as
 `.` (identity), function call, and parenthesis.
-This grammar defines a complex `path` as
+This grammar defines a compound `path` as
 a sequence of path parts,
 potentially prefixed by an atomic root.
 A path `part` is any of the operators previously introduced in this section.
@@ -1128,7 +1121,7 @@ for all operators except for `.ident`.)
 
 ::: Example
 
-The following is a complex path:
+The following is a compound path:
 
     add[].posts[0]?.sections[]["title"]?
 
@@ -1158,7 +1151,7 @@ We can transform this into an equivalent filter:
 
 :::
 
-Filters inside a part of a complex path,
+Filters inside a part of a compound path,
 such as `f` and `g` in `.[f][:g]`,
 are run with the _input given to the whole path_.
 
@@ -1544,33 +1537,11 @@ The filter `true and false` returns `false`, whereas `true or false` returns `tr
 :::
 
 ::: Note
-These filters only produce the values `true` and `false`, and
-so are only useful for genuine Boolean operations, rather
-than the common Perl/Python/Ruby idiom of
+These filters only produce the values `true` and `false`,
+rather than the common Perl/Python/Ruby idiom of
 "value_that_may_be_null or default". If you want to use this
 form of "or", picking between two values rather than
 evaluating a condition, see the [`//` operator](#alternative-operator) below.
-:::
-
-::: Note
-The expressions `f and g` and `f or g` can be considered
-"syntactic sugar" around if-then-else.
-To show this, we can define filters
-`and_(f)` and `or_(f)` such that
-`f and g` is equivalent to `and_(f; g)` and
-`f  or g` is equivalent to  `or_(f; g)`:
-
-~~~
-def bool: if . then true else false end;
-def and_(f; g): if f then g | bool else false end;
-def  or_(f; g): if f then true  else g | bool end;
-
-[true, false] |
-[.[] and .[]] == [and_(.[]; .[])],
-[.[]  or .[]] == [ or_(.[]; .[])]
-~~~
-
-This yields twice `true` to certify the equivalence.
 :::
 
 ::: Examples
@@ -2372,7 +2343,7 @@ the last sub-expression, `.`, sees
 the original value, not the modified value.
 :::
 
-We can use any kind of [path expression](#complex-paths) that starts with `.`
+We can use any kind of [compound path](#compound-paths) that starts with `.`
 on the left-hand side of an assignment, such as
 `.[].a` or `.[0]`.
 We'll discuss usage of other filters on the left-hand side
@@ -2532,7 +2503,7 @@ simple path operators such as
 `.[0]` and `.a` on the left-hand side.
 We are now going to show more complex filters on the left-hand side.
 
-First, we can write any [complex path](#complex-paths)
+First, we can write any [compound path](#compound-paths)
 on the left-hand side of an update.
 
 ::: Example
@@ -2546,12 +2517,12 @@ The filter `.posts[].comments += ["this is great"]` appends the string
 :::
 
 In general, on the left-hand side of an assignment, we can use
-filters that evaluate to a _concatenation of complex paths_, where
-each of these complex paths must start with `.`.
+filters that evaluate to a _concatenation of compound paths_, where
+each of these compound paths must start with `.`.
 We call such filters [_path expressions_](#path-expressions).
 
 When jq evaluates an assignment, it tries to evaluate
-its left-hand side to a concatenation of complex paths.
+its left-hand side to a concatenation of compound paths.
 If it succeeds, it updates the values at the positions corresponding to these paths.
 
 ::: Example
@@ -2561,7 +2532,7 @@ We can find the comments for these posts using the "select" function described e
 
     .posts[] | select(.author == "stedolan") | .comments
 
-We can evaluate this to a concatenation of complex paths --- for example,
+We can evaluate this to a concatenation of compound paths --- for example,
 if the 3rd and 42th post were written by "stedolan", this would yield
 `.posts[3].comments, .posts[42].comments`.
 We can therefore use this on the left-hand side of an assignment, such as:
@@ -2571,7 +2542,7 @@ We can therefore use this on the left-hand side of an assignment, such as:
 
 ::: Example
 The filter `$var.foo = 1` yields an error, because
-`$var.foo` is a complex path that starts with `$var`, not with `.`.
+`$var.foo` is a compound path that starts with `$var`, not with `.`.
 Therefore, this path does not point to the input of the assignment.
 You can use `$var | .foo = 1` instead.
 :::
@@ -2622,7 +2593,7 @@ The following filters are path expressions:
 
 * `.` (identity)
 * `..` (recursive descent)
-* complex path: if it starts with some `f`, then `f` must be a path expression
+* compound path: if it starts with some `f`, then `f` must be a path expression
   * (`.[]` is a path expression because it starts with `.`, which is a path expression)
   * (`{}[]` is _not_ a path expression, because it starts with `{}`, which is no path expression)
 * `if i then t else e end`: if `i` and `e` are path expressions
@@ -2669,7 +2640,7 @@ so jq does not attempt to evaluate `0` as path.
 
 ::: Compatibility
 jaq uses a different approach than jq and gojq to run assignments,
-which does not construct complex paths during assignments.
+which does not construct compound paths during assignments.
 Due to this, jaq's approach is generally more performant,
 but in certain scenarios, it can yield different outputs than jq,
 in particular when using `f |= empty`.
