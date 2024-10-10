@@ -510,6 +510,7 @@ jaq does not consider \f[CR]JQ_COLORS\f[R].
 jq supports the same set of datatypes as JSON \[em] booleans, numbers,
 strings, arrays, objects (JSON\-speak for hashes with only string keys),
 and \f[CR]null\f[R].
+This section covers how to create values in jq.
 .PP
 \f[CR]null\f[R], booleans, numbers, and strings are written the same way
 as in JSON.
@@ -520,14 +521,6 @@ ignores it, and returns 42.
 .SS Booleans
 The booleans can be produced by the filters \f[CR]true\f[R] and
 \f[CR]false\f[R].
-.TP
-\f[I]Note\f[R]
-The booleans can be defined by:
-.IP
-.EX
-def  true: 0 == 0;
-def false: 0 != 0;
-.EE
 .SS Numbers
 Numbers in jq are internally represented by their IEEE754 double
 precision approximation.
@@ -788,8 +781,9 @@ to the IEEE754 representation.
 .IP "(2)" 4
 jq will attempt to maintain the original decimal precision of number
 literals (if the \f[CR]\-\-disable\-decnum\f[R] build configuration
-option was not used), but in expressions such \f[CR]1E1234567890\f[R],
-precision will be lost if the exponent is too large.
+option was not used), but in expressions such as
+\f[CR]1E1234567890\f[R], precision will be lost if the exponent is too
+large.
 .IP "(3)" 4
 In jq programs, a leading minus sign will trigger the conversion of the
 number to an IEEE754 representation.
@@ -907,8 +901,8 @@ $ echo \[aq][{\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}, {\[dq]name\[d
 \[dq]XML\[dq]
 .EE
 .SS Function call
-jq disposes of many builtin functions for a variety of tasks, and you
-can also define your own functions.
+jq provides many builtin functions for a variety of tasks, and you can
+also define your own functions.
 .PP
 Each function has an \f[I]arity\f[R] that specifies how many
 \f[I]arguments\f[R] that function takes.
@@ -957,7 +951,7 @@ $ echo \[aq]\[dq]\[dq]\[aq] \[rs]
 \[dq]aa\[dq]
 .EE
 .SS Parenthesis
-Parenthesis work as a grouping operator just as in any typical
+Parentheses act as a grouping operator just as in any typical
 programming language.
 .TP
 \f[I]Examples\f[R]
@@ -1141,7 +1135,7 @@ $ echo \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq] \
   | jq \[aq].[\-2:]\[aq]
 [\[dq]d\[dq], \[dq]e\[dq]]
 .EE
-.SS Complex paths
+.SS Compound paths
 Frequently, when using the path operators given above, we find ourselves
 combining them with the \f[CR]|\f[R] and \f[CR]?\f[R] operators.
 Therefore, jq provides shorthand syntax for these combinations.
@@ -1157,9 +1151,9 @@ For example:
 .IP \[bu] 2
 \f[CR].a.b.c\f[R] for \f[CR].a | .b | .c\f[R], and so on.
 .PP
-We call such a combination a \f[I]complex path\f[R].
+We call such a combination a \f[I]compound path\f[R].
 .PP
-The rules for what constitutes a complex path are surprisingly complex.
+The rules for what constitutes a compound path are surprisingly complex.
 Therefore, we define it via a formal grammar in \c
 .UR https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
 EBNF
@@ -1185,7 +1179,7 @@ part = \[dq].\[dq], ident
 Here, \f[CR]ident\f[R] refers to an identifier\-like key, \f[CR]t\f[R]
 refers to a filter, and \f[CR]atomic\f[R] refers to an \f[I]atomic\f[R]
 filter, such as \f[CR].\f[R] (identity), function call, and parenthesis.
-This grammar defines a complex \f[CR]path\f[R] as a sequence of path
+This grammar defines a compound \f[CR]path\f[R] as a sequence of path
 parts, potentially prefixed by an atomic root.
 A path \f[CR]part\f[R] is any of the operators previously introduced in
 this section.
@@ -1193,7 +1187,7 @@ this section.
 all operators except for \f[CR].ident\f[R].)
 .TP
 \f[I]Example\f[R]
-The following is a complex path:
+The following is a compound path:
 .IP
 .EX
 add[].posts[0]?.sections[][\[dq]title\[dq]]?
@@ -1221,7 +1215,7 @@ We can transform this into an equivalent filter:
 | .[\[dq]title\[dq]]?
 .EE
 .PP
-Filters inside a part of a complex path, such as \f[CR]f\f[R] and
+Filters inside a part of a compound path, such as \f[CR]f\f[R] and
 \f[CR]g\f[R] in \f[CR].[f][:g]\f[R], are run with the \f[I]input given
 to the whole path\f[R].
 .TP
@@ -1590,31 +1584,11 @@ The filter \f[CR]true and false\f[R] returns \f[CR]false\f[R], whereas
 .TP
 \f[I]Note\f[R]
 These filters only produce the values \f[CR]true\f[R] and
-\f[CR]false\f[R], and so are only useful for genuine Boolean operations,
-rather than the common Perl/Python/Ruby idiom of
+\f[CR]false\f[R], rather than the common Perl/Python/Ruby idiom of
 \[lq]value_that_may_be_null or default\[rq].
 If you want to use this form of \[lq]or\[rq], picking between two values
 rather than evaluating a condition, see the \f[CR]//\f[R] operator
 below.
-.TP
-\f[I]Note\f[R]
-The expressions \f[CR]f and g\f[R] and \f[CR]f or g\f[R] can be
-considered \[lq]syntactic sugar\[rq] around if\-then\-else.
-To show this, we can define filters \f[CR]and_(f)\f[R] and
-\f[CR]or_(f)\f[R] such that \f[CR]f and g\f[R] is equivalent to
-\f[CR]and_(f; g)\f[R] and \f[CR]f  or g\f[R] is equivalent to
-\f[CR]or_(f; g)\f[R]:
-.IP
-.EX
-def bool: if . then true else false end;
-def and_(f; g): if f then g | bool else false end;
-def  or_(f; g): if f then true  else g | bool end;
-
-[true, false] |
-[.[] and .[]] == [and_(.[]; .[])],
-[.[]  or .[]] == [ or_(.[]; .[])]
-.EE
-This yields twice \f[CR]true\f[R] to certify the equivalence.
 .TP
 \f[I]Examples\f[R]
 .IP
@@ -2412,7 +2386,7 @@ The filter \f[CR]{a:{b:{c:1}}} | (.a.b = 3), .\f[R] outputs
 sub\-expression, \f[CR].\f[R], sees the original value, not the modified
 value.
 .PP
-We can use any kind of path expression that starts with \f[CR].\f[R] on
+We can use any kind of compound path that starts with \f[CR].\f[R] on
 the left\-hand side of an assignment, such as \f[CR].[].a\f[R] or
 \f[CR].[0]\f[R].
 We\[cq]ll discuss usage of other filters on the left\-hand side in
@@ -2563,7 +2537,7 @@ So far, we have seen assignments using simple path operators such as
 \f[CR].[0]\f[R] and \f[CR].a\f[R] on the left\-hand side.
 We are now going to show more complex filters on the left\-hand side.
 .PP
-First, we can write any complex path on the left\-hand side of an
+First, we can write any compound path on the left\-hand side of an
 update.
 .TP
 \f[I]Example\f[R]
@@ -2578,12 +2552,12 @@ appends the string \[lq]this is great\[rq] to the \[lq]comments\[rq]
 array of \f[I]each\f[R] post in the input.
 .PP
 In general, on the left\-hand side of an assignment, we can use filters
-that evaluate to a \f[I]concatenation of complex paths\f[R], where each
-of these complex paths must start with \f[CR].\f[R].
+that evaluate to a \f[I]concatenation of compound paths\f[R], where each
+of these compound paths must start with \f[CR].\f[R].
 We call such filters \f[I]path expressions\f[R].
 .PP
 When jq evaluates an assignment, it tries to evaluate its left\-hand
-side to a concatenation of complex paths.
+side to a concatenation of compound paths.
 If it succeeds, it updates the values at the positions corresponding to
 these paths.
 .TP
@@ -2598,7 +2572,7 @@ function described earlier:
 .EX
 \&.posts[] | select(.author == \[dq]stedolan\[dq]) | .comments
 .EE
-We can evaluate this to a concatenation of complex paths \[em] for
+We can evaluate this to a concatenation of compound paths \[em] for
 example, if the 3rd and 42th post were written by \[lq]stedolan\[rq],
 this would yield \f[CR].posts[3].comments, .posts[42].comments\f[R].
 We can therefore use this on the left\-hand side of an assignment, such
@@ -2610,7 +2584,7 @@ as:
 .TP
 \f[I]Example\f[R]
 The filter \f[CR]$var.foo = 1\f[R] yields an error, because
-\f[CR]$var.foo\f[R] is a complex path that starts with \f[CR]$var\f[R],
+\f[CR]$var.foo\f[R] is a compound path that starts with \f[CR]$var\f[R],
 not with \f[CR].\f[R].
 Therefore, this path does not point to the input of the assignment.
 You can use \f[CR]$var | .foo = 1\f[R] instead.
@@ -2658,7 +2632,7 @@ The following filters are path expressions:
 .IP \[bu] 2
 \f[CR]..\f[R] (recursive descent)
 .IP \[bu] 2
-complex path: if it starts with some \f[CR]f\f[R], then \f[CR]f\f[R]
+compound path: if it starts with some \f[CR]f\f[R], then \f[CR]f\f[R]
 must be a path expression
 .RS 2
 .IP \[bu] 2
@@ -2728,7 +2702,7 @@ path.
 .TP
 \f[I]Compatibility\f[R]
 jaq uses a different approach than jq and gojq to run assignments, which
-does not construct complex paths during assignments.
+does not construct compound paths during assignments.
 Due to this, jaq\[cq]s approach is generally more performant, but in
 certain scenarios, it can yield different outputs than jq, in particular
 when using \f[CR]f |= empty\f[R].
