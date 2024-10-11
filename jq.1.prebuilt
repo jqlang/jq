@@ -1946,6 +1946,15 @@ $ echo \[aq][[0], [0, 1], [2, 1, 0]]\[aq] \[rs]
 {\[dq]a\[dq]:0,\[dq]b\[dq]:1}
 {\[dq]a\[dq]:2,\[dq]b\[dq]:1}
 .EE
+.IP
+.EX
+$ echo \[aq][{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}, {\[dq]a\[dq]: 3, \[dq]b\[dq]: 4}]\[aq] \[rs]
+  | jq \[aq]foreach .[] as {(\[dq]a\[dq], \[dq]b\[dq]): $x} ([]; . + [$x])\[aq]
+[1]
+[1,2]
+[1,2,3]
+[1,2,3,4]
+.EE
 .SS Destructuring alternative operator: \f[CR]?//\f[R]
 The destructuring alternative operator provides a concise mechanism for
 destructuring an input that can take one of several forms.

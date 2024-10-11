@@ -1901,6 +1901,15 @@ jaq does not support destructuring.
 {"a":2,"b":1}
 ~~~
 
+~~~
+foreach .[] as {("a", "b"): $x} ([]; . + [$x])
+[{"a": 1, "b": 2}, {"a": 3, "b": 4}]
+[1]
+[1,2]
+[1,2,3]
+[1,2,3,4]
+~~~
+
 :::
 
 ## Destructuring alternative operator: `?//`
