@@ -1748,10 +1748,11 @@ of the program, you'll need that part of the program to define a
 variable (as a function parameter, object member, or whatever) in
 which to place the data.
 
-It is also possible to [define functions](#definitions) in jq, which is
-used pervasively to define jq's standard library.
-(In fact, many jq functions such as [`map`](#map) and [`select`](#select)
-are written in jq.)
+It is also possible to [define functions](#definitions) in jq itself.
+In fact, many of jq's built-in functions, including
+[`map`](#map) and
+[`select`](#select),
+are written in jq.
 
 ## Variable binding: `f as $x | g`
 
@@ -1769,9 +1770,8 @@ simply `add / length` - the `add` expression is given the array and
 produces its sum, and the `length` expression is given the array and
 produces its length.
 
-So, there's generally a cleaner way to solve most problems in jq than defining variables.
-Still, sometimes they do make things easier, so
-jq lets you define variables using `f as $x`.
+So, variables are often unnecessary and sometimes even best avoided,
+but jq does let you define variables using the syntax `f as $x`.
 All variable names start with `$`.
 Here's a slightly uglier version of the array-averaging example:
 
@@ -1780,6 +1780,7 @@ Here's a slightly uglier version of the array-averaging example:
 We'll need a more complicated problem to find a situation where using
 variables actually makes our lives easier.
 
+::: Example
 
 Suppose we have an array of blog posts, with "author" and "title"
 fields, and another object which is used to map author usernames to
@@ -1800,6 +1801,8 @@ We use a variable, `$names`, to store the realnames object, so that we
 can refer to it later when looking up author usernames:
 
     .realnames as $names | .posts[] | {title, author: $names[.author]}
+
+:::
 
 The filter `f as $x | g` runs `f` on its input, and
 for each output `y` produced by `f`,
@@ -2246,16 +2249,16 @@ should not produce more than one output for each input.
 
 ::: Example
 The builtin function [`repeat`](#repeat) can be
-naively implemented like `repeat1` below.
+naively implemented like `repeat_naive` below.
 It is tail-recursive, however, it binds `f` to a new argument
-whenever `repeat1` is called recursively.
+whenever `repeat_naive` is called recursively.
 This makes `f` more costly to call with every recursion step.
 For that reason, `repeat` is implemented like below, where
 `f` is bound only once, and
 the recursive call does not have to perform any binding.
 
-    def repeat1(f):
-        f, repeat1(f);
+    def repeat_naive(f):
+        f, repeat_naive(f);
 
     def repeat(f):
       def _repeat:
@@ -2268,12 +2271,18 @@ The builtin function [`while`](#while) is also implemented recursively.
 We apply a similar transformation as above for `repeat`
 to keep the cost of calls to `cond` and `update` constant:
 
-    def while1(cond; update):
-        if cond then ., (update | while1(cond; update)) else empty end;
+    def while_naive(cond; update):
+        if cond
+        then ., (update | while_naive(cond; update))
+        else empty
+        end;
 
     def while (cond; update):
       def _while:
-        if cond then ., (update | _while              ) else empty end;
+        if cond
+        then ., (update | _while)
+        else empty
+        end;
       _while
 :::
 
@@ -2425,7 +2434,8 @@ The filter `{a: 1} | .a = (2, 3)` yields two outputs, namely
 :::
 
 ::: Note
-The filter `a = b` is equivalent to `b as $x | a |= b`.
+The filter `a = b` is equivalent to `b as $x | a |= $x`
+(where `$x` is a fresh variable name).
 :::
 
 ::: Note
@@ -2648,14 +2658,15 @@ so jq does not attempt to evaluate `0` as path.
 :::
 
 ::: Compatibility
-jaq uses a different approach than jq and gojq to run assignments,
-which does not construct compound paths during assignments.
-Due to this, jaq's approach is generally more performant,
-but in certain scenarios, it can yield different outputs than jq,
-in particular when using `f |= empty`.
+
+jaq's approach to handling assignments is quite different from that of jq and gojq.
+Specifically, jaq executes assignments without constructing compound paths.
+This means that jaq does not allow certain filters on the left-hand side of assignments,
+notably `f?` and `label $x | f`.
+jaq's approach is generally more performant, but in certain scenarios,
+jaq and jq will produce different results, in particular when using `f |= empty`.
 However, for the examples in this section, jq and jaq yield the same outputs.
-Furthermore, jaq does not allow for certain filters
-on the left-hand side of assignments, in particular `f?` and `label $x | f`.
+
 :::
 
 
