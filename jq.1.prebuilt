@@ -108,8 +108,8 @@ awk\[cq]s \f[CR]\-f\f[R] option.
 \f[CR]\-L directory\f[R]:
 .RS 2
 .PP
-Prepend \f[CR]directory\f[R] to the search path for modules.
-If this option is used then no builtin search path is used.
+Prepend \f[CR]directory\f[R] to the search paths for modules.
+If this option is used then no builtin search paths are used.
 .RE
 .IP \[bu] 2
 \f[CR]\-\-exit\-status\f[R] / \f[CR]\-e\f[R]:
@@ -535,8 +535,49 @@ preserved.
 This also includes cases when the original literal would be truncated
 when converted to an IEEE754 double precision floating point number.
 .TP
+\f[I]Note\f[R]
+Using the current implementation of jq, the expression
+\f[CR]1E1234567890\f[R] produces \f[CR]1.7976931348623157e+308\f[R] on
+at least one platform.
+This is because, in the process of parsing the number, jq has converted
+it to an IEEE754 double\-precision representation, losing precision.
+The way in which jq handles numbers has changed over time.
+Further changes are likely within the parameters set by the relevant
+JSON standards.
+Moreover, build configuration options can alter how jq processes
+numbers.
+The following remarks are therefore offered with the understanding that
+they are intended to be descriptive of the current version of jq and
+should not be interpreted as being prescriptive:
+.IP "(1)" 4
+Any arithmetic operation on a number that has not already been converted
+to an IEEE754 double precision representation will trigger a conversion
+to the IEEE754 representation.
+.IP "(2)" 4
+jq will attempt to maintain the original decimal precision of number
+literals (unless the \f[CR]\-\-disable\-decnum\f[R] build configuration
+option was used), but in expressions such as \f[CR]1E1234567890\f[R],
+precision will be lost if the exponent is too large.
+.IP "(3)" 4
+In jq programs, a leading minus sign triggers the conversion of the
+number to an IEEE754 representation.
+.IP "(4)" 4
+Comparisons are carried out using the untruncated big decimal
+representation of numbers if available, as illustrated in one of the
+following examples.
+See the builtin function \f[CR]have_decnum\f[R] for examples where the
+\f[CR]\-\-disable\-decnum\f[R] build configuration option matters.
+.TP
 \f[I]Compatibility\f[R]
 In gojq and jaq, numbers are either floating\-point numbers or integers.
+.TP
+\f[I]Examples\f[R]
+.IP
+.EX
+$ jq \[aq]. < 0.12345678901234567890123456788\[aq] \[rs]
+  <<< \[aq]0.12345678901234567890123456789\[aq]
+false
+.EE
 .SS Strings
 .SS String interpolation: \f[CR]\[rs](f)\f[R]
 Inside a string, you can put a filter inside parentheses after a
@@ -757,46 +798,6 @@ Since jq by default pretty\-prints all output, a trivial program
 consisting of nothing but \f[CR].\f[R] can be used to format JSON output
 from, say, \f[CR]curl\f[R].
 .TP
-\f[I]Note\f[R]
-Although the identity filter never modifies the value of its input, jq
-processing can sometimes make it appear as though it does.
-For example, using the current implementation of jq, the expression
-\f[CR]1E1234567890 | .\f[R] produces \f[CR]1.7976931348623157e+308\f[R]
-on at least one platform.
-This is because, in the process of parsing the number, this particular
-version of jq has converted it to an IEEE754 double\-precision
-representation, losing precision.
-The way in which jq handles numbers has changed over time and further
-changes are likely within the parameters set by the relevant JSON
-standards.
-Moreover, build configuration options can alter how jq processes
-numbers.
-The following remarks are therefore offered with the understanding that
-they are intended to be descriptive of the current version of jq and
-should not be interpreted as being prescriptive:
-.IP "(1)" 4
-Any arithmetic operation on a number that has not already been converted
-to an IEEE754 double precision representation will trigger a conversion
-to the IEEE754 representation.
-.IP "(2)" 4
-jq will attempt to maintain the original decimal precision of number
-literals (if the \f[CR]\-\-disable\-decnum\f[R] build configuration
-option was not used), but in expressions such as
-\f[CR]1E1234567890\f[R], precision will be lost if the exponent is too
-large.
-.IP "(3)" 4
-In jq programs, a leading minus sign will trigger the conversion of the
-number to an IEEE754 representation.
-.IP "(4)" 4
-Comparisons are carried out using the untruncated big decimal
-representation of numbers if available, as illustrated in one of the
-following examples.
-The examples below use the builtin function \f[CR]have_decnum\f[R] in
-order to demonstrate the expected effects of using / not using the
-\f[CR]\-\-disable\-decnum\f[R] build configuration option, and also to
-allow automated tests derived from these examples to pass regardless of
-whether that option is used.
-.TP
 \f[I]Examples\f[R]
 .IP
 .EX
@@ -809,30 +810,6 @@ $ jq \[aq].\[aq] \[rs]
 $ jq \[aq].\[aq] \[rs]
   <<< \[aq]0.12345678901234567890123456789\[aq]
 0.12345678901234567890123456789
-.EE
-.IP
-.EX
-$ jq \[aq][., tojson] | . == if have_decnum then [12345678909876543212345,\[dq]12345678909876543212345\[dq]] else [12345678909876543000000,\[dq]12345678909876543000000\[dq]] end\[aq] \[rs]
-  <<< \[aq]12345678909876543212345\[aq]
-true
-.EE
-.IP
-.EX
-$ jq \[aq]. < 0.12345678901234567890123456788\[aq] \[rs]
-  <<< \[aq]0.12345678901234567890123456789\[aq]
-false
-.EE
-.IP
-.EX
-$ jq \[aq]map([., . == 1]) | tojson | . == if have_decnum then \[dq][[1,true],[1.000,true],[1.0,true],[1.00,true]]\[dq] else \[dq][[1,true],[1,true],[1,true],[1,true]]\[dq] end\[aq] \[rs]
-  <<< \[aq][1, 1.000, 1.0, 100e\-2]\[aq]
-true
-.EE
-.IP
-.EX
-$ jq \[aq]. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000) | . == if have_decnum then [true, false] else [false, false] end\[aq] \[rs]
-  <<< \[aq]10000000000000000000000000000001\[aq]
-true
 .EE
 .SS Concatenation: \f[CR],\f[R]
 The \f[CR],\f[R] operator concatenates the outputs of two filters.
@@ -4862,9 +4839,9 @@ The filter \f[CR]input\f[R] outputs one new input, and the filter
 This is primarily useful for reductions over a program\[cq]s inputs.
 .TP
 \f[I]Note\f[R]
-When using \f[CR]input\f[R], it is generally necessary to invoke jq with
-the \f[CR]\-n\f[R] command\-line option, otherwise the first entity will
-be lost.
+When using \f[CR]input\f[R] or \f[CR]inputs\f[R], it is often necessary
+to invoke jq with the \f[CR]\-n\f[R] command\-line option to avoid
+losing the first value in the input stream.
 .IP
 .EX
 $ echo 1 2 3 4 | jq \[aq][., input]\[aq]
@@ -5058,6 +5035,32 @@ support for preservation of input number literals.
 This builtin returns true if jq was built with \[lq]decnum\[rq], which
 is the current literal number preserving numeric backend implementation
 for jq.
+.PP
+The examples below use the builtin function \f[CR]have_decnum\f[R] in
+order to demonstrate the expected effects of using / not using
+\f[CR]\-\-disable\-decnum\f[R].
+They also allow automated tests derived from these examples to pass
+regardless of whether that option is used.
+.TP
+\f[I]Examples\f[R]
+.IP
+.EX
+$ jq \[aq][., tojson] | . == if have_decnum then [12345678909876543212345,\[dq]12345678909876543212345\[dq]] else [12345678909876543000000,\[dq]12345678909876543000000\[dq]] end\[aq] \[rs]
+  <<< \[aq]12345678909876543212345\[aq]
+true
+.EE
+.IP
+.EX
+$ jq \[aq]map([., . == 1]) | tojson | . == if have_decnum then \[dq][[1,true],[1.000,true],[1.0,true],[1.00,true]]\[dq] else \[dq][[1,true],[1,true],[1,true],[1,true]]\[dq] end\[aq] \[rs]
+  <<< \[aq][1, 1.000, 1.0, 100e\-2]\[aq]
+true
+.EE
+.IP
+.EX
+$ jq \[aq]. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000) | . == if have_decnum then [true, false] else [false, false] end\[aq] \[rs]
+  <<< \[aq]10000000000000000000000000000001\[aq]
+true
+.EE
 .SS \f[CR]$JQ_BUILD_CONFIGURATION\f[R]
 This builtin variable shows the jq executable\[cq]s build configuration.
 Its value has no particular format, but it can be expected to be at

@@ -1,3 +1,7 @@
+. < 0.12345678901234567890123456788
+0.12345678901234567890123456789
+false
+
 "The input was \(.), which is one less than \(.+1)"
 42
 "The input was 42, which is one less than 43"
@@ -42,22 +46,6 @@
 .
 0.12345678901234567890123456789
 0.12345678901234567890123456789
-
-[., tojson] | . == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end
-12345678909876543212345
-true
-
-. < 0.12345678901234567890123456788
-0.12345678901234567890123456789
-false
-
-map([., . == 1]) | tojson | . == if have_decnum then "[[1,true],[1.000,true],[1.0,true],[1.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end
-[1, 1.000, 1.0, 100e-2]
-true
-
-. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000) | . == if have_decnum then [true, false] else [false, false] end
-10000000000000000000000000000001
-true
 
 .foo, .bar
 {"foo": 42, "bar": "something else", "baz": true}
@@ -1001,4 +989,16 @@ true
 try error("\($__loc__)") catch .
 null
 "{\"file\":\"<top-level>\",\"line\":1}"
+
+[., tojson] | . == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end
+12345678909876543212345
+true
+
+map([., . == 1]) | tojson | . == if have_decnum then "[[1,true],[1.000,true],[1.0,true],[1.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end
+[1, 1.000, 1.0, 100e-2]
+true
+
+. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000) | . == if have_decnum then [true, false] else [false, false] end
+10000000000000000000000000000001
+true
 
