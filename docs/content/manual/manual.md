@@ -90,8 +90,8 @@ using some command-line options:
 
 * `-L directory`:
 
-  Prepend `directory` to the [search path for modules](#search-path).
-  If this option is used then no builtin search path is used.
+  Prepend `directory` to the [search paths for modules](#search-paths).
+  If this option is used then no builtin search paths are used.
 
 * `--exit-status` / `-e`:
 
@@ -3660,7 +3660,7 @@ true
 jq currently only has IEEE754 double-precision (64-bit) floating
 point number support.
 
-Besides [simple arithmetic operators such as `+`](#arithmetic-operations),
+Besides [simple arithmetic operators such as `+`](#arithmetic-and-comparison),
 jq also has most standard math functions from the C math library.
 C math functions that take a single input argument (e.g., `sin()`) are
 available as zero-argument jq functions.
@@ -4264,7 +4264,7 @@ See the [section on recursion](#recursion).
 
 :::
 
-### `range(upto)`, `range(from; upto)`, `range(from; upto; by)`
+### `range(upto)`, `range(from; upto)`, `range(from; upto; by)` {#range}
 
 The `range` function produces a range of numbers. `range(4; 10)`
 produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers
@@ -5091,7 +5091,7 @@ additional decoration, not even a newline.
 Stops the jq program with no further outputs.  jq will exit
 with exit status `0`.
 
-### `halt_error`, `halt_error(exit_code)`
+### `halt_error`, `halt_error(exit_code)` {#halt-error}
 
 Stops the jq program with no further outputs.  The input will
 be printed on `stderr` as raw output (i.e., strings will not
