@@ -5038,9 +5038,9 @@ the filter `inputs` outputs all remaining inputs.
 This is primarily useful for reductions over a program's inputs.
 
 ::: Note
-When using `input`, it is generally necessary to
-invoke jq with the `-n` command-line option,
-otherwise the first entity will be lost.
+When using `input` or `inputs`, it is often necessary to
+invoke jq with the `-n` command-line option to
+avoid losing the first value in the input stream.
 
     $ echo 1 2 3 4 | jq '[., input]'
     [1,2]
