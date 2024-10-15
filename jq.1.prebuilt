@@ -556,8 +556,8 @@ The example above is equivalent to:
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]42\[aq] \[rs]
-  | jq \[aq]\[dq]The input was \[rs](.), which is one less than \[rs](.+1)\[dq]\[aq]
+$ jq \[aq]\[dq]The input was \[rs](.), which is one less than \[rs](.+1)\[dq]\[aq] \[rs]
+  <<< \[aq]42\[aq]
 \[dq]The input was 42, which is one less than 43\[dq]
 .EE
 .SS String formatting: \f[CR]\[at]f\f[R]
@@ -591,26 +591,26 @@ in the URL are not escaped, as they were part of the string literal.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]This works if x < y\[dq]\[aq] \[rs]
-  | jq \[aq]\[at]html\[aq]
+$ jq \[aq]\[at]html\[aq] \[rs]
+  <<< \[aq]\[dq]This works if x < y\[dq]\[aq]
 \[dq]This works if x &lt; y\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]O\[aq]Hara\[aq]s Ale\[dq]\[aq] \[rs]
-  | jq \[aq]\[at]sh \[dq]echo \[rs](.)\[dq]\[aq]
+$ jq \[aq]\[at]sh \[dq]echo \[rs](.)\[dq]\[aq] \[rs]
+  <<< \[aq]\[dq]O\[aq]Hara\[aq]s Ale\[dq]\[aq]
 \[dq]echo \[aq]O\[aq]\[rs]\[rs]\[aq]\[aq]Hara\[aq]\[rs]\[rs]\[aq]\[aq]s Ale\[aq]\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]This is a message\[dq]\[aq] \[rs]
-  | jq \[aq]\[at]base64\[aq]
+$ jq \[aq]\[at]base64\[aq] \[rs]
+  <<< \[aq]\[dq]This is a message\[dq]\[aq]
 \[dq]VGhpcyBpcyBhIG1lc3NhZ2U=\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]VGhpcyBpcyBhIG1lc3NhZ2U=\[dq]\[aq] \[rs]
-  | jq \[aq]\[at]base64d\[aq]
+$ jq \[aq]\[at]base64d\[aq] \[rs]
+  <<< \[aq]\[dq]VGhpcyBpcyBhIG1lc3NhZ2U=\[dq]\[aq]
 \[dq]This is a message\[dq]
 .EE
 .SS Arrays: \f[CR][]\f[R]
@@ -637,14 +637,14 @@ elements.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]user\[dq]:\[dq]stedolan\[dq], \[dq]projects\[dq]: [\[dq]jq\[dq], \[dq]wikiflow\[dq]]}\[aq] \[rs]
-  | jq \[aq][.user, .projects[]]\[aq]
+$ jq \[aq][.user, .projects[]]\[aq] \[rs]
+  <<< \[aq]{\[dq]user\[dq]:\[dq]stedolan\[dq], \[dq]projects\[dq]: [\[dq]jq\[dq], \[dq]wikiflow\[dq]]}\[aq]
 [\[dq]stedolan\[dq], \[dq]jq\[dq], \[dq]wikiflow\[dq]]
 .EE
 .IP
 .EX
-$ echo \[aq][1, 2, 3]\[aq] \[rs]
-  | jq \[aq][ .[] | . * 2]\[aq]
+$ jq \[aq][ .[] | . * 2]\[aq] \[rs]
+  <<< \[aq][1, 2, 3]\[aq]
 [2, 4, 6]
 .EE
 .SS Objects: \f[CR]{}\f[R]
@@ -736,15 +736,15 @@ produces
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]user\[dq]:\[dq]stedolan\[dq],\[dq]titles\[dq]:[\[dq]JQ Primer\[dq], \[dq]More JQ\[dq]]}\[aq] \[rs]
-  | jq \[aq]{user, title: .titles[]}\[aq]
+$ jq \[aq]{user, title: .titles[]}\[aq] \[rs]
+  <<< \[aq]{\[dq]user\[dq]:\[dq]stedolan\[dq],\[dq]titles\[dq]:[\[dq]JQ Primer\[dq], \[dq]More JQ\[dq]]}\[aq]
 {\[dq]user\[dq]:\[dq]stedolan\[dq], \[dq]title\[dq]: \[dq]JQ Primer\[dq]}
 {\[dq]user\[dq]:\[dq]stedolan\[dq], \[dq]title\[dq]: \[dq]More JQ\[dq]}
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]user\[dq]:\[dq]stedolan\[dq],\[dq]titles\[dq]:[\[dq]JQ Primer\[dq], \[dq]More JQ\[dq]]}\[aq] \[rs]
-  | jq \[aq]{(.user): .titles}\[aq]
+$ jq \[aq]{(.user): .titles}\[aq] \[rs]
+  <<< \[aq]{\[dq]user\[dq]:\[dq]stedolan\[dq],\[dq]titles\[dq]:[\[dq]JQ Primer\[dq], \[dq]More JQ\[dq]]}\[aq]
 {\[dq]stedolan\[dq]: [\[dq]JQ Primer\[dq], \[dq]More JQ\[dq]]}
 .EE
 .SH BASIC FILTERS
@@ -800,38 +800,38 @@ whether that option is used.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]Hello, world!\[dq]\[aq] \[rs]
-  | jq \[aq].\[aq]
+$ jq \[aq].\[aq] \[rs]
+  <<< \[aq]\[dq]Hello, world!\[dq]\[aq]
 \[dq]Hello, world!\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq]0.12345678901234567890123456789\[aq] \[rs]
-  | jq \[aq].\[aq]
+$ jq \[aq].\[aq] \[rs]
+  <<< \[aq]0.12345678901234567890123456789\[aq]
 0.12345678901234567890123456789
 .EE
 .IP
 .EX
-$ echo \[aq]12345678909876543212345\[aq] \[rs]
-  | jq \[aq][., tojson] | . == if have_decnum then [12345678909876543212345,\[dq]12345678909876543212345\[dq]] else [12345678909876543000000,\[dq]12345678909876543000000\[dq]] end\[aq]
+$ jq \[aq][., tojson] | . == if have_decnum then [12345678909876543212345,\[dq]12345678909876543212345\[dq]] else [12345678909876543000000,\[dq]12345678909876543000000\[dq]] end\[aq] \[rs]
+  <<< \[aq]12345678909876543212345\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq]0.12345678901234567890123456789\[aq] \[rs]
-  | jq \[aq]. < 0.12345678901234567890123456788\[aq]
+$ jq \[aq]. < 0.12345678901234567890123456788\[aq] \[rs]
+  <<< \[aq]0.12345678901234567890123456789\[aq]
 false
 .EE
 .IP
 .EX
-$ echo \[aq][1, 1.000, 1.0, 100e\-2]\[aq] \[rs]
-  | jq \[aq]map([., . == 1]) | tojson | . == if have_decnum then \[dq][[1,true],[1.000,true],[1.0,true],[1.00,true]]\[dq] else \[dq][[1,true],[1,true],[1,true],[1,true]]\[dq] end\[aq]
+$ jq \[aq]map([., . == 1]) | tojson | . == if have_decnum then \[dq][[1,true],[1.000,true],[1.0,true],[1.00,true]]\[dq] else \[dq][[1,true],[1,true],[1,true],[1,true]]\[dq] end\[aq] \[rs]
+  <<< \[aq][1, 1.000, 1.0, 100e\-2]\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq]10000000000000000000000000000001\[aq] \[rs]
-  | jq \[aq]. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000) | . == if have_decnum then [true, false] else [false, false] end\[aq]
+$ jq \[aq]. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000) | . == if have_decnum then [true, false] else [false, false] end\[aq] \[rs]
+  <<< \[aq]10000000000000000000000000000001\[aq]
 true
 .EE
 .SS Concatenation: \f[CR],\f[R]
@@ -850,23 +850,23 @@ and \[lq]bar\[rq] fields as separate outputs.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 42, \[dq]bar\[dq]: \[dq]something else\[dq], \[dq]baz\[dq]: true}\[aq] \[rs]
-  | jq \[aq].foo, .bar\[aq]
+$ jq \[aq].foo, .bar\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 42, \[dq]bar\[dq]: \[dq]something else\[dq], \[dq]baz\[dq]: true}\[aq]
 42
 \[dq]something else\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]user\[dq]:\[dq]stedolan\[dq], \[dq]projects\[dq]: [\[dq]jq\[dq], \[dq]wikiflow\[dq]]}\[aq] \[rs]
-  | jq \[aq].user, .projects[]\[aq]
+$ jq \[aq].user, .projects[]\[aq] \[rs]
+  <<< \[aq]{\[dq]user\[dq]:\[dq]stedolan\[dq], \[dq]projects\[dq]: [\[dq]jq\[dq], \[dq]wikiflow\[dq]]}\[aq]
 \[dq]stedolan\[dq]
 \[dq]jq\[dq]
 \[dq]wikiflow\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq] \[rs]
-  | jq \[aq].[4,2]\[aq]
+$ jq \[aq].[4,2]\[aq] \[rs]
+  <<< \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq]
 \[dq]e\[dq]
 \[dq]c\[dq]
 .EE
@@ -895,8 +895,8 @@ produced.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][{\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}, {\[dq]name\[dq]:\[dq]XML\[dq], \[dq]good\[dq]:false}]\[aq] \[rs]
-  | jq \[aq].[] | .name\[aq]
+$ jq \[aq].[] | .name\[aq] \[rs]
+  <<< \[aq][{\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}, {\[dq]name\[dq]:\[dq]XML\[dq], \[dq]good\[dq]:false}]\[aq]
 \[dq]JSON\[dq]
 \[dq]XML\[dq]
 .EE
@@ -930,22 +930,22 @@ for concatenation.
 The first example calls the function \f[CR]length/0\f[R]:
 .IP
 .EX
-$ echo \[aq][1, 1, 2, 3]\[aq] \[rs]
-  | jq \[aq]length\[aq]
+$ jq \[aq]length\[aq] \[rs]
+  <<< \[aq][1, 1, 2, 3]\[aq]
 4
 .EE
 The next example calls \f[CR]range/2\f[R] and \f[CR]add/1\f[R]:
 .IP
 .EX
-$ echo \[aq]2\[aq] \[rs]
-  | jq \[aq]add(range(0; .))\[aq]
+$ jq \[aq]add(range(0; .))\[aq] \[rs]
+  <<< \[aq]2\[aq]
 3
 .EE
 The last example calls \f[CR]while/2\f[R]:
 .IP
 .EX
-$ echo \[aq]\[dq]\[dq]\[aq] \[rs]
-  | jq \[aq]while(length < 3; . + \[dq]a\[dq])\[aq]
+$ jq \[aq]while(length < 3; . + \[dq]a\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]\[dq]\[aq]
 \[dq]\[dq]
 \[dq]a\[dq]
 \[dq]aa\[dq]
@@ -957,8 +957,8 @@ programming language.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]1\[aq] \[rs]
-  | jq \[aq](. + 2) * 5\[aq]
+$ jq \[aq](. + 2) * 5\[aq] \[rs]
+  <<< \[aq]1\[aq]
 15
 .EE
 .SS Recursive descent: \f[CR]..\f[R]
@@ -976,8 +976,8 @@ the \f[CR]?\f[R] operator.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][[{\[dq]a\[dq]:1}]]\[aq] \[rs]
-  | jq \[aq].. | .a?\[aq]
+$ jq \[aq].. | .a?\[aq] \[rs]
+  <<< \[aq][[{\[dq]a\[dq]:1}]]\[aq]
 1
 .EE
 .SH PATHS
@@ -999,28 +999,28 @@ than as a single array.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][{\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}, {\[dq]name\[dq]:\[dq]XML\[dq], \[dq]good\[dq]:false}]\[aq] \[rs]
-  | jq \[aq].[]\[aq]
+$ jq \[aq].[]\[aq] \[rs]
+  <<< \[aq][{\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}, {\[dq]name\[dq]:\[dq]XML\[dq], \[dq]good\[dq]:false}]\[aq]
 {\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}
 {\[dq]name\[dq]:\[dq]XML\[dq], \[dq]good\[dq]:false}
 .EE
 .IP
 .EX
-$ echo \[aq][]\[aq] \[rs]
-  | jq \[aq].[]\[aq]
+$ jq \[aq].[]\[aq] \[rs]
+  <<< \[aq][]\[aq]
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]:[1,2,3]}\[aq] \[rs]
-  | jq \[aq].foo[]\[aq]
+$ jq \[aq].foo[]\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]:[1,2,3]}\[aq]
 1
 2
 3
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 1}\[aq] \[rs]
-  | jq \[aq].[]\[aq]
+$ jq \[aq].[]\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 1}\[aq]
 1
 1
 .EE
@@ -1065,38 +1065,38 @@ To obtain the same behaviour in jq and jaq, you can use
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 42, \[dq]bar\[dq]: \[dq]less interesting data\[dq]}\[aq] \[rs]
-  | jq \[aq].foo\[aq]
+$ jq \[aq].foo\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 42, \[dq]bar\[dq]: \[dq]less interesting data\[dq]}\[aq]
 42
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]notfoo\[dq]: true, \[dq]alsonotfoo\[dq]: false}\[aq] \[rs]
-  | jq \[aq].foo\[aq]
+$ jq \[aq].foo\[aq] \[rs]
+  <<< \[aq]{\[dq]notfoo\[dq]: true, \[dq]alsonotfoo\[dq]: false}\[aq]
 null
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 42}\[aq] \[rs]
-  | jq \[aq].[\[dq]foo\[dq]]\[aq]
+$ jq \[aq].[\[dq]foo\[dq]]\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 42}\[aq]
 42
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}, {\[dq]name\[dq]:\[dq]XML\[dq], \[dq]good\[dq]:false}]\[aq] \[rs]
-  | jq \[aq].[0]\[aq]
+$ jq \[aq].[0]\[aq] \[rs]
+  <<< \[aq][{\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}, {\[dq]name\[dq]:\[dq]XML\[dq], \[dq]good\[dq]:false}]\[aq]
 {\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}, {\[dq]name\[dq]:\[dq]XML\[dq], \[dq]good\[dq]:false}]\[aq] \[rs]
-  | jq \[aq].[2]\[aq]
+$ jq \[aq].[2]\[aq] \[rs]
+  <<< \[aq][{\[dq]name\[dq]:\[dq]JSON\[dq], \[dq]good\[dq]:true}, {\[dq]name\[dq]:\[dq]XML\[dq], \[dq]good\[dq]:false}]\[aq]
 null
 .EE
 .IP
 .EX
-$ echo \[aq][1,2,3]\[aq] \[rs]
-  | jq \[aq].[\-2]\[aq]
+$ jq \[aq].[\-2]\[aq] \[rs]
+  <<< \[aq][1,2,3]\[aq]
 2
 .EE
 .SS Slicing operator: \f[CR].[f:g]\f[R]
@@ -1113,26 +1113,26 @@ Indices are zero\-based.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq] \[rs]
-  | jq \[aq].[2:4]\[aq]
+$ jq \[aq].[2:4]\[aq] \[rs]
+  <<< \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq]
 [\[dq]c\[dq], \[dq]d\[dq]]
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]abcdefghi\[dq]\[aq] \[rs]
-  | jq \[aq].[2:4]\[aq]
+$ jq \[aq].[2:4]\[aq] \[rs]
+  <<< \[aq]\[dq]abcdefghi\[dq]\[aq]
 \[dq]cd\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq] \[rs]
-  | jq \[aq].[:3]\[aq]
+$ jq \[aq].[:3]\[aq] \[rs]
+  <<< \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq]
 [\[dq]a\[dq], \[dq]b\[dq], \[dq]c\[dq]]
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq] \[rs]
-  | jq \[aq].[\-2:]\[aq]
+$ jq \[aq].[\-2:]\[aq] \[rs]
+  <<< \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq]
 [\[dq]d\[dq], \[dq]e\[dq]]
 .EE
 .SS Compound paths
@@ -1258,26 +1258,26 @@ will not raise \f[I]any\f[R] error.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 42, \[dq]bar\[dq]: \[dq]less interesting data\[dq]}\[aq] \[rs]
-  | jq \[aq].foo?\[aq]
+$ jq \[aq].foo?\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 42, \[dq]bar\[dq]: \[dq]less interesting data\[dq]}\[aq]
 42
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]notfoo\[dq]: true, \[dq]alsonotfoo\[dq]: false}\[aq] \[rs]
-  | jq \[aq].foo?\[aq]
+$ jq \[aq].foo?\[aq] \[rs]
+  <<< \[aq]{\[dq]notfoo\[dq]: true, \[dq]alsonotfoo\[dq]: false}\[aq]
 null
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 42}\[aq] \[rs]
-  | jq \[aq].[\[dq]foo\[dq]]?\[aq]
+$ jq \[aq].[\[dq]foo\[dq]]?\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 42}\[aq]
 42
 .EE
 .IP
 .EX
-$ echo \[aq][1,2]\[aq] \[rs]
-  | jq \[aq][.foo?]\[aq]
+$ jq \[aq][.foo?]\[aq] \[rs]
+  <<< \[aq][1,2]\[aq]
 []
 .EE
 .SH ARITHMETIC AND COMPARISON
@@ -1342,32 +1342,32 @@ unchanged.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: 7}\[aq] \[rs]
-  | jq \[aq].a + 1\[aq]
+$ jq \[aq].a + 1\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: 7}\[aq]
 8
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: [1,2], \[dq]b\[dq]: [3,4]}\[aq] \[rs]
-  | jq \[aq].a + .b\[aq]
+$ jq \[aq].a + .b\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: [1,2], \[dq]b\[dq]: [3,4]}\[aq]
 [1,2,3,4]
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: 1}\[aq] \[rs]
-  | jq \[aq].a + null\[aq]
+$ jq \[aq].a + null\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: 1}\[aq]
 1
 .EE
 .IP
 .EX
-$ echo \[aq]{}\[aq] \[rs]
-  | jq \[aq].a + 1\[aq]
+$ jq \[aq].a + 1\[aq] \[rs]
+  <<< \[aq]{}\[aq]
 1
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]{a: 1} + {b: 2} + {c: 3} + {a: 42}\[aq]
+$ jq \[aq]{a: 1} + {b: 2} + {c: 3} + {a: 42}\[aq] \[rs]
+  <<< \[aq]null\[aq]
 {\[dq]a\[dq]: 42, \[dq]b\[dq]: 2, \[dq]c\[dq]: 3}
 .EE
 .SS Subtraction: \f[CR]\-\f[R]
@@ -1378,14 +1378,14 @@ array\[cq]s elements from the first array.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]:3}\[aq] \[rs]
-  | jq \[aq]4 \- .a\[aq]
+$ jq \[aq]4 \- .a\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]:3}\[aq]
 1
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]xml\[dq], \[dq]yaml\[dq], \[dq]json\[dq]]\[aq] \[rs]
-  | jq \[aq]. \- [\[dq]xml\[dq], \[dq]yaml\[dq]]\[aq]
+$ jq \[aq]. \- [\[dq]xml\[dq], \[dq]yaml\[dq]]\[aq] \[rs]
+  <<< \[aq][\[dq]xml\[dq], \[dq]yaml\[dq], \[dq]json\[dq]]\[aq]
 [\[dq]json\[dq]]
 .EE
 .SS Multiplication, division, modulo: \f[CR]*\f[R], \f[CR]/\f[R], \f[CR]%\f[R]
@@ -1407,26 +1407,26 @@ values are objects, the two are merged with the same strategy.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]5\[aq] \[rs]
-  | jq \[aq]10 / . * 3\[aq]
+$ jq \[aq]10 / . * 3\[aq] \[rs]
+  <<< \[aq]5\[aq]
 6
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]a, b,c,d, e\[dq]\[aq] \[rs]
-  | jq \[aq]. / \[dq], \[dq]\[aq]
+$ jq \[aq]. / \[dq], \[dq]\[aq] \[rs]
+  <<< \[aq]\[dq]a, b,c,d, e\[dq]\[aq]
 [\[dq]a\[dq],\[dq]b,c,d\[dq],\[dq]e\[dq]]
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]{\[dq]k\[dq]: {\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}} * {\[dq]k\[dq]: {\[dq]a\[dq]: 0,\[dq]c\[dq]: 3}}\[aq]
+$ jq \[aq]{\[dq]k\[dq]: {\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}} * {\[dq]k\[dq]: {\[dq]a\[dq]: 0,\[dq]c\[dq]: 3}}\[aq] \[rs]
+  <<< \[aq]null\[aq]
 {\[dq]k\[dq]: {\[dq]a\[dq]: 0, \[dq]b\[dq]: 2, \[dq]c\[dq]: 3}}
 .EE
 .IP
 .EX
-$ echo \[aq][1,0,\-1]\[aq] \[rs]
-  | jq \[aq].[] | (1 / .)?\[aq]
+$ jq \[aq].[] | (1 / .)?\[aq] \[rs]
+  <<< \[aq][1,0,\-1]\[aq]
 1
 \-1
 .EE
@@ -1447,20 +1447,20 @@ The expression \f[CR]a != b\f[R] returns \f[CR]false\f[R] if
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]. == false\[aq]
+$ jq \[aq]. == false\[aq] \[rs]
+  <<< \[aq]null\[aq]
 false
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]:1, \[dq]b\[dq]: {\[dq]c\[dq]: 3, \[dq]d\[dq]: 4}}\[aq] \[rs]
-  | jq \[aq]. == {\[dq]b\[dq]: {\[dq]d\[dq]: (4 + 1e\-20), \[dq]c\[dq]: 3}, \[dq]a\[dq]:1}\[aq]
+$ jq \[aq]. == {\[dq]b\[dq]: {\[dq]d\[dq]: (4 + 1e\-20), \[dq]c\[dq]: 3}, \[dq]a\[dq]:1}\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]:1, \[dq]b\[dq]: {\[dq]c\[dq]: 3, \[dq]d\[dq]: 4}}\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][1, 1.0, \[dq]1\[dq], \[dq]banana\[dq]]\[aq] \[rs]
-  | jq \[aq].[] == 1\[aq]
+$ jq \[aq].[] == 1\[aq] \[rs]
+  <<< \[aq][1, 1.0, \[dq]1\[dq], \[dq]banana\[dq]]\[aq]
 true
 true
 false
@@ -1495,8 +1495,8 @@ their keys are equal then the values are compared key by key.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]2\[aq] \[rs]
-  | jq \[aq]. < 5\[aq]
+$ jq \[aq]. < 5\[aq] \[rs]
+  <<< \[aq]2\[aq]
 true
 .EE
 .SH BOOLEAN FILTERS
@@ -1545,14 +1545,14 @@ branch.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]2\[aq] \[rs]
-  | jq \[aq]if . == 0 then \[dq]zero\[dq] elif . == 1 then \[dq]one\[dq] else \[dq]many\[dq] end\[aq]
+$ jq \[aq]if . == 0 then \[dq]zero\[dq] elif . == 1 then \[dq]one\[dq] else \[dq]many\[dq] end\[aq] \[rs]
+  <<< \[aq]2\[aq]
 \[dq]many\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq][false, 1, null]\[aq] \[rs]
-  | jq \[aq].[] | if . then ., .+1 else . end\[aq]
+$ jq \[aq].[] | if . then ., .+1 else . end\[aq] \[rs]
+  <<< \[aq][false, 1, null]\[aq]
 false
 1
 2
@@ -1593,21 +1593,21 @@ below.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]42 and \[dq]a string\[dq]\[aq]
+$ jq \[aq]42 and \[dq]a string\[dq]\[aq] \[rs]
+  <<< \[aq]null\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq](true, false) or false\[aq]
+$ jq \[aq](true, false) or false\[aq] \[rs]
+  <<< \[aq]null\[aq]
 true
 false
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq](true, true) and (true, false)\[aq]
+$ jq \[aq](true, true) and (true, false)\[aq] \[rs]
+  <<< \[aq]null\[aq]
 true
 false
 true
@@ -1615,8 +1615,8 @@ false
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq][true, false | not]\[aq]
+$ jq \[aq][true, false | not]\[aq] \[rs]
+  <<< \[aq]null\[aq]
 [false, true]
 .EE
 .SS Alternative operator: \f[CR]//\f[R]
@@ -1656,32 +1656,32 @@ This is because \f[CR]false, 1 // 2\f[R] parses the same way as
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]empty // 42\[aq]
+$ jq \[aq]empty // 42\[aq] \[rs]
+  <<< \[aq]null\[aq]
 42
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 19}\[aq] \[rs]
-  | jq \[aq].foo // 42\[aq]
+$ jq \[aq].foo // 42\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 19}\[aq]
 19
 .EE
 .IP
 .EX
-$ echo \[aq]{}\[aq] \[rs]
-  | jq \[aq].foo // 42\[aq]
+$ jq \[aq].foo // 42\[aq] \[rs]
+  <<< \[aq]{}\[aq]
 42
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq](false, null, 1) // 42\[aq]
+$ jq \[aq](false, null, 1) // 42\[aq] \[rs]
+  <<< \[aq]null\[aq]
 1
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq](false, null, 1) | . // 42\[aq]
+$ jq \[aq](false, null, 1) | . // 42\[aq] \[rs]
+  <<< \[aq]null\[aq]
 42
 42
 1
@@ -1700,20 +1700,20 @@ handler.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]true\[aq] \[rs]
-  | jq \[aq]try .a catch \[dq]. is not an object\[dq]\[aq]
+$ jq \[aq]try .a catch \[dq]. is not an object\[dq]\[aq] \[rs]
+  <<< \[aq]true\[aq]
 \[dq]. is not an object\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq][{}, true, {\[dq]a\[dq]:1}]\[aq] \[rs]
-  | jq \[aq][.[]|try .a]\[aq]
+$ jq \[aq][.[]|try .a]\[aq] \[rs]
+  <<< \[aq][{}, true, {\[dq]a\[dq]:1}]\[aq]
 [null, 1]
 .EE
 .IP
 .EX
-$ echo \[aq]true\[aq] \[rs]
-  | jq \[aq]try error(\[dq]some exception\[dq]) catch .\[aq]
+$ jq \[aq]try error(\[dq]some exception\[dq]) catch .\[aq] \[rs]
+  <<< \[aq]true\[aq]
 \[dq]some exception\[dq]
 .EE
 .SS Error suppression: \f[CR]?\f[R]
@@ -1723,14 +1723,14 @@ The \f[CR]?\f[R] operator, used as \f[CR]f?\f[R], is shorthand for
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][{}, true, {\[dq]a\[dq]:1}]\[aq] \[rs]
-  | jq \[aq][.[] | .a?]\[aq]
+$ jq \[aq][.[] | .a?]\[aq] \[rs]
+  <<< \[aq][{}, true, {\[dq]a\[dq]:1}]\[aq]
 [null, 1]
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]1\[dq], \[dq]invalid\[dq], \[dq]3\[dq], 4]\[aq] \[rs]
-  | jq \[aq][.[] | tonumber?]\[aq]
+$ jq \[aq][.[] | tonumber?]\[aq] \[rs]
+  <<< \[aq][\[dq]1\[dq], \[dq]invalid\[dq], \[dq]3\[dq], 4]\[aq]
 [1, 3, 4]
 .EE
 .SS label\-break
@@ -1785,10 +1785,9 @@ To pass a value to another part of the program, you\[cq]ll need that
 part of the program to define a variable (as a function parameter,
 object member, or whatever) in which to place the data.
 .PP
-It is also possible to define functions in jq, which is used pervasively
-to define jq\[cq]s standard library.
-(In fact, many jq functions such as \f[CR]map\f[R] and \f[CR]select\f[R]
-are written in jq.)
+It is also possible to define functions in jq itself.
+In fact, many of jq\[cq]s built\-in functions, including \f[CR]map\f[R]
+and \f[CR]select\f[R], are written in jq.
 .SS Variable binding: \f[CR]f as $x | g\f[R]
 In jq, all filters have an input and an output, so manual plumbing is
 not necessary to pass a value from one part of a program to the next.
@@ -1804,10 +1803,8 @@ In jq, it\[cq]s simply \f[CR]add / length\f[R] \- the \f[CR]add\f[R]
 expression is given the array and produces its sum, and the
 \f[CR]length\f[R] expression is given the array and produces its length.
 .PP
-So, there\[cq]s generally a cleaner way to solve most problems in jq
-than defining variables.
-Still, sometimes they do make things easier, so jq lets you define
-variables using \f[CR]f as $x\f[R].
+So, variables are often unnecessary and sometimes even best avoided, but
+jq does let you define variables using the syntax \f[CR]f as $x\f[R].
 All variable names start with \f[CR]$\f[R].
 Here\[cq]s a slightly uglier version of the array\-averaging example:
 .IP
@@ -1817,7 +1814,8 @@ length as $array_length | add / $array_length
 .PP
 We\[cq]ll need a more complicated problem to find a situation where
 using variables actually makes our lives easier.
-.PP
+.TP
+\f[I]Example\f[R]
 Suppose we have an array of blog posts, with \[lq]author\[rq] and
 \[lq]title\[rq] fields, and another object which is used to map author
 usernames to real names.
@@ -1829,7 +1827,6 @@ Our input looks like:
  \[dq]realnames\[dq]: {\[dq]anon\[dq]: \[dq]Anonymous Coward\[dq],
                \[dq]person1\[dq]: \[dq]Person McPherson\[dq]}}
 .EE
-.PP
 We want to produce the posts with the author field containing a real
 name, as in:
 .IP
@@ -1837,7 +1834,6 @@ name, as in:
 {\[dq]title\[dq]: \[dq]First post\[dq], \[dq]author\[dq]: \[dq]Anonymous Coward\[dq]}
 {\[dq]title\[dq]: \[dq]A well\-written article\[dq], \[dq]author\[dq]: \[dq]Person McPherson\[dq]}
 .EE
-.PP
 We use a variable, \f[CR]$names\f[R], to store the realnames object, so
 that we can refer to it later when looking up author usernames:
 .IP
@@ -1858,14 +1854,14 @@ Just as \f[CR]{foo}\f[R] is a handy way of writing
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]:10, \[dq]bar\[dq]:200}\[aq] \[rs]
-  | jq \[aq].bar as $x | .foo | . + $x\[aq]
+$ jq \[aq].bar as $x | .foo | . + $x\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]:10, \[dq]bar\[dq]:200}\[aq]
 210
 .EE
 .IP
 .EX
-$ echo \[aq]5\[aq] \[rs]
-  | jq \[aq]. as $i|[(.*2|. as $i| $i), $i]\[aq]
+$ jq \[aq]. as $i|[(.*2|. as $i| $i), $i]\[aq] \[rs]
+  <<< \[aq]5\[aq]
 [10,5]
 .EE
 .SS Scoping
@@ -1934,22 +1930,22 @@ jaq does not support destructuring.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][2, 3, {\[dq]c\[dq]: 4, \[dq]d\[dq]: 5}]\[aq] \[rs]
-  | jq \[aq]. as [$a, $b, {c: $c}] | $a + $b + $c\[aq]
+$ jq \[aq]. as [$a, $b, {c: $c}] | $a + $b + $c\[aq] \[rs]
+  <<< \[aq][2, 3, {\[dq]c\[dq]: 4, \[dq]d\[dq]: 5}]\[aq]
 9
 .EE
 .IP
 .EX
-$ echo \[aq][[0], [0, 1], [2, 1, 0]]\[aq] \[rs]
-  | jq \[aq].[] as [$a, $b] | {a: $a, b: $b}\[aq]
+$ jq \[aq].[] as [$a, $b] | {a: $a, b: $b}\[aq] \[rs]
+  <<< \[aq][[0], [0, 1], [2, 1, 0]]\[aq]
 {\[dq]a\[dq]:0,\[dq]b\[dq]:null}
 {\[dq]a\[dq]:0,\[dq]b\[dq]:1}
 {\[dq]a\[dq]:2,\[dq]b\[dq]:1}
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}, {\[dq]a\[dq]: 3, \[dq]b\[dq]: 4}]\[aq] \[rs]
-  | jq \[aq]foreach .[] as {(\[dq]a\[dq], \[dq]b\[dq]): $x} ([]; . + [$x])\[aq]
+$ jq \[aq]foreach .[] as {(\[dq]a\[dq], \[dq]b\[dq]): $x} ([]; . + [$x])\[aq] \[rs]
+  <<< \[aq][{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}, {\[dq]a\[dq]: 3, \[dq]b\[dq]: 4}]\[aq]
 [1]
 [1,2]
 [1,2,3]
@@ -2014,22 +2010,22 @@ jaq does not support this operator.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: {\[dq]d\[dq]: 3, \[dq]e\[dq]: 4}}, {\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: [{\[dq]d\[dq]: 3, \[dq]e\[dq]: 4}]}]\[aq] \[rs]
-  | jq \[aq].[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}\[aq]
+$ jq \[aq].[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}\[aq] \[rs]
+  <<< \[aq][{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: {\[dq]d\[dq]: 3, \[dq]e\[dq]: 4}}, {\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: [{\[dq]d\[dq]: 3, \[dq]e\[dq]: 4}]}]\[aq]
 {\[dq]a\[dq]:1,\[dq]b\[dq]:2,\[dq]d\[dq]:3,\[dq]e\[dq]:4}
 {\[dq]a\[dq]:1,\[dq]b\[dq]:2,\[dq]d\[dq]:3,\[dq]e\[dq]:4}
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: {\[dq]d\[dq]: 3, \[dq]e\[dq]: 4}}, {\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: [{\[dq]d\[dq]: 3, \[dq]e\[dq]: 4}]}]\[aq] \[rs]
-  | jq \[aq].[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}\[aq]
+$ jq \[aq].[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}\[aq] \[rs]
+  <<< \[aq][{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: {\[dq]d\[dq]: 3, \[dq]e\[dq]: 4}}, {\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: [{\[dq]d\[dq]: 3, \[dq]e\[dq]: 4}]}]\[aq]
 {\[dq]a\[dq]:1,\[dq]b\[dq]:2,\[dq]d\[dq]:3,\[dq]e\[dq]:null}
 {\[dq]a\[dq]:1,\[dq]b\[dq]:2,\[dq]d\[dq]:null,\[dq]e\[dq]:4}
 .EE
 .IP
 .EX
-$ echo \[aq][[3]]\[aq] \[rs]
-  | jq \[aq].[] as [$a] ?// [$b] | if $a != null then error(\[dq]err: \[rs]($a)\[dq]) else {$a,$b} end\[aq]
+$ jq \[aq].[] as [$a] ?// [$b] | if $a != null then error(\[dq]err: \[rs]($a)\[dq]) else {$a,$b} end\[aq] \[rs]
+  <<< \[aq][[3]]\[aq]
 {\[dq]a\[dq]:null,\[dq]b\[dq]:3}
 .EE
 .SH REDUCTION
@@ -2081,20 +2077,20 @@ it yields:
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1,2,3,4,5]\[aq] \[rs]
-  | jq \[aq]reduce .[] as $item (0; . + $item)\[aq]
+$ jq \[aq]reduce .[] as $item (0; . + $item)\[aq] \[rs]
+  <<< \[aq][1,2,3,4,5]\[aq]
 15
 .EE
 .IP
 .EX
-$ echo \[aq][[1,2],[3,4],[5,6]]\[aq] \[rs]
-  | jq \[aq]reduce .[] as [$i,$j] (0; . + $i * $j)\[aq]
+$ jq \[aq]reduce .[] as [$i,$j] (0; . + $i * $j)\[aq] \[rs]
+  <<< \[aq][[1,2],[3,4],[5,6]]\[aq]
 44
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]x\[dq]:\[dq]a\[dq],\[dq]y\[dq]:1},{\[dq]x\[dq]:\[dq]b\[dq],\[dq]y\[dq]:2},{\[dq]x\[dq]:\[dq]c\[dq],\[dq]y\[dq]:3}]\[aq] \[rs]
-  | jq \[aq]reduce .[] as {$x,$y} (null; .x += $x | .y += [$y])\[aq]
+$ jq \[aq]reduce .[] as {$x,$y} (null; .x += $x | .y += [$y])\[aq] \[rs]
+  <<< \[aq][{\[dq]x\[dq]:\[dq]a\[dq],\[dq]y\[dq]:1},{\[dq]x\[dq]:\[dq]b\[dq],\[dq]y\[dq]:2},{\[dq]x\[dq]:\[dq]c\[dq],\[dq]y\[dq]:3}]\[aq]
 {\[dq]x\[dq]:\[dq]abc\[dq],\[dq]y\[dq]:[1,2,3]}
 .EE
 .SS \f[CR]foreach\f[R]
@@ -2164,8 +2160,8 @@ In contrast, jaq yields:
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1,2,3,4,5]\[aq] \[rs]
-  | jq \[aq]foreach .[] as $item (0; . + $item)\[aq]
+$ jq \[aq]foreach .[] as $item (0; . + $item)\[aq] \[rs]
+  <<< \[aq][1,2,3,4,5]\[aq]
 1
 3
 6
@@ -2174,8 +2170,8 @@ $ echo \[aq][1,2,3,4,5]\[aq] \[rs]
 .EE
 .IP
 .EX
-$ echo \[aq][1,2,3,4,5]\[aq] \[rs]
-  | jq \[aq]foreach .[] as $item (0; . + $item; [$item, . * 2])\[aq]
+$ jq \[aq]foreach .[] as $item (0; . + $item; [$item, . * 2])\[aq] \[rs]
+  <<< \[aq][1,2,3,4,5]\[aq]
 [1,2]
 [2,6]
 [3,12]
@@ -2184,8 +2180,8 @@ $ echo \[aq][1,2,3,4,5]\[aq] \[rs]
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]foo\[dq], \[dq]bar\[dq], \[dq]baz\[dq]]\[aq] \[rs]
-  | jq \[aq]foreach .[] as $item (0; . + 1; {index: ., $item})\[aq]
+$ jq \[aq]foreach .[] as $item (0; . + 1; {index: ., $item})\[aq] \[rs]
+  <<< \[aq][\[dq]foo\[dq], \[dq]bar\[dq], \[dq]baz\[dq]]\[aq]
 {\[dq]index\[dq]:1,\[dq]item\[dq]:\[dq]foo\[dq]}
 {\[dq]index\[dq]:2,\[dq]item\[dq]:\[dq]bar\[dq]}
 {\[dq]index\[dq]:3,\[dq]item\[dq]:\[dq]baz\[dq]}
@@ -2273,14 +2269,14 @@ See also the section on scoping.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][[1,2],[10,20]]\[aq] \[rs]
-  | jq \[aq]def addvalue(f): . + [f]; map(addvalue(.[0]))\[aq]
+$ jq \[aq]def addvalue(f): . + [f]; map(addvalue(.[0]))\[aq] \[rs]
+  <<< \[aq][[1,2],[10,20]]\[aq]
 [[1,2,1], [10,20,10]]
 .EE
 .IP
 .EX
-$ echo \[aq][[1,2],[10,20]]\[aq] \[rs]
-  | jq \[aq]def addvalue(f): f as $x | map(. + $x); addvalue(.[0])\[aq]
+$ jq \[aq]def addvalue(f): f as $x | map(. + $x); addvalue(.[0])\[aq] \[rs]
+  <<< \[aq][[1,2],[10,20]]\[aq]
 [[1,2,1,2], [10,20,1,2]]
 .EE
 .SS Recursion
@@ -2295,17 +2291,17 @@ call should not produce more than one output for each input.
 .TP
 \f[I]Example\f[R]
 The builtin function \f[CR]repeat\f[R] can be naively implemented like
-\f[CR]repeat1\f[R] below.
+\f[CR]repeat_naive\f[R] below.
 It is tail\-recursive, however, it binds \f[CR]f\f[R] to a new argument
-whenever \f[CR]repeat1\f[R] is called recursively.
+whenever \f[CR]repeat_naive\f[R] is called recursively.
 This makes \f[CR]f\f[R] more costly to call with every recursion step.
 For that reason, \f[CR]repeat\f[R] is implemented like below, where
 \f[CR]f\f[R] is bound only once, and the recursive call does not have to
 perform any binding.
 .IP
 .EX
-def repeat1(f):
-    f, repeat1(f);
+def repeat_naive(f):
+    f, repeat_naive(f);
 
 def repeat(f):
   def _repeat:
@@ -2319,12 +2315,18 @@ We apply a similar transformation as above for \f[CR]repeat\f[R] to keep
 the cost of calls to \f[CR]cond\f[R] and \f[CR]update\f[R] constant:
 .IP
 .EX
-def while1(cond; update):
-    if cond then ., (update | while1(cond; update)) else empty end;
+def while_naive(cond; update):
+    if cond
+    then ., (update | while_naive(cond; update))
+    else empty
+    end;
 
 def while (cond; update):
   def _while:
-    if cond then ., (update | _while              ) else empty end;
+    if cond
+    then ., (update | _while)
+    else empty
+    end;
   _while
 .EE
 .SS Generators and iterators
@@ -2357,8 +2359,8 @@ construction, and sub\-functions.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]def range(init; upto; by): def _range: if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto)); range(0; 10; 3)\[aq]
+$ jq \[aq]def range(init; upto; by): def _range: if (by > 0 and . < upto) or (by < 0 and . > upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by > 0 and . < upto) or (by < 0 and . > upto)); range(0; 10; 3)\[aq] \[rs]
+  <<< \[aq]null\[aq]
 0
 3
 6
@@ -2366,8 +2368,8 @@ $ echo \[aq]null\[aq] \[rs]
 .EE
 .IP
 .EX
-$ echo \[aq]1\[aq] \[rs]
-  | jq \[aq]def while(cond; update): def _while: if cond then ., (update | _while) else empty end; _while; [while(.<100; .*2)]\[aq]
+$ jq \[aq]def while(cond; update): def _while: if cond then ., (update | _while) else empty end; _while; [while(.<100; .*2)]\[aq] \[rs]
+  <<< \[aq]1\[aq]
 [1,2,4,8,16,32,64]
 .EE
 .SH ASSIGNMENT
@@ -2468,7 +2470,8 @@ The filter \f[CR]{a: 1} | .a = (2, 3)\f[R] yields two outputs, namely
 .TP
 \f[I]Note\f[R]
 The filter \f[CR]a = b\f[R] is equivalent to
-\f[CR]b as $x | a |= b\f[R].
+\f[CR]b as $x | a |= $x\f[R] (where \f[CR]$x\f[R] is a fresh variable
+name).
 .TP
 \f[I]Note\f[R]
 Assignment works a little differently in jq than in most programming
@@ -2495,14 +2498,14 @@ Most users will want to use modification assignment operators, such as
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: {\[dq]b\[dq]: 10}, \[dq]b\[dq]: 20}\[aq] \[rs]
-  | jq \[aq].a = .b\[aq]
+$ jq \[aq].a = .b\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: {\[dq]b\[dq]: 10}, \[dq]b\[dq]: 20}\[aq]
 {\[dq]a\[dq]:20,\[dq]b\[dq]:20}
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: {\[dq]b\[dq]: 10}, \[dq]b\[dq]: 20}\[aq] \[rs]
-  | jq \[aq].a |= .b\[aq]
+$ jq \[aq].a |= .b\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: {\[dq]b\[dq]: 10}, \[dq]b\[dq]: 20}\[aq]
 {\[dq]a\[dq]:10,\[dq]b\[dq]:20}
 .EE
 .SS Arithmetic update assignment: \f[CR]+=\f[R], \f[CR]\-=\f[R], \f[CR]*=\f[R], \f[CR]/=\f[R], \f[CR]%=\f[R], \f[CR]//=\f[R]
@@ -2535,8 +2538,8 @@ For any arithmetic operation \f[CR]op\f[R], the filter
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 42}\[aq] \[rs]
-  | jq \[aq].foo += 1\[aq]
+$ jq \[aq].foo += 1\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 42}\[aq]
 {\[dq]foo\[dq]: 43}
 .EE
 .SS Complex assignments
@@ -2613,22 +2616,22 @@ The filter \f[CR](.a,.b)=0\f[R] sets both.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][true,false,[5,true,[true,[false]],false]]\[aq] \[rs]
-  | jq \[aq](..|select(type==\[dq]boolean\[dq])) |= if . then 1 else 0 end\[aq]
+$ jq \[aq](..|select(type==\[dq]boolean\[dq])) |= if . then 1 else 0 end\[aq] \[rs]
+  <<< \[aq][true,false,[5,true,[true,[false]],false]]\[aq]
 [1,0,[5,1,[1,[0]],0]]
 .EE
 .IP
 .EX
-$ echo \[aq]{}\[aq] \[rs]
-  | jq \[aq](.a, .b) = range(3)\[aq]
+$ jq \[aq](.a, .b) = range(3)\[aq] \[rs]
+  <<< \[aq]{}\[aq]
 {\[dq]a\[dq]:0,\[dq]b\[dq]:0}
 {\[dq]a\[dq]:1,\[dq]b\[dq]:1}
 {\[dq]a\[dq]:2,\[dq]b\[dq]:2}
 .EE
 .IP
 .EX
-$ echo \[aq]{}\[aq] \[rs]
-  | jq \[aq](.a, .b) |= range(3)\[aq]
+$ jq \[aq](.a, .b) |= range(3)\[aq] \[rs]
+  <<< \[aq]{}\[aq]
 {\[dq]a\[dq]:0,\[dq]b\[dq]:0}
 .EE
 .SS Path expressions
@@ -2710,16 +2713,17 @@ Such an assignment will always return its input, because
 path.
 .TP
 \f[I]Compatibility\f[R]
-jaq uses a different approach than jq and gojq to run assignments, which
-does not construct compound paths during assignments.
-Due to this, jaq\[cq]s approach is generally more performant, but in
-certain scenarios, it can yield different outputs than jq, in particular
-when using \f[CR]f |= empty\f[R].
+jaq\[cq]s approach to handling assignments is quite different from that
+of jq and gojq.
+Specifically, jaq executes assignments without constructing compound
+paths.
+This means that jaq does not allow certain filters on the left\-hand
+side of assignments, notably \f[CR]f?\f[R] and \f[CR]label $x | f\f[R].
+jaq\[cq]s approach is generally more performant, but in certain
+scenarios, jaq and jq will produce different results, in particular when
+using \f[CR]f |= empty\f[R].
 However, for the examples in this section, jq and jaq yield the same
 outputs.
-Furthermore, jaq does not allow for certain filters on the left\-hand
-side of assignments, in particular \f[CR]f?\f[R] and
-\f[CR]label $x | f\f[R].
 .SH MANAGING LARGE PROGRAMS
 .SS Comments
 You can write comments in your jq programs using \f[CR]#\f[R].
@@ -2906,15 +2910,15 @@ You\[cq]ll know if you need it :)
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]1, empty, 2\[aq]
+$ jq \[aq]1, empty, 2\[aq] \[rs]
+  <<< \[aq]null\[aq]
 1
 2
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq][1,2,empty,3]\[aq]
+$ jq \[aq][1,2,empty,3]\[aq] \[rs]
+  <<< \[aq]null\[aq]
 [1,2,3]
 .EE
 .SS \f[CR]error\f[R], \f[CR]error(message)\f[R]
@@ -2925,14 +2929,14 @@ Errors can be caught with try/catch.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]error message\[dq]\[aq] \[rs]
-  | jq \[aq]try error catch .\[aq]
+$ jq \[aq]try error catch .\[aq] \[rs]
+  <<< \[aq]\[dq]error message\[dq]\[aq]
 \[dq]error message\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq]42\[aq] \[rs]
-  | jq \[aq]try error(\[dq]invalid value: \[rs](.)\[dq]) catch .\[aq]
+$ jq \[aq]try error(\[dq]invalid value: \[rs](.)\[dq]) catch .\[aq] \[rs]
+  <<< \[aq]42\[aq]
 \[dq]invalid value: 42\[dq]
 .EE
 .SS \f[CR]length\f[R]
@@ -2956,8 +2960,8 @@ It is an error to use \f[CR]length\f[R] on a \f[B]boolean\f[R].
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][[1,2], \[dq]string\[dq], {\[dq]a\[dq]:2}, null, \-5]\[aq] \[rs]
-  | jq \[aq].[] | length\[aq]
+$ jq \[aq].[] | length\[aq] \[rs]
+  <<< \[aq][[1,2], \[dq]string\[dq], {\[dq]a\[dq]:2}, null, \-5]\[aq]
 2
 6
 1
@@ -2984,14 +2988,14 @@ keys will roughly be in insertion order.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]abc\[dq]: 1, \[dq]abcd\[dq]: 2, \[dq]Foo\[dq]: 3}\[aq] \[rs]
-  | jq \[aq]keys\[aq]
+$ jq \[aq]keys\[aq] \[rs]
+  <<< \[aq]{\[dq]abc\[dq]: 1, \[dq]abcd\[dq]: 2, \[dq]Foo\[dq]: 3}\[aq]
 [\[dq]Foo\[dq], \[dq]abc\[dq], \[dq]abcd\[dq]]
 .EE
 .IP
 .EX
-$ echo \[aq][42,3,35]\[aq] \[rs]
-  | jq \[aq]keys\[aq]
+$ jq \[aq]keys\[aq] \[rs]
+  <<< \[aq][42,3,35]\[aq]
 [0,1,2]
 .EE
 .SS \f[CR]map(f)\f[R], \f[CR]map_values(f)\f[R]
@@ -3042,26 +3046,26 @@ In fact, these are their implementations.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1,2,3]\[aq] \[rs]
-  | jq \[aq]map(.+1)\[aq]
+$ jq \[aq]map(.+1)\[aq] \[rs]
+  <<< \[aq][1,2,3]\[aq]
 [2,3,4]
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: 3}\[aq] \[rs]
-  | jq \[aq]map_values(.+1)\[aq]
+$ jq \[aq]map_values(.+1)\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: 3}\[aq]
 {\[dq]a\[dq]: 2, \[dq]b\[dq]: 3, \[dq]c\[dq]: 4}
 .EE
 .IP
 .EX
-$ echo \[aq][1,2]\[aq] \[rs]
-  | jq \[aq]map(., .)\[aq]
+$ jq \[aq]map(., .)\[aq] \[rs]
+  <<< \[aq][1,2]\[aq]
 [1,1,2,2]
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: null, \[dq]b\[dq]: true, \[dq]c\[dq]: false}\[aq] \[rs]
-  | jq \[aq]map_values(. // empty)\[aq]
+$ jq \[aq]map_values(. // empty)\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: null, \[dq]b\[dq]: true, \[dq]c\[dq]: false}\[aq]
 {\[dq]b\[dq]:true}
 .EE
 .SS \f[CR]to_entries\f[R], \f[CR]from_entries\f[R], \f[CR]with_entries(f)\f[R]
@@ -3083,20 +3087,20 @@ operation to all keys and values of an object.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}\[aq] \[rs]
-  | jq \[aq]to_entries\[aq]
+$ jq \[aq]to_entries\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}\[aq]
 [{\[dq]key\[dq]:\[dq]a\[dq], \[dq]value\[dq]:1}, {\[dq]key\[dq]:\[dq]b\[dq], \[dq]value\[dq]:2}]
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]key\[dq]:\[dq]a\[dq], \[dq]value\[dq]:1}, {\[dq]key\[dq]:\[dq]b\[dq], \[dq]value\[dq]:2}]\[aq] \[rs]
-  | jq \[aq]from_entries\[aq]
+$ jq \[aq]from_entries\[aq] \[rs]
+  <<< \[aq][{\[dq]key\[dq]:\[dq]a\[dq], \[dq]value\[dq]:1}, {\[dq]key\[dq]:\[dq]b\[dq], \[dq]value\[dq]:2}]\[aq]
 {\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}\[aq] \[rs]
-  | jq \[aq]with_entries(.key |= \[dq]KEY_\[dq] + .)\[aq]
+$ jq \[aq]with_entries(.key |= \[dq]KEY_\[dq] + .)\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}\[aq]
 {\[dq]KEY_a\[dq]: 1, \[dq]KEY_b\[dq]: 2}
 .EE
 .SS \f[CR]not\f[R]
@@ -3117,14 +3121,14 @@ It\[cq]s useful for filtering lists:
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1,5,3,0,7]\[aq] \[rs]
-  | jq \[aq]map(select(. >= 2))\[aq]
+$ jq \[aq]map(select(. >= 2))\[aq] \[rs]
+  <<< \[aq][1,5,3,0,7]\[aq]
 [5,3,7]
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]id\[dq]: \[dq]first\[dq], \[dq]val\[dq]: 1}, {\[dq]id\[dq]: \[dq]second\[dq], \[dq]val\[dq]: 2}]\[aq] \[rs]
-  | jq \[aq].[] | select(.id == \[dq]second\[dq])\[aq]
+$ jq \[aq].[] | select(.id == \[dq]second\[dq])\[aq] \[rs]
+  <<< \[aq][{\[dq]id\[dq]: \[dq]first\[dq], \[dq]val\[dq]: 1}, {\[dq]id\[dq]: \[dq]second\[dq], \[dq]val\[dq]: 2}]\[aq]
 {\[dq]id\[dq]: \[dq]second\[dq], \[dq]val\[dq]: 2}
 .EE
 .SS \f[CR]type\f[R]
@@ -3134,8 +3138,8 @@ string, which is one of null, boolean, number, string, array or object.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][0, false, [], {}, null, \[dq]hello\[dq]]\[aq] \[rs]
-  | jq \[aq]map(type)\[aq]
+$ jq \[aq]map(type)\[aq] \[rs]
+  <<< \[aq][0, false, [], {}, null, \[dq]hello\[dq]]\[aq]
 [\[dq]number\[dq], \[dq]boolean\[dq], \[dq]array\[dq], \[dq]object\[dq], \[dq]null\[dq], \[dq]string\[dq]]
 .EE
 .SS \f[CR]arrays\f[R], \f[CR]objects\f[R], \f[CR]iterables\f[R], \f[CR]booleans\f[R], \f[CR]numbers\f[R], \f[CR]normals\f[R], \f[CR]finites\f[R], \f[CR]strings\f[R], \f[CR]nulls\f[R], \f[CR]values\f[R], \f[CR]scalars\f[R]
@@ -3146,8 +3150,8 @@ strings, null, non\-null values, and non\-iterables, respectively.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][[],{},1,\[dq]foo\[dq],null,true,false]\[aq] \[rs]
-  | jq \[aq].[]|numbers\[aq]
+$ jq \[aq].[]|numbers\[aq] \[rs]
+  <<< \[aq][[],{},1,\[dq]foo\[dq],null,true,false]\[aq]
 1
 .EE
 .SS Membership functions
@@ -3164,32 +3168,32 @@ equal.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]foobar\[dq]\[aq] \[rs]
-  | jq \[aq]contains(\[dq]bar\[dq])\[aq]
+$ jq \[aq]contains(\[dq]bar\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]foobar\[dq]\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]foobar\[dq], \[dq]foobaz\[dq], \[dq]blarp\[dq]]\[aq] \[rs]
-  | jq \[aq]contains([\[dq]baz\[dq], \[dq]bar\[dq]])\[aq]
+$ jq \[aq]contains([\[dq]baz\[dq], \[dq]bar\[dq]])\[aq] \[rs]
+  <<< \[aq][\[dq]foobar\[dq], \[dq]foobaz\[dq], \[dq]blarp\[dq]]\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]foobar\[dq], \[dq]foobaz\[dq], \[dq]blarp\[dq]]\[aq] \[rs]
-  | jq \[aq]contains([\[dq]bazzzzz\[dq], \[dq]bar\[dq]])\[aq]
+$ jq \[aq]contains([\[dq]bazzzzz\[dq], \[dq]bar\[dq]])\[aq] \[rs]
+  <<< \[aq][\[dq]foobar\[dq], \[dq]foobaz\[dq], \[dq]blarp\[dq]]\[aq]
 false
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 12, \[dq]bar\[dq]:[1,2,{\[dq]barp\[dq]:12, \[dq]blip\[dq]:13}]}\[aq] \[rs]
-  | jq \[aq]contains({foo: 12, bar: [{barp: 12}]})\[aq]
+$ jq \[aq]contains({foo: 12, bar: [{barp: 12}]})\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 12, \[dq]bar\[dq]:[1,2,{\[dq]barp\[dq]:12, \[dq]blip\[dq]:13}]}\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 12, \[dq]bar\[dq]:[1,2,{\[dq]barp\[dq]:12, \[dq]blip\[dq]:13}]}\[aq] \[rs]
-  | jq \[aq]contains({foo: 12, bar: [{barp: 15}]})\[aq]
+$ jq \[aq]contains({foo: 12, bar: [{barp: 15}]})\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 12, \[dq]bar\[dq]:[1,2,{\[dq]barp\[dq]:12, \[dq]blip\[dq]:13}]}\[aq]
 false
 .EE
 .SS \f[CR]indices(s)\f[R]
@@ -3202,20 +3206,20 @@ match those of \f[CR]s\f[R].
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]a,b, cd, efg, hijk\[dq]\[aq] \[rs]
-  | jq \[aq]indices(\[dq], \[dq])\[aq]
+$ jq \[aq]indices(\[dq], \[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]a,b, cd, efg, hijk\[dq]\[aq]
 [3,7,12]
 .EE
 .IP
 .EX
-$ echo \[aq][0,1,2,1,3,1,4]\[aq] \[rs]
-  | jq \[aq]indices(1)\[aq]
+$ jq \[aq]indices(1)\[aq] \[rs]
+  <<< \[aq][0,1,2,1,3,1,4]\[aq]
 [1,3,5]
 .EE
 .IP
 .EX
-$ echo \[aq][0,1,2,3,1,4,2,5,1,2,6,7]\[aq] \[rs]
-  | jq \[aq]indices([1,2])\[aq]
+$ jq \[aq]indices([1,2])\[aq] \[rs]
+  <<< \[aq][0,1,2,3,1,4,2,5,1,2,6,7]\[aq]
 [1,8]
 .EE
 .SS \f[CR]index(s)\f[R], \f[CR]rindex(s)\f[R]
@@ -3225,38 +3229,38 @@ Outputs the index of the first (\f[CR]index\f[R]) or last
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]a,b, cd, efg, hijk\[dq]\[aq] \[rs]
-  | jq \[aq]index(\[dq], \[dq])\[aq]
+$ jq \[aq]index(\[dq], \[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]a,b, cd, efg, hijk\[dq]\[aq]
 3
 .EE
 .IP
 .EX
-$ echo \[aq][0,1,2,1,3,1,4]\[aq] \[rs]
-  | jq \[aq]index(1)\[aq]
+$ jq \[aq]index(1)\[aq] \[rs]
+  <<< \[aq][0,1,2,1,3,1,4]\[aq]
 1
 .EE
 .IP
 .EX
-$ echo \[aq][0,1,2,3,1,4,2,5,1,2,6,7]\[aq] \[rs]
-  | jq \[aq]index([1,2])\[aq]
+$ jq \[aq]index([1,2])\[aq] \[rs]
+  <<< \[aq][0,1,2,3,1,4,2,5,1,2,6,7]\[aq]
 1
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]a,b, cd, efg, hijk\[dq]\[aq] \[rs]
-  | jq \[aq]rindex(\[dq], \[dq])\[aq]
+$ jq \[aq]rindex(\[dq], \[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]a,b, cd, efg, hijk\[dq]\[aq]
 12
 .EE
 .IP
 .EX
-$ echo \[aq][0,1,2,1,3,1,4]\[aq] \[rs]
-  | jq \[aq]rindex(1)\[aq]
+$ jq \[aq]rindex(1)\[aq] \[rs]
+  <<< \[aq][0,1,2,1,3,1,4]\[aq]
 5
 .EE
 .IP
 .EX
-$ echo \[aq][0,1,2,3,1,4,2,5,1,2,6,7]\[aq] \[rs]
-  | jq \[aq]rindex([1,2])\[aq]
+$ jq \[aq]rindex([1,2])\[aq] \[rs]
+  <<< \[aq][0,1,2,3,1,4,2,5,1,2,6,7]\[aq]
 8
 .EE
 .SS \f[CR]inside\f[R]
@@ -3267,32 +3271,32 @@ It is, essentially, an inversed version of \f[CR]contains\f[R].
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]bar\[dq]\[aq] \[rs]
-  | jq \[aq]inside(\[dq]foobar\[dq])\[aq]
+$ jq \[aq]inside(\[dq]foobar\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]bar\[dq]\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]baz\[dq], \[dq]bar\[dq]]\[aq] \[rs]
-  | jq \[aq]inside([\[dq]foobar\[dq], \[dq]foobaz\[dq], \[dq]blarp\[dq]])\[aq]
+$ jq \[aq]inside([\[dq]foobar\[dq], \[dq]foobaz\[dq], \[dq]blarp\[dq]])\[aq] \[rs]
+  <<< \[aq][\[dq]baz\[dq], \[dq]bar\[dq]]\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]bazzzzz\[dq], \[dq]bar\[dq]]\[aq] \[rs]
-  | jq \[aq]inside([\[dq]foobar\[dq], \[dq]foobaz\[dq], \[dq]blarp\[dq]])\[aq]
+$ jq \[aq]inside([\[dq]foobar\[dq], \[dq]foobaz\[dq], \[dq]blarp\[dq]])\[aq] \[rs]
+  <<< \[aq][\[dq]bazzzzz\[dq], \[dq]bar\[dq]]\[aq]
 false
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 12, \[dq]bar\[dq]: [{\[dq]barp\[dq]: 12}]}\[aq] \[rs]
-  | jq \[aq]inside({\[dq]foo\[dq]: 12, \[dq]bar\[dq]:[1,2,{\[dq]barp\[dq]:12, \[dq]blip\[dq]:13}]})\[aq]
+$ jq \[aq]inside({\[dq]foo\[dq]: 12, \[dq]bar\[dq]:[1,2,{\[dq]barp\[dq]:12, \[dq]blip\[dq]:13}]})\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 12, \[dq]bar\[dq]: [{\[dq]barp\[dq]: 12}]}\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 12, \[dq]bar\[dq]: [{\[dq]barp\[dq]: 15}]}\[aq] \[rs]
-  | jq \[aq]inside({\[dq]foo\[dq]: 12, \[dq]bar\[dq]:[1,2,{\[dq]barp\[dq]:12, \[dq]blip\[dq]:13}]})\[aq]
+$ jq \[aq]inside({\[dq]foo\[dq]: 12, \[dq]bar\[dq]:[1,2,{\[dq]barp\[dq]:12, \[dq]blip\[dq]:13}]})\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 12, \[dq]bar\[dq]: [{\[dq]barp\[dq]: 15}]}\[aq]
 false
 .EE
 .SS \f[CR]has(key)\f[R]
@@ -3306,14 +3310,14 @@ although \f[CR]has\f[R] will be faster.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][{\[dq]foo\[dq]: 42}, {}]\[aq] \[rs]
-  | jq \[aq]map(has(\[dq]foo\[dq]))\[aq]
+$ jq \[aq]map(has(\[dq]foo\[dq]))\[aq] \[rs]
+  <<< \[aq][{\[dq]foo\[dq]: 42}, {}]\[aq]
 [true, false]
 .EE
 .IP
 .EX
-$ echo \[aq][[0,1], [\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq]]]\[aq] \[rs]
-  | jq \[aq]map(has(2))\[aq]
+$ jq \[aq]map(has(2))\[aq] \[rs]
+  <<< \[aq][[0,1], [\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq]]]\[aq]
 [false, true]
 .EE
 .SS \f[CR]in\f[R]
@@ -3325,15 +3329,15 @@ It is, essentially, an inversed version of \f[CR]has\f[R].
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\[dq]foo\[dq], \[dq]bar\[dq]]\[aq] \[rs]
-  | jq \[aq].[] | in({\[dq]foo\[dq]: 42})\[aq]
+$ jq \[aq].[] | in({\[dq]foo\[dq]: 42})\[aq] \[rs]
+  <<< \[aq][\[dq]foo\[dq], \[dq]bar\[dq]]\[aq]
 true
 false
 .EE
 .IP
 .EX
-$ echo \[aq][2, 0]\[aq] \[rs]
-  | jq \[aq]map(in([0,1]))\[aq]
+$ jq \[aq]map(in([0,1]))\[aq] \[rs]
+  <<< \[aq][2, 0]\[aq]
 [false, true]
 .EE
 .SS \f[CR]bsearch(x)\f[R]
@@ -3348,20 +3352,20 @@ that is probably of no interest.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][0,1]\[aq] \[rs]
-  | jq \[aq]bsearch(0)\[aq]
+$ jq \[aq]bsearch(0)\[aq] \[rs]
+  <<< \[aq][0,1]\[aq]
 0
 .EE
 .IP
 .EX
-$ echo \[aq][1,2,3]\[aq] \[rs]
-  | jq \[aq]bsearch(0)\[aq]
+$ jq \[aq]bsearch(0)\[aq] \[rs]
+  <<< \[aq][1,2,3]\[aq]
 \-1
 .EE
 .IP
 .EX
-$ echo \[aq][1,2,3]\[aq] \[rs]
-  | jq \[aq]bsearch(4) as $ix | if $ix < 0 then .[\-(1+$ix)] = 4 else . end\[aq]
+$ jq \[aq]bsearch(4) as $ix | if $ix < 0 then .[\-(1+$ix)] = 4 else . end\[aq] \[rs]
+  <<< \[aq][1,2,3]\[aq]
 [1,2,3,4]
 .EE
 .SS Path expression functions
@@ -3397,14 +3401,14 @@ paths.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]path(.a[0].b)\[aq]
+$ jq \[aq]path(.a[0].b)\[aq] \[rs]
+  <<< \[aq]null\[aq]
 [\[dq]a\[dq],0,\[dq]b\[dq]]
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]:[{\[dq]b\[dq]:1}]}\[aq] \[rs]
-  | jq \[aq][path(..)]\[aq]
+$ jq \[aq][path(..)]\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]:[{\[dq]b\[dq]:1}]}\[aq]
 [[],[\[dq]a\[dq]],[\[dq]a\[dq],0],[\[dq]a\[dq],0,\[dq]b\[dq]]]
 .EE
 .SS \f[CR]del(path_expression)\f[R]
@@ -3414,14 +3418,14 @@ value from an object.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]: 42, \[dq]bar\[dq]: 9001, \[dq]baz\[dq]: 42}\[aq] \[rs]
-  | jq \[aq]del(.foo)\[aq]
+$ jq \[aq]del(.foo)\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]: 42, \[dq]bar\[dq]: 9001, \[dq]baz\[dq]: 42}\[aq]
 {\[dq]bar\[dq]: 9001, \[dq]baz\[dq]: 42}
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]foo\[dq], \[dq]bar\[dq], \[dq]baz\[dq]]\[aq] \[rs]
-  | jq \[aq]del(.[1, 2])\[aq]
+$ jq \[aq]del(.[1, 2])\[aq] \[rs]
+  <<< \[aq][\[dq]foo\[dq], \[dq]bar\[dq], \[dq]baz\[dq]]\[aq]
 [\[dq]foo\[dq]]
 .EE
 .SS \f[CR]pick(pathexps)\f[R]
@@ -3435,14 +3439,14 @@ not be used.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: {\[dq]c\[dq]: 2, \[dq]d\[dq]: 3}, \[dq]e\[dq]: 4}\[aq] \[rs]
-  | jq \[aq]pick(.a, .b.c, .x)\[aq]
+$ jq \[aq]pick(.a, .b.c, .x)\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: {\[dq]c\[dq]: 2, \[dq]d\[dq]: 3}, \[dq]e\[dq]: 4}\[aq]
 {\[dq]a\[dq]:1,\[dq]b\[dq]:{\[dq]c\[dq]:2},\[dq]x\[dq]:null}
 .EE
 .IP
 .EX
-$ echo \[aq][1,2,3,4]\[aq] \[rs]
-  | jq \[aq]pick(.[2], .[0], .[0])\[aq]
+$ jq \[aq]pick(.[2], .[0], .[0])\[aq] \[rs]
+  <<< \[aq][1,2,3,4]\[aq]
 [1,null,3]
 .EE
 .SS Path functions
@@ -3461,14 +3465,14 @@ all numeric values.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1,[[],{\[dq]a\[dq]:2}]]\[aq] \[rs]
-  | jq \[aq][paths]\[aq]
+$ jq \[aq][paths]\[aq] \[rs]
+  <<< \[aq][1,[[],{\[dq]a\[dq]:2}]]\[aq]
 [[0],[1],[1,0],[1,1],[1,1,\[dq]a\[dq]]]
 .EE
 .IP
 .EX
-$ echo \[aq][1,[[],{\[dq]a\[dq]:2}]]\[aq] \[rs]
-  | jq \[aq][paths(type == \[dq]number\[dq])]\[aq]
+$ jq \[aq][paths(type == \[dq]number\[dq])]\[aq] \[rs]
+  <<< \[aq][1,[[],{\[dq]a\[dq]:2}]]\[aq]
 [[0],[1,1,\[dq]a\[dq]]]
 .EE
 .SS \f[CR]getpath(PATHS)\f[R]
@@ -3478,14 +3482,14 @@ The builtin function \f[CR]getpath\f[R] outputs the values in
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]getpath([\[dq]a\[dq],\[dq]b\[dq]])\[aq]
+$ jq \[aq]getpath([\[dq]a\[dq],\[dq]b\[dq]])\[aq] \[rs]
+  <<< \[aq]null\[aq]
 null
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]:{\[dq]b\[dq]:0, \[dq]c\[dq]:1}}\[aq] \[rs]
-  | jq \[aq][getpath([\[dq]a\[dq],\[dq]b\[dq]], [\[dq]a\[dq],\[dq]c\[dq]])]\[aq]
+$ jq \[aq][getpath([\[dq]a\[dq],\[dq]b\[dq]], [\[dq]a\[dq],\[dq]c\[dq]])]\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]:{\[dq]b\[dq]:0, \[dq]c\[dq]:1}}\[aq]
 [0, 1]
 .EE
 .SS \f[CR]setpath(PATHS; VALUE)\f[R]
@@ -3495,20 +3499,20 @@ The builtin function \f[CR]setpath\f[R] sets the \f[CR]PATHS\f[R] in
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]setpath([\[dq]a\[dq],\[dq]b\[dq]]; 1)\[aq]
+$ jq \[aq]setpath([\[dq]a\[dq],\[dq]b\[dq]]; 1)\[aq] \[rs]
+  <<< \[aq]null\[aq]
 {\[dq]a\[dq]: {\[dq]b\[dq]: 1}}
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]:{\[dq]b\[dq]:0}}\[aq] \[rs]
-  | jq \[aq]setpath([\[dq]a\[dq],\[dq]b\[dq]]; 1)\[aq]
+$ jq \[aq]setpath([\[dq]a\[dq],\[dq]b\[dq]]; 1)\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]:{\[dq]b\[dq]:0}}\[aq]
 {\[dq]a\[dq]: {\[dq]b\[dq]: 1}}
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]setpath([0,\[dq]a\[dq]]; 1)\[aq]
+$ jq \[aq]setpath([0,\[dq]a\[dq]]; 1)\[aq] \[rs]
+  <<< \[aq]null\[aq]
 [{\[dq]a\[dq]:1}]
 .EE
 .SS \f[CR]delpaths(PATHS)\f[R]
@@ -3520,8 +3524,8 @@ of strings and numbers.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]:{\[dq]b\[dq]:1},\[dq]x\[dq]:{\[dq]y\[dq]:2}}\[aq] \[rs]
-  | jq \[aq]delpaths([[\[dq]a\[dq],\[dq]b\[dq]]])\[aq]
+$ jq \[aq]delpaths([[\[dq]a\[dq],\[dq]b\[dq]]])\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]:{\[dq]b\[dq]:1},\[dq]x\[dq]:{\[dq]y\[dq]:2}}\[aq]
 {\[dq]a\[dq]:{},\[dq]x\[dq]:{\[dq]y\[dq]:2}}
 .EE
 .SS Reduction functions
@@ -3540,26 +3544,26 @@ the input.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq]]\[aq] \[rs]
-  | jq \[aq]add\[aq]
+$ jq \[aq]add\[aq] \[rs]
+  <<< \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq]]\[aq]
 \[dq]abc\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq][1, 2, 3]\[aq] \[rs]
-  | jq \[aq]add\[aq]
+$ jq \[aq]add\[aq] \[rs]
+  <<< \[aq][1, 2, 3]\[aq]
 6
 .EE
 .IP
 .EX
-$ echo \[aq][]\[aq] \[rs]
-  | jq \[aq]add\[aq]
+$ jq \[aq]add\[aq] \[rs]
+  <<< \[aq][]\[aq]
 null
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]a\[dq]:3}, {\[dq]a\[dq]:5}, {\[dq]b\[dq]:6}]\[aq] \[rs]
-  | jq \[aq]add(.[].a)\[aq]
+$ jq \[aq]add(.[].a)\[aq] \[rs]
+  <<< \[aq][{\[dq]a\[dq]:3}, {\[dq]a\[dq]:5}, {\[dq]b\[dq]:6}]\[aq]
 8
 .EE
 .SS \f[CR]any\f[R], \f[CR]any(condition)\f[R], \f[CR]any(generator; condition)\f[R]
@@ -3578,20 +3582,20 @@ condition to all the outputs of the given generator.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][true, false]\[aq] \[rs]
-  | jq \[aq]any\[aq]
+$ jq \[aq]any\[aq] \[rs]
+  <<< \[aq][true, false]\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][false, false]\[aq] \[rs]
-  | jq \[aq]any\[aq]
+$ jq \[aq]any\[aq] \[rs]
+  <<< \[aq][false, false]\[aq]
 false
 .EE
 .IP
 .EX
-$ echo \[aq][]\[aq] \[rs]
-  | jq \[aq]any\[aq]
+$ jq \[aq]any\[aq] \[rs]
+  <<< \[aq][]\[aq]
 false
 .EE
 .SS \f[CR]all\f[R], \f[CR]all(condition)\f[R], \f[CR]all(generator; condition)\f[R]
@@ -3610,20 +3614,20 @@ If the input is an empty array, \f[CR]all\f[R] returns \f[CR]true\f[R].
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][true, false]\[aq] \[rs]
-  | jq \[aq]all\[aq]
+$ jq \[aq]all\[aq] \[rs]
+  <<< \[aq][true, false]\[aq]
 false
 .EE
 .IP
 .EX
-$ echo \[aq][true, true]\[aq] \[rs]
-  | jq \[aq]all\[aq]
+$ jq \[aq]all\[aq] \[rs]
+  <<< \[aq][true, true]\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][]\[aq] \[rs]
-  | jq \[aq]all\[aq]
+$ jq \[aq]all\[aq] \[rs]
+  <<< \[aq][]\[aq]
 true
 .EE
 .SS Number functions
@@ -3680,8 +3684,8 @@ you may wish use \f[CR]fabs\f[R].
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\-10, \-1.1, \-1e\-1]\[aq] \[rs]
-  | jq \[aq]map(abs)\[aq]
+$ jq \[aq]map(abs)\[aq] \[rs]
+  <<< \[aq][\-10, \-1.1, \-1e\-1]\[aq]
 [10,1.1,1e\-1]
 .EE
 .SS \f[CR]floor\f[R]
@@ -3690,8 +3694,8 @@ The \f[CR]floor\f[R] function returns the floor of its numeric input.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]3.14159\[aq] \[rs]
-  | jq \[aq]floor\[aq]
+$ jq \[aq]floor\[aq] \[rs]
+  <<< \[aq]3.14159\[aq]
 3
 .EE
 .SS \f[CR]sqrt\f[R]
@@ -3701,8 +3705,8 @@ input.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]9\[aq] \[rs]
-  | jq \[aq]sqrt\[aq]
+$ jq \[aq]sqrt\[aq] \[rs]
+  <<< \[aq]9\[aq]
 3
 .EE
 .SS \f[CR]infinite\f[R], \f[CR]nan\f[R], \f[CR]isinfinite\f[R], \f[CR]isnan\f[R], \f[CR]isfinite\f[R], \f[CR]isnormal\f[R]
@@ -3725,15 +3729,15 @@ sub\-normals do not raise errors.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\-1, 1]\[aq] \[rs]
-  | jq \[aq].[] | (infinite * .) < 0\[aq]
+$ jq \[aq].[] | (infinite * .) < 0\[aq] \[rs]
+  <<< \[aq][\-1, 1]\[aq]
 true
 false
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]infinite, nan | type\[aq]
+$ jq \[aq]infinite, nan | type\[aq] \[rs]
+  <<< \[aq]null\[aq]
 \[dq]number\[dq]
 \[dq]number\[dq]
 .EE
@@ -3753,20 +3757,20 @@ so on.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][8,3,null,6]\[aq] \[rs]
-  | jq \[aq]sort\[aq]
+$ jq \[aq]sort\[aq] \[rs]
+  <<< \[aq][8,3,null,6]\[aq]
 [null,3,6,8]
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]foo\[dq]:4, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:2, \[dq]bar\[dq]:1}]\[aq] \[rs]
-  | jq \[aq]sort_by(.foo)\[aq]
+$ jq \[aq]sort_by(.foo)\[aq] \[rs]
+  <<< \[aq][{\[dq]foo\[dq]:4, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:2, \[dq]bar\[dq]:1}]\[aq]
 [{\[dq]foo\[dq]:2, \[dq]bar\[dq]:1}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:4, \[dq]bar\[dq]:10}]
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]foo\[dq]:4, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:20}, {\[dq]foo\[dq]:2, \[dq]bar\[dq]:1}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:10}]\[aq] \[rs]
-  | jq \[aq]sort_by(.foo, .bar)\[aq]
+$ jq \[aq]sort_by(.foo, .bar)\[aq] \[rs]
+  <<< \[aq][{\[dq]foo\[dq]:4, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:20}, {\[dq]foo\[dq]:2, \[dq]bar\[dq]:1}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:10}]\[aq]
 [{\[dq]foo\[dq]:2, \[dq]bar\[dq]:1}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:20}, {\[dq]foo\[dq]:4, \[dq]bar\[dq]:10}]
 .EE
 .SS \f[CR]group_by(path_expression)\f[R]
@@ -3783,8 +3787,8 @@ function above.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][{\[dq]foo\[dq]:1, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:100}, {\[dq]foo\[dq]:1, \[dq]bar\[dq]:1}]\[aq] \[rs]
-  | jq \[aq]group_by(.foo)\[aq]
+$ jq \[aq]group_by(.foo)\[aq] \[rs]
+  <<< \[aq][{\[dq]foo\[dq]:1, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:3, \[dq]bar\[dq]:100}, {\[dq]foo\[dq]:1, \[dq]bar\[dq]:1}]\[aq]
 [[{\[dq]foo\[dq]:1, \[dq]bar\[dq]:10}, {\[dq]foo\[dq]:1, \[dq]bar\[dq]:1}], [{\[dq]foo\[dq]:3, \[dq]bar\[dq]:100}]]
 .EE
 .SS \f[CR]min\f[R], \f[CR]max\f[R], \f[CR]min_by(path_exp)\f[R], \f[CR]max_by(path_exp)\f[R]
@@ -3799,14 +3803,14 @@ examine, e.g.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][5,4,2,7]\[aq] \[rs]
-  | jq \[aq]min\[aq]
+$ jq \[aq]min\[aq] \[rs]
+  <<< \[aq][5,4,2,7]\[aq]
 2
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]foo\[dq]:1, \[dq]bar\[dq]:14}, {\[dq]foo\[dq]:2, \[dq]bar\[dq]:3}]\[aq] \[rs]
-  | jq \[aq]max_by(.foo)\[aq]
+$ jq \[aq]max_by(.foo)\[aq] \[rs]
+  <<< \[aq][{\[dq]foo\[dq]:1, \[dq]bar\[dq]:14}, {\[dq]foo\[dq]:2, \[dq]bar\[dq]:3}]\[aq]
 {\[dq]foo\[dq]:2, \[dq]bar\[dq]:3}
 .EE
 .SS \f[CR]unique\f[R], \f[CR]unique_by(path_exp)\f[R]
@@ -3821,20 +3825,20 @@ produced by \f[CR]group\f[R].
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1,2,5,3,5,3,1,3]\[aq] \[rs]
-  | jq \[aq]unique\[aq]
+$ jq \[aq]unique\[aq] \[rs]
+  <<< \[aq][1,2,5,3,5,3,1,3]\[aq]
 [1,2,3,5]
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]foo\[dq]: 1, \[dq]bar\[dq]: 2}, {\[dq]foo\[dq]: 1, \[dq]bar\[dq]: 3}, {\[dq]foo\[dq]: 4, \[dq]bar\[dq]: 5}]\[aq] \[rs]
-  | jq \[aq]unique_by(.foo)\[aq]
+$ jq \[aq]unique_by(.foo)\[aq] \[rs]
+  <<< \[aq][{\[dq]foo\[dq]: 1, \[dq]bar\[dq]: 2}, {\[dq]foo\[dq]: 1, \[dq]bar\[dq]: 3}, {\[dq]foo\[dq]: 4, \[dq]bar\[dq]: 5}]\[aq]
 [{\[dq]foo\[dq]: 1, \[dq]bar\[dq]: 2}, {\[dq]foo\[dq]: 4, \[dq]bar\[dq]: 5}]
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]chunky\[dq], \[dq]bacon\[dq], \[dq]kitten\[dq], \[dq]cicada\[dq], \[dq]asparagus\[dq]]\[aq] \[rs]
-  | jq \[aq]unique_by(length)\[aq]
+$ jq \[aq]unique_by(length)\[aq] \[rs]
+  <<< \[aq][\[dq]chunky\[dq], \[dq]bacon\[dq], \[dq]kitten\[dq], \[dq]cicada\[dq], \[dq]asparagus\[dq]]\[aq]
 [\[dq]bacon\[dq], \[dq]chunky\[dq], \[dq]asparagus\[dq]]
 .EE
 .SS \f[CR]reverse\f[R]
@@ -3843,8 +3847,8 @@ This function reverses an array.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1,2,3,4]\[aq] \[rs]
-  | jq \[aq]reverse\[aq]
+$ jq \[aq]reverse\[aq] \[rs]
+  <<< \[aq][1,2,3,4]\[aq]
 [4,3,2,1]
 .EE
 .SS \f[CR]combinations\f[R], \f[CR]combinations(n)\f[R]
@@ -3856,8 +3860,8 @@ If given an argument \f[CR]n\f[R], it outputs all combinations of
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][[1,2], [3, 4]]\[aq] \[rs]
-  | jq \[aq]combinations\[aq]
+$ jq \[aq]combinations\[aq] \[rs]
+  <<< \[aq][[1,2], [3, 4]]\[aq]
 [1, 3]
 [1, 4]
 [2, 3]
@@ -3865,8 +3869,8 @@ $ echo \[aq][[1,2], [3, 4]]\[aq] \[rs]
 .EE
 .IP
 .EX
-$ echo \[aq][0, 1]\[aq] \[rs]
-  | jq \[aq]combinations(2)\[aq]
+$ jq \[aq]combinations(2)\[aq] \[rs]
+  <<< \[aq][0, 1]\[aq]
 [0, 0]
 [0, 1]
 [1, 0]
@@ -3879,8 +3883,8 @@ Rows are padded with nulls so the result is always rectangular.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][[1], [2,3]]\[aq] \[rs]
-  | jq \[aq]transpose\[aq]
+$ jq \[aq]transpose\[aq] \[rs]
+  <<< \[aq][[1], [2,3]]\[aq]
 [[1,2],[null,3]]
 .EE
 .SS \f[CR]flatten\f[R], \f[CR]flatten(depth)\f[R]
@@ -3896,26 +3900,26 @@ two levels deep.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1, [2], [[3]]]\[aq] \[rs]
-  | jq \[aq]flatten\[aq]
+$ jq \[aq]flatten\[aq] \[rs]
+  <<< \[aq][1, [2], [[3]]]\[aq]
 [1, 2, 3]
 .EE
 .IP
 .EX
-$ echo \[aq][1, [2], [[3]]]\[aq] \[rs]
-  | jq \[aq]flatten(1)\[aq]
+$ jq \[aq]flatten(1)\[aq] \[rs]
+  <<< \[aq][1, [2], [[3]]]\[aq]
 [1, 2, [3]]
 .EE
 .IP
 .EX
-$ echo \[aq][[]]\[aq] \[rs]
-  | jq \[aq]flatten\[aq]
+$ jq \[aq]flatten\[aq] \[rs]
+  <<< \[aq][[]]\[aq]
 []
 .EE
 .IP
 .EX
-$ echo \[aq][{\[dq]foo\[dq]: \[dq]bar\[dq]}, [{\[dq]foo\[dq]: \[dq]baz\[dq]}]]\[aq] \[rs]
-  | jq \[aq]flatten\[aq]
+$ jq \[aq]flatten\[aq] \[rs]
+  <<< \[aq][{\[dq]foo\[dq]: \[dq]bar\[dq]}, [{\[dq]foo\[dq]: \[dq]baz\[dq]}]]\[aq]
 [{\[dq]foo\[dq]: \[dq]bar\[dq]}, {\[dq]foo\[dq]: \[dq]baz\[dq]}]
 .EE
 .SS String functions
@@ -3926,8 +3930,8 @@ bytes used to encode a string in UTF\-8.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]\[rs]u03bc\[dq]\[aq] \[rs]
-  | jq \[aq]utf8bytelength\[aq]
+$ jq \[aq]utf8bytelength\[aq] \[rs]
+  <<< \[aq]\[dq]\[rs]u03bc\[dq]\[aq]
 2
 .EE
 .SS \f[CR]startswith(str)\f[R]
@@ -3937,8 +3941,8 @@ starts with the given string argument.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\[dq]fo\[dq], \[dq]foo\[dq], \[dq]barfoo\[dq], \[dq]foobar\[dq], \[dq]barfoob\[dq]]\[aq] \[rs]
-  | jq \[aq][.[]|startswith(\[dq]foo\[dq])]\[aq]
+$ jq \[aq][.[]|startswith(\[dq]foo\[dq])]\[aq] \[rs]
+  <<< \[aq][\[dq]fo\[dq], \[dq]foo\[dq], \[dq]barfoo\[dq], \[dq]foobar\[dq], \[dq]barfoob\[dq]]\[aq]
 [false, true, false, true, false]
 .EE
 .SS \f[CR]endswith(str)\f[R]
@@ -3948,8 +3952,8 @@ ends with the given string argument.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\[dq]foobar\[dq], \[dq]barfoo\[dq]]\[aq] \[rs]
-  | jq \[aq][.[]|endswith(\[dq]foo\[dq])]\[aq]
+$ jq \[aq][.[]|endswith(\[dq]foo\[dq])]\[aq] \[rs]
+  <<< \[aq][\[dq]foobar\[dq], \[dq]barfoo\[dq]]\[aq]
 [false, true]
 .EE
 .SS \f[CR]ltrimstr(str)\f[R]
@@ -3959,8 +3963,8 @@ with it.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\[dq]fo\[dq], \[dq]foo\[dq], \[dq]barfoo\[dq], \[dq]foobar\[dq], \[dq]afoo\[dq]]\[aq] \[rs]
-  | jq \[aq][.[]|ltrimstr(\[dq]foo\[dq])]\[aq]
+$ jq \[aq][.[]|ltrimstr(\[dq]foo\[dq])]\[aq] \[rs]
+  <<< \[aq][\[dq]fo\[dq], \[dq]foo\[dq], \[dq]barfoo\[dq], \[dq]foobar\[dq], \[dq]afoo\[dq]]\[aq]
 [\[dq]fo\[dq],\[dq]\[dq],\[dq]barfoo\[dq],\[dq]bar\[dq],\[dq]afoo\[dq]]
 .EE
 .SS \f[CR]rtrimstr(str)\f[R]
@@ -3970,8 +3974,8 @@ it.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\[dq]fo\[dq], \[dq]foo\[dq], \[dq]barfoo\[dq], \[dq]foobar\[dq], \[dq]foob\[dq]]\[aq] \[rs]
-  | jq \[aq][.[]|rtrimstr(\[dq]foo\[dq])]\[aq]
+$ jq \[aq][.[]|rtrimstr(\[dq]foo\[dq])]\[aq] \[rs]
+  <<< \[aq][\[dq]fo\[dq], \[dq]foo\[dq], \[dq]barfoo\[dq], \[dq]foobar\[dq], \[dq]foob\[dq]]\[aq]
 [\[dq]fo\[dq],\[dq]\[dq],\[dq]bar\[dq],\[dq]foobar\[dq],\[dq]foob\[dq]]
 .EE
 .SS \f[CR]trim\f[R], \f[CR]ltrim\f[R], \f[CR]rtrim\f[R]
@@ -3990,8 +3994,8 @@ Note that what considers whitespace might change in the future.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq] abc \[dq]\[aq] \[rs]
-  | jq \[aq]trim, ltrim, rtrim\[aq]
+$ jq \[aq]trim, ltrim, rtrim\[aq] \[rs]
+  <<< \[aq]\[dq] abc \[dq]\[aq]
 \[dq]abc\[dq]
 \[dq]abc \[dq]
 \[dq] abc\[dq]
@@ -4003,8 +4007,8 @@ numbers.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]foobar\[dq]\[aq] \[rs]
-  | jq \[aq]explode\[aq]
+$ jq \[aq]explode\[aq] \[rs]
+  <<< \[aq]\[dq]foobar\[dq]\[aq]
 [102,111,111,98,97,114]
 .EE
 .SS \f[CR]implode\f[R]
@@ -4013,8 +4017,8 @@ The inverse of explode.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][65, 66, 67]\[aq] \[rs]
-  | jq \[aq]implode\[aq]
+$ jq \[aq]implode\[aq] \[rs]
+  <<< \[aq][65, 66, 67]\[aq]
 \[dq]ABC\[dq]
 .EE
 .SS \f[CR]split(str)\f[R]
@@ -4026,8 +4030,8 @@ arguments (see the regular expressions section below).
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]a, b,c,d, e, \[dq]\[aq] \[rs]
-  | jq \[aq]split(\[dq], \[dq])\[aq]
+$ jq \[aq]split(\[dq], \[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]a, b,c,d, e, \[dq]\[aq]
 [\[dq]a\[dq],\[dq]b,c,d\[dq],\[dq]e\[dq],\[dq]\[dq]]
 .EE
 .SS \f[CR]join(str)\f[R]
@@ -4053,14 +4057,14 @@ and jaq yield the same output.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][\[dq]a\[dq],\[dq]b,c,d\[dq],\[dq]e\[dq]]\[aq] \[rs]
-  | jq \[aq]join(\[dq], \[dq])\[aq]
+$ jq \[aq]join(\[dq], \[dq])\[aq] \[rs]
+  <<< \[aq][\[dq]a\[dq],\[dq]b,c,d\[dq],\[dq]e\[dq]]\[aq]
 \[dq]a, b,c,d, e\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]a\[dq],1,2.3,true,null,false]\[aq] \[rs]
-  | jq \[aq]join(\[dq] \[dq])\[aq]
+$ jq \[aq]join(\[dq] \[dq])\[aq] \[rs]
+  <<< \[aq][\[dq]a\[dq],1,2.3,true,null,false]\[aq]
 \[dq]a 1 2.3 true  false\[dq]
 .EE
 .SS \f[CR]ascii_downcase\f[R], \f[CR]ascii_upcase\f[R]
@@ -4070,8 +4074,8 @@ A\-Z) converted to the specified case.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]useful but not for é\[dq]\[aq] \[rs]
-  | jq \[aq]ascii_upcase\[aq]
+$ jq \[aq]ascii_upcase\[aq] \[rs]
+  <<< \[aq]\[dq]useful but not for é\[dq]\[aq]
 \[dq]USEFUL BUT NOT FOR é\[dq]
 .EE
 .SS String formatting functions
@@ -4135,8 +4139,8 @@ See the section on recursion.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]1\[aq] \[rs]
-  | jq \[aq][repeat(.*2, error)?]\[aq]
+$ jq \[aq][repeat(.*2, error)?]\[aq] \[rs]
+  <<< \[aq]1\[aq]
 [2]
 .EE
 .SS \f[CR]range(upto)\f[R], \f[CR]range(from; upto)\f[R], \f[CR]range(from; upto; by)\f[R]
@@ -4158,39 +4162,39 @@ The three argument form generates numbers \f[CR]from\f[R] to
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]range(2; 4)\[aq]
+$ jq \[aq]range(2; 4)\[aq] \[rs]
+  <<< \[aq]null\[aq]
 2
 3
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq][range(2; 4)]\[aq]
+$ jq \[aq][range(2; 4)]\[aq] \[rs]
+  <<< \[aq]null\[aq]
 [2,3]
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq][range(4)]\[aq]
+$ jq \[aq][range(4)]\[aq] \[rs]
+  <<< \[aq]null\[aq]
 [0,1,2,3]
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq][range(0; 10; 3)]\[aq]
+$ jq \[aq][range(0; 10; 3)]\[aq] \[rs]
+  <<< \[aq]null\[aq]
 [0,3,6,9]
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq][range(0; 10; \-1)]\[aq]
+$ jq \[aq][range(0; 10; \-1)]\[aq] \[rs]
+  <<< \[aq]null\[aq]
 []
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq][range(0; \-5; \-1)]\[aq]
+$ jq \[aq][range(0; \-5; \-1)]\[aq] \[rs]
+  <<< \[aq]null\[aq]
 [0,\-1,\-2,\-3,\-4]
 .EE
 .SS \f[CR]while(cond; update)\f[R]
@@ -4206,8 +4210,8 @@ See advanced topics below.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]1\[aq] \[rs]
-  | jq \[aq][while(.<100; .*2)]\[aq]
+$ jq \[aq][while(.<100; .*2)]\[aq] \[rs]
+  <<< \[aq]1\[aq]
 [1,2,4,8,16,32,64]
 .EE
 .SS \f[CR]until(cond; next)\f[R]
@@ -4226,8 +4230,8 @@ See advanced topics below.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]4\[aq] \[rs]
-  | jq \[aq][.,1]|until(.[0] < 1; [.[0] \- 1, .[1] * .[0]])|.[1]\[aq]
+$ jq \[aq][.,1]|until(.[0] < 1; [.[0] \- 1, .[1] * .[0]])|.[1]\[aq] \[rs]
+  <<< \[aq]4\[aq]
 24
 .EE
 .SS \f[CR]recurse(f)\f[R], \f[CR]recurse\f[R], \f[CR]recurse(f; condition)\f[R]
@@ -4274,8 +4278,8 @@ input.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]{\[dq]foo\[dq]:[{\[dq]foo\[dq]: []}, {\[dq]foo\[dq]:[{\[dq]foo\[dq]:[]}]}]}\[aq] \[rs]
-  | jq \[aq]recurse(.foo[])\[aq]
+$ jq \[aq]recurse(.foo[])\[aq] \[rs]
+  <<< \[aq]{\[dq]foo\[dq]:[{\[dq]foo\[dq]: []}, {\[dq]foo\[dq]:[{\[dq]foo\[dq]:[]}]}]}\[aq]
 {\[dq]foo\[dq]:[{\[dq]foo\[dq]:[]},{\[dq]foo\[dq]:[{\[dq]foo\[dq]:[]}]}]}
 {\[dq]foo\[dq]:[]}
 {\[dq]foo\[dq]:[{\[dq]foo\[dq]:[]}]}
@@ -4283,8 +4287,8 @@ $ echo \[aq]{\[dq]foo\[dq]:[{\[dq]foo\[dq]: []}, {\[dq]foo\[dq]:[{\[dq]foo\[dq]:
 .EE
 .IP
 .EX
-$ echo \[aq]{\[dq]a\[dq]:0,\[dq]b\[dq]:[1]}\[aq] \[rs]
-  | jq \[aq]recurse\[aq]
+$ jq \[aq]recurse\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]:0,\[dq]b\[dq]:[1]}\[aq]
 {\[dq]a\[dq]:0,\[dq]b\[dq]:[1]}
 0
 [1]
@@ -4292,8 +4296,8 @@ $ echo \[aq]{\[dq]a\[dq]:0,\[dq]b\[dq]:[1]}\[aq] \[rs]
 .EE
 .IP
 .EX
-$ echo \[aq]2\[aq] \[rs]
-  | jq \[aq]recurse(. * .; . < 20)\[aq]
+$ jq \[aq]recurse(. * .; . < 20)\[aq] \[rs]
+  <<< \[aq]2\[aq]
 2
 4
 16
@@ -4314,14 +4318,14 @@ input can be considered for alteration.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][[4, 1, 7], [8, 5, 2], [3, 6, 9]]\[aq] \[rs]
-  | jq \[aq]walk(if type == \[dq]array\[dq] then sort else . end)\[aq]
+$ jq \[aq]walk(if type == \[dq]array\[dq] then sort else . end)\[aq] \[rs]
+  <<< \[aq][[4, 1, 7], [8, 5, 2], [3, 6, 9]]\[aq]
 [[1,4,7],[2,5,8],[3,6,9]]
 .EE
 .IP
 .EX
-$ echo \[aq][ { \[dq]_a\[dq]: { \[dq]__b\[dq]: 2 } } ]\[aq] \[rs]
-  | jq \[aq]walk( if type == \[dq]object\[dq] then with_entries( .key |= sub( \[dq]\[ha]_+\[dq]; \[dq]\[dq]) ) else . end )\[aq]
+$ jq \[aq]walk( if type == \[dq]object\[dq] then with_entries( .key |= sub( \[dq]\[ha]_+\[dq]; \[dq]\[dq]) ) else . end )\[aq] \[rs]
+  <<< \[aq][ { \[dq]_a\[dq]: { \[dq]__b\[dq]: 2 } } ]\[aq]
 [{\[dq]a\[dq]:{\[dq]b\[dq]:2}}]
 .EE
 .SS Stream processing functions
@@ -4331,20 +4335,20 @@ Returns true if \f[CR]expr\f[R] produces no outputs, false otherwise.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]isempty(empty)\[aq]
+$ jq \[aq]isempty(empty)\[aq] \[rs]
+  <<< \[aq]null\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][]\[aq] \[rs]
-  | jq \[aq]isempty(.[])\[aq]
+$ jq \[aq]isempty(.[])\[aq] \[rs]
+  <<< \[aq][]\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][1,2,3]\[aq] \[rs]
-  | jq \[aq]isempty(.[])\[aq]
+$ jq \[aq]isempty(.[])\[aq] \[rs]
+  <<< \[aq][1,2,3]\[aq]
 false
 .EE
 .SS \f[CR]limit(n; expr)\f[R]
@@ -4354,8 +4358,8 @@ The \f[CR]limit\f[R] function extracts up to \f[CR]n\f[R] outputs from
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][0,1,2,3,4,5,6,7,8,9]\[aq] \[rs]
-  | jq \[aq][limit(3;.[])]\[aq]
+$ jq \[aq][limit(3;.[])]\[aq] \[rs]
+  <<< \[aq][0,1,2,3,4,5,6,7,8,9]\[aq]
 [0,1,2]
 .EE
 .SS \f[CR]skip(n; expr)\f[R]
@@ -4365,8 +4369,8 @@ The \f[CR]skip\f[R] function skips the first \f[CR]n\f[R] outputs from
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][0,1,2,3,4,5,6,7,8,9]\[aq] \[rs]
-  | jq \[aq][skip(3; .[])]\[aq]
+$ jq \[aq][skip(3; .[])]\[aq] \[rs]
+  <<< \[aq][0,1,2,3,4,5,6,7,8,9]\[aq]
 [3,4,5,6,7,8,9]
 .EE
 .SS \f[CR]first(expr)\f[R], \f[CR]last(expr)\f[R], \f[CR]nth(n; expr)\f[R]
@@ -4381,8 +4385,8 @@ Note that \f[CR]nth(n; expr)\f[R] doesn\[cq]t support negative values of
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]10\[aq] \[rs]
-  | jq \[aq][first(range(.)), last(range(.)), nth(./2; range(.))]\[aq]
+$ jq \[aq][first(range(.)), last(range(.)), nth(./2; range(.))]\[aq] \[rs]
+  <<< \[aq]10\[aq]
 [0,9,5]
 .EE
 .SS \f[CR]first\f[R], \f[CR]last\f[R], \f[CR]nth(n)\f[R]
@@ -4395,8 +4399,8 @@ The \f[CR]nth(n)\f[R] function extracts the nth value of any array at
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]10\[aq] \[rs]
-  | jq \[aq][range(.)]|[first, last, nth(5)]\[aq]
+$ jq \[aq][range(.)]|[first, last, nth(5)]\[aq] \[rs]
+  <<< \[aq]10\[aq]
 [0,9,5]
 .EE
 .SS JSON conversion functions
@@ -4410,20 +4414,20 @@ encodes strings as JSON strings.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1, \[dq]foo\[dq], [\[dq]foo\[dq]]]\[aq] \[rs]
-  | jq \[aq][.[]|tostring]\[aq]
+$ jq \[aq][.[]|tostring]\[aq] \[rs]
+  <<< \[aq][1, \[dq]foo\[dq], [\[dq]foo\[dq]]]\[aq]
 [\[dq]1\[dq],\[dq]foo\[dq],\[dq][\[rs]\[dq]foo\[rs]\[dq]]\[dq]]
 .EE
 .IP
 .EX
-$ echo \[aq][1, \[dq]foo\[dq], [\[dq]foo\[dq]]]\[aq] \[rs]
-  | jq \[aq][.[]|tojson]\[aq]
+$ jq \[aq][.[]|tojson]\[aq] \[rs]
+  <<< \[aq][1, \[dq]foo\[dq], [\[dq]foo\[dq]]]\[aq]
 [\[dq]1\[dq],\[dq]\[rs]\[dq]foo\[rs]\[dq]\[dq],\[dq][\[rs]\[dq]foo\[rs]\[dq]]\[dq]]
 .EE
 .IP
 .EX
-$ echo \[aq][1, \[dq]foo\[dq], [\[dq]foo\[dq]]]\[aq] \[rs]
-  | jq \[aq][.[]|tojson|fromjson]\[aq]
+$ jq \[aq][.[]|tojson|fromjson]\[aq] \[rs]
+  <<< \[aq][1, \[dq]foo\[dq], [\[dq]foo\[dq]]]\[aq]
 [1,\[dq]foo\[dq],[\[dq]foo\[dq]]]
 .EE
 .SS \f[CR]tostring\f[R]
@@ -4433,8 +4437,8 @@ Strings are left unchanged, and all other values are JSON\-encoded.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1, \[dq]1\[dq], [1]]\[aq] \[rs]
-  | jq \[aq].[] | tostring\[aq]
+$ jq \[aq].[] | tostring\[aq] \[rs]
+  <<< \[aq][1, \[dq]1\[dq], [1]]\[aq]
 \[dq]1\[dq]
 \[dq]1\[dq]
 \[dq][1]\[dq]
@@ -4447,8 +4451,8 @@ equivalent, leave numbers alone, and give an error on all other input.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][1, \[dq]1\[dq]]\[aq] \[rs]
-  | jq \[aq].[] | tonumber\[aq]
+$ jq \[aq].[] | tonumber\[aq] \[rs]
+  <<< \[aq][1, \[dq]1\[dq]]\[aq]
 1
 1
 .EE
@@ -4475,8 +4479,8 @@ the Unix epoch.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]2015\-03\-05T23:51:47Z\[dq]\[aq] \[rs]
-  | jq \[aq]fromdate\[aq]
+$ jq \[aq]fromdate\[aq] \[rs]
+  <<< \[aq]\[dq]2015\-03\-05T23:51:47Z\[dq]\[aq]
 1425599507
 .EE
 .SS Low\-level date functions
@@ -4532,14 +4536,14 @@ jaq does not provide any of the given low\-level date functions.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]2015\-03\-05T23:51:47Z\[dq]\[aq] \[rs]
-  | jq \[aq]strptime(\[dq]%Y\-%m\-%dT%H:%M:%SZ\[dq])\[aq]
+$ jq \[aq]strptime(\[dq]%Y\-%m\-%dT%H:%M:%SZ\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]2015\-03\-05T23:51:47Z\[dq]\[aq]
 [2015,2,5,23,51,47,4,63]
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]2015\-03\-05T23:51:47Z\[dq]\[aq] \[rs]
-  | jq \[aq]strptime(\[dq]%Y\-%m\-%dT%H:%M:%SZ\[dq])|mktime\[aq]
+$ jq \[aq]strptime(\[dq]%Y\-%m\-%dT%H:%M:%SZ\[dq])|mktime\[aq] \[rs]
+  <<< \[aq]\[dq]2015\-03\-05T23:51:47Z\[dq]\[aq]
 1425599507
 .EE
 .SS SQL\-style functions
@@ -4659,14 +4663,14 @@ the input.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]foo\[dq]\[aq] \[rs]
-  | jq \[aq]test(\[dq]foo\[dq])\[aq]
+$ jq \[aq]test(\[dq]foo\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]foo\[dq]\[aq]
 true
 .EE
 .IP
 .EX
-$ echo \[aq][\[dq]xabcd\[dq], \[dq]ABC\[dq]]\[aq] \[rs]
-  | jq \[aq].[] | test(\[dq]a b c # spaces are ignored\[dq]; \[dq]ix\[dq])\[aq]
+$ jq \[aq].[] | test(\[dq]a b c # spaces are ignored\[dq]; \[dq]ix\[dq])\[aq] \[rs]
+  <<< \[aq][\[dq]xabcd\[dq], \[dq]ABC\[dq]]\[aq]
 true
 true
 .EE
@@ -4701,35 +4705,35 @@ Capturing groups that did not match anything return an offset of \-1
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]abc abc\[dq]\[aq] \[rs]
-  | jq \[aq]match(\[dq](abc)+\[dq]; \[dq]g\[dq])\[aq]
+$ jq \[aq]match(\[dq](abc)+\[dq]; \[dq]g\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]abc abc\[dq]\[aq]
 {\[dq]offset\[dq]: 0, \[dq]length\[dq]: 3, \[dq]string\[dq]: \[dq]abc\[dq], \[dq]captures\[dq]: [{\[dq]offset\[dq]: 0, \[dq]length\[dq]: 3, \[dq]string\[dq]: \[dq]abc\[dq], \[dq]name\[dq]: null}]}
 {\[dq]offset\[dq]: 4, \[dq]length\[dq]: 3, \[dq]string\[dq]: \[dq]abc\[dq], \[dq]captures\[dq]: [{\[dq]offset\[dq]: 4, \[dq]length\[dq]: 3, \[dq]string\[dq]: \[dq]abc\[dq], \[dq]name\[dq]: null}]}
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]foo bar foo\[dq]\[aq] \[rs]
-  | jq \[aq]match(\[dq]foo\[dq])\[aq]
+$ jq \[aq]match(\[dq]foo\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]foo bar foo\[dq]\[aq]
 {\[dq]offset\[dq]: 0, \[dq]length\[dq]: 3, \[dq]string\[dq]: \[dq]foo\[dq], \[dq]captures\[dq]: []}
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]foo bar FOO\[dq]\[aq] \[rs]
-  | jq \[aq]match([\[dq]foo\[dq], \[dq]ig\[dq]])\[aq]
+$ jq \[aq]match([\[dq]foo\[dq], \[dq]ig\[dq]])\[aq] \[rs]
+  <<< \[aq]\[dq]foo bar FOO\[dq]\[aq]
 {\[dq]offset\[dq]: 0, \[dq]length\[dq]: 3, \[dq]string\[dq]: \[dq]foo\[dq], \[dq]captures\[dq]: []}
 {\[dq]offset\[dq]: 8, \[dq]length\[dq]: 3, \[dq]string\[dq]: \[dq]FOO\[dq], \[dq]captures\[dq]: []}
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]foo bar foo foo  foo\[dq]\[aq] \[rs]
-  | jq \[aq]match(\[dq]foo (?<bar123>bar)? foo\[dq]; \[dq]ig\[dq])\[aq]
+$ jq \[aq]match(\[dq]foo (?<bar123>bar)? foo\[dq]; \[dq]ig\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]foo bar foo foo  foo\[dq]\[aq]
 {\[dq]offset\[dq]: 0, \[dq]length\[dq]: 11, \[dq]string\[dq]: \[dq]foo bar foo\[dq], \[dq]captures\[dq]: [{\[dq]offset\[dq]: 4, \[dq]length\[dq]: 3, \[dq]string\[dq]: \[dq]bar\[dq], \[dq]name\[dq]: \[dq]bar123\[dq]}]}
 {\[dq]offset\[dq]: 12, \[dq]length\[dq]: 8, \[dq]string\[dq]: \[dq]foo  foo\[dq], \[dq]captures\[dq]: [{\[dq]offset\[dq]: \-1, \[dq]length\[dq]: 0, \[dq]string\[dq]: null, \[dq]name\[dq]: \[dq]bar123\[dq]}]}
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]abc\[dq]\[aq] \[rs]
-  | jq \[aq][ match(\[dq].\[dq]; \[dq]g\[dq])] | length\[aq]
+$ jq \[aq][ match(\[dq].\[dq]; \[dq]g\[dq])] | length\[aq] \[rs]
+  <<< \[aq]\[dq]abc\[dq]\[aq]
 3
 .EE
 .SS \f[CR]capture(val)\f[R], \f[CR]capture(regex; flags)\f[R]
@@ -4739,8 +4743,8 @@ capture as the key, and the matched string as the corresponding value.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]xyzzy\-14\[dq]\[aq] \[rs]
-  | jq \[aq]capture(\[dq](?<a>[a\-z]+)\-(?<n>[0\-9]+)\[dq])\[aq]
+$ jq \[aq]capture(\[dq](?<a>[a\-z]+)\-(?<n>[0\-9]+)\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]xyzzy\-14\[dq]\[aq]
 { \[dq]a\[dq]: \[dq]xyzzy\[dq], \[dq]n\[dq]: \[dq]14\[dq] }
 .EE
 .SS \f[CR]scan(regex)\f[R], \f[CR]scan(regex; flags)\f[R]
@@ -4753,8 +4757,8 @@ To capture all the matches for each input string, use the idiom
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]abcdefabc\[dq]\[aq] \[rs]
-  | jq \[aq]scan(\[dq]c\[dq])\[aq]
+$ jq \[aq]scan(\[dq]c\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]abcdefabc\[dq]\[aq]
 \[dq]c\[dq]
 \[dq]c\[dq]
 .EE
@@ -4767,8 +4771,8 @@ For backwards compatibility, when called with a single argument,
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]ab,cd, ef\[dq]\[aq] \[rs]
-  | jq \[aq]split(\[dq], *\[dq]; null)\[aq]
+$ jq \[aq]split(\[dq], *\[dq]; null)\[aq] \[rs]
+  <<< \[aq]\[dq]ab,cd, ef\[dq]\[aq]
 [\[dq]ab\[dq],\[dq]cd\[dq],\[dq]ef\[dq]]
 .EE
 .SS \f[CR]splits(regex)\f[R], \f[CR]splits(regex; flags)\f[R]
@@ -4778,8 +4782,8 @@ but as a stream instead of an array.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]ab,cd,   ef, gh\[dq]\[aq] \[rs]
-  | jq \[aq]splits(\[dq], *\[dq])\[aq]
+$ jq \[aq]splits(\[dq], *\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]ab,cd,   ef, gh\[dq]\[aq]
 \[dq]ab\[dq]
 \[dq]cd\[dq]
 \[dq]ef\[dq]
@@ -4798,14 +4802,14 @@ reference to a captured variable named \[lq]x\[rq] would take the form:
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]123abc456def\[dq]\[aq] \[rs]
-  | jq \[aq]sub(\[dq][\[ha]a\-z]*(?<x>[a\-z]+)\[dq]; \[dq]Z\[rs](.x)\[dq]; \[dq]g\[dq])\[aq]
+$ jq \[aq]sub(\[dq][\[ha]a\-z]*(?<x>[a\-z]+)\[dq]; \[dq]Z\[rs](.x)\[dq]; \[dq]g\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]123abc456def\[dq]\[aq]
 \[dq]ZabcZdef\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]aB\[dq]\[aq] \[rs]
-  | jq \[aq][sub(\[dq](?<a>.)\[dq]; \[dq]\[rs](.a|ascii_upcase)\[dq], \[dq]\[rs](.a|ascii_downcase)\[dq])]\[aq]
+$ jq \[aq][sub(\[dq](?<a>.)\[dq]; \[dq]\[rs](.a|ascii_upcase)\[dq], \[dq]\[rs](.a|ascii_downcase)\[dq])]\[aq] \[rs]
+  <<< \[aq]\[dq]aB\[dq]\[aq]
 [\[dq]AB\[dq],\[dq]aB\[dq]]
 .EE
 .SS \f[CR]gsub(regex; tostring)\f[R], \f[CR]gsub(regex; tostring; flags)\f[R]
@@ -4818,14 +4822,14 @@ will produce a corresponding stream of JSON strings.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]\[dq]Abcabc\[dq]\[aq] \[rs]
-  | jq \[aq]gsub(\[dq](?<x>.)[\[ha]a]*\[dq]; \[dq]+\[rs](.x)\-\[dq])\[aq]
+$ jq \[aq]gsub(\[dq](?<x>.)[\[ha]a]*\[dq]; \[dq]+\[rs](.x)\-\[dq])\[aq] \[rs]
+  <<< \[aq]\[dq]Abcabc\[dq]\[aq]
 \[dq]+A\-+a\-\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq]\[dq]p\[dq]\[aq] \[rs]
-  | jq \[aq][gsub(\[dq]p\[dq]; \[dq]a\[dq], \[dq]b\[dq])]\[aq]
+$ jq \[aq][gsub(\[dq]p\[dq]; \[dq]a\[dq], \[dq]b\[dq])]\[aq] \[rs]
+  <<< \[aq]\[dq]p\[dq]\[aq]
 [\[dq]a\[dq],\[dq]b\[dq]]
 .EE
 .SS I/O functions
@@ -4947,14 +4951,14 @@ At the moment there is no builtin for setting environment variables.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]$ENV.PAGER\[aq]
+$ jq \[aq]$ENV.PAGER\[aq] \[rs]
+  <<< \[aq]null\[aq]
 \[dq]less\[dq]
 .EE
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]env.PAGER\[aq]
+$ jq \[aq]env.PAGER\[aq] \[rs]
+  <<< \[aq]null\[aq]
 \[dq]less\[dq]
 .EE
 .SS Streaming functions
@@ -4991,8 +4995,8 @@ expression.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]1\[aq] \[rs]
-  | jq \[aq]truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])\[aq]
+$ jq \[aq]truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])\[aq] \[rs]
+  <<< \[aq]1\[aq]
 [[0],2]
 [[0]]
 .EE
@@ -5002,8 +5006,8 @@ Outputs values corresponding to the stream expression\[cq]s outputs.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))\[aq]
+$ jq \[aq]fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))\[aq] \[rs]
+  <<< \[aq]null\[aq]
 [2]
 .EE
 .SS \f[CR]tostream\f[R]
@@ -5012,8 +5016,8 @@ The \f[CR]tostream\f[R] builtin outputs the streamed form of its input.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq][0,[1,{\[dq]a\[dq]:1},{\[dq]b\[dq]:2}]]\[aq] \[rs]
-  | jq \[aq]. as $dot|fromstream($dot|tostream)|.==$dot\[aq]
+$ jq \[aq]. as $dot|fromstream($dot|tostream)|.==$dot\[aq] \[rs]
+  <<< \[aq][0,[1,{\[dq]a\[dq]:1},{\[dq]b\[dq]:2}]]\[aq]
 true
 .EE
 .SS Miscellaneous
@@ -5037,8 +5041,8 @@ values.
 \f[I]Examples\f[R]
 .IP
 .EX
-$ echo \[aq]null\[aq] \[rs]
-  | jq \[aq]try error(\[dq]\[rs]($__loc__)\[dq]) catch .\[aq]
+$ jq \[aq]try error(\[dq]\[rs]($__loc__)\[dq]) catch .\[aq] \[rs]
+  <<< \[aq]null\[aq]
 \[dq]{\[rs]\[dq]file\[rs]\[dq]:\[rs]\[dq]<top\-level>\[rs]\[dq],\[rs]\[dq]line\[rs]\[dq]:1}\[dq]
 .EE
 .SS \f[CR]builtins\f[R]

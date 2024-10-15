@@ -63,9 +63,9 @@ function example(test)
   local _, _, filter, input, output = test:find("([^\n]+)\n([^\n]+)\n(.*)")
 
   if FORMAT == "man" then
-    input = "echo '" .. input .. "'"
-    filter = "jq '" .. filter .. "'"
-    return pandoc.CodeBlock("$ " .. input .. " \\\n  | " .. filter .. "\n" .. output)
+    filter = "'" .. filter .. "'"
+    input = "'" .. input .. "'"
+    return pandoc.CodeBlock("$ jq " .. filter .. " \\\n  <<< " .. input .. "\n" .. output)
   end
 
   local url = "https://jqplay.org/jq?q=" .. encodeUrl(filter) .. "&j=" .. encodeUrl(input)
