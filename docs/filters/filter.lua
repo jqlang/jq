@@ -69,15 +69,25 @@ function example(test)
   end
 
   local url = "https://jqplay.org/jq?q=" .. encodeUrl(filter) .. "&j=" .. encodeUrl(input)
+
+  function code(code, lang)
+    local attrs = {class = lang}
+    if FORMAT == "html" then
+      return pandoc.Code     (code, attrs)
+    else
+      return pandoc.CodeBlock(code, attrs)
+    end
+  end
+
   simple_table = pandoc.SimpleTable(
     "", -- caption
     {pandoc.AlignRight, pandoc.AlignLeft},
     {0, 0}, -- let pandoc determine col widths,
     {}, -- headers
     {
-      {pandoc.Strong("Filter"), pandoc.Code(filter, {class = "jq"  })},
-      {pandoc.Strong( "Input"), pandoc.Code( input, {class = "json"})},
-      {pandoc.Strong("Output"), pandoc.Code(output, {class = "json"})},
+      {pandoc.Strong("Filter"), code(filter, "jq"  )},
+      {pandoc.Strong( "Input"), code( input, "json")},
+      {pandoc.Strong("Output"), code(output, "json")},
       {pandoc.Link("Run", url), {}}
     }
   )
