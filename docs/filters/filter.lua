@@ -50,11 +50,11 @@ function Div(el)
       }
     end
   end
-  if FORMAT == "man" then
-    el = pandoc.DefinitionList({{pandoc.Emph(class), el.content}})
-  elseif FORMAT == "html" then
+  if FORMAT == "html" then
     el.classes = {"alert", "alert-primary"}
     table.insert(el.content, 1, pandoc.Span(class, {class = "block-start"}))
+  else
+    el = pandoc.DefinitionList({{pandoc.Emph(class), el.content}})
   end
   return el
 end
