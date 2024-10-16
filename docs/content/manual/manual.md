@@ -619,67 +619,78 @@ array of four elements.
 
 ## Objects: `{}`
 
-Like JSON, `{}` is for constructing objects (aka dictionaries or hashes), as in:
+Like in JSON, `{}` is for constructing objects (aka dictionaries or hashes), as in:
 `{"a": 42, "b": 17}`.
 
-If the keys are "identifier-like", then the quotes can be left
-off, as in `{a:42, b:17}`.  Variable references as key
-expressions use the value of the variable as the key.  Key
-expressions other than constant literals, identifiers, or
-variable references, need to be parenthesized, e.g.,
-`{("a"+"b"):59}`.
+As keys, you can use constant literals, variables, or parenthesized expressions,
+such as `{("a"+"b"):59}`.
+As values, you can use any expression; however,
+an expression containing colons needs to be surrounded by parentheses.
 
-The value can be any expression
-(although you need to wrap it in parentheses if it contains colons),
-which gets applied to the `{}` expression's input
-(remember, all filters have an input and an output).
-For example,
+We say that a key is _identifier-like_ when it
+does not start with a digit and
+consists only of alphanumeric characters and underscores;
+for example, `foo` is identifier-like.
+If a key is an identifier-like string, such as `"foo"`,
+then the quotes can be omitted.
+For example, you may write `{"a":42, "b":17}` more succinctly as `{a:42, b:17}`.
 
-    {foo: .bar}
-
-produces the JSON object `{"foo": 42}` if given the JSON
-object `{"bar":42, "baz":43}` as its input. You can use this
-to select particular fields of an object: if the input is an
-object with "user", "title", "id", and "content" fields and
-you just want "user" and "title", you can write
-
-    {user: .user, title: .title}
-
-Because that is so common, there's a shortcut syntax for it:
-`{user, title}`.
-
+Key and value expressions are evaluated with the input of `{}`.
 If one of the expressions produces multiple results,
-multiple dictionaries will be produced. If the input's
+multiple objects are produced.
 
-    {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
+::: Example
 
-then the expression
+The filter
 
-    {user, title: .titles[]}
+    {user: "stedolan", title: ("JQ Primer", "More JQ")}
 
-will produce two outputs:
+produces two outputs:
 
     {"user":"stedolan", "title": "JQ Primer"}
     {"user":"stedolan", "title": "More JQ"}
 
-Putting parentheses around the key means it will be evaluated as an
-expression. With the same input as above,
+:::
 
-    {(.user): .titles}
+::: Example
 
-produces
+The filter `{("a", "b"): 1}` outputs `{"a": 1}` and `{"b": 1}`.
 
-    {"stedolan": ["JQ Primer", "More JQ"]}
+:::
 
-Variable references as keys use the value of the variable as
-the key.  Without a value then the variable's name becomes the
-key and its value becomes the value,
+If an input object contains an entry `"k": v` where `k` is an identifier-like key,
+then we can create a new object `{"k": v}` by writing `{k}`.
+You can use this to select particular fields of an object.
+
+::: Example
+
+If the input is an object with "user", "title", "id", and "content" fields, then
+you can obtain an object with just the "user" and "title" fields by `{user, title}`.
+
+This is syntactic sugar for the filter `{user: .user, title: .title}`,
+which uses the [indexing operator](#indexing-operator) that we will see later.
+
+:::
+
+When using a [variable](#variables) `$x` as key without surrounding parentheses,
+you can omit a value after `$x`, i.e. you can write `{$x}`.
+This is equivalent to `{x: $x}`, which constructs
+an object with a field `"x"` that takes the value of `$x`.
+
+When using a variable `$x` as key and a value is given,
+i.e. `{$x: v}`, then this is equivalent to `{($x): v}`.
+
+::: Example
+
+The filter
 
     "f o o" as $foo | "b a r" as $bar | {$foo, $bar:$foo}
 
 produces
 
     {"foo":"f o o","b a r":"f o o"}
+
+:::
 
 ::: Examples
 
@@ -694,6 +705,12 @@ produces
 {(.user): .titles}
 {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
 {"stedolan": ["JQ Primer", "More JQ"]}
+~~~
+
+~~~
+{foo: .bar}
+{"bar":42, "baz":43}
+{"foo": 42}.
 ~~~
 
 :::
@@ -950,11 +967,7 @@ For example, given the object `{name: "Anna", age: 24}`, the filter
 `.["age"]` produces `24`, and
 `.["address"]` produces `null`.
 
-We say that a key is _identifier-like_ when it
-does not start with a digit and
-consists only of alphanumeric characters and underscores;
-for example, `"foo"` is identifier-like.
-For identifier-like keys like `"foo"`, you can also look up
+For [identifier-like keys](#objects) like `"foo"`, you can also look up
 the field `"foo"` of an object using the shorthand syntax `.foo`.
 For example, we could have written `.name`, `.age`, and `.address` above, whereas
 we cannot use this shorthand syntax for `.["foo::bar"]` and `.["foo.bar"]`.
@@ -1084,7 +1097,7 @@ part = ".", ident
 ~~~
 
 Here,
-`ident` refers to an [identifier-like key](#indexing-operator),
+`ident` refers to an [identifier-like key](#objects),
 `t` refers to a filter, and
 `atomic` refers to an _atomic_ filter, such as
 `.` (identity), function call, and parenthesis.
