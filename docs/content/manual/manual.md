@@ -1863,18 +1863,84 @@ this filter is syntactically correct and returns `1`.
 
 ## Destructuring
 
-Multiple variables may be declared using a single `as` expression by
-providing a pattern that matches the structure of the input:
+So far in this section, every variable binding
+`f as $x | g` bound exactly one variable `$x` in `g`.
+Now, we will introduce a mechanism to bind _multiple_ variables in one `as` binding.
+For this, we write `f as p | g`, where `p` is a
+_pattern_ that matches the structure of the outputs of `f`.
 
-    . as {realnames: $names, posts: [$first, $second]} | ...
+::: Example
+
+The filter
+
+    . as {realnames: $names, posts: [$first, $second]} | g
+
+is equivalent to the filter
+
+    .realnames as $names |
+    .posts[0]  as $first |
+    .posts[1]  as $second] |
+    g
+
+:::
 
 The variable declarations in array patterns (e.g., `. as [$first, $second]`)
 bind the elements of the array from the element at index zero on up, in order.
 When there is no value at the index for an array pattern element,
 `null` is bound to that variable.
 
-::: Compatibility
-jaq does not support destructuring.
+::: Example
+
+The filter
+
+    . as [$x, {a: $y}] | $x, $y
+
+is equivalent to
+
+    .[0] as $x |
+    .[1].a as $y |
+    $x, $y
+
+Given the input `{a: 1, b: []}`, it returns twice `null`,
+because neither `.b` nor `.c[0]` are present in the input.
+
+:::
+
+Similarly to [object construction](#objects),
+`{$x}` is equivalent to `{x: $x}` also for object patterns.
+
+::: Example
+
+We could have written the previous example equivalently as:
+
+    . as [$x, {$a}] | $x, $a
+
+:::
+
+We can write any filter `(f)` as object key in a pattern.
+
+::: Example
+
+Given the input `{"a": 1, "b": 2, "c": 3, "d": 4}`, the filter
+
+    . as {("a", "b"): $x, ("c", "d"): $y} | [$x, $y]
+
+produces four outputs, namely `[1, 3] [1, 4] [2, 3] [2, 4]`.
+
+:::
+
+We can also use patterns in reduction operators such as [`reduce`] and [`foreach`].
+
+::: Note
+
+A pattern `p` is either
+a variable `$x`,
+an array  pattern `[p1, ..., pn]` containing `n` patterns, or
+an object pattern `{e1, ..., en}` containing `n` object entries.
+An object entry `e` is either
+a variable `$x` or
+a key-value pair `(f): g` (where `f` and `g` are filters).
+
 :::
 
 ::: Examples
