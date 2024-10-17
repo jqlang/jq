@@ -2156,7 +2156,6 @@ A similar transformation can be made for `reduce`.
 :::
 
 ::: Compatibility
-jaq does not provide `foreach/3`, but it does provide `foreach/2`.
 
 Furthermore, similarly as for `reduce`,
 jq considers only the _last_ output of `UPDATE` for the next iteration, whereas
