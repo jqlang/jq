@@ -1877,9 +1877,10 @@ The filter
 
 is equivalent to the filter
 
-    .realnames as $names |
-    .posts[0]  as $first |
-    .posts[1]  as $second] |
+    .realnames as $names  |
+    .posts     as $p1     |
+    ($p1.[0])  as $first  |
+    ($p1.[1])  as $second |
     g
 
 :::
@@ -1895,10 +1896,11 @@ The filter
 
     . as [$x, {a: $y}] | $x, $y
 
-is equivalent to
+is equivalent to the filter
 
-    .[0] as $x |
-    .[1].a as $y |
+    .[0]  as $x  |
+    .[1]  as $p1 |
+    $p1.a as $y  |
     $x, $y
 
 Given the input `{a: 1, b: []}`, it returns twice `null`,
