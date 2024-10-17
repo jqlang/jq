@@ -2132,6 +2132,29 @@ to running something like this:
 When `EXTRACT` is omitted, the identity filter is used.
 That is, it outputs the intermediate values as they are.
 
+
+::: Note
+
+We can also use a pattern at the place of `$var`.
+
+    foreach EXP as PATTERN (INIT; UPDATE; EXTRACT)
+
+When `PATTERN` binds the variables `$x1`, ..., `$xn`,
+then the expression is equivalent to:
+
+    foreach (EXP as PATTERN | {$x1, ..., $xn}) as $x (
+      INIT;
+      $x as {$x1, ..., $xn} | UPDATE;
+      $x as {$x1, ..., $xn} | EXTRACT
+    )
+
+Here, `$x` must be chosen to be a fresh variable;
+in particular, it must not occur in `UPDATE` or `EXTRACT`.
+
+A similar transformation can be made for `reduce`.
+
+:::
+
 ::: Compatibility
 jaq does not provide `foreach/3`, but it does provide `foreach/2`.
 
