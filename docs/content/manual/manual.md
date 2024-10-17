@@ -2157,9 +2157,9 @@ A similar transformation can be made for `reduce`.
 
 ::: Compatibility
 
-Furthermore, similarly as for `reduce`,
-jq considers only the _last_ output of `UPDATE` for the next iteration, whereas
-jq considers _all_ of them.
+Similarly as for `reduce`,
+jq  considers only the _last_ output of `UPDATE` for the next iteration, whereas
+jaq considers _all_ of them.
 For example, the filter
 
     foreach (0, 1) as $x ([]; . + (["a", $x], ["b", $x]))
