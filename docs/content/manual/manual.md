@@ -1931,6 +1931,39 @@ produces four outputs, namely `[1, 3] [1, 4] [2, 3] [2, 4]`.
 
 :::
 
+When using a filter `(f)` as object key in a pattern, then
+`f` is run with the input that was matched
+by its parent object pattern, not
+by the whole pattern.
+
+::: Example
+
+The filter
+
+     . as [{(.k): $x}] | $x
+
+is equivalent to:
+
+    .[0]  as $p0 |
+    $p0.k as $x  |
+    $x
+
+Here, we can see that `(.k)` is run with the input `$p0`, which is the value that
+the parent object pattern of `(.k)`, namely `{(.k): $x}`, is trying to match.
+Compare this with the following _wrong_ transformation, where
+`(.k)` would be run with the input matched by the whole pattern:
+
+
+    .[0]  as $p0 |
+    .k    as $x  |
+    $x
+
+Given the input `[{"k": "a", "a": 1}]`,
+the first (correct) transformation yields `1`, whereas
+the second (wrong)  transformation yields an error.
+
+:::
+
 We can also use patterns in reduction operators such as [`reduce`] and [`foreach`].
 
 ::: Note
