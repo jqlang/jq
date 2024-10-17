@@ -2068,6 +2068,7 @@ so the effect is similar to running something like this:
         3 as $item | . + $item
 
 ::: Compatibility
+
 When `UPDATE` yields multiple outputs,
 jq only considers the _last_ one for the next iteration, whereas
 jaq considers _all_ of them.
@@ -2083,6 +2084,7 @@ yields `["b",0,"b",1]` in jq, whereas in jaq, it yields:
 ["b",0,"a",1]
 ["b",0,"b",1]
 ~~~
+
 :::
 
 ::: Examples
