@@ -1824,16 +1824,19 @@ sections:
             input: '["a",1,2.3,true,null,false]'
             output: ['"a 1 2.3 true  false"']
 
-      - title: "`ascii_downcase`, `ascii_upcase`"
+      - title: "`ascii_downcase`, `ascii_upcase`, `ascii_title`"
         body: |
 
           Emit a copy of the input string with its alphabetic characters (a-z and A-Z)
           converted to the specified case.
 
         examples:
-          - program: 'ascii_upcase'
+          - program: "ascii_upcase"
             input: '"useful but not for é"'
             output: ['"USEFUL BUT NOT FOR é"']
+          - program: "ascii_title"
+            input: '"useful but not for é"'
+            output: ['"Useful But Not For é"']
 
       - title: "`while(cond; update)`"
         body: |

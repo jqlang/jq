@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "September 2024" "" ""
+.TH "JQ" "1" "October 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -2037,7 +2037,7 @@ jq \'join(" ")\'
 .
 .IP "" 0
 .
-.SS "ascii_downcase, ascii_upcase"
+.SS "ascii_downcase, ascii_upcase, ascii_title"
 Emit a copy of the input string with its alphabetic characters (a\-z and A\-Z) converted to the specified case\.
 .
 .IP "" 4
@@ -2047,6 +2047,10 @@ Emit a copy of the input string with its alphabetic characters (a\-z and A\-Z) c
 jq \'ascii_upcase\'
    "useful but not for é"
 => "USEFUL BUT NOT FOR é"
+
+jq \'ascii_title\'
+   "useful but not for é"
+=> "Useful But Not For é"
 .
 .fi
 .
