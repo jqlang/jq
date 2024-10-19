@@ -1831,7 +1831,7 @@ sections:
           converted to the specified case.
 
         examples:
-          - program: "ascii_upcase"
+          - program: 'ascii_upcase'
             input: '"useful but not for é"'
             output: ['"USEFUL BUT NOT FOR é"']
 
