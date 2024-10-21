@@ -632,6 +632,10 @@ ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"
 
+ascii_title
+"useful but not for é"
+"Useful But Not For é"
+
 [while(.<100; .*2)]
 1
 [1,2,4,8,16,32,64]

@@ -203,6 +203,8 @@ def ascii_downcase:
 # like ruby's upcase - only characters a to z are affected
 def ascii_upcase:
   explode | map( if 97 <= . and . <= 122 then . - 32  else . end) | implode;
+def ascii_title:
+  split(" ") | map(sub("(?<a>.)"; "\(.a|ascii_upcase)")) | join(" ")
 
 # Streaming utilities
 def truncate_stream(stream):
