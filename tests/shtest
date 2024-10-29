@@ -210,6 +210,28 @@ else
   cmp $d/out $d/expected
 fi
 
+# Regression tests for #3194
+echo 42 > $d/expected
+$JQ -nn 42 > $d/out 2>&1
+cmp $d/out $d/expected
+
+$JQ -nL. 42 > $d/out 2>&1
+cmp $d/out $d/expected
+$JQ -nL . 42 > $d/out 2>&1
+cmp $d/out $d/expected
+
+$JQ -h > $d/expected 2>&1
+$JQ -hV > $d/out 2>&1
+cmp $d/out $d/expected
+$JQ -h -V > $d/out 2>&1
+cmp $d/out $d/expected
+
+$JQ -V > $d/expected 2>&1
+$JQ -Vh > $d/out 2>&1
+cmp $d/out $d/expected
+$JQ -V -h > $d/out 2>&1
+cmp $d/out $d/expected
+
 ## Test streaming parser
 
 ## If we add an option to stream to the `import ... as $symbol;` directive
