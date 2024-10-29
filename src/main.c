@@ -95,7 +95,7 @@ static void usage(int code, int keep_it_short) {
       "                            an array;\n"
       "      --seq                 parse input/output as application/json-seq;\n"
       "  -f, --from-file file      load filter from the file;\n"
-      "  -L directory              search modules from the directory;\n"
+      "  -L, --library-path dir    search modules from the directory;\n"
       "      --arg name value      set $name to the string value;\n"
       "      --argjson name value  set $name to the JSON value;\n"
       "      --slurpfile name file set $name to an array of JSON values read\n"
@@ -137,7 +137,7 @@ static int isoption(const char** text, char shortopt, const char* longopt, int i
       return 1;
     }
   } else {
-    if (longopt != NULL && !strcmp(*text, longopt)) {
+    if (!strcmp(*text, longopt)) {
       *text = NULL;
       return 1;
     }
@@ -403,7 +403,7 @@ int main(int argc, char* argv[]) {
           options |= PROVIDE_NULL;
         } else if (isoption(&text, 'f', "from-file", is_short)) {
           options |= FROM_FILE;
-        } else if (isoption(&text, 'L', NULL, is_short)) {
+        } else if (isoption(&text, 'L', "library-path", is_short)) {
           if (jv_get_kind(lib_search_paths) == JV_KIND_NULL)
             lib_search_paths = jv_array();
           if (text != NULL) { // -Lname

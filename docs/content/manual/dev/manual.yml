@@ -226,7 +226,7 @@ sections:
         Read filter from the file rather than from a command line, like
         awk's -f option.
 
-      * `-L directory`:
+      * `-L directory` / `--library-path directory`:
 
         Prepend `directory` to the search list for modules.  If this
         option is used then no builtin search list is used.  See the
