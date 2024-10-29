@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "September 2024" "" ""
+.TH "JQ" "1" "October 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -169,7 +169,7 @@ Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts i
 Read filter from the file rather than from a command line, like awk\'s \-f option\.
 .
 .TP
-\fB\-L directory\fR:
+\fB\-L directory\fR / \fB\-\-library\-path directory\fR:
 .
 .IP
 Prepend \fBdirectory\fR to the search list for modules\. If this option is used then no builtin search list is used\. See the section on modules below\.
