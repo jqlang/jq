@@ -587,7 +587,7 @@ int main(int argc, char* argv[]) {
     jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string_fmt("%.*s-master", (int)(strchr(JQ_VERSION, '-') - JQ_VERSION), JQ_VERSION));
 
 #ifdef USE_ISATTY
-  if (!program && (!isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
+  if (!program && !(options & FROM_FILE) && (!isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
     program = ".";
 #endif
 
