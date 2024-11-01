@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "October 2024" "" ""
+.TH "JQ" "1" "November 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -181,7 +181,7 @@ Prepend \fBdirectory\fR to the search list for modules\. If this option is used 
 This option passes a value to the jq program as a predefined variable\. If you run jq with \fB\-\-arg foo bar\fR, then \fB$foo\fR is available in the program and has the value \fB"bar"\fR\. Note that \fBvalue\fR will be treated as a string, so \fB\-\-arg foo 123\fR will bind \fB$foo\fR to \fB"123"\fR\.
 .
 .IP
-Named arguments are also available to the jq program as \fB$ARGS\.named\fR\.
+Named arguments are also available to the jq program as \fB$ARGS\.named\fR\. When the name is not a valid identifier, this is the only way to access it\.
 .
 .TP
 \fB\-\-argjson name JSON\-text\fR:

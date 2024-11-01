@@ -454,7 +454,6 @@ int main(int argc, char* argv[]) {
           further_args_are_strings = 0;
           further_args_are_json = 1;
         } else if (isoption(&text, 0, "arg", is_short)) {
-          // FIXME: For --arg* we should check that the varname is acceptable
           if (i >= argc - 2) {
             fprintf(stderr, "%s: --arg takes two parameters (e.g. --arg varname value)\n", progname);
             die();

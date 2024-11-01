@@ -241,7 +241,8 @@ sections:
         bind `$foo` to `"123"`.
 
         Named arguments are also available to the jq program as
-        `$ARGS.named`.
+        `$ARGS.named`. When the name is not a valid identifier, this is
+        the only way to access it.
 
       * `--argjson name JSON-text`:
 
