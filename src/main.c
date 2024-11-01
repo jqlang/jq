@@ -160,9 +160,8 @@ enum {
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
   SEQ                   = 16384,
-  RUN_TESTS             = 32768,
   /* debugging only */
-  DUMP_DISASM           = 65536,
+  DUMP_DISASM           = 32768,
 };
 
 enum {
