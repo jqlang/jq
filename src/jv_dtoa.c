@@ -2368,29 +2368,21 @@ jvp_strtod
 
 	sign = nz0 = nz1 = nz = bc.dplen = bc.uflchk = 0;
 	dval(&rv) = 0.;
-	for(s = s00;;s++) switch(*s) {
+	switch(*(s = s00)) {
 		case '-':
 			sign = 1;
 			/* no break */
 			JQ_FALLTHROUGH;
 		case '+':
 			if (*++s)
-				goto break2;
+				break;
 			/* no break */
 			JQ_FALLTHROUGH;
 		case 0:
 			goto ret0;
-		case '\t':
-		case '\n':
-		case '\v':
-		case '\f':
-		case '\r':
-		case ' ':
-			continue;
 		default:
-			goto break2;
+			break;
 		}
- break2:
 	if (*s == '0') {
 #ifndef NO_HEX_FP /*{*/
 		switch(s[1]) {
