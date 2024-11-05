@@ -103,20 +103,36 @@ if [ $n -ne $nref ]; then
   exit 1
 fi
 
+## Test parse error message
+echo 123 > $d/input_valid
+echo 456 > $d/input_error_line2
+echo asd >> $d/input_error_line2
+
+cat > $d/expected_out <<EOF
+123
+456
+EOF
+cat > $d/expected_err <<EOF
+jq: parse error (at $d/input_error_line2:2): Invalid numeric literal at line 4, column 0
+EOF
+$VALGRIND $Q $JQ -c . $d/input_valid $d/input_error_line2 > $d/out 2> $d/err || true
+cmp $d/out $d/expected_out
+cmp $d/err $d/expected_err
+
 ## Test JSON sequence support
 
 cat > $d/expected <<EOF
-jq: ignoring parse error: Truncated value at line 2, column 5
-jq: ignoring parse error: Truncated value at line 2, column 25
-jq: ignoring parse error: Truncated value at line 2, column 41
+jq: ignoring parse error (at <stdin>:2): Truncated value at line 2, column 5
+jq: ignoring parse error (at <stdin>:2): Truncated value at line 2, column 25
+jq: ignoring parse error (at <stdin>:2): Truncated value at line 2, column 41
 EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"\036false\n'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},false]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
 
 cat > $d/expected <<EOF
-jq: ignoring parse error: Truncated value at line 2, column 5
-jq: ignoring parse error: Truncated value at line 2, column 25
-jq: ignoring parse error: Truncated value at line 3, column 1
+jq: ignoring parse error (at <stdin>:2): Truncated value at line 2, column 5
+jq: ignoring parse error (at <stdin>:2): Truncated value at line 2, column 25
+jq: ignoring parse error (at <stdin>:2): Truncated value at line 3, column 1
 EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
@@ -124,7 +140,7 @@ cmp $d/out $d/expected
 # Note that here jq sees no inputs at all but it still succeeds because
 # --seq ignores parse errors
 cat > $d/expected <<EOF
-jq: ignoring parse error: Unfinished abandoned text at EOF at line 1, column 4
+jq: ignoring parse error (at <stdin>:0): Unfinished abandoned text at EOF at line 1, column 4
 EOF
 printf '"foo' | $JQ -c --seq . > $d/out 2>&1
 cmp $d/out $d/expected
@@ -137,7 +153,7 @@ cmp $d/out $d/expected
 
 # Numeric values truncated by EOF are ignored
 cat > $d/expected <<EOF
-jq: ignoring parse error: Unfinished abandoned text at EOF at line 1, column 1
+jq: ignoring parse error (at <stdin>:0): Unfinished abandoned text at EOF at line 1, column 1
 EOF
 printf '1' | $JQ -c --seq . > $d/out 2>&1
 cmp $d/out $d/expected
