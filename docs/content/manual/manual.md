@@ -9,7 +9,7 @@ Each filter takes an input value and produces a _stream_ of output values.
 For instance, when the input value is an array,
 the filter [`.[]`](#iteration-operator) yields all the elements of the array.
 Even literals like `"hello"` or `42` are filters ---
-they take an input and produce the same literal as output.
+they take an input, ignore it, and produce the same literal as output.
 
 The simplest filter (or jq program) is
 [identity `.`](#identity), which simply outputs its input.
