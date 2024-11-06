@@ -32,7 +32,7 @@ in other languages are just done by gluing filters together in jq.
 We can run a filter `FILTER` using `jq FILTER`, e.g. `jq .foo`.
 For large filters, it may be more convenient to
 write it into some `FILE` and to
-run it with `jq -f FILE`, e.g. `jq -f filter.jq`.
+run it using `jq -f FILE`, e.g. `jq -f filter.jq`.
 
 ::: Note
 When using `jq FILTER`, it is important to mind the shell's quoting rules.
@@ -124,8 +124,10 @@ using some command-line options:
 * `--null-input` / `-n`:
 
   Don't read any input at all. Instead, the filter is run once
-  using `null` as the input. This is useful when using jq as a
-  simple calculator or to construct JSON data from scratch.
+  using `null` as the input. This is useful when using jq
+  as a simple calculator,
+  to construct JSON data from scratch, or
+  in conjunction with the [`input` / `inputs` filters](#input).
 
 * `--raw-input` / `-R`:
 
@@ -188,7 +190,7 @@ using some command-line options:
 * `--compact-output` / `-c`:
 
   By default, jq pretty-prints JSON output. Using this option
-  will result in more compact output by instead putting each
+  will result in more compact output by instead outputting each
   JSON object on a single line.
 
 * `--raw-output` / `-r`:
@@ -225,7 +227,7 @@ using some command-line options:
   equivalent escape sequence.
 
   ::: Compatibility
-  jaq does not support this option.
+  gojq and jaq do not support this option.
   :::
 
 * `--sort-keys` / `-S`:
@@ -233,6 +235,8 @@ using some command-line options:
   Output the fields of each object with the keys in sorted order.
 
   ::: Compatibility
+  gojq always sorts the fields of objects by their keys, so it does not support this option.
+
   jaq does not support this option.
   However, you can sort all output objects by their keys using a filter such as:
 
@@ -270,7 +274,7 @@ using some command-line options:
   pipe jq's output elsewhere.
 
   ::: Compatibility
-  jaq does not support this option.
+  gojq and jaq do not support this option.
   :::
 
 * `--seq`:
@@ -285,7 +289,7 @@ using some command-line options:
   option.
 
   ::: Compatibility
-  jaq does not support this option.
+  gojq and jaq do not support this option.
   :::
 
 * `--binary` / `-b`:
@@ -295,7 +299,7 @@ using some command-line options:
   into carriage-return-then-newline (CRLF).
 
   ::: Compatibility
-  jaq does not support this option.
+  gojq and jaq do not support this option.
   :::
 
 ## Variable options
@@ -359,7 +363,7 @@ using some command-line options:
   without notice in future releases.
 
   ::: Compatibility
-  jaq does not support this option.
+  gojq and jaq do not support this option.
   :::
 
 * `--run-tests [filename]`:
@@ -424,7 +428,7 @@ jaq does not consider `JQ_COLORS`.
 
 # Types and Values
 
-jq supports the same set of datatypes as JSON ---
+jq supports the same set of data types as JSON ---
 booleans, numbers, strings, arrays, objects
 (JSON-speak for hashes with only string keys), and
 `null`.
@@ -516,7 +520,7 @@ such as:
 The output of the filter will be interpolated into the string.
 The example above is equivalent to:
 
-    "Hello " + (.name) + " of planet " + (.planet) + "!"
+    "Hello " + (.name | tostring) + " of planet " + (.planet | tostring) + "!"
 
 ::: Examples
 
@@ -579,9 +583,9 @@ not escaped, as they were part of the string literal.
 
 :::
 
-## Arrays: `[]`
+## Arrays: `[]`, `[...]`
 
-As in JSON, `[]` is used to construct arrays, as in `[1,2,3]`.
+As in JSON, `[...]` is used to construct arrays, as in `[1,2,3]`.
 The elements of the arrays can be any jq expression.
 All of the results produced by all of the expressions are collected into one big array.
 You can use it to construct an array out of a known quantity
@@ -608,7 +612,7 @@ array of four elements.
 ~~~
 
 ~~~
-[ .[] | . * 2]
+[.[] | . * 2]
 [1, 2, 3]
 [2, 4, 6]
 ~~~
@@ -617,10 +621,12 @@ array of four elements.
 
 
 
-## Objects: `{}`
+## Objects: `{}`, `{...}`
 
-Like in JSON, `{}` is for constructing objects (aka dictionaries or hashes), as in:
+Like in JSON, `{...}` is for constructing objects (aka dictionaries or hashes), as in
 `{"a": 42, "b": 17}`.
+Here, `"a"` and `"b"` are the _keys_ (or _fields_) of the object, and
+`42` and `17` are the corresponding _values_ of the object.
 
 As keys, you can use constant literals, variables, or parenthesized expressions,
 such as `{("a"+"b"):59}`.
@@ -635,7 +641,7 @@ If a key is an identifier-like string, such as `"foo"`,
 then the quotes can be omitted.
 For example, you may write `{"a":42, "b":17}` more succinctly as `{a:42, b:17}`.
 
-Key and value expressions are evaluated with the input of `{}`.
+Key and value expressions are evaluated with the input of the `{...}` literal.
 If one of the expressions produces multiple results,
 multiple objects are produced.
 
@@ -815,7 +821,8 @@ middle refers to whatever value `.a` produced.
 jq provides [many builtin functions](#builtin-functions) for a variety of tasks,
 and you can also [define your own functions](#definitions).
 
-Each function has an _arity_ that specifies how many _arguments_ that function takes.
+Each function takes an input, as well as a fixed number of _arguments_.
+The number of arguments that a function takes is called _arity_.
 For example,
 the function [`length`](#length) does not take any argument, so its arity is 0, whereas
 the function [`contains`](#contains) takes one argument, so its arity is 1.
@@ -945,9 +952,9 @@ numbers `1 2 3` as three separate results, rather than as a single array.
 
 ~~~
 .[]
-{"a": 1, "b": 1}
+{"a": 1, "b": 2}
 1
-1
+2
 ~~~
 
 :::
@@ -1017,6 +1024,19 @@ null
 2
 ~~~
 
+~~~
+{a:1, b:2}
+.["a","b"]
+1
+2
+~~~
+
+~~~
+.[keys[] | select(test("^b"))]
+{a:1, b:2, c:3}
+2
+~~~
+
 :::
 
 ## Slicing operator: `.[f:g]` {#slicing-operator}
@@ -1055,6 +1075,14 @@ Indices are zero-based.
 .[-2:]
 ["a","b","c","d","e"]
 ["d", "e"]
+~~~
+
+~~~
+.[:range(1; length+1)]
+[1,2,3]
+[1]
+[1,2]
+[1,2,3]
 ~~~
 
 :::
@@ -1418,16 +1446,20 @@ their left argument is greater than, greater than or equal
 to, less than or equal to or less than their right argument
 (respectively).
 
-Values are ordered as follows, by increasing order:
+If two values of different type are ordered, the
+types are ordered instead in the following increasing order:
 
 * `null`
-* `false`
-* `true`
+* booleans
 * numbers
-* strings, in alphabetical order (by unicode codepoint value)
-* arrays, in lexical order
+* strings
+* arrays
 * objects
 
+For booleans, `false` is smaller than `true`.
+Strings are ordered [alphabetically](https://en.wikipedia.org/wiki/Alphabetical_order)
+(by Unicode codepoint value).
+Arrays are ordered [lexicographically](https://en.wikipedia.org/wiki/Lexicographic_order).
 The ordering for objects is a little complex: first they're
 compared by comparing their sets of keys (as arrays in
 sorted order), and if their keys are equal then the values
@@ -1438,6 +1470,18 @@ are compared key by key.
 ~~~
 . < 5
 2
+true
+~~~
+
+~~~
+[1,3] > [1,2]
+null
+true
+~~~
+
+~~~
+"jq" > false
+null
 true
 ~~~
 
