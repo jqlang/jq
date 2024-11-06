@@ -73,7 +73,11 @@ function example(test)
   function code(code, lang)
     local attrs = {class = lang}
     if FORMAT == "html" then
-      return pandoc.Code     (code, attrs)
+      local lines = {}
+      for line in code:gmatch '[^\n]+' do
+        lines[#lines + 1] = pandoc.Code(line, attrs)
+      end
+      return pandoc.LineBlock(lines)
     else
       return pandoc.CodeBlock(code, attrs)
     end
