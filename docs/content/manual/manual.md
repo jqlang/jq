@@ -1197,6 +1197,65 @@ Now, let us consider a **correct** transformation:
 
 :::
 
+When a path contains multiple filters, such as `.[f][g]`, then
+the filters are bound from _right to left_; that is,
+the filter is equivalent to `g as $y | f as $x | .[$x][$y]`.
+This behaviour is similar to that of the
+[arithmetic and comparison](#arithmetic-and-comparison) operators.
+However, for the slicing operator `.[f:g]`,
+the filters are bound from _left to right_; that is,
+the filter is equivalent to `f as $x | g as $y | .[$x][$y]`.
+
+::: Example
+
+Let us consider the input `{"a": [1, 2], "b": [3, 4]}`
+The filter `.["a", "b"][0, 1]` is equivalent to:
+
+~~~
+( 0 ,  1 ) as $y |
+("a", "b") as $x |
+.[$x][$y]
+~~~
+
+Running it with the input yields `1, 3, 2, 4`.
+
+The filter `.["a", "b"][0,1:1,2]` is equivalent to:
+
+~~~
+( 0 ,  1 ) as $y1 |
+( 1 ,  2 ) as $y2 |
+("a", "b") as $x  |
+.[$x][$y1:$y2]
+~~~
+
+Running it with the input yields `[1], [3], [1, 2], [3, 4], [], [], [2], [4]`.
+
+:::
+
+::: Compatibility
+
+In jaq, all filters in a path are bound _uniformly from left to right_.
+That is, the two examples above are equivalent to the filters
+
+~~~
+("a", "b") as $x |
+( 0 ,  1 ) as $y |
+.[$x][$y]
+~~~
+
+yielding `1, 2, 3, 4`, and
+
+~~~
+("a", "b") as $x  |
+( 0 ,  1 ) as $y1 |
+( 1 ,  2 ) as $y2 |
+.[$x][$y1:$y2]
+~~~
+
+yielding `[1], [1, 2], [], [2], [3], [3, 4], [], [4]`.
+
+:::
+
 ::: Note
 Surprisingly, the filter `.[f]?` is **not** equivalent to `(.[f])?`.
 To see this, let us transform `.[f]?` to an equivalent filter like above:
