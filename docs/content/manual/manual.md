@@ -1128,7 +1128,7 @@ Here,
 `ident` refers to an [identifier-like key](#objects),
 `t` refers to a filter, and
 `atomic` refers to an _atomic_ filter, such as
-`.` (identity), function call, and parenthesis.
+`.` (identity), literal (e.g. `{a: 1}`), function call, and parenthesis.
 This grammar defines a compound `path` as
 a sequence of path parts,
 potentially prefixed by an atomic root.
@@ -1558,6 +1558,16 @@ You can negate the boolean value of a value with the builtin function [`not`](#n
 It is called as a filter to which things can be piped
 rather than with special syntax, as in `.foo and .bar | not`.
 
+::: Note
+
+Mind the precedences.
+In particular, the filter
+`false and false | not` is equivalent to
+`(false and false) | not` and yields `true`, whereas
+`false and (false | not)` yields `false`.
+
+:::
+
 ## if-then-else-end {#if-then-else}
 
 The filter `if i then t else e end`
@@ -1623,7 +1633,7 @@ Otherwise, both filters return `false`.
 
 Given two filters `f` and `g`,
 their conjunction `f and g` and
-their disjunction `f  or g`
+their disjunction `f or g`
 run `f` on the input,
 and for every output `y` of `f`, they analyze
 the [boolean value](#boolean-filters) `y` of the output:
@@ -1751,15 +1761,35 @@ null
 
 # Error handling
 
+Many filters throw errors, e.g. `0 | .[]` or [`error`](#error).
+In this section, we show how to recover from errors.
+
 ## try-catch
 
-Errors can be caught by using `try EXP catch EXP`.  The first
-expression is executed, and if it fails then the second is
-executed with the error message.  The output of the handler,
-if any, is output as if it had been the output of the
-expression to try.
+Errors can be caught by using `try EXP catch EXP`.
+The first expression is executed, and if it fails,
+then the second is executed with the error message.
+The output of the handler, if any, is output as if it
+had been the output of the expression to try.
 
 The `try EXP` form uses `empty` as the exception handler.
+
+Using try/catch allows to break out of control structures like
+`reduce`, `foreach`, `while`, and so on.
+For a more robust way to do this,
+you may also use [`label-break`](#label-break).
+
+::: Example
+
+The following filter repeats an expression `exp` until it raises an error.
+If the error is "break", then this stops repeating without re-raising the error.
+If the error is something else, then this re-raises it.
+
+~~~
+try repeat(exp) catch if .=="break" then empty else error
+~~~
+
+:::
 
 ::: Examples
 
@@ -1804,16 +1834,6 @@ The `?` operator, used as `f?`, is shorthand for `try f`.
 :::
 
 ## label-break
-
-A convenient use of try/catch is to break out of control
-structures like `reduce`, `foreach`, `while`, and so on.
-
-For example:
-
-    # Repeat an expression until it raises "break" as an
-    # error, then stop repeating without re-raising the error.
-    # But if the error caught is not "break" then re-raise it.
-    try repeat(exp) catch if .=="break" then empty else error
 
 jq has a syntax for named lexical labels to "break" or "go (back) to":
 
@@ -1910,8 +1930,7 @@ for each output `y` produced by `f`,
 it runs `g` with the original input and with `$x` set to `y`.
 Thus `as` functions as something of a foreach loop.
 
-Just as `{foo}` is a handy way of writing `{foo: .foo}`, so
-`{$foo}` is a handy way of writing `{foo: $foo}`.
+You can write `{$foo}` as shorthand for `{foo: $foo}`.
 
 ::: Examples
 
@@ -1990,9 +2009,8 @@ The filter
 is equivalent to the filter
 
     .realnames as $names  |
-    .posts     as $p1     |
-    ($p1.[0])  as $first  |
-    ($p1.[1])  as $second |
+    .posts[0]  as $first  |
+    .posts[1]  as $second |
     g
 
 :::
@@ -2373,7 +2391,7 @@ foreach .[] as $item (0; . + 1; {index: ., $item})
 :::
 
 
-# Definitions
+# Function definitions
 
 When you have a filter `g`, you can give it a name `f` as follows:
 
@@ -3079,7 +3097,7 @@ null
 
 :::
 
-### `error`, `error(message)`
+### `error`, `error(message)` {#error}
 
 Produces an error with the input value, or with the message given as the argument.
 Errors can be caught with [try/catch](#try-catch).
