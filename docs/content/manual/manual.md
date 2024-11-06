@@ -1583,7 +1583,7 @@ need something like `if .name == "" then A else B end` instead.
 
 More cases can be added to an if using `elif A then B` syntax.
 
-`if A then B end` is shorthand for `if A then B else .  end`.
+`if A then B end` is shorthand for `if A then B else . end`.
 That is, the `else` branch is optional, and if absent, it is the same as `.`.
 This also applies to `elif` with absent ending `else` branch.
 
@@ -1602,6 +1602,15 @@ false
 1
 2
 null
+~~~
+
+~~~
+if range(0;4) % 2 == 0 then "even" else "odd" end
+null
+"even"
+"odd"
+"even"
+"odd"
 ~~~
 
 :::
