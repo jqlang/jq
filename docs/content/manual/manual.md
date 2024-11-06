@@ -1204,7 +1204,7 @@ This behaviour is similar to that of the
 [arithmetic and comparison](#arithmetic-and-comparison) operators.
 However, for the slicing operator `.[f:g]`,
 the filters are bound from _left to right_; that is,
-the filter is equivalent to `f as $x | g as $y | .[$x][$y]`.
+the filter is equivalent to `f as $x | g as $y | .[$x:$y]`.
 
 ::: Example
 
