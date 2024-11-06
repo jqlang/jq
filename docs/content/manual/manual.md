@@ -2841,7 +2841,7 @@ The following filters are path expressions:
 * compound path: if it starts with some `f`, then `f` must be a path expression
   * (`.[]` is a path expression because it starts with `.`, which is a path expression)
   * (`{}[]` is _not_ a path expression, because it starts with `{}`, which is no path expression)
-* `if i then t else e end`: if `i` and `e` are path expressions
+* `if i then t else e end`: if `t` and `e` are path expressions
 * `f as $x | g`: if `g` is a path expression
 * `f, g`: if `f` and `g` are path expressions
 * `f | g`: if `f` and `g` are path expressions
