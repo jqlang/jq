@@ -2892,14 +2892,9 @@ with a `jq` interpreter invoked with the specified options (`-M`,
 with the arguments (`$@`) that were passed to `sh`.
 :::
 
-::: Compatibility
-jaq ignores backslashes at the end of comment lines.
-:::
-
 ## Modules
 
 jq has a library/module system. Modules are files whose names end in `.jq`.
-
 
 ### Importing / including modules {#importing-modules}
 
@@ -2984,7 +2979,6 @@ For example, with `-L$HOME/.jq` a module `foo` can be found in
 
 If `.jq` exists in the user's home directory, and is a file (not a directory),
 it is automatically sourced into the main program.
-
 
 
 # Builtin functions
