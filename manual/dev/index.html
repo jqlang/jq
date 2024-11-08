@@ -304,7 +304,7 @@ using some command-line options:</p>
 <p>Read filter from the file rather than from a command line, like
   awk's -f option.</p>
 <ul>
-<li><code>-L directory</code>:</li>
+<li><code>-L directory</code> / <code>--library-path directory</code>:</li>
 </ul>
 <p>Prepend <code>directory</code> to the search list for modules.  If this
   option is used then no builtin search list is used.  See the
@@ -318,7 +318,8 @@ using some command-line options:</p>
   <code>value</code> will be treated as a string, so <code>--arg foo 123</code> will
   bind <code>$foo</code> to <code>"123"</code>.</p>
 <p>Named arguments are also available to the jq program as
-  <code>$ARGS.named</code>.</p>
+  <code>$ARGS.named</code>. When the name is not a valid identifier, this is
+  the only way to access it.</p>
 <ul>
 <li><code>--argjson name JSON-text</code>:</li>
 </ul>
