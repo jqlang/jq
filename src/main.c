@@ -94,7 +94,7 @@ static void usage(int code, int keep_it_short) {
       "      --stream-errors       implies --stream and report parse error as\n"
       "                            an array;\n"
       "      --seq                 parse input/output as application/json-seq;\n"
-      "  -f, --from-file file      load filter from the file;\n"
+      "  -f, --from-file           load the filter from a file;\n"
       "  -L, --library-path dir    search modules from the directory;\n"
       "      --arg name value      set $name to the string value;\n"
       "      --argjson name value  set $name to the JSON value;\n"
