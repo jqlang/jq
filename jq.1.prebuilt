@@ -163,10 +163,10 @@ Implies \fB\-\-stream\fR\. Invalid JSON inputs produce no error values when \fB\
 Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts in jq\'s input and output\. This means that an ASCII RS (record separator) character is printed before each value on output and an ASCII LF (line feed) is printed after every output\. Input JSON texts that fail to parse are ignored (but warned about), discarding all subsequent input until the next RS\. This mode also parses the output of jq without the \fB\-\-seq\fR option\.
 .
 .TP
-\fB\-f filename\fR / \fB\-\-from\-file filename\fR:
+\fB\-f\fR / \fB\-\-from\-file\fR:
 .
 .IP
-Read filter from the file rather than from a command line, like awk\'s \-f option\.
+Read the filter from a file rather than from a command line, like awk\'s \-f option\. This changes the filter argument to be interpreted as a filename, instead of the source of a program\.
 .
 .TP
 \fB\-L directory\fR / \fB\-\-library\-path directory\fR:
@@ -4065,7 +4065,7 @@ Backslash continuing the comment on the next line can be useful when writing the
 # total \- Output the sum of the given arguments (or stdin)
 # usage: total [numbers\.\.\.]
 # \e
-exec jq \-\-args \-MRnf "$0" \-\- "$@"
+exec jq \-\-args \-MRnf \-\- "$0" "$@"
 
 $ARGS\.positional |
 reduce (
@@ -4085,7 +4085,7 @@ reduce (
 .IP "" 0
 .
 .P
-The \fBexec\fR line is considered a comment by jq, so it is ignored\. But it is not ignored by \fBsh\fR, since in \fBsh\fR a backslash at the end of the line does not continue the comment\. With this trick, when the script is invoked as \fBtotal 1 2\fR, \fB/bin/sh \-\- /path/to/total 1 2\fR will be run, and \fBsh\fR will then run \fBexec jq \-\-args \-MRnf /path/to/total \-\- 1 2\fR replacing itself with a \fBjq\fR interpreter invoked with the specified options (\fB\-M\fR, \fB\-R\fR, \fB\-n\fR, \fB\-\-args\fR), that evaluates the current file (\fB$0\fR), with the arguments (\fB$@\fR) that were passed to \fBsh\fR\.
+The \fBexec\fR line is considered a comment by jq, so it is ignored\. But it is not ignored by \fBsh\fR, since in \fBsh\fR a backslash at the end of the line does not continue the comment\. With this trick, when the script is invoked as \fBtotal 1 2\fR, \fB/bin/sh \-\- /path/to/total 1 2\fR will be run, and \fBsh\fR will then run \fBexec jq \-\-args \-MRnf \-\- /path/to/total 1 2\fR replacing itself with a \fBjq\fR interpreter invoked with the specified options (\fB\-M\fR, \fB\-R\fR, \fB\-n\fR, \fB\-\-args\fR), that evaluates the current file (\fB$0\fR), with the arguments (\fB$@\fR) that were passed to \fBsh\fR\.
 .
 .SH "MODULES"
 jq has a library/module system\. Modules are files whose names end in \fB\.jq\fR\.
