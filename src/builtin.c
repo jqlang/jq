@@ -1879,6 +1879,33 @@ BINOPS
 #undef LIBM_DD
 #undef LIBM_DA
 
+// This is a hack to make last(g) yield no output values,
+// if g yields no output values, without using boxing.
+static block gen_last_1() {
+  block last_var = gen_op_var_fresh(STOREV, "last");
+  block is_empty_var = gen_op_var_fresh(STOREV, "is_empty");
+  block init = BLOCK(gen_op_simple(DUP),
+                     gen_const(jv_null()),
+                     last_var,
+                     gen_op_simple(DUP),
+                     gen_const(jv_true()),
+                     is_empty_var);
+  block call_arg = BLOCK(gen_call("arg", gen_noop()),
+                         gen_op_simple(DUP),
+                         gen_op_bound(STOREV, last_var),
+                         gen_const(jv_false()),
+                         gen_op_bound(STOREV, is_empty_var),
+                         gen_op_simple(BACKTRACK));
+  block if_empty = gen_op_simple(BACKTRACK);
+  return BLOCK(init,
+               gen_op_target(FORK, call_arg),
+               call_arg,
+               BLOCK(gen_op_bound(LOADVN, is_empty_var),
+                     gen_op_target(JUMP_F, if_empty),
+                     if_empty,
+                     gen_op_bound(LOADVN, last_var)));
+}
+
 struct bytecoded_builtin { const char* name; block code; };
 static block bind_bytecoded_builtins(block b) {
   block builtins = gen_noop();
@@ -1898,6 +1925,7 @@ static block bind_bytecoded_builtins(block b) {
       {"path", BLOCK(gen_op_simple(PATH_BEGIN),
                      gen_call("arg", gen_noop()),
                      gen_op_simple(PATH_END))},
+      {"last", gen_last_1()},
     };
     for (unsigned i=0; i<sizeof(builtin_def_1arg)/sizeof(builtin_def_1arg[0]); i++) {
       builtins = BLOCK(builtins, gen_function(builtin_def_1arg[i].name,
