@@ -7237,13 +7237,13 @@ and last values from <code>expr</code>, respectively.</p>
 Note that <code>nth(n; expr)</code> doesn't support negative values of <code>n</code>.</p>
             <div class="pb-3">
               <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-transparent link-body-emphasis border-0" data-bs-toggle="collapse" data-bs-target="#example100" aria-expanded="false" aria-controls="example100">
-                <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Example
+                <span class="me-1 d-print-none" aria-hidden="true"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></span>Examples
               </button>
               <div id="example100" class="collapse mx-3 small d-print-block">
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
-                    <td class="font-monospace">jq '[first(range(.)), last(range(.)), nth(./2; range(.))]'</td>
+                    <td class="font-monospace">jq '[first(range(.)), last(range(.)), nth(5; range(.))]'</td>
                   </tr>
                   <tr>
                     <th>Input</th>
@@ -7254,7 +7254,25 @@ Note that <code>nth(n; expr)</code> doesn't support negative values of <code>n</
                     <td class="font-monospace">[0,9,5]</td>
                   </tr>
                   <tr class="d-print-none">
-                    <th><a href="https://jqplay.org/jq?q=%5Bfirst%28range%28.%29%29%2C%20last%28range%28.%29%29%2C%20nth%28./2%3B%20range%28.%29%29%5D&j=10" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <th><a href="https://jqplay.org/jq?q=%5Bfirst%28range%28.%29%29%2C%20last%28range%28.%29%29%2C%20nth%285%3B%20range%28.%29%29%5D&j=10" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <td></td>
+                  </tr>
+                </table>
+                <table class="table table-borderless table-sm w-auto">
+                  <tr>
+                    <th class="pe-3">Command</th>
+                    <td class="font-monospace">jq '[first(empty), last(empty), nth(5; empty)]'</td>
+                  </tr>
+                  <tr>
+                    <th>Input</th>
+                    <td class="font-monospace">null</td>
+                  </tr>
+                  <tr>
+                    <th>Output</th>
+                    <td class="font-monospace">[]</td>
+                  </tr>
+                  <tr class="d-print-none">
+                    <th><a href="https://jqplay.org/jq?q=%5Bfirst%28empty%29%2C%20last%28empty%29%2C%20nth%285%3B%20empty%29%5D&j=null" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
                     <td></td>
                   </tr>
                 </table>
