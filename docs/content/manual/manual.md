@@ -84,9 +84,11 @@ using some command-line options:
 
 ## General options
 
-* `-f filename` / `--from-file filename`:
+* `-f` / `--from-file`:
 
-  Read filter from the file rather than from a command line, like awk's `-f` option.
+  Read filter from a file rather than from the command line, like awk's `-f` option.
+  This changes the filter argument to be interpreted as a filename,
+  instead of the source of a program.
 
 * `-L directory`:
 
@@ -2954,7 +2956,7 @@ when writing the "shebang" for a jq script:
     # total - Output the sum of the given arguments (or stdin)
     # usage: total [numbers...]
     # \
-    exec jq --args -MRnf "$0" -- "$@"
+    exec jq --args -MRnf -- "$0" "$@"
 
     $ARGS.positional |
     reduce (
@@ -2974,7 +2976,7 @@ But it is not ignored by `sh`, since in `sh` a backslash at the
 end of the line does not continue the comment.
 With this trick, when the script is invoked as `total 1 2`,
 `/bin/sh -- /path/to/total 1 2` will be run, and `sh` will then
-run `exec jq --args -MRnf /path/to/total -- 1 2` replacing itself
+run `exec jq --args -MRnf -- /path/to/total 1 2` replacing itself
 with a `jq` interpreter invoked with the specified options (`-M`,
 `-R`, `-n`, `--args`), that evaluates the current file (`$0`),
 with the arguments (`$@`) that were passed to `sh`.
