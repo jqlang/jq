@@ -1,4 +1,8 @@
 
+.[keys[] | select(test("^b"))]
+{a:1, b:2, c:3}
+2
+
 split(", ")
 "a, b,c,d, e, "
 ["a","b,c,d","e",""]

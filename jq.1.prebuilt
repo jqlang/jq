@@ -5,7 +5,8 @@
 jq \[en] Command\-line JSON processor
 .SH SYNOPSIS
 \f[B]jq\f[R] \f[CR][\f[R]\f[I]OPTION\f[R]\f[CR]]\f[R]\&...
-\f[I]FILTER\f[R] \f[CR][\f[R]\f[I]FILE\f[R]\f[CR]]\f[R]\&...
+\f[CR][\f[R]\f[I]FILTER\f[R]\f[CR]]\f[R]
+\f[CR][\f[R]\f[I]FILE\f[R]\f[CR]]\f[R]\&...
 .SH DESCRIPTION
 jq is a tool to transform JSON data in various ways, such as selecting,
 iterating, and reducing.
@@ -20,7 +21,8 @@ output values.
 For instance, when the input value is an array, the filter
 \f[CR].[]\f[R] yields all the elements of the array.
 Even literals like \f[CR]\[dq]hello\[dq]\f[R] or \f[CR]42\f[R] are
-filters \[em] they take an input and produce the same literal as output.
+filters \[em] they take an input, ignore it, and produce the same
+literal as output.
 .PP
 The simplest filter (or jq program) is identity \f[CR].\f[R], which
 simply outputs its input.
@@ -42,7 +44,7 @@ languages are just done by gluing filters together in jq.
 We can run a filter \f[CR]FILTER\f[R] using \f[CR]jq FILTER\f[R],
 e.g.\ \f[CR]jq .foo\f[R].
 For large filters, it may be more convenient to write it into some
-\f[CR]FILE\f[R] and to run it with \f[CR]jq \-f FILE\f[R],
+\f[CR]FILE\f[R] and to run it using \f[CR]jq \-f FILE\f[R],
 e.g.\ \f[CR]jq \-f filter.jq\f[R].
 .TP
 \f[I]Note\f[R]
@@ -98,14 +100,16 @@ You can affect how jq reads and writes its input and output using some
 command\-line options:
 .SS General options
 .IP \[bu] 2
-\f[CR]\-f filename\f[R] / \f[CR]\-\-from\-file filename\f[R]:
+\f[CR]\-f\f[R] / \f[CR]\-\-from\-file\f[R]:
 .RS 2
 .PP
-Read filter from the file rather than from a command line, like
+Read filter from a file rather than from the command line, like
 awk\[cq]s \f[CR]\-f\f[R] option.
+This changes the filter argument to be interpreted as a filename,
+instead of the source of a program.
 .RE
 .IP \[bu] 2
-\f[CR]\-L directory\f[R]:
+\f[CR]\-L directory\f[R] / \f[CR]\-\-library\-path directory\f[R]:
 .RS 2
 .PP
 Prepend \f[CR]directory\f[R] to the search paths for modules.
@@ -151,8 +155,9 @@ Remaining arguments are not interpreted as options.
 .PP
 Don\[cq]t read any input at all.
 Instead, the filter is run once using \f[CR]null\f[R] as the input.
-This is useful when using jq as a simple calculator or to construct JSON
-data from scratch.
+This is useful when using jq as a simple calculator, to construct JSON
+data from scratch, or in conjunction with the \f[CR]input\f[R] /
+\f[CR]inputs\f[R] filters.
 .RE
 .IP \[bu] 2
 \f[CR]\-\-raw\-input\f[R] / \f[CR]\-R\f[R]:
@@ -222,8 +227,8 @@ jaq does not support this option.
 .RS 2
 .PP
 By default, jq pretty\-prints JSON output.
-Using this option will result in more compact output by instead putting
-each JSON object on a single line.
+Using this option will result in more compact output by instead
+outputting each JSON object on a single line.
 .RE
 .IP \[bu] 2
 \f[CR]\-\-raw\-output\f[R] / \f[CR]\-r\f[R]:
@@ -266,7 +271,7 @@ Using this option, you can force jq to produce pure ASCII output with
 every non\-ASCII character replaced with the equivalent escape sequence.
 .TP
 \f[I]Compatibility\f[R]
-jaq does not support this option.
+gojq and jaq do not support this option.
 .RE
 .IP \[bu] 2
 \f[CR]\-\-sort\-keys\f[R] / \f[CR]\-S\f[R]:
@@ -275,6 +280,8 @@ jaq does not support this option.
 Output the fields of each object with the keys in sorted order.
 .TP
 \f[I]Compatibility\f[R]
+gojq always sorts the fields of objects by their keys, so it does not
+support this option.
 jaq does not support this option.
 However, you can sort all output objects by their keys using a filter
 such as:
@@ -323,7 +330,7 @@ This is useful if you pipe a slow data source into jq and pipe jq\[cq]s
 output elsewhere.
 .TP
 \f[I]Compatibility\f[R]
-jaq does not support this option.
+gojq and jaq do not support this option.
 .RE
 .IP \[bu] 2
 \f[CR]\-\-seq\f[R]:
@@ -340,7 +347,7 @@ This mode also parses the output of jq without the \f[CR]\-\-seq\f[R]
 option.
 .TP
 \f[I]Compatibility\f[R]
-jaq does not support this option.
+gojq and jaq do not support this option.
 .RE
 .IP \[bu] 2
 \f[CR]\-\-binary\f[R] / \f[CR]\-b\f[R]:
@@ -351,7 +358,7 @@ using a native jq.exe, otherwise jq will turn newlines (LFs) into
 carriage\-return\-then\-newline (CRLF).
 .TP
 \f[I]Compatibility\f[R]
-jaq does not support this option.
+gojq and jaq do not support this option.
 .RE
 .SS Variable options
 .IP \[bu] 2
@@ -367,6 +374,8 @@ Note that \f[CR]value\f[R] will be treated as a string, so
 .PP
 Named arguments are also available to the jq program as
 \f[CR]$ARGS.named\f[R].
+When the name is not a valid identifier, this is the only way to access
+it.
 .RE
 .IP \[bu] 2
 \f[CR]\-\-argjson name JSON\-text\f[R]:
@@ -427,7 +436,7 @@ This output has no supported format or structure and may change without
 notice in future releases.
 .TP
 \f[I]Compatibility\f[R]
-jaq does not support this option.
+gojq and jaq do not support this option.
 .RE
 .IP \[bu] 2
 \f[CR]\-\-run\-tests [filename]\f[R]:
@@ -507,7 +516,7 @@ The second number is one of these:
 \f[I]Compatibility\f[R]
 jaq does not consider \f[CR]JQ_COLORS\f[R].
 .SH TYPES AND VALUES
-jq supports the same set of datatypes as JSON \[em] booleans, numbers,
+jq supports the same set of data types as JSON \[em] booleans, numbers,
 strings, arrays, objects (JSON\-speak for hashes with only string keys),
 and \f[CR]null\f[R].
 This section covers how to create values in jq.
@@ -591,7 +600,7 @@ The output of the filter will be interpolated into the string.
 The example above is equivalent to:
 .IP
 .EX
-\[dq]Hello \[dq] + (.name) + \[dq] of planet \[dq] + (.planet) + \[dq]!\[dq]
+\[dq]Hello \[dq] + (.name | tostring) + \[dq] of planet \[dq] + (.planet | tostring) + \[dq]!\[dq]
 .EE
 .TP
 \f[I]Examples\f[R]
@@ -654,8 +663,8 @@ $ jq \[aq]\[at]base64d\[aq] \[rs]
   <<< \[aq]\[dq]VGhpcyBpcyBhIG1lc3NhZ2U=\[dq]\[aq]
 \[dq]This is a message\[dq]
 .EE
-.SS Arrays: \f[CR][]\f[R]
-As in JSON, \f[CR][]\f[R] is used to construct arrays, as in
+.SS Arrays: \f[CR][]\f[R], \f[CR][...]\f[R]
+As in JSON, \f[CR][...]\f[R] is used to construct arrays, as in
 \f[CR][1,2,3]\f[R].
 The elements of the arrays can be any jq expression.
 All of the results produced by all of the expressions are collected into
@@ -684,90 +693,84 @@ $ jq \[aq][.user, .projects[]]\[aq] \[rs]
 .EE
 .IP
 .EX
-$ jq \[aq][ .[] | . * 2]\[aq] \[rs]
+$ jq \[aq][.[] | . * 2]\[aq] \[rs]
   <<< \[aq][1, 2, 3]\[aq]
 [2, 4, 6]
 .EE
-.SS Objects: \f[CR]{}\f[R]
-Like JSON, \f[CR]{}\f[R] is for constructing objects (aka dictionaries
-or hashes), as in: \f[CR]{\[dq]a\[dq]: 42, \[dq]b\[dq]: 17}\f[R].
+.SS Objects: \f[CR]{}\f[R], \f[CR]{...}\f[R]
+Like in JSON, \f[CR]{...}\f[R] is for constructing objects (aka
+dictionaries or hashes), as in
+\f[CR]{\[dq]a\[dq]: 42, \[dq]b\[dq]: 17}\f[R].
+Here, \f[CR]\[dq]a\[dq]\f[R] and \f[CR]\[dq]b\[dq]\f[R] are the
+\f[I]keys\f[R] (or \f[I]fields\f[R]) of the object, and \f[CR]42\f[R]
+and \f[CR]17\f[R] are the corresponding \f[I]values\f[R] of the object.
 .PP
-If the keys are \[lq]identifier\-like\[rq], then the quotes can be left
-off, as in \f[CR]{a:42, b:17}\f[R].
-Variable references as key expressions use the value of the variable as
-the key.
-Key expressions other than constant literals, identifiers, or variable
-references, need to be parenthesized, e.g.,
-\f[CR]{(\[dq]a\[dq]+\[dq]b\[dq]):59}\f[R].
+As keys, you can use constant literals, variables, or parenthesized
+expressions, such as \f[CR]{(\[dq]a\[dq]+\[dq]b\[dq]):59}\f[R].
+As values, you can use any expression; however, an expression containing
+colons needs to be surrounded by parentheses.
 .PP
-The value can be any expression (although you need to wrap it in
-parentheses if it contains colons), which gets applied to the
-\f[CR]{}\f[R] expression\[cq]s input (remember, all filters have an
-input and an output).
-For example,
+We say that a key is \f[I]identifier\-like\f[R] when it does not start
+with a digit and consists only of alphanumeric characters and
+underscores; for example, \f[CR]foo\f[R] is identifier\-like.
+If a key is an identifier\-like string, such as
+\f[CR]\[dq]foo\[dq]\f[R], then the quotes can be omitted.
+For example, you may write \f[CR]{\[dq]a\[dq]:42, \[dq]b\[dq]:17}\f[R]
+more succinctly as \f[CR]{a:42, b:17}\f[R].
+.PP
+Key and value expressions are evaluated with the input of the
+\f[CR]{...}\f[R] literal.
+If one of the expressions produces multiple results, multiple objects
+are produced.
+.TP
+\f[I]Example\f[R]
+The filter
 .IP
 .EX
-{foo: .bar}
+{user: \[dq]stedolan\[dq], title: (\[dq]JQ Primer\[dq], \[dq]More JQ\[dq])}
 .EE
-.PP
-produces the JSON object \f[CR]{\[dq]foo\[dq]: 42}\f[R] if given the
-JSON object \f[CR]{\[dq]bar\[dq]:42, \[dq]baz\[dq]:43}\f[R] as its
-input.
-You can use this to select particular fields of an object: if the input
-is an object with \[lq]user\[rq], \[lq]title\[rq], \[lq]id\[rq], and
-\[lq]content\[rq] fields and you just want \[lq]user\[rq] and
-\[lq]title\[rq], you can write
-.IP
-.EX
-{user: .user, title: .title}
-.EE
-.PP
-Because that is so common, there\[cq]s a shortcut syntax for it:
-\f[CR]{user, title}\f[R].
-.PP
-If one of the expressions produces multiple results, multiple
-dictionaries will be produced.
-If the input\[cq]s
-.IP
-.EX
-{\[dq]user\[dq]:\[dq]stedolan\[dq],\[dq]titles\[dq]:[\[dq]JQ Primer\[dq], \[dq]More JQ\[dq]]}
-.EE
-.PP
-then the expression
-.IP
-.EX
-{user, title: .titles[]}
-.EE
-.PP
-will produce two outputs:
+produces two outputs:
 .IP
 .EX
 {\[dq]user\[dq]:\[dq]stedolan\[dq], \[dq]title\[dq]: \[dq]JQ Primer\[dq]}
 {\[dq]user\[dq]:\[dq]stedolan\[dq], \[dq]title\[dq]: \[dq]More JQ\[dq]}
 .EE
+.TP
+\f[I]Example\f[R]
+The filter \f[CR]{(\[dq]a\[dq], \[dq]b\[dq]): 1}\f[R] outputs
+\f[CR]{\[dq]a\[dq]: 1}\f[R] and \f[CR]{\[dq]b\[dq]: 1}\f[R].
 .PP
-Putting parentheses around the key means it will be evaluated as an
-expression.
-With the same input as above,
-.IP
-.EX
-{(.user): .titles}
-.EE
+If an input object contains an entry \f[CR]\[dq]k\[dq]: v\f[R] where
+\f[CR]k\f[R] is an identifier\-like key, then we can create a new object
+\f[CR]{\[dq]k\[dq]: v}\f[R] by writing \f[CR]{k}\f[R].
+You can use this to select particular fields of an object.
+.TP
+\f[I]Example\f[R]
+If the input is an object with \[lq]user\[rq], \[lq]title\[rq],
+\[lq]id\[rq], and \[lq]content\[rq] fields, then you can obtain an
+object with just the \[lq]user\[rq] and \[lq]title\[rq] fields by
+\f[CR]{user, title}\f[R].
+This is syntactic sugar for the filter
+\f[CR]{user: .user, title: .title}\f[R], which uses the indexing
+operator that we will see later.
 .PP
-produces
-.IP
-.EX
-{\[dq]stedolan\[dq]: [\[dq]JQ Primer\[dq], \[dq]More JQ\[dq]]}
-.EE
+When using a variable \f[CR]$x\f[R] as key without surrounding
+parentheses, you can omit a value after \f[CR]$x\f[R], i.e.\ you can
+write \f[CR]{$x}\f[R].
+This is equivalent to \f[CR]{x: $x}\f[R], which constructs an object
+with a field \f[CR]\[dq]x\[dq]\f[R] that takes the value of
+\f[CR]$x\f[R].
 .PP
-Variable references as keys use the value of the variable as the key.
-Without a value then the variable\[cq]s name becomes the key and its
-value becomes the value,
+When using a variable \f[CR]$x\f[R] as key and a value is given,
+i.e.\ \f[CR]{$x: v}\f[R], then this is equivalent to
+\f[CR]{($x): v}\f[R].
+.TP
+\f[I]Example\f[R]
+The filter
 .IP
 .EX
 \[dq]f o o\[dq] as $foo | \[dq]b a r\[dq] as $bar | {$foo, $bar:$foo}
 .EE
-.PP
 produces
 .IP
 .EX
@@ -787,6 +790,12 @@ $ jq \[aq]{user, title: .titles[]}\[aq] \[rs]
 $ jq \[aq]{(.user): .titles}\[aq] \[rs]
   <<< \[aq]{\[dq]user\[dq]:\[dq]stedolan\[dq],\[dq]titles\[dq]:[\[dq]JQ Primer\[dq], \[dq]More JQ\[dq]]}\[aq]
 {\[dq]stedolan\[dq]: [\[dq]JQ Primer\[dq], \[dq]More JQ\[dq]]}
+.EE
+.IP
+.EX
+$ jq \[aq]{foo: .bar}\[aq] \[rs]
+  <<< \[aq]{\[dq]bar\[dq]:42, \[dq]baz\[dq]:43}\[aq]
+{\[dq]foo\[dq]: 42}.
 .EE
 .SH BASIC FILTERS
 .SS Identity: \f[CR].\f[R]
@@ -881,8 +890,9 @@ $ jq \[aq].[] | .name\[aq] \[rs]
 jq provides many builtin functions for a variety of tasks, and you can
 also define your own functions.
 .PP
-Each function has an \f[I]arity\f[R] that specifies how many
-\f[I]arguments\f[R] that function takes.
+Each function takes an input, as well as a fixed number of
+\f[I]arguments\f[R].
+The number of arguments that a function takes is called \f[I]arity\f[R].
 For example, the function \f[CR]length\f[R] does not take any argument,
 so its arity is 0, whereas the function \f[CR]contains\f[R] takes one
 argument, so its arity is 1.
@@ -997,9 +1007,9 @@ $ jq \[aq].foo[]\[aq] \[rs]
 .IP
 .EX
 $ jq \[aq].[]\[aq] \[rs]
-  <<< \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 1}\[aq]
+  <<< \[aq]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2}\[aq]
 1
-1
+2
 .EE
 .SS Indexing operator: \f[CR].[f]\f[R]
 When given an array as input, \f[CR].[n]\f[R] produces the
@@ -1019,9 +1029,6 @@ For example, given the object
 \f[CR].[\[dq]age\[dq]]\f[R] produces \f[CR]24\f[R], and
 \f[CR].[\[dq]address\[dq]]\f[R] produces \f[CR]null\f[R].
 .PP
-We say that a key is \f[I]identifier\-like\f[R] when it does not start
-with a digit and consists only of alphanumeric characters and
-underscores; for example, \f[CR]\[dq]foo\[dq]\f[R] is identifier\-like.
 For identifier\-like keys like \f[CR]\[dq]foo\[dq]\f[R], you can also
 look up the field \f[CR]\[dq]foo\[dq]\f[R] of an object using the
 shorthand syntax \f[CR].foo\f[R].
@@ -1076,6 +1083,19 @@ $ jq \[aq].[\-2]\[aq] \[rs]
   <<< \[aq][1,2,3]\[aq]
 2
 .EE
+.IP
+.EX
+$ jq \[aq]{a:1, b:2}\[aq] \[rs]
+  <<< \[aq].[\[dq]a\[dq],\[dq]b\[dq]]\[aq]
+1
+2
+.EE
+.IP
+.EX
+$ jq \[aq].[keys[] | select(test(\[dq]\[ha]b\[dq]))]\[aq] \[rs]
+  <<< \[aq]{a:1, b:2, c:3}\[aq]
+2
+.EE
 .SS Slicing operator: \f[CR].[f:g]\f[R]
 The operator \f[CR].[f:g]\f[R] returns a slice of an array or a string.
 For example, when given an array, \f[CR].[10:15]\f[R] returns an array
@@ -1111,6 +1131,14 @@ $ jq \[aq].[:3]\[aq] \[rs]
 $ jq \[aq].[\-2:]\[aq] \[rs]
   <<< \[aq][\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq],\[dq]d\[dq],\[dq]e\[dq]]\[aq]
 [\[dq]d\[dq], \[dq]e\[dq]]
+.EE
+.IP
+.EX
+$ jq \[aq].[:range(1; length+1)]\[aq] \[rs]
+  <<< \[aq][1,2,3]\[aq]
+[1]
+[1,2]
+[1,2,3]
 .EE
 .SS Compound paths
 Frequently, when using the path operators given above, we find ourselves
@@ -1155,7 +1183,8 @@ part = \[dq].\[dq], ident
 .PP
 Here, \f[CR]ident\f[R] refers to an identifier\-like key, \f[CR]t\f[R]
 refers to a filter, and \f[CR]atomic\f[R] refers to an \f[I]atomic\f[R]
-filter, such as \f[CR].\f[R] (identity), function call, and parenthesis.
+filter, such as \f[CR].\f[R] (identity), literal
+(e.g.\ \f[CR]{a: 1}\f[R]), function call, and parenthesis.
 This grammar defines a compound \f[CR]path\f[R] as a sequence of path
 parts, potentially prefixed by an atomic root.
 A path \f[CR]part\f[R] is any of the operators previously introduced in
@@ -1217,6 +1246,58 @@ Now, let us consider a \f[B]correct\f[R] transformation:
 | .[]           # \-\->  {a: 1, b: 2}, {a: 3}
 | .[$x]         # \-\->  1, 3
 .EE
+.PP
+When a path contains multiple filters, such as \f[CR].[f][g]\f[R], then
+the filters are bound from \f[I]right to left\f[R]; that is, the filter
+is equivalent to \f[CR]g as $y | f as $x | .[$x][$y]\f[R].
+This behaviour is similar to that of the arithmetic and comparison
+operators.
+However, for the slicing operator \f[CR].[f:g]\f[R], the filters are
+bound from \f[I]left to right\f[R]; that is, the filter is equivalent to
+\f[CR]f as $x | g as $y | .[$x:$y]\f[R].
+.TP
+\f[I]Example\f[R]
+Let us consider the input
+\f[CR]{\[dq]a\[dq]: [1, 2], \[dq]b\[dq]: [3, 4]}\f[R] The filter
+\f[CR].[\[dq]a\[dq], \[dq]b\[dq]][0, 1]\f[R] is equivalent to:
+.IP
+.EX
+( 0 ,  1 ) as $y |
+(\[dq]a\[dq], \[dq]b\[dq]) as $x |
+\&.[$x][$y]
+.EE
+Running it with the input yields \f[CR]1, 3, 2, 4\f[R].
+The filter \f[CR].[\[dq]a\[dq], \[dq]b\[dq]][0,1:1,2]\f[R] is equivalent
+to:
+.IP
+.EX
+( 0 ,  1 ) as $y1 |
+( 1 ,  2 ) as $y2 |
+(\[dq]a\[dq], \[dq]b\[dq]) as $x  |
+\&.[$x][$y1:$y2]
+.EE
+Running it with the input yields
+\f[CR][1], [3], [1, 2], [3, 4], [], [], [2], [4]\f[R].
+.TP
+\f[I]Compatibility\f[R]
+In jaq, all filters in a path are bound \f[I]uniformly from left to
+right\f[R].
+That is, the two examples above are equivalent to the filters
+.IP
+.EX
+(\[dq]a\[dq], \[dq]b\[dq]) as $x |
+( 0 ,  1 ) as $y |
+\&.[$x][$y]
+.EE
+yielding \f[CR]1, 2, 3, 4\f[R], and
+.IP
+.EX
+(\[dq]a\[dq], \[dq]b\[dq]) as $x  |
+( 0 ,  1 ) as $y1 |
+( 1 ,  2 ) as $y2 |
+\&.[$x][$y1:$y2]
+.EE
+yielding \f[CR][1], [1, 2], [], [2], [3], [3, 4], [], [4]\f[R].
 .TP
 \f[I]Note\f[R]
 Surprisingly, the filter \f[CR].[f]?\f[R] is \f[B]not\f[R] equivalent to
@@ -1449,22 +1530,32 @@ The ordering operators \f[CR]>\f[R], \f[CR]>=\f[R], \f[CR]<=\f[R],
 than or equal to, less than or equal to or less than their right
 argument (respectively).
 .PP
-Values are ordered as follows, by increasing order:
+If two values of different type are ordered, the types are ordered
+instead in the following increasing order:
 .IP \[bu] 2
 \f[CR]null\f[R]
 .IP \[bu] 2
-\f[CR]false\f[R]
-.IP \[bu] 2
-\f[CR]true\f[R]
+booleans
 .IP \[bu] 2
 numbers
 .IP \[bu] 2
-strings, in alphabetical order (by unicode codepoint value)
+strings
 .IP \[bu] 2
-arrays, in lexical order
+arrays
 .IP \[bu] 2
 objects
 .PP
+For booleans, \f[CR]false\f[R] is smaller than \f[CR]true\f[R].
+Strings are ordered \c
+.UR https://en.wikipedia.org/wiki/Alphabetical_order
+alphabetically
+.UE \c
+\ (by Unicode codepoint value).
+Arrays are ordered \c
+.UR https://en.wikipedia.org/wiki/Lexicographic_order
+lexicographically
+.UE \c
+\&.
 The ordering for objects is a little complex: first they\[cq]re compared
 by comparing their sets of keys (as arrays in sorted order), and if
 their keys are equal then the values are compared key by key.
@@ -1474,6 +1565,18 @@ their keys are equal then the values are compared key by key.
 .EX
 $ jq \[aq]. < 5\[aq] \[rs]
   <<< \[aq]2\[aq]
+true
+.EE
+.IP
+.EX
+$ jq \[aq][1,3] > [1,2]\[aq] \[rs]
+  <<< \[aq]null\[aq]
+true
+.EE
+.IP
+.EX
+$ jq \[aq]\[dq]jq\[dq] > false\[aq] \[rs]
+  <<< \[aq]null\[aq]
 true
 .EE
 .SH BOOLEAN FILTERS
@@ -1488,6 +1591,12 @@ You can negate the boolean value of a value with the builtin function
 \f[CR]not\f[R].
 It is called as a filter to which things can be piped rather than with
 special syntax, as in \f[CR].foo and .bar | not\f[R].
+.TP
+\f[I]Note\f[R]
+Mind the precedences.
+In particular, the filter \f[CR]false and false | not\f[R] is equivalent
+to \f[CR](false and false) | not\f[R] and yields \f[CR]true\f[R],
+whereas \f[CR]false and (false | not)\f[R] yields \f[CR]false\f[R].
 .SS if\-then\-else\-end
 The filter \f[CR]if i then t else e end\f[R] runs \f[CR]t\f[R] when
 \f[CR]i\f[R] returns an output with boolean value \f[CR]true\f[R],
@@ -1513,7 +1622,7 @@ You can\[cq]t test whether, e.g.\ a string is empty using
 More cases can be added to an if using \f[CR]elif A then B\f[R] syntax.
 .PP
 \f[CR]if A then B end\f[R] is shorthand for
-\f[CR]if A then B else .  end\f[R].
+\f[CR]if A then B else . end\f[R].
 That is, the \f[CR]else\f[R] branch is optional, and if absent, it is
 the same as \f[CR].\f[R].
 This also applies to \f[CR]elif\f[R] with absent ending \f[CR]else\f[R]
@@ -1535,6 +1644,15 @@ false
 2
 null
 .EE
+.IP
+.EX
+$ jq \[aq]if range(0;4) % 2 == 0 then \[dq]even\[dq] else \[dq]odd\[dq] end\[aq] \[rs]
+  <<< \[aq]null\[aq]
+\[dq]even\[dq]
+\[dq]odd\[dq]
+\[dq]even\[dq]
+\[dq]odd\[dq]
+.EE
 .SS \f[CR]and\f[R], \f[CR]or\f[R]
 The filter \f[CR]f and g\f[R] returns true if both \f[CR]f\f[R] and
 \f[CR]g\f[R] return an output with boolean value \f[CR]true\f[R].
@@ -1543,7 +1661,7 @@ The filter \f[CR]f or g\f[R] returns true if either \f[CR]f\f[R] or
 Otherwise, both filters return \f[CR]false\f[R].
 .PP
 Given two filters \f[CR]f\f[R] and \f[CR]g\f[R], their conjunction
-\f[CR]f and g\f[R] and their disjunction \f[CR]f  or g\f[R] run
+\f[CR]f and g\f[R] and their disjunction \f[CR]f or g\f[R] run
 \f[CR]f\f[R] on the input, and for every output \f[CR]y\f[R] of
 \f[CR]f\f[R], they analyze the boolean value \f[CR]y\f[R] of the output:
 .IP \[bu] 2
@@ -1664,15 +1782,33 @@ $ jq \[aq](false, null, 1) | . // 42\[aq] \[rs]
 1
 .EE
 .SH ERROR HANDLING
+Many filters throw errors, e.g.\ \f[CR]0 | .[]\f[R] or \f[CR]error\f[R].
+In this section, we show how to recover from errors.
 .SS try\-catch
 Errors can be caught by using \f[CR]try EXP catch EXP\f[R].
-The first expression is executed, and if it fails then the second is
+The first expression is executed, and if it fails, then the second is
 executed with the error message.
 The output of the handler, if any, is output as if it had been the
 output of the expression to try.
 .PP
 The \f[CR]try EXP\f[R] form uses \f[CR]empty\f[R] as the exception
 handler.
+.PP
+Using try/catch allows to break out of control structures like
+\f[CR]reduce\f[R], \f[CR]foreach\f[R], \f[CR]while\f[R], and so on.
+For a more robust way to do this, you may also use
+\f[CR]label\-break\f[R].
+.TP
+\f[I]Example\f[R]
+The following filter repeats an expression \f[CR]exp\f[R] until it
+raises an error.
+If the error is \[lq]break\[rq], then this stops repeating without
+re\-raising the error.
+If the error is something else, then this re\-raises it.
+.IP
+.EX
+try repeat(exp) catch if .==\[dq]break\[dq] then empty else error
+.EE
 .TP
 \f[I]Examples\f[R]
 .IP
@@ -1711,18 +1847,6 @@ $ jq \[aq][.[] | tonumber?]\[aq] \[rs]
 [1, 3, 4]
 .EE
 .SS label\-break
-A convenient use of try/catch is to break out of control structures like
-\f[CR]reduce\f[R], \f[CR]foreach\f[R], \f[CR]while\f[R], and so on.
-.PP
-For example:
-.IP
-.EX
-# Repeat an expression until it raises \[dq]break\[dq] as an
-# error, then stop repeating without re\-raising the error.
-# But if the error caught is not \[dq]break\[dq] then re\-raise it.
-try repeat(exp) catch if .==\[dq]break\[dq] then empty else error
-.EE
-.PP
 jq has a syntax for named lexical labels to \[lq]break\[rq] or \[lq]go
 (back) to\[rq]:
 .IP
@@ -1824,9 +1948,7 @@ for each output \f[CR]y\f[R] produced by \f[CR]f\f[R], it runs
 \f[CR]y\f[R].
 Thus \f[CR]as\f[R] functions as something of a foreach loop.
 .PP
-Just as \f[CR]{foo}\f[R] is a handy way of writing
-\f[CR]{foo: .foo}\f[R], so \f[CR]{$foo}\f[R] is a handy way of writing
-\f[CR]{foo: $foo}\f[R].
+You can write \f[CR]{$foo}\f[R] as shorthand for \f[CR]{foo: $foo}\f[R].
 .TP
 \f[I]Examples\f[R]
 .IP
@@ -1887,12 +2009,27 @@ However, because they live in different worlds, they do not shadow each
 other, therefore this filter is syntactically correct and returns
 \f[CR]1\f[R].
 .SS Destructuring
-Multiple variables may be declared using a single \f[CR]as\f[R]
-expression by providing a pattern that matches the structure of the
-input:
+So far in this section, every variable binding \f[CR]f as $x | g\f[R]
+bound exactly one variable \f[CR]$x\f[R] in \f[CR]g\f[R].
+Now, we will introduce a mechanism to bind \f[I]multiple\f[R] variables
+in one \f[CR]as\f[R] binding.
+For this, we write \f[CR]f as p | g\f[R], where \f[CR]p\f[R] is a
+\f[I]pattern\f[R] that matches the structure of the outputs of
+\f[CR]f\f[R].
+.TP
+\f[I]Example\f[R]
+The filter
 .IP
 .EX
-\&. as {realnames: $names, posts: [$first, $second]} | ...
+\&. as {realnames: $names, posts: [$first, $second]} | g
+.EE
+is equivalent to the filter
+.IP
+.EX
+\&.realnames as $names  |
+\&.posts[0]  as $first  |
+\&.posts[1]  as $second |
+g
 .EE
 .PP
 The variable declarations in array patterns (e.g.,
@@ -1901,8 +2038,90 @@ the element at index zero on up, in order.
 When there is no value at the index for an array pattern element,
 \f[CR]null\f[R] is bound to that variable.
 .TP
-\f[I]Compatibility\f[R]
-jaq does not support destructuring.
+\f[I]Example\f[R]
+The filter
+.IP
+.EX
+\&. as [$x, {a: $y}] | $x, $y
+.EE
+is equivalent to the filter
+.IP
+.EX
+\&.[0]  as $x  |
+\&.[1]  as $p1 |
+$p1.a as $y  |
+$x, $y
+.EE
+Given the input \f[CR]{a: 1, b: []}\f[R], it returns twice
+\f[CR]null\f[R], because neither \f[CR].b\f[R] nor \f[CR].c[0]\f[R] are
+present in the input.
+.PP
+Similarly to object construction, \f[CR]{$x}\f[R] is equivalent to
+\f[CR]{x: $x}\f[R] also for object patterns.
+.TP
+\f[I]Example\f[R]
+We could have written the previous example equivalently as:
+.IP
+.EX
+\&. as [$x, {$a}] | $x, $a
+.EE
+.PP
+We can write any filter \f[CR](f)\f[R] as object key in a pattern.
+.TP
+\f[I]Example\f[R]
+Given the input
+\f[CR]{\[dq]a\[dq]: 1, \[dq]b\[dq]: 2, \[dq]c\[dq]: 3, \[dq]d\[dq]: 4}\f[R],
+the filter
+.IP
+.EX
+\&. as {(\[dq]a\[dq], \[dq]b\[dq]): $x, (\[dq]c\[dq], \[dq]d\[dq]): $y} | [$x, $y]
+.EE
+produces four outputs, namely \f[CR][1, 3] [1, 4] [2, 3] [2, 4]\f[R].
+.PP
+When using a filter \f[CR](f)\f[R] as object key in a pattern, then
+\f[CR]f\f[R] is run with the input that was matched by its parent object
+pattern, not by the whole pattern.
+.TP
+\f[I]Example\f[R]
+The filter
+.IP
+.EX
+ . as [{(.k): $x}] | $x
+.EE
+is equivalent to:
+.IP
+.EX
+\&.[0]  as $p0 |
+$p0.k as $x  |
+$x
+.EE
+Here, we can see that \f[CR](.k)\f[R] is run with the input
+\f[CR]$p0\f[R], which is the value that the parent object pattern of
+\f[CR](.k)\f[R], namely \f[CR]{(.k): $x}\f[R], is trying to match.
+Compare this with the following \f[I]wrong\f[R] transformation, where
+\f[CR](.k)\f[R] would be run with the input matched by the whole
+pattern:
+.IP
+.EX
+\&.[0]  as $p0 |
+\&.k    as $x  |
+$x
+.EE
+Given the input \f[CR][{\[dq]k\[dq]: \[dq]a\[dq], \[dq]a\[dq]: 1}]\f[R],
+the first (correct) transformation yields \f[CR]1\f[R], whereas the
+second (wrong) transformation yields an error.
+.PP
+We can also use patterns in reduction operators such as
+\f[CR]reduce\f[R] and \f[CR]foreach\f[R].
+.TP
+\f[I]Note\f[R]
+A pattern \f[CR]p\f[R] is either a variable \f[CR]$x\f[R], an array
+pattern \f[CR][p1, ..., pn]\f[R] containing \f[CR]n\f[R] patterns, or an
+object pattern \f[CR]{e1, ..., en}\f[R] containing \f[CR]n\f[R] object
+entries.
+An object entry \f[CR]e\f[R] is either a variable \f[CR]$x\f[R] or a
+key\-value pair \f[CR](f): g\f[R] (where \f[CR]f\f[R] and \f[CR]g\f[R]
+are filters).
 .TP
 \f[I]Examples\f[R]
 .IP
@@ -2099,12 +2318,30 @@ So the effect is similar to running something like this:
 When \f[CR]EXTRACT\f[R] is omitted, the identity filter is used.
 That is, it outputs the intermediate values as they are.
 .TP
+\f[I]Note\f[R]
+We can also use a pattern at the place of \f[CR]$var\f[R].
+.IP
+.EX
+foreach EXP as PATTERN (INIT; UPDATE; EXTRACT)
+.EE
+When \f[CR]PATTERN\f[R] binds the variables \f[CR]$x1\f[R], \&...,
+\f[CR]$xn\f[R], then the expression is equivalent to:
+.IP
+.EX
+foreach (EXP as PATTERN | {$x1, ..., $xn}) as $x (
+  INIT;
+  $x as {$x1, ..., $xn} | UPDATE;
+  $x as {$x1, ..., $xn} | EXTRACT
+)
+.EE
+(Here, the name of \f[CR]$x\f[R] must be chosen such that \f[CR]$x\f[R]
+does not shadow any existing variable at this point.)
+A similar transformation can be made for \f[CR]reduce\f[R].
+.TP
 \f[I]Compatibility\f[R]
-jaq does not provide \f[CR]foreach/3\f[R], but it does provide
-\f[CR]foreach/2\f[R].
-Furthermore, similarly as for \f[CR]reduce\f[R], jq considers only the
-\f[I]last\f[R] output of \f[CR]UPDATE\f[R] for the next iteration,
-whereas jq considers \f[I]all\f[R] of them.
+Similarly as for \f[CR]reduce\f[R], jq considers only the \f[I]last\f[R]
+output of \f[CR]UPDATE\f[R] for the next iteration, whereas jaq
+considers \f[I]all\f[R] of them.
 For example, the filter
 .IP
 .EX
@@ -2163,7 +2400,7 @@ $ jq \[aq]foreach .[] as $item (0; . + 1; {index: ., $item})\[aq] \[rs]
 {\[dq]index\[dq]:2,\[dq]item\[dq]:\[dq]bar\[dq]}
 {\[dq]index\[dq]:3,\[dq]item\[dq]:\[dq]baz\[dq]}
 .EE
-.SH DEFINITIONS
+.SH FUNCTION DEFINITIONS
 When you have a filter \f[CR]g\f[R], you can give it a name \f[CR]f\f[R]
 as follows:
 .IP
@@ -2307,12 +2544,11 @@ def while (cond; update):
   _while
 .EE
 .SS Generators and iterators
-Some jq operators and functions are actually generators in that they can
-produce zero, one, or more values for each input, just as one might
-expect in other programming languages that have generators.
+jq expressions are generators in that they can produce zero, one, or
+more values for each input.
 For example, \f[CR].[]\f[R] generates all the values in its input (which
-must be an array or an object), \f[CR]range(0; 10)\f[R] generates the
-integers between 0 and 10, and so on.
+must be an array or an object), and \f[CR]range(0; 10)\f[R] generates
+the integers 0, 1, \&..., 9.
 .PP
 Even the comma operator is a generator, generating first the values
 generated by the expression to the left of the comma, then the values
@@ -2357,7 +2593,7 @@ side with outputs given by the right\-hand side, then return the updated
 input.
 .TP
 \f[I]Example\f[R]
-The filter \f[CR]{a: 1, b: 2} | (.a = 3)\f[R] outputs
+The filter \f[CR]{a: 1, b: 2} | .a = 3\f[R] outputs
 \f[CR]{a: 3, b: 2}\f[R].
 Here, we replaced the value at position \f[CR].a\f[R] with 3.
 .PP
@@ -2380,9 +2616,9 @@ the left\-hand side of an assignment, such as \f[CR].[].a\f[R] or
 We\[cq]ll discuss usage of other filters on the left\-hand side in
 complex assignments.
 .SS Update assignment: \f[CR]|=\f[R]
-For every position returned by \f[CR]p\f[R], the update operator
-\f[CR]p |= f\f[R] replaces the value \f[CR]v\f[R] at that position by
-the output of \f[CR]f\f[R] applied to \f[CR]v\f[R].
+For every value returned by \f[CR]p\f[R], the update operator
+\f[CR]p |= f\f[R] replaces that value by the output of \f[CR]f\f[R]
+applied to \f[CR]v\f[R].
 .TP
 \f[I]Example\f[R]
 The filter \f[CR]{foo: 1, bar: 3} | .foo |= .+1\f[R] builds an object
@@ -2428,6 +2664,9 @@ the input to the left\-hand side, not the current value returned by the
 left\-hand side.
 Second, when the right\-hand side returns multiple values, then the
 operation is performed for each of these values.
+.TP
+\f[I]Example\f[R]
+The filter \f[CR]{a:1} | .b = 2\f[R] yields \f[CR]{a: 1, b: 2}\f[R].
 .TP
 \f[I]Example\f[R]
 To see the difference between \f[CR]=\f[R] and \f[CR]|=\f[R], let us
@@ -2632,7 +2871,7 @@ must be a path expression
 with \f[CR]{}\f[R], which is no path expression)
 .RE
 .IP \[bu] 2
-\f[CR]if i then t else e end\f[R]: if \f[CR]i\f[R] and \f[CR]e\f[R] are
+\f[CR]if i then t else e end\f[R]: if \f[CR]t\f[R] and \f[CR]e\f[R] are
 path expressions
 .IP \[bu] 2
 \f[CR]f as $x | g\f[R]: if \f[CR]g\f[R] is a path expression
@@ -2740,7 +2979,7 @@ writing the \[lq]shebang\[rq] for a jq script:
 # total \- Output the sum of the given arguments (or stdin)
 # usage: total [numbers...]
 # \[rs]
-exec jq \-\-args \-MRnf \[dq]$0\[dq] \-\- \[dq]$\[at]\[dq]
+exec jq \-\-args \-MRnf \-\- \[dq]$0\[dq] \[dq]$\[at]\[dq]
 
 $ARGS.positional |
 reduce (
@@ -2762,15 +3001,12 @@ backslash at the end of the line does not continue the comment.
 With this trick, when the script is invoked as \f[CR]total 1 2\f[R],
 \f[CR]/bin/sh \-\- /path/to/total 1 2\f[R] will be run, and
 \f[CR]sh\f[R] will then run
-\f[CR]exec jq \-\-args \-MRnf /path/to/total \-\- 1 2\f[R] replacing
+\f[CR]exec jq \-\-args \-MRnf \-\- /path/to/total 1 2\f[R] replacing
 itself with a \f[CR]jq\f[R] interpreter invoked with the specified
 options (\f[CR]\-M\f[R], \f[CR]\-R\f[R], \f[CR]\-n\f[R],
 \f[CR]\-\-args\f[R]), that evaluates the current file (\f[CR]$0\f[R]),
 with the arguments (\f[CR]$\[at]\f[R]) that were passed to
 \f[CR]sh\f[R].
-.TP
-\f[I]Compatibility\f[R]
-jaq ignores backslashes at the end of comment lines.
 .SS Modules
 jq has a library/module system.
 Modules are files whose names end in \f[CR].jq\f[R].
@@ -2873,8 +3109,8 @@ found in \f[CR]$HOME/.jq/foo.jq\f[R] and
 If \f[CR].jq\f[R] exists in the user\[cq]s home directory, and is a file
 (not a directory), it is automatically sourced into the main program.
 .SH BUILTIN FUNCTIONS
-This section documents all named filter functions that are available by
-default in any jq program.
+This section documents all functions that are available by default in
+any jq program.
 .SS Basic functions
 .SS \f[CR]empty\f[R]
 \f[CR]empty\f[R] returns no results.
@@ -4362,9 +4598,15 @@ Note that \f[CR]nth(n; expr)\f[R] doesn\[cq]t support negative values of
 \f[I]Examples\f[R]
 .IP
 .EX
-$ jq \[aq][first(range(.)), last(range(.)), nth(./2; range(.))]\[aq] \[rs]
+$ jq \[aq][first(range(.)), last(range(.)), nth(5; range(.))]\[aq] \[rs]
   <<< \[aq]10\[aq]
 [0,9,5]
+.EE
+.IP
+.EX
+$ jq \[aq][first(empty), last(empty), nth(5; empty)]\[aq] \[rs]
+  <<< \[aq]null\[aq]
+[]
 .EE
 .SS \f[CR]first\f[R], \f[CR]last\f[R], \f[CR]nth(n)\f[R]
 The \f[CR]first\f[R] and \f[CR]last\f[R] functions extract the first and
