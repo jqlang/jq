@@ -314,8 +314,8 @@ using some command-line options:
   `value` will be treated as a string, so `--arg foo 123` will
   bind `$foo` to `"123"`.
 
-  Named arguments are also available to the jq program as
-  `$ARGS.named`.
+  Named arguments are also available to the jq program as `$ARGS.named`.
+  When the name is not a valid identifier, this is the only way to access it.
 
 * `--argjson name JSON-text`:
 
