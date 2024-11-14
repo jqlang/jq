@@ -4769,9 +4769,15 @@ Note that `nth(n; expr)` doesn't support negative values of `n`.
 ::: Examples
 
 ~~~
-[first(range(.)), last(range(.)), nth(./2; range(.))]
+[first(range(.)), last(range(.)), nth(5; range(.))]
 10
 [0,9,5]
+~~~
+
+~~~
+[first(empty), last(empty), nth(5; empty)]
+null
+[]
 ~~~
 
 :::
