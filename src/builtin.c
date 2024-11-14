@@ -1594,7 +1594,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   return r;
 }
 
-static int jv2tm(jv a, struct tm *tm) {
+static int jv2tm(jv a, struct tm *tm, int localtime) {
   memset(tm, 0, sizeof(*tm));
   static const size_t offsets[] = {
     offsetof(struct tm, tm_year),
@@ -1624,13 +1624,25 @@ static int jv2tm(jv a, struct tm *tm) {
     jv_free(n);
   }
 
-  // We use UTC everywhere (gettimeofday, gmtime) and UTC does not do DST.
-  // Setting tm_isdst to 0 is done by the memset.
-  // tm->tm_isdst = 0;
+  if (localtime) {
+    tm->tm_isdst = -1;
+    mktime(tm);
+  } else {
+#ifdef HAVE_TIMEGM
+    timegm(tm);
+#elif HAVE_TM_TM_GMT_OFF
+    // tm->tm_gmtoff = 0;
+    tm->tm_zone = "GMT";
+#elif HAVE_TM___TM_GMT_OFF
+    // tm->__tm_gmtoff = 0;
+    tm->__tm_zone = "GMT";
+#endif
+    // tm->tm_isdst = 0;
 
-  // The standard permits the tm structure to contain additional members. We
-  // hope it is okay to initialize them to zero, because the standard does not
-  // provide an alternative.
+    // The standard permits the tm structure to contain additional members. We
+    // hope it is okay to initialize them to zero, because the standard does not
+    // provide an alternative.
+  }
 
   jv_free(a);
   return 1;
@@ -1642,7 +1654,7 @@ static jv f_mktime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY)
     return ret_error(a, jv_string("mktime requires array inputs"));
   struct tm tm;
-  if (!jv2tm(a, &tm))
+  if (!jv2tm(a, &tm, 0))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
   time_t t = my_mktime(&tm);
   if (t == (time_t)-1)
@@ -1740,7 +1752,7 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(b) != JV_KIND_STRING)
     return ret_error2(a, b, jv_string("strftime/1 requires a string format"));
   struct tm tm;
-  if (!jv2tm(a, &tm))
+  if (!jv2tm(a, &tm, 0))
     return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
 
   const char *fmt = jv_string_value(b);
@@ -1771,7 +1783,7 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(b) != JV_KIND_STRING)
     return ret_error2(a, b, jv_string("strflocaltime/1 requires a string format"));
   struct tm tm;
-  if (!jv2tm(a, &tm))
+  if (!jv2tm(a, &tm, 1))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
