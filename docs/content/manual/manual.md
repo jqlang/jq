@@ -90,7 +90,7 @@ using some command-line options:
   This changes the filter argument to be interpreted as a filename,
   instead of the source of a program.
 
-* `-L directory`:
+* `-L directory` / `--library-path directory`:
 
   Prepend `directory` to the [search paths for modules](#search-paths).
   If this option is used then no builtin search paths are used.
