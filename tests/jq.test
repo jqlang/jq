@@ -1416,6 +1416,22 @@ indices(", ")
 "a,b, cd,e, fgh, ijkl"
 [3,9,14]
 
+index("!")
+"здравствуй мир!"
+14
+
+.[:rindex("x")]
+"正xyz"
+"正"
+
+indices("o")
+"🇬🇧oo"
+[2,3]
+
+indices("o")
+"ƒoo"
+[1,2]
+
 [.[]|split(",")]
 ["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
 [["a"," bc"," def"," ghij"," jklmn"," a","b"," c","d"," e","f"],["a","b","c","d"," e","f","g","h"]]
