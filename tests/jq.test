@@ -322,6 +322,10 @@ null
 [{"a":1}, {"b":2}, {"a":3, "b":4}]
 [-1, -1, -4]
 
+[foreach range(5) as $x (0; .+$x | select($x!=2); [$x,.])]
+null
+[[0,0],[1,1],[3,4],[4,8]]
+
 [limit(3; .[])]
 [11,22,33,44,55,66,77,88,99]
 [11,22,33]
@@ -824,6 +828,10 @@ null
 reduce . as $n (.; .)
 null
 null
+
+reduce range(5) as $x (0; .+$x | select($x!=2))
+null
+8
 
 # Destructuring
 . as {$a, b: [$c, {$d}]} | [$a, $c, $d]
