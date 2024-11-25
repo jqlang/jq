@@ -9,7 +9,7 @@
 #include "jv.h"
 #include "jv_unicode.h"
 
-jv jv_load_file(const char* filename, int raw) {
+jv jv_load_file(const char* filename, int raw, int maxdepth) {
   struct stat sb;
   int fd = open(filename, O_RDONLY);
   if (fd == -1) {
@@ -36,7 +36,7 @@ jv jv_load_file(const char* filename, int raw) {
     data = jv_string("");
   } else {
     data = jv_array();
-    parser = jv_parser_new(0);
+    parser = jv_parser_new(0, maxdepth);
   }
 
   // To avoid mangling UTF-8 multi-byte sequences that cross the end of our read

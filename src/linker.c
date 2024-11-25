@@ -334,9 +334,9 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int opt
   block program;
   jv data;
   if (is_data && !raw)
-    data = jv_load_file(jv_string_value(lib_path), 0);
+    data = jv_load_file(jv_string_value(lib_path), 0, jq_get_parser_maxdepth(jq));
   else
-    data = jv_load_file(jv_string_value(lib_path), 1);
+    data = jv_load_file(jv_string_value(lib_path), 1, jq_get_parser_maxdepth(jq));
   int state_idx;
   if (!jv_is_valid(data)) {
     program = gen_noop();
@@ -386,7 +386,7 @@ jv load_module_meta(jq_state *jq, jv mod_relpath) {
   if (!jv_is_valid(lib_path))
     return lib_path;
   jv meta = jv_null();
-  jv data = jv_load_file(jv_string_value(lib_path), 1);
+  jv data = jv_load_file(jv_string_value(lib_path), 1, jq_get_parser_maxdepth(jq));
   if (jv_is_valid(data)) {
     block program;
     struct locfile* src = locfile_init(jq, jv_string_value(lib_path), jv_string_value(data), jv_string_length_bytes(jv_copy(data)));

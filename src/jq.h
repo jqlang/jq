@@ -35,6 +35,9 @@ int jq_halted(jq_state *);
 jv jq_get_exit_code(jq_state *);
 jv jq_get_error_message(jq_state *);
 
+int jq_get_parser_maxdepth(jq_state *);
+void jq_set_parser_maxdepth(jq_state *, int);
+
 typedef jv (*jq_input_cb)(jq_state *, void *);
 void jq_set_input_cb(jq_state *, jq_input_cb, void *);
 void jq_get_input_cb(jq_state *, jq_input_cb *, void **);
