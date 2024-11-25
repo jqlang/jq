@@ -2,7 +2,7 @@
 #define BYTECODE_H
 #include <stdint.h>
 
-#include "jv.h"
+#include "jq.h"
 
 typedef enum {
 #define OP(name, imm, in, out) name,
@@ -44,9 +44,14 @@ struct opcode_description {
 const struct opcode_description* opcode_describe(opcode op);
 
 
-#define MAX_CFUNCTION_ARGS 10
+#define MAX_CFUNCTION_ARGS 4
 struct cfunction {
-  jv (*fptr)();
+  union {
+    jv (*a1)(jq_state *, jv);
+    jv (*a2)(jq_state *, jv, jv);
+    jv (*a3)(jq_state *, jv, jv, jv);
+    jv (*a4)(jq_state *, jv, jv, jv, jv);
+  } fptr;
   const char* name;
   int nargs;
 };

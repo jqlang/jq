@@ -917,14 +917,13 @@ jv jq_next(jq_state *jq) {
       }
       struct cfunction* function = &frame_current(jq)->bc->globals->cfunctions[*pc++];
       switch (function->nargs) {
-      case 1: top = ((jv (*)(jq_state *, jv))function->fptr)(jq, in[0]); break;
-      case 2: top = ((jv (*)(jq_state *, jv, jv))function->fptr)(jq, in[0], in[1]); break;
-      case 3: top = ((jv (*)(jq_state *, jv, jv, jv))function->fptr)(jq, in[0], in[1], in[2]); break;
-      case 4: top = ((jv (*)(jq_state *, jv, jv, jv, jv))function->fptr)(jq, in[0], in[1], in[2], in[3]); break;
-      case 5: top = ((jv (*)(jq_state *, jv, jv, jv, jv, jv))function->fptr)(jq, in[0], in[1], in[2], in[3], in[4]); break;
+      case 1: top = function->fptr.a1(jq, in[0]); break;
+      case 2: top = function->fptr.a2(jq, in[0], in[1]); break;
+      case 3: top = function->fptr.a3(jq, in[0], in[1], in[2]); break;
+      case 4: top = function->fptr.a4(jq, in[0], in[1], in[2], in[3]); break;
       // FIXME: a) up to 7 arguments (input + 6), b) should assert
       // because the compiler should not generate this error.
-      default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"));
+      default: return jv_invalid_with_msg(jv_string("Function takes too many arguments"))
       }
 
       if (jv_is_valid(top)) {
