@@ -931,6 +931,9 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
 
   jv_free(modifiers);
 
+  if (!(options & ONIG_OPTION_SINGLELINE)) {
+    options |= ONIG_OPTION_NEGATE_SINGLELINE;
+  }
   onigret = onig_new(&reg, (const UChar*)jv_string_value(regex),
       (const UChar*)(jv_string_value(regex) + jv_string_length_bytes(jv_copy(regex))),
       options, ONIG_ENCODING_UTF8, ONIG_SYNTAX_PERL_NG, &einfo);
