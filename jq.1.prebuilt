@@ -257,9 +257,6 @@ jaq does not support this option.
 .RS 2
 .PP
 Like \f[CR]\-r\f[R] but jq won\[cq]t print a newline after each output.
-.TP
-\f[I]Compatibility\f[R]
-In jaq, this does not enable \f[CR]\-\-raw\-output\f[R].
 .RE
 .IP \[bu] 2
 \f[CR]\-\-ascii\-output\f[R] / \f[CR]\-a\f[R]:
@@ -282,13 +279,6 @@ Output the fields of each object with the keys in sorted order.
 \f[I]Compatibility\f[R]
 gojq always sorts the fields of objects by their keys, so it does not
 support this option.
-jaq does not support this option.
-However, you can sort all output objects by their keys using a filter
-such as:
-.IP
-.EX
-walk(if . >= {} then reduce (keys[] as $k | { ($k): .[$k] }) as $o ({}; . + $o) end)
-.EE
 .RE
 .IP \[bu] 2
 \f[CR]\-\-color\-output\f[R] / \f[CR]\-C\f[R] and
@@ -304,10 +294,6 @@ disables colored output by default, but you can enable it by
 .PP
 Colors can be configured with the \f[CR]JQ_COLORS\f[R] environment
 variable.
-.TP
-\f[I]Compatibility\f[R]
-In jaq, the corresponding options are called \f[CR]\-\-color=always\f[R]
-and \f[CR]\-\-color=never\f[R].
 .RE
 .IP \[bu] 2
 \f[CR]\-\-tab\f[R]:
@@ -412,9 +398,6 @@ texts in the file named \f[CR]bar\f[R].
 .PP
 Remaining arguments are positional string arguments.
 These are available to the jq program as \f[CR]$ARGS.positional[]\f[R].
-.TP
-\f[I]Compatibility\f[R]
-jaq does not support this option.
 .RE
 .IP \[bu] 2
 \f[CR]\-\-jsonargs\f[R]:

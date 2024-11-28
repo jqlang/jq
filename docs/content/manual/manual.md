@@ -216,10 +216,6 @@ using some command-line options:
 
   Like `-r` but jq won't print a newline after each output.
 
-  ::: Compatibility
-  In jaq, this does not enable `--raw-output`.
-  :::
-
 * `--ascii-output` / `-a`:
 
   jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
@@ -238,13 +234,6 @@ using some command-line options:
 
   ::: Compatibility
   gojq always sorts the fields of objects by their keys, so it does not support this option.
-
-  jaq does not support this option.
-  However, you can sort all output objects by their keys using a filter such as:
-
-  ~~~
-  walk(if . >= {} then reduce (keys[] as $k | { ($k): .[$k] }) as $o ({}; . + $o) end)
-  ~~~
   :::
 
 * `--color-output` / `-C` and `--monochrome-output` / `-M`:
@@ -256,10 +245,6 @@ using some command-line options:
   colored output by default, but you can enable it by `-C`.
 
   Colors can be configured with [the `JQ_COLORS` environment variable](#colors).
-
-  ::: Compatibility
-  In jaq, the corresponding options are called `--color=always` and `--color=never`.
-  :::
 
 * `--tab`:
 
@@ -342,10 +327,6 @@ using some command-line options:
 
   Remaining arguments are positional string arguments.  These are
   available to the jq program as `$ARGS.positional[]`.
-
-  ::: Compatibility
-  jaq does not support this option.
-  :::
 
 * `--jsonargs`:
 
