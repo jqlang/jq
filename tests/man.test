@@ -41,7 +41,7 @@ false
 
 {foo: .bar}
 {"bar":42, "baz":43}
-{"foo": 42}.
+{"foo": 42}
 
 .
 "Hello, world!"
@@ -77,8 +77,8 @@ length
 4
 
 add(range(0; .))
-2
-3
+4
+6
 
 while(length < 3; . + "a")
 ""
@@ -138,8 +138,8 @@ null
 [1,2,3]
 2
 
-{a:1, b:2}
 .["a","b"]
+{"a":1, "b":2}
 1
 2
 

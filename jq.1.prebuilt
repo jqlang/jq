@@ -795,7 +795,7 @@ $ jq \[aq]{(.user): .titles}\[aq] \[rs]
 .EX
 $ jq \[aq]{foo: .bar}\[aq] \[rs]
   <<< \[aq]{\[dq]bar\[dq]:42, \[dq]baz\[dq]:43}\[aq]
-{\[dq]foo\[dq]: 42}.
+{\[dq]foo\[dq]: 42}
 .EE
 .SH BASIC FILTERS
 .SS Identity: \f[CR].\f[R]
@@ -925,8 +925,8 @@ The next example calls \f[CR]range/2\f[R] and \f[CR]add/1\f[R]:
 .IP
 .EX
 $ jq \[aq]add(range(0; .))\[aq] \[rs]
-  <<< \[aq]2\[aq]
-3
+  <<< \[aq]4\[aq]
+6
 .EE
 The last example calls \f[CR]while/2\f[R]:
 .IP
@@ -1085,8 +1085,8 @@ $ jq \[aq].[\-2]\[aq] \[rs]
 .EE
 .IP
 .EX
-$ jq \[aq]{a:1, b:2}\[aq] \[rs]
-  <<< \[aq].[\[dq]a\[dq],\[dq]b\[dq]]\[aq]
+$ jq \[aq].[\[dq]a\[dq],\[dq]b\[dq]]\[aq] \[rs]
+  <<< \[aq]{\[dq]a\[dq]:1, \[dq]b\[dq]:2}\[aq]
 1
 2
 .EE

@@ -718,7 +718,7 @@ produces
 ~~~
 {foo: .bar}
 {"bar":42, "baz":43}
-{"foo": 42}.
+{"foo": 42}
 ~~~
 
 :::
@@ -857,8 +857,8 @@ The next example calls
 
 ~~~
 add(range(0; .))
-2
-3
+4
+6
 ~~~
 
 The last example calls [`while/2`](#while):
@@ -1027,8 +1027,8 @@ null
 ~~~
 
 ~~~
-{a:1, b:2}
 .["a","b"]
+{"a":1, "b":2}
 1
 2
 ~~~
