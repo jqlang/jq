@@ -1093,7 +1093,7 @@ $ jq \[aq]{a:1, b:2}\[aq] \[rs]
 .IP
 .EX
 $ jq \[aq].[keys[] | select(test(\[dq]\[ha]b\[dq]))]\[aq] \[rs]
-  <<< \[aq]{a:1, b:2, c:3}\[aq]
+  <<< \[aq]{\[dq]a\[dq]:1, \[dq]b\[dq]:2, \[dq]c\[dq]:3}\[aq]
 2
 .EE
 .SS Slicing operator: \f[CR].[f:g]\f[R]
