@@ -221,12 +221,13 @@ sections:
         RS.  This mode also parses the output of jq without the `--seq`
         option.
 
-      * `-f filename` / `--from-file filename`:
+      * `-f` / `--from-file`:
 
-        Read filter from the file rather than from a command line, like
-        awk's -f option.
+        Read the filter from a file rather than from a command line,
+        like awk's -f option. This changes the filter argument to be
+        interpreted as a filename, instead of the source of a program.
 
-      * `-L directory`:
+      * `-L directory` / `--library-path directory`:
 
         Prepend `directory` to the search list for modules.  If this
         option is used then no builtin search list is used.  See the
@@ -241,7 +242,8 @@ sections:
         bind `$foo` to `"123"`.
 
         Named arguments are also available to the jq program as
-        `$ARGS.named`.
+        `$ARGS.named`. When the name is not a valid identifier, this is
+        the only way to access it.
 
       * `--argjson name JSON-text`:
 
@@ -3037,15 +3039,25 @@ sections:
             input: '[1,2,3]'
             output: ['false']
 
-      - title: "`limit(n; exp)`"
+      - title: "`limit(n; expr)`"
         body: |
 
-          The `limit` function extracts up to `n` outputs from `exp`.
+          The `limit` function extracts up to `n` outputs from `expr`.
 
         examples:
-          - program: '[limit(3;.[])]'
+          - program: '[limit(3; .[])]'
             input: '[0,1,2,3,4,5,6,7,8,9]'
             output: ['[0,1,2]']
+
+      - title: "`skip(n; expr)`"
+        body: |
+
+          The `skip` function skips the first `n` outputs from `expr`.
+
+        examples:
+          - program: '[skip(3; .[])]'
+            input: '[0,1,2,3,4,5,6,7,8,9]'
+            output: ['[3,4,5,6,7,8,9]']
 
       - title: "`first(expr)`, `last(expr)`, `nth(n; expr)`"
         body: |
@@ -3057,9 +3069,12 @@ sections:
           Note that `nth(n; expr)` doesn't support negative values of `n`.
 
         examples:
-          - program: '[first(range(.)), last(range(.)), nth(./2; range(.))]'
+          - program: '[first(range(.)), last(range(.)), nth(5; range(.))]'
             input: '10'
             output: ['[0,9,5]']
+          - program: '[first(empty), last(empty), nth(5; empty)]'
+            input: 'null'
+            output: ['[]']
 
       - title: "`first`, `last`, `nth(n)`"
         body: |
@@ -3622,7 +3637,7 @@ sections:
           # total - Output the sum of the given arguments (or stdin)
           # usage: total [numbers...]
           # \
-          exec jq --args -MRnf "$0" -- "$@"
+          exec jq --args -MRnf -- "$0" "$@"
 
           $ARGS.positional |
           reduce (
@@ -3642,7 +3657,7 @@ sections:
       end of the line does not continue the comment.
       With this trick, when the script is invoked as `total 1 2`,
       `/bin/sh -- /path/to/total 1 2` will be run, and `sh` will then
-      run `exec jq --args -MRnf /path/to/total -- 1 2` replacing itself
+      run `exec jq --args -MRnf -- /path/to/total 1 2` replacing itself
       with a `jq` interpreter invoked with the specified options (`-M`,
       `-R`, `-n`, `--args`), that evaluates the current file (`$0`),
       with the arguments (`$@`) that were passed to `sh`.

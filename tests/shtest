@@ -14,6 +14,9 @@ JQ="$JQ -b"
 
 PATH=$JQBASEDIR:$PATH $JQBASEDIR/tests/jq-f-test.sh > /dev/null
 
+SHELL=/bin/sh
+export SHELL
+
 if [ -f "$JQBASEDIR/.libs/libinject_errors.so" ]; then
   # Do some simple error injection tests to check that we're handling
   # I/O errors correctly.
@@ -209,6 +212,28 @@ elif [ $? -ne 5 ]; then
 else
   cmp $d/out $d/expected
 fi
+
+# Regression tests for #3194
+echo 42 > $d/expected
+$JQ -nn 42 > $d/out 2>&1
+cmp $d/out $d/expected
+
+$JQ -nL. 42 > $d/out 2>&1
+cmp $d/out $d/expected
+$JQ -nL . 42 > $d/out 2>&1
+cmp $d/out $d/expected
+
+$JQ -h > $d/expected 2>&1
+$JQ -hV > $d/out 2>&1
+cmp $d/out $d/expected
+$JQ -h -V > $d/out 2>&1
+cmp $d/out $d/expected
+
+$JQ -V > $d/expected 2>&1
+$JQ -Vh > $d/out 2>&1
+cmp $d/out $d/expected
+$JQ -V -h > $d/out 2>&1
+cmp $d/out $d/expected
 
 ## Test streaming parser
 
@@ -586,17 +611,17 @@ if $test_no_color && command -v script >/dev/null 2>&1; then
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  NO_COLOR= faketty $JQ_NO_B -n . > $d/color
+  faketty env NO_COLOR= $JQ_NO_B -n . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  NO_COLOR=1 faketty $JQ_NO_B -n . > $d/color
+  faketty env NO_COLOR=1 $JQ_NO_B -n . > $d/color
   printf 'null\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  NO_COLOR=1 faketty $JQ_NO_B -Cn . > $d/color
+  faketty env NO_COLOR=1 $JQ_NO_B -Cn . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color

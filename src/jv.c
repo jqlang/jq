@@ -1273,15 +1273,21 @@ jv jv_string_indexes(jv j, jv k) {
   assert(JVP_HAS_KIND(k, JV_KIND_STRING));
   const char *jstr = jv_string_value(j);
   const char *idxstr = jv_string_value(k);
-  const char *p;
+  const char *p, *lp;
   int jlen = jv_string_length_bytes(jv_copy(j));
   int idxlen = jv_string_length_bytes(jv_copy(k));
   jv a = jv_array();
 
   if (idxlen != 0) {
-    p = jstr;
+    int n = 0;
+    p = lp = jstr;
     while ((p = _jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
-      a = jv_array_append(a, jv_number(p - jstr));
+      while (lp < p) {
+        lp += jvp_utf8_decode_length(*lp);
+        n++;
+      }
+
+      a = jv_array_append(a, jv_number(n));
       p++;
     }
   }
