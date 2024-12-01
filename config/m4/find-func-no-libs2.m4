@@ -42,7 +42,7 @@ case "$ac_res" in
 	yes)
 	eval "ac_cv_func_$1=yes"
 	eval "LIB_$1="
-	AC_DEFINE_UNQUOTED($ac_tr_func)
+	AC_DEFINE_UNQUOTED($ac_tr_func, 1, [Define if the $1 function is available.])
 	AC_MSG_RESULT([yes])
 	;;
 	no)
@@ -53,8 +53,8 @@ case "$ac_res" in
 	*)
 	eval "ac_cv_func_$1=yes"
 	eval "ac_cv_lib_`echo "$ac_res" | sed 's/-l//'`=yes"
-	AC_DEFINE_UNQUOTED($ac_tr_func)
-	AC_DEFINE_UNQUOTED($ac_tr_lib)
+	AC_DEFINE_UNQUOTED($ac_tr_func, 1, [Define if you have the $1 function.])
+	AC_DEFINE_UNQUOTED($ac_tr_lib, 1, [Define if you have the $2 library.])
 	AC_MSG_RESULT([yes, in $ac_res])
 	;;
 esac
