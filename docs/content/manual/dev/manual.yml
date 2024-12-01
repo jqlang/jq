@@ -266,6 +266,13 @@ sections:
         available in the program and has a string whose contents are to the texts
         in the file named `bar`.
 
+      * `--depth n`:
+
+        This option sets the maximum parsing depth (of objects and arrays) to
+        `n`. Exceeding the parsing depth causes `jq` to exit early with an error.
+        If you set `n` to 0, the parser will go arbitrarily deep. The default
+        value is 256.
+
       * `--args`:
 
         Remaining arguments are positional string arguments.  These are
