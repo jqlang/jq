@@ -115,11 +115,10 @@ CLEANFILES = src/builtin.inc
 
 bin_PROGRAMS = jq
 jq_SOURCES = src/main.c
-jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
 
 if ENABLE_ALL_STATIC
-jq_LDFLAGS += -all-static
+jq_LDFLAGS = -all-static
 endif
 
 ### Tests (make check)
