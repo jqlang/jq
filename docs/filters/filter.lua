@@ -13,14 +13,14 @@ function dump(o)
 end
 ]]--
 
--- uppercase top-level headings for man pages
 function Header(el)
+  -- uppercase top-level headings for man pages
   if FORMAT == "man" and el.level == 1 then
     return el:walk{Str = function(el) return pandoc.Str(string.upper(el.text)) end}
+  -- add anchor links after headline for HTML
   elseif FORMAT == "html" then
-    local span = pandoc.RawInline("html", '<span class="bi bi-link-45deg" aria-hidden="true"></span>')
-    local link = pandoc.Link(span, "#" .. el.identifier)
-    link.classes = {"icon-link"}
+    local span = pandoc.Span("", {class = 'bi bi-link-45deg', ["aria-hidden"] = "true"})
+    local link = pandoc.Link(span, "#" .. el.identifier, "Link to this section", {class = "icon-link"})
     el.content[#el.content + 1] = pandoc.Space()
     el.content[#el.content + 1] = link
     return el
