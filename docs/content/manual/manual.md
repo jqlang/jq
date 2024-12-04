@@ -106,7 +106,7 @@ using some command-line options:
   3 if there was a jq program compile error, or
   0 if the jq program ran.
 
-  You can also set the exit status with the [`halt_error`](#halt-error) function.
+  You can also set the exit status with the [`halt_error`](#halt_error) function.
 
 * `--version` / `-V`:
 
@@ -493,7 +493,7 @@ false
 
 ## Strings
 
-### String interpolation: `\(f)`
+### String interpolation: `\(f)` {#string-interpolation}
 
 Inside a string, you can put a filter inside parentheses after a backslash,
 such as:
@@ -515,7 +515,7 @@ The example above is equivalent to:
 
 :::
 
-### String formatting: `@f`
+### String formatting: `@f` {#string-formatting}
 
 The `@foo` syntax is used to format and escape strings,
 which is useful for building URLs, documents in a language
@@ -566,7 +566,7 @@ not escaped, as they were part of the string literal.
 
 :::
 
-## Arrays: `[]`, `[...]`
+## Arrays: `[]`, `[...]` {#arrays}
 
 As in JSON, `[...]` is used to construct arrays, as in `[1,2,3]`.
 The elements of the arrays can be any jq expression.
@@ -604,7 +604,7 @@ array of four elements.
 
 
 
-## Objects: `{}`, `{...}`
+## Objects: `{}`, `{...}` {#objects}
 
 Like in JSON, `{...}` is for constructing objects (aka dictionaries or hashes), as in
 `{"a": 42, "b": 17}`.
@@ -802,7 +802,7 @@ middle refers to whatever value `.a` produced.
 ## Function call
 
 jq provides [many builtin functions](#builtin-functions) for a variety of tasks,
-and you can also [define your own functions](#definitions).
+and you can also [define your own functions](#function-definitions).
 
 Each function takes an input, as well as a fixed number of _arguments_.
 The number of arguments that a function takes is called _arity_.
@@ -892,7 +892,7 @@ This is particularly useful in conjunction with
 :::
 
 
-# Paths
+# Path operators
 
 In this section, we will show three very frequently used operators, namely for
 [iteration](#iteration-operator),
@@ -1376,7 +1376,7 @@ null
 
 :::
 
-## Subtraction: `-`
+## Subtraction: `-` {#subtraction}
 
 As well as normal arithmetic subtraction on numbers, the `-`
 operator can be used on arrays to remove all occurrences of
@@ -1852,13 +1852,13 @@ of the program, you'll need that part of the program to define a
 variable (as a function parameter, object member, or whatever) in
 which to place the data.
 
-It is also possible to [define functions](#definitions) in jq itself.
+It is also possible to [define functions](#function-definitions) in jq itself.
 In fact, many of jq's built-in functions, including
-[`map`](#map) and
+[`map`](#map-map_values) and
 [`select`](#select),
 are written in jq.
 
-## Variable binding: `f as $x | g`
+## Variable binding: `f as $x | g` {#variable-binding}
 
 In jq, all filters have an input and an output, so manual
 plumbing is not necessary to pass a value from one part of a program
@@ -1936,7 +1936,7 @@ You can write `{$foo}` as shorthand for `{foo: $foo}`.
 There are three types of symbols in jq:
 [variables](#variables),
 [labels](#label-break), and
-[functions](#definitions).
+[functions](#function-definitions).
 All of these symbols are scoped lexically, with filters being able to refer only to
 symbols that have been defined "to the left" of them.
 Furthermore, there is no way to change the value of a binding;
@@ -2705,7 +2705,7 @@ such as `|=` or `+=`, rather than `=`.
 
 :::
 
-## Arithmetic update assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`
+## Arithmetic update assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=` {#arithmetic-update-assignment}
 
 jq has a few operators of the form `a op= b`.
 So, `+= 1` can be used to increment values, being the same as `|= . + 1`.
@@ -3163,7 +3163,7 @@ keys
 
 :::
 
-### `map(f)`, `map_values(f)` {#map}
+### `map(f)`, `map_values(f)` {#map-map_values}
 
 For any filter `f`, `map(f)` and `map_values(f)` apply `f`
 to each of the values in the input array or object, that is,
@@ -3235,7 +3235,7 @@ map_values(. // empty)
 
 :::
 
-### `to_entries`, `from_entries`, `with_entries(f)`
+### `to_entries`, `from_entries`, `with_entries(f)` {#to_entries-from_entries-with_entries}
 
 These functions convert between an object and an array of
 key-value pairs. If `to_entries` is passed an object, then
@@ -3382,7 +3382,7 @@ false
 
 :::
 
-### `indices(s)`
+### `indices(s)` {#indices}
 
 Outputs an array containing the indices in `.` where `s`
 occurs.  The input may be an array, in which case if `s` is an
@@ -3411,7 +3411,7 @@ indices([1,2])
 
 :::
 
-### `index(s)`, `rindex(s)`
+### `index(s)`, `rindex(s)` {#index-rindex}
 
 Outputs the index of the first (`index`) or last (`rindex`)
 occurrence of `s` in the input.
@@ -3496,7 +3496,7 @@ false
 
 :::
 
-### `has(key)`
+### `has(key)` {#has}
 
 The builtin function `has` returns whether the input object
 has the given key, or the input array has an element at the
@@ -3546,7 +3546,7 @@ map(in([0,1]))
 
 :::
 
-### `bsearch(x)`
+### `bsearch(x)` {#bsearch}
 
 `bsearch(x)` conducts a binary search for x in the input
 array.  If the input is sorted and contains x, then
@@ -3622,7 +3622,7 @@ null
 
 :::
 
-### `del(path_expression)`
+### `del(path_expression)` {#del}
 
 The builtin function `del` removes a key and its corresponding
 value from an object.
@@ -3643,7 +3643,7 @@ del(.[1, 2])
 
 :::
 
-### `pick(pathexps)`
+### `pick(pathexps)` {#pick}
 
 Emit the projection of the input object or array defined by the
 specified sequence of path expressions, such that if `p` is any
@@ -3672,7 +3672,7 @@ pick(.[2], .[0], .[0])
 The following functions all produce or process paths
 in the format output by the [`path`](#path) function.
 
-### `paths`, `paths(node_filter)`
+### `paths`, `paths(node_filter)` {#paths}
 
 `paths` outputs the paths to all the elements in its input
 (except it does not output the empty list, representing .
@@ -3698,7 +3698,7 @@ values.
 
 :::
 
-### `getpath(PATHS)`
+### `getpath(PATHS)` {#getpath}
 
 The builtin function `getpath` outputs the values in `.` found
 at each path in `PATHS`.
@@ -3719,7 +3719,7 @@ null
 
 :::
 
-### `setpath(PATHS; VALUE)`
+### `setpath(PATHS; VALUE)` {#setpath}
 
 The builtin function `setpath` sets the `PATHS` in `.` to `VALUE`.
 
@@ -3745,7 +3745,7 @@ null
 
 :::
 
-### `delpaths(PATHS)`
+### `delpaths(PATHS)` {#delpaths}
 
 The builtin function `delpaths` deletes the `PATHS` in `.`.
 `PATHS` must be an array of paths, where each path is an array
@@ -3804,7 +3804,7 @@ add(.[].a)
 
 :::
 
-### `any`, `any(condition)`, `any(generator; condition)`
+### `any`, `any(condition)`, `any(generator; condition)` {#any}
 
 The filter `any` takes as input an array of boolean values,
 and produces `true` as output if any of the elements of
@@ -3840,7 +3840,7 @@ false
 
 :::
 
-### `all`, `all(condition)`, `all(generator; condition)`
+### `all`, `all(condition)`, `all(generator; condition)` {#all}
 
 The filter `all` takes as input an array of boolean values,
 and produces `true` as output if all of the elements of
@@ -3996,7 +3996,7 @@ null
 
 ## Array functions
 
-### `sort`, `sort_by(path_expression)`
+### `sort`, `sort_by(path_expression)` {#sort-sort_by}
 
 The `sort` functions sorts its input, which must be an array.
 Values are sorted using [the order given by `<`](#ordering).
@@ -4030,7 +4030,7 @@ sort_by(.foo, .bar)
 
 :::
 
-### `group_by(path_expression)`
+### `group_by(path_expression)` {#group_by}
 
 `group_by(.foo)` takes as input an array, groups the
 elements having the same `.foo` field into separate arrays,
@@ -4051,7 +4051,7 @@ group_by(.foo)
 
 :::
 
-### `min`, `max`, `min_by(path_exp)`, `max_by(path_exp)`
+### `min`, `max`, `min_by(path_exp)`, `max_by(path_exp)` {#min-max-min_by-max_by}
 
 Find the minimum or maximum element of the input array.
 
@@ -4075,7 +4075,7 @@ max_by(.foo)
 
 :::
 
-### `unique`, `unique_by(path_exp)`
+### `unique`, `unique_by(path_exp)` {#unique-unique_by}
 
 The `unique` function takes as input an array and produces
 an array of the same elements, in sorted order, with
@@ -4122,7 +4122,7 @@ reverse
 
 :::
 
-### `combinations`, `combinations(n)`
+### `combinations`, `combinations(n)` {#combinations}
 
 Outputs all combinations of the elements of the arrays in the
 input array. If given an argument `n`, it outputs all combinations
@@ -4165,7 +4165,7 @@ transpose
 
 :::
 
-### `flatten`, `flatten(depth)`
+### `flatten`, `flatten(depth)` {#flatten}
 
 The filter `flatten` takes as input an array of nested arrays,
 and produces a flat array in which all arrays inside the original
@@ -4221,7 +4221,7 @@ utf8bytelength
 
 :::
 
-### `startswith(str)`
+### `startswith(str)` {#startswith}
 
 Outputs `true` if . starts with the given string argument.
 
@@ -4235,7 +4235,7 @@ Outputs `true` if . starts with the given string argument.
 
 :::
 
-### `endswith(str)`
+### `endswith(str)` {#endswith}
 
 Outputs `true` if . ends with the given string argument.
 
@@ -4249,7 +4249,7 @@ Outputs `true` if . ends with the given string argument.
 
 :::
 
-### `ltrimstr(str)`
+### `ltrimstr(str)` {#ltrimstr}
 
 Outputs its input with the given prefix string removed, if it
 starts with it.
@@ -4264,7 +4264,7 @@ starts with it.
 
 :::
 
-### `rtrimstr(str)`
+### `rtrimstr(str)` {#rtrimstr}
 
 Outputs its input with the given suffix string removed, if it
 ends with it.
@@ -4332,7 +4332,7 @@ implode
 
 :::
 
-### `split(str)`
+### `split(str)` {#split-1}
 
 Splits an input string on the separator argument.
 
@@ -4349,7 +4349,7 @@ split(", ")
 
 :::
 
-### `join(str)`
+### `join(str)` {#join}
 
 Joins the array of elements given as input, using the
 argument as separator. It is the inverse of `split`: that is,
@@ -4563,7 +4563,7 @@ output for each input.  See advanced topics below.
 
 :::
 
-### `until(cond; next)`
+### `until(cond; next)` {#until}
 
 The `until(cond; next)` function allows you to repeatedly
 apply the expression `next`, initially to `.` then to its own
@@ -4652,7 +4652,7 @@ recurse(. * .; . < 20)
 
 :::
 
-### `walk(f)`
+### `walk(f)` {#walk}
 
 The `walk(f)` function applies f recursively to every
 component of the input entity.  When an array is
@@ -4685,7 +4685,7 @@ walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . en
 
 ## Stream processing functions
 
-### `isempty(expr)`
+### `isempty(expr)` {#isempty}
 
 Returns true if `expr` produces no outputs, false otherwise.
 
@@ -4711,7 +4711,7 @@ false
 
 :::
 
-### `limit(n; expr)`
+### `limit(n; expr)` {#limit}
 
 The `limit` function extracts up to `n` outputs from `expr`.
 
@@ -4725,7 +4725,7 @@ The `limit` function extracts up to `n` outputs from `expr`.
 
 :::
 
-### `skip(n; expr)`
+### `skip(n; expr)` {#skip}
 
 The `skip` function skips the first `n` outputs from `expr`.
 
@@ -4739,7 +4739,7 @@ The `skip` function skips the first `n` outputs from `expr`.
 
 :::
 
-### `first(expr)`, `last(expr)`, `nth(n; expr)`
+### `first(expr)`, `last(expr)`, `nth(n; expr)` {#first-last-nth-2}
 
 The `first(expr)` and `last(expr)` functions extract the first
 and last values from `expr`, respectively.
@@ -4763,7 +4763,7 @@ null
 
 :::
 
-### `first`, `last`, `nth(n)`
+### `first`, `last`, `nth(n)` {#first-last-nth-1}
 
 The `first` and `last` functions extract the first
 and last values from any array at `.`.
@@ -5038,7 +5038,7 @@ jaq uses the [`regex` library](https://docs.rs/regex/latest/regex/) instead of O
 which can result in subtle differences in regex execution.
 :::
 
-### `test(val)`, `test(regex; flags)`
+### `test(val)`, `test(regex; flags)` {#test}
 
 Like `match`, but does not return match objects, only `true` or `false`
 for whether or not the regex matches the input.
@@ -5060,7 +5060,7 @@ true
 
 :::
 
-### `match(val)`, `match(regex; flags)`
+### `match(val)`, `match(regex; flags)` {#match}
 
 **match** outputs an object for each match it finds.  Matches have
 the following fields:
@@ -5116,7 +5116,7 @@ match("foo (?<bar123>bar)? foo"; "ig")
 
 :::
 
-### `capture(val)`, `capture(regex; flags)`
+### `capture(val)`, `capture(regex; flags)` {#capture}
 
 Collects the named captures in a JSON object, with the name
 of each capture as the key, and the matched string as the
@@ -5132,7 +5132,7 @@ capture("(?<a>[a-z]+)-(?<n>[0-9]+)")
 
 :::
 
-### `scan(regex)`, `scan(regex; flags)`
+### `scan(regex)`, `scan(regex; flags)` {#scan}
 
 Emit a stream of the non-overlapping substrings of the input
 that match the regex in accordance with the flags, if any
@@ -5151,7 +5151,7 @@ scan("c")
 
 :::
 
-### `split(regex; flags)`
+### `split(regex; flags)` {#split-2}
 
 Splits an input string on each regex match.
 
@@ -5168,7 +5168,7 @@ split(", *"; null)
 
 :::
 
-### `splits(regex)`, `splits(regex; flags)`
+### `splits(regex)`, `splits(regex; flags)` {#splits}
 
 These provide the same results as their `split` counterparts,
 but as a stream instead of an array.
@@ -5186,7 +5186,7 @@ splits(", *")
 
 :::
 
-### `sub(regex; tostring)`, `sub(regex; tostring; flags)`
+### `sub(regex; tostring)`, `sub(regex; tostring; flags)` {#sub}
 
 Emit the string obtained by replacing the first match of
 regex in the input string with `tostring`, after
@@ -5213,7 +5213,7 @@ sub("[^a-z]*(?<x>[a-z]+)"; "Z\(.x)"; "g")
 
 :::
 
-### `gsub(regex; tostring)`, `gsub(regex; tostring; flags)`
+### `gsub(regex; tostring)`, `gsub(regex; tostring; flags)` {#gsub}
 
 `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
 replaced by `tostring`, after interpolation. If the second argument is a stream
@@ -5283,7 +5283,7 @@ in jq, `input` yields an error, whereas
 in jaq, `input` yields no output value, i.e. `empty`.
 :::
 
-### `debug`, `debug(msgs)`
+### `debug`, `debug(msgs)` {#debug}
 
 These two filters are like `.` but have as a side-effect the
 production of one or more messages on stderr.
@@ -5319,7 +5319,7 @@ additional decoration, not even a newline.
 Stops the jq program with no further outputs.  jq will exit
 with exit status `0`.
 
-### `halt_error`, `halt_error(exit_code)` {#halt-error}
+### `halt_error`, `halt_error(exit_code)` {#halt_error}
 
 Stops the jq program with no further outputs.  The input will
 be printed on `stderr` as raw output (i.e., strings will not
@@ -5348,7 +5348,7 @@ Returns the line number of the input currently being filtered.
 jaq does not provide this function.
 :::
 
-### `$ENV`, `env`
+### `$ENV`, `env` {#env}
 
 `$ENV` is an object representing the environment variables as
 set when the jq program started.
@@ -5401,7 +5401,7 @@ Because jaq does not support the `--stream` option,
 it does not provide any of the functions in this subsection.
 :::
 
-### `truncate_stream(stream_expression)`
+### `truncate_stream(stream_expression)` {#truncate_stream}
 
 Consumes a number as input and truncates the corresponding
 number of path elements from the left of the outputs of the
@@ -5418,7 +5418,7 @@ truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])
 
 :::
 
-### `fromstream(stream_expression)`
+### `fromstream(stream_expression)` {#fromstream}
 
 Outputs values corresponding to the stream expression's
 outputs.
@@ -5464,7 +5464,7 @@ Programs can use this to query a module's metadata, which they
 could then use to, for example, search for, download, and
 install missing dependencies.
 
-### `$__loc__`
+### `$__loc__` {#__loc__}
 
 Produces an object with a "file" key and a "line" key, with
 the filename and line number where `$__loc__` occurs, as
