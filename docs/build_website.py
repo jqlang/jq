@@ -91,5 +91,9 @@ def copy_public_files(root=''):
 os.makedirs('output', exist_ok=True)
 copy_public_files()
 
+os.system("./build_manual.sh > content/manual/manual.yml")
+
 for fn in glob.glob('content/**/*.yml', recursive=True):
     generate_file(env, fn)
+
+os.remove("content/manual/manual.yml")
