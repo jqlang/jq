@@ -17,6 +17,13 @@ end
 function Header(el)
   if FORMAT == "man" and el.level == 1 then
     return el:walk{Str = function(el) return pandoc.Str(string.upper(el.text)) end}
+  elseif FORMAT == "html" then
+    local span = pandoc.RawInline("html", '<span class="bi bi-link-45deg" aria-hidden="true"></span>')
+    local link = pandoc.Link(span, "#" .. el.identifier)
+    link.classes = {"icon-link"}
+    el.content[#el.content + 1] = pandoc.Space()
+    el.content[#el.content + 1] = link
+    return el
   end
 end
 
