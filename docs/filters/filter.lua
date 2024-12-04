@@ -90,6 +90,8 @@ function example(test)
     end
   end
 
+  local run_arrow = pandoc.Span("", {class = 'bi bi-box-arrow-up-right ms-2', ["aria-hidden"] = "true"})
+  local run_attrs = {class = 'btn btn-outline-primary btn-sm', target = "_blank", rel = "noopener"}
   simple_table = pandoc.SimpleTable(
     "", -- caption
     {pandoc.AlignRight, pandoc.AlignLeft},
@@ -99,7 +101,7 @@ function example(test)
       {pandoc.Strong("Filter"), code(filter, "jq"  )},
       {pandoc.Strong( "Input"), code( input, "json")},
       {pandoc.Strong("Output"), code(output, "json")},
-      {pandoc.Link("Run", url), {}}
+      {pandoc.Link({"Run", run_arrow}, url, "Run example", run_attrs), {}}
     }
   )
   local table = pandoc.utils.from_simple_table(simple_table)
