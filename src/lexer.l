@@ -130,7 +130,9 @@ struct lexer_param;
 \.[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return FIELD;}
 \$([a-zA-Z_][a-zA-Z_0-9]*::)*[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return BINDING;}
 
-[ \n\t]+  {}
+[ \r\n\t]+  {}
+
+\xEF\xBB\xBF { return UTF8_BOM; }
 
 . { return INVALID_CHARACTER; }
 
