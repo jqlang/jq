@@ -160,7 +160,7 @@ check_DATA = tests/man.test
 # Making changes to the manpage without having the python deps means your
 # tests won't run. If you aren't making changes to the examples, you probably
 # don't care. But if you are, then you need to run the tests anyway.
-tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/manual.md
+tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/dev/manual.md
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && ./build_mantests.sh )
 else
@@ -174,7 +174,7 @@ endif
 # manpage, then we'll end up using the cached version. Otherwise, we need to
 # rebuild it.
 man_MANS = jq.1
-jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.md $(srcdir)/docs/man/*
+jq.1.prebuilt: $(srcdir)/docs/content/manual/dev/manual.md $(srcdir)/docs/man/*
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && ./build_manpage.sh ) > $@
 else
