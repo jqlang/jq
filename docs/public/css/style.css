@@ -50,28 +50,6 @@ section[id] {
   font-weight: bold;
 }
 
-details > summary {
-  /* disable default marker */
-  list-style: none;
-  display: flex;
-  /* distance between arrow and text */
-  gap: 5px;
-  /* align arrow with text vertically */
-  align-items: center;
-}
-
-details > summary:before  {
-  /* downwards-pointing chevron */
-  content: url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"%23000000\"><path d=\"m17.5 4.75-7.5 7.5-7.5-7.5L1 6.25l9 9 9-9z\"/></svg>");
-  /* make transformations applicable */
-  display: inline-flex;
-  transition: all 0.25s;
-}
-
-details:not([open]) > summary:before {
-  transform: rotate(-90deg);
-}
-
 ul {
   list-style: none;
   padding-left: 1rem;
