@@ -184,7 +184,7 @@ using some command-line options:
   when `--stream` without `--stream-errors`.
 
   ::: Compatibility
-  jaq does not support this option.
+  gojq and jaq do not support this option.
   :::
 
 ## Output options
@@ -405,6 +405,7 @@ The second number is one of these:
 - 37 (white)
 
 ::: Compatibility
+gojq considers `GOJQ_COLORS` instead.
 jaq does not consider `JQ_COLORS`.
 :::
 
@@ -1092,13 +1093,15 @@ Therefore, we define it via a formal grammar in
 [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form):
 
 ~~~ ebnf
+field = ident | string;
+
 path = atomic, part
-     | ".", ident
+     | ".", field
      | path, part
      | path, part, "?"
      ;
 
-part = ".", ident
+part = ".", field
      | "[",            "]"
      | "[",     t,     "]"
      | "[", t, ":", t, "]"
@@ -1551,7 +1554,7 @@ In particular, the filter
 
 :::
 
-## if-then-else-end {#if-then-else}
+## if-then-else-end
 
 The filter `if i then t else e end`
 runs `t` when `i` returns an output with boolean value `true`, otherwise, it
@@ -2016,8 +2019,7 @@ is equivalent to the filter
     $p1.a as $y  |
     $x, $y
 
-Given the input `{a: 1, b: []}`, it returns twice `null`,
-because neither `.b` nor `.c[0]` are present in the input.
+Given the input `[1, {b: 2}}`, it returns `1, null`.
 
 :::
 
@@ -2308,7 +2310,7 @@ A similar transformation can be made for `reduce`.
 ::: Compatibility
 
 Similarly as for `reduce`,
-jq  considers only the _last_ output of `UPDATE` for the next iteration, whereas
+jq and gojq consider only the _last_ output of `UPDATE` for the next iteration, whereas
 jaq considers _all_ of them.
 For example, the filter
 
@@ -3522,7 +3524,7 @@ map(has(2))
 
 :::
 
-### `in`
+### `in(x)` {#in}
 
 The builtin function `in` returns whether or not the input key is in the
 given object, or the input index corresponds to an element
@@ -4400,9 +4402,12 @@ ascii_upcase
 
 ## String formatting functions
 
+The functions in this section can also be used as prefix for strings;
+see [string formatting](#string-formatting).
+
 ### `@text`
 
-Calls `tostring`, see that function for details.
+Calls [`tostring`](#tostring).
 
 ### `@json`
 
@@ -5034,8 +5039,9 @@ Note that certain flags may also be specified within REGEX, e.g.
 evaluates to `true`, `true`, `false`, `false`.
 
 ::: Compatibility
-jaq uses the [`regex` library](https://docs.rs/regex/latest/regex/) instead of Oniguruma,
-which can result in subtle differences in regex execution.
+gojq uses the [`regexp` package](https://pkg.go.dev/regexp) and
+ jaq uses the [`regex_lite` crate](https://docs.rs/regex-lite) instead of Oniguruma.
+This can result in subtle differences in regex execution.
 :::
 
 ### `test(val)`, `test(regex; flags)` {#test}
@@ -5345,7 +5351,7 @@ jaq does not provide this function.
 Returns the line number of the input currently being filtered.
 
 ::: Compatibility
-jaq does not provide this function.
+gojq and jaq do not provide this function.
 :::
 
 ### `$ENV`, `env` {#env}
