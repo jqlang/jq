@@ -219,7 +219,7 @@ Invalid JSON inputs produce no error values when \f[CR]\-\-stream\f[R]
 without \f[CR]\-\-stream\-errors\f[R].
 .TP
 \f[I]Compatibility\f[R]
-jaq does not support this option.
+gojq and jaq do not support this option.
 .RE
 .SS Output options
 .IP \[bu] 2
@@ -497,6 +497,7 @@ The second number is one of these:
 37 (white)
 .TP
 \f[I]Compatibility\f[R]
+gojq considers \f[CR]GOJQ_COLORS\f[R] instead.
 jaq does not consider \f[CR]JQ_COLORS\f[R].
 .SH TYPES AND VALUES
 jq supports the same set of data types as JSON \[em] booleans, numbers,
@@ -950,7 +951,7 @@ $ jq \[aq].. | .a?\[aq] \[rs]
   <<< \[aq][[{\[dq]a\[dq]:1}]]\[aq]
 1
 .EE
-.SH PATHS
+.SH PATH OPERATORS
 In this section, we will show three very frequently used operators,
 namely for iteration, indexing, and slicing.
 These operators serve to obtain parts of values.
@@ -1149,13 +1150,15 @@ EBNF
 :
 .IP
 .EX
+field = ident | string;
+
 path = atomic, part
-     | \[dq].\[dq], ident
+     | \[dq].\[dq], field
      | path, part
      | path, part, \[dq]?\[dq]
      ;
 
-part = \[dq].\[dq], ident
+part = \[dq].\[dq], field
      | \[dq][\[dq],            \[dq]]\[dq]
      | \[dq][\[dq],     t,     \[dq]]\[dq]
      | \[dq][\[dq], t, \[dq]:\[dq], t, \[dq]]\[dq]
@@ -2035,9 +2038,7 @@ is equivalent to the filter
 $p1.a as $y  |
 $x, $y
 .EE
-Given the input \f[CR]{a: 1, b: []}\f[R], it returns twice
-\f[CR]null\f[R], because neither \f[CR].b\f[R] nor \f[CR].c[0]\f[R] are
-present in the input.
+Given the input \f[CR][1, {b: 2}}\f[R], it returns \f[CR]1, null\f[R].
 .PP
 Similarly to object construction, \f[CR]{$x}\f[R] is equivalent to
 \f[CR]{x: $x}\f[R] also for object patterns.
@@ -2322,9 +2323,9 @@ does not shadow any existing variable at this point.)
 A similar transformation can be made for \f[CR]reduce\f[R].
 .TP
 \f[I]Compatibility\f[R]
-Similarly as for \f[CR]reduce\f[R], jq considers only the \f[I]last\f[R]
-output of \f[CR]UPDATE\f[R] for the next iteration, whereas jaq
-considers \f[I]all\f[R] of them.
+Similarly as for \f[CR]reduce\f[R], jq and gojq consider only the
+\f[I]last\f[R] output of \f[CR]UPDATE\f[R] for the next iteration,
+whereas jaq considers \f[I]all\f[R] of them.
 For example, the filter
 .IP
 .EX
@@ -3516,7 +3517,7 @@ $ jq \[aq]map(has(2))\[aq] \[rs]
   <<< \[aq][[0,1], [\[dq]a\[dq],\[dq]b\[dq],\[dq]c\[dq]]]\[aq]
 [false, true]
 .EE
-.SS \f[CR]in\f[R]
+.SS \f[CR]in(x)\f[R]
 The builtin function \f[CR]in\f[R] returns whether or not the input key
 is in the given object, or the input index corresponds to an element in
 the given array.
@@ -4275,8 +4276,10 @@ $ jq \[aq]ascii_upcase\[aq] \[rs]
 \[dq]USEFUL BUT NOT FOR é\[dq]
 .EE
 .SS String formatting functions
+The functions in this section can also be used as prefix for strings;
+see string formatting.
 .SS \f[CR]\[at]text\f[R]
-Calls \f[CR]tostring\f[R], see that function for details.
+Calls \f[CR]tostring\f[R].
 .SS \f[CR]\[at]json\f[R]
 Serializes the input as JSON.
 .SS \f[CR]\[at]html\f[R]
@@ -4851,12 +4854,16 @@ evaluates to \f[CR]true\f[R], \f[CR]true\f[R], \f[CR]false\f[R],
 \f[CR]false\f[R].
 .TP
 \f[I]Compatibility\f[R]
-jaq uses the \c
-.UR https://docs.rs/regex/latest/regex/
-\f[CR]regex\f[R] library
+gojq uses the \c
+.UR https://pkg.go.dev/regexp
+\f[CR]regexp\f[R] package
 .UE \c
-\ instead of Oniguruma, which can result in subtle differences in regex
-execution.
+\ and jaq uses the \c
+.UR https://docs.rs/regex-lite
+\f[CR]regex_lite\f[R] crate
+.UE \c
+\ instead of Oniguruma.
+This can result in subtle differences in regex execution.
 .SS \f[CR]test(val)\f[R], \f[CR]test(regex; flags)\f[R]
 Like \f[CR]match\f[R], but does not return match objects, only
 \f[CR]true\f[R] or \f[CR]false\f[R] for whether or not the regex matches
@@ -5140,7 +5147,7 @@ jaq does not provide this function.
 Returns the line number of the input currently being filtered.
 .TP
 \f[I]Compatibility\f[R]
-jaq does not provide this function.
+gojq and jaq do not provide this function.
 .SS \f[CR]$ENV\f[R], \f[CR]env\f[R]
 \f[CR]$ENV\f[R] is an object representing the environment variables as
 set when the jq program started.
