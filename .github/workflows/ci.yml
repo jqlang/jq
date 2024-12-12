@@ -117,6 +117,7 @@ jobs:
             test-suite.log
             tests/*.log
       - name: attest-build-provenance
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: jq-${{ env.SUFFIX }}
@@ -188,6 +189,7 @@ jobs:
             test-suite.log
             tests/*.log
       - name: attest-build-provenance
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: jq-${{ env.SUFFIX }}
@@ -266,6 +268,7 @@ jobs:
             test-suite.log
             tests/*.log
       - name: attest-build-provenance
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: jq-${{ env.SUFFIX }}.exe
@@ -299,6 +302,7 @@ jobs:
           make dist dist-zip
           git diff --exit-code
       - name: attest-build-provenance
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
@@ -380,6 +384,7 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
       - name: attest-build-provenance
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/${{ github.repository }}
