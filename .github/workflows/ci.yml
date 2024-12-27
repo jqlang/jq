@@ -374,8 +374,8 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and release Docker image
-        id: attestation
         uses: docker/build-push-action@v6
+        id: build-push
         with:
           context: .
           push: ${{ startsWith(github.ref, 'refs/tags/jq-') }}
@@ -388,7 +388,7 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/${{ github.repository }}
-          subject-digest: ${{ steps.attestation.outputs.digest }}
+          subject-digest: ${{ steps.build-push.outputs.digest }}
           push-to-registry: true
 
   release:
