@@ -7,11 +7,6 @@ on:
       - "jq-*"
   pull_request:
 
-permissions:
-  id-token: write
-  contents: read
-  attestations: write
-
 jobs:
   linux:
     strategy:
@@ -116,11 +111,6 @@ jobs:
           path: |
             test-suite.log
             tests/*.log
-      - name: attest-build-provenance
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: jq-${{ env.SUFFIX }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -188,11 +178,6 @@ jobs:
           path: |
             test-suite.log
             tests/*.log
-      - name: attest-build-provenance
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: jq-${{ env.SUFFIX }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -267,11 +252,6 @@ jobs:
           path: |
             test-suite.log
             tests/*.log
-      - name: attest-build-provenance
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: jq-${{ env.SUFFIX }}.exe
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -301,13 +281,6 @@ jobs:
           make distcheck
           make dist dist-zip
           git diff --exit-code
-      - name: attest-build-provenance
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: |
-            jq-*.tar.gz
-            jq-*.zip
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -395,6 +368,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
       pull-requests: write
     environment: release
     needs: [linux, macos, windows, dist, docker]
@@ -417,6 +392,10 @@ jobs:
           sha256sum jq-* > sha256sum.txt
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
           gh release upload "$TAG_NAME" --clobber jq-* sha256sum.txt
+      - name: attest-build-provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: jq-*
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
