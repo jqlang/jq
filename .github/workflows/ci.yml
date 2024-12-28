@@ -371,7 +371,6 @@ jobs:
       id-token: write
       attestations: write
       pull-requests: write
-      actions: write
     environment: release
     needs: [linux, macos, windows, dist, docker]
     if: startsWith(github.ref, 'refs/tags/jq-')
