@@ -371,6 +371,7 @@ jobs:
       id-token: write
       attestations: write
       pull-requests: write
+      actions: write
     environment: release
     needs: [linux, macos, windows, dist, docker]
     if: startsWith(github.ref, 'refs/tags/jq-')
@@ -380,6 +381,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
+          pattern: jq-*
           merge-multiple: true
       - name: Upload release
         env:
