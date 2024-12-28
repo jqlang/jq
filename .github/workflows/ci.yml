@@ -356,7 +356,7 @@ jobs:
           platforms: linux/386,linux/amd64,linux/arm64,linux/mips64le,linux/ppc64le,linux/riscv64,linux/s390x
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-      - name: Docker attest-build-provenance
+      - name: Generate signed attestations
         if: startsWith(github.ref, 'refs/tags/')
         uses: actions/attest-build-provenance@v2
         with:
@@ -393,7 +393,7 @@ jobs:
           sha256sum jq-* > sha256sum.txt
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
           gh release upload "$TAG_NAME" --clobber jq-* sha256sum.txt
-      - name: Release attest-build-provenance
+      - name: Generate signed attestations
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: jq-*
