@@ -357,7 +357,7 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
       - name: Generate signed attestations
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/jq-')
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/${{ github.repository }}
