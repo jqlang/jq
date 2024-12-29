@@ -51,6 +51,7 @@ tests/*.trs
 
 # Docs output
 docs/output
+docs/content/manual/dev/manual.yml
 
 cscope.in.out
 cscope.out

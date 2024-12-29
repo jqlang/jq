@@ -12,10 +12,35 @@
         <span class="bi bi-list" aria-hidden="true"></span>
       </button>
       <nav id="contents" class="col-md-3 sticky-md-top p-3 overflow-y-auto offcanvas-md offcanvas-end d-print-none" style="top:4.5rem; height:calc(100dvh - 5.5rem);" aria-label="Table of contents">
-        <div class="d-flex justify-content-between">
-          <h4>Contents</h4>
-          <button type="button" class="btn-close d-md-none" data-bs-dismiss="offcanvas" data-bs-target="#contents" aria-label="Close table of contents"></button>
-        </div>
+        <h4>Contents</h4>
+        {%- if toc %}
+        <ul class="ps-0">
+          {%- for section in toc %}
+          {%- if section.level == 1 %}
+          {%- if not loop.first %}
+              </ul>
+            </details>
+          </li>
+          {%- endif %}
+          <li>
+            <details>
+              <summary class="py-2">
+                <a href="#{{ section.id }}" class="text-decoration-none">{{ section.title }}</a>
+              </summary>
+              <ul>
+          {%- elif section.level == 2 %}
+                <li class="py-2 ps-4">
+                  <a href="#{{ section.id }}" class="text-decoration-none">{{ section.title }}</a>
+                </li>
+          {%- endif %}
+          {%- if loop.last %}
+              </ul>
+            </details>
+          </li>
+          {%- endif %}
+          {%- endfor %}
+        </ul>
+        {%- else %}
         <ul class="offcanvas-md-body nav nav-pills flex-column">
           {%- for section in sections %}
           <li class="nav-item" data-bs-dismiss="offcanvas" data-bs-target="#contents">
@@ -23,6 +48,7 @@
           </li>
           {%- endfor %}
         </ul>
+        {%- endif %}
       </nav>
       {%- set section_ids = {} %}
       {%- macro check_section_id(id) -%}
@@ -107,6 +133,9 @@
       integrity="sha384-xbzjoN6H5XHmAqoSSR42hZVRninPGx85y+XZQGlWxVu2y91lTmr/oD80i5cjeUBv" crossorigin="anonymous"></script>
     <script id="section-ids" type="application/json">
       {
+        {%- for section in toc %}
+        {{ section.title | tojson }}: {{ section.id | tojson }}{{ "," if not loop.last }}
+        {%- endfor %}
         {%- for section in sections %}
         {%- for entry in section.entries %}
         {{ entry.title | search_id | tojson }}: {{ entry.title | entry_id | tojson }},
