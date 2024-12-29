@@ -132,11 +132,10 @@ CLEANFILES = src/version.h .remake-version-h src/builtin.inc src/config_opts.inc
 
 bin_PROGRAMS = jq
 jq_SOURCES = src/main.c src/version.h
-jq_LDFLAGS = -static-libtool-libs
 jq_LDADD = libjq.la -lm
 
 if ENABLE_ALL_STATIC
-jq_LDFLAGS += -all-static
+jq_LDFLAGS = -all-static
 endif
 
 ### Tests (make check)
