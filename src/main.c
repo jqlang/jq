@@ -101,6 +101,7 @@ static void usage(int code, int keep_it_short) {
       "      --slurpfile name file set $name to an array of JSON values read\n"
       "                            from the file;\n"
       "      --rawfile name file   set $name to string contents of file;\n"
+      "      --depth n             set parser maxdepth to n (0 for unbounded);\n"
       "      --args                consume remaining arguments as positional\n"
       "                            string values;\n"
       "      --jsonargs            consume remaining arguments as positional\n"
@@ -296,6 +297,7 @@ int main(int argc, char* argv[]) {
   int ret = JQ_OK_NO_OUTPUT;
   int compiled = 0;
   int parser_flags = 0;
+  int parser_maxdepth = DEFAULT_MAX_PARSING_DEPTH;
   int nfiles = 0;
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
@@ -441,6 +443,18 @@ int main(int argc, char* argv[]) {
           i++;
         } else if (isoption(&text, 0, "seq", is_short)) {
           options |= SEQ;
+        } else if (isoption(&text, 0, "depth", is_short)) {
+          if (i >= argc - 1) {
+            fprintf(stderr, "%s: --depth takes one parameter\n", progname);
+            die();
+          }
+          int depth = atoi(argv[i+1]);
+          if (depth < 0) {
+            fprintf(stderr, "%s: --depth takes a non-negative number\n", progname);
+            die();
+          }
+          parser_maxdepth = depth;
+          i++;
         } else if (isoption(&text, 0, "stream", is_short)) {
           parser_flags |= JV_PARSE_STREAMING;
         } else if (isoption(&text, 0, "stream-errors", is_short)) {
@@ -483,7 +497,7 @@ int main(int argc, char* argv[]) {
             die();
           }
           if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1]))) {
-            jv data = jv_load_file(argv[i+2], raw);
+            jv data = jv_load_file(argv[i+2], raw, parser_maxdepth);
             if (!jv_is_valid(data)) {
               data = jv_invalid_get_msg(data);
               fprintf(stderr, "%s: Bad JSON in --%s %s %s: %s\n", progname, which,
@@ -591,6 +605,8 @@ int main(int argc, char* argv[]) {
 
   if (!program) usage(2, 1);
 
+  jq_set_parser_maxdepth(jq, parser_maxdepth);
+
   if (options & FROM_FILE) {
     char *program_origin = strdup(program);
     if (program_origin == NULL) {
@@ -598,7 +614,7 @@ int main(int argc, char* argv[]) {
       exit(2);
     }
 
-    jv data = jv_load_file(program, 1);
+    jv data = jv_load_file(program, 1, parser_maxdepth);
     if (!jv_is_valid(data)) {
       data = jv_invalid_get_msg(data);
       fprintf(stderr, "%s: %s\n", progname, jv_string_value(data));
@@ -644,7 +660,7 @@ int main(int argc, char* argv[]) {
   if ((options & RAW_INPUT))
     jq_util_input_set_parser(input_state, NULL, (options & SLURP) ? 1 : 0);
   else
-    jq_util_input_set_parser(input_state, jv_parser_new(parser_flags), (options & SLURP) ? 1 : 0);
+    jq_util_input_set_parser(input_state, jv_parser_new(parser_flags, parser_maxdepth), (options & SLURP) ? 1 : 0);
 
   // Let jq program read from inputs
   jq_set_input_cb(jq, jq_util_input_next_input_cb, input_state);

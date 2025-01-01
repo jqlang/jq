@@ -354,7 +354,7 @@ static void *test_pthread_run(void *ptr) {
         return NULL;
     }
 
-    struct jv_parser *parser = jv_parser_new(0);
+    struct jv_parser *parser = jv_parser_new(0, jq_get_parser_maxdepth(jq));
     jv_parser_set_buf(parser, buf, strlen(buf), 0);
     rv = test_pthread_jq_parse(jq, parser);
 

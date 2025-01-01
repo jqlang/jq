@@ -725,4 +725,28 @@ $VALGRIND $Q $JQ . <<\NUM
 -10E-1000000001
 NUM
 
+# --depth flag
+echo '[["doubly nested"]]' >$d/depth2.json
+
+s='"inner"'
+i=0
+while [ "$i" -lt 257 ]; do
+  s="[$s]"
+  i=$((i + 1))
+done
+echo "$s" >$d/depth257.json
+
+$JQ -- '.' $d/depth2.json # should work
+if $JQ --depth 1 -- '.' $d/depth2.json; then
+  echo "setting --depth 1 did not crash when given deep input"
+  exit 1
+fi
+
+if $JQ -- '.' $d/depth257.json; then
+  echo "default depth of 256 did not crash when given deep input"
+  exit 1
+fi
+$JQ --depth 257 -- '.' $d/depth257.json # should work
+$JQ --depth 0 -- '.' $d/depth257.json # should work
+
 exit 0
