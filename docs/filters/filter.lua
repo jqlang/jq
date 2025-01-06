@@ -48,11 +48,11 @@ function Div(el)
 
     if FORMAT == "html" then
       local summary = pandoc.Plain{
-        pandoc.RawInline("html",  '<summary class="text-body-secondary link-body-emphasis small">'), pandoc.Str 'Examples',
+        pandoc.RawInline("html",  '<summary class="text-body-secondary link-body-emphasis">'), pandoc.Str 'Examples',
         pandoc.RawInline("html", "</summary>")
       }
       return {
-        pandoc.RawBlock("html",  '<details class="pb-3">'), summary, el,
+        pandoc.RawBlock("html",  '<details class="pb-3 small">'), summary, el,
         pandoc.RawBlock("html", '</details>')
       }
     end
