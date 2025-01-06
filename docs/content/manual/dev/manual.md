@@ -1095,10 +1095,8 @@ Therefore, we define it via a formal grammar in
 ~~~ ebnf
 field = ident | string;
 
-path = atomic, part
+init = atomic, part
      | ".", field
-     | path, part
-     | path, part, "?"
      ;
 
 part = ".", field
@@ -1108,6 +1106,10 @@ part = ".", field
      | "[", t, ":",    "]"
      | "[",    ":", t, "]"
      ;
+
+(* `[ t ]` stands for an optional occurrence of `t` and
+   `{ t }` stands for arbitrarily many occurrences of `t` *)
+path = init, [ "?" ], { part, [ "?" ] };
 ~~~
 
 Here,
