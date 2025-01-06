@@ -1152,10 +1152,8 @@ EBNF
 .EX
 field = ident | string;
 
-path = atomic, part
+init = atomic, part
      | \[dq].\[dq], field
-     | path, part
-     | path, part, \[dq]?\[dq]
      ;
 
 part = \[dq].\[dq], field
@@ -1165,6 +1163,10 @@ part = \[dq].\[dq], field
      | \[dq][\[dq], t, \[dq]:\[dq],    \[dq]]\[dq]
      | \[dq][\[dq],    \[dq]:\[dq], t, \[dq]]\[dq]
      ;
+
+(* \[ga][ t ]\[ga] stands for an optional occurrence of \[ga]t\[ga] and
+   \[ga]{ t }\[ga] stands for arbitrarily many occurrences of \[ga]t\[ga] *)
+path = init, [ \[dq]?\[dq] ], { part, [ \[dq]?\[dq] ] };
 .EE
 .PP
 Here, \f[CR]ident\f[R] refers to an identifier\-like key, \f[CR]t\f[R]
