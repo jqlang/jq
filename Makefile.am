@@ -160,11 +160,9 @@ check_DATA = tests/man.test
 # Making changes to the manpage without having the python deps means your
 # tests won't run. If you aren't making changes to the examples, you probably
 # don't care. But if you are, then you need to run the tests anyway.
-tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/dev/manual.yml
+tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/dev/manual.md
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
-	  $(PIPENV) run python validate_manual_schema.py content/manual/dev/manual.yml && \
-	  $(PIPENV) run python build_mantests.py )
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && ./build_mantests.sh )
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manual test.
 	@echo As a result, the manual test is out of date.
@@ -176,11 +174,9 @@ endif
 # manpage, then we'll end up using the cached version. Otherwise, we need to
 # rebuild it.
 man_MANS = jq.1
-jq.1.prebuilt: $(srcdir)/docs/content/manual/dev/manual.yml
+jq.1.prebuilt: $(srcdir)/docs/content/manual/dev/manual.md $(srcdir)/docs/man/*
 if ENABLE_DOCS
-	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
-	  $(PIPENV) run python validate_manual_schema.py content/manual/dev/manual.yml && \
-	  $(PIPENV) run python build_manpage.py ) > $@
+	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && ./build_manpage.sh ) > $@
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manpage.
 	@echo As a result, the manpage is out of date.
@@ -209,10 +205,10 @@ endif
 install-binaries: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec
 
-DOC_FILES = docs/content docs/public docs/templates                     \
-        docs/Pipfile docs/Pipfile.lock docs/build_manpage.py            \
-        docs/build_mantests.py docs/build_website.py docs/README.md     \
-        docs/validate_manual_schema.py docs/manual_schema.yml
+DOC_FILES = docs/content docs/public docs/templates docs/filters        \
+        docs/man docs/Pipfile docs/Pipfile.lock docs/build_manpage.sh   \
+        docs/build_mantests.sh docs/build_website.py docs/README.md     \
+		docs/build_manual.sh
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \

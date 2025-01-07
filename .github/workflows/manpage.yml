@@ -21,19 +21,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install Pandoc
+        uses: pandoc/actions/setup@main
         with:
-          python-version: '3.11'
-          cache: pipenv
-      - name: Install pipenv
-        run: pip install pipenv
-      - name: Install dependencies
-        run: pipenv sync
-        working-directory: docs
-      - name: Validate manual schema
-        run: pipenv run python3 validate_manual_schema.py content/manual/**/*.yml
-        working-directory: docs
+          version: 3.4
       - name: Configure
         run: |
           autoreconf -i
@@ -41,7 +32,7 @@ jobs:
       - name: Build man page, man.test, manonig.test
         run: |
           mv jq.1.prebuilt jq.1.old
-          rm -f tests/man.test manonig.test
+          rm -f tests/man.test tests/manonig.test
           make jq.1.prebuilt tests/man.test tests/manonig.test
       - name: Make sure that jq.1.prebuilt, man.test, manonig.test are up to date
         run: |

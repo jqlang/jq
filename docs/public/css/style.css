@@ -40,6 +40,16 @@ section[id] {
   --bs-offcanvas-width: auto;
 }
 
+.alert > :last-child {
+  margin-bottom: 0;
+}
+
+.block-start {
+  float: left;
+  margin-right: 1rem;
+  font-weight: bold;
+}
+
 ul {
   list-style: none;
   padding-left: 1rem;
