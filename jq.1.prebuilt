@@ -1134,51 +1134,15 @@ For example:
 .IP \[bu] 2
 \f[CR].[].key?\f[R] for \f[CR].[] | .key?\f[R],
 .IP \[bu] 2
-\f[CR].[]?[]\f[R] for \f[CR].[]? | .[]\f[R],
+\f[CR].[]?[\-1]\f[R] for \f[CR].[]? | .[\-1]\f[R],
 .IP \[bu] 2
 \f[CR].a.b\f[R] for \f[CR].a | .b\f[R],
 .IP \[bu] 2
-\f[CR].a.b.c\f[R] for \f[CR].a | .b | .c\f[R], and so on.
+\f[CR].a.b.c\f[R] for \f[CR].a | .b | .c\f[R]
+.IP \[bu] 2
+\f[CR]f[0]\f[R] for \f[CR]f | .[0]\f[R], and so on.
 .PP
 We call such a combination a \f[I]compound path\f[R].
-.PP
-The rules for what constitutes a compound path are surprisingly complex.
-Therefore, we define it via a formal grammar in \c
-.UR https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
-EBNF
-.UE \c
-:
-.IP
-.EX
-field = ident | string;
-
-init = atomic, part
-     | \[dq].\[dq], field
-     ;
-
-part = \[dq].\[dq], field
-     | \[dq][\[dq],            \[dq]]\[dq]
-     | \[dq][\[dq],     t,     \[dq]]\[dq]
-     | \[dq][\[dq], t, \[dq]:\[dq], t, \[dq]]\[dq]
-     | \[dq][\[dq], t, \[dq]:\[dq],    \[dq]]\[dq]
-     | \[dq][\[dq],    \[dq]:\[dq], t, \[dq]]\[dq]
-     ;
-
-(* \[ga][ t ]\[ga] stands for an optional occurrence of \[ga]t\[ga] and
-   \[ga]{ t }\[ga] stands for arbitrarily many occurrences of \[ga]t\[ga] *)
-path = init, [ \[dq]?\[dq] ], { part, [ \[dq]?\[dq] ] };
-.EE
-.PP
-Here, \f[CR]ident\f[R] refers to an identifier\-like key, \f[CR]t\f[R]
-refers to a filter, and \f[CR]atomic\f[R] refers to an \f[I]atomic\f[R]
-filter, such as \f[CR].\f[R] (identity), literal
-(e.g.\ \f[CR]{a: 1}\f[R]), function call, and parenthesis.
-This grammar defines a compound \f[CR]path\f[R] as a sequence of path
-parts, potentially prefixed by an atomic root.
-A path \f[CR]part\f[R] is any of the operators previously introduced in
-this section.
-(Note that \f[CR]part\f[R] does not include the leading \f[CR].\f[R] for
-all operators except for \f[CR].ident\f[R].)
 .TP
 \f[I]Example\f[R]
 The following is a compound path:

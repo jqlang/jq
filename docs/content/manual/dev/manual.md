@@ -1082,12 +1082,14 @@ For example:
 
 * `.key[]` for `.key | .[]`,
 * `.[].key?` for `.[] | .key?`,
-* `.[]?[]` for `.[]? | .[]`,
+* `.[]?[-1]` for `.[]? | .[-1]`,
 * `.a.b` for `.a | .b`,
-* `.a.b.c` for `.a | .b | .c`, and so on.
+* `.a.b.c` for `.a | .b | .c`
+* `f[0]` for `f | .[0]`, and so on.
 
 We call such a combination a _compound path_.
 
+<!--
 The rules for what constitutes a compound path are surprisingly complex.
 Therefore, we define it via a formal grammar in
 [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form):
@@ -1123,6 +1125,7 @@ potentially prefixed by an atomic root.
 A path `part` is any of the operators previously introduced in this section.
 (Note that `part` does not include the leading `.`
 for all operators except for `.ident`.)
+-->
 
 ::: Example
 
