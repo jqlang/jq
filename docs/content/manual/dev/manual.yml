@@ -2219,6 +2219,13 @@ sections:
           Note that the slashes, question mark, etc. in the URL are
           not escaped, as they were part of the string literal.
 
+          You can also define custom string formats using "def" syntax,
+          just like defining functions.
+
+              def @foo: gsub("a+"; ".");
+
+          Unlike functions, string formats cannot take arguments.
+
         examples:
           - program: '@html'
             input: '"This works if x < y"'
@@ -2235,6 +2242,10 @@ sections:
           - program: '@base64d'
             input: '"VGhpcyBpcyBhIG1lc3NhZ2U="'
             output: ['"This is a message"']
+
+          - program: 'def @foo: gsub("a+"; "."); @foo, @foo "a \(.) \(. + .) a"'
+            input: '"aba"'
+            output: ['".b."', '"a .b. .b.b. a"']
 
       - title: "Dates"
         body: |

@@ -563,40 +563,148 @@ static jv escape_string(jv input, const char* escapings) {
 
 }
 
-static jv f_format(jq_state *jq, jv input, jv fmt) {
-  if (jv_get_kind(fmt) != JV_KIND_STRING) {
-    jv_free(input);
-    return type_error(fmt, "is not a valid format");
-  }
-  const char* fmt_s = jv_string_value(fmt);
-  if (!strcmp(fmt_s, "json")) {
-    jv_free(fmt);
-    return jv_dump_string(input, 0);
-  } else if (!strcmp(fmt_s, "text")) {
-    jv_free(fmt);
-    return f_tostring(jq, input);
-  } else if (!strcmp(fmt_s, "csv") || !strcmp(fmt_s, "tsv")) {
-    const char *quotes, *sep, *escapings;
-    const char *msg;
-    if (!strcmp(fmt_s, "csv")) {
-      msg = "cannot be csv-formatted, only array";
-      quotes = "\"";
-      sep = ",";
-      escapings = "\"\"\"\0";
+static jv f_html_fmt(jq_state *jq, jv input) {
+  input = f_tostring(jq, input);
+  return escape_string(input, "&&amp;\0<&lt;\0>&gt;\0'&apos;\0\"&quot;\0");
+}
+
+static jv f_uri_fmt(jq_state *jq, jv input) {
+  input = f_tostring(jq, input);
+  int unreserved[128] = {0};
+  const char* p = CHARS_ALPHANUM "-_.~";
+  while (*p) unreserved[(int)*p++] = 1;
+
+  jv line = jv_string("");
+  const char* s = jv_string_value(input);
+  for (int i=0; i<jv_string_length_bytes(jv_copy(input)); i++) {
+    unsigned ch = (unsigned)(unsigned char)*s;
+    if (ch < 128 && unreserved[ch]) {
+      line = jv_string_append_buf(line, s, 1);
     } else {
-      msg = "cannot be tsv-formatted, only array";
-      assert(!strcmp(fmt_s, "tsv"));
-      quotes = "";
-      sep = "\t";
-      escapings = "\t\\t\0\r\\r\0\n\\n\0\\\\\\\0";
+      line = jv_string_concat(line, jv_string_fmt("%%%02X", ch));
     }
-    jv_free(fmt);
-    if (jv_get_kind(input) != JV_KIND_ARRAY)
-      return type_error(input, msg);
-    jv line = jv_string("");
-    jv_array_foreach(input, i, x) {
-      if (i) line = jv_string_append_str(line, sep);
-      switch (jv_get_kind(x)) {
+    s++;
+  }
+  jv_free(input);
+  return line;
+}
+
+static jv f_urid_fmt(jq_state *jq, jv input) {
+  input = f_tostring(jq, input);
+  jv line = jv_string("");
+  const char *errmsg =  "is not a valid uri encoding";
+  const char *s = jv_string_value(input);
+  while (*s) {
+    if (*s != '%') {
+      line = jv_string_append_buf(line, s++, 1);
+    } else {
+      unsigned char unicode[4] = {0};
+      int b = 0;
+      // check leading bits of first octet to determine length of unicode character
+      // (https://datatracker.ietf.org/doc/html/rfc3629#section-3)
+      while (b == 0 || (b < 4 && unicode[0] >> 7 & 1 && unicode[0] >> (7-b) & 1)) {
+        if (*(s++) != '%') {
+          jv_free(line);
+          return type_error(input, errmsg);
+        }
+        for (int i=0; i<2; i++) {
+          unicode[b] <<= 4;
+          char c = *(s++);
+          if ('0' <= c && c <= '9') unicode[b] |= c - '0';
+          else if ('a' <= c && c <= 'f') unicode[b] |= c - 'a' + 10;
+          else if ('A' <= c && c <= 'F') unicode[b] |= c - 'A' + 10;
+          else {
+            jv_free(line);
+            return type_error(input, errmsg);
+          }
+        }
+        b++;
+      }
+      if (!jvp_utf8_is_valid((const char *)unicode, (const char *)unicode+b)) {
+        jv_free(line);
+        return type_error(input, errmsg);
+      }
+      line = jv_string_append_buf(line, (const char *)unicode, b);
+    }
+  }
+  jv_free(input);
+  return line;
+}
+
+static jv f_base64_fmt(jq_state *jq, jv input) {
+  input = f_tostring(jq, input);
+  jv line = jv_string("");
+  const unsigned char* data = (const unsigned char*)jv_string_value(input);
+  int len = jv_string_length_bytes(jv_copy(input));
+  for (int i=0; i<len; i+=3) {
+    uint32_t code = 0;
+    int n = len - i >= 3 ? 3 : len-i;
+    for (int j=0; j<3; j++) {
+      code <<= 8;
+      code |= j < n ? (unsigned)data[i+j] : 0;
+    }
+    char buf[4];
+    for (int j=0; j<4; j++) {
+      buf[j] = BASE64_ENCODE_TABLE[(code >> (18 - j*6)) & 0x3f];
+    }
+    if (n < 3) buf[3] = '=';
+    if (n < 2) buf[2] = '=';
+    line = jv_string_append_buf(line, buf, sizeof(buf));
+  }
+  jv_free(input);
+  return line;
+}
+
+static jv f_base64d_fmt(jq_state *jq, jv input) {
+  input = f_tostring(jq, input);
+  const unsigned char* data = (const unsigned char*)jv_string_value(input);
+  int len = jv_string_length_bytes(jv_copy(input));
+  size_t decoded_len = MAX((3 * (size_t)len) / 4, (size_t)1); // 3 usable bytes for every 4 bytes of input
+  char *result = jv_mem_calloc(decoded_len, sizeof(char));
+  uint32_t ri = 0;
+  int input_bytes_read=0;
+  uint32_t code = 0;
+  for (int i=0; i<len && data[i] != '='; i++) {
+    if (BASE64_DECODE_TABLE[data[i]] == BASE64_INVALID_ENTRY) {
+      free(result);
+      return type_error(input, "is not valid base64 data");
+    }
+
+    code <<= 6;
+    code |= BASE64_DECODE_TABLE[data[i]];
+    input_bytes_read++;
+
+    if (input_bytes_read == 4) {
+      result[ri++] = (code >> 16) & 0xFF;
+      result[ri++] = (code >> 8) & 0xFF;
+      result[ri++] = code & 0xFF;
+      input_bytes_read = 0;
+      code = 0;
+    }
+  }
+  if (input_bytes_read == 3) {
+    result[ri++] = (code >> 10) & 0xFF;
+    result[ri++] = (code >> 2) & 0xFF;
+  } else if (input_bytes_read == 2) {
+    result[ri++] = (code >> 4) & 0xFF;
+  } else if (input_bytes_read == 1) {
+    free(result);
+    return type_error(input, "trailing base64 byte found");
+  }
+
+  jv line = jv_string_sized(result, ri);
+  jv_free(input);
+  free(result);
+  return line;
+}
+
+static jv f_csv_fmt(jq_state *jq, jv input) {
+  if (jv_get_kind(input) != JV_KIND_ARRAY)
+    return type_error(input, "cannot be csv-formatted, only array");
+  jv line = jv_string("");
+  jv_array_foreach(input, i, x) {
+    if (i) line = jv_string_append_str(line, ",");
+    switch (jv_get_kind(x)) {
       case JV_KIND_NULL:
         /* null rendered as empty string */
         jv_free(x);
@@ -606,192 +714,90 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
         line = jv_string_concat(line, jv_dump_string(x, 0));
         break;
       case JV_KIND_NUMBER:
-        if (jv_number_value(x) != jv_number_value(x)) {
+        if (jvp_number_is_nan(x)) {
           /* NaN, render as empty string */
           jv_free(x);
         } else {
           line = jv_string_concat(line, jv_dump_string(x, 0));
         }
         break;
-      case JV_KIND_STRING: {
-        line = jv_string_append_str(line, quotes);
-        line = jv_string_concat(line, escape_string(x, escapings));
-        line = jv_string_append_str(line, quotes);
+      case JV_KIND_STRING:
+        line = jv_string_append_str(line, "\"");
+        line = jv_string_concat(line, escape_string(x, "\"\"\"\0"));
+        line = jv_string_append_str(line, "\"");
         break;
-      }
       default:
         jv_free(input);
         jv_free(line);
         return type_error(x, "is not valid in a csv row");
-      }
     }
-    jv_free(input);
-    return line;
-  } else if (!strcmp(fmt_s, "html")) {
-    jv_free(fmt);
-    return escape_string(f_tostring(jq, input), "&&amp;\0<&lt;\0>&gt;\0'&apos;\0\"&quot;\0");
-  } else if (!strcmp(fmt_s, "uri")) {
-    jv_free(fmt);
-    input = f_tostring(jq, input);
+  }
+  jv_free(input);
+  return line;
+}
 
-    int unreserved[128] = {0};
-    const char* p = CHARS_ALPHANUM "-_.~";
-    while (*p) unreserved[(int)*p++] = 1;
-
-    jv line = jv_string("");
-    const char* s = jv_string_value(input);
-    for (int i=0; i<jv_string_length_bytes(jv_copy(input)); i++) {
-      unsigned ch = (unsigned)(unsigned char)*s;
-      if (ch < 128 && unreserved[ch]) {
-        line = jv_string_append_buf(line, s, 1);
-      } else {
-        line = jv_string_concat(line, jv_string_fmt("%%%02X", ch));
-      }
-      s++;
-    }
-    jv_free(input);
-    return line;
-  } else if (!strcmp(fmt_s, "urid")) {
-    jv_free(fmt);
-    input = f_tostring(jq, input);
-
-    jv line = jv_string("");
-    const char *errmsg =  "is not a valid uri encoding";
-    const char *s = jv_string_value(input);
-    while (*s) {
-      if (*s != '%') {
-        line = jv_string_append_buf(line, s++, 1);
-      } else {
-        unsigned char unicode[4] = {0};
-        int b = 0;
-        // check leading bits of first octet to determine length of unicode character
-        // (https://datatracker.ietf.org/doc/html/rfc3629#section-3)
-        while (b == 0 || (b < 4 && unicode[0] >> 7 & 1 && unicode[0] >> (7-b) & 1)) {
-          if (*(s++) != '%') {
-            jv_free(line);
-            return type_error(input, errmsg);
-          }
-          for (int i=0; i<2; i++) {
-            unicode[b] <<= 4;
-            char c = *(s++);
-            if ('0' <= c && c <= '9') unicode[b] |= c - '0';
-            else if ('a' <= c && c <= 'f') unicode[b] |= c - 'a' + 10;
-            else if ('A' <= c && c <= 'F') unicode[b] |= c - 'A' + 10;
-            else {
-              jv_free(line);
-              return type_error(input, errmsg);
-            }
-          }
-          b++;
+static jv f_tsv_fmt(jq_state *jq, jv input) {
+  if (jv_get_kind(input) != JV_KIND_ARRAY)
+    return type_error(input, "cannot be tsv-formatted, only array");
+  jv line = jv_string("");
+  jv_array_foreach(input, i, x) {
+    if (i) line = jv_string_append_str(line, "\t");
+    switch (jv_get_kind(x)) {
+      case JV_KIND_NULL:
+        /* null rendered as empty string */
+        jv_free(x);
+        break;
+      case JV_KIND_TRUE:
+      case JV_KIND_FALSE:
+        line = jv_string_concat(line, jv_dump_string(x, 0));
+        break;
+      case JV_KIND_NUMBER:
+        if (jvp_number_is_nan(x)) {
+          /* NaN, render as empty string */
+          jv_free(x);
+        } else {
+          line = jv_string_concat(line, jv_dump_string(x, 0));
         }
-        if (!jvp_utf8_is_valid((const char *)unicode, (const char *)unicode+b)) {
-          jv_free(line);
-          return type_error(input, errmsg);
-        }
-        line = jv_string_append_buf(line, (const char *)unicode, b);
-      }
+        break;
+      case JV_KIND_STRING:
+        line = jv_string_concat(line, escape_string(x, "\t\\t\0\r\\r\0\n\\n\0\\\\\\\0"));
+        break;
+      default:
+        jv_free(input);
+        jv_free(line);
+        return type_error(x, "is not valid in a tsv row");
     }
-    jv_free(input);
-    return line;
-  } else if (!strcmp(fmt_s, "sh")) {
-    jv_free(fmt);
-    if (jv_get_kind(input) != JV_KIND_ARRAY)
-      input = jv_array_set(jv_array(), 0, input);
-    jv line = jv_string("");
-    jv_array_foreach(input, i, x) {
-      if (i) line = jv_string_append_str(line, " ");
-      switch (jv_get_kind(x)) {
+  }
+  jv_free(input);
+  return line;
+}
+
+static jv f_sh_fmt(jq_state *jq, jv input) {
+  if (jv_get_kind(input) != JV_KIND_ARRAY)
+    input = jv_array_set(jv_array(), 0, input);
+  jv line = jv_string("");
+  jv_array_foreach(input, i, x) {
+    if (i) line = jv_string_append_str(line, " ");
+    switch (jv_get_kind(x)) {
       case JV_KIND_NULL:
       case JV_KIND_TRUE:
       case JV_KIND_FALSE:
       case JV_KIND_NUMBER:
         line = jv_string_concat(line, jv_dump_string(x, 0));
         break;
-
-      case JV_KIND_STRING: {
+      case JV_KIND_STRING:
         line = jv_string_append_str(line, "'");
         line = jv_string_concat(line, escape_string(x, "''\\''\0"));
         line = jv_string_append_str(line, "'");
         break;
-      }
-
       default:
         jv_free(input);
         jv_free(line);
         return type_error(x, "can not be escaped for shell");
-      }
     }
-    jv_free(input);
-    return line;
-  } else if (!strcmp(fmt_s, "base64")) {
-    jv_free(fmt);
-    input = f_tostring(jq, input);
-    jv line = jv_string("");
-    const unsigned char* data = (const unsigned char*)jv_string_value(input);
-    int len = jv_string_length_bytes(jv_copy(input));
-    for (int i=0; i<len; i+=3) {
-      uint32_t code = 0;
-      int n = len - i >= 3 ? 3 : len-i;
-      for (int j=0; j<3; j++) {
-        code <<= 8;
-        code |= j < n ? (unsigned)data[i+j] : 0;
-      }
-      char buf[4];
-      for (int j=0; j<4; j++) {
-        buf[j] = BASE64_ENCODE_TABLE[(code >> (18 - j*6)) & 0x3f];
-      }
-      if (n < 3) buf[3] = '=';
-      if (n < 2) buf[2] = '=';
-      line = jv_string_append_buf(line, buf, sizeof(buf));
-    }
-    jv_free(input);
-    return line;
-  } else if (!strcmp(fmt_s, "base64d")) {
-    jv_free(fmt);
-    input = f_tostring(jq, input);
-    const unsigned char* data = (const unsigned char*)jv_string_value(input);
-    int len = jv_string_length_bytes(jv_copy(input));
-    size_t decoded_len = MAX((3 * (size_t)len) / 4, (size_t)1); // 3 usable bytes for every 4 bytes of input
-    char *result = jv_mem_calloc(decoded_len, sizeof(char));
-    uint32_t ri = 0;
-    int input_bytes_read=0;
-    uint32_t code = 0;
-    for (int i=0; i<len && data[i] != '='; i++) {
-      if (BASE64_DECODE_TABLE[data[i]] == BASE64_INVALID_ENTRY) {
-        free(result);
-        return type_error(input, "is not valid base64 data");
-      }
-
-      code <<= 6;
-      code |= BASE64_DECODE_TABLE[data[i]];
-      input_bytes_read++;
-
-      if (input_bytes_read == 4) {
-        result[ri++] = (code >> 16) & 0xFF;
-        result[ri++] = (code >> 8) & 0xFF;
-        result[ri++] = code & 0xFF;
-        input_bytes_read = 0;
-        code = 0;
-      }
-    }
-    if (input_bytes_read == 3) {
-      result[ri++] = (code >> 10) & 0xFF;
-      result[ri++] = (code >> 2) & 0xFF;
-    } else if (input_bytes_read == 2) {
-      result[ri++] = (code >> 4) & 0xFF;
-    } else if (input_bytes_read == 1) {
-      free(result);
-      return type_error(input, "trailing base64 byte found");
-    }
-
-    jv line = jv_string_sized(result, ri);
-    jv_free(input);
-    free(result);
-    return line;
-  } else {
-    jv_free(input);
-    return jv_invalid_with_msg(jv_string_concat(fmt, jv_string(" is not a valid format")));
   }
+  jv_free(input);
+  return line;
 }
 
 static jv f_keys(jq_state *jq, jv input) {
@@ -1940,7 +1946,16 @@ BINOPS
   CFUNC(f_min_by_impl, "_min_by_impl", 2),
   CFUNC(f_max_by_impl, "_max_by_impl", 2),
   CFUNC(f_error, "error", 1),
-  CFUNC(f_format, "format", 2),
+  CFUNC(f_tostring, "@text", 1),
+  CFUNC(f_dump, "@json", 1),
+  CFUNC(f_html_fmt, "@html", 1),
+  CFUNC(f_uri_fmt, "@uri", 1),
+  CFUNC(f_urid_fmt, "@urid", 1),
+  CFUNC(f_base64_fmt, "@base64", 1),
+  CFUNC(f_base64d_fmt, "@base64d", 1),
+  CFUNC(f_csv_fmt, "@csv", 1),
+  CFUNC(f_tsv_fmt, "@tsv", 1),
+  CFUNC(f_sh_fmt, "@sh", 1),
   CFUNC(f_env, "env", 1),
   CFUNC(f_halt, "halt", 1),
   CFUNC(f_halt_error, "halt_error", 2),

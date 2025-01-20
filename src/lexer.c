@@ -1384,7 +1384,7 @@ case 40:
 YY_RULE_SETUP
 #line 91 "src/lexer.l"
 {
-  yylval->literal = jv_string_sized(yytext + 1, yyleng - 1); return FORMAT;
+  yylval->literal = jv_string(yytext); return FORMAT;
 }
 	YY_BREAK
 case 41:
