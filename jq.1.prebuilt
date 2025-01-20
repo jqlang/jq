@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "November 2024" "" ""
+.TH "JQ" "1" "January 2025" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -2394,6 +2394,22 @@ will produce the following output for the input \fB{"search":"what is jq?"}\fR:
 .P
 Note that the slashes, question mark, etc\. in the URL are not escaped, as they were part of the string literal\.
 .
+.P
+You can also define custom string formats using "def" syntax, just like defining functions\.
+.
+.IP "" 4
+.
+.nf
+
+def @foo: gsub("a+"; "\.");
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Unlike functions, string formats cannot take arguments\.
+.
 .IP "" 4
 .
 .nf
@@ -2413,6 +2429,10 @@ jq \'@base64\'
 jq \'@base64d\'
    "VGhpcyBpcyBhIG1lc3NhZ2U="
 => "This is a message"
+
+jq \'def @foo: gsub("a+"; "\."); @foo, @foo "a \e(\.) \e(\. + \.) a"\'
+   "aba"
+=> "\.b\.", "a \.b\. \.b\.b\. a"
 .
 .fi
 .
