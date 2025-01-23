@@ -832,7 +832,7 @@ block gen_reduce(block source, block matcher, block init, block body) {
   block loop = BLOCK(gen_op_simple(DUPN),
                      source,
                      bind_alternation_matchers(matcher,
-                                  BLOCK(gen_op_bound(LOADVN, res_var),
+                                  BLOCK(gen_op_bound(LOADV, res_var),
                                         body,
                                         gen_op_bound(STOREV, res_var))),
                      gen_op_simple(BACKTRACK));
@@ -854,7 +854,7 @@ block gen_foreach(block source, block matcher, block init, block update, block e
                      // in the body to see
                      bind_alternation_matchers(matcher,
                                   // load the loop state variable
-                                  BLOCK(gen_op_bound(LOADVN, state_var),
+                                  BLOCK(gen_op_bound(LOADV, state_var),
                                         // generate updated state
                                         update,
                                         // save the updated state for value extraction

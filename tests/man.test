@@ -6,21 +6,21 @@
 0.12345678901234567890123456789
 0.12345678901234567890123456789
 
-[., tojson]
+[., tojson] | . == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end
 12345678909876543212345
-[12345678909876543212345,"12345678909876543212345"]
+true
 
 . < 0.12345678901234567890123456788
 0.12345678901234567890123456789
 false
 
-map([., . == 1]) | tojson
+map([., . == 1]) | tojson | . == if have_decnum then "[[1,true],[1.000,true],[1.0,true],[1.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end
 [1, 1.000, 1.0, 100e-2]
-"[[1,true],[1.000,true],[1.0,true],[1.00,true]]"
+true
 
-. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000)
+. as $big | [$big, $big + 1] | map(. > 10000000000000000000000000000000) | . == if have_decnum then [true, false] else [false, false] end
 10000000000000000000000000000001
-[true, false]
+true
 
 .foo
 {"foo": 42, "bar": "less interesting data"}
@@ -358,6 +358,10 @@ add
 []
 null
 
+add(.[].a)
+[{"a":3}, {"a":5}, {"b":6}]
+8
+
 any
 [true, false]
 true
@@ -601,6 +605,12 @@ combinations(2)
 [.[]|rtrimstr("foo")]
 ["fo", "foo", "barfoo", "foobar", "foob"]
 ["fo","","bar","foobar","foob"]
+
+trim, ltrim, rtrim
+" abc "
+"abc"
+"abc "
+" abc"
 
 explode
 "foobar"
@@ -863,13 +873,21 @@ isempty(.[])
 [1,2,3]
 false
 
-[limit(3;.[])]
+[limit(3; .[])]
 [0,1,2,3,4,5,6,7,8,9]
 [0,1,2]
 
-[first(range(.)), last(range(.)), nth(./2; range(.))]
+[skip(3; .[])]
+[0,1,2,3,4,5,6,7,8,9]
+[3,4,5,6,7,8,9]
+
+[first(range(.)), last(range(.)), nth(5; range(.))]
 10
 [0,9,5]
+
+[first(empty), last(empty), nth(5; empty)]
+null
+[]
 
 [range(.)]|[first, last, nth(5)]
 10

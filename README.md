@@ -17,6 +17,17 @@ Download the latest releases from the [GitHub release page](https://github.com/j
 
 Pull the [jq image](https://github.com/jqlang/jq/pkgs/container/jq) to start quickly with Docker.
 
+
+#### Run with Docker
+##### Example: Extracting the version from a `package.json` file
+```bash
+docker run --rm -i ghcr.io/jqlang/jq:latest < package.json '.version'
+```
+##### Example: Extracting the version from a `package.json` file with a mounted volume
+```bash
+docker run --rm -i -v "$PWD:$PWD" -w "$PWD" ghcr.io/jqlang/jq:latest '.version' package.json
+```
+
 ### Building from source
 
 #### Dependencies
@@ -29,9 +40,10 @@ Pull the [jq image](https://github.com/jqlang/jq/pkgs/container/jq) to start qui
 #### Instructions
 
 ```console
-git submodule update --init # if building from git to get oniguruma
-autoreconf -i               # if building from git
+git submodule update --init    # if building from git to get oniguruma
+autoreconf -i                  # if building from git
 ./configure --with-oniguruma=builtin
+make clean                     # if upgrading from a version previously built from source
 make -j8
 make check
 sudo make install

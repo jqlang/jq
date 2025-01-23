@@ -141,7 +141,7 @@ endif
 
 ### Tests (make check)
 
-TESTS = tests/mantest tests/jqtest tests/shtest tests/utf8test tests/base64test
+TESTS = tests/mantest tests/jqtest tests/shtest tests/utf8test tests/base64test tests/uritest
 if !WIN32
 TESTS += tests/optionaltest
 endif
@@ -160,10 +160,10 @@ check_DATA = tests/man.test
 # Making changes to the manpage without having the python deps means your
 # tests won't run. If you aren't making changes to the examples, you probably
 # don't care. But if you are, then you need to run the tests anyway.
-tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/manual.yml
+tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/dev/manual.yml
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
-	  $(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+	  $(PIPENV) run python validate_manual_schema.py content/manual/dev/manual.yml && \
 	  $(PIPENV) run python build_mantests.py )
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manual test.
@@ -176,10 +176,10 @@ endif
 # manpage, then we'll end up using the cached version. Otherwise, we need to
 # rebuild it.
 man_MANS = jq.1
-jq.1.prebuilt: $(srcdir)/docs/content/manual/manual.yml
+jq.1.prebuilt: $(srcdir)/docs/content/manual/dev/manual.yml
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
-	  $(PIPENV) run python validate_manual_schema.py content/manual/manual.yml && \
+	  $(PIPENV) run python validate_manual_schema.py content/manual/dev/manual.yml && \
 	  $(PIPENV) run python build_manpage.py ) > $@
 else
 	@echo Changes to the manual.yml require docs to be enabled to update the manpage.
@@ -218,7 +218,6 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
         src/parser.h src/version.h src/builtin.jq scripts/version       \
         libjq.pc                                                        \
-        tests/base64.test tests/jq-f-test.sh tests/jq.test              \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
         tests/modules/home1/.jq tests/modules/home2/.jq/g.jq            \
@@ -232,7 +231,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/onig.supp tests/local.supp                                \
         tests/setup tests/torture/input0.json                           \
         tests/optional.test tests/man.test tests/manonig.test           \
-        tests/jq.test tests/onig.test tests/base64.test                 \
+        tests/jq.test tests/onig.test tests/base64.test tests/uri.test  \
         tests/utf8-truncate.jq tests/jq-f-test.sh                       \
         tests/no-main-program.jq tests/yes-main-program.jq
 

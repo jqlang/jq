@@ -10,6 +10,7 @@
 
 static void jv_test();
 static void run_jq_tests(jv, int, FILE *, int, int);
+static void run_jq_start_state_tests();
 #ifdef HAVE_PTHREAD
 static void run_jq_pthread_tests();
 #endif
@@ -37,6 +38,7 @@ int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
     }
   }
   run_jq_tests(libdirs, verbose, testdata, skip, take);
+  run_jq_start_state_tests();
 #ifdef HAVE_PTHREAD
   run_jq_pthread_tests();
 #endif
@@ -74,7 +76,7 @@ static void test_err_cb(void *data, jv e) {
 }
 
 static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int take) {
-  char prog[4096];
+  char prog[4096] = {0};
   char buf[4096];
   struct err_data err_msg;
   int tests = 0, passed = 0, invalid = 0;
@@ -208,11 +210,13 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
         printf(" for test at line number %u: %s\n", lineno, prog);
         pass = 0;
       }
+#ifdef USE_DECNUM
       jv as_string = jv_dump_string(jv_copy(expected), rand() & ~(JV_PRINT_COLOR|JV_PRINT_REFCOUNT));
       jv reparsed = jv_parse_sized(jv_string_value(as_string), jv_string_length_bytes(jv_copy(as_string)));
       assert(jv_equal(jv_copy(expected), jv_copy(reparsed)));
       jv_free(as_string);
       jv_free(reparsed);
+#endif
       jv_free(expected);
       jv_free(actual);
     }
@@ -246,6 +250,66 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
   }
 
   if (passed != tests) exit(1);
+}
+
+
+static int test_start_state(jq_state *jq, char *prog) {
+  int pass = 1;
+  jv message = jq_get_error_message(jq);
+  if (jv_is_valid(message)) {
+    printf("*** Expected error_message to be invalid after jq_start: %s\n", prog);
+    pass = 0;
+  }
+  jv_free(message);
+
+  jv exit_code = jq_get_exit_code(jq);
+  if (jv_is_valid(exit_code)) {
+    printf("*** Expected exit_code to be invalid after jq_start: %s\n", prog);
+    pass = 0;
+  }
+  jv_free(exit_code);
+
+  if (jq_halted(jq)) {
+    printf("*** Expected jq to not be halted after jq_start: %s\n", prog);
+    pass = 0;
+  }
+
+  return pass;
+}
+
+// Test jq_state is reset after subsequent calls to jq_start.
+static void test_jq_start_resets_state(char *prog, const char *input) {
+  printf("Test jq_state: %s\n", prog);
+  jq_state *jq = jq_init();
+  assert(jq);
+
+  int compiled = jq_compile(jq, prog);
+  assert(compiled);
+
+  // First call to jq_start. Run until completion.
+  jv parsed_input = jv_parse(input);
+  assert(jv_is_valid(parsed_input));
+  jq_start(jq, parsed_input, 0);
+  assert(test_start_state(jq, prog));
+  while (1) {
+    jv result = jq_next(jq);
+    int valid = jv_is_valid(result);
+    jv_free(result);
+    if (!valid) { break; }
+  }
+
+  // Second call to jq_start.
+  jv parsed_input2 = jv_parse(input);
+  assert(jv_is_valid(parsed_input2));
+  jq_start(jq, parsed_input2, 0);
+  assert(test_start_state(jq, prog));
+
+  jq_teardown(&jq);
+}
+
+static void run_jq_start_state_tests() {
+  test_jq_start_resets_state(".[]", "[1,2,3]");
+  test_jq_start_resets_state(".[] | if .%2 == 0 then halt_error else . end", "[1,2,3]");
 }
 
 

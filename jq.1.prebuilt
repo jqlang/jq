@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "February 2024" "" ""
+.TH "JQ" "1" "November 2024" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -163,13 +163,13 @@ Implies \fB\-\-stream\fR\. Invalid JSON inputs produce no error values when \fB\
 Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts in jq\'s input and output\. This means that an ASCII RS (record separator) character is printed before each value on output and an ASCII LF (line feed) is printed after every output\. Input JSON texts that fail to parse are ignored (but warned about), discarding all subsequent input until the next RS\. This mode also parses the output of jq without the \fB\-\-seq\fR option\.
 .
 .TP
-\fB\-f filename\fR / \fB\-\-from\-file filename\fR:
+\fB\-f\fR / \fB\-\-from\-file\fR:
 .
 .IP
-Read filter from the file rather than from a command line, like awk\'s \-f option\.
+Read the filter from a file rather than from a command line, like awk\'s \-f option\. This changes the filter argument to be interpreted as a filename, instead of the source of a program\.
 .
 .TP
-\fB\-L directory\fR:
+\fB\-L directory\fR / \fB\-\-library\-path directory\fR:
 .
 .IP
 Prepend \fBdirectory\fR to the search list for modules\. If this option is used then no builtin search list is used\. See the section on modules below\.
@@ -181,7 +181,7 @@ Prepend \fBdirectory\fR to the search list for modules\. If this option is used 
 This option passes a value to the jq program as a predefined variable\. If you run jq with \fB\-\-arg foo bar\fR, then \fB$foo\fR is available in the program and has the value \fB"bar"\fR\. Note that \fBvalue\fR will be treated as a string, so \fB\-\-arg foo 123\fR will bind \fB$foo\fR to \fB"123"\fR\.
 .
 .IP
-Named arguments are also available to the jq program as \fB$ARGS\.named\fR\.
+Named arguments are also available to the jq program as \fB$ARGS\.named\fR\. When the name is not a valid identifier, this is the only way to access it\.
 .
 .TP
 \fB\-\-argjson name JSON\-text\fR:
@@ -286,19 +286,25 @@ Although the identity filter never modifies the value of its input, jq processin
 produces \fB1\.7976931348623157e+308\fR on at least one platform\. This is because, in the process of parsing the number, this particular version of jq has converted it to an IEEE754 double\-precision representation, losing precision\.
 .
 .P
-The way in which jq handles numbers has changed over time and further changes are likely within the parameters set by the relevant JSON standards\. The following remarks are therefore offered with the understanding that they are intended to be descriptive of the current version of jq and should not be interpreted as being prescriptive:
+The way in which jq handles numbers has changed over time and further changes are likely within the parameters set by the relevant JSON standards\. Moreover, build configuration options can alter how jq processes numbers\.
+.
+.P
+The following remarks are therefore offered with the understanding that they are intended to be descriptive of the current version of jq and should not be interpreted as being prescriptive:
 .
 .P
 (1) Any arithmetic operation on a number that has not already been converted to an IEEE754 double precision representation will trigger a conversion to the IEEE754 representation\.
 .
 .P
-(2) jq will attempt to maintain the original decimal precision of number literals, but in expressions such \fB1E1234567890\fR, precision will be lost if the exponent is too large\.
+(2) jq will attempt to maintain the original decimal precision of number literals (if the \fB\-\-disable\-decnum\fR build configuration option was not used), but in expressions such \fB1E1234567890\fR, precision will be lost if the exponent is too large\.
 .
 .P
 (3) In jq programs, a leading minus sign will trigger the conversion of the number to an IEEE754 representation\.
 .
 .P
 (4) Comparisons are carried out using the untruncated big decimal representation of numbers if available, as illustrated in one of the following examples\.
+.
+.P
+The examples below use the builtin function \fBhave_decnum\fR in order to demonstrate the expected effects of using / not using the \fB\-\-disable\-decnum\fR build configuration option, and also to allow automated tests derived from these examples to pass regardless of whether that option is used\.
 .
 .IP "" 4
 .
@@ -312,21 +318,21 @@ jq \'\.\'
    0\.12345678901234567890123456789
 => 0\.12345678901234567890123456789
 
-jq \'[\., tojson]\'
+jq \'[\., tojson] | \. == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end\'
    12345678909876543212345
-=> [12345678909876543212345,"12345678909876543212345"]
+=> true
 
 jq \'\. < 0\.12345678901234567890123456788\'
    0\.12345678901234567890123456789
 => false
 
-jq \'map([\., \. == 1]) | tojson\'
+jq \'map([\., \. == 1]) | tojson | \. == if have_decnum then "[[1,true],[1\.000,true],[1\.0,true],[1\.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end\'
    [1, 1\.000, 1\.0, 100e\-2]
-=> "[[1,true],[1\.000,true],[1\.0,true],[1\.00,true]]"
+=> true
 
-jq \'\. as $big | [$big, $big + 1] | map(\. > 10000000000000000000000000000000)\'
+jq \'\. as $big | [$big, $big + 1] | map(\. > 10000000000000000000000000000000) | \. == if have_decnum then [true, false] else [false, false] end\'
    10000000000000000000000000000001
-=> [true, false]
+=> true
 .
 .fi
 .
@@ -1334,11 +1340,14 @@ jq \'[paths(type == "number")]\'
 .
 .IP "" 0
 .
-.SS "add"
+.SS "add, add(generator)"
 The filter \fBadd\fR takes as input an array, and produces as output the elements of the array added together\. This might mean summed, concatenated or merged depending on the types of the elements of the input array \- the rules are the same as those for the \fB+\fR operator (described above)\.
 .
 .P
 If the input is an empty array, \fBadd\fR returns \fBnull\fR\.
+.
+.P
+\fBadd(generator)\fR operates on the given generator rather than the input\.
 .
 .IP "" 4
 .
@@ -1355,6 +1364,10 @@ jq \'add\'
 jq \'add\'
    []
 => null
+
+jq \'add(\.[]\.a)\'
+   [{"a":3}, {"a":5}, {"b":6}]
+=> 8
 .
 .fi
 .
@@ -1930,6 +1943,30 @@ jq \'[\.[]|rtrimstr("foo")]\'
 .
 .IP "" 0
 .
+.SS "trim, ltrim, rtrim"
+\fBtrim\fR trims both leading and trailing whitespace\.
+.
+.P
+\fBltrim\fR trims only leading (left side) whitespace\.
+.
+.P
+\fBrtrim\fR trims only trailing (right side) whitespace\.
+.
+.P
+Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"\fR and also all characters in the Unicode character database with the whitespace property\. Note that what considers whitespace might change in the future\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'trim, ltrim, rtrim\'
+   " abc "
+=> "abc", "abc ", " abc"
+.
+.fi
+.
+.IP "" 0
+.
 .SS "explode"
 Converts an input string into an array of the string\'s codepoint numbers\.
 .
@@ -2152,11 +2189,17 @@ jq \'walk( if type == "object" then with_entries( \.key |= sub( "^_+"; "") ) els
 .
 .IP "" 0
 .
+.SS "have_literal_numbers"
+This builtin returns true if jq\'s build configuration includes support for preservation of input number literals\.
+.
+.SS "have_decnum"
+This builtin returns true if jq was built with "decnum", which is the current literal number preserving numeric backend implementation for jq\.
+.
 .SS "$JQ_BUILD_CONFIGURATION"
 This builtin binding shows the jq executable\'s build configuration\. Its value has no particular format, but it can be expected to be at least the \fB\./configure\fR command\-line arguments, and may be enriched in the future to include the version strings for the build tooling used\.
 .
 .P
-Note that this can be overriden in the command\-line with \fB\-\-arg\fR and related options\.
+Note that this can be overridden in the command\-line with \fB\-\-arg\fR and related options\.
 .
 .SS "$ENV, env"
 \fB$ENV\fR is an object representing the environment variables as set when the jq program started\.
@@ -2287,6 +2330,12 @@ Applies HTML/XML escaping, by mapping the characters \fB<>&\'"\fR to their entit
 Applies percent\-encoding, by mapping all reserved URI characters to a \fB%XX\fR sequence\.
 .
 .TP
+\fB@urid\fR:
+.
+.IP
+The inverse of \fB@uri\fR, applies percent\-decoding, by mapping all \fB%XX\fR sequences to their corresponding URI characters\.
+.
+.TP
 \fB@csv\fR:
 .
 .IP
@@ -2397,7 +2446,7 @@ The \fBlocaltime\fR builtin works like the \fBgmtime\fR builtin, but using the l
 The \fBmktime\fR builtin consumes "broken down time" representations of time output by \fBgmtime\fR and \fBstrptime\fR\.
 .
 .P
-The \fBstrptime(fmt)\fR builtin parses input strings matching the \fBfmt\fR argument\. The output is in the "broken down time" representation consumed by \fBgmtime\fR and output by \fBmktime\fR\.
+The \fBstrptime(fmt)\fR builtin parses input strings matching the \fBfmt\fR argument\. The output is in the "broken down time" representation consumed by \fBmktime\fR and output by \fBgmtime\fR\.
 .
 .P
 The \fBstrftime(fmt)\fR builtin formats a time (GMT) with the given format\. The \fBstrflocaltime\fR does the same, but using the local timezone setting\.
@@ -3386,16 +3435,31 @@ jq \'isempty(\.[])\'
 .
 .IP "" 0
 .
-.SS "limit(n; exp)"
-The \fBlimit\fR function extracts up to \fBn\fR outputs from \fBexp\fR\.
+.SS "limit(n; expr)"
+The \fBlimit\fR function extracts up to \fBn\fR outputs from \fBexpr\fR\.
 .
 .IP "" 4
 .
 .nf
 
-jq \'[limit(3;\.[])]\'
+jq \'[limit(3; \.[])]\'
    [0,1,2,3,4,5,6,7,8,9]
 => [0,1,2]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "skip(n; expr)"
+The \fBskip\fR function skips the first \fBn\fR outputs from \fBexpr\fR\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[skip(3; \.[])]\'
+   [0,1,2,3,4,5,6,7,8,9]
+=> [3,4,5,6,7,8,9]
 .
 .fi
 .
@@ -3411,9 +3475,13 @@ The \fBnth(n; expr)\fR function extracts the nth value output by \fBexpr\fR\. No
 .
 .nf
 
-jq \'[first(range(\.)), last(range(\.)), nth(\./2; range(\.))]\'
+jq \'[first(range(\.)), last(range(\.)), nth(5; range(\.))]\'
    10
 => [0,9,5]
+
+jq \'[first(empty), last(empty), nth(5; empty)]\'
+   null
+=> []
 .
 .fi
 .
@@ -3598,7 +3666,7 @@ Besides simple arithmetic operators such as \fB+\fR, jq also has most standard m
 Availability of standard math functions depends on the availability of the corresponding math functions in your operating system and C math library\. Unavailable math functions will be defined but will raise an error\.
 .
 .P
-One\-input C math functions: \fBacos\fR \fBacosh\fR \fBasin\fR \fBasinh\fR \fBatan\fR \fBatanh\fR \fBcbrt\fR \fBceil\fR \fBcos\fR \fBcosh\fR \fBerf\fR \fBerfc\fR \fBexp\fR \fBexp10\fR \fBexp2\fR \fBexpm1\fR \fBfabs\fR \fBfloor\fR \fBgamma\fR \fBj0\fR \fBj1\fR \fBlgamma\fR \fBlog\fR \fBlog10\fR \fBlog1p\fR \fBlog2\fR \fBlogb\fR \fBnearbyint\fR \fBpow10\fR \fBrint\fR \fBround\fR \fBsignificand\fR \fBsin\fR \fBsinh\fR \fBsqrt\fR \fBtan\fR \fBtanh\fR \fBtgamma\fR \fBtrunc\fR \fBy0\fR \fBy1\fR\.
+One\-input C math functions: \fBacos\fR \fBacosh\fR \fBasin\fR \fBasinh\fR \fBatan\fR \fBatanh\fR \fBcbrt\fR \fBceil\fR \fBcos\fR \fBcosh\fR \fBerf\fR \fBerfc\fR \fBexp\fR \fBexp10\fR \fBexp2\fR \fBexpm1\fR \fBfabs\fR \fBfloor\fR \fBgamma\fR \fBj0\fR \fBj1\fR \fBlgamma\fR \fBlog\fR \fBlog10\fR \fBlog1p\fR \fBlog2\fR \fBlogb\fR \fBnearbyint\fR \fBrint\fR \fBround\fR \fBsignificand\fR \fBsin\fR \fBsinh\fR \fBsqrt\fR \fBtan\fR \fBtanh\fR \fBtgamma\fR \fBtrunc\fR \fBy0\fR \fBy1\fR\.
 .
 .P
 Two\-input C math functions: \fBatan2\fR \fBcopysign\fR \fBdrem\fR \fBfdim\fR \fBfmax\fR \fBfmin\fR \fBfmod\fR \fBfrexp\fR \fBhypot\fR \fBjn\fR \fBldexp\fR \fBmodf\fR \fBnextafter\fR \fBnexttoward\fR \fBpow\fR \fBremainder\fR \fBscalb\fR \fBscalbln\fR \fByn\fR\.
@@ -4001,7 +4069,7 @@ Backslash continuing the comment on the next line can be useful when writing the
 # total \- Output the sum of the given arguments (or stdin)
 # usage: total [numbers\.\.\.]
 # \e
-exec jq \-\-args \-MRnf "$0" \-\- "$@"
+exec jq \-\-args \-MRnf \-\- "$0" "$@"
 
 $ARGS\.positional |
 reduce (
@@ -4021,7 +4089,7 @@ reduce (
 .IP "" 0
 .
 .P
-The \fBexec\fR line is considered a comment by jq, so it is ignored\. But it is not ignored by \fBsh\fR, since in \fBsh\fR a backslash at the end of the line does not continue the comment\. With this trick, when the script is invoked as \fBtotal 1 2\fR, \fB/bin/sh \-\- /path/to/total 1 2\fR will be run, and \fBsh\fR will then run \fBexec jq \-\-args \-MRnf /path/to/total \-\- 1 2\fR replacing itself with a \fBjq\fR interpreter invoked with the specified options (\fB\-M\fR, \fB\-R\fR, \fB\-n\fR, \fB\-\-args\fR), that evaluates the current file (\fB$0\fR), with the arguments (\fB$@\fR) that were passed to \fBsh\fR\.
+The \fBexec\fR line is considered a comment by jq, so it is ignored\. But it is not ignored by \fBsh\fR, since in \fBsh\fR a backslash at the end of the line does not continue the comment\. With this trick, when the script is invoked as \fBtotal 1 2\fR, \fB/bin/sh \-\- /path/to/total 1 2\fR will be run, and \fBsh\fR will then run \fBexec jq \-\-args \-MRnf \-\- /path/to/total 1 2\fR replacing itself with a \fBjq\fR interpreter invoked with the specified options (\fB\-M\fR, \fB\-R\fR, \fB\-n\fR, \fB\-\-args\fR), that evaluates the current file (\fB$0\fR), with the arguments (\fB$@\fR) that were passed to \fBsh\fR\.
 .
 .SH "MODULES"
 jq has a library/module system\. Modules are files whose names end in \fB\.jq\fR\.
@@ -4060,7 +4128,7 @@ Consecutive components with the same name are not allowed to avoid ambiguities (
 For example, with \fB\-L$HOME/\.jq\fR a module \fBfoo\fR can be found in \fB$HOME/\.jq/foo\.jq\fR and \fB$HOME/\.jq/foo/foo\.jq\fR\.
 .
 .P
-If \fB$HOME/\.jq\fR is a file, it is sourced into the main program\.
+If \fB\.jq\fR exists in the user\'s home directory, and is a file (not a directory), it is automatically sourced into the main program\.
 .
 .SS "import RelativePathString as NAME [<metadata>];"
 Imports a module found at the given path relative to a directory in a search path\. A \fB\.jq\fR suffix will be added to the relative path string\. The module\'s symbols are prefixed with \fBNAME::\fR\.

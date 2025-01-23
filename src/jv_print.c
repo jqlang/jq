@@ -29,12 +29,12 @@
 // the last color is used for object keys.
 static char color_bufs[8][16];
 static const char *color_bufps[8];
-static const char* def_colors[] =
+static const char *const def_colors[] =
   {COL("0;90"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
    COL("0;32"),    COL("1;39"),      COL("1;39"),     COL("1;34")};
 #define FIELD_COLOR (colors[7])
 
-static const char **colors = def_colors;
+static const char *const *colors = def_colors;
 
 int
 jq_set_colors(const char *c)
@@ -206,7 +206,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       if (jv_get_kind(msg) == JV_KIND_STRING) {
         put_str("<invalid:", F, S, flags & JV_PRINT_ISATTY);
         jvp_dump_string(msg, flags | JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
-        put_str(">", F, S, flags & JV_PRINT_ISATTY);
+        put_char('>', F, S, flags & JV_PRINT_ISATTY);
       } else {
         put_str("<invalid>", F, S, flags & JV_PRINT_ISATTY);
       }
@@ -259,7 +259,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
       put_str("[]", F, S, flags & JV_PRINT_ISATTY);
       break;
     }
-    put_str("[", F, S, flags & JV_PRINT_ISATTY);
+    put_char('[', F, S, flags & JV_PRINT_ISATTY);
     jv_array_foreach(x, i, elem) {
       if (i!=0) {
         if (color) put_str(color, F, S, flags & JV_PRINT_ISATTY);

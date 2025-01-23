@@ -14,6 +14,9 @@ JQ="$JQ -b"
 
 PATH=$JQBASEDIR:$PATH $JQBASEDIR/tests/jq-f-test.sh > /dev/null
 
+SHELL=/bin/sh
+export SHELL
+
 if [ -f "$JQBASEDIR/.libs/libinject_errors.so" ]; then
   # Do some simple error injection tests to check that we're handling
   # I/O errors correctly.
@@ -210,6 +213,28 @@ else
   cmp $d/out $d/expected
 fi
 
+# Regression tests for #3194
+echo 42 > $d/expected
+$JQ -nn 42 > $d/out 2>&1
+cmp $d/out $d/expected
+
+$JQ -nL. 42 > $d/out 2>&1
+cmp $d/out $d/expected
+$JQ -nL . 42 > $d/out 2>&1
+cmp $d/out $d/expected
+
+$JQ -h > $d/expected 2>&1
+$JQ -hV > $d/out 2>&1
+cmp $d/out $d/expected
+$JQ -h -V > $d/out 2>&1
+cmp $d/out $d/expected
+
+$JQ -V > $d/expected 2>&1
+$JQ -Vh > $d/out 2>&1
+cmp $d/out $d/expected
+$JQ -V -h > $d/out 2>&1
+cmp $d/out $d/expected
+
 ## Test streaming parser
 
 ## If we add an option to stream to the `import ... as $symbol;` directive
@@ -357,6 +382,17 @@ clean=true
 if [ "$(HOME="$mods/home1" $VALGRIND $Q $JQ -nr fg)" != foobar ]; then
     echo "Bug #479 appears to be back" 1>&2
     exit 1
+fi
+
+if $msys || $mingw; then
+    HOME_BAK=$HOME
+    unset HOME
+    if [ "$(USERPROFILE="$mods/home1" $VALGRIND $Q $JQ -nr foo)" != baz ]; then
+        echo "Bug #3104 regressed (sourcing %USERPROFILE%/.jq on Windows)" 1>&2
+        exit 1
+    fi
+    export HOME=$HOME_BAK
+    unset HOME_BAK
 fi
 
 if [ $(HOME="$mods/home1" $VALGRIND $Q $JQ --debug-dump-disasm -n fg | grep '^[a-z]' | wc -l) -ne 3 ]; then
@@ -575,17 +611,17 @@ if $test_no_color && command -v script >/dev/null 2>&1; then
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  NO_COLOR= faketty $JQ_NO_B -n . > $d/color
+  faketty env NO_COLOR= $JQ_NO_B -n . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  NO_COLOR=1 faketty $JQ_NO_B -n . > $d/color
+  faketty env NO_COLOR=1 $JQ_NO_B -n . > $d/color
   printf 'null\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  NO_COLOR=1 faketty $JQ_NO_B -Cn . > $d/color
+  faketty env NO_COLOR=1 $JQ_NO_B -Cn . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
@@ -668,9 +704,11 @@ if ! x=$($JQ -cn '[
 fi
 
 # CVE-2023-50268: No stack overflow comparing a nan with a large payload
-$VALGRIND $Q $JQ '1 != .' <<\EOF >/dev/null
-Nan4000
+if $JQ -ne 'have_decnum'; then
+  $VALGRIND $Q $JQ '1 != .' <<\EOF >/dev/null
+  Nan4000
 EOF
+fi
 
 # Allow passing the inline jq script before -- #2919
 if ! r=$($JQ --args -rn -- '$ARGS.positional[0]' bar) || [ "$r" != bar ]; then

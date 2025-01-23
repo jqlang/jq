@@ -213,9 +213,9 @@ enum {
 #define JVP_FLAGS_NUMBER_LITERAL      JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_DECIMAL, 1))
 
 // the decimal precision of binary double
-#define DEC_NUBMER_DOUBLE_PRECISION   (17)
+#define DEC_NUMBER_DOUBLE_PRECISION   (17)
 #define DEC_NUMBER_STRING_GUARD       (14)
-#define DEC_NUBMER_DOUBLE_EXTRA_UNITS ((DEC_NUBMER_DOUBLE_PRECISION - DECNUMDIGITS + DECDPUN - 1)/DECDPUN)
+#define DEC_NUMBER_DOUBLE_EXTRA_UNITS ((DEC_NUMBER_DOUBLE_PRECISION - DECNUMDIGITS + DECDPUN - 1)/DECDPUN)
 
 #include "jv_thread.h"
 #ifdef WIN32
@@ -542,7 +542,7 @@ typedef struct {
 
 typedef struct {
   decNumber number;
-  decNumberUnit units[DEC_NUBMER_DOUBLE_EXTRA_UNITS];
+  decNumberUnit units[DEC_NUMBER_DOUBLE_EXTRA_UNITS];
 } decNumberDoublePrecision;
 
 
@@ -600,11 +600,11 @@ static double jvp_literal_number_to_double(jv j) {
 
   // init as decimal64 but change digits to allow conversion to binary64 (double)
   decContextDefault(&dblCtx, DEC_INIT_DECIMAL64);
-  dblCtx.digits = DEC_NUBMER_DOUBLE_PRECISION;
+  dblCtx.digits = DEC_NUMBER_DOUBLE_PRECISION;
 
   decNumber *p_dec_number = jvp_dec_number_ptr(j);
   decNumberDoublePrecision dec_double;
-  char literal[DEC_NUBMER_DOUBLE_PRECISION + DEC_NUMBER_STRING_GUARD + 1];
+  char literal[DEC_NUMBER_DOUBLE_PRECISION + DEC_NUMBER_STRING_GUARD + 1];
 
   // reduce the number to the shortest possible form
   // that fits into the 64 bit floating point representation
@@ -1025,14 +1025,13 @@ jv jv_array_slice(jv a, int start, int end) {
 jv jv_array_indexes(jv a, jv b) {
   jv res = jv_array();
   int idx = -1;
-  jv_array_foreach(a, ai, aelem) {
-    jv_free(aelem);
+  int alen = jv_array_length(jv_copy(a));
+  for (int ai = 0; ai < alen; ++ai) {
     jv_array_foreach(b, bi, belem) {
-      if (!jv_equal(jv_array_get(jv_copy(a), ai + bi), jv_copy(belem)))
+      if (!jv_equal(jv_array_get(jv_copy(a), ai + bi), belem))
         idx = -1;
       else if (bi == 0 && idx == -1)
         idx = ai;
-      jv_free(belem);
     }
     if (idx > -1)
       res = jv_array_append(res, jv_number(idx));
@@ -1274,15 +1273,21 @@ jv jv_string_indexes(jv j, jv k) {
   assert(JVP_HAS_KIND(k, JV_KIND_STRING));
   const char *jstr = jv_string_value(j);
   const char *idxstr = jv_string_value(k);
-  const char *p;
+  const char *p, *lp;
   int jlen = jv_string_length_bytes(jv_copy(j));
   int idxlen = jv_string_length_bytes(jv_copy(k));
   jv a = jv_array();
 
   if (idxlen != 0) {
-    p = jstr;
+    int n = 0;
+    p = lp = jstr;
     while ((p = _jq_memmem(p, (jstr + jlen) - p, idxstr, idxlen)) != NULL) {
-      a = jv_array_append(a, jv_number(p - jstr));
+      while (lp < p) {
+        lp += jvp_utf8_decode_length(*lp);
+        n++;
+      }
+
+      a = jv_array_append(a, jv_number(n));
       p++;
     }
   }

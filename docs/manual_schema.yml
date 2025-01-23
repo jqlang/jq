@@ -1,7 +1,6 @@
 type: object
 required:
   - headline
-  - history
   - body
   - manpage_intro
   - manpage_epilogue
@@ -9,8 +8,6 @@ required:
 additionalProperties: false
 properties:
   headline:
-    type: string
-  history:
     type: string
   body:
     type: string

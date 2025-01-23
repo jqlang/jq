@@ -118,3 +118,21 @@ int jvp_utf8_encode(int codepoint, char* out) {
   assert(out - start == jvp_utf8_encode_length(codepoint));
   return out - start;
 }
+
+// characters with White_Space property in:
+// https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
+int jvp_codepoint_is_whitespace(int c) {
+  return
+    (c >= 0x0009 && c <= 0x000D) || // <control-0009>..<control-000D>
+    c == 0x0020                  || // SPACE
+    c == 0x0085                  || // <control-0085>
+    c == 0x00A0                  || // NO-BREAK SPACE
+    c == 0x1680                  || // OGHAM SPACE MARK
+    (c >= 0x2000 && c <= 0x200A) || // EN QUAD..HAIR SPACE
+    c == 0x2028                  || // LINE SEPARATOR
+    c == 0x2029                  || // PARAGRAPH SEPARATOR
+    c == 0x202F                  || // NARROW NO-BREAK SPACE
+    c == 0x205F                  || // MEDIUM MATHEMATICAL SPACE
+    c == 0x3000                     // IDEOGRAPHIC SPACE
+    ;
+}
