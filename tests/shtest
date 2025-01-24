@@ -37,77 +37,17 @@ $VALGRIND $Q $JQ -Rse '. == "a\u0000b\nc\u0000d\ne"' $d/input
 $VALGRIND $Q $JQ -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input
 
 ## Test constant folding
-
-## XXX If we add a builtin to list the program's disassembly then we can
-## move all of these into tests/all.test
-
-# String constant folding (addition only)
 nref=$($VALGRIND $Q $JQ -n --debug-dump-disasm '"foo"' | wc -l)
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '"foo" + "bar"' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for strings didn't work"
-  exit 1
-fi
-
-# Numeric constant folding (binary operators)
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '1+1' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '1-1' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '2*3' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9/3' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9%3' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9==3' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9!=3' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9<3' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9>3' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9<=3' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
-n=$($VALGRIND $Q $JQ -n --debug-dump-disasm '9>=3' | wc -l)
-if [ $n -ne $nref ]; then
-  echo "Constant expression folding for numbers didn't work"
-  exit 1
-fi
+for exp in '1+1' '1-1' '2*3' '9/3' '9%3' '9==3' '9!=3' \
+  '9<3' '9>3' '9<=3' '9>=3' '1+2*3-4/5%6' '"foo" + "bar"'; do
+  n=$($VALGRIND $Q $JQ -n --debug-dump-disasm "$exp" | wc -l)
+  if [ $n -ne $nref ]; then
+    echo "Constant expression folding didn't work: $exp"
+    exit 1
+  fi
+done
 
 ## Test JSON sequence support
-
 cat > $d/expected <<EOF
 jq: ignoring parse error: Truncated value at line 2, column 5
 jq: ignoring parse error: Truncated value at line 2, column 25
