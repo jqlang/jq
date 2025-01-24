@@ -1,9 +1,7 @@
 .gitattributes export-ignore
 .gitignore export-ignore
 * text=auto eol=lf
-
-# vendored files
-src/decNumber/** linguist-vendored
+vendor/** linguist-vendored
 
 # generated files
 src/lexer.[ch] linguist-generated=true
