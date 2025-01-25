@@ -2049,14 +2049,14 @@ those keys whose values when piped to <code>f</code> produce no values
 at all.</p>
 <p>The key difference between <code>map(f)</code> and <code>map_values(f)</code> is
 that the former simply forms an array from all the values of
-<code>($x|f)</code> for each value, $x, in the input array or object,
+<code>($x|f)</code> for each value, <code>$x</code>, in the input array or object,
 but <code>map_values(f)</code> only uses <code>first($x|f)</code>.</p>
 <p>Specifically, for object inputs, <code>map_values(f)</code> constructs
 the output object by examining in turn the value of
-<code>first(.[$k]|f)</code> for each key, $k, of the input.  If this
+<code>first(.[$k]|f)</code> for each key, <code>$k</code>, of the input.  If this
 expression produces no values, then the corresponding key
 will be dropped; otherwise, the output object will have that
-value at the key, $k.</p>
+value at the key, <code>$k</code>.</p>
 <p>Here are some examples to clarify the behavior of <code>map</code> and
 <code>map_values</code> when applied to arrays. These examples assume the
 input is <code>[1]</code> in all cases:</p>
@@ -5581,13 +5581,13 @@ some systems. In particular, the <code>%u</code> and <code>%j</code> specifiers 
             </h3>
             <p>jq provides a few SQL-style operators.</p>
 <ul>
-<li>INDEX(stream; index_expression):</li>
+<li><code>INDEX(stream; index_expression)</code>:</li>
 </ul>
 <p>This builtin produces an object whose keys are computed by
   the given index expression applied to each value from the
   given stream.</p>
 <ul>
-<li>JOIN($idx; stream; idx_expr; join_expr):</li>
+<li><code>JOIN($idx; stream; idx_expr; join_expr)</code>:</li>
 </ul>
 <p>This builtin joins the values from the given stream to the
   given index.  The index's keys are computed by applying the
@@ -5596,22 +5596,22 @@ some systems. In particular, the <code>%u</code> and <code>%j</code> specifiers 
   value from the index is fed to the given join expression to
   produce each result.</p>
 <ul>
-<li>JOIN($idx; stream; idx_expr):</li>
+<li><code>JOIN($idx; stream; idx_expr)</code>:</li>
 </ul>
 <p>Same as <code>JOIN($idx; stream; idx_expr; .)</code>.</p>
 <ul>
-<li>JOIN($idx; idx_expr):</li>
+<li><code>JOIN($idx; idx_expr)</code>:</li>
 </ul>
 <p>This builtin joins the input <code>.</code> to the given index, applying
   the given index expression to <code>.</code> to compute the index key.
   The join operation is as described above.</p>
 <ul>
-<li>IN(s):</li>
+<li><code>IN(s)</code>:</li>
 </ul>
 <p>This builtin outputs <code>true</code> if <code>.</code> appears in the given
   stream, otherwise it outputs <code>false</code>.</p>
 <ul>
-<li>IN(source; s):</li>
+<li><code>IN(source; s)</code>:</li>
 </ul>
 <p>This builtin outputs <code>true</code> if any value in the source stream
   appears in the second stream, otherwise it outputs <code>false</code>.</p>
@@ -6766,7 +6766,7 @@ name, as in:</p>
 <pre><code>{"title": "First post", "author": "Anonymous Coward"}
 {"title": "A well-written article", "author": "Person McPherson"}
 </code></pre>
-<p>We use a variable, $names, to store the realnames object, so that we
+<p>We use a variable, <code>$names</code>, to store the realnames object, so that we
 can refer to it later when looking up author usernames:</p>
 <pre><code>.realnames as $names | .posts[] | {title, author: $names[.author]}
 </code></pre>
