@@ -638,11 +638,11 @@ null
 4
 15
 
-map(tobool)
+map(toboolean)
 ["false","true",false,true]
 [false,true,false,true]
 
-.[] | try tobool catch .
+.[] | try toboolean catch .
 [null,0,"tru","truee","fals","falsee",[],{}]
 "null (null) cannot be parsed as a boolean"
 "number (0) cannot be parsed as a boolean"

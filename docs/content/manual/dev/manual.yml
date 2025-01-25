@@ -1476,15 +1476,15 @@ sections:
             input: '[1, "1"]'
             output: ['1', '1']
 
-      - title: "`tobool`"
+      - title: "`toboolean`"
         body: |
 
-          The `tobool` function parses its input as a boolean. It
+          The `toboolean` function parses its input as a boolean. It
           will convert correctly-formatted strings to their boolean
           equivalent, leave booleans alone, and give an error on all other input.
 
         examples:
-          - program: '.[] | tobool'
+          - program: '.[] | toboolean'
             input: '["true", "false", true, false]'
             output: ['true', 'false', 'true', 'false']
 

@@ -440,7 +440,7 @@ sqrt
 1
 1
 
-.[] | tobool
+.[] | toboolean
 ["true", "false", true, false]
 true
 false

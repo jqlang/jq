@@ -486,7 +486,7 @@ static jv f_tonumber(jq_state *jq, jv input) {
   return type_error(input, "cannot be parsed as a number");
 }
 
-static jv f_tobool(jq_state *jq, jv input) {
+static jv f_toboolean(jq_state *jq, jv input) {
   if (jv_get_kind(input) == JV_KIND_TRUE || jv_get_kind(input) == JV_KIND_FALSE) {
     return input;
   }
@@ -1867,7 +1867,7 @@ BINOPS
   CFUNC(f_dump, "tojson", 1),
   CFUNC(f_json_parse, "fromjson", 1),
   CFUNC(f_tonumber, "tonumber", 1),
-  CFUNC(f_tobool, "tobool", 1),
+  CFUNC(f_toboolean, "toboolean", 1),
   CFUNC(f_tostring, "tostring", 1),
   CFUNC(f_keys, "keys", 1),
   CFUNC(f_keys_unsorted, "keys_unsorted", 1),
