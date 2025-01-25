@@ -140,10 +140,10 @@ cmp $d/out $d/expected
 
 # Regression test for --raw-output0
 printf "a\0b\0" > $d/expected
-printf '["a", "b"]' | $VALGRIND $Q $JQ --raw-output0 .[] > $d/out
+printf '["a", "b"]' | $VALGRIND $Q $JQ --raw-output0 '.[]' > $d/out
 cmp $d/out $d/expected
 printf "a\0" > $d/expected
-if printf '["a", "c\\u0000d", "b"]' | $VALGRIND $Q $JQ --raw-output0 .[] > $d/out; then
+if printf '["a", "c\\u0000d", "b"]' | $VALGRIND $Q $JQ --raw-output0 '.[]' > $d/out; then
   echo "Should exit error on string containing NUL with --raw-output0" 1>&2
   exit 1
 elif [ $? -ne 5 ]; then
