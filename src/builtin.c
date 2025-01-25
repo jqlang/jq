@@ -835,6 +835,40 @@ static jv f_sort_by_impl(jq_state *jq, jv input, jv keys) {
   }
 }
 
+/*
+ * Assuming the input array is sorted, bsearch/1 returns
+ * the index of the target if the target is in the input array; and otherwise
+ * (-1 - ix), where ix is the insertion point that would leave the array sorted.
+ * If the input is not sorted, bsearch will terminate but with irrelevant results.
+ */
+static jv f_bsearch(jq_state *jq, jv input, jv target) {
+  if (jv_get_kind(input) != JV_KIND_ARRAY) {
+    jv_free(target);
+    return type_error(input, "cannot be searched from");
+  }
+  int start = 0;
+  int end = jv_array_length(jv_copy(input));
+  jv answer = jv_invalid();
+  while (start < end) {
+    int mid = start + (end - start) / 2;
+    int result = jv_cmp(jv_copy(target), jv_array_get(jv_copy(input), mid));
+    if (result == 0) {
+      answer = jv_number(mid);
+      break;
+    } else if (result < 0) {
+      end = mid;
+    } else {
+      start = mid + 1;
+    }
+  }
+  if (!jv_is_valid(answer)) {
+    answer = jv_number(-1 - start);
+  }
+  jv_free(input);
+  jv_free(target);
+  return answer;
+}
+
 static jv f_group_by_impl(jq_state *jq, jv input, jv keys) {
   if (jv_get_kind(input) == JV_KIND_ARRAY &&
       jv_get_kind(keys) == JV_KIND_ARRAY &&
@@ -1844,6 +1878,7 @@ BINOPS
   CFUNC(f_sort, "sort", 1),
   CFUNC(f_sort_by_impl, "_sort_by_impl", 2),
   CFUNC(f_group_by_impl, "_group_by_impl", 2),
+  CFUNC(f_bsearch, "bsearch", 2),
   CFUNC(f_min, "min", 1),
   CFUNC(f_max, "max", 1),
   CFUNC(f_min_by_impl, "_min_by_impl", 2),

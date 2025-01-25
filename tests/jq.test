@@ -1642,11 +1642,21 @@ ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"
 
-bsearch(0,2,4)
+bsearch(0,1,2,3,4)
 [1,2,3]
 -1
+0
 1
+2
 -4
+
+bsearch({x:1})
+[{ "x": 0 },{ "x": 1 },{ "x": 2 }]
+1
+
+try ["OK", bsearch(0)] catch ["KO",.]
+"aa"
+["KO","string (\"aa\") cannot be searched from"]
 
 # strptime tests are in optional.test
 
