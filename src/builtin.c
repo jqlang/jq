@@ -491,11 +491,13 @@ static jv f_tobool(jq_state *jq, jv input) {
     return input;
   }
   if (jv_get_kind(input) == JV_KIND_STRING) {
-    jv parsed = jv_parse(jv_string_value(input));
-    jv_kind parsed_kind = jv_get_kind(parsed);
-    if (parsed_kind == JV_KIND_TRUE || parsed_kind == JV_KIND_FALSE) {
+    const char *s = jv_string_value(input);
+    if (strcmp(s, "true") == 0) {
       jv_free(input);
-      return parsed;
+      return jv_true();
+    } else if (strcmp(s, "false") == 0) {
+      jv_free(input);
+      return jv_false();
     }
   }
   return type_error(input, "cannot be parsed as a boolean");
