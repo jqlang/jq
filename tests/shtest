@@ -694,4 +694,26 @@ printf '[\n      {\n            "a": 1\n      }\n]\n' > $d/expected
 $JQ --indent 6 -n "[{a:1}]" > $d/out
 cmp $d/out $d/expected
 
+if ! $msys && ! $mingw; then
+  # Test handling of timezones -- #2429, #2475
+  if ! r=$(TZ=Asia/Tokyo $JQ -rn '1731627341 | strflocaltime("%F %T %z %Z")') \
+    || [ "$r" != "2024-11-15 08:35:41 +0900 JST" ]; then
+    echo "Incorrectly formatted local time"
+    exit 1
+  fi
+ 
+  if ! r=$(TZ=Europe/Paris $JQ -rn '1731627341 | strflocaltime("%F %T %z %Z")') \
+    || [ "$r" != "2024-11-15 00:35:41 +0100 CET" ]; then
+    echo "Incorrectly formatted local time"
+    exit 1
+  fi
+ 
+  if ! r=$(TZ=Europe/Paris $JQ -rn '1731627341 | strftime("%F %T %z %Z")') \
+    || ( [ "$r" != "2024-11-14 23:35:41 +0000 UTC" ] \
+      && [ "$r" != "2024-11-14 23:35:41 +0000 GMT" ] ); then
+    echo "Incorrectly formatted universal time"
+    exit 1
+  fi
+fi
+
 exit 0
