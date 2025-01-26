@@ -6,17 +6,16 @@ on:
     paths:
       - 'docs/**'
 concurrency: website
-permissions:
-  contents: write
 
 jobs:
-  website:
+  build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -26,15 +25,23 @@ jobs:
         run: pip install pipenv
       - name: Install dependencies
         run: pipenv sync
-        working-directory: docs
-      - name: Update website
-        run: scripts/update-website
-      - name: Commit changes
-        run: |
-          if ! git diff --quiet; then
-            git add --all
-            git config user.name 'github-actions[bot]'
-            git config user.email 'github-actions[bot]@users.noreply.github.com'
-            git commit -m 'Update website'
-            git push origin gh-pages
-          fi
+      - name: Build website
+        run: pipenv run python3 build_website.py
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/output/
+
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        id: deployment
