@@ -1758,7 +1758,21 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   const char *fmt = jv_string_value(b);
   size_t alloced = strlen(fmt) + 100;
   char *buf = alloca(alloced);
+#ifdef __APPLE__
+  /* Apple Libc (as of version 1669.40.2) contains a bug which causes it to
+   * ignore the `tm.tm_gmtoff` in favor of the global timezone. To print the
+   * proper timezone offset we temporarily switch the TZ to UTC. */
+  char *tz = getenv("TZ");
+  setenv("TZ", "UTC", 1);
+#endif
   size_t n = strftime(buf, alloced, fmt, &tm);
+#ifdef __APPLE__
+  if (tz) {
+    setenv("TZ", tz, 1);
+  } else {
+    unsetenv("TZ");
+  }
+#endif
   jv_free(b);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
   if (n == 0 || n > alloced)
