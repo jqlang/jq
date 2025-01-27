@@ -3223,9 +3223,8 @@ sections:
                     def _range:
                         if (by > 0 and . < upto) or (by < 0 and . > upto)
                         then ., ((.+by)|_range)
-                        else . end;
-                    if by == 0 then init else init|_range end |
-                    select((by > 0 and . < upto) or (by < 0 and . > upto));
+                        else empty end;
+                    if init == upto then empty elif by == 0 then init else init|_range end;
                 range(0; 10; 3)'
             input: 'null'
             output: ['0', '3', '6', '9']
