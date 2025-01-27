@@ -2699,12 +2699,17 @@ sections:
           that match the regex in accordance with the flags, if any
           have been specified.  If there is no match, the stream is empty.
           To capture all the matches for each input string, use the idiom
-          `[ expr ]`, e.g. `[ scan(regex) ]`.
+          `[ expr ]`, e.g. `[ scan(regex) ]`.  If the regex contains capturing
+          groups, the filter emits a stream of arrays, each of which contains
+          the captured strings.
 
         examples:
           - program: 'scan("c")'
             input: '"abcdefabc"'
             output: ['"c"', '"c"']
+          - program: 'scan("(a+)(b+)")'
+            input: '"abaabbaaabbb"'
+            output: ['["a","b"]', '["aa","bb"]', '["aaa","bbb"]']
 
       - title: "`split(regex; flags)`"
         body: |
