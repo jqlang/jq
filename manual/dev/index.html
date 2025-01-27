@@ -7581,7 +7581,7 @@ generator construction, and sub-functions.</p>
                 <table class="table table-borderless table-sm w-auto">
                   <tr>
                     <th class="pe-3">Command</th>
-                    <td class="font-monospace">jq 'def range(init; upto; by): def _range: if (by &gt; 0 and . &lt; upto) or (by &lt; 0 and . &gt; upto) then ., ((.+by)|_range) else . end; if by == 0 then init else init|_range end | select((by &gt; 0 and . &lt; upto) or (by &lt; 0 and . &gt; upto)); range(0; 10; 3)'</td>
+                    <td class="font-monospace">jq 'def range(init; upto; by): def _range: if (by &gt; 0 and . &lt; upto) or (by &lt; 0 and . &gt; upto) then ., ((.+by)|_range) else empty end; if init == upto then empty elif by == 0 then init else init|_range end; range(0; 10; 3)'</td>
                   </tr>
                   <tr>
                     <th>Input</th>
@@ -7604,7 +7604,7 @@ generator construction, and sub-functions.</p>
                     <td class="font-monospace">9</td>
                   </tr>
                   <tr class="d-print-none">
-                    <th><a href="https://jqplay.org/jq?q=def%20range%28init%3B%20upto%3B%20by%29%3A%20def%20_range%3A%20if%20%28by%20%3E%200%20and%20.%20%3C%20upto%29%20or%20%28by%20%3C%200%20and%20.%20%3E%20upto%29%20then%20.%2C%20%28%28.%2Bby%29%7C_range%29%20else%20.%20end%3B%20if%20by%20%3D%3D%200%20then%20init%20else%20init%7C_range%20end%20%7C%20select%28%28by%20%3E%200%20and%20.%20%3C%20upto%29%20or%20%28by%20%3C%200%20and%20.%20%3E%20upto%29%29%3B%20range%280%3B%2010%3B%203%29&j=null" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
+                    <th><a href="https://jqplay.org/jq?q=def%20range%28init%3B%20upto%3B%20by%29%3A%20def%20_range%3A%20if%20%28by%20%3E%200%20and%20.%20%3C%20upto%29%20or%20%28by%20%3C%200%20and%20.%20%3E%20upto%29%20then%20.%2C%20%28%28.%2Bby%29%7C_range%29%20else%20empty%20end%3B%20if%20init%20%3D%3D%20upto%20then%20empty%20elif%20by%20%3D%3D%200%20then%20init%20else%20init%7C_range%20end%3B%20range%280%3B%2010%3B%203%29&j=null" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Run<span class="bi bi-box-arrow-up-right ms-2" aria-hidden="true"></span></a></th>
                     <td></td>
                   </tr>
                 </table>
