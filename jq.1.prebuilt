@@ -2985,7 +2985,7 @@ jq \'capture("(?<a>[a\-z]+)\-(?<n>[0\-9]+)")\'
 .IP "" 0
 .
 .SS "scan(regex), scan(regex; flags)"
-Emit a stream of the non\-overlapping substrings of the input that match the regex in accordance with the flags, if any have been specified\. If there is no match, the stream is empty\. To capture all the matches for each input string, use the idiom \fB[ expr ]\fR, e\.g\. \fB[ scan(regex) ]\fR\.
+Emit a stream of the non\-overlapping substrings of the input that match the regex in accordance with the flags, if any have been specified\. If there is no match, the stream is empty\. To capture all the matches for each input string, use the idiom \fB[ expr ]\fR, e\.g\. \fB[ scan(regex) ]\fR\. If the regex contains capturing groups, the filter emits a stream of arrays, each of which contains the captured strings\.
 .
 .IP "" 4
 .
@@ -2994,6 +2994,10 @@ Emit a stream of the non\-overlapping substrings of the input that match the reg
 jq \'scan("c")\'
    "abcdefabc"
 => "c", "c"
+
+jq \'scan("(a+)(b+)")\'
+   "abaabbaaabbb"
+=> ["a","b"], ["aa","bb"], ["aaa","bbb"]
 .
 .fi
 .
