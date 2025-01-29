@@ -38,6 +38,7 @@ struct jq_state {
   int subexp_nest;
   int debug_trace_enabled;
   int initial_execution;
+  int parser_maxdepth;
   unsigned next_label;
 
   int halted;
@@ -1063,6 +1064,8 @@ jq_state *jq_init(void) {
   jq->exit_code = jv_invalid();
   jq->error_message = jv_invalid();
 
+  jq->parser_maxdepth = DEFAULT_MAX_PARSING_DEPTH;
+
   jq->input_cb = NULL;
   jq->input_cb_data = NULL;
 
@@ -1337,4 +1340,14 @@ jv jq_get_exit_code(jq_state *jq)
 jv jq_get_error_message(jq_state *jq)
 {
   return jv_copy(jq->error_message);
+}
+
+int jq_get_parser_maxdepth(jq_state *jq)
+{
+  return jq->parser_maxdepth;
+}
+
+void jq_set_parser_maxdepth(jq_state *jq, int parser_maxdepth)
+{
+  jq->parser_maxdepth = parser_maxdepth;
 }

@@ -202,6 +202,12 @@ This option reads all the JSON texts in the named file and binds an array of the
 This option reads in the named file and binds its contents to the given global variable\. If you run jq with \fB\-\-rawfile foo bar\fR, then \fB$foo\fR is available in the program and has a string whose contents are to the texts in the file named \fBbar\fR\.
 .
 .TP
+\fB\-\-depth n\fR:
+.
+.IP
+This option sets the maximum parsing depth (of objects and arrays) to \fBn\fR\. Exceeding the parsing depth causes \fBjq\fR to exit early with an error\. If you set \fBn\fR to 0, the parser will go arbitrarily deep\. The default value is 256\.
+.
+.TP
 \fB\-\-args\fR:
 .
 .IP
