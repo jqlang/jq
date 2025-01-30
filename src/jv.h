@@ -74,8 +74,9 @@ jv jv_number(double);
 jv jv_number_with_literal(const char*);
 double jv_number_value(jv);
 int jv_is_integer(jv);
+jv jv_number_negate(jv);
 
-int jv_number_has_literal(jv n);
+int jv_number_has_literal(jv);
 const char* jv_number_get_literal(jv);
 
 jv jv_array(void);

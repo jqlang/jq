@@ -373,10 +373,7 @@ sections:
           such `1E1234567890`, precision will be lost if the exponent
           is too large.
 
-          (3) In jq programs, a leading minus sign will trigger the
-          conversion of the number to an IEEE754 representation.
-
-          (4) Comparisons are carried out using the untruncated
+          (3) Comparisons are carried out using the untruncated
           big decimal representation of numbers if available, as
           illustrated in one of the following examples.
 
@@ -395,15 +392,19 @@ sections:
             input: '0.12345678901234567890123456789'
             output: ['0.12345678901234567890123456789']
 
-          - program: '[., tojson] | . == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end'
+          - program: '[., tojson] == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end'
             input: '12345678909876543212345'
+            output: ['true']
+
+          - program: '[1234567890987654321,-1234567890987654321 | tojson] == if have_decnum then ["1234567890987654321","-1234567890987654321"] else ["1234567890987654400","-1234567890987654400"] end'
+            input: 'null'
             output: ['true']
 
           - program: '. < 0.12345678901234567890123456788'
             input: '0.12345678901234567890123456789'
             output: ['false']
 
-          - program: 'map([., . == 1]) | tojson | . == if have_decnum then "[[1,true],[1.000,true],[1.0,true],[1.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end'
+          - program: 'map([., . == 1]) | tojson == if have_decnum then "[[1,true],[1.000,true],[1.0,true],[1.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end'
             input: '[1, 1.000, 1.0, 100e-2]'
             output: ['true']
 
