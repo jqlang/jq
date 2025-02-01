@@ -5,7 +5,7 @@ Name: jq
 Version: %{myver}
 Release: %{myrel}%{?dist}
 Source0: jq-%{myver}.tar.gz
-URL: https://jqlang.github.io/jq
+URL: https://jqlang.org
 License: MIT AND ICU AND CC-BY-3.0
 AutoReqProv: no
 #BuildPrereq: autoconf, libtool, automake, flex, bison, python

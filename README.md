@@ -4,7 +4,7 @@
 
 ## Documentation
 
-- **Official Documentation**: [jqlang.github.io/jq](https://jqlang.github.io/jq)
+- **Official Documentation**: [jqlang.org](https://jqlang.org)
 - **Try jq Online**: [jqplay.org](https://jqplay.org)
 
 ## Installation

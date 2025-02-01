@@ -60,7 +60,7 @@ static void usage(int code, int keep_it_short) {
     "standard output.\n\n"
     "The simplest filter is ., which copies jq's input to its output\n"
     "unmodified except for formatting. For more advanced filters see\n"
-    "the jq(1) manpage (\"man jq\") and/or https://jqlang.github.io/jq/.\n\n"
+    "the jq(1) manpage (\"man jq\") and/or https://jqlang.org/.\n\n"
     "Example:\n\n\t$ echo '{\"foo\": 0}' | jq .\n"
     "\t{\n\t  \"foo\": 0\n\t}\n\n",
     JQ_VERSION, progname, progname, progname);
@@ -119,7 +119,7 @@ static void usage(int code, int keep_it_short) {
 
 static void die() {
   fprintf(stderr, "Use %s --help for help with command-line options,\n", progname);
-  fprintf(stderr, "or see the jq manpage, or online docs  at https://jqlang.github.io/jq\n");
+  fprintf(stderr, "or see the jq manpage, or online docs  at https://jqlang.org\n");
   exit(2);
 }
 

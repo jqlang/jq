@@ -4,7 +4,7 @@ libdir=@libdir@
 includedir=@includedir@
 
 Name: libjq
-URL: https://jqlang.github.io/jq/
+URL: https://jqlang.org/
 Description: Library to process JSON using a query language
 Version: @VERSION@
 Libs: -L${libdir} -ljq
