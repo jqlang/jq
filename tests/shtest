@@ -665,4 +665,33 @@ $VALGRIND $Q $JQ . <<\NUM
 -10E-1000000001
 NUM
 
+# test for --indent and --compact-output -- #1465
+printf '[1,2]\n' > $d/expected
+$JQ --compact-output -n "[1,2]" > $d/out
+cmp $d/out $d/expected
+
+printf '[\n1,\n2\n]\n' > $d/expected
+$JQ --indent 0 -n "[1,2]" > $d/out
+cmp $d/out $d/expected
+
+printf '[\n 1,\n 2\n]\n' > $d/expected
+$JQ --indent 1 -n "[1,2]" > $d/out
+cmp $d/out $d/expected
+
+printf '[\n     1,\n     2\n]\n' > $d/expected
+$JQ --indent 5 -n "[1,2]" > $d/out
+cmp $d/out $d/expected
+
+printf '[\n{\n"a": 1\n}\n]\n' > $d/expected
+$JQ --indent 0 -n "[{a:1}]" > $d/out
+cmp $d/out $d/expected
+
+printf '[\n {\n  "a": 1\n }\n]\n' > $d/expected
+$JQ --indent 1 -n "[{a:1}]" > $d/out
+cmp $d/out $d/expected
+
+printf '[\n      {\n            "a": 1\n      }\n]\n' > $d/expected
+$JQ --indent 6 -n "[{a:1}]" > $d/out
+cmp $d/out $d/expected
+
 exit 0
