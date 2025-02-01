@@ -12,7 +12,7 @@ import shutil
 import yaml
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--root', default='/jq')
+parser.add_argument('--root', default='')
 args = parser.parse_args()
 
 env = Environment(
@@ -26,7 +26,7 @@ def load_yml_file(fn):
         return yaml.safe_load(f)
 
 
-env.globals['url'] = 'https://jqlang.github.io/jq'
+env.globals['url'] = 'https://jqlang.org'
 env.globals['root'] = args.root
 
 env.filters['search_id'] = lambda input: input.replace(r'`', '')

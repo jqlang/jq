@@ -1,6 +1,6 @@
 m4_define([jq_version], m4_esyscmd_s([scripts/version])))
 
-AC_INIT([jq],[jq_version],[https://github.com/jqlang/jq/issues],[jq],[https://jqlang.github.io/jq])
+AC_INIT([jq],[jq_version],[https://github.com/jqlang/jq/issues],[jq],[https://jqlang.org])
 
 dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.65])
