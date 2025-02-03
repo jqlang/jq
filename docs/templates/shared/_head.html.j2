@@ -2,6 +2,11 @@
     <meta charset="utf-8">
     <title>{{ headline }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:title" content="{{ headline }}">
+    <meta property="og:description" content="jq is a lightweight and flexible command-line JSON processor">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{{ url }}{{ root }}/icon.png">
+    <meta property="og:url" content="{{ url }}/{{ permalink }}">
     <link rel="icon" href="{{ root }}/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ root }}/icon.png" type="image/png">
     <link rel="canonical" href="{{ url }}/{{ permalink }}">
