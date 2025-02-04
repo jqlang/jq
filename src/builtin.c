@@ -1006,8 +1006,13 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
         jv captures = jv_array();
         for (int i = 1; i < region->num_regs; ++i) {
           jv cap = jv_object();
-          cap = jv_object_set(cap, jv_string("offset"), jv_number(idx));
-          cap = jv_object_set(cap, jv_string("string"), jv_string(""));
+          if (region->beg[i] == -1) {
+            cap = jv_object_set(cap, jv_string("offset"), jv_number(-1));
+            cap = jv_object_set(cap, jv_string("string"), jv_null());
+          } else {
+            cap = jv_object_set(cap, jv_string("offset"), jv_number(idx));
+            cap = jv_object_set(cap, jv_string("string"), jv_string(""));
+          }
           cap = jv_object_set(cap, jv_string("length"), jv_number(0));
           cap = jv_object_set(cap, jv_string("name"), jv_null());
           captures = jv_array_append(captures, cap);

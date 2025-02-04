@@ -1,7 +1,7 @@
 # match builtin
 [match("( )*"; "g")]
 "abc"
-[{"offset":0,"length":0,"string":"","captures":[{"offset":0,"string":"","length":0,"name":null}]},{"offset":1,"length":0,"string":"","captures":[{"offset":1,"string":"","length":0,"name":null}]},{"offset":2,"length":0,"string":"","captures":[{"offset":2,"string":"","length":0,"name":null}]},{"offset":3,"length":0,"string":"","captures":[{"offset":3,"string":"","length":0,"name":null}]}]
+[{"offset":0,"length":0,"string":"","captures":[{"offset":-1,"string":null,"length":0,"name":null}]},{"offset":1,"length":0,"string":"","captures":[{"offset":-1,"string":null,"length":0,"name":null}]},{"offset":2,"length":0,"string":"","captures":[{"offset":-1,"string":null,"length":0,"name":null}]},{"offset":3,"length":0,"string":"","captures":[{"offset":-1,"string":null,"length":0,"name":null}]}]
 
 [match("( )*"; "gn")]
 "abc"
@@ -36,6 +36,32 @@
 [match(["foo (?<bar123>bar)? foo", "ig"])]
 "foo bar foo foo  foo"
 [{"offset": 0, "length": 11, "string": "foo bar foo", "captures":[{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]},{"offset":12, "length": 8, "string": "foo  foo", "captures":[{"offset": -1, "length": 0, "string": null, "name": "bar123"}]}]
+
+# non-matched optional group
+"a","b","c" | capture("(?<x>a)?b?")
+null
+{"x":"a"}
+{"x":null}
+{"x":null}
+
+"a","b","c" | match("(?<x>a)?b?")
+null
+{"offset":0,"length":1,"string":"a","captures":[{"offset":0,"length":1,"string":"a","name":"x"}]}
+{"offset":0,"length":1,"string":"b","captures":[{"offset":-1,"string":null,"length":0,"name":"x"}]}
+{"offset":0,"length":0,"string":"","captures":[{"offset":-1,"string":null,"length":0,"name":"x"}]}
+
+# same as above but allow empty match for group
+"a","b","c" | capture("(?<x>a?)?b?")
+null
+{"x":"a"}
+{"x":""}
+{"x":""}
+
+"a","b","c" | match("(?<x>a?)?b?")
+null
+{"offset":0,"length":1,"string":"a","captures":[{"offset":0,"length":1,"string":"a","name":"x"}]}
+{"offset":0,"length":1,"string":"b","captures":[{"offset":0,"string":"","length":0,"name":"x"}]}
+{"offset":0,"length":0,"string":"","captures":[{"offset":0,"string":"","length":0,"name":"x"}]}
 
 #test builtin
 [test("( )*"; "gn")]
