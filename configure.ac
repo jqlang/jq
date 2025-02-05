@@ -277,10 +277,10 @@ AS_IF([test "x$with_oniguruma" != xno], [
           AC_MSG_NOTICE([Oniguruma was not found. Will use the packaged oniguruma.])
        ])
    ])
-   AS_IF([test "x$build_oniguruma" = xyes && test -f "${srcdir}/modules/oniguruma/configure.ac" ], [
-       onig_CFLAGS="-I${srcdir}/modules/oniguruma/src"
-       onig_LDFLAGS="-L${srcdir}/modules/oniguruma/src -Wl,-rpath,${libdir}"
-       AC_CONFIG_SUBDIRS([modules/oniguruma])
+   AS_IF([test "x$build_oniguruma" = xyes && test -f "${srcdir}/vendor/oniguruma/configure.ac" ], [
+       onig_CFLAGS="-I${srcdir}/vendor/oniguruma/src"
+       onig_LDFLAGS="-L${srcdir}/vendor/oniguruma/src -Wl,-rpath,${libdir}"
+       AC_CONFIG_SUBDIRS([vendor/oniguruma])
        AC_DEFINE([HAVE_LIBONIG],1,[Define to 1 if the system includes libonig])
    ])
    CFLAGS="$save_CFLAGS"
