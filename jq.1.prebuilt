@@ -298,10 +298,7 @@ The following remarks are therefore offered with the understanding that they are
 (2) jq will attempt to maintain the original decimal precision of number literals (if the \fB\-\-disable\-decnum\fR build configuration option was not used), but in expressions such \fB1E1234567890\fR, precision will be lost if the exponent is too large\.
 .
 .P
-(3) In jq programs, a leading minus sign will trigger the conversion of the number to an IEEE754 representation\.
-.
-.P
-(4) Comparisons are carried out using the untruncated big decimal representation of numbers if available, as illustrated in one of the following examples\.
+(3) Comparisons are carried out using the untruncated big decimal representation of numbers if available, as illustrated in one of the following examples\.
 .
 .P
 The examples below use the builtin function \fBhave_decnum\fR in order to demonstrate the expected effects of using / not using the \fB\-\-disable\-decnum\fR build configuration option, and also to allow automated tests derived from these examples to pass regardless of whether that option is used\.
@@ -318,15 +315,19 @@ jq \'\.\'
    0\.12345678901234567890123456789
 => 0\.12345678901234567890123456789
 
-jq \'[\., tojson] | \. == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end\'
+jq \'[\., tojson] == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end\'
    12345678909876543212345
+=> true
+
+jq \'[1234567890987654321,\-1234567890987654321 | tojson] == if have_decnum then ["1234567890987654321","\-1234567890987654321"] else ["1234567890987654400","\-1234567890987654400"] end\'
+   null
 => true
 
 jq \'\. < 0\.12345678901234567890123456788\'
    0\.12345678901234567890123456789
 => false
 
-jq \'map([\., \. == 1]) | tojson | \. == if have_decnum then "[[1,true],[1\.000,true],[1\.0,true],[1\.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end\'
+jq \'map([\., \. == 1]) | tojson == if have_decnum then "[[1,true],[1\.000,true],[1\.0,true],[1\.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end\'
    [1, 1\.000, 1\.0, 100e\-2]
 => true
 

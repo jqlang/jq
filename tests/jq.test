@@ -1985,6 +1985,19 @@ true
 {"x":13911860366432393}
 13911860366432382
 
+# Unary negation preserves numerical precision
+-. | tojson == if have_decnum then "-13911860366432393" else "-13911860366432392" end
+13911860366432393
+true
+
+-. | tojson == if have_decnum then "0.12345678901234567890123456789" else "0.12345678901234568" end
+-0.12345678901234567890123456789
+true
+
+[1E+1000,-1E+1000 | tojson] == if have_decnum then ["1E+1000","-1E+1000"] else ["1.7976931348623157e+308","-1.7976931348623157e+308"] end
+null
+true
+
 . |= try . catch .
 1
 1

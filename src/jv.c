@@ -562,7 +562,6 @@ static decNumber* jvp_dec_number_ptr(jv j) {
 }
 
 static jvp_literal_number* jvp_literal_number_alloc(unsigned literal_length) {
-
   /* The number of units needed is ceil(DECNUMDIGITS/DECDPUN)         */
   int units = ((literal_length+DECDPUN-1)/DECDPUN);
 
@@ -571,19 +570,18 @@ static jvp_literal_number* jvp_literal_number_alloc(unsigned literal_length) {
     + sizeof(decNumberUnit) * units
   );
 
+  n->refcnt = JV_REFCNT_INIT;
+  n->num_double = NAN;
+  n->literal_data = NULL;
   return n;
 }
 
 static jv jvp_literal_number_new(const char * literal) {
+  jvp_literal_number* n = jvp_literal_number_alloc(strlen(literal));
 
-  jvp_literal_number * n = jvp_literal_number_alloc(strlen(literal));
-
-  n->refcnt = JV_REFCNT_INIT;
-  n->literal_data = NULL;
   decContext *ctx = DEC_CONTEXT();
   decContextClearStatus(ctx, DEC_Conversion_syntax);
   decNumberFromString(&n->num_decimal, literal, ctx);
-  n->num_double = NAN;
 
   if (ctx->status & DEC_Conversion_syntax) {
     jv_mem_free(n);
@@ -732,6 +730,21 @@ int jvp_number_is_nan(jv n) {
   }
 #endif
   return n.u.number != n.u.number;
+}
+
+jv jv_number_negate(jv n) {
+  assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
+
+#ifdef USE_DECNUM
+  if (JVP_HAS_FLAGS(n, JVP_FLAGS_NUMBER_LITERAL)) {
+    jvp_literal_number* m = jvp_literal_number_alloc(jvp_dec_number_ptr(n)->digits);
+
+    decNumberMinus(&m->num_decimal, jvp_dec_number_ptr(n), DEC_CONTEXT());
+    jv r = {JVP_FLAGS_NUMBER_LITERAL, 0, 0, 0, {&m->refcnt}};
+    return r;
+  }
+#endif
+  return jv_number(-jv_number_value(n));
 }
 
 int jvp_number_cmp(jv a, jv b) {
