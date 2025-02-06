@@ -10,16 +10,16 @@
           aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle page navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-        <a class="navbar-brand" href="{{ root }}/" aria-label="Top page"><img src="{{ root }}/jq.svg" alt="jq logo" style="height:1.5rem"></a>
+        <a class="navbar-brand" href="/" aria-label="Top page"><img src="/jq.svg" alt="jq logo" style="height:1.5rem"></a>
         <div id="navbar-collapse" class="offcanvas offcanvas-start navbar-collapse w-auto" aria-labelledby="navbar-title">
           <div class="offcanvas-header">
             <h3 id="navbar-title" class="me-3">jq</h3>
             <button type="button" class="d-md-none btn-close" data-bs-dismiss="offcanvas" aria-label="Close page navigation"></button>
           </div>
           <ul class="offcanvas-body navbar-nav me-auto text-nowrap">
-            <li class="nav-item d-md-none"><a class="nav-link{% if not navitem %} active{% endif %}"{% if not navitem %} aria-current="page"{% endif %} href="{{ root }}/">Top page</a></li>
+            <li class="nav-item d-md-none"><a class="nav-link{% if not navitem %} active{% endif %}"{% if not navitem %} aria-current="page"{% endif %} href="/">Top page</a></li>
             {%- for item in ['tutorial', 'download', 'manual'] %}
-            <li class="nav-item"><a class="nav-link{% if item == navitem %} active{% endif %}"{% if item == navitem %} aria-current="page"{% endif %} href="{{ root }}/{{ item }}/">{{ item | capitalize }}</a></li>
+            <li class="nav-item"><a class="nav-link{% if item == navitem %} active{% endif %}"{% if item == navitem %} aria-current="page"{% endif %} href="/{{ item }}/">{{ item | capitalize }}</a></li>
             {%- endfor %}
             <li class="nav-item"><a class="nav-link" href="https://github.com/jqlang/jq" target="_blank" rel="noopener">GitHub</a></li>
             <li class="nav-item"><a class="nav-link" href="https://github.com/jqlang/jq/issues" target="_blank" rel="noopener">Issues</a></li>

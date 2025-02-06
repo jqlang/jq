@@ -21,6 +21,5 @@ the `Makefile` will be able to generate the jq manpage.  You can just run
 `make jq.1` to build the manpage manually, and `make tests/man.test` to
 update the manual tests.
 
-To build the website, run `pipenv run python3 build_website.py --root /output`
-in the `docs/` directory. To serve them locally, you can run
-`python3 -m http.server`.
+To build the website, run `pipenv run python3 build_website.py` in the `docs/` directory.
+To serve them locally, you can run `python3 -m http.server -d output`.
