@@ -1159,7 +1159,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
         else if (curr->op == LOADV)
           locfile_locate(curr->locfile, curr->source, "jq: error: $%s is not defined", curr->symbol);
         else
-          locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, curr->nactuals);
+          locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined, also happens when you separate arguments by comma (,) instead of semicolon (;)", curr->symbol, curr->nactuals);
         errors++;
         // don't process this instruction if it's not well-defined
         ret = BLOCK(ret, inst_block(curr));
