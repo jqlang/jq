@@ -21,6 +21,11 @@
 extern void jv_tsd_dtoa_ctx_init();
 #endif
 
+#ifdef HAVE_SECCOMP
+#include <sys/prctl.h>
+#include <seccomp.h>
+#endif
+
 #if !defined(HAVE_ISATTY) && defined(HAVE__ISATTY)
 #undef isatty
 #define isatty _isatty
@@ -268,6 +273,79 @@ static void stderr_cb(void *data, jv input) {
   }
   jv_free(input);
 }
+
+#if defined(__gnu_linux__) && defined(HAVE_SECCOMP) /* seccomp */
+  prctl(PR_SET_NO_NEW_PRIVS, 1);
+  prctl(PR_SET_DUMPABLE, 0);
+
+  scmp_filter_ctx ctx;
+  ctx = seccomp_init(SCMP_ACT_KILL); // default action: kill, SIGSYS, entry in the system's log
+  if (ctx == NULL) {
+    perror("this system does not have Seccomp");
+    ret = 71; goto out;
+  }
+  /* the "Seccomp preamble" */
+  int rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigreturn), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit_group), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(close), 0);
+#ifndef __GLIBC__
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SYS_writev, 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SYS_brk, 0);
+#endif
+  if (rc != 0) {
+    perror("a rule in the Seccomp preamble has been rejected");
+    ret = 77; goto out;
+  }
+
+  /* writing - but to no regular file unless FD swapped for stdout or stderr */
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 1,
+    SCMP_CMP(0, SCMP_CMP_EQ, STDOUT_FILENO));
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 1,
+    SCMP_CMP(0, SCMP_CMP_EQ, STDERR_FILENO));
+
+  /* opening and reading files */
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(fstat), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(lstat), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(stat), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(open), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(openat), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(lseek), 0);
+
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(ioctl), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mmap), 2,
+    SCMP_A0(SCMP_CMP_EQ, (size_t)NULL),
+    SCMP_A5(SCMP_CMP_EQ, 0)
+  );
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(munmap), 2,
+    SCMP_A0(SCMP_CMP_NE, (size_t)NULL),
+    SCMP_A1(SCMP_CMP_GE, 0)
+  );
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(brk), 0);
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigaction), 0);
+#ifndef __GLIBC__
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SYS_madvise, 0);
+#endif
+  if (rc != 0) {
+    perror("a rule in the Seccomp read/write block has been rejected");
+    ret = 77; goto out;
+  }
+
+  /* called indirectly by jq */
+  rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getcwd), 0);
+  if (rc != 0) {
+    perror("a rule of the last Seccomp block has been rejected");
+    ret = 77; goto out;
+  }
+
+  /* apply the ruleset */
+  rc = seccomp_load(ctx);
+  if (rc != 0) {
+    perror("cannot apply the Seccomp ruleset");
+    ret = 77; goto out;
+  }
+#endif /* seccomp */
 
 #ifdef WIN32
 int umain(int argc, char* argv[]);
