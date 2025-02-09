@@ -381,16 +381,17 @@ jv jv_dump_string(jv x, int flags) {
 }
 
 char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize) {
-  x = jv_dump_string(x,0);
-  const char* p = jv_string_value(x);
-  const size_t len = strlen(p);
-  strncpy(outbuf, p, bufsize);
-  outbuf[bufsize - 1] = 0;
+  x = jv_dump_string(x, 0);
+  const char *str = jv_string_value(x);
+  const size_t len = strlen(str);
+  strncpy(outbuf, str, bufsize);
   if (len > bufsize - 1 && bufsize >= 4) {
-    // Indicate truncation with '...'
-    outbuf[bufsize - 2]='.';
-    outbuf[bufsize - 3]='.';
-    outbuf[bufsize - 4]='.';
+    // Indicate truncation with '...' without breaking UTF-8.
+    const char *s = jvp_utf8_backtrack(outbuf + bufsize - 4, outbuf, NULL);
+    if (s) bufsize = s + 4 - outbuf;
+    strcpy(outbuf + bufsize - 4, "...");
+  } else {
+    outbuf[bufsize - 1] = '\0';
   }
   jv_free(x);
   return outbuf;
