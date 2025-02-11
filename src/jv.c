@@ -206,9 +206,6 @@ enum {
   JVP_NUMBER_DECIMAL = 1
 };
 
-#define JV_NUMBER_SIZE_INIT      (0)
-#define JV_NUMBER_SIZE_CONVERTED (1)
-
 #define JVP_FLAGS_NUMBER_NATIVE       JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_NATIVE, 0))
 #define JVP_FLAGS_NUMBER_LITERAL      JVP_MAKE_FLAGS(JV_KIND_NUMBER, JVP_MAKE_PFLAGS(JVP_NUMBER_DECIMAL, 1))
 
@@ -587,8 +584,12 @@ static jv jvp_literal_number_new(const char * literal) {
     jv_mem_free(n);
     return JV_INVALID;
   }
+  if (decNumberIsNaN(&n->num_decimal)) {
+    jv_mem_free(n);
+    return jv_number(NAN);
+  }
 
-  jv r = {JVP_FLAGS_NUMBER_LITERAL, 0, 0, JV_NUMBER_SIZE_INIT, {&n->refcnt}};
+  jv r = {JVP_FLAGS_NUMBER_LITERAL, 0, 0, 0, {&n->refcnt}};
   return r;
 }
 
@@ -696,9 +697,8 @@ double jv_number_value(jv j) {
   if (JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_LITERAL)) {
     jvp_literal_number* n = jvp_literal_number_ptr(j);
 
-    if (j.size != JV_NUMBER_SIZE_CONVERTED) {
+    if (isnan(n->num_double)) {
       n->num_double = jvp_literal_number_to_double(j);
-      j.size = JV_NUMBER_SIZE_CONVERTED;
     }
 
     return n->num_double;
@@ -729,7 +729,7 @@ int jvp_number_is_nan(jv n) {
     return decNumberIsNaN(pdec);
   }
 #endif
-  return n.u.number != n.u.number;
+  return isnan(n.u.number);
 }
 
 jv jv_number_negate(jv n) {
