@@ -1866,10 +1866,6 @@ true
 true
 true
 true
-true
-true
-true
-true
 
 range(5;13)|IN(range(0;10;3))
 null
