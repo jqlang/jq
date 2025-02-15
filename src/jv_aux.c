@@ -727,3 +727,25 @@ jv jv_group(jv objects, jv keys) {
   jv_mem_free(entries);
   return ret;
 }
+
+jv jv_unique(jv objects, jv keys) {
+  assert(jv_get_kind(objects) == JV_KIND_ARRAY);
+  assert(jv_get_kind(keys) == JV_KIND_ARRAY);
+  assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
+  int n = jv_array_length(jv_copy(objects));
+  struct sort_entry* entries = sort_items(objects, keys);
+  jv ret = jv_array();
+  jv curr_key = jv_invalid();
+  for (int i = 0; i < n; i++) {
+    if (jv_equal(jv_copy(curr_key), jv_copy(entries[i].key))) {
+      jv_free(entries[i].key);
+    } else {
+      jv_free(curr_key);
+      curr_key = entries[i].key;
+      ret = jv_array_append(ret, entries[i].object);
+    }
+  }
+  jv_free(curr_key);
+  jv_mem_free(entries);
+  return ret;
+}
