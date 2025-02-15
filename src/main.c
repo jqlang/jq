@@ -35,6 +35,8 @@ extern void jv_tsd_dtoa_ctx_init();
 #include "jq.h"
 #include "jv_alloc.h"
 #include "util.h"
+#include "src/version.h"
+#include "src/config_opts.inc"
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
 
