@@ -411,11 +411,11 @@ void yyerror(YYLTYPE* loc, block* answer, int* errors,
 #ifdef WIN32
       locfile_locate(locations, *loc, 
                     "jq: syntax error at line %d, column %d: Found %s where it was not expected. This might be due to Windows cmd shell quoting issues.",
-                    line + 1, column + 1, s + 24); // Skip "syntax error, unexpected "
+                    line + 1, column + 1, s + 24);
 #else
       locfile_locate(locations, *loc,
                     "jq: syntax error at line %d, column %d: Found %s where it was not expected. This might be due to Unix shell quoting issues.",
-                    line + 1, column + 1, s + 24); // Skip "syntax error, unexpected "
+                    line + 1, column + 1, s + 24);
 #endif
   } else {
       locfile_locate(locations, *loc, "jq: error at line %d, column %d: %s", line, loc->start, s);

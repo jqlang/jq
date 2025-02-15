@@ -1745,6 +1745,14 @@ module []; 0
 jq: error at line 0, column 0: Module metadata must be an object at <top-level>, line 1:
 
 %%FAIL
+include "a" (.+1); 0
+jq: error at line 0, column 0: Module metadata must be constant at <top-level>, line 1:
+
+%%FAIL
+include "a" []; 0
+jq: error at line 0, column 0: Module metadata must be an object at <top-level>, line 1:
+
+%%FAIL
 include "\ "; 0
 jq: error at line 0, column 9: Invalid escape at line 1, column 4 (while parsing '"\ "') at <top-level>, line 1:
 
