@@ -192,8 +192,20 @@ sub("(?<x>.)"; "\(.x)!")
 "aB"
 ["AB","ab","cc"]
 
-# splits and _nwise
+# splits
 [splits("")]
 "ab"
 ["","a","b",""]
+
+[splits("c")]
+"ab"
+["ab"]
+
+[splits("a+"; "i")]
+"abAABBabA"
+["","b","BB","b",""]
+
+[splits("b+"; "i")]
+"abAABBabA"
+["a","AA","a","A"]
 
