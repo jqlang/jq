@@ -34,7 +34,7 @@ void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
   nomem_handler.handler = handler;
 }
 
-static void memory_exhausted() {
+static void memory_exhausted(void) {
   if (nomem_handler.handler)
     nomem_handler.handler(nomem_handler.data); // Maybe handler() will longjmp() to safety
   // Or not
@@ -105,7 +105,7 @@ void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
   nomem_handler->data = data;
 }
 
-static void memory_exhausted() {
+static void memory_exhausted(void) {
   struct nomem_handler *nomem_handler;
 
   pthread_once(&mem_once, tsd_init);
@@ -129,7 +129,7 @@ void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
   nomem_handler.data = data;
 }
 
-static void memory_exhausted() {
+static void memory_exhausted(void) {
   fprintf(stderr, "jq: error: cannot allocate memory\n");
   abort();
 }

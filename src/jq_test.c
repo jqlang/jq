@@ -8,11 +8,11 @@
 #include "jv.h"
 #include "jq.h"
 
-static void jv_test();
+static void jv_test(void);
 static void run_jq_tests(jv, int, FILE *, int, int);
-static void run_jq_start_state_tests();
+static void run_jq_start_state_tests(void);
 #ifdef HAVE_PTHREAD
-static void run_jq_pthread_tests();
+static void run_jq_pthread_tests(void);
 #endif
 
 int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
@@ -307,7 +307,7 @@ static void test_jq_start_resets_state(char *prog, const char *input) {
   jq_teardown(&jq);
 }
 
-static void run_jq_start_state_tests() {
+static void run_jq_start_state_tests(void) {
   test_jq_start_resets_state(".[]", "[1,2,3]");
   test_jq_start_resets_state(".[] | if .%2 == 0 then halt_error else . end", "[1,2,3]");
 }
@@ -365,7 +365,7 @@ static void *test_pthread_run(void *ptr) {
     return NULL;
 }
 
-static void run_jq_pthread_tests() {
+static void run_jq_pthread_tests(void) {
     pthread_t threads[NUMBER_OF_THREADS];
     struct test_pthread_data data[NUMBER_OF_THREADS];
     int createerror;
@@ -399,7 +399,7 @@ static void run_jq_pthread_tests() {
 #endif // HAVE_PTHREAD
 
 
-static void jv_test() {
+static void jv_test(void) {
   /// JSON parser regression tests
   {
     jv v = jv_parse("{\"a':\"12\"}");

@@ -128,7 +128,7 @@ block gen_location(location loc, struct locfile* l, block b) {
   return b;
 }
 
-block gen_noop() {
+block gen_noop(void) {
   block b = {0,0};
   return b;
 }

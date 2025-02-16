@@ -1957,7 +1957,7 @@ BINOPS
 
 // This is a hack to make last(g) yield no output values,
 // if g yields no output values, without using boxing.
-static block gen_last_1() {
+static block gen_last_1(void) {
   block last_var = gen_op_var_fresh(STOREV, "last");
   block is_empty_var = gen_op_var_fresh(STOREV, "is_empty");
   block init = BLOCK(gen_op_simple(DUP),
