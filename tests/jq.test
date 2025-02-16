@@ -1788,6 +1788,19 @@ try -. catch .
 "very-long-string"
 "string (\"very-long-...) cannot be negated"
 
+try (.-.) catch .
+"very-long-string"
+"string (\"very-long-...) and string (\"very-long-...) cannot be subtracted"
+
+"x" * range(0; 12; 2) + "☆" * 5 | try -. catch .
+null
+"string (\"☆☆☆...) cannot be negated"
+"string (\"xx☆☆...) cannot be negated"
+"string (\"xxxx☆☆...) cannot be negated"
+"string (\"xxxxxx☆...) cannot be negated"
+"string (\"xxxxxxxx...) cannot be negated"
+"string (\"xxxxxxxxxx...) cannot be negated"
+
 join(",")
 ["1",2,true,false,3.4]
 "1,2,true,false,3.4"
