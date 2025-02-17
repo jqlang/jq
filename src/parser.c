@@ -403,22 +403,28 @@ struct lexer_param {
   } while (0)
 
 void yyerror(YYLTYPE* loc, block* answer, int* errors,
-             struct locfile* locations, struct lexer_param* lexer_param_ptr, const char *s){
+             struct locfile* locations, struct lexer_param* lexer_param_ptr, const char *s) {
   (*errors)++;
+  int line = locfile_get_line(locations, loc->start);
+  int column = loc->start - locations->linemap[line];
   if (strstr(s, "unexpected")) {
 #ifdef WIN32
-      locfile_locate(locations, *loc, "jq: error: %s (Windows cmd shell quoting issues?)", s);
+      locfile_locate(locations, *loc, 
+                    "jq: syntax error at line %d, column %d: Found %s where it was not expected. This might be due to Windows cmd shell quoting issues.",
+                    line + 1, column + 1, s + 24);
 #else
-      locfile_locate(locations, *loc, "jq: error: %s (Unix shell quoting issues?)", s);
+      locfile_locate(locations, *loc,
+                    "jq: syntax error at line %d, column %d: Found %s where it was not expected. This might be due to Unix shell quoting issues.",
+                    line + 1, column + 1, s + 24);
 #endif
   } else {
-      locfile_locate(locations, *loc, "jq: error: %s", s);
+      locfile_locate(locations, *loc, "jq: error at line %d, column %d: %s", line, loc->start, s);
   }
 }
 
 int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors,
           struct locfile* locations, struct lexer_param* lexer_param_ptr) {
-  yyscan_t lexer = lexer_param_ptr->lexer;
+  yyscan_t lexer = lexer_param_ptr->lexer; 
   int tok = jq_yylex(yylval, yylloc, lexer);
   if ((tok == LITERAL || tok == QQSTRING_TEXT) && !jv_is_valid(yylval->literal)) {
     jv msg = jv_invalid_get_msg(jv_copy(yylval->literal));
@@ -2092,12 +2098,12 @@ yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
         yyformat = S;                       \
         break
     default: /* Avoid compiler warnings. */
-      YYCASE_(0, YY_("syntax error"));
-      YYCASE_(1, YY_("syntax error, unexpected %s"));
-      YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
-      YYCASE_(3, YY_("syntax error, unexpected %s, expecting %s or %s"));
-      YYCASE_(4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
-      YYCASE_(5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
+      YYCASE_(0, YY_("Found unexpected token"));
+      YYCASE_(1, YY_("Found %s where it was not expected. This might be due to Unix shell quoting issues."));
+      YYCASE_(2, YY_("Found %s where it was not expected. Expected %s. This might be due to Unix shell quoting issues."));
+      YYCASE_(3, YY_("Found %s where it was not expected. Expected %s or %s. This might be due to Unix shell quoting issues."));
+      YYCASE_(4, YY_("Found %s where it was not expected. Expected %s, %s, or %s. This might be due to Unix shell quoting issues."));
+      YYCASE_(5, YY_("Found %s where it was not expected. Expected %s, %s, %s, or %s. This might be due to Unix shell quoting issues."));
 #undef YYCASE_
     }
 
