@@ -6,6 +6,11 @@ walk( if type == "object" then with_entries( .key |= sub( "^_+"; "") ) else . en
 [ { "_a": { "__b": 2 } } ]
 [{"a":{"b":2}}]
 
+def @foo: gsub("a+"; "."); @foo, @foo "a \(.) \(. + .) a"
+"aba"
+".b."
+"a .b. .b.b. a"
+
 test("foo")
 "foo"
 true
