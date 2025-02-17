@@ -1474,8 +1474,10 @@ static time_t my_mktime(struct tm *tm) {
   if (tz != NULL)
     setenv("TZ", "", 1);
   time_t t = mktime(tm);
-  if (tz != NULL)
+  if (tz != NULL) {
     setenv("TZ", tz, 1);
+    free(tz);
+  }
   return t;
 #endif
 }
@@ -1762,13 +1764,14 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   /* Apple Libc (as of version 1669.40.2) contains a bug which causes it to
    * ignore the `tm.tm_gmtoff` in favor of the global timezone. To print the
    * proper timezone offset we temporarily switch the TZ to UTC. */
-  char *tz = getenv("TZ");
+  char *tz = (tz = getenv("TZ")) != NULL ? strdup(tz) : NULL;
   setenv("TZ", "UTC", 1);
 #endif
   size_t n = strftime(buf, alloced, fmt, &tm);
 #ifdef __APPLE__
   if (tz) {
     setenv("TZ", tz, 1);
+    free(tz);
   } else {
     unsetenv("TZ");
   }
