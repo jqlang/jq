@@ -728,6 +728,14 @@ if ! $msys && ! $mingw; then
     echo "Incorrectly formatted universal time"
     exit 1
   fi
+ 
+  if ! r=$(TZ=Etc/GMT+7 $JQ -nc '1731627341 | .,. | [strftime("%FT%T"),strflocaltime("%FT%T%z")]'
+) \
+    || [ "$r" != '["2024-11-14T23:35:41","2024-11-14T16:35:41-0700"]
+["2024-11-14T23:35:41","2024-11-14T16:35:41-0700"]' ]; then
+    echo "strftime or strftimelocal are not pure functions"
+    exit 1
+  fi
 fi
 
 exit 0
