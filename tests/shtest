@@ -94,6 +94,20 @@ if printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out; then
 fi
 cmp $d/out $d/expected
 
+# Test control characters for #2909
+cat > $d/expected <<EOF
+jq: parse error: Invalid string: control characters from U+0000 through U+001F must be escaped at line 1, column 3
+EOF
+for i in 1 2 30 31; do
+  if printf "\"$(printf '\\%03o' $i)\"" | $JQ '.' > $d/out 2>&1; then
+    printf 'Error expected but jq exited successfully\n' 1>&2
+    exit 2
+  fi
+  cmp $d/out $d/expected
+done
+printf '" ~\\u007f"\n' > $d/expected
+printf "\"$(printf '\\%03o' 32 126 127)\"" | $JQ '.' > $d/out 2>&1
+cmp $d/out $d/expected
 
 ## Test --exit-status
 data='{"i": 1}\n{"i": 2}\n{"i": 3}\n'
