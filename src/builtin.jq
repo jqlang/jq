@@ -42,7 +42,7 @@ def recurse: recurse(.[]?);
 def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];
 def from_entries: map({(.key // .Key // .name // .Name): (if has("value") then .value else .Value end)}) | add | .//={};
 def with_entries(f): to_entries | map(f) | from_entries;
-def reverse: [.[length - 1 - range(0;length)]];
+def reverse: [.[range(length-1;-1;-1)]];
 def indices($i): if type == "array" and ($i|type) == "array" then .[$i]
   elif type == "array" then .[[$i]]
   elif type == "string" and ($i|type) == "string" then _strindices($i)
@@ -70,6 +70,7 @@ def join($x): reduce .[] as $i (null;
 def _flatten($x): reduce .[] as $i ([]; if $i | type == "array" and $x != 0 then . + ($i | _flatten($x-1)) else . + [$i] end);
 def flatten($x): if $x < 0 then error("flatten depth must not be negative") else _flatten($x) end;
 def flatten: _flatten(-1);
+def range($x;$y): range($x;$y;1);
 def range($x): range(0;$x);
 def fromdateiso8601: strptime("%Y-%m-%dT%H:%M:%SZ")|mktime;
 def todateiso8601: strftime("%Y-%m-%dT%H:%M:%SZ");
@@ -157,11 +158,6 @@ def skip($n; expr):
   if $n > 0 then foreach expr as $item ($n; . - 1; if . < 0 then $item else empty end)
   elif $n == 0 then expr
   else error("skip doesn't support negative count") end;
-# range/3, with a `by` expression argument
-def range($init; $upto; $by):
-    if $by > 0 then $init|while(. < $upto; . + $by)
-  elif $by < 0 then $init|while(. > $upto; . + $by)
-  else empty end;
 def first(g): label $out | g | ., break $out;
 def isempty(g): first((g|false), true);
 def all(generator; condition): isempty(generator|condition and empty);
