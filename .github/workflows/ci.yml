@@ -156,6 +156,7 @@ jobs:
             --disable-docs \
             --disable-valgrind \
             --with-oniguruma=builtin \
+            --disable-shared \
             --enable-static \
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all"
