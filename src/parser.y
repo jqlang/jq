@@ -137,16 +137,22 @@ struct lexer_param {
   } while (0)
 
 void yyerror(YYLTYPE* loc, block* answer, int* errors,
-             struct locfile* locations, struct lexer_param* lexer_param_ptr, const char *s){
+             struct locfile* locations, struct lexer_param* lexer_param_ptr, const char *s) {
   (*errors)++;
+  int line = locfile_get_line(locations, loc->start);
+  int column = loc->start - locations->linemap[line];
   if (strstr(s, "unexpected")) {
 #ifdef WIN32
-      locfile_locate(locations, *loc, "jq: error: %s (Windows cmd shell quoting issues?)", s);
+      locfile_locate(locations, *loc, 
+                    "jq: syntax error at line %d, column %d: Found %s where it was not expected. This might be due to Windows cmd shell quoting issues.",
+                    line + 1, column + 1, s);
 #else
-      locfile_locate(locations, *loc, "jq: error: %s (Unix shell quoting issues?)", s);
+      locfile_locate(locations, *loc,
+                    "jq: syntax error at line %d, column %d: Found %s where it was not expected. This might be due to Unix shell quoting issues.",
+                    line + 1, column + 1, s);
 #endif
   } else {
-      locfile_locate(locations, *loc, "jq: error: %s", s);
+      locfile_locate(locations, *loc, "jq: error at line %d, column %d: %s", line + 1, column + 1, s);
   }
 }
 

@@ -117,11 +117,11 @@ null
 
 %%FAIL
 {(0):1}
-jq: error: Cannot use number (0) as object key at <top-level>, line 1:
+jq: error at line 1, column 2: Cannot use number (0) as object key at <top-level>, line 1:
 
 %%FAIL
 {non_const:., (0):1}
-jq: error: Cannot use number (0) as object key at <top-level>, line 1:
+jq: error at line 1, column 15: Cannot use number (0) as object key at <top-level>, line 1:
 
 #
 # Field access, piping
@@ -1738,27 +1738,27 @@ null
 
 %%FAIL
 module (.+1); 0
-jq: error: Module metadata must be constant at <top-level>, line 1:
+jq: error at line 1, column 1: Module metadata must be constant at <top-level>, line 1:
 
 %%FAIL
 module []; 0
-jq: error: Module metadata must be an object at <top-level>, line 1:
+jq: error at line 1, column 1: Module metadata must be an object at <top-level>, line 1:
 
 %%FAIL
 include "a" (.+1); 0
-jq: error: Module metadata must be constant at <top-level>, line 1:
+jq: error at line 1, column 1: Module metadata must be constant at <top-level>, line 1:
 
 %%FAIL
 include "a" []; 0
-jq: error: Module metadata must be an object at <top-level>, line 1:
+jq: error at line 1, column 1: Module metadata must be an object at <top-level>, line 1:
 
 %%FAIL
 include "\ "; 0
-jq: error: Invalid escape at line 1, column 4 (while parsing '"\ "') at <top-level>, line 1:
+jq: error at line 1, column 10: Invalid escape at line 1, column 4 (while parsing '"\ "') at <top-level>, line 1:
 
 %%FAIL
 include "\(a)"; 0
-jq: error: Import path must be constant at <top-level>, line 1:
+jq: error at line 1, column 9: Import path must be constant at <top-level>, line 1:
 
 modulemeta
 "c"
@@ -1774,11 +1774,11 @@ modulemeta | .defs | length
 
 %%FAIL IGNORE MSG
 import "syntaxerror" as e; .
-jq: error: syntax error, unexpected ';', expecting $end (Unix shell quoting issues?) at /home/nico/ws/jq/tests/modules/syntaxerror/syntaxerror.jq, line 1:
+jq: error: syntax error, unexpected ';', expecting $end (Unix shell quoting issues?) at /home/nico/ws/jq/tests/modules/syntaxerror/syntaxerror.jq:
 
 %%FAIL IGNORE MSG
 %::wat
-jq: error: syntax error, unexpected '%', expecting $end (Unix shell quoting issues?) at <top-level>, line 1:
+jq: error: syntax error, unexpected '%', expecting $end (Unix shell quoting issues?) at <top-level>:
 
 import "test_bind_order" as check; check::check
 null
@@ -1859,7 +1859,7 @@ null
 
 %%FAIL IGNORE MSG
 }
-jq: error: syntax error, unexpected INVALID_CHARACTER, expecting $end (Unix shell quoting issues?) at <top-level>, line 1:
+jq: error: syntax error, unexpected INVALID_CHARACTER, expecting $end (Unix shell quoting issues?) at <top-level>:
 
 (.[{}] = 0)?
 null
