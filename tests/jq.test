@@ -117,11 +117,11 @@ null
 
 %%FAIL
 {(0):1}
-jq: error at line 0, column 1: Cannot use number (0) as object key at <top-level>, line 1:
+jq: error at line 1, column 2: Cannot use number (0) as object key at <top-level>, line 1:
 
 %%FAIL
 {non_const:., (0):1}
-jq: error at line 0, column 14: Cannot use number (0) as object key at <top-level>, line 1:
+jq: error at line 1, column 15: Cannot use number (0) as object key at <top-level>, line 1:
 
 #
 # Field access, piping
@@ -1738,27 +1738,27 @@ null
 
 %%FAIL
 module (.+1); 0
-jq: error at line 0, column 0: Module metadata must be constant at <top-level>, line 1:
+jq: error at line 1, column 1: Module metadata must be constant at <top-level>, line 1:
 
 %%FAIL
 module []; 0
-jq: error at line 0, column 0: Module metadata must be an object at <top-level>, line 1:
+jq: error at line 1, column 1: Module metadata must be an object at <top-level>, line 1:
 
 %%FAIL
 include "a" (.+1); 0
-jq: error at line 0, column 0: Module metadata must be constant at <top-level>, line 1:
+jq: error at line 1, column 1: Module metadata must be constant at <top-level>, line 1:
 
 %%FAIL
 include "a" []; 0
-jq: error at line 0, column 0: Module metadata must be an object at <top-level>, line 1:
+jq: error at line 1, column 1: Module metadata must be an object at <top-level>, line 1:
 
 %%FAIL
 include "\ "; 0
-jq: error at line 0, column 9: Invalid escape at line 1, column 4 (while parsing '"\ "') at <top-level>, line 1:
+jq: error at line 1, column 10: Invalid escape at line 1, column 4 (while parsing '"\ "') at <top-level>, line 1:
 
 %%FAIL
 include "\(a)"; 0
-jq: error at line 0, column 8: Import path must be constant at <top-level>, line 1:
+jq: error at line 1, column 9: Import path must be constant at <top-level>, line 1:
 
 modulemeta
 "c"

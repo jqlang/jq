@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_SRC_PARSER_H_INCLUDED
-# define YY_YY_SRC_PARSER_H_INCLUDED
+#ifndef YY_YY_PARSER_H_INCLUDED
+# define YY_YY_PARSER_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 12 "src/parser.y"
+#line 12 "parser.y"
 
 #include "locfile.h"
 struct lexer_param;
@@ -62,7 +62,7 @@ struct lexer_param;
     }                                           \
   } while (0)
 
-#line 66 "src/parser.h"
+#line 66 "parser.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -122,68 +122,17 @@ struct lexer_param;
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Token kinds.  */
-#define YYEMPTY -2
-#define YYEOF 0
-#define YYerror 256
-#define YYUNDEF 257
-#define INVALID_CHARACTER 258
-#define IDENT 259
-#define FIELD 260
-#define BINDING 261
-#define LITERAL 262
-#define FORMAT 263
-#define REC 264
-#define SETMOD 265
-#define EQ 266
-#define NEQ 267
-#define DEFINEDOR 268
-#define AS 269
-#define DEF 270
-#define MODULE 271
-#define IMPORT 272
-#define INCLUDE 273
-#define IF 274
-#define THEN 275
-#define ELSE 276
-#define ELSE_IF 277
-#define REDUCE 278
-#define FOREACH 279
-#define END 280
-#define AND 281
-#define OR 282
-#define TRY 283
-#define CATCH 284
-#define LABEL 285
-#define BREAK 286
-#define LOC 287
-#define SETPIPE 288
-#define SETPLUS 289
-#define SETMINUS 290
-#define SETMULT 291
-#define SETDIV 292
-#define SETDEFINEDOR 293
-#define LESSEQ 294
-#define GREATEREQ 295
-#define ALTERNATION 296
-#define QQSTRING_START 297
-#define QQSTRING_TEXT 298
-#define QQSTRING_INTERP_START 299
-#define QQSTRING_INTERP_END 300
-#define QQSTRING_END 301
-#define FUNCDEF 302
-#define NONOPT 303
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 32 "src/parser.y"
+#line 32 "parser.y"
 
   jv literal;
   block blk;
 
-#line 187 "src/parser.h"
+#line 136 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -211,4 +160,4 @@ struct YYLTYPE
 int yyparse (block* answer, int* errors, struct locfile* locations, struct lexer_param* lexer_param_ptr);
 
 
-#endif /* !YY_YY_SRC_PARSER_H_INCLUDED  */
+#endif /* !YY_YY_PARSER_H_INCLUDED  */
