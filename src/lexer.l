@@ -89,7 +89,7 @@ struct lexer_param;
 }
 
 "@"[a-zA-Z0-9_]+ {
-  yylval->literal = jv_string_sized(yytext + 1, yyleng - 1); return FORMAT;
+  yylval->literal = jv_string(yytext); return FORMAT;
 }
 
 ([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][+-]?[0-9]+)? {
