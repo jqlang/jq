@@ -65,23 +65,18 @@ endif
 
 include_HEADERS = src/jv.h src/jq.h
 
-if ENABLE_UBSAN
-AM_CFLAGS += -fsanitize=undefined
-endif
-
 AM_CPPFLAGS = -I$(srcdir)/src -I$(srcdir)/vendor
 
-### Running tests under Valgrind
+### Address sanitizer (ASan)
 
 if ENABLE_ASAN
 AM_CFLAGS += -fsanitize=address
-NO_VALGRIND = 1
-else
-if ENABLE_VALGRIND
-NO_VALGRIND =
-else
-NO_VALGRIND = 1
 endif
+
+### Undefined Behavior Sanitizer
+
+if ENABLE_UBSAN
+AM_CFLAGS += -fsanitize=undefined
 endif
 
 ### Code coverage with gcov
@@ -127,7 +122,11 @@ TESTS = tests/mantest tests/jqtest tests/shtest tests/utf8test tests/base64test 
 if !WIN32
 TESTS += tests/optionaltest
 endif
-AM_TESTS_ENVIRONMENT = JQ=$(abs_builddir)/jq NO_VALGRIND=$(NO_VALGRIND)
+
+AM_TESTS_ENVIRONMENT = JQ=$(abs_builddir)/jq
+if ENABLE_VALGRIND
+AM_TESTS_ENVIRONMENT += ENABLE_VALGRIND=1
+endif
 
 # This is a magic make variable that causes it to treat tests/man.test as a
 # DATA-type dependency for the check target. As a result, it will attempt to
