@@ -39,11 +39,6 @@ if test "$USE_MAINTAINER_MODE" = yes; then
   AC_CHECK_PROGS(LEX, flex lex)
 fi
 
-dnl Check for valgrind
-AC_CHECK_PROGS(valgrind_cmd, valgrind)
-if test "x$valgrind_cmd" = "x" ; then
-    AC_MSG_WARN([valgrind is required to test jq.])
-fi
 AC_CHECK_FUNCS(memmem)
 
 AC_CHECK_HEADER("sys/cygwin.h", [have_cygwin=1;])
@@ -54,10 +49,9 @@ dnl Running tests with Valgrind is slow. It is faster to iterate on
 dnl code without Valgrind until tests pass, then enable Valgrind and
 dnl fix leaks.
 AC_ARG_ENABLE([valgrind],
-   AS_HELP_STRING([--disable-valgrind],[do not run tests under Valgrind]))
+   AS_HELP_STRING([--enable-valgrind],[enable Valgrind during testing]))
 
-dnl Running tests with Valgrind is slow; address sanitizer (ASAN) is
-dnl faster.
+dnl Address sanitizer (ASan)
 AC_ARG_ENABLE([asan],
    AS_HELP_STRING([--enable-asan],[enable address sanitizer]))
 
@@ -114,7 +108,7 @@ AS_IF([test "x$enable_decnum" != "xno"],[
    AC_DEFINE([USE_DECNUM], 1, [Define to enable decnum support.])
 ])
 
-AM_CONDITIONAL([ENABLE_VALGRIND], [test "x$enable_valgrind" != xno])
+AM_CONDITIONAL([ENABLE_VALGRIND], [test "x$enable_valgrind" = xyes])
 AM_CONDITIONAL([ENABLE_ASAN], [test "x$enable_asan" = xyes])
 AM_CONDITIONAL([ENABLE_UBSAN], [test "x$enable_ubsan" = xyes])
 AM_CONDITIONAL([ENABLE_GCOV], [test "x$enable_gcov" = xyes])
@@ -291,7 +285,6 @@ AC_SUBST(onig_LDFLAGS)
 
 AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
 AM_CONDITIONAL([WITH_ONIGURUMA], [test "x$with_oniguruma" != xno])
-AC_SUBST([BUNDLER], ["$bundle_cmd"])
 
 AC_CONFIG_MACRO_DIRS([config/m4 m4])
 AC_CONFIG_HEADERS([src/config.h])

@@ -19,7 +19,6 @@ COPY . /app
 RUN autoreconf -i \
  && ./configure \
       --disable-docs \
-      --disable-valgrind \
       --with-oniguruma=builtin \
       --enable-static \
       --enable-all-static \

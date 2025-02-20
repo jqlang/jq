@@ -22,6 +22,7 @@ jobs:
           autoreconf -i
           ./configure \
             --disable-docs \
+            --enable-valgrind \
             --with-oniguruma=yes
           make -j"$(nproc)"
           file ./jq
@@ -54,6 +55,7 @@ jobs:
           autoreconf -i
           ./configure \
             --disable-docs \
+            --enable-valgrind \
             --with-oniguruma=no
           make -j"$(nproc)"
           file ./jq
