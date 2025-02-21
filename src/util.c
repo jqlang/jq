@@ -98,7 +98,7 @@ jv expand_path(jv path) {
   return ret;
 }
 
-jv get_home() {
+jv get_home(void) {
   jv ret;
   char *home = getenv("HOME");
   if (!home) {
