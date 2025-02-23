@@ -340,21 +340,10 @@ jv binop_multiply(jv a, jv b) {
       str = b;
       num = a;
     }
-    jv res;
     double d = jv_number_value(num);
-    if (d < 0 || isnan(d)) {
-      res = jv_null();
-    } else {
-      int n = d;
-      size_t alen = jv_string_length_bytes(jv_copy(str));
-      res = jv_string_empty(alen * n);
-      for (; n > 0; n--) {
-        res = jv_string_append_buf(res, jv_string_value(str), alen);
-      }
-    }
-    jv_free(str);
     jv_free(num);
-    return res;
+    return jv_string_repeat(str,
+        d < 0 || isnan(d) ? -1 : d > INT_MAX ? INT_MAX : (int)d);
   } else if (ak == JV_KIND_OBJECT && bk == JV_KIND_OBJECT) {
     return jv_object_merge_recursive(a, b);
   } else {

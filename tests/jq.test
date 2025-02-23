@@ -1460,6 +1460,18 @@ indices("o")
 "abc"
 [null,null]
 
+. * 100000 | [.[:10],.[-10:]]
+"abc"
+["abcabcabca","cabcabcabc"]
+
+. * 1000000000
+""
+""
+
+try (. * 1000000000) catch .
+"abc"
+"Repeat string result too long"
+
 [.[] / ","]
 ["a, bc, def, ghij, jklmn, a,b, c,d, e,f", "a,b,c,d, e,f,g,h"]
 [["a"," bc"," def"," ghij"," jklmn"," a","b"," c","d"," e","f"],["a","b","c","d"," e","f","g","h"]]
