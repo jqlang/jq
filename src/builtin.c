@@ -8,21 +8,6 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <stddef.h>
-#ifdef HAVE_ALLOCA_H
-# include <alloca.h>
-#elif !defined alloca
-# ifdef __GNUC__
-#  define alloca __builtin_alloca
-# elif defined _MSC_VER
-#  include <malloc.h>
-#  define alloca _alloca
-# elif !defined HAVE_ALLOCA
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-void *alloca (size_t);
-# endif
-#endif
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
@@ -1758,8 +1743,8 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
     return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
 
   const char *fmt = jv_string_value(b);
-  size_t alloced = strlen(fmt) + 100;
-  char *buf = alloca(alloced);
+  size_t max_size = strlen(fmt) + 100;
+  char *buf = jv_mem_alloc(max_size);
 #ifdef __APPLE__
   /* Apple Libc (as of version 1669.40.2) contains a bug which causes it to
    * ignore the `tm.tm_gmtoff` in favor of the global timezone. To print the
@@ -1767,7 +1752,7 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   char *tz = (tz = getenv("TZ")) != NULL ? strdup(tz) : NULL;
   setenv("TZ", "UTC", 1);
 #endif
-  size_t n = strftime(buf, alloced, fmt, &tm);
+  size_t n = strftime(buf, max_size, fmt, &tm);
 #ifdef __APPLE__
   if (tz) {
     setenv("TZ", tz, 1);
@@ -1778,9 +1763,13 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
 #endif
   jv_free(b);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
-  if (n == 0 || n > alloced)
+  if ((n == 0 && *fmt) || n > max_size) {
+    free(buf);
     return jv_invalid_with_msg(jv_string("strftime/1: unknown system failure"));
-  return jv_string(buf);
+  }
+  jv ret = jv_string_sized(buf, n);
+  free(buf);
+  return ret;
 }
 #else
 static jv f_strftime(jq_state *jq, jv a, jv b) {
@@ -1803,14 +1792,18 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   if (!jv2tm(a, &tm, 1))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   const char *fmt = jv_string_value(b);
-  size_t alloced = strlen(fmt) + 100;
-  char *buf = alloca(alloced);
-  size_t n = strftime(buf, alloced, fmt, &tm);
+  size_t max_size = strlen(fmt) + 100;
+  char *buf = jv_mem_alloc(max_size);
+  size_t n = strftime(buf, max_size, fmt, &tm);
   jv_free(b);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
-  if (n == 0 || n > alloced)
+  if ((n == 0 && *fmt) || n > max_size) {
+    free(buf);
     return jv_invalid_with_msg(jv_string("strflocaltime/1: unknown system failure"));
-  return jv_string(buf);
+  }
+  jv ret = jv_string_sized(buf, n);
+  free(buf);
+  return ret;
 }
 #else
 static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
