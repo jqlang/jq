@@ -2033,7 +2033,11 @@ map(abs)
 [-0, 0, -10, -1.1]
 [0,0,10,1.1]
 
-map(fabs == length) | unique
+map(fabs)
+[-0, 0, -10, -1.1]
+[0,0,10,1.1]
+
+map(abs == length) | unique
 [-10, -1.1, -1e-1, 1000000000000000002]
 [true]
 
@@ -2041,6 +2045,14 @@ map(fabs == length) | unique
 map(abs)
 [0.1,1000000000000000002]
 [1e-1, 1000000000000000002]
+
+[1E+1000,-1E+1000 | abs | tojson] | unique == if have_decnum then ["1E+1000"] else ["1.7976931348623157e+308"] end
+null
+true
+
+[1E+1000,-1E+1000 | length | tojson] | unique == if have_decnum then ["1E+1000"] else ["1.7976931348623157e+308"] end
+null
+true
 
 # Using a keyword as variable/label name
 

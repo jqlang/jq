@@ -732,6 +732,21 @@ int jvp_number_is_nan(jv n) {
   return isnan(n.u.number);
 }
 
+jv jv_number_abs(jv n) {
+  assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
+
+#ifdef USE_DECNUM
+  if (JVP_HAS_FLAGS(n, JVP_FLAGS_NUMBER_LITERAL)) {
+    jvp_literal_number* m = jvp_literal_number_alloc(jvp_dec_number_ptr(n)->digits);
+
+    decNumberAbs(&m->num_decimal, jvp_dec_number_ptr(n), DEC_CONTEXT());
+    jv r = {JVP_FLAGS_NUMBER_LITERAL, 0, 0, 0, {&m->refcnt}};
+    return r;
+  }
+#endif
+  return jv_number(fabs(jv_number_value(n)));
+}
+
 jv jv_number_negate(jv n) {
   assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
 
