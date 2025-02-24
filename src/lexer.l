@@ -40,8 +40,8 @@ struct lexer_param;
 
 "#" { yy_push_state(IN_COMMENT, yyscanner); }
 <IN_COMMENT>{
-  \\[\\\n]|. { }
-  \n { yy_pop_state(yyscanner); }
+  \\(\\|\r?\n)|. { }
+  \r?\n { yy_pop_state(yyscanner); }
 }
 <IN_COMMENT><<EOF>> { yy_pop_state(yyscanner); }
 
@@ -130,7 +130,7 @@ struct lexer_param;
 \.[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return FIELD;}
 \$([a-zA-Z_][a-zA-Z_0-9]*::)*[a-zA-Z_][a-zA-Z_0-9]*  { yylval->literal = jv_string(yytext+1); return BINDING;}
 
-[ \n\t]+  {}
+[ \r\n\t]+  {}
 
 . { return INVALID_CHARACTER; }
 
