@@ -39,6 +39,31 @@ if test "$USE_MAINTAINER_MODE" = yes; then
   AC_CHECK_PROGS(LEX, flex lex)
 fi
 
+AC_ARG_WITH([seccomp],
+    [AS_HELP_STRING([--with-seccomp=prefix],
+        [try this for a non-standard install prefix of libseccomp2])],
+    [],
+    [with_seccomp=yes])
+
+AS_IF([test "x$with_seccomp" != xno], [
+    AS_IF([test "x$with_seccomp" != xyes], [
+        CFLAGS="$CFLAGS -I${with_seccomp}/include"
+        LDFLAGS="$LDFLAGS -L${with_seccomp}/lib"
+    ])
+    # check for libseccomp2
+    have_seccomp=0
+    AC_CHECK_HEADER("seccomp.h",
+        AC_CHECK_LIB([seccomp],[seccomp_init],[LIBS="$LIBS -lseccomp"; have_seccomp=1;],
+                     [AC_MSG_ERROR([You must install libseccomp-dev.])]))
+    # handle check results
+    AS_IF([test $have_seccomp = 1], [
+        AC_DEFINE([HAVE_SECCOMP], 1, [Define to 1 if libseccomp2 is installed])
+    ], [
+        AC_MSG_NOTICE([libseccomp2 was not found.])
+        AC_MSG_NOTICE([Try setting the location using '--with-seccomp=PREFIX'])
+    ])
+])
+
 dnl Check for valgrind
 AC_CHECK_PROGS(valgrind_cmd, valgrind)
 if test "x$valgrind_cmd" = "x" ; then
