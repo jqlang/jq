@@ -155,6 +155,13 @@ cmp $d/out $d/expected
 printf "[1,2][3,4]\n" | $JQ -cs add > $d/out 2>&1
 cmp $d/out $d/expected
 
+# Regression test for #3273
+echo "[[[0],1],[[0]],[[0],2],[[0]]]" > $d/expected
+printf "[1][2]" | $JQ -c -s --stream . > $d/out 2>&1
+cmp $d/out $d/expected
+printf "[1][2]\n" | $JQ -c -s --stream . > $d/out 2>&1
+cmp $d/out $d/expected
+
 # Regression test for --raw-output0
 printf "a\0b\0" > $d/expected
 printf '["a", "b"]' | $VALGRIND $Q $JQ --raw-output0 '.[]' > $d/out
