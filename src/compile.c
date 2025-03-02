@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,7 +6,6 @@
 #include "bytecode.h"
 #include "locfile.h"
 #include "jv_alloc.h"
-#include "linker.h"
 
 /*
   The intermediate representation for jq filters is as a sequence of
@@ -1374,7 +1372,7 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
   bc->globals = jv_mem_alloc(sizeof(struct symbol_table));
   int ncfunc = count_cfunctions(b);
   bc->globals->ncfunctions = 0;
-  bc->globals->cfunctions = jv_mem_calloc(ncfunc, sizeof(struct cfunction));
+  bc->globals->cfunctions = jv_mem_calloc(ncfunc ? ncfunc : 1, sizeof(struct cfunction));
   bc->globals->cfunc_names = jv_array();
   bc->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_null());
   jv env = jv_invalid();

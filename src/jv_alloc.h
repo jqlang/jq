@@ -2,7 +2,6 @@
 #define JV_ALLOC_H
 
 #include <stddef.h>
-#include "jv.h"
 
 void* jv_mem_alloc(size_t);
 void* jv_mem_alloc_unguarded(size_t);

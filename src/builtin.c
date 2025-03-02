@@ -757,9 +757,12 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     input = f_tostring(jq, input);
     const unsigned char* data = (const unsigned char*)jv_string_value(input);
     int len = jv_string_length_bytes(jv_copy(input));
+    if (len == 0) {
+      jv_free(input);
+      return jv_string("");
+    }
     size_t decoded_len = (3 * (size_t)len) / 4; // 3 usable bytes for every 4 bytes of input
     char *result = jv_mem_calloc(decoded_len, sizeof(char));
-    memset(result, 0, decoded_len * sizeof(char));
     uint32_t ri = 0;
     int input_bytes_read=0;
     uint32_t code = 0;

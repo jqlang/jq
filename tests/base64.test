@@ -2,6 +2,10 @@
 # Blank lines and lines starting with # are ignored
 
 @base64
+""
+""
+
+@base64
 "<>&'\"\t"
 "PD4mJyIJ"
 
@@ -14,6 +18,10 @@
 @base64
 "foóbar\n"
 "Zm/Ds2Jhcgo="
+
+@base64d
+""
+""
 
 @base64d
 "Zm/Ds2Jhcgo="

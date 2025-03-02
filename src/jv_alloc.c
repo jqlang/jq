@@ -1,7 +1,8 @@
-#include <stdlib.h>
+#include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "jv_alloc.h"
+#include "jv.h"
 
 struct nomem_handler {
     jv_nomem_handler_f handler;
@@ -150,6 +151,7 @@ void* jv_mem_alloc_unguarded(size_t sz) {
 }
 
 void* jv_mem_calloc(size_t nemb, size_t sz) {
+  assert(nemb > 0 && sz > 0);
   void* p = calloc(nemb, sz);
   if (!p) {
     memory_exhausted();
@@ -158,6 +160,7 @@ void* jv_mem_calloc(size_t nemb, size_t sz) {
 }
 
 void* jv_mem_calloc_unguarded(size_t nemb, size_t sz) {
+  assert(nemb > 0 && sz > 0);
   return calloc(nemb, sz);
 }
 
