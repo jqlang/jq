@@ -48,6 +48,7 @@ struct lexer_param;
 
 
 %token INVALID_CHARACTER
+%token UTF8_BOM
 %token <literal> IDENT
 %token <literal> FIELD
 %token <literal> BINDING
@@ -287,12 +288,14 @@ static block gen_loc_object(location *loc, struct locfile *locations) {
 
 %%
 TopLevel:
-Module Imports Exp {
-  *answer = BLOCK($1, $2, gen_op_simple(TOP), $3);
+MsBomOpt Module Imports Exp {
+  *answer = BLOCK($2, $3, gen_op_simple(TOP), $4);
 } |
-Module Imports FuncDefs {
-  *answer = BLOCK($1, $2, $3);
+MsBomOpt Module Imports FuncDefs {
+  *answer = BLOCK($2, $3, $4);
 }
+
+MsBomOpt: UTF8_BOM | %empty;
 
 Module:
 %empty {
