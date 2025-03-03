@@ -27,43 +27,64 @@
 // Color table. See https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 // for how to choose these. The order is same as jv_kind definition, and
 // the last color is used for object keys.
-static char color_bufs[8][16];
-static const char *color_bufps[8];
-static const char *const def_colors[] =
-  {COL("0;90"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
+static const char *colors[] =
+  {COL("0;90"),    COL("0;39"),      COL("0;39"),     COL("0;39"),\
    COL("0;32"),    COL("1;39"),      COL("1;39"),     COL("1;34")};
+#define COLORS_LEN (sizeof(colors) / sizeof(colors[0]))
 #define FIELD_COLOR (colors[7])
 
-static const char *const *colors = def_colors;
-
-int
-jq_set_colors(const char *c)
-{
-  const char *e;
-  size_t i;
-
-  if (c == NULL)
+// will leak memory if called more than once
+// will not reset previous colors
+int jq_set_colors(const char *codes) {
+  if (codes == NULL)
     return 1;
-  colors = def_colors;
-  memset(color_bufs, 0, sizeof(color_bufs));
-  for (i = 0; i < sizeof(def_colors) / sizeof(def_colors[0]); i++)
-    color_bufps[i] = def_colors[i];
-  for (i = 0; i < sizeof(def_colors) / sizeof(def_colors[0]) && *c != '\0'; i++, c = e) {
-    if ((e = strchr(c, ':')) == NULL)
-      e = c + strlen(c);
-    if ((size_t)(e - c) > sizeof(color_bufs[i]) - 4 /* ESC [ m NUL */)
-      return 0;
-    color_bufs[i][0] = ESC[0];
-    color_bufs[i][1] = '[';
-    (void) strncpy(&color_bufs[i][2], c, e - c);
-    if (strspn(&color_bufs[i][2], "0123456789;") < strlen(&color_bufs[i][2]))
-      return 0;
-    color_bufs[i][2 + (e - c)] = 'm';
-    color_bufps[i] = color_bufs[i];
-    if (e[0] == ':')
-      e++;
+
+  // the start of each color code in the env var, and the byte after the end of the last one
+  const char *offsets[COLORS_LEN + 1];
+  size_t num_colors;
+
+  for (num_colors = 0; num_colors < COLORS_LEN; num_colors++) {
+    offsets[num_colors] = codes;
+    letter:
+    switch (codes[0]) {
+    // technically posix doesn't specify ascii so a range wouldn't be portable
+    case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': case ';':
+      codes++;
+      goto letter; // loops until end of color code
+    case ':':
+      codes++;
+      continue; // next color
+    case '\0':
+      goto var_end; // done
+    default:
+      return 0; // invalid character
+    }
   }
-  colors = color_bufps;
+  var_end:
+  if (offsets[num_colors] != codes) {
+    // count the last color and store its end (plus one byte for consistency)
+    // an empty last color would be ignored (for cases like "" and "0:")
+    num_colors++;
+    offsets[num_colors] = codes + 1;
+  } else if (num_colors == 0) {
+    return 0;
+  }
+
+  // add ESC '[' 'm' to each string
+  // '\0' is already included in difference of offsets
+  char *colors_buf = jv_mem_alloc(offsets[num_colors] - offsets[0] + 3 * num_colors);
+  for (size_t i = 0; i < num_colors; i++) {
+    colors[i] = colors_buf;
+    size_t len = offsets[i + 1] - 1 - offsets[i];
+
+    colors_buf[0] = ESC[0];
+    colors_buf[1] = '[';
+    memcpy(colors_buf + 2, offsets[i], len);
+    colors_buf[2 + len] = 'm';
+    colors_buf[3 + len] = '\0';
+
+    colors_buf += len + 4;
+  }
   return 1;
 }
 
