@@ -17,6 +17,9 @@ PATH=$JQBASEDIR:$PATH $JQBASEDIR/tests/jq-f-test.sh > /dev/null
 SHELL=/bin/sh
 export SHELL
 
+unset JQ_COLORS
+unset NO_COLOR
+
 if [ -f "$JQBASEDIR/.libs/libinject_errors.so" ]; then
   # Do some simple error injection tests to check that we're handling
   # I/O errors correctly.
@@ -413,7 +416,6 @@ if [ "$($VALGRIND $Q $JQ -n '{"a":"xyz"} | halt_error(1)' 2>&1)" != '{"a":"xyz"}
 fi
 
 # Check $JQ_COLORS
-unset JQ_COLORS
 
 ## Default colors, null input
 $JQ -Ccn . > $d/color
@@ -552,7 +554,6 @@ test_no_color=true
 $msys  && test_no_color=false
 $mingw && test_no_color=false
 if $test_no_color && command -v script >/dev/null 2>&1; then
-  unset NO_COLOR
   if script -qc echo /dev/null >/dev/null 2>&1; then
     faketty() { script -qec "$*" /dev/null; }
   else # macOS
