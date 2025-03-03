@@ -27,43 +27,71 @@
 // Color table. See https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 // for how to choose these. The order is same as jv_kind definition, and
 // the last color is used for object keys.
-static char color_bufs[8][16];
-static const char *color_bufps[8];
-static const char *const def_colors[] =
-  {COL("0;90"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
+#define DEF_COLORS \
+  {COL("0;90"),    COL("0;39"),      COL("0;39"),     COL("0;39"),\
    COL("0;32"),    COL("1;39"),      COL("1;39"),     COL("1;34")};
+static const char *const def_colors[] = DEF_COLORS;
+static const char *colors[] = DEF_COLORS;
+#define COLORS_LEN (sizeof(colors) / sizeof(colors[0]))
 #define FIELD_COLOR (colors[7])
 
-static const char *const *colors = def_colors;
-
-int
-jq_set_colors(const char *c)
-{
-  const char *e;
-  size_t i;
-
+static char *colors_buf = NULL;
+int jq_set_colors(const char *c) {
   if (c == NULL)
     return 1;
-  colors = def_colors;
-  memset(color_bufs, 0, sizeof(color_bufs));
-  for (i = 0; i < sizeof(def_colors) / sizeof(def_colors[0]); i++)
-    color_bufps[i] = def_colors[i];
-  for (i = 0; i < sizeof(def_colors) / sizeof(def_colors[0]) && *c != '\0'; i++, c = e) {
-    if ((e = strchr(c, ':')) == NULL)
-      e = c + strlen(c);
-    if ((size_t)(e - c) > sizeof(color_bufs[i]) - 4 /* ESC [ m NUL */)
+  const char *offsets[COLORS_LEN + 1]; // extra item for the end of the last string
+
+  size_t cl = 0;
+  size_t cn = 0;
+
+  while (cl < COLORS_LEN) {
+    offsets[cl++] = c;
+    // gcc won't optimize out strspn
+    letter:
+    switch (c++[0]) {
+    // technically posix doesn't specify ascii so a range wouldn't be portable
+    case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': case ';':
+      goto letter;
+    case ':':
+      continue;
+    case '\0':
+      goto var_end;
+    default:
       return 0;
-    color_bufs[i][0] = ESC[0];
-    color_bufs[i][1] = '[';
-    (void) strncpy(&color_bufs[i][2], c, e - c);
-    if (strspn(&color_bufs[i][2], "0123456789;") < strlen(&color_bufs[i][2]))
-      return 0;
-    color_bufs[i][2 + (e - c)] = 'm';
-    color_bufps[i] = color_bufs[i];
-    if (e[0] == ':')
-      e++;
+    }
   }
-  colors = color_bufps;
+  var_end:
+  // don't override last color on empty variable or trailing :
+  if (offsets[--cl] != c - 1) {
+    offsets[++cl] = c;
+  } else if (cl == 0) {
+    if (colors_buf != NULL) {
+      jv_mem_free(colors_buf);
+      colors_buf = NULL;
+    }
+    goto reset;
+  }
+
+  colors_buf = jv_mem_realloc(
+    colors_buf,
+    // add ESC '[' 'm' to each string
+    // '\0' is already included in difference of offsets
+    offsets[cl] - offsets[0] + 3 * cl
+  );
+  char *cb = colors_buf;
+  for (; cn < cl; cn++) {
+    colors[cn] = cb;
+    cb[0] = ESC[0];
+    cb[1] = '[';
+    size_t len = offsets[cn + 1] - 1 - offsets[cn];
+    memcpy(cb + 2, offsets[cn], len);
+    cb[len + 2] = 'm';
+    cb[len + 3] = '\0';
+    cb += len + 4;
+  }
+  reset:
+  for (; cn < COLORS_LEN; cn++)
+    colors[cn] = def_colors[cn];
   return 1;
 }
 
