@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include "jv.h"
 #include "jv_alloc.h"
 #include "jv_private.h"
 
@@ -552,6 +553,10 @@ jv jv_keys_unsorted(jv x) {
 jv jv_keys(jv x) {
   if (jv_get_kind(x) == JV_KIND_OBJECT) {
     int nkeys = jv_object_length(jv_copy(x));
+    if (nkeys == 0) {
+      jv_free(x);
+      return jv_array();
+    }
     jv* keys = jv_mem_calloc(nkeys, sizeof(jv));
     int kidx = 0;
     jv_object_foreach(x, key, value) {
@@ -673,6 +678,11 @@ static struct sort_entry* sort_items(jv objects, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
   int n = jv_array_length(jv_copy(objects));
+  if (n == 0) {
+    jv_free(objects);
+    jv_free(keys);
+    return NULL;
+  }
   struct sort_entry* entries = jv_mem_calloc(n, sizeof(struct sort_entry));
   for (int i=0; i<n; i++) {
     entries[i].object = jv_array_get(jv_copy(objects), i);
