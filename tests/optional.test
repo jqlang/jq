@@ -12,6 +12,11 @@ last(range(365 * 67)|("1970-03-01T01:02:03Z"|strptime("%Y-%m-%dT%H:%M:%SZ")|mkti
 null
 [2037,1,11,1,2,3,3,41]
 
+# Regression test for #3276
+fromdate
+"2038-01-19T03:14:08Z"
+2147483648
+
 # %e is not available on mingw/WIN32
 strftime("%A, %B %e, %Y")
 1435677542.822351

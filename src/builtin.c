@@ -5,6 +5,9 @@
 # define _XPG6
 # define __EXTENSIONS__
 #endif
+#ifdef __OpenBSD__
+# define _BSD_SOURCE
+#endif
 #include <sys/time.h>
 #include <stdlib.h>
 #include <stddef.h>
