@@ -585,6 +585,11 @@ static jv jvp_literal_number_new(const char * literal) {
     return JV_INVALID;
   }
   if (decNumberIsNaN(&n->num_decimal)) {
+    // Reject NaN with payload.
+    if (n->num_decimal.digits > 1 || *n->num_decimal.lsu != 0) {
+      jv_mem_free(n);
+      return JV_INVALID;
+    }
     jv_mem_free(n);
     return jv_number(NAN);
   }

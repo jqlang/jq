@@ -2110,11 +2110,17 @@ tojson | fromjson
 {"a":nan}
 {"a":null}
 
-# also "nan with payload" #2985
-if have_decnum then fromjson else nan end | isnan
-"nan1234"
+# NaN with payload is not parsed
+.[] | try (fromjson | isnan) catch .
+["NaN","-NaN","NaN1","NaN10","NaN100","NaN1000","NaN10000","NaN100000"]
 true
-
+true
+"Invalid numeric literal at EOF at line 1, column 4 (while parsing 'NaN1')"
+"Invalid numeric literal at EOF at line 1, column 5 (while parsing 'NaN10')"
+"Invalid numeric literal at EOF at line 1, column 6 (while parsing 'NaN100')"
+"Invalid numeric literal at EOF at line 1, column 7 (while parsing 'NaN1000')"
+"Invalid numeric literal at EOF at line 1, column 8 (while parsing 'NaN10000')"
+"Invalid numeric literal at EOF at line 1, column 9 (while parsing 'NaN100000')"
 
 # calling input/0, or debug/0 in a test doesn't crash jq
 

@@ -669,13 +669,6 @@ if ! x=$($JQ -cn "$(printf '[\r\n1,# comment\r\n2,# comment\\\r\ncomment\r\n3\r\
   exit 1
 fi
 
-# CVE-2023-50268: No stack overflow comparing a nan with a large payload
-if $JQ -ne 'have_decnum'; then
-  $VALGRIND $Q $JQ '1 != .' <<\EOF >/dev/null
-  Nan4000
-EOF
-fi
-
 # Allow passing the inline jq script before -- #2919
 if ! r=$($JQ --args -rn -- '$ARGS.positional[0]' bar) || [ "$r" != bar ]; then
     echo "passing the inline script after -- didn't work"
