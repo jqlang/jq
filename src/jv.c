@@ -1324,6 +1324,32 @@ jv jv_string_indexes(jv j, jv k) {
   return a;
 }
 
+jv jv_string_repeat(jv j, int n) {
+  assert(JVP_HAS_KIND(j, JV_KIND_STRING));
+  if (n < 0) {
+    jv_free(j);
+    return jv_null();
+  }
+  int len = jv_string_length_bytes(jv_copy(j));
+  int64_t res_len = (int64_t)len * n;
+  if (res_len >= INT_MAX) {
+    jv_free(j);
+    return jv_invalid_with_msg(jv_string("Repeat string result too long"));
+  }
+  if (res_len == 0) {
+    jv_free(j);
+    return jv_string("");
+  }
+  jv res = jv_string_empty(res_len);
+  res = jvp_string_append(res, jv_string_value(j), len);
+  for (int curr = len, grow; curr < res_len; curr += grow) {
+    grow = MIN(res_len - curr, curr);
+    res = jvp_string_append(res, jv_string_value(res), grow);
+  }
+  jv_free(j);
+  return res;
+}
+
 jv jv_string_split(jv j, jv sep) {
   assert(JVP_HAS_KIND(j, JV_KIND_STRING));
   assert(JVP_HAS_KIND(sep, JV_KIND_STRING));
