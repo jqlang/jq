@@ -497,7 +497,7 @@ static jv f_length(jq_state *jq, jv input) {
   } else if (jv_get_kind(input) == JV_KIND_STRING) {
     return jv_number(jv_string_length_codepoints(input));
   } else if (jv_get_kind(input) == JV_KIND_NUMBER) {
-    jv r = jv_number(fabs(jv_number_value(input)));
+    jv r = jv_number_abs(input);
     jv_free(input);
     return r;
   } else if (jv_get_kind(input) == JV_KIND_NULL) {
