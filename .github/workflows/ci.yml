@@ -88,7 +88,6 @@ jobs:
           ./configure \
             --host=${{ matrix.CC }} \
             --disable-docs \
-            --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
             --enable-all-static \
@@ -154,7 +153,6 @@ jobs:
           ./configure \
             --host="${{ matrix.target }}$(uname -r)" \
             --disable-docs \
-            --disable-valgrind \
             --with-oniguruma=builtin \
             --enable-static \
             --enable-all-static \
@@ -230,7 +228,6 @@ jobs:
           autoreconf -i
           ./configure \
             --disable-docs \
-            --disable-valgrind \
             --with-oniguruma=builtin \
             --disable-shared \
             --enable-static \
@@ -276,7 +273,6 @@ jobs:
           autoreconf -i
           ./configure \
             --disable-docs \
-            --disable-valgrind \
             --with-oniguruma=builtin
           make distcheck
           make dist dist-zip

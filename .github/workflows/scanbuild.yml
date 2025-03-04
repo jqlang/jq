@@ -49,7 +49,7 @@ jobs:
                 MAKEVARS: ${{ matrix.makevars }}
               run: |
                 autoreconf -i
-                ./configure --with-oniguruma=builtin $COVERAGE
+                ./configure --with-oniguruma=builtin --enable-valgrind $COVERAGE
                 scan-build --keep-going make -j4
             - name: Test
               env:
