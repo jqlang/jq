@@ -879,6 +879,24 @@ static jv f_group_by_impl(jq_state *jq, jv input, jv keys) {
   }
 }
 
+static jv f_unique(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_ARRAY) {
+    return jv_unique(input, jv_copy(input));
+  } else {
+    return type_error(input, "cannot be sorted, as it is not an array");
+  }
+}
+
+static jv f_unique_by_impl(jq_state *jq, jv input, jv keys) {
+  if (jv_get_kind(input) == JV_KIND_ARRAY &&
+      jv_get_kind(keys) == JV_KIND_ARRAY &&
+      jv_array_length(jv_copy(input)) == jv_array_length(jv_copy(keys))) {
+    return jv_unique(input, keys);
+  } else {
+    return type_error2(input, keys, "cannot be sorted, as they are not both arrays");
+  }
+}
+
 #ifdef HAVE_LIBONIG
 static int f_match_name_iter(const UChar* name, const UChar *name_end, int ngroups,
     int *groups, regex_t *reg, void *arg) {
@@ -1912,6 +1930,8 @@ BINOPS
   CFUNC(f_sort, "sort", 1),
   CFUNC(f_sort_by_impl, "_sort_by_impl", 2),
   CFUNC(f_group_by_impl, "_group_by_impl", 2),
+  CFUNC(f_unique, "unique", 1),
+  CFUNC(f_unique_by_impl, "_unique_by_impl", 2),
   CFUNC(f_bsearch, "bsearch", 2),
   CFUNC(f_min, "min", 1),
   CFUNC(f_max, "max", 1),
