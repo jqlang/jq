@@ -24,6 +24,10 @@
 ""
 
 @base64d
+"="
+""
+
+@base64d
 "Zm/Ds2Jhcgo="
 "foóbar\n"
 
