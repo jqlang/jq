@@ -32,6 +32,8 @@ stamp-h1
 config.log
 config.status
 autom4te.cache
+confdefs.h
+conftest*
 INSTALL
 Makefile
 jq-*.tar.gz
