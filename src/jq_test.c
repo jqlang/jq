@@ -382,7 +382,11 @@ static void run_jq_pthread_tests() {
 
     // wait for all threads
     for(a = 0; a < NUMBER_OF_THREADS; ++a) {
+#ifdef __MVS__
+        if (threads[a].__ != 0) {
+#else
         if (threads[a] != 0) {
+#endif
             pthread_join(threads[a], NULL);
         }
     }
