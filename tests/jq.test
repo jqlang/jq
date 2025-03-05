@@ -2319,3 +2319,11 @@ try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"
 try ["OK", setpath([[1]]; 1)] catch ["KO", .]
 []
 ["KO","Cannot update field at array index of array"]
+
+# regression test for #3227
+foreach .[] as $x (0, 1; . + $x)
+[1, 2]
+1
+3
+2
+4
