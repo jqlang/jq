@@ -27,43 +27,42 @@
 // Color table. See https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 // for how to choose these. The order is same as jv_kind definition, and
 // the last color is used for object keys.
-static char color_bufs[8][16];
-static const char *color_bufps[8];
-static const char *const def_colors[] =
+static const char *const default_colors[] =
   {COL("0;90"),    COL("0;39"),      COL("0;39"),     COL("0;39"),
    COL("0;32"),    COL("1;39"),      COL("1;39"),     COL("1;34")};
 #define FIELD_COLOR (colors[7])
 
-static const char *const *colors = def_colors;
+static const char *const *colors = default_colors;
 
 int
 jq_set_colors(const char *c)
 {
-  const char *e;
-  size_t i;
-
   if (c == NULL)
     return 1;
-  colors = def_colors;
-  memset(color_bufs, 0, sizeof(color_bufs));
-  for (i = 0; i < sizeof(def_colors) / sizeof(def_colors[0]); i++)
-    color_bufps[i] = def_colors[i];
-  for (i = 0; i < sizeof(def_colors) / sizeof(def_colors[0]) && *c != '\0'; i++, c = e) {
-    if ((e = strchr(c, ':')) == NULL)
-      e = c + strlen(c);
-    if ((size_t)(e - c) > sizeof(color_bufs[i]) - 4 /* ESC [ m NUL */)
+
+  static const char *color_bufs[8];
+  for (int i = 0; i < 8; i++)
+    color_bufs[i] = default_colors[i];
+
+  const char *e;
+  for (int i = 0; i < 8 && *c != '\0'; i++, c = e) {
+    size_t l;
+    if ((e = strchr(c, ':')) != NULL)
+      l = e++ - c;
+    else
+      e = c + (l = strlen(c));
+    char *color_buf = jv_mem_alloc(l + 4);
+    color_buf[0] = ESC[0];
+    color_buf[1] = '[';
+    strncpy(&color_buf[2], c, l);
+    color_buf[2 + l] = 'm';
+    color_buf[2 + l + 1] = '\0';
+    if (strspn(&color_buf[2], "0123456789;") < l)
       return 0;
-    color_bufs[i][0] = ESC[0];
-    color_bufs[i][1] = '[';
-    (void) strncpy(&color_bufs[i][2], c, e - c);
-    if (strspn(&color_bufs[i][2], "0123456789;") < strlen(&color_bufs[i][2]))
-      return 0;
-    color_bufs[i][2 + (e - c)] = 'm';
-    color_bufps[i] = color_bufs[i];
-    if (e[0] == ':')
-      e++;
+    color_bufs[i] = color_buf;
   }
-  colors = color_bufps;
+
+  colors = color_bufs;
   return 1;
 }
 
