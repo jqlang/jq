@@ -271,12 +271,11 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
         fclose(state->current_input);
       }
       state->current_input = NULL;
-      jv_free(state->current_filename);
-      state->current_filename = jv_invalid();
-      state->current_line = 0 ;
     }
     const char *f = next_file(state);
     if (f != NULL) {
+      jv_free(state->current_filename);
+      state->current_line = 0;
       if (!strcmp(f, "-")) {
         state->current_input = stdin;
         state->current_filename = jv_string("<stdin>");
@@ -288,7 +287,6 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
           state->failures++;
         }
       }
-      state->current_line = 0;
     }
   }
 
@@ -344,8 +342,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
       }
     }
   }
-  return state->curr_file == state->nfiles &&
-      (!state->current_input || feof(state->current_input) || ferror(state->current_input));
+  return state->curr_file == state->nfiles && !state->current_input;
 }
 
 jv jq_util_input_next_input_cb(jq_state *jq, void *data) {
@@ -399,7 +396,6 @@ jv jq_util_input_get_current_line(jq_state* jq) {
 // When slurping, it returns just one value
 jv jq_util_input_next_input(jq_util_input_state *state) {
   int is_last = 0;
-  int has_more = 0;
   jv value = jv_invalid(); // need more input
   do {
     if (state->parser == NULL) {
@@ -429,10 +425,6 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
       }
       value = jv_parser_next(state->parser);
       if (jv_is_valid(state->slurped)) {
-        // When slurping an input that doesn't have a trailing newline,
-        // we might have more than one value on the same line, so let's check
-        // to see if we have more data to parse.
-        has_more = jv_parser_remaining(state->parser);
         if (jv_is_valid(value)) {
           state->slurped = jv_array_append(state->slurped, value);
           value = jv_invalid();
@@ -442,7 +434,7 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
         return value;
       }
     }
-  } while (!is_last || has_more);
+  } while (!is_last);
 
   if (jv_is_valid(state->slurped)) {
     value = state->slurped;
