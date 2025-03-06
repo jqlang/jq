@@ -514,6 +514,8 @@ static pfunc check_literal(struct jv_parser* p) {
   case 'f': pattern = "false"; plen = 5; v = jv_false(); break;
   case '\'':
     return "Invalid string literal; expected \", but got '";
+  case 0x1e:
+    return "Record Separator (RS) detected, this might be application/json-seq. Try using the --seq option.";
   case 'n':
     // if it starts with 'n', it could be a literal "nan"
     if (p->tokenbuf[1] == 'u') {
