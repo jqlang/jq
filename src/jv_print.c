@@ -48,25 +48,14 @@ int jq_set_colors(const char *code_str) {
 
   for (num_colors = 0;; num_colors++) {
     codes[num_colors] = code_str;
-    letter:
-    switch (code_str[0]) {
-    // technically posix doesn't specify ascii so a range wouldn't be portable
-    case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': case ';':
-      code_str++;
-      goto letter; // loops until end of color code
-    case ':':
-      code_str++;
-      continue; // next color
-    case '\0':
-      goto set_codes_end; // done
-    default:
+    code_str += strspn(code_str, "0123456789;");
+    if (code_str[0] == '\0' || num_colors + 1 >= COLORS_LEN) {
+      break;
+    } else if (code_str[0] != ':') {
       return 0; // invalid character
     }
-    if (num_colors + 1 >= COLORS_LEN) {
-      goto set_codes_end; // done
-    }
+    code_str++;
   }
-  set_codes_end:
   if (codes[num_colors] != code_str) {
     // count the last color and store its end (plus one byte for consistency with starts)
     // an empty last color would be ignored (for cases like "" and "0:")
