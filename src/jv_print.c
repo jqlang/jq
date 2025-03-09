@@ -42,18 +42,20 @@ int jq_set_colors(const char *code_str) {
 
   // the start of each color code in the env var, and the byte after the end of the last one
   const char *codes[COLORS_LEN + 1];
-  size_t num_colors = 0;
+  size_t num_colors;
   // must be initialized before `goto default_colors`, used later to loop over every color
   size_t ci = 0;
 
-  while (num_colors < COLORS_LEN) {
-    codes[num_colors++] = code_str;
+  for (num_colors = 0; num_colors < COLORS_LEN; num_colors++) {
+    codes[num_colors] = code_str;
     letter:
-    switch (code_str++[0]) {
+    switch (code_str[0]) {
     // technically posix doesn't specify ascii so a range wouldn't be portable
     case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': case ';':
+      code_str++;
       goto letter; // loops until end of color code
     case ':':
+      code_str++;
       continue; // next color
     case '\0':
       goto set_codes_end; // done
@@ -62,10 +64,11 @@ int jq_set_colors(const char *code_str) {
     }
   }
   set_codes_end:
-  if (codes[--num_colors] != code_str - 1) {
+  if (codes[num_colors] != code_str) {
     // count the last color and store its end (plus one byte for consistency with starts)
     // an empty last color would be ignored (for cases like "" and "0:")
-    codes[++num_colors] = code_str;
+    num_colors++;
+    codes[num_colors] = code_str + 1;
   } else if (num_colors == 0) {
     if (colors_buf != NULL) {
       jv_mem_free(colors_buf);
