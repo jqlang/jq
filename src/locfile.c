@@ -78,16 +78,18 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
     return;
   }
   if (loc.start == -1) {
-    jq_report_error(l->jq, jv_string_fmt("jq: error: %s\n<unknown location>", jv_string_value(m1)));
+    jq_report_error(l->jq, jv_string_fmt("jq: error: %s", jv_string_value(m1)));
     jv_free(m1);
     return;
   }
-  jv m2 = jv_string_fmt("%s at %s, line %d, column %d:\n%.*s%*s",
+  jv underline = jv_string_repeat(jv_string("^"), loc.end - loc.start);
+  jv m2 = jv_string_fmt("%s at %s, line %d, column %d:\n    %.*s\n    %*s",
                         jv_string_value(m1), jv_string_value(l->fname),
                         startline + 1, loc.start - offset + 1,
                         locfile_line_length(l, startline), l->data + offset,
-                        loc.start - offset, "");
+                        loc.end - offset, jv_string_value(underline));
   jv_free(m1);
+  jv_free(underline);
   jq_report_error(l->jq, m2);
   return;
 }
