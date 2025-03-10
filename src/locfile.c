@@ -82,8 +82,9 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
     jv_free(m1);
     return;
   }
-  jv m2 = jv_string_fmt("%s at %s, line %d:\n%.*s%*s", jv_string_value(m1),
-                        jv_string_value(l->fname), startline + 1,
+  jv m2 = jv_string_fmt("%s at %s, line %d, column %d:\n%.*s%*s",
+                        jv_string_value(m1), jv_string_value(l->fname),
+                        startline + 1, loc.start - offset + 1,
                         locfile_line_length(l, startline), l->data + offset,
                         loc.start - offset, "");
   jv_free(m1);
