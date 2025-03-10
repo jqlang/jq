@@ -108,14 +108,14 @@ struct lexer_param;
 %left '+' '-'
 %left '*' '/' '%'
 %precedence NONOPT /* non-optional; rules for which a specialized
-                      '?' rule should be preferred over Exp '?' */
-%precedence '?'
+                      '?' rule should be preferred over Expr '?' */
+%precedence '?' '.' '[' FIELD
 %precedence "try"
 %precedence "catch"
 
 
-%type <blk> Exp Term
-%type <blk> MkDict MkDictPair ExpD
+%type <blk> Query Expr Term
+%type <blk> DictPairs DictPair DictExpr
 %type <blk> ElseBody
 %type <blk> String QQString
 %type <blk> FuncDef FuncDefs
@@ -287,7 +287,7 @@ static block gen_loc_object(location *loc, struct locfile *locations) {
 
 %%
 TopLevel:
-Module Imports Exp {
+Module Imports Query {
   *answer = BLOCK($1, $2, gen_op_simple(TOP), $3);
 } |
 Module Imports FuncDefs {
@@ -298,7 +298,7 @@ Module:
 %empty {
   $$ = gen_noop();
 } |
-"module" Exp ';' {
+"module" Query ';' {
   if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant");
     $$ = gen_noop();
@@ -328,165 +328,108 @@ FuncDef FuncDefs {
   $$ = block_join($1, $2);
 }
 
-Exp:
-FuncDef Exp %prec FUNCDEF {
+
+Query:
+FuncDef Query %prec FUNCDEF {
   $$ = block_bind_referenced($1, $2, OP_IS_CALL_PSEUDO);
 } |
-
-Term "as" Patterns '|' Exp {
+Term "as" Patterns '|' Query {
   $$ = gen_destructure($1, $3, $5);
 } |
-"reduce" Term "as" Patterns '(' Exp ';' Exp ')' {
-  $$ = gen_reduce($2, $4, $6, $8);
-} |
-
-"foreach" Term "as" Patterns '(' Exp ';' Exp ';' Exp ')' {
-  $$ = gen_foreach($2, $4, $6, $8, $10);
-} |
-
-"foreach" Term "as" Patterns '(' Exp ';' Exp ')' {
-  $$ = gen_foreach($2, $4, $6, $8, gen_noop());
-} |
-
-"if" Exp "then" Exp ElseBody {
-  $$ = gen_cond($2, $4, $5);
-} |
-"if" Exp "then" error {
-  FAIL(@$, "Possibly unterminated 'if' statement");
-  $$ = $2;
-} |
-
-"try" Exp "catch" Exp {
-  $$ = gen_try($2, $4);
-} |
-"try" Exp {
-  $$ = gen_try($2, gen_op_simple(BACKTRACK));
-} |
-"try" Exp "catch" error {
-  FAIL(@$, "Possibly unterminated 'try' statement");
-  $$ = $2;
-} |
-
-"label" BINDING '|' Exp {
+"label" BINDING '|' Query {
   jv v = jv_string_fmt("*label-%s", jv_string_value($2));
   $$ = gen_location(@$, locations, gen_label(jv_string_value(v), $4));
   jv_free($2);
   jv_free(v);
 } |
-
-Exp '?' {
-  $$ = gen_try($1, gen_op_simple(BACKTRACK));
-} |
-
-Exp '=' Exp {
-  $$ = gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3)));
-} |
-
-Exp "or" Exp {
-  $$ = gen_or($1, $3);
-} |
-
-Exp "and" Exp {
-  $$ = gen_and($1, $3);
-} |
-
-Exp "//" Exp {
-  $$ = gen_definedor($1, $3);
-} |
-
-Exp "//=" Exp {
-  $$ = gen_definedor_assign($1, $3);
-} |
-
-Exp "|=" Exp {
-  $$ = gen_call("_modify", BLOCK(gen_lambda($1), gen_lambda($3)));
-} |
-
-Exp '|' Exp {
+Query '|' Query {
   $$ = block_join($1, $3);
 } |
-
-Exp ',' Exp {
+Query ',' Query {
   $$ = gen_both($1, $3);
 } |
-
-Exp '+' Exp {
-  $$ = gen_binop($1, $3, '+');
-} |
-
-Exp "+=" Exp {
-  $$ = gen_update($1, $3, '+');
-} |
-
-'-' Exp {
-  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
-} |
-
-Exp '-' Exp {
-  $$ = gen_binop($1, $3, '-');
-} |
-
-Exp "-=" Exp {
-  $$ = gen_update($1, $3, '-');
-} |
-
-Exp '*' Exp {
-  $$ = gen_binop($1, $3, '*');
-} |
-
-Exp "*=" Exp {
-  $$ = gen_update($1, $3, '*');
-} |
-
-Exp '/' Exp {
-  $$ = gen_binop($1, $3, '/');
-} |
-
-Exp '%' Exp {
-  $$ = gen_binop($1, $3, '%');
-} |
-
-Exp "/=" Exp {
-  $$ = gen_update($1, $3, '/');
-} |
-
-Exp SETMOD Exp {
-  $$ = gen_update($1, $3, '%');
-} |
-
-Exp "==" Exp {
-  $$ = gen_binop($1, $3, EQ);
-} |
-
-Exp "!=" Exp {
-  $$ = gen_binop($1, $3, NEQ);
-} |
-
-Exp '<' Exp {
-  $$ = gen_binop($1, $3, '<');
-} |
-
-Exp '>' Exp {
-  $$ = gen_binop($1, $3, '>');
-} |
-
-Exp "<=" Exp {
-  $$ = gen_binop($1, $3, LESSEQ);
-} |
-
-Exp ">=" Exp {
-  $$ = gen_binop($1, $3, GREATEREQ);
-} |
-
-Term {
+Expr {
   $$ = $1;
 }
+
+
+Expr:
+Expr "//" Expr {
+  $$ = gen_definedor($1, $3);
+} |
+Expr '=' Expr {
+  $$ = gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3)));
+} |
+Expr "or" Expr {
+  $$ = gen_or($1, $3);
+} |
+Expr "and" Expr {
+  $$ = gen_and($1, $3);
+} |
+Expr "//=" Expr {
+  $$ = gen_definedor_assign($1, $3);
+} |
+Expr "|=" Expr {
+  $$ = gen_call("_modify", BLOCK(gen_lambda($1), gen_lambda($3)));
+} |
+Expr '+' Expr {
+  $$ = gen_binop($1, $3, '+');
+} |
+Expr "+=" Expr {
+  $$ = gen_update($1, $3, '+');
+} |
+Expr '-' Expr {
+  $$ = gen_binop($1, $3, '-');
+} |
+Expr "-=" Expr {
+  $$ = gen_update($1, $3, '-');
+} |
+Expr '*' Expr {
+  $$ = gen_binop($1, $3, '*');
+} |
+Expr "*=" Expr {
+  $$ = gen_update($1, $3, '*');
+} |
+Expr '/' Expr {
+  $$ = gen_binop($1, $3, '/');
+} |
+Expr '%' Expr {
+  $$ = gen_binop($1, $3, '%');
+} |
+Expr "/=" Expr {
+  $$ = gen_update($1, $3, '/');
+} |
+Expr SETMOD Expr {
+  $$ = gen_update($1, $3, '%');
+} |
+Expr "==" Expr {
+  $$ = gen_binop($1, $3, EQ);
+} |
+Expr "!=" Expr {
+  $$ = gen_binop($1, $3, NEQ);
+} |
+Expr '<' Expr {
+  $$ = gen_binop($1, $3, '<');
+} |
+Expr '>' Expr {
+  $$ = gen_binop($1, $3, '>');
+} |
+Expr "<=" Expr {
+  $$ = gen_binop($1, $3, LESSEQ);
+} |
+Expr ">=" Expr {
+  $$ = gen_binop($1, $3, GREATEREQ);
+} |
+Term %prec NONOPT {
+  $$ = $1;
+}
+
 
 Import:
 ImportWhat ';' {
   $$ = $1;
 } |
-ImportWhat Exp ';' {
+ImportWhat Query ';' {
   if (!block_is_const($2)) {
     FAIL(@$, "Module metadata must be constant");
     $$ = gen_noop();
@@ -538,12 +481,12 @@ String {
 }
 
 FuncDef:
-"def" IDENT ':' Exp ';' {
+"def" IDENT ':' Query ';' {
   $$ = gen_function(jv_string_value($2), gen_noop(), $4);
   jv_free($2);
 } |
 
-"def" IDENT '(' Params ')' ':' Exp ';' {
+"def" IDENT '(' Params ')' ':' Query ';' {
   $$ = gen_function(jv_string_value($2), $4, $7);
   jv_free($2);
 }
@@ -590,31 +533,20 @@ QQString:
 QQString QQSTRING_TEXT {
   $$ = gen_binop($1, gen_const($2), '+');
 } |
-QQString QQSTRING_INTERP_START Exp QQSTRING_INTERP_END {
+QQString QQSTRING_INTERP_START Query QQSTRING_INTERP_END {
   $$ = gen_binop($1, gen_format($3, jv_copy($<literal>0)), '+');
 }
 
 
 ElseBody:
-"elif" Exp "then" Exp ElseBody {
+"elif" Query "then" Query ElseBody {
   $$ = gen_cond($2, $4, $5);
 } |
-"else" Exp "end" {
+"else" Query "end" {
   $$ = $2;
 } |
 "end" {
   $$ = gen_noop();
-}
-
-ExpD:
-ExpD '|' ExpD {
-  $$ = block_join($1, $3);
-} |
-'-' ExpD {
-  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
-} |
-Term {
-  $$ = $1;
 }
 
 
@@ -671,16 +603,16 @@ Term '.' String %prec NONOPT {
   $$ = gen_noop();
 } |
 /* FIXME: string literals */
-Term '[' Exp ']' '?' {
+Term '[' Query ']' '?' {
   $$ = gen_index_opt($1, $3);
 } |
-Term '[' Exp ']' %prec NONOPT {
+Term '[' Query ']' %prec NONOPT {
   $$ = gen_index($1, $3);
 } |
-Term '.' '[' Exp ']' '?' {
+Term '.' '[' Query ']' '?' {
   $$ = gen_index_opt($1, $4);
 } |
-Term '.' '[' Exp ']' %prec NONOPT {
+Term '.' '[' Query ']' %prec NONOPT {
   $$ = gen_index($1, $4);
 } |
 Term '[' ']' '?' {
@@ -695,23 +627,26 @@ Term '.' '[' ']' '?' {
 Term '.' '[' ']' %prec NONOPT {
   $$ = block_join($1, gen_op_simple(EACH));
 } |
-Term '[' Exp ':' Exp ']' '?' {
+Term '[' Query ':' Query ']' '?' {
   $$ = gen_slice_index($1, $3, $5, INDEX_OPT);
 } |
-Term '[' Exp ':' ']' '?' {
+Term '[' Query ':' ']' '?' {
   $$ = gen_slice_index($1, $3, gen_const(jv_null()), INDEX_OPT);
 } |
-Term '[' ':' Exp ']' '?' {
+Term '[' ':' Query ']' '?' {
   $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX_OPT);
 } |
-Term '[' Exp ':' Exp ']' %prec NONOPT {
+Term '[' Query ':' Query ']' %prec NONOPT {
   $$ = gen_slice_index($1, $3, $5, INDEX);
 } |
-Term '[' Exp ':' ']' %prec NONOPT {
+Term '[' Query ':' ']' %prec NONOPT {
   $$ = gen_slice_index($1, $3, gen_const(jv_null()), INDEX);
 } |
-Term '[' ':' Exp ']' %prec NONOPT {
+Term '[' ':' Query ']' %prec NONOPT {
   $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX);
+} |
+Term '?' {
+  $$ = gen_try($1, gen_op_simple(BACKTRACK));
 } |
 LITERAL {
   $$ = gen_const($1);
@@ -722,21 +657,50 @@ String {
 FORMAT {
   $$ = gen_format(gen_noop(), $1);
 } |
-'(' Exp ')' {
+'-' Term {
+  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
+} |
+'(' Query ')' {
   $$ = $2;
 } |
-'[' Exp ']' {
+'[' Query ']' {
   $$ = gen_collect($2);
 } |
 '[' ']' {
   $$ = gen_const(jv_array());
 } |
-'{' MkDict '}' {
+'{' DictPairs '}' {
   block o = gen_const_object($2);
   if (o.first != NULL)
     $$ = o;
   else
     $$ = BLOCK(gen_subexp(gen_const(jv_object())), $2, gen_op_simple(POP));
+} |
+"reduce" Expr "as" Patterns '(' Query ';' Query ')' {
+  $$ = gen_reduce($2, $4, $6, $8);
+} |
+"foreach" Expr "as" Patterns '(' Query ';' Query ';' Query ')' {
+  $$ = gen_foreach($2, $4, $6, $8, $10);
+} |
+"foreach" Expr "as" Patterns '(' Query ';' Query ')' {
+  $$ = gen_foreach($2, $4, $6, $8, gen_noop());
+} |
+"if" Query "then" Query ElseBody {
+  $$ = gen_cond($2, $4, $5);
+} |
+"if" Query "then" error {
+  FAIL(@$, "Possibly unterminated 'if' statement");
+  $$ = $2;
+} |
+"try" Expr "catch" Expr {
+  $$ = gen_try($2, $4);
+} |
+"try" Expr "catch" error {
+  FAIL(@$, "Possibly unterminated 'try' statement");
+  $$ = $2;
+} |
+"try" Expr {
+  $$ = gen_try($2, gen_op_simple(BACKTRACK));
 } |
 /*
  * This `$$$$varname` hack is strictly private to jq builtins.  DO NOT USE!!
@@ -795,7 +759,7 @@ Args ';' Arg {
 }
 
 Arg:
-Exp {
+Query {
   $$ = gen_lambda($1);
 }
 
@@ -859,7 +823,7 @@ Keyword ':' Pattern {
 String ':' Pattern {
   $$ = gen_object_matcher($1, $3);
 } |
-'(' Exp ')' ':' Pattern {
+'(' Query ')' ':' Pattern {
   jv msg = check_object_key($2);
   if (jv_is_valid(msg)) {
     FAIL(@$, jv_string_value(msg));
@@ -928,61 +892,73 @@ Keyword:
   $$ = jv_string("break");
 }
 
-MkDict:
-%empty {
-  $$=gen_noop();
-} |
- MkDictPair { $$ = $1; }
-| MkDictPair ',' MkDict { $$=block_join($1, $3); }
-| error ',' MkDict { $$ = $3; }
 
-MkDictPair:
-IDENT ':' ExpD {
+DictPairs:
+%empty {
+  $$ = gen_noop();
+} |
+DictPair {
+  $$ = $1;
+} |
+DictPair ',' DictPairs {
+  $$ = block_join($1, $3);
+}
+
+DictPair:
+IDENT ':' DictExpr {
   $$ = gen_dictpair(gen_const($1), $3);
- }
-| Keyword ':' ExpD {
+} |
+Keyword ':' DictExpr {
   $$ = gen_dictpair(gen_const($1), $3);
-  }
-| String ':' ExpD {
+} |
+String ':' DictExpr {
   $$ = gen_dictpair($1, $3);
-  }
-| String {
+} |
+String {
   $$ = gen_dictpair($1, BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
                               gen_op_simple(DUP2), gen_op_simple(INDEX)));
-  }
-| BINDING ':' ExpD {
+} |
+BINDING ':' DictExpr {
   $$ = gen_dictpair(gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))),
                     $3);
   jv_free($1);
-  }
-| BINDING {
+} |
+BINDING {
   $$ = gen_dictpair(gen_const($1),
                     gen_location(@$, locations, gen_op_unbound(LOADV, jv_string_value($1))));
-  }
-| IDENT {
+} |
+IDENT {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
                     gen_index(gen_noop(), gen_const($1)));
-  }
-| "$__loc__" {
+} |
+"$__loc__" {
   $$ = gen_dictpair(gen_const(jv_string("__loc__")),
                     gen_loc_object(&@$, locations));
-  }
-| Keyword {
+} |
+Keyword {
   $$ = gen_dictpair(gen_const(jv_copy($1)),
                     gen_index(gen_noop(), gen_const($1)));
-  }
-| '(' Exp ')' ':' ExpD {
+} |
+'(' Query ')' ':' DictExpr {
   jv msg = check_object_key($2);
   if (jv_is_valid(msg)) {
     FAIL(@$, jv_string_value(msg));
   }
   jv_free(msg);
   $$ = gen_dictpair($2, $5);
-  }
-| error ':' ExpD {
+} |
+error ':' DictExpr {
   FAIL(@$, "May need parentheses around object key expression");
   $$ = $3;
-  }
+}
+
+DictExpr:
+DictExpr '|' DictExpr {
+  $$ = block_join($1, $3);
+} |
+Expr {
+  $$ = $1;
+}
 %%
 
 int jq_parse(struct locfile* locations, block* answer) {
