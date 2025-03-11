@@ -70,8 +70,6 @@ static void test_err_cb(void *data, jv e) {
     e = jv_dump_string(e, JV_PRINT_INVALID);
   if (!strncmp(jv_string_value(e), "jq: error", sizeof("jq: error") - 1))
     snprintf(err_data->buf, sizeof(err_data->buf), "%s", jv_string_value(e));
-  if (strchr(err_data->buf, '\n'))
-    *(strchr(err_data->buf, '\n')) = '\0';
   jv_free(e);
 }
 
@@ -108,18 +106,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
 
     if (skip > 0) {
       skip--;
-
-      // skip past test data
-      while (fgets(buf, sizeof(buf), testdata)) {
-        lineno++;
-        if (buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
-          break;
-      }
-
-      must_fail = 0;
-      check_msg = 0;
-
-      continue;
+      goto next;
     } else if (skip == 0) {
       printf("Skipped %d tests\n", tests_to_skip);
       skip = -1;
@@ -139,37 +126,40 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
 
     if (must_fail) {
       jq_set_error_cb(jq, NULL, NULL);
-      if (!fgets(buf, sizeof(buf), testdata)) { invalid++; break; }
-      lineno++;
-      if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = 0;
       if (compiled) {
-        printf("*** Test program compiled that should not have at line %u: %s\n", lineno, prog);
-        must_fail = 0;
-        check_msg = 0;
-        invalid++;
-        continue;
+        printf("*** Test program compiled successfully, but should fail at line number %u: %s\n", lineno, prog);
+        goto fail;
       }
-      if (check_msg && strcmp(buf, err_msg.buf) != 0) {
-        printf("*** Erroneous test program failed with wrong message (%s) at line %u: %s\n", err_msg.buf, lineno, prog);
+      char *err_buf = err_msg.buf;
+      while (fgets(buf, sizeof(buf), testdata)) {
+        lineno++;
+        if (skipline(buf)) break;
+        if (check_msg) {
+          if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = '\0';
+          if (strncmp(buf, err_buf, strlen(buf)) != 0) {
+            if (strchr(err_buf, '\n')) *strchr(err_buf, '\n') = '\0';
+            printf("*** Erroneous program failed with '%s', but expected '%s' at line number %u: %s\n", err_buf, buf, lineno, prog);
+            goto fail;
+          }
+          err_buf += strlen(buf);
+          if (*err_buf == '\n') err_buf++;
+        }
+      }
+      if (check_msg && *err_buf != '\0') {
+        if (strchr(err_buf, '\n')) *strchr(err_buf, '\n') = '\0';
+        printf("*** Erroneous program failed with extra message '%s' at line %u: %s\n", err_buf, lineno, prog);
         invalid++;
-      } else {
-        passed++;
+        pass = 0;
       }
       must_fail = 0;
       check_msg = 0;
+      passed += pass;
       continue;
     }
 
     if (!compiled) {
       printf("*** Test program failed to compile at line %u: %s\n", lineno, prog);
-      invalid++;
-      // skip past test data
-      while (fgets(buf, sizeof(buf), testdata)) {
-        lineno++;
-        if (buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
-          break;
-      }
-      continue;
+      goto fail;
     }
     if (verbose) {
       printf("Disassembly:\n");
@@ -181,8 +171,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
     jv input = jv_parse(buf);
     if (!jv_is_valid(input)) {
       printf("*** Input is invalid on line %u: %s\n", lineno, buf);
-      invalid++;
-      continue;
+      goto fail;
     }
     jq_start(jq, input, verbose ? JQ_DEBUG_TRACE : 0);
 
@@ -192,8 +181,7 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
       jv expected = jv_parse(buf);
       if (!jv_is_valid(expected)) {
         printf("*** Expected result is invalid on line %u: %s\n", lineno, buf);
-        invalid++;
-        continue;
+        goto fail;
       }
       jv actual = jq_next(jq);
       if (!jv_is_valid(actual)) {
@@ -226,12 +214,25 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
         printf("*** Superfluous result: ");
         jv_dump(extra, 0);
         printf(" for test at line number %u, %s\n", lineno, prog);
+        invalid++;
         pass = 0;
       } else {
         jv_free(extra);
       }
     }
-    passed+=pass;
+    passed += pass;
+    continue;
+
+fail:
+    invalid++;
+
+next:
+    while (fgets(buf, sizeof(buf), testdata)) {
+      lineno++;
+      if (skipline(buf)) break;
+    }
+    must_fail = 0;
+    check_msg = 0;
   }
   jq_teardown(&jq);
 
