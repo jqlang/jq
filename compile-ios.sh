@@ -3,7 +3,7 @@
 
 # Defaults
 set -e
-oniguruma='6.9.3'
+oniguruma='6.9.10'
 
 unset CFLAGS
 unset CXXFLAGS
