@@ -30,15 +30,11 @@ extern void jv_tsd_dtoa_ctx_init();
 #define USE_ISATTY
 #endif
 
-#include "compile.h"
 #include "jv.h"
 #include "jq.h"
-#include "jv_alloc.h"
 #include "util.h"
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
-
-static const char* progname;
 
 /*
  * For a longer help message we could use a better option parsing
@@ -52,9 +48,9 @@ static void usage(int code, int keep_it_short) {
 
   int ret = fprintf(f,
     "jq - commandline JSON processor [version %s]\n"
-    "\nUsage:\t%s [options] <jq filter> [file...]\n"
-    "\t%s [options] --args <jq filter> [strings...]\n"
-    "\t%s [options] --jsonargs <jq filter> [JSON_TEXTS...]\n\n"
+    "\nUsage:\tjq [options] <jq filter> [file...]\n"
+    "\tjq [options] --args <jq filter> [strings...]\n"
+    "\tjq [options] --jsonargs <jq filter> [JSON_TEXTS...]\n\n"
     "jq is a tool for processing JSON inputs, applying the given filter to\n"
     "its JSON text inputs and producing the filter's results as JSON on\n"
     "standard output.\n\n"
@@ -62,12 +58,9 @@ static void usage(int code, int keep_it_short) {
     "unmodified except for formatting. For more advanced filters see\n"
     "the jq(1) manpage (\"man jq\") and/or https://jqlang.org/.\n\n"
     "Example:\n\n\t$ echo '{\"foo\": 0}' | jq .\n"
-    "\t{\n\t  \"foo\": 0\n\t}\n\n",
-    JQ_VERSION, progname, progname, progname);
+    "\t{\n\t  \"foo\": 0\n\t}\n\n", JQ_VERSION);
   if (keep_it_short) {
-    fprintf(f,
-      "For listing the command options, use %s --help.\n",
-      progname);
+    fprintf(f, "For listing the command options, use jq --help.\n");
   } else {
     (void) fprintf(f,
       "Command options:\n"
@@ -118,7 +111,7 @@ static void usage(int code, int keep_it_short) {
 }
 
 static void die() {
-  fprintf(stderr, "Use %s --help for help with command-line options,\n", progname);
+  fprintf(stderr, "Use jq --help for help with command-line options,\n");
   fprintf(stderr, "or see the jq manpage, or online docs  at https://jqlang.org\n");
   exit(2);
 }
@@ -321,8 +314,6 @@ int main(int argc, char* argv[]) {
   jv ARGS = jv_array(); /* positional arguments */
   jv program_arguments = jv_object(); /* named arguments */
 
-  if (argc) progname = argv[0];
-
   jq = jq_init();
   if (jq == NULL) {
     perror("jq_init");
@@ -349,7 +340,7 @@ int main(int argc, char* argv[]) {
       } else if (further_args_are_json) {
         jv v =  jv_parse(argv[i]);
         if (!jv_is_valid(v)) {
-          fprintf(stderr, "%s: invalid JSON text passed to --jsonargs\n", progname);
+          fprintf(stderr, "jq: invalid JSON text passed to --jsonargs\n");
           die();
         }
         ARGS = jv_array_append(ARGS, v);
@@ -426,13 +417,13 @@ int main(int argc, char* argv[]) {
           dumpopts |= JV_PRINT_TAB | JV_PRINT_PRETTY;
         } else if (isoption(&text, 0, "indent", is_short)) {
           if (i >= argc - 1) {
-            fprintf(stderr, "%s: --indent takes one parameter\n", progname);
+            fprintf(stderr, "jq: --indent takes one parameter\n");
             die();
           }
           dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(7));
           int indent = atoi(argv[i+1]);
           if (indent < -1 || indent > 7) {
-            fprintf(stderr, "%s: --indent takes a number between -1 and 7\n", progname);
+            fprintf(stderr, "jq: --indent takes a number between -1 and 7\n");
             die();
           }
           dumpopts |= JV_PRINT_INDENT_FLAGS(indent);
@@ -453,7 +444,7 @@ int main(int argc, char* argv[]) {
           further_args_are_json = 1;
         } else if (isoption(&text, 0, "arg", is_short)) {
           if (i >= argc - 2) {
-            fprintf(stderr, "%s: --arg takes two parameters (e.g. --arg varname value)\n", progname);
+            fprintf(stderr, "jq: --arg takes two parameters (e.g. --arg varname value)\n");
             die();
           }
           if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1])))
@@ -461,13 +452,13 @@ int main(int argc, char* argv[]) {
           i += 2; // skip the next two arguments
         } else if (isoption(&text, 0, "argjson", is_short)) {
           if (i >= argc - 2) {
-            fprintf(stderr, "%s: --argjson takes two parameters (e.g. --argjson varname text)\n", progname);
+            fprintf(stderr, "jq: --argjson takes two parameters (e.g. --argjson varname text)\n");
             die();
           }
           if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1]))) {
             jv v = jv_parse(argv[i+2]);
             if (!jv_is_valid(v)) {
-              fprintf(stderr, "%s: invalid JSON text passed to --argjson\n", progname);
+              fprintf(stderr, "jq: invalid JSON text passed to --argjson\n");
               die();
             }
             program_arguments = jv_object_set(program_arguments, jv_string(argv[i+1]), v);
@@ -477,14 +468,14 @@ int main(int argc, char* argv[]) {
             isoption(&text, 0, "slurpfile", is_short)) {
           const char *which = raw ? "rawfile" : "slurpfile";
           if (i >= argc - 2) {
-            fprintf(stderr, "%s: --%s takes two parameters (e.g. --%s varname filename)\n", progname, which, which);
+            fprintf(stderr, "jq: --%s takes two parameters (e.g. --%s varname filename)\n", which, which);
             die();
           }
           if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1]))) {
             jv data = jv_load_file(argv[i+2], raw);
             if (!jv_is_valid(data)) {
               data = jv_invalid_get_msg(data);
-              fprintf(stderr, "%s: Bad JSON in --%s %s %s: %s\n", progname, which,
+              fprintf(stderr, "jq: Bad JSON in --%s %s %s: %s\n", which,
                       argv[i+1], argv[i+2], jv_string_value(data));
               jv_free(data);
               ret = JQ_ERROR_SYSTEM;
@@ -519,9 +510,9 @@ int main(int argc, char* argv[]) {
           goto out;
         } else {
           if (is_short) {
-            fprintf(stderr, "%s: Unknown option -%c\n", progname, text[0]);
+            fprintf(stderr, "jq: Unknown option -%c\n", text[0]);
           } else {
-            fprintf(stderr, "%s: Unknown option --%s\n", progname, text);
+            fprintf(stderr, "jq: Unknown option --%s\n", text);
           }
           die();
         }
@@ -599,7 +590,7 @@ int main(int argc, char* argv[]) {
     jv data = jv_load_file(program, 1);
     if (!jv_is_valid(data)) {
       data = jv_invalid_get_msg(data);
-      fprintf(stderr, "%s: %s\n", progname, jv_string_value(data));
+      fprintf(stderr, "jq: %s\n", jv_string_value(data));
       jv_free(data);
       ret = JQ_ERROR_SYSTEM;
       goto out;
