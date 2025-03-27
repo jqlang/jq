@@ -119,15 +119,15 @@ const jv JV_INVALID = {JVP_FLAGS_INVALID, 0, 0, 0, {0}};
 const jv JV_FALSE = {JVP_FLAGS_FALSE, 0, 0, 0, {0}};
 const jv JV_TRUE = {JVP_FLAGS_TRUE, 0, 0, 0, {0}};
 
-jv jv_true() {
+jv jv_true(void) {
   return JV_TRUE;
 }
 
-jv jv_false() {
+jv jv_false(void) {
   return JV_FALSE;
 }
 
-jv jv_null() {
+jv jv_null(void) {
   return JV_NULL;
 }
 
@@ -155,7 +155,7 @@ jv jv_invalid_with_msg(jv err) {
   return x;
 }
 
-jv jv_invalid() {
+jv jv_invalid(void) {
   return JV_INVALID;
 }
 
@@ -492,12 +492,12 @@ static pthread_once_t dec_ctx_once = PTHREAD_ONCE_INIT;
 
 // atexit finalizer to clean up the tsd dec contexts if main() exits
 // without having called pthread_exit()
-void jv_tsd_dec_ctx_fini() {
+void jv_tsd_dec_ctx_fini(void) {
   jv_mem_free(pthread_getspecific(dec_ctx_key));
   pthread_setspecific(dec_ctx_key, NULL);
 }
 
-void jv_tsd_dec_ctx_init() {
+void jv_tsd_dec_ctx_init(void) {
   if (pthread_key_create(&dec_ctx_key, jv_mem_free) != 0) {
     fprintf(stderr, "error: cannot create thread specific key");
     abort();
@@ -991,7 +991,7 @@ jv jv_array_sized(int n) {
   return jvp_array_new(n);
 }
 
-jv jv_array() {
+jv jv_array(void) {
   return jv_array_sized(16);
 }
 
@@ -1801,7 +1801,7 @@ static int jvp_object_contains(jv a, jv b) {
  * Objects (public interface)
  */
 #define DEFAULT_OBJECT_SIZE 8
-jv jv_object() {
+jv jv_object(void) {
   return jvp_object_new(8);
 }
 
