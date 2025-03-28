@@ -749,6 +749,7 @@ jv jv_unique(jv objects, jv keys) {
   for (int i = 0; i < n; i++) {
     if (jv_equal(jv_copy(curr_key), jv_copy(entries[i].key))) {
       jv_free(entries[i].key);
+      jv_free(entries[i].object);
     } else {
       jv_free(curr_key);
       curr_key = entries[i].key;
