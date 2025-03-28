@@ -98,26 +98,16 @@ def scan($re; $flags):
       else .string
       end;
 def scan($re): scan($re; null);
-#
-# If input is an array, then emit a stream of successive subarrays of length n (or less),
-# and similarly for strings.
-def _nwise($n):
-  def n: if length <= $n then . else .[0:$n] , (.[$n:] | n) end;
-  n;
-def _nwise(a; $n): a | _nwise($n);
-#
+
 # splits/1 produces a stream; split/1 is retained for backward compatibility.
-def splits($re; flags): . as $s
-#  # multiple occurrences of "g" are acceptable
-  | [ match($re; "g" + flags) | (.offset, .offset + .length) ]
-  | [0] + . +[$s|length]
-  | _nwise(2)
-  | $s[.[0]:.[1] ] ;
+def splits($re; $flags):
+  .[foreach (match($re; $flags+"g"), null) as {$offset, $length}
+      (null; {start: .next, end: $offset, next: ($offset+$length)})];
 def splits($re): splits($re; null);
-#
+
 # split emits an array for backward compatibility
-def split($re; flags): [ splits($re; flags) ];
-#
+def split($re; $flags): [ splits($re; $flags) ];
+
 # If s contains capture variables, then create a capture object and pipe it to s, bearing
 # in mind that s could be a stream
 def sub($re; s; $flags):
@@ -132,12 +122,12 @@ def sub($re; s; $flags):
             | .previous = ($edit | .offset + .length ) )
           | .result[] + $in[.previous:] )
       // $in;
-#
+
 def sub($re; s): sub($re; s; "");
-#
+
 def gsub($re; s; flags): sub($re; s; flags + "g");
 def gsub($re; s): sub($re; s; "g");
-#
+
 ########################################################################
 # generic iterator/generator
 def while(cond; update):
