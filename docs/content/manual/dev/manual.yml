@@ -2151,9 +2151,15 @@ sections:
 
           * `@csv`:
 
-            The input must be an array, and it is rendered as CSV
-            with double quotes for strings, and quotes escaped by
-            repetition.
+            The input must be an array, and it is rendered as comma 
+            separated CSV with double quotes for strings, and quotes 
+            escaped by repetition.
+
+          * `@ssv`:
+
+            The input must be an array, and it is rendered as semicolon
+            separated CSV with double quotes for strings, and quotes 
+            escaped by repetition.
 
           * `@tsv`:
 
