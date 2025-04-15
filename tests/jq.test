@@ -61,7 +61,7 @@ null
 null
 "interpolation"
 
-@text,@json,([1,.]|@csv,@ssv,@tsv),@html,(@uri|.,@urid),@sh,(@base64|.,@base64d)
+@text,@json,([1,.]|@csv,@scsv,@tsv),@html,(@uri|.,@urid),@sh,(@base64|.,@base64d)
 "!()<>&'\"\t"
 "!()<>&'\"\t"
 "\"!()<>&'\\\"\\t\""
