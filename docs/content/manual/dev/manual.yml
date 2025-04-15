@@ -2155,7 +2155,7 @@ sections:
             separated CSV with double quotes for strings, and quotes 
             escaped by repetition.
 
-          * `@ssv`:
+          * `@scsv`:
 
             The input must be an array, and it is rendered as semicolon
             separated CSV with double quotes for strings, and quotes 
