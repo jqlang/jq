@@ -89,12 +89,15 @@ jobs:
             --host=${{ matrix.CC }} \
             --disable-docs \
             --with-oniguruma=builtin \
+            --enable-shared \
             --enable-static \
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all"
           make -j"$(nproc)"
           file ./jq
-          cp ./jq jq-${{ env.SUFFIX }}
+          mkdir jq-${{ env.SUFFIX }}
+          cp ./jq src/jv.h src/jq.h .libs/libjq* libjq.pc jq-${{ env.SUFFIX }}
+          rm -f jq-${{ env.SUFFIX }}/libjq.la jq-${{ env.SUFFIX }}/libjq.lai
       - name: Test
         # Only run tests for amd64 matching the CI machine arch
         if: ${{ matrix.arch == 'amd64' }}
@@ -154,13 +157,16 @@ jobs:
             --host="${{ matrix.target }}$(uname -r)" \
             --disable-docs \
             --with-oniguruma=builtin \
+            --enable-shared \
             --enable-static \
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all"
           make -j"$(sysctl -n hw.logicalcpu)"
           strip ./jq
           file ./jq
-          cp ./jq jq-${{ env.SUFFIX }}
+          mkdir jq-${{ env.SUFFIX }}
+          cp -rp ./jq src/jv.h src/jq.h .libs/libjq* jq-${{ env.SUFFIX }}
+          rm -f jq-${{ env.SUFFIX }}/libjq.la jq-${{ env.SUFFIX }}/libjq.lai
       - name: Test
         # Only run tests for amd64 matching the CI machine arch
         if: ${{ matrix.arch == 'amd64' }}
@@ -229,13 +235,15 @@ jobs:
           ./configure \
             --disable-docs \
             --with-oniguruma=builtin \
-            --disable-shared \
+            --enable-shared \
             --enable-static \
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all"
           make -j$(nproc)
           file ./jq.exe
-          cp ./jq.exe jq-${{ env.SUFFIX }}.exe
+          mkdir jq-${{ env.SUFFIX }}
+          cp ./jq.exe src/jv.h src/jq.h .libs/libjq* jq-${{ env.SUFFIX }}
+          rm -f jq-${{ env.SUFFIX }}/libjq.la jq-${{ env.SUFFIX }}/libjq.lai
       - name: Test
         run: |
           make check VERBOSE=yes
@@ -253,7 +261,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jq-${{ env.SUFFIX }}
-          path: jq-${{ env.SUFFIX }}.exe
+          path: jq-${{ env.SUFFIX }}
           if-no-files-found: error
           retention-days: 7
 
@@ -306,14 +314,15 @@ jobs:
       - name: Move executables
         run: |
           mkdir -p linux/{386,amd64,arm64,mips64le,ppc64le,riscv64,s390x}
-          mv jq-linux-i386 linux/386/jq
-          mv jq-linux-amd64 linux/amd64/jq
-          mv jq-linux-arm64 linux/arm64/jq
-          mv jq-linux-mips64el linux/mips64le/jq
-          mv jq-linux-ppc64el linux/ppc64le/jq
-          mv jq-linux-riscv64 linux/riscv64/jq
-          mv jq-linux-s390x linux/s390x/jq
+          mv jq-linux-i386/* linux/386/
+          mv jq-linux-amd64/* linux/amd64/
+          mv jq-linux-arm64/* linux/arm64/
+          mv jq-linux-mips64el/* linux/mips64le/
+          mv jq-linux-ppc64el/* linux/ppc64le/
+          mv jq-linux-riscv64/* linux/riscv64/
+          mv jq-linux-s390x/* linux/s390x/
           chmod +x linux/*/jq
+          ls -F linux/{386,amd64,arm64,mips64le,ppc64le,riscv64,s390x}
       - name: Create Dockerfile
         run: |
           cat <<'EOF' >Dockerfile
@@ -383,6 +392,9 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # These are for backwards compatibility with previous
+          # releases' URI local parts that get baked into users'
+          # recipes.
           cp jq-linux-amd64 jq-linux64
           cp jq-macos-amd64 jq-osx-amd64
           cp jq-windows-amd64.exe jq-win64.exe
