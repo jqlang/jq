@@ -34,12 +34,12 @@ ACLOCAL_AMFLAGS = -I config/m4
 # header file creation so we'll use good old make
 if MAINTAINER_MODE
 BUILT_SOURCES = src/lexer.h src/lexer.c src/parser.h src/parser.c \
-                src/builtin.inc
+                src/builtin.inc src/config_opts.inc src/version.h
 src/lexer.c: src/lexer.l
 	$(AM_V_LEX) flex -o src/lexer.c --header-file=src/lexer.h $<
 src/lexer.h: src/lexer.c
 else
-BUILT_SOURCES = src/builtin.inc
+BUILT_SOURCES = src/builtin.inc src/config_opts.inc src/version.h
 .y.c:
 	$(AM_V_YACC) echo "NOT building parser.c!"
 .l.c:
@@ -96,6 +96,23 @@ endif
 
 ### Building the jq binary
 
+# Remake the version.h header file if, and only if, the git ID has changed
+.PHONY: .FORCE
+.FORCE:
+generate_ver = ver="`{ $(srcdir)/scripts/version || echo '$(VERSION)' ; } | sed 's/.*/\x23define JQ_VERSION \"&\"/'`"
+.remake-version-h: .FORCE
+	@ $(generate_ver); test "x`cat src/version.h 2>/dev/null`" = "x$$ver" || touch .remake-version-h
+src/version.h: .remake-version-h
+	mkdir -p src
+	$(AM_V_GEN) $(generate_ver); echo "$$ver" > $@
+src/config_opts.inc:
+	mkdir -p src
+	$(AM_V_GEN) if test -x ./config.status; then \
+	  ./config.status --config; \
+	else echo "(unknown)"; \
+	fi | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/"/' -e 's/^/#define JQ_CONFIG /' > $@
+src/main.c: src/version.h src/config_opts.inc
+
 src/builtin.inc: $(srcdir)/src/builtin.jq
 	mkdir -p src
 	$(AM_V_GEN) od -v -A n -t o1 -- $< | \
@@ -106,7 +123,7 @@ src/builtin.inc: $(srcdir)/src/builtin.jq
 	    -e 's/ \([123456789]\)/ 0\1/g' > $@
 src/builtin.o: src/builtin.inc
 
-CLEANFILES = src/builtin.inc
+CLEANFILES = src/version.h .remake-version-h src/builtin.inc src/config_opts.inc
 
 bin_PROGRAMS = jq
 jq_SOURCES = src/main.c
@@ -197,7 +214,8 @@ DOC_FILES = docs/content docs/public docs/templates                     \
 
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
-        src/parser.h src/builtin.jq scripts/version libjq.pc            \
+        src/parser.h src/version.h src/builtin.jq scripts/version       \
+        libjq.pc                                                        \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
         tests/modules/home1/.jq tests/modules/home2/.jq/g.jq            \

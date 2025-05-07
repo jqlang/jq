@@ -236,9 +236,6 @@ AC_C_BIGENDIAN(
    AC_MSG_ERROR(universal endianness not supported)
 )
 
-AC_DEFINE_UNQUOTED([JQ_CONFIG], ["$ac_cs_config"], [The options jq was configured with.])
-AH_BOTTOM([#define JQ_VERSION PACKAGE_VERSION])
-
 dnl Oniguruma
 AC_ARG_WITH([oniguruma],
    [AS_HELP_STRING([--with-oniguruma=prefix],
@@ -287,8 +284,6 @@ AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
 AM_CONDITIONAL([WITH_ONIGURUMA], [test "x$with_oniguruma" != xno])
 
 AC_CONFIG_MACRO_DIRS([config/m4 m4])
-AC_CONFIG_HEADERS([src/config.h])
-CFLAGS="$CFLAGS --include src/config.h"
 AC_CONFIG_FILES([Makefile libjq.pc])
 AC_OUTPUT
 
