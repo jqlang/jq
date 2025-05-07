@@ -463,6 +463,23 @@ static jv f_tonumber(jq_state *jq, jv input) {
   return type_error(input, "cannot be parsed as a number");
 }
 
+static jv f_toboolean(jq_state *jq, jv input) {
+  if (jv_get_kind(input) == JV_KIND_TRUE || jv_get_kind(input) == JV_KIND_FALSE) {
+    return input;
+  }
+  if (jv_get_kind(input) == JV_KIND_STRING) {
+    const char *s = jv_string_value(input);
+    if (strcmp(s, "true") == 0) {
+      jv_free(input);
+      return jv_true();
+    } else if (strcmp(s, "false") == 0) {
+      jv_free(input);
+      return jv_false();
+    }
+  }
+  return type_error(input, "cannot be parsed as a boolean");
+}
+
 static jv f_length(jq_state *jq, jv input) {
   if (jv_get_kind(input) == JV_KIND_ARRAY) {
     return jv_number(jv_array_length(input));
@@ -1886,6 +1903,7 @@ BINOPS
   CFUNC(f_dump, "tojson", 1),
   CFUNC(f_json_parse, "fromjson", 1),
   CFUNC(f_tonumber, "tonumber", 1),
+  CFUNC(f_toboolean, "toboolean", 1),
   CFUNC(f_tostring, "tostring", 1),
   CFUNC(f_keys, "keys", 1),
   CFUNC(f_keys_unsorted, "keys_unsorted", 1),
