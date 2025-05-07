@@ -3384,8 +3384,8 @@ sections:
 
       Several builtins are provided to make handling streams easier.
 
-      The examples below use the streamed form of `[0,[1]]`, which is
-      `[[0],0],[[1,0],1],[[1,0]],[[1]]`.
+      The examples below use the streamed form of `[1,[2]]`, which is
+      `[[0],1],[[1,0],2],[[1,0]],[[1]]`.
 
       Streaming forms include `[<path>, <leaf-value>]` (to indicate any
       scalar value, empty array, or empty object), and `[<path>]` (to
