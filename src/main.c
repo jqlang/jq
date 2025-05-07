@@ -112,7 +112,7 @@ static void usage(int code, int keep_it_short) {
   exit((ret < 0 && code == 0) ? 2 : code);
 }
 
-static void die() {
+static void die(void) {
   fprintf(stderr, "Use jq --help for help with command-line options,\n");
   fprintf(stderr, "or see the jq manpage, or online docs  at https://jqlang.org\n");
   exit(2);
