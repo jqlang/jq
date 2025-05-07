@@ -139,15 +139,7 @@ struct lexer_param {
 void yyerror(YYLTYPE* loc, block* answer, int* errors,
              struct locfile* locations, struct lexer_param* lexer_param_ptr, const char *s){
   (*errors)++;
-  if (strstr(s, "unexpected")) {
-#ifdef WIN32
-      locfile_locate(locations, *loc, "jq: error: %s (Windows cmd shell quoting issues?)", s);
-#else
-      locfile_locate(locations, *loc, "jq: error: %s (Unix shell quoting issues?)", s);
-#endif
-  } else {
-      locfile_locate(locations, *loc, "jq: error: %s", s);
-  }
+  locfile_locate(locations, *loc, "jq: error: %s", s);
 }
 
 int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors,
@@ -300,11 +292,11 @@ Module:
 } |
 "module" Exp ';' {
   if (!block_is_const($2)) {
-    FAIL(@$, "Module metadata must be constant");
+    FAIL(@2, "Module metadata must be constant");
     $$ = gen_noop();
     block_free($2);
   } else if (block_const_kind($2) != JV_KIND_OBJECT) {
-    FAIL(@$, "Module metadata must be an object");
+    FAIL(@2, "Module metadata must be an object");
     $$ = gen_noop();
     block_free($2);
   } else {
@@ -488,12 +480,12 @@ ImportWhat ';' {
 } |
 ImportWhat Exp ';' {
   if (!block_is_const($2)) {
-    FAIL(@$, "Module metadata must be constant");
+    FAIL(@2, "Module metadata must be constant");
     $$ = gen_noop();
     block_free($1);
     block_free($2);
   } else if (block_const_kind($2) != JV_KIND_OBJECT) {
-    FAIL(@$, "Module metadata must be an object");
+    FAIL(@2, "Module metadata must be an object");
     $$ = gen_noop();
     block_free($1);
     block_free($2);
@@ -529,7 +521,7 @@ ImportWhat:
 ImportFrom:
 String {
   if (!block_is_const($1)) {
-    FAIL(@$, "Import path must be constant");
+    FAIL(@1, "Import path must be constant");
     $$ = gen_const(jv_string(""));
     block_free($1);
   } else {
@@ -862,7 +854,7 @@ String ':' Pattern {
 '(' Exp ')' ':' Pattern {
   jv msg = check_object_key($2);
   if (jv_is_valid(msg)) {
-    FAIL(@$, jv_string_value(msg));
+    FAIL(@2, jv_string_value(msg));
   }
   jv_free(msg);
   $$ = gen_object_matcher($2, $5);
@@ -974,13 +966,13 @@ IDENT ':' ExpD {
 | '(' Exp ')' ':' ExpD {
   jv msg = check_object_key($2);
   if (jv_is_valid(msg)) {
-    FAIL(@$, jv_string_value(msg));
+    FAIL(@2, jv_string_value(msg));
   }
   jv_free(msg);
   $$ = gen_dictpair($2, $5);
   }
 | error ':' ExpD {
-  FAIL(@$, "May need parentheses around object key expression");
+  FAIL(@1, "May need parentheses around object key expression");
   $$ = $3;
   }
 %%
