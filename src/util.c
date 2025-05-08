@@ -434,7 +434,10 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
         // to see if we have more data to parse.
         has_more = jv_parser_remaining(state->parser);
         if (jv_is_valid(value)) {
-          state->slurped = jv_array_append(state->slurped, value);
+          // Don't append termination tokens (empty arrays) when slurping
+          if (!(jv_get_kind(value) == JV_KIND_ARRAY && jv_array_length(jv_copy(value)) == 0)) {
+            state->slurped = jv_array_append(state->slurped, value);
+          }
           value = jv_invalid();
         } else if (jv_invalid_has_msg(jv_copy(value)))
           return value; // Not slurped parsed input
