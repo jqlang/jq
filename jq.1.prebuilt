@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "January 2025" "" ""
+.TH "JQ" "1" "May 2025" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -1939,6 +1939,21 @@ Outputs its input with the given suffix string removed, if it ends with it\.
 jq \'[\.[]|rtrimstr("foo")]\'
    ["fo", "foo", "barfoo", "foobar", "foob"]
 => ["fo","","bar","foobar","foob"]
+.
+.fi
+.
+.IP "" 0
+.
+.SS "trimstr(str)"
+Outputs its input with the given string removed at both ends, if it starts or ends with it\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[\.[]|trimstr("foo")]\'
+   ["fo", "foo", "barfoo", "foobarfoo", "foob"]
+=> ["fo","","bar","bar","b"]
 .
 .fi
 .
