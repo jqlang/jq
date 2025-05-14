@@ -728,6 +728,12 @@ if ! $msys && ! $mingw; then
     exit 1
   fi
 
+  if ! r=$(TZ=Europe/Paris $JQ -rn '1750500000 | strflocaltime("%F %T %z %Z")') \
+    || [ "$r" != "2025-06-21 12:00:00 +0200 CEST" ]; then
+    echo "Incorrectly formatted local time"
+    exit 1
+  fi
+
   if ! r=$(TZ=Europe/Paris $JQ -rn '1731627341 | strftime("%F %T %z %Z")') \
     || ( [ "$r" != "2024-11-14 23:35:41 +0000 UTC" ] \
       && [ "$r" != "2024-11-14 23:35:41 +0000 GMT" ] ); then
