@@ -3317,8 +3317,8 @@ sections:
 
       Several builtins are provided to make handling streams easier.
 
-      The examples below use the streamed form of `[0,[1]]`, which is
-      `[[0],0],[[1,0],1],[[1,0]],[[1]]`.
+      The examples below use the streamed form of `["a",["b"]]`, which is
+      `[[0],"a"],[[1,0],"b"],[[1,0]],[[1]]`.
 
       Streaming forms include `[<path>, <leaf-value>]` (to indicate any
       scalar value, empty array, or empty object), and `[<path>]` (to
@@ -3335,9 +3335,9 @@ sections:
           given streaming expression.
 
         examples:
-          - program: "truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]])"
+          - program: 'truncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]])'
             input: "1"
-            output: ["[[0],2]", "[[0]]"]
+            output: ['[[0],"b"]', '[[0]]']
 
       - title: "`fromstream(stream_expression)`"
         body: |
@@ -3346,9 +3346,9 @@ sections:
           outputs.
 
         examples:
-          - program: "fromstream(1|truncate_stream([[0],1],[[1,0],2],[[1,0]],[[1]]))"
+          - program: 'fromstream(1|truncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]]))'
             input: "null"
-            output: ["[2]"]
+            output: ['["b"]']
 
       - title: "`tostream`"
         body: |
