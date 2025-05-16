@@ -2340,7 +2340,13 @@ The inverse of \fB@uri\fR, applies percent\-decoding, by mapping all \fB%XX\fR s
 \fB@csv\fR:
 .
 .IP
-The input must be an array, and it is rendered as CSV with double quotes for strings, and quotes escaped by repetition\.
+The input must be an array, and it is rendered as comma separated CSV with double quotes for strings, and quotes escaped by repetition\.
+.
+.TP
+\fB@ssv\fR:
+.
+.IP
+The input must be an array, and it is rendered as semicolon separated CSV with double quotes for strings, and quotes escaped by repetition\.
 .
 .TP
 \fB@tsv\fR:
