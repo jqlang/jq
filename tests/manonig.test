@@ -64,6 +64,13 @@ splits(", *")
 "ef"
 "gh"
 
+splits(",? *"; "n")
+"ab,cd ef,  gh"
+"ab"
+"cd"
+"ef"
+"gh"
+
 sub("[^a-z]*(?<x>[a-z]+)"; "Z\(.x)"; "g")
 "123abc456def"
 "ZabcZdef"
