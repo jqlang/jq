@@ -433,6 +433,16 @@ JQ_COLORS='4;31' $JQ -Ccn . > $d/color
 printf '\033[4;31mnull\033[0m\n' > $d/expect
 cmp $d/color $d/expect
 
+## Set implicit empty color, null input
+$JQ -Ccn . > $d/color
+printf '\033[0;90mnull\033[0m\n' > $d/expect
+cmp $d/color $d/expect
+
+## Set explicit empty color, null input
+JQ_COLORS=':' $JQ -Ccn . > $d/color
+printf '\033[mnull\033[0m\n' > $d/expect
+cmp $d/color $d/expect
+
 ## Default colors, complex input
 $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/color
 {
@@ -527,30 +537,11 @@ JQ_COLORS='0;30:0;31:0;32:0;33:0;34:1;35:1;36:1;37' \
 } > $d/expect
 cmp $d/color $d/expect
 
-# Check garbage in JQ_COLORS.  We write each color sequence into a 16
-# char buffer that needs to hold ESC [ <color> m NUL, so each color
-# sequence can be no more than 12 chars (bytes).  These emit a warning
-# on stderr.
+# Check garbage in JQ_COLORS.  These emit a warning on stderr.
 set -vx
 echo 'Failed to set $JQ_COLORS' > $d/expect_warning
 $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/expect
 JQ_COLORS='garbage;30:*;31:,;3^:0;$%:0;34:1;35:1;36' \
-  $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/color 2>$d/warning
-cmp $d/color $d/expect
-cmp $d/warning $d/expect_warning
-JQ_COLORS='1234567890123456789;30:0;31:0;32:0;33:0;34:1;35:1;36' \
-  $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/color 2>$d/warning
-cmp $d/color $d/expect
-cmp $d/warning $d/expect_warning
-JQ_COLORS='1;31234567890123456789:0;31:0;32:0;33:0;34:1;35:1;36' \
-  $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/color 2>$d/warning
-cmp $d/color $d/expect
-cmp $d/warning $d/expect_warning
-JQ_COLORS='1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456:1234567890123456;1234567890123456' \
-  $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/color 2>$d/warning
-cmp $d/color $d/expect
-cmp $d/warning $d/expect_warning
-JQ_COLORS="0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:0123456789123:" \
   $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/color 2>$d/warning
 cmp $d/color $d/expect
 cmp $d/warning $d/expect_warning
