@@ -154,6 +154,7 @@ jobs:
             --host="${{ matrix.target }}$(uname -r)" \
             --disable-docs \
             --with-oniguruma=builtin \
+            --disable-shared \
             --enable-static \
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all"
