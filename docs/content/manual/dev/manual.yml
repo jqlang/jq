@@ -2736,6 +2736,9 @@ sections:
           - program: 'splits(", *")'
             input: '"ab,cd,   ef, gh"'
             output: ['"ab"','"cd"','"ef"','"gh"']
+          - program: 'splits(",? *"; "n")'
+            input: '"ab,cd ef,  gh"'
+            output: ['"ab"','"cd"','"ef"','"gh"']
 
       - title: "`sub(regex; tostring)`, `sub(regex; tostring; flags)`"
         body: |

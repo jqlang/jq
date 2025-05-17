@@ -3032,6 +3032,10 @@ These provide the same results as their \fBsplit\fR counterparts, but as a strea
 jq \'splits(", *")\'
    "ab,cd,   ef, gh"
 => "ab", "cd", "ef", "gh"
+
+jq \'splits(",? *"; "n")\'
+   "ab,cd ef,  gh"
+=> "ab", "cd", "ef", "gh"
 .
 .fi
 .
