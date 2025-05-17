@@ -65,7 +65,7 @@ jobs:
             CC: riscv64-linux-gnu
           - arch: s390x
             CC: s390x-linux-gnu
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.arch == 'i386' && 'ubuntu-22.04' || 'ubuntu-24.04' }}
     env:
       AR: ${{ matrix.CC }}-ar
       CHOST: ${{ matrix.CC }}
@@ -130,7 +130,7 @@ jobs:
             target: x86_64-apple-darwin
           - arch: arm64
             target: arm64-apple-darwin
-    runs-on: macos-13
+    runs-on: macos-14
     env:
       LDFLAGS: -dead_strip
       SUFFIX: macos-${{ matrix.arch }}
@@ -163,8 +163,6 @@ jobs:
           file ./jq
           cp ./jq jq-${{ env.SUFFIX }}
       - name: Test
-        # Only run tests for amd64 matching the CI machine arch
-        if: ${{ matrix.arch == 'amd64' }}
         run: |
           make check VERBOSE=yes
           git diff --exit-code
