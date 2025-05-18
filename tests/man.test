@@ -444,6 +444,13 @@ sqrt
 1
 1
 
+.[] | toboolean
+["true", "false", true, false]
+true
+false
+true
+false
+
 .[] | tostring
 [1, "1", [1]]
 "1"

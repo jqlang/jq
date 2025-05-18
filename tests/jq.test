@@ -656,6 +656,21 @@ null
 4
 15
 
+map(toboolean)
+["false","true",false,true]
+[false,true,false,true]
+
+.[] | try toboolean catch .
+[null,0,"tru","truee","fals","falsee",[],{}]
+"null (null) cannot be parsed as a boolean"
+"number (0) cannot be parsed as a boolean"
+"string (\"tru\") cannot be parsed as a boolean"
+"string (\"truee\") cannot be parsed as a boolean"
+"string (\"fals\") cannot be parsed as a boolean"
+"string (\"falsee\") cannot be parsed as a boolean"
+"array ([]) cannot be parsed as a boolean"
+"object ({}) cannot be parsed as a boolean"
+
 [{"a":42},.object,10,.num,false,true,null,"b",[1,4]] | .[] as $x | [$x == .[]]
 {"object": {"a":42}, "num":10.0}
 [true,  true,  false, false, false, false, false, false, false]
