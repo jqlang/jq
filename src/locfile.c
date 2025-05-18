@@ -7,7 +7,7 @@
 #include "jq.h"
 #include "jv_alloc.h"
 #include "locfile.h"
-
+#include "util.h"
 
 struct locfile* locfile_init(jq_state *jq, const char *fname, const char* data, int length) {
   struct locfile* l = jv_mem_alloc(sizeof(struct locfile));
@@ -63,13 +63,6 @@ static int locfile_line_length(struct locfile* l, int line) {
 void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
   va_list fmtargs;
   va_start(fmtargs, fmt);
-  int startline;
-  int offset;
-
-  if (loc.start != -1) {
-    startline = locfile_get_line(l, loc.start);
-    offset = l->linemap[startline];
-  }
 
   jv m1 = jv_string_vfmt(fmt, fmtargs);
   va_end(fmtargs);
@@ -78,16 +71,23 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
     return;
   }
   if (loc.start == -1) {
-    jq_report_error(l->jq, jv_string_fmt("jq: error: %s\n<unknown location>", jv_string_value(m1)));
+    jq_report_error(l->jq, jv_string_fmt("jq: error: %s", jv_string_value(m1)));
     jv_free(m1);
     return;
   }
-  jv m2 = jv_string_fmt("%s at %s, line %d, column %d:\n%.*s%*s",
+
+  int startline = locfile_get_line(l, loc.start);
+  int offset = l->linemap[startline];
+  int end = MIN(loc.end, l->linemap[startline+1] - 1);
+  assert(end > loc.start);
+  jv underline = jv_string_repeat(jv_string("^"), end - loc.start);
+  jv m2 = jv_string_fmt("%s at %s, line %d, column %d:\n    %.*s\n    %*s",
                         jv_string_value(m1), jv_string_value(l->fname),
                         startline + 1, loc.start - offset + 1,
                         locfile_line_length(l, startline), l->data + offset,
-                        loc.start - offset, "");
+                        end - offset, jv_string_value(underline));
   jv_free(m1);
+  jv_free(underline);
   jq_report_error(l->jq, m2);
   return;
 }

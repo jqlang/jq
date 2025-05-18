@@ -634,6 +634,29 @@ EOF
   fi
 fi
 
+# Test syntax error messages of multiline filter (we can't test in jq.test)
+if $VALGRIND $Q $JQ -n '[
+  try if .
+         then 1
+         else 2
+  catch ]' > $d/out 2>&1; then
+  echo 'syntax error not detected'
+  exit 1
+fi
+cat > $d/expected <<EOF
+jq: error: syntax error, unexpected catch, expecting end or '|' or ',' at <top-level>, line 5, column 3:
+      catch ]
+      ^^^^^
+jq: error: Possibly unterminated 'if' statement at <top-level>, line 2, column 7:
+      try if .
+          ^^^^
+jq: error: Possibly unterminated 'try' statement at <top-level>, line 2, column 3:
+      try if .
+      ^^^^^^^^
+jq: 3 compile errors
+EOF
+diff $d/out $d/expected
+
 # Comments!
 if ! x=$($JQ -n '123 # comment') || [ "$x" != 123 ]; then
   echo 'comment did not work'

@@ -59,6 +59,12 @@ null
 "Aa\r\n\t\b\f\u03bc"
 "Aa\u000d\u000a\u0009\u0008\u000c\u03bc"
 
+%%FAIL
+"u\vw"
+jq: error: Invalid escape at line 1, column 4 (while parsing '"\v"') at <top-level>, line 1, column 3:
+    "u\vw"
+      ^^
+
 "inter\("pol" + "ation")"
 null
 "interpolation"
@@ -119,11 +125,21 @@ null
 
 %%FAIL
 {(0):1}
-jq: error: Cannot use number (0) as object key at <top-level>, line 1, column 2:
+jq: error: Cannot use number (0) as object key at <top-level>, line 1, column 3:
+    {(0):1}
+      ^
+
+%%FAIL
+{1+2:3}
+jq: error: May need parentheses around object key expression at <top-level>, line 1, column 2:
+    {1+2:3}
+     ^^^
 
 %%FAIL
 {non_const:., (0):1}
-jq: error: Cannot use number (0) as object key at <top-level>, line 1, column 15:
+jq: error: Cannot use number (0) as object key at <top-level>, line 1, column 16:
+    {non_const:., (0):1}
+                   ^
 
 #
 # Field access, piping
@@ -303,6 +319,8 @@ null
 %%FAIL
 . as $foo | break $foo
 jq: error: $*label-foo is not defined at <top-level>, line 1, column 13:
+    . as $foo | break $foo
+                ^^^^^^^^^^
 
 [.[]|[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]]
 [1,2,3,4,5]
@@ -518,13 +536,29 @@ null
 [0]
 [0]
 
-%%FAIL IGNORE MSG
+%%FAIL
 . as [] | null
-jq: error: syntax error, unexpected ']', expecting '$' or '[' or '{' (Unix shell quoting issues?) at <top-level>, line 1, column 7:
+jq: error: syntax error, unexpected ']', expecting BINDING or '[' or '{' at <top-level>, line 1, column 7:
+    . as [] | null
+          ^
 
-%%FAIL IGNORE MSG
+%%FAIL
 . as {} | null
-jq: error: syntax error, unexpected '}' (Unix shell quoting issues?) at <top-level>, line 1, column 7:
+jq: error: syntax error, unexpected '}' at <top-level>, line 1, column 7:
+    . as {} | null
+          ^
+
+%%FAIL
+. as $foo | [$foo, $bar]
+jq: error: $bar is not defined at <top-level>, line 1, column 20:
+    . as $foo | [$foo, $bar]
+                       ^^^^
+
+%%FAIL
+. as {(true):$foo} | $foo
+jq: error: Cannot use boolean (true) as object key at <top-level>, line 1, column 8:
+    . as {(true):$foo} | $foo
+           ^^^^
 
 # [.,(.[] | {x:.},.),.,.[]]
 
@@ -1840,27 +1874,39 @@ null
 
 %%FAIL
 module (.+1); 0
-jq: error: Module metadata must be constant at <top-level>, line 1, column 1:
+jq: error: Module metadata must be constant at <top-level>, line 1, column 8:
+    module (.+1); 0
+           ^^^^^
 
 %%FAIL
 module []; 0
-jq: error: Module metadata must be an object at <top-level>, line 1, column 1:
+jq: error: Module metadata must be an object at <top-level>, line 1, column 8:
+    module []; 0
+           ^^
 
 %%FAIL
 include "a" (.+1); 0
-jq: error: Module metadata must be constant at <top-level>, line 1, column 1:
+jq: error: Module metadata must be constant at <top-level>, line 1, column 13:
+    include "a" (.+1); 0
+                ^^^^^
 
 %%FAIL
 include "a" []; 0
-jq: error: Module metadata must be an object at <top-level>, line 1, column 1:
+jq: error: Module metadata must be an object at <top-level>, line 1, column 13:
+    include "a" []; 0
+                ^^
 
 %%FAIL
 include "\ "; 0
 jq: error: Invalid escape at line 1, column 4 (while parsing '"\ "') at <top-level>, line 1, column 10:
+    include "\ "; 0
+             ^^
 
 %%FAIL
 include "\(a)"; 0
 jq: error: Import path must be constant at <top-level>, line 1, column 9:
+    include "\(a)"; 0
+            ^^^^^^
 
 modulemeta
 "c"
@@ -1876,11 +1922,15 @@ modulemeta | .defs | length
 
 %%FAIL IGNORE MSG
 import "syntaxerror" as e; .
-jq: error: syntax error, unexpected ';', expecting $end (Unix shell quoting issues?) at /home/nico/ws/jq/tests/modules/syntaxerror/syntaxerror.jq, line 1, column 8:
+jq: error: syntax error, unexpected ';', expecting end of file at tests/modules/syntaxerror/syntaxerror.jq, line 1, column 4:
+    wat;
+       ^
 
-%%FAIL IGNORE MSG
+%%FAIL
 %::wat
-jq: error: syntax error, unexpected '%', expecting $end (Unix shell quoting issues?) at <top-level>, line 1, column 1:
+jq: error: syntax error, unexpected '%', expecting end of file at <top-level>, line 1, column 1:
+    %::wat
+    ^
 
 import "test_bind_order" as check; check::check
 null
@@ -1959,9 +2009,17 @@ true
 [range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)
 null
 
-%%FAIL IGNORE MSG
+%%FAIL
+{
+jq: error: syntax error, unexpected end of file at <top-level>, line 1, column 1:
+    {
+    ^
+
+%%FAIL
 }
-jq: error: syntax error, unexpected INVALID_CHARACTER, expecting $end (Unix shell quoting issues?) at <top-level>, line 1, column 1:
+jq: error: syntax error, unexpected INVALID_CHARACTER, expecting end of file at <top-level>, line 1, column 1:
+    }
+    ^
 
 (.[{}] = 0)?
 null
