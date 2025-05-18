@@ -460,6 +460,12 @@ static jv f_tonumber(jq_state *jq, jv input) {
     jv_free(input);
     return number;
   }
+  if (jv_get_kind(input) == JV_KIND_FALSE) {
+	return jv_number(0);
+  }
+  if (jv_get_kind(input) == JV_KIND_TRUE) {
+	return jv_number(1);
+  }
   return type_error(input, "cannot be parsed as a number");
 }
 
