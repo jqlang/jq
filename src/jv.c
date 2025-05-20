@@ -1025,6 +1025,11 @@ jv jv_array_set(jv j, int idx, jv val) {
     jv_free(val);
     return jv_invalid_with_msg(jv_string("Out of bounds negative array index"));
   }
+  if (idx > (INT_MAX >> 2) - jvp_array_offset(j)) {
+    jv_free(j);
+    jv_free(val);
+    return jv_invalid_with_msg(jv_string("Array index too large"));
+  }
   // copy/free of val,j coalesced
   jv* slot = jvp_array_write(&j, idx);
   jv_free(*slot);
@@ -1044,6 +1049,7 @@ jv jv_array_concat(jv a, jv b) {
   // FIXME: could be faster
   jv_array_foreach(b, i, elem) {
     a = jv_array_append(a, elem);
+    if (!jv_is_valid(a)) break;
   }
   jv_free(b);
   return a;
@@ -1321,6 +1327,7 @@ jv jv_string_indexes(jv j, jv k) {
       }
 
       a = jv_array_append(a, jv_number(n));
+      if (!jv_is_valid(a)) break;
       p++;
     }
   }
@@ -1369,14 +1376,17 @@ jv jv_string_split(jv j, jv sep) {
 
   if (seplen == 0) {
     int c;
-    while ((jstr = jvp_utf8_next(jstr, jend, &c)))
+    while ((jstr = jvp_utf8_next(jstr, jend, &c))) {
       a = jv_array_append(a, jv_string_append_codepoint(jv_string(""), c));
+      if (!jv_is_valid(a)) break;
+    }
   } else {
     for (p = jstr; p < jend; p = s + seplen) {
       s = _jq_memmem(p, jend - p, sepstr, seplen);
       if (s == NULL)
         s = jend;
       a = jv_array_append(a, jv_string_sized(p, s - p));
+      if (!jv_is_valid(a)) break;
       // Add an empty string to denote that j ends on a sep
       if (s + seplen == jend && seplen != 0)
         a = jv_array_append(a, jv_string(""));
@@ -1394,8 +1404,10 @@ jv jv_string_explode(jv j) {
   const char* end = i + len;
   jv a = jv_array_sized(len);
   int c;
-  while ((i = jvp_utf8_next(i, end, &c)))
+  while ((i = jvp_utf8_next(i, end, &c))) {
     a = jv_array_append(a, jv_number(c));
+    if (!jv_is_valid(a)) break;
+  }
   jv_free(j);
   return a;
 }
@@ -1669,10 +1681,13 @@ static void jvp_object_free(jv o) {
   }
 }
 
-static jv jvp_object_rehash(jv object) {
+static int jvp_object_rehash(jv *objectp) {
+  jv object = *objectp;
   assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
   assert(jvp_refcnt_unshared(object.u.ptr));
   int size = jvp_object_size(object);
+  if (size > INT_MAX >> 2)
+    return 0;
   jv new_object = jvp_object_new(size * 2);
   for (int i=0; i<size; i++) {
     struct object_slot* slot = jvp_object_get_slot(object, i);
@@ -1685,7 +1700,8 @@ static jv jvp_object_rehash(jv object) {
   }
   // references are transported, just drop the old table
   jv_mem_free(jvp_object_ptr(object));
-  return new_object;
+  *objectp = new_object;
+  return 1;
 }
 
 static jv jvp_object_unshare(jv object) {
@@ -1714,27 +1730,32 @@ static jv jvp_object_unshare(jv object) {
   return new_object;
 }
 
-static jv* jvp_object_write(jv* object, jv key) {
+static int jvp_object_write(jv* object, jv key, jv **valpp) {
   *object = jvp_object_unshare(*object);
   int* bucket = jvp_object_find_bucket(*object, key);
   struct object_slot* slot = jvp_object_find_slot(*object, key, bucket);
   if (slot) {
     // already has the key
     jvp_string_free(key);
-    return &slot->value;
+    *valpp = &slot->value;
+    return 1;
   }
   slot = jvp_object_add_slot(*object, key, bucket);
   if (slot) {
     slot->value = jv_invalid();
   } else {
-    *object = jvp_object_rehash(*object);
+    if (!jvp_object_rehash(object)) {
+      *valpp = NULL;
+      return 0;
+    }
     bucket = jvp_object_find_bucket(*object, key);
     assert(!jvp_object_find_slot(*object, key, bucket));
     slot = jvp_object_add_slot(*object, key, bucket);
     assert(slot);
     slot->value = jv_invalid();
   }
-  return &slot->value;
+  *valpp = &slot->value;
+  return 1;
 }
 
 static int jvp_object_delete(jv* object, jv key) {
@@ -1834,7 +1855,11 @@ jv jv_object_set(jv object, jv key, jv value) {
   assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
   assert(JVP_HAS_KIND(key, JV_KIND_STRING));
   // copy/free of object, key, value coalesced
-  jv* slot = jvp_object_write(&object, key);
+  jv* slot;
+  if (!jvp_object_write(&object, key, &slot)) {
+    jv_free(object);
+    return jv_invalid_with_msg(jv_string("Object too big"));
+  }
   jv_free(*slot);
   *slot = value;
   return object;
@@ -1859,6 +1884,7 @@ jv jv_object_merge(jv a, jv b) {
   assert(JVP_HAS_KIND(a, JV_KIND_OBJECT));
   jv_object_foreach(b, k, v) {
     a = jv_object_set(a, k, v);
+    if (!jv_is_valid(a)) break;
   }
   jv_free(b);
   return a;
@@ -1878,6 +1904,7 @@ jv jv_object_merge_recursive(jv a, jv b) {
       jv_free(elem);
       a = jv_object_set(a, k, v);
     }
+    if (!jv_is_valid(a)) break;
   }
   jv_free(b);
   return a;

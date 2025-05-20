@@ -226,6 +226,10 @@ null
 [0,1,2]
 [0,5,2]
 
+try (.[999999999] = 0) catch .
+null
+"Array index too large"
+
 #
 # Multiple outputs, iteration
 #

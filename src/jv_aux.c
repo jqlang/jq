@@ -194,18 +194,19 @@ jv jv_set(jv t, jv k, jv v) {
         if (slice_len < insert_len) {
           // array is growing
           int shift = insert_len - slice_len;
-          for (int i = array_len - 1; i >= end; i--) {
+          for (int i = array_len - 1; i >= end && jv_is_valid(t); i--) {
             t = jv_array_set(t, i + shift, jv_array_get(jv_copy(t), i));
           }
         } else if (slice_len > insert_len) {
           // array is shrinking
           int shift = slice_len - insert_len;
-          for (int i = end; i < array_len; i++) {
+          for (int i = end; i < array_len && jv_is_valid(t); i++) {
             t = jv_array_set(t, i - shift, jv_array_get(jv_copy(t), i));
           }
-          t = jv_array_slice(t, 0, array_len - shift);
+          if (jv_is_valid(t))
+            t = jv_array_slice(t, 0, array_len - shift);
         }
-        for (int i=0; i < insert_len; i++) {
+        for (int i = 0; i < insert_len && jv_is_valid(t); i++) {
           t = jv_array_set(t, start + i, jv_array_get(jv_copy(v), i));
         }
         jv_free(v);
