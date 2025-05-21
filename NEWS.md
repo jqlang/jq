@@ -1,3 +1,46 @@
+# TBD
+
+- `trim`, `ltrim` and `rtrim` Added to trim leading and trailing white space. @wader #3056
+  ```sh
+  $ jq -n '" hello " | trim'
+  "hello"
+  ```
+- `tonumber` Is now faster and rejects numbers with leading or trailing white space. @itchyny #3055
+- `pow10` Removed as it has been deprecated in glibc. Use `exp10` instead. @itchyny #3059
+- `ltrimstr` and `rtrimstr` now error for non-string inputs. @emanuele6 #2969
+- Add `@urid`. Reverse of `@uri`. @fmgornick #3161
+  ```sh
+  $ jq -Rr '@urid' <<< '%6a%71'
+  jq
+  ```
+- Add `add/1`. Generator variant of `add/0`. @myaaaaaaaaa #3144
+  ```sh
+  $ jq -n 'add(1,2,3)'
+  6
+  ```
+- Support Tcl-style multiline comments. @emanuele6 #2989
+  ```
+  #!/bin/sh --
+  # Can be use to do shebang scripts.
+  # Next line will be seen as a comment be of the trailing backslash. \
+  exec jq ...
+
+  # this jq expression will result in [1]
+  [
+    1,
+    # \
+    2
+  ]
+  ```
+- Consistently reset color formatting. @thaliaarchi #3034
+- Fix building with `-Woverlength-strings` and be C99 compliant. @emanuele6 #3019
+- Fix issue with including `~/.jq` on Windows in some situations where `$HOME` is not set. @kirkoman #3114
+- Fix `mktime/0` overflow and regression require 6 or more elements in input array. @emanuele6 #3162 #3070
+- Make latest release instead of development version the default manual. @wader #3130
+- Remove multiple calls to free when successively calling `jq_reset`. @Sameesunkaria #3134
+- Fix option parsing of `--binary` on non-Windows platforms. @calestyo #3131
+- Add `strptime` fallback not only for Windows. @fdellwing #3094
+
 # 1.7.1
 
 ## Security
