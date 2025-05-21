@@ -1959,6 +1959,21 @@ jq \'[\.[]|rtrimstr("foo")]\'
 .
 .IP "" 0
 .
+.SS "trimstr(str)"
+Outputs its input with the given string removed at both ends, if it starts or ends with it\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[\.[]|trimstr("foo")]\'
+   ["fo", "foo", "barfoo", "foobarfoo", "foob"]
+=> ["fo","","bar","bar","b"]
+.
+.fi
+.
+.IP "" 0
+.
 .SS "trim, ltrim, rtrim"
 \fBtrim\fR trims both leading and trailing whitespace\.
 .

@@ -1798,6 +1798,17 @@ sections:
             input: '["fo", "foo", "barfoo", "foobar", "foob"]'
             output: ['["fo","","bar","foobar","foob"]']
 
+      - title: "`trimstr(str)`"
+        body: |
+
+          Outputs its input with the given string removed at both ends, if it
+          starts or ends with it.
+
+        examples:
+          - program: '[.[]|trimstr("foo")]'
+            input: '["fo", "foo", "barfoo", "foobarfoo", "foob"]'
+            output: ['["fo","","bar","bar","b"]']
+
       - title: "`trim`, `ltrim`, `rtrim`"
         body: |
 

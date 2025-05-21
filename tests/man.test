@@ -617,6 +617,10 @@ combinations(2)
 ["fo", "foo", "barfoo", "foobar", "foob"]
 ["fo","","bar","foobar","foob"]
 
+[.[]|trimstr("foo")]
+["fo", "foo", "barfoo", "foobarfoo", "foob"]
+["fo","","bar","bar","b"]
+
 trim, ltrim, rtrim
 " abc "
 "abc"
