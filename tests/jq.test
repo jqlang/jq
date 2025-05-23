@@ -513,6 +513,14 @@ null
 34324
 43
 
+1 + 2 as $x | -$x
+null
+-3
+
+"x" as $x | "a"+"y" as $y | $x+","+$y
+null
+"x,ay"
+
 1 as $x | [$x,$x,$x as $x | $x]
 null
 [1,1,1]

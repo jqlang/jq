@@ -325,7 +325,7 @@ Query:
 FuncDef Query %prec FUNCDEF {
   $$ = block_bind_referenced($1, $2, OP_IS_CALL_PSEUDO);
 } |
-Term "as" Patterns '|' Query {
+Expr "as" Patterns '|' Query {
   $$ = gen_destructure($1, $3, $5);
 } |
 "label" BINDING '|' Query {
