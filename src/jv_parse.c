@@ -11,7 +11,7 @@
 typedef const char* presult;
 
 #ifndef MAX_PARSING_DEPTH
-#define MAX_PARSING_DEPTH (256)
+#define MAX_PARSING_DEPTH (10000)
 #endif
 
 #define TRY(x) do {presult msg__ = (x); if (msg__) return msg__; } while(0)
