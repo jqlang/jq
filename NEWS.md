@@ -1,3 +1,245 @@
+# 1.8.0
+
+We are pleased to announce the release of version 1.8.0.
+This release includes a number of improvements since the last version.
+Note that some changes may introduce breaking changes to existing scripts,
+so be sure to read the following information carefully.
+Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.7.1...jq-1.8.0>.
+
+## Releasing
+
+- Change the version number pattern to `1.X.Y` (`1.8.0` instead of `1.8`). @itchyny #2999
+- Generate provenance attestations for release artifacts and docker image. @lectrical #3225
+
+  ```sh
+  gh attestation verify --repo jqlang/jq jq-linux-amd64
+  gh attestation verify --repo jqlang/jq oci://ghcr.io/jqlang/jq:1.8.0
+  ```
+
+## Security fixes
+
+- CVE-2024-23337: Fix signed integer overflow in `jvp_array_write` and `jvp_object_rehash`.
+  @itchyny de21386681c0df0104a99d9d09db23a9b2a78b1e
+  - The fix for this issue now limits the maximum size of arrays and objects to 536870912 (`2^29`) elements.
+- CVE-2024-53427: Reject NaN with payload while parsing JSON.
+  @itchyny a09a4dfd55e6c24d04b35062ccfe4509748b1dd3
+  - The fix for this issue now drops support for NaN with payload in JSON (like `NaN123`).
+    Other JSON extensions like `NaN` and `Infinity` are still supported.
+- CVE-2025-48060: Fix heap buffer overflow in `jv_string_vfmt`.
+  @itchyny c6e041699d8cd31b97375a2596217aff2cfca85b
+- Fix use of uninitialized value in `check_literal`. @itchyny #3324
+- Fix segmentation fault on `strftime/1`, `strflocaltime/1`. @itchyny #3271
+- Fix unhandled overflow in `@base64d`. @emanuele6 #3080
+
+## CLI changes
+
+- Fix `--indent 0` implicitly enabling `--compact-output`. @amarshall @gbrlmarn @itchyny #3232
+
+  ```sh
+  $ jq --indent 0 . <<< '{ "foo": ["hello", "world"] }'
+  {
+  "foo": [
+  "hello",
+  "world"
+  ]
+  }
+  # Previously, this implied --compact-output, but now outputs with new lines.
+  ```
+
+- Improve error messages to show problematic position in the filter. @itchyny #3292
+
+  ```sh
+  $ jq -n '1 + $foo + 2'
+  jq: error: $foo is not defined at <top-level>, line 1, column 5:
+      1 + $foo + 2
+          ^^^^
+  jq: 1 compile error
+  ```
+
+- Include column number in parser and compiler error messages. @liviubobocu #3257
+- Fix error message for string literal beginning with single quote. @mattmeyers #2964
+
+  ```sh
+  $ jq .foo <<< "{'foo':'bar'}"
+  jq: parse error: Invalid string literal; expected ", but got ' at line 1, column 7
+  # Previously, the error message was Invalid numeric literal at line 1, column 7.
+  ```
+
+- Improve `JQ_COLORS` environment variable to support larger escapes like truecolor. @SArpnt #3282
+
+  ```sh
+  JQ_COLORS="38;2;255;173;173:38;2;255;214;165:38;2;253;255;182:38;2;202;255;191:38;2;155;246;255:38;2;160;196;255:38;2;189;178;255:38;2;255;198;255" jq -nc '[null,false,true,42,{"a":"bc"}]'
+  ```
+
+- Add `--library-path` long option for `-L`. @thaliaarchi #3194
+- Fix `--slurp --stream` when input has no trailing newline character. @itchyny #3279
+- Fix `--indent` option to error for malformed values. @thaliaarchi #3195
+- Fix option parsing of `--binary` on non-Windows platforms. @calestyo #3131
+- Fix issue with `~/.jq` on Windows where `$HOME` is not set. @kirkoman #3114
+- Fix broken non-Latin output in the command help on Windows. @itchyny #3299
+- Increase the maximum parsing depth for JSON to 10000. @itchyny #3328
+- Parse short options in order given. @thaliaarchi #3194
+- Consistently reset color formatting. @thaliaarchi #3034
+
+## New functions
+
+- Add `trim/0`, `ltrim/0` and `rtrim/0` to trim leading and trailing white spaces. @wader #3056
+
+  ```sh
+  $ jq -n '" hello " | trim, ltrim, rtrim'
+  "hello"
+  "hello "
+  " hello"
+  ```
+
+- Add `trimstr/1` to trim string from both ends. @gbrlmarn #3319
+
+  ```sh
+  $ jq -n '"foobarfoo" | trimstr("foo")'
+  "bar"
+  ```
+
+- Add `add/1`. Generator variant of `add/0`. @myaaaaaaaaa #3144
+
+  ```sh
+  $ jq -c '.sum = add(.xs[])' <<< '{"xs":[1,2,3]}'
+  {"xs":[1,2,3],"sum":6}
+  ```
+
+- Add `skip/2` as the counterpart to `limit/2`. @itchyny #3181
+
+  ```sh
+  $ jq -nc '[1,2,3,4,5] | [skip(2; .[])]'
+  [3,4,5]
+  ```
+
+- Add `toboolean/0` to convert strings to booleans. @brahmlower @itchyny #2098
+
+  ```sh
+  $ jq -n '"true", "false" | toboolean'
+  true
+  false
+  ```
+
+- Add `@urid` format. Reverse of `@uri`. @fmgornick #3161
+
+  ```sh
+  $ jq -Rr '@urid' <<< '%6a%71'
+  jq
+  ```
+
+## Changes to existing functions
+
+- Use code point index for `indices/1`, `index/1` and `rindex/1`. @wader #3065
+  - This is a breaking change. Use `utf8bytelength/0` to get byte index.
+- Improve `tonumber/0` performance and rejects numbers with leading or trailing
+  white spaces. @itchyny @thaliaarchi #3055 #3195
+  - This is a breaking change. Use `trim/0` to remove leading and trailing white spaces.
+- Populate timezone data when formatting time. This fixes timezone name in
+  `strftime/1`, `strflocaltime/1` for DST. @marcin-serwin @sihde #3203 #3264 #3323
+- Preserve numerical precision on unary negation, `abs/0`, `length/0`. @itchyny #3242 #3275
+- Make `last(empty)` yield no output values like `first(empty)`. @itchyny #3179
+- Make `ltrimstr/1` and `rtrimstr/1` error for non-string inputs. @emanuele6 #2969
+- Make `limit/2` error for negative count. @itchyny #3181
+- Fix `mktime/0` overflow and allow fewer elements in date-time representation array. @emanuele6 #3070 #3162
+- Fix non-matched optional capture group. @wader #3238
+- Provide `strptime/1` on all systems. @george-hopkins @fdellwing  #3008 #3094
+- Fix `_WIN32` port of `strptime`. @emanuele6 #3071
+- Improve `bsearch/1` performance by implementing in C. @eloycoto #2945
+- Improve `unique/0` and `unique_by/1` performance. @itchyny @emanuele6 #3254 #3304
+- Fix error messages including long string literal not to break Unicode characters. @itchyny #3249
+- Remove `pow10/0` as it has been deprecated in glibc 2.27. Use `exp10/0` instead. @itchyny #3059
+- Remove private (and undocumented) `_nwise` filter. @itchyny #3260
+
+## Language changes
+
+- Fix precedence of binding syntax against unary and binary operators.
+  Also, allow some expressions as object values. @itchyny #3053 #3326
+  - This is a breaking change that may change the output of filters with binding syntax as follows.
+
+  ```sh
+  $ jq -nc '[-1 as $x | 1,$x]'
+  [1,-1]    # previously, [-1,-1]
+  $ jq -nc '1 | . + 2 as $x | -$x'
+  -3        # previously, -1
+  $ jq -nc '{x: 1 + 2, y: false or true, z: null // 3}'
+  {"x":3,"y":true,"z":3}    # previously, syntax error
+  ```
+
+- Support Tcl-style multiline comments. @emanuele6 #2989
+
+  ```sh
+  #!/bin/sh --
+  # Can be use to do shebang scripts.
+  # Next line will be seen as a comment be of the trailing backslash. \
+  exec jq ...
+  # this jq expression will result in [1]
+  [
+    1,
+    # \
+    2
+  ]
+  ```
+
+- Fix `foreach` not to break init backtracking with `DUPN`. @kanwren #3266
+
+  ```sh
+  $ jq -n '[1, 2] | foreach .[] as $x (0, 1; . + $x)'
+  1
+  3
+  2
+  4
+  ```
+
+- Fix `reduce`/`foreach` state variable should not be reset each iteration. @itchyny #3205
+
+  ```sh
+  $ jq -n 'reduce range(5) as $x (0; .+$x | select($x!=2))'
+  8
+  $ jq -nc '[foreach range(5) as $x (0; .+$x | select($x!=2); [$x,.])]'
+  [[0,0],[1,1],[3,4],[4,8]]
+  ```
+
+- Support CRLF line breaks in filters. @itchyny #3274
+- Improve performance of repeating strings. @itchyny #3272
+
+## Documentation changes
+
+- Switch the homepage to custom domain [jqlang.org](https://jqlang.org). @itchyny @owenthereal #3243
+- Make latest release instead of development version the default manual. @wader #3130
+- Add opengraph meta tags. @wader #3247
+- Replace jqplay.org with play.jqlang.org @owenthereal #3265
+- Add missing line from decNumber's licence to `COPYING`. @emanuele6 #3106
+- Various document improvements. @tsibley #3322, @itchyny #3240, @jhcarl0814 #3239,
+  @01mf02 #3184, @thaliaarchi #3199, @NathanBaulch #3173, @cjlarose #3164,
+  @sheepster1 #3105, #3103, @kishoreinvits #3042, @jbrains #3035, @thalman #3033,
+  @SOF3 #3017, @wader #3015, @wllm-rbnt #3002
+
+## Build improvements
+
+- Fix build with GCC 15 (C23). @emanuele6 #3209
+- Fix build with `-Woverlength-strings` @emanuele6 #3019
+- Fix compiler warning `type-limits` in `found_string`. @itchyny #3263
+- Fix compiler error in `jv_dtoa.c` and `builtin.c`. @UlrichEckhardt #3036
+- Fix warning: a function definition without a prototype is deprecated. @itchyny #3259
+- Define `_BSD_SOURCE` in `builtin.c` for OpenBSD support. @itchyny #3278
+- Define empty `JV_{,V}PRINTF_LIKE` macros if `__GNUC__` is not defined. @emanuele6 #3160
+- Avoid `ctype.h` abuse: cast `char` to `unsigned char` first. @riastradh #3152
+- Remove multiple calls to free when successively calling `jq_reset`. @Sameesunkaria #3134
+- Enable IBM z/OS support. @sachintu47 #3277
+- Fix insecure `RUNPATH`. @orbea #3212
+- Avoid zero-length `calloc`. @itchyny #3280
+- Move oniguruma and decNumber to vendor directory. @itchyny #3234
+
+## Test improvements
+
+- Run tests in C locale. @emanuele6 #3039
+- Improve reliability of `NO_COLOR` tests. @dag-erling #3188
+- Improve `shtest` not to fail if `JQ_COLORS` and `NO_COLOR` are already set. @SArpnt #3283
+- Refactor constant folding tests. @itchyny #3233
+- Make tests pass when `--disable-decnum`. @nicowilliams 6d02d53f515bf1314d644eee93ba30b0d11c7d2b
+- Disable Valgrind by default during testing. @itchyny #3269
+
 # 1.7.1
 
 ## Security
