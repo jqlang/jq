@@ -1148,6 +1148,7 @@ static jv jvp_string_empty_new(uint32_t length) {
   jvp_string* s = jvp_string_alloc(length);
   s->length_hashed = 0;
   memset(s->data, 0, length);
+  s->data[length] = 0;
   jv r = {JVP_FLAGS_STRING, 0, 0, 0, {&s->refcnt}};
   return r;
 }

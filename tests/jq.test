@@ -2362,6 +2362,10 @@ map(try implode catch .)
 [123,["a"],[nan]]
 ["implode input must be an array","string (\"a\") can't be imploded, unicode codepoint needs to be numeric","number (null) can't be imploded, unicode codepoint needs to be numeric"]
 
+try 0[implode] catch .
+[]
+"Cannot index number with string \"\""
+
 # walk
 walk(.)
 {"x":0}
