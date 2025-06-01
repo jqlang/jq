@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
+#include <stdbool.h>
 #include "jv.h"
 
 #define MAX_COLS 64
@@ -15,7 +16,21 @@ static void word_to_wordboundary_regex(char *out, size_t outlen, const char *wor
     snprintf(out, outlen, "(^|[^[:alnum:]_])(%s)([^[:alnum:]_]|$)", word);
 }
 
-// Colorize all matches of regexes from color_terms (regex array)
+// Improved colorize_terms: single-pass, no overlap, no repeated/garbled output
+typedef struct {
+    int start;
+    int end;
+    int pattern_index;
+} Match;
+
+static int cmp_match(const void* a, const void* b) {
+    const Match* ma = (const Match*)a;
+    const Match* mb = (const Match*)b;
+    // Sort by start, then longest match first for overlap
+    if (ma->start != mb->start) return ma->start - mb->start;
+    return mb->end - ma->end;
+}
+
 static void colorize_terms(char *buf, size_t buflen, const char *input, jv color_terms) {
     static const char *ansi_colors[] = {
         "1;31", "1;32", "1;33", "1;34", "1;35", "1;36",
@@ -23,75 +38,94 @@ static void colorize_terms(char *buf, size_t buflen, const char *input, jv color
         "1;91", "1;92", "1;93", "1;94", "1;95", "1;96",
         "1;101", "1;102", "1;103", "1;104", "1;105", "1;106"
     };
-    int n_colors = sizeof(ansi_colors)/sizeof(ansi_colors[0]);
+    int n_colors = sizeof(ansi_colors) / sizeof(ansi_colors[0]);
     int n_terms = jv_get_kind(color_terms) == JV_KIND_ARRAY ? jv_array_length(jv_copy(color_terms)) : 0;
 
-    char temp[4096];
-    strncpy(temp, input, sizeof(temp)-1);
-    temp[sizeof(temp)-1] = '\0';
-
     if (n_terms == 0) {
-        strncpy(buf, temp, buflen-1);
+        strncpy(buf, input, buflen-1);
         buf[buflen-1] = '\0';
         return;
     }
 
+    // 1. Gather all matches (max 128 for safety)
+    Match matches[128];
+    int match_count = 0;
     for (int t = 0; t < n_terms; ++t) {
         jv term = jv_array_get(jv_copy(color_terms), t);
         if (jv_get_kind(term) != JV_KIND_STRING) { jv_free(term); continue; }
         const char *pattern = jv_string_value(term);
 
         regex_t regex;
-        if (regcomp(&regex, pattern, REG_EXTENDED | REG_ICASE)) {
-            jv_free(term);
-            continue;
-        }
+        if (regcomp(&regex, pattern, REG_EXTENDED | REG_ICASE))
+        { jv_free(term); continue; }
 
-        char colored[512];
-        int color_idx = t % n_colors;
-        char result[4096] = {0};
-        char *src = temp;
-        regmatch_t match;
-
-        while (!regexec(&regex, src, 1, &match, 0)) {
-            strncat(result, src, match.rm_so);
-
-            regmatch_t subs[4];
-            // The match is at src+match.rm_so..src+match.rm_eo
-            // Try to find submatch 2 (the core word)
-            if (regexec(&regex, src + match.rm_so, 4, subs, 0) == 0 && subs[2].rm_so != -1) {
-                // Output: everything before submatch 2 (within the match), then the colored submatch 2, then everything after submatch 2 (within the match)
-                if (subs[2].rm_so > 0)
-                    strncat(result, src + match.rm_so, subs[2].rm_so);
-                // Colorize core
-                int mlen = subs[2].rm_eo - subs[2].rm_so;
-                char matchbuf[512];
-                strncpy(matchbuf, src + match.rm_so + subs[2].rm_so, mlen);
-                matchbuf[mlen] = '\0';
-                snprintf(colored, sizeof(colored), "\033[%sm%s\033[0m", ansi_colors[color_idx], matchbuf);
-                strcat(result, colored);
-                // Copy suffix (from end of submatch 2 to end of match)
-                if (subs[2].rm_eo < match.rm_eo - match.rm_so)
-                    strncat(result, src + match.rm_so + subs[2].rm_eo, match.rm_eo - match.rm_so - subs[2].rm_eo);
-            } else {
-                // fallback: color the whole match
-                int n = match.rm_eo - match.rm_so;
-                char matchbuf[512];
-                strncpy(matchbuf, src + match.rm_so, n);
-                matchbuf[n] = '\0';
-                snprintf(colored, sizeof(colored), "\033[%sm%s\033[0m", ansi_colors[color_idx], matchbuf);
-                strcat(result, colored);
+        const char* s = input;
+        int offset = 0;
+        regmatch_t m[4];
+        while (!regexec(&regex, s, 4, m, 0)) {
+            if (m[2].rm_so != -1 && match_count < 128) {
+                Match mm = {
+                    .start = offset + m[2].rm_so,
+                    .end = offset + m[2].rm_eo,
+                    .pattern_index = t
+                };
+                matches[match_count++] = mm;
             }
-            src += match.rm_eo;
+            int adv = (m[0].rm_eo > 0) ? m[0].rm_eo : 1;
+            s += adv;
+            offset += adv;
         }
-        strcat(result, src);
-        strncpy(temp, result, sizeof(temp)-1);
-        temp[sizeof(temp)-1] = '\0';
         regfree(&regex);
         jv_free(term);
     }
-    strncpy(buf, temp, buflen-1);
-    buf[buflen-1] = '\0';
+
+    // 2. Sort matches by start, longest match first if overlap
+    qsort(matches, match_count, sizeof(Match), cmp_match);
+
+    // 3. Remove overlapping matches: keep only first for each region
+    bool taken[4096] = {0}; // up to 4096 chars per cell
+    for (int i = 0; i < match_count; ++i) {
+        for (int j = matches[i].start; j < matches[i].end; ++j) {
+            if (taken[j]) { matches[i].start = matches[i].end = -1; break; }
+        }
+        if (matches[i].start != -1) {
+            for (int j = matches[i].start; j < matches[i].end; ++j) taken[j] = true;
+        }
+    }
+
+    // 4. Walk string, emitting colored or uncolored text
+    int pos = 0, outpos = 0;
+    for (int i = 0; i < match_count; ++i) {
+        if (matches[i].start == -1) continue;
+        if ((size_t)(outpos + (matches[i].start - pos)) < buflen) {
+            int n = matches[i].start - pos;
+            memcpy(buf + outpos, input + pos, n);
+            outpos += n;
+        }
+        int n = matches[i].end - matches[i].start;
+        if ((size_t)(outpos + 32) < buflen) {
+            outpos += snprintf(buf + outpos, buflen - outpos, "\033[%sm", ansi_colors[matches[i].pattern_index % n_colors]);
+        }
+        if ((size_t)(outpos + n) < buflen) {
+            memcpy(buf + outpos, input + matches[i].start, n);
+            outpos += n;
+        }
+        if ((size_t)(outpos + 5) < buflen) {
+            memcpy(buf + outpos, "\033[0m", 4);
+            outpos += 4;
+            buf[outpos] = '\0';
+        }
+        pos = matches[i].end;
+    }
+    // Output tail
+    int inputlen = strlen(input);
+    if ((size_t)(outpos + (inputlen-pos)) < buflen) {
+        memcpy(buf + outpos, input + pos, inputlen - pos);
+        outpos += inputlen - pos;
+        buf[outpos] = '\0';
+    } else {
+        buf[outpos] = '\0';
+    }
 }
 
 static jv my_jv_join(jv input, const char *sep) {
@@ -122,12 +156,82 @@ static jv my_jv_join(jv input, const char *sep) {
     return res;
 }
 
+// Use jv_keys (not jv_object_keys)!
+jv jv_keys(jv);
+
+static jv convert_array_of_objects(jv arr) {
+    int n = jv_array_length(jv_copy(arr));
+    if (n == 0) {
+        jv_free(arr);
+        return jv_invalid_with_msg(jv_string("Cannot render empty array of objects as table"));
+    }
+    // Collect all keys, in order of first appearance
+    jv keys = jv_array();
+    for (int i = 0; i < n; ++i) {
+        jv obj = jv_array_get(jv_copy(arr), i);
+        if (jv_get_kind(obj) != JV_KIND_OBJECT) { jv_free(obj); continue; }
+        jv iter = jv_keys(jv_copy(obj));
+        int key_count = jv_array_length(jv_copy(iter));
+        for (int j = 0; j < key_count; ++j) {
+            jv k = jv_array_get(jv_copy(iter), j);
+            int already = 0;
+            int keys_len = jv_array_length(jv_copy(keys));
+            for (int ki = 0; ki < keys_len; ++ki) {
+                jv k2 = jv_array_get(jv_copy(keys), ki);
+                if (jv_equal(jv_copy(k), jv_copy(k2))) already = 1;
+                jv_free(k2);
+                if (already) break;
+            }
+            if (!already) keys = jv_array_append(keys, jv_copy(k));
+            jv_free(k);
+        }
+        jv_free(iter);
+        jv_free(obj);
+    }
+    // Build rows
+    jv rows = jv_array();
+    for (int i = 0; i < n; ++i) {
+        jv obj = jv_array_get(jv_copy(arr), i);
+        if (jv_get_kind(obj) != JV_KIND_OBJECT) { jv_free(obj); continue; }
+        jv row = jv_array();
+        int key_count = jv_array_length(jv_copy(keys));
+        for (int j = 0; j < key_count; ++j) {
+            jv k = jv_array_get(jv_copy(keys), j);
+            jv v = jv_object_get(jv_copy(obj), jv_copy(k));
+            if (!jv_is_valid(v)) v = jv_null();
+            row = jv_array_append(row, v);
+            jv_free(k);
+        }
+        rows = jv_array_append(rows, row);
+        jv_free(obj);
+    }
+    // Compose result
+    jv result = jv_object();
+    result = jv_object_set(result, jv_string("headings"), keys);
+    result = jv_object_set(result, jv_string("rows"), rows);
+    jv_free(arr);
+    return result;
+}
+
 jv format_table(jv input) {
     if (jv_get_kind(input) == JV_KIND_NULL ||
         (jv_get_kind(input) == JV_KIND_STRING && strlen(jv_string_value(input)) == 0) ||
         (jv_get_kind(input) == JV_KIND_ARRAY && jv_array_length(jv_copy(input)) == 0)) {
         jv_free(input);
         return jv_string("");
+    }
+
+    // Array-of-object support
+    if (jv_get_kind(input) == JV_KIND_ARRAY && jv_array_length(jv_copy(input)) > 0) {
+        jv first = jv_array_get(jv_copy(input), 0);
+        if (jv_get_kind(first) == JV_KIND_OBJECT) {
+            jv new_input = convert_array_of_objects(jv_copy(input));
+            jv_free(first);
+            jv_free(input);
+            input = new_input;
+        } else {
+            jv_free(first);
+        }
     }
 
     jv headings = jv_null();
