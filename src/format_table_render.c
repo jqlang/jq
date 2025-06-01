@@ -1,8 +1,11 @@
+#ifdef HAVE_LIBONIG
+#include <oniguruma.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <oniguruma.h>
 #include "jv.h"
 
 #define MAX_COLS 64
@@ -29,6 +32,7 @@ static int cmp_match(const void* a, const void* b) {
   return mb->end - ma->end;
 }
 
+#ifdef HAVE_LIBONIG
 void colorize_terms(char *buf, size_t buflen, const char *input, jv color_terms) {
   static const char *ansi_colors[] = {
     "1;31", "1;32", "1;33", "1;34", "1;35", "1;36",
@@ -127,6 +131,13 @@ void colorize_terms(char *buf, size_t buflen, const char *input, jv color_terms)
     buf[outpos] = '\0';
   }
 }
+#else
+void colorize_terms(char *buf, size_t buflen, const char *input, jv color_terms) {
+  // Oniguruma not available; just copy input
+  strncpy(buf, input, buflen-1);
+  buf[buflen-1] = '\0';
+}
+#endif
 
 jv my_jv_join(jv input, const char *sep) {
   if (jv_get_kind(input) != JV_KIND_ARRAY) {
