@@ -35,7 +35,7 @@
 #include "jv_dtoa_tsd.h"
 #include "jv_private.h"
 #include "util.h"
-#include "table_format.h"
+#include "format_table.h"
 
 #define BINOP(name) \
 static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
