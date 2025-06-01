@@ -150,13 +150,14 @@ static jv my_jv_join(jv input, const char *sep) {
 
 jv jv_keys(jv);
 
+// Helper: Given an array of objects, produce {"headings": ..., "rows": ...}
+// Preserves key order from the first object.
 static jv convert_array_of_objects(jv arr) {
     int n = jv_array_length(jv_copy(arr));
     if (n == 0) {
         jv_free(arr);
         return jv_invalid_with_msg(jv_string("Cannot render empty array of objects as table"));
     }
-    // Get keys from first object, in insertion order
     jv first_obj = jv_array_get(jv_copy(arr), 0);
     jv keys = jv_array();
     if (jv_get_kind(first_obj) == JV_KIND_OBJECT) {
@@ -169,7 +170,6 @@ static jv convert_array_of_objects(jv arr) {
         }
     }
     jv_free(first_obj);
-    // Add any new keys from other objects, preserving order of first appearance
     for (int i = 1; i < n; ++i) {
         jv obj = jv_array_get(jv_copy(arr), i);
         if (jv_get_kind(obj) != JV_KIND_OBJECT) { jv_free(obj); continue; }
@@ -191,7 +191,6 @@ static jv convert_array_of_objects(jv arr) {
         jv_free(iter);
         jv_free(obj);
     }
-    // Build rows
     jv rows = jv_array();
     for (int i = 0; i < n; ++i) {
         jv obj = jv_array_get(jv_copy(arr), i);
@@ -215,12 +214,54 @@ static jv convert_array_of_objects(jv arr) {
     return result;
 }
 
+// If input is {rows: array of objects, color_words?: ...}, expand it to {headings, rows, color_words?}
+static jv normalize_rows_object(jv input) {
+    jv rows = jv_object_get(jv_copy(input), jv_string("rows"));
+    jv headings = jv_object_get(jv_copy(input), jv_string("headings"));
+    if (jv_get_kind(headings) == JV_KIND_ARRAY) {
+        jv_free(rows);
+        jv_free(headings);
+        return input; // already normalized
+    }
+    if (jv_get_kind(rows) == JV_KIND_ARRAY && jv_array_length(jv_copy(rows)) > 0) {
+        jv first = jv_array_get(jv_copy(rows), 0);
+        if (jv_get_kind(first) == JV_KIND_OBJECT) {
+            jv expanded = convert_array_of_objects(jv_copy(rows));
+            jv color_words = jv_object_get(jv_copy(input), jv_string("color_words"));
+            if (jv_get_kind(color_words) == JV_KIND_ARRAY) {
+                expanded = jv_object_set(expanded, jv_string("color_words"), color_words);
+            } else {
+                jv_free(color_words);
+                jv color_terms = jv_object_get(jv_copy(input), jv_string("color_terms"));
+                if (jv_get_kind(color_terms) == JV_KIND_ARRAY) {
+                    expanded = jv_object_set(expanded, jv_string("color_terms"), color_terms);
+                } else {
+                    jv_free(color_terms);
+                }
+            }
+            jv_free(first);
+            jv_free(rows);
+            jv_free(input);
+            return expanded;
+        }
+        jv_free(first);
+    }
+    jv_free(rows);
+    jv_free(headings);
+    return input;
+}
+
 jv format_table(jv input) {
     if (jv_get_kind(input) == JV_KIND_NULL ||
         (jv_get_kind(input) == JV_KIND_STRING && strlen(jv_string_value(input)) == 0) ||
         (jv_get_kind(input) == JV_KIND_ARRAY && jv_array_length(jv_copy(input)) == 0)) {
         jv_free(input);
         return jv_string("");
+    }
+
+    // Normalize: handle {rows: array of objects, color_words?: ...}
+    if (jv_get_kind(input) == JV_KIND_OBJECT) {
+        input = normalize_rows_object(input);
     }
 
     if (jv_get_kind(input) == JV_KIND_ARRAY && jv_array_length(jv_copy(input)) > 0) {
@@ -301,6 +342,41 @@ jv format_table(jv input) {
         jv_free(input); jv_free(color_terms);
         return jv_invalid_with_msg(jv_string("Input to @table must be array-of-arrays or {headings?, rows, color_words?}"));
     }
+
+    // --- PATCH: convert rows (array of objects) to array of arrays if needed
+    if (jv_get_kind(headings) == JV_KIND_ARRAY && jv_get_kind(rows) == JV_KIND_ARRAY) {
+        int nrows = jv_array_length(jv_copy(rows));
+        int ncols = jv_array_length(jv_copy(headings));
+        int needs_conversion = 0;
+        for (int i = 0; i < nrows; ++i) {
+            jv r = jv_array_get(jv_copy(rows), i);
+            if (jv_get_kind(r) == JV_KIND_OBJECT) {
+                needs_conversion = 1;
+                jv_free(r);
+                break;
+            }
+            jv_free(r);
+        }
+        if (needs_conversion) {
+            jv new_rows = jv_array();
+            for (int i = 0; i < nrows; ++i) {
+                jv obj = jv_array_get(jv_copy(rows), i);
+                jv arr_row = jv_array();
+                for (int j = 0; j < ncols; ++j) {
+                    jv k = jv_array_get(jv_copy(headings), j);
+                    jv v = jv_object_get(jv_copy(obj), jv_copy(k));
+                    if (!jv_is_valid(v)) v = jv_null();
+                    arr_row = jv_array_append(arr_row, v);
+                    jv_free(k);
+                }
+                new_rows = jv_array_append(new_rows, arr_row);
+                jv_free(obj);
+            }
+            jv_free(rows);
+            rows = new_rows;
+        }
+    }
+    // --- END PATCH
 
     int cols = 0, row_count = 0;
     int col_widths[MAX_COLS] = {0};
