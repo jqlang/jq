@@ -629,7 +629,7 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     return line;
   } else if (!strcmp(fmt_s, "table")) {
     jv_free(fmt);
-    return format_table(jq, input);
+    return format_table(input);
   } else if (!strcmp(fmt_s, "html")) {
     jv_free(fmt);
     return escape_string(f_tostring(jq, input), "&&amp;\0<&lt;\0>&gt;\0'&apos;\0\"&quot;\0");

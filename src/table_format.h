@@ -4,6 +4,6 @@
 #include "jq.h"
 #include "jv.h"
 
-jv format_table(jq_state *jq, jv input);
+jv format_table(jv input);
 
 #endif // TABLE_FORMAT_H
