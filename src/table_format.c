@@ -16,7 +16,6 @@ static void word_to_wordboundary_regex(char *out, size_t outlen, const char *wor
     snprintf(out, outlen, "(^|[^[:alnum:]_])(%s)([^[:alnum:]_]|$)", word);
 }
 
-// Improved colorize_terms: single-pass, no overlap, no repeated/garbled output
 typedef struct {
     int start;
     int end;
@@ -26,7 +25,6 @@ typedef struct {
 static int cmp_match(const void* a, const void* b) {
     const Match* ma = (const Match*)a;
     const Match* mb = (const Match*)b;
-    // Sort by start, then longest match first for overlap
     if (ma->start != mb->start) return ma->start - mb->start;
     return mb->end - ma->end;
 }
@@ -47,7 +45,6 @@ static void colorize_terms(char *buf, size_t buflen, const char *input, jv color
         return;
     }
 
-    // 1. Gather all matches (max 128 for safety)
     Match matches[128];
     int match_count = 0;
     for (int t = 0; t < n_terms; ++t) {
@@ -56,8 +53,7 @@ static void colorize_terms(char *buf, size_t buflen, const char *input, jv color
         const char *pattern = jv_string_value(term);
 
         regex_t regex;
-        if (regcomp(&regex, pattern, REG_EXTENDED | REG_ICASE))
-        { jv_free(term); continue; }
+        if (regcomp(&regex, pattern, REG_EXTENDED | REG_ICASE)) { jv_free(term); continue; }
 
         const char* s = input;
         int offset = 0;
@@ -79,11 +75,9 @@ static void colorize_terms(char *buf, size_t buflen, const char *input, jv color
         jv_free(term);
     }
 
-    // 2. Sort matches by start, longest match first if overlap
     qsort(matches, match_count, sizeof(Match), cmp_match);
 
-    // 3. Remove overlapping matches: keep only first for each region
-    bool taken[4096] = {0}; // up to 4096 chars per cell
+    bool taken[4096] = {0};
     for (int i = 0; i < match_count; ++i) {
         for (int j = matches[i].start; j < matches[i].end; ++j) {
             if (taken[j]) { matches[i].start = matches[i].end = -1; break; }
@@ -93,7 +87,6 @@ static void colorize_terms(char *buf, size_t buflen, const char *input, jv color
         }
     }
 
-    // 4. Walk string, emitting colored or uncolored text
     int pos = 0, outpos = 0;
     for (int i = 0; i < match_count; ++i) {
         if (matches[i].start == -1) continue;
@@ -117,7 +110,6 @@ static void colorize_terms(char *buf, size_t buflen, const char *input, jv color
         }
         pos = matches[i].end;
     }
-    // Output tail
     int inputlen = strlen(input);
     if ((size_t)(outpos + (inputlen-pos)) < buflen) {
         memcpy(buf + outpos, input + pos, inputlen - pos);
@@ -156,7 +148,6 @@ static jv my_jv_join(jv input, const char *sep) {
     return res;
 }
 
-// Use jv_keys (not jv_object_keys)!
 jv jv_keys(jv);
 
 static jv convert_array_of_objects(jv arr) {
@@ -165,9 +156,21 @@ static jv convert_array_of_objects(jv arr) {
         jv_free(arr);
         return jv_invalid_with_msg(jv_string("Cannot render empty array of objects as table"));
     }
-    // Collect all keys, in order of first appearance
+    // Get keys from first object, in insertion order
+    jv first_obj = jv_array_get(jv_copy(arr), 0);
     jv keys = jv_array();
-    for (int i = 0; i < n; ++i) {
+    if (jv_get_kind(first_obj) == JV_KIND_OBJECT) {
+        int iter = jv_object_iter(first_obj);
+        while (jv_object_iter_valid(first_obj, iter)) {
+            jv key = jv_object_iter_key(first_obj, iter);
+            keys = jv_array_append(keys, jv_copy(key));
+            jv_free(key);
+            iter = jv_object_iter_next(first_obj, iter);
+        }
+    }
+    jv_free(first_obj);
+    // Add any new keys from other objects, preserving order of first appearance
+    for (int i = 1; i < n; ++i) {
         jv obj = jv_array_get(jv_copy(arr), i);
         if (jv_get_kind(obj) != JV_KIND_OBJECT) { jv_free(obj); continue; }
         jv iter = jv_keys(jv_copy(obj));
@@ -205,7 +208,6 @@ static jv convert_array_of_objects(jv arr) {
         rows = jv_array_append(rows, row);
         jv_free(obj);
     }
-    // Compose result
     jv result = jv_object();
     result = jv_object_set(result, jv_string("headings"), keys);
     result = jv_object_set(result, jv_string("rows"), rows);
@@ -221,7 +223,6 @@ jv format_table(jv input) {
         return jv_string("");
     }
 
-    // Array-of-object support
     if (jv_get_kind(input) == JV_KIND_ARRAY && jv_array_length(jv_copy(input)) > 0) {
         jv first = jv_array_get(jv_copy(input), 0);
         if (jv_get_kind(first) == JV_KIND_OBJECT) {
@@ -239,7 +240,6 @@ jv format_table(jv input) {
     int have_separator = 0;
     int show_headings = 0;
 
-    // Build color_terms from color_words if present
     jv color_terms = jv_null();
     if (jv_get_kind(input) == JV_KIND_OBJECT) {
         jv words = jv_object_get(jv_copy(input), jv_string("color_words"));
@@ -259,7 +259,6 @@ jv format_table(jv input) {
             jv_free(words);
         } else {
             jv_free(words);
-            // fallback to legacy "color_terms" if present
             jv c = jv_object_get(jv_copy(input), jv_string("color_terms"));
             if (jv_get_kind(c) == JV_KIND_ARRAY)
                 color_terms = c;
@@ -270,7 +269,6 @@ jv format_table(jv input) {
     if (jv_is_valid(color_terms) == 0)
         color_terms = jv_array();
 
-    // Detect input mode
     if (jv_get_kind(input) == JV_KIND_OBJECT) {
         jv h = jv_object_get(jv_copy(input), jv_string("headings"));
         jv r = jv_object_get(jv_copy(input), jv_string("rows"));
@@ -307,7 +305,6 @@ jv format_table(jv input) {
     int cols = 0, row_count = 0;
     int col_widths[MAX_COLS] = {0};
 
-    // Determine column count and compute col_widths
     if (show_headings) {
         cols = jv_array_length(jv_copy(headings));
         for (int j = 0; j < cols; ++j) {
@@ -335,7 +332,6 @@ jv format_table(jv input) {
 
     jv lines = jv_array();
 
-    // Top border
     {
         char buf[4096] = "┌";
         for (int j = 0; j < cols; ++j) {
@@ -347,7 +343,6 @@ jv format_table(jv input) {
         lines = jv_array_append(lines, jv_string(buf));
     }
 
-    // Headings row (bold, never colored)
     if (show_headings) {
         char buf[4096] = "│";
         int ncols = jv_array_length(jv_copy(headings));
@@ -356,7 +351,7 @@ jv format_table(jv input) {
             jv sval = (jv_get_kind(val) == JV_KIND_STRING) ? jv_copy(val) : jv_dump_string(jv_copy(val), 0);
 
             char cell[2560];
-            snprintf(cell, sizeof(cell), "\033[1m%s\033[0m", jv_string_value(sval)); // bold only
+            snprintf(cell, sizeof(cell), "\033[1m%s\033[0m", jv_string_value(sval));
 
             int pad = col_widths[j] - (int)strlen(jv_string_value(sval));
             strcat(buf, cell);
@@ -369,7 +364,6 @@ jv format_table(jv input) {
         lines = jv_array_append(lines, jv_string(buf));
     }
 
-    // Header separator
     if (have_separator) {
         char sep[4096] = "├";
         for (int j = 0; j < cols; ++j) {
@@ -381,7 +375,6 @@ jv format_table(jv input) {
         lines = jv_array_append(lines, jv_string(sep));
     }
 
-    // Data rows (colorized)
     for (int i = 0; i < row_count; ++i) {
         jv row = jv_array_get(jv_copy(rows), i);
         int ncols = jv_array_length(jv_copy(row));
@@ -405,7 +398,6 @@ jv format_table(jv input) {
         jv_free(row);
     }
 
-    // Bottom border
     {
         char buf[4096] = "└";
         for (int j = 0; j < cols; ++j) {
