@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <regex.h>
 #include <stdbool.h>
+#include <oniguruma.h>
 #include "jv.h"
 
 #define MAX_COLS 64
@@ -52,26 +52,34 @@ void colorize_terms(char *buf, size_t buflen, const char *input, jv color_terms)
     if (jv_get_kind(term) != JV_KIND_STRING) { jv_free(term); continue; }
     const char *pattern = jv_string_value(term);
 
-    regex_t regex;
-    if (regcomp(&regex, pattern, REG_EXTENDED | REG_ICASE)) { jv_free(term); continue; }
+    OnigRegex reg;
+    OnigErrorInfo einfo;
+    int r = onig_new(&reg,
+                     (const UChar*)pattern, (const UChar*)(pattern + strlen(pattern)),
+                     ONIG_OPTION_IGNORECASE | ONIG_OPTION_EXTEND,
+                     ONIG_ENCODING_UTF8, ONIG_SYNTAX_DEFAULT, &einfo);
+    if (r != ONIG_NORMAL) { jv_free(term); continue; }
 
-    const char* s = input;
+    const UChar* s = (const UChar*)input;
+    const UChar* end = s + strlen(input);
     int offset = 0;
-    regmatch_t m[4];
-    while (!regexec(&regex, s, 4, m, 0)) {
-      if (m[2].rm_so != -1 && match_count < 128) {
+    OnigRegion* region = onig_region_new();
+    while (onig_search(reg, s, end, s, end, region, 0) >= 0) {
+      if (region->num_regs > 2 && region->beg[2] >= 0 && match_count < 128) {
         Match mm = {
-          .start = offset + m[2].rm_so,
-          .end = offset + m[2].rm_eo,
+          .start = offset + region->beg[2],
+          .end = offset + region->end[2],
           .pattern_index = t
         };
         matches[match_count++] = mm;
       }
-      int adv = (m[0].rm_eo > 0) ? m[0].rm_eo : 1;
+      int adv = region->end[0] > 0 ? region->end[0] : 1;
       s += adv;
       offset += adv;
+      if (s >= end) break;
     }
-    regfree(&regex);
+    onig_region_free(region, 1);
+    onig_free(reg);
     jv_free(term);
   }
 
