@@ -32,6 +32,10 @@ tail: |
   on [Libera.Chat](https://libera.chat/). For more interactive discussions, feel free to join our [Discord server](https://discord.gg/yg6yjNmgAC).
 
 news:
+  - date: 1 June 2025
+    body: |
+      jq 1.8.0 released. See [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.8.0) for details.
+
   - date: 13 December 2023
     body: |
       jq 1.7.1 released. Security (CVE-2023-50246, CVE-2023-50268) and bug fixes.
