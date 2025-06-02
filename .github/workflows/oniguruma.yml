@@ -29,7 +29,8 @@ jobs:
       - name: Test
         run: |
           ./jq -n '"" | test("")'
-          make check VERBOSE=yes
+          # make check VERBOSE=yes
+          VERBOSE=yes TRACE_TESTS=1 ./tests/jqtest
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -62,7 +63,8 @@ jobs:
       - name: Test
         run: |
           ! ./jq -n '"" | test("")'
-          make check VERBOSE=yes
+          # make check VERBOSE=yes
+          VERBOSE=yes TRACE_TESTS=1 ./tests/jqtest
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
