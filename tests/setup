@@ -46,16 +46,21 @@ if [ -z "$d" ]; then
     exit 1
 fi
 
-jq_oniguruma_status() {
-    if $JQ --exit-status --null-input '"" | test("")' > /dev/null 2>&1; then
-        echo enabled
-    else
-        echo disabled
-    fi
+oniguruma_status() {
+    $JQ --exit-status --null-input '"" | test("")' > /dev/null 2>&1
 }
 
+if ! command -v awk > /dev/null; then
+  echo "awk is required but not found in PATH."
+  exit 1
+fi
+
+if [ ! -f "$JQTESTDIR/${TESTFILE:-jq.test}" ]; then
+  echo "Test file '$JQTESTDIR/${TESTFILE:-jq.test}' not found."
+  exit 1
+fi
 test_file() {
-    awk -v status="$(jq_oniguruma_status)" '
+    awk -v status="$(oniguruma_status && echo enabled || echo disabled)" '
       /^# jqtest oniguruma:/ {
         if ($0 ~ status) next         # If matches current status, skip marker only
         skip=1; next                  # Else, skip this and the next line
