@@ -56,7 +56,7 @@ jq_oniguruma_status() {
 
 test_file() {
 #    awk -v status="$(jq_oniguruma_status)" '
-    awk -v status="disabled" '
+    awk -v status="enabled" '
       /^# jqtest oniguruma:/ {
         if ($0 ~ status) next         # If matches current status, skip marker only
         skip=1; next                  # Else, skip this and the next line
