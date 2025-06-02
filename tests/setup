@@ -45,3 +45,22 @@ if [ -z "$d" ]; then
     echo "Your OS does not support mktemp(1) -d" 1>&2
     exit 1
 fi
+
+jq_oniguruma_status() {
+    if $JQ -n '"" | test("")' &>/dev/null || false; then
+        echo enabled
+    else
+        echo disabled
+    fi
+}
+
+test_file() {
+    awk -v status="$(jq_oniguruma_status)" '
+      /^# jqtest oniguruma:/ {
+        if ($0 ~ status) next         # If matches current status, skip marker only
+        skip=1; next                  # Else, skip this and the next line
+      }
+      skip { skip=0; next }           # Skip the line after the marker for the other status
+      { print }
+    ' "$JQTESTDIR/${TESTFILE:-jq.test}"
+}
