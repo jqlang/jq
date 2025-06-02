@@ -82,18 +82,15 @@ null
 "ISgpPD4mJyIJ"
 "!()<>&'\"\t"
 
-# table with headings, rows & color_words
+# table from array of values
 @table
-{"headings":["false","bartrue","baz"],"rows":[["true","false","TRUE"],[1,null,0],["true false","FALSE TRUE","falsetrue"]],"color_words":["(no|NO|false|FALSE)","(yes|YES|true|TRUE)","null"]}
-# jqtest oniguruma:enabled
-"┌──────────┬──────────┬─────────┐\n│\u001b[1mfalse\u001b[0m     │\u001b[1mbartrue\u001b[0m   │\u001b[1mbaz\u001b[0m      │\n├──────────┼──────────┼─────────┤\n│\u001b[1;32mtrue\u001b[0m      │\u001b[1;31mfalse\u001b[0m     │\u001b[1;32mTRUE\u001b[0m     │\n│1         │\u001b[1;33mnull\u001b[0m      │0        │\n│\u001b[1;32mtrue\u001b[0m \u001b[1;31mfalse\u001b[0m│\u001b[1;31mFALSE\u001b[0m \u001b[1;32mTRUE\u001b[0m│falsetrue│\n└──────────┴──────────┴─────────┘"
-# jqtest oniguruma:disabled
-"┌──────────┬──────────┬─────────┐\n│\u001b[1mfalse\u001b[0m     │\u001b[1mbartrue\u001b[0m   │\u001b[1mbaz\u001b[0m      │\n├──────────┼──────────┼─────────┤\n│true      │false     │TRUE     │\n│1         │null      │0        │\n│true false│FALSE TRUE│falsetrue│\n└──────────┴──────────┴─────────┘"
+[["one","two", "three"],[1, null, "Three"],["", 2,false]]
+"┌───┬────┬─────┐\n│\u001b[1mone\u001b[0m│\u001b[1mtwo\u001b[0m │\u001b[1mthree\u001b[0m│\n│1  │null│Three│\n│   │2   │false│\n└───┴────┴─────┘"
 
 # table from array of objects
 @table
-[{"false":"true","bartrue":"false","baz":"TRUE"},{"false":1,"bartrue":null,"baz":0},{"false":"true false","bartrue":"FALSE TRUE","baz":"falsetrue"}]
-"┌──────────┬──────────┬─────────┐\n│\u001b[1mfalse\u001b[0m     │\u001b[1mbartrue\u001b[0m   │\u001b[1mbaz\u001b[0m      │\n├──────────┼──────────┼─────────┤\n│true      │false     │TRUE     │\n│1         │null      │0        │\n│true false│FALSE TRUE│falsetrue│\n└──────────┴──────────┴─────────┘"
+[{"one":1,"two":null,"three":"Three"},{"two":2,"three":false}]
+"┌────┬────┬─────┐\n│\u001b[1mone\u001b[0m │\u001b[1mtwo\u001b[0m │\u001b[1mthree\u001b[0m│\n├────┼────┼─────┤\n│1   │null│Three│\n│null│2   │false│\n└────┴────┴─────┘"
 
 # regression test for #436
 @base64

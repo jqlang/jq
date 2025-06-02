@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "June 2025" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -2379,6 +2379,12 @@ The input must be an array, and it is rendered as CSV with double quotes for str
 The input must be an array, and it is rendered as TSV (tab\-separated values)\. Each input array will be printed as a single line\. Fields are separated by a single tab (ascii \fB0x09\fR)\. Input characters line\-feed (ascii \fB0x0a\fR), carriage\-return (ascii \fB0x0d\fR), tab (ascii \fB0x09\fR) and backslash (ascii \fB0x5c\fR) will be output as escape sequences \fB\en\fR, \fB\er\fR, \fB\et\fR, \fB\e\e\fR respectively\.
 .
 .TP
+\fB@table\fR:
+.
+.IP
+The input must be an array of objects or values, and it is rendered as an ASCII table\.
+.
+.TP
 \fB@sh\fR:
 .
 .IP
@@ -2444,6 +2450,10 @@ jq \'@base64\'
 jq \'@base64d\'
    "VGhpcyBpcyBhIG1lc3NhZ2U="
 => "This is a message"
+
+jq \'@table\'
+   [{"a": 1, "b": 2}, {"a": "one", "b": "two"}]
+=> "┌───┬───┐\en│\eu001b[1ma\eu001b[0m  │\eu001b[1mb\eu001b[0m  │\en├───┼───┤\en│1  │2  │\en│one│two│\en└───┴───┘"
 .
 .fi
 .
