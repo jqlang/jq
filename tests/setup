@@ -47,7 +47,7 @@ if [ -z "$d" ]; then
 fi
 
 jq_oniguruma_status() {
-    if $JQ --exit-status --null-input '"" | test("")' &>/dev/null; then
+    if $JQ --exit-status --null-input '"" | test("")' &>/dev/null || false; then
         echo enabled
     else
         echo disabled
