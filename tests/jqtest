@@ -2,4 +2,4 @@
 
 . "${0%/*}/setup" "$@"
 
-test_file | $VALGRIND $Q $JQ -L "$mods" --run-tests -
+test_file | $VALGRIND $Q $JQ -L "$mods" --run-tests
