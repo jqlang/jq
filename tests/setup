@@ -53,11 +53,15 @@ jq_oniguruma_installed() {
 if ! command -v awk > /dev/null; then
   echo "awk is required but not found in PATH."
   exit 1
+else
+  echo "XXXXXXXXXXXX awk was found"
 fi
 
 if [ ! -f "$JQTESTDIR/${TESTFILE:-jq.test}" ]; then
   echo "Test file '$JQTESTDIR/${TESTFILE:-jq.test}' not found."
   exit 1
+else
+  echo "XXXXXXXXXXXX jq.test was found"
 fi
 test_file() {
     status="$(jq_oniguruma_installed && echo enabled || echo disabled)"
