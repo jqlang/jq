@@ -46,7 +46,7 @@ if [ -z "$d" ]; then
     exit 1
 fi
 
-oniguruma_status() {
+jq_oniguruma_installed() {
     $JQ --exit-status --null-input '"" | test("")' > /dev/null 2>&1
 }
 
@@ -60,12 +60,24 @@ if [ ! -f "$JQTESTDIR/${TESTFILE:-jq.test}" ]; then
   exit 1
 fi
 test_file() {
-    awk -v status="$(oniguruma_status && echo enabled || echo disabled)" '
-      /^# jqtest oniguruma:/ {
-        if ($0 ~ status) next         # If matches current status, skip marker only
-        skip=1; next                  # Else, skip this and the next line
-      }
-      skip { skip=0; next }           # Skip the line after the marker for the other status
-      { print }
-    ' "$JQTESTDIR/${TESTFILE:-jq.test}"
+    status="$(jq_oniguruma_installed && echo enabled || echo disabled)"
+    skip=0
+    while IFS= read -r line; do
+        if [ "$skip" -eq 1 ]; then skip=0; continue; fi
+        case "$line" in
+            "# jqtest oniguruma:"*)
+                marker_status="${line#\# jqtest oniguruma:}"
+                # Remove leading and trailing whitespace (POSIX shell way)
+                marker_status="${marker_status#"${marker_status%%[![:space:]]*}"}"
+                marker_status="${marker_status%"${marker_status##*[![:space:]]}"}"
+                if [ "$marker_status" = "$status" ]; then
+                    continue
+                else
+                    skip=1
+                    continue
+                fi
+                ;;
+        esac
+        printf "%s\n" "$line"
+    done < "$JQTESTDIR/${TESTFILE:-jq.test}"
 }
