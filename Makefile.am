@@ -99,7 +99,7 @@ endif
 # Remake the version.h header file if, and only if, the git ID has changed
 .PHONY: .FORCE
 .FORCE:
-generate_ver = ver="`{ $(srcdir)/scripts/version || echo '$(VERSION)' ; } | sed 's/.*/\x23define JQ_VERSION \"&\"/'`"
+generate_ver = ver="`{ $(srcdir)/scripts/version || echo '$(VERSION)' ; } | xargs printf '\043define JQ_VERSION \"%s\"\n'`"
 .remake-version-h: .FORCE
 	@ $(generate_ver); test "x`cat src/version.h 2>/dev/null`" = "x$$ver" || touch .remake-version-h
 src/version.h: .remake-version-h
