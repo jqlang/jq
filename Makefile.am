@@ -16,7 +16,6 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
         src/jv_dtoa_tsd.c                                               \
         src/format_table.c                                              \
-        src/format_table_input.c src/format_table_render.c              \
         vendor/decNumber/decContext.c vendor/decNumber/decNumber.c      \
         ${LIBJQ_INCS}
 
@@ -202,7 +201,7 @@ endif
 AM_CFLAGS += $(onig_CFLAGS)
 
 if WITH_ONIGURUMA
-TESTS += tests/jqonigtest tests/onigtest tests/manonigtest
+TESTS += tests/onigtest tests/manonigtest
 endif
 
 ### Packaging
@@ -232,8 +231,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/onig.supp tests/local.supp                                \
         tests/setup tests/torture/input0.json                           \
         tests/optional.test tests/man.test tests/manonig.test           \
-        tests/jq.test tests/jqonig.test tests/onig.test                 \
-        tests/base64.test tests/uri.test                                \
+        tests/jq.test tests/onig.test tests/base64.test tests/uri.test  \
         tests/utf8-truncate.jq tests/jq-f-test.sh                       \
         tests/no-main-program.jq tests/yes-main-program.jq
 

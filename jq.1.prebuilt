@@ -2382,7 +2382,7 @@ The input must be an array, and it is rendered as TSV (tab\-separated values)\. 
 \fB@table\fR:
 .
 .IP
-The input must be an array of objects or values, and it is rendered as an ASCII table\.
+The input must be an array of values, and it is rendered as an ASCII table\.
 .
 .TP
 \fB@sh\fR:
@@ -2452,8 +2452,8 @@ jq \'@base64d\'
 => "This is a message"
 
 jq \'@table\'
-   [{"a": 1, "b": 2}, {"a": "one", "b": "two"}]
-=> "┌───┬───┐\en│\eu001b[1ma\eu001b[0m  │\eu001b[1mb\eu001b[0m  │\en├───┼───┤\en│1  │2  │\en│one│two│\en└───┴───┘"
+   [["a", 1], ["b", 2]]
+=> "┌─┬─┐\en│a│1│\en│b│2│\en└─┴─┘"
 .
 .fi
 .

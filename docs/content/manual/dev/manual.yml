@@ -2190,7 +2190,7 @@ sections:
 
           * `@table`:
 
-            The input must be an array of objects or values, and it is
+            The input must be an array of values, and it is
             rendered as an ASCII table.
 
           * `@sh`:
@@ -2242,8 +2242,8 @@ sections:
             output: ['"This is a message"']
 
           - program: '@table'
-            input: '[{"a": 1, "b": 2}, {"a": "one", "b": "two"}]'
-            output: ['"┌───┬───┐\n│\u001b[1ma\u001b[0m  │\u001b[1mb\u001b[0m  │\n├───┼───┤\n│1  │2  │\n│one│two│\n└───┴───┘"']
+            input: '[["a", 1], ["b", 2]]'
+            output: ['"┌─┬─┐\n│a│1│\n│b│2│\n└─┴─┘"']
 
       - title: "Dates"
         body: |

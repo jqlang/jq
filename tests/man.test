@@ -740,8 +740,8 @@ bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
 "This is a message"
 
 @table
-[{"a": 1, "b": 2}, {"a": "one", "b": "two"}]
-"┌───┬───┐\n│\u001b[1ma\u001b[0m  │\u001b[1mb\u001b[0m  │\n├───┼───┤\n│1  │2  │\n│one│two│\n└───┴───┘"
+[["a", 1], ["b", 2]]
+"┌─┬─┐\n│a│1│\n│b│2│\n└─┴─┘"
 
 fromdate
 "2015-03-05T23:51:47Z"

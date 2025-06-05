@@ -84,13 +84,9 @@ null
 
 # table from array of values
 @table
-[["one","two", "three"],[1, null, "Three"],["", 2,false]]
-"┌───┬────┬─────┐\n│\u001b[1mone\u001b[0m│\u001b[1mtwo\u001b[0m │\u001b[1mthree\u001b[0m│\n│1  │null│Three│\n│   │2   │false│\n└───┴────┴─────┘"
+[["one","two"],[1, null],[false, 2]]
+"┌─────┬────┐\n│one  │two │\n│1    │null│\n│false│2   │\n└─────┴────┘"
 
-# table from array of objects
-@table
-[{"one":1,"two":null,"three":"Three"},{"two":2,"three":false}]
-"┌────┬────┬─────┐\n│\u001b[1mone\u001b[0m │\u001b[1mtwo\u001b[0m │\u001b[1mthree\u001b[0m│\n├────┼────┼─────┤\n│1   │null│Three│\n│null│2   │false│\n└────┴────┴─────┘"
 
 # regression test for #436
 @base64
