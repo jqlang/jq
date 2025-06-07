@@ -1559,14 +1559,9 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   memset(&tm, 0, sizeof(tm));
   tm.tm_wday = 8; // sentinel
   tm.tm_yday = 367; // sentinel
+
   const char *input = jv_string_value(a);
   const char *fmt = jv_string_value(b);
-
-#ifndef HAVE_STRPTIME
-  if (strcmp(fmt, "%Y-%m-%dT%H:%M:%SZ")) {
-    return ret_error2(a, b, jv_string("strptime/1 only supports ISO 8601 on this platform"));
-  }
-#endif
   const char *end = strptime(input, fmt, &tm);
   if (end == NULL || (*end != '\0' && !isspace((unsigned char)*end))) {
     return ret_error2(a, b, jv_string_fmt("date \"%s\" does not match format \"%s\"", input, fmt));
