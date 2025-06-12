@@ -1897,8 +1897,8 @@ jv jv_object_merge_recursive(jv a, jv b) {
 
   jv_object_foreach(b, k, v) {
     jv elem = jv_object_get(jv_copy(a), jv_copy(k));
-    if (jv_is_valid(elem) &&
-        JVP_HAS_KIND(elem, JV_KIND_OBJECT) &&
+    int elem_valid = jv_is_valid(elem);
+    if (elem_valid && (elem_valid ? JVP_HAS_KIND(elem, JV_KIND_OBJECT) : 0) &&
         JVP_HAS_KIND(v, JV_KIND_OBJECT)) {
       a = jv_object_set(a, k, jv_object_merge_recursive(elem, v));
     } else {
