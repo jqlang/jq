@@ -78,8 +78,7 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
 
   int startline = locfile_get_line(l, loc.start);
   int offset = l->linemap[startline];
-  int end = MIN(loc.end, l->linemap[startline+1] - 1);
-  assert(end > loc.start);
+  int end = MIN(loc.end, MAX(l->linemap[startline+1] - 1, loc.start + 1));
   jv underline = jv_string_repeat(jv_string("^"), end - loc.start);
   jv m2 = jv_string_fmt("%s at %s, line %d, column %d:\n    %.*s\n    %*s",
                         jv_string_value(m1), jv_string_value(l->fname),

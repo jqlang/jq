@@ -711,6 +711,20 @@ jq: 3 compile errors
 EOF
 diff $d/out $d/expected
 
+# Test syntax error messages when error happens at the end.
+if $VALGRIND $Q $JQ -n 'if
+' > $d/out 2>&1; then
+  echo 'syntax error not detected'
+  exit 1
+fi
+cat > $d/expected <<EOF
+jq: error: syntax error, unexpected end of file at <top-level>, line 1, column 3:
+    if
+      ^
+jq: 1 compile error
+EOF
+diff $d/out $d/expected
+
 # Comments!
 if ! x=$($JQ -n '123 # comment') || [ "$x" != 123 ]; then
   echo 'comment did not work'
