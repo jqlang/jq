@@ -246,10 +246,6 @@ static block gen_binop(block a, block b, int op) {
   return gen_call(funcname, BLOCK(gen_lambda(a), gen_lambda(b)));
 }
 
-static block gen_format(block a, jv fmt) {
-  return BLOCK(a, gen_call("format", gen_lambda(gen_const(fmt))));
-}
-
 static block gen_definedor_assign(block object, block val) {
   block tmp = gen_op_var_fresh(STOREV, "tmp");
   return BLOCK(gen_op_simple(DUP),
@@ -477,9 +473,12 @@ FuncDef:
   $$ = gen_function(jv_string_value($2), gen_noop(), $4);
   jv_free($2);
 } |
-
 "def" IDENT '(' Params ')' ':' Query ';' {
   $$ = gen_function(jv_string_value($2), $4, $7);
+  jv_free($2);
+} |
+"def" FORMAT ':' Query ';' {
+  $$ = gen_function(jv_string_value($2), gen_noop(), $4);
   jv_free($2);
 }
 
@@ -507,7 +506,7 @@ FORMAT QQSTRING_START {
   $$ = $1;
 } |
 QQSTRING_START {
-  $$ = jv_string("text");
+  $$ = jv_string("@text");
 }
 
 
@@ -526,7 +525,8 @@ QQString QQSTRING_TEXT {
   $$ = gen_binop($1, gen_const($2), '+');
 } |
 QQString QQSTRING_INTERP_START Query QQSTRING_INTERP_END {
-  $$ = gen_binop($1, gen_format($3, jv_copy($<literal>0)), '+');
+  const char *s = jv_string_value($<literal>0);
+  $$ = gen_binop($1, BLOCK($3, gen_location(@3, locations, gen_call(s, gen_noop()))), '+');
 }
 
 
@@ -647,7 +647,9 @@ String {
   $$ = $1;
 } |
 FORMAT {
-  $$ = gen_format(gen_noop(), $1);
+  const char *s = jv_string_value($1);
+  $$ = gen_location(@$, locations, gen_call(s, gen_noop()));
+  jv_free($1);
 } |
 '-' Term {
   $$ = BLOCK($2, gen_call("_negate", gen_noop()));
