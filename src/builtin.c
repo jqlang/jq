@@ -1764,6 +1764,7 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
     return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
 
   const char *fmt = jv_string_value(b);
+  int fmt_not_empty = *fmt != '\0';
   size_t max_size = strlen(fmt) + 100;
   char *buf = jv_mem_alloc(max_size);
 #ifdef __APPLE__
@@ -1784,7 +1785,7 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
 #endif
   jv_free(b);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
-  if ((n == 0 && *fmt) || n > max_size) {
+  if ((n == 0 && fmt_not_empty) || n > max_size) {
     free(buf);
     return jv_invalid_with_msg(jv_string("strftime/1: unknown system failure"));
   }
@@ -1813,12 +1814,13 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   if (!jv2tm(a, &tm, 1))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   const char *fmt = jv_string_value(b);
+  int fmt_not_empty = *fmt != '\0';
   size_t max_size = strlen(fmt) + 100;
   char *buf = jv_mem_alloc(max_size);
   size_t n = strftime(buf, max_size, fmt, &tm);
   jv_free(b);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
-  if ((n == 0 && *fmt) || n > max_size) {
+  if ((n == 0 && fmt_not_empty) || n > max_size) {
     free(buf);
     return jv_invalid_with_msg(jv_string("strflocaltime/1: unknown system failure"));
   }
