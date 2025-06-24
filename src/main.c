@@ -21,6 +21,10 @@
 extern void jv_tsd_dtoa_ctx_init();
 #endif
 
+#ifdef HAVE_LIBONIG
+#include <oniguruma.h>
+#endif
+
 #if !defined(HAVE_ISATTY) && defined(HAVE__ISATTY)
 #undef isatty
 #define isatty _isatty
@@ -296,6 +300,13 @@ int main(int argc, char* argv[]) {
 
 #ifdef HAVE_SETLOCALE
   (void) setlocale(LC_ALL, "");
+#endif
+
+#ifdef HAVE_LIBONIG
+  // use a lower regex parse depth limit than the default (4096) to protect
+  // from stack-overflows
+  // https://github.com/jqlang/jq/security/advisories/GHSA-f946-j5j2-4w5m
+  onig_set_parse_depth_limit(1024);
 #endif
 
 #ifdef __OpenBSD__
