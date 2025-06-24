@@ -193,6 +193,7 @@ CLEANFILES += jq.1
 
 if BUILD_ONIGURUMA
 libjq_la_LIBADD += vendor/oniguruma/src/.libs/libonig.la
+jq_LDADD += vendor/oniguruma/src/.libs/libonig.la
 SUBDIRS = vendor/oniguruma
 endif
 
