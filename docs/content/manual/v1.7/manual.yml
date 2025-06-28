@@ -3239,7 +3239,7 @@ sections:
 
           Outputs one new input.
 
-          Note that when using `input` it is generally be necessary to
+          Note that when using `input` it is generally necessary to
           invoke jq with the `-n` command-line option, otherwise
           the first entity will be lost.
 
