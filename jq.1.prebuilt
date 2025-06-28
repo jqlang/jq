@@ -3729,7 +3729,7 @@ Most jq builtins are referentially transparent, and yield constant and repeatabl
 Outputs one new input\.
 .
 .P
-Note that when using \fBinput\fR it is generally be necessary to invoke jq with the \fB\-n\fR command\-line option, otherwise the first entity will be lost\.
+Note that when using \fBinput\fR it is generally necessary to invoke jq with the \fB\-n\fR command\-line option, otherwise the first entity will be lost\.
 .
 .IP "" 4
 .
