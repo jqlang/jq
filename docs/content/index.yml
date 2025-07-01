@@ -32,6 +32,10 @@ tail: |
   on [Libera.Chat](https://libera.chat/). For more interactive discussions, feel free to join our [Discord server](https://discord.gg/yg6yjNmgAC).
 
 news:
+  - date: 1 July 2025
+    body: |
+      jq 1.8.1 released. See [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.8.1) for details.
+
   - date: 1 June 2025
     body: |
       jq 1.8.0 released. See [release notes](https://github.com/jqlang/jq/releases/tag/jq-1.8.0) for details.
