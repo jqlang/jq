@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "September 2025" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -167,6 +167,12 @@ Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts i
 .
 .IP
 Read the filter from a file rather than from a command line, like awk\'s \-f option\. This changes the filter argument to be interpreted as a filename, instead of the source of a program\.
+.
+.TP
+\fB\-o\fR / \fB\-\-output\-file filename\fR:
+.
+.IP
+Write output to the file called filename instead of stdout\.
 .
 .TP
 \fB\-L directory\fR / \fB\-\-library\-path directory\fR:
