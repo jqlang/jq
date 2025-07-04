@@ -805,6 +805,10 @@ printf '[\n      {\n            "a": 1\n      }\n]\n' > $d/expected
 $JQ --indent 6 -n "[{a:1}]" > $d/out
 cmp $d/out $d/expected
 
+printf '{"wide":"👋"}' > $d/expected
+$JQ -j -c -o $d/out -n "{wide:\"👋\"}"
+cmp $d/out $d/expected
+
 if ! $msys && ! $mingw; then
   # Test handling of timezones -- #2429, #2475
   if ! r=$(TZ=Asia/Tokyo $JQ -rn '1731627341 | strflocaltime("%F %T %z %Z")') \
