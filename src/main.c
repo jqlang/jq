@@ -485,6 +485,7 @@ int main(int argc, char* argv[]) {
           }
           i += 2; // skip the next two arguments
         } else if (isoption(&text, 'o', "output-file", is_short)) {
+          options |= NO_COLOR_OUTPUT;
           const char *which = "output-file";
           if (i >= argc - 1) {
             fprintf(stderr, "jq: --%s takes one parameter (e.g. --%s filename)\n", which, which);
