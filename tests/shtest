@@ -807,9 +807,7 @@ cmp $d/out $d/expected
 
 printf '{"wide":"👋"}' > $d/expected
 $JQ -j -c -o $d/out -n "{wide:\"👋\"}"
-cat $d/out $d/expected
 cmp $d/out $d/expected
-
 
 if ! $msys && ! $mingw; then
   # Test handling of timezones -- #2429, #2475
