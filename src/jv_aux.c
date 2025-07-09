@@ -702,6 +702,9 @@ jv jv_sort(jv objects, jv keys) {
   assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
   int n = jv_array_length(jv_copy(objects));
   struct sort_entry* entries = sort_items(objects, keys);
+  if(!entries){
+    return jv_array();
+  }
   jv ret = jv_array();
   for (int i=0; i<n; i++) {
     jv_free(entries[i].key);
