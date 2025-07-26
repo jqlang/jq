@@ -190,12 +190,18 @@ jobs:
         arch:
           - amd64
           - i386
+          - arm64
         include:
           - arch: amd64
             msystem: UCRT64
+            os: windows-2022
           - arch: i386
             msystem: MINGW32
-    runs-on: windows-2022
+            os: windows-2022
+          - arch: arm64
+            msystem: CLANGARM64
+            os: windows-11-arm
+    runs-on: ${{ matrix.os }}
     env:
       LDFLAGS: -s
       SUFFIX: windows-${{ matrix.arch }}
