@@ -892,8 +892,9 @@ jv jv_parse_sized_custom_flags(const char* string, int length, int flags) {
 
   if (!jv_is_valid(value) && jv_invalid_has_msg(jv_copy(value))) {
     jv msg = jv_invalid_get_msg(value);
-    value = jv_invalid_with_msg(jv_string_fmt("%s (while parsing '%s')",
+    value = jv_invalid_with_msg(jv_string_fmt("%s (while parsing '%.*s')",
                                               jv_string_value(msg),
+                                              length,
                                               string));
     jv_free(msg);
   }
