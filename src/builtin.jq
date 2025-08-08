@@ -241,3 +241,35 @@ def JOIN($idx; stream; idx_expr; join_expr):
   stream | [., $idx[idx_expr]] | join_expr;
 def IN(s): any(s == .; .);
 def IN(src; s): any(src == s; .);
+
+# Clean timestamp and converts ISO 8601 timestamps to readable format
+def clean_timestamp:
+  if type == "string" then
+    if test("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}") then
+      split("T") as $parts |
+      if ($parts | length) == 2 then
+        $parts[0] + " " + (
+          $parts[1] 
+          | split(".")[0]
+          | split("Z")[0]
+          | split("+")[0]
+          | split("-")[0]
+          | if test("^\\d{2}:\\d{2}:\\d{2}$") then . else split("-")[0] end
+        )
+      else
+        .
+      end
+    else
+      .
+    end
+  elif type == "number" then
+    if . != null then
+      (if . > 9999999999 then . / 1000 else . end | todateiso8601 | clean_timestamp)
+    else
+      null
+    end
+  elif . == null then
+    null
+  else
+    .
+  end;
