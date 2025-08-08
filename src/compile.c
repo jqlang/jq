@@ -994,7 +994,7 @@ block gen_destructure(block var, block matchers, block body) {
     top = BLOCK(top, gen_op_simple(DUP));
   }
 
-  return BLOCK(top, gen_op_simple(SUBEXP_BEGIN), gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, BLOCK(gen_op_simple(SUBEXP_END), body)));
+  return BLOCK(top, gen_op_simple(SUBEXP_BEGIN), gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
 }
 
 // Like gen_var_binding(), but bind `break`'s wildcard unbound variable
