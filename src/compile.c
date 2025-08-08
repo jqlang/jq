@@ -788,7 +788,7 @@ static block bind_alternation_matchers(block matchers, block body) {
 
   // We don't have any alternations here, so we can use the simplest case.
   if (altmatchers.first == NULL) {
-    return bind_matcher(final_matcher, body);
+    return bind_matcher(final_matcher, BLOCK(gen_op_simple(SUBEXP_END), gen_op_simple(POP), body));
   }
 
   // Collect var names
@@ -823,7 +823,7 @@ static block bind_alternation_matchers(block matchers, block body) {
   // We're done with these insts now.
   block_free(altmatchers);
 
-  return bind_matcher(preamble, BLOCK(mb, final_matcher, body));
+  return bind_matcher(preamble, BLOCK(mb, final_matcher, gen_op_simple(SUBEXP_END), gen_op_simple(POP), body));
 }
 
 block gen_reduce(block source, block matcher, block init, block body) {
