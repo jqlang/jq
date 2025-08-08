@@ -788,7 +788,7 @@ static block bind_alternation_matchers(block matchers, block body) {
 
   // We don't have any alternations here, so we can use the simplest case.
   if (altmatchers.first == NULL) {
-    return bind_matcher(final_matcher, BLOCK(gen_op_simple(SUBEXP_END), gen_op_simple(POP), body));
+    return bind_matcher(final_matcher, body);
   }
 
   // Collect var names
@@ -823,7 +823,7 @@ static block bind_alternation_matchers(block matchers, block body) {
   // We're done with these insts now.
   block_free(altmatchers);
 
-  return bind_matcher(preamble, BLOCK(mb, final_matcher, gen_op_simple(SUBEXP_END), gen_op_simple(POP), body));
+  return bind_matcher(preamble, BLOCK(mb, final_matcher, body));
 }
 
 block gen_reduce(block source, block matcher, block init, block body) {
@@ -994,7 +994,7 @@ block gen_destructure(block var, block matchers, block body) {
     top = BLOCK(top, gen_op_simple(DUP));
   }
 
-  return BLOCK(top, gen_op_simple(SUBEXP_BEGIN), gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
+  return BLOCK(top, gen_op_simple(SUBEXP_BEGIN), gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, BLOCK(gen_op_simple(SUBEXP_END), body)));
 }
 
 // Like gen_var_binding(), but bind `break`'s wildcard unbound variable
