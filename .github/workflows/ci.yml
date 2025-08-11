@@ -304,7 +304,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
       - name: Download executables
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: jq-linux-*
           merge-multiple: true
@@ -379,7 +379,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: jq-*
           merge-multiple: true
