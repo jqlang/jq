@@ -75,7 +75,7 @@ jobs:
       SUFFIX: linux-${{ matrix.arch }}
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
       - name: Install packages
@@ -136,7 +136,7 @@ jobs:
       SUFFIX: macos-${{ matrix.arch }}
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
       - name: Install packages
@@ -213,7 +213,7 @@ jobs:
         run: git config --system core.autocrlf false
         shell: bash
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
       - uses: msys2/setup-msys2@v2
@@ -266,7 +266,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
       - name: Install packages
@@ -302,9 +302,9 @@ jobs:
     needs: linux
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Download executables
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: jq-linux-*
           merge-multiple: true
@@ -377,9 +377,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/jq-')
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: jq-*
           merge-multiple: true
