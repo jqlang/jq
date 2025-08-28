@@ -563,6 +563,27 @@ static jv escape_string(jv input, const char* escapings) {
 
 }
 
+static int string_contains_byte(jv input, const char* search) {
+  assert(jv_get_kind(input) == JV_KIND_STRING);
+
+  int lookup[128] = {0};
+  const char* p = search;
+  while (*p) {
+    lookup[(int)*p] = 1;
+    p++;
+  }
+
+  const char* s = jv_string_value(input);
+  for (int i=0; s[i] != '\0'; i++) {
+    int c = s[i];
+    if (c < 128 && lookup[c]) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
 static jv f_format(jq_state *jq, jv input, jv fmt) {
   if (jv_get_kind(fmt) != JV_KIND_STRING) {
     jv_free(input);
@@ -600,9 +621,13 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
         }
         break;
       case JV_KIND_STRING: {
-        line = jv_string_append_str(line, "\"");
-        line = jv_string_concat(line, escape_string(x, "\"\"\"\0"));
-        line = jv_string_append_str(line, "\"");
+        if (string_contains_byte(x, "\n\",") != -1) {
+          line = jv_string_append_str(line, "\"");
+          line = jv_string_concat(line, escape_string(x, "\"\"\"\0"));
+          line = jv_string_append_str(line, "\"");
+        } else {
+          line = jv_string_concat(line, x);
+        }
         break;
       }
       default:
