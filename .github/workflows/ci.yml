@@ -359,7 +359,7 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
       - name: Generate signed attestations
         if: startsWith(github.ref, 'refs/tags/jq-')
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.build-push.outputs.digest }}
@@ -395,7 +395,7 @@ jobs:
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
           gh release upload "$TAG_NAME" --clobber jq-* sha256sum.txt
       - name: Generate signed attestations
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: jq-*
       - name: Import GPG key
