@@ -2258,6 +2258,14 @@ sections:
           The `now` builtin outputs the current time, in seconds since
           the Unix epoch.
 
+          The `clean_timestamp` builtin converts ISO 8601 timestamp strings
+          to human-readable format "YYYY-MM-DD HH:MM:SS". It automatically
+          handles various ISO 8601 variations including microseconds and
+          timezone indicators. For numeric inputs, it automatically detects
+          whether the value represents seconds or milliseconds since the Unix
+          epoch and converts accordingly. Non-timestamp strings and null
+          values are preserved unchanged.
+
           Low-level jq interfaces to the C-library time functions are
           also provided: `strptime`, `strftime`, `strflocaltime`,
           `mktime`, `gmtime`, and `localtime`.  Refer to your host
@@ -2311,6 +2319,18 @@ sections:
             input: '"2015-03-05T23:51:47Z"'
             output: ['1425599507']
 
+          - program: 'clean_timestamp'
+            input: '"2020-01-01T23:43:12.123456+05:00"'
+            output: ['"2020-01-01 23:43:12"']
+
+          - program: 'clean_timestamp'
+            input: '1577919792'
+            output: ['"2020-01-01 23:03:12"']
+          
+          - program: 'map(clean_timestamp)'
+            input: '[1577919792, "2020-01-01T23:43:12Z", null]'
+            output: ['["2020-01-01 23:03:12", "2020-01-01 23:43:12", null]']
+          
       - title: "SQL-Style Operators"
         body: |
 
