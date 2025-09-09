@@ -516,18 +516,23 @@ static jv f_utf8bytelength(jq_state *jq, jv input) {
 #define CHARS_ALPHANUM "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
 static const unsigned char BASE64_ENCODE_TABLE[64 + 1] = CHARS_ALPHANUM "+/";
+static const unsigned char BASE64URL_ENCODE_TABLE[64 + 1] = CHARS_ALPHANUM "-_";
 static const unsigned char BASE64_INVALID_ENTRY = 0xFF;
 static const unsigned char BASE64_DECODE_TABLE[255] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
   62, // +
-  0xFF, 0xFF, 0xFF,
+  0xFF,
+  62, // -
+  0xFF,
   63, // /
   52, 53, 54, 55, 56, 57, 58, 59, 60, 61, // 0-9
   0xFF, 0xFF, 0xFF,
   99, // =
   0xFF, 0xFF, 0xFF,
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, // A-Z
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF,
+  63, // _
+  0xFF,
   26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,  // a-z
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
@@ -561,6 +566,41 @@ static jv escape_string(jv input, const char* escapings) {
   jv_free(input);
   return ret;
 
+}
+
+static jv base64_encode_common(jq_state *jq, jv input, const unsigned char * encoding_table, int is_pad) {
+  input = f_tostring(jq, input);
+  jv line = jv_string("");
+  const unsigned char* data = (const unsigned char*)jv_string_value(input);
+  int len = jv_string_length_bytes(jv_copy(input));
+  for (int i=0; i<len; i+=3) {
+    uint32_t code = 0;
+    int n = len - i >= 3 ? 3 : len-i;
+    for (int j=0; j<3; j++) {
+      code <<= 8;
+      code |= j < n ? (unsigned)data[i+j] : 0;
+    }
+    char buf[4];
+    for (int j=0; j<4; j++) {
+      buf[j] = encoding_table[(code >> (18 - j*6)) & 0x3f];
+    }
+    unsigned buf_len = sizeof(buf);
+    if (n < 3) {
+      // n is the number of bytes encoded this loop, this branch is possible only
+      // when len is a multiple of 3, and then on the last loop only.
+      // n = 1 byte -> buf[0,1] are valid, n = 2 bytes -> buf[0,1,2] are valid
+      if (is_pad) {
+        buf[3] = '=';
+        if (n < 2) buf[2] = '=';
+      }
+      else {
+        buf_len = n + 1;
+      }
+    }
+    line = jv_string_append_buf(line, buf, buf_len);
+  }
+  jv_free(input);
+  return line;
 }
 
 static jv f_format(jq_state *jq, jv input, jv fmt) {
@@ -725,27 +765,13 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     return line;
   } else if (!strcmp(fmt_s, "base64")) {
     jv_free(fmt);
-    input = f_tostring(jq, input);
-    jv line = jv_string("");
-    const unsigned char* data = (const unsigned char*)jv_string_value(input);
-    int len = jv_string_length_bytes(jv_copy(input));
-    for (int i=0; i<len; i+=3) {
-      uint32_t code = 0;
-      int n = len - i >= 3 ? 3 : len-i;
-      for (int j=0; j<3; j++) {
-        code <<= 8;
-        code |= j < n ? (unsigned)data[i+j] : 0;
-      }
-      char buf[4];
-      for (int j=0; j<4; j++) {
-        buf[j] = BASE64_ENCODE_TABLE[(code >> (18 - j*6)) & 0x3f];
-      }
-      if (n < 3) buf[3] = '=';
-      if (n < 2) buf[2] = '=';
-      line = jv_string_append_buf(line, buf, sizeof(buf));
-    }
-    jv_free(input);
-    return line;
+    return base64_encode_common(jq, input, BASE64_ENCODE_TABLE, 1);
+  } else if (!strcmp(fmt_s, "base64url")) {
+    jv_free(fmt);
+    return base64_encode_common(jq, input, BASE64URL_ENCODE_TABLE, 0);
+  } else if (!strcmp(fmt_s, "base64urlp")) {
+    jv_free(fmt);
+    return base64_encode_common(jq, input, BASE64URL_ENCODE_TABLE, 1);
   } else if (!strcmp(fmt_s, "base64d")) {
     jv_free(fmt);
     input = f_tostring(jq, input);
