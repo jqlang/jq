@@ -1,3 +1,6 @@
+#if __SIZEOF_POINTER__==4
+# define _TIME_BITS 64
+#endif
 #ifndef __sun__
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED 1
