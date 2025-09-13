@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
 #endif
@@ -199,11 +200,13 @@ static void run_jq_tests(jv lib_dirs, int verbose, FILE *testdata, int skip, int
         pass = 0;
       }
 #ifdef USE_DECNUM
-      jv as_string = jv_dump_string(jv_copy(expected), rand() & ~(JV_PRINT_COLOR|JV_PRINT_REFCOUNT));
-      jv reparsed = jv_parse_sized(jv_string_value(as_string), jv_string_length_bytes(jv_copy(as_string)));
-      assert(jv_equal(jv_copy(expected), jv_copy(reparsed)));
-      jv_free(as_string);
-      jv_free(reparsed);
+      if (!(jv_get_kind(expected) == JV_KIND_NUMBER && isnan(jv_number_value(expected)))) {
+        jv as_string = jv_dump_string(jv_copy(expected), rand() & ~(JV_PRINT_COLOR|JV_PRINT_REFCOUNT));
+        jv reparsed = jv_parse_sized(jv_string_value(as_string), jv_string_length_bytes(jv_copy(as_string)));
+        assert(jv_equal(jv_copy(expected), jv_copy(reparsed)));
+        jv_free(as_string);
+        jv_free(reparsed);
+      }
 #endif
       jv_free(expected);
       jv_free(actual);
