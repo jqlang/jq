@@ -680,9 +680,11 @@ EOF
   if [ -z "$l" ]; then
     echo "WARNING: Not testing localization"
   else
-    date=$(LC_ALL=$l date +'%a %d %b %Y at %H:%M:%S')
-    if ! LC_ALL=$l $JQ -nR --arg date "$date" '$date|strptime("%a %d %b %Y at %H:%M:%S")'; then
-      echo "jq does not honor LC_ALL environment variable"
+    dt1=$(LC_ALL=$l date +'%a %d %b %Y at %H:%M:%S')
+    dt2=$(LC_ALL=$l jq -nr 'now | strflocaltime("%a %d %b %Y at %H:%M:%S")')
+    dt3=$(LC_ALL=$l date +'%a %d %b %Y at %H:%M:%S')
+    if [ "$dt1" != "$dt2" ] && [ "$dt2" != "$dt3" ]; then
+      echo "jq does not honor LC_ALL environment variable ($dt1, $dt2, $dt3)"
       exit 1
     fi
   fi
