@@ -807,9 +807,103 @@ printf '[\n      {\n            "a": 1\n      }\n]\n' > $d/expected
 $JQ --indent 6 -n "[{a:1}]" > $d/out
 cmp $d/out $d/expected
 
+# Simple --output-file
 printf '{"wide":"👋"}' > $d/expected
-$JQ -j -c -o $d/out -n "{wide:\"👋\"}"
+$JQ -j -c -o $d/out -n '{wide:"👋"}'
 cmp $d/out $d/expected
+
+# --output-file creates a file
+rm $d/out
+echo '"create"' > $d/expected
+$JQ -o $d/out -n '"create"'
+cmp $d/out $d/expected
+
+# Program errors are not written to --output-file
+echo 42 > $d/expected
+echo 'jq: error (at <unknown>): error!' > $d/expected_err
+! $JQ -o $d/out -n '42, ("error!" | error)' 2> $d/err
+cmp $d/out $d/expected
+cmp $d/err $d/expected_err
+
+# Disassembly is not written to --output-file
+echo 42 > $d/expected
+printf '0000 TOP\n0001 LOADK 42\n0003 RET\n\n' > $d/expected_disasm
+$JQ --debug-dump-disasm -o $d/out -n 42 > $d/disasm
+cmp $d/out $d/expected
+cmp $d/disasm $d/expected_disasm
+
+# Debug trace is not written to --output-file
+echo 42 > $d/expected
+printf '0000 TOP\t\n0001 LOADK 42\tnull\n0003 RET\t42\n0003 RET\t\t<backtracking>\n' > $d/expected_trace
+$JQ --debug-trace -o $d/out -n 42 > $d/trace
+cmp $d/out $d/expected
+cmp $d/trace $d/expected_trace
+
+# --output-file is one of the inputs
+printf '1\n2\n' > $d/out
+printf '' > $d/expected
+$JQ -o $d/out '.+3' $d/out
+cmp $d/out $d/expected
+
+# --output-file with --from-file
+echo hello > $d/out
+printf '' > $d/expected
+cat > $d/expected_err <<EOF
+jq: error: Top-level program not given (try ".")
+jq: 1 compile error
+EOF
+! $JQ -f -o $d/out $d/out 2> $d/err
+diff $d/out $d/expected
+diff $d/err $d/expected_err
+
+# --output-file before and after --rawfile
+printf hello > $d/out
+echo '""' > $d/expected
+$JQ -o $d/out --rawfile arg $d/out -n '$arg'
+diff $d/out $d/expected
+printf hello > $d/out
+echo '"hello"' > $d/expected
+$JQ --rawfile arg $d/out -o $d/out -n '$arg'
+diff $d/out $d/expected
+
+# --output-file before and after --slurpfile
+printf '"hello"\n"world"' > $d/out
+echo '[]' > $d/expected
+$JQ -o $d/out --slurpfile arg $d/out -nc '$arg'
+diff $d/out $d/expected
+printf '"hello"\n"world"' > $d/out
+echo '["hello","world"]' > $d/expected
+$JQ --slurpfile arg $d/out -o $d/out -nc '$arg'
+diff $d/out $d/expected
+
+# --output-file before and after --binary
+printf '1\n2\n' > $d/expected
+$JQ_NO_B -o $d/out --binary -n '1,2'
+cmp $d/out $d/expected
+$JQ_NO_B --binary -o $d/out -n '1,2'
+cmp $d/out $d/expected
+
+# --output-file before and after --color-output
+echo '"hello"' > $d/expected
+$JQ -o $d/out --color-output -n '"hello"'
+cmp $d/out $d/expected
+$JQ --color-output -o $d/out -n '"hello"'
+cmp $d/out $d/expected
+
+# --output-file without a filter uses . as the filter
+printf '[\n  1,\n  2\n]\n' > $d/expected
+echo '[1,2]' | $JQ -o $d/out
+cmp $d/out $d/expected
+
+# --output-file handles failure
+! $JQ -o $d/notfound/out -n . 2> $d/err
+grep "jq: Could not open --output-file .*/notfound/out: No such file or directory" $d/err > /dev/null
+
+# --output-file does not allow directories
+mkdir $d/dir
+! $JQ -o $d/dir -n . 2> $d/err
+grep "jq: Could not open --output-file .*/dir" $d/err > /dev/null
+rmdir $d/dir
 
 if ! $msys && ! $mingw; then
   # Test handling of timezones -- #2429, #2475
