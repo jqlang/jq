@@ -172,7 +172,10 @@ Read the filter from a file rather than from a command line, like awk\'s \-f opt
 \fB\-o\fR / \fB\-\-output\-file filename\fR:
 .
 .IP
-Write output to the file called filename instead of stdout\.
+Write output values to the named file instead of standard out\.
+.
+.IP
+The outputs from \fB\-\-debug\-dump\-disasm\fR and \fB\-\-debug\-trace\fR are still written to standard out, so this option can be used to separate them\.
 .
 .TP
 \fB\-L directory\fR / \fB\-\-library\-path directory\fR:
