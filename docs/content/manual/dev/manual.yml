@@ -229,7 +229,11 @@ sections:
 
       * `-o` / `--output-file filename`:
 
-        Write output to the file called filename instead of stdout.
+        Write output values to the named file instead of standard out.
+
+        The outputs from `--debug-dump-disasm` and `--debug-trace` are
+        still written to standard out, so this option can be used to
+        separate them.
 
       * `-L directory` / `--library-path directory`:
 
