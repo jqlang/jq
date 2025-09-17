@@ -42,8 +42,6 @@ extern void jv_tsd_dtoa_ctx_init();
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
 
-FILE *ofile;
-
 /*
  * For a longer help message we could use a better option parsing
  * strategy, one that lets stack options.
@@ -175,7 +173,7 @@ enum {
 #define jq_exit_with_status(r)  exit(abs(r))
 #define jq_exit(r)              exit( r > 0 ? r : 0 )
 
-static int process(jq_state *jq, jv value, int flags, int dumpopts, int options) {
+static int process(jq_state *jq, jv value, FILE *ofile, int flags, int dumpopts, int options) {
   int ret = JQ_OK_NO_OUTPUT; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
   jv result;
@@ -201,7 +199,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
         ret = JQ_OK;
       if (options & SEQ)
         priv_fwrite("\036", 1, ofile, dumpopts & JV_PRINT_ISATTY);
-      jv_dump(result, dumpopts);
+      jv_dumpf(result, ofile, dumpopts);
     }
     if (!(options & RAW_NO_LF))
       priv_fwrite("\n", 1, ofile, dumpopts & JV_PRINT_ISATTY);
@@ -291,13 +289,13 @@ int umain(int argc, char* argv[]) {
 #else /*}*/
 int main(int argc, char* argv[]) {
 #endif
-  ofile = stdout;
   jq_state *jq = NULL;
   jq_util_input_state *input_state = NULL;
   int ret = JQ_OK_NO_OUTPUT;
   int compiled = 0;
   int parser_flags = 0;
   int nfiles = 0;
+  FILE *ofile = stdout;
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
   int options = 0;
@@ -680,13 +678,13 @@ int main(int argc, char* argv[]) {
     jq_util_input_add_input(input_state, "-");
 
   if (options & PROVIDE_NULL) {
-    ret = process(jq, jv_null(), jq_flags, dumpopts, options);
+    ret = process(jq, jv_null(), ofile, jq_flags, dumpopts, options);
   } else {
     jv value;
     while (jq_util_input_errors(input_state) == 0 &&
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
-        ret = process(jq, value, jq_flags, dumpopts, options);
+        ret = process(jq, value, ofile, jq_flags, dumpopts, options);
         if (ret <= 0 && ret != JQ_OK_NO_OUTPUT)
           last_result = (ret != JQ_OK_NULL_KIND);
         if (jq_halted(jq))
