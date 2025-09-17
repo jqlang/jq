@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <libgen.h>
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
@@ -8,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #ifdef WIN32
@@ -92,6 +94,7 @@ static void usage(int code, int keep_it_short) {
       "                            an array;\n"
       "      --seq                 parse input/output as application/json-seq;\n"
       "  -f, --from-file           load the filter from a file;\n"
+      "  -o, --output-file file    output to file instead of stdout;\n"
       "  -L, --library-path dir    search modules from the directory;\n"
       "      --arg name value      set $name to the string value;\n"
       "      --argjson name value  set $name to the JSON value;\n"
@@ -157,8 +160,10 @@ enum {
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
   SEQ                   = 16384,
-  /* debugging only */
-  DUMP_DISASM           = 32768,
+  DUMP_DISASM           = 32768, /* debugging only */
+#ifdef WIN32
+  BINARY_OUTPUT         = 65536,
+#endif
 };
 
 enum {
@@ -172,14 +177,14 @@ enum {
 #define jq_exit_with_status(r)  exit(abs(r))
 #define jq_exit(r)              exit( r > 0 ? r : 0 )
 
-static int process(jq_state *jq, jv value, int flags, int dumpopts, int options) {
+static int process(jq_state *jq, jv value, FILE *ofile, int flags, int dumpopts, int options) {
   int ret = JQ_OK_NO_OUTPUT; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       if (options & ASCII_OUTPUT) {
-        jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
+        jv_dumpf(jv_copy(result), ofile, JV_PRINT_ASCII);
       } else if ((options & RAW_OUTPUT0) && strlen(jv_string_value(result)) != (unsigned long)jv_string_length_bytes(jv_copy(result))) {
         jv_free(result);
         result = jv_invalid_with_msg(jv_string(
@@ -187,7 +192,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
         break;
       } else {
         priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
-            stdout, dumpopts & JV_PRINT_ISATTY);
+            ofile, dumpopts & JV_PRINT_ISATTY);
       }
       ret = JQ_OK;
       jv_free(result);
@@ -197,15 +202,15 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
       else
         ret = JQ_OK;
       if (options & SEQ)
-        priv_fwrite("\036", 1, stdout, dumpopts & JV_PRINT_ISATTY);
-      jv_dump(result, dumpopts);
+        priv_fwrite("\036", 1, ofile, dumpopts & JV_PRINT_ISATTY);
+      jv_dumpf(result, ofile, dumpopts);
     }
     if (!(options & RAW_NO_LF))
-      priv_fwrite("\n", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+      priv_fwrite("\n", 1, ofile, dumpopts & JV_PRINT_ISATTY);
     if (options & RAW_OUTPUT0)
-      priv_fwrite("\0", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+      priv_fwrite("\0", 1, ofile, dumpopts & JV_PRINT_ISATTY);
     if (options & UNBUFFERED_OUTPUT)
-      fflush(stdout);
+      fflush(ofile);
   }
   if (jq_halted(jq)) {
     // jq program invoked `halt` or `halt_error`
@@ -294,6 +299,7 @@ int main(int argc, char* argv[]) {
   int compiled = 0;
   int parser_flags = 0;
   int nfiles = 0;
+  FILE *ofile = stdout;
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
   int options = 0;
@@ -404,6 +410,23 @@ int main(int argc, char* argv[]) {
           options |= PROVIDE_NULL;
         } else if (isoption(&text, 'f', "from-file", is_short)) {
           options |= FROM_FILE;
+        } else if (isoption(&text, 'o', "output-file", is_short)) {
+          options |= NO_COLOR_OUTPUT;
+          if (i >= argc - 1) {
+            fprintf(stderr, "jq: --output-file takes one parameter (e.g. --output-file filename)\n");
+            die();
+          }
+          if (ofile != stdout)
+            fclose(ofile);
+          ofile = fopen(argv[i+1], "w");
+          if (!ofile) {
+            fprintf(stderr, "jq: Could not open --output-file %s: %s\n", argv[i+1], strerror(errno));
+            die();
+          }
+#ifdef WIN32
+          _setmode(fileno(ofile), options & BINARY_OUTPUT ? _O_BINARY : _O_TEXT | _O_U8TEXT);
+#endif
+          i += 1; // skip the next argument
         } else if (isoption(&text, 'L', "library-path", is_short)) {
           if (jv_get_kind(lib_search_paths) == JV_KIND_NULL)
             lib_search_paths = jv_array();
@@ -419,9 +442,14 @@ int main(int argc, char* argv[]) {
           }
         } else if (isoption(&text, 'b', "binary", is_short)) {
 #ifdef WIN32
+          options |= BINARY_OUTPUT;
+          if (ofile != stdout) {
+            fflush(ofile);
+            _setmode(fileno(ofile), _O_BINARY);
+          }
           fflush(stdout);
           fflush(stderr);
-          _setmode(fileno(stdin),  _O_BINARY);
+          _setmode(fileno(stdin), _O_BINARY);
           _setmode(fileno(stdout), _O_BINARY);
           _setmode(fileno(stderr), _O_BINARY);
 #endif
@@ -537,7 +565,7 @@ int main(int argc, char* argv[]) {
   }
 
 #ifdef USE_ISATTY
-  if (isatty(STDOUT_FILENO)) {
+  if (ofile == stdout && isatty(STDOUT_FILENO)) {
 #ifndef WIN32
     dumpopts |= JV_PRINT_ISATTY | JV_PRINT_COLOR;
 #else
@@ -590,7 +618,7 @@ int main(int argc, char* argv[]) {
     jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string_fmt("%.*s-master", (int)(strchr(JQ_VERSION, '-') - JQ_VERSION), JQ_VERSION));
 
 #ifdef USE_ISATTY
-  if (!program && !(options & FROM_FILE) && (!isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
+  if (!program && !(options & FROM_FILE) && (ofile != stdout || !isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
     program = ".";
 #endif
 
@@ -664,13 +692,13 @@ int main(int argc, char* argv[]) {
     jq_util_input_add_input(input_state, "-");
 
   if (options & PROVIDE_NULL) {
-    ret = process(jq, jv_null(), jq_flags, dumpopts, options);
+    ret = process(jq, jv_null(), ofile, jq_flags, dumpopts, options);
   } else {
     jv value;
     while (jq_util_input_errors(input_state) == 0 &&
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
-        ret = process(jq, value, jq_flags, dumpopts, options);
+        ret = process(jq, value, ofile, jq_flags, dumpopts, options);
         if (ret <= 0 && ret != JQ_OK_NO_OUTPUT)
           last_result = (ret != JQ_OK_NULL_KIND);
         if (jq_halted(jq))
@@ -697,9 +725,16 @@ int main(int argc, char* argv[]) {
 
 out:
   badwrite = ferror(stdout);
-  if (fclose(stdout)!=0 || badwrite) {
-    fprintf(stderr,"jq: error: writing output failed: %s\n", strerror(errno));
+  if (fclose(stdout) != 0 || badwrite) {
+    fprintf(stderr, "jq: error: writing output failed: %s\n", strerror(errno));
     ret = JQ_ERROR_SYSTEM;
+  }
+  if (ofile != stdout) {
+    badwrite = ferror(ofile);
+    if (fclose(ofile) != 0 || badwrite) {
+      fprintf(stderr, "jq: error: writing output failed: %s\n", strerror(errno));
+      ret = JQ_ERROR_SYSTEM;
+    }
   }
 
   jv_free(ARGS);
