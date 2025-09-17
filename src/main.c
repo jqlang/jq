@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <libgen.h>
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
@@ -8,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #ifdef WIN32
@@ -158,8 +160,10 @@ enum {
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
   SEQ                   = 16384,
-  /* debugging only */
-  DUMP_DISASM           = 32768,
+  DUMP_DISASM           = 32768, /* debugging only */
+#ifdef WIN32
+  BINARY_OUTPUT         = 65536,
+#endif
 };
 
 enum {
@@ -320,9 +324,9 @@ int main(int argc, char* argv[]) {
 
 #ifdef WIN32
   jv_tsd_dtoa_ctx_init();
-  fflush(ofile);
+  fflush(stdout);
   fflush(stderr);
-  _setmode(fileno(ofile), _O_TEXT | _O_U8TEXT);
+  _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
   _setmode(fileno(stderr), _O_TEXT | _O_U8TEXT);
 #endif
 
@@ -412,11 +416,16 @@ int main(int argc, char* argv[]) {
             fprintf(stderr, "jq: --output-file takes one parameter (e.g. --output-file filename)\n");
             die();
           }
+          if (ofile != stdout)
+            fclose(ofile);
           ofile = fopen(argv[i+1], "w");
           if (!ofile) {
-            fprintf(stderr, "jq: unable to open output-file\n");
+            fprintf(stderr, "jq: Could not open --output-file %s: %s\n", argv[i+1], strerror(errno));
             die();
           }
+#ifdef WIN32
+          _setmode(fileno(ofile), options & BINARY_OUTPUT ? _O_BINARY : _O_TEXT | _O_U8TEXT);
+#endif
           i += 1; // skip the next argument
         } else if (isoption(&text, 'L', "library-path", is_short)) {
           if (jv_get_kind(lib_search_paths) == JV_KIND_NULL)
@@ -433,10 +442,15 @@ int main(int argc, char* argv[]) {
           }
         } else if (isoption(&text, 'b', "binary", is_short)) {
 #ifdef WIN32
-          fflush(ofile);
+          options |= BINARY_OUTPUT;
+          if (ofile != stdout) {
+            fflush(ofile);
+            _setmode(fileno(ofile), _O_BINARY);
+          }
+          fflush(stdout);
           fflush(stderr);
-          _setmode(fileno(stdin),  _O_BINARY);
-          _setmode(fileno(ofile), _O_BINARY);
+          _setmode(fileno(stdin), _O_BINARY);
+          _setmode(fileno(stdout), _O_BINARY);
           _setmode(fileno(stderr), _O_BINARY);
 #endif
         } else if (isoption(&text, 0, "tab", is_short)) {
@@ -551,7 +565,7 @@ int main(int argc, char* argv[]) {
   }
 
 #ifdef USE_ISATTY
-  if (isatty(STDOUT_FILENO)) {
+  if (ofile == stdout && isatty(STDOUT_FILENO)) {
 #ifndef WIN32
     dumpopts |= JV_PRINT_ISATTY | JV_PRINT_COLOR;
 #else
@@ -604,7 +618,7 @@ int main(int argc, char* argv[]) {
     jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string_fmt("%.*s-master", (int)(strchr(JQ_VERSION, '-') - JQ_VERSION), JQ_VERSION));
 
 #ifdef USE_ISATTY
-  if (!program && !(options & FROM_FILE) && (!isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
+  if (!program && !(options & FROM_FILE) && (ofile != stdout || !isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
     program = ".";
 #endif
 
@@ -710,10 +724,17 @@ int main(int argc, char* argv[]) {
     ret = JQ_ERROR_SYSTEM;
 
 out:
-  badwrite = ferror(ofile);
-  if (fclose(ofile)!=0 || badwrite) {
-    fprintf(stderr,"jq: error: writing output failed: %s\n", strerror(errno));
+  badwrite = ferror(stdout);
+  if (fclose(stdout) != 0 || badwrite) {
+    fprintf(stderr, "jq: error: writing output failed: %s\n", strerror(errno));
     ret = JQ_ERROR_SYSTEM;
+  }
+  if (ofile != stdout) {
+    badwrite = ferror(ofile);
+    if (fclose(ofile) != 0 || badwrite) {
+      fprintf(stderr, "jq: error: writing output failed: %s\n", strerror(errno));
+      ret = JQ_ERROR_SYSTEM;
+    }
   }
 
   jv_free(ARGS);
