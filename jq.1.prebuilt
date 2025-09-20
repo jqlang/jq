@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "July 2025" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -2391,10 +2391,22 @@ The input is escaped suitable for use in a command\-line for a POSIX shell\. If 
 The input is converted to base64 as specified by RFC 4648\.
 .
 .TP
+\fB@base64url\fR:
+.
+.IP
+The input is converted to base64url without padding as specified by RFC 4648\. This no padding version should only be used when the length of the data is known by a referring specification\.
+.
+.TP
+\fB@base64urlp\fR:
+.
+.IP
+The input is converted to base64url with padding as specified by RFC 4648\. This padding version is for general url safe encoding, but be aware padding bytes (\fB=\fR) will be percent encoded in urls\.
+.
+.TP
 \fB@base64d\fR:
 .
 .IP
-The inverse of \fB@base64\fR, input is decoded as specified by RFC 4648\. Note\e: If the decoded string is not UTF\-8, the results are undefined\.
+The inverse of \fB@base64\fR, input is decoded as specified by RFC 4648\. Note\e: If the decoded string is not UTF\-8, the results are undefined\. This function decodes the base64 or base64url encodings\. If you require strict validation, re\-encode the string and check for equality\.
 .
 .P
 This syntax can be combined with string interpolation in a useful way\. You can follow a \fB@foo\fR token with a string literal\. The contents of the string literal will \fInot\fR be escaped\. However, all interpolations made inside that string literal will be escaped\. For instance,
