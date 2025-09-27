@@ -2503,3 +2503,17 @@ strflocaltime("" | ., @uri)
 0
 ""
 ""
+
+# regression tests for #3413
+# max parse/print depth == 10000
+reduce range(9999) as $_ ([];[.]) | tojson | fromjson | flatten
+null
+[]
+
+reduce range(10000) as $_ ([];[.]) | tojson | try (fromjson) catch test("Exceeds depth limit for parsing")
+null
+true
+
+reduce range(10001) as $_ ([];[.]) | tojson | try (fromjson) catch test("<skipped: too deep>")
+null
+true
