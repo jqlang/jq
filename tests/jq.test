@@ -2510,10 +2510,10 @@ reduce range(9999) as $_ ([];[.]) | tojson | fromjson | flatten
 null
 []
 
-reduce range(10000) as $_ ([];[.]) | tojson | try (fromjson) catch test("Exceeds depth limit for parsing")
+reduce range(10000) as $_ ([];[.]) | tojson | try (fromjson) catch . | (contains("<skipped: too deep>") | not) and contains("Exceeds depth limit for parsing")
 null
 true
 
-reduce range(10001) as $_ ([];[.]) | tojson | try (fromjson) catch test("<skipped: too deep>")
+reduce range(10001) as $_ ([];[.]) | tojson | contains("<skipped: too deep>")
 null
 true
