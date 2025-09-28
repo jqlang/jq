@@ -75,7 +75,7 @@ def todateiso8601: strftime("%Y-%m-%dT%H:%M:%SZ");
 def fromdate: fromdateiso8601;
 def todate: todateiso8601;
 def ltrimstr($left): if startswith($left) then .[$left | length:] end;
-def rtrimstr($right): if endswith($right) then .[:$right | -length] end;
+def rtrimstr($right): if endswith($right) then .[:length - ($right | length)] end;
 def trimstr($val): ltrimstr($val) | rtrimstr($val);
 def match(re; mode): _match_impl(re; mode; false)|.[];
 def match($val): ($val|type) as $vt | if $vt == "string" then match($val; null)

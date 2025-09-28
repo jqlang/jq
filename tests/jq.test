@@ -1512,6 +1512,18 @@ split("")
 ["fo", "foo", "barfoo", "foobarfoo", "foob"]
 ["fo","","bar","bar","b"]
 
+[.[]|ltrimstr("")]
+["a", "xx", ""]
+["a", "xx", ""]
+
+[.[]|rtrimstr("")]
+["a", "xx", ""]
+["a", "xx", ""]
+
+[.[]|trimstr("")]
+["a", "xx", ""]
+["a", "xx", ""]
+
 [(index(","), rindex(",")), indices(",")]
 "a,bc,def,ghij,klmno"
 [1,13,[1,4,8,13]]
