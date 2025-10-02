@@ -3,6 +3,12 @@
 
 #include "jq.h"
 #include "jv.h"
+#include "oniguruma.h"
+
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv) {
+  onig_set_parse_depth_limit(1024);
+  return 0;
+}
 
 // Fuzzer inspired by /src/jq_test.c
 // The goal is to have the fuzzer execute the functions:
