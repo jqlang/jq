@@ -2515,3 +2515,22 @@ strflocaltime("" | ., @uri)
 0
 ""
 ""
+
+# regression tests for #3413
+# upper range bounds should be in sync with the constants defined at
+#   src/jv_parse.c:#define MAX_PARSING_DEPTH (N)
+#   src/jv_print.c:#define MAX_PRINT_DEPTH (N)
+# (N-1)
+reduce range(9999) as $_ ([];[.]) | tojson | fromjson | flatten
+null
+[]
+
+# (N)
+reduce range(10000) as $_ ([];[.]) | tojson | try (fromjson) catch . | (contains("<skipped: too deep>") | not) and contains("Exceeds depth limit for parsing")
+null
+true
+
+# (N+1)
+reduce range(10001) as $_ ([];[.]) | tojson | contains("<skipped: too deep>")
+null
+true
