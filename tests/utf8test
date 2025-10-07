@@ -1,10 +1,24 @@
-#!/bin/sh
+#!/bin/sh -x
 
 . "${0%/*}/setup" "$@"
 
-if [ "$($VALGRIND $Q $JQ -nf $JQTESTDIR/utf8-truncate.jq)" != "true" ]; then
-	echo "UTF-8 byte sequences that span the jv_load_file read buffer are mangled"
-	exit 1
-fi
+# Reading jq file does not corrupt multi-byte characters -- #1311
+for l in 1 2 3 4; do
+  $VALGRIND $Q $JQ -rn "[(range($l) | 48), (range(3000) | 128515)] | implode |
+    \"\\(tojson) | explode | unique == [48, 128515]\"" > $d/input
+  if ! $VALGRIND $Q $JQ -nef $d/input > /dev/null; then
+    echo "Reading jq file corrupted multi-byte characters"
+    exit 1
+  fi
+done
+
+# Slurping raw input does not corrupt multi-byte characters -- #3389
+for l in 1 2 3 4; do
+  $VALGRIND $Q $JQ -jn "[(range($l) | 48), (range(3000) | 128515)] | implode" > $d/input
+  if ! $VALGRIND $Q $JQ -Rse 'explode | unique == [48, 128515]' $d/input > /dev/null; then
+    echo "Slurping raw input corrupted multi-byte characters"
+    exit 1
+  fi
+done
 
 exit 0
