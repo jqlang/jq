@@ -65,6 +65,7 @@ void *alloca (size_t);
 #include "util.h"
 #include "jq.h"
 #include "jv_alloc.h"
+#include "jv_unicode.h"
 
 #ifdef WIN32
 FILE *fopen(const char *fname, const char *mode) {
@@ -296,7 +297,9 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
     char *res;
     memset(state->buf, 0xff, sizeof(state->buf));
 
-    while (!(res = fgets(state->buf, sizeof(state->buf), state->current_input)) &&
+    const int max_utf8_len = 4;
+    const int max_gets_len = sizeof(state->buf) - max_utf8_len;
+    while (!(res = fgets(state->buf, max_gets_len, state->current_input)) &&
            ferror(state->current_input) && errno == EINTR)
       clearerr(state->current_input);
     if (res == NULL) {
@@ -304,7 +307,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
       if (ferror(state->current_input))
         state->failures++;
     } else {
-      const char *p = memchr(state->buf, '\n', sizeof(state->buf));
+      const char *p = memchr(state->buf, '\n', max_gets_len);
 
       if (p != NULL)
         state->current_line++;
@@ -330,13 +333,18 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
          * terminating '\0'. This only works because we previously memset our
          * buffer with something nonzero.
          */
-        for (i = sizeof(state->buf) - 1; i > 0; i--) {
+        for (i = max_gets_len - 1; i > 0; i--) {
           if (state->buf[i] == '\0')
             break;
         }
         state->buf_valid_len = i;
       } else if (p == NULL) {
-        state->buf_valid_len = sizeof(state->buf) - 1;
+        state->buf_valid_len = max_gets_len - 1;
+        char *end = state->buf + state->buf_valid_len;
+        int len = 0;
+        if (jvp_utf8_backtrack(end - 1, state->buf, &len) && len > 0) {
+          state->buf_valid_len += fread(end, 1, len, state->current_input);
+        }
       } else {
         state->buf_valid_len = (p - state->buf) + 1;
       }
