@@ -17,7 +17,7 @@
 #include "jv_private.h"
 
 #ifndef MAX_PRINT_DEPTH
-#define MAX_PRINT_DEPTH (256)
+#define MAX_PRINT_DEPTH (10000)
 #endif
 
 #define ESC "\033"
