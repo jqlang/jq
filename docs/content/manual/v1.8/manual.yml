@@ -2298,6 +2298,21 @@ sections:
           some systems. In particular, the `%u` and `%j` specifiers for
           `strptime(fmt)` are not supported on macOS.
 
+          The `fromwebkit` builtin converts WebKit/Chromium timestamp format
+          (microseconds since January 1, 1601 UTC) to ISO 8601 format. This is
+          commonly used in browser forensics when analyzing Chrome, Safari, Edge,
+          and other Chromium-based browser artifacts. The function validates
+          input ranges and handles null values. Zero values return null, and
+          negative or out-of-range values produce errors.
+    
+          The `toreadable` builtin converts ISO 8601 timestamp strings or Unix
+          timestamps to human-readable format "YYYY-MM-DD HH:MM:SS". For numeric
+          inputs, it automatically detects whether the value represents seconds
+          or milliseconds and converts accordingly. The function strictly validates
+          input and produces errors for malformed or out-of-range values rather
+          than silently passing them through. This makes it suitable for data
+          validation pipelines where invalid timestamps should be caught.
+
         examples:
           - program: 'fromdate'
             input: '"2015-03-05T23:51:47Z"'
@@ -2310,6 +2325,30 @@ sections:
           - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")|mktime'
             input: '"2015-03-05T23:51:47Z"'
             output: ['1425599507']
+
+          - program: "fromwebkit"
+            input: "13318523932000000"
+            output: ['"2023-03-15T14:32:12Z"']
+    
+          - program: "fromwebkit"
+            input: "0"
+            output: ["null"]
+    
+          - program: "toreadable"
+            input: '"2020-01-01T23:43:12.123456+05:00"'
+            output: ['"2020-01-01 23:43:12"']
+    
+          - program: "toreadable"
+            input: "1577919792"
+            output: ['"2020-01-01 23:03:12"']
+    
+          - program: "toreadable"
+            input: "1577919792000"
+            output: ['"2020-01-01 23:03:12"']
+    
+          - program: 'map(toreadable)'
+            input: '[1577919792, "2020-01-01T23:43:12Z", null]'
+            output: ['["2020-01-01 23:03:12", "2020-01-01 23:43:12", null]']
 
       - title: "SQL-Style Operators"
         body: |
@@ -3856,3 +3895,4 @@ sections:
         - 35 (magenta)
         - 36 (cyan)
         - 37 (white)
+
