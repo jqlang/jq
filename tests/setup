@@ -18,7 +18,7 @@ export LC_ALL
 
 if [ -n "${ENABLE_VALGRIND-}" ] && which valgrind > /dev/null; then
     VALGRIND="valgrind --error-exitcode=1 --leak-check=full \
-                       --suppressions=$JQTESTDIR/onig.supp \
+                       --suppressions=$JQTESTDIR/pcre2.supp \
                        --suppressions=$JQTESTDIR/local.supp"
     VG_EXIT0=--error-exitcode=0
     Q=-q
