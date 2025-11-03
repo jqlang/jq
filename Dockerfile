@@ -1,4 +1,4 @@
-FROM debian:12-slim AS builder
+FROM debian:13-slim AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive \
     DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -10,6 +10,8 @@ RUN apt-get update \
       build-essential \
       autoconf \
       libtool \
+      libpcre2-dev \
+      libpcre2-8-0 \
       git \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
@@ -19,7 +21,8 @@ COPY . /app
 RUN autoreconf -i \
  && ./configure \
       --disable-docs \
-      --with-oniguruma=builtin \
+      --with-oniguruma=no \
+      --with-pcre2 \
       --enable-static \
       --enable-all-static \
       --prefix=/usr/local \
