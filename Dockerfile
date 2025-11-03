@@ -19,7 +19,7 @@ COPY . /app
 RUN autoreconf -i \
  && ./configure \
       --disable-docs \
-      --with-oniguruma=builtin \
+      --with-pcre2=builtin \
       --enable-static \
       --enable-all-static \
       --prefix=/usr/local \

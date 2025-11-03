@@ -2598,12 +2598,9 @@ sections:
     body: |
 
       jq uses the
-      [Oniguruma regular expression library](https://github.com/kkos/oniguruma/blob/master/doc/RE),
-      as do PHP, TextMate, Sublime Text, etc, so the
+      [PCRE2 library](https://pcre2project.github.io/pcre2/) (Perl-Comptible Regular Rexpressions),
+      as do lots of other open soruce projcets, so the
       description here will focus on jq specifics.
-
-      Oniguruma supports several flavors of regular expression, so it is important to know
-      that jq uses the ["Perl NG" (Perl with named groups)](https://github.com/kkos/oniguruma/blob/master/doc/SYNTAX.md) flavor.
 
       The jq regex filters are defined so that they can be used using
       one of these patterns:
@@ -2631,7 +2628,6 @@ sections:
       * `n` - Ignore empty matches
       * `p` - Both s and m modes are enabled
       * `s` - Single line mode (`^` -> `\A`, `$` -> `\Z`)
-      * `l` - Find longest possible matches
       * `x` - Extended regex format (ignore whitespace and comments)
 
       To match a whitespace with the `x` flag, use `\s`, e.g.
