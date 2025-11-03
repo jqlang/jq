@@ -7,6 +7,6 @@ vendor/** linguist-vendored
 src/lexer.[ch] linguist-generated=true
 src/parser.[ch] linguist-generated=true
 tests/man.test linguist-generated=true
-tests/manonig.test linguist-generated=true
+tests/manpcre2.test linguist-generated=true
 jq.1.prebuilt linguist-generated=true
 docs/Pipfile.lock linguist-generated=true
