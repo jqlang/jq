@@ -18,8 +18,12 @@
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
-#ifdef HAVE_LIBONIG
-#include <oniguruma.h>
+#ifdef HAVE_LIBPCRE2_8
+#ifdef WIN32
+// TODO: move to configure.ac
+#define PCRE2_STATIC 1
+#endif
+#include <pcre2.h>
 #endif
 #include <string.h>
 #include <time.h>
@@ -893,233 +897,280 @@ static jv f_unique_by_impl(jq_state *jq, jv input, jv keys) {
   }
 }
 
-#ifdef HAVE_LIBONIG
-static int f_match_name_iter(const UChar* name, const UChar *name_end, int ngroups,
-    int *groups, regex_t *reg, void *arg) {
-  jv captures = *(jv*)arg;
-  for (int i = 0; i < ngroups; ++i) {
-    jv cap = jv_array_get(jv_copy(captures),groups[i]-1);
-    if (jv_get_kind(cap) == JV_KIND_OBJECT) {
-      cap = jv_object_set(cap, jv_string("name"), jv_string_sized((const char*)name, name_end-name));
-      captures = jv_array_set(captures,groups[i]-1,cap);
-    } else {
-      jv_free(cap);
-    }
+#if defined(HAVE_LIBPCRE2_8)
+static int utf8_cp_count(PCRE2_SPTR s, PCRE2_SPTR end) {
+  int c = 0;
+  for (; s < end; c++) {
+    s += jvp_utf8_decode_length(*s);
   }
-  *(jv *)arg = captures;
-  return 0;
+  return c;
 }
 
 static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
-  int test = jv_equal(testmode, jv_true());
-  jv result;
-  int onigret;
-  int global = 0;
-  regex_t *reg;
-  OnigErrorInfo einfo;
-  OnigRegion* region;
+  int is_testmode = jv_equal(testmode, jv_true());
 
   if (jv_get_kind(input) != JV_KIND_STRING) {
     jv_free(regex);
     jv_free(modifiers);
-    return type_error(input, "cannot be matched, as it is not a string");
+    return type_error(input, "input cannot be matched, as it is not a string");
   }
 
   if (jv_get_kind(regex) != JV_KIND_STRING) {
     jv_free(input);
     jv_free(modifiers);
-    return type_error(regex, "is not a string");
+    return type_error(regex, "regex is not a string");
   }
 
-  OnigOptionType options = ONIG_OPTION_CAPTURE_GROUP;
-
+  int global = 0;
+  uint32_t compile_options =
+      (PCRE2_UTF | // pattern and subject uses utf-8 (PCRE2_CODE_UNIT_WIDTH 8)
+       PCRE2_UCP | // include unicode in some character classes, ex \b
+       PCRE2_NO_UTF_CHECK | // pattern is valid utf-8
+       PCRE2_DUPNAMES       // allow dup group names (same as jq with onig)
+      );
+  uint32_t match_options = PCRE2_NO_UTF_CHECK;
   if (jv_get_kind(modifiers) == JV_KIND_STRING) {
     jv modarray = jv_string_explode(jv_copy(modifiers));
     jv_array_foreach(modarray, i, mod) {
       switch ((int)jv_number_value(mod)) {
-        case 'g':
-          global = 1;
-          break;
-        case 'i':
-          options |= ONIG_OPTION_IGNORECASE;
-          break;
-        case 'x':
-          options |= ONIG_OPTION_EXTEND;
-          break;
-        case 'm':
-          options |= ONIG_OPTION_MULTILINE;
-          break;
-        case 's':
-          options |= ONIG_OPTION_SINGLELINE;
-          break;
-        case 'p':
-          options |= ONIG_OPTION_MULTILINE | ONIG_OPTION_SINGLELINE;
-          break;
-        case 'l':
-          options |= ONIG_OPTION_FIND_LONGEST;
-          break;
-        case 'n':
-          options |= ONIG_OPTION_FIND_NOT_EMPTY;
-          break;
-        default:
-          jv_free(input);
-          jv_free(regex);
-          jv_free(modarray);
-          return jv_invalid_with_msg(jv_string_concat(modifiers,
-                jv_string(" is not a valid modifier string")));
+      case 'g':
+        global = 1;
+        break;
+      case 'i':
+        compile_options |= PCRE2_CASELESS;
+        break;
+      case 'x':
+        // TODO: also PCRE2_EXTENDED_MORE?
+        compile_options |= PCRE2_EXTENDED;
+        break;
+      case 'm':
+        compile_options |= PCRE2_MULTILINE;
+        break;
+      case 's':
+        compile_options |= PCRE2_FIRSTLINE;
+        break;
+      case 'p':
+        compile_options |= PCRE2_MULTILINE | PCRE2_FIRSTLINE;
+        break;
+        // case 'l':
+        // TODO: possible with PCRE2? throw unsupported error?
+        // (first) longest match:
+        // "a aaa bbb" | match("[ab]*";"l") -> "aaa"
+        // with "lg" it includes all matches after the first longest match.
+        // if not supported by pcre2 it can probably be reimplement somehow
+        // with some added complexity.
+        break;
+      case 'n':
+        match_options = PCRE2_NOTEMPTY;
+        break;
+      default:
+        jv_free(input);
+        jv_free(regex);
+        jv_free(modarray);
+        return jv_invalid_with_msg(jv_string_concat(
+            modifiers, jv_string(" is not a valid modifier string")));
       }
     }
     jv_free(modarray);
   } else if (jv_get_kind(modifiers) != JV_KIND_NULL) {
-    // If it isn't a string or null, then it is the wrong type...
+    // if it isn't a string or null, then it is the wrong type
     jv_free(input);
     jv_free(regex);
-    return type_error(modifiers, "is not a string");
+    return type_error(modifiers, "regex modifiers is not a string");
   }
-
   jv_free(modifiers);
 
-  onigret = onig_new(&reg, (const UChar*)jv_string_value(regex),
-      (const UChar*)(jv_string_value(regex) + jv_string_length_bytes(jv_copy(regex))),
-      options, ONIG_ENCODING_UTF8, ONIG_SYNTAX_PERL_NG, &einfo);
-  if (onigret != ONIG_NORMAL) {
-    UChar ebuf[ONIG_MAX_ERROR_MESSAGE_LEN];
-    onig_error_code_to_str(ebuf, onigret, &einfo);
+  pcre2_code *re = NULL;
+  PCRE2_SIZE erroffset = 0;
+  int errorcode = 0;
+  re = pcre2_compile((PCRE2_SPTR)jv_string_value(regex), PCRE2_ZERO_TERMINATED,
+                     compile_options, &errorcode, &erroffset, NULL);
+  if (re == NULL) {
+    PCRE2_UCHAR buffer[256] = {};
+    pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
     jv_free(input);
     jv_free(regex);
-    return jv_invalid_with_msg(jv_string_concat(jv_string("Regex failure: "),
-          jv_string((char*)ebuf)));
+    return jv_invalid_with_msg(jv_string_concat(jv_string("regex failure: "),
+                                                jv_string((char *)buffer)));
   }
-  result = test ? jv_false() : jv_array();
-  const char *input_string = jv_string_value(input);
-  const UChar* start = (const UChar*)jv_string_value(input);
-  const unsigned long length = jv_string_length_bytes(jv_copy(input));
-  const UChar* end = start + length;
-  region = onig_region_new();
-  do {
-    onigret = onig_search(reg,
-        (const UChar*)jv_string_value(input), end, /* string boundaries */
-        start, end, /* search boundaries */
-        region, ONIG_OPTION_NONE);
-    if (onigret >= 0) {
-      if (test) {
+
+  uint32_t capture_count = 0;
+  PCRE2_SPTR *capture_names = NULL;
+
+  if (!is_testmode) {
+    pcre2_pattern_info(re, PCRE2_INFO_CAPTURECOUNT, &capture_count);
+    if (capture_count > 0) {
+      // use calloc so that unnamed capture groups has a null pointer
+      capture_names = jv_mem_calloc(capture_count, sizeof(capture_names[0]));
+
+      uint32_t name_count = 0;
+      pcre2_pattern_info(re, PCRE2_INFO_NAMECOUNT, &name_count);
+      if (name_count > 0) {
+        PCRE2_SPTR name_table;
+        uint32_t name_entry_size;
+        pcre2_pattern_info(re, PCRE2_INFO_NAMETABLE, &name_table);
+        pcre2_pattern_info(re, PCRE2_INFO_NAMEENTRYSIZE, &name_entry_size);
+
+        // each entry looks like this:
+        // struct {
+        //    n uint16_t     // big endian
+        //    char name[]    // null terminated name
+        //    char padding[] // padding to be PCRE2_INFO_NAMEENTRYSIZE in size
+        // }
+        PCRE2_SPTR entry = name_table;
+        for (uint32_t i = 0; i < name_count; i++) {
+          // -1 as first pair in ovector is the whole match
+          int n = ((entry[0] << 8) | entry[1]) - 1;
+          capture_names[n] = entry + 2;
+          entry += name_entry_size;
+        }
+      }
+    }
+  }
+
+  pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, NULL);
+  PCRE2_SPTR subject = (PCRE2_SPTR)jv_string_value(input);
+  PCRE2_SIZE subject_length = jv_string_length_bytes(jv_copy(input));
+
+  PCRE2_SIZE start_byte_offset = 0;
+  // these are used keep track of codepoint offset for current match
+  // so that we don't have to count from the subject start for each match
+  // TODO: better tracking for substrings offset also?
+  int match_offset = 0;
+  PCRE2_SPTR match_end_prev = subject;
+  jv result = is_testmode ? jv_false() : jv_array();
+  uint32_t retry_empty_options = 0;
+  for (;;) {
+    int rc = pcre2_match(re, subject, subject_length, start_byte_offset,
+                         match_options | retry_empty_options, match_data, NULL);
+    if (rc > 0) {
+      if (is_testmode) {
         result = jv_true();
         break;
       }
-
-      // Zero-width match
-      if (region->end[0] == region->beg[0]) {
-        unsigned long idx;
-        const char *fr = (const char*)input_string;
-        for (idx = 0; fr < input_string+region->beg[0]; idx++) {
-          fr += jvp_utf8_decode_length(*fr);
-        }
-        jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
-        match = jv_object_set(match, jv_string("length"), jv_number(0));
-        match = jv_object_set(match, jv_string("string"), jv_string(""));
-        jv captures = jv_array();
-        for (int i = 1; i < region->num_regs; ++i) {
-          jv cap = jv_object();
-          if (region->beg[i] == -1) {
-            cap = jv_object_set(cap, jv_string("offset"), jv_number(-1));
-            cap = jv_object_set(cap, jv_string("string"), jv_null());
-          } else {
-            cap = jv_object_set(cap, jv_string("offset"), jv_number(idx));
-            cap = jv_object_set(cap, jv_string("string"), jv_string(""));
-          }
-          cap = jv_object_set(cap, jv_string("length"), jv_number(0));
-          cap = jv_object_set(cap, jv_string("name"), jv_null());
-          captures = jv_array_append(captures, cap);
-        }
-        onig_foreach_name(reg, f_match_name_iter, &captures);
-        match = jv_object_set(match, jv_string("captures"), captures);
-        result = jv_array_append(result, match);
-        // ensure '"qux" | match("(?=u)"; "g")' matches just once
-        start = (const UChar*)(input_string+region->end[0]+1);
-        continue;
+    } else if (rc == PCRE2_ERROR_NOMATCH) {
+      // TODO: this is based on pcre2demo.c before it used pcre2_next_match
+      // TODO: maybe can port pcre2_next_match?
+      if (retry_empty_options == 0) {
+        // retry did not help
+        break;
       }
-
-      unsigned long idx;
-      unsigned long len;
-      const char *fr = (const char*)input_string;
-
-      for (idx = len = 0; fr < input_string+region->end[0]; len++) {
-        if (fr == input_string+region->beg[0]) idx = len, len=0;
-        fr += jvp_utf8_decode_length(*fr);
-      }
-
-      jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
-
-      unsigned long blen = region->end[0]-region->beg[0];
-      match = jv_object_set(match, jv_string("length"), jv_number(len));
-      match = jv_object_set(match, jv_string("string"), jv_string_sized(input_string+region->beg[0],blen));
-      jv captures = jv_array();
-      for (int i = 1; i < region->num_regs; ++i) {
-        // Empty capture.
-        if (region->beg[i] == region->end[i]) {
-          // Didn't match.
-          jv cap;
-          if (region->beg[i] == -1) {
-            cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(-1));
-            cap = jv_object_set(cap, jv_string("string"), jv_null());
-          } else {
-            fr = input_string;
-            for (idx = 0; fr < input_string+region->beg[i]; idx++) {
-              fr += jvp_utf8_decode_length(*fr);
-            }
-            cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
-            cap = jv_object_set(cap, jv_string("string"), jv_string(""));
-          }
-          cap = jv_object_set(cap, jv_string("length"), jv_number(0));
-          cap = jv_object_set(cap, jv_string("name"), jv_null());
-          captures = jv_array_append(captures, cap);
-          continue;
-        }
-        fr = input_string;
-        for (idx = len = 0; fr < input_string+region->end[i]; len++) {
-          if (fr == input_string+region->beg[i]) idx = len, len=0;
-          fr += jvp_utf8_decode_length(*fr);
-        }
-
-        blen = region->end[i]-region->beg[i];
-        jv cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
-        cap = jv_object_set(cap, jv_string("length"), jv_number(len));
-        cap = jv_object_set(cap, jv_string("string"), jv_string_sized(input_string+region->beg[i],blen));
-        cap = jv_object_set(cap, jv_string("name"), jv_null());
-        captures = jv_array_append(captures,cap);
-      }
-      onig_foreach_name(reg,f_match_name_iter,&captures);
-      match = jv_object_set(match, jv_string("captures"), captures);
-      result = jv_array_append(result, match);
-      start = (const UChar*)(input_string+region->end[0]);
-      onig_region_free(region,0);
-    } else if (onigret == ONIG_MISMATCH) {
-      break;
-    } else { /* Error */
-      UChar ebuf[ONIG_MAX_ERROR_MESSAGE_LEN];
-      onig_error_code_to_str(ebuf, onigret, &einfo);
+      start_byte_offset += jvp_utf8_decode_length(subject[start_byte_offset]);
+      retry_empty_options = 0;
+      // retry match with no extra options
+      continue;
+    } else {
       jv_free(result);
-      result = jv_invalid_with_msg(jv_string_concat(jv_string("Regex failure: "),
-            jv_string((char*)ebuf)));
+      // TODO: reason string?
+      result =
+          jv_invalid_with_msg(jv_string_fmt("regexp match error (%d)", rc));
       break;
     }
-  } while (global && start <= end);
-  onig_region_free(region,1);
-  region = NULL;
-  onig_free(reg);
+
+    PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(match_data);
+    PCRE2_SPTR match_start = subject + ovector[0];
+    PCRE2_SPTR match_end = subject + ovector[1];
+    PCRE2_SIZE match_length_bytes = match_end - match_start;
+    match_offset += utf8_cp_count(match_end_prev, match_start);
+    int match_length = utf8_cp_count(match_start, match_end);
+    jv match = jv_object();
+    match = jv_object_set(match, jv_string("offset"), jv_number(match_offset));
+    match = jv_object_set(match, jv_string("length"), jv_number(match_length));
+    match = jv_object_set(
+        match, jv_string("string"),
+        jv_string_sized((const char *)match_start, match_length_bytes));
+
+    jv captures = jv_array();
+    for (int i = 1; i < rc; i++) {
+      int substring_matched = ovector[2 * i] != PCRE2_UNSET;
+      int cap_offset = 0;
+      int cap_length = 0;
+      jv cap_string = jv_null();
+
+      if (substring_matched) {
+        PCRE2_SPTR substring_start = subject + ovector[2 * i];
+        PCRE2_SPTR substring_end = subject + ovector[2 * i + 1];
+        PCRE2_SIZE substring_length = substring_end - substring_start;
+        cap_offset = match_offset + utf8_cp_count(match_start, substring_start);
+        cap_length = utf8_cp_count(substring_start, substring_end);
+        cap_string =
+            jv_string_sized((const char *)substring_start, substring_length);
+      } else {
+        cap_offset = -1;
+      }
+
+      jv cap = jv_object();
+      cap = jv_object_set(cap, jv_string("offset"), jv_number(cap_offset));
+      cap = jv_object_set(cap, jv_string("length"), jv_number(cap_length));
+      cap = jv_object_set(cap, jv_string("string"), cap_string);
+      PCRE2_SPTR name = capture_names != NULL ? capture_names[i - 1] : NULL;
+      if (name != NULL) {
+        cap = jv_object_set(cap, jv_string("name"),
+                            jv_string((const char *)name));
+      } else {
+        cap = jv_object_set(cap, jv_string("name"), jv_null());
+      }
+
+      captures = jv_array_append(captures, cap);
+    }
+
+    // this imitates onig by filling out non-matched capture groups
+    for (uint32_t i = rc - 1; i < capture_count; i++) {
+      jv cap = jv_object();
+      cap = jv_object_set(cap, jv_string("offset"), jv_number(-1));
+      cap = jv_object_set(cap, jv_string("length"), jv_number(0));
+      cap = jv_object_set(cap, jv_string("string"), jv_null());
+      PCRE2_SPTR name = capture_names != NULL ? capture_names[i] : NULL;
+      if (name != NULL) {
+        cap = jv_object_set(cap, jv_string("name"),
+                            jv_string((const char *)name));
+      } else {
+        cap = jv_object_set(cap, jv_string("name"), jv_null());
+      }
+      captures = jv_array_append(captures, cap);
+    }
+
+    match = jv_object_set(match, jv_string("captures"), captures);
+    result = jv_array_append(result, match);
+
+    if (!global) {
+      break;
+    }
+
+    start_byte_offset = ovector[1];
+    match_end_prev = match_end;
+    match_offset += match_length;
+
+    // code below is partially based pcre2_next_match from new version of pcre2
+    // maybe use it in the future when more available?
+    if (ovector[0] == ovector[1]) {
+      if (ovector[0] == subject_length) {
+        break;
+      }
+      retry_empty_options |= PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED;
+    }
+  }
+
+  if (capture_names != NULL) {
+    jv_mem_free(capture_names);
+  }
+  pcre2_match_data_free(match_data);
+  pcre2_code_free(re);
   jv_free(input);
   jv_free(regex);
+
   return result;
 }
-#else /* !HAVE_LIBONIG */
+
+#else
 static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   jv_free(input);
   jv_free(regex);
   jv_free(modifiers);
   jv_free(testmode);
-  return jv_invalid_with_msg(jv_string("jq was compiled without ONIGURUMA regex library. match/test/sub and related functions are not available."));
+  return jv_invalid_with_msg(jv_string("jq was compiled without a regex library. match/test/sub and related functions are not available."));
 }
-#endif /* HAVE_LIBONIG */
+#endif /* HAVE_LIBPCRE2 */
 
 static jv minmax_by(jv values, jv keys, int is_min) {
   if (jv_get_kind(values) != JV_KIND_ARRAY)
