@@ -56,7 +56,7 @@ AM_YFLAGS = --warnings=all -Wno-yacc -d
 lib_LTLIBRARIES = libjq.la
 libjq_la_SOURCES = ${LIBJQ_SRC}
 libjq_la_LIBADD = -lm
-libjq_la_LDFLAGS = $(onig_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info 1:4:0
+libjq_la_LDFLAGS = $(onig_LDFLAGS) $(pcre2_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
 if WIN32
 libjq_la_LIBADD += -lshlwapi
@@ -198,9 +198,15 @@ SUBDIRS = vendor/oniguruma
 endif
 
 AM_CFLAGS += $(onig_CFLAGS)
+AM_CFLAGS += $(pcre2_CFLAGS)
 
 if WITH_ONIGURUMA
 TESTS += tests/onigtest tests/manonigtest
+endif
+
+if WITH_PCRE2
+TESTS += tests/onigtest tests/manonigtest
+TESTS += tests/pcre2test
 endif
 
 ### Packaging
@@ -230,7 +236,7 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/onig.supp tests/local.supp                                \
         tests/setup tests/torture/input0.json                           \
         tests/optional.test tests/man.test tests/manonig.test           \
-        tests/jq.test tests/onig.test tests/base64.test tests/uri.test  \
+        tests/jq.test tests/onig.test tests/pcre2.test tests/base64.test tests/uri.test  \
         tests/jq-f-test.sh                                              \
         tests/no-main-program.jq tests/yes-main-program.jq
 

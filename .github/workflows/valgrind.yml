@@ -16,14 +16,15 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y automake autoconf libtool valgrind
+          sudo apt-get install -y automake autoconf libtool libpcre2-dev libpcre2-8-0 valgrind
       - name: Build
         run: |
           autoreconf -i
           ./configure \
             --disable-docs \
             --enable-valgrind \
-            --with-oniguruma=builtin
+            --with-oniguruma=no \
+            --with-pcre2
           make -j"$(nproc)"
           file ./jq
       - name: Test

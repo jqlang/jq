@@ -15,97 +15,46 @@ jobs:
         arch:
           - amd64
           - arm64
-          - armel
-          - armhf
           - i386
-          - mips
-          - mips64
-          - mips64el
-          - mips64r6
-          - mips64r6el
-          - mipsel
-          - mipsr6
-          - mipsr6el
-          - powerpc
           - ppc64el
           - riscv64
           - s390x
         include:
+          # TODO: arm/v7 arm/v6?
           - arch: amd64
-            CC: x86_64-linux-gnu
+            platform: linux/amd64
           - arch: arm64
-            CC: aarch64-linux-gnu
-          - arch: armel
-            CC: arm-linux-gnueabi
-          - arch: armhf
-            CC: arm-linux-gnueabihf
+            platform: linux/arm64
           - arch: i386
-            CC: i686-linux-gnu
-          - arch: mips
-            CC: mips-linux-gnu
-          - arch: mips64
-            CC: mips64-linux-gnuabi64
-          - arch: mips64el
-            CC: mips64el-linux-gnuabi64
-          - arch: mips64r6
-            CC: mipsisa64r6-linux-gnuabi64
-          - arch: mips64r6el
-            CC: mipsisa64r6el-linux-gnuabi64
-          - arch: mipsel
-            CC: mipsel-linux-gnu
-          - arch: mipsr6
-            CC: mipsisa32r6-linux-gnu
-          - arch: mipsr6el
-            CC: mipsisa32r6el-linux-gnu
-          - arch: powerpc
-            CC: powerpc-linux-gnu
+            platform: linux/386
           - arch: ppc64el
-            CC: powerpc64le-linux-gnu
+            platform: linux/ppc64le
           - arch: riscv64
-            CC: riscv64-linux-gnu
+            platform: linux/riscv64
           - arch: s390x
-            CC: s390x-linux-gnu
-    runs-on: ${{ matrix.arch == 'i386' && 'ubuntu-22.04' || 'ubuntu-24.04' }}
+            platform: linux/s390x
+    runs-on: ubuntu-24.04
     env:
-      AR: ${{ matrix.CC }}-ar
-      CHOST: ${{ matrix.CC }}
-      CC: ${{ matrix.CC }}-gcc
-      CPP: ${{ matrix.CC }}-cpp
-      LDFLAGS: -s
-      SUFFIX: linux-${{ matrix.arch }}
+      BIN_NAME: jq-linux-${{ matrix.arch }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v5
         with:
           submodules: true
-      - name: Install packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y automake autoconf libtool crossbuild-essential-${{ matrix.arch }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Build
         run: |
-          autoreconf -i
-          ./configure \
-            --host=${{ matrix.CC }} \
-            --disable-docs \
-            --with-oniguruma=builtin \
-            --enable-static \
-            --enable-all-static \
-            CFLAGS="-O2 -pthread -fstack-protector-all"
-          make -j"$(nproc)"
-          file ./jq
-          cp ./jq jq-${{ env.SUFFIX }}
-      - name: Test
-        # Only run tests for amd64 matching the CI machine arch
-        if: ${{ matrix.arch == 'amd64' }}
-        run: |
-          make check VERBOSE=yes
-          git diff --exit-code
+          docker build --platform ${{ matrix.platform }} -t jq-build-${{ env.BIN_NAME }} .
+          docker cp $(docker create jq-build-${{ env.BIN_NAME }}):/jq ${{ env.BIN_NAME }}
+          file ${{ env.BIN_NAME }}
       - name: Upload Test Logs
         if: ${{ failure() }}
         uses: actions/upload-artifact@v5
         with:
-          name: test-logs-${{ env.SUFFIX }}
+          name: test-logs-${{ env.BIN_NAME }}
           retention-days: 7
           path: |
             test-suite.log
@@ -113,8 +62,8 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: jq-${{ env.SUFFIX }}
-          path: jq-${{ env.SUFFIX }}
+          name: ${{ env.BIN_NAME }}
+          path: ${{ env.BIN_NAME }}
           if-no-files-found: error
           retention-days: 7
 
@@ -127,10 +76,10 @@ jobs:
           - arm64
         include:
           - arch: amd64
-            target: x86_64-apple-darwin
+            runs_on: macos-15-intel
           - arch: arm64
-            target: arm64-apple-darwin
-    runs-on: macos-14
+            runs_on: macos-15
+    runs-on: ${{ matrix.runs_on }}
     env:
       LDFLAGS: -dead_strip
       SUFFIX: macos-${{ matrix.arch }}
@@ -143,17 +92,14 @@ jobs:
         run: |
           # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
           brew update || brew update-reset
-          brew install autoconf automake libtool
-      - name: Set CC
-        run: |
-          echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> "$GITHUB_ENV"
+          brew install autoconf automake libtool pcre2
       - name: Build
         run: |
           autoreconf -i
           ./configure \
-            --host="${{ matrix.target }}$(uname -r)" \
             --disable-docs \
-            --with-oniguruma=builtin \
+            --with-oniguruma=no \
+            --with-pcre2 \
             --disable-shared \
             --enable-static \
             --enable-all-static \
@@ -228,12 +174,14 @@ jobs:
             libtool
           pacboy: >-
             toolchain:p
+            pcre2:p
       - name: Build
         run: |
           autoreconf -i
           ./configure \
             --disable-docs \
-            --with-oniguruma=builtin \
+            --with-oniguruma=no \
+            --with-pcre2 \
             --disable-shared \
             --enable-static \
             --enable-all-static \
@@ -272,7 +220,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y automake autoconf
+          sudo apt-get install -y automake autoconf libpcre2-dev libpcre2-8-0
       - name: Create dist
         run: |
           autoreconf -i
@@ -310,11 +258,10 @@ jobs:
           merge-multiple: true
       - name: Move executables
         run: |
-          mkdir -p linux/{386,amd64,arm64,mips64le,ppc64le,riscv64,s390x}
+          mkdir -p linux/{386,amd64,arm64,ppc64le,riscv64,s390x}
           mv jq-linux-i386 linux/386/jq
           mv jq-linux-amd64 linux/amd64/jq
           mv jq-linux-arm64 linux/arm64/jq
-          mv jq-linux-mips64el linux/mips64le/jq
           mv jq-linux-ppc64el linux/ppc64le/jq
           mv jq-linux-riscv64 linux/riscv64/jq
           mv jq-linux-s390x linux/s390x/jq
@@ -354,7 +301,7 @@ jobs:
           context: .
           push: ${{ startsWith(github.ref, 'refs/tags/jq-') }}
           provenance: false
-          platforms: linux/386,linux/amd64,linux/arm64,linux/mips64le,linux/ppc64le,linux/riscv64,linux/s390x
+          platforms: linux/386,linux/amd64,linux/arm64,linux/ppc64le,linux/riscv64,linux/s390x
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
       - name: Generate signed attestations
