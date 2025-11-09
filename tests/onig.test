@@ -29,9 +29,10 @@
 "a bār"
 [{"offset": 2, "length": 4, "string": "bār", "captures":[]}]
 
-[match(".+?\\b")]
-"ā two-codepoint grapheme"
-[{"offset": 0, "length": 2, "string": "ā", "captures":[]}]
+# TODO: temp disabled as pcre2 < 10.43 captures length 1
+#[match(".+?\\b")]
+#"ā two-codepoint grapheme"
+#[{"offset": 0, "length": 2, "string": "ā", "captures":[]}]
 
 [match(["foo (?<bar123>bar)? foo", "ig"])]
 "foo bar foo foo  foo"

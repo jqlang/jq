@@ -1,0 +1,25 @@
+# subject type error test
+try match("") catch .
+null
+"null (null) input cannot be matched, as it is not a string"
+
+# pattern error test
+try match("*") catch .
+""
+"regex failure: quantifier does not follow a repeatable item"
+
+# modifiers type error test
+try match(""; 123) catch .
+""
+"number (123) regex modifiers is not a string"
+
+# null modifiers is ok with onig impl
+test(""; null)
+""
+true
+
+# multi-byte codepoint split
+# different from onig (["","å","","ä","","ö","",""])
+[splits("")]
+"åäö"
+["","å","ä","ö",""]
