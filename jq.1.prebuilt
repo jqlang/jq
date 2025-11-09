@@ -199,7 +199,7 @@ This option reads all the JSON texts in the named file and binds an array of the
 \fB\-\-rawfile variable\-name filename\fR:
 .
 .IP
-This option reads in the named file and binds its contents to the given global variable\. If you run jq with \fB\-\-rawfile foo bar\fR, then \fB$foo\fR is available in the program and has a string whose contents are to the texts in the file named \fBbar\fR\.
+This option reads in the named file and binds its content to the given global variable\. If you run jq with \fB\-\-rawfile foo bar\fR, then \fB$foo\fR is available in the program and has a string whose content is set to the text in the file named \fBbar\fR\.
 .
 .TP
 \fB\-\-args\fR:

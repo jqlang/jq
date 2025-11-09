@@ -261,10 +261,10 @@ sections:
 
       * `--rawfile variable-name filename`:
 
-        This option reads in the named file and binds its contents to the given
+        This option reads in the named file and binds its content to the given
         global variable.  If you run jq with `--rawfile foo bar`, then `$foo` is
-        available in the program and has a string whose contents are to the texts
-        in the file named `bar`.
+        available in the program and has a string whose content is set to the
+        text in the file named `bar`.
 
       * `--args`:
 
