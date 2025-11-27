@@ -2510,7 +2510,7 @@ foreach .[] as $x (0, 1; . + $x)
 
 # regression test for CVE-2025-49014 (use of fmt after free)
 # tests with both empty string literal and empty string created by function
-# as they seems to behave referecne wise differently.
+# as they seems to behave reference wise differently.
 strflocaltime("" | ., @uri)
 0
 ""
