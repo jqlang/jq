@@ -283,7 +283,44 @@ AC_SUBST(onig_LDFLAGS)
 AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
 AM_CONDITIONAL([WITH_ONIGURUMA], [test "x$with_oniguruma" != xno])
 
+dnl PCRE2
+dnl TODO: proper check
+AC_ARG_WITH([pcre2],
+   [AS_HELP_STRING([--with-pcre2], [Use PCRE2 library])],
+   [with_pcre2=yes],
+   [with_pcre2=no])
+
+if test "$with_pcre2" = yes; then
+   AC_CHECK_PROG(PCRE2_CONFIG, pcre2-config, pcre2-config)
+   AC_ARG_WITH(pcre2-config,
+               AS_HELP_STRING([--with-pcre2-config=PATH],
+                              [Location of PCRE2 pcre2-config (auto)]),
+               [pcre2_config="$withval"],
+               [pcre2_config=""])
+
+   if test "x$pcre2_config" != "x" ; then
+      AC_MSG_CHECKING(for $pcre2_config)
+
+      if test -f $pcre2_config ; then
+         PCRE2_CONFIG=$pcre2_config
+         AC_MSG_RESULT(yes)
+      else
+         AC_MSG_RESULT(no - searching PATH)
+      fi
+   fi
+   if test "x$PCRE2_CONFIG" = "x"; then
+      AC_CHECK_PROGS(PCRE2_CONFIG, pcre2-config)
+   fi
+   pcre2_CFLAGS=`$PCRE2_CONFIG --cflags`
+   pcre2_LDFLAGS=`$PCRE2_CONFIG --libs8`
+   AC_SUBST(pcre2_CFLAGS)
+   AC_SUBST(pcre2_LDFLAGS)
+   dnl condtional?
+   AC_DEFINE([HAVE_PCRE2],1,[Define to 1 if the system includes pcre2])
+fi
+
+AM_CONDITIONAL([WITH_PCRE2], [test "x$with_pcre2" != xno])
+
 AC_CONFIG_MACRO_DIRS([config/m4 m4])
 AC_CONFIG_FILES([Makefile libjq.pc])
 AC_OUTPUT
-
