@@ -227,6 +227,10 @@ sections:
         like awk's -f option. This changes the filter argument to be
         interpreted as a filename, instead of the source of a program.
 
+      * `-o` / `--output-file filename`:
+
+        Write output to the file called filename instead of stdout.
+
       * `-L directory` / `--library-path directory`:
 
         Prepend `directory` to the search list for modules.  If this
