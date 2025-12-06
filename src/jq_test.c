@@ -564,4 +564,19 @@ static void jv_test(void) {
     //jv_dump(jv_copy(o2), 0); printf("\n");
     jv_free(o2);
   }
+
+  {
+	jv test_unshared = JV_OBJECT(jv_string("some"), JV_ARRAY(jv_string("other"), jv_true()));
+
+	assert(jv_is_unshared(test_unshared));
+	jv_free(test_unshared);
+
+	jv initial = jv_parse("{\"test\":[{\"some\":\"value\"}, 1, true, false, null]}");
+	jv new = jv_unshare(jv_copy(initial));
+
+	assert(jv_equal(jv_copy(initial), jv_copy(new)));
+	assert(jv_is_unshared(new));
+	jv_free(initial);
+	jv_free(new);
+  }
 }
