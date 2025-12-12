@@ -3320,7 +3320,7 @@ sections:
       output as JSON texts on `stdout`.) The `debug` builtin can have
       application-specific behavior, such as for executables that use
       the libjq C API but aren't the jq executable itself.  The `stderr`
-      builtin outputs its input in raw mode to stder with no additional
+      builtin outputs its input in raw mode to stderr with no additional
       decoration, not even a newline.
 
       Most jq builtins are referentially transparent, and yield constant
