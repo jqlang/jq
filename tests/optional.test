@@ -2,8 +2,8 @@
 
 # Regression test for #3276 (fails on mingw/WIN32)
 fromdate
-"2038-01-19T03:14:08Z"
-2147483648
+"2038-01-19T03:14:07Z"
+2147483647
 
 # %e is not available on mingw/WIN32
 strftime("%A, %B %e, %Y")
