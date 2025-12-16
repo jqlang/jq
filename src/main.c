@@ -83,6 +83,8 @@ static void usage(int code, int keep_it_short) {
       "                            using escape sequences;\n"
       "  -S, --sort-keys           sort keys of each object on output;\n"
       "  -C, --color-output        colorize JSON output;\n"
+      "      --color-field spec    colorize object string values matching\n"
+      "                            spec (key=value:ansi), implies -C;\n"
       "  -M, --monochrome-output   disable colored output;\n"
       "      --tab                 use tabs for indentation;\n"
       "      --indent n            use n spaces for indentation (max 7 spaces);\n"
@@ -390,6 +392,17 @@ int main(int argc, char* argv[]) {
           dumpopts &= ~(JV_PRINT_TAB | JV_PRINT_INDENT_FLAGS(7));
         } else if (isoption(&text, 'C', "color-output", is_short)) {
           options |= COLOR_OUTPUT;
+        } else if (isoption(&text, 0, "color-field", is_short)) {
+          if (i >= argc - 1) {
+            fprintf(stderr, "jq: --color-field takes one parameter\n");
+            die();
+          }
+          options |= COLOR_OUTPUT;
+          if (!jq_add_color_field(argv[i + 1])) {
+            fprintf(stderr, "jq: invalid --color-field argument: %s\n", argv[i + 1]);
+            die();
+          }
+          i++;
         } else if (isoption(&text, 'M', "monochrome-output", is_short)) {
           options |= NO_COLOR_OUTPUT;
         } else if (isoption(&text, 'a', "ascii-output", is_short)) {
