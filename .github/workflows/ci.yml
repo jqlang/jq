@@ -310,15 +310,16 @@ jobs:
           merge-multiple: true
       - name: Move executables
         run: |
-          mkdir -p linux/{386,amd64,arm64,mips64le,ppc64le,riscv64,s390x}
+          mkdir -p linux/{386,amd64,arm64,arm/v7,mips64le,ppc64le,riscv64,s390x}
+          chmod +x jq-linux-*
           mv jq-linux-i386 linux/386/jq
           mv jq-linux-amd64 linux/amd64/jq
           mv jq-linux-arm64 linux/arm64/jq
+          mv jq-linux-armhf linux/arm/v7/jq
           mv jq-linux-mips64el linux/mips64le/jq
           mv jq-linux-ppc64el linux/ppc64le/jq
           mv jq-linux-riscv64 linux/riscv64/jq
           mv jq-linux-s390x linux/s390x/jq
-          chmod +x linux/*/jq
       - name: Create Dockerfile
         run: |
           cat <<'EOF' >Dockerfile
@@ -354,7 +355,7 @@ jobs:
           context: .
           push: ${{ startsWith(github.ref, 'refs/tags/jq-') }}
           provenance: false
-          platforms: linux/386,linux/amd64,linux/arm64,linux/mips64le,linux/ppc64le,linux/riscv64,linux/s390x
+          platforms: linux/386,linux/amd64,linux/arm64,linux/arm/v7,linux/mips64le,linux/ppc64le,linux/riscv64,linux/s390x
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
       - name: Generate signed attestations
