@@ -220,6 +220,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
         tests/modules/home1/.jq tests/modules/home2/.jq/g.jq            \
+        tests/modules/home3/.config/jq/cfg.jq                           \
+        tests/modules/home3/.jq/priority_test.jq                        \
         tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq           \
         tests/modules/shadow1.jq tests/modules/shadow2.jq               \
         tests/modules/syntaxerror/syntaxerror.jq                        \
@@ -227,6 +229,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order0.jq                               \
         tests/modules/test_bind_order1.jq                               \
         tests/modules/test_bind_order2.jq                               \
+        tests/modules/xdg1/jq/xdg.jq                                    \
+        tests/modules/xdg2/jq/priority_test.jq                          \
         tests/onig.supp tests/local.supp                                \
         tests/setup tests/torture/input0.json                           \
         tests/optional.test tests/man.test tests/manonig.test           \

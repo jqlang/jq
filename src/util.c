@@ -126,6 +126,26 @@ jv get_home(void) {
   return ret;
 }
 
+// Get $XDG_CONFIG_HOME, fallbacking to $HOME/.config on non-Windows platforms.
+jv get_xdg_config_home(void) {
+  char *xdg_config_home = getenv("XDG_CONFIG_HOME");
+  if (xdg_config_home && xdg_config_home[0]) {
+    return jv_string(xdg_config_home);
+  }
+
+#ifndef WIN32
+  // Fallback to $HOME/.config on non-Windows platforms.
+  jv home = get_home();
+  if (jv_is_valid(home)) {
+    jv ret = jv_string_fmt("%s/.config", jv_string_value(home));
+    jv_free(home);
+    return ret;
+  }
+  jv_free(home);
+#endif
+
+  return jv_invalid_with_msg(jv_string("No $XDG_CONFIG_HOME available"));
+}
 
 jv jq_realpath(jv path) {
   int path_max;
