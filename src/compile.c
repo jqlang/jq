@@ -1280,15 +1280,16 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
         for (inst* param = curr->arglist.first; param; param = param->next) {
           assert(param->op == CLOSURE_PARAM);
           assert(param->bound_by == param);
+          // Prevent closure index from overflowing into ARG_NEWCLOSURE flag
+          if (subfn->nclosures == ARG_NEWCLOSURE) {
+            locfile_locate(lf, curr->source,
+                "function has too many parameters (max %d)", ARG_NEWCLOSURE - 1);
+            errors++;
+            break;
+          }
           param->imm.intval = subfn->nclosures++;
           param->compiled = subfn;
           params = jv_array_append(params, jv_string(param->symbol));
-        }
-        // Prevent closure index from overflowing into ARG_NEWCLOSURE flag
-        if (subfn->nclosures == ARG_NEWCLOSURE) {
-          locfile_locate(lf, curr->source,
-              "function has too many parameters (max %d)", ARG_NEWCLOSURE - 1);
-          errors++;
         }
         subfn->debuginfo = jv_object_set(subfn->debuginfo, jv_string("params"), params);
         errors += compile(subfn, curr->subfn, lf, args, env);
