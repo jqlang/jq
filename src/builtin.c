@@ -1238,7 +1238,7 @@ static jv f_env(jq_state *jq, jv input) {
     val = strchr(e[0], '=');
     if (val == NULL)
       env = jv_object_set(env, jv_string(var), jv_null());
-    else if (var - val < INT_MAX)
+    else if (val - var < INT_MAX)
       env = jv_object_set(env, jv_string_sized(var, val - var), jv_string(val + 1));
   }
   return env;
