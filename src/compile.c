@@ -1244,7 +1244,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
       // Prevent subfunction index from overflowing into ARG_NEWCLOSURE flag
       if (bc->nsubfunctions == ARG_NEWCLOSURE) {
         locfile_locate(lf, curr->source,
-            "too many subfunctions/closures (max %d)", ARG_NEWCLOSURE - 1);
+            "too many function parameters or local function definitions (max %d)", ARG_NEWCLOSURE - 1);
         errors++;
       }
       curr->imm.intval = bc->nsubfunctions++;
