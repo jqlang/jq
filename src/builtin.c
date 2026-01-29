@@ -38,7 +38,7 @@
 #include "jv_dtoa_tsd.h"
 #include "jv_private.h"
 #include "util.h"
-
+#include "format_table.h"
 
 #define BINOP(name) \
 static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
@@ -630,6 +630,9 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     }
     jv_free(input);
     return line;
+  } else if (!strcmp(fmt_s, "table")) {
+    jv_free(fmt);
+    return format_table(input);
   } else if (!strcmp(fmt_s, "html")) {
     jv_free(fmt);
     return escape_string(f_tostring(jq, input), "&&amp;\0<&lt;\0>&gt;\0'&apos;\0\"&quot;\0");

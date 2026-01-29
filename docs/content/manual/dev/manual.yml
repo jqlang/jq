@@ -2188,6 +2188,11 @@ sections:
             backslash (ascii `0x5c`) will be output as escape sequences
             `\n`, `\r`, `\t`, `\\` respectively.
 
+          * `@table`:
+
+            The input must be an array of values, and it is
+            rendered as an ASCII table.
+
           * `@sh`:
 
             The input is escaped suitable for use in a command-line
@@ -2235,6 +2240,10 @@ sections:
           - program: '@base64d'
             input: '"VGhpcyBpcyBhIG1lc3NhZ2U="'
             output: ['"This is a message"']
+
+          - program: '@table'
+            input: '[["a", 1], ["b", 2]]'
+            output: ['"┌─┬─┐\n│a│1│\n│b│2│\n└─┴─┘"']
 
       - title: "Dates"
         body: |
