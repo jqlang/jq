@@ -146,23 +146,23 @@ static int isoption(const char** text, char shortopt, const char* longopt, int i
 }
 
 enum {
-  SLURP                 = 1,
-  RAW_INPUT             = 2,
-  PROVIDE_NULL          = 4,
-  RAW_OUTPUT            = 8,
-  RAW_OUTPUT0           = 16,
-  ASCII_OUTPUT          = 32,
-  COLOR_OUTPUT          = 64,
-  NO_COLOR_OUTPUT       = 128,
-  SORTED_OUTPUT         = 256,
-  FROM_FILE             = 512,
-  RAW_NO_LF             = 1024,
-  UNBUFFERED_OUTPUT     = 2048,
-  EXIT_STATUS           = 4096,
-  SEQ                   = 16384,
-  DUMP_DISASM           = 32768, /* debugging only */
+  SLURP                 = 1 << 0,
+  RAW_INPUT             = 1 << 1,
+  PROVIDE_NULL          = 1 << 2,
+  RAW_OUTPUT            = 1 << 3,
+  RAW_OUTPUT0           = 1 << 4,
+  ASCII_OUTPUT          = 1 << 5,
+  COLOR_OUTPUT          = 1 << 6,
+  NO_COLOR_OUTPUT       = 1 << 7,
+  SORTED_OUTPUT         = 1 << 8,
+  FROM_FILE             = 1 << 9,
+  RAW_NO_LF             = 1 << 10,
+  UNBUFFERED_OUTPUT     = 1 << 11,
+  EXIT_STATUS           = 1 << 12,
+  SEQ                   = 1 << 13,
+  DUMP_DISASM           = 1 << 14, /* debugging only */
 #ifdef WIN32
-  BINARY_OUTPUT         = 65536,
+  BINARY_OUTPUT         = 1 << 15,
 #endif
 };
 
