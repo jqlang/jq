@@ -15,6 +15,7 @@
 #include "jv_unicode.h"
 #include "jv_alloc.h"
 #include "jv_private.h"
+#include "util.h"
 
 #ifndef MAX_PRINT_DEPTH
 #define MAX_PRINT_DEPTH (10000)
@@ -408,17 +409,30 @@ jv jv_dump_string(jv x, int flags) {
 }
 
 char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize) {
+  assert(bufsize > 0);
   x = jv_dump_string(x, 0);
   const char *str = jv_string_value(x);
   const size_t len = strlen(str);
-  strncpy(outbuf, str, bufsize);
-  if (len > bufsize - 1 && bufsize >= 4) {
-    // Indicate truncation with '...' without breaking UTF-8.
-    const char *s = jvp_utf8_backtrack(outbuf + bufsize - 4, outbuf, NULL);
-    if (s) bufsize = s + 4 - outbuf;
-    strcpy(outbuf + bufsize - 4, "...");
+  if (len > bufsize - 1 && bufsize >= 8) {
+    char delim = 0;
+    switch (str[0]) {
+    case '"': delim = '"'; break;
+    case '[': delim = ']'; break;
+    case '{': delim = '}'; break;
+    }
+    size_t l = bufsize - (delim ? 5 : 4);  // "...", delim (if any), '\0'
+    const char *s = jvp_utf8_backtrack(str + l, str, NULL);
+    if (s) l = s - str;
+    memcpy(outbuf, str, l);
+    outbuf[l++] = '.';
+    outbuf[l++] = '.';
+    outbuf[l++] = '.';
+    if (delim) outbuf[l++] = delim;
+    outbuf[l] = '\0';
   } else {
-    outbuf[bufsize - 1] = '\0';
+    size_t l = MIN(len, bufsize - 1);
+    memcpy(outbuf, str, l);
+    outbuf[l] = '\0';
   }
   jv_free(x);
   return outbuf;

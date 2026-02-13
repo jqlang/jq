@@ -135,15 +135,11 @@ jv jv_get(jv t, jv k) {
     jv_free(k);
     v = jv_null();
   } else {
-    /*
-     * If k is a short string it's probably from a jq .foo expression or
-     * similar, in which case putting it in the invalid msg may help the
-     * user.  The length 30 is arbitrary.
-     */
-    if (jv_get_kind(k) == JV_KIND_STRING && jv_string_length_bytes(jv_copy(k)) < 30) {
-      v = jv_invalid_with_msg(jv_string_fmt("Cannot index %s with string \"%s\"",
+    if (jv_get_kind(k) == JV_KIND_STRING) {
+      char errbuf[35];
+      v = jv_invalid_with_msg(jv_string_fmt("Cannot index %s with string %s",
                                             jv_kind_name(jv_get_kind(t)),
-                                            jv_string_value(k)));
+                                            jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf))));
     } else {
       v = jv_invalid_with_msg(jv_string_fmt("Cannot index %s with %s",
                                             jv_kind_name(jv_get_kind(t)),
