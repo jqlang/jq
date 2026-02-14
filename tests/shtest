@@ -382,9 +382,9 @@ if [ "$(HOME=/nonexistent XDG_CONFIG_HOME="$mods/xdg1" $VALGRIND $Q $JQ -nr 'inc
     echo "Failed to load module from \$XDG_CONFIG_HOME/jq/" 1>&2
     exit 1
 fi
-## ~/.jq/ should be searched before $XDG_CONFIG_HOME/jq/
-if [ "$(HOME="$mods/home3" XDG_CONFIG_HOME="$mods/xdg2" $VALGRIND $Q $JQ -nr 'include "priority_test"; test')" != "qux" ]; then
-    echo "~/.jq/ should take priority over \$XDG_CONFIG_HOME/jq/" 1>&2
+## $JQ_CONFIG_HOME/jq/ should be searched before ~/.jq/
+if [ "$(HOME="$mods/home3" XDG_CONFIG_HOME="$mods/xdg2" $VALGRIND $Q $JQ -nr 'include "priority_test"; test')" != "baz" ]; then
+    echo "\$JQ_CONFIG_HOME/jq/ should take priority over ~/.jq/" 1>&2
     exit 1
 fi
 if $msys || $mingw; then
@@ -399,14 +399,19 @@ if $msys || $mingw; then
         exit 1
     fi
 else
-    ## If $XDG_CONFIG_HOME is unset, fallback to $HOME/.config/jq/
+    ## If $XDG_CONFIG_HOME is unset and $HOME/.config/jq exists, fallback to $HOME/.config/jq/
     if [ "$(unset XDG_CONFIG_HOME; HOME="$mods/home3" $VALGRIND $Q $JQ -nr 'include "cfg"; test')" != "bar" ]; then
         echo "Failed to fallback to \$HOME/.config/jq/ when \$XDG_CONFIG_HOME is unset" 1>&2
         exit 1
     fi
-    ## If $XDG_CONFIG_HOME is an empty string, fallback to $HOME/.config/jq/
+    ## If $XDG_CONFIG_HOME is an empty string and $HOME/.config/jq exists, fallback to $HOME/.config/jq/
     if [ "$(XDG_CONFIG_HOME="" HOME="$mods/home3" $VALGRIND $Q $JQ -nr 'include "cfg"; test')" != "bar" ]; then
         echo "Failed to fallback to \$HOME/.config/jq/ when \$XDG_CONFIG_HOME is empty" 1>&2
+        exit 1
+    fi
+    ## If $HOME/.config/jq does not exist, do not fallback to $HOME/.config/
+    if unset XDG_CONFIG_HOME; HOME="$mods/home1" $VALGRIND $Q $JQ -nr 'include "cfg"; test' 2>/dev/null; then
+        echo "Should not fallback to \$HOME/.config/ when \$HOME/.config/jq does not exist" 1>&2
         exit 1
     fi
 fi

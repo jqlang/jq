@@ -570,8 +570,7 @@ int main(int argc, char* argv[]) {
 
   if (jv_get_kind(lib_search_paths) == JV_KIND_NULL) {
     // Default search path list
-    lib_search_paths = JV_ARRAY(jv_string("~/.jq"),
-                                jv_string("$XDG_CONFIG_HOME/jq"),
+    lib_search_paths = JV_ARRAY(jv_string("$JQ_CONFIG_HOME"),
                                 jv_string("$ORIGIN/../lib/jq"),
                                 jv_string("$ORIGIN/../lib"));
   }

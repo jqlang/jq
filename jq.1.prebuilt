@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "January 2026" "" ""
+.TH "JQ" "1" "February 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -4143,7 +4143,7 @@ Paths in the search path are subject to various substitutions\.
 For paths starting with \fB~/\fR, the user\'s home directory is substituted for \fB~\fR\.
 .
 .P
-For paths starting with \fB$XDG_CONFIG_HOME/\fR, the value of the environment variable \fB$XDG_CONFIG_HOME\fR is substituted for \fB$XDG_CONFIG_HOME\fR\. If the variable is not defined, \fB$HOME/\.config\fR is used as the default on non\-Windows platforms\. On Windows, these paths are removed from the search path if the variable is not defined\.
+For paths starting with \fB$JQ_CONFIG_HOME/\fR, \fB$JQ_CONFIG_HOME\fR is resolved as follows: if the environment variable \fB$XDG_CONFIG_HOME\fR is set and non\-empty, \fB$XDG_CONFIG_HOME/jq\fR is used if the directory exists; on non\-Windows platforms, \fB~/\.config/jq\fR is used if the directory exists; otherwise, \fB~/\.jq\fR is used as a fallback\.
 .
 .P
 For paths starting with \fB$ORIGIN/\fR, the directory where the jq executable is located is substituted for \fB$ORIGIN\fR\.
@@ -4155,7 +4155,7 @@ For paths starting with \fB\./\fR or paths that are \fB\.\fR, the path of the in
 Import directives can optionally specify a search path to which the default is appended\.
 .
 .P
-The default search path is the search path given to the \fB\-L\fR command\-line option, else \fB["~/\.jq", "$XDG_CONFIG_HOME/jq", "$ORIGIN/\.\./lib/jq", "$ORIGIN/\.\./lib"]\fR\.
+The default search path is the search path given to the \fB\-L\fR command\-line option, else \fB["$JQ_CONFIG_HOME", "$ORIGIN/\.\./lib/jq", "$ORIGIN/\.\./lib"]\fR\.
 .
 .P
 Null and empty string path elements terminate search path processing\.

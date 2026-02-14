@@ -126,25 +126,46 @@ jv get_home(void) {
   return ret;
 }
 
-// Get $XDG_CONFIG_HOME, fallbacking to $HOME/.config on non-Windows platforms.
-jv get_xdg_config_home(void) {
+static int is_directory(const char *path) {
+  struct stat sb;
+  return stat(path, &sb) == 0 && S_ISDIR(sb.st_mode);
+}
+
+// Get the config home base directory. Resolved as follows:
+//
+// 1. $XDG_CONFIG_HOME/jq if set, non-empty, and the directory exists
+// 2. Non-Windows only: $HOME/.config/jq if the directory exists
+// 3. $HOME/.jq
+jv get_config_home(void) {
   char *xdg_config_home = getenv("XDG_CONFIG_HOME");
   if (xdg_config_home && xdg_config_home[0]) {
-    return jv_string(xdg_config_home);
+    jv xdg_jq = jv_string_fmt("%s/jq", xdg_config_home);
+    if (is_directory(jv_string_value(xdg_jq))) {
+      return xdg_jq;
+    }
+    jv_free(xdg_jq);
+  }
+
+  jv home = get_home();
+  if (!jv_is_valid(home)) {
+    jv_free(home);
+    return jv_invalid_with_msg(jv_string("No config home directory available"));
   }
 
 #ifndef WIN32
-  // Fallback to $HOME/.config on non-Windows platforms.
-  jv home = get_home();
-  if (jv_is_valid(home)) {
-    jv ret = jv_string_fmt("%s/.config", jv_string_value(home));
+  // Fallback to $HOME/.config/jq on non-Windows platforms.
+  jv config_jq = jv_string_fmt("%s/.config/jq", jv_string_value(home));
+  if (is_directory(jv_string_value(config_jq))) {
     jv_free(home);
-    return ret;
+    return config_jq;
   }
-  jv_free(home);
+  jv_free(config_jq);
 #endif
+  // Fallback to $HOME/.jq.
+  jv dot_jq = jv_string_fmt("%s/.jq", jv_string_value(home));
+  jv_free(home);
 
-  return jv_invalid_with_msg(jv_string("No $XDG_CONFIG_HOME available"));
+  return dot_jq;
 }
 
 jv jq_realpath(jv path) {

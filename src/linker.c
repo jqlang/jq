@@ -48,7 +48,7 @@ static int path_is_relative(jv p) {
 // in the following order:
 // 1. lib_path
 // 2. -L paths passed in on the command line (from jq_state*) or builtin list
-static jv build_lib_search_chain(jq_state *jq, jv search_path, jv xdg_config_home, jv jq_origin, jv lib_origin) {
+static jv build_lib_search_chain(jq_state *jq, jv search_path, jv config_home, jv jq_origin, jv lib_origin) {
   assert(jv_get_kind(search_path) == JV_KIND_ARRAY);
   jv expanded = jv_array();
   jv expanded_elt;
@@ -66,14 +66,15 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv xdg_config_hom
     }
     if (strcmp(".",jv_string_value(path)) == 0) {
       expanded_elt = jv_copy(path);
-    } else if (strncmp("$XDG_CONFIG_HOME/",jv_string_value(path),sizeof("$XDG_CONFIG_HOME/") - 1) == 0) {
-      if (jv_is_valid(xdg_config_home)) {
+    } else if (strcmp("$JQ_CONFIG_HOME",jv_string_value(path)) == 0) {
+      expanded_elt = jv_copy(config_home);
+    } else if (strncmp("$JQ_CONFIG_HOME/",jv_string_value(path),sizeof("$JQ_CONFIG_HOME/") - 1) == 0) {
+      if (jv_is_valid(config_home)) {
         expanded_elt = jv_string_fmt("%s/%s",
-                                 jv_string_value(xdg_config_home),
-                                 jv_string_value(path) + sizeof ("$XDG_CONFIG_HOME/") - 1);
+                                 jv_string_value(config_home),
+                                 jv_string_value(path) + sizeof ("$JQ_CONFIG_HOME/") - 1);
       } else {
-        // Remove $XDG_CONFIG_HOME/* from the search path if $XDG_CONFIG_HOME is not defined.
-        expanded_elt = jv_null();
+        expanded_elt = jv_invalid();
       }
     } else if (strncmp("$ORIGIN/",jv_string_value(path),sizeof("$ORIGIN/") - 1) == 0) {
       expanded_elt = jv_string_fmt("%s/%s",
@@ -88,10 +89,14 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv xdg_config_hom
       expanded_elt = path;
       path = jv_invalid();
     }
-    expanded = jv_array_append(expanded, expanded_elt);
+    if (jv_is_valid(expanded_elt)) {
+      expanded = jv_array_append(expanded, expanded_elt);
+    } else {
+      jv_free(expanded_elt);
+    }
     jv_free(path);
   }
-  jv_free(xdg_config_home);
+  jv_free(config_home);
   jv_free(jq_origin);
   jv_free(lib_origin);
   jv_free(search_path);
@@ -143,10 +148,10 @@ static jv jv_basename(jv name) {
 }
 
 // Asummes validated relative path to module
-static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv xdg_config_home, jv jq_origin, jv lib_origin) {
+static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv config_home, jv jq_origin, jv lib_origin) {
   if (!jv_is_valid(rel_path)) {
     jv_free(search);
-    jv_free(xdg_config_home);
+    jv_free(config_home);
     jv_free(jq_origin);
     jv_free(lib_origin);
     return rel_path;
@@ -154,7 +159,7 @@ static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv 
   if (jv_get_kind(rel_path) != JV_KIND_STRING) {
     jv_free(rel_path);
     jv_free(search);
-    jv_free(xdg_config_home);
+    jv_free(config_home);
     jv_free(jq_origin);
     jv_free(lib_origin);
     return jv_invalid_with_msg(jv_string_fmt("Module path must be a string"));
@@ -162,7 +167,7 @@ static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv 
   if (jv_get_kind(search) != JV_KIND_ARRAY) {
     jv_free(rel_path);
     jv_free(search);
-    jv_free(xdg_config_home);
+    jv_free(config_home);
     jv_free(jq_origin);
     jv_free(lib_origin);
     return jv_invalid_with_msg(jv_string_fmt("Module search path must be an array"));
@@ -172,7 +177,7 @@ static jv find_lib(jq_state *jq, jv rel_path, jv search, const char *suffix, jv 
   int ret;
 
   // Ideally we should cache this somewhere
-  search = build_lib_search_chain(jq, search, xdg_config_home, jq_origin, lib_origin);
+  search = build_lib_search_chain(jq, search, config_home, jq_origin, lib_origin);
   jv err = jv_array_get(jv_copy(search), 1);
   search = jv_array_get(search, 0);
 
@@ -254,7 +259,7 @@ static jv default_search(jq_state *jq, jv value) {
 }
 
 // XXX Split this into a util that takes a callback, and then...
-static int process_dependencies(jq_state *jq, jv xdg_config_home, jv jq_origin, jv lib_origin, block *src_block, struct lib_loading_state *lib_state) {
+static int process_dependencies(jq_state *jq, jv config_home, jv jq_origin, jv lib_origin, block *src_block, struct lib_loading_state *lib_state) {
   jv deps = block_take_imports(src_block);
   block bk = *src_block;
   int nerrors = 0;
@@ -283,7 +288,7 @@ static int process_dependencies(jq_state *jq, jv xdg_config_home, jv jq_origin, 
     // dep is now freed; do not reuse
 
     // find_lib does a lot of work that could be cached...
-    jv resolved = find_lib(jq, relpath, search, is_data ? ".json" : ".jq", jv_copy(xdg_config_home), jv_copy(jq_origin), jv_copy(lib_origin));
+    jv resolved = find_lib(jq, relpath, search, is_data ? ".json" : ".jq", jv_copy(config_home), jv_copy(jq_origin), jv_copy(lib_origin));
     // XXX ...move the rest of this into a callback.
     if (!jv_is_valid(resolved)) {
       jv_free(as);
@@ -295,7 +300,7 @@ static int process_dependencies(jq_state *jq, jv xdg_config_home, jv jq_origin, 
       jq_report_error(jq, jv_string_fmt("jq: error: %s\n",jv_string_value(emsg)));
       jv_free(emsg);
       jv_free(deps);
-      jv_free(xdg_config_home);
+      jv_free(config_home);
       jv_free(jq_origin);
       jv_free(lib_origin);
       return 1;
@@ -335,7 +340,7 @@ static int process_dependencies(jq_state *jq, jv xdg_config_home, jv jq_origin, 
     jv_free(as);
   }
   jv_free(lib_origin);
-  jv_free(xdg_config_home);
+  jv_free(config_home);
   jv_free(jq_origin);
   jv_free(deps);
   return nerrors;
@@ -374,7 +379,7 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int opt
     locfile_free(src);
     if (nerrors == 0) {
       char *lib_origin = strdup(jv_string_value(lib_path));
-      nerrors += process_dependencies(jq, get_xdg_config_home(),
+      nerrors += process_dependencies(jq, get_config_home(),
                                       jq_get_jq_origin(jq),
                                       jv_string(dirname(lib_origin)),
                                       &program, lib_state);
@@ -398,7 +403,7 @@ out:
 // as we do in process_dependencies.
 jv load_module_meta(jq_state *jq, jv mod_relpath) {
   // We can't know the caller's origin; we could though, if it was passed in
-  jv lib_path = find_lib(jq, validate_relpath(mod_relpath), jq_get_lib_dirs(jq), ".jq", get_xdg_config_home(), jq_get_jq_origin(jq), jv_null());
+  jv lib_path = find_lib(jq, validate_relpath(mod_relpath), jq_get_lib_dirs(jq), ".jq", get_config_home(), jq_get_jq_origin(jq), jv_null());
   if (!jv_is_valid(lib_path))
     return lib_path;
   jv meta = jv_null();
@@ -448,7 +453,7 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
     jv_free(home);
   }
 
-  nerrors = process_dependencies(jq, get_xdg_config_home(), jq_get_jq_origin(jq), jq_get_prog_origin(jq), &program, &lib_state);
+  nerrors = process_dependencies(jq, get_config_home(), jq_get_jq_origin(jq), jq_get_prog_origin(jq), &program, &lib_state);
   block libs = gen_noop();
   for (uint64_t i = 0; i < lib_state.ct; ++i) {
     free(lib_state.names[i]);
