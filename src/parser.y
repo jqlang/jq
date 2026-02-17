@@ -164,7 +164,7 @@ int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, block* answer, int* errors,
  * object key. */
 static jv check_object_key(block k) {
   if (block_is_const(k) && block_const_kind(k) != JV_KIND_STRING) {
-    char errbuf[15];
+    char errbuf[30];
     return jv_string_fmt("Cannot use %s (%s) as object key",
         jv_kind_name(block_const_kind(k)),
         jv_dump_string_trunc(block_const(k), errbuf, sizeof(errbuf)));

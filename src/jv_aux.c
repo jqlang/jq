@@ -135,16 +135,12 @@ jv jv_get(jv t, jv k) {
     jv_free(k);
     v = jv_null();
   } else {
-    if (jv_get_kind(k) == JV_KIND_STRING) {
-      char errbuf[35];
-      v = jv_invalid_with_msg(jv_string_fmt("Cannot index %s with string %s",
-                                            jv_kind_name(jv_get_kind(t)),
-                                            jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf))));
-    } else {
-      v = jv_invalid_with_msg(jv_string_fmt("Cannot index %s with %s",
-                                            jv_kind_name(jv_get_kind(t)),
-                                            jv_kind_name(jv_get_kind(k))));
-    }
+    char errbuf[30];
+    v = jv_invalid_with_msg(jv_string_fmt(
+          "Cannot index %s with %s (%s)",
+          jv_kind_name(jv_get_kind(t)),
+          jv_kind_name(jv_get_kind(k)),
+          jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf))));
     jv_free(t);
     jv_free(k);
   }

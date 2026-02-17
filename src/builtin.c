@@ -50,24 +50,23 @@ BINOPS
 
 
 static jv type_error(jv bad, const char* msg) {
-  char errbuf[15];
+  char errbuf[30];
   const char *badkind = jv_kind_name(jv_get_kind(bad));
-  jv err = jv_invalid_with_msg(jv_string_fmt("%s (%s) %s", badkind,
-                                             jv_dump_string_trunc(bad, errbuf, sizeof(errbuf)),
-                                             msg));
+  jv err = jv_invalid_with_msg(jv_string_fmt(
+        "%s (%s) %s", badkind,
+        jv_dump_string_trunc(bad, errbuf, sizeof(errbuf)), msg));
   return err;
 }
 
 static jv type_error2(jv bad1, jv bad2, const char* msg) {
-  char errbuf1[15],errbuf2[15];
+  char errbuf1[30], errbuf2[30];
   const char *badkind1 = jv_kind_name(jv_get_kind(bad1));
   const char *badkind2 = jv_kind_name(jv_get_kind(bad2));
-  jv err = jv_invalid_with_msg(jv_string_fmt("%s (%s) and %s (%s) %s",
-                                             badkind1,
-                                             jv_dump_string_trunc(bad1, errbuf1, sizeof(errbuf1)),
-                                             badkind2,
-                                             jv_dump_string_trunc(bad2, errbuf2, sizeof(errbuf2)),
-                                             msg));
+  jv err = jv_invalid_with_msg(jv_string_fmt(
+        "%s (%s) and %s (%s) %s", badkind1,
+        jv_dump_string_trunc(bad1, errbuf1, sizeof(errbuf1)),
+        badkind2,
+        jv_dump_string_trunc(bad2, errbuf2, sizeof(errbuf2)), msg));
   return err;
 }
 
