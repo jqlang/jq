@@ -25,9 +25,18 @@ jobs:
             --disable-maintainer-mode \
             --disable-decnum
           make -j"$(nproc)"
-          make check
           file ./jq
       - name: Test
         run: |
           diff <(echo 100000000000000000000 | ./jq) <(echo 1e+20)
+          make check VERBOSE=yes
           git diff --exit-code
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-logs-decnum-disabled
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
