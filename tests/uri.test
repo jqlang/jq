@@ -19,6 +19,28 @@
 "a%20%CE%BC%20%E2%88%B0%20%F0%9F%98%8E"
 "a \u03bc \u2230 \ud83d\ude0e"
 
+# Check that @urid does not corrupt UTF-8 when no decoding is needed
+@urid
+"Knäckebröd"
+"Knäckebröd"
+
+# Percent-decoding of a two-byte UTF-8 character (U+0435, Cyrillic 'е')
+@urid
+"%D0%B5"
+"е"
+
+# Percent-decoding of a three-byte UTF-8 character (U+2230, '∰')
+@urid
+"%E2%88%B0"
+"∰"
+
+# Percent-decoding of a four-byte UTF-8 character (U+1F60E, '😎')
+@urid
+"%F0%9F%98%8E"
+"😎"
+
+
+
 ### invalid uri strings
 
 # unicode character should be length 4 (not 3)
@@ -36,3 +58,23 @@
 . | try @urid catch .
 "%F0%C0%81%8E"
 "string (\"%F0%C0%81%8E\") is not a valid uri encoding"
+
+# Incomplete percent sequence (missing hex digits)
+. | try @urid catch .
+"%D0"
+"string (\"%D0\") is not a valid uri encoding"
+
+# String ending with a stray '%'
+. | try @urid catch .
+"abc%"
+"string (\"abc%\") is not a valid uri encoding"
+
+# Literal '%' not followed by (hex) digits
+. | try @urid catch .
+"100% satisfaction"
+"string (\"100% satis...) is not a valid uri encoding"
+
+# Overlong UTF-8 encoding (2-byte encoding for '/')
+. | try @urid catch .
+"%C0%AF"
+"string (\"%C0%AF\") is not a valid uri encoding"

@@ -662,9 +662,14 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     const char *errmsg =  "is not a valid uri encoding";
     const char *s = jv_string_value(input);
     while (*s) {
-      if (*s != '%') {
-        line = jv_string_append_buf(line, s++, 1);
-      } else {
+      // Find a contiguous block of non-'%' characters
+      const char *start = s;
+      while (*s && *s != '%') ++s;
+      if (s > start) {
+        line = jv_string_append_buf(line, start, s - start);
+      }
+
+      if (*s == '%') {
         unsigned char unicode[4] = {0};
         int b = 0;
         // check leading bits of first octet to determine length of unicode character
