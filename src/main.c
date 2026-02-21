@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <signal.h>
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
 #endif
@@ -278,6 +279,84 @@ static void stderr_cb(void *data, jv input) {
   jv_free(input);
 }
 
+static char * volatile ofile_tmp_to_clean = NULL;
+
+static void cleanup_tmp(void) {
+  if (ofile_tmp_to_clean) {
+    unlink(ofile_tmp_to_clean);
+    ofile_tmp_to_clean = NULL;
+  }
+}
+
+static void cleanup_tmp_signal(int sig) {
+  if (ofile_tmp_to_clean)
+    unlink(ofile_tmp_to_clean);
+  signal(sig, SIG_DFL);
+  raise(sig);
+}
+
+/*
+ * Create a temp file suitable for rename-into-place over dest.
+ * Tries a predictable name first (.jq-<basename>.tmp), falling back
+ * to mkstemp(.jq-XXXXXX) if the predictable name already exists.
+ * Returns fd on success (and sets *tmp_path to a malloc'd string),
+ * or -1 on failure (with errno set, *tmp_path unchanged).
+ */
+static int open_temp_for_rename(const char *dest, char **tmp_path) {
+  char *dtmp = strdup(dest);
+  char *btmp = strdup(dest);
+  if (!dtmp || !btmp) {
+    free(dtmp);
+    free(btmp);
+    return -1;
+  }
+  const char *dir = dirname(dtmp);
+  const char *base = basename(btmp);
+  int pred_len = snprintf(NULL, 0, "%s/.jq-%s.tmp", dir, base) + 1;
+  int mks_len = snprintf(NULL, 0, "%s/.jq-XXXXXX", dir) + 1;
+  size_t len = pred_len > mks_len ? pred_len : mks_len;
+  char *tmp = malloc(len);
+  if (!tmp) {
+    free(dtmp);
+    free(btmp);
+    return -1;
+  }
+  snprintf(tmp, len, "%s/.jq-%s.tmp", dir, base);
+  int fd = open(tmp, O_CREAT | O_WRONLY | O_EXCL, 0666);
+  if (fd == -1 && errno == EEXIST) {
+    snprintf(tmp, len, "%s/.jq-XXXXXX", dir);
+    fd = mkstemp(tmp);
+  }
+  free(dtmp);
+  free(btmp);
+  if (fd == -1) {
+    int e = errno;
+    free(tmp);
+    errno = e;
+    return -1;
+  }
+  *tmp_path = tmp;
+  return fd;
+}
+
+static void install_cleanup_handlers(void) {
+  atexit(cleanup_tmp);
+#ifndef WIN32
+  static const int sigs[] = { SIGABRT, SIGHUP, SIGINT, SIGPIPE, SIGQUIT, SIGTERM };
+  struct sigaction sa, old;
+  for (size_t i = 0; i < sizeof(sigs)/sizeof(sigs[0]); i++) {
+    sigaction(sigs[i], NULL, &old);
+    if (old.sa_handler != SIG_IGN) {
+      memset(&sa, 0, sizeof(sa));
+      sa.sa_handler = cleanup_tmp_signal;
+      sigemptyset(&sa.sa_mask);
+      sa.sa_flags = 0;
+      sigaction(sigs[i], &sa, NULL);
+    }
+  }
+#endif
+}
+
 #ifdef WIN32
 int umain(int argc, char* argv[]);
 
@@ -306,6 +385,7 @@ int main(int argc, char* argv[]) {
   int nfiles = 0;
   FILE *ofile = stdout;
   char *ofile_name = NULL;
+  char *ofile_tmp = NULL;
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
   int options = 0;
@@ -319,13 +399,6 @@ int main(int argc, char* argv[]) {
   // from stack-overflows
   // https://github.com/jqlang/jq/security/advisories/GHSA-f946-j5j2-4w5m
   onig_set_parse_depth_limit(1024);
-#endif
-
-#ifdef __OpenBSD__
-  if (pledge("stdio rpath", NULL) == -1) {
-    perror("pledge");
-    exit(JQ_ERROR_SYSTEM);
-  }
 #endif
 
 #ifdef WIN32
@@ -557,8 +630,15 @@ int main(int argc, char* argv[]) {
     }
   }
 
+#ifdef __OpenBSD__
+  if (pledge(ofile_name ? "stdio rpath cpath" : "stdio rpath", NULL) == -1) {
+    perror("pledge");
+    exit(JQ_ERROR_SYSTEM);
+  }
+#endif
+
 #ifdef USE_ISATTY
-  if (ofile_name && isatty(STDOUT_FILENO)) {
+  if (!ofile_name && isatty(STDOUT_FILENO)) {
 #ifndef WIN32
     dumpopts |= JV_PRINT_ISATTY;
     char *term = getenv("TERM");
@@ -621,11 +701,20 @@ int main(int argc, char* argv[]) {
   if (!program) usage(2, 1);
 
   if (ofile_name) {
-    ofile = fopen(ofile_name, "w");
-    if (!ofile) {
-      fprintf(stderr, "jq: Could not open --output-file %s: %s\n", ofile_name, strerror(errno));
+    int fd = open_temp_for_rename(ofile_name, &ofile_tmp);
+    if (fd == -1) {
+      fprintf(stderr, "jq: Could not create temp file for --output-file %s: %s\n", ofile_name, strerror(errno));
       die();
     }
+    ofile = fdopen(fd, "w");
+    if (!ofile) {
+      fprintf(stderr, "jq: Could not open --output-file %s: %s\n", ofile_name, strerror(errno));
+      close(fd);
+      unlink(ofile_tmp);
+      die();
+    }
+    ofile_tmp_to_clean = ofile_tmp;
+    install_cleanup_handlers();
 #ifdef WIN32
     _setmode(fileno(ofile), options & BINARY_OUTPUT ? _O_BINARY : _O_TEXT | _O_U8TEXT);
 #endif
@@ -740,22 +829,36 @@ int main(int argc, char* argv[]) {
     ret = JQ_ERROR_SYSTEM;
 
 out:
+  // Close input files before renaming output (needed on Windows where
+  // rename() fails if the destination is open).
+  jq_util_input_free(&input_state);
+
   badwrite = ferror(stdout);
   if (fclose(stdout) != 0 || badwrite) {
     fprintf(stderr, "jq: error: writing output failed: %s\n", strerror(errno));
     ret = JQ_ERROR_SYSTEM;
   }
-  if (ofile != stdout) {
+  if (ofile_name) {
     badwrite = ferror(ofile);
     if (fclose(ofile) != 0 || badwrite) {
       fprintf(stderr, "jq: error: writing output failed: %s\n", strerror(errno));
       ret = JQ_ERROR_SYSTEM;
+    } else if (
+#ifdef WIN32
+        // Windows rename() won't replace an existing file
+        unlink(ofile_name) != 0 && errno != ENOENT ? 1 :
+#endif
+        rename(ofile_tmp, ofile_name) != 0) {
+      fprintf(stderr, "jq: error: could not rename %s to %s: %s\n", ofile_tmp, ofile_name, strerror(errno));
+      ret = JQ_ERROR_SYSTEM;
     }
+    ofile_tmp_to_clean = NULL;
+    unlink(ofile_tmp);
+    free(ofile_tmp);
   }
 
   jv_free(ARGS);
   jv_free(program_arguments);
-  jq_util_input_free(&input_state);
   jq_teardown(&jq);
 
   if (options & EXIT_STATUS) {
