@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "September 2025" "" ""
+.TH "JQ" "1" "February 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -172,10 +172,16 @@ Read the filter from a file rather than from a command line, like awk\'s \-f opt
 \fB\-o\fR / \fB\-\-output\-file filename\fR:
 .
 .IP
-Write output values to the named file instead of standard out\.
+Write output values to the named file instead of standard out\. The output is first written to a temporary file in the same directory, then renamed into place on success\. This makes it safe to use an input file as the output file (e\.g\., \fBjq \'\.x += 1\' f\.json \-o f\.json\fR)\.
 .
 .IP
 The outputs from \fB\-\-debug\-dump\-disasm\fR and \fB\-\-debug\-trace\fR are still written to standard out, so this option can be used to separate them\.
+.
+.TP
+\fB\-O\fR / \fB\-\-clobber\-output filename\fR:
+.
+.IP
+Like \fB\-o\fR, but truncates the output file immediately instead of writing to a temporary file first\. This is faster, but the output file must not also be an input file, and partial output may be left behind if jq is interrupted\.
 .
 .TP
 \fB\-L directory\fR / \fB\-\-library\-path directory\fR:

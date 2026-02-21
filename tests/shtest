@@ -839,26 +839,26 @@ $JQ --debug-trace -o $d/out -n 42 > $d/trace
 cmp $d/out $d/expected
 cmp $d/trace $d/expected_trace
 
-# --output-file is one of the inputs
+# --output-file is one of the inputs (temp file allows safe read)
 printf '1\n2\n' > $d/out
-printf '' > $d/expected
+printf '4\n5\n' > $d/expected
 $JQ -o $d/out '.+3' $d/out
 cmp $d/out $d/expected
 
-# --output-file with --from-file
+# --output-file with --from-file (program file not clobbered)
 echo hello > $d/out
-printf '' > $d/expected
-cat > $d/expected_err <<EOF
-jq: error: Top-level program not given (try ".")
+cat > $d/expected_err <<'EOF'
+jq: error: hello/0 is not defined at <top-level>, line 1, column 1:
+    hello
+    ^^^^^
 jq: 1 compile error
 EOF
 ! $JQ -f -o $d/out $d/out 2> $d/err
-diff $d/out $d/expected
 diff $d/err $d/expected_err
 
-# --output-file before and after --rawfile
+# --output-file before and after --rawfile (input not clobbered)
 printf hello > $d/out
-echo '""' > $d/expected
+echo '"hello"' > $d/expected
 $JQ -o $d/out --rawfile arg $d/out -n '$arg'
 diff $d/out $d/expected
 printf hello > $d/out
@@ -866,9 +866,9 @@ echo '"hello"' > $d/expected
 $JQ --rawfile arg $d/out -o $d/out -n '$arg'
 diff $d/out $d/expected
 
-# --output-file before and after --slurpfile
+# --output-file before and after --slurpfile (input not clobbered)
 printf '"hello"\n"world"' > $d/out
-echo '[]' > $d/expected
+echo '["hello","world"]' > $d/expected
 $JQ -o $d/out --slurpfile arg $d/out -nc '$arg'
 diff $d/out $d/expected
 printf '"hello"\n"world"' > $d/out
@@ -895,14 +895,14 @@ printf '[\n  1,\n  2\n]\n' > $d/expected
 echo '[1,2]' | $JQ -o $d/out
 cmp $d/out $d/expected
 
-# --output-file handles failure
+# --output-file handles failure (nonexistent parent directory)
 ! $JQ -o $d/notfound/out -n . 2> $d/err
-grep "jq: Could not open --output-file .*/notfound/out: No such file or directory" $d/err > /dev/null
+grep "jq: Could not create temp file for --output-file .*/notfound/out" $d/err > /dev/null
 
 # --output-file does not allow directories
 mkdir $d/dir
 ! $JQ -o $d/dir -n . 2> $d/err
-grep "jq: Could not open --output-file .*/dir" $d/err > /dev/null
+grep "jq: error: could not rename .* to .*/dir" $d/err > /dev/null
 rmdir $d/dir
 
 if ! $msys && ! $mingw; then
