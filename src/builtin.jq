@@ -41,7 +41,7 @@ def recurse: recurse(.[]?);
 def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];
 def from_entries: map({(.key // .Key // .name // .Name): (if has("value") then .value else .Value end)}) | add | .//={};
 def with_entries(f): to_entries | map(f) | from_entries;
-def reverse: [.[length - 1 - range(0;length)]];
+def reverse: def r: [.[length - 1 - range(0;length)]]; if type == "string" then explode | r | implode else r end;
 def indices($i): if type == "array" and ($i|type) == "array" then .[$i]
   elif type == "array" then .[[$i]]
   elif type == "string" and ($i|type) == "string" then _strindices($i)
