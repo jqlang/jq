@@ -165,6 +165,8 @@ def nth($n; g):
   else first(skip($n; g)) end;
 def first: .[0];
 def last: .[-1];
+def head: select(length >0) | .[:1] | if type == "array" then .[] end;
+def tail: .[1:];
 def nth($n): .[$n];
 def combinations:
     if length == 0 then [] else
