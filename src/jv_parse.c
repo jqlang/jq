@@ -444,6 +444,12 @@ static int unhex4(char* hex) {
 }
 
 static pfunc found_string(struct jv_parser* p) {
+  // empty string, no tokenbuf allocated
+  if (p->tokenpos == 0) {
+    TRY(value(p, jv_string("")));
+    return 0;
+  }
+
   char* in = p->tokenbuf;
   char* out = p->tokenbuf;
   char* end = p->tokenbuf + p->tokenpos;
