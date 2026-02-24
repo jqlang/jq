@@ -844,4 +844,31 @@ if ! $msys && ! $mingw; then
   fi
 fi
 
+# Test ARG_NEWCLOSURE overflow protection (issue #3458)
+# Test 1: Too many function parameters (4097 params triggers the limit)
+echo "Testing function parameter limit..."
+cat > $d/expected <<EOF
+jq: error: too many function parameters or local function definitions (max 4095)
+jq: 1 compile error
+EOF
+$JQ -rn '"def f(\([range(4097) | "a\(.)"] | join(";"))): .; f(\([range(4097)] | join(";")))"' > $d/prog.jq
+$JQ -nf $d/prog.jq 2> $d/out && {
+  echo "Expected compile error for too many parameters"
+  exit 1
+}
+diff $d/out $d/expected
+
+# Test 2: Too many local functions (4097 functions triggers the limit)
+echo "Testing local function limit..."
+cat > $d/expected <<EOF
+jq: error: too many function parameters or local function definitions (max 4095)
+jq: 1 compile error
+EOF
+$JQ -rn '"\([range(4097) | "def f\(.): \(.)"] | join("; ")); \([range(4097) | "f\(.)"] | join(" + "))"' > $d/prog.jq
+$JQ -nf $d/prog.jq 2> $d/out && {
+  echo "Expected compile error for too many local functions"
+  exit 1
+}
+diff $d/out $d/expected
+
 exit 0

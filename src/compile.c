@@ -1241,6 +1241,13 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
 
     if (curr->op == CLOSURE_CREATE) {
       assert(curr->bound_by == curr);
+      // Prevent subfunction index from overflowing into ARG_NEWCLOSURE flag
+      if (bc->nsubfunctions >= ARG_NEWCLOSURE) {
+        locfile_locate(lf, curr->source,
+            "too many function parameters or local function definitions (max %d)", ARG_NEWCLOSURE - 1);
+        errors++;
+        break;
+      }
       curr->imm.intval = bc->nsubfunctions++;
     }
     if (curr->op == CLOSURE_CREATE_C) {
@@ -1274,6 +1281,13 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
         for (inst* param = curr->arglist.first; param; param = param->next) {
           assert(param->op == CLOSURE_PARAM);
           assert(param->bound_by == param);
+          // Prevent closure index from overflowing into ARG_NEWCLOSURE flag
+          if (subfn->nclosures >= ARG_NEWCLOSURE) {
+            locfile_locate(lf, curr->source,
+                "function has too many parameters (max %d)", ARG_NEWCLOSURE - 1);
+            errors++;
+            break;
+          }
           param->imm.intval = subfn->nclosures++;
           param->compiled = subfn;
           params = jv_array_append(params, jv_string(param->symbol));
