@@ -10,13 +10,10 @@
 #include "bytecode.h"
 
 #include "jv_alloc.h"
-#include "jq_parser.h"
 #include "locfile.h"
 #include "jv.h"
 #include "jq.h"
-#include "parser.h"
 #include "builtin.h"
-#include "util.h"
 #include "linker.h"
 
 struct jq_state {
@@ -499,10 +496,11 @@ jv jq_next(jq_state *jq) {
         stack_push(jq, jv_object_set(objv, k, v));
         stack_push(jq, stktop);
       } else {
-        char errbuf[15];
-        set_error(jq, jv_invalid_with_msg(jv_string_fmt("Cannot use %s (%s) as object key",
-                                                        jv_kind_name(jv_get_kind(k)),
-                                                        jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf)))));
+        char errbuf[30];
+        set_error(jq, jv_invalid_with_msg(jv_string_fmt(
+                "Cannot use %s (%s) as object key",
+                jv_kind_name(jv_get_kind(k)),
+                jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf)))));
         jv_free(stktop);
         jv_free(v);
         jv_free(k);
@@ -685,7 +683,7 @@ jv jq_next(jq_state *jq) {
       jv k = stack_pop(jq);
       // detect invalid path expression like path(reverse | .a)
       if (!path_intact(jq, jv_copy(t))) {
-        char keybuf[15];
+        char keybuf[30];
         char objbuf[30];
         jv msg = jv_string_fmt(
             "Invalid path expression near attempt to access element %s of %s",
@@ -771,11 +769,11 @@ jv jq_next(jq_state *jq) {
       } else {
         assert(opcode == EACH || opcode == EACH_OPT);
         if (opcode == EACH) {
-          char errbuf[15];
-          set_error(jq,
-                    jv_invalid_with_msg(jv_string_fmt("Cannot iterate over %s (%s)",
-                                                      jv_kind_name(jv_get_kind(container)),
-                                                      jv_dump_string_trunc(jv_copy(container), errbuf, sizeof(errbuf)))));
+          char errbuf[30];
+          set_error(jq, jv_invalid_with_msg(jv_string_fmt(
+                  "Cannot iterate over %s (%s)",
+                  jv_kind_name(jv_get_kind(container)),
+                  jv_dump_string_trunc(jv_copy(container), errbuf, sizeof(errbuf)))));
         }
         keep_going = 0;
       }

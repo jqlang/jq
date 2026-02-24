@@ -935,19 +935,19 @@ null
 # Destructuring DUP/POP issues
 .[] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 [[3],[4],[5],6]
-# Runtime error: "jq: Cannot index array with string \"c\""
+# Runtime error: "jq: Cannot index array with string (\"c\")"
 
 .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 [[3],[4],[5],6]
-# Runtime error: "jq: Cannot index array with string \"c\""
+# Runtime error: "jq: Cannot index array with string (\"c\")"
 
 [[3],[4],[5],6][] | . as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 null
-# Runtime error: "jq: Cannot index array with string \"c\""
+# Runtime error: "jq: Cannot index array with string (\"c\")"
 
 [[3],[4],[5],6] | .[] as {a:$a} ?// {a:$a} ?// {a:$a} | $a
 null
-# Runtime error: "jq: Cannot index array with string \"c\""
+# Runtime error: "jq: Cannot index array with string (\"c\")"
 
 .[] | . as {a:$a} ?// {a:$a} ?// $a | $a
 [[3],[4],[5],6]
@@ -1242,10 +1242,10 @@ def inc(x): x |= .+1; inc(.[].a)
 [null,{"b":0},{"a":0},{"a":null},{"a":[0,1]},{"a":{"b":1}},{"a":[{}]},{"a":[{"c":3}]}]
 {"a":[{"b":5}]}
 {"b":0,"a":[{"b":5}]}
-"Cannot index number with number"
+"Cannot index number with number (0)"
 {"a":[{"b":5}]}
-"Cannot index number with string \"b\""
-"Cannot index object with number"
+"Cannot index number with string (\"b\")"
+"Cannot index object with number (0)"
 {"a":[{"b":5}]}
 {"a":[{"c":3,"b":5}]}
 
@@ -1430,7 +1430,7 @@ null
 # Try/catch and general `?` operator
 [.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]
 [0,1,2,3]
-["foo","Cannot index number with string \"a\"",3]
+["foo","Cannot index number with string (\"a\")",3]
 
 [.[]|(.a, .a)?]
 [null,true,{"a":1}]
@@ -1965,21 +1965,25 @@ null
 true
 
 try -. catch .
-"very-long-string"
-"string (\"very-long-...) cannot be negated"
+"very-long-long-long-long-string"
+"string (\"very-long-long-long-long...\") cannot be negated"
 
 try (.-.) catch .
-"very-long-string"
-"string (\"very-long-...) and string (\"very-long-...) cannot be subtracted"
+"very-long-long-long-long-string"
+"string (\"very-long-long-long-long...\") and string (\"very-long-long-long-long...\") cannot be subtracted"
 
-"x" * range(0; 12; 2) + "☆" * 5 | try -. catch .
+"x" * range(0; 12; 2) + "☆" * 8 | try -. catch .
 null
-"string (\"☆☆☆...) cannot be negated"
-"string (\"xx☆☆...) cannot be negated"
-"string (\"xxxx☆☆...) cannot be negated"
-"string (\"xxxxxx☆...) cannot be negated"
-"string (\"xxxxxxxx...) cannot be negated"
-"string (\"xxxxxxxxxx...) cannot be negated"
+"string (\"☆☆☆☆☆☆☆☆\") cannot be negated"
+"string (\"xx☆☆☆☆☆☆☆☆\") cannot be negated"
+"string (\"xxxx☆☆☆☆☆☆...\") cannot be negated"
+"string (\"xxxxxx☆☆☆☆☆☆...\") cannot be negated"
+"string (\"xxxxxxxx☆☆☆☆☆...\") cannot be negated"
+"string (\"xxxxxxxxxx☆☆☆☆...\") cannot be negated"
+
+try (. + "x") catch . == if have_decnum then "number (12345678901234567890123456...) and string (\"x\") cannot be added" else "number (12345678901234568000000000...) and string (\"x\") cannot be added" end
+123456789012345678901234567890
+true
 
 join(",")
 ["1",2,true,false,3.4]
@@ -1999,7 +2003,7 @@ join(",")
 
 try join(",") catch .
 ["1","2",{"a":{"b":{"c":33}}}]
-"string (\"1,2,\") and object ({\"a\":{\"b\":{...) cannot be added"
+"string (\"1,2,\") and object ({\"a\":{\"b\":{\"c\":33}}}) cannot be added"
 
 try join(",") catch .
 ["1","2",[3,4,5]]
@@ -2376,7 +2380,7 @@ map(try implode catch .)
 
 try 0[implode] catch .
 []
-"Cannot index number with string \"\""
+"Cannot index number with string (\"\")"
 
 # walk
 walk(.)
@@ -2452,14 +2456,14 @@ null
 
 try ("foobar" | .[1.5]) catch .
 null
-"Cannot index string with number"
+"Cannot index string with number (1.5)"
 
 
 # setpath/2 does not leak the input after an invalid get #2970
 
 try ["ok", setpath([1]; 1)] catch ["ko", .]
 {"hi":"hello"}
-["ko","Cannot index object with number"]
+["ko","Cannot index object with number (1)"]
 
 try fromjson catch .
 "{'a': 123}"
