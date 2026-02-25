@@ -2469,6 +2469,10 @@ try fromjson catch .
 "{'a': 123}"
 "Invalid string literal; expected \", but got ' at line 1, column 5 (while parsing '{'a': 123}')"
 
+try fromjson catch .
+"\u001e{\"a\": 123}"
+"Record Separator (RS) detected, this might be application/json-seq. Try using the --seq option. at line 1, column 2 (while parsing '\u001e{\"a\": 123}')"
+
 # ltrimstr/1 rtrimstr/1 don't leak on invalid input #2977
 
 try ltrimstr(1) catch "x", try rtrimstr(1) catch "x" | "ok"
