@@ -356,7 +356,7 @@ jv binop_divide(jv a, jv b) {
   }
 }
 
-#define dtoi(n) ((n) < INTMAX_MIN ? INTMAX_MIN : -(n) < INTMAX_MIN ? INTMAX_MAX : (intmax_t)(n))
+#define dtoi(n) ((n) < INTMAX_MIN ? INTMAX_MIN : -(n) <= INTMAX_MIN ? INTMAX_MAX : (intmax_t)(n))
 jv binop_mod(jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
     double na = jv_number_value(a);
