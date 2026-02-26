@@ -79,8 +79,9 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->last_seen = JV_LAST_NONE;
   p->output = jv_invalid();
   p->next = jv_invalid();
-  p->tokenbuf = 0;
-  p->tokenlen = p->tokenpos = 0;
+  p->tokenlen = 256;
+  p->tokenbuf = jv_mem_alloc(p->tokenlen);
+  p->tokenpos = 0;
   if ((p->flags & JV_PARSE_SEQ))
     p->st = JV_PARSER_WAITING_FOR_RS;
   else
@@ -444,12 +445,6 @@ static int unhex4(char* hex) {
 }
 
 static pfunc found_string(struct jv_parser* p) {
-  // empty string, no tokenbuf allocated
-  if (p->tokenpos == 0) {
-    TRY(value(p, jv_string("")));
-    return 0;
-  }
-
   char* in = p->tokenbuf;
   char* out = p->tokenbuf;
   char* end = p->tokenbuf + p->tokenpos;
