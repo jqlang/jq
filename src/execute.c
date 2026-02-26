@@ -922,6 +922,8 @@ jv jq_next(jq_state *jq) {
       if (!jv_is_valid(top)) {
         if (jv_invalid_has_msg(jv_copy(top)))
           set_error(jq, top);
+        else
+          jv_free(top);
         goto do_backtrack;
       }
 
@@ -1020,12 +1022,19 @@ jv jq_format_error(jv msg) {
   // Invalid with msg; prefix with "jq: error: "
 
   if (jv_get_kind(msg) != JV_KIND_INVALID) {
-    if (jv_get_kind(msg) == JV_KIND_STRING)
-      return jv_string_fmt("jq: error: %s", jv_string_value(msg));
+    if (jv_get_kind(msg) == JV_KIND_STRING) {
+      jv r = jv_string_fmt("jq: error: %s", jv_string_value(msg));
+      jv_free(msg);
+      return r;
+    }
 
     msg = jv_dump_string(msg, JV_PRINT_INVALID);
-    if (jv_get_kind(msg) == JV_KIND_STRING)
-      return jv_string_fmt("jq: error: %s", jv_string_value(msg));
+    if (jv_get_kind(msg) == JV_KIND_STRING) {
+      jv r = jv_string_fmt("jq: error: %s", jv_string_value(msg));
+      jv_free(msg);
+      return r;
+    }
+    jv_free(msg);
     return jq_format_error(jv_null());  // ENOMEM
   }
 
@@ -1234,9 +1243,10 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   int nerrors = load_program(jq, locations, &program);
   if (nerrors == 0) {
     nerrors = builtins_bind(jq, &program);
-    if (nerrors == 0) {
+    if (nerrors == 0)
       nerrors = block_compile(program, &jq->bc, locations, args2obj(args));
-    }
+    else
+      jv_free(args);
   } else
     jv_free(args);
   if (nerrors)

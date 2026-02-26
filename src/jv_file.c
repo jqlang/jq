@@ -67,6 +67,7 @@ jv jv_load_file(const char* filename, int raw) {
         data = value;
         break;
       }
+      jv_free(value);
     }
   }
   if (!raw)

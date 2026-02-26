@@ -1746,6 +1746,7 @@ static int jvp_object_write(jv* object, jv key, jv **valpp) {
     slot->value = jv_invalid();
   } else {
     if (!jvp_object_rehash(object)) {
+      jvp_string_free(key);
       *valpp = NULL;
       return 0;
     }
@@ -1859,6 +1860,7 @@ jv jv_object_set(jv object, jv key, jv value) {
   jv* slot;
   if (!jvp_object_write(&object, key, &slot)) {
     jv_free(object);
+    jv_free(value);
     return jv_invalid_with_msg(jv_string("Object too big"));
   }
   jv_free(*slot);
