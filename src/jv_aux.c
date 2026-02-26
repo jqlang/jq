@@ -420,6 +420,8 @@ jv jv_setpath(jv root, jv path, jv value) {
   return jv_set(root, pathcurr, jv_setpath(subroot, pathrest, value));
 }
 
+
+
 jv jv_getpath(jv root, jv path) {
   if (jv_get_kind(path) != JV_KIND_ARRAY) {
     jv_free(root);
@@ -530,6 +532,7 @@ static int string_cmp(const void* pa, const void* pb){
   if (r == 0) r = lena - lenb;
   return r;
 }
+
 
 jv jv_keys_unsorted(jv x) {
   if (jv_get_kind(x) != JV_KIND_OBJECT)

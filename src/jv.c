@@ -1954,6 +1954,132 @@ jv jv_object_iter_value(jv object, int iter) {
 /*
  * Memory management
  */
+jv jv_unshare(jv input){
+	switch(jv_get_kind(input)){
+		case JV_KIND_INVALID:
+			{
+				if(!jv_invalid_has_msg(jv_copy(input))){
+					jv_free(input);
+					return jv_invalid();
+				}
+				return jv_invalid_with_msg(jv_unshare(jv_invalid_get_msg(jv_copy(input))));
+			}
+		case JV_KIND_OBJECT:
+			{
+				jv keys = jv_keys(jv_copy(input));
+				size_t keys_length = jv_array_length(jv_copy(keys));
+
+				jv output_object = jv_object();
+
+				for(size_t i = 0; i < keys_length; i++){
+					jv key = jv_array_get(jv_copy(keys), i);
+					output_object = jv_object_set(
+							output_object, jv_unshare(key),
+							jv_unshare(
+								jv_object_get(
+									jv_copy(input),
+									jv_copy(key)
+								)
+							)
+						);
+				}
+
+				jv_free(keys);
+				jv_free(input);
+				return output_object;
+			}
+		case JV_KIND_ARRAY:
+			{
+				size_t amount = jv_array_length(jv_copy(input));
+
+				jv output_array = jv_array_sized(amount);
+
+				for(size_t i = 0; i < amount; i++){
+					output_array = jv_array_set(
+							output_array,
+							i,
+							jv_unshare(
+								jv_array_get(
+									jv_copy(input),
+									i
+								)
+							)
+						);
+				}
+
+				jv_free(input);
+
+				return output_array;
+			}
+		case JV_KIND_STRING:
+			{
+				jv output_string = jv_string(jv_string_value(input));
+				jv_free(input);
+				return output_string;
+			}
+		case JV_KIND_NUMBER:
+			{
+				double val = jv_number_value(input);
+				jv_free(input);
+				return jv_number(val);
+			}
+		case JV_KIND_TRUE:
+			jv_free(input);
+			return jv_true();
+		case JV_KIND_FALSE:
+			jv_free(input);
+			return jv_false();
+		case JV_KIND_NULL:
+			jv_free(input);
+			return jv_null();
+		default:
+			return jv_invalid();
+	}
+}
+
+int jv_is_unshared(jv a){
+	if(jv_get_refcnt(a) != 1){
+		fprintf(stderr, "input refcnt != 1\n");
+		return 1;
+	}
+	if(jv_get_kind(a) == JV_KIND_OBJECT){
+		jv keys = jv_keys(jv_copy(a));
+		size_t keys_length = jv_array_length(jv_copy(keys));
+		for(size_t i = 0; i < keys_length; i++){
+			jv key = jv_array_get(jv_copy(keys), i);
+			if(jv_get_refcnt(key) > 3){
+				fprintf(stderr, "key in object does not have refcnt 1, %d\n", jv_get_refcnt(key));
+				jv_free(key);
+				jv_free(keys);
+				return 0;
+			}
+
+			jv value = jv_object_get(jv_copy(a), key);
+			jv_free(value);
+			if(!jv_is_unshared(value)){
+				fprintf(stderr, "failed on object\n");
+				jv_free(keys);
+				return 0;
+			}
+		}
+
+		jv_free(keys);
+	
+	}else if(jv_get_kind(a) == JV_KIND_ARRAY){
+		size_t a_length = jv_array_length(jv_copy(a));
+		for(size_t i = 0; i < a_length; i++){
+			jv value = jv_array_get(jv_copy(a), i);
+			jv_free(value);
+			if(!jv_is_unshared(value)){
+				fprintf(stderr, "failed on array value\n");
+				return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+
 jv jv_copy(jv j) {
   if (JVP_IS_ALLOCATED(j)) {
     jvp_refcnt_inc(j.u.ptr);
