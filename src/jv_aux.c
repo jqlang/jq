@@ -493,8 +493,10 @@ jv jv_delpaths(jv object, jv paths) {
     jv_free(paths);
     return jv_invalid_with_msg(jv_string("Paths must be specified as an array"));
   }
-  paths = jv_sort(paths, jv_copy(paths));
-  jv_array_foreach(paths, i, elem) {
+  int paths_length = jv_array_length(jv_copy(paths));
+  paths = jv_sort(jv_array_slice(paths, 0, paths_length), jv_copy(paths));
+  for(int i = 0; i < paths_length; i++) {
+    jv elem = jv_array_get(jv_copy(paths), i);
     if (jv_get_kind(elem) != JV_KIND_ARRAY) {
       jv_free(object);
       jv_free(paths);
@@ -505,7 +507,7 @@ jv jv_delpaths(jv object, jv paths) {
     }
     jv_free(elem);
   }
-  if (jv_array_length(jv_copy(paths)) == 0) {
+  if (paths_length == 0) {
     // nothing is being deleted
     jv_free(paths);
     return object;
@@ -515,7 +517,7 @@ jv jv_delpaths(jv object, jv paths) {
     jv_free(paths);
     jv_free(object);
     return jv_null();
-  }
+  }  
   return delpaths_sorted(object, paths, 0);
 }
 
