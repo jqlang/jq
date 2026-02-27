@@ -152,6 +152,40 @@ sections:
 
         Like `-r` but jq won't print a newline after each output.
 
+      * `--in-place` / `-i`:
+
+        Edit one file in place by writing output to a temporary file in
+        the same directory, then renaming it over the original.
+
+        This follows `sed -i`-style direct-file usage:
+
+        * the input file is also the output target;
+        * exactly one input file argument is required;
+        * stdin (`-`) is rejected;
+        * using multiple input files is rejected;
+        * combining with `--null-input` / `-n` is rejected.
+
+        On jq compile/runtime/system errors, jq leaves the original file
+        unchanged and removes temporary output.
+
+        Examples:
+
+        * Increment a field and keep output compact:
+
+          `jq -c --in-place '.count += 1' state.json`
+
+        * Normalize key order in-place:
+
+          `jq -S --in-place '.' config.json`
+
+        * Slurp multiple JSON texts from one file, transform once, write back:
+
+          `jq -s --in-place 'map(.enabled = true)' records.json`
+
+        * Produce non-JSON text in-place (valid, but replaces file with raw text):
+
+          `jq -r --in-place '.items[]' items.json`
+
       * `--ascii-output` / `-a`:
 
         jq usually outputs non-ASCII Unicode codepoints as UTF-8, even
