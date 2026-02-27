@@ -73,6 +73,7 @@ static void usage(int code, int keep_it_short) {
       "Command options:\n"
       "  -n, --null-input          use `null` as the single input value;\n"
       "  -R, --raw-input           read each line as string instead of JSON;\n"
+      "  -i, --in-place            update the input file in place;\n"
       "  -s, --slurp               read all inputs into an array and use it as\n"
       "                            the single input value;\n"
       "  -c, --compact-output      compact instead of pretty-printed output;\n"
@@ -104,7 +105,6 @@ static void usage(int code, int keep_it_short) {
       "      --jsonargs            consume remaining arguments as positional\n"
       "                            JSON values;\n"
       "  -e, --exit-status         set exit status code based on the output;\n"
-      "  -i, --in-place            update the input file in place;\n"
 #ifdef WIN32
       "  -b, --binary              open input/output streams in binary mode;\n"
 #endif
