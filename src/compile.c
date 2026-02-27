@@ -502,7 +502,8 @@ jv block_list_funcs(block body, int omit_underscores) {
   for (inst *pos = body.first; pos != NULL; pos = pos->next) {
     if (pos->op == CLOSURE_CREATE || pos->op == CLOSURE_CREATE_C) {
       if (pos->symbol != NULL && (!omit_underscores || pos->symbol[0] != '_')) {
-        funcs = jv_object_set(funcs, jv_string_fmt("%s/%i", pos->symbol, pos->nformals), jv_null());
+        funcs = jv_object_set(funcs, pos->symbol[0] == '@' ? jv_string_fmt("%s", pos->symbol)
+            : jv_string_fmt("%s/%i", pos->symbol, pos->nformals), jv_null());
       }
     }
   }
@@ -576,7 +577,7 @@ block gen_param(const char* name) {
 }
 
 block gen_lambda(block body) {
-  return gen_function("@lambda", gen_noop(), body);
+  return gen_function("#lambda", gen_noop(), body);
 }
 
 block gen_call(const char* name, block args) {
@@ -1135,6 +1136,8 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
       } else if (!curr->bound_by) {
         if (curr->symbol[0] == '*' && curr->symbol[1] >= '1' && curr->symbol[1] <= '3' && curr->symbol[2] == '\0')
           locfile_locate(curr->locfile, curr->source, "jq: error: break used outside labeled control structure");
+        else if (curr->symbol[0] == '@')
+          locfile_locate(curr->locfile, curr->source, "jq: error: %s is not a defined format", curr->symbol);
         else if (curr->op == LOADV)
           locfile_locate(curr->locfile, curr->source, "jq: error: $%s is not defined", curr->symbol);
         else

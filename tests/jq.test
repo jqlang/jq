@@ -82,6 +82,12 @@ null
 "ISgpPD4mJyIJ"
 "!()<>&'\"\t"
 
+[0,nan,null,false,true,"",0] | @csv, @tsv, @sh
+null
+"0,,,false,true,\"\",0"
+"0\t\t\tfalse\ttrue\t\t0"
+"0 null null false true '' 0"
+
 # regression test for #436
 @base64
 "foóbar\n"
@@ -102,6 +108,18 @@ null
 @html "<b>\(.)</b>"
 "<script>hax</script>"
 "<b>&lt;script&gt;hax&lt;/script&gt;</b>"
+
+%%FAIL
+@unknown
+jq: error: @unknown is not a defined format at <top-level>, line 1, column 1:
+    @unknown
+    ^^^^^^^^
+
+%%FAIL
+@unknown "a\(. + .)b"
+jq: error: @unknown is not a defined format at <top-level>, line 1, column 14:
+    @unknown "a\(. + .)b"
+                 ^^^^^
 
 [.[]|tojson|fromjson]
 ["foo", 1, ["a", 1, "b", 2, {"foo":"bar"}]]
@@ -2132,13 +2150,17 @@ true
 null
 false
 
-all(builtins[] / "/"; .[1]|tonumber >= 0)
+all(builtins[] / "/"; .[1]|tonumber? >= 0)
 null
 true
 
 builtins|any(.[:1] == "_")
 null
 false
+
+"@json"|IN(builtins[])
+null
+true
 
 ## Test ability to use keywords (uncomment after eval is pushed)
 #(.[] as $kw | "\"{\($kw)} as $\($kw) | $\($kw) | {$\($kw)} | {\($kw):.\($kw)}\""|eval|empty),null
