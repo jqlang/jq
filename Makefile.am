@@ -56,7 +56,7 @@ AM_YFLAGS = --warnings=all -Wno-yacc -d
 lib_LTLIBRARIES = libjq.la
 libjq_la_SOURCES = ${LIBJQ_SRC}
 libjq_la_LIBADD = -lm
-libjq_la_LDFLAGS = $(onig_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info 1:4:0
+libjq_la_LDFLAGS = $(pcre2_LDFLAGS) $(pcre2_LDFLAGS) -export-symbols-regex '^j[qv]_' -version-info 1:4:0
 
 if WIN32
 libjq_la_LIBADD += -lshlwapi
@@ -158,7 +158,7 @@ check_DATA = tests/man.test
 # Making changes to the manpage without having the python deps means your
 # tests won't run. If you aren't making changes to the examples, you probably
 # don't care. But if you are, then you need to run the tests anyway.
-tests/man.test tests/manonig.test: $(srcdir)/docs/content/manual/dev/manual.yml
+tests/man.test tests/manopcre2.test: $(srcdir)/docs/content/manual/dev/manual.yml
 if ENABLE_DOCS
 	$(AM_V_GEN) ( cd ${abs_srcdir}/docs && \
 	  $(PIPENV) run python validate_manual_schema.py content/manual/dev/manual.yml && \
@@ -189,18 +189,19 @@ jq.1: jq.1.prebuilt
 
 CLEANFILES += jq.1
 
-### Build oniguruma
+### Build PCRE2
 
-if BUILD_ONIGURUMA
-libjq_la_LIBADD += vendor/oniguruma/src/.libs/libonig.la
-jq_LDADD += vendor/oniguruma/src/.libs/libonig.la
-SUBDIRS = vendor/oniguruma
+if BUILD_PCRE2
+libjq_la_LIBADD += vendor/pcre2/.libs/libpcre2-8.la
+jq_LDADD += vendor/pcre2/.libs/libpcre2-8.la
+SUBDIRS = vendor/pcre2
 endif
 
-AM_CFLAGS += $(onig_CFLAGS)
+AM_CFLAGS += $(pcre2_CFLAGS)
+AM_CFLAGS += $(pcre2_CFLAGS)
 
-if WITH_ONIGURUMA
-TESTS += tests/onigtest tests/manonigtest
+if WITH_PCRE2
+TESTS += tests/pcre2test tests/manpcre2test
 endif
 
 ### Packaging
@@ -227,14 +228,14 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order0.jq                               \
         tests/modules/test_bind_order1.jq                               \
         tests/modules/test_bind_order2.jq                               \
-        tests/onig.supp tests/local.supp                                \
+        tests/pcre2.supp tests/local.supp                                \
         tests/setup tests/torture/input0.json                           \
-        tests/optional.test tests/man.test tests/manonig.test           \
-        tests/jq.test tests/onig.test tests/base64.test tests/uri.test  \
+        tests/optional.test tests/man.test tests/manpcre2.test           \
+        tests/jq.test tests/pcre2.test tests/pcre2.test tests/base64.test tests/uri.test  \
         tests/jq-f-test.sh                                              \
         tests/no-main-program.jq tests/yes-main-program.jq
 
-AM_DISTCHECK_CONFIGURE_FLAGS=--with-oniguruma=builtin
+AM_DISTCHECK_CONFIGURE_FLAGS=--with-pcre2=builtin
 
 # README.md is expected in GitHub projects, good stuff in it, so we'll
 # distribute it and install it with the package in the doc directory.

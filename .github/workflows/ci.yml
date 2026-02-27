@@ -77,18 +77,18 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          submodules: true
+          submodules: recursive
       - name: Install packages
         run: |
           sudo apt-get update
           sudo apt-get install -y automake autoconf libtool crossbuild-essential-${{ matrix.arch }}
       - name: Build
         run: |
-          autoreconf -i
+          autoreconf --verbose -i
           ./configure \
             --host=${{ matrix.CC }} \
             --disable-docs \
-            --with-oniguruma=builtin \
+            --with-pcre2=builtin \
             --enable-static \
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all"
@@ -138,7 +138,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          submodules: true
+          submodules: recursive
       - name: Install packages
         run: |
           # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
@@ -149,11 +149,11 @@ jobs:
           echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> "$GITHUB_ENV"
       - name: Build
         run: |
-          autoreconf -i
+          autoreconf --no-recursive -i
           ./configure \
             --host="${{ matrix.target }}$(uname -r)" \
             --disable-docs \
-            --with-oniguruma=builtin \
+            --with-pcre2=builtin \
             --disable-shared \
             --enable-static \
             --enable-all-static \
@@ -215,7 +215,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          submodules: true
+          submodules: recursive
       - uses: msys2/setup-msys2@v2
         with:
           update: true
@@ -230,10 +230,10 @@ jobs:
             toolchain:p
       - name: Build
         run: |
-          autoreconf -i
+          autoreconf --no-recursive -i
           ./configure \
             --disable-docs \
-            --with-oniguruma=builtin \
+            --with-pcre2=builtin \
             --disable-shared \
             --enable-static \
             --enable-all-static \
@@ -243,7 +243,9 @@ jobs:
           cp ./jq.exe jq-${{ env.SUFFIX }}.exe
       - name: Test
         run: |
-          make check VERBOSE=yes
+          # TODO: pcre2 tests do not work in our msys2 env
+          # so use check-am that does not do recursive check
+          make check-am VERBOSE=yes
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -268,7 +270,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          submodules: true
+          submodules: recursive
       - name: Install packages
         run: |
           sudo apt-get update -qq
@@ -278,7 +280,7 @@ jobs:
           autoreconf -i
           ./configure \
             --disable-docs \
-            --with-oniguruma=builtin
+            --with-pcre2=builtin
           make distcheck
           make dist dist-zip
           git diff --exit-code
@@ -383,7 +385,7 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           pattern: jq-*
-          merge-multiple: true
+          merge-multiple: recursive
       - name: Upload release
         env:
           TAG_NAME: ${{ github.ref_name }}

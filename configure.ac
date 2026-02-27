@@ -236,54 +236,62 @@ AC_C_BIGENDIAN(
    AC_MSG_ERROR(universal endianness not supported)
 )
 
-dnl Oniguruma
-AC_ARG_WITH([oniguruma],
-   [AS_HELP_STRING([--with-oniguruma=prefix],
-      [try this for a non-standard install prefix of the oniguruma library])], ,
-   [with_oniguruma=yes])
+dnl PCRE2
+AC_ARG_WITH([pcre2],
+   [AS_HELP_STRING([--with-pcre2=prefix],
+      [try this for a non-standard install prefix of the pcre2 library])], ,
+   [with_pcre2=yes])
 
-onig_CFLAGS=
-onig_LDFLAGS=
-build_oniguruma=no
-AS_IF([test "x$with_oniguruma" != xno], [
+pcre2_CFLAGS=
+pcre2_LDFLAGS=
+build_pcre2=no
+AS_IF([test "x$with_pcre2" != xno], [
    save_CFLAGS="$CFLAGS"
    save_LDFLAGS="$LDFLAGS"
-   AS_IF([test "x$with_oniguruma" != xyes], [
-      AS_IF([test "x$with_oniguruma" = xbuiltin], [
-          build_oniguruma=yes
+   AS_IF([test "x$with_pcre2" != xyes], [
+      AS_IF([test "x$with_pcre2" = xbuiltin], [
+          build_pcre2=yes
       ], [
-          onig_CFLAGS="-I${with_oniguruma}/include"
-          onig_LDFLAGS="-L${with_oniguruma}/lib"
+          pcre2_CFLAGS="-I${with_pcre2}/include"
+          pcre2_LDFLAGS="-L${with_pcre2}/lib"
       ])
+   ], [
+      AC_CHECK_PROGS(PCRE2_CONFIG, pcre2-config)
+      AS_IF([test "x$ac_cv_prog_PCRE2_CONFIG" = x], [
+         AC_MSG_ERROR([could not find pcre2-config])
+      ])
+      # header file require DPCRE2_CODE_UNIT_WIDTH to be set
+      pcre2_CFLAGS="`pcre2-config --cflags` -DPCRE2_CODE_UNIT_WIDTH=8"
+      pcre2_LDFLAGS="`pcre2-config --libs8`"
    ])
-   AS_IF([test "x$build_oniguruma" = xno], [
-       # check for ONIGURUMA library, either in /usr or where requested
-       CFLAGS="$CFLAGS $onig_CFLAGS"
-       LDFLAGS="$LDFLAGS $onig_LDFLAGS"
-       AC_CHECK_HEADER("oniguruma.h",
-          AC_CHECK_LIB([onig],[onig_version]))
+   AS_IF([test "x$build_pcre2" = xno], [
+       # check for PCRE2 library, either in /usr or where requested
+       CFLAGS="$CFLAGS $pcre2_CFLAGS"
+       LDFLAGS="$LDFLAGS $pcre2_LDFLAGS"
+       AC_CHECK_HEADER("pcre2.h",
+          # symbols in libs8 has _8 suffix
+          AC_CHECK_LIB([pcre2-8],[pcre2_compile_8]))
        # handle check results
-       AS_IF([test "x$ac_cv_lib_onig_onig_version" != "xyes"], [
-          build_oniguruma=yes
-          AC_MSG_NOTICE([Oniguruma was not found. Will use the packaged oniguruma.])
+       AS_IF([test "x$ac_cv_lib_pcre2_8_pcre2_compile_8" != "xyes"], [
+          build_pcre2=yes
+          AC_MSG_NOTICE([PCRE2 was not found. Will use the packaged pcre2.])
        ])
    ])
-   AS_IF([test "x$build_oniguruma" = xyes && test -f "${srcdir}/vendor/oniguruma/configure.ac" ], [
-       onig_CFLAGS="-I${srcdir}/vendor/oniguruma/src"
-       onig_LDFLAGS="-L${srcdir}/vendor/oniguruma/src -Wl,-rpath,${libdir}"
-       AC_CONFIG_SUBDIRS([vendor/oniguruma])
-       AC_DEFINE([HAVE_LIBONIG],1,[Define to 1 if the system includes libonig])
+   AS_IF([test "x$build_pcre2" = xyes && test -f "${srcdir}/vendor/pcre2/configure.ac" ], [
+       pcre2_CFLAGS="-I${srcdir}/vendor/pcre2/src -DPCRE2_CODE_UNIT_WIDTH=8"
+       pcre2_LDFLAGS="-L${srcdir}/vendor/pcre2/src -Wl,-rpath,${libdir}"
+       AC_CONFIG_SUBDIRS([vendor/pcre2])
+       AC_DEFINE([HAVE_LIBPCRE2_8],1,[Define to 1 if the system includes libpcre2])
    ])
    CFLAGS="$save_CFLAGS"
    LDFLAGS="$save_LDFLAGS"
 ])
-AC_SUBST(onig_CFLAGS)
-AC_SUBST(onig_LDFLAGS)
+AC_SUBST(pcre2_CFLAGS)
+AC_SUBST(pcre2_LDFLAGS)
 
-AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
-AM_CONDITIONAL([WITH_ONIGURUMA], [test "x$with_oniguruma" != xno])
+AM_CONDITIONAL([BUILD_PCRE2], [test "x$build_pcre2" = xyes])
+AM_CONDITIONAL([WITH_PCRE2], [test "x$with_pcre2" != xno])
 
 AC_CONFIG_MACRO_DIRS([config/m4 m4])
 AC_CONFIG_FILES([Makefile libjq.pc])
 AC_OUTPUT
-
