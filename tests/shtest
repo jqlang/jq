@@ -136,6 +136,16 @@ $VALGRIND $Q $JQ -c -i '.+1' $d/inplace-numbers.json
 printf '2\n3\n' > $d/expected
 cmp $d/inplace-numbers.json $d/expected
 
+# sed-like unhappy paths from issue discussions
+ret=0
+if $JQ --in-place '.+1' > /dev/null 2>&1; then
+  echo "--in-place must reject missing input file argument" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 2 ]
+
 ret=0
 if printf '1\n' | $JQ --in-place '.+1' - > /dev/null 2>&1; then
   echo "--in-place must reject stdin as input file" 1>&2
@@ -159,6 +169,56 @@ printf '1\n' > $d/expected
 cmp $d/inplace-a.json $d/expected
 printf '2\n' > $d/expected
 cmp $d/inplace-b.json $d/expected
+
+ret=0
+if $JQ -n --in-place '.+1' $d/inplace-a.json > /dev/null 2>&1; then
+  echo "--in-place must reject --null-input" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 2 ]
+
+# Preserve original file on compile and runtime errors
+printf '{"k":1}\n' > $d/inplace-error.json
+ret=0
+if $JQ --in-place '.+=' $d/inplace-error.json > /dev/null 2>&1; then
+  echo "--in-place should fail on compile error" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 3 ]
+printf '{"k":1}\n' > $d/expected
+cmp $d/inplace-error.json $d/expected
+
+ret=0
+if $JQ --in-place 'error("boom")' $d/inplace-error.json > /dev/null 2>&1; then
+  echo "--in-place should fail on runtime error" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 5 ]
+printf '{"k":1}\n' > $d/expected
+cmp $d/inplace-error.json $d/expected
+
+# mkstemp failure path: non-writable directory
+mkdir $d/inplace-ro
+printf '1\n' > $d/inplace-ro/file.json
+chmod 0555 $d/inplace-ro
+ret=0
+if $JQ --in-place '.+1' $d/inplace-ro/file.json > /dev/null 2>&1; then
+  echo "--in-place should fail when temp file cannot be created" 1>&2
+  chmod 0755 $d/inplace-ro
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 2 ]
+chmod 0755 $d/inplace-ro
+printf '1\n' > $d/expected
+cmp $d/inplace-ro/file.json $d/expected
 
 
 # Regression test for #951

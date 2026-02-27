@@ -610,6 +610,10 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "jq: --in-place requires exactly one input file\n");
       die();
     }
+    if (options & PROVIDE_NULL) {
+      fprintf(stderr, "jq: --in-place cannot be used with --null-input\n");
+      die();
+    }
 
     size_t tlen = strlen(in_place_input) + sizeof(".XXXXXX");
     in_place_tmp = malloc(tlen);
