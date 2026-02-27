@@ -720,6 +720,10 @@ int main(int argc, char* argv[]) {
       ret = JQ_ERROR_SYSTEM;
       goto out;
     }
+#ifdef WIN32
+    if (binary_mode)
+      _setmode(fileno(stdout), _O_BINARY);
+#endif
     // In-place output is written to a file, not an interactive terminal.
     dumpopts &= ~JV_PRINT_ISATTY;
     if (!(options & COLOR_OUTPUT))
