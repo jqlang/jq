@@ -577,13 +577,18 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
   } else if (!strcmp(fmt_s, "text")) {
     jv_free(fmt);
     return f_tostring(jq, input);
-  } else if (!strcmp(fmt_s, "csv") || !strcmp(fmt_s, "tsv")) {
+  } else if (!strcmp(fmt_s, "csv") || !strcmp(fmt_s, "scsv") || !strcmp(fmt_s, "tsv")) {
     const char *quotes, *sep, *escapings;
     const char *msg;
     if (!strcmp(fmt_s, "csv")) {
       msg = "cannot be csv-formatted, only array";
       quotes = "\"";
       sep = ",";
+      escapings = "\"\"\"\0";
+    } else if (!strcmp(fmt_s, "scsv")) {
+      msg = "cannot be scsv-formatted, only array";
+      quotes = "\"";
+      sep = ";";
       escapings = "\"\"\"\0";
     } else {
       msg = "cannot be tsv-formatted, only array";
