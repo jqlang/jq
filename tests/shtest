@@ -226,21 +226,23 @@ printf '{"k":1}\n' > $d/expected
 cmp $d/inplace-error.json $d/expected
 
 # mkstemp failure path: non-writable directory
-mkdir $d/inplace-ro
-printf '1\n' > $d/inplace-ro/file.json
-chmod 0555 $d/inplace-ro
-ret=0
-if $JQ --in-place '.+1' $d/inplace-ro/file.json > /dev/null 2>&1; then
-  echo "--in-place should fail when temp file cannot be created" 1>&2
+if ! $msys && ! $mingw; then
+  mkdir $d/inplace-ro
+  printf '1\n' > $d/inplace-ro/file.json
+  chmod 0555 $d/inplace-ro
+  ret=0
+  if $JQ --in-place '.+1' $d/inplace-ro/file.json > /dev/null 2>&1; then
+    echo "--in-place should fail when temp file cannot be created" 1>&2
+    chmod 0755 $d/inplace-ro
+    exit 1
+  else
+    ret=$?
+  fi
+  [ $ret -eq 2 ]
   chmod 0755 $d/inplace-ro
-  exit 1
-else
-  ret=$?
+  printf '1\n' > $d/expected
+  cmp $d/inplace-ro/file.json $d/expected
 fi
-[ $ret -eq 2 ]
-chmod 0755 $d/inplace-ro
-printf '1\n' > $d/expected
-cmp $d/inplace-ro/file.json $d/expected
 
 
 # Regression test for #951
