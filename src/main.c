@@ -42,6 +42,8 @@ extern void jv_tsd_dtoa_ctx_init();
 
 int jq_testsuite(jv lib_dirs, int verbose, int argc, char* argv[]);
 
+FILE *ofile;
+
 /*
  * For a longer help message we could use a better option parsing
  * strategy, one that lets stack options.
@@ -81,6 +83,7 @@ static void usage(int code, int keep_it_short) {
       "                            each output;\n"
       "  -a, --ascii-output        output strings by only ASCII characters\n"
       "                            using escape sequences;\n"
+      "  -o, --output-file         output to file instead of stdout\n"
       "  -S, --sort-keys           sort keys of each object on output;\n"
       "  -C, --color-output        colorize JSON output;\n"
       "  -M, --monochrome-output   disable colored output;\n"
@@ -179,7 +182,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       if (options & ASCII_OUTPUT) {
-        jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
+        jv_dumpf(jv_copy(result), ofile, JV_PRINT_ASCII);
       } else if ((options & RAW_OUTPUT0) && strlen(jv_string_value(result)) != (unsigned long)jv_string_length_bytes(jv_copy(result))) {
         jv_free(result);
         result = jv_invalid_with_msg(jv_string(
@@ -187,7 +190,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
         break;
       } else {
         priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
-            stdout, dumpopts & JV_PRINT_ISATTY);
+            ofile, dumpopts & JV_PRINT_ISATTY);
       }
       ret = JQ_OK;
       jv_free(result);
@@ -197,15 +200,15 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
       else
         ret = JQ_OK;
       if (options & SEQ)
-        priv_fwrite("\036", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+        priv_fwrite("\036", 1, ofile, dumpopts & JV_PRINT_ISATTY);
       jv_dump(result, dumpopts);
     }
     if (!(options & RAW_NO_LF))
-      priv_fwrite("\n", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+      priv_fwrite("\n", 1, ofile, dumpopts & JV_PRINT_ISATTY);
     if (options & RAW_OUTPUT0)
-      priv_fwrite("\0", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+      priv_fwrite("\0", 1, ofile, dumpopts & JV_PRINT_ISATTY);
     if (options & UNBUFFERED_OUTPUT)
-      fflush(stdout);
+      fflush(ofile);
   }
   if (jq_halted(jq)) {
     // jq program invoked `halt` or `halt_error`
@@ -288,6 +291,7 @@ int umain(int argc, char* argv[]) {
 #else /*}*/
 int main(int argc, char* argv[]) {
 #endif
+  ofile = stdout;
   jq_state *jq = NULL;
   jq_util_input_state *input_state = NULL;
   int ret = JQ_OK_NO_OUTPUT;
@@ -318,9 +322,9 @@ int main(int argc, char* argv[]) {
 
 #ifdef WIN32
   jv_tsd_dtoa_ctx_init();
-  fflush(stdout);
+  fflush(ofile);
   fflush(stderr);
-  _setmode(fileno(stdout), _O_TEXT | _O_U8TEXT);
+  _setmode(fileno(ofile), _O_TEXT | _O_U8TEXT);
   _setmode(fileno(stderr), _O_TEXT | _O_U8TEXT);
 #endif
 
@@ -419,10 +423,10 @@ int main(int argc, char* argv[]) {
           }
         } else if (isoption(&text, 'b', "binary", is_short)) {
 #ifdef WIN32
-          fflush(stdout);
+          fflush(ofile);
           fflush(stderr);
           _setmode(fileno(stdin),  _O_BINARY);
-          _setmode(fileno(stdout), _O_BINARY);
+          _setmode(fileno(ofile), _O_BINARY);
           _setmode(fileno(stderr), _O_BINARY);
 #endif
         } else if (isoption(&text, 0, "tab", is_short)) {
@@ -480,6 +484,21 @@ int main(int argc, char* argv[]) {
             program_arguments = jv_object_set(program_arguments, jv_string(argv[i+1]), v);
           }
           i += 2; // skip the next two arguments
+        } else if (isoption(&text, 'o', "output-file", is_short)) {
+          options |= NO_COLOR_OUTPUT;
+          const char *which = "output-file";
+          if (i >= argc - 1) {
+            fprintf(stderr, "jq: --%s takes one parameter (e.g. --%s filename)\n", which, which);
+            die();
+          }
+
+          ofile = fopen(argv[i+1], "w");
+          if (!ofile ) {
+              fprintf(stderr, "jq: unable to open output-file.");
+              die();
+          }
+
+          i += 1; // skip the next argument
         } else if ((raw = isoption(&text, 0, "rawfile", is_short)) ||
             isoption(&text, 0, "slurpfile", is_short)) {
           const char *which = raw ? "rawfile" : "slurpfile";
@@ -696,8 +715,8 @@ int main(int argc, char* argv[]) {
     ret = JQ_ERROR_SYSTEM;
 
 out:
-  badwrite = ferror(stdout);
-  if (fclose(stdout)!=0 || badwrite) {
+  badwrite = ferror(ofile);
+  if (fclose(ofile)!=0 || badwrite) {
     fprintf(stderr,"jq: error: writing output failed: %s\n", strerror(errno));
     ret = JQ_ERROR_SYSTEM;
   }

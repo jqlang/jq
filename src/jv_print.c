@@ -36,6 +36,8 @@ static const char *colors[] = DEFAULT_COLORS;
 #define COLORS_LEN (sizeof(colors) / sizeof(colors[0]))
 #define FIELD_COLOR (colors[7])
 
+extern FILE *ofile;
+
 static char *colors_buf = NULL;
 int jq_set_colors(const char *code_str) {
   if (code_str == NULL)
@@ -391,7 +393,7 @@ void jv_dumpf(jv x, FILE *f, int flags) {
 }
 
 void jv_dump(jv x, int flags) {
-  jv_dumpf(x, stdout, flags);
+  jv_dumpf(x, ofile, flags);
 }
 
 /* This one is nice for use in debuggers */
