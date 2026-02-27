@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -103,6 +104,7 @@ static void usage(int code, int keep_it_short) {
       "      --jsonargs            consume remaining arguments as positional\n"
       "                            JSON values;\n"
       "  -e, --exit-status         set exit status code based on the output;\n"
+      "  -i, --in-place            update the input file in place;\n"
 #ifdef WIN32
       "  -b, --binary              open input/output streams in binary mode;\n"
 #endif
@@ -156,6 +158,7 @@ enum {
   RAW_NO_LF             = 1024,
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
+  IN_PLACE              = 8192,
   SEQ                   = 16384,
   /* debugging only */
   DUMP_DISASM           = 32768,
@@ -297,6 +300,8 @@ int main(int argc, char* argv[]) {
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
   int options = 0;
+  const char *in_place_input = NULL;
+  char *in_place_tmp = NULL;
 
 #ifdef HAVE_SETLOCALE
   (void) setlocale(LC_ALL, "");
@@ -359,6 +364,8 @@ int main(int argc, char* argv[]) {
         ARGS = jv_array_append(ARGS, v);
       } else {
         jq_util_input_add_input(input_state, argv[i]);
+        if (nfiles == 0)
+          in_place_input = argv[i];
         nfiles++;
       }
     } else if (!strcmp(argv[i], "--")) {
@@ -452,6 +459,8 @@ int main(int argc, char* argv[]) {
           parser_flags |= JV_PARSE_STREAMING | JV_PARSE_STREAM_ERRORS;
         } else if (isoption(&text, 'e', "exit-status", is_short)) {
           options |= EXIT_STATUS;
+        } else if (isoption(&text, 'i', "in-place", is_short)) {
+          options |= IN_PLACE;
         } else if (isoption(&text, 0, "args", is_short)) {
           further_args_are_strings = 1;
           further_args_are_json = 0;
@@ -596,6 +605,49 @@ int main(int argc, char* argv[]) {
 
   if (!program) usage(2, 1);
 
+  if (options & IN_PLACE) {
+    if (nfiles != 1 || in_place_input == NULL || !strcmp(in_place_input, "-")) {
+      fprintf(stderr, "jq: --in-place requires exactly one input file\n");
+      die();
+    }
+
+    size_t tlen = strlen(in_place_input) + sizeof(".XXXXXX");
+    in_place_tmp = jv_mem_alloc(tlen);
+    int n = snprintf(in_place_tmp, tlen, "%s.XXXXXX", in_place_input);
+    assert(n > 0 && (size_t)n < tlen);
+
+    int in_place_fd = mkstemp(in_place_tmp);
+    if (in_place_fd == -1) {
+      fprintf(stderr, "jq: error: cannot create temporary file for --in-place: %s\n", strerror(errno));
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+#ifndef WIN32
+    struct stat st;
+    if (stat(in_place_input, &st) == 0 &&
+        fchmod(in_place_fd, st.st_mode & 07777) == -1) {
+      fprintf(stderr, "jq: error: cannot set temporary file permissions for --in-place: %s\n",
+              strerror(errno));
+      close(in_place_fd);
+      unlink(in_place_tmp);
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+#endif
+    if (close(in_place_fd) == -1) {
+      fprintf(stderr, "jq: error: cannot close temporary file for --in-place: %s\n", strerror(errno));
+      unlink(in_place_tmp);
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+    if (freopen(in_place_tmp, "w", stdout) == NULL) {
+      fprintf(stderr, "jq: error: cannot redirect output for --in-place: %s\n", strerror(errno));
+      unlink(in_place_tmp);
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+  }
+
   if (options & FROM_FILE) {
     char *program_origin = strdup(program);
     if (program_origin == NULL) {
@@ -700,6 +752,18 @@ out:
   if (fclose(stdout)!=0 || badwrite) {
     fprintf(stderr,"jq: error: writing output failed: %s\n", strerror(errno));
     ret = JQ_ERROR_SYSTEM;
+  }
+  if (in_place_tmp != NULL) {
+    if (ret <= JQ_OK) {
+      if (rename(in_place_tmp, in_place_input) != 0) {
+        fprintf(stderr, "jq: error: cannot replace %s: %s\n", in_place_input, strerror(errno));
+        unlink(in_place_tmp);
+        ret = JQ_ERROR_SYSTEM;
+      }
+    } else {
+      unlink(in_place_tmp);
+    }
+    jv_mem_free(in_place_tmp);
   }
 
   jv_free(ARGS);

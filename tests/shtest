@@ -125,6 +125,41 @@ printf "$data" | $JQ --exit-status 'select(.i==2) | false' > /dev/null 2>&1 || r
 [ $ret -eq 1 ]
 printf "$data" | $JQ --exit-status 'select(.i==2) | true' > /dev/null 2>&1
 
+# Test --in-place / -i (no backup suffix argument needed)
+printf '{"n":1}\n' > $d/inplace.json
+$VALGRIND $Q $JQ -c --in-place '.n += 1' $d/inplace.json
+printf '{"n":2}\n' > $d/expected
+cmp $d/inplace.json $d/expected
+
+printf '1\n2\n' > $d/inplace-numbers.json
+$VALGRIND $Q $JQ -c -i '.+1' $d/inplace-numbers.json
+printf '2\n3\n' > $d/expected
+cmp $d/inplace-numbers.json $d/expected
+
+ret=0
+if printf '1\n' | $JQ --in-place '.+1' - > /dev/null 2>&1; then
+  echo "--in-place must reject stdin as input file" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 2 ]
+
+printf '1\n' > $d/inplace-a.json
+printf '2\n' > $d/inplace-b.json
+ret=0
+if $JQ --in-place '.+1' $d/inplace-a.json $d/inplace-b.json > /dev/null 2>&1; then
+  echo "--in-place must reject multiple input files" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 2 ]
+printf '1\n' > $d/expected
+cmp $d/inplace-a.json $d/expected
+printf '2\n' > $d/expected
+cmp $d/inplace-b.json $d/expected
+
 
 # Regression test for #951
 printf '"a\n' > $d/input
