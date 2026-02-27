@@ -140,14 +140,19 @@ cmp $d/inplace-numbers.json $d/expected
 test_in_place_color=true
 $msys  && test_in_place_color=false
 $mingw && test_in_place_color=false
+have_faketty=false
 if $test_in_place_color && command -v script >/dev/null 2>&1; then
   if script -qc echo /dev/null >/dev/null 2>&1; then
     faketty() { script -qec "$*" /dev/null; }
-  else # macOS
+    have_faketty=true
+  elif script -q /dev/null echo >/dev/null 2>&1; then # macOS
     faketty() { script -q /dev/null "$@" /dev/null |
       sed 's/^\x5E\x44\x08\x08//'; }
+    have_faketty=true
   fi
+fi
 
+if $have_faketty; then
   printf '{"x":1}\n' > $d/inplace-color.json
   faketty $JQ_NO_B --in-place '.x=2' $d/inplace-color.json > /dev/null
   printf '{\n  "x": 2\n}\n' > $d/expected
