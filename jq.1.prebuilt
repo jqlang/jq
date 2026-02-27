@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "February 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -100,9 +100,55 @@ Like \fB\-r\fR but jq will print NUL instead of newline after each output\. This
 Like \fB\-r\fR but jq won\'t print a newline after each output\.
 .
 .TP
-\fB\-\-ascii\-output\fR / \fB\-a\fR:
+\fB\-\-in\-place\fR / \fB\-i\fR:
 .
 .IP
+Edit one file in place by writing output to a temporary file in the same directory, then renaming it over the original\.
+.
+.IP
+This follows \fBsed \-i\fR\-style direct\-file usage:
+.
+.IP "\(bu" 4
+the input file is also the output target;
+.
+.IP "\(bu" 4
+exactly one input file argument is required;
+.
+.IP "\(bu" 4
+stdin (\fB\-\fR) is rejected;
+.
+.IP "\(bu" 4
+using multiple input files is rejected;
+.
+.IP "\(bu" 4
+combining with \fB\-\-null\-input\fR / \fB\-n\fR is rejected\.
+.
+.IP "" 0
+.
+.P
+On jq compile/runtime/system errors, jq leaves the original file unchanged and removes temporary output\.
+.
+.P
+Examples:
+.
+.IP "\(bu" 4
+Increment a field and keep output compact:\fBjq \-c \-\-in\-place \'\.count += 1\' state\.json\fR
+.
+.IP "\(bu" 4
+Normalize key order in\-place:\fBjq \-S \-\-in\-place \'\.\' config\.json\fR
+.
+.IP "\(bu" 4
+Slurp multiple JSON texts from one file, transform once, write back:\fBjq \-s \-\-in\-place \'map(\.enabled = true)\' records\.json\fR
+.
+.IP "\(bu" 4
+Produce non\-JSON text in\-place (valid, but replaces file with raw text):\fBjq \-r \-\-in\-place \'\.items[]\' items\.json\fR
+.
+.IP "\(bu" 4
+\fB\-\-ascii\-output\fR / \fB\-a\fR:
+.
+.IP "" 0
+.
+.P
 jq usually outputs non\-ASCII Unicode codepoints as UTF\-8, even if the input specified them as escape sequences (like "\eu03bc")\. Using this option, you can force jq to produce pure ASCII output with every non\-ASCII character replaced with the equivalent escape sequence\.
 .
 .TP
