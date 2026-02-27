@@ -82,6 +82,10 @@ null
 "ISgpPD4mJyIJ"
 "!()<>&'\"\t"
 
+@csv
+["hello", "hello,world", "a\"b", "one\ntwo", "foo, \"bar\nbaz\" end"]
+"hello,\"hello,world\",\"a\"\"b\",\"one\ntwo\",\"foo, \"\"bar\nbaz\"\" end\""
+
 # regression test for #436
 @base64
 "foóbar\n"
