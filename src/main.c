@@ -612,7 +612,12 @@ int main(int argc, char* argv[]) {
     }
 
     size_t tlen = strlen(in_place_input) + sizeof(".XXXXXX");
-    in_place_tmp = jv_mem_alloc(tlen);
+    in_place_tmp = malloc(tlen);
+    if (in_place_tmp == NULL) {
+      fprintf(stderr, "jq: error: out of memory\n");
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
     int n = snprintf(in_place_tmp, tlen, "%s.XXXXXX", in_place_input);
     assert(n > 0 && (size_t)n < tlen);
 
@@ -763,7 +768,7 @@ out:
     } else {
       unlink(in_place_tmp);
     }
-    jv_mem_free(in_place_tmp);
+    free(in_place_tmp);
   }
 
   jv_free(ARGS);
