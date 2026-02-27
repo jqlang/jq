@@ -124,6 +124,62 @@ static void die(void) {
   exit(2);
 }
 
+static int replace_file(const char *src, const char *dst) {
+#ifdef WIN32
+  int src_wlen = MultiByteToWideChar(CP_UTF8, 0, src, -1, NULL, 0);
+  int dst_wlen = MultiByteToWideChar(CP_UTF8, 0, dst, -1, NULL, 0);
+  if (src_wlen <= 0 || dst_wlen <= 0) {
+    errno = EINVAL;
+    return -1;
+  }
+  wchar_t *src_w = malloc((size_t)src_wlen * sizeof(wchar_t));
+  wchar_t *dst_w = malloc((size_t)dst_wlen * sizeof(wchar_t));
+  if (src_w == NULL || dst_w == NULL) {
+    free(src_w);
+    free(dst_w);
+    errno = ENOMEM;
+    return -1;
+  }
+  if (!MultiByteToWideChar(CP_UTF8, 0, src, -1, src_w, src_wlen) ||
+      !MultiByteToWideChar(CP_UTF8, 0, dst, -1, dst_w, dst_wlen)) {
+    free(src_w);
+    free(dst_w);
+    errno = EINVAL;
+    return -1;
+  }
+  if (!MoveFileExW(src_w, dst_w, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+    DWORD err = GetLastError();
+    switch (err) {
+      case ERROR_FILE_NOT_FOUND:
+      case ERROR_PATH_NOT_FOUND:
+        errno = ENOENT;
+        break;
+      case ERROR_ACCESS_DENIED:
+        errno = EACCES;
+        break;
+      case ERROR_FILE_EXISTS:
+      case ERROR_ALREADY_EXISTS:
+        errno = EEXIST;
+        break;
+      case ERROR_SHARING_VIOLATION:
+        errno = EBUSY;
+        break;
+      default:
+        errno = EIO;
+        break;
+    }
+    free(src_w);
+    free(dst_w);
+    return -1;
+  }
+  free(src_w);
+  free(dst_w);
+  return 0;
+#else
+  return rename(src, dst);
+#endif
+}
+
 static int isoptish(const char* text) {
   return text[0] == '-' && (text[1] == '-' || isalpha((unsigned char)text[1]));
 }
@@ -768,7 +824,7 @@ out:
   }
   if (in_place_tmp != NULL) {
     if (ret <= JQ_OK) {
-      if (rename(in_place_tmp, in_place_input) != 0) {
+      if (replace_file(in_place_tmp, in_place_input) != 0) {
         fprintf(stderr, "jq: error: cannot replace %s: %s\n", in_place_input, strerror(errno));
         unlink(in_place_tmp);
         ret = JQ_ERROR_SYSTEM;
