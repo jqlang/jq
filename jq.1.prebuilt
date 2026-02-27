@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "December 2025" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -119,6 +119,18 @@ By default, jq outputs colored JSON if writing to a terminal\. You can force it 
 .
 .IP
 Colors can be configured with the \fBJQ_COLORS\fR environment variable (see below)\.
+.
+.TP
+\fB\-\-color\-field spec\fR:
+.
+.IP
+Colorize object string values that match \fBspec\fR\.
+.
+.IP
+The \fBspec\fR format is \fBkey=value:ansi\fR, where \fBansi\fR is a partial ANSI SGR sequence such as \fB1;31\fR (red) or \fB1;33\fR (yellow)\.
+.
+.IP
+This option implies \fB\-C\fR\.
 .
 .TP
 \fB\-\-tab\fR:
