@@ -358,6 +358,9 @@ int main(int argc, char* argv[]) {
   int options = 0;
   const char *in_place_input = NULL;
   char *in_place_tmp = NULL;
+#ifdef WIN32
+  int binary_mode = 0;
+#endif
 
 #ifdef HAVE_SETLOCALE
   (void) setlocale(LC_ALL, "");
@@ -482,6 +485,7 @@ int main(int argc, char* argv[]) {
           }
         } else if (isoption(&text, 'b', "binary", is_short)) {
 #ifdef WIN32
+          binary_mode = 1;
           fflush(stdout);
           fflush(stderr);
           _setmode(fileno(stdin),  _O_BINARY);
@@ -705,7 +709,12 @@ int main(int argc, char* argv[]) {
       ret = JQ_ERROR_SYSTEM;
       goto out;
     }
-    if (freopen(in_place_tmp, "w", stdout) == NULL) {
+    const char *in_place_mode = "w";
+#ifdef WIN32
+    if (binary_mode)
+      in_place_mode = "wb";
+#endif
+    if (freopen(in_place_tmp, in_place_mode, stdout) == NULL) {
       fprintf(stderr, "jq: error: cannot redirect output for --in-place: %s\n", strerror(errno));
       unlink(in_place_tmp);
       ret = JQ_ERROR_SYSTEM;
