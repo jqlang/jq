@@ -136,6 +136,24 @@ $VALGRIND $Q $JQ -c -i '.+1' $d/inplace-numbers.json
 printf '2\n3\n' > $d/expected
 cmp $d/inplace-numbers.json $d/expected
 
+# Make sure in-place output is not terminal-colorized by default
+test_in_place_color=true
+$msys  && test_in_place_color=false
+$mingw && test_in_place_color=false
+if $test_in_place_color && command -v script >/dev/null 2>&1; then
+  if script -qc echo /dev/null >/dev/null 2>&1; then
+    faketty() { script -qec "$*" /dev/null; }
+  else # macOS
+    faketty() { script -q /dev/null "$@" /dev/null |
+      sed 's/^\x5E\x44\x08\x08//'; }
+  fi
+
+  printf '{"x":1}\n' > $d/inplace-color.json
+  faketty $JQ_NO_B --in-place '.x = 2' $d/inplace-color.json > /dev/null
+  printf '{\n  "x": 2\n}\n' > $d/expected
+  cmp $d/inplace-color.json $d/expected
+fi
+
 # sed-like unhappy paths from issue discussions
 ret=0
 if $JQ --in-place '.+1' > /dev/null 2>&1; then

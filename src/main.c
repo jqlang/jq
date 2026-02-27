@@ -655,6 +655,10 @@ int main(int argc, char* argv[]) {
       ret = JQ_ERROR_SYSTEM;
       goto out;
     }
+    // In-place output is written to a file, not an interactive terminal.
+    dumpopts &= ~JV_PRINT_ISATTY;
+    if (!(options & COLOR_OUTPUT))
+      dumpopts &= ~JV_PRINT_COLOR;
   }
 
   if (options & FROM_FILE) {
