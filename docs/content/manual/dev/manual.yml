@@ -2198,10 +2198,24 @@ sections:
 
             The input is converted to base64 as specified by RFC 4648.
 
+          * `@base64url`:
+
+            The input is converted to base64url without padding as specified
+            by RFC 4648. This no padding version should only be used when the
+            length of the data is known by a referring specification.
+
+          * `@base64urlp`:
+
+            The input is converted to base64url with padding as specified
+            by RFC 4648. This padding version is for general url safe encoding,
+            but be aware padding bytes (`=`) will be percent encoded in urls.
+
           * `@base64d`:
 
             The inverse of `@base64`, input is decoded as specified by RFC 4648.
             Note\: If the decoded string is not UTF-8, the results are undefined.
+            This function decodes the base64 or base64url encodings. If you require
+            strict validation, re-encode the string and check for equality.
 
           This syntax can be combined with string interpolation in a
           useful way. You can follow a `@foo` token with a string
