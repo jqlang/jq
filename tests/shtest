@@ -142,12 +142,11 @@ $msys  && test_in_place_color=false
 $mingw && test_in_place_color=false
 have_faketty=false
 if $test_in_place_color && command -v script >/dev/null 2>&1; then
-  if script -qc echo /dev/null >/dev/null 2>&1; then
-    faketty() { script -qec "$*" /dev/null; }
+  if script -qec true /dev/null >/dev/null 2>&1; then
+    faketty() { script -qec "$*" /dev/null >/dev/null; }
     have_faketty=true
-  elif script -q /dev/null echo >/dev/null 2>&1; then # macOS
-    faketty() { script -q /dev/null "$@" /dev/null |
-      sed 's/^\x5E\x44\x08\x08//'; }
+  elif script -q /dev/null true >/dev/null 2>&1; then # macOS/BSD
+    faketty() { script -q /dev/null "$@" >/dev/null; }
     have_faketty=true
   fi
 fi
