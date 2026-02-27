@@ -149,7 +149,7 @@ if $test_in_place_color && command -v script >/dev/null 2>&1; then
   fi
 
   printf '{"x":1}\n' > $d/inplace-color.json
-  faketty $JQ_NO_B --in-place '.x = 2' $d/inplace-color.json > /dev/null
+  faketty $JQ_NO_B --in-place '.x=2' $d/inplace-color.json > /dev/null
   printf '{\n  "x": 2\n}\n' > $d/expected
   cmp $d/inplace-color.json $d/expected
 fi
