@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -72,6 +73,7 @@ static void usage(int code, int keep_it_short) {
       "Command options:\n"
       "  -n, --null-input          use `null` as the single input value;\n"
       "  -R, --raw-input           read each line as string instead of JSON;\n"
+      "  -i, --in-place            update the input file in place;\n"
       "  -s, --slurp               read all inputs into an array and use it as\n"
       "                            the single input value;\n"
       "  -c, --compact-output      compact instead of pretty-printed output;\n"
@@ -122,6 +124,62 @@ static void die(void) {
   exit(2);
 }
 
+static int replace_file(const char *src, const char *dst) {
+#ifdef WIN32
+  int src_wlen = MultiByteToWideChar(CP_UTF8, 0, src, -1, NULL, 0);
+  int dst_wlen = MultiByteToWideChar(CP_UTF8, 0, dst, -1, NULL, 0);
+  if (src_wlen <= 0 || dst_wlen <= 0) {
+    errno = EINVAL;
+    return -1;
+  }
+  wchar_t *src_w = malloc((size_t)src_wlen * sizeof(wchar_t));
+  wchar_t *dst_w = malloc((size_t)dst_wlen * sizeof(wchar_t));
+  if (src_w == NULL || dst_w == NULL) {
+    free(src_w);
+    free(dst_w);
+    errno = ENOMEM;
+    return -1;
+  }
+  if (!MultiByteToWideChar(CP_UTF8, 0, src, -1, src_w, src_wlen) ||
+      !MultiByteToWideChar(CP_UTF8, 0, dst, -1, dst_w, dst_wlen)) {
+    free(src_w);
+    free(dst_w);
+    errno = EINVAL;
+    return -1;
+  }
+  if (!MoveFileExW(src_w, dst_w, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+    DWORD err = GetLastError();
+    switch (err) {
+      case ERROR_FILE_NOT_FOUND:
+      case ERROR_PATH_NOT_FOUND:
+        errno = ENOENT;
+        break;
+      case ERROR_ACCESS_DENIED:
+        errno = EACCES;
+        break;
+      case ERROR_FILE_EXISTS:
+      case ERROR_ALREADY_EXISTS:
+        errno = EEXIST;
+        break;
+      case ERROR_SHARING_VIOLATION:
+        errno = EBUSY;
+        break;
+      default:
+        errno = EIO;
+        break;
+    }
+    free(src_w);
+    free(dst_w);
+    return -1;
+  }
+  free(src_w);
+  free(dst_w);
+  return 0;
+#else
+  return rename(src, dst);
+#endif
+}
+
 static int isoptish(const char* text) {
   return text[0] == '-' && (text[1] == '-' || isalpha((unsigned char)text[1]));
 }
@@ -156,6 +214,7 @@ enum {
   RAW_NO_LF             = 1024,
   UNBUFFERED_OUTPUT     = 2048,
   EXIT_STATUS           = 4096,
+  IN_PLACE              = 8192,
   SEQ                   = 16384,
   /* debugging only */
   DUMP_DISASM           = 32768,
@@ -297,6 +356,11 @@ int main(int argc, char* argv[]) {
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
   int options = 0;
+  const char *in_place_input = NULL;
+  char *in_place_tmp = NULL;
+#ifdef WIN32
+  int binary_mode = 0;
+#endif
 
 #ifdef HAVE_SETLOCALE
   (void) setlocale(LC_ALL, "");
@@ -359,6 +423,8 @@ int main(int argc, char* argv[]) {
         ARGS = jv_array_append(ARGS, v);
       } else {
         jq_util_input_add_input(input_state, argv[i]);
+        if (nfiles == 0)
+          in_place_input = argv[i];
         nfiles++;
       }
     } else if (!strcmp(argv[i], "--")) {
@@ -419,6 +485,7 @@ int main(int argc, char* argv[]) {
           }
         } else if (isoption(&text, 'b', "binary", is_short)) {
 #ifdef WIN32
+          binary_mode = 1;
           fflush(stdout);
           fflush(stderr);
           _setmode(fileno(stdin),  _O_BINARY);
@@ -452,6 +519,8 @@ int main(int argc, char* argv[]) {
           parser_flags |= JV_PARSE_STREAMING | JV_PARSE_STREAM_ERRORS;
         } else if (isoption(&text, 'e', "exit-status", is_short)) {
           options |= EXIT_STATUS;
+        } else if (isoption(&text, 'i', "in-place", is_short)) {
+          options |= IN_PLACE;
         } else if (isoption(&text, 0, "args", is_short)) {
           further_args_are_strings = 1;
           further_args_are_json = 0;
@@ -596,6 +665,71 @@ int main(int argc, char* argv[]) {
 
   if (!program) usage(2, 1);
 
+  if (options & IN_PLACE) {
+    if (nfiles != 1 || in_place_input == NULL || !strcmp(in_place_input, "-")) {
+      fprintf(stderr, "jq: --in-place requires exactly one input file\n");
+      die();
+    }
+    if (options & PROVIDE_NULL) {
+      fprintf(stderr, "jq: --in-place cannot be used with --null-input\n");
+      die();
+    }
+
+    size_t tlen = strlen(in_place_input) + sizeof(".XXXXXX");
+    in_place_tmp = malloc(tlen);
+    if (in_place_tmp == NULL) {
+      fprintf(stderr, "jq: error: out of memory\n");
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+    int n = snprintf(in_place_tmp, tlen, "%s.XXXXXX", in_place_input);
+    assert(n > 0 && (size_t)n < tlen);
+
+    int in_place_fd = mkstemp(in_place_tmp);
+    if (in_place_fd == -1) {
+      fprintf(stderr, "jq: error: cannot create temporary file for --in-place: %s\n", strerror(errno));
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+#ifndef WIN32
+    struct stat st;
+    if (stat(in_place_input, &st) == 0 &&
+        fchmod(in_place_fd, st.st_mode & 07777) == -1) {
+      fprintf(stderr, "jq: error: cannot set temporary file permissions for --in-place: %s\n",
+              strerror(errno));
+      close(in_place_fd);
+      unlink(in_place_tmp);
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+#endif
+    if (close(in_place_fd) == -1) {
+      fprintf(stderr, "jq: error: cannot close temporary file for --in-place: %s\n", strerror(errno));
+      unlink(in_place_tmp);
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+    const char *in_place_mode = "w";
+#ifdef WIN32
+    if (binary_mode)
+      in_place_mode = "wb";
+#endif
+    if (freopen(in_place_tmp, in_place_mode, stdout) == NULL) {
+      fprintf(stderr, "jq: error: cannot redirect output for --in-place: %s\n", strerror(errno));
+      unlink(in_place_tmp);
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+#ifdef WIN32
+    if (binary_mode)
+      _setmode(fileno(stdout), _O_BINARY);
+#endif
+    // In-place output is written to a file, not an interactive terminal.
+    dumpopts &= ~JV_PRINT_ISATTY;
+    if (!(options & COLOR_OUTPUT))
+      dumpopts &= ~JV_PRINT_COLOR;
+  }
+
   if (options & FROM_FILE) {
     char *program_origin = strdup(program);
     if (program_origin == NULL) {
@@ -700,6 +834,18 @@ out:
   if (fclose(stdout)!=0 || badwrite) {
     fprintf(stderr,"jq: error: writing output failed: %s\n", strerror(errno));
     ret = JQ_ERROR_SYSTEM;
+  }
+  if (in_place_tmp != NULL) {
+    if (ret <= JQ_OK) {
+      if (replace_file(in_place_tmp, in_place_input) != 0) {
+        fprintf(stderr, "jq: error: cannot replace %s: %s\n", in_place_input, strerror(errno));
+        unlink(in_place_tmp);
+        ret = JQ_ERROR_SYSTEM;
+      }
+    } else {
+      unlink(in_place_tmp);
+    }
+    free(in_place_tmp);
   }
 
   jv_free(ARGS);
