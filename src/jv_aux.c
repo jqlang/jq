@@ -276,7 +276,9 @@ static jv jv_dels(jv t, jv keys) {
     jv starts = jv_array(), ends = jv_array();
     jv_array_foreach(keys, i, key) {
       if (jv_get_kind(key) == JV_KIND_NUMBER) {
-        if (jv_number_value(key) < 0) {
+        if (jvp_number_is_nan(key)) {
+          jv_free(key);
+        } else if (jv_number_value(key) < 0) {
           neg_keys = jv_array_append(neg_keys, key);
         } else {
           nonneg_keys = jv_array_append(nonneg_keys, key);
@@ -439,13 +441,14 @@ jv jv_getpath(jv root, jv path) {
 static jv delpaths_sorted(jv object, jv paths, int start) {
   jv delkeys = jv_array();
   for (int i=0; i<jv_array_length(jv_copy(paths));) {
-    int j = i;
     assert(jv_array_length(jv_array_get(jv_copy(paths), i)) > start);
     int delkey = jv_array_length(jv_array_get(jv_copy(paths), i)) == start + 1;
     jv key = jv_array_get(jv_array_get(jv_copy(paths), i), start);
-    while (j < jv_array_length(jv_copy(paths)) &&
-           jv_equal(jv_copy(key), jv_array_get(jv_array_get(jv_copy(paths), j), start)))
+    int j = i;
+    do
       j++;
+    while (j < jv_array_length(jv_copy(paths)) &&
+           jv_equal(jv_copy(key), jv_array_get(jv_array_get(jv_copy(paths), j), start)));
     // if i <= entry < j, then entry starts with key
     if (delkey) {
       // deleting this entire key, we don't care about any more specific deletions
