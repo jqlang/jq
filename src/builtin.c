@@ -1417,13 +1417,13 @@ static jv f_stderr(jq_state *jq, jv input) {
   return input;
 }
 
-static jv tm2jv(struct tm *tm) {
+static jv tm2jv(struct tm *tm, double fsecs) {
   return JV_ARRAY(jv_number(tm->tm_year + 1900),
                   jv_number(tm->tm_mon),
                   jv_number(tm->tm_mday),
                   jv_number(tm->tm_hour),
                   jv_number(tm->tm_min),
-                  jv_number(tm->tm_sec),
+                  jv_number(tm->tm_sec + (fsecs - floor(fsecs))),
                   jv_number(tm->tm_wday),
                   jv_number(tm->tm_yday));
 }
@@ -1597,7 +1597,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   if (tm.tm_yday == 367 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)
     set_tm_yday(&tm);
 #endif
-  jv r = tm2jv(&tm);
+  jv r = tm2jv(&tm, 0);
   if (*end != '\0')
     r = jv_array_append(r, jv_string(end));
   jv_free(a); // must come after `*end` because `end` is a pointer into `a`'s string
@@ -1686,8 +1686,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
   tmp = gmtime_r(&secs, &tm);
   if (tmp == NULL)
     return jv_invalid_with_msg(jv_string("error converting number of seconds since epoch to datetime"));
-  a = tm2jv(tmp);
-  return jv_array_set(a, 5, jv_number(jv_number_value(jv_array_get(jv_copy(a), 5)) + (fsecs - floor(fsecs))));
+  return tm2jv(tmp, fsecs);
 }
 #elif defined HAVE_GMTIME
 static jv f_gmtime(jq_state *jq, jv a) {
@@ -1701,8 +1700,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
   tmp = gmtime(&secs);
   if (tmp == NULL)
     return jv_invalid_with_msg(jv_string("error converting number of seconds since epoch to datetime"));
-  a = tm2jv(tmp);
-  return jv_array_set(a, 5, jv_number(jv_number_value(jv_array_get(jv_copy(a), 5)) + (fsecs - floor(fsecs))));
+  return tm2jv(tmp, fsecs);
 }
 #else
 static jv f_gmtime(jq_state *jq, jv a) {
@@ -1723,8 +1721,7 @@ static jv f_localtime(jq_state *jq, jv a) {
   tmp = localtime_r(&secs, &tm);
   if (tmp == NULL)
     return jv_invalid_with_msg(jv_string("error converting number of seconds since epoch to datetime"));
-  a = tm2jv(tmp);
-  return jv_array_set(a, 5, jv_number(jv_number_value(jv_array_get(jv_copy(a), 5)) + (fsecs - floor(fsecs))));
+  return tm2jv(tmp, fsecs);
 }
 #elif defined HAVE_GMTIME
 static jv f_localtime(jq_state *jq, jv a) {
@@ -1738,8 +1735,7 @@ static jv f_localtime(jq_state *jq, jv a) {
   tmp = localtime(&secs);
   if (tmp == NULL)
     return jv_invalid_with_msg(jv_string("error converting number of seconds since epoch to datetime"));
-  a = tm2jv(tmp);
-  return jv_array_set(a, 5, jv_number(jv_number_value(jv_array_get(jv_copy(a), 5)) + (fsecs - floor(fsecs))));
+  return tm2jv(tmp, fsecs);
 }
 #else
 static jv f_localtime(jq_state *jq, jv a) {
