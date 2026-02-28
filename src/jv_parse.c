@@ -79,8 +79,9 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->last_seen = JV_LAST_NONE;
   p->output = jv_invalid();
   p->next = jv_invalid();
-  p->tokenbuf = 0;
-  p->tokenlen = p->tokenpos = 0;
+  p->tokenlen = 256;
+  p->tokenbuf = jv_mem_alloc(p->tokenlen);
+  p->tokenpos = 0;
   if ((p->flags & JV_PARSE_SEQ))
     p->st = JV_PARSER_WAITING_FOR_RS;
   else
