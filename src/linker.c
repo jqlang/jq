@@ -16,7 +16,6 @@
 #include "locfile.h"
 #include "jv.h"
 #include "jq.h"
-#include "parser.h"
 #include "util.h"
 #include "compile.h"
 #include "jv_alloc.h"
@@ -60,6 +59,7 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv jq_origin, jv 
     }
     path = expand_path(path);
     if (!jv_is_valid(path)) {
+      jv_free(err);
       err = path;
       path = jv_null();
       continue;

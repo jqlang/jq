@@ -607,6 +607,7 @@ int main(int argc, char* argv[]) {
     if (!jv_is_valid(data)) {
       data = jv_invalid_get_msg(data);
       fprintf(stderr, "jq: %s\n", jv_string_value(data));
+      free(program_origin);
       jv_free(data);
       ret = JQ_ERROR_SYSTEM;
       goto out;

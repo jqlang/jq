@@ -91,19 +91,15 @@ jv jv_get(jv t, jv k) {
       v = jv_null();
     } else {
       double didx = jv_number_value(k);
-      if (jvp_number_is_nan(k)) {
+      if (didx < INT_MIN) didx = INT_MIN;
+      if (didx > INT_MAX) didx = INT_MAX;
+      int idx = (int)didx;
+      if (idx < 0)
+        idx += jv_array_length(jv_copy(t));
+      v = jv_array_get(t, idx);
+      if (!jv_is_valid(v)) {
+        jv_free(v);
         v = jv_null();
-      } else {
-        if (didx < INT_MIN) didx = INT_MIN;
-        if (didx > INT_MAX) didx = INT_MAX;
-        int idx = (int)didx;
-        if (idx < 0)
-          idx += jv_array_length(jv_copy(t));
-        v = jv_array_get(t, idx);
-        if (!jv_is_valid(v)) {
-          jv_free(v);
-          v = jv_null();
-        }
       }
     }
     jv_free(k);
@@ -163,6 +159,7 @@ jv jv_set(jv t, jv k, jv v) {
     if (jvp_number_is_nan(k)) {
       jv_free(t);
       jv_free(k);
+      jv_free(v);
       t = jv_invalid_with_msg(jv_string("Cannot set array element at NaN index"));
     } else {
       double didx = jv_number_value(k);
@@ -292,7 +289,6 @@ static jv jv_dels(jv t, jv keys) {
           ends = jv_array_append(ends, jv_number(end));
         } else {
           jv_free(new_array);
-          jv_free(key);
           new_array = e;
           goto arr_out;
         }
