@@ -15,6 +15,7 @@
 
 jv expand_path(jv);
 jv get_home(void);
+jv get_config_home(void);
 jv jq_realpath(jv);
 
 /*

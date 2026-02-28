@@ -3708,6 +3708,12 @@ sections:
       For paths starting with `~/`, the user's home directory is
       substituted for `~`.
 
+      For paths starting with `$JQ_CONFIG_HOME/`, `$JQ_CONFIG_HOME` is
+      resolved as follows: if the environment variable `$XDG_CONFIG_HOME`
+      is set and non-empty, `$XDG_CONFIG_HOME/jq` is used if the directory
+      exists; on non-Windows platforms, `~/.config/jq` is used if the
+      directory exists; otherwise, `~/.jq` is used as a fallback.
+
       For paths starting with `$ORIGIN/`, the directory where the jq
       executable is located is substituted for `$ORIGIN`.
 
@@ -3719,8 +3725,8 @@ sections:
       the default is appended.
 
       The default search path is the search path given to the `-L`
-      command-line option, else `["~/.jq", "$ORIGIN/../lib/jq",
-      "$ORIGIN/../lib"]`.
+      command-line option, else `["$JQ_CONFIG_HOME",
+      "$ORIGIN/../lib/jq", "$ORIGIN/../lib"]`.
 
       Null and empty string path elements terminate search path
       processing.
