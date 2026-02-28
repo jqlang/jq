@@ -1834,6 +1834,10 @@ gmtime
 1425599507
 [2015,2,5,23,51,47,4,63]
 
+gmtime[5]
+1425599507.25
+47.25
+
 # test invalid tm input
 try strftime("%Y-%m-%dT%H:%M:%SZ") catch .
 ["a",1,2,3,4,5,6,7]
