@@ -193,6 +193,11 @@ def ascii_downcase:
 def ascii_upcase:
   explode | map( if 97 <= . and . <= 122 then . - 32  else . end) | implode;
 
+def lpad(len;fill):
+  tostring | ($len - length) as $l | ($fill * $l)[:$l] + .;
+def rpad(len;fill):
+  tostring | ($len - length) as $l | . + ($fill * $l)[:$l];
+
 # Streaming utilities
 def truncate_stream(stream):
   . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][$n:]) else empty end;
