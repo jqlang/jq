@@ -52,13 +52,17 @@ pre {
   border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
 }
 
-button{
-  &[aria-expanded=false] .bi-chevron-down {
-    display: none;
+button {
+  &[aria-expanded=false] {
+    .bi-chevron-down, .hide-result-text {
+      display: none;
+    }
   }
 
-  &[aria-expanded=true] .bi-chevron-right {
-    display: none;
+  &[aria-expanded=true] {
+    .bi-chevron-right, .show-result-text {
+      display: none;
+    }
   }
 }
 
