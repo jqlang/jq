@@ -213,12 +213,12 @@
         },
         "markdown": {
             "hashes": [
-                "sha256:37062d4f2aa4b2b6b32aefb80faa300f82cc790cb949a35b8caede34f2b68c0e",
-                "sha256:b5b99d6951e2e4948d939255596523444c0e677c669700b1d17aa4a8a464cb7c"
+                "sha256:994d51325d25ad8aa7ce4ebaec003febcce822c3f8c911e3b17c52f7f589f950",
+                "sha256:e91464b71ae3ee7afd3017d9f358ef0baf158fd9a298db92f1d4761133824c36"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.10'",
-            "version": "==3.10"
+            "version": "==3.10.2"
         },
         "markupsafe": {
             "hashes": [
