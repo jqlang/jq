@@ -168,7 +168,11 @@ sections:
         On jq compile/runtime/system errors, jq leaves the original file
         unchanged and removes temporary output.
 
-        Examples:
+        Example usage patterns:
+
+        * Update a package version from a shell variable:
+
+          `jq -i ".version = ${VER}" package.json`
 
         * Increment a field and keep output compact:
 

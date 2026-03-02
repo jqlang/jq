@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "February 2026" "" ""
+.TH "JQ" "1" "March 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -129,7 +129,10 @@ combining with \fB\-\-null\-input\fR / \fB\-n\fR is rejected\.
 On jq compile/runtime/system errors, jq leaves the original file unchanged and removes temporary output\.
 .
 .P
-Examples:
+Example usage patterns:
+.
+.IP "\(bu" 4
+Update a package version from a shell variable:\fBjq \-i "\.version = ${VER}" package\.json\fR
 .
 .IP "\(bu" 4
 Increment a field and keep output compact:\fBjq \-c \-\-in\-place \'\.count += 1\' state\.json\fR
