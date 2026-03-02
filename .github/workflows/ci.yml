@@ -103,7 +103,7 @@ jobs:
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
@@ -111,7 +111,7 @@ jobs:
             test-suite.log
             tests/*.log
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jq-${{ env.SUFFIX }}
           path: jq-${{ env.SUFFIX }}
@@ -168,7 +168,7 @@ jobs:
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
@@ -176,7 +176,7 @@ jobs:
             test-suite.log
             tests/*.log
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jq-${{ env.SUFFIX }}
           path: jq-${{ env.SUFFIX }}
@@ -247,7 +247,7 @@ jobs:
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
@@ -255,7 +255,7 @@ jobs:
             test-suite.log
             tests/*.log
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jq-${{ env.SUFFIX }}
           path: jq-${{ env.SUFFIX }}.exe
@@ -283,7 +283,7 @@ jobs:
           make dist dist-zip
           git diff --exit-code
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jq-dist
           if-no-files-found: error
@@ -304,7 +304,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
       - name: Download executables
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: jq-linux-*
           merge-multiple: true
@@ -360,7 +360,7 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
       - name: Generate signed attestations
         if: startsWith(github.ref, 'refs/tags/jq-')
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.build-push.outputs.digest }}
@@ -380,7 +380,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: jq-*
           merge-multiple: true
@@ -396,7 +396,7 @@ jobs:
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
           gh release upload "$TAG_NAME" --clobber jq-* sha256sum.txt
       - name: Generate signed attestations
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: jq-*
       - name: Import GPG key
