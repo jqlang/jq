@@ -698,6 +698,10 @@ null
 4
 15
 
+"123\u0000456" | try tonumber catch .
+null
+"string (\"123\\u0000456\") cannot be parsed as a number"
+
 map(toboolean)
 ["false","true",false,true]
 [false,true,false,true]
@@ -712,6 +716,11 @@ map(toboolean)
 "string (\"falsee\") cannot be parsed as a boolean"
 "array ([]) cannot be parsed as a boolean"
 "object ({}) cannot be parsed as a boolean"
+
+"true\u0000x", "false\u0000" | try toboolean catch .
+null
+"string (\"true\\u0000x\") cannot be parsed as a boolean"
+"string (\"false\\u0000\") cannot be parsed as a boolean"
 
 [{"a":42},.object,10,.num,false,true,null,"b",[1,4]] | .[] as $x | [$x == .[]]
 {"object": {"a":42}, "num":10.0}

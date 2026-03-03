@@ -446,6 +446,10 @@ static jv f_tonumber(jq_state *jq, jv input) {
   }
   if (jv_get_kind(input) == JV_KIND_STRING) {
     const char* s = jv_string_value(input);
+    int len = jv_string_length_bytes(jv_copy(input));
+    if ((size_t)len != strlen(s)) {
+      return type_error(input, "cannot be parsed as a number");
+    }
 #ifdef USE_DECNUM
     jv number = jv_number_with_literal(s);
     if (jv_get_kind(number) == JV_KIND_INVALID) {
@@ -471,6 +475,10 @@ static jv f_toboolean(jq_state *jq, jv input) {
   }
   if (jv_get_kind(input) == JV_KIND_STRING) {
     const char *s = jv_string_value(input);
+    int len = jv_string_length_bytes(jv_copy(input));
+    if ((size_t)len != strlen(s)) {
+      return type_error(input, "cannot be parsed as a boolean");
+    }
     if (strcmp(s, "true") == 0) {
       jv_free(input);
       return jv_true();
