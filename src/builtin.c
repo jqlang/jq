@@ -515,6 +515,18 @@ static jv f_utf8bytelength(jq_state *jq, jv input) {
   return jv_number(jv_string_length_bytes(input));
 }
 
+static const unsigned char URI_UNRESERVED[128] = {
+  // 1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x00
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x10
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, // 0x20: - .
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, // 0x30: 0-9
+  0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x40: A-O
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, // 0x50: P-Z _
+  0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x60: a-o
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, // 0x70: p-z ~
+};
+
 #define CHARS_ALPHANUM "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
 static const unsigned char BASE64_ENCODE_TABLE[64 + 1] = CHARS_ALPHANUM "+/";
@@ -635,64 +647,62 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
   } else if (!strcmp(fmt_s, "uri")) {
     jv_free(fmt);
     input = f_tostring(jq, input);
-
-    int unreserved[128] = {0};
-    const char* p = CHARS_ALPHANUM "-_.~";
-    while (*p) unreserved[(int)*p++] = 1;
-
-    jv line = jv_string("");
     const char* s = jv_string_value(input);
-    for (int i=0; i<jv_string_length_bytes(jv_copy(input)); i++) {
-      unsigned ch = (unsigned)(unsigned char)*s;
-      if (ch < 128 && unreserved[ch]) {
-        line = jv_string_append_buf(line, s, 1);
+    int len = jv_string_length_bytes(jv_copy(input));
+    char *result = jv_mem_alloc((size_t)len * 3 + 1);
+    uint32_t ri = 0;
+    for (int i = 0; i < len; i++) {
+      unsigned c = (unsigned)(unsigned char)s[i];
+      if (c < 128 && URI_UNRESERVED[c]) {
+        result[ri++] = (char)c;
       } else {
-        line = jv_string_concat(line, jv_string_fmt("%%%02X", ch));
+        result[ri++] = '%';
+        result[ri++] = "0123456789ABCDEF"[c >> 4];
+        result[ri++] = "0123456789ABCDEF"[c & 0x0F];
       }
-      s++;
     }
+    jv line = jv_string_sized(result, ri);
+    free(result);
     jv_free(input);
     return line;
   } else if (!strcmp(fmt_s, "urid")) {
     jv_free(fmt);
     input = f_tostring(jq, input);
-
-    jv line = jv_string("");
-    const char *errmsg =  "is not a valid uri encoding";
+    const char *errmsg = "is not a valid uri encoding";
     const char *s = jv_string_value(input);
-    while (*s) {
-      if (*s != '%') {
-        line = jv_string_append_buf(line, s++, 1);
+    int len = jv_string_length_bytes(jv_copy(input));
+    char *result = jv_mem_alloc((size_t)len + 1);
+    uint32_t ri = 0;
+    for (int i = 0; i < len; i++) {
+      char c = s[i];
+      if (c != '%') {
+        result[ri++] = c;
       } else {
-        unsigned char unicode[4] = {0};
-        int b = 0;
-        // check leading bits of first octet to determine length of unicode character
-        // (https://datatracker.ietf.org/doc/html/rfc3629#section-3)
-        while (b == 0 || (b < 4 && unicode[0] >> 7 & 1 && unicode[0] >> (7-b) & 1)) {
-          if (*(s++) != '%') {
-            jv_free(line);
+        int hi = 0, lo = 0;
+        for (int j = 0; j < 2; j++) {
+          if (++i >= len) {
+            free(result);
             return type_error(input, errmsg);
           }
-          for (int i=0; i<2; i++) {
-            unicode[b] <<= 4;
-            char c = *(s++);
-            if ('0' <= c && c <= '9') unicode[b] |= c - '0';
-            else if ('a' <= c && c <= 'f') unicode[b] |= c - 'a' + 10;
-            else if ('A' <= c && c <= 'F') unicode[b] |= c - 'A' + 10;
-            else {
-              jv_free(line);
-              return type_error(input, errmsg);
-            }
+          int *d = j == 0 ? &hi : &lo;
+          c = s[i];
+          if ('0' <= c && c <= '9') *d = c - '0';
+          else if ('a' <= c && c <= 'f') *d = c - 'a' + 10;
+          else if ('A' <= c && c <= 'F') *d = c - 'A' + 10;
+          else {
+            free(result);
+            return type_error(input, errmsg);
           }
-          b++;
         }
-        if (!jvp_utf8_is_valid((const char *)unicode, (const char *)unicode+b)) {
-          jv_free(line);
-          return type_error(input, errmsg);
-        }
-        line = jv_string_append_buf(line, (const char *)unicode, b);
+        result[ri++] = (hi << 4) | lo;
       }
     }
+    if (!jvp_utf8_is_valid(result, result + ri)) {
+      free(result);
+      return type_error(input, errmsg);
+    }
+    jv line = jv_string_sized(result, ri);
+    free(result);
     jv_free(input);
     return line;
   } else if (!strcmp(fmt_s, "sh")) {
