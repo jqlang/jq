@@ -400,7 +400,7 @@ jobs:
         with:
           subject-path: jq-*
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@v7
         with:
           gpg_private_key: ${{ secrets.JQ_RELEASE_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.JQ_RELEASE_GPG_PASSPHRASE }}
