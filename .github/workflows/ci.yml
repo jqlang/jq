@@ -330,7 +330,7 @@ jobs:
           ENTRYPOINT ["/jq"]
           EOF
       - name: Docker metadata
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         id: metadata
         with:
           images: ghcr.io/${{ github.repository }}
@@ -339,17 +339,17 @@ jobs:
             && format('type=match,pattern=jq-(.*),group=1,value={0}', github.ref_name)
             || 'type=sha,format=long' }}
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and release Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         id: build-push
         with:
           context: .
