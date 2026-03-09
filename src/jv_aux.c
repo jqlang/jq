@@ -595,7 +595,9 @@ int jv_cmp(jv a, jv b) {
     break;
 
   case JV_KIND_NUMBER: {
-    if (jvp_number_is_nan(a)) {
+    if (jvp_number_is_nan(a) && jvp_number_is_nan(b)) {
+      r = 0;
+    } else if (jvp_number_is_nan(a)) {
       r = jv_cmp(jv_null(), jv_copy(b));
     } else if (jvp_number_is_nan(b)) {
       r = jv_cmp(jv_copy(a), jv_null());

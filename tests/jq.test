@@ -1681,6 +1681,17 @@ unique
 []
 []
 
+# NaN comparison: two NaNs compare equal in jv_cmp (for sort, bsearch, etc.)
+# bsearch: old logic never matches (jv_cmp(nan,nan)<0), new logic finds it
+bsearch(nan)
+[nan, 1, 2]
+0
+
+# sort regression: compare only x-order to avoid NaN equality pitfalls in test harness
+sort | map(.x)
+[{"x":2,"v":nan},{"x":0,"v":nan},{"x":1,"v":1}]
+[0,2,1]
+
 [min, max, min_by(.[1]), max_by(.[1]), min_by(.[2]), max_by(.[2])]
 [[4,2,"a"],[3,1,"a"],[2,4,"a"],[1,3,"a"]]
 [[1,3,"a"],[4,2,"a"],[3,1,"a"],[2,4,"a"],[4,2,"a"],[1,3,"a"]]
