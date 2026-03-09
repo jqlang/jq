@@ -1222,7 +1222,7 @@ args2obj(jv args)
   jv kk = jv_string("name");
   jv vk = jv_string("value");
   jv_array_foreach(args, i, v)
-    r = jv_object_set(r, jv_object_get(jv_copy(v), kk), jv_object_get(v, vk));
+    r = jv_object_set(r, jv_object_get(jv_copy(v), jv_copy(kk)), jv_object_get(v, jv_copy(vk)));
   jv_free(args);
   jv_free(kk);
   jv_free(vk);

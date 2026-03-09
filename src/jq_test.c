@@ -11,6 +11,9 @@
 static void jv_test(void);
 static void run_jq_tests(jv, int, FILE *, int, int);
 static void run_jq_start_state_tests(void);
+static void run_jq_compile_args_tests(void);
+static void run_jq_recompile_tests(void);
+static void run_jq_exhaust_and_reuse_tests(void);
 #ifdef HAVE_PTHREAD
 static void run_jq_pthread_tests(void);
 #endif
@@ -39,6 +42,9 @@ int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
   }
   run_jq_tests(libdirs, verbose, testdata, skip, take);
   run_jq_start_state_tests();
+  run_jq_compile_args_tests();
+  run_jq_recompile_tests();
+  run_jq_exhaust_and_reuse_tests();
 #ifdef HAVE_PTHREAD
   run_jq_pthread_tests();
 #endif
@@ -316,6 +322,187 @@ static void test_jq_start_resets_state(char *prog, const char *input) {
 static void run_jq_start_state_tests(void) {
   test_jq_start_resets_state(".[]", "[1,2,3]");
   test_jq_start_resets_state(".[] | if .%2 == 0 then halt_error else . end", "[1,2,3]");
+}
+
+static void compile_args_and_check(jq_state *jq, const char *prog,
+                                   jv args, jv input, jv expected) {
+  printf("  subtest: %s\n", prog);
+  int compiled = jq_compile_args(jq, prog, args);
+  assert(compiled);
+
+  jq_start(jq, input, 0);
+  jv result = jq_next(jq);
+  assert(jv_is_valid(result));
+  assert(jv_equal(result, expected));
+
+  jv extra = jq_next(jq);
+  assert(!jv_is_valid(extra));
+  jv_free(extra);
+}
+
+// Test that jq_compile_args() with array arguments handles jv
+// refcounting correctly in args2obj(). The array path converts
+// [{"name":"k","value":"v"}, ...] into {"k":"v", ...}.
+static void run_jq_compile_args_tests(void) {
+  printf("Test jq_compile_args with array args\n");
+  jq_state *jq = jq_init();
+  assert(jq);
+
+  // Empty array: loop body never runs, kk/vk allocated and freed
+  compile_args_and_check(jq, "42",
+    jv_array(), jv_null(), jv_number(42));
+
+  // Single element: one iteration, no reuse of kk/vk
+  compile_args_and_check(jq, "$val",
+    JV_ARRAY(JV_OBJECT(jv_string("name"), jv_string("val"),
+                       jv_string("value"), jv_number(42))),
+    jv_null(), jv_number(42));
+
+  // Two elements: minimum to trigger former UAF on iteration 2
+  compile_args_and_check(jq, "$x + $y",
+    JV_ARRAY(JV_OBJECT(jv_string("name"), jv_string("x"),
+                       jv_string("value"), jv_number(1)),
+             JV_OBJECT(jv_string("name"), jv_string("y"),
+                       jv_string("value"), jv_number(2))),
+    jv_null(), jv_number(3));
+
+  // Three elements: exercises further loop iterations
+  compile_args_and_check(jq, "$a + $b + $c",
+    JV_ARRAY(JV_OBJECT(jv_string("name"), jv_string("a"),
+                       jv_string("value"), jv_string("hello")),
+             JV_OBJECT(jv_string("name"), jv_string("b"),
+                       jv_string("value"), jv_string(" ")),
+             JV_OBJECT(jv_string("name"), jv_string("c"),
+                       jv_string("value"), jv_string("world"))),
+    jv_null(), jv_string("hello world"));
+
+  // Object args: bypasses args2obj loop via early return
+  compile_args_and_check(jq, "$x * $y",
+    JV_OBJECT(jv_string("x"), jv_number(10),
+              jv_string("y"), jv_number(20)),
+    jv_null(), jv_number(200));
+
+  jq_teardown(&jq);
+}
+
+
+// Test that recompiling on the same jq_state doesn't leak or
+// double-free the previous bytecode, and that switching between
+// jq_compile and jq_compile_args works correctly.
+static void run_jq_recompile_tests(void) {
+  printf("Test jq recompile on same state\n");
+  jq_state *jq = jq_init();
+  assert(jq);
+
+  // First program via jq_compile
+  int compiled = jq_compile(jq, ". + 1");
+  assert(compiled);
+  jq_start(jq, jv_number(1), 0);
+  jv r = jq_next(jq);
+  assert(jv_is_valid(r));
+  assert(jv_number_value(r) == 2);
+  jv_free(r);
+  r = jq_next(jq);
+  assert(!jv_is_valid(r));
+  jv_free(r);
+
+  // Recompile with a different program on the same state
+  compiled = jq_compile(jq, ". * 2");
+  assert(compiled);
+  jq_start(jq, jv_number(5), 0);
+  r = jq_next(jq);
+  assert(jv_is_valid(r));
+  assert(jv_number_value(r) == 10);
+  jv_free(r);
+  r = jq_next(jq);
+  assert(!jv_is_valid(r));
+  jv_free(r);
+
+  // Recompile via jq_compile_args with array args (args2obj path)
+  compiled = jq_compile_args(jq, "$n + $m",
+    JV_ARRAY(JV_OBJECT(jv_string("name"), jv_string("n"),
+                       jv_string("value"), jv_number(100)),
+             JV_OBJECT(jv_string("name"), jv_string("m"),
+                       jv_string("value"), jv_number(7))));
+  assert(compiled);
+  jq_start(jq, jv_null(), 0);
+  r = jq_next(jq);
+  assert(jv_is_valid(r));
+  assert(jv_number_value(r) == 107);
+  jv_free(r);
+  r = jq_next(jq);
+  assert(!jv_is_valid(r));
+  jv_free(r);
+
+  // Back to jq_compile after jq_compile_args
+  compiled = jq_compile(jq, ". - 1");
+  assert(compiled);
+  jq_start(jq, jv_number(10), 0);
+  r = jq_next(jq);
+  assert(jv_is_valid(r));
+  assert(jv_number_value(r) == 9);
+  jv_free(r);
+  r = jq_next(jq);
+  assert(!jv_is_valid(r));
+  jv_free(r);
+
+  jq_teardown(&jq);
+}
+
+
+// Test that exhausting jq_next doesn't corrupt state, and that
+// the same jq_state can be reused with jq_start after exhaustion.
+static void run_jq_exhaust_and_reuse_tests(void) {
+  printf("Test jq exhaust and reuse\n");
+  jq_state *jq = jq_init();
+  assert(jq);
+
+  int compiled = jq_compile(jq, ".[]");
+  assert(compiled);
+
+  // First run: drain all results
+  jq_start(jq, jv_parse("[1,2,3]"), 0);
+  for (int i = 1; i <= 3; i++) {
+    jv r = jq_next(jq);
+    assert(jv_is_valid(r));
+    assert(jv_number_value(r) == i);
+    jv_free(r);
+  }
+  jv r = jq_next(jq);
+  assert(!jv_is_valid(r));
+  jv_free(r);
+
+  // Reuse with new input on the same compiled program
+  jq_start(jq, jv_parse("[10,20]"), 0);
+  r = jq_next(jq);
+  assert(jv_is_valid(r));
+  assert(jv_number_value(r) == 10);
+  jv_free(r);
+  r = jq_next(jq);
+  assert(jv_is_valid(r));
+  assert(jv_number_value(r) == 20);
+  jv_free(r);
+  r = jq_next(jq);
+  assert(!jv_is_valid(r));
+  jv_free(r);
+
+  // Reuse again with empty array (zero results)
+  jq_start(jq, jv_parse("[]"), 0);
+  r = jq_next(jq);
+  assert(!jv_is_valid(r));
+  jv_free(r);
+
+  // Reuse once more after zero-result run
+  jq_start(jq, jv_parse("[99]"), 0);
+  r = jq_next(jq);
+  assert(jv_is_valid(r));
+  assert(jv_number_value(r) == 99);
+  jv_free(r);
+  r = jq_next(jq);
+  assert(!jv_is_valid(r));
+  jv_free(r);
+
+  jq_teardown(&jq);
 }
 
 
