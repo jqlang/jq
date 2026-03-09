@@ -11,3 +11,5 @@ updates:
     groups:
       official-actions:
         patterns: ["actions/*"]
+      docker-actions:
+        patterns: ["docker/*"]
