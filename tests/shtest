@@ -125,6 +125,125 @@ printf "$data" | $JQ --exit-status 'select(.i==2) | false' > /dev/null 2>&1 || r
 [ $ret -eq 1 ]
 printf "$data" | $JQ --exit-status 'select(.i==2) | true' > /dev/null 2>&1
 
+# Test --in-place / -i (no backup suffix argument needed)
+printf '{"n":1}\n' > $d/inplace.json
+$VALGRIND $Q $JQ -c --in-place '.n += 1' $d/inplace.json
+printf '{"n":2}\n' > $d/expected
+cmp $d/inplace.json $d/expected
+
+printf '1\n2\n' > $d/inplace-numbers.json
+$VALGRIND $Q $JQ -c -i '.+1' $d/inplace-numbers.json
+printf '2\n3\n' > $d/expected
+cmp $d/inplace-numbers.json $d/expected
+
+# Make sure in-place output is not terminal-colorized by default
+test_in_place_color=true
+$msys  && test_in_place_color=false
+$mingw && test_in_place_color=false
+have_faketty=false
+if $test_in_place_color && command -v script >/dev/null 2>&1; then
+  if script -qec true /dev/null >/dev/null 2>&1; then
+    faketty() { script -qec "$*" /dev/null >/dev/null; }
+    have_faketty=true
+  elif script -q /dev/null true >/dev/null 2>&1; then # macOS/BSD
+    faketty() { script -q /dev/null "$@" >/dev/null; }
+    have_faketty=true
+  fi
+fi
+
+if $have_faketty; then
+  printf '{"x":1}\n' > $d/inplace-color.json
+  faketty $JQ_NO_B --in-place '.x=2' $d/inplace-color.json > /dev/null
+  printf '{\n  "x": 2\n}\n' > $d/expected
+  cmp $d/inplace-color.json $d/expected
+fi
+
+# sed-like unhappy paths from issue discussions
+ret=0
+if $JQ --in-place '.+1' > /dev/null 2>&1; then
+  echo "--in-place must reject missing input file argument" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 2 ]
+
+ret=0
+if printf '1\n' | $JQ --in-place '.+1' - > /dev/null 2>&1; then
+  echo "--in-place must reject stdin as input file" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 2 ]
+
+printf '1\n' > $d/inplace-a.json
+printf '2\n' > $d/inplace-b.json
+ret=0
+if $JQ --in-place '.+1' $d/inplace-a.json $d/inplace-b.json > /dev/null 2>&1; then
+  echo "--in-place must reject multiple input files" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 2 ]
+printf '1\n' > $d/expected
+cmp $d/inplace-a.json $d/expected
+printf '2\n' > $d/expected
+cmp $d/inplace-b.json $d/expected
+
+ret=0
+if $JQ -n --in-place '.+1' $d/inplace-a.json > /dev/null 2>&1; then
+  echo "--in-place must reject --null-input" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 2 ]
+
+# Preserve original file on compile and runtime errors
+printf '{"k":1}\n' > $d/inplace-error.json
+ret=0
+if $JQ --in-place '.+=' $d/inplace-error.json > /dev/null 2>&1; then
+  echo "--in-place should fail on compile error" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 3 ]
+printf '{"k":1}\n' > $d/expected
+cmp $d/inplace-error.json $d/expected
+
+ret=0
+if $JQ --in-place 'error("boom")' $d/inplace-error.json > /dev/null 2>&1; then
+  echo "--in-place should fail on runtime error" 1>&2
+  exit 1
+else
+  ret=$?
+fi
+[ $ret -eq 5 ]
+printf '{"k":1}\n' > $d/expected
+cmp $d/inplace-error.json $d/expected
+
+# mkstemp failure path: non-writable directory
+if ! $msys && ! $mingw; then
+  mkdir $d/inplace-ro
+  printf '1\n' > $d/inplace-ro/file.json
+  chmod 0555 $d/inplace-ro
+  ret=0
+  if $JQ --in-place '.+1' $d/inplace-ro/file.json > /dev/null 2>&1; then
+    echo "--in-place should fail when temp file cannot be created" 1>&2
+    chmod 0755 $d/inplace-ro
+    exit 1
+  else
+    ret=$?
+  fi
+  [ $ret -eq 2 ]
+  chmod 0755 $d/inplace-ro
+  printf '1\n' > $d/expected
+  cmp $d/inplace-ro/file.json $d/expected
+fi
+
 
 # Regression test for #951
 printf '"a\n' > $d/input
