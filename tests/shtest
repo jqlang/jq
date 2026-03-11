@@ -20,6 +20,18 @@ export SHELL
 unset JQ_COLORS
 unset NO_COLOR
 
+## Test --color-field (per-field value highlighting)
+printf '{"level":"ERROR"}\n' \
+  | $JQ -c --color-field 'level=ERROR:1;31' '.' > $d/out
+printf '\033[1;39m{\033[0m\033[1;34m"level"\033[0m\033[1;39m:\033[0m\033[1;31m"ERROR"\033[0m\033[1;39m}\033[0m\n' > $d/expected
+cmp $d/out $d/expected
+
+# -M should disable coloring even if --color-field is set
+printf '{"level":"ERROR"}\n' \
+  | $JQ -c --color-field 'level=ERROR:1;31' -M '.' > $d/out
+printf '{"level":"ERROR"}\n' > $d/expected
+cmp $d/out $d/expected
+
 if [ -f "$JQBASEDIR/.libs/libinject_errors.so" ]; then
   # Do some simple error injection tests to check that we're handling
   # I/O errors correctly.

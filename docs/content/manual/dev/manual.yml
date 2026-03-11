@@ -175,6 +175,15 @@ sections:
         Colors can be configured with the `JQ_COLORS` environment
         variable (see below).
 
+      * `--color-field spec`:
+
+        Colorize object string values that match `spec`.
+
+        The `spec` format is `key=value:ansi`, where `ansi` is a partial ANSI
+        SGR sequence such as `1;31` (red) or `1;33` (yellow).
+
+        This option implies `-C`.
+
       * `--tab`:
 
         Use a tab for each indentation level instead of two spaces.
