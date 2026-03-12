@@ -1114,7 +1114,12 @@ static jv jvp_string_copy_replace_bad(const char* data, uint32_t length) {
   const char* end = data + length;
   const char* i = data;
 
-  uint32_t maxlength = length * 3 + 1; // worst case: all bad bytes, each becomes a 3-byte U+FFFD
+  // worst case: all bad bytes, each becomes a 3-byte U+FFFD
+  uint64_t maxlength = (uint64_t)length * 3 + 1;
+  if (maxlength >= INT_MAX) {
+    return jv_invalid_with_msg(jv_string("String too long"));
+  }
+
   jvp_string* s = jvp_string_alloc(maxlength);
   char* out = s->data;
   int c = 0;
@@ -1174,6 +1179,10 @@ static uint32_t jvp_string_remaining_space(jvp_string* s) {
 static jv jvp_string_append(jv string, const char* data, uint32_t len) {
   jvp_string* s = jvp_string_ptr(string);
   uint32_t currlen = jvp_string_length(s);
+  if ((uint64_t)currlen + len >= INT_MAX) {
+    jv_free(string);
+    return jv_invalid_with_msg(jv_string("String too long"));
+  }
 
   if (jvp_refcnt_unshared(string.u.ptr) &&
       jvp_string_remaining_space(s) >= len) {
