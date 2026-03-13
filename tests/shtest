@@ -375,6 +375,47 @@ if ! HOME="$mods/home2" $VALGRIND $Q $JQ -n 'include "g"; empty'; then
     exit 1
 fi
 
+# Test handling of $XDG_CONFIG_HOME.
+
+## If $XDG_CONFIG_HOME is set, load module from $XDG_CONFIG_HOME/jq/
+if [ "$(HOME=/nonexistent XDG_CONFIG_HOME="$mods/xdg1" $VALGRIND $Q $JQ -nr 'include "xdg"; test')" != "foo" ]; then
+    echo "Failed to load module from \$XDG_CONFIG_HOME/jq/" 1>&2
+    exit 1
+fi
+## $JQ_CONFIG_HOME/jq/ should be searched before ~/.jq/
+if [ "$(HOME="$mods/home3" XDG_CONFIG_HOME="$mods/xdg2" $VALGRIND $Q $JQ -nr 'include "priority_test"; test')" != "baz" ]; then
+    echo "\$JQ_CONFIG_HOME/jq/ should take priority over ~/.jq/" 1>&2
+    exit 1
+fi
+if $msys || $mingw; then
+    ## If $XDG_CONFIG_HOME is unset, do not fallback to $HOME/.config/jq/
+    if unset XDG_CONFIG_HOME; HOME="$mods/home3" $VALGRIND $Q $JQ -nr 'include "cfg"; test' 2>/dev/null; then
+        echo "Windows should not fallback to \$HOME/.config/jq/ when \$XDG_CONFIG_HOME is unset" 1>&2
+        exit 1
+    fi
+    ## If $XDG_CONFIG_HOME is an empty string, do not fallback to $HOME/.config/jq/
+    if XDG_CONFIG_HOME="" HOME="$mods/home3" $VALGRIND $Q $JQ -nr 'include "cfg"; test' 2>/dev/null; then
+        echo "Windows should not fallback to \$HOME/.config/jq/ when \$XDG_CONFIG_HOME is empty" 1>&2
+        exit 1
+    fi
+else
+    ## If $XDG_CONFIG_HOME is unset and $HOME/.config/jq exists, fallback to $HOME/.config/jq/
+    if [ "$(unset XDG_CONFIG_HOME; HOME="$mods/home3" $VALGRIND $Q $JQ -nr 'include "cfg"; test')" != "bar" ]; then
+        echo "Failed to fallback to \$HOME/.config/jq/ when \$XDG_CONFIG_HOME is unset" 1>&2
+        exit 1
+    fi
+    ## If $XDG_CONFIG_HOME is an empty string and $HOME/.config/jq exists, fallback to $HOME/.config/jq/
+    if [ "$(XDG_CONFIG_HOME="" HOME="$mods/home3" $VALGRIND $Q $JQ -nr 'include "cfg"; test')" != "bar" ]; then
+        echo "Failed to fallback to \$HOME/.config/jq/ when \$XDG_CONFIG_HOME is empty" 1>&2
+        exit 1
+    fi
+    ## If $HOME/.config/jq does not exist, do not fallback to $HOME/.config/
+    if unset XDG_CONFIG_HOME; HOME="$mods/home1" $VALGRIND $Q $JQ -nr 'include "cfg"; test' 2>/dev/null; then
+        echo "Should not fallback to \$HOME/.config/ when \$HOME/.config/jq does not exist" 1>&2
+        exit 1
+    fi
+fi
+
 cd "$JQBASEDIR" # so that relative library paths are guaranteed correct
 if ! $VALGRIND $Q $JQ -L ./tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
     echo "Issue #817 regression?" 1>&2
