@@ -19,28 +19,37 @@ static void run_jq_pthread_tests(void);
 #endif
 
 int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
-  FILE *testdata = stdin;
   int skip = -1;
   int take = -1;
+  int nfiles = 0;
   jv_test();
-  if (argc > 0) {
-    for(int i = 0; i < argc; i++) {
-      if (!strcmp(argv[i], "--skip")) {
-        skip = atoi(argv[i+1]);
-        i++;
-      } else if (!strcmp(argv[i], "--take")) {
-        take = atoi(argv[i+1]);
-        i++;
-      } else {
-        testdata = fopen(argv[i], "r");
-        if (!testdata) {
-          perror("fopen");
-          exit(1);
-        }
+  for (int i = 0; i < argc; i++) {
+    if (!strcmp(argv[i], "--skip")) {
+      if (++i >= argc) {
+        fprintf(stderr, "--skip requires an argument\n");
+        exit(1);
       }
+      skip = atoi(argv[i]);
+    } else if (!strcmp(argv[i], "--take")) {
+      if (++i >= argc) {
+        fprintf(stderr, "--take requires an argument\n");
+        exit(1);
+      }
+      take = atoi(argv[i]);
+    } else {
+      FILE *testdata = fopen(argv[i], "r");
+      if (!testdata) {
+        perror("fopen");
+        exit(1);
+      }
+      run_jq_tests(jv_copy(libdirs), verbose, testdata, skip, take);
+      fclose(testdata);
+      nfiles++;
     }
   }
-  run_jq_tests(libdirs, verbose, testdata, skip, take);
+  if (nfiles == 0)
+    run_jq_tests(jv_copy(libdirs), verbose, stdin, skip, take);
+  jv_free(libdirs);
   run_jq_start_state_tests();
   run_jq_compile_args_tests();
   run_jq_recompile_tests();
