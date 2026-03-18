@@ -50,7 +50,7 @@ def index($i):   indices($i) | .[0];       # TODO: optimize
 def rindex($i):  indices($i) | .[-1:][0];  # TODO: optimize
 def paths: path(recurse)|select(length > 0);
 def paths(node_filter): path(recurse|select(node_filter))|select(length > 0);
-def isfinite: type == "number" and (isinfinite | not);
+def isfinite: type == "number" and (isinfinite | not) and (isnan | not);
 def arrays: select(type == "array");
 def objects: select(type == "object");
 def iterables: select(type|. == "array" or . == "object");
