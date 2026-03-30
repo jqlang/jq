@@ -5,7 +5,9 @@ from lxml import etree
 import markdown
 from markdown.extensions import Extension
 import re
+import os
 import sys
+from time import time
 import yaml
 
 
@@ -66,8 +68,9 @@ class RoffWalker(object):
         last_tag = None
         while root is not None:
             if root.tag == 'h1':
+                epoch = int(os.environ.get('SOURCE_DATE_EPOCH', time()))
                 self.__write_cmd('.TH "JQ" "1" "{}" "" ""'.format(
-                    date.today().strftime('%B %Y')))
+                    date.fromtimestamp(epoch).strftime('%B %Y')))
                 self.__write_cmd('.SH "NAME"')
                 # TODO: properly parse this
                 self.__write_raw(r'\fBjq\fR \- Command\-line JSON processor' +
