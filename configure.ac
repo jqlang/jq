@@ -6,6 +6,12 @@ dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.65])
 AC_CONFIG_AUX_DIR([config])
 AC_USE_SYSTEM_EXTENSIONS
+
+dnl Prefer GNU make on Solaris where /usr/bin/make is not suitable
+AS_IF([test -z "$MAKE"], [
+  AS_CASE(["`uname -s`"], [SunOS], [MAKE=/usr/gnu/bin/make])
+])
+
 AM_INIT_AUTOMAKE([1.11.2 subdir-objects parallel-tests foreign -Wall])
 AM_SILENT_RULES([yes])
 AM_PROG_AR
