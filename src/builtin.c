@@ -1306,6 +1306,14 @@ static jv f_string_explode(jq_state *jq, jv a) {
 }
 
 static jv f_string_indexes(jq_state *jq, jv a, jv b) {
+  if (jv_get_kind(a) != JV_KIND_STRING) {
+    jv_free(b);
+    return type_error(a, "cannot be searched, as it is not a string");
+  }
+  if (jv_get_kind(b) != JV_KIND_STRING) {
+    jv_free(a);
+    return type_error(b, "is not a string");
+  }
   return jv_string_indexes(a, b);
 }
 

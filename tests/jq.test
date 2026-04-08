@@ -1549,6 +1549,15 @@ split("")
 "xababababax"
 [1,7,[1,3,5,7]]
 
+# _strindices is used by indices/1 but is callable
+try _strindices("abc") catch .
+123
+"number (123) cannot be searched, as it is not a string"
+
+try _strindices(123) catch .
+"abc"
+"number (123) is not a string"
+
 # trim
 # \u000b is vertical tab (\v not supported by json)
 map(trim), map(ltrim), map(rtrim)
