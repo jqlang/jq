@@ -6,6 +6,12 @@ dnl Created autoconf implementation thompson@dtosolutions, 26NOV12
 AC_PREREQ([2.65])
 AC_CONFIG_AUX_DIR([config])
 AC_USE_SYSTEM_EXTENSIONS
+
+dnl Prefer GNU make on Solaris where /usr/bin/make is not suitable
+AS_IF([test -z "$MAKE"], [
+  AS_CASE(["`uname -s`"], [SunOS], [MAKE=/usr/gnu/bin/make])
+])
+
 AM_INIT_AUTOMAKE([1.11.2 subdir-objects parallel-tests foreign -Wall])
 AM_SILENT_RULES([yes])
 AM_PROG_AR
@@ -282,6 +288,14 @@ AC_SUBST(onig_LDFLAGS)
 
 AM_CONDITIONAL([BUILD_ONIGURUMA], [test "x$build_oniguruma" = xyes])
 AM_CONDITIONAL([WITH_ONIGURUMA], [test "x$with_oniguruma" != xno])
+
+dnl On Solaris, strptime clears the tm structure before parsing. This breaks the
+dnl sentinel logic in builtin.c, which then incorrectly assumes that strptime set
+dnl tm_wday and tm_yday. Defining _STRPTIME_DONTZERO disables that behavior.
+AS_IF([test "x`uname -s 2>/dev/null`" = "xSunOS"], [
+  CPPFLAGS="$CPPFLAGS -D_STRPTIME_DONTZERO"
+])
+
 
 AC_CONFIG_MACRO_DIRS([config/m4 m4])
 AC_CONFIG_FILES([Makefile libjq.pc])

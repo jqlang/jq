@@ -4,13 +4,20 @@
 
 msys=false
 mingw=false
+sunos=false
 case "$(uname -s)" in
 MSYS*)  msys=true;;
 MINGW*) mingw=true;;
+SunOS*) sunos=true;;
 esac
 
 JQ_NO_B=$JQ
 JQ="$JQ -b"
+
+# On Solaris, GNU tools are available in /usr/gnu. This script should prefer
+# them over the native tools, because the native versions may lack some
+# command-line options the script relies on.
+$sunos && PATH="/usr/gnu/bin:$PATH"
 
 PATH=$JQBASEDIR:$PATH $JQBASEDIR/tests/jq-f-test.sh > /dev/null
 
@@ -603,16 +610,18 @@ cmp $d/color $d/expect
 echo 'Failed to set $JQ_COLORS' > $d/expect_warning
 $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/expect
 for colors in '/' '[30' '30m' '30:31m:32' '30:*:31' 'invalid'; do
-  JQ_COLORS=$colors \
-    $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/color 2>$d/warning
+  export JQ_COLORS=$colors
+  $JQ -Ccn '[{"a":true,"b":false},"abc",123,null]' > $d/color 2>$d/warning
   cmp $d/color $d/expect
   cmp $d/warning $d/expect_warning
 done
+unset JQ_COLORS
 
 # Check $NO_COLOR
 test_no_color=true
 $msys  && test_no_color=false
 $mingw && test_no_color=false
+$sunos && test_no_color=false
 if $test_no_color && command -v script >/dev/null 2>&1; then
   if script -qc echo /dev/null >/dev/null 2>&1; then
     faketty() { script -qec "$*" /dev/null; }
@@ -681,7 +690,7 @@ EOF
     echo "WARNING: Not testing localization"
   else
     dt1=$(LC_ALL=$l date +'%a %d %b %Y at %H:%M:%S')
-    dt2=$(LC_ALL=$l jq -nr 'now | strflocaltime("%a %d %b %Y at %H:%M:%S")')
+    dt2=$(LC_ALL=$l $JQ -nr 'now | strflocaltime("%a %d %b %Y at %H:%M:%S")')
     dt3=$(LC_ALL=$l date +'%a %d %b %Y at %H:%M:%S')
     if [ "$dt1" != "$dt2" ] && [ "$dt2" != "$dt3" ]; then
       echo "jq does not honor LC_ALL environment variable ($dt1, $dt2, $dt3)"
