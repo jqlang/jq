@@ -41,9 +41,14 @@ src/lexer.h: src/lexer.c
 else
 BUILT_SOURCES = src/builtin.inc src/config_opts.inc src/version.h
 .y.c:
-	$(AM_V_YACC) echo "NOT building parser.c!"
+	$(AM_V_YACC) [ "$(<D)" = "$(@D)" ] || cp $(<D)/$(@F) $@
+	$(AM_V_YACC) [ "$(<D)" = "$(@D)" ] || cp $(<D)/$(*F).h $*.h
+	$(AM_V_YACC) touch $@ $*.h
+
 .l.c:
-	$(AM_V_LEX) echo "NOT building lexer.c!"
+	$(AM_V_LEX) [ "$(<D)" = "$(@D)" ] || cp $(<D)/$(@F) $@
+	$(AM_V_LEX) [ "$(<D)" = "$(@D)" ] || cp $(<D)/$(*F).h $*.h
+	$(AM_V_LEX) touch $@ $*.h
 endif
 
 # Tell YACC (Bison) autoconf macros that you want a header file created.
