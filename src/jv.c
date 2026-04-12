@@ -40,6 +40,10 @@
 #include <limits.h>
 #include <math.h>
 #include <float.h>
+#include <time.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <pthread.h>
 
 #include "jv_alloc.h"
 #include "jv.h"
@@ -1206,7 +1210,33 @@ static jv jvp_string_append(jv string, const char* data, uint32_t len) {
   }
 }
 
-static const uint32_t HASH_SEED = 0x432A9843;
+static uint32_t hash_seed;
+static pthread_once_t hash_seed_once = PTHREAD_ONCE_INIT;
+
+static void jvp_hash_seed_init(void) {
+  uint32_t seed;
+#if defined(HAVE_ARC4RANDOM)
+  seed = arc4random();
+#elif defined(HAVE_GETENTROPY)
+  if (getentropy(&seed, sizeof(seed)) != 0)
+    seed = (uint32_t)getpid() ^ (uint32_t)time(NULL);
+#else
+  int fd = open("/dev/urandom", O_RDONLY);
+  if (fd >= 0) {
+    if (read(fd, &seed, sizeof(seed)) != 4)
+      seed = (uint32_t)getpid() ^ (uint32_t)time(NULL);
+    close(fd);
+  } else {
+    seed = (uint32_t)getpid() ^ (uint32_t)time(NULL);
+  }
+#endif
+  hash_seed = seed;
+}
+
+static uint32_t jvp_hash_seed(void) {
+  pthread_once(&hash_seed_once, jvp_hash_seed_init);
+  return hash_seed;
+}
 
 static uint32_t rotl32 (uint32_t x, int8_t r){
   return (x << r) | (x >> (32 - r));
@@ -1225,7 +1255,7 @@ static uint32_t jvp_string_hash(jv jstr) {
   int len = (int)jvp_string_length(str);
   const int nblocks = len / 4;
 
-  uint32_t h1 = HASH_SEED;
+  uint32_t h1 = jvp_hash_seed();
 
   const uint32_t c1 = 0xcc9e2d51;
   const uint32_t c2 = 0x1b873593;
