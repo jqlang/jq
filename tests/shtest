@@ -880,4 +880,10 @@ $JQ -nf $d/prog.jq 2> $d/out && {
 }
 diff $d/out $d/expected
 
+# CVE-2026-33948: No NUL truncation in the JSON parser
+if printf '{}\x00{}' | $JQ >/dev/null 2> /dev/null; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 1
+fi
+
 exit 0
