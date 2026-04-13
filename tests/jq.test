@@ -2568,3 +2568,28 @@ true
 reduce range(10001) as $_ ([];[.]) | tojson | contains("<skipped: too deep>")
 null
 true
+
+# regression test for CVE-2026-33947
+setpath([range(10000) | 0]; 0) | flatten
+null
+[0]
+
+try setpath([range(10001) | 0]; 0) catch .
+null
+"Path too deep"
+
+getpath([range(10000) | 0])
+null
+null
+
+try getpath([range(10001) | 0]) catch .
+null
+"Path too deep"
+
+delpaths([[range(10000) | 0]])
+null
+null
+
+try delpaths([[range(10001) | 0]]) catch .
+null
+"Path too deep"

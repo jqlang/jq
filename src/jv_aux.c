@@ -365,12 +365,22 @@ static jv jv_dels(jv t, jv keys) {
   return t;
 }
 
+#ifndef MAX_PATH_DEPTH
+#define MAX_PATH_DEPTH (10000)
+#endif
+
 jv jv_setpath(jv root, jv path, jv value) {
   if (jv_get_kind(path) != JV_KIND_ARRAY) {
     jv_free(value);
     jv_free(root);
     jv_free(path);
     return jv_invalid_with_msg(jv_string("Path must be specified as an array"));
+  }
+  if (jv_array_length(jv_copy(path)) > MAX_PATH_DEPTH) {
+    jv_free(value);
+    jv_free(root);
+    jv_free(path);
+    return jv_invalid_with_msg(jv_string("Path too deep"));
   }
   if (!jv_is_valid(root)){
     jv_free(value);
@@ -423,6 +433,11 @@ jv jv_getpath(jv root, jv path) {
     jv_free(root);
     jv_free(path);
     return jv_invalid_with_msg(jv_string("Path must be specified as an array"));
+  }
+  if (jv_array_length(jv_copy(path)) > MAX_PATH_DEPTH) {
+    jv_free(root);
+    jv_free(path);
+    return jv_invalid_with_msg(jv_string("Path too deep"));
   }
   if (!jv_is_valid(root)) {
     jv_free(path);
@@ -501,6 +516,12 @@ jv jv_delpaths(jv object, jv paths) {
                                                  jv_kind_name(jv_get_kind(elem))));
       jv_free(elem);
       return err;
+    }
+    if (jv_array_length(jv_copy(elem)) > MAX_PATH_DEPTH) {
+      jv_free(object);
+      jv_free(paths);
+      jv_free(elem);
+      return jv_invalid_with_msg(jv_string("Path too deep"));
     }
     jv_free(elem);
   }
