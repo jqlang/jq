@@ -553,7 +553,9 @@ block gen_function(const char* name, block formals, block body) {
     i->nformals = 0;
     if (i->op == CLOSURE_PARAM_REGULAR) {
       i->op = CLOSURE_PARAM;
-      body = gen_var_binding(gen_call(i->symbol, gen_noop()), i->symbol, body);
+      char *regular = strdup("@regular");
+      body = gen_var_binding(gen_call(regular, gen_noop()), i->symbol, body);
+      i->symbol = regular;
     }
     block_bind_subblock(inst_block(i), body, OP_IS_CALL_PSEUDO | OP_HAS_BINDING, 0);
   }
