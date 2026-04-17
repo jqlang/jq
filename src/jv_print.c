@@ -70,16 +70,20 @@ int jq_set_colors(const char *code_str) {
     goto default_colors;
   }
 
+  size_t buf_size = codes[num_colors] - codes[0] + 3 * num_colors;
   colors_buf = jv_mem_realloc(
     colors_buf,
     // add ESC '[' 'm' to each string
     // '\0' is already included in difference of codes
-    codes[num_colors] - codes[0] + 3 * num_colors
+    buf_size
   );
   char *cb = colors_buf;
+  char *cb_end = colors_buf + buf_size;
   for (; ci < num_colors; ci++) {
     colors[ci] = cb;
     size_t len = codes[ci + 1] - 1 - codes[ci];
+    if (len + 4 > (size_t)(cb_end - cb))
+      break;
 
     cb[0] = ESC[0];
     cb[1] = '[';
@@ -423,6 +427,7 @@ char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize) {
     size_t l = bufsize - (delim ? 5 : 4);  // "...", delim (if any), '\0'
     const char *s = jvp_utf8_backtrack(str + l, str, NULL);
     if (s) l = s - str;
+    if (l > bufsize - 1) l = bufsize - 1;
     memcpy(outbuf, str, l);
     outbuf[l++] = '.';
     outbuf[l++] = '.';
@@ -431,6 +436,7 @@ char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize) {
     outbuf[l] = '\0';
   } else {
     size_t l = MIN(len, bufsize - 1);
+    if (l > bufsize - 1) l = bufsize - 1;
     memcpy(outbuf, str, l);
     outbuf[l] = '\0';
   }
