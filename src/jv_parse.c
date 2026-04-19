@@ -530,6 +530,10 @@ static pfunc check_literal(struct jv_parser* p) {
   } else {
     // FIXME: better parser
     p->tokenbuf[p->tokenpos] = 0;
+    const char* dot = strchr(p->tokenbuf, '.');
+    if (dot && (dot[1] < '0' || dot[1] > '9')) {
+      return "Invalid numeric literal";
+    }
 #ifdef USE_DECNUM
     jv number = jv_number_with_literal(p->tokenbuf);
     if (jv_get_kind(number) == JV_KIND_INVALID) {

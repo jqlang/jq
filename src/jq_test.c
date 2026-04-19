@@ -610,6 +610,19 @@ static void jv_test(void) {
     assert(strcmp(jv_string_value(v), "Expected separator between values at line 1, column 9 (while parsing '{\"a':\"12\"}')") == 0);
     jv_free(v);
   }
+  {
+    jv v = jv_parse("23.");
+    assert(jv_get_kind(v) == JV_KIND_INVALID);
+    v = jv_invalid_get_msg(v);
+    assert(strstr(jv_string_value(v), "Invalid numeric literal") != NULL);
+    jv_free(v);
+
+    v = jv_parse("23.e1");
+    assert(jv_get_kind(v) == JV_KIND_INVALID);
+    v = jv_invalid_get_msg(v);
+    assert(strstr(jv_string_value(v), "Invalid numeric literal") != NULL);
+    jv_free(v);
+  }
   /// Arrays and numbers
   {
     jv a = jv_array();
