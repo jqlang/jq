@@ -611,17 +611,14 @@ static void jv_test(void) {
     jv_free(v);
   }
   {
-    jv v = jv_parse("23.");
-    assert(jv_get_kind(v) == JV_KIND_INVALID);
-    v = jv_invalid_get_msg(v);
-    assert(strstr(jv_string_value(v), "Invalid numeric literal") != NULL);
-    jv_free(v);
-
-    v = jv_parse("23.e1");
-    assert(jv_get_kind(v) == JV_KIND_INVALID);
-    v = jv_invalid_get_msg(v);
-    assert(strstr(jv_string_value(v), "Invalid numeric literal") != NULL);
-    jv_free(v);
+    const char* invalid_numbers[] = {"23.", "23.e1", "0.", "-1."};
+    for (size_t i = 0; i < sizeof(invalid_numbers) / sizeof(invalid_numbers[0]); i++) {
+      jv v = jv_parse(invalid_numbers[i]);
+      assert(jv_get_kind(v) == JV_KIND_INVALID);
+      v = jv_invalid_get_msg(v);
+      assert(strstr(jv_string_value(v), "Invalid numeric literal") != NULL);
+      jv_free(v);
+    }
   }
   /// Arrays and numbers
   {
