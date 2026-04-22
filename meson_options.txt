@@ -1,0 +1,8 @@
+option('decnum',            type: 'boolean', value: true, description: 'decnum support')
+option('oniguruma',         type: 'combo', value: 'builtin', choices: ['system', 'builtin', 'false'], description: 'oniguruma support')
+
+option('error-injection',   type: 'boolean', value: false, description: 'build and test with error injection')
+option('all-static',        type: 'boolean', value: false, description: 'link jq with static libraries only')
+
+option('docs',              type: 'boolean', value: true, description: 'build docs')
+option('valgrind',          type: 'boolean', value: false, description: 'enable Valgrind during testing')
