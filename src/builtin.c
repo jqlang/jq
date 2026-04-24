@@ -421,7 +421,10 @@ jv binop_greatereq(jv a, jv b) {
 
 static jv f_contains(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) == jv_get_kind(b)) {
-    return jv_bool(jv_contains(a, b));
+    int r = jv_contains(a, b);
+    if (r < 0)
+      return jv_invalid_with_msg(jv_string("Containment check too deep"));
+    return jv_bool(r);
   } else {
     return type_error2(a, b, "cannot have their containment checked");
   }

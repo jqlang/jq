@@ -938,19 +938,19 @@ static void jvp_clamp_slice_params(int len, int *pstart, int *pend)
 }
 
 
-static int jvp_array_contains(jv a, jv b) {
+static int jvp_contains(jv a, jv b, int depth);
+
+static int jvp_array_contains(jv a, jv b, int depth) {
   int r = 1;
   jv_array_foreach(b, bi, belem) {
     int ri = 0;
     jv_array_foreach(a, ai, aelem) {
-      if (jv_contains(aelem, jv_copy(belem))) {
-        ri = 1;
-        break;
-      }
+      ri = jvp_contains(aelem, jv_copy(belem), depth);
+      if (ri) break;
     }
     jv_free(belem);
-    if (!ri) {
-      r = 0;
+    if (ri <= 0) {
+      r = ri;
       break;
     }
   }
@@ -1844,7 +1844,7 @@ static int jvp_object_equal(jv o1, jv o2) {
   return len1 == len2;
 }
 
-static int jvp_object_contains(jv a, jv b) {
+static int jvp_object_contains(jv a, jv b, int depth) {
   assert(JVP_HAS_KIND(a, JV_KIND_OBJECT));
   assert(JVP_HAS_KIND(b, JV_KIND_OBJECT));
   int r = 1;
@@ -1852,9 +1852,9 @@ static int jvp_object_contains(jv a, jv b) {
   jv_object_foreach(b, key, b_val) {
     jv a_val = jv_object_get(jv_copy(a), key);
 
-    r = jv_contains(a_val, b_val);
+    r = jvp_contains(a_val, b_val, depth);
 
-    if (!r) break;
+    if (r <= 0) break;
   }
   return r;
 }
@@ -2086,14 +2086,23 @@ int jv_identical(jv a, jv b) {
   return r;
 }
 
-int jv_contains(jv a, jv b) {
+#ifndef MAX_CONTAINS_DEPTH
+#define MAX_CONTAINS_DEPTH (10000)
+#endif
+
+static int jvp_contains(jv a, jv b, int depth) {
+  if (depth > MAX_CONTAINS_DEPTH) {
+    jv_free(a);
+    jv_free(b);
+    return -1;
+  }
   int r = 1;
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
   } else if (JVP_HAS_KIND(a, JV_KIND_OBJECT)) {
-    r = jvp_object_contains(a, b);
+    r = jvp_object_contains(a, b, depth + 1);
   } else if (JVP_HAS_KIND(a, JV_KIND_ARRAY)) {
-    r = jvp_array_contains(a, b);
+    r = jvp_array_contains(a, b, depth + 1);
   } else if (JVP_HAS_KIND(a, JV_KIND_STRING)) {
     int b_len = jv_string_length_bytes(jv_copy(b));
     if (b_len != 0) {
@@ -2108,4 +2117,9 @@ int jv_contains(jv a, jv b) {
   jv_free(a);
   jv_free(b);
   return r;
+}
+
+// Returns 1 (contained), 0 (not contained), or -1 (too deep)
+int jv_contains(jv a, jv b) {
+  return jvp_contains(a, b, 0);
 }

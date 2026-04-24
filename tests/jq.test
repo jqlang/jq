@@ -2593,3 +2593,12 @@ null
 try delpaths([[range(10001) | 0]]) catch .
 null
 "Path too deep"
+
+# regression test for CVE-2026-40612
+reduce range(10000) as $_ ([]; [.]) | contains([[]])
+null
+true
+
+try (reduce range(10001) as $_ ([]; [.]) as $x | $x | contains($x)) catch .
+null
+"Containment check too deep"
