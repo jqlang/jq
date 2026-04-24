@@ -1,0 +1,10 @@
+[binaries]
+c = 'mips64-linux-gnuabi64-gcc'
+cpp = 'mips64-linux-gnuabi64-g++'
+ar = 'mips64-linux-gnuabi64-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'mips64'
+cpu = 'mips64'
+endian = 'little'

@@ -1,0 +1,10 @@
+[binaries]
+c = 'i686-linux-gnu-gcc'
+cpp = 'i686-linux-gnu-g++'
+ar = 'i686-linux-gnu-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'i386'
+cpu = 'i386'
+endian = 'little'

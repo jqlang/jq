@@ -1,0 +1,10 @@
+[binaries]
+c = 'arm-linux-gnueabihf-gcc'
+cpp = 'arm-linux-gnueabihf-g++'
+ar = 'arm-linux-gnueabihf-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'armhf'
+cpu = 'armhf'
+endian = 'little'
