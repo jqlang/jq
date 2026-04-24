@@ -1,3 +1,82 @@
+# 1.8.2
+
+This is a patch release to fix security issues and various bugs found in 1.8.1, and add builds for Windows arm64 and Docker arm/v7.
+Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.8.1...jq-1.8.2>.
+
+## Security fixes
+
+- CVE-2026-32316: Fix heap buffer overflow in `jvp_string_append` and `jvp_string_copy_replace_bad`.
+  @itchyny e47e56d226519635768e6aab2f38f0ab037c09e5
+- CVE-2026-33947: Limit path depth to prevent stack overflow in `jv_setpath`, `jv_getpath`, `jv_delpaths`.
+  @itchyny fb59f1491058d58bdc3e8dd28f1773d1ac690a1f
+- CVE-2026-40612: Limit containment check depth to prevent stack overflow in `contains`.
+  @itchyny d1a12569d91641135976a8536776a4a329c02cc2
+- CVE-2026-40164: Randomize hash seed to mitigate hash collision DoS attacks.
+  @AsafMeizner @itchyny 0c7d133c3c7e37c00b6d46b658a02244fdd3c784
+- CVE-2026-39979: Fix out-of-bounds read in `jv_parse_sized()`.
+  @wader 2f09060afab23fe9390cce7cb860b10416e1bf5f
+- CVE-2026-41257: Fix signed-int overflow in `stack_reallocate`.
+  @itchyny 01b3cded76daacbfddb7f8763700b0803bcb5c6f
+- CVE-2026-33948: Fix NUL truncation in the JSON parser.
+  @itchyny 6374ae0bcdfe33a18eb0ae6db28493b1f34a0a5b
+- CVE-2026-41256: Fix NUL truncation in program files loaded with `-f`.
+  @itchyny 5a015deae35d19e3ebbc65db6c157a80e76df738
+- CVE-2026-39956: Fix `_strindices` missing runtime type checks.
+  @tlsbollei fdf8ef0f0810e3d365cdd5160de43db46f57ed03
+- GHSA-gf4g-95wj-4q4r: Fix use-after-free in `args2obj()` array argument path. @sseal #3498
+- Limit number of function parameters and definitions to prevent SEGV. @OwenSanzas #3460
+- Pre-allocate `tokenbuf` for string parser to avoid undefined behavior. @fab1ano #3485
+- Fix memory leaks and double frees. @itchyny #3487
+
+## Releasing
+
+- Add builds for Windows arm64. @dennisameling #3376
+- Support arm/v7 architecture in Docker images. @itchyny #3463
+- Update GPG signing key. @itchyny 0ff997f
+
+## CLI changes
+
+- Improve error message truncation with closing delimiters. @itchyny #3478
+- Remove extra space from `die` function output. @krtk6160 #3391
+- Fix raw input flag not to corrupt multi-byte characters. @itchyny #3421
+- Fix crash when importing a module with errors twice. @itchyny #3497
+- Increase the maximum printing depth from 256 to 10000. @ishnagy #3414
+
+## Changes to existing functions
+
+- Fix `rtrimstr("")` always outputting `""`. @A4-Tacks #3415
+- Fix infinite loop and undefined behavior in `del(.[nan])`. @itchyny #3490
+- Refactor `@uri` and `@urid` to fix multi-byte UTF-8 corruption. @itchyny #3495
+- Fix `tonumber` and `toboolean` to reject strings with embedded null bytes. @itchyny #3496
+- Fix undefined behavior in modulo operator. @fab1ano #3486
+- Fix reversed pointer subtraction in `f_env` bounds check. @itchyny #3465
+- Fix missing validity check in `f_strflocaltime` after `f_localtime`. @itchyny #3491
+- Fix year 2038 problem on 32-bit platforms. @itchyny #3407
+- Use `//` instead of `//=` in `from_entries` definition. @itchyny #3516
+
+## Build and test changes
+
+- Drop `strptime` test using non-portable `%F`. @alyssais #3365
+- Limit oniguruma depth to 1024 in `jq_fuzz_execute`. @sudhackar #3377
+- Fix localization test for time formatting functions. @itchyny #3409
+- Fix expected value assertion. @itchyny #3431 #3408
+- Fix typo in tests/jq.test. @bigmoonbit #3441
+- Refactor `tm2jv` to handle fractional seconds. @itchyny #3489
+- Fix `jq_fuzz_parse_stream`: use iterative parser API for streaming mode. @OwenSanzas #3499
+- Fix crashes and resource leaks in `jq_testsuite`. @itchyny #3509
+- Support building with `--disable-maintainer-mode` and source != build dir. @Saur2000 #3518
+- Add Solaris support. @vlmarek #3515
+- Respect `SOURCE_DATE_EPOCH` while generating man page. @McSinyx #3514
+- Fix CI to add `artifact-metadata` permission for actions/attest. @itchyny ##3530
+
+## Documentation changes
+
+- Add wiki link to navigation bar. @wader #3424
+- Add missing word in manual for rawfile. @jpmens #3434
+- Fix typo `stder` -> `stderr`. @jjatria #3446
+- Fix buttons in tutorial to toggle labels when clicked on. @itchyny #3493
+- Fix `happened` spelling in tutorial changelog entries. @Rohan5commit #3525
+
 # 1.8.1
 
 This is a patch release to fix security, performance, and build issues found in 1.8.0.
