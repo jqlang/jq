@@ -298,6 +298,7 @@ jobs:
       id-token: write
       contents: read
       attestations: write
+      artifact-metadata: write
       packages: write
     needs: linux
     steps:
@@ -372,6 +373,7 @@ jobs:
       contents: write
       id-token: write
       attestations: write
+      artifact-metadata: write
       pull-requests: write
     environment: release
     needs: [linux, macos, windows, dist, docker]
