@@ -1,3 +1,62 @@
+# 1.8.2
+
+This is a patch release to fix security, performance, and build issues found in 1.8.1.
+Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.8.1...jq-1.8.2>.
+
+## Security fixes
+
+- CVE-2026-33947: Limit path depth to prevent stack overflow.
+  @itchyny fb59f1491058d58bdc3e8dd28f1773d1ac690a1f
+- CVE-2026-39979: Fix out-of-bounds read in jv_parse_sized().
+  @itchyny @wader 2f09060afab23fe9390cce7cb860b10416e1bf5f
+- CVE-2026-40164: Randomize hash seed to mitigate hash collision DoS attacks
+  @itchyny @AsafMeizner 0c7d133c3c7e37c00b6d46b658a02244fdd3c784
+- CVE-2026-33948: Fix NUL truncation in the JSON parser
+  @itchyny 6374ae0bcdfe33a18eb0ae6db28493b1f34a0a5b
+- CVE-2026-39956: Add runtime type checks to f_string_indexes
+  @tlsbollei fdf8ef0f0810e3d365cdd5160de43db46f57ed03
+- CVE-2026-32316: Fix heap buffer overflow in `jvp_string_append` and `jvp_string_copy_replace_bad`
+  @itchyny e47e56d226519635768e6aab2f38f0ab037c09e5
+- CWE-416 / GHSA-gf4g-95wj-4q4r: Fix use-after-free in args2obj() array argument path (#3498)
+  @sseal 3985b80ce50bd75c6eb5a97cb3348c3f835ca8e0
+- Limit number of function parameters and definitions to prevent SEGV (#3460) @OwenSanzas
+- Fix memory leaks and double frees (#3487) @itchyny
+- Fix UB in string parsing logic (src/jv_parse.c) (#3485) @fab1ano
+- Fix reversed pointer subtraction in `f_env` bounds check (#3465) @itchyny
+
+## Language changes
+
+- Fix tonumber and toboolean to reject strings with embedded null bytes (#3496) @itchyny
+- Refactor @uri and @urid and fix multi-byte UTF-8 corruption (#3495) @itchyny
+- Fix off-by-one in modulo operator #3486 @fab1ano
+- Fix `rtrimstr("")` always output `""` (#3415) @A4-Tacks
+- Fix year 2038 problem on 32-bit platforms (fix #3369) (#3407) @itchyny
+
+## CLI changes
+
+- Improve error message truncation with closing delimiters (#3478) @itchyny
+- Fix slurping raw input not to corrupt multi-byte characters (fix #3389) (#3421) @itchyny
+- Increase the maximum printing depth from 256 to 10000 (fixes #3413) (#3414) @ishnagy
+- Remove extra space from die func output (#3391) @krtk6160
+
+## Build and test improvements
+
+- Add Solaris support (#3515) @vlmarek
+- Support building with --disable-maintainer-mode and source != build dir (#3518) @Saur2000
+- Respect SOURCE_DATE_EPOCH while generating man page (#3514) @McSinyx
+- Support arm/v7 architecture in Docker images (#3463) @itchyny @riptide-01
+- jq_fuzz_execute: limit oniguruma depth to 1024 (#3377) @sudhackar
+- Fix localization test for time formatting functions (fix #3368) (#3409) @itchyny
+- JQ Test Suite Assertion Failure in JSON Parsing Consistency Validation #3393 @itchyny @err2zero
+- CI: add builds for Windows arm64 (#3376) @itchyny
+- jq.test: drop non-portable %F test (#3365) @alyssais
+
+## Documentation changes
+
+- Fix stder typo (#3446) @jjatria
+- Add missing word in manual for rawfile (#3434) @jpmens
+- website: Add wiki link to navigation bar (#3424) @wader
+
 # 1.8.1
 
 This is a patch release to fix security, performance, and build issues found in 1.8.0.
