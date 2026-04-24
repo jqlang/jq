@@ -886,4 +886,11 @@ if printf '{}\x00{}' | $JQ >/dev/null 2> /dev/null; then
   exit 1
 fi
 
+# CVE-2026-41256: No NUL truncation in program files loaded with -f
+printf '.\x00invalid' > "$d/nul_prog.jq"
+if echo '42' | $JQ -f "$d/nul_prog.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for program file with NUL bytes\n' 1>&2
+  exit 1
+fi
+
 exit 0
