@@ -1,0 +1,10 @@
+[binaries]
+c = 'mipsisa32r6el-linux-gnu-gcc'
+cpp = 'mipsisa32r6el-linux-gnu-g++'
+ar = 'mipsisa32r6el-linux-gnu-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'mipsr6el'
+cpu = 'mipsr6el'
+endian = 'little'

@@ -16,17 +16,16 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y automake autoconf gdb valgrind clang clang-tools
+          sudo apt-get install -y meson valgrind clang clang-tools
           echo "CC=clang" >> "$GITHUB_ENV"
       - name: Build
         run: |
-          autoreconf -i
-          ./configure --enable-valgrind CFLAGS="-g -O0"
-          scan-build --keep-going --exclude vendor/ make -j"$(nproc)"
+          meson setup -Dvalgrind=true -Dbuildtype=debug
+          scan-build --keep-going --exclude vendor/ ninja -C _build
       - name: Test
         run: |
           ulimit -c unlimited
-          scan-build --keep-going --exclude vendor/ make -j"$(nproc)" check
+          scan-build --keep-going --exclude vendor/ ninja -C _build test
       - name: Core dump stacks
         run: |
           if [[ -f core ]]; then
@@ -37,7 +36,7 @@ jobs:
       - name: Test logs
         if: ${{ failure() }}
         run: |
-          cat test-suite.log tests/*.log
+          cat _build/meson-logs/testlog.txt
       - name: Upload Logs
         uses: actions/upload-artifact@v7
         with:

@@ -21,6 +21,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
@@ -36,16 +40,13 @@ jobs:
         working-directory: docs
       - name: Configure
         run: |
-          autoreconf -i
-          ./configure --enable-docs
+          meson setup _build -Doniguruma=false
       - name: Build man page, man.test, manonig.test
         run: |
-          mv jq.1.prebuilt jq.1.old
-          rm -f tests/man.test manonig.test
-          make jq.1.prebuilt tests/man.test tests/manonig.test
+          ninja -C _build docs/jq.1 build_mantests
       - name: Make sure that jq.1.prebuilt, man.test, manonig.test are up to date
         run: |
           git diff --exit-code tests/man.test tests/manonig.test
           # skip build date in jq.1.prebuilt
           test -s jq.1.prebuilt
-          diff -- <(tail -n +3 jq.1.old) <(tail -n +3 jq.1.prebuilt)
+          diff -- <(tail -n +3 jq.1.prebuilt) <(tail -n +3 _build/docs/jq.1)
