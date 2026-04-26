@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <assert.h>
 #include "jv.h"
 #include "jv_dtoa.h"
@@ -419,14 +420,17 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
   return 0;
 }
 
-static void tokenadd(struct jv_parser* p, char c) {
+static pfunc tokenadd(struct jv_parser* p, char c) {
   assert(p->tokenpos <= p->tokenlen);
   if (p->tokenpos >= (p->tokenlen - 1)) {
-    p->tokenlen = p->tokenlen*2 + 256;
+    if (p->tokenlen > INT_MAX / 2)
+      return "Token too long";
+    p->tokenlen *= 2;
     p->tokenbuf = jv_mem_realloc(p->tokenbuf, p->tokenlen);
   }
   assert(p->tokenpos < p->tokenlen);
   p->tokenbuf[p->tokenpos++] = c;
+  return 0;
 }
 
 static int unhex4(char* hex) {
@@ -677,7 +681,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
     }
     switch (cls) {
     case LITERAL:
-      tokenadd(p, ch);
+      TRY(tokenadd(p, ch));
       break;
     case WHITESPACE:
       break;
@@ -697,7 +701,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
       p->st = JV_PARSER_NORMAL;
       if (check_done(p, out)) answer = OK;
     } else {
-      tokenadd(p, ch);
+      TRY(tokenadd(p, ch));
       if (ch == '\\' && p->st == JV_PARSER_STRING) {
         p->st = JV_PARSER_STRING_ESCAPE;
       } else {
