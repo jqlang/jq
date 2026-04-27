@@ -105,7 +105,7 @@ jobs:
           cp _build/src/jq jq-${{ env.SUFFIX }}
       - name: Test
         run: |
-          make check VERBOSE=yes
+          ninja -C _build test
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -173,7 +173,7 @@ jobs:
           cp _build/src/jq.exe jq-${{ env.SUFFIX }}.exe
       - name: Test
         run: |
-          make check VERBOSE=yes
+          ninja -C _build test
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
