@@ -18,17 +18,26 @@ config_opts_inc = custom_target(
     output: 'config_opts.inc',
 )
 
-lexer_c_h = custom_target(
-    command: [flex, '-o', '@OUTPUT0@', '--header-file=@OUTPUT1@', '@INPUT@'],
-    input: 'lexer.l',
-    output: ['lexer.c', 'lexer.h'],
-)
+# Support unavailable flex, bison tools
+if flex.found()
+    lexer_c_h = custom_target(
+        command: [flex, '-o', '@OUTPUT0@', '--header-file=@OUTPUT1@', '@INPUT@'],
+        input: 'lexer.l',
+        output: ['lexer.c', 'lexer.h'],
+    )
+else
+    lexer_c_h = ['lexer.c', 'lexer.h']
+endif
 
-parser_c_h = custom_target(
-    command: [yacc, '-o', '@OUTPUT0@', '--header=@OUTPUT1@', '@INPUT@'],
-    input: 'parser.y',
-    output: ['parser.c', 'parser.h'],
-)
+if yacc.found()
+    parser_c_h = custom_target(
+        command: [yacc, '-o', '@OUTPUT0@', '--header=@OUTPUT1@', '@INPUT@'],
+        input: 'parser.y',
+        output: ['parser.c', 'parser.h'],
+    )
+else
+    parser_c_h = ['parser.c', 'parser.h']
+endif
 
 source_files = [
     'builtin.c',
