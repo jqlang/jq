@@ -16,20 +16,17 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y automake autoconf libtool
+          sudo apt-get install -y meson
       - name: Build
         run: |
-          autoreconf -i
-          ./configure \
-            --disable-docs \
-            --disable-maintainer-mode \
-            --disable-decnum
-          make -j"$(nproc)"
-          file ./jq
+          meson setup _build -Ddocs=false -Ddecnum=false
+          ninja -C _build
+          file _build/src/jq
       - name: Test
         run: |
-          diff <(echo 100000000000000000000 | ./jq) <(echo 1e+20)
-          make check VERBOSE=yes
+          cd _build
+          diff <(echo 100000000000000000000 | ./src/jq) <(echo 1e+20)
+          meson test -v
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -38,5 +35,4 @@ jobs:
           name: test-logs-decnum-disabled
           retention-days: 7
           path: |
-            test-suite.log
-            tests/*.log
+            _build/meson-logs/testlog.txt

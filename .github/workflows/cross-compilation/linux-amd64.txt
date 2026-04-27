@@ -1,0 +1,10 @@
+[binaries]
+c = 'x86_64-linux-gnu-gcc'
+cpp = 'x86_64-linux-gnu-g++'
+ar = 'x86_64-linux-gnu-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'amd64'
+cpu = 'amd64'
+endian = 'little'

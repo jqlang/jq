@@ -1,0 +1,10 @@
+[binaries]
+c = 'mips-linux-gnu-gcc'
+cpp = 'mips-linux-gnu-g++'
+ar = 'mips-linux-gnu-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'mips'
+cpu = 'mips'
+endian = 'little'

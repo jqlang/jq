@@ -1,0 +1,10 @@
+[binaries]
+c = 'riscv64-linux-gnu-gcc'
+cpp = 'riscv64-linux-gnu-g++'
+ar = 'riscv64-linux-gnu-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'riscv64'
+cpu = 'riscv64'
+endian = 'little'

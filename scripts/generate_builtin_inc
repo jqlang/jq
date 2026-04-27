@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+set -eu
+
+input=$1
+output=$2
+
+od -v -A n -t o1 -- "$input" \
+| sed -e 's/$/ /' \
+    -e 's/\([0123456789]\) /\1, /g' \
+    -e 's/ $//' \
+    -e 's/ 0/  0/g' \
+    -e 's/ \([123456789]\)/ 0\1/g' \
+> "$output"

@@ -30,48 +30,8 @@ jobs:
           - ppc64el
           - riscv64
           - s390x
-        include:
-          - arch: amd64
-            CC: x86_64-linux-gnu
-          - arch: arm64
-            CC: aarch64-linux-gnu
-          - arch: armel
-            CC: arm-linux-gnueabi
-          - arch: armhf
-            CC: arm-linux-gnueabihf
-          - arch: i386
-            CC: i686-linux-gnu
-          - arch: mips
-            CC: mips-linux-gnu
-          - arch: mips64
-            CC: mips64-linux-gnuabi64
-          - arch: mips64el
-            CC: mips64el-linux-gnuabi64
-          - arch: mips64r6
-            CC: mipsisa64r6-linux-gnuabi64
-          - arch: mips64r6el
-            CC: mipsisa64r6el-linux-gnuabi64
-          - arch: mipsel
-            CC: mipsel-linux-gnu
-          - arch: mipsr6
-            CC: mipsisa32r6-linux-gnu
-          - arch: mipsr6el
-            CC: mipsisa32r6el-linux-gnu
-          - arch: powerpc
-            CC: powerpc-linux-gnu
-          - arch: ppc64el
-            CC: powerpc64le-linux-gnu
-          - arch: riscv64
-            CC: riscv64-linux-gnu
-          - arch: s390x
-            CC: s390x-linux-gnu
     runs-on: ${{ matrix.arch == 'i386' && 'ubuntu-22.04' || 'ubuntu-24.04' }}
     env:
-      AR: ${{ matrix.CC }}-ar
-      CHOST: ${{ matrix.CC }}
-      CC: ${{ matrix.CC }}-gcc
-      CPP: ${{ matrix.CC }}-cpp
-      LDFLAGS: -s
       SUFFIX: linux-${{ matrix.arch }}
     steps:
       - name: Clone repository
@@ -81,25 +41,17 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y automake autoconf libtool crossbuild-essential-${{ matrix.arch }}
+          sudo apt-get install -y crossbuild-essential-${{ matrix.arch }} meson
       - name: Build
         run: |
-          autoreconf -i
-          ./configure \
-            --host=${{ matrix.CC }} \
-            --disable-docs \
-            --with-oniguruma=builtin \
-            --enable-static \
-            --enable-all-static \
-            CFLAGS="-O2 -pthread -fstack-protector-all"
-          make -j"$(nproc)"
-          file ./jq
-          cp ./jq jq-${{ env.SUFFIX }}
+          meson setup _build -Doniguruma=builtin --cross-file .github/workflows/cross-compilation/linux-${{ matrix.arch }}.txt
+          ninja -C _build
+          cp _build/src/jq jq-${{ env.SUFFIX }}
       - name: Test
         # Only run tests for amd64 matching the CI machine arch
         if: ${{ matrix.arch == 'amd64' }}
         run: |
-          make check VERBOSE=yes
+          ninja -C _build test
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -108,8 +60,7 @@ jobs:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
           path: |
-            test-suite.log
-            tests/*.log
+            _build/meson-logs/testlog.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -132,7 +83,6 @@ jobs:
             target: arm64-apple-darwin
     runs-on: macos-14
     env:
-      LDFLAGS: -dead_strip
       SUFFIX: macos-${{ matrix.arch }}
     steps:
       - name: Clone repository
@@ -143,28 +93,19 @@ jobs:
         run: |
           # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
           brew update || brew update-reset
-          brew install autoconf automake libtool
+          brew install meson
       - name: Set CC
         run: |
           echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> "$GITHUB_ENV"
       - name: Build
         run: |
-          autoreconf -i
-          ./configure \
-            --host="${{ matrix.target }}$(uname -r)" \
-            --disable-docs \
-            --with-oniguruma=builtin \
-            --disable-shared \
-            --enable-static \
-            --enable-all-static \
-            CFLAGS="-O2 -pthread -fstack-protector-all"
-          make -j"$(sysctl -n hw.logicalcpu)"
-          strip ./jq
-          file ./jq
-          cp ./jq jq-${{ env.SUFFIX }}
+          meson setup _build -Ddocs=false -Doniguruma=builtin -Ddefault_library=static -Dbuildtype=release -Dstrip=true -Dbison=auto
+          ninja -C _build
+          file _build/src/jq
+          cp _build/src/jq jq-${{ env.SUFFIX }}
       - name: Test
         run: |
-          make check VERBOSE=yes
+          ninja -C _build test
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -173,8 +114,7 @@ jobs:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
           path: |
-            test-suite.log
-            tests/*.log
+            _build/meson-logs/testlog.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -203,7 +143,6 @@ jobs:
             os: windows-11-arm
     runs-on: ${{ matrix.os }}
     env:
-      LDFLAGS: -s
       SUFFIX: windows-${{ matrix.arch }}
     defaults:
       run:
@@ -223,27 +162,19 @@ jobs:
           install: >-
             base-devel
             git
-            autoconf
-            automake
-            libtool
           pacboy: >-
             toolchain:p
+            meson
+            cmake
       - name: Build
         run: |
-          autoreconf -i
-          ./configure \
-            --disable-docs \
-            --with-oniguruma=builtin \
-            --disable-shared \
-            --enable-static \
-            --enable-all-static \
-            CFLAGS="-O2 -pthread -fstack-protector-all -Wl,--stack,8388608"
-          make -j$(nproc)
-          file ./jq.exe
-          cp ./jq.exe jq-${{ env.SUFFIX }}.exe
+          meson setup _build -Ddocs=false -Doniguruma=builtin -Ddefault_library=static
+          ninja -C _build
+          file _build/src/jq
+          cp _build/src/jq.exe jq-${{ env.SUFFIX }}.exe
       - name: Test
         run: |
-          make check VERBOSE=yes
+          ninja -C _build test
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -252,8 +183,7 @@ jobs:
           name: test-logs-${{ env.SUFFIX }}
           retention-days: 7
           path: |
-            test-suite.log
-            tests/*.log
+            _build/meson-logs/testlog.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -272,16 +202,11 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y automake autoconf
+          sudo apt-get install -y meson
       - name: Create dist
         run: |
-          autoreconf -i
-          ./configure \
-            --disable-docs \
-            --with-oniguruma=builtin
-          make distcheck
-          make dist dist-zip
-          git diff --exit-code
+          meson setup _build -Doniguruma=builtin -Ddocs=false
+          meson dist -C _build --formats zip,xztar
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -289,8 +214,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           path: |
-            jq-*.tar.gz
-            jq-*.zip
+            _build/meson-dist/jq-*.tar*
+            _build/meson-dist/jq-*.zip
 
   docker:
     runs-on: ubuntu-latest

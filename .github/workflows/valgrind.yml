@@ -16,19 +16,16 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y automake autoconf libtool valgrind
+          sudo apt-get install -y meson valgrind
       - name: Build
         run: |
-          autoreconf -i
-          ./configure \
-            --disable-docs \
-            --enable-valgrind \
-            --with-oniguruma=builtin
-          make -j"$(nproc)"
-          file ./jq
+          meson setup _build -Ddocs=false -Dvalgrind=true -Doniguruma=builtin
+          ninja -C _build
+          file _build/src/jq
       - name: Test
         run: |
-          make check VERBOSE=yes
+          cd _build
+          meson test -v
           git diff --exit-code
       - name: Upload Test Logs
         if: ${{ failure() }}
@@ -37,5 +34,4 @@ jobs:
           name: test-logs-valgrind-linux
           retention-days: 7
           path: |
-            test-suite.log
-            tests/*.log
+            _build/meson-logs/testlog.txt
