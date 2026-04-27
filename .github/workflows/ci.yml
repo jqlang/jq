@@ -93,7 +93,7 @@ jobs:
         run: |
           # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
           brew update || brew update-reset
-          brew install meson
+          brew install meson bison
       - name: Set CC
         run: |
           echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> "$GITHUB_ENV"
