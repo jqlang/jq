@@ -143,7 +143,6 @@ jobs:
             os: windows-11-arm
     runs-on: ${{ matrix.os }}
     env:
-      LDFLAGS: -s
       SUFFIX: windows-${{ matrix.arch }}
     defaults:
       run:
@@ -163,24 +162,15 @@ jobs:
           install: >-
             base-devel
             git
-            autoconf
-            automake
-            libtool
+            meson
           pacboy: >-
             toolchain:p
       - name: Build
         run: |
-          autoreconf -i
-          ./configure \
-            --disable-docs \
-            --with-oniguruma=builtin \
-            --disable-shared \
-            --enable-static \
-            --enable-all-static \
-            CFLAGS="-O2 -pthread -fstack-protector-all -Wl,--stack,8388608"
-          make -j$(nproc)
-          file ./jq.exe
-          cp ./jq.exe jq-${{ env.SUFFIX }}.exe
+          meson setup _build -Ddocs=false -Doniguruma=builtin -Ddefault_library=static
+          ninja -C _build
+          file _build/src/jq
+          cp _build/src/jq.exe jq-${{ env.SUFFIX }}.exe
       - name: Test
         run: |
           make check VERBOSE=yes
