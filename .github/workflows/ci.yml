@@ -93,13 +93,13 @@ jobs:
         run: |
           # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
           brew update || brew update-reset
-          brew install meson bison
+          brew install meson
       - name: Set CC
         run: |
           echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> "$GITHUB_ENV"
       - name: Build
         run: |
-          meson setup _build -Ddocs=false -Doniguruma=builtin -Ddefault_library=static -Dbuildtype=release -Dstrip=true
+          meson setup _build -Ddocs=false -Doniguruma=builtin -Ddefault_library=static -Dbuildtype=release -Dstrip=true -Dbison=auto
           ninja -C _build
           file _build/src/jq
           cp _build/src/jq jq-${{ env.SUFFIX }}
