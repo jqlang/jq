@@ -165,6 +165,7 @@ jobs:
           pacboy: >-
             toolchain:p
             meson
+            cmake
       - name: Build
         run: |
           meson setup _build -Ddocs=false -Doniguruma=builtin -Ddefault_library=static
