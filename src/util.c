@@ -126,6 +126,47 @@ jv get_home(void) {
   return ret;
 }
 
+static int is_directory(const char *path) {
+  struct stat sb;
+  return stat(path, &sb) == 0 && S_ISDIR(sb.st_mode);
+}
+
+// Get the config home base directory. Resolved as follows:
+//
+// 1. $XDG_CONFIG_HOME/jq if set, non-empty, and the directory exists
+// 2. Non-Windows only: $HOME/.config/jq if the directory exists
+// 3. $HOME/.jq
+jv get_config_home(void) {
+  char *xdg_config_home = getenv("XDG_CONFIG_HOME");
+  if (xdg_config_home && xdg_config_home[0]) {
+    jv xdg_jq = jv_string_fmt("%s/jq", xdg_config_home);
+    if (is_directory(jv_string_value(xdg_jq))) {
+      return xdg_jq;
+    }
+    jv_free(xdg_jq);
+  }
+
+  jv home = get_home();
+  if (!jv_is_valid(home)) {
+    jv_free(home);
+    return jv_invalid_with_msg(jv_string("No config home directory available"));
+  }
+
+#ifndef WIN32
+  // Fallback to $HOME/.config/jq on non-Windows platforms.
+  jv config_jq = jv_string_fmt("%s/.config/jq", jv_string_value(home));
+  if (is_directory(jv_string_value(config_jq))) {
+    jv_free(home);
+    return config_jq;
+  }
+  jv_free(config_jq);
+#endif
+  // Fallback to $HOME/.jq.
+  jv dot_jq = jv_string_fmt("%s/.jq", jv_string_value(home));
+  jv_free(home);
+
+  return dot_jq;
+}
 
 jv jq_realpath(jv path) {
   int path_max;
