@@ -18,7 +18,7 @@ cc = meson.get_compiler('c')
 # Check dependencies
 
 flex = find_program(['flex', 'lex'])
-yacc = find_program('bison', version: '>=3.0')
+yacc = find_program('bison', version: '>=2.3')
 
 if target_machine.endian() == 'big'
     config.set10('IEEE_MC68k', true)
