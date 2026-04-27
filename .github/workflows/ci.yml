@@ -93,6 +93,7 @@ jobs:
         run: |
           # brew update sometimes fails with "Fetching /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask failed!"
           brew update || brew update-reset
+          brew upgrade
           brew install meson bison
       - name: Set CC
         run: |
