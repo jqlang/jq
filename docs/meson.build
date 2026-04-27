@@ -14,7 +14,7 @@ endif
 
 docs_pipenv = custom_target('docs_pipenv',
     command: [
-        'bash', '-c',
+        'sh', '-c',
         '(cd @0@ && pipenv sync) && touch docs/pipenv.flag'.format(meson.current_source_dir())
     ],
     depend_files: [
@@ -26,7 +26,7 @@ docs_pipenv = custom_target('docs_pipenv',
 
 run_target('build_mantests',
     command: [
-        'bash', '-c',
+        'sh', '-c',
         'cd @0@;'.format(meson.current_source_dir())
         + 'pipenv run ./validate_manual_schema.py content/manual/dev/manual.yml;'
         + 'pipenv run ./build_mantests.py',
@@ -37,7 +37,7 @@ run_target('build_mantests',
 
 custom_target('manpage',
     command: [
-        'bash', '-c',
+        'sh', '-c',
         'cd @0@;'.format(meson.current_source_dir())
         + 'pipenv run ./validate_manual_schema.py content/manual/dev/manual.yml;'
         + 'pipenv run ./build_manpage.py',

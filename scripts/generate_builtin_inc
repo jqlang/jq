@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-set -Eeuo pipefail
+#!/usr/bin/env sh
+set -eu
 
 input=$1
 output=$2
