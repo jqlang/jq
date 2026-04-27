@@ -162,9 +162,9 @@ jobs:
           install: >-
             base-devel
             git
-            meson
           pacboy: >-
             toolchain:p
+            meson
       - name: Build
         run: |
           meson setup _build -Ddocs=false -Doniguruma=builtin -Ddefault_library=static
