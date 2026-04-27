@@ -2,7 +2,7 @@
 set -eu
 
 if [ "${1:-}" = "set-dist" ]; then
-    $MESONREWRITE --sourcedir="$MESON_PROJECT_DIST_ROOT" kwargs set project / version "$2"
+    meson rewrite --sourcedir="$MESON_PROJECT_DIST_ROOT" kwargs set project / version "$2"
     exit
 fi
 
