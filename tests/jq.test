@@ -2602,3 +2602,19 @@ true
 try (reduce range(10001) as $_ ([]; [.]) as $x | $x | contains($x)) catch .
 null
 "Containment check too deep"
+
+# Tests for issue #3268 for "Did you mean?" hints for undefined symbols
+# The %%FAIL tests verify the primary error message is unchanged
+# Hint lines ("jq: Did you mean: ...") are tested in shtest
+
+%%FAIL
+to_string
+jq: error: to_string/0 is not defined at <top-level>, line 1, column 1:
+    to_string
+    ^^^^^^^^^
+
+%%FAIL
+1 as $X | $x
+jq: error: $x is not defined at <top-level>, line 1, column 11:
+    1 as $X | $x
+              ^^

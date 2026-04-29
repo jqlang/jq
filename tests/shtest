@@ -893,4 +893,34 @@ if echo '42' | $JQ -f "$d/nul_prog.jq" >/dev/null 2>/dev/null; then
   exit 1
 fi
 
+# Tests for issue #3268: "Did you mean?" hints for undefined symbols
+
+# Function typo: to_string -> tostring
+cat > $d/expected <<'EOF'
+jq: error: to_string/0 is not defined at <top-level>, line 1, column 1:
+    to_string
+    ^^^^^^^^^
+jq: Did you mean: tostring/0?
+jq: 1 compile error
+EOF
+$JQ -n 'to_string' > /dev/null 2> $d/out && {
+  echo "Expected compile error for 'to_string'"
+  exit 1
+}
+diff $d/out $d/expected
+
+# Variable typo: $x -> $X (case mismatch)
+cat > $d/expected <<'EOF'
+jq: error: $x is not defined at <top-level>, line 1, column 11:
+    1 as $X | $x
+              ^^
+jq: Did you mean: $X?
+jq: 1 compile error
+EOF
+$JQ -n '1 as $X | $x' > /dev/null 2> $d/out && {
+  echo "Expected compile error for '\$x'"
+  exit 1
+}
+diff $d/out $d/expected
+
 exit 0

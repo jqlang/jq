@@ -1120,9 +1120,131 @@ make_env(jv env)
   return jv_copy(r);
 }
 
+// Standard Levenshtein distance, capped at `max` to avoid O(n^2) work on
+// very long strings.  Returns max+1 when the distance exceeds the cap
+static int levenshtein(const char *a, const char *b, int max) {
+  int la = (int)strlen(a);
+  int lb = (int)strlen(b);
+  // Quick bounds check: if lengths differ by more than max, bail early
+  if (abs(la - lb) > max) return max + 1;
+
+  // Use two alternating rows
+  int *row0 = jv_mem_alloc((lb + 1) * sizeof(int));
+  int *row1 = jv_mem_alloc((lb + 1) * sizeof(int));
+  for (int j = 0; j <= lb; j++) row0[j] = j;
+
+  for (int i = 1; i <= la; i++) {
+    row1[0] = i;
+    int row_min = row1[0];
+    for (int j = 1; j <= lb; j++) {
+      int cost = (a[i-1] == b[j-1]) ? 0 : 1;
+      int v = row0[j-1] + cost;           // substitution
+      int del = row0[j] + 1;              // deletion
+      int ins = row1[j-1] + 1;            // insertion
+      if (del < v) v = del;
+      if (ins < v) v = ins;
+      row1[j] = v;
+      if (v < row_min) row_min = v;
+    }
+    if (row_min > max) {
+      jv_mem_free(row0);
+      jv_mem_free(row1);
+      return max + 1;
+    }
+    // swap rows
+    int *tmp = row0; row0 = row1; row1 = tmp;
+  }
+  int result = row0[lb];
+  jv_mem_free(row0);
+  jv_mem_free(row1);
+  return result;
+}
+
+// Collect bound variable names (op==LOADV/STOREV with bound_by set) and
+// function binder names (op==CLOSURE_CREATE / CLOSURE_CREATE_C with
+// bound_by==self) recursively through subfn and arglist.
+// We pass two separate jv arrays: one for variables, one for functions
+// (with their arities encoded as "name/arity").
+static void collect_bound_symbols_inner(inst *i,
+                                        jv *vars,    // "$name" entries
+                                        jv *funcs) { // "name/arity" entries
+  if (!i) return;
+  for (; i; i = i->next) {
+    int flags = opcode_describe(i->op)->flags;
+    if ((flags & OP_HAS_BINDING) && i->bound_by == i && i->symbol) {
+      // Skip internal break labels
+      if (i->symbol[0] == '*') goto recurse;
+
+      if (i->op == STOREV) {
+        // Variable binder
+        char *vname = jv_mem_alloc(1 + strlen(i->symbol) + 1);
+        vname[0] = '$';
+        strcpy(vname + 1, i->symbol);
+        // Avoid duplicates (cheap check)
+        int dup = 0;
+        for (int k = 0; k < jv_array_length(jv_copy(*vars)); k++) {
+          jv elem = jv_array_get(jv_copy(*vars), k);
+          if (strcmp(jv_string_value(elem), vname) == 0) { jv_free(elem); dup = 1; break; }
+          jv_free(elem);
+        }
+        if (!dup) *vars = jv_array_append(*vars, jv_string(vname));
+        jv_mem_free(vname);
+      } else if (i->op == CLOSURE_CREATE || i->op == CLOSURE_CREATE_C) {
+        // Function binder: count formals
+        int nformals = i->nformals;
+        if (nformals < 0) nformals = 0;
+        jv fname = jv_string_fmt("%s/%d", i->symbol, nformals);
+        int dup = 0;
+        for (int k = 0; k < jv_array_length(jv_copy(*funcs)); k++) {
+          jv elem = jv_array_get(jv_copy(*funcs), k);
+          if (strcmp(jv_string_value(elem), jv_string_value(fname)) == 0) { jv_free(elem); dup = 1; break; }
+          jv_free(elem);
+        }
+        if (!dup) *funcs = jv_array_append(*funcs, jv_copy(fname));
+        jv_free(fname);
+      }
+    }
+  recurse:
+    collect_bound_symbols_inner(i->subfn.first,  vars, funcs);
+    collect_bound_symbols_inner(i->arglist.first, vars, funcs);
+  }
+}
+
+// Collect all bound symbols reachable from a block.
+static void collect_bound_symbols(block b, jv *vars, jv *funcs) {
+  *vars  = jv_array();
+  *funcs = jv_array();
+  collect_bound_symbols_inner(b.first, vars, funcs);
+}
+
+// Return a jv_string with the best suggestion for `needle` from `candidates`
+// (array of jv strings), or jv_invalid() if nothing is close enough.
+// `threshold` is the max edit distance we'll accept.
+static jv best_suggestion(const char *needle, jv candidates, int threshold) {
+  int best_dist = threshold + 1;
+  jv best = jv_invalid();
+  int n = jv_array_length(jv_copy(candidates));
+  for (int i = 0; i < n; i++) {
+    jv cand = jv_array_get(jv_copy(candidates), i);
+    int d = levenshtein(needle, jv_string_value(cand), threshold);
+    if (d < best_dist) {
+      best_dist = d;
+      jv_free(best);
+      best = jv_copy(cand);
+    }
+    jv_free(cand);
+  }
+  return best;
+}
+
 // Expands call instructions into a calling sequence
 static int expand_call_arglist(block* b, jv args, jv *env) {
   int errors = 0;
+
+  // Pre-pass: collect all bound symbols so we can suggest similar names
+  jv bound_vars, bound_funcs;
+  collect_bound_symbols(*b, &bound_vars, &bound_funcs);
+
   block ret = gen_noop();
   for (inst* curr; (curr = block_take(b));) {
     if (opcode_describe(curr->op)->flags & OP_HAS_BINDING) {
@@ -1133,12 +1255,46 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
         curr->op = LOADK;
         curr->imm.constant = jv_object_get(jv_copy(args), jv_string(curr->symbol));
       } else if (!curr->bound_by) {
-        if (curr->symbol[0] == '*' && curr->symbol[1] >= '1' && curr->symbol[1] <= '3' && curr->symbol[2] == '\0')
+        if (curr->symbol[0] == '*' && curr->symbol[1] >= '1' && curr->symbol[1] <= '3' && curr->symbol[2] == '\0') {
           locfile_locate(curr->locfile, curr->source, "jq: error: break used outside labeled control structure");
-        else if (curr->op == LOADV)
+        } else if (curr->op == LOADV) {
           locfile_locate(curr->locfile, curr->source, "jq: error: $%s is not defined", curr->symbol);
-        else
+          // Suggest a similar variable name
+          char *needle = jv_mem_alloc(1 + strlen(curr->symbol) + 1);
+          needle[0] = '$';
+          strcpy(needle + 1, curr->symbol);
+          // Merge locally bound vars with globally known vars
+          jv all_vars = jq_get_known_vars(curr->locfile->jq);
+          int nlocal = jv_array_length(jv_copy(bound_vars));
+          for (int k = 0; k < nlocal; k++)
+            all_vars = jv_array_append(all_vars, jv_array_get(jv_copy(bound_vars), k));
+          jv suggestion = best_suggestion(needle, all_vars, 3);
+          jv_mem_free(needle);
+          jv_free(all_vars);
+          if (jv_is_valid(suggestion)) {
+            jq_report_error(curr->locfile->jq,
+                jv_string_fmt("jq: Did you mean: %s?", jv_string_value(suggestion)));
+            jv_free(suggestion);
+          }
+        } else {
           locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, curr->nactuals);
+          // Suggest a similar function name
+          char *needle = jv_mem_alloc(strlen(curr->symbol) + 1 + 20 + 1);
+          sprintf(needle, "%s/%d", curr->symbol, curr->nactuals);
+          // Merge locally bound funcs with globally known builtins
+          jv all_funcs = jq_get_known_funcs(curr->locfile->jq);
+          int nlocal = jv_array_length(jv_copy(bound_funcs));
+          for (int k = 0; k < nlocal; k++)
+            all_funcs = jv_array_append(all_funcs, jv_array_get(jv_copy(bound_funcs), k));
+          jv suggestion = best_suggestion(needle, all_funcs, 3);
+          jv_mem_free(needle);
+          jv_free(all_funcs);
+          if (jv_is_valid(suggestion)) {
+            jq_report_error(curr->locfile->jq,
+                jv_string_fmt("jq: Did you mean: %s?", jv_string_value(suggestion)));
+            jv_free(suggestion);
+          }
+        }
         errors++;
         // don't process this instruction if it's not well-defined
         ret = BLOCK(ret, inst_block(curr));
@@ -1208,6 +1364,8 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
     ret = BLOCK(ret, prelude, inst_block(curr));
   }
   *b = ret;
+  jv_free(bound_vars);
+  jv_free(bound_funcs);
   return errors;
 }
 
