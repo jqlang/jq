@@ -469,6 +469,17 @@ static jv f_tonumber(jq_state *jq, jv input) {
     jv_free(input);
     return number;
   }
+  // Handle conversion to bools here. TODO
+  if (jv_get_kind(input) == JV_KIND_TRUE) {
+	  jv number = jv_number(1);
+	  jv_free(input);
+	  return number;
+  }
+  if (jv_get_kind(input) == JV_KIND_FALSE) {
+	  jv number = jv_number(0);
+	  jv_free(input);
+	  return number;
+  }
   return type_error(input, "cannot be parsed as a number");
 }
 
