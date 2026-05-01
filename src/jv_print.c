@@ -79,6 +79,7 @@ int jq_set_colors(const char *code_str) {
   char *cb = colors_buf;
   for (; ci < num_colors; ci++) {
     colors[ci] = cb;
+    if (codes[ci + 1] <= codes[ci]) break;
     size_t len = codes[ci + 1] - 1 - codes[ci];
 
     cb[0] = ESC[0];
