@@ -162,9 +162,9 @@ jobs:
           install: >-
             base-devel
             git
+          pacboy: >-
             meson
             cmake
-          pacboy: >-
             toolchain:p
       - name: Build
         run: |
