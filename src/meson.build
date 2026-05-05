@@ -76,7 +76,7 @@ foreach key : config.keys()
 endforeach
 
 if is_win32
-    c_args += ['-municode']
+    c_args += ['-municode', '-DWIN32']
 endif
 
 
