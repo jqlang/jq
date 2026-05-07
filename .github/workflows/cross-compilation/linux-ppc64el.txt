@@ -1,0 +1,10 @@
+[binaries]
+c = 'powerpc64le-linux-gnu-gcc'
+cpp = 'powerpc64le-linux-gnu-g++'
+ar = 'powerpc64le-linux-gnu-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'ppc64el'
+cpu = 'ppc64el'
+endian = 'little'

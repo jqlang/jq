@@ -1,0 +1,10 @@
+[binaries]
+c = 'arm-linux-gnueabi-gcc'
+cpp = 'arm-linux-gnueabi-g++'
+ar = 'arm-linux-gnueabi-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'armel'
+cpu = 'armel'
+endian = 'little'

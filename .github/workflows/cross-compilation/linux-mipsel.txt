@@ -1,0 +1,10 @@
+[binaries]
+c = 'mipsel-linux-gnu-gcc'
+cpp = 'mipsel-linux-gnu-g++'
+ar = 'mipsel-linux-gnu-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'mipsel'
+cpu = 'mipsel'
+endian = 'little'

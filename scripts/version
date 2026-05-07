@@ -1,6 +1,13 @@
 #!/bin/sh
 set -eu
 
+if [ "${1:-}" = "set-dist" ]; then
+    sed -i "s|^ *version: run_command.*|version: '$2',|" "$MESON_PROJECT_DIST_ROOT/meson.build"
+    # meson rewrite works fine starting with v1.10
+    # meson rewrite --sourcedir="$MESON_PROJECT_DIST_ROOT" kwargs set project / version "$2"
+    exit
+fi
+
 cd "$(dirname "$0")/../"
 test -e .git || exit 1
 

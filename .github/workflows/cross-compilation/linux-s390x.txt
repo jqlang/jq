@@ -1,0 +1,10 @@
+[binaries]
+c = 's390x-linux-gnu-gcc'
+cpp = 's390x-linux-gnu-g++'
+ar = 's390x-linux-gnu-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 's390x'
+cpu = 's390x'
+endian = 'little'

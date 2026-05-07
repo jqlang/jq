@@ -1,0 +1,10 @@
+[binaries]
+c = 'aarch64-linux-gnu-gcc'
+cpp = 'aarch64-linux-gnu-g++'
+ar = 'aarch64-linux-gnu-ar'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'arm64'
+cpu = 'arm64'
+endian = 'little'
