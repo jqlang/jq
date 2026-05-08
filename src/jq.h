@@ -51,6 +51,10 @@ jv jq_get_lib_dirs(jq_state *);
 void jq_set_attr(jq_state *, jv, jv);
 jv jq_get_attr(jq_state *, jv);
 
+void jq_set_known_symbols(jq_state *, jv, jv);
+jv jq_get_known_funcs(jq_state *);
+jv jq_get_known_vars(jq_state *);
+
 /*
  * We use char * instead of jf for filenames here because filenames
  * should be in the process' locale's codeset, which may not be UTF-8,

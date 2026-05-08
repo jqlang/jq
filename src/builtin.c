@@ -28,6 +28,7 @@
 #endif
 #include "builtin.h"
 #include "compile.h"
+#include "jq.h"
 #include "jq_parser.h"
 #include "bytecode.h"
 #include "linker.h"
@@ -2104,6 +2105,10 @@ int builtins_bind(jq_state *jq, block* bb) {
   builtins = bind_bytecoded_builtins(builtins);
   builtins = gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), builtins);
   builtins = gen_builtin_list(builtins);
+
+  // Collect all function names before block_bind_referenced discards unreferenced ones
+  jv all_funcs = block_list_funcs(builtins, 0);
+  jq_set_known_symbols(jq, all_funcs, jv_array());
 
   *bb = block_bind_referenced(builtins, *bb, OP_IS_CALL_PSEUDO);
   return nerrors;

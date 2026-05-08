@@ -48,6 +48,11 @@ struct jq_state {
   void *debug_cb_data;
   jq_msg_cb stderr_cb;
   void *stderr_cb_data;
+
+  // All known function names ("name/arity") and variable names ("$name"),
+  // collected before block_bind_referenced discards unreferenced builtins
+  jv known_funcs; // jv_array of "name/arity" strings
+  jv known_vars;  // jv_array of "$name" strings
 };
 
 struct closure {
@@ -1086,6 +1091,9 @@ jq_state *jq_init(void) {
   jq->path = jv_null();
   jq->value_at_path = jv_null();
 
+  jq->known_funcs = jv_array();
+  jq->known_vars = jv_array();
+
   jq->nomem_handler = NULL;
   jq->nomem_handler_data = NULL;
   return jq;
@@ -1138,6 +1146,8 @@ void jq_teardown(jq_state **jq) {
   bytecode_free(old_jq->bc);
   old_jq->bc = 0;
   jv_free(old_jq->attrs);
+  jv_free(old_jq->known_funcs);
+  jv_free(old_jq->known_vars);
 
   jv_mem_free(old_jq);
 }
@@ -1286,6 +1296,21 @@ void jq_set_attr(jq_state *jq, jv attr, jv val) {
 
 jv jq_get_attr(jq_state *jq, jv attr) {
   return jv_object_get(jv_copy(jq->attrs), attr);
+}
+
+void jq_set_known_symbols(jq_state *jq, jv funcs, jv vars) {
+  jv_free(jq->known_funcs);
+  jv_free(jq->known_vars);
+  jq->known_funcs = funcs;
+  jq->known_vars = vars;
+}
+
+jv jq_get_known_funcs(jq_state *jq) {
+  return jv_copy(jq->known_funcs);
+}
+
+jv jq_get_known_vars(jq_state *jq) {
+  return jv_copy(jq->known_vars);
 }
 
 void jq_dump_disassembly(jq_state *jq, int indent) {
