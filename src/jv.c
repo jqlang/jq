@@ -896,16 +896,20 @@ static jv* jvp_array_write(jv* a, int i) {
   }
 }
 
-static int jvp_array_equal(jv a, jv b) {
+static int jvp_equal(jv a, jv b, int depth);
+
+static int jvp_array_equal(jv a, jv b, int depth) {
   if (jvp_array_length(a) != jvp_array_length(b))
     return 0;
   if (jvp_array_ptr(a) == jvp_array_ptr(b) &&
       jvp_array_offset(a) == jvp_array_offset(b))
     return 1;
   for (int i=0; i<jvp_array_length(a); i++) {
-    if (!jv_equal(jv_copy(*jvp_array_read(a, i)),
-                  jv_copy(*jvp_array_read(b, i))))
-      return 0;
+    int r = jvp_equal(jv_copy(*jvp_array_read(a, i)),
+                      jv_copy(*jvp_array_read(b, i)),
+                      depth);
+    if (r <= 0)
+      return r;
   }
   return 1;
 }
@@ -1055,7 +1059,14 @@ jv jv_array_indexes(jv a, jv b) {
   int alen = jv_array_length(jv_copy(a));
   for (int ai = 0; ai < alen; ++ai) {
     jv_array_foreach(b, bi, belem) {
-      if (!jv_equal(jv_array_get(jv_copy(a), ai + bi), belem))
+      int equal = jv_equal(jv_array_get(jv_copy(a), ai + bi), belem);
+      if (equal < 0) {
+        jv_free(res);
+        jv_free(a);
+        jv_free(b);
+        return jv_invalid_with_msg(jv_string("Equality check too deep"));
+      }
+      if (!equal)
         idx = -1;
       else if (bi == 0 && idx == -1)
         idx = ai;
@@ -1799,7 +1810,7 @@ static int jvp_object_length(jv object) {
   return n;
 }
 
-static int jvp_object_equal(jv o1, jv o2) {
+static int jvp_object_equal(jv o1, jv o2, int depth) {
   int len2 = jvp_object_length(o2);
   int len1 = 0;
   for (int i=0; i<jvp_object_size(o1); i++) {
@@ -1808,7 +1819,8 @@ static int jvp_object_equal(jv o1, jv o2) {
     jv* slot2 = jvp_object_read(o2, slot->string);
     if (!slot2) return 0;
     // FIXME: do less refcounting here
-    if (!jv_equal(jv_copy(slot->value), jv_copy(*slot2))) return 0;
+    int r = jvp_equal(jv_copy(slot->value), jv_copy(*slot2), depth);
+    if (r <= 0) return r;
     len1++;
   }
   return len1 == len2;
@@ -2067,7 +2079,16 @@ int jv_get_refcnt(jv j) {
  * Higher-level operations
  */
 
-int jv_equal(jv a, jv b) {
+#ifndef MAX_EQUAL_DEPTH
+#define MAX_EQUAL_DEPTH (10000)
+#endif
+
+static int jvp_equal(jv a, jv b, int depth) {
+  if (depth > MAX_EQUAL_DEPTH) {
+    jv_free(a);
+    jv_free(b);
+    return -1;
+  }
   int r;
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
@@ -2083,13 +2104,13 @@ int jv_equal(jv a, jv b) {
       r = jvp_number_equal(a, b);
       break;
     case JV_KIND_ARRAY:
-      r = jvp_array_equal(a, b);
+      r = jvp_array_equal(a, b, depth + 1);
       break;
     case JV_KIND_STRING:
       r = jvp_string_equal(a, b);
       break;
     case JV_KIND_OBJECT:
-      r = jvp_object_equal(a, b);
+      r = jvp_object_equal(a, b, depth + 1);
       break;
     default:
       r = 1;
@@ -2099,6 +2120,11 @@ int jv_equal(jv a, jv b) {
   jv_free(a);
   jv_free(b);
   return r;
+}
+
+// Returns 1 if equal, 0 if not equal, or -1 if the comparison is too deep
+int jv_equal(jv a, jv b) {
+  return jvp_equal(a, b, 0);
 }
 
 int jv_identical(jv a, jv b) {
