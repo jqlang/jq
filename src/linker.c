@@ -93,6 +93,10 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv jq_origin, jv 
 // in between).
 static jv validate_relpath(jv name) {
   const char *s = jv_string_value(name);
+  if (strlen(s) != (size_t)jv_string_length_bytes(jv_copy(name))) {
+    jv_free(name);
+    return jv_invalid_with_msg(jv_string("Module path contains a NUL byte"));
+  }
   if (strchr(s, '\\')) {
     jv res = jv_invalid_with_msg(jv_string_fmt("Modules must be named by relative paths using '/', not '\\' (%s)", s));
     jv_free(name);
@@ -425,7 +429,7 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   jv home = get_home();
   if (jv_is_valid(home)) {
     /* Import ~/.jq as a library named "" found in $HOME or %USERPROFILE% */
-    block import = gen_import_meta(gen_import("", NULL, 0),
+    block import = gen_import_meta(gen_import(jv_string(""), jv_invalid(), 0),
         gen_const(JV_OBJECT(
             jv_string("optional"), jv_true(),
             jv_string("search"), home)));

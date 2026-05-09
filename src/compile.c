@@ -525,13 +525,17 @@ jv block_module_meta(block b) {
   return jv_null();
 }
 
-block gen_import(const char* name, const char* as, int is_data) {
+block gen_import(jv name, jv as, int is_data) {
+  assert(jv_get_kind(name) == JV_KIND_STRING);
+  assert(!jv_is_valid(as) || jv_get_kind(as) == JV_KIND_STRING);
   inst* i = inst_new(DEPS);
   jv meta = jv_object();
-  if (as != NULL)
-    meta = jv_object_set(meta, jv_string("as"), jv_string(as));
+  if (jv_is_valid(as))
+    meta = jv_object_set(meta, jv_string("as"), as);
+  else
+    jv_free(as);
   meta = jv_object_set(meta, jv_string("is_data"), is_data ? jv_true() : jv_false());
-  meta = jv_object_set(meta, jv_string("relpath"), jv_string(name));
+  meta = jv_object_set(meta, jv_string("relpath"), name);
   i->imm.constant = meta;
   return inst_block(i);
 }

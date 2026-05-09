@@ -893,4 +893,21 @@ if echo '42' | $JQ -f "$d/nul_prog.jq" >/dev/null 2>/dev/null; then
   exit 1
 fi
 
+# CVE-2026-43895: No NUL bytes in module/data import paths
+printf 'import "a\\u0000b" as $x; .' > "$d/nul_import.jq"
+if $JQ -nf "$d/nul_import.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for import path with NUL bytes\n' 1>&2
+  exit 1
+fi
+printf 'include "a\\u0000b"; .' > "$d/nul_include.jq"
+if $JQ -nf "$d/nul_include.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for include path with NUL bytes\n' 1>&2
+  exit 1
+fi
+printf '"a\\u0000b" | modulemeta' > "$d/nul_modulemeta.jq"
+if $JQ -nf "$d/nul_modulemeta.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for modulemeta with NUL bytes\n' 1>&2
+  exit 1
+fi
+
 exit 0
