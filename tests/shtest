@@ -382,15 +382,38 @@ if ! HOME="$mods/home2" $VALGRIND $Q $JQ -n 'include "g"; empty'; then
     exit 1
 fi
 
+(
 cd "$JQBASEDIR" # so that relative library paths are guaranteed correct
 if ! $VALGRIND $Q $JQ -L ./tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
     echo "Issue #817 regression?" 1>&2
     exit 1
 fi
+)
 
+(
 cd "$JQBASEDIR"
 if ! $VALGRIND $Q $JQ -L tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
     echo "Issue #817 regression?" 1>&2
+    exit 1
+fi
+)
+
+# CVE-2026-44777: Circular imports should be detected
+if $VALGRIND $JQ -L "$mods" -ne 'import "cycle_a" as a; null' 2> $d/out; then
+    echo "Mutual import should be rejected" 1>&2
+    exit 1
+fi
+if ! grep -q "circular import" $d/out; then
+    echo "Expected circular import error" 1>&2
+    exit 1
+fi
+
+if $VALGRIND $JQ -L "$mods" -ne 'import "cycle_self" as s; null' 2> $d/out; then
+    echo "Self import should be rejected" 1>&2
+    exit 1
+fi
+if ! grep -q "circular import" $d/out; then
+    echo "Expected circular import error" 1>&2
     exit 1
 fi
 
