@@ -454,6 +454,32 @@ jv jv_getpath(jv root, jv path) {
 
 // assumes paths is a sorted array of arrays
 static jv delpaths_sorted(jv object, jv paths, int start) {
+  // Resolve negative array indices against the array length, the way jv_get does at
+  // non-leaf levels and jv_dels at the leaf, so paths reaching the same element via a
+  // positive or a negative index are grouped and reconciled together.
+  if (jv_get_kind(object) == JV_KIND_ARRAY) {
+    int len = jv_array_length(jv_copy(object));
+    int resort = 0;
+    for (int i=0; i<jv_array_length(jv_copy(paths)); i++) {
+      jv path = jv_array_get(jv_copy(paths), i);
+      int leaf = jv_array_length(jv_copy(path)) == start + 1;
+      jv key = jv_array_get(jv_copy(path), start);
+      double didx = jv_get_kind(key) == JV_KIND_NUMBER && !jvp_number_is_nan(key) ? jv_number_value(key) : 0;
+      jv_free(key);
+      if (didx < INT_MIN) didx = INT_MIN;
+      if (didx > INT_MAX) didx = INT_MAX;
+      int idx = (int)didx;
+      if (leaf ? didx < 0 : idx < 0) idx += len;
+      if (idx >= 0 && idx < len && didx != idx) {
+        paths = jv_array_set(paths, i, jv_array_set(path, start, jv_number(idx)));
+        resort = 1;
+        continue;
+      }
+      jv_free(path);
+    }
+    if (resort)
+      paths = jv_sort(paths, jv_copy(paths));
+  }
   jv delkeys = jv_array();
   for (int i=0; i<jv_array_length(jv_copy(paths));) {
     assert(jv_array_length(jv_array_get(jv_copy(paths), i)) > start);
