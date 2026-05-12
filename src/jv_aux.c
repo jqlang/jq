@@ -16,6 +16,18 @@ static double jv_number_get_value_and_consume(jv number) {
   return value;
 }
 
+static int jv_number_value_is_valid_array_index(jv number) {
+  double value = jv_number_value(number);
+  return isfinite(value);
+}
+
+static int jv_number_get_int_clamped_and_consume(jv number) {
+  double value = jv_number_get_value_and_consume(number);
+  if (value < INT_MIN) value = INT_MIN;
+  if (value > INT_MAX) value = INT_MAX;
+  return (int)value;
+}
+
 static jv parse_slice(jv j, jv slice, int* pstart, int* pend) {
   // Array slices
   jv start_jv = jv_object_get(jv_copy(slice), jv_string("start"));
@@ -242,11 +254,11 @@ jv jv_has(jv t, jv k) {
     jv_free(elem);
   } else if (jv_get_kind(t) == JV_KIND_ARRAY &&
              jv_get_kind(k) == JV_KIND_NUMBER) {
-    if (jvp_number_is_nan(k)) {
+    if (!jv_number_value_is_valid_array_index(k)) {
       jv_free(t);
       ret = jv_false();
     } else {
-      jv elem = jv_array_get(t, (int)jv_number_value(k));
+      jv elem = jv_array_get(t, jv_number_get_int_clamped_and_consume(jv_copy(k)));
       ret = jv_bool(jv_is_valid(elem));
       jv_free(elem);
     }
@@ -276,7 +288,7 @@ static jv jv_dels(jv t, jv keys) {
     jv starts = jv_array(), ends = jv_array();
     jv_array_foreach(keys, i, key) {
       if (jv_get_kind(key) == JV_KIND_NUMBER) {
-        if (jvp_number_is_nan(key)) {
+        if (!jv_number_value_is_valid_array_index(key)) {
           jv_free(key);
         } else if (jv_number_value(key) < 0) {
           neg_keys = jv_array_append(neg_keys, key);
@@ -309,7 +321,7 @@ static jv jv_dels(jv t, jv keys) {
     for (int i = 0; i < len; ++i) {
       int del = 0;
       while (neg_idx < jv_array_length(jv_copy(neg_keys))) {
-        int delidx = len + (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(neg_keys), neg_idx));
+        int delidx = len + jv_number_get_int_clamped_and_consume(jv_array_get(jv_copy(neg_keys), neg_idx));
         if (i == delidx) {
           del = 1;
         }
@@ -319,7 +331,7 @@ static jv jv_dels(jv t, jv keys) {
         neg_idx++;
       }
       while (nonneg_idx < jv_array_length(jv_copy(nonneg_keys))) {
-        int delidx = (int)jv_number_get_value_and_consume(jv_array_get(jv_copy(nonneg_keys), nonneg_idx));
+        int delidx = jv_number_get_int_clamped_and_consume(jv_array_get(jv_copy(nonneg_keys), nonneg_idx));
         if (i == delidx) {
           del = 1;
         }

@@ -1189,6 +1189,10 @@ del(.[nan])
 [1,2,3]
 [1,2,3]
 
+del(.[infinite])
+[1,2,3]
+[1,2,3]
+
 del(.[nan,nan])
 [1,2,3]
 [1,2,3]
@@ -1731,6 +1735,10 @@ map(has(2))
 [false, true]
 
 has(nan)
+[0,1,2]
+false
+
+has(infinite)
 [0,1,2]
 false
 
