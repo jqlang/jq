@@ -3116,7 +3116,7 @@ Variables are an absolute necessity in most programming languages, but they\'re 
 In most languages, variables are the only means of passing around data\. If you calculate a value, and you want to use it more than once, you\'ll need to store it in a variable\. To pass a value to another part of the program, you\'ll need that part of the program to define a variable (as a function parameter, object member, or whatever) in which to place the data\.
 .
 .P
-It is also possible to define functions in jq, although this is is a feature whose biggest use is defining jq\'s standard library (many jq functions such as \fBmap\fR and \fBselect\fR are in fact written in jq)\.
+It is also possible to define functions in jq, although this is a feature whose biggest use is defining jq\'s standard library (many jq functions such as \fBmap\fR and \fBselect\fR are in fact written in jq)\.
 .
 .P
 jq has reduction operators, which are very powerful but a bit tricky\. Again, these are mostly used internally, to define some useful bits of jq\'s standard library\.
