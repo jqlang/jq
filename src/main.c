@@ -488,7 +488,7 @@ int main(int argc, char* argv[]) {
             die();
           }
           if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1]))) {
-            jv data = jv_load_file(argv[i+2], raw);
+            jv data = jv_load_file(argv[i+2], raw, 0);
             if (!jv_is_valid(data)) {
               data = jv_invalid_get_msg(data);
               fprintf(stderr, "jq: Bad JSON in --%s %s %s: %s\n", which,
@@ -603,7 +603,7 @@ int main(int argc, char* argv[]) {
       exit(2);
     }
 
-    jv data = jv_load_file(program, 1);
+    jv data = jv_load_file(program, 1, 0);
     if (!jv_is_valid(data)) {
       data = jv_invalid_get_msg(data);
       fprintf(stderr, "jq: %s\n", jv_string_value(data));
