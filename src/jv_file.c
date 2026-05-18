@@ -2,7 +2,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,42 +9,19 @@
 #include "jv.h"
 #include "jv_unicode.h"
 
-static int jv_strtofd(const char* decimal) {
-  if(!('0' <= *decimal && *decimal <= '9')) return -1;
-  intmax_t parsed = strtoimax(decimal, (char**)&decimal, 10);
-  int fd = parsed;
-  if(*decimal || fd != parsed) return -1;
-  return fd;
-}
-
-jv jv_load_file(const char* source, int raw, int is_fd) {
+jv jv_load_from_fd(int fd, const char *fd_description, int raw) {
   struct stat sb;
-  int fd;
-  if(is_fd) {
-    fd = jv_strtofd(source);
-    if(fd == -1) {
-      return jv_invalid_with_msg(jv_string_fmt("Not a file descriptor: %s",
-                                               source));
-    }
-  } else {
-    fd = open(source, O_RDONLY);
-    if (fd == -1) {
-      return jv_invalid_with_msg(jv_string_fmt("Could not open %s: %s",
-                                               source,
-                                               strerror(errno)));
-    }
-  }
   if (fstat(fd, &sb) == -1) {
     int staterr = errno;
-    if(!is_fd) close(fd);
-    return jv_invalid_with_msg(jv_string_fmt("Cannot stat %s%s: %s",
-                                             is_fd ? "FD " : "", source,
+    close(fd);
+    return jv_invalid_with_msg(jv_string_fmt("Cannot stat %s: %s",
+                                             fd_description,
                                              strerror(staterr)));
   }
   if (S_ISDIR(sb.st_mode)) {
-    if(!is_fd) close(fd);
-    return jv_invalid_with_msg(jv_string_fmt("Cannot read %s%s: %s",
-                                             is_fd ? "FD " : "", source,
+    close(fd);
+    return jv_invalid_with_msg(jv_string_fmt("Cannot read %s: %s",
+                                             fd_description,
                                              "It's a directory"));
   }
 
@@ -53,9 +29,9 @@ jv jv_load_file(const char* source, int raw, int is_fd) {
   struct jv_parser* parser = NULL;
   jv data;
   if (!file) {
-    if(!is_fd) close(fd);
-    return jv_invalid_with_msg(jv_string_fmt("Could not open %s%s: %s",
-                                             is_fd ? "FD " : "", source,
+    close(fd);
+    return jv_invalid_with_msg(jv_string_fmt("Could not open stream for %s: %s",
+                                             fd_description,
                                              strerror(errno)));
   }
   if (raw) {
@@ -101,8 +77,18 @@ jv jv_load_file(const char* source, int raw, int is_fd) {
   int badread = ferror(file);
   if (fclose(file) != 0 || badread) {
     jv_free(data);
-    return jv_invalid_with_msg(jv_string_fmt("Error reading from %s%s",
-                                             is_fd ? "FD " : "", source));
+    return jv_invalid_with_msg(jv_string_fmt("Error reading from %s",
+                                             fd_description));
   }
   return data;
+}
+
+jv jv_load_file(const char *filename, int raw) {
+  int fd = open(filename, O_RDONLY);
+  if (fd == -1) {
+    return jv_invalid_with_msg(jv_string_fmt("Could not open %s: %s",
+                                             filename,
+                                             strerror(errno)));
+  }
+  return jv_load_from_fd(fd, filename, raw);
 }
