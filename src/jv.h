@@ -249,7 +249,7 @@ jv jv_parse_custom_flags(const char* string, int flags);
 typedef void (*jv_nomem_handler_f)(void *);
 void jv_nomem_handler(jv_nomem_handler_f, void *);
 
-jv jv_load_file(const char *, int);
+jv jv_load_file(const char *, int, int);
 
 typedef struct jv_parser jv_parser;
 jv_parser* jv_parser_new(int);
