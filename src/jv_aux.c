@@ -16,6 +16,24 @@ static double jv_number_get_value_and_consume(jv number) {
   return value;
 }
 
+#ifndef MAX_CMP_DEPTH
+#define MAX_CMP_DEPTH (10000)
+#endif
+
+struct sort_cmp_state {
+  int too_deep;
+};
+
+#ifdef _MSC_VER
+static __declspec(thread) struct sort_cmp_state sort_cmp_state;
+#else
+#ifdef HAVE___THREAD
+static __thread struct sort_cmp_state sort_cmp_state;
+#else
+static struct sort_cmp_state sort_cmp_state;
+#endif
+#endif
+
 static jv parse_slice(jv j, jv slice, int* pstart, int* pend) {
   // Array slices
   jv start_jv = jv_object_get(jv_copy(slice), jv_string("start"));
@@ -463,7 +481,7 @@ static jv delpaths_sorted(jv object, jv paths, int start) {
     do
       j++;
     while (j < jv_array_length(jv_copy(paths)) &&
-           jv_equal(jv_copy(key), jv_array_get(jv_array_get(jv_copy(paths), j), start)));
+           jv_equal(jv_copy(key), jv_array_get(jv_array_get(jv_copy(paths), j), start)) == 1);
     // if i <= entry < j, then entry starts with key
     if (delkey) {
       // deleting this entire key, we don't care about any more specific deletions
@@ -597,7 +615,13 @@ jv jv_keys(jv x) {
   }
 }
 
-int jv_cmp(jv a, jv b) {
+static int jvp_cmp(jv a, jv b, int depth) {
+  if (depth > MAX_CMP_DEPTH) {
+    jv_free(a);
+    jv_free(b);
+    return INT_MIN;
+  }
+
   if (jv_get_kind(a) != jv_get_kind(b)) {
     int r = (int)jv_get_kind(a) - (int)jv_get_kind(b);
     jv_free(a);
@@ -612,14 +636,13 @@ int jv_cmp(jv a, jv b) {
   case JV_KIND_FALSE:
   case JV_KIND_TRUE:
     // there's only one of each of these values
-    r = 0;
     break;
 
   case JV_KIND_NUMBER: {
     if (jvp_number_is_nan(a)) {
-      r = jv_cmp(jv_null(), jv_copy(b));
+      r = jvp_cmp(jv_null(), jv_copy(b), depth);
     } else if (jvp_number_is_nan(b)) {
-      r = jv_cmp(jv_copy(a), jv_null());
+      r = jvp_cmp(jv_copy(a), jv_null(), depth);
     } else {
       r = jvp_number_cmp(a, b);
     }
@@ -643,7 +666,9 @@ int jv_cmp(jv a, jv b) {
       }
       jv xa = jv_array_get(jv_copy(a), i);
       jv xb = jv_array_get(jv_copy(b), i);
-      r = jv_cmp(xa, xb);
+      r = jvp_cmp(xa, xb, depth + 1);
+      if (r == INT_MIN)
+        break;
       i++;
     }
     break;
@@ -652,13 +677,14 @@ int jv_cmp(jv a, jv b) {
   case JV_KIND_OBJECT: {
     jv keys_a = jv_keys(jv_copy(a));
     jv keys_b = jv_keys(jv_copy(b));
-    r = jv_cmp(jv_copy(keys_a), keys_b);
+    r = jvp_cmp(jv_copy(keys_a), keys_b, depth + 1);
     if (r == 0) {
       jv_array_foreach(keys_a, i, key) {
         jv xa = jv_object_get(jv_copy(a), jv_copy(key));
         jv xb = jv_object_get(jv_copy(b), key);
-        r = jv_cmp(xa, xb);
-        if (r) break;
+        r = jvp_cmp(xa, xb, depth + 1);
+        if (r != 0)
+          break;
       }
     }
     jv_free(keys_a);
@@ -671,6 +697,11 @@ int jv_cmp(jv a, jv b) {
   return r;
 }
 
+// Returns <0, 0, >0 if a is less than, equal to, or greater than b, or
+// INT_MIN if the comparison is too deep
+int jv_cmp(jv a, jv b) {
+  return jvp_cmp(a, b, 0);
+}
 
 struct sort_entry {
   jv object;
@@ -678,19 +709,32 @@ struct sort_entry {
   int index;
 };
 
+static void sort_entry_array_free(struct sort_entry* entries, int start, int n) {
+  for (int i = start; i < n; i++) {
+    jv_free(entries[i].key);
+    jv_free(entries[i].object);
+  }
+  jv_mem_free(entries);
+}
+
 static int sort_cmp(const void* pa, const void* pb) {
   const struct sort_entry* a = pa;
   const struct sort_entry* b = pb;
   int r = jv_cmp(jv_copy(a->key), jv_copy(b->key));
+  if (r == INT_MIN) {
+    sort_cmp_state.too_deep = 1;
+    return 0;
+  }
   // comparing by index if r == 0 makes the sort stable
   return r ? r : (a->index - b->index);
 }
 
-static struct sort_entry* sort_items(jv objects, jv keys) {
+static struct sort_entry* sort_items(jv objects, jv keys, int *too_deep) {
   assert(jv_get_kind(objects) == JV_KIND_ARRAY);
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
   int n = jv_array_length(jv_copy(objects));
+  *too_deep = 0;
   if (n == 0) {
     jv_free(objects);
     jv_free(keys);
@@ -704,7 +748,13 @@ static struct sort_entry* sort_items(jv objects, jv keys) {
   }
   jv_free(objects);
   jv_free(keys);
+  sort_cmp_state.too_deep = 0;
   qsort(entries, n, sizeof(struct sort_entry), sort_cmp);
+  if (sort_cmp_state.too_deep) {
+    sort_entry_array_free(entries, 0, n);
+    *too_deep = 1;
+    return NULL;
+  }
   return entries;
 }
 
@@ -713,7 +763,10 @@ jv jv_sort(jv objects, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
   int n = jv_array_length(jv_copy(objects));
-  struct sort_entry* entries = sort_items(objects, keys);
+  int too_deep = 0;
+  struct sort_entry* entries = sort_items(objects, keys, &too_deep);
+  if (too_deep)
+    return jv_invalid_with_msg(jv_string("Comparison too deep"));
   jv ret = jv_array();
   for (int i=0; i<n; i++) {
     jv_free(entries[i].key);
@@ -728,13 +781,24 @@ jv jv_group(jv objects, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
   int n = jv_array_length(jv_copy(objects));
-  struct sort_entry* entries = sort_items(objects, keys);
+  int too_deep = 0;
+  struct sort_entry* entries = sort_items(objects, keys, &too_deep);
+  if (too_deep)
+    return jv_invalid_with_msg(jv_string("Comparison too deep"));
   jv ret = jv_array();
   if (n > 0) {
     jv curr_key = entries[0].key;
     jv group = jv_array_append(jv_array(), entries[0].object);
     for (int i = 1; i < n; i++) {
-      if (jv_equal(jv_copy(curr_key), jv_copy(entries[i].key))) {
+      int equal = jv_equal(jv_copy(curr_key), jv_copy(entries[i].key));
+      if (equal < 0) {
+        jv_free(curr_key);
+        jv_free(group);
+        sort_entry_array_free(entries, i, n);
+        jv_free(ret);
+        return jv_invalid_with_msg(jv_string("Equality check too deep"));
+      }
+      if (equal) {
         jv_free(entries[i].key);
       } else {
         jv_free(curr_key);
@@ -756,11 +820,21 @@ jv jv_unique(jv objects, jv keys) {
   assert(jv_get_kind(keys) == JV_KIND_ARRAY);
   assert(jv_array_length(jv_copy(objects)) == jv_array_length(jv_copy(keys)));
   int n = jv_array_length(jv_copy(objects));
-  struct sort_entry* entries = sort_items(objects, keys);
+  int too_deep = 0;
+  struct sort_entry* entries = sort_items(objects, keys, &too_deep);
+  if (too_deep)
+    return jv_invalid_with_msg(jv_string("Comparison too deep"));
   jv ret = jv_array();
   jv curr_key = jv_invalid();
   for (int i = 0; i < n; i++) {
-    if (jv_equal(jv_copy(curr_key), jv_copy(entries[i].key))) {
+    int equal = jv_equal(jv_copy(curr_key), jv_copy(entries[i].key));
+    if (equal < 0) {
+      jv_free(curr_key);
+      sort_entry_array_free(entries, i, n);
+      jv_free(ret);
+      return jv_invalid_with_msg(jv_string("Equality check too deep"));
+    }
+    if (equal) {
       jv_free(entries[i].key);
       jv_free(entries[i].object);
     } else {

@@ -297,7 +297,15 @@ jv binop_minus(jv a, jv b) {
     jv_array_foreach(a, i, x) {
       int include = 1;
       jv_array_foreach(b, j, y) {
-        if (jv_equal(jv_copy(x), y)) {
+        int equal = jv_equal(jv_copy(x), y);
+        if (equal < 0) {
+          jv_free(out);
+          jv_free(x);
+          jv_free(a);
+          jv_free(b);
+          return jv_invalid_with_msg(jv_string("Equality check too deep"));
+        }
+        if (equal) {
           include = 0;
           break;
         }
@@ -381,11 +389,17 @@ jv binop_mod(jv a, jv b) {
 #undef dtoi
 
 jv binop_equal(jv a, jv b) {
-  return jv_bool(jv_equal(a, b));
+  int r = jv_equal(a, b);
+  if (r < 0)
+    return jv_invalid_with_msg(jv_string("Equality check too deep"));
+  return jv_bool(r);
 }
 
 jv binop_notequal(jv a, jv b) {
-  return jv_bool(!jv_equal(a, b));
+  int r = jv_equal(a, b);
+  if (r < 0)
+    return jv_invalid_with_msg(jv_string("Equality check too deep"));
+  return jv_bool(!r);
 }
 
 enum cmp_op {
@@ -397,6 +411,8 @@ enum cmp_op {
 
 static jv order_cmp(jv a, jv b, enum cmp_op op) {
   int r = jv_cmp(a, b);
+  if (r == INT_MIN)
+    return jv_invalid_with_msg(jv_string("Comparison too deep"));
   return jv_bool((op == CMP_OP_LESS && r < 0) ||
                  (op == CMP_OP_LESSEQ && r <= 0) ||
                  (op == CMP_OP_GREATEREQ && r >= 0) ||
@@ -868,6 +884,12 @@ static jv f_bsearch(jq_state *jq, jv input, jv target) {
   while (start < end) {
     int mid = start + (end - start) / 2;
     int result = jv_cmp(jv_copy(target), jv_array_get(jv_copy(input), mid));
+    if (result == INT_MIN) {
+      jv_free(answer);
+      jv_free(input);
+      jv_free(target);
+      return jv_invalid_with_msg(jv_string("Comparison too deep"));
+    }
     if (result == 0) {
       answer = jv_number(mid);
       break;
@@ -1159,6 +1181,14 @@ static jv minmax_by(jv values, jv keys, int is_min) {
   for (int i=1; i<jv_array_length(jv_copy(values)); i++) {
     jv item = jv_array_get(jv_copy(keys), i);
     int cmp = jv_cmp(jv_copy(item), jv_copy(retkey));
+    if (cmp == INT_MIN) {
+      jv_free(item);
+      jv_free(values);
+      jv_free(keys);
+      jv_free(retkey);
+      jv_free(ret);
+      return jv_invalid_with_msg(jv_string("Comparison too deep"));
+    }
     if ((cmp < 0) == (is_min == 1)) {
       jv_free(retkey);
       retkey = item;
