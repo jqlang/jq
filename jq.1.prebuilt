@@ -307,31 +307,31 @@ The examples below use the builtin function \fBhave_decnum\fR in order to demons
 .
 .nf
 
-jq \'\.\'
+jq \(aq\.\(aq
    "Hello, world!"
 => "Hello, world!"
 
-jq \'\.\'
+jq \(aq\.\(aq
    0\.12345678901234567890123456789
 => 0\.12345678901234567890123456789
 
-jq \'[\., tojson] == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end\'
+jq \(aq[\., tojson] == if have_decnum then [12345678909876543212345,"12345678909876543212345"] else [12345678909876543000000,"12345678909876543000000"] end\(aq
    12345678909876543212345
 => true
 
-jq \'[1234567890987654321,\-1234567890987654321 | tojson] == if have_decnum then ["1234567890987654321","\-1234567890987654321"] else ["1234567890987654400","\-1234567890987654400"] end\'
+jq \(aq[1234567890987654321,\-1234567890987654321 | tojson] == if have_decnum then ["1234567890987654321","\-1234567890987654321"] else ["1234567890987654400","\-1234567890987654400"] end\(aq
    null
 => true
 
-jq \'\. < 0\.12345678901234567890123456788\'
+jq \(aq\. < 0\.12345678901234567890123456788\(aq
    0\.12345678901234567890123456789
 => false
 
-jq \'map([\., \. == 1]) | tojson == if have_decnum then "[[1,true],[1\.000,true],[1\.0,true],[1\.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end\'
+jq \(aqmap([\., \. == 1]) | tojson == if have_decnum then "[[1,true],[1\.000,true],[1\.0,true],[1\.00,true]]" else "[[1,true],[1,true],[1,true],[1,true]]" end\(aq
    [1, 1\.000, 1\.0, 100e\-2]
 => true
 
-jq \'\. as $big | [$big, $big + 1] | map(\. > 10000000000000000000000000000000) | \. == if have_decnum then [true, false] else [false, false] end\'
+jq \(aq\. as $big | [$big, $big + 1] | map(\. > 10000000000000000000000000000000) | \. == if have_decnum then [true, false] else [false, false] end\(aq
    10000000000000000000000000000001
 => true
 .
@@ -358,15 +358,15 @@ For example \fB\.["foo::bar"]\fR and \fB\.["foo\.bar"]\fR work while \fB\.foo::b
 .
 .nf
 
-jq \'\.foo\'
+jq \(aq\.foo\(aq
    {"foo": 42, "bar": "less interesting data"}
 => 42
 
-jq \'\.foo\'
+jq \(aq\.foo\(aq
    {"notfoo": true, "alsonotfoo": false}
 => null
 
-jq \'\.["foo"]\'
+jq \(aq\.["foo"]\(aq
    {"foo": 42}
 => 42
 .
@@ -381,19 +381,19 @@ Just like \fB\.foo\fR, but does not output an error when \fB\.\fR is not an obje
 .
 .nf
 
-jq \'\.foo?\'
+jq \(aq\.foo?\(aq
    {"foo": 42, "bar": "less interesting data"}
 => 42
 
-jq \'\.foo?\'
+jq \(aq\.foo?\(aq
    {"notfoo": true, "alsonotfoo": false}
 => null
 
-jq \'\.["foo"]?\'
+jq \(aq\.["foo"]?\(aq
    {"foo": 42}
 => 42
 
-jq \'[\.foo?]\'
+jq \(aq[\.foo?]\(aq
    [1,2]
 => []
 .
@@ -414,15 +414,15 @@ Negative indices are allowed, with \-1 referring to the last element, \-2 referr
 .
 .nf
 
-jq \'\.[0]\'
+jq \(aq\.[0]\(aq
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
 => {"name":"JSON", "good":true}
 
-jq \'\.[2]\'
+jq \(aq\.[2]\(aq
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
 => null
 
-jq \'\.[\-2]\'
+jq \(aq\.[\-2]\(aq
    [1,2,3]
 => 2
 .
@@ -437,19 +437,19 @@ The \fB\.[<number>:<number>]\fR syntax can be used to return a subarray of an ar
 .
 .nf
 
-jq \'\.[2:4]\'
+jq \(aq\.[2:4]\(aq
    ["a","b","c","d","e"]
 => ["c", "d"]
 
-jq \'\.[2:4]\'
+jq \(aq\.[2:4]\(aq
    "abcdefghi"
 => "cd"
 
-jq \'\.[:3]\'
+jq \(aq\.[:3]\(aq
    ["a","b","c","d","e"]
 => ["a", "b", "c"]
 
-jq \'\.[\-2:]\'
+jq \(aq\.[\-2:]\(aq
    ["a","b","c","d","e"]
 => ["d", "e"]
 .
@@ -470,19 +470,19 @@ Note that the iterator operator is a generator of values\.
 .
 .nf
 
-jq \'\.[]\'
+jq \(aq\.[]\(aq
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
 => {"name":"JSON", "good":true}, {"name":"XML", "good":false}
 
-jq \'\.[]\'
+jq \(aq\.[]\(aq
    []
 => 
 
-jq \'\.foo[]\'
+jq \(aq\.foo[]\(aq
    {"foo":[1,2,3]}
 => 1, 2, 3
 
-jq \'\.[]\'
+jq \(aq\.[]\(aq
    {"a": 1, "b": 1}
 => 1, 1
 .
@@ -503,15 +503,15 @@ The \fB,\fR operator is one way to construct generators\.
 .
 .nf
 
-jq \'\.foo, \.bar\'
+jq \(aq\.foo, \.bar\(aq
    {"foo": 42, "bar": "something else", "baz": true}
 => 42, "something else"
 
-jq \'\.user, \.projects[]\'
+jq \(aq\.user, \.projects[]\(aq
    {"user":"stedolan", "projects": ["jq", "wikiflow"]}
 => "stedolan", "jq", "wikiflow"
 
-jq \'\.[4,2]\'
+jq \(aq\.[4,2]\(aq
    ["a","b","c","d","e"]
 => "e", "c"
 .
@@ -535,7 +535,7 @@ Note too that \fB\.\fR is the input value at the particular stage in a "pipeline
 .
 .nf
 
-jq \'\.[] | \.name\'
+jq \(aq\.[] | \.name\(aq
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
 => "JSON", "XML"
 .
@@ -550,7 +550,7 @@ Parenthesis work as a grouping operator just as in any typical programming langu
 .
 .nf
 
-jq \'(\. + 2) * 5\'
+jq \(aq(\. + 2) * 5\(aq
    1
 => 15
 .
@@ -583,11 +583,11 @@ If you have a filter \fBX\fR that produces four results, then the expression \fB
 .
 .nf
 
-jq \'[\.user, \.projects[]]\'
+jq \(aq[\.user, \.projects[]]\(aq
    {"user":"stedolan", "projects": ["jq", "wikiflow"]}
 => ["stedolan", "jq", "wikiflow"]
 
-jq \'[ \.[] | \. * 2]\'
+jq \(aq[ \.[] | \. * 2]\(aq
    [1, 2, 3]
 => [2, 4, 6]
 .
@@ -718,11 +718,11 @@ produces
 
 {"foo":"f o o","b a r":"f o o"}
 
-jq \'{user, title: \.titles[]}\'
+jq \(aq{user, title: \.titles[]}\(aq
    {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
 => {"user":"stedolan", "title": "JQ Primer"}, {"user":"stedolan", "title": "More JQ"}
 
-jq \'{(\.user): \.titles}\'
+jq \(aq{(\.user): \.titles}\(aq
    {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
 => {"stedolan": ["JQ Primer", "More JQ"]}
 .
@@ -740,7 +740,7 @@ This is particularly useful in conjunction with \fBpath(EXP)\fR (also see below)
 .
 .nf
 
-jq \'\.\. | \.a?\'
+jq \(aq\.\. | \.a?\(aq
    [[{"a":1}]]
 => 1
 .
@@ -781,23 +781,23 @@ The operator \fB+\fR takes two filters, applies them both to the same input, and
 .
 .nf
 
-jq \'\.a + 1\'
+jq \(aq\.a + 1\(aq
    {"a": 7}
 => 8
 
-jq \'\.a + \.b\'
+jq \(aq\.a + \.b\(aq
    {"a": [1,2], "b": [3,4]}
 => [1,2,3,4]
 
-jq \'\.a + null\'
+jq \(aq\.a + null\(aq
    {"a": 1}
 => 1
 
-jq \'\.a + 1\'
+jq \(aq\.a + 1\(aq
    {}
 => 1
 
-jq \'{a: 1} + {b: 2} + {c: 3} + {a: 42}\'
+jq \(aq{a: 1} + {b: 2} + {c: 3} + {a: 42}\(aq
    null
 => {"a": 42, "b": 2, "c": 3}
 .
@@ -812,11 +812,11 @@ As well as normal arithmetic subtraction on numbers, the \fB\-\fR operator can b
 .
 .nf
 
-jq \'4 \- \.a\'
+jq \(aq4 \- \.a\(aq
    {"a":3}
 => 1
 
-jq \'\. \- ["xml", "yaml"]\'
+jq \(aq\. \- ["xml", "yaml"]\(aq
    ["xml", "yaml", "json"]
 => ["json"]
 .
@@ -840,19 +840,19 @@ Multiplying two objects will merge them recursively: this works like addition bu
 .
 .nf
 
-jq \'10 / \. * 3\'
+jq \(aq10 / \. * 3\(aq
    5
 => 6
 
-jq \'\. / ", "\'
+jq \(aq\. / ", "\(aq
    "a, b,c,d, e"
 => ["a","b,c,d","e"]
 
-jq \'{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}\'
+jq \(aq{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}\(aq
    null
 => {"k": {"a": 0, "b": 2, "c": 3}}
 
-jq \'\.[] | (1 / \.)?\'
+jq \(aq\.[] | (1 / \.)?\(aq
    [1,0,\-1]
 => 1, \-1
 .
@@ -873,7 +873,7 @@ To compute the absolute value of a number as a floating point number, you may wi
 .
 .nf
 
-jq \'map(abs)\'
+jq \(aqmap(abs)\(aq
    [\-10, \-1\.1, \-1e\-1]
 => [10,1\.1,1e\-1]
 .
@@ -906,7 +906,7 @@ It is an error to use \fBlength\fR on a \fBboolean\fR\.
 .
 .nf
 
-jq \'\.[] | length\'
+jq \(aq\.[] | length\(aq
    [[1,2], "string", {"a":2}, null, \-5]
 => 2, 6, 1, 0, 5
 .
@@ -921,7 +921,7 @@ The builtin function \fButf8bytelength\fR outputs the number of bytes used to en
 .
 .nf
 
-jq \'utf8bytelength\'
+jq \(aqutf8bytelength\(aq
    "\eu03bc"
 => 2
 .
@@ -945,11 +945,11 @@ The \fBkeys_unsorted\fR function is just like \fBkeys\fR, but if the input is an
 .
 .nf
 
-jq \'keys\'
+jq \(aqkeys\(aq
    {"abc": 1, "abcd": 2, "Foo": 3}
 => ["Foo", "abc", "abcd"]
 
-jq \'keys\'
+jq \(aqkeys\(aq
    [42,3,35]
 => [0,1,2]
 .
@@ -967,11 +967,11 @@ The builtin function \fBhas\fR returns whether the input object has the given ke
 .
 .nf
 
-jq \'map(has("foo"))\'
+jq \(aqmap(has("foo"))\(aq
    [{"foo": 42}, {}]
 => [true, false]
 
-jq \'map(has(2))\'
+jq \(aqmap(has(2))\(aq
    [[0,1], ["a","b","c"]]
 => [false, true]
 .
@@ -986,11 +986,11 @@ The builtin function \fBin\fR returns whether or not the input key is in the giv
 .
 .nf
 
-jq \'\.[] | in({"foo": 42})\'
+jq \(aq\.[] | in({"foo": 42})\(aq
    ["foo", "bar"]
 => true, false
 
-jq \'map(in([0,1]))\'
+jq \(aqmap(in([0,1]))\(aq
    [2, 0]
 => [false, true]
 .
@@ -1042,19 +1042,19 @@ In fact, these are their implementations\.
 .
 .nf
 
-jq \'map(\.+1)\'
+jq \(aqmap(\.+1)\(aq
    [1,2,3]
 => [2,3,4]
 
-jq \'map_values(\.+1)\'
+jq \(aqmap_values(\.+1)\(aq
    {"a": 1, "b": 2, "c": 3}
 => {"a": 2, "b": 3, "c": 4}
 
-jq \'map(\., \.)\'
+jq \(aqmap(\., \.)\(aq
    [1,2]
 => [1,1,2,2]
 
-jq \'map_values(\. // empty)\'
+jq \(aqmap_values(\. // empty)\(aq
    {"a": null, "b": true, "c": false}
 => {"b":true}
 .
@@ -1069,11 +1069,11 @@ Emit the projection of the input object or array defined by the specified sequen
 .
 .nf
 
-jq \'pick(\.a, \.b\.c, \.x)\'
+jq \(aqpick(\.a, \.b\.c, \.x)\(aq
    {"a": 1, "b": {"c": 2, "d": 3}, "e": 4}
 => {"a":1,"b":{"c":2},"x":null}
 
-jq \'pick(\.[2], \.[0], \.[0])\'
+jq \(aqpick(\.[2], \.[0], \.[0])\(aq
    [1,2,3,4]
 => [1,null,3]
 .
@@ -1100,11 +1100,11 @@ Note that the path expressions are not different from normal expressions\. The e
 .
 .nf
 
-jq \'path(\.a[0]\.b)\'
+jq \(aqpath(\.a[0]\.b)\(aq
    null
 => ["a",0,"b"]
 
-jq \'[path(\.\.)]\'
+jq \(aq[path(\.\.)]\(aq
    {"a":[{"b":1}]}
 => [[],["a"],["a",0],["a",0,"b"]]
 .
@@ -1119,11 +1119,11 @@ The builtin function \fBdel\fR removes a key and its corresponding value from an
 .
 .nf
 
-jq \'del(\.foo)\'
+jq \(aqdel(\.foo)\(aq
    {"foo": 42, "bar": 9001, "baz": 42}
 => {"bar": 9001, "baz": 42}
 
-jq \'del(\.[1, 2])\'
+jq \(aqdel(\.[1, 2])\(aq
    ["foo", "bar", "baz"]
 => ["foo"]
 .
@@ -1138,11 +1138,11 @@ The builtin function \fBgetpath\fR outputs the values in \fB\.\fR found at each 
 .
 .nf
 
-jq \'getpath(["a","b"])\'
+jq \(aqgetpath(["a","b"])\(aq
    null
 => null
 
-jq \'[getpath(["a","b"], ["a","c"])]\'
+jq \(aq[getpath(["a","b"], ["a","c"])]\(aq
    {"a":{"b":0, "c":1}}
 => [0, 1]
 .
@@ -1157,15 +1157,15 @@ The builtin function \fBsetpath\fR sets the \fBPATHS\fR in \fB\.\fR to \fBVALUE\
 .
 .nf
 
-jq \'setpath(["a","b"]; 1)\'
+jq \(aqsetpath(["a","b"]; 1)\(aq
    null
 => {"a": {"b": 1}}
 
-jq \'setpath(["a","b"]; 1)\'
+jq \(aqsetpath(["a","b"]; 1)\(aq
    {"a":{"b":0}}
 => {"a": {"b": 1}}
 
-jq \'setpath([0,"a"]; 1)\'
+jq \(aqsetpath([0,"a"]; 1)\(aq
    null
 => [{"a":1}]
 .
@@ -1180,7 +1180,7 @@ The builtin function \fBdelpaths\fR deletes the \fBPATHS\fR in \fB\.\fR\. \fBPAT
 .
 .nf
 
-jq \'delpaths([["a","b"]])\'
+jq \(aqdelpaths([["a","b"]])\(aq
    {"a":{"b":1},"x":{"y":2}}
 => {"a":{},"x":{"y":2}}
 .
@@ -1198,15 +1198,15 @@ These functions convert between an object and an array of key\-value pairs\. If 
 .
 .nf
 
-jq \'to_entries\'
+jq \(aqto_entries\(aq
    {"a": 1, "b": 2}
 => [{"key":"a", "value":1}, {"key":"b", "value":2}]
 
-jq \'from_entries\'
+jq \(aqfrom_entries\(aq
    [{"key":"a", "value":1}, {"key":"b", "value":2}]
 => {"a": 1, "b": 2}
 
-jq \'with_entries(\.key |= "KEY_" + \.)\'
+jq \(aqwith_entries(\.key |= "KEY_" + \.)\(aq
    {"a": 1, "b": 2}
 => {"KEY_a": 1, "KEY_b": 2}
 .
@@ -1224,11 +1224,11 @@ It\'s useful for filtering lists: \fB[1,2,3] | map(select(\. >= 2))\fR will give
 .
 .nf
 
-jq \'map(select(\. >= 2))\'
+jq \(aqmap(select(\. >= 2))\(aq
    [1,5,3,0,7]
 => [5,3,7]
 
-jq \'\.[] | select(\.id == "second")\'
+jq \(aq\.[] | select(\.id == "second")\(aq
    [{"id": "first", "val": 1}, {"id": "second", "val": 2}]
 => {"id": "second", "val": 2}
 .
@@ -1243,7 +1243,7 @@ These built\-ins select only inputs that are arrays, objects, iterables (arrays 
 .
 .nf
 
-jq \'\.[]|numbers\'
+jq \(aq\.[]|numbers\(aq
    [[],{},1,"foo",null,true,false]
 => 1
 .
@@ -1261,11 +1261,11 @@ It\'s useful on occasion\. You\'ll know if you need it :)
 .
 .nf
 
-jq \'1, empty, 2\'
+jq \(aq1, empty, 2\(aq
    null
 => 1, 2
 
-jq \'[1,2,empty,3]\'
+jq \(aq[1,2,empty,3]\(aq
    null
 => [1,2,3]
 .
@@ -1280,11 +1280,11 @@ Produces an error with the input value, or with the message given as the argumen
 .
 .nf
 
-jq \'try error catch \.\'
+jq \(aqtry error catch \.\(aq
    "error message"
 => "error message"
 
-jq \'try error("invalid value: \e(\.)") catch \.\'
+jq \(aqtry error("invalid value: \e(\.)") catch \.\(aq
    42
 => "invalid value: 42"
 .
@@ -1311,7 +1311,7 @@ Produces an object with a "file" key and a "line" key, with the filename and lin
 .
 .nf
 
-jq \'try error("\e($__loc__)") catch \.\'
+jq \(aqtry error("\e($__loc__)") catch \.\(aq
    null
 => "{\e"file\e":\e"<top\-level>\e",\e"line\e":1}"
 .
@@ -1329,11 +1329,11 @@ jq \'try error("\e($__loc__)") catch \.\'
 .
 .nf
 
-jq \'[paths]\'
+jq \(aq[paths]\(aq
    [1,[[],{"a":2}]]
 => [[0],[1],[1,0],[1,1],[1,1,"a"]]
 
-jq \'[paths(type == "number")]\'
+jq \(aq[paths(type == "number")]\(aq
    [1,[[],{"a":2}]]
 => [[0],[1,1,"a"]]
 .
@@ -1354,19 +1354,19 @@ If the input is an empty array, \fBadd\fR returns \fBnull\fR\.
 .
 .nf
 
-jq \'add\'
+jq \(aqadd\(aq
    ["a","b","c"]
 => "abc"
 
-jq \'add\'
+jq \(aqadd\(aq
    [1, 2, 3]
 => 6
 
-jq \'add\'
+jq \(aqadd\(aq
    []
 => null
 
-jq \'add(\.[]\.a)\'
+jq \(aqadd(\.[]\.a)\(aq
    [{"a":3}, {"a":5}, {"b":6}]
 => 8
 .
@@ -1390,15 +1390,15 @@ The \fBany(generator; condition)\fR form applies the given condition to all the 
 .
 .nf
 
-jq \'any\'
+jq \(aqany\(aq
    [true, false]
 => true
 
-jq \'any\'
+jq \(aqany\(aq
    [false, false]
 => false
 
-jq \'any\'
+jq \(aqany\(aq
    []
 => false
 .
@@ -1422,15 +1422,15 @@ If the input is an empty array, \fBall\fR returns \fBtrue\fR\.
 .
 .nf
 
-jq \'all\'
+jq \(aqall\(aq
    [true, false]
 => false
 
-jq \'all\'
+jq \(aqall\(aq
    [true, true]
 => true
 
-jq \'all\'
+jq \(aqall\(aq
    []
 => true
 .
@@ -1448,19 +1448,19 @@ The filter \fBflatten\fR takes as input an array of nested arrays, and produces 
 .
 .nf
 
-jq \'flatten\'
+jq \(aqflatten\(aq
    [1, [2], [[3]]]
 => [1, 2, 3]
 
-jq \'flatten(1)\'
+jq \(aqflatten(1)\(aq
    [1, [2], [[3]]]
 => [1, 2, [3]]
 
-jq \'flatten\'
+jq \(aqflatten\(aq
    [[]]
 => []
 
-jq \'flatten\'
+jq \(aqflatten\(aq
    [{"foo": "bar"}, [{"foo": "baz"}]]
 => [{"foo": "bar"}, {"foo": "baz"}]
 .
@@ -1484,27 +1484,27 @@ The three argument form generates numbers \fBfrom\fR to \fBupto\fR with an incre
 .
 .nf
 
-jq \'range(2; 4)\'
+jq \(aqrange(2; 4)\(aq
    null
 => 2, 3
 
-jq \'[range(2; 4)]\'
+jq \(aq[range(2; 4)]\(aq
    null
 => [2,3]
 
-jq \'[range(4)]\'
+jq \(aq[range(4)]\(aq
    null
 => [0,1,2,3]
 
-jq \'[range(0; 10; 3)]\'
+jq \(aq[range(0; 10; 3)]\(aq
    null
 => [0,3,6,9]
 
-jq \'[range(0; 10; \-1)]\'
+jq \(aq[range(0; 10; \-1)]\(aq
    null
 => []
 
-jq \'[range(0; \-5; \-1)]\'
+jq \(aq[range(0; \-5; \-1)]\(aq
    null
 => [0,\-1,\-2,\-3,\-4]
 .
@@ -1519,7 +1519,7 @@ The \fBfloor\fR function returns the floor of its numeric input\.
 .
 .nf
 
-jq \'floor\'
+jq \(aqfloor\(aq
    3\.14159
 => 3
 .
@@ -1534,7 +1534,7 @@ The \fBsqrt\fR function returns the square root of its numeric input\.
 .
 .nf
 
-jq \'sqrt\'
+jq \(aqsqrt\(aq
    9
 => 3
 .
@@ -1549,7 +1549,7 @@ The \fBtonumber\fR function parses its input as a number\. It will convert corre
 .
 .nf
 
-jq \'\.[] | tonumber\'
+jq \(aq\.[] | tonumber\(aq
    [1, "1"]
 => 1, 1
 .
@@ -1564,7 +1564,7 @@ The \fBtoboolean\fR function parses its input as a boolean\. It will convert cor
 .
 .nf
 
-jq \'\.[] | toboolean\'
+jq \(aq\.[] | toboolean\(aq
    ["true", "false", true, false]
 => true, false, true, false
 .
@@ -1579,7 +1579,7 @@ The \fBtostring\fR function prints its input as a string\. Strings are left unch
 .
 .nf
 
-jq \'\.[] | tostring\'
+jq \(aq\.[] | tostring\(aq
    [1, "1", [1]]
 => "1", "1", "[1]"
 .
@@ -1594,7 +1594,7 @@ The \fBtype\fR function returns the type of its argument as a string, which is o
 .
 .nf
 
-jq \'map(type)\'
+jq \(aqmap(type)\(aq
    [0, false, [], {}, null, "hello"]
 => ["number", "boolean", "array", "object", "null", "string"]
 .
@@ -1615,11 +1615,11 @@ Currently most arithmetic operations operating on infinities, NaNs, and sub\-nor
 .
 .nf
 
-jq \'\.[] | (infinite * \.) < 0\'
+jq \(aq\.[] | (infinite * \.) < 0\(aq
    [\-1, 1]
 => true, false
 
-jq \'infinite, nan | type\'
+jq \(aqinfinite, nan | type\(aq
    null
 => "number", "number"
 .
@@ -1663,15 +1663,15 @@ The ordering for objects is a little complex: first they\'re compared by compari
 .
 .nf
 
-jq \'sort\'
+jq \(aqsort\(aq
    [8,3,null,6]
 => [null,3,6,8]
 
-jq \'sort_by(\.foo)\'
+jq \(aqsort_by(\.foo)\(aq
    [{"foo":4, "bar":10}, {"foo":3, "bar":10}, {"foo":2, "bar":1}]
 => [{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":4, "bar":10}]
 
-jq \'sort_by(\.foo, \.bar)\'
+jq \(aqsort_by(\.foo, \.bar)\(aq
    [{"foo":4, "bar":10}, {"foo":3, "bar":20}, {"foo":2, "bar":1}, {"foo":3, "bar":10}]
 => [{"foo":2, "bar":1}, {"foo":3, "bar":10}, {"foo":3, "bar":20}, {"foo":4, "bar":10}]
 .
@@ -1689,7 +1689,7 @@ Any jq expression, not just a field access, may be used in place of \fB\.foo\fR\
 .
 .nf
 
-jq \'group_by(\.foo)\'
+jq \(aqgroup_by(\.foo)\(aq
    [{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]
 => [[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]
 .
@@ -1707,11 +1707,11 @@ The \fBmin_by(path_exp)\fR and \fBmax_by(path_exp)\fR functions allow you to spe
 .
 .nf
 
-jq \'min\'
+jq \(aqmin\(aq
    [5,4,2,7]
 => 2
 
-jq \'max_by(\.foo)\'
+jq \(aqmax_by(\.foo)\(aq
    [{"foo":1, "bar":14}, {"foo":2, "bar":3}]
 => {"foo":2, "bar":3}
 .
@@ -1729,15 +1729,15 @@ The \fBunique_by(path_exp)\fR function will keep only one element for each value
 .
 .nf
 
-jq \'unique\'
+jq \(aqunique\(aq
    [1,2,5,3,5,3,1,3]
 => [1,2,3,5]
 
-jq \'unique_by(\.foo)\'
+jq \(aqunique_by(\.foo)\(aq
    [{"foo": 1, "bar": 2}, {"foo": 1, "bar": 3}, {"foo": 4, "bar": 5}]
 => [{"foo": 1, "bar": 2}, {"foo": 4, "bar": 5}]
 
-jq \'unique_by(length)\'
+jq \(aqunique_by(length)\(aq
    ["chunky", "bacon", "kitten", "cicada", "asparagus"]
 => ["bacon", "chunky", "asparagus"]
 .
@@ -1752,7 +1752,7 @@ This function reverses an array\.
 .
 .nf
 
-jq \'reverse\'
+jq \(aqreverse\(aq
    [1,2,3,4]
 => [4,3,2,1]
 .
@@ -1767,23 +1767,23 @@ The filter \fBcontains(b)\fR will produce true if b is completely contained with
 .
 .nf
 
-jq \'contains("bar")\'
+jq \(aqcontains("bar")\(aq
    "foobar"
 => true
 
-jq \'contains(["baz", "bar"])\'
+jq \(aqcontains(["baz", "bar"])\(aq
    ["foobar", "foobaz", "blarp"]
 => true
 
-jq \'contains(["bazzzzz", "bar"])\'
+jq \(aqcontains(["bazzzzz", "bar"])\(aq
    ["foobar", "foobaz", "blarp"]
 => false
 
-jq \'contains({foo: 12, bar: [{barp: 12}]})\'
+jq \(aqcontains({foo: 12, bar: [{barp: 12}]})\(aq
    {"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}
 => true
 
-jq \'contains({foo: 12, bar: [{barp: 15}]})\'
+jq \(aqcontains({foo: 12, bar: [{barp: 15}]})\(aq
    {"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]}
 => false
 .
@@ -1798,15 +1798,15 @@ Outputs an array containing the indices in \fB\.\fR where \fBs\fR occurs\. The i
 .
 .nf
 
-jq \'indices(", ")\'
+jq \(aqindices(", ")\(aq
    "a,b, cd, efg, hijk"
 => [3,7,12]
 
-jq \'indices(1)\'
+jq \(aqindices(1)\(aq
    [0,1,2,1,3,1,4]
 => [1,3,5]
 
-jq \'indices([1,2])\'
+jq \(aqindices([1,2])\(aq
    [0,1,2,3,1,4,2,5,1,2,6,7]
 => [1,8]
 .
@@ -1821,27 +1821,27 @@ Outputs the index of the first (\fBindex\fR) or last (\fBrindex\fR) occurrence o
 .
 .nf
 
-jq \'index(", ")\'
+jq \(aqindex(", ")\(aq
    "a,b, cd, efg, hijk"
 => 3
 
-jq \'index(1)\'
+jq \(aqindex(1)\(aq
    [0,1,2,1,3,1,4]
 => 1
 
-jq \'index([1,2])\'
+jq \(aqindex([1,2])\(aq
    [0,1,2,3,1,4,2,5,1,2,6,7]
 => 1
 
-jq \'rindex(", ")\'
+jq \(aqrindex(", ")\(aq
    "a,b, cd, efg, hijk"
 => 12
 
-jq \'rindex(1)\'
+jq \(aqrindex(1)\(aq
    [0,1,2,1,3,1,4]
 => 5
 
-jq \'rindex([1,2])\'
+jq \(aqrindex([1,2])\(aq
    [0,1,2,3,1,4,2,5,1,2,6,7]
 => 8
 .
@@ -1856,23 +1856,23 @@ The filter \fBinside(b)\fR will produce true if the input is completely containe
 .
 .nf
 
-jq \'inside("foobar")\'
+jq \(aqinside("foobar")\(aq
    "bar"
 => true
 
-jq \'inside(["foobar", "foobaz", "blarp"])\'
+jq \(aqinside(["foobar", "foobaz", "blarp"])\(aq
    ["baz", "bar"]
 => true
 
-jq \'inside(["foobar", "foobaz", "blarp"])\'
+jq \(aqinside(["foobar", "foobaz", "blarp"])\(aq
    ["bazzzzz", "bar"]
 => false
 
-jq \'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})\'
+jq \(aqinside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})\(aq
    {"foo": 12, "bar": [{"barp": 12}]}
 => true
 
-jq \'inside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})\'
+jq \(aqinside({"foo": 12, "bar":[1,2,{"barp":12, "blip":13}]})\(aq
    {"foo": 12, "bar": [{"barp": 15}]}
 => false
 .
@@ -1887,7 +1887,7 @@ Outputs \fBtrue\fR if \. starts with the given string argument\.
 .
 .nf
 
-jq \'[\.[]|startswith("foo")]\'
+jq \(aq[\.[]|startswith("foo")]\(aq
    ["fo", "foo", "barfoo", "foobar", "barfoob"]
 => [false, true, false, true, false]
 .
@@ -1902,7 +1902,7 @@ Outputs \fBtrue\fR if \. ends with the given string argument\.
 .
 .nf
 
-jq \'[\.[]|endswith("foo")]\'
+jq \(aq[\.[]|endswith("foo")]\(aq
    ["foobar", "barfoo"]
 => [false, true]
 .
@@ -1917,11 +1917,11 @@ Outputs all combinations of the elements of the arrays in the input array\. If g
 .
 .nf
 
-jq \'combinations\'
+jq \(aqcombinations\(aq
    [[1,2], [3, 4]]
 => [1, 3], [1, 4], [2, 3], [2, 4]
 
-jq \'combinations(2)\'
+jq \(aqcombinations(2)\(aq
    [0, 1]
 => [0, 0], [0, 1], [1, 0], [1, 1]
 .
@@ -1936,7 +1936,7 @@ Outputs its input with the given prefix string removed, if it starts with it\.
 .
 .nf
 
-jq \'[\.[]|ltrimstr("foo")]\'
+jq \(aq[\.[]|ltrimstr("foo")]\(aq
    ["fo", "foo", "barfoo", "foobar", "afoo"]
 => ["fo","","barfoo","bar","afoo"]
 .
@@ -1951,7 +1951,7 @@ Outputs its input with the given suffix string removed, if it ends with it\.
 .
 .nf
 
-jq \'[\.[]|rtrimstr("foo")]\'
+jq \(aq[\.[]|rtrimstr("foo")]\(aq
    ["fo", "foo", "barfoo", "foobar", "foob"]
 => ["fo","","bar","foobar","foob"]
 .
@@ -1966,7 +1966,7 @@ Outputs its input with the given string removed at both ends, if it starts or en
 .
 .nf
 
-jq \'[\.[]|trimstr("foo")]\'
+jq \(aq[\.[]|trimstr("foo")]\(aq
    ["fo", "foo", "barfoo", "foobarfoo", "foob"]
 => ["fo","","bar","bar","b"]
 .
@@ -1990,7 +1990,7 @@ Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"
 .
 .nf
 
-jq \'trim, ltrim, rtrim\'
+jq \(aqtrim, ltrim, rtrim\(aq
    " abc "
 => "abc", "abc ", " abc"
 .
@@ -2005,7 +2005,7 @@ Converts an input string into an array of the string\'s codepoint numbers\.
 .
 .nf
 
-jq \'explode\'
+jq \(aqexplode\(aq
    "foobar"
 => [102,111,111,98,97,114]
 .
@@ -2020,7 +2020,7 @@ The inverse of explode\.
 .
 .nf
 
-jq \'implode\'
+jq \(aqimplode\(aq
    [65, 66, 67]
 => "ABC"
 .
@@ -2038,7 +2038,7 @@ Splits an input string on the separator argument\.
 .
 .nf
 
-jq \'split(", ")\'
+jq \(aqsplit(", ")\(aq
    "a, b,c,d, e, "
 => ["a","b,c,d","e",""]
 .
@@ -2056,11 +2056,11 @@ Numbers and booleans in the input are converted to strings\. Null values are tre
 .
 .nf
 
-jq \'join(", ")\'
+jq \(aqjoin(", ")\(aq
    ["a","b,c,d","e"]
 => "a, b,c,d, e"
 
-jq \'join(" ")\'
+jq \(aqjoin(" ")\(aq
    ["a",1,2\.3,true,null,false]
 => "a 1 2\.3 true  false"
 .
@@ -2075,7 +2075,7 @@ Emit a copy of the input string with its alphabetic characters (a\-z and A\-Z) c
 .
 .nf
 
-jq \'ascii_upcase\'
+jq \(aqascii_upcase\(aq
    "useful but not for é"
 => "USEFUL BUT NOT FOR é"
 .
@@ -2093,7 +2093,7 @@ Note that \fBwhile(cond; update)\fR is internally defined as a recursive jq func
 .
 .nf
 
-jq \'[while(\.<100; \.*2)]\'
+jq \(aq[while(\.<100; \.*2)]\(aq
    1
 => [1,2,4,8,16,32,64]
 .
@@ -2111,7 +2111,7 @@ Note that \fBrepeat(exp)\fR is internally defined as a recursive jq function\. R
 .
 .nf
 
-jq \'[repeat(\.*2, error)?]\'
+jq \(aq[repeat(\.*2, error)?]\(aq
    1
 => [2]
 .
@@ -2129,7 +2129,7 @@ Note that \fBuntil(cond; next)\fR is internally defined as a recursive jq functi
 .
 .nf
 
-jq \'[\.,1]|until(\.[0] < 1; [\.[0] \- 1, \.[1] * \.[0]])|\.[1]\'
+jq \(aq[\.,1]|until(\.[0] < 1; [\.[0] \- 1, \.[1] * \.[0]])|\.[1]\(aq
    4
 => 24
 .
@@ -2185,15 +2185,15 @@ The recursive calls in \fBrecurse\fR will not consume additional memory whenever
 .
 .nf
 
-jq \'recurse(\.foo[])\'
+jq \(aqrecurse(\.foo[])\(aq
    {"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}
 => {"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}, {"foo":[]}, {"foo":[{"foo":[]}]}, {"foo":[]}
 
-jq \'recurse\'
+jq \(aqrecurse\(aq
    {"a":0,"b":[1]}
 => {"a":0,"b":[1]}, 0, [1], 1
 
-jq \'recurse(\. * \.; \. < 20)\'
+jq \(aqrecurse(\. * \.; \. < 20)\(aq
    2
 => 2, 4, 16
 .
@@ -2208,11 +2208,11 @@ The \fBwalk(f)\fR function applies f recursively to every component of the input
 .
 .nf
 
-jq \'walk(if type == "array" then sort else \. end)\'
+jq \(aqwalk(if type == "array" then sort else \. end)\(aq
    [[4, 1, 7], [8, 5, 2], [3, 6, 9]]
 => [[1,4,7],[2,5,8],[3,6,9]]
 
-jq \'walk( if type == "object" then with_entries( \.key |= sub( "^_+"; "") ) else \. end )\'
+jq \(aqwalk( if type == "object" then with_entries( \.key |= sub( "^_+"; "") ) else \. end )\(aq
    [ { "_a": { "__b": 2 } } ]
 => [{"a":{"b":2}}]
 .
@@ -2245,11 +2245,11 @@ At the moment there is no builtin for setting environment variables\.
 .
 .nf
 
-jq \'$ENV\.PAGER\'
+jq \(aq$ENV\.PAGER\(aq
    null
 => "less"
 
-jq \'env\.PAGER\'
+jq \(aqenv\.PAGER\(aq
    null
 => "less"
 .
@@ -2264,7 +2264,7 @@ Transpose a possibly jagged matrix (an array of arrays)\. Rows are padded with n
 .
 .nf
 
-jq \'transpose\'
+jq \(aqtranspose\(aq
    [[1], [2,3]]
 => [[1,2],[null,3]]
 .
@@ -2279,15 +2279,15 @@ jq \'transpose\'
 .
 .nf
 
-jq \'bsearch(0)\'
+jq \(aqbsearch(0)\(aq
    [0,1]
 => 0
 
-jq \'bsearch(0)\'
+jq \(aqbsearch(0)\(aq
    [1,2,3]
 => \-1
 
-jq \'bsearch(4) as $ix | if $ix < 0 then \.[\-(1+$ix)] = 4 else \. end\'
+jq \(aqbsearch(4) as $ix | if $ix < 0 then \.[\-(1+$ix)] = 4 else \. end\(aq
    [1,2,3]
 => [1,2,3,4]
 .
@@ -2302,7 +2302,7 @@ Inside a string, you can put an expression inside parens after a backslash\. Wha
 .
 .nf
 
-jq \'"The input was \e(\.), which is one less than \e(\.+1)"\'
+jq \(aq"The input was \e(\.), which is one less than \e(\.+1)"\(aq
    42
 => "The input was 42, which is one less than 43"
 .
@@ -2317,15 +2317,15 @@ The \fBtojson\fR and \fBfromjson\fR builtins dump values as JSON texts or parse 
 .
 .nf
 
-jq \'[\.[]|tostring]\'
+jq \(aq[\.[]|tostring]\(aq
    [1, "foo", ["foo"]]
 => ["1","foo","[\e"foo\e"]"]
 
-jq \'[\.[]|tojson]\'
+jq \(aq[\.[]|tojson]\(aq
    [1, "foo", ["foo"]]
 => ["1","\e"foo\e"","[\e"foo\e"]"]
 
-jq \'[\.[]|tojson|fromjson]\'
+jq \(aq[\.[]|tojson|fromjson]\(aq
    [1, "foo", ["foo"]]
 => [1,"foo",["foo"]]
 .
@@ -2429,19 +2429,19 @@ Note that the slashes, question mark, etc\. in the URL are not escaped, as they 
 .
 .nf
 
-jq \'@html\'
+jq \(aq@html\(aq
    "This works if x < y"
 => "This works if x &lt; y"
 
-jq \'@sh "echo \e(\.)"\'
-   "O\'Hara\'s Ale"
-=> "echo \'O\'\e\e\'\'Hara\'\e\e\'\'s Ale\'"
+jq \(aq@sh "echo \e(\.)"\(aq
+   "O\(aqHara\(aqs Ale"
+=> "echo \(aqO\(aq\e\e\(aq\(aqHara\(aq\e\e\(aq\(aqs Ale\(aq"
 
-jq \'@base64\'
+jq \(aq@base64\(aq
    "This is a message"
 => "VGhpcyBpcyBhIG1lc3NhZ2U="
 
-jq \'@base64d\'
+jq \(aq@base64d\(aq
    "VGhpcyBpcyBhIG1lc3NhZ2U="
 => "This is a message"
 .
@@ -2492,15 +2492,15 @@ jq may not support some or all of this date functionality on some systems\. In p
 .
 .nf
 
-jq \'fromdate\'
+jq \(aqfromdate\(aq
    "2015\-03\-05T23:51:47Z"
 => 1425599507
 
-jq \'strptime("%Y\-%m\-%dT%H:%M:%SZ")\'
+jq \(aqstrptime("%Y\-%m\-%dT%H:%M:%SZ")\(aq
    "2015\-03\-05T23:51:47Z"
 => [2015,2,5,23,51,47,4,63]
 
-jq \'strptime("%Y\-%m\-%dT%H:%M:%SZ")|mktime\'
+jq \(aqstrptime("%Y\-%m\-%dT%H:%M:%SZ")|mktime\(aq
    "2015\-03\-05T23:51:47Z"
 => 1425599507
 .
@@ -2562,15 +2562,15 @@ The expression \'a == b\' will produce \'true\' if the results of evaluating a a
 .
 .nf
 
-jq \'\. == false\'
+jq \(aq\. == false\(aq
    null
 => false
 
-jq \'\. == {"b": {"d": (4 + 1e\-20), "c": 3}, "a":1}\'
+jq \(aq\. == {"b": {"d": (4 + 1e\-20), "c": 3}, "a":1}\(aq
    {"a":1, "b": {"c": 3, "d": 4}}
 => true
 
-jq \'\.[] == 1\'
+jq \(aq\.[] == 1\(aq
    [1, 1\.0, "1", "banana"]
 => true, true, false, false
 .
@@ -2597,13 +2597,13 @@ More cases can be added to an if using \fBelif A then B\fR syntax\.
 .
 .nf
 
-jq \'if \. == 0 then
+jq \(aqif \. == 0 then
   "zero"
 elif \. == 1 then
   "one"
 else
   "many"
-end\'
+end\(aq
    2
 => "many"
 .
@@ -2621,7 +2621,7 @@ The ordering is the same as that described for \fBsort\fR, above\.
 .
 .nf
 
-jq \'\. < 5\'
+jq \(aq\. < 5\(aq
    2
 => true
 .
@@ -2645,19 +2645,19 @@ These three only produce the values \fBtrue\fR and \fBfalse\fR, and so are only 
 .
 .nf
 
-jq \'42 and "a string"\'
+jq \(aq42 and "a string"\(aq
    null
 => true
 
-jq \'(true, false) or false\'
+jq \(aq(true, false) or false\(aq
    null
 => true, false
 
-jq \'(true, true) and (true, false)\'
+jq \(aq(true, true) and (true, false)\(aq
    null
 => true, false, true, false
 
-jq \'[true, false | not]\'
+jq \(aq[true, false | not]\(aq
    null
 => [false, true]
 .
@@ -2681,23 +2681,23 @@ Note: \fBsome_generator // defaults_here\fR is not the same as \fBsome_generator
 .
 .nf
 
-jq \'empty // 42\'
+jq \(aqempty // 42\(aq
    null
 => 42
 
-jq \'\.foo // 42\'
+jq \(aq\.foo // 42\(aq
    {"foo": 19}
 => 19
 
-jq \'\.foo // 42\'
+jq \(aq\.foo // 42\(aq
    {}
 => 42
 
-jq \'(false, null, 1) // 42\'
+jq \(aq(false, null, 1) // 42\(aq
    null
 => 1
 
-jq \'(false, null, 1) | \. // 42\'
+jq \(aq(false, null, 1) | \. // 42\(aq
    null
 => 42, 42, 1
 .
@@ -2715,15 +2715,15 @@ The \fBtry EXP\fR form uses \fBempty\fR as the exception handler\.
 .
 .nf
 
-jq \'try \.a catch "\. is not an object"\'
+jq \(aqtry \.a catch "\. is not an object"\(aq
    true
 => "\. is not an object"
 
-jq \'[\.[]|try \.a]\'
+jq \(aq[\.[]|try \.a]\(aq
    [{}, true, {"a":1}]
 => [null, 1]
 
-jq \'try error("some exception") catch \.\'
+jq \(aqtry error("some exception") catch \.\(aq
    true
 => "some exception"
 .
@@ -2805,11 +2805,11 @@ The \fB?\fR operator, used as \fBEXP?\fR, is shorthand for \fBtry EXP\fR\.
 .
 .nf
 
-jq \'[\.[] | \.a?]\'
+jq \(aq[\.[] | \.a?]\(aq
    [{}, true, {"a":1}]
 => [null, 1]
 
-jq \'[\.[] | tonumber?]\'
+jq \(aq[\.[] | tonumber?]\(aq
    ["1", "invalid", "3", 4]
 => [1, 3, 4]
 .
@@ -2894,7 +2894,7 @@ To match a whitespace with the \fBx\fR flag, use \fB\es\fR, e\.g\.
 .
 .nf
 
-jq \-n \'"a b" | test("a\e\esb"; "x")\'
+jq \-n \(aq"a b" | test("a\e\esb"; "x")\(aq
 .
 .fi
 .
@@ -2907,7 +2907,7 @@ Note that certain flags may also be specified within REGEX, e\.g\.
 .
 .nf
 
-jq \-n \'("test", "TEst", "teST", "TEST") | test("(?i)te(?\-i)st")\'
+jq \-n \(aq("test", "TEst", "teST", "TEST") | test("(?i)te(?\-i)st")\(aq
 .
 .fi
 .
@@ -2923,11 +2923,11 @@ Like \fBmatch\fR, but does not return match objects, only \fBtrue\fR or \fBfalse
 .
 .nf
 
-jq \'test("foo")\'
+jq \(aqtest("foo")\(aq
    "foo"
 => true
 
-jq \'\.[] | test("a b c # spaces are ignored"; "ix")\'
+jq \(aq\.[] | test("a b c # spaces are ignored"; "ix")\(aq
    ["xabcd", "ABC"]
 => true, true
 .
@@ -2976,23 +2976,23 @@ Capturing groups that did not match anything return an offset of \-1
 .
 .nf
 
-jq \'match("(abc)+"; "g")\'
+jq \(aqmatch("(abc)+"; "g")\(aq
    "abc abc"
 => {"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}, {"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
 
-jq \'match("foo")\'
+jq \(aqmatch("foo")\(aq
    "foo bar foo"
 => {"offset": 0, "length": 3, "string": "foo", "captures": []}
 
-jq \'match(["foo", "ig"])\'
+jq \(aqmatch(["foo", "ig"])\(aq
    "foo bar FOO"
 => {"offset": 0, "length": 3, "string": "foo", "captures": []}, {"offset": 8, "length": 3, "string": "FOO", "captures": []}
 
-jq \'match("foo (?<bar123>bar)? foo"; "ig")\'
+jq \(aqmatch("foo (?<bar123>bar)? foo"; "ig")\(aq
    "foo bar foo foo  foo"
 => {"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}, {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": \-1, "length": 0, "string": null, "name": "bar123"}]}
 
-jq \'[ match("\."; "g")] | length\'
+jq \(aq[ match("\."; "g")] | length\(aq
    "abc"
 => 3
 .
@@ -3007,7 +3007,7 @@ Collects the named captures in a JSON object, with the name of each capture as t
 .
 .nf
 
-jq \'capture("(?<a>[a\-z]+)\-(?<n>[0\-9]+)")\'
+jq \(aqcapture("(?<a>[a\-z]+)\-(?<n>[0\-9]+)")\(aq
    "xyzzy\-14"
 => { "a": "xyzzy", "n": "14" }
 .
@@ -3022,11 +3022,11 @@ Emit a stream of the non\-overlapping substrings of the input that match the reg
 .
 .nf
 
-jq \'scan("c")\'
+jq \(aqscan("c")\(aq
    "abcdefabc"
 => "c", "c"
 
-jq \'scan("(a+)(b+)")\'
+jq \(aqscan("(a+)(b+)")\(aq
    "abaabbaaabbb"
 => ["a","b"], ["aa","bb"], ["aaa","bbb"]
 .
@@ -3044,7 +3044,7 @@ For backwards compatibility, when called with a single argument, \fBsplit\fR spl
 .
 .nf
 
-jq \'split(", *"; null)\'
+jq \(aqsplit(", *"; null)\(aq
    "ab,cd, ef"
 => ["ab","cd","ef"]
 .
@@ -3059,11 +3059,11 @@ These provide the same results as their \fBsplit\fR counterparts, but as a strea
 .
 .nf
 
-jq \'splits(", *")\'
+jq \(aqsplits(", *")\(aq
    "ab,cd,   ef, gh"
 => "ab", "cd", "ef", "gh"
 
-jq \'splits(",? *"; "n")\'
+jq \(aqsplits(",? *"; "n")\(aq
    "ab,cd ef,  gh"
 => "ab", "cd", "ef", "gh"
 .
@@ -3078,11 +3078,11 @@ Emit the string obtained by replacing the first match of regex in the input stri
 .
 .nf
 
-jq \'sub("[^a\-z]*(?<x>[a\-z]+)"; "Z\e(\.x)"; "g")\'
+jq \(aqsub("[^a\-z]*(?<x>[a\-z]+)"; "Z\e(\.x)"; "g")\(aq
    "123abc456def"
 => "ZabcZdef"
 
-jq \'[sub("(?<a>\.)"; "\e(\.a|ascii_upcase)", "\e(\.a|ascii_downcase)")]\'
+jq \(aq[sub("(?<a>\.)"; "\e(\.a|ascii_upcase)", "\e(\.a|ascii_downcase)")]\(aq
    "aB"
 => ["AB","aB"]
 .
@@ -3097,11 +3097,11 @@ jq \'[sub("(?<a>\.)"; "\e(\.a|ascii_upcase)", "\e(\.a|ascii_downcase)")]\'
 .
 .nf
 
-jq \'gsub("(?<x>\.)[^a]*"; "+\e(\.x)\-")\'
+jq \(aqgsub("(?<x>\.)[^a]*"; "+\e(\.x)\-")\(aq
    "Abcabc"
 => "+A\-+a\-"
 
-jq \'[gsub("p"; "a", "b")]\'
+jq \(aq[gsub("p"; "a", "b")]\(aq
    "p"
 => ["a","b"]
 .
@@ -3253,19 +3253,19 @@ For programming language theorists, it\'s more accurate to say that jq variables
 .
 .nf
 
-jq \'\.bar as $x | \.foo | \. + $x\'
+jq \(aq\.bar as $x | \.foo | \. + $x\(aq
    {"foo":10, "bar":200}
 => 210
 
-jq \'\. as $i|[(\.*2|\. as $i| $i), $i]\'
+jq \(aq\. as $i|[(\.*2|\. as $i| $i), $i]\(aq
    5
 => [10,5]
 
-jq \'\. as [$a, $b, {c: $c}] | $a + $b + $c\'
+jq \(aq\. as [$a, $b, {c: $c}] | $a + $b + $c\(aq
    [2, 3, {"c": 4, "d": 5}]
 => 9
 
-jq \'\.[] as [$a, $b] | {a: $a, b: $b}\'
+jq \(aq\.[] as [$a, $b] | {a: $a, b: $b}\(aq
    [[0], [0, 1], [2, 1, 0]]
 => {"a":0,"b":null}, {"a":0,"b":1}, {"a":2,"b":1}
 .
@@ -3338,15 +3338,15 @@ Additionally, if the subsequent expression returns an error, the alternative ope
 
 [[3]] | \.[] as [$a] ?// [$b] | if $a != null then error("err: \e($a)") else {$a,$b} end
 
-jq \'\.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}\'
+jq \(aq\.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}\(aq
    [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
 => {"a":1,"b":2,"d":3,"e":4}, {"a":1,"b":2,"d":3,"e":4}
 
-jq \'\.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}\'
+jq \(aq\.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}\(aq
    [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
 => {"a":1,"b":2,"d":3,"e":null}, {"a":1,"b":2,"d":null,"e":4}
 
-jq \'\.[] as [$a] ?// [$b] | if $a != null then error("err: \e($a)") else {$a,$b} end\'
+jq \(aq\.[] as [$a] ?// [$b] | if $a != null then error("err: \e($a)") else {$a,$b} end\(aq
    [[3]]
 => {"a":null,"b":3}
 .
@@ -3433,11 +3433,11 @@ Multiple definitions using the same function name are allowed\. Each re\-definit
 .
 .nf
 
-jq \'def addvalue(f): \. + [f]; map(addvalue(\.[0]))\'
+jq \(aqdef addvalue(f): \. + [f]; map(addvalue(\.[0]))\(aq
    [[1,2],[10,20]]
 => [[1,2,1], [10,20,10]]
 
-jq \'def addvalue(f): f as $x | map(\. + $x); addvalue(\.[0])\'
+jq \(aqdef addvalue(f): f as $x | map(\. + $x); addvalue(\.[0])\(aq
    [[1,2],[10,20]]
 => [[1,2,1,2], [10,20,1,2]]
 .
@@ -3458,15 +3458,15 @@ Returns true if \fBexp\fR produces no outputs, false otherwise\.
 .
 .nf
 
-jq \'isempty(empty)\'
+jq \(aqisempty(empty)\(aq
    null
 => true
 
-jq \'isempty(\.[])\'
+jq \(aqisempty(\.[])\(aq
    []
 => true
 
-jq \'isempty(\.[])\'
+jq \(aqisempty(\.[])\(aq
    [1,2,3]
 => false
 .
@@ -3481,7 +3481,7 @@ The \fBlimit\fR function extracts up to \fBn\fR outputs from \fBexpr\fR\.
 .
 .nf
 
-jq \'[limit(3; \.[])]\'
+jq \(aq[limit(3; \.[])]\(aq
    [0,1,2,3,4,5,6,7,8,9]
 => [0,1,2]
 .
@@ -3496,7 +3496,7 @@ The \fBskip\fR function skips the first \fBn\fR outputs from \fBexpr\fR\.
 .
 .nf
 
-jq \'[skip(3; \.[])]\'
+jq \(aq[skip(3; \.[])]\(aq
    [0,1,2,3,4,5,6,7,8,9]
 => [3,4,5,6,7,8,9]
 .
@@ -3514,11 +3514,11 @@ The \fBnth(n; expr)\fR function extracts the nth value output by \fBexpr\fR\. No
 .
 .nf
 
-jq \'[first(range(\.)), last(range(\.)), nth(5; range(\.))]\'
+jq \(aq[first(range(\.)), last(range(\.)), nth(5; range(\.))]\(aq
    10
 => [0,9,5]
 
-jq \'[first(empty), last(empty), nth(5; empty)]\'
+jq \(aq[first(empty), last(empty), nth(5; empty)]\(aq
    null
 => []
 .
@@ -3536,7 +3536,7 @@ The \fBnth(n)\fR function extracts the nth value of any array at \fB\.\fR\.
 .
 .nf
 
-jq \'[range(\.)]|[first, last, nth(5)]\'
+jq \(aq[range(\.)]|[first, last, nth(5)]\(aq
    10
 => [0,9,5]
 .
@@ -3568,15 +3568,15 @@ For each result that \fB\.[]\fR produces, \fB\. + $item\fR is run to accumulate 
     2 as $item | \. + $item |
     3 as $item | \. + $item
 
-jq \'reduce \.[] as $item (0; \. + $item)\'
+jq \(aqreduce \.[] as $item (0; \. + $item)\(aq
    [1,2,3,4,5]
 => 15
 
-jq \'reduce \.[] as [$i,$j] (0; \. + $i * $j)\'
+jq \(aqreduce \.[] as [$i,$j] (0; \. + $i * $j)\(aq
    [[1,2],[3,4],[5,6]]
 => 44
 
-jq \'reduce \.[] as {$x,$y} (null; \.x += $x | \.y += [$y])\'
+jq \(aqreduce \.[] as {$x,$y} (null; \.x += $x | \.y += [$y])\(aq
    [{"x":"a","y":1},{"x":"b","y":2},{"x":"c","y":3}]
 => {"x":"abc","y":[1,2,3]}
 .
@@ -3622,15 +3622,15 @@ When \fBEXTRACT\fR is omitted, the identity filter is used\. That is, it outputs
 .
 .nf
 
-jq \'foreach \.[] as $item (0; \. + $item)\'
+jq \(aqforeach \.[] as $item (0; \. + $item)\(aq
    [1,2,3,4,5]
 => 1, 3, 6, 10, 15
 
-jq \'foreach \.[] as $item (0; \. + $item; [$item, \. * 2])\'
+jq \(aqforeach \.[] as $item (0; \. + $item; [$item, \. * 2])\(aq
    [1,2,3,4,5]
 => [1,2], [2,6], [3,12], [4,20], [5,30]
 
-jq \'foreach \.[] as $item (0; \. + 1; {index: \., $item})\'
+jq \(aqforeach \.[] as $item (0; \. + 1; {index: \., $item})\(aq
    ["foo", "bar", "baz"]
 => {"index":1,"item":"foo"}, {"index":2,"item":"bar"}, {"index":3,"item":"baz"}
 .
@@ -3683,11 +3683,11 @@ All jq functions can be generators just by using builtin generators\. It is also
 .
 .nf
 
-jq \'def range(init; upto; by): def _range: if (by > 0 and \. < upto) or (by < 0 and \. > upto) then \., ((\.+by)|_range) else empty end; if init == upto then empty elif by == 0 then init else init|_range end; range(0; 10; 3)\'
+jq \(aqdef range(init; upto; by): def _range: if (by > 0 and \. < upto) or (by < 0 and \. > upto) then \., ((\.+by)|_range) else empty end; if init == upto then empty elif by == 0 then init else init|_range end; range(0; 10; 3)\(aq
    null
 => 0, 3, 6, 9
 
-jq \'def while(cond; update): def _while: if cond then \., (update | _while) else empty end; _while; [while(\.<100; \.*2)]\'
+jq \(aqdef while(cond; update): def _while: if cond then \., (update | _while) else empty end; _while; [while(\.<100; \.*2)]\(aq
    1
 => [1,2,4,8,16,32,64]
 .
@@ -3735,7 +3735,7 @@ Note that when using \fBinput\fR it is generally necessary to invoke jq with the
 .
 .nf
 
-echo 1 2 3 4 | jq \'[\., input]\' # [1,2] [3,4]
+echo 1 2 3 4 | jq \(aq[\., input]\(aq # [1,2] [3,4]
 .
 .fi
 .
@@ -3751,7 +3751,7 @@ This is primarily useful for reductions over a program\'s inputs\. Note that whe
 .
 .nf
 
-echo 1 2 3 | jq \-n \'reduce inputs as $i (0; \. + $i)\' # 6
+echo 1 2 3 | jq \-n \(aqreduce inputs as $i (0; \. + $i)\(aq # 6
 .
 .fi
 .
@@ -3837,7 +3837,7 @@ Consumes a number as input and truncates the corresponding number of path elemen
 .
 .nf
 
-jq \'truncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]])\'
+jq \(aqtruncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]])\(aq
    1
 => [[0],"b"], [[0]]
 .
@@ -3852,7 +3852,7 @@ Outputs values corresponding to the stream expression\'s outputs\.
 .
 .nf
 
-jq \'fromstream(1|truncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]]))\'
+jq \(aqfromstream(1|truncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]]))\(aq
    null
 => ["b"]
 .
@@ -3867,7 +3867,7 @@ The \fBtostream\fR builtin outputs the streamed form of its input\.
 .
 .nf
 
-jq \'\. as $dot|fromstream($dot|tostream)|\.==$dot\'
+jq \(aq\. as $dot|fromstream($dot|tostream)|\.==$dot\(aq
    [0,[1,{"a":1},{"b":2}]]
 => true
 .
@@ -3918,7 +3918,7 @@ If the right\-hand side outputs multiple values, only the first one will be used
 .
 .nf
 
-jq \'(\.\.|select(type=="boolean")) |= if \. then 1 else 0 end\'
+jq \(aq(\.\.|select(type=="boolean")) |= if \. then 1 else 0 end\(aq
    [true,false,[5,true,[true,[false]],false]]
 => [1,0,[5,1,[1,[0]],0]]
 .
@@ -3933,7 +3933,7 @@ jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \f
 .
 .nf
 
-jq \'\.foo += 1\'
+jq \(aq\.foo += 1\(aq
    {"foo": 42}
 => {"foo": 43}
 .
@@ -3983,19 +3983,19 @@ The former will set the \fBa\fR field of the input to the \fBb\fR field of the i
 .
 .nf
 
-jq \'\.a = \.b\'
+jq \(aq\.a = \.b\(aq
    {"a": {"b": 10}, "b": 20}
 => {"a":20,"b":20}
 
-jq \'\.a |= \.b\'
+jq \(aq\.a |= \.b\(aq
    {"a": {"b": 10}, "b": 20}
 => {"a":10,"b":20}
 
-jq \'(\.a, \.b) = range(3)\'
+jq \(aq(\.a, \.b) = range(3)\(aq
    null
 => {"a":0,"b":0}, {"a":1,"b":1}, {"a":2,"b":2}
 
-jq \'(\.a, \.b) |= range(3)\'
+jq \(aq(\.a, \.b) |= range(3)\(aq
    null
 => {"a":0,"b":0}
 .

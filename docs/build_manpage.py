@@ -171,13 +171,14 @@ class RoffWalker(object):
         return text
 
     def _pre_sanitize(self, text):
-        return self._base_sanitize(text)
-
-    def _code_sanitize(self, text):
         text = re.sub(r'\\', r'\\e', text)
         text = re.sub(r'\.', r'\\.', text)
         text = re.sub("'", r"\(aq", text)
         text = re.sub('-', r'\-', text)
+        return text
+
+    def _code_sanitize(self, text):
+        text = self._pre_sanitize(text)
         text = re.sub(r'\s', ' ', text)
         return text
 
