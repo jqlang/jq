@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "May 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -8,7 +8,7 @@
 \fBjq\fR [\fIoptions\fR\.\.\.] \fIfilter\fR [\fIfiles\fR\.\.\.]
 .
 .P
-\fBjq\fR can transform JSON in various ways, by selecting, iterating, reducing and otherwise mangling JSON documents\. For instance, running the command \fBjq \'map(\.price) | add\'\fR will take an array of JSON objects as input and return the sum of their "price" fields\.
+\fBjq\fR can transform JSON in various ways, by selecting, iterating, reducing and otherwise mangling JSON documents\. For instance, running the command \fBjq \(aqmap(\.price) | add\(aq\fR will take an array of JSON objects as input and return the sum of their "price" fields\.
 .
 .P
 \fBjq\fR can accept text input as well, but by default, \fBjq\fR reads a stream of JSON entities (including numbers and other literals) from \fBstdin\fR\. Whitespace is only needed to separate entities such as 1 and 2, and true and false\. One or more \fIfiles\fR may be specified, in which case \fBjq\fR will read input from those instead\.
@@ -41,10 +41,10 @@ The simplest and most common filter (or jq program) is \fB\.\fR, which is the id
 Note: it is important to mind the shell\'s quoting rules\. As a general rule it\'s best to always quote (with single\-quote characters on Unix shells) the jq program, as too many characters with special meaning to jq are also shell meta\-characters\. For example, \fBjq "foo"\fR will fail on most Unix shells because that will be the same as \fBjq foo\fR, which will generally fail because \fBfoo is not defined\fR\. When using the Windows command shell (cmd\.exe) it\'s best to use double quotes around your jq program when given on the command\-line (instead of the \fB\-f program\-file\fR option), but then double\-quotes in the jq program need backslash escaping\. When using the Powershell (\fBpowershell\.exe\fR) or the Powershell Core (\fBpwsh\fR/\fBpwsh\.exe\fR), use single\-quote characters around the jq program and backslash\-escaped double\-quotes (\fB\e"\fR) inside the jq program\.
 .
 .IP "\(bu" 4
-Unix shells: \fBjq \'\.["foo"]\'\fR
+Unix shells: \fBjq \(aq\.["foo"]\(aq\fR
 .
 .IP "\(bu" 4
-Powershell: \fBjq \'\.[\e"foo\e"]\'\fR
+Powershell: \fBjq \(aq\.[\e"foo\e"]\(aq\fR
 .
 .IP "\(bu" 4
 Windows command shell: \fBjq "\.[\e"foo\e"]"\fR
@@ -2352,7 +2352,7 @@ Serializes the input as JSON\.
 \fB@html\fR:
 .
 .IP
-Applies HTML/XML escaping, by mapping the characters \fB<>&\'"\fR to their entity equivalents \fB&lt;\fR, \fB&gt;\fR, \fB&amp;\fR, \fB&apos;\fR, \fB&quot;\fR\.
+Applies HTML/XML escaping, by mapping the characters \fB<>&\(aq"\fR to their entity equivalents \fB&lt;\fR, \fB&gt;\fR, \fB&amp;\fR, \fB&apos;\fR, \fB&quot;\fR\.
 .
 .TP
 \fB@uri\fR:
