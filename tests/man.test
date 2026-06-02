@@ -995,3 +995,4 @@ null
 (.a, .b) |= range(3)
 null
 {"a":0,"b":0}
+
