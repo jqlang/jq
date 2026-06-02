@@ -643,6 +643,10 @@ join(" ")
 ["a",1,2.3,true,null,false]
 "a 1 2.3 true  false"
 
+join(", ")
+{"a":1,"b":2}
+"1, 2"
+
 ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"
@@ -991,4 +995,3 @@ null
 (.a, .b) |= range(3)
 null
 {"a":0,"b":0}
-
