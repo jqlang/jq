@@ -1865,14 +1865,16 @@ sections:
       - title: "`join(str)`"
         body: |
 
-          Joins the array of elements given as input, using the
+          Joins the values from the input array or object, using the
           argument as separator. It is the inverse of `split`: that is,
           running `split("foo") | join("foo")` over any input string
           returns said input string.
 
           Numbers and booleans in the input are converted to strings.
-          Null values are treated as empty strings. Arrays and objects
-          in the input are not supported.
+          Null values are treated as empty strings. When the input is
+          an object, `join` operates on the values that `.[]`
+          produces. Arrays and objects among the joined values are not
+          supported.
 
         examples:
           - program: 'join(", ")'
@@ -1881,6 +1883,9 @@ sections:
           - program: 'join(" ")'
             input: '["a",1,2.3,true,null,false]'
             output: ['"a 1 2.3 true  false"']
+          - program: 'join(", ")'
+            input: '{"a":1,"b":2}'
+            output: ['"1, 2"']
 
       - title: "`ascii_downcase`, `ascii_upcase`"
         body: |
