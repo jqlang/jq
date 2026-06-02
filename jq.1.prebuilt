@@ -2047,10 +2047,10 @@ jq \'split(", ")\'
 .IP "" 0
 .
 .SS "join(str)"
-Joins the array of elements given as input, using the argument as separator\. It is the inverse of \fBsplit\fR: that is, running \fBsplit("foo") | join("foo")\fR over any input string returns said input string\.
+Joins the values from the input array or object, using the argument as separator\. It is the inverse of \fBsplit\fR: that is, running \fBsplit("foo") | join("foo")\fR over any input string returns said input string\.
 .
 .P
-Numbers and booleans in the input are converted to strings\. Null values are treated as empty strings\. Arrays and objects in the input are not supported\.
+Numbers and booleans in the input are converted to strings\. Null values are treated as empty strings\. When the input is an object, \fBjoin\fR operates on the values that \fB\.[]\fR produces\. Arrays and objects among the joined values are not supported\.
 .
 .IP "" 4
 .
@@ -2063,6 +2063,10 @@ jq \'join(", ")\'
 jq \'join(" ")\'
    ["a",1,2\.3,true,null,false]
 => "a 1 2\.3 true  false"
+
+jq \'join(", ")\'
+   {"a":1,"b":2}
+=> "1, 2"
 .
 .fi
 .
