@@ -1977,7 +1977,13 @@ sections:
 
           The `strftime(fmt)` builtin formats a time (GMT) with the
           given format.  The `strflocaltime` does the same, but using
-          the local timezone setting.
+          the local timezone setting. Note that `strftime` and
+          `strflocaltime` can consume both seconds since the Unix epoch, as
+          output by `now`, `mktime`, etc., and "broken down time",
+          but `strflocaltime` will only actually use the local timezone
+          setting if consuming seconds since the Unix epoch. When
+          consuming "broken down time" its output will be the same as
+          `strftime`'s.
 
           The format strings for `strptime` and `strftime` are described
           in typical C library documentation.  The format string for ISO
