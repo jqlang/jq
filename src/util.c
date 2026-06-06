@@ -312,13 +312,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
       if (p != NULL)
         state->current_line++;
 
-      if (p == NULL && state->parser != NULL) {
-        /*
-         * There should be no NULs in JSON texts (but JSON text
-         * sequences are another story).
-         */
-        state->buf_valid_len = strlen(state->buf);
-      } else if (p == NULL && feof(state->current_input)) {
+      if (p == NULL && feof(state->current_input)) {
         size_t i;
 
         /*

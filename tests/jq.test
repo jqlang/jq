@@ -1549,6 +1549,15 @@ split("")
 "xababababax"
 [1,7,[1,3,5,7]]
 
+# _strindices is used by indices/1 but is callable
+try _strindices("abc") catch .
+123
+"number (123) cannot be searched, as it is not a string"
+
+try _strindices(123) catch .
+"abc"
+"number (123) is not a string"
+
 # trim
 # \u000b is vertical tab (\v not supported by json)
 map(trim), map(ltrim), map(rtrim)
@@ -2559,3 +2568,68 @@ true
 reduce range(10001) as $_ ([];[.]) | tojson | contains("<skipped: too deep>")
 null
 true
+
+# regression test for CVE-2026-33947
+setpath([range(10000) | 0]; 0) | flatten
+null
+[0]
+
+try setpath([range(10001) | 0]; 0) catch .
+null
+"Path too deep"
+
+getpath([range(10000) | 0])
+null
+null
+
+try getpath([range(10001) | 0]) catch .
+null
+"Path too deep"
+
+delpaths([[range(10000) | 0]])
+null
+null
+
+try delpaths([[range(10001) | 0]]) catch .
+null
+"Path too deep"
+
+# regression test for CVE-2026-40612
+reduce range(10000) as $_ ([]; [.]) | contains([[]])
+null
+true
+
+try (reduce range(10001) as $_ ([]; [.]) as $x | $x | contains($x)) catch .
+null
+"Containment check too deep"
+
+# regression test for CVE-2026-43896
+reduce range(10000) as $_ ({}; {a: .}) as $x | $x * $x | length
+null
+1
+
+try (reduce range(10001) as $_ ({}; {a: .}) as $x | $x * $x) catch .
+null
+"Object merge too deep"
+
+# regression test for deep structural equality recursion
+try ((reduce range(10001) as $_ ([]; [.])) as $x | (reduce range(10001) as $_ ([]; [.])) as $y | $x == $y) catch .
+null
+"Equality check too deep"
+
+# regression tests for deep ordering comparisons
+try ((reduce range(10001) as $_ ([]; [.])) as $x | [$x, $x] | sort) catch .
+null
+"Comparison too deep"
+
+try ((reduce range(10001) as $_ ([]; [.])) as $x | [$x, $x] | unique) catch .
+null
+"Comparison too deep"
+
+try ((reduce range(10001) as $_ ({}; {a: .})) as $x | [$x, $x] | sort) catch .
+null
+"Comparison too deep"
+
+try ((reduce range(10001) as $_ ({}; {a: .})) as $x | [$x, $x] | unique) catch .
+null
+"Comparison too deep"

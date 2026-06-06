@@ -28,7 +28,7 @@ jobs:
       - name: Build website
         run: pipenv run python3 build_website.py
       - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs/output/
 

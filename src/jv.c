@@ -40,6 +40,10 @@
 #include <limits.h>
 #include <math.h>
 #include <float.h>
+#include <time.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <pthread.h>
 
 #include "jv_alloc.h"
 #include "jv.h"
@@ -179,14 +183,6 @@ int jv_invalid_has_msg(jv inv) {
   int r = JVP_HAS_FLAGS(inv, JVP_FLAGS_INVALID_MSG);
   jv_free(inv);
   return r;
-}
-
-static void jvp_invalid_free(jv x) {
-  assert(JVP_HAS_KIND(x, JV_KIND_INVALID));
-  if (JVP_HAS_FLAGS(x, JVP_FLAGS_INVALID_MSG) && jvp_refcnt_dec(x.u.ptr)) {
-    jv_free(((jvp_invalid*)x.u.ptr)->errmsg);
-    jv_mem_free(x.u.ptr);
-  }
 }
 
 /*
@@ -574,7 +570,10 @@ static jvp_literal_number* jvp_literal_number_alloc(unsigned literal_length) {
 }
 
 static jv jvp_literal_number_new(const char * literal) {
-  jvp_literal_number* n = jvp_literal_number_alloc(strlen(literal));
+  size_t len = strlen(literal);
+  if (len > DEC_MAX_DIGITS)
+    return JV_INVALID;
+  jvp_literal_number* n = jvp_literal_number_alloc(len);
 
   decContext *ctx = DEC_CONTEXT();
   decContextClearStatus(ctx, DEC_Conversion_syntax);
@@ -843,17 +842,6 @@ static jv jvp_array_new(unsigned size) {
   return r;
 }
 
-static void jvp_array_free(jv a) {
-  assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
-  if (jvp_refcnt_dec(a.u.ptr)) {
-    jvp_array* array = jvp_array_ptr(a);
-    for (int i=0; i<array->length; i++) {
-      jv_free(array->elements[i]);
-    }
-    jv_mem_free(array);
-  }
-}
-
 static int jvp_array_length(jv a) {
   assert(JVP_HAS_KIND(a, JV_KIND_ARRAY));
   return a.size;
@@ -901,23 +889,27 @@ static jv* jvp_array_write(jv* a, int i) {
       new_array->elements[j] = JV_NULL;
     }
     new_array->length = new_length;
-    jvp_array_free(*a);
+    jv_free(*a);
     jv new_jv = {JVP_FLAGS_ARRAY, 0, 0, new_length, {&new_array->refcnt}};
     *a = new_jv;
     return &new_array->elements[i];
   }
 }
 
-static int jvp_array_equal(jv a, jv b) {
+static int jvp_equal(jv a, jv b, int depth);
+
+static int jvp_array_equal(jv a, jv b, int depth) {
   if (jvp_array_length(a) != jvp_array_length(b))
     return 0;
   if (jvp_array_ptr(a) == jvp_array_ptr(b) &&
       jvp_array_offset(a) == jvp_array_offset(b))
     return 1;
   for (int i=0; i<jvp_array_length(a); i++) {
-    if (!jv_equal(jv_copy(*jvp_array_read(a, i)),
-                  jv_copy(*jvp_array_read(b, i))))
-      return 0;
+    int r = jvp_equal(jv_copy(*jvp_array_read(a, i)),
+                      jv_copy(*jvp_array_read(b, i)),
+                      depth);
+    if (r <= 0)
+      return r;
   }
   return 1;
 }
@@ -934,19 +926,19 @@ static void jvp_clamp_slice_params(int len, int *pstart, int *pend)
 }
 
 
-static int jvp_array_contains(jv a, jv b) {
+static int jvp_contains(jv a, jv b, int depth);
+
+static int jvp_array_contains(jv a, jv b, int depth) {
   int r = 1;
   jv_array_foreach(b, bi, belem) {
     int ri = 0;
     jv_array_foreach(a, ai, aelem) {
-      if (jv_contains(aelem, jv_copy(belem))) {
-        ri = 1;
-        break;
-      }
+      ri = jvp_contains(aelem, jv_copy(belem), depth);
+      if (ri) break;
     }
     jv_free(belem);
-    if (!ri) {
-      r = 0;
+    if (ri <= 0) {
+      r = ri;
       break;
     }
   }
@@ -1067,7 +1059,14 @@ jv jv_array_indexes(jv a, jv b) {
   int alen = jv_array_length(jv_copy(a));
   for (int ai = 0; ai < alen; ++ai) {
     jv_array_foreach(b, bi, belem) {
-      if (!jv_equal(jv_array_get(jv_copy(a), ai + bi), belem))
+      int equal = jv_equal(jv_array_get(jv_copy(a), ai + bi), belem);
+      if (equal < 0) {
+        jv_free(res);
+        jv_free(a);
+        jv_free(b);
+        return jv_invalid_with_msg(jv_string("Equality check too deep"));
+      }
+      if (!equal)
         idx = -1;
       else if (bi == 0 && idx == -1)
         idx = ai;
@@ -1114,7 +1113,12 @@ static jv jvp_string_copy_replace_bad(const char* data, uint32_t length) {
   const char* end = data + length;
   const char* i = data;
 
-  uint32_t maxlength = length * 3 + 1; // worst case: all bad bytes, each becomes a 3-byte U+FFFD
+  // worst case: all bad bytes, each becomes a 3-byte U+FFFD
+  uint64_t maxlength = (uint64_t)length * 3 + 1;
+  if (maxlength >= INT_MAX) {
+    return jv_invalid_with_msg(jv_string("String too long"));
+  }
+
   jvp_string* s = jvp_string_alloc(maxlength);
   char* out = s->data;
   int c = 0;
@@ -1174,6 +1178,10 @@ static uint32_t jvp_string_remaining_space(jvp_string* s) {
 static jv jvp_string_append(jv string, const char* data, uint32_t len) {
   jvp_string* s = jvp_string_ptr(string);
   uint32_t currlen = jvp_string_length(s);
+  if ((uint64_t)currlen + len >= INT_MAX) {
+    jv_free(string);
+    return jv_invalid_with_msg(jv_string("String too long"));
+  }
 
   if (jvp_refcnt_unshared(string.u.ptr) &&
       jvp_string_remaining_space(s) >= len) {
@@ -1197,7 +1205,33 @@ static jv jvp_string_append(jv string, const char* data, uint32_t len) {
   }
 }
 
-static const uint32_t HASH_SEED = 0x432A9843;
+static uint32_t hash_seed;
+static pthread_once_t hash_seed_once = PTHREAD_ONCE_INIT;
+
+static void jvp_hash_seed_init(void) {
+  uint32_t seed;
+#if defined(HAVE_ARC4RANDOM)
+  seed = arc4random();
+#elif defined(HAVE_GETENTROPY)
+  if (getentropy(&seed, sizeof(seed)) != 0)
+    seed = (uint32_t)getpid() ^ (uint32_t)time(NULL);
+#else
+  int fd = open("/dev/urandom", O_RDONLY);
+  if (fd >= 0) {
+    if (read(fd, &seed, sizeof(seed)) != 4)
+      seed = (uint32_t)getpid() ^ (uint32_t)time(NULL);
+    close(fd);
+  } else {
+    seed = (uint32_t)getpid() ^ (uint32_t)time(NULL);
+  }
+#endif
+  hash_seed = seed;
+}
+
+static uint32_t jvp_hash_seed(void) {
+  pthread_once(&hash_seed_once, jvp_hash_seed_init);
+  return hash_seed;
+}
 
 static uint32_t rotl32 (uint32_t x, int8_t r){
   return (x << r) | (x >> (32 - r));
@@ -1216,7 +1250,7 @@ static uint32_t jvp_string_hash(jv jstr) {
   int len = (int)jvp_string_length(str);
   const int nblocks = len / 4;
 
-  uint32_t h1 = HASH_SEED;
+  uint32_t h1 = jvp_hash_seed();
 
   const uint32_t c1 = 0xcc9e2d51;
   const uint32_t c2 = 0x1b873593;
@@ -1668,20 +1702,6 @@ static jv* jvp_object_read(jv object, jv key) {
   else return &slot->value;
 }
 
-static void jvp_object_free(jv o) {
-  assert(JVP_HAS_KIND(o, JV_KIND_OBJECT));
-  if (jvp_refcnt_dec(o.u.ptr)) {
-    for (int i=0; i<jvp_object_size(o); i++) {
-      struct object_slot* slot = jvp_object_get_slot(o, i);
-      if (jv_get_kind(slot->string) != JV_KIND_NULL) {
-        jvp_string_free(slot->string);
-        jv_free(slot->value);
-      }
-    }
-    jv_mem_free(jvp_object_ptr(o));
-  }
-}
-
 static int jvp_object_rehash(jv *objectp) {
   jv object = *objectp;
   assert(JVP_HAS_KIND(object, JV_KIND_OBJECT));
@@ -1726,7 +1746,7 @@ static jv jvp_object_unshare(jv object) {
   int* new_buckets = jvp_object_buckets(new_object);
   memcpy(new_buckets, old_buckets, sizeof(int) * jvp_object_size(new_object)*2);
 
-  jvp_object_free(object);
+  jv_free(object);
   assert(jvp_refcnt_unshared(new_object.u.ptr));
   return new_object;
 }
@@ -1790,7 +1810,7 @@ static int jvp_object_length(jv object) {
   return n;
 }
 
-static int jvp_object_equal(jv o1, jv o2) {
+static int jvp_object_equal(jv o1, jv o2, int depth) {
   int len2 = jvp_object_length(o2);
   int len1 = 0;
   for (int i=0; i<jvp_object_size(o1); i++) {
@@ -1799,13 +1819,14 @@ static int jvp_object_equal(jv o1, jv o2) {
     jv* slot2 = jvp_object_read(o2, slot->string);
     if (!slot2) return 0;
     // FIXME: do less refcounting here
-    if (!jv_equal(jv_copy(slot->value), jv_copy(*slot2))) return 0;
+    int r = jvp_equal(jv_copy(slot->value), jv_copy(*slot2), depth);
+    if (r <= 0) return r;
     len1++;
   }
   return len1 == len2;
 }
 
-static int jvp_object_contains(jv a, jv b) {
+static int jvp_object_contains(jv a, jv b, int depth) {
   assert(JVP_HAS_KIND(a, JV_KIND_OBJECT));
   assert(JVP_HAS_KIND(b, JV_KIND_OBJECT));
   int r = 1;
@@ -1813,9 +1834,9 @@ static int jvp_object_contains(jv a, jv b) {
   jv_object_foreach(b, key, b_val) {
     jv a_val = jv_object_get(jv_copy(a), key);
 
-    r = jv_contains(a_val, b_val);
+    r = jvp_contains(a_val, b_val, depth);
 
-    if (!r) break;
+    if (r <= 0) break;
   }
   return r;
 }
@@ -1893,16 +1914,33 @@ jv jv_object_merge(jv a, jv b) {
   return a;
 }
 
-jv jv_object_merge_recursive(jv a, jv b) {
+#ifndef MAX_OBJECT_MERGE_DEPTH
+#define MAX_OBJECT_MERGE_DEPTH (10000)
+#endif
+
+static jv jvp_object_merge_recursive(jv a, jv b, int depth) {
   assert(JVP_HAS_KIND(a, JV_KIND_OBJECT));
   assert(JVP_HAS_KIND(b, JV_KIND_OBJECT));
+
+  if (depth > MAX_OBJECT_MERGE_DEPTH) {
+    jv_free(a);
+    jv_free(b);
+    return jv_invalid_with_msg(jv_string("Object merge too deep"));
+  }
 
   jv_object_foreach(b, k, v) {
     jv elem = jv_object_get(jv_copy(a), jv_copy(k));
     if (jv_is_valid(elem) &&
         JVP_HAS_KIND(elem, JV_KIND_OBJECT) &&
         JVP_HAS_KIND(v, JV_KIND_OBJECT)) {
-      a = jv_object_set(a, k, jv_object_merge_recursive(elem, v));
+      jv merged = jvp_object_merge_recursive(elem, v, depth + 1);
+      if (!jv_is_valid(merged)) {
+        jv_free(k);
+        jv_free(a);
+        jv_free(b);
+        return merged;
+      }
+      a = jv_object_set(a, k, merged);
     } else {
       jv_free(elem);
       a = jv_object_set(a, k, v);
@@ -1911,6 +1949,10 @@ jv jv_object_merge_recursive(jv a, jv b) {
   }
   jv_free(b);
   return a;
+}
+
+jv jv_object_merge_recursive(jv a, jv b) {
+  return jvp_object_merge_recursive(a, b, 0);
 }
 
 /*
@@ -1963,24 +2005,66 @@ jv jv_copy(jv j) {
   return j;
 }
 
+/*
+ * Free children iteratively via a heap-allocated buffer to avoid
+ * recursion through jv_free, which would cause stack overflow on
+ * deeply nested values.
+ */
 void jv_free(jv j) {
-  switch(JVP_KIND(j)) {
-    case JV_KIND_ARRAY:
-      jvp_array_free(j);
-      break;
-    case JV_KIND_STRING:
-      jvp_string_free(j);
-      break;
-    case JV_KIND_OBJECT:
-      jvp_object_free(j);
-      break;
-    case JV_KIND_INVALID:
-      jvp_invalid_free(j);
-      break;
-    case JV_KIND_NUMBER:
-      jvp_number_free(j);
-      break;
+  jv* pending = NULL;
+  size_t len = 0, cap = 0;
+  while (1) {
+    switch (JVP_KIND(j)) {
+      case JV_KIND_ARRAY:
+        if (jvp_refcnt_dec(j.u.ptr)) {
+          jvp_array* arr = jvp_array_ptr(j);
+          if (len + arr->length > cap) {
+            cap = (len + arr->length) * 2;
+            pending = jv_mem_realloc(pending, cap * sizeof(jv));
+          }
+          for (int i = 0; i < arr->length; i++)
+            pending[len++] = arr->elements[i];
+          jv_mem_free(arr);
+        }
+        break;
+      case JV_KIND_OBJECT:
+        if (jvp_refcnt_dec(j.u.ptr)) {
+          int sz = jvp_object_size(j);
+          if (len + sz > cap) {
+            cap = (len + sz) * 2;
+            pending = jv_mem_realloc(pending, cap * sizeof(jv));
+          }
+          for (int i = 0; i < sz; i++) {
+            struct object_slot* slot = jvp_object_get_slot(j, i);
+            if (jv_get_kind(slot->string) != JV_KIND_NULL) {
+              jvp_string_free(slot->string);
+              pending[len++] = slot->value;
+            }
+          }
+          jv_mem_free(jvp_object_ptr(j));
+        }
+        break;
+      case JV_KIND_INVALID:
+        if (JVP_HAS_FLAGS(j, JVP_FLAGS_INVALID_MSG) && jvp_refcnt_dec(j.u.ptr)) {
+          if (len + 1 > cap) {
+            cap = (len + 1) * 2;
+            pending = jv_mem_realloc(pending, cap * sizeof(jv));
+          }
+          pending[len++] = ((jvp_invalid*)j.u.ptr)->errmsg;
+          jv_mem_free(j.u.ptr);
+        }
+        break;
+      case JV_KIND_STRING:
+        jvp_string_free(j);
+        break;
+      case JV_KIND_NUMBER:
+        jvp_number_free(j);
+        break;
+    }
+    if (len == 0) break;
+    j = pending[--len];
   }
+  jv_mem_free(pending);
 }
 
 int jv_get_refcnt(jv j) {
@@ -1995,7 +2079,16 @@ int jv_get_refcnt(jv j) {
  * Higher-level operations
  */
 
-int jv_equal(jv a, jv b) {
+#ifndef MAX_EQUAL_DEPTH
+#define MAX_EQUAL_DEPTH (10000)
+#endif
+
+static int jvp_equal(jv a, jv b, int depth) {
+  if (depth > MAX_EQUAL_DEPTH) {
+    jv_free(a);
+    jv_free(b);
+    return -1;
+  }
   int r;
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
@@ -2011,13 +2104,13 @@ int jv_equal(jv a, jv b) {
       r = jvp_number_equal(a, b);
       break;
     case JV_KIND_ARRAY:
-      r = jvp_array_equal(a, b);
+      r = jvp_array_equal(a, b, depth + 1);
       break;
     case JV_KIND_STRING:
       r = jvp_string_equal(a, b);
       break;
     case JV_KIND_OBJECT:
-      r = jvp_object_equal(a, b);
+      r = jvp_object_equal(a, b, depth + 1);
       break;
     default:
       r = 1;
@@ -2027,6 +2120,11 @@ int jv_equal(jv a, jv b) {
   jv_free(a);
   jv_free(b);
   return r;
+}
+
+// Returns 1 if equal, 0 if not equal, or -1 if the comparison is too deep
+int jv_equal(jv a, jv b) {
+  return jvp_equal(a, b, 0);
 }
 
 int jv_identical(jv a, jv b) {
@@ -2047,14 +2145,23 @@ int jv_identical(jv a, jv b) {
   return r;
 }
 
-int jv_contains(jv a, jv b) {
+#ifndef MAX_CONTAINS_DEPTH
+#define MAX_CONTAINS_DEPTH (10000)
+#endif
+
+static int jvp_contains(jv a, jv b, int depth) {
+  if (depth > MAX_CONTAINS_DEPTH) {
+    jv_free(a);
+    jv_free(b);
+    return -1;
+  }
   int r = 1;
   if (jv_get_kind(a) != jv_get_kind(b)) {
     r = 0;
   } else if (JVP_HAS_KIND(a, JV_KIND_OBJECT)) {
-    r = jvp_object_contains(a, b);
+    r = jvp_object_contains(a, b, depth + 1);
   } else if (JVP_HAS_KIND(a, JV_KIND_ARRAY)) {
-    r = jvp_array_contains(a, b);
+    r = jvp_array_contains(a, b, depth + 1);
   } else if (JVP_HAS_KIND(a, JV_KIND_STRING)) {
     int b_len = jv_string_length_bytes(jv_copy(b));
     if (b_len != 0) {
@@ -2069,4 +2176,9 @@ int jv_contains(jv a, jv b) {
   jv_free(a);
   jv_free(b);
   return r;
+}
+
+// Returns 1 (contained), 0 (not contained), or -1 (too deep)
+int jv_contains(jv a, jv b) {
+  return jvp_contains(a, b, 0);
 }

@@ -149,6 +149,8 @@ AC_CHECK_MEMBER([struct tm.tm_gmtoff], [AC_DEFINE([HAVE_TM_TM_GMT_OFF],1,[Define
 AC_CHECK_MEMBER([struct tm.__tm_gmtoff], [AC_DEFINE([HAVE_TM___TM_GMT_OFF],1,[Define to 1 if the system has the __tm_gmt_off field in struct tm])],
                 [], [[#include <time.h>]])
 AC_FIND_FUNC([setlocale], [c], [#include <locale.h>], [0,0])
+AC_FIND_FUNC([arc4random], [c], [#include <stdlib.h>], [])
+AC_FIND_FUNC([getentropy], [c], [#include <unistd.h>], [0, 0])
 
 dnl Figure out if we have the pthread functions we actually need
 AC_FIND_FUNC_NO_LIBS([pthread_key_create], [], [#include <pthread.h>], [NULL, NULL])

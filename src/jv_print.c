@@ -410,6 +410,10 @@ jv jv_dump_string(jv x, int flags) {
 
 char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize) {
   assert(bufsize > 0);
+  if (jv_get_kind(x) == JV_KIND_STRING &&
+      (size_t)jv_string_length_bytes(jv_copy(x)) > bufsize) {
+    x = jv_string_slice(x, 0, bufsize);
+  }
   x = jv_dump_string(x, 0);
   const char *str = jv_string_value(x);
   const size_t len = strlen(str);

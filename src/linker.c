@@ -20,9 +20,13 @@
 #include "compile.h"
 #include "jv_alloc.h"
 
+struct lib_entry {
+  char *name;
+  block def;
+  int loading;
+};
 struct lib_loading_state {
-  char **names;
-  block *defs;
+  struct lib_entry *entries;
   uint64_t ct;
 };
 static int load_library(jq_state *jq, jv lib_path,
@@ -93,6 +97,10 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv jq_origin, jv 
 // in between).
 static jv validate_relpath(jv name) {
   const char *s = jv_string_value(name);
+  if (strlen(s) != (size_t)jv_string_length_bytes(jv_copy(name))) {
+    jv_free(name);
+    return jv_invalid_with_msg(jv_string("Module path contains a NUL byte"));
+  }
   if (strchr(s, '\\')) {
     jv res = jv_invalid_with_msg(jv_string_fmt("Modules must be named by relative paths using '/', not '\\' (%s)", s));
     jv_free(name);
@@ -299,14 +307,24 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
     } else {
       uint64_t state_idx = 0;
       for (; state_idx < lib_state->ct; ++state_idx) {
-        if (strcmp(lib_state->names[state_idx],jv_string_value(resolved)) == 0)
+        if (strcmp(lib_state->entries[state_idx].name, jv_string_value(resolved)) == 0)
           break;
       }
 
       if (state_idx < lib_state->ct) { // Found
+        if (lib_state->entries[state_idx].loading) {
+          jq_report_error(jq, jv_string_fmt("jq: error: circular import of %s\n",
+                                            jv_string_value(resolved)));
+          jv_free(resolved);
+          jv_free(as);
+          jv_free(deps);
+          jv_free(jq_origin);
+          jv_free(lib_origin);
+          return 1;
+        }
         jv_free(resolved);
         // Bind the library to the program
-        bk = block_bind_library(lib_state->defs[state_idx], bk, OP_IS_CALL_PSEUDO, as_str);
+        bk = block_bind_library(lib_state->entries[state_idx].def, bk, OP_IS_CALL_PSEUDO, as_str);
       } else { // Not found.   Add it to the table before binding.
         block dep_def_block = gen_noop();
         nerrors += load_library(jq, resolved, is_data, raw, optional, as_str, &dep_def_block, lib_state);
@@ -348,32 +366,38 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int opt
       jq_report_error(jq, jv_string_fmt("jq: error loading data file %s: %s\n", jv_string_value(lib_path), jv_string_value(data)));
       nerrors++;
     }
-    goto out;
   } else if (is_data) {
     // import "foo" as $bar;
     program = gen_const_global(jv_copy(data), as);
+    state_idx = lib_state->ct++;
+    lib_state->entries = jv_mem_realloc(lib_state->entries, lib_state->ct * sizeof(struct lib_entry));
+    lib_state->entries[state_idx].name = strdup(jv_string_value(lib_path));
+    lib_state->entries[state_idx].def = program;
+    lib_state->entries[state_idx].loading = 0;
   } else {
     // import "foo" as bar;
     src = locfile_init(jq, jv_string_value(lib_path), jv_string_value(data), jv_string_length_bytes(jv_copy(data)));
     nerrors += jq_parse_library(src, &program);
     locfile_free(src);
     if (nerrors == 0) {
+      // Register the library before processing its dependencies so that
+      // circular imports can be detected.
+      state_idx = lib_state->ct++;
+      lib_state->entries = jv_mem_realloc(lib_state->entries, lib_state->ct * sizeof(struct lib_entry));
+      lib_state->entries[state_idx].name = strdup(jv_string_value(lib_path));
+      lib_state->entries[state_idx].def = gen_noop();
+      lib_state->entries[state_idx].loading = 1;
+
       char *lib_origin = strdup(jv_string_value(lib_path));
       nerrors += process_dependencies(jq, jq_get_jq_origin(jq),
                                       jv_string(dirname(lib_origin)),
                                       &program, lib_state);
       free(lib_origin);
       program = block_bind_self(program, OP_IS_CALL_PSEUDO);
+      lib_state->entries[state_idx].def = program;
+      lib_state->entries[state_idx].loading = 0;
     }
   }
-  if (nerrors == 0) {
-    state_idx = lib_state->ct++;
-    lib_state->names = jv_mem_realloc(lib_state->names, lib_state->ct * sizeof(const char *));
-    lib_state->defs = jv_mem_realloc(lib_state->defs, lib_state->ct * sizeof(block));
-    lib_state->names[state_idx] = strdup(jv_string_value(lib_path));
-    lib_state->defs[state_idx] = program;
-  }
-out:
   *out_block = program;
   jv_free(lib_path);
   jv_free(data);
@@ -411,7 +435,7 @@ jv load_module_meta(jq_state *jq, jv mod_relpath) {
 int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   int nerrors = 0;
   block program;
-  struct lib_loading_state lib_state = {0,0,0};
+  struct lib_loading_state lib_state = {0,0};
   nerrors = jq_parse(src, &program);
   if (nerrors)
     return nerrors;
@@ -425,7 +449,7 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   jv home = get_home();
   if (jv_is_valid(home)) {
     /* Import ~/.jq as a library named "" found in $HOME or %USERPROFILE% */
-    block import = gen_import_meta(gen_import("", NULL, 0),
+    block import = gen_import_meta(gen_import(jv_string(""), jv_invalid(), 0),
         gen_const(JV_OBJECT(
             jv_string("optional"), jv_true(),
             jv_string("search"), home)));
@@ -437,14 +461,13 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   nerrors = process_dependencies(jq, jq_get_jq_origin(jq), jq_get_prog_origin(jq), &program, &lib_state);
   block libs = gen_noop();
   for (uint64_t i = 0; i < lib_state.ct; ++i) {
-    free(lib_state.names[i]);
-    if (nerrors == 0 && !block_is_const(lib_state.defs[i]))
-      libs = block_join(libs, lib_state.defs[i]);
+    free(lib_state.entries[i].name);
+    if (nerrors == 0 && !block_is_const(lib_state.entries[i].def))
+      libs = block_join(libs, lib_state.entries[i].def);
     else
-      block_free(lib_state.defs[i]);
+      block_free(lib_state.entries[i].def);
   }
-  free(lib_state.names);
-  free(lib_state.defs);
+  free(lib_state.entries);
   if (nerrors)
     block_free(program);
   else

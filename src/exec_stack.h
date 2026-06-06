@@ -2,8 +2,10 @@
 #define EXEC_STACK_H
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "jv_alloc.h"
 
 /*
@@ -81,15 +83,19 @@ static stack_ptr* stack_block_next(struct stack* s, stack_ptr p) {
 }
 
 static void stack_reallocate(struct stack* s, size_t sz) {
-  int old_mem_length = -(s->bound) + ALIGNMENT;
-  char* old_mem_start = (s->mem_end != NULL) ? (s->mem_end - old_mem_length) : NULL;
+  size_t old_mem_length = (size_t)(-(s->bound)) + ALIGNMENT;
+  char* old_mem_start = s->mem_end != NULL ? s->mem_end - old_mem_length : NULL;
 
-  int new_mem_length = align_round_up((old_mem_length + sz + 256) * 2);
+  size_t new_mem_length = align_round_up((old_mem_length + sz + 256) * 2);
+  if (new_mem_length > INT_MAX) {
+    fprintf(stderr, "jq: error: cannot allocate memory\n");
+    abort();
+  }
   char* new_mem_start = jv_mem_realloc(old_mem_start, new_mem_length);
   memmove(new_mem_start + (new_mem_length - old_mem_length),
             new_mem_start, old_mem_length);
   s->mem_end = new_mem_start + new_mem_length;
-  s->bound = -(new_mem_length - ALIGNMENT);
+  s->bound = -(int)(new_mem_length - ALIGNMENT);
 }
 
 static stack_ptr stack_push_block(struct stack* s, stack_ptr p, size_t sz) {

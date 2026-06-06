@@ -382,15 +382,38 @@ if ! HOME="$mods/home2" $VALGRIND $Q $JQ -n 'include "g"; empty'; then
     exit 1
 fi
 
+(
 cd "$JQBASEDIR" # so that relative library paths are guaranteed correct
 if ! $VALGRIND $Q $JQ -L ./tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
     echo "Issue #817 regression?" 1>&2
     exit 1
 fi
+)
 
+(
 cd "$JQBASEDIR"
 if ! $VALGRIND $Q $JQ -L tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
     echo "Issue #817 regression?" 1>&2
+    exit 1
+fi
+)
+
+# CVE-2026-44777: Circular imports should be detected
+if $VALGRIND $JQ -L "$mods" -ne 'import "cycle_a" as a; null' 2> $d/out; then
+    echo "Mutual import should be rejected" 1>&2
+    exit 1
+fi
+if ! grep -q "circular import" $d/out; then
+    echo "Expected circular import error" 1>&2
+    exit 1
+fi
+
+if $VALGRIND $JQ -L "$mods" -ne 'import "cycle_self" as s; null' 2> $d/out; then
+    echo "Self import should be rejected" 1>&2
+    exit 1
+fi
+if ! grep -q "circular import" $d/out; then
+    echo "Expected circular import error" 1>&2
     exit 1
 fi
 
@@ -879,5 +902,35 @@ $JQ -nf $d/prog.jq 2> $d/out && {
   exit 1
 }
 diff $d/out $d/expected
+
+# CVE-2026-33948: No NUL truncation in the JSON parser
+if printf '{}\x00{}' | $JQ >/dev/null 2> /dev/null; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 1
+fi
+
+# CVE-2026-41256: No NUL truncation in program files loaded with -f
+printf '.\x00invalid' > "$d/nul_prog.jq"
+if echo '42' | $JQ -f "$d/nul_prog.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for program file with NUL bytes\n' 1>&2
+  exit 1
+fi
+
+# CVE-2026-43895: No NUL bytes in module/data import paths
+printf 'import "a\\u0000b" as $x; .' > "$d/nul_import.jq"
+if $JQ -nf "$d/nul_import.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for import path with NUL bytes\n' 1>&2
+  exit 1
+fi
+printf 'include "a\\u0000b"; .' > "$d/nul_include.jq"
+if $JQ -nf "$d/nul_include.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for include path with NUL bytes\n' 1>&2
+  exit 1
+fi
+printf '"a\\u0000b" | modulemeta' > "$d/nul_modulemeta.jq"
+if $JQ -nf "$d/nul_modulemeta.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for modulemeta with NUL bytes\n' 1>&2
+  exit 1
+fi
 
 exit 0

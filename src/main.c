@@ -612,6 +612,14 @@ int main(int argc, char* argv[]) {
       ret = JQ_ERROR_SYSTEM;
       goto out;
     }
+    int len = jv_string_length_bytes(jv_copy(data));
+    if ((size_t)len != strlen(jv_string_value(data))) {
+      fprintf(stderr, "jq: program file contains NUL bytes\n");
+      free(program_origin);
+      jv_free(data);
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
     jq_set_attr(jq, jv_string("PROGRAM_ORIGIN"), jq_realpath(jv_string(dirname(program_origin))));
     ARGS = JV_OBJECT(jv_string("positional"), ARGS,
                      jv_string("named"), jv_copy(program_arguments));
