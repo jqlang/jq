@@ -1178,7 +1178,7 @@ static uint32_t jvp_string_remaining_space(jvp_string* s) {
 static jv jvp_string_append(jv string, const char* data, uint32_t len) {
   jvp_string* s = jvp_string_ptr(string);
   uint32_t currlen = jvp_string_length(s);
-  if ((uint64_t)currlen + len >= INT_MAX) {
+  if ((uint64_t)currlen + len >= INT_MAX - sizeof(jvp_string) / 2) {
     jv_free(string);
     return jv_invalid_with_msg(jv_string("String too long"));
   }
@@ -1379,7 +1379,7 @@ jv jv_string_repeat(jv j, int n) {
   }
   int len = jv_string_length_bytes(jv_copy(j));
   int64_t res_len = (int64_t)len * n;
-  if (res_len >= INT_MAX) {
+  if ((uint64_t)res_len >= INT_MAX - sizeof(jvp_string) / 2) {
     jv_free(j);
     return jv_invalid_with_msg(jv_string("Repeat string result too long"));
   }
@@ -1464,6 +1464,7 @@ jv jv_string_implode(jv j) {
     if (nv < 0 || nv > 0x10FFFF || (nv >= 0xD800 && nv <= 0xDFFF))
       nv = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
     s = jv_string_append_codepoint(s, nv);
+    if (!jv_is_valid(s)) break;
   }
 
   jv_free(j);

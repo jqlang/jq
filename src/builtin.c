@@ -1434,6 +1434,7 @@ static jv f_string_implode(jq_state *jq, jv a) {
     if (nv < 0 || nv > 0x10FFFF || (nv >= 0xD800 && nv <= 0xDFFF))
       nv = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
     s = jv_string_append_codepoint(s, nv);
+    if (!jv_is_valid(s)) break;
   }
 
   jv_free(a);
