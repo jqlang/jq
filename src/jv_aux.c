@@ -260,7 +260,7 @@ jv jv_has(jv t, jv k) {
     jv_free(elem);
   } else if (jv_get_kind(t) == JV_KIND_ARRAY &&
              jv_get_kind(k) == JV_KIND_NUMBER) {
-    if (jvp_number_is_nan(k)) {
+    if (jvp_number_is_nan(k) || isinf(jv_number_value(k))) {
       jv_free(t);
       ret = jv_false();
     } else {
@@ -294,7 +294,7 @@ static jv jv_dels(jv t, jv keys) {
     jv starts = jv_array(), ends = jv_array();
     jv_array_foreach(keys, i, key) {
       if (jv_get_kind(key) == JV_KIND_NUMBER) {
-        if (jvp_number_is_nan(key)) {
+        if (jvp_number_is_nan(key) || isinf(jv_number_value(key))) {
           jv_free(key);
         } else if (jv_number_value(key) < 0) {
           neg_keys = jv_array_append(neg_keys, key);
