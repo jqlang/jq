@@ -169,6 +169,8 @@ body:
        * jq 1.8.2 executables for
          [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-windows-amd64.exe)
          or
+         [ARM64](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-windows-arm64.exe)
+         or
          [i386](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-windows-i386.exe).
 
        * jq 1.8.1 executables for
