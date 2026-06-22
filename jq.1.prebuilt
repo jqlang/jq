@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "April 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -476,7 +476,7 @@ jq \'\.[]\'
 
 jq \'\.[]\'
    []
-=> 
+=>
 
 jq \'\.foo[]\'
    {"foo":[1,2,3]}
@@ -1543,15 +1543,15 @@ jq \'sqrt\'
 .IP "" 0
 .
 .SS "tonumber"
-The \fBtonumber\fR function parses its input as a number\. It will convert correctly\-formatted strings to their numeric equivalent, leave numbers alone, and give an error on all other input\.
+The \fBtonumber\fR function parses its input as a number\. It will convert booleans and correctly\-formatted strings to their numeric equivalent, leave numbers alone, and give an error on all other input\.
 .
 .IP "" 4
 .
 .nf
 
 jq \'\.[] | tonumber\'
-   [1, "1"]
-=> 1, 1
+   [1, "1", true]
+=> 1, 1, 1
 .
 .fi
 .

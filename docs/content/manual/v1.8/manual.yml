@@ -1469,13 +1469,14 @@ sections:
         body: |
 
           The `tonumber` function parses its input as a number. It
-          will convert correctly-formatted strings to their numeric
-          equivalent, leave numbers alone, and give an error on all other input.
+          will convert booleans and correctly-formatted strings to
+          their numeric equivalent, leave numbers alone, and give
+          an error on all other input.
 
         examples:
           - program: '.[] | tonumber'
-            input: '[1, "1"]'
-            output: ['1', '1']
+            input: '[1, "1", true]'
+            output: ['1', '1', '1']
 
       - title: "`toboolean`"
         body: |
