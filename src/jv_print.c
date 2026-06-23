@@ -36,6 +36,16 @@ static const char *colors[] = DEFAULT_COLORS;
 #define COLORS_LEN (sizeof(colors) / sizeof(colors[0]))
 #define FIELD_COLOR (colors[7])
 
+struct color_field_rule {
+  char *key;
+  char *value;
+  char *color;
+};
+
+static struct color_field_rule *color_field_rules = NULL;
+static size_t color_field_rules_len = 0;
+static size_t color_field_rules_cap = 0;
+
 static char *colors_buf = NULL;
 int jq_set_colors(const char *code_str) {
   if (code_str == NULL)
@@ -92,6 +102,74 @@ int jq_set_colors(const char *code_str) {
   default_colors:
   for (; ci < COLORS_LEN; ci++)
     colors[ci] = default_colors[ci];
+  return 1;
+}
+
+static const char *lookup_color_field_rule(const char *key, const char *value) {
+  for (size_t i = 0; i < color_field_rules_len; i++) {
+    if (strcmp(color_field_rules[i].key, key) == 0 &&
+        strcmp(color_field_rules[i].value, value) == 0) {
+      return color_field_rules[i].color;
+    }
+  }
+  return NULL;
+}
+
+int jq_add_color_field(const char *spec) {
+  if (spec == NULL)
+    return 0;
+
+  const char *eq = strchr(spec, '=');
+  const char *colon = strrchr(spec, ':');
+  if (eq == NULL || colon == NULL || eq == spec || colon <= eq + 1)
+    return 0;
+
+  const char *key_start = spec;
+  const char *key_end = eq;
+  const char *value_start = eq + 1;
+  const char *value_end = colon;
+  const char *code = colon + 1;
+
+  if (*code == '\0')
+    return 0;
+
+  size_t code_len = strlen(code);
+  if (strspn(code, "0123456789;") != code_len)
+    return 0;
+
+  size_t key_len = (size_t)(key_end - key_start);
+  size_t value_len = (size_t)(value_end - value_start);
+  if (key_len == 0 || value_len == 0)
+    return 0;
+
+  if (color_field_rules_len == color_field_rules_cap) {
+    size_t new_cap = color_field_rules_cap ? color_field_rules_cap * 2 : 8;
+    struct color_field_rule *new_rules = jv_mem_realloc(color_field_rules, new_cap * sizeof(*new_rules));
+    if (new_rules == NULL)
+      return 0;
+    color_field_rules = new_rules;
+    color_field_rules_cap = new_cap;
+  }
+
+  struct color_field_rule *rule = &color_field_rules[color_field_rules_len];
+  rule->key = jv_mem_alloc(key_len + 1);
+  rule->value = jv_mem_alloc(value_len + 1);
+  rule->color = jv_mem_alloc(code_len + 4);
+  if (rule->key == NULL || rule->value == NULL || rule->color == NULL)
+    return 0;
+
+  memcpy(rule->key, key_start, key_len);
+  rule->key[key_len] = '\0';
+  memcpy(rule->value, value_start, value_len);
+  rule->value[value_len] = '\0';
+
+  rule->color[0] = ESC[0];
+  rule->color[1] = '[';
+  memcpy(rule->color + 2, code, code_len);
+  rule->color[2 + code_len] = 'm';
+  rule->color[3 + code_len] = '\0';
+
+  color_field_rules_len++;
   return 1;
 }
 
@@ -216,12 +294,12 @@ static void put_refcnt(struct dtoa_context* C, int refcnt, FILE *F, jv* S, int T
   put_char(')', F, S, T);
 }
 
-static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FILE* F, jv* S) {
+static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FILE* F, jv* S, const char *forced_color) {
   char buf[JVP_DTOA_FMT_MAX_LEN];
   const char* color = 0;
   double refcnt = (flags & JV_PRINT_REFCOUNT) ? jv_get_refcnt(x) - 1 : -1;
   if ((flags & JV_PRINT_COLOR) && jv_get_kind(x) != JV_KIND_INVALID) {
-    color = colors[(int)jv_get_kind(x) - 1];
+    color = forced_color ? forced_color : colors[(int)jv_get_kind(x) - 1];
     put_str(color, F, S, flags & JV_PRINT_ISATTY);
   }
   if (indent > MAX_PRINT_DEPTH) {
@@ -253,7 +331,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
     break;
   case JV_KIND_NUMBER: {
     if (jvp_number_is_nan(x)) {
-      jv_dump_term(C, jv_null(), flags, indent, F, S);
+      jv_dump_term(C, jv_null(), flags, indent, F, S, NULL);
     } else {
 #ifdef USE_DECNUM
       const char * literal_data = jv_number_get_literal(x);
@@ -298,7 +376,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
         put_char('\n', F, S, flags & JV_PRINT_ISATTY);
         put_indent(indent + 1, flags, F, S, flags & JV_PRINT_ISATTY);
       }
-      jv_dump_term(C, elem, flags, indent + 1, F, S);
+      jv_dump_term(C, elem, flags, indent + 1, F, S, NULL);
     }
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S, flags & JV_PRINT_ISATTY);
@@ -355,6 +433,12 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
         put_indent(indent + 1, flags, F, S, flags & JV_PRINT_ISATTY);
       }
 
+      const char *forced_value_color = NULL;
+      if ((flags & JV_PRINT_COLOR) && jv_get_kind(value) == JV_KIND_STRING &&
+          jv_get_kind(key) == JV_KIND_STRING) {
+        forced_value_color = lookup_color_field_rule(jv_string_value(key), jv_string_value(value));
+      }
+
       first = 0;
       if (color) put_str(FIELD_COLOR, F, S, flags & JV_PRINT_ISATTY);
       jvp_dump_string(key, flags & JV_PRINT_ASCII, F, S, flags & JV_PRINT_ISATTY);
@@ -368,7 +452,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
         put_char(' ', F, S, flags & JV_PRINT_ISATTY);
       }
 
-      jv_dump_term(C, value, flags, indent + 1, F, S);
+      jv_dump_term(C, value, flags, indent + 1, F, S, forced_value_color);
     }
     if (flags & JV_PRINT_PRETTY) {
       put_char('\n', F, S, flags & JV_PRINT_ISATTY);
@@ -387,7 +471,7 @@ static void jv_dump_term(struct dtoa_context* C, jv x, int flags, int indent, FI
 }
 
 void jv_dumpf(jv x, FILE *f, int flags) {
-  jv_dump_term(tsd_dtoa_context_get(), x, flags, 0, f, 0);
+  jv_dump_term(tsd_dtoa_context_get(), x, flags, 0, f, 0, NULL);
 }
 
 void jv_dump(jv x, int flags) {
@@ -404,7 +488,7 @@ void jv_show(jv x, int flags) {
 
 jv jv_dump_string(jv x, int flags) {
   jv s = jv_string("");
-  jv_dump_term(tsd_dtoa_context_get(), x, flags, 0, 0, &s);
+  jv_dump_term(tsd_dtoa_context_get(), x, flags, 0, 0, &s, NULL);
   return s;
 }
 
