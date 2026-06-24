@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "January 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -2818,11 +2818,7 @@ jq \'[\.[] | tonumber?]\'
 .IP "" 0
 .
 .SH "REGULAR EXPRESSIONS"
-jq uses the Oniguruma regular expression library, as do PHP, TextMate, Sublime Text, etc, so the description here will focus on jq specifics\.
-
-.
-.P
-Oniguruma supports several flavors of regular expression, so it is important to know that jq uses the "Perl NG" (Perl with named groups) flavor\.
+jq uses the PCRE2 library (Perl\-Comptible Regular Rexpressions), as do lots of other open soruce projcets, so the description here will focus on jq specifics\.
 
 .
 .P
@@ -2878,9 +2874,6 @@ FLAGS is a string consisting of one of more of the supported flags:
 .
 .IP "\(bu" 4
 \fBs\fR \- Single line mode (\fB^\fR \-> \fB\eA\fR, \fB$\fR \-> \fB\eZ\fR)
-.
-.IP "\(bu" 4
-\fBl\fR \- Find longest possible matches
 .
 .IP "\(bu" 4
 \fBx\fR \- Extended regex format (ignore whitespace and comments)
