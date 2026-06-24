@@ -308,6 +308,22 @@ cat > $d/expected <<'EOF'
 EOF
 cmp $d/out $d/expected
 
+# --slurpfd, --rawfd
+$VALGRIND $JQ -n --slurpfd foo 8 8< $JQBASEDIR/tests/modules/data.json \
+  --rawfd bar 9 9<> $JQBASEDIR/tests/modules/data.json '{$foo, $bar}' > $d/out
+cat > $d/expected <<'EOF'
+{
+  "foo": [
+    {
+      "this": "is a test",
+      "that": "is too"
+    }
+  ],
+  "bar": "{\n  \"this\": \"is a test\",\n  \"that\": \"is too\"\n}\n"
+}
+EOF
+cmp $d/out $d/expected
+
 # --args, --jsonargs, $ARGS.positional
 $VALGRIND $JQ -n -c --args '$ARGS.positional' foo bar baz > $d/out
 printf '["foo","bar","baz"]\n' > $d/expected
