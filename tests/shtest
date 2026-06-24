@@ -640,7 +640,7 @@ for colors in '/' '[30' '30m' '30:31m:32' '30:*:31' 'invalid'; do
 done
 unset JQ_COLORS
 
-# Check $NO_COLOR
+# Check $NO_COLOR and $TERM
 test_no_color=true
 $msys  && test_no_color=false
 $mingw && test_no_color=false
@@ -653,22 +653,32 @@ if $test_no_color && command -v script >/dev/null 2>&1; then
       sed 's/^\x5E\x44\x08\x08//'; }
   fi
 
-  faketty $JQ_NO_B -n . > $d/color
+  faketty env TERM=xterm-256color $JQ_NO_B -n . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  faketty env NO_COLOR= $JQ_NO_B -n . > $d/color
+  faketty env TERM=xterm-256color NO_COLOR= $JQ_NO_B -n . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  faketty env NO_COLOR=1 $JQ_NO_B -n . > $d/color
+  faketty env TERM=xterm-256color NO_COLOR=1 $JQ_NO_B -n . > $d/color
   printf 'null\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  faketty env NO_COLOR=1 $JQ_NO_B -Cn . > $d/color
+  faketty env TERM=xterm-256color NO_COLOR=1 $JQ_NO_B -Cn . > $d/color
+  printf '\033[0;90mnull\033[0m\r\n' > $d/expect
+  od -tc $d/expect
+  od -tc $d/color
+  cmp $d/color $d/expect
+  faketty env TERM=dumb $JQ_NO_B -n . > $d/color
+  printf 'null\r\n' > $d/expect
+  od -tc $d/expect
+  od -tc $d/color
+  cmp $d/color $d/expect
+  faketty env TERM=dumb $JQ_NO_B -Cn . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
