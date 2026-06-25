@@ -1930,6 +1930,19 @@ import "shadow1" as f; import "shadow2" as f; import "shadow1" as e; [e::e, f::e
 null
 [2,3]
 
+# Regression tests for cross-module transitive-include bug (value-arg path):
+# An included module that itself includes another module must not cause the
+# transitively-included module's functions to be freed as unreferenced.
+include "cross_mid"; cross_wrap(5)
+null
+5
+
+# Regression tests for cross-module transitive-include bug (filter-arg path):
+# Same scenario but with a filter argument crossing the module boundary.
+include "cross_user"; cross_use_gen
+null
+[0,1,2]
+
 %%FAIL
 module (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1, column 8:
