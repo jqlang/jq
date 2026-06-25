@@ -459,13 +459,20 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   }
 
   nerrors = process_dependencies(jq, jq_get_jq_origin(jq), jq_get_prog_origin(jq), &program, &lib_state);
-  block libs = gen_noop();
-  for (uint64_t i = 0; i < lib_state.ct; ++i) {
+  for (uint64_t i = 0; i < lib_state.ct; ++i)
     free(lib_state.entries[i].name);
-    if (nerrors == 0 && !block_is_const(lib_state.entries[i].def))
-      libs = block_join(libs, lib_state.entries[i].def);
+  // Join library blocks in reverse registration order so that deeper dependencies
+  // (registered later via DFS pre-order) appear earlier in the block than their
+  // dependents.  block_mark_referenced traverses backward (last-to-first), so
+  // dependents are processed first and mark their dependencies as referenced
+  // before those dependencies are encountered -- preventing transitive callees
+  // from being incorrectly freed as unreferenced.
+  block libs = gen_noop();
+  for (uint64_t i = lib_state.ct; i > 0; --i) {
+    if (nerrors == 0 && !block_is_const(lib_state.entries[i-1].def))
+      libs = block_join(libs, lib_state.entries[i-1].def);
     else
-      block_free(lib_state.entries[i].def);
+      block_free(lib_state.entries[i-1].def);
   }
   free(lib_state.entries);
   if (nerrors)

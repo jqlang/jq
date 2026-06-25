@@ -234,6 +234,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order2.jq                               \
         tests/modules/cycle_a.jq tests/modules/cycle_b.jq               \
         tests/modules/cycle_self.jq                                     \
+        tests/modules/cross_base.jq tests/modules/cross_gen.jq          \
+        tests/modules/cross_mid.jq tests/modules/cross_user.jq          \
         tests/onig.supp tests/local.supp                                \
         tests/setup tests/torture/input0.json                           \
         tests/optional.test tests/man.test tests/manonig.test           \
