@@ -1115,7 +1115,7 @@ static jv jvp_string_copy_replace_bad(const char* data, uint32_t length) {
 
   // worst case: all bad bytes, each becomes a 3-byte U+FFFD
   uint64_t maxlength = (uint64_t)length * 3 + 1;
-  if (maxlength >= INT_MAX) {
+  if (maxlength >= INT_MAX - sizeof(jvp_string) / 2) {
     return jv_invalid_with_msg(jv_string("String too long"));
   }
 
