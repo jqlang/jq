@@ -437,7 +437,7 @@ int main(int argc, char* argv[]) {
           errno = 0;
           long indent = strtol(argv[i+1], &end, 10);
           if (errno || indent < -1 || indent > 7 ||
-              isspace(*argv[i+1]) || end == argv[i+1] || *end) {
+              isspace((unsigned char)*argv[i+1]) || end == argv[i+1] || *end) {
             fprintf(stderr, "jq: --indent takes a number between -1 and 7\n");
             die();
           }
