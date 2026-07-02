@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "June 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -2480,7 +2480,7 @@ The \fBmktime\fR builtin consumes "broken down time" representations of time out
 The \fBstrptime(fmt)\fR builtin parses input strings matching the \fBfmt\fR argument\. The output is in the "broken down time" representation consumed by \fBmktime\fR and output by \fBgmtime\fR\.
 .
 .P
-The \fBstrftime(fmt)\fR builtin formats a time (GMT) with the given format\. The \fBstrflocaltime\fR does the same, but using the local timezone setting\.
+The \fBstrftime(fmt)\fR builtin formats a time (GMT) with the given format\. The \fBstrflocaltime\fR does the same, but using the local timezone setting\. Note that \fBstrftime\fR and \fBstrflocaltime\fR can consume both seconds since the Unix epoch, as output by \fBnow\fR, \fBmktime\fR, etc\., and "broken down time", but \fBstrflocaltime\fR will only actually use the local timezone setting if consuming seconds since the Unix epoch\. When consuming "broken down time" its output will be the same as \fBstrftime\fR\'s\.
 .
 .P
 The format strings for \fBstrptime\fR and \fBstrftime\fR are described in typical C library documentation\. The format string for ISO 8601 datetime is \fB"%Y\-%m\-%dT%H:%M:%SZ"\fR\.
