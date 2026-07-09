@@ -150,7 +150,9 @@ def skip($n; expr):
   else error("skip doesn't support negative count") end;
 # range/3, with a `by` expression argument
 def range($init; $upto; $by):
-    if $by > 0 then $init|while(. < $upto; . + $by)
+    if ($init|type) != "number" or ($upto|type) != "number" or ($by|type) != "number"
+    then error("Range bounds must be numeric")
+  elif $by > 0 then $init|while(. < $upto; . + $by)
   elif $by < 0 then $init|while(. > $upto; . + $by)
   else empty end;
 def first(g): label $out | g | ., break $out;

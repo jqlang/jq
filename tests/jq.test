@@ -2118,6 +2118,24 @@ null
 false
 false
 
+# jqlang/jq#3116: range/3 must reject non-numeric bounds like range/1 and
+# range/2 already do, instead of silently looping forever or emitting empty.
+[try range(0;[];1) catch .]
+null
+["Range bounds must be numeric"]
+
+[try range([];0;1) catch .]
+null
+["Range bounds must be numeric"]
+
+[try range(0;5;[]) catch .]
+null
+["Range bounds must be numeric"]
+
+[range(0;5;1)]
+null
+[0,1,2,3,4]
+
 IN(range(10;20); range(10))
 null
 false
