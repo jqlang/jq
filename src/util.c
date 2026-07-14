@@ -1171,7 +1171,17 @@ out:
             /* calculate month of day of year */
             i = 0;
             isleap = isleap_sum(tm->tm_year, TM_YEAR_BASE);
-            while (tm->tm_yday >= start_of_month[isleap][i])
+            /*
+             * A week-number conversion (%U/%W) can leave tm_yday
+             * outside [0, days-in-year); roll a negative value back
+             * into the previous year before indexing start_of_month.
+             */
+            if (tm->tm_yday < 0) {
+                tm->tm_year--;
+                isleap = isleap_sum(tm->tm_year, TM_YEAR_BASE);
+                tm->tm_yday += start_of_month[isleap][12];
+            }
+            while (i <= 12 && tm->tm_yday >= start_of_month[isleap][i])
                 i++;
             if (i > 12) {
                 i = 1;
