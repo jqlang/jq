@@ -712,8 +712,13 @@ EOF
   if [ -z "$l" ]; then
     echo "WARNING: Not testing localization"
   else
-    dt_c=$(LC_ALL=C date -d '20260101 12:00:00')
-    dt_l=$(LC_ALL=$l date -d '20260101 12:00:00')
+    if date -v1d >/dev/null 2>&1; then
+      dt_c=$(LC_ALL=c date -j -f '%Y%m%d %H:%M:%S' '20260101 12:00:00')
+      dt_l=$(LC_ALL=$l date -j -f '%Y%m%d %H:%M:%S' '20260101 12:00:00')
+    else
+      dt_c=$(LC_ALL=c date -d '20260101 12:00:00')
+      dt_l=$(LC_ALL=$l date -d '20260101 12:00:00')
+    fi
     if [ "$dt_c" = "$dt_l" ]; then
       echo "WARNING: Date does not produce locale-dependent output for $l, skipping localization test"
     else
