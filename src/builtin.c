@@ -1086,8 +1086,14 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
         onig_foreach_name(reg, f_match_name_iter, &captures);
         match = jv_object_set(match, jv_string("captures"), captures);
         result = jv_array_append(result, match);
-        // ensure '"qux" | match("(?=u)"; "g")' matches just once
-        start = (const UChar*)(input_string+region->end[0]+1);
+        // ensure '"qux" | match("(?=u)"; "g")' matches just once; advance the
+        // search start past the whole codepoint, not a single byte, so we don't
+        // land in the middle of a multibyte character (which would yield a
+        // spurious duplicate match at the same offset).
+        start = (const UChar*)(input_string + region->end[0] +
+            ((size_t)region->end[0] < length
+                 ? jvp_utf8_decode_length(input_string[region->end[0]])
+                 : 1));
         continue;
       }
 
