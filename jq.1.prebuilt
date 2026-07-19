@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "July 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -3850,7 +3850,43 @@ jq \'truncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]])\'
 .IP "" 0
 .
 .SS "fromstream(stream_expression)"
-Outputs values corresponding to the stream expression\'s outputs\.
+Reconstructs values from a stream of path\-value pairs such as those produced by \fBtostream\fR\.
+.
+.P
+Stream entries look like \fB[path]\fR or \fB[path, value]\fR\. A path\-only entry closes the container at that path\. \fBfromstream\fR needs those closing markers to finish nested objects/arrays; without them the reconstructed value may be incomplete or empty\.
+.
+.P
+The common pattern for rebuilding a full value from a truncated or filtered stream is to append an end\-of\-stream marker \fB[[null]]\fR (equivalently a root\-level close):
+.
+.IP "" 4
+.
+.nf
+
+fromstream( inputs; [[null]] )
+.
+.fi
+.
+.IP "" 0
+.
+.P
+or, when wrapping an arbitrary stream expression:
+.
+.IP "" 4
+.
+.nf
+
+def collectstream(f):
+  fromstream(
+    (f | select(length == 2)),
+    [[null]]
+  );
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Prefer producing the stream with \fBtostream\fR when you control both ends — \fBfromstream(…|tostream)\fR is the round\-trip form shown below\.
 .
 .IP "" 4
 .

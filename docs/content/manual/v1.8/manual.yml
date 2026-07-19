@@ -3440,8 +3440,30 @@ sections:
       - title: "`fromstream(stream_expression)`"
         body: |
 
-          Outputs values corresponding to the stream expression's
-          outputs.
+          Reconstructs values from a stream of path-value pairs such as those
+          produced by `tostream`.
+
+          Stream entries look like `[path]` or `[path, value]`. A path-only
+          entry closes the container at that path. `fromstream` needs those
+          closing markers to finish nested objects/arrays; without them the
+          reconstructed value may be incomplete or empty.
+
+          The common pattern for rebuilding a full value from a truncated or
+          filtered stream is to append an end-of-stream marker `[[null]]`
+          (equivalently a root-level close):
+
+              fromstream( inputs; [[null]] )
+
+          or, when wrapping an arbitrary stream expression:
+
+              def collectstream(f):
+                fromstream(
+                  (f | select(length == 2)),
+                  [[null]]
+                );
+
+          Prefer producing the stream with `tostream` when you control both
+          ends — `fromstream(…|tostream)` is the round-trip form shown below.
 
         examples:
           - program: 'fromstream(1|truncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]]))'
