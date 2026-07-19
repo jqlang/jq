@@ -305,7 +305,7 @@ Full commit log can be found at <https://github.com/jqlang/jq/compare/jq-1.7.1..
 
   ```sh
   #!/bin/sh --
-  # Can be use to do shebang scripts.
+  # Can be used to do shebang scripts.
   # Next line will be seen as a comment be of the trailing backslash. \
   exec jq ...
   # this jq expression will result in [1]
