@@ -77,7 +77,6 @@ struct lexer_param;
 "<=" { return LESSEQ; }
 ">=" { return GREATEREQ; }
 ".." { return REC; }
-"?//" { return ALTERNATION; }
 "."|"?"|"="|";"|","|":"|"|"|"+"|"-"|"*"|"/"|"%"|"\$"|"<"|">" { return yytext[0];}
 
 "["|"{"|"(" {

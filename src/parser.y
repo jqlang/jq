@@ -85,7 +85,6 @@ struct lexer_param;
 %token SETDEFINEDOR "//="
 %token LESSEQ "<="
 %token GREATEREQ ">="
-%token ALTERNATION "?//"
 
 %token QQSTRING_START
 %token <literal> QQSTRING_TEXT
@@ -746,16 +745,16 @@ Query {
 }
 
 RepPatterns:
-RepPatterns "?//" Pattern {
-  $$ = BLOCK($1, gen_destructure_alt($3));
+RepPatterns '?' "//" Pattern {
+  $$ = BLOCK($1, gen_destructure_alt($4));
 } |
 Pattern {
   $$ = gen_destructure_alt($1);
 }
 
 Patterns:
-RepPatterns "?//" Pattern {
-  $$ = BLOCK($1, $3);
+RepPatterns '?' "//"  Pattern {
+  $$ = BLOCK($1, $4);
 } |
 Pattern {
   $$ = $1;
