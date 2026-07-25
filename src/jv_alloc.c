@@ -187,3 +187,14 @@ void* jv_mem_realloc(void* p, size_t sz) {
   }
   return p;
 }
+
+void* jv_mem_reallocarray(void* p, size_t nmemb, size_t sz) {
+  if (sz && nmemb > SIZE_MAX / sz) {
+    memory_exhausted();
+  }
+  p = realloc(p, nmemb * sz);
+  if (!p) {
+    memory_exhausted();
+  }
+  return p;
+}
