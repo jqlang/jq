@@ -260,11 +260,14 @@ jv jv_has(jv t, jv k) {
     jv_free(elem);
   } else if (jv_get_kind(t) == JV_KIND_ARRAY &&
              jv_get_kind(k) == JV_KIND_NUMBER) {
-    if (jvp_number_is_nan(k) || isinf(jv_number_value(k))) {
+    double nv = jv_number_value(k);
+    if (isnan(nv) || isinf(nv)) {
       jv_free(t);
       ret = jv_false();
     } else {
-      jv elem = jv_array_get(t, (int)jv_number_value(k));
+      if (nv < INT_MIN) nv = INT_MIN;
+      if (nv > INT_MAX) nv = INT_MAX;
+      jv elem = jv_array_get(t, (int)nv);
       ret = jv_bool(jv_is_valid(elem));
       jv_free(elem);
     }
@@ -294,9 +297,10 @@ static jv jv_dels(jv t, jv keys) {
     jv starts = jv_array(), ends = jv_array();
     jv_array_foreach(keys, i, key) {
       if (jv_get_kind(key) == JV_KIND_NUMBER) {
-        if (jvp_number_is_nan(key) || isinf(jv_number_value(key))) {
+        double nv = jv_number_value(key);
+        if (isnan(nv) || isinf(nv) || nv < INT_MIN || nv > INT_MAX) {
           jv_free(key);
-        } else if (jv_number_value(key) < 0) {
+        } else if (nv < 0) {
           neg_keys = jv_array_append(neg_keys, key);
         } else {
           nonneg_keys = jv_array_append(nonneg_keys, key);
