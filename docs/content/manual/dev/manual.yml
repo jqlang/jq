@@ -3698,6 +3698,14 @@ sections:
       `-R`, `-n`, `--args`), that evaluates the current file (`$0`),
       with the arguments (`$@`) that were passed to `sh`.
 
+      Note on version differences: before jq 1.8.0, backslash-continued
+      comments were recognized only in the special shebang form (a `#!`
+      line followed by a continued comment). Starting with 1.8.0, Tcl-style
+      multiline comments work generally, so a trailing backslash continues a
+      `#` comment anywhere. Portable shebang scripts should still use the
+      classic `#!/bin/sh --` plus continued-comment `exec jq ...` pattern
+      shown above so they work on both pre-1.8 and 1.8+ builds.
+
   - title: Modules
     body: |
 

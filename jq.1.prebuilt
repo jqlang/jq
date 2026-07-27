@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "July 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -4133,6 +4133,9 @@ reduce (
 .
 .P
 The \fBexec\fR line is considered a comment by jq, so it is ignored\. But it is not ignored by \fBsh\fR, since in \fBsh\fR a backslash at the end of the line does not continue the comment\. With this trick, when the script is invoked as \fBtotal 1 2\fR, \fB/bin/sh \-\- /path/to/total 1 2\fR will be run, and \fBsh\fR will then run \fBexec jq \-\-args \-MRnf \-\- /path/to/total 1 2\fR replacing itself with a \fBjq\fR interpreter invoked with the specified options (\fB\-M\fR, \fB\-R\fR, \fB\-n\fR, \fB\-\-args\fR), that evaluates the current file (\fB$0\fR), with the arguments (\fB$@\fR) that were passed to \fBsh\fR\.
+.
+.P
+Note on version differences: before jq 1\.8\.0, backslash\-continued comments were recognized only in the special shebang form (a \fB#!\fR line followed by a continued comment)\. Starting with 1\.8\.0, Tcl\-style multiline comments work generally, so a trailing backslash continues a \fB#\fR comment anywhere\. Portable shebang scripts should still use the classic \fB#!/bin/sh \-\-\fR plus continued\-comment \fBexec jq \.\.\.\fR pattern shown above so they work on both pre\-1\.8 and 1\.8+ builds\.
 .
 .SH "MODULES"
 jq has a library/module system\. Modules are files whose names end in \fB\.jq\fR\.
