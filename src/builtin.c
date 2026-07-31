@@ -1,4 +1,4 @@
-#if __SIZEOF_POINTER__==4
+#if __SIZEOF_POINTER__==4 && !defined(__ILP32__)
 # define _TIME_BITS 64
 #endif
 #ifndef __sun__
