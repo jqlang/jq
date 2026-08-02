@@ -990,7 +990,7 @@ sections:
           - program: '.[] | in({"foo": 42})'
             input: '["foo", "bar"]'
             output: ['true', 'false']
-          - program: 'map(in([0,1]))'
+          - program: 'map(in([3,4]))'
             input: '[2, 0]'
             output: ['[false, true]']
 
