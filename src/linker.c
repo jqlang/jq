@@ -28,7 +28,17 @@ struct lib_entry {
 struct lib_loading_state {
   struct lib_entry *entries;
   uint64_t ct;
+  // Indices into entries[], in the order the libraries finished loading
+  // (DFS post-order), so that dependencies precede their dependents.
+  uint64_t *order;
+  uint64_t order_ct;
 };
+
+static void lib_state_finish(struct lib_loading_state *lib_state, uint64_t idx) {
+  lib_state->order = jv_mem_realloc(lib_state->order,
+                                    (lib_state->order_ct + 1) * sizeof(uint64_t));
+  lib_state->order[lib_state->order_ct++] = idx;
+}
 static int load_library(jq_state *jq, jv lib_path,
                         int is_data, int raw, int optional,
                         const char *as, block *out_block,
@@ -374,6 +384,7 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int opt
     lib_state->entries[state_idx].name = strdup(jv_string_value(lib_path));
     lib_state->entries[state_idx].def = program;
     lib_state->entries[state_idx].loading = 0;
+    lib_state_finish(lib_state, state_idx);
   } else {
     // import "foo" as bar;
     src = locfile_init(jq, jv_string_value(lib_path), jv_string_value(data), jv_string_length_bytes(jv_copy(data)));
@@ -396,6 +407,7 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int opt
       program = block_bind_self(program, OP_IS_CALL_PSEUDO);
       lib_state->entries[state_idx].def = program;
       lib_state->entries[state_idx].loading = 0;
+      lib_state_finish(lib_state, state_idx);
     }
   }
   *out_block = program;
@@ -435,7 +447,7 @@ jv load_module_meta(jq_state *jq, jv mod_relpath) {
 int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   int nerrors = 0;
   block program;
-  struct lib_loading_state lib_state = {0,0};
+  struct lib_loading_state lib_state = {0,0,0,0};
   nerrors = jq_parse(src, &program);
   if (nerrors)
     return nerrors;
@@ -459,15 +471,26 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   }
 
   nerrors = process_dependencies(jq, jq_get_jq_origin(jq), jq_get_prog_origin(jq), &program, &lib_state);
+  // Join the libraries in the order they finished loading, so that a library
+  // always precedes the libraries that depend on it.  block_mark_referenced
+  // walks the joined block backwards and only descends into definitions it has
+  // already seen referenced, so a dependency placed after its dependents would
+  // have its own body left unmarked and dropped from under it.
   block libs = gen_noop();
+  for (uint64_t i = 0; i < lib_state.order_ct; ++i) {
+    struct lib_entry *e = &lib_state.entries[lib_state.order[i]];
+    if (nerrors == 0 && !block_is_const(e->def))
+      libs = block_join(libs, e->def);
+    else
+      block_free(e->def);
+    e->def = gen_noop();
+  }
   for (uint64_t i = 0; i < lib_state.ct; ++i) {
     free(lib_state.entries[i].name);
-    if (nerrors == 0 && !block_is_const(lib_state.entries[i].def))
-      libs = block_join(libs, lib_state.entries[i].def);
-    else
-      block_free(lib_state.entries[i].def);
+    block_free(lib_state.entries[i].def);
   }
   free(lib_state.entries);
+  free(lib_state.order);
   if (nerrors)
     block_free(program);
   else
