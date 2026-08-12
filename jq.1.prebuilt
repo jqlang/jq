@@ -867,7 +867,7 @@ The builtin function \fBabs\fR is defined naively as: \fBif \. < 0 then \- \. el
 For numeric input, this is the absolute value\. See the section on the identity filter for the implications of this definition for numeric input\.
 .
 .P
-To compute the absolute value of a number as a floating point number, you may wish use \fBfabs\fR\.
+To compute the absolute value of a number as a floating point number, you may wish to use \fBfabs\fR\.
 .
 .IP "" 4
 .
