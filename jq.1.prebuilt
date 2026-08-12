@@ -3219,7 +3219,7 @@ Multiple variables may be declared using a single \fBas\fR expression by providi
 .IP "" 0
 .
 .P
-The variable declarations in array patterns (e\.g\., \fB\. as [$first, $second]\fR) bind to the elements of the array in from the element at index zero on up, in order\. When there is no value at the index for an array pattern element, \fBnull\fR is bound to that variable\.
+The variable declarations in array patterns (e\.g\., \fB\. as [$first, $second]\fR) bind to the elements of the array from the element at index zero on up, in order\. When there is no value at the index for an array pattern element, \fBnull\fR is bound to that variable\.
 .
 .P
 Variables are scoped over the rest of the expression that defines them, so
