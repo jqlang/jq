@@ -1820,7 +1820,7 @@ sections:
 
           Whitespace characters are the usual `" "`, `"\n"` `"\t"`, `"\r"`
           and also all characters in the Unicode character database with the
-          whitespace property. Note that what considers whitespace might
+          whitespace property. Note that what is considered whitespace might
           change in the future.
 
         examples:

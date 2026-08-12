@@ -1984,7 +1984,7 @@ jq \'[\.[]|trimstr("foo")]\'
 \fBrtrim\fR trims only trailing (right side) whitespace\.
 .
 .P
-Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"\fR and also all characters in the Unicode character database with the whitespace property\. Note that what considers whitespace might change in the future\.
+Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"\fR and also all characters in the Unicode character database with the whitespace property\. Note that what is considered whitespace might change in the future\.
 .
 .IP "" 4
 .
