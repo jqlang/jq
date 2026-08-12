@@ -876,7 +876,7 @@ sections:
           section on the identity filter for the implications of this
           definition for numeric input.
 
-          To compute the absolute value of a number as a floating point number, you may wish use `fabs`.
+          To compute the absolute value of a number as a floating point number, you may wish to use `fabs`.
 
         examples:
           - program: 'map(abs)'
