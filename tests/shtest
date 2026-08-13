@@ -119,6 +119,27 @@ printf '" ~\\u007f"\n' > $d/expected
 printf "\"$(printf '\\%03o' 32 126 127)\"" | $JQ '.' > $d/out 2>&1
 cmp $d/out $d/expected
 
+# Regression test for #3110: a raw NUL byte outside of a string must be a clean
+# parse error, not silently truncate the surrounding token. Previously
+# `printf '12\0003'` printed 12 and dropped the trailing 3.
+cat > $d/expected <<EOF
+jq: parse error: Invalid character at line 1, column 3
+EOF
+if printf '12\0003' | $JQ '.' > $d/out 2>&1; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 2
+fi
+cmp $d/out $d/expected
+# A NUL at the very start of the input is rejected too.
+cat > $d/expected <<EOF
+jq: parse error: Invalid character at line 1, column 1
+EOF
+if printf '\000' | $JQ '.' > $d/out 2>&1; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 2
+fi
+cmp $d/out $d/expected
+
 ## Test --exit-status
 data='{"i": 1}\n{"i": 2}\n{"i": 3}\n'
 printf "$data" | $JQ --exit-status 'select(.i==1)' > /dev/null 2>&1
