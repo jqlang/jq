@@ -1820,7 +1820,7 @@ sections:
 
           Whitespace characters are the usual `" "`, `"\n"` `"\t"`, `"\r"`
           and also all characters in the Unicode character database with the
-          whitespace property. Note that what considers whitespace might
+          whitespace property. Note that what is considered whitespace might
           change in the future.
 
         examples:
@@ -2819,7 +2819,7 @@ sections:
       which to place the data.
 
       It is also possible to define functions in jq, although this is
-      is a feature whose biggest use is defining jq's standard library
+      a feature whose biggest use is defining jq's standard library
       (many jq functions such as `map` and `select` are in fact written
       in jq).
 
@@ -2901,7 +2901,7 @@ sections:
               . as {realnames: $names, posts: [$first, $second]} | ...
 
           The variable declarations in array patterns (e.g., `. as
-          [$first, $second]`) bind to the elements of the array in from
+          [$first, $second]`) bind to the elements of the array from
           the element at index zero on up, in order.  When there is no
           value at the index for an array pattern element, `null` is
           bound to that variable.

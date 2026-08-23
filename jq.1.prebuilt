@@ -1984,7 +1984,7 @@ jq \'[\.[]|trimstr("foo")]\'
 \fBrtrim\fR trims only trailing (right side) whitespace\.
 .
 .P
-Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"\fR and also all characters in the Unicode character database with the whitespace property\. Note that what considers whitespace might change in the future\.
+Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"\fR and also all characters in the Unicode character database with the whitespace property\. Note that what is considered whitespace might change in the future\.
 .
 .IP "" 4
 .
@@ -3120,7 +3120,7 @@ Variables are an absolute necessity in most programming languages, but they\'re 
 In most languages, variables are the only means of passing around data\. If you calculate a value, and you want to use it more than once, you\'ll need to store it in a variable\. To pass a value to another part of the program, you\'ll need that part of the program to define a variable (as a function parameter, object member, or whatever) in which to place the data\.
 .
 .P
-It is also possible to define functions in jq, although this is is a feature whose biggest use is defining jq\'s standard library (many jq functions such as \fBmap\fR and \fBselect\fR are in fact written in jq)\.
+It is also possible to define functions in jq, although this is a feature whose biggest use is defining jq\'s standard library (many jq functions such as \fBmap\fR and \fBselect\fR are in fact written in jq)\.
 .
 .P
 jq has reduction operators, which are very powerful but a bit tricky\. Again, these are mostly used internally, to define some useful bits of jq\'s standard library\.
@@ -3219,7 +3219,7 @@ Multiple variables may be declared using a single \fBas\fR expression by providi
 .IP "" 0
 .
 .P
-The variable declarations in array patterns (e\.g\., \fB\. as [$first, $second]\fR) bind to the elements of the array in from the element at index zero on up, in order\. When there is no value at the index for an array pattern element, \fBnull\fR is bound to that variable\.
+The variable declarations in array patterns (e\.g\., \fB\. as [$first, $second]\fR) bind to the elements of the array from the element at index zero on up, in order\. When there is no value at the index for an array pattern element, \fBnull\fR is bound to that variable\.
 .
 .P
 Variables are scoped over the rest of the expression that defines them, so
