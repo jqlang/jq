@@ -563,6 +563,11 @@ typedef enum {
 
 static chclass classify(char c) {
   switch (c) {
+  case '\0':
+    // RFC 8259 forbids raw NUL in JSON text. Treating it as a literal lets it
+    // slip into the token buffer, where check_literal() reads the buffer as a
+    // NUL-terminated C string and silently truncates the token. Reject it.
+    return INVALID;
   case ' ':
   case '\t':
   case '\r':
