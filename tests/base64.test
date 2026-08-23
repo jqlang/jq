@@ -36,6 +36,53 @@
 "cWl4YmF6Cg"
 "qixbaz\n"
 
+# base64url encoding (Section 5 of RFC 4648) without padding
+@base64url
+"ab>cd?"
+"YWI-Y2Q_"
+
+@base64url
+"ab>cd?x"
+"YWI-Y2Q_eA"
+
+@base64url
+"ab>cd?xy"
+"YWI-Y2Q_eHk"
+
+@base64url
+"ab>cd?xyz"
+"YWI-Y2Q_eHl6"
+
+# base64url encoding (Section 5 of RFC 4648) with padding
+@base64urlp
+"ab>cd?"
+"YWI-Y2Q_"
+
+@base64urlp
+"ab>cd?x"
+"YWI-Y2Q_eA=="
+
+@base64urlp
+"ab>cd?xy"
+"YWI-Y2Q_eHk="
+
+@base64urlp
+"ab>cd?xyz"
+"YWI-Y2Q_eHl6"
+
+# base64url decoding (Section 5 of RFC 4648)
+@base64d
+"YWI-"
+"ab>"
+
+@base64d
+"Y2Q_"
+"cd?"
+
+@base64d
+"YWI-Y2Q_"
+"ab>cd?"
+
 # invalid base64 characters (whitespace)
 . | try @base64d catch .
 "Not base64 data"
