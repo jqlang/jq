@@ -150,8 +150,8 @@ def skip($n; expr):
   else error("skip doesn't support negative count") end;
 # range/3, with a `by` expression argument
 def range($init; $upto; $by):
-    if $by > 0 then $init|while(. < $upto; . + $by)
-  elif $by < 0 then $init|while(. > $upto; . + $by)
+    if $by > 0 then $init|while(. < $upto; . as $current | . + $by | select(. > $current))
+  elif $by < 0 then $init|while(. > $upto; . as $current | . + $by | select(. < $current))
   else empty end;
 def first(g): label $out | g | ., break $out;
 def isempty(g): first((g|false), true);

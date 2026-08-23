@@ -531,11 +531,18 @@ jv jq_next(jq_state *jq) {
         goto do_backtrack;
       } else {
         jv curr = *var;
-        *var = jv_number(jv_number_value(*var) + 1);
+        double curr_num = jv_number_value(curr);
+        double next = curr_num + 1;
+        *var = jv_number(next);
 
-        struct stack_pos spos = stack_get_pos(jq);
-        stack_push(jq, max);
-        stack_save(jq, pc - 3, spos);
+        if (next > curr_num) {
+          struct stack_pos spos = stack_get_pos(jq);
+          stack_push(jq, max);
+          stack_save(jq, pc - 3, spos);
+        } else {
+          // Stop if adding one cannot advance at the current precision.
+          jv_free(max);
+        }
 
         stack_push(jq, curr);
       }
