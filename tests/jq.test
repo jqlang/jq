@@ -82,6 +82,12 @@ null
 "ISgpPD4mJyIJ"
 "!()<>&'\"\t"
 
+# table from array of values
+@table
+[["one","two"],[1, null],[false, 2]]
+"┌─────┬────┐\n│one  │two │\n│1    │null│\n│false│2   │\n└─────┴────┘"
+
+
 # regression test for #436
 @base64
 "foóbar\n"
