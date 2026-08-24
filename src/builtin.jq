@@ -72,19 +72,23 @@ def flatten($x): if $x < 0 then error("flatten depth must not be negative") else
 def flatten: _flatten(-1);
 def range($x): range(0;$x);
 def fromdateiso8601:
-  if type == "string" and endswith("Z") then
-    (rindex(".") as $dot
-     | if $dot == 19 and length > 21 then
-         (.[20:length-1] as $frac
-          | ($frac | try ("0." + . | tonumber) catch null) as $n
-          | if $n != null then
-              (.[:19] + "Z" | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) + $n
-            else
-              strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
-            end)
-       else
-         strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
-       end)
+  if type == "string" then
+    if length == 20 then
+      strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
+    else
+      (length as $len
+       | if $len > 21 and .[$len-1:$len] == "Z" and .[19:20] == "." then
+           (.[20:$len-1] as $frac
+            | ($frac | try ("0." + . | tonumber) catch null) as $n
+            | if $n != null then
+                (.[:19] + "Z" | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) + $n
+              else
+                strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
+              end)
+         else
+           strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
+         end)
+    end
   else
     strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
   end;
