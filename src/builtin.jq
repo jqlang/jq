@@ -72,13 +72,22 @@ def flatten($x): if $x < 0 then error("flatten depth must not be negative") else
 def flatten: _flatten(-1);
 def range($x): range(0;$x);
 def fromdateiso8601:
-  _match_impl("^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})\\.([0-9]+)Z$"; null; false) as $m
-  | if ($m | length) > 0 then
-      (($m[0].captures[0].string + "Z" | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime)
-       + ("0." + $m[0].captures[1].string | tonumber))
-    else
-      strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
-    end;
+  if type == "string" and endswith("Z") then
+    (rindex(".") as $dot
+     | if $dot == 19 and length > 21 then
+         (.[20:length-1] as $frac
+          | ($frac | try ("0." + . | tonumber) catch null) as $n
+          | if $n != null then
+              (.[:19] + "Z" | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) + $n
+            else
+              strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
+            end)
+       else
+         strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
+       end)
+  else
+    strptime("%Y-%m-%dT%H:%M:%SZ") | mktime
+  end;
 def todateiso8601: strftime("%Y-%m-%dT%H:%M:%SZ");
 def fromdate: fromdateiso8601;
 def todate: todateiso8601;
