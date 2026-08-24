@@ -72,6 +72,7 @@ jv jq_util_input_get_current_filename(jq_state*);
 jv jq_util_input_get_current_line(jq_state*);
 
 int jq_set_colors(const char *);
+int jq_add_color_field(const char *);
 
 #ifdef __cplusplus
 }
