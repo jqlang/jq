@@ -76,6 +76,8 @@ double jv_number_value(jv);
 int jv_is_integer(jv);
 jv jv_number_abs(jv);
 jv jv_number_negate(jv);
+jv jv_number_add(jv, jv);
+jv jv_number_subtract(jv, jv);
 
 int jv_number_has_literal(jv);
 const char* jv_number_get_literal(jv);
