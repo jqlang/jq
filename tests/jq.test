@@ -2542,6 +2542,17 @@ foreach .[] as $x (0, 1; . + $x)
 2
 4
 
+# regression test for #3227 (reduce)
+[] | reduce .[] as $x (0, 0; .)
+null
+0
+0
+
+[] | reduce .[] as $x (0, 0; .) as $y | $y
+null
+0
+0
+
 # regression test for CVE-2025-49014 (use of fmt after free)
 # tests with both empty string literal and empty string created by function
 # as they seems to behave reference wise differently.
