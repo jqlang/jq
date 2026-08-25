@@ -2663,6 +2663,15 @@ true
 null
 true
 
+# Mixed literal/double operands also preserve precision (non-literal 1 from number length)
+1773942167980555584 + (1 | length) == if have_decnum then 1773942167980555585 else 1773942167980555500 end
+null
+true
+
+1773942167980555584 - (1 | length) == if have_decnum then 1773942167980555583 else 1773942167980555500 end
+null
+true
+
 # NaN, null, and infinite behavior is preserved
 [((nan - 1) | isnan), ((nan + 1) | isnan), (null + 1), (1 + null), ((1e1000 - 1e1000) | tostring)] == if have_decnum then [true,true,1,1,"0"] else [true,true,1,1,"null"] end
 null
