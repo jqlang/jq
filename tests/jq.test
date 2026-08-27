@@ -1978,6 +1978,10 @@ modulemeta | .defs | length
 "c"
 2
 
+import "c" as c; modulemeta
+"d"
+{"deps":[],"defs":["meh/0"]}
+
 %%FAIL IGNORE MSG
 import "syntaxerror" as e; .
 jq: error: syntax error, unexpected ';', expecting end of file at tests/modules/syntaxerror/syntaxerror.jq, line 1, column 4:
