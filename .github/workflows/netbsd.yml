@@ -1,0 +1,50 @@
+name: NetBSD
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "jq-*"
+  pull_request:
+
+jobs:
+  netbsd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+      - name: Build and test
+        uses: vmactions/netbsd-vm@v1
+        with:
+          usesh: true
+          cache-after-prepare: true
+          prepare: |
+            # The image's default PKG_PATH falls back to a 9.0 package set;
+            # point it at the running release instead.
+            PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/$(uname -m)/$(uname -r)/All/"
+            export PKG_PATH
+            pkg_add autoconf automake libtool gmake git
+          run: |
+            set -e
+            # The VM runs as root over a checkout owned by another uid, so git
+            # rejects the repository and scripts/version -- which AC_INIT calls
+            # through m4_esyscmd_s -- exits 128, leaving JQ_VERSION undefined.
+            git config --global --add safe.directory "$PWD"
+            git config --global --add safe.directory "$PWD/vendor/oniguruma"
+            autoreconf -i
+            ./configure --disable-docs --with-oniguruma=builtin --enable-static
+            gmake -j"$(sysctl -n hw.ncpu)"
+            gmake check VERBOSE=yes
+      - name: Upload Test Logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-logs-netbsd
+          retention-days: 7
+          path: |
+            test-suite.log
+            tests/*.log
