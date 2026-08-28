@@ -34,7 +34,7 @@ static struct sort_cmp_state sort_cmp_state;
 #endif
 #endif
 
-static jv parse_slice(jv j, jv slice, int* pstart, int* pend) {
+static jv parse_slice(jv j, jv slice, int* pstart, int* pend, int allow_out_of_bounds) {
   // Array slices
   jv start_jv = jv_object_get(jv_copy(slice), jv_string("start"));
   jv end_jv = jv_object_get(slice, jv_string("end"));
@@ -77,7 +77,7 @@ static jv parse_slice(jv j, jv slice, int* pstart, int* pend) {
   if (isnan(dstart)) dstart = 0;
   if (dstart < 0)    dstart += len;
   if (dstart < 0)    dstart = 0;
-  if (dstart > len)  dstart = len;
+  if (!allow_out_of_bounds && dstart > len) dstart = len;
   start = dstart > INT_MAX ? INT_MAX : (int)dstart; // Rounds down
 
   if (isnan(dend))   dend = len;
@@ -89,7 +89,8 @@ static jv parse_slice(jv j, jv slice, int* pstart, int* pend) {
                                                 // but round end up
 
   if (end < start) end = start;
-  assert(0 <= start && start <= end && end <= len);
+  assert(0 <= start && start <= end);
+  assert(allow_out_of_bounds || end <= len);
   *pstart = start;
   *pend = end;
   return jv_true();
@@ -123,7 +124,7 @@ jv jv_get(jv t, jv k) {
     jv_free(k);
   } else if (jv_get_kind(t) == JV_KIND_ARRAY && jv_get_kind(k) == JV_KIND_OBJECT) {
     int start, end;
-    jv e = parse_slice(jv_copy(t), k, &start, &end);
+    jv e = parse_slice(jv_copy(t), k, &start, &end, 0);
     if (jv_get_kind(e) == JV_KIND_TRUE) {
       v = jv_array_slice(t, start, end);
     } else {
@@ -132,7 +133,7 @@ jv jv_get(jv t, jv k) {
     }
   } else if (jv_get_kind(t) == JV_KIND_STRING && jv_get_kind(k) == JV_KIND_OBJECT) {
     int start, end;
-    jv e = parse_slice(jv_copy(t), k, &start, &end);
+    jv e = parse_slice(jv_copy(t), k, &start, &end, 0);
     if (jv_get_kind(e) == JV_KIND_TRUE) {
       v = jv_string_slice(t, start, end);
     } else {
@@ -191,13 +192,22 @@ jv jv_set(jv t, jv k, jv v) {
              (jv_get_kind(t) == JV_KIND_ARRAY || isnull)) {
     if (isnull) t = jv_array();
     int start, end;
-    jv e = parse_slice(jv_copy(t), k, &start, &end);
+    jv e = parse_slice(jv_copy(t), k, &start, &end, 1);
     if (jv_get_kind(e) == JV_KIND_TRUE) {
       if (jv_get_kind(v) == JV_KIND_ARRAY) {
         int array_len = jv_array_length(jv_copy(t));
+        int insert_len = jv_array_length(jv_copy(v));
+        if (start > array_len) {
+          if (insert_len == 0) {
+            start = end = array_len;
+          } else {
+            t = jv_array_set(t, start - 1, jv_null());
+            array_len = start;
+            end = start;
+          }
+        }
         assert(0 <= start && start <= end && end <= array_len);
         int slice_len = end - start;
-        int insert_len = jv_array_length(jv_copy(v));
         if (slice_len < insert_len) {
           // array is growing
           int shift = insert_len - slice_len;
@@ -303,7 +313,7 @@ static jv jv_dels(jv t, jv keys) {
         }
       } else if (jv_get_kind(key) == JV_KIND_OBJECT) {
         int start, end;
-        jv e = parse_slice(jv_copy(t), key, &start, &end);
+        jv e = parse_slice(jv_copy(t), key, &start, &end, 0);
         if (jv_get_kind(e) == JV_KIND_TRUE) {
           starts = jv_array_append(starts, jv_number(start));
           ends = jv_array_append(ends, jv_number(end));
