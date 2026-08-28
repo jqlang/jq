@@ -2250,13 +2250,45 @@ sections:
 
           The `fromdateiso8601` builtin parses datetimes in the ISO 8601
           format to a number of seconds since the Unix epoch
-          (1970-01-01T00:00:00Z).  The `todateiso8601` builtin does the
-          inverse.
+          (1970-01-01T00:00:00Z).  The `todateiso8601` builtin formats a
+          number of seconds as `"%Y-%m-%dT%H:%M:%SZ"`.
 
-          The `fromdate` builtin parses datetime strings.  Currently
-          `fromdate` only supports ISO 8601 datetime strings, but in the
-          future it will attempt to parse datetime strings in more
-          formats.
+          `fromdateiso8601` accepts a complete date, optionally followed by
+          a time of day, written in either the extended representation, which
+          separates the components, or the basic representation, which does
+          not.  The two cannot be mixed within one datetime.  The date may be
+          a calendar date (`2015-03-05`, `20150305`), an ordinal date
+          (`2015-064`, `2015064`), or a week date (`2015-W10-4`, `2015W104`);
+          all three denote the same day.  Years outside the range 0000 to 9999
+          are written with a sign and six digits, as in `+012015-03-05`.
+
+          The time of day may omit its seconds, or its minutes and seconds,
+          as in `2015-03-05T23:51Z` and `2015-03-05T23Z`, or be left out
+          altogether, in which case the value is midnight UTC.  It may carry a
+          fractional part after a `.` or a `,`, which belongs to the lowest
+          component present, so `23,5` is half past 23.  It may be followed
+          by an offset from UTC written as `Z`, `+hh`, `+hh:mm` or `+hhmm`;
+          a datetime with no offset is read as UTC.  A time of `24:00:00`
+          denotes midnight of the following day, and a leap second is read as
+          the second before it, since jq counts every day as 86400 seconds.
+
+          The `W`, `T` and `Z` designators may also be written in lower
+          case, which ISO 8601 permits where upper case is not available.
+          RFC 3339 additionally allows the date and the time to be separated
+          by a space instead of a `T` "for the sake of readability", which jq
+          accepts too.  The offset may use the other representation's
+          separator style, as in `2015-03-05T23:51:47+0900`, although
+          ISO 8601 does not allow the basic and extended representations
+          to be mixed.
+
+          A complete date is required, so `2015` and `2015-03` are errors
+          even though ISO 8601 defines them as dates, and `T23:51:47` is an
+          error because a time of day on its own is not a point in time.
+          Dates that do not exist, such as `2015-02-30` or `2016-W53-1`, are
+          errors too, as is `2015-03-05Z`, since a zone designator belongs to
+          the time of day.
+
+          The `fromdate` builtin is an alias for `fromdateiso8601`.
 
           The `todate` builtin is an alias for `todateiso8601`.
 
@@ -2296,8 +2328,11 @@ sections:
           the local timezone setting.
 
           The format strings for `strptime` and `strftime` are described
-          in typical C library documentation.  The format string for ISO
-          8601 datetime is `"%Y-%m-%dT%H:%M:%SZ"`.
+          in typical C library documentation.  `"%Y-%m-%dT%H:%M:%SZ"` is
+          the format that `todateiso8601` produces; it is only one of the
+          ISO 8601 representations that `fromdateiso8601` accepts, and
+          `strptime` cannot parse the others -- there is no portable format
+          specifier for week dates or for fractional seconds.
 
           jq may not support some or all of this date functionality on
           some systems. In particular, the `%u` and `%j` specifiers for
@@ -2307,6 +2342,14 @@ sections:
           - program: 'fromdate'
             input: '"2015-03-05T23:51:47Z"'
             output: ['1425599507']
+
+          - program: 'fromdateiso8601'
+            input: '"2015-03-06T08:51:47.25+09:00"'
+            output: ['1425599507.25']
+
+          - program: 'map(fromdateiso8601)'
+            input: '["20150305T235147Z","2015-064T23:51:47Z","2015-W10-4T23:51:47Z"]'
+            output: ['[1425599507,1425599507,1425599507]']
 
           - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")'
             input: '"2015-03-05T23:51:47Z"'

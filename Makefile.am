@@ -5,7 +5,8 @@ LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
-        src/util.h src/jv_dtoa_tsd.h src/jv_thread.h src/jv_private.h   \
+        src/util.h src/iso8601.h                                        \
+        src/jv_dtoa_tsd.h src/jv_thread.h src/jv_private.h              \
         vendor/decNumber/decContext.h vendor/decNumber/decNumber.h      \
         vendor/decNumber/decNumberLocal.h
 
@@ -13,7 +14,7 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
         src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
-        src/jv_dtoa_tsd.c                                               \
+        src/iso8601.c src/jv_dtoa_tsd.c                                 \
         vendor/decNumber/decContext.c vendor/decNumber/decNumber.c      \
         ${LIBJQ_INCS}
 
