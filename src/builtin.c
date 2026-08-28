@@ -32,6 +32,7 @@
 #include "bytecode.h"
 #include "linker.h"
 #include "locfile.h"
+#include "iso8601.h"
 #include "jv_unicode.h"
 #include "jv_alloc.h"
 #include "jv_dtoa.h"
@@ -1680,6 +1681,17 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   return r;
 }
 
+static jv f_fromdateiso8601(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_STRING)
+    return ret_error(a, jv_string("fromdateiso8601 requires string inputs"));
+  double t;
+  if (!jvp_iso8601_parse(jv_string_value(a), jv_string_length_bytes(jv_copy(a)), &t))
+    return ret_error(a, jv_string_fmt("date \"%s\" is not a valid ISO 8601 datetime",
+                                      jv_string_value(a)));
+  jv_free(a);
+  return jv_number(t);
+}
+
 static int jv2tm(jv a, struct tm *tm, int localtime) {
   memset(tm, 0, sizeof(*tm));
   static const size_t offsets[] = {
@@ -2041,6 +2053,7 @@ BINOPS
   CFUNC(f_input, "input", 1),
   CFUNC(f_debug, "debug", 1),
   CFUNC(f_stderr, "stderr", 1),
+  CFUNC(f_fromdateiso8601, "fromdateiso8601", 1),
   CFUNC(f_strptime, "strptime", 2),
   CFUNC(f_strftime, "strftime", 2),
   CFUNC(f_strflocaltime, "strflocaltime", 2),
