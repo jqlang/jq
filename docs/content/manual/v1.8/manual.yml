@@ -3696,7 +3696,13 @@ sections:
       run `exec jq --args -MRnf -- /path/to/total 1 2` replacing itself
       with a `jq` interpreter invoked with the specified options (`-M`,
       `-R`, `-n`, `--args`), that evaluates the current file (`$0`),
-      with the arguments (`$@`) that were passed to `sh`.      The example above uses the jq 1.8 and later behaviour. For compatibility      with jq 1.7 and earlier, keep the shebang on the first line and put a      backslash-continued comment immediately on the second line, followed by      the `exec` line. jq 1.8 and later support backslash-continued comments      in any position.
+      with the arguments (`$@`) that were passed to `sh`.
+
+            The example above uses the jq 1.8 and later behaviour. For compatibility
+                  with jq 1.7 and earlier, keep the shebang on the first line and put a
+                        backslash-continued comment immediately on the second line, followed by
+                              the `exec` line. jq 1.8 and later support backslash-continued comments
+                                    in any position.
 
   - title: Modules
     body: |
