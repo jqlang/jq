@@ -4134,6 +4134,9 @@ reduce (
 .P
 The \fBexec\fR line is considered a comment by jq, so it is ignored\. But it is not ignored by \fBsh\fR, since in \fBsh\fR a backslash at the end of the line does not continue the comment\. With this trick, when the script is invoked as \fBtotal 1 2\fR, \fB/bin/sh \-\- /path/to/total 1 2\fR will be run, and \fBsh\fR will then run \fBexec jq \-\-args \-MRnf \-\- /path/to/total 1 2\fR replacing itself with a \fBjq\fR interpreter invoked with the specified options (\fB\-M\fR, \fB\-R\fR, \fB\-n\fR, \fB\-\-args\fR), that evaluates the current file (\fB$0\fR), with the arguments (\fB$@\fR) that were passed to \fBsh\fR\.
 .
+.P
+The example above uses the jq 1\.8 and later behaviour\. For compatibility with jq 1\.7 and earlier, keep the shebang on the first line and put a backslash\-continued comment immediately on the second line, followed by the \fBexec\fR line\. jq 1\.8 and later support backslash\-continued comments in any position\.
+.
 .SH "MODULES"
 jq has a library/module system\. Modules are files whose names end in \fB\.jq\fR\.
 .
