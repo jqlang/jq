@@ -1042,6 +1042,10 @@ null
 [5]
 6
 
+label $out | . as [$a] ?// $b | {$a, $b}, break $out
+[7]
+{"a":7,"b":null}
+
 . as $dot|any($dot[];not)
 [1,2,3,4,true,false,1,2,3,4,5]
 true
