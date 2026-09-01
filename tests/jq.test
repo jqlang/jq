@@ -1930,6 +1930,29 @@ import "shadow1" as f; import "shadow2" as f; import "shadow1" as e; [e::e, f::e
 null
 [2,3]
 
+# Transitively included modules must not be dropped as unreferenced (#3597)
+include "chain_a"; chain_a
+null
+"c"
+
+# ... including when the shared dependency is first pulled in by a module
+# whose own definitions end up unused, in either include order
+include "diamond_used"; include "diamond_unused"; diamond_used
+null
+1
+
+include "diamond_unused"; include "diamond_used"; diamond_used
+null
+1
+
+include "diamond_leaf"; include "diamond_used"; diamond_used
+null
+1
+
+include "diamond_used"; include "diamond_leaf"; diamond_used
+null
+1
+
 %%FAIL
 module (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1, column 8:
