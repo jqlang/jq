@@ -1930,6 +1930,23 @@ import "shadow1" as f; import "shadow2" as f; import "shadow1" as e; [e::e, f::e
 null
 [2,3]
 
+# A module reached only through another module must be linked before its
+# importers, or dead-code elimination drops the definitions that only the
+# importer's body references (#3597)
+include "deep1"; f
+null
+[1,[21,3],[22,3,1]]
+
+# ... including when the shared dependency is pulled in first by an importer
+# whose own definitions end up unused, in either import order
+import "deep2a" as a; import "deep2b" as b; b::f
+null
+[22,3,1]
+
+import "deep2b" as b; import "deep2a" as a; b::f
+null
+[22,3,1]
+
 %%FAIL
 module (.+1); 0
 jq: error: Module metadata must be constant at <top-level>, line 1, column 8:
