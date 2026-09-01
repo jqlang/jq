@@ -248,6 +248,24 @@ static jv default_search(jq_state *jq, jv value) {
   return value;
 }
 
+static void register_module_path(jq_state *jq, jv relpath, jv resolved) {
+  jv paths = jq_get_attr(jq, jv_string("JQ_MODULE_PATHS"));
+  if (jv_get_kind(paths) != JV_KIND_OBJECT) {
+    jv_free(paths);
+    paths = jv_object();
+  }
+
+  jv existing = jv_object_get(jv_copy(paths), jv_copy(relpath));
+  if (!jv_is_valid(existing))
+    paths = jv_object_set(paths, relpath, resolved);
+  else {
+    jv_free(existing);
+    jv_free(relpath);
+    jv_free(resolved);
+  }
+  jq_set_attr(jq, jv_string("JQ_MODULE_PATHS"), paths);
+}
+
 // XXX Split this into a util that takes a callback, and then...
 static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block *src_block, struct lib_loading_state *lib_state) {
   jv deps = block_take_imports(src_block);
@@ -270,6 +288,7 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
       optional = 1;
     jv_free(v);
     jv relpath = validate_relpath(jv_object_get(jv_copy(dep), jv_string("relpath")));
+    jv module_name = jv_copy(relpath);
     jv as = jv_object_get(jv_copy(dep), jv_string("as"));
     assert(!jv_is_valid(as) || jv_get_kind(as) == JV_KIND_STRING);
     if (jv_get_kind(as) == JV_KIND_STRING)
@@ -281,6 +300,7 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
     jv resolved = find_lib(jq, relpath, search, is_data ? ".json" : ".jq", jv_copy(jq_origin), jv_copy(lib_origin));
     // XXX ...move the rest of this into a callback.
     if (!jv_is_valid(resolved)) {
+      jv_free(module_name);
       jv_free(as);
       if (optional) {
         jv_free(resolved);
@@ -294,6 +314,11 @@ static int process_dependencies(jq_state *jq, jv jq_origin, jv lib_origin, block
       jv_free(lib_origin);
       return 1;
     }
+
+    if (is_data)
+      jv_free(module_name);
+    else
+      register_module_path(jq, module_name, jv_copy(resolved));
 
     if (is_data) {
       // Can't reuse data libs because the wrong name is bound
@@ -407,8 +432,24 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int opt
 // FIXME It'd be nice to have an option to search the same search path
 // as we do in process_dependencies.
 jv load_module_meta(jq_state *jq, jv mod_relpath) {
+  mod_relpath = validate_relpath(mod_relpath);
+  if (!jv_is_valid(mod_relpath))
+    return mod_relpath;
+
   // We can't know the caller's origin; we could though, if it was passed in
-  jv lib_path = find_lib(jq, validate_relpath(mod_relpath), jq_get_lib_dirs(jq), ".jq", jq_get_jq_origin(jq), jv_null());
+  jv module_paths = jq_get_attr(jq, jv_string("JQ_MODULE_PATHS"));
+  jv lib_path = jv_invalid();
+  if (jv_get_kind(module_paths) == JV_KIND_OBJECT)
+    lib_path = jv_object_get(module_paths, jv_copy(mod_relpath));
+  else
+    jv_free(module_paths);
+
+  if (jv_get_kind(lib_path) != JV_KIND_STRING) {
+    jv_free(lib_path);
+    lib_path = find_lib(jq, mod_relpath, jq_get_lib_dirs(jq), ".jq", jq_get_jq_origin(jq), jv_null());
+  } else {
+    jv_free(mod_relpath);
+  }
   if (!jv_is_valid(lib_path))
     return lib_path;
   jv meta = jv_null();
@@ -436,6 +477,7 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
   int nerrors = 0;
   block program;
   struct lib_loading_state lib_state = {0,0};
+  jq_set_attr(jq, jv_string("JQ_MODULE_PATHS"), jv_object());
   nerrors = jq_parse(src, &program);
   if (nerrors)
     return nerrors;
