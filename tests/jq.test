@@ -1896,6 +1896,111 @@ last(range(365 * 67)|("1970-03-01T01:02:03Z"|strptime("%Y-%m-%dT%H:%M:%SZ")|mkti
 null
 [2037,1,11,1,2,3,3,41]
 
+# fromdateiso8601 accepts the calendar, ordinal and week date forms,
+# in both the extended and the basic representation
+[("2015-03-05T23:51:47Z", "20150305T235147Z", "2015-064T23:51:47Z", "2015064T235147Z", "2015-W10-4T23:51:47Z", "2015W104T235147Z") | fromdateiso8601]
+null
+[1425599507,1425599507,1425599507,1425599507,1425599507,1425599507]
+
+# fractional seconds, with either decimal sign
+[("2015-03-05T23:51:47.25Z", "2015-03-05T23:51:47,25Z", "20150305T235147.25Z") | fromdateiso8601]
+null
+[1425599507.25,1425599507.25,1425599507.25]
+
+# UTC offsets; an absent offset means UTC
+[("2015-03-06T08:51:47+09:00", "2015-03-06T08:51:47+0900", "2015-03-06T08:51:47+09", "2015-03-05T18:21:47-05:30", "2015-03-05T23:51:47z", "2015-03-05T23:51:47") | fromdateiso8601]
+null
+[1425599507,1425599507,1425599507,1425599507,1425599507,1425599507]
+
+# the date and the time may be separated by "T", "t" or a space
+[("2015-03-05t23:51:47Z", "2015-03-05 23:51:47Z") | fromdateiso8601]
+null
+[1425599507,1425599507]
+
+# the W, T and Z designators may be written in lower case
+[("2015-w10-4t23:51:47z", "2015w104t235147z", "2015-03-05t23:51:47z") | fromdateiso8601]
+null
+[1425599507,1425599507,1425599507]
+
+# expanded years carry a sign and exactly six digits
+[("+012015-03-05T23:51:47Z", "-000001-01-01T00:00:00Z", "+0020150305T235147Z", "+2025-03-05", "+02025-03-05", "+0002025-03-05") | try fromdateiso8601 catch "ERR"]
+null
+[316995119507,-62198755200,1425599507,"ERR","ERR","ERR"]
+
+# "24:00:00" is midnight of the following day, at any precision
+[("2015-03-05T24:00:00Z", "2015-03-05T24:00Z", "2015-03-05T24Z") | fromdateiso8601 | todate]
+null
+["2015-03-06T00:00:00Z","2015-03-06T00:00:00Z","2015-03-06T00:00:00Z"]
+
+# leap seconds are dropped rather than rejected
+"2015-06-30T23:59:60Z" | fromdateiso8601 | todate
+null
+"2015-06-30T23:59:59Z"
+
+# 2015 starts on a Thursday, so it has 53 ISO weeks
+"2015-W53-1T00:00:00Z" | fromdateiso8601 | todate
+null
+"2015-12-28T00:00:00Z"
+
+# 2016 is a leap year starting on a Friday: 366 days, but only 52 ISO weeks
+[("2016-366T00:00:00Z", "2016-W52-7T00:00:00Z") | fromdateiso8601 | todate]
+null
+["2016-12-31T00:00:00Z","2017-01-01T00:00:00Z"]
+
+# fromdateiso8601 is not limited by the range of a 32-bit time_t (#3276)
+fromdate
+"2038-01-19T03:14:08Z"
+2147483648
+
+# the time may drop its seconds, or its minutes and seconds
+[("2015-03-05T23:51Z", "2015-03-05T23Z", "20150305T2351Z", "20150305T23Z") | fromdateiso8601]
+null
+[1425599460,1425596400,1425599460,1425596400]
+
+# a decimal fraction belongs to the lowest component present
+[("2015-03-05T23:51:47,5Z", "2015-03-05T23:51,5Z", "2015-03-05T23,5Z") | fromdateiso8601]
+null
+[1425599507.5,1425599490,1425598200]
+
+# a date on its own is midnight UTC
+[("2015-03-05", "20150305", "2015-064", "2015064", "2015-W10-4", "2015W104") | fromdateiso8601]
+null
+[1425513600,1425513600,1425513600,1425513600,1425513600,1425513600]
+
+# the zone designator belongs to the time, so a bare date cannot carry one
+[("2015-03-05Z", "2015-03-05+09:00", "2015-03-05T") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR","ERR"]
+
+# the date must be complete, and a time must not be empty
+[("2015", "2015-03", "2015-W10", "2015-03T00:00:00Z", "T23:51:47Z", "T23:51:47", "23:51:47", "") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR"]
+
+# the date and the time must agree on whether separators are used,
+# and "YYYYMM" is ambiguous with "YYMMDD"
+[("2015-03-05T235147Z", "20150305T23:51:47Z", "201503T00:00:00Z", "2015-03-05T2351Z", "20150305T23:51Z", "20150305T23205Z") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR","ERR","ERR","ERR","ERR"]
+
+# out-of-range components are rejected
+[("2015-02-30T00:00:00Z", "2015-13-01T00:00:00Z", "2015-00-01T00:00:00Z", "2015-366T00:00:00Z", "2016-W53-1T00:00:00Z", "2015-W10-8T00:00:00Z", "2015-W00-1T00:00:00Z", "2015-03-05T25:00:00Z", "2015-03-05T24:00:01Z", "2015-03-05T24:01Z", "2015-03-05T23:60:00Z", "2015-03-05T23:51:47+24:00", "2015-03-05T23:51:47+09:") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR"]
+
+# the input must be exactly a datetime: no surrounding whitespace
+[(" 2015-03-05T23:51:47Z", "2015-03-05T23:51:47Z ") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR"]
+
+try fromdateiso8601 catch .
+123
+"fromdateiso8601 requires string inputs"
+
+try fromdateiso8601 catch .
+"not a date"
+"date \"not a date\" is not a valid ISO 8601 datetime"
+
 # module system
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
 null
