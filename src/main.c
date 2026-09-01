@@ -1,7 +1,9 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <libgen.h>
+#include <limits.h>
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
 #endif
@@ -98,6 +100,9 @@ static void usage(int code, int keep_it_short) {
       "      --slurpfile name file set $name to an array of JSON values read\n"
       "                            from the file;\n"
       "      --rawfile name file   set $name to string contents of file;\n"
+      "      --slurpfd name fd     set $name to an array of JSON values read\n"
+      "                            from the file descriptor;\n"
+      "      --rawfd name fd       set $name to string contents read from fd;\n"
       "      --args                consume remaining arguments as positional\n"
       "                            string values;\n"
       "      --jsonargs            consume remaining arguments as positional\n"
@@ -140,6 +145,57 @@ static int isoption(const char** text, char shortopt, const char* longopt, int i
     }
   }
   return 0;
+}
+
+enum arg_file {
+  NOT_ARG_FILE = 0,
+  ARG_RAW_FILE,
+  ARG_SLURP_FILE,
+  ARG_RAW_FD,
+  ARG_SLURP_FD
+};
+static enum arg_file is_arg_file_option(const char** text, int is_short) {
+  if(isoption(text, 0, "rawfile",   is_short)) return ARG_RAW_FILE;
+  if(isoption(text, 0, "slurpfile", is_short)) return ARG_SLURP_FILE;
+  if(isoption(text, 0, "rawfd",     is_short)) return ARG_RAW_FD;
+  if(isoption(text, 0, "slurpfd",   is_short)) return ARG_SLURP_FD;
+  return NOT_ARG_FILE;
+}
+static const char* show_arg_file(enum arg_file option) {
+  switch(option) {
+  case ARG_RAW_FILE:   return "rawfile";
+  case ARG_SLURP_FILE: return "slurpfile";
+  case ARG_RAW_FD:     return "rawfd";
+  case ARG_SLURP_FD:   return "slurpfd";
+  case NOT_ARG_FILE:
+  }
+  assert(0);
+}
+static int arg_file_wants_fd(enum arg_file option) {
+  switch(option) {
+  case ARG_RAW_FILE:
+  case ARG_SLURP_FILE: return 0;
+  case ARG_RAW_FD:
+  case ARG_SLURP_FD:   return 1;
+  case NOT_ARG_FILE:
+  }
+  assert(0);
+}
+static int arg_file_is_raw(enum arg_file option) {
+  switch(option) {
+  case ARG_RAW_FILE:
+  case ARG_RAW_FD:     return 1;
+  case ARG_SLURP_FILE:
+  case ARG_SLURP_FD:   return 0;
+  case NOT_ARG_FILE:
+  }
+  assert(0);
+}
+static int jq_strtofd(const char *decimal) {
+  if(!isdigit(*decimal)) return -1;
+  uintmax_t fd = strtoumax(decimal, (char**)&decimal, 10);
+  if(*decimal || fd > INT_MAX) return -1;
+  return fd;
 }
 
 enum {
@@ -374,7 +430,7 @@ int main(int argc, char* argv[]) {
         text++;
         is_short = 1;
       }
-      int raw; // Temporary for --rawfile
+      enum arg_file arg_file; // Temporary for --{raw,slurp}{file,fd}
 
       // Parse a long option in one iteration or iterate over short options
       while (text != NULL) {
@@ -480,18 +536,32 @@ int main(int argc, char* argv[]) {
             program_arguments = jv_object_set(program_arguments, jv_string(argv[i+1]), v);
           }
           i += 2; // skip the next two arguments
-        } else if ((raw = isoption(&text, 0, "rawfile", is_short)) ||
-            isoption(&text, 0, "slurpfile", is_short)) {
-          const char *which = raw ? "rawfile" : "slurpfile";
+        } else if ((arg_file = is_arg_file_option(&text, is_short))) {
           if (i >= argc - 2) {
-            fprintf(stderr, "jq: --%s takes two parameters (e.g. --%s varname filename)\n", which, which);
+            fprintf(stderr, "jq: --%s takes two parameters (e.g. --%s varname %s)\n",
+                    show_arg_file(arg_file), show_arg_file(arg_file),
+                    arg_file_wants_fd(arg_file) ? "5" : "filename");
             die();
           }
           if (!jv_object_has(jv_copy(program_arguments), jv_string(argv[i+1]))) {
-            jv data = jv_load_file(argv[i+2], raw);
+            jv data;
+            if (arg_file_wants_fd(arg_file)) {
+              int fd = jq_strtofd(argv[i+2]);
+              if(fd == -1) {
+                fprintf(stderr, "jq: not a file descriptor: %s\n", argv[i+2]);
+                die();
+              }
+              char *fd_description;
+              if(asprintf(&fd_description, "FD %d", fd) < 0) {
+                perror("malloc");
+                exit(2);
+              }
+              data = jv_load_from_fd(fd, fd_description, arg_file_is_raw(arg_file));
+              free(fd_description);
+            } else data = jv_load_file(argv[i+2], arg_file_is_raw(arg_file));
             if (!jv_is_valid(data)) {
               data = jv_invalid_get_msg(data);
-              fprintf(stderr, "jq: Bad JSON in --%s %s %s: %s\n", which,
+              fprintf(stderr, "jq: Bad JSON in --%s %s %s: %s\n", show_arg_file(arg_file),
                       argv[i+1], argv[i+2], jv_string_value(data));
               jv_free(data);
               ret = JQ_ERROR_SYSTEM;
