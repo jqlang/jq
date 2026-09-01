@@ -481,6 +481,21 @@ del(.[2:4],.[0],.[-2:])
 [0,1,"a","b",4,5,6,7]
 [0,1,"a","b","c",4,5,6,7]
 
+# Assignment to a slice beyond the array pads with nulls (issue #2813)
+.[10:11] |= [2]
+[1]
+[1,null,null,null,null,null,null,null,null,null,2]
+
+# Padding also works when the replacement has multiple elements
+.[3:4] = [2,3]
+[1]
+[1,null,null,2,3]
+
+# Assigning an empty array to a slice beyond the array remains a no-op
+.[10:11] = []
+[1]
+[1]
+
 # Slices at large offsets (issue #1108)
 #
 # This is written this way because [range(<large number>)] is
