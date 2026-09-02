@@ -356,6 +356,50 @@ if [ "$EC" -ne 2 ]; then
     exit 1
 fi
 
+## Regression tests for issues #2242 and #2244 input_line_number
+## The counter only advanced when a read happened to land on a newline, so a
+## value on a line whose newline had not been read yet reported the line
+## before it: the last line of input without a trailing newline, and any value
+## ending exactly on the read-buffer boundary.
+
+printf '1\n2\n3\n' > $d/input
+printf '1\n2\n3\n' > $d/expected
+$VALGRIND $Q $JQ -c input_line_number $d/input > $d/out
+cmp $d/out $d/expected
+
+# no trailing newline on the last line (#2244)
+printf '1\n2\n3' > $d/input
+printf '1\n2\n3\n' > $d/expected
+$VALGRIND $Q $JQ -c input_line_number $d/input > $d/out
+cmp $d/out $d/expected
+
+# a single value with no trailing newline is still on line 1
+printf '0' > $d/input
+echo 1 > $d/expected
+$VALGRIND $Q $JQ -c input_line_number $d/input > $d/out
+cmp $d/out $d/expected
+
+# raw input, no trailing newline
+printf 'a\nb\nc' > $d/input
+printf '1\n2\n3\n' > $d/expected
+$VALGRIND $Q $JQ -R -c input_line_number $d/input > $d/out
+cmp $d/out $d/expected
+
+# a value ending exactly on the read-buffer boundary (#2242). The lengths
+# sweep the boundary so this keeps working if the buffer size changes.
+for len in 4087 4088 4089 4090 4091 4092 4093; do
+    awk -v n=$len 'BEGIN{printf "0\n\""; while (n-- > 0) printf "a"; printf "\"\n0\n"}' > $d/input
+    printf '1\n2\n3\n' > $d/expected
+    $VALGRIND $Q $JQ -c input_line_number $d/input > $d/out
+    cmp $d/out $d/expected
+done
+
+# several values on one line all report that line
+printf '1 2 3\n' > $d/input
+printf '1\n1\n1\n' > $d/expected
+$VALGRIND $Q $JQ -c input_line_number $d/input > $d/out
+cmp $d/out $d/expected
+
 ## Fuzz parser
 
 ## XXX With a $(urandom) builtin we could move this test into tests/all.test
