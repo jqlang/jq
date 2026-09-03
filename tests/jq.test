@@ -767,6 +767,18 @@ map_values(.+1)
 null
 [null,120,null,55]
 
+counter
+[4,4,"one",2,2,3,3,3,4,4,true,null]
+{"4":4,"3":3,"2":2,"one":1,"true":1,"null":1}
+
+counter(.[], .[])
+[4,4,"one",2,2,3,3,3,4,4]
+{"4":8,"3":6,"2":4,"one":2}
+
+counter(empty)
+1
+{}
+
 # Real-world use case for add(empty)
 .sum = add(.arr[])
 {"arr":[]}
