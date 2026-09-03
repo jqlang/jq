@@ -1331,6 +1331,28 @@ sections:
             input: '[{"a":3}, {"a":5}, {"b":6}]'
             output: ['8']
 
+      - title: "`counter`, `counter(generator)`"
+        body: |
+
+          The filter `counter` takes as input an array, and counts the number
+          of strings, numbers, boolean, and null values
+
+          If the input is an empty array, `counter` returns `{}`.
+
+          `counter(generator)` operates on the given generator rather than
+          the input.
+
+        examples:
+          - program: counter
+            input: '["a","b","b"]'
+            output: ['{"b": 2, "a": 3}']
+          - program: counter
+            input: '[true, true, false, null]'
+            output: ['{"true": 2, "false": 1, "null": 1}']
+          - program: counter(.[].a)
+            input: '[{"a":"foo"}, {"a":"foo"}, {"a":"bar"}]'
+            output: ['{"foo": 2, "bar": 1}']
+
       - title: "`any`, `any(condition)`, `any(generator; condition)`"
         body: |
 

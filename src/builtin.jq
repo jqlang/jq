@@ -47,6 +47,10 @@ def indices($i): if type == "array" and ($i|type) == "array" then .[$i]
   elif type == "array" then .[[$i]]
   elif type == "string" and ($i|type) == "string" then _strindices($i)
   else .[$i] end;
+def counter(f): reduce f as $x ({}; .[
+    $x|if type=="number" or type=="boolean" or .==null then tostring end] += 1) |
+  to_entries | sort_by(-.value) | from_entries;
+def counter: counter(.[]);
 def index($i):   indices($i) | .[0];       # TODO: optimize
 def rindex($i):  indices($i) | .[-1:][0];  # TODO: optimize
 def paths: path(recurse)|select(length > 0);
