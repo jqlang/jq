@@ -694,6 +694,14 @@ null
 null
 [true,true]
 
+nan|isfinite
+null
+false
+
+[0, 1, nan, infinite, -infinite] | map(isfinite)
+null
+[true, true, false, false, false]
+
 1 + tonumber + ("10" | tonumber)
 4
 15
