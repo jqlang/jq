@@ -340,19 +340,16 @@ sections:
           program consisting of nothing but `.` can be used to format
           JSON output from, say, `curl`.
 
-          Note that if you invoke `jq` without providing any filter argument,
-          it defaults to the identity filter `.`. For example, running:
-
-              jq data.json
-
-          is exactly equivalent to running:
+          Note that jq requires a filter argument to run. The identity
+          filter . is the simplest filter, which outputs the input
+          unchanged. It is commonly used to pretty-print JSON files.
+          For example:
 
               jq . data.json
 
-          Therefore, explicitly writing `.` is only necessary when you need to
-          refer to the current input within a larger expression (e.g., inside
-          parentheses or after a pipe), or when you want to be explicit about
-          formatting input as pretty-printed JSON.
+          Therefore, explicitly writing . is necessary to tell jq to
+          process the file using the identity logic, or when you need
+          to refer to the current input within a larger expression.
 
           Although the identity filter never modifies the value of its
           input, jq processing can sometimes make it appear as though
