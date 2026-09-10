@@ -2,336 +2,804 @@ headline: Tutorial
 body:
   - text: |
 
-      GitHub has a JSON API, so let's play with that. This URL gets us the last
-      5 commits from the jq repo.
+      jq is a command-line JSON processor: it reads JSON, applies the program you
+      give it, and writes JSON back out. A jq program is called a filter, and the
+      simplest one is `.`, the identity filter, which produces its input unchanged.
 
-  - command: "curl 'https://api.github.com/repos/jqlang/jq/commits?per_page=5'"
-    result: |
-      [
-        {
-          "sha": "cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-          "node_id": "C_kwDOAE3WVdoAKGNmZjUzMzZlYzcxYjZmZWUzOTZhOTViYjBlNGJlYTM2NWUwY2QxZTg",
-          "commit": {
-            "author": {
-              "name": "Mattias Wadman",
-              "email": "mattias.wadman@gmail.com",
-              "date": "2021-06-09T14:02:22Z"
-            },
-            "committer": {
-              "name": "Nico Williams",
-              "email": "nico@cryptonector.com",
-              "date": "2022-05-26T21:04:32Z"
-            },
-            "message": "docs: Document repeat(exp)",
-            "tree": {
-              "sha": "d67d5542df1f16d1a48e1fb75749f60482cd874b",
-              "url": "https://api.github.com/repos/jqlang/jq/git/trees/d67d5542df1f16d1a48e1fb75749f60482cd874b"
-            },
-            "url": "https://api.github.com/repos/jqlang/jq/git/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-            "comment_count": 0,
-            "verification": {
-              "verified": false,
-              "reason": "unsigned",
-              "signature": null,
-              "payload": null
-            }
-          },
-          "url": "https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-          "html_url": "https://github.com/jqlang/jq/commit/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-          "comments_url": "https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8/comments",
-          "author": {
-      ...
-
-  - text: |
-
-      GitHub returns nicely formatted JSON. For servers that don't, it can be
-      helpful to pipe the response through jq to pretty-print it. The simplest
-      jq program is the expression `.`, which takes the input and produces it
-      unchanged as output.
-
-  - command: "curl 'https://api.github.com/repos/jqlang/jq/commits?per_page=5' | jq '.'"
-    result: |
-      [
-        {
-          "sha": "cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-          "node_id": "C_kwDOAE3WVdoAKGNmZjUzMzZlYzcxYjZmZWUzOTZhOTViYjBlNGJlYTM2NWUwY2QxZTg",
-          "commit": {
-            "author": {
-              "name": "Mattias Wadman",
-              "email": "mattias.wadman@gmail.com",
-              "date": "2021-06-09T14:02:22Z"
-            },
-            "committer": {
-              "name": "Nico Williams",
-              "email": "nico@cryptonector.com",
-              "date": "2022-05-26T21:04:32Z"
-            },
-            "message": "docs: Document repeat(exp)",
-            "tree": {
-              "sha": "d67d5542df1f16d1a48e1fb75749f60482cd874b",
-              "url": "https://api.github.com/repos/jqlang/jq/git/trees/d67d5542df1f16d1a48e1fb75749f60482cd874b"
-            },
-            "url": "https://api.github.com/repos/jqlang/jq/git/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-            "comment_count": 0,
-            "verification": {
-              "verified": false,
-              "reason": "unsigned",
-              "signature": null,
-              "payload": null
-            }
-          },
-          "url": "https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-          "html_url": "https://github.com/jqlang/jq/commit/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-          "comments_url": "https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8/comments",
-          "author": {
-      ...
-
-  - text: |
-
-      We can use jq to extract just the first commit.
-
-  - command: "curl 'https://api.github.com/repos/jqlang/jq/commits?per_page=5' | jq '.[0]'"
+  - command: "echo '{\"foo\": 42, \"bar\": [1, 2, 3]}' | jq '.'"
     result: |
       {
-        "sha": "cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-        "node_id": "C_kwDOAE3WVdoAKGNmZjUzMzZlYzcxYjZmZWUzOTZhOTViYjBlNGJlYTM2NWUwY2QxZTg",
+        "foo": 42,
+        "bar": [
+          1,
+          2,
+          3
+        ]
+      }
+
+  - text: |
+
+      The value is unchanged, but the formatting is jq's own: it pretty-prints and
+      colorizes what it writes, so `jq .` alone is already a useful way to make dense
+      JSON readable. Note the quotes around the program: `.` would survive the shell
+      bare, but almost every program past this one contains characters the shell
+      would otherwise interpret, so it is a habit worth forming early.
+
+  - text: |
+
+      - - -
+
+      For something more substantial, let's use GitHub's API. The `gh`
+      command-line tool speaks it, so this asks for the most recent commits to the
+      jq repository and saves the answer:
+
+          gh api repos/jqlang/jq/commits > commits.json
+
+      (`curl -s https://api.github.com/repos/jqlang/jq/commits` fetches the same
+      data if you do not have `gh`. GitHub pretty-prints its own responses, so that
+      file will be easier to read than the one below.)
+
+  - text: |
+
+      jq reads the file you name on the command line, or standard input if you name
+      none, so `gh api repos/jqlang/jq/commits | jq '.[0]'` would work just as well,
+      and day to day that is how you would write it. Saving the response once keeps
+      every example below repeatable: no repeated downloads, no rate limit, and no
+      data shifting underneath you when somebody pushes.
+
+      Here is the beginning of what arrived - the repository keeps moving, so your
+      own commits will differ from the ones shown here:
+
+  - command: "head -c 200 commits.json"
+    result: |
+      [{"sha":"9d241e277204b83c4a7ddc7d733e5c72f99ef500","node_id":"C_kwDOAE3WVdoAKDlkMjQxZTI3NzIwNGI4M2M0YTdkZGM3ZDczM2U1YzcyZjk5ZWY1MDA","commit":{"author":{"name":"dependabot[bot]","email":"49699333+depe
+
+  - text: |
+
+      One very long line - about 120 KB of it. This is the situation jq exists to
+      fix. Start by asking how much is in there:
+
+  - command: "jq 'length' commits.json"
+    result: |
+      30
+
+  - text: |
+
+      Thirty commits, which is what this endpoint returns when you do not ask for a
+      particular page size. `.[0]` indexes into an array, and jq pretty-prints the
+      element it picks out:
+
+  - command: "jq '.[0]' commits.json"
+    result: |
+      {
+        "sha": "9d241e277204b83c4a7ddc7d733e5c72f99ef500",
+        "node_id": "C_kwDOAE3WVdoAKDlkMjQxZTI3NzIwNGI4M2M0YTdkZGM3ZDczM2U1YzcyZjk5ZWY1MDA",
         "commit": {
           "author": {
-            "name": "Mattias Wadman",
-            "email": "mattias.wadman@gmail.com",
-            "date": "2021-06-09T14:02:22Z"
+            "name": "dependabot[bot]",
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "date": "2026-09-01T06:30:46Z"
           },
           "committer": {
-            "name": "Nico Williams",
-            "email": "nico@cryptonector.com",
-            "date": "2022-05-26T21:04:32Z"
+            "name": "GitHub",
+            "email": "noreply@github.com",
+            "date": "2026-09-01T06:30:46Z"
           },
-          "message": "docs: Document repeat(exp)",
+          "message": "build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)",
           "tree": {
-            "sha": "d67d5542df1f16d1a48e1fb75749f60482cd874b",
-            "url": "https://api.github.com/repos/jqlang/jq/git/trees/d67d5542df1f16d1a48e1fb75749f60482cd874b"
+            "sha": "a35a9454bff26f1b7a94d8401ddef014249b3e2a",
+            "url": "https://api.github.com/repos/jqlang/jq/git/trees/a35a9454bff26f1b7a94d8401ddef014249b3e2a"
           },
-          "url": "https://api.github.com/repos/jqlang/jq/git/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
+          "url": "https://api.github.com/repos/jqlang/jq/git/commits/9d241e277204b83c4a7ddc7d733e5c72f99ef500",
           "comment_count": 0,
           "verification": {
-            "verified": false,
-            "reason": "unsigned",
-            "signature": null,
-            "payload": null
+            "verified": true,
+            "reason": "valid",
+            "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJqlnEWCRC1aQ7uu5UhlAAAyOQQACXr1PX49pfMGtGjm3AI44Sq\nZhyHjH7nJ+QagUVpky25lOr86cMTL12b7zQqS8mW9ESUvOB3Og7J3xdDAn8dJb9y\nFDVyKnQwxNVHboSTFzDgI4qORbnJPrT4imdHLbmAf6oodDAtoUjtx9ai/UvbXcud\nl/PKB7CvoGxPqxbjb3mjovM75dQihDcpXJvJ/AxfgJAfecU88o6Oj30XYq6lxwsc\nMMctYKZMPJhIV1IjpTFrkvuFd7ycyghDJG0bTUnruW+kz2Fl4t7OzPzl/ZwqI3pY\nFIeIR31KSz1BsHB2PdanrrN1WPjmbd/7/69/EmdQYNrzxopSfHedbiwF7VMStTyv\nF26sPNogniA2znvEJwY0fLOF6fRKdH8LR5tUVOUm4Rv7Dc7jF8wmapzV94o9+r/p\nV3t6dMwz4KQUnZUbXE+Z5q/Csoy/1nQYcpj/vvIAQOpx+SeFBPtweFeU+oN1W1dZ\nJYS6LvVTS+8xGPEFjFwbA23pCbCqRIUL4JLzRWpfyaHP6bkhRJFWO6SmgOGymWBz\nEhdiO616YxN34C7OMFET/LsPWvowIBJ3NcDGRifb7S6lUtNQ3xBb0GwMYBZcexTT\nlwv8UtiRda4qbDB5/Maejklobv0IM3OrlyyjvqtxVwCf1WSWEjaOkBHxHJE80wBy\nUycRdNdExOiumLaKrUVx\n=qDA7\n-----END PGP SIGNATURE-----\n",
+            "payload": "tree a35a9454bff26f1b7a94d8401ddef014249b3e2a\nparent 8bce8b65437bf12b9e39d7f5e85f9ef285d7e785\nauthor dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> 1788244246 +0900\ncommitter GitHub <noreply@github.com> 1788244246 +0900\n\nbuild(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)",
+            "verified_at": "2026-09-01T06:30:46Z"
           }
         },
-        "url": "https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-        "html_url": "https://github.com/jqlang/jq/commit/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8",
-        "comments_url": "https://api.github.com/repos/jqlang/jq/commits/cff5336ec71b6fee396a95bb0e4bea365e0cd1e8/comments",
+        "url": "https://api.github.com/repos/jqlang/jq/commits/9d241e277204b83c4a7ddc7d733e5c72f99ef500",
+        "html_url": "https://github.com/jqlang/jq/commit/9d241e277204b83c4a7ddc7d733e5c72f99ef500",
+        "comments_url": "https://api.github.com/repos/jqlang/jq/commits/9d241e277204b83c4a7ddc7d733e5c72f99ef500/comments",
         "author": {
-          "login": "wader",
-          "id": 185566,
-          "node_id": "MDQ6VXNlcjE4NTU2Ng==",
-          "avatar_url": "https://avatars.githubusercontent.com/u/185566?v=4",
+          "login": "dependabot[bot]",
+          "id": 49699333,
+          "node_id": "MDM6Qm90NDk2OTkzMzM=",
+          "avatar_url": "https://avatars.githubusercontent.com/in/29110?v=4",
           "gravatar_id": "",
-          "url": "https://api.github.com/users/wader",
-          "html_url": "https://github.com/wader",
-          "followers_url": "https://api.github.com/users/wader/followers",
-          "following_url": "https://api.github.com/users/wader/following{/other_user}",
-          "gists_url": "https://api.github.com/users/wader/gists{/gist_id}",
-          "starred_url": "https://api.github.com/users/wader/starred{/owner}{/repo}",
-          "subscriptions_url": "https://api.github.com/users/wader/subscriptions",
-          "organizations_url": "https://api.github.com/users/wader/orgs",
-          "repos_url": "https://api.github.com/users/wader/repos",
-          "events_url": "https://api.github.com/users/wader/events{/privacy}",
-          "received_events_url": "https://api.github.com/users/wader/received_events",
-          "type": "User",
+          "url": "https://api.github.com/users/dependabot%5Bbot%5D",
+          "html_url": "https://github.com/apps/dependabot",
+          "followers_url": "https://api.github.com/users/dependabot%5Bbot%5D/followers",
+          "following_url": "https://api.github.com/users/dependabot%5Bbot%5D/following{/other_user}",
+          "gists_url": "https://api.github.com/users/dependabot%5Bbot%5D/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/dependabot%5Bbot%5D/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/dependabot%5Bbot%5D/subscriptions",
+          "organizations_url": "https://api.github.com/users/dependabot%5Bbot%5D/orgs",
+          "repos_url": "https://api.github.com/users/dependabot%5Bbot%5D/repos",
+          "events_url": "https://api.github.com/users/dependabot%5Bbot%5D/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/dependabot%5Bbot%5D/received_events",
+          "type": "Bot",
+          "user_view_type": "public",
           "site_admin": false
         },
         "committer": {
-          "login": "nicowilliams",
-          "id": 604851,
-          "node_id": "MDQ6VXNlcjYwNDg1MQ==",
-          "avatar_url": "https://avatars.githubusercontent.com/u/604851?v=4",
+          "login": "web-flow",
+          "id": 19864447,
+          "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+          "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
           "gravatar_id": "",
-          "url": "https://api.github.com/users/nicowilliams",
-          "html_url": "https://github.com/nicowilliams",
-          "followers_url": "https://api.github.com/users/nicowilliams/followers",
-          "following_url": "https://api.github.com/users/nicowilliams/following{/other_user}",
-          "gists_url": "https://api.github.com/users/nicowilliams/gists{/gist_id}",
-          "starred_url": "https://api.github.com/users/nicowilliams/starred{/owner}{/repo}",
-          "subscriptions_url": "https://api.github.com/users/nicowilliams/subscriptions",
-          "organizations_url": "https://api.github.com/users/nicowilliams/orgs",
-          "repos_url": "https://api.github.com/users/nicowilliams/repos",
-          "events_url": "https://api.github.com/users/nicowilliams/events{/privacy}",
-          "received_events_url": "https://api.github.com/users/nicowilliams/received_events",
+          "url": "https://api.github.com/users/web-flow",
+          "html_url": "https://github.com/web-flow",
+          "followers_url": "https://api.github.com/users/web-flow/followers",
+          "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+          "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+          "organizations_url": "https://api.github.com/users/web-flow/orgs",
+          "repos_url": "https://api.github.com/users/web-flow/repos",
+          "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/web-flow/received_events",
           "type": "User",
+          "user_view_type": "public",
           "site_admin": false
         },
         "parents": [
           {
-            "sha": "f2ad9517c72f6267ae317639ab56bbfd4a8653d4",
-            "url": "https://api.github.com/repos/jqlang/jq/commits/f2ad9517c72f6267ae317639ab56bbfd4a8653d4",
-            "html_url": "https://github.com/jqlang/jq/commit/f2ad9517c72f6267ae317639ab56bbfd4a8653d4"
+            "sha": "8bce8b65437bf12b9e39d7f5e85f9ef285d7e785",
+            "url": "https://api.github.com/repos/jqlang/jq/commits/8bce8b65437bf12b9e39d7f5e85f9ef285d7e785",
+            "html_url": "https://github.com/jqlang/jq/commit/8bce8b65437bf12b9e39d7f5e85f9ef285d7e785"
           }
         ]
       }
 
   - text: |
 
-      For the rest of the examples, I'll leave out the `curl` command - it's not
-      going to change.
+      That is a lot of metadata for one commit. Field access uses the same `.`
+      notation, and paths chain, so the commit message is:
 
-      There's a lot of info we don't care about there, so we'll restrict it down
-      to the most interesting fields.
+  - command: "jq '.[0].commit.message' commits.json"
+    result: |
+      "build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)"
 
-  - command: "jq '.[0] | {message: .commit.message, name: .commit.committer.name}'"
+  - text: |
+
+      The result is a JSON string, quotes and all, because jq writes JSON. When
+      the value is destined for something that wants plain text, `-r` writes
+      strings raw instead:
+
+  - command: "jq -r '.[0].commit.message' commits.json"
+    result: |
+      build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)
+
+  - text: |
+
+      - - -
+
+      Most of that commit object is noise. To keep only the interesting parts, build
+      a new object out of them:
+
+  - command: "jq '.[0] | {message: .commit.message, author: .commit.author.name}' commits.json"
     result: |
       {
-        "message": "docs: Document repeat(exp)",
-        "name": "Nico Williams"
+        "message": "build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)",
+        "author": "dependabot[bot]"
       }
 
   - text: |
 
-      The `|` operator in jq feeds the output of one filter (`.[0]` which gets
-      the first element of the array in the response) into the input of another
-      (`{...}` which builds an object out of those fields). You can access
-      nested attributes, such as `.commit.message`.
+      Two things are happening here. `|` is jq's pipe, named after the shell's and
+      working the same way: it feeds the output of the filter on its left into the
+      input of the filter on its right. So `.[0]` selects the first commit, and
+      everything after the pipe is evaluated with that commit as its input. And
+      `{...}` constructs an object, with each value written as a filter applied to
+      that input.
 
-      Now let's get the rest of the commits.
+      Replacing `.[0]` with `.[]` runs the same construction over every element of
+      the array:
 
-  - command:  "jq '.[] | {message: .commit.message, name: .commit.committer.name}'"
+  - command: "jq '.[] | {message: .commit.message, author: .commit.author.name}' commits.json"
     result: |
       {
-        "message": "docs: Document repeat(exp)",
-        "name": "Nico Williams"
+        "message": "build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)",
+        "author": "dependabot[bot]"
       }
       {
-        "message": "Mention -n in IO-section and for input/inputs",
-        "name": "Nico Williams"
+        "message": "build(deps): bump lxml from 6.1.1 to 6.1.2 in /docs (#3621)",
+        "author": "dependabot[bot]"
       }
       {
-        "message": "Fix iteration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happened because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.",
-        "name": "Nico Williams"
+        "message": "Fix a handful of typos (#3605)",
+        "author": "Anna Rift"
       }
       {
-        "message": "docs: point to Libera.Chat instead of Freenode",
-        "name": "Nico Williams"
+        "message": "Fix strftime-related functions on NetBSD. (#3579)",
+        "author": "Thomas Klausner"
       }
       {
-        "message": "Missing \"va_end\" call. This was found by running the cppcheck static analysis where it shows as error.",
-        "name": "Nico Williams"
+        "message": "Reject raw NUL bytes in the parser instead of silently truncating tokens (#3606)",
+        "author": "august"
+      }
+      {
+        "message": "docs: `in` example use [3,4] instead of [0,1] (#3599)",
+        "author": "A4-Tacks"
+      }
+      {
+        "message": "Fix typo 'you may wish [to] use' (#3604)\n\nFix all instances of the phrase \"you may wish use `fabs`\" -> \"you may\nwish _to_ use `fabs`\" (emphasis mine) in the manual.",
+        "author": "Anna Rift"
+      }
+      {
+        "message": "build(deps): bump actions/setup-python from 6 to 7 in the official-actions group (#3595)",
+        "author": "dependabot[bot]"
+      }
+      {
+        "message": "docs: clarify join behavior on objects (#3555)",
+        "author": "ded-furby"
+      }
+      {
+        "message": "Advance past the whole codepoint after a zero-width regex match (#3586)",
+        "author": "WinkleMad"
+      }
+      {
+        "message": "shtest: skip locale test if date lacks locale support (#3583)",
+        "author": "pavel kuliaka"
+      }
+      {
+        "message": "Cast char to unsigned char before passing to isspace (#3574)",
+        "author": "Thomas Klausner"
+      }
+      {
+        "message": "Add a download link for Windows arm64",
+        "author": "itchyny"
+      }
+      {
+        "message": "Update jq documentation for jq 1.8.2 release",
+        "author": "itchyny"
+      }
+      {
+        "message": "Update signatures of 1.8.2 (#3566)\n\nCo-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>",
+        "author": "github-actions[bot]"
+      }
+      {
+        "message": "build(deps): bump actions/checkout from 6 to 7 in the official-actions group (#3565)",
+        "author": "dependabot[bot]"
+      }
+      {
+        "message": "Update NEWS.md and AUTHORS for 1.8.2 (#3529)",
+        "author": "itchyny"
+      }
+      {
+        "message": "Upload attestation bundle as a release artifact (#3563)\n\nThe bundle generated by actions/attest is currently only retrievable\nvia the GitHub attestations API, which requires authentication.\nUploading it as jq-attestation.json lets downstream consumers\n(distro packagers, unauthenticated CI) verify provenance offline.",
+        "author": "itchyny"
+      }
+      {
+        "message": "Tighten string length bounds and propagate invalid jv in implode\n\nThe bound added in CVE-2026-32316 (e47e56d22) still allowed\n`sizeof(jvp_string) + (currlen + len) * 2 + 1` to wrap `size_t` on\n32-bit platforms. Tighten the threshold so the final allocation\nfits in 32-bit `size_t`.\n\nAlso break out of `jv_string_implode` and `f_string_implode` once\n`jv_string_append_codepoint` returns an invalid `jv`; otherwise the\nnext iteration triggers the assertion in `jvp_string_ptr` (or\ninvokes undefined behavior under `-DNDEBUG`).\n\nFixes CVE-2026-54679.\n\nCo-authored-by: Dirk Müller <dirk@dmllr.de>",
+        "author": "itchyny"
+      }
+      {
+        "message": "Fix heap-buffer-overflow in raw file loading\n\nWhen `jv_string_append_buf` overflows the string length limit,\nit returns an invalid `jv`; `jv_load_file` then re-entered it\non the invalid value and overran the heap. Break out of the loop\nonce the value is invalid.\n\nFixes CVE-2026-49839.",
+        "author": "itchyny"
+      }
+      {
+        "message": "build(deps): bump lxml from 6.1.0 to 6.1.1 in /docs (#3553)",
+        "author": "dependabot[bot]"
+      }
+      {
+        "message": "Fix undefined pointer arithmetic in UTF-8 helpers\n\nFixes GHSA-ggc9-rpv2-xgpm and GHSA-gvwx-xj9r-3frq.",
+        "author": "theyoucheng"
+      }
+      {
+        "message": "Fix one-byte over-read in BASE64_DECODE_TABLE (#3547)\n\nThe table was declared with 255 entries but indexed by an unsigned\nchar, so the decoder would read one byte past the array for input\nbytes equal to 0xFF. Through jq's normal input paths the over-read\nis unreachable because invalid UTF-8 bytes are normalized to U+FFFD\nbefore reaching @base64d, but the table is still wrong at the C\nlevel and reachable by libjq callers that construct strings via\nthe C API without UTF-8 validation.",
+        "author": "itchyny"
+      }
+      {
+        "message": "Guard deep structural equality and comparison recursion (#3539)\n\njv_equal and jv_cmp overflows the C stack on deeply nested\ninput. Cap recursion at 10000 with -1 / INT_MIN sentinels;\noperators that compose user expressions surface this as\n\"Equality check too deep\" / \"Comparison too deep\".\n\nFixes CVE-2026-47770.",
+        "author": "Yu-Fu Fu"
+      }
+      {
+        "message": "Detect circular module imports to prevent stack overflow\n\njq used to recurse without bound on mutual or self-referential\n`import` declarations, exhausting the stack. Track each library's\nload state with a `loading` flag set before its dependencies are\nprocessed; a recursive reference to an in-progress library now\nreports \"circular import of X\".\n\nFixes CVE-2026-44777.",
+        "author": "itchyny"
+      }
+      {
+        "message": "Reject embedded NUL bytes in module import paths\n\njq accepts embedded NUL bytes at the language level but resolves\nmodule import paths through NUL-terminated C strings, so the path\nvalidated by policy or audit code could differ from the on-disk\npath jq actually opens. Pass jv through gen_import so the AST\npreserves the original bytes, and reject embedded NULs in\nvalidate_relpath.\n\nFixes CVE-2026-43895.",
+        "author": "itchyny"
+      }
+      {
+        "message": "Reject numeric literals longer than DEC_MAX_DIGITS (999999999)\n\nA signed-int overflow in decNumber's D2U macro lets huge literals\nwrite attacker-controlled bytes past a stack buffer. Cap the length\nbefore calling decNumberFromString, and pre-slice long strings in\njv_dump_string_trunc so the resulting error message doesn't itself\nallocate a multi-GiB buffer.\n\nFixes CVE-2026-43894.",
+        "author": "itchyny"
+      }
+      {
+        "message": "Limit recursive object merge depth to prevent stack overflow\n\nThis fixes CVE-2026-43896.",
+        "author": "itchyny"
+      }
+      {
+        "message": "Avoid stack overflow when freeing deeply nested values",
+        "author": "itchyny"
+      }
+      {
+        "message": "Fix CI to add `artifact-metadata` permission for actions/attest (#3530)",
+        "author": "itchyny"
       }
 
   - text: |
 
-      `.[]` returns each element of the array returned in the response, one at a
-      time, which are all fed into
-      `{message: .commit.message, name: .commit.committer.name}`.
+      Thirty objects, not an array of thirty objects. This is central to how jq works:
+      a jq program transforms a *stream* of JSON values. Every expression runs
+      once per value in its input stream and may produce any number of values -
+      zero, one, or many - on its output stream. `.[]` is simply an expression
+      that takes one array and emits each of its elements.
 
-      Data in jq is represented as streams of JSON values - every jq
-      expression runs for each value in its input stream, and can
-      produce any number of values to its output stream.
+      Every value jq writes is followed by a newline. Reading is more relaxed than
+      writing: jq accepts values separated by any amount of whitespace, or by none
+      at all, which is what makes the format `cat`-friendly - join two jq outputs
+      together and the result is still something jq can read. A pretty-printed value
+      spans as many lines as it needs, so when the next program in the pipeline is
+      line-oriented, `-c` is what you want. It compacts each value onto one line:
 
-      Streams are serialised by just separating JSON values with
-      whitespace. This is a `cat`-friendly format - you can just join
-      two JSON streams together and get a valid JSON stream.
+  - command: "jq -c '.[] | {message: .commit.message, author: .commit.author.name}' commits.json"
+    result: |
+      {"message":"build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)","author":"dependabot[bot]"}
+      {"message":"build(deps): bump lxml from 6.1.1 to 6.1.2 in /docs (#3621)","author":"dependabot[bot]"}
+      {"message":"Fix a handful of typos (#3605)","author":"Anna Rift"}
+      {"message":"Fix strftime-related functions on NetBSD. (#3579)","author":"Thomas Klausner"}
+      {"message":"Reject raw NUL bytes in the parser instead of silently truncating tokens (#3606)","author":"august"}
+      {"message":"docs: `in` example use [3,4] instead of [0,1] (#3599)","author":"A4-Tacks"}
+      {"message":"Fix typo 'you may wish [to] use' (#3604)\n\nFix all instances of the phrase \"you may wish use `fabs`\" -> \"you may\nwish _to_ use `fabs`\" (emphasis mine) in the manual.","author":"Anna Rift"}
+      {"message":"build(deps): bump actions/setup-python from 6 to 7 in the official-actions group (#3595)","author":"dependabot[bot]"}
+      {"message":"docs: clarify join behavior on objects (#3555)","author":"ded-furby"}
+      {"message":"Advance past the whole codepoint after a zero-width regex match (#3586)","author":"WinkleMad"}
+      {"message":"shtest: skip locale test if date lacks locale support (#3583)","author":"pavel kuliaka"}
+      {"message":"Cast char to unsigned char before passing to isspace (#3574)","author":"Thomas Klausner"}
+      {"message":"Add a download link for Windows arm64","author":"itchyny"}
+      {"message":"Update jq documentation for jq 1.8.2 release","author":"itchyny"}
+      {"message":"Update signatures of 1.8.2 (#3566)\n\nCo-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>","author":"github-actions[bot]"}
+      {"message":"build(deps): bump actions/checkout from 6 to 7 in the official-actions group (#3565)","author":"dependabot[bot]"}
+      {"message":"Update NEWS.md and AUTHORS for 1.8.2 (#3529)","author":"itchyny"}
+      {"message":"Upload attestation bundle as a release artifact (#3563)\n\nThe bundle generated by actions/attest is currently only retrievable\nvia the GitHub attestations API, which requires authentication.\nUploading it as jq-attestation.json lets downstream consumers\n(distro packagers, unauthenticated CI) verify provenance offline.","author":"itchyny"}
+      {"message":"Tighten string length bounds and propagate invalid jv in implode\n\nThe bound added in CVE-2026-32316 (e47e56d22) still allowed\n`sizeof(jvp_string) + (currlen + len) * 2 + 1` to wrap `size_t` on\n32-bit platforms. Tighten the threshold so the final allocation\nfits in 32-bit `size_t`.\n\nAlso break out of `jv_string_implode` and `f_string_implode` once\n`jv_string_append_codepoint` returns an invalid `jv`; otherwise the\nnext iteration triggers the assertion in `jvp_string_ptr` (or\ninvokes undefined behavior under `-DNDEBUG`).\n\nFixes CVE-2026-54679.\n\nCo-authored-by: Dirk Müller <dirk@dmllr.de>","author":"itchyny"}
+      {"message":"Fix heap-buffer-overflow in raw file loading\n\nWhen `jv_string_append_buf` overflows the string length limit,\nit returns an invalid `jv`; `jv_load_file` then re-entered it\non the invalid value and overran the heap. Break out of the loop\nonce the value is invalid.\n\nFixes CVE-2026-49839.","author":"itchyny"}
+      {"message":"build(deps): bump lxml from 6.1.0 to 6.1.1 in /docs (#3553)","author":"dependabot[bot]"}
+      {"message":"Fix undefined pointer arithmetic in UTF-8 helpers\n\nFixes GHSA-ggc9-rpv2-xgpm and GHSA-gvwx-xj9r-3frq.","author":"theyoucheng"}
+      {"message":"Fix one-byte over-read in BASE64_DECODE_TABLE (#3547)\n\nThe table was declared with 255 entries but indexed by an unsigned\nchar, so the decoder would read one byte past the array for input\nbytes equal to 0xFF. Through jq's normal input paths the over-read\nis unreachable because invalid UTF-8 bytes are normalized to U+FFFD\nbefore reaching @base64d, but the table is still wrong at the C\nlevel and reachable by libjq callers that construct strings via\nthe C API without UTF-8 validation.","author":"itchyny"}
+      {"message":"Guard deep structural equality and comparison recursion (#3539)\n\njv_equal and jv_cmp overflows the C stack on deeply nested\ninput. Cap recursion at 10000 with -1 / INT_MIN sentinels;\noperators that compose user expressions surface this as\n\"Equality check too deep\" / \"Comparison too deep\".\n\nFixes CVE-2026-47770.","author":"Yu-Fu Fu"}
+      {"message":"Detect circular module imports to prevent stack overflow\n\njq used to recurse without bound on mutual or self-referential\n`import` declarations, exhausting the stack. Track each library's\nload state with a `loading` flag set before its dependencies are\nprocessed; a recursive reference to an in-progress library now\nreports \"circular import of X\".\n\nFixes CVE-2026-44777.","author":"itchyny"}
+      {"message":"Reject embedded NUL bytes in module import paths\n\njq accepts embedded NUL bytes at the language level but resolves\nmodule import paths through NUL-terminated C strings, so the path\nvalidated by policy or audit code could differ from the on-disk\npath jq actually opens. Pass jv through gen_import so the AST\npreserves the original bytes, and reject embedded NULs in\nvalidate_relpath.\n\nFixes CVE-2026-43895.","author":"itchyny"}
+      {"message":"Reject numeric literals longer than DEC_MAX_DIGITS (999999999)\n\nA signed-int overflow in decNumber's D2U macro lets huge literals\nwrite attacker-controlled bytes past a stack buffer. Cap the length\nbefore calling decNumberFromString, and pre-slice long strings in\njv_dump_string_trunc so the resulting error message doesn't itself\nallocate a multi-GiB buffer.\n\nFixes CVE-2026-43894.","author":"itchyny"}
+      {"message":"Limit recursive object merge depth to prevent stack overflow\n\nThis fixes CVE-2026-43896.","author":"itchyny"}
+      {"message":"Avoid stack overflow when freeing deeply nested values","author":"itchyny"}
+      {"message":"Fix CI to add `artifact-metadata` permission for actions/attest (#3530)","author":"itchyny"}
 
-      If you want to get the output as a single array, you can tell jq to
-      "collect" all of the answers by wrapping the filter in square
-      brackets:
+  - text: |
 
-  - command: "jq '[.[] | {message: .commit.message, name: .commit.committer.name}]'"
+      To get a single array back instead of a stream, collect the results by
+      wrapping the filter in square brackets:
+
+  - command: "jq '[.[] | .commit.author.name]' commits.json"
     result: |
       [
-        {
-          "message": "docs: Document repeat(exp)",
-          "name": "Nico Williams"
-        },
-        {
-          "message": "Mention -n in IO-section and for input/inputs",
-          "name": "Nico Williams"
-        },
-        {
-          "message": "Fix iteration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happened because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.",
-          "name": "Nico Williams"
-        },
-        {
-          "message": "docs: point to Libera.Chat instead of Freenode",
-          "name": "Nico Williams"
-        },
-        {
-          "message": "Missing \"va_end\" call. This was found by running the cppcheck static analysis where it shows as error.",
-          "name": "Nico Williams"
-        }
+        "dependabot[bot]",
+        "dependabot[bot]",
+        "Anna Rift",
+        "Thomas Klausner",
+        "august",
+        "A4-Tacks",
+        "Anna Rift",
+        "dependabot[bot]",
+        "ded-furby",
+        "WinkleMad",
+        "pavel kuliaka",
+        "Thomas Klausner",
+        "itchyny",
+        "itchyny",
+        "github-actions[bot]",
+        "dependabot[bot]",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "dependabot[bot]",
+        "theyoucheng",
+        "itchyny",
+        "Yu-Fu Fu",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "itchyny"
+      ]
+
+  - text: |
+
+      Because `[.[] | f]` is such a common shape, jq spells it `map(f)`. Same filter,
+      same array:
+
+  - command: "jq 'map(.commit.author.name)' commits.json"
+    result: |
+      [
+        "dependabot[bot]",
+        "dependabot[bot]",
+        "Anna Rift",
+        "Thomas Klausner",
+        "august",
+        "A4-Tacks",
+        "Anna Rift",
+        "dependabot[bot]",
+        "ded-furby",
+        "WinkleMad",
+        "pavel kuliaka",
+        "Thomas Klausner",
+        "itchyny",
+        "itchyny",
+        "github-actions[bot]",
+        "dependabot[bot]",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "dependabot[bot]",
+        "theyoucheng",
+        "itchyny",
+        "Yu-Fu Fu",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "itchyny",
+        "itchyny"
       ]
 
   - text: |
 
       - - -
 
-      Next, let's try getting the URLs of the parent commits out of the
-      API results as well. In each commit, the GitHub API includes information
-      about "parent" commits. There can be one or many.
+      `map` changes every element and leaves the shape of the array alone. The next
+      few builtins do the reverse: the elements come through untouched and the array
+      itself is rearranged. `unique` drops duplicates:
 
-          "parents": [
-            {
-              "sha": "f2ad9517c72f6267ae317639ab56bbfd4a8653d4",
-              "url": "https://api.github.com/repos/jqlang/jq/commits/f2ad9517c72f6267ae317639ab56bbfd4a8653d4",
-              "html_url": "https://github.com/jqlang/jq/commit/f2ad9517c72f6267ae317639ab56bbfd4a8653d4"
-            }
-          ]
+  - command: "jq -r 'map(.commit.author.name) | unique[]' commits.json"
+    result: |
+      A4-Tacks
+      Anna Rift
+      Thomas Klausner
+      WinkleMad
+      Yu-Fu Fu
+      august
+      ded-furby
+      dependabot[bot]
+      github-actions[bot]
+      itchyny
+      pavel kuliaka
+      theyoucheng
 
-      We want to pull out all of the "html_url" fields inside that array of parent
-      commits and make a simple list of strings to go along with the
-      "message" and "author" fields we already have.
+  - text: |
 
-  - command: "jq '[.[] | {message: .commit.message, name: .commit.committer.name, parents: [.parents[].html_url]}]'"
+      Note that it sorts as a side effect: jq finds duplicates by ordering the array
+      first, and that order is what comes back. To sort on purpose there is `sort`,
+      and `first` and `last` pick the ends off what it returns - between them, the
+      stretch of time these thirty commits cover:
+
+  - command: "jq 'map(.commit.author.date) | sort | [first, last]' commits.json"
+    result: |
+      [
+        "2026-05-05T05:06:45Z",
+        "2026-09-01T06:30:46Z"
+      ]
+
+  - text: |
+
+      `sort_by(f)` is the general form. It orders whole elements by whatever `f`
+      extracts, which is what you need as soon as the answer involves more than the
+      key you sorted on - the same two ends, now with their authors attached:
+
+  - command: "jq 'sort_by(.commit.author.date) | [first, last] | map({author: .commit.author.name, date: .commit.author.date})' commits.json"
     result: |
       [
         {
-          "message": "docs: Document repeat(exp)",
-          "name": "Nico Williams",
-          "parents": [
-            "https://github.com/jqlang/jq/commit/f2ad9517c72f6267ae317639ab56bbfd4a8653d4"
-          ]
+          "author": "itchyny",
+          "date": "2026-05-05T05:06:45Z"
         },
         {
-          "message": "Mention -n in IO-section and for input/inputs",
-          "name": "Nico Williams",
-          "parents": [
-            "https://github.com/jqlang/jq/commit/c4d39c4d22f2b12225ca1b311708f7e084ad9ff8"
-          ]
-        },
-        {
-          "message": "Fix iteration problem for non decimal string\n\nWhen the string transformation to number failed, all following\ntransformation failed too.\n\nThis happened because status in decNumberFromString function is\nupdated just in error case. Reusing the DEC_CONTEXT that failed\nbefore results into error even if the string is valid number.",
-          "name": "Nico Williams",
-          "parents": [
-            "https://github.com/jqlang/jq/commit/174db0f93552bdb551ae1f3c5c64744df0ad8e2f"
-          ]
-        },
-        {
-          "message": "docs: point to Libera.Chat instead of Freenode",
-          "name": "Nico Williams",
-          "parents": [
-            "https://github.com/jqlang/jq/commit/29cf77977ef52eec708982b19bf9d2ec17443337"
-          ]
-        },
-        {
-          "message": "Missing \"va_end\" call. This was found by running the cppcheck static analysis where it shows as error.",
-          "name": "Nico Williams",
-          "parents": [
-            "https://github.com/jqlang/jq/commit/55e6e2c21829bd866bd4b18ee254b05c9020320a"
-          ]
+          "author": "dependabot[bot]",
+          "date": "2026-09-01T06:30:46Z"
         }
       ]
 
   - text: |
 
-      Here we're making an object as before, but this time the `parents`
-      field is being set to `[.parents[].html_url]`, which collects
-      all of the parent commit URLs defined in the parents object.
+      `sort` could not have done that. It sees only the values it is given, so the
+      dates would have arrived with nothing attached; `sort_by` keeps whole commits
+      and merely puts them in order.
+
+  - text: |
+
+      `group_by(f)` gathers the elements that agree on `f` into sub-arrays, so an
+      array of thirty commits becomes an array of arrays. It orders them by `f` on
+      the way, just as `unique` does, which is where the alphabetical order below
+      comes from. This is the usual way to count things:
+
+  - command: "jq 'group_by(.commit.author.name) | map({author: .[0].commit.author.name, commits: length})' commits.json"
+    result: |
+      [
+        {
+          "author": "A4-Tacks",
+          "commits": 1
+        },
+        {
+          "author": "Anna Rift",
+          "commits": 2
+        },
+        {
+          "author": "Thomas Klausner",
+          "commits": 2
+        },
+        {
+          "author": "WinkleMad",
+          "commits": 1
+        },
+        {
+          "author": "Yu-Fu Fu",
+          "commits": 1
+        },
+        {
+          "author": "august",
+          "commits": 1
+        },
+        {
+          "author": "ded-furby",
+          "commits": 1
+        },
+        {
+          "author": "dependabot[bot]",
+          "commits": 5
+        },
+        {
+          "author": "github-actions[bot]",
+          "commits": 1
+        },
+        {
+          "author": "itchyny",
+          "commits": 13
+        },
+        {
+          "author": "pavel kuliaka",
+          "commits": 1
+        },
+        {
+          "author": "theyoucheng",
+          "commits": 1
+        }
+      ]
+
+  - text: |
+
+      Each group is still a full array of commit objects, so `.[0].commit.author.name`
+      reads the author off its first member and `length` counts the members.
+      `unique_by`, `min_by` and `max_by` take a filter the same way `sort_by` does,
+      and `add` folds an array down to a single value.
 
   - text: |
 
       - - -
 
-      Here endeth the tutorial! There's lots more to play with. Go
-      read [the manual](../manual/) if you're interested, and [download
-      jq](../download/) if you haven't already.
+      An expression that produces *no* output for some inputs is how filtering works.
+      `select(condition)` emits its input unchanged when the condition holds, and
+      nothing at all when it does not, so putting one in the middle of a pipeline
+      drops the values you do not want. What it passes on is the whole value, not
+      just the part the condition looked at, which means a filter can test one field
+      and then go on to read another - here, finding the commits dependabot made and
+      printing what they say:
+
+  - command: "jq -r '.[] | select(.commit.author.name == \"dependabot[bot]\") | .commit.message' commits.json"
+    result: |
+      build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)
+      build(deps): bump lxml from 6.1.1 to 6.1.2 in /docs (#3621)
+      build(deps): bump actions/setup-python from 6 to 7 in the official-actions group (#3595)
+      build(deps): bump actions/checkout from 6 to 7 in the official-actions group (#3565)
+      build(deps): bump lxml from 6.1.0 to 6.1.1 in /docs (#3553)
+
+  - text: |
+
+      Conditions join up with `and` and `or`. Piping into the field first means the
+      path is written once and the comparisons both read `.`, which widens this to
+      catch the other bot too:
+
+  - command: "jq -c '.[] | select(.commit.author.name | . == \"dependabot[bot]\" or . == \"github-actions[bot]\") | [.commit.author.name, .commit.message]' commits.json"
+    result: |
+      ["dependabot[bot]","build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)"]
+      ["dependabot[bot]","build(deps): bump lxml from 6.1.1 to 6.1.2 in /docs (#3621)"]
+      ["dependabot[bot]","build(deps): bump actions/setup-python from 6 to 7 in the official-actions group (#3595)"]
+      ["github-actions[bot]","Update signatures of 1.8.2 (#3566)\n\nCo-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"]
+      ["dependabot[bot]","build(deps): bump actions/checkout from 6 to 7 in the official-actions group (#3565)"]
+      ["dependabot[bot]","build(deps): bump lxml from 6.1.0 to 6.1.1 in /docs (#3553)"]
+
+  - text: |
+
+      One more commit than before, and pairing each message with its author shows
+      which of the two clauses caught it. Negation is the odd one out of the three:
+      jq has no `!`, and `not` is a filter like any other, so it takes its argument
+      from the left - `endswith("[bot]") | not` is how you say "not a bot".
+
+  - text: |
+
+      `select` works on any value, not just objects, so where the test and the answer
+      are the same field the value can flow straight into it. The condition need not
+      be a comparison either - `test` matches a regular expression. Together that is
+      the subject line of every commit which fixed a published vulnerability:
+
+  - command: "jq -r '.[] | .commit.message | select(test(\"CVE-[0-9]{4}-[0-9]+\")) | split(\"\\n\")[0]' commits.json"
+    result: |
+      Tighten string length bounds and propagate invalid jv in implode
+      Fix heap-buffer-overflow in raw file loading
+      Guard deep structural equality and comparison recursion (#3539)
+      Detect circular module imports to prevent stack overflow
+      Reject embedded NUL bytes in module import paths
+      Reject numeric literals longer than DEC_MAX_DIGITS (999999999)
+      Limit recursive object merge depth to prevent stack overflow
+
+  - text: |
+
+      `test` looks anywhere in the string, so it finds the `Fixes CVE-...` line down
+      in a commit body even where the subject says nothing about it. Flags go in a
+      second argument: `test("fix"; "i")` ignores case.
+
+  - text: |
+
+      - - -
+
+      Everything so far has worked on arrays - `.[]` to open one up, then `map`,
+      `sort`, `select`. Objects need a conversion first: `to_entries` turns one into
+      an array of key/value pairs, which is how you reach an object's keys when they
+      are data rather than something you typed:
+
+  - command: "jq '.[0].commit.author | to_entries' commits.json"
+    result: |
+      [
+        {
+          "key": "name",
+          "value": "dependabot[bot]"
+        },
+        {
+          "key": "email",
+          "value": "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        {
+          "key": "date",
+          "value": "2026-09-01T06:30:46Z"
+        }
+      ]
+
+  - text: |
+
+      `from_entries` goes the other way, building an object out of pairs. That turns
+      the author counts from earlier into a lookup table:
+
+  - command: "jq 'group_by(.commit.author.name) | map({key: .[0].commit.author.name, value: length}) | from_entries' commits.json"
+    result: |
+      {
+        "A4-Tacks": 1,
+        "Anna Rift": 2,
+        "Thomas Klausner": 2,
+        "WinkleMad": 1,
+        "Yu-Fu Fu": 1,
+        "august": 1,
+        "ded-furby": 1,
+        "dependabot[bot]": 5,
+        "github-actions[bot]": 1,
+        "itchyny": 13,
+        "pavel kuliaka": 1,
+        "theyoucheng": 1
+      }
+
+  - text: |
+
+      `with_entries(f)` is that round trip in one step - `to_entries | map(f) |
+      from_entries` - running `f` over each pair, so a `select` there keeps or drops
+      whole fields. Eleven of the nineteen keys on an account object are API URLs,
+      and this throws them all out by testing each key as it goes past:
+
+  - command: "jq '.[0].author | with_entries(select(.key | endswith(\"_url\") | not))' commits.json"
+    result: |
+      {
+        "login": "dependabot[bot]",
+        "id": 49699333,
+        "node_id": "MDM6Qm90NDk2OTkzMzM=",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/dependabot%5Bbot%5D",
+        "type": "Bot",
+        "user_view_type": "public",
+        "site_admin": false
+      }
+
+  - text: |
+
+      Inside `f` a pair is just an object, so `.key` and `.value` are ordinary
+      paths: `with_entries(.key |= ascii_downcase)` would lowercase every field
+      name.
+
+  - text: |
+
+      Values can be built as well as pulled out. Inside a string, `\(...)` substitutes
+      the result of a filter, and `[a:b]` slices strings and arrays - between them
+      enough to turn each commit into a one-line log entry:
+
+  - command: "jq -r '.[] | \"\\(.sha[0:7]) \\(.commit.author.name)\"' commits.json"
+    result: |
+      9d241e2 dependabot[bot]
+      8bce8b6 dependabot[bot]
+      41b8edf Anna Rift
+      17b4118 Thomas Klausner
+      fbee8f4 august
+      8cf81cb A4-Tacks
+      4bb50d7 Anna Rift
+      603db3f dependabot[bot]
+      2d410d6 ded-furby
+      f1f39b4 WinkleMad
+      dbcaa9d pavel kuliaka
+      579e6f7 Thomas Klausner
+      42d4035 itchyny
+      3c81b62 itchyny
+      f0dabad github-actions[bot]
+      34f7186 dependabot[bot]
+      88e8340 itchyny
+      a5a29cc itchyny
+      46d1da3 itchyny
+      e987df0 itchyny
+      985abe5 dependabot[bot]
+      df924ea theyoucheng
+      a829f67 itchyny
+      7122866 Yu-Fu Fu
+      f58787c itchyny
+      9d223f1 itchyny
+      9761ceb itchyny
+      532ccea itchyny
+      33d7bce itchyny
+      7316e5c itchyny
+
+  - text: |
+
+      The pieces combine. `map(select(...))` is the ordinary way to filter an array:
+      `map` visits every element and `select` decides whether it survives, so
+      `endswith("[bot]") | not` clears out dependabot and friends. `group_by` and
+      `sort_by` then do what they did above - remembering that jq sorts ascending, so
+      negating the key is how you ask for largest-first, and `reverse` does the same
+      job for keys that cannot be negated. `@tsv` then joins each pair into a
+      tab-separated line, giving a plain-text leaderboard of the humans:
+
+  - command: "jq -r 'map(select(.commit.author.name | endswith(\"[bot]\") | not)) | group_by(.commit.author.name) | map({author: .[0].commit.author.name, commits: length}) | sort_by(-.commits) | .[] | [.commits, .author] | @tsv' commits.json"
+    result: |
+      13	itchyny
+      2	Anna Rift
+      2	Thomas Klausner
+      1	A4-Tacks
+      1	WinkleMad
+      1	Yu-Fu Fu
+      1	august
+      1	ded-furby
+      1	pavel kuliaka
+      1	theyoucheng
+
+  - text: |
+
+      Seven stages, each doing one thing to the value it receives: drop the bots,
+      group what is left by author, count each group, put the counts in order, take
+      the array apart again, pair each count with its author, and join the pair into
+      a line. Most real jq programs are built exactly this way.
+
+  - text: |
+
+      - - -
+
+      That is the core of it: paths to reach into a document, `|` to chain
+      filters, `[]` and `{}` to take structures apart and put new ones back
+      together, and streams tying it all together. Everything else is built on
+      those.
+
+      There is plenty more: arithmetic, variables and conditionals; updating a
+      document in place; `@base64`, `@uri` and the other `@` formats; `reduce` and
+      `foreach` for folding a stream down to one value; `inputs` and the rest of the
+      IO builtins for reading many values instead of one; and defining your own
+      functions on top of a large library of builtins. Go read
+      [the manual](../manual/) when you want it, and [download jq](../download/) if
+      you have not already.
