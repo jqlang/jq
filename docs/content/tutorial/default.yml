@@ -42,13 +42,11 @@ body:
   - text: |
 
       jq reads the file you name on the command line, or standard input if you name
-      none, so `gh api repos/jqlang/jq/commits | jq '.[0]'` would work just as well,
-      and day to day that is how you would write it. Saving the response once keeps
-      every example below repeatable: no repeated downloads, no rate limit, and no
-      data shifting underneath you when somebody pushes.
+      none, so piping `gh api` straight into `jq` would work just as well, and day
+      to day that is how you would write it. In this tutorial, we save the response
+      to a file so you can follow along without needing to download repeatedly.
 
-      Here is the beginning of what arrived - the repository keeps moving, so your
-      own commits will differ from the ones shown here:
+      The first 200 bytes of that file look like this:
 
   - command: "head -c 200 commits.json"
     result: |
@@ -454,9 +452,7 @@ body:
 
       - - -
 
-      `map` changes every element and leaves the shape of the array alone. The next
-      few builtins do the reverse: the elements come through untouched and the array
-      itself is rearranged. `unique` drops duplicates:
+      Let's explore filters that operate on arrays. `unique` drops duplicates:
 
   - command: "jq -r 'map(.commit.author.name) | unique[]' commits.json"
     result: |
@@ -584,8 +580,8 @@ body:
       - - -
 
       An expression that produces *no* output for some inputs is how filtering works.
-      `select(condition)` emits its input unchanged when the condition holds, and
-      nothing at all when it does not, so putting one in the middle of a pipeline
+      `select(condition)` emits its input unchanged when the condition is true, and
+      nothing at all when it is not, so putting one in the middle of a pipeline
       drops the values you do not want. What it passes on is the whole value, not
       just the part the condition looked at, which means a filter can test one field
       and then go on to read another - here, finding the commits dependabot made and
