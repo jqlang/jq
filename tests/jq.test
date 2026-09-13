@@ -69,11 +69,12 @@ jq: error: Invalid escape at line 1, column 4 (while parsing '"\v"') at <top-lev
 null
 "interpolation"
 
-@text,@json,([1,.]|@csv,@tsv),@html,(@uri|.,@urid),@sh,(@base64|.,@base64d)
+@text,@json,([1,.]|@csv,@scsv,@tsv),@html,(@uri|.,@urid),@sh,(@base64|.,@base64d)
 "!()<>&'\"\t"
 "!()<>&'\"\t"
 "\"!()<>&'\\\"\\t\""
 "1,\"!()<>&'\"\"\t\""
+"1;\"!()<>&'\"\"\t\""
 "1\t!()<>&'\"\\t"
 "!()&lt;&gt;&amp;&apos;&quot;\t"
 "%21%28%29%3C%3E%26%27%22%09"
