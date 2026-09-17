@@ -1757,7 +1757,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = gmtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1771,7 +1771,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = gmtime(&secs);
   if (tmp == NULL)
@@ -1792,7 +1792,7 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = localtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1806,7 +1806,7 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = localtime(&secs);
   if (tmp == NULL)
