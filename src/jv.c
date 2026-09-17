@@ -449,6 +449,8 @@ pthread_setspecific(pthread_key_t key, void *value)
         } else {
             new_num = (values.values_num + values.values_num / 2);
         }
+        if (new_num > SIZE_MAX / sizeof(void *))
+            return ENOMEM;
         new_values = realloc(values.values, sizeof(void *) * new_num);
         if (new_values == NULL)
             return ENOMEM;
@@ -2021,7 +2023,7 @@ void jv_free(jv j) {
           jvp_array* arr = jvp_array_ptr(j);
           if (len + arr->length > cap) {
             cap = (len + arr->length) * 2;
-            pending = jv_mem_realloc(pending, cap * sizeof(jv));
+            pending = jv_mem_reallocarray(pending, cap, sizeof(jv));
           }
           for (int i = 0; i < arr->length; i++)
             pending[len++] = arr->elements[i];
@@ -2033,7 +2035,7 @@ void jv_free(jv j) {
           int sz = jvp_object_size(j);
           if (len + sz > cap) {
             cap = (len + sz) * 2;
-            pending = jv_mem_realloc(pending, cap * sizeof(jv));
+            pending = jv_mem_reallocarray(pending, cap, sizeof(jv));
           }
           for (int i = 0; i < sz; i++) {
             struct object_slot* slot = jvp_object_get_slot(j, i);
@@ -2049,7 +2051,7 @@ void jv_free(jv j) {
         if (JVP_HAS_FLAGS(j, JVP_FLAGS_INVALID_MSG) && jvp_refcnt_dec(j.u.ptr)) {
           if (len + 1 > cap) {
             cap = (len + 1) * 2;
-            pending = jv_mem_realloc(pending, cap * sizeof(jv));
+            pending = jv_mem_reallocarray(pending, cap, sizeof(jv));
           }
           pending[len++] = ((jvp_invalid*)j.u.ptr)->errmsg;
           jv_mem_free(j.u.ptr);

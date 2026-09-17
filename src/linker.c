@@ -370,7 +370,7 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int opt
     // import "foo" as $bar;
     program = gen_const_global(jv_copy(data), as);
     state_idx = lib_state->ct++;
-    lib_state->entries = jv_mem_realloc(lib_state->entries, lib_state->ct * sizeof(struct lib_entry));
+    lib_state->entries = jv_mem_reallocarray(lib_state->entries, lib_state->ct, sizeof(struct lib_entry));
     lib_state->entries[state_idx].name = strdup(jv_string_value(lib_path));
     lib_state->entries[state_idx].def = program;
     lib_state->entries[state_idx].loading = 0;
@@ -383,7 +383,7 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int opt
       // Register the library before processing its dependencies so that
       // circular imports can be detected.
       state_idx = lib_state->ct++;
-      lib_state->entries = jv_mem_realloc(lib_state->entries, lib_state->ct * sizeof(struct lib_entry));
+      lib_state->entries = jv_mem_reallocarray(lib_state->entries, lib_state->ct, sizeof(struct lib_entry));
       lib_state->entries[state_idx].name = strdup(jv_string_value(lib_path));
       lib_state->entries[state_idx].def = gen_noop();
       lib_state->entries[state_idx].loading = 1;
