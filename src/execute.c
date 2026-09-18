@@ -519,7 +519,7 @@ jv jq_next(jq_state *jq) {
       if (raising) {
         jv_free(max);
         goto do_backtrack;
-      } 
+      }
       if (jv_get_kind(*var) != JV_KIND_NUMBER ||
           jv_get_kind(max) != JV_KIND_NUMBER) {
         set_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
@@ -882,15 +882,16 @@ jv jq_next(jq_state *jq) {
         jv_free(stack_pop(jq));
         goto do_backtrack;
       }
-      // `try EXP ...` exception caught in EXP
-      // DESTRUCTURE_ALT doesn't want the error message on the stack,
-      // as we would just want to throw it away anyway.
-      if (opcode != ON_BACKTRACK(DESTRUCTURE_ALT)) {
-        jv_free(stack_pop(jq)); // free the input
-        stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
-      } else {
-        jv_free(jq->error);
-      }
+
+      // Propagate break's control-flow error to its label.
+      jv msg = jv_invalid_get_msg(jv_copy(jq->error));
+      int is_break = jv_get_kind(msg) == JV_KIND_OBJECT &&
+                     jv_object_has(jv_copy(msg), jv_string("__jq"));
+      jv_free(msg);
+      if (is_break)
+        goto do_backtrack;
+
+      jv_free(jq->error);
       jq->error = jv_null();
       uint16_t offset = *pc++;
       pc += offset;
