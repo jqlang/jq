@@ -33,7 +33,8 @@ env.filters['entry_id'] = lambda input: re.sub(
         r'\1',  # e.g. range-range-range -> range
         re.sub(r' ?/ ?|,? ', '-',
                re.sub(r'[`;]|: .*|\(.*?\)| \[.+\]', '', input)))).lower()
-env.filters['markdownify'] = lambda input: Markup(markdown(input))
+env.filters['markdownify'] = lambda input: Markup(
+    markdown(input, extensions=['md_in_html']))
 env.filters['no_paragraph'] = lambda input: Markup(re.sub(r'</?p>', '', input))
 
 env.globals['unique_id'] = pass_context(
