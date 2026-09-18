@@ -473,6 +473,30 @@ jv jv_getpath(jv root, jv path) {
 // assumes paths is a sorted array of arrays
 static jv delpaths_sorted(jv object, jv paths, int start) {
   jv delkeys = jv_array();
+  // Normalize negative indices at non-leaf positions so that paths
+  // like [-1,-6] and [0,6] get grouped together rather than treated
+  // as different sub-objects (fixes #3538).
+  if (jv_get_kind(object) == JV_KIND_ARRAY) {
+    int alen = jv_array_length(jv_copy(object));
+    for (int i = 0; i < jv_array_length(jv_copy(paths)); i++) {
+      jv path = jv_array_get(jv_copy(paths), i);
+      if (jv_array_length(jv_copy(path)) > start + 1) {
+        jv key = jv_array_get(jv_copy(path), start);
+        if (jv_get_kind(key) == JV_KIND_NUMBER) {
+          double num = jv_number_value(key);
+          if (num < 0) {
+            int normalized = (int)num + alen;
+            if (normalized >= 0) {
+              jv newpath = jv_array_set(jv_copy(path), start, jv_number(normalized));
+              paths = jv_array_set(paths, i, newpath);
+            }
+          }
+        }
+        jv_free(key);
+      }
+      jv_free(path);
+    }
+  }
   for (int i=0; i<jv_array_length(jv_copy(paths));) {
     assert(jv_array_length(jv_array_get(jv_copy(paths), i)) > start);
     int delkey = jv_array_length(jv_array_get(jv_copy(paths), i)) == start + 1;
