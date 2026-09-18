@@ -1120,6 +1120,19 @@ path(.)
 42
 []
 
+# Regression test for #3128
+[path({} as {$a} | .), path(. as {$a} | .)]
+null
+[[], []]
+
+path({meta: {key: "a"}} as {meta: {$key}} | .[$key])
+{"a": 1}
+["a"]
+
+[path({key: "a"} as {$key} ?// [$key] | .[$key]), path(["a"] as {$key} ?// [$key] | .[$key])]
+{"a": 1}
+[["a"], ["a"]]
+
 try path(.a | map(select(.b == 0))) catch .
 {"a":[{"b":0}]}
 "Invalid path expression with result [{\"b\":0}]"
