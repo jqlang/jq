@@ -1465,6 +1465,11 @@ try error(0) // 1
 null
 1
 
+# Lex token test #3589, like error(0)? // 1
+error(0) ?// 1
+null
+1
+
 1, try error(2), 3
 null
 1
