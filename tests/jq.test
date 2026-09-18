@@ -2094,6 +2094,21 @@ JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[
 [[5,"foo"],[3,"bar"],[1,"foobar"]]
 [[[5,"foo"],null],[[3,"bar"],[3,"efg"]],[[1,"foobar"],[1,"bcd"]]]
 
+INDEX([{id:1,name:"number"},{id:true,name:"boolean"},{id:null,name:"null"}][]; .id) as $idx
+| [JOIN($idx; [{id:1},{id:true},{id:null}][]; .id)]
+null
+[[{"id":1},{"id":1,"name":"number"}],[{"id":true},{"id":true,"name":"boolean"}],[{"id":null},{"id":null,"name":"null"}]]
+
+INDEX([{id:1,name:"number"},{id:true,name:"boolean"},{id:null,name:"null"}][]; .id) as $idx
+| [{id:1},{id:true},{id:null}] | JOIN($idx; .id)
+null
+[[{"id":1},{"id":1,"name":"number"}],[{"id":true},{"id":true,"name":"boolean"}],[{"id":null},{"id":null,"name":"null"}]]
+
+INDEX([{id:1,name:"number"},{id:true,name:"boolean"},{id:null,name:"null"}][]; .id) as $idx
+| [JOIN($idx; [{id:1},{id:true},{id:null}][]; .id; .[1].name)]
+null
+["number","boolean","null"]
+
 range(5;10)|IN(range(10))
 null
 true
