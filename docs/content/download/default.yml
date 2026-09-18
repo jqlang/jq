@@ -40,6 +40,9 @@ body:
          or
          [i386](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-linux-i386).
 
+      <details markdown="1">
+      <summary>Older versions</summary>
+
        * jq 1.8.1 binaries for
          [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-linux-amd64)
          or
@@ -88,6 +91,8 @@ body:
          or
          [i386](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-linux-x86).
 
+      </details>
+
       ### macOS
 
        * Use [Homebrew](https://brew.sh/) to install jq with `brew install jq`.
@@ -100,6 +105,9 @@ body:
          [Apple Silicon](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-macos-arm64)
          or
          [Intel Mac](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-macos-amd64).
+
+      <details markdown="1">
+      <summary>Older versions</summary>
 
        * jq 1.8.1 binaries for
          [Apple Silicon](https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-macos-arm64)
@@ -137,6 +145,8 @@ body:
          or
          [i386](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-osx-x86).
 
+      </details>
+
       ### FreeBSD
 
        * `pkg install jq` as root installs a pre-built
@@ -173,6 +183,9 @@ body:
          [ARM64](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-windows-arm64.exe)
          or
          [i386](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-windows-i386.exe).
+
+      <details markdown="1">
+      <summary>Older versions</summary>
 
        * jq 1.8.1 executables for
          [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-windows-amd64.exe)
@@ -214,51 +227,73 @@ body:
          or
          [i386](https://github.com/jqlang/jq/releases/download/jq-1.3/jq-win32.exe).
 
+      </details>
+
       ### Checksums and signatures
 
-      SHA-256 checksums are provided for all release and pre-release binaries.
-      The checksums for jq 1.8.2 are in
-      [sig/v1.8.2/sha256sum.txt](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.8.2/sha256sum.txt).
-      The checksums for jq 1.8.1 are in
-      [sig/v1.8.1/sha256sum.txt](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.8.1/sha256sum.txt).
-      The checksums for jq 1.8.0 are in
-      [sig/v1.8.0/sha256sum.txt](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.8.0/sha256sum.txt).
-      The checksums for jq 1.7.1 are in
-      [sig/v1.7.1/sha256sum.txt](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.7.1/sha256sum.txt).
-      The checksums for jq 1.7 are in
-      [sig/v1.7/sha256sum.txt](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.7/sha256sum.txt).
-      The checksums for jq 1.6 are in
-      [sig/v1.6/sha256sum.txt](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.6/sha256sum.txt).
-      The checksums for jq 1.5 are in
-      [sig/v1.5/sha256sum.txt](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.5/sha256sum.txt).
-
-      Additionally, all release artifacts are signed by a jq release key.  We have two release keys, [one for 1.6 and older releases](https://raw.githubusercontent.com/jqlang/jq/master/sig/jq-release-old.key), and [one for 1.7 and newer releases](https://raw.githubusercontent.com/jqlang/jq/master/sig/jq-release-new.key).
-      The signatures for jq 1.8.2 are in
-      [sig/v1.8.2/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.8.2).
-      The signatures for jq 1.8.1 are in
-      [sig/v1.8.1/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.8.1).
-      The signatures for jq 1.8.0 are in
-      [sig/v1.8.0/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.8.0).
-      The signatures for jq 1.7.1 are in
-      [sig/v1.7.1/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.7.1).
-      The signatures for jq 1.7 are in
-      [sig/v1.7/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.7).
-      The signatures for jq 1.6 are in
-      [sig/v1.6/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.6).
-      The signatures for jq 1.5 are in
-      [sig/v1.5/\*.asc](https://github.com/jqlang/jq/tree/master/sig/v1.5).
+      SHA-256 checksums are provided for all release and pre-release binaries,
+      and all release artifacts are signed by a jq release key. We have two release keys,
+      [one for 1.6 and older releases](https://raw.githubusercontent.com/jqlang/jq/master/sig/jq-release-old.key),
+      and
+      [one for 1.7 and newer releases](https://raw.githubusercontent.com/jqlang/jq/master/sig/jq-release-new.key).
       You can use [GnuPG](https://gnupg.org/) to verify a signature by downloading
       the signature and running `gpg --verify signature.asc`.
+
+       * jq 1.8.2
+         [checksums](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.8.2/sha256sum.txt)
+         and
+         [signatures](https://github.com/jqlang/jq/tree/master/sig/v1.8.2).
+
+      <details markdown="1">
+      <summary>Older versions</summary>
+
+       * jq 1.8.1
+         [checksums](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.8.1/sha256sum.txt)
+         and
+         [signatures](https://github.com/jqlang/jq/tree/master/sig/v1.8.1).
+
+       * jq 1.8.0
+         [checksums](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.8.0/sha256sum.txt)
+         and
+         [signatures](https://github.com/jqlang/jq/tree/master/sig/v1.8.0).
+
+       * jq 1.7.1
+         [checksums](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.7.1/sha256sum.txt)
+         and
+         [signatures](https://github.com/jqlang/jq/tree/master/sig/v1.7.1).
+
+       * jq 1.7
+         [checksums](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.7/sha256sum.txt)
+         and
+         [signatures](https://github.com/jqlang/jq/tree/master/sig/v1.7).
+
+       * jq 1.6
+         [checksums](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.6/sha256sum.txt)
+         and
+         [signatures](https://github.com/jqlang/jq/tree/master/sig/v1.6).
+
+       * jq 1.5
+         [checksums](https://raw.githubusercontent.com/jqlang/jq/master/sig/v1.5/sha256sum.txt)
+         and
+         [signatures](https://github.com/jqlang/jq/tree/master/sig/v1.5).
+
+      </details>
 
       ### From source on Linux, macOS, Cygwin, and other POSIX-like operating systems
 
        * [Source tarball for jq 1.8.2](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-1.8.2.tar.gz)
+
+      <details markdown="1">
+      <summary>Older versions</summary>
+
        * [Source tarball for jq 1.8.1](https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-1.8.1.tar.gz)
        * [Source tarball for jq 1.8.0](https://github.com/jqlang/jq/releases/download/jq-1.8.0/jq-1.8.0.tar.gz)
        * [Source tarball for jq 1.7.1](https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-1.7.1.tar.gz)
        * [Source tarball for jq 1.7](https://github.com/jqlang/jq/releases/download/jq-1.7/jq-1.7.tar.gz)
        * [Source tarball for jq 1.6](https://github.com/jqlang/jq/releases/download/jq-1.6/jq-1.6.tar.gz)
        * [Source tarball for jq 1.5](https://github.com/jqlang/jq/releases/download/jq-1.5/jq-1.5.tar.gz)
+
+      </details>
 
       You can build it using the usual `./configure && make && sudo
       make install` rigmarole.

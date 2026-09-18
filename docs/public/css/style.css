@@ -45,6 +45,19 @@ ul {
   padding-left: 1rem;
 }
 
+details {
+  margin-bottom: 1rem;
+  padding-left: 1rem;
+
+  & summary {
+    cursor: pointer;
+  }
+
+  & ul {
+    padding-left: 0;
+  }
+}
+
 pre {
   margin: 0 .5rem 1rem;
   padding: .5rem 1rem;
