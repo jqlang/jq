@@ -962,6 +962,47 @@ static int f_match_name_iter(const UChar* name, const UChar *name_end, int ngrou
   return 0;
 }
 
+static jv f_match_captures(const char *input, const OnigRegion *region,
+    regex_t *reg) {
+  jv captures = jv_array();
+  for (int i = 1; i < region->num_regs; ++i) {
+    unsigned long idx;
+    unsigned long len;
+    const char *fr;
+    jv cap;
+
+    if (region->beg[i] == -1) {
+      cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(-1));
+      cap = jv_object_set(cap, jv_string("string"), jv_null());
+      cap = jv_object_set(cap, jv_string("length"), jv_number(0));
+    } else if (region->beg[i] == region->end[i]) {
+      fr = input;
+      for (idx = 0; fr < input + region->beg[i]; idx++) {
+        fr += jvp_utf8_decode_length(*fr);
+      }
+      cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
+      cap = jv_object_set(cap, jv_string("string"), jv_string(""));
+      cap = jv_object_set(cap, jv_string("length"), jv_number(0));
+    } else {
+      fr = input;
+      for (idx = len = 0; fr < input + region->end[i]; len++) {
+        if (fr == input + region->beg[i]) idx = len, len = 0;
+        fr += jvp_utf8_decode_length(*fr);
+      }
+
+      unsigned long blen = region->end[i] - region->beg[i];
+      cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
+      cap = jv_object_set(cap, jv_string("length"), jv_number(len));
+      cap = jv_object_set(cap, jv_string("string"),
+          jv_string_sized(input + region->beg[i], blen));
+    }
+    cap = jv_object_set(cap, jv_string("name"), jv_null());
+    captures = jv_array_append(captures, cap);
+  }
+  onig_foreach_name(reg, f_match_name_iter, &captures);
+  return captures;
+}
+
 static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   int test = jv_equal(testmode, jv_true());
   jv result;
@@ -1069,21 +1110,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
         jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
         match = jv_object_set(match, jv_string("length"), jv_number(0));
         match = jv_object_set(match, jv_string("string"), jv_string(""));
-        jv captures = jv_array();
-        for (int i = 1; i < region->num_regs; ++i) {
-          jv cap = jv_object();
-          if (region->beg[i] == -1) {
-            cap = jv_object_set(cap, jv_string("offset"), jv_number(-1));
-            cap = jv_object_set(cap, jv_string("string"), jv_null());
-          } else {
-            cap = jv_object_set(cap, jv_string("offset"), jv_number(idx));
-            cap = jv_object_set(cap, jv_string("string"), jv_string(""));
-          }
-          cap = jv_object_set(cap, jv_string("length"), jv_number(0));
-          cap = jv_object_set(cap, jv_string("name"), jv_null());
-          captures = jv_array_append(captures, cap);
-        }
-        onig_foreach_name(reg, f_match_name_iter, &captures);
+        jv captures = f_match_captures(input_string, region, reg);
         match = jv_object_set(match, jv_string("captures"), captures);
         result = jv_array_append(result, match);
         // ensure '"qux" | match("(?=u)"; "g")' matches just once; advance the
@@ -1111,42 +1138,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
       unsigned long blen = region->end[0]-region->beg[0];
       match = jv_object_set(match, jv_string("length"), jv_number(len));
       match = jv_object_set(match, jv_string("string"), jv_string_sized(input_string+region->beg[0],blen));
-      jv captures = jv_array();
-      for (int i = 1; i < region->num_regs; ++i) {
-        // Empty capture.
-        if (region->beg[i] == region->end[i]) {
-          // Didn't match.
-          jv cap;
-          if (region->beg[i] == -1) {
-            cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(-1));
-            cap = jv_object_set(cap, jv_string("string"), jv_null());
-          } else {
-            fr = input_string;
-            for (idx = 0; fr < input_string+region->beg[i]; idx++) {
-              fr += jvp_utf8_decode_length(*fr);
-            }
-            cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
-            cap = jv_object_set(cap, jv_string("string"), jv_string(""));
-          }
-          cap = jv_object_set(cap, jv_string("length"), jv_number(0));
-          cap = jv_object_set(cap, jv_string("name"), jv_null());
-          captures = jv_array_append(captures, cap);
-          continue;
-        }
-        fr = input_string;
-        for (idx = len = 0; fr < input_string+region->end[i]; len++) {
-          if (fr == input_string+region->beg[i]) idx = len, len=0;
-          fr += jvp_utf8_decode_length(*fr);
-        }
-
-        blen = region->end[i]-region->beg[i];
-        jv cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
-        cap = jv_object_set(cap, jv_string("length"), jv_number(len));
-        cap = jv_object_set(cap, jv_string("string"), jv_string_sized(input_string+region->beg[i],blen));
-        cap = jv_object_set(cap, jv_string("name"), jv_null());
-        captures = jv_array_append(captures,cap);
-      }
-      onig_foreach_name(reg,f_match_name_iter,&captures);
+      jv captures = f_match_captures(input_string, region, reg);
       match = jv_object_set(match, jv_string("captures"), captures);
       result = jv_array_append(result, match);
       start = (const UChar*)(input_string+region->end[0]);
