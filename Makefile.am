@@ -224,6 +224,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         libjq.pc                                                        \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
+        tests/modules/deep1.jq tests/modules/deep2a.jq                  \
+        tests/modules/deep2b.jq tests/modules/deep3.jq                  \
         tests/modules/home1/.jq tests/modules/home2/.jq/g.jq            \
         tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq           \
         tests/modules/shadow1.jq tests/modules/shadow2.jq               \
