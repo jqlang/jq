@@ -21,30 +21,36 @@ body:
 
       The value is unchanged, but the formatting is jq's own: it pretty-prints and
       colorizes what it writes, so `jq .` alone is already a useful way to make dense
-      JSON readable. Note the quotes around the program: `.` would survive the shell
-      bare, but almost every program past this one contains characters the shell
-      would otherwise interpret, so it is a habit worth forming early.
+      JSON readable. Note the quotes around the program. The shell has no special
+      meaning for `.`, so `jq .` works without them, but almost every program past
+      this one contains characters the shell would interpret itself. Quoting is a
+      habit worth forming early. (On Windows, `cmd.exe` wants double quotes around
+      the program instead, and any double quote inside it then needs a backslash.)
 
   - text: |
 
       - - -
 
       For something more substantial, let's use GitHub's API. The `gh`
-      command-line tool speaks it, so this asks for the most recent commits to the
-      jq repository and saves the answer:
+      command-line tool speaks it, so this asks for the commits made to the jq
+      repository before a fixed date and saves the answer:
 
-          gh api repos/jqlang/jq/commits > commits.json
+          gh api 'repos/jqlang/jq/commits?until=2026-09-02' > commits.json
 
-      (`curl -s https://api.github.com/repos/jqlang/jq/commits` fetches the same
-      data if you do not have `gh`. GitHub pretty-prints its own responses, so that
-      file will be easier to read than the one below.)
+      (If you do not have `gh`, `curl -s
+      'https://api.github.com/repos/jqlang/jq/commits?until=2026-09-02'` fetches the
+      same commits. GitHub pretty-prints what it sends to `curl`, so that file
+      arrives spread over a couple of thousand lines rather than the single line
+      shown just below; every jq command here gives the same answer either way.)
 
   - text: |
 
       jq reads the file you name on the command line, or standard input if you name
       none, so piping `gh api` straight into `jq` would work just as well, and day
       to day that is how you would write it. In this tutorial, we save the response
-      to a file so you can follow along without needing to download repeatedly.
+      to a file so you can follow along without downloading it repeatedly. `until`
+      pins the result to a fixed set of commits, so what you see matches what is
+      shown here.
 
       The first 200 bytes of that file look like this:
 
@@ -54,8 +60,10 @@ body:
 
   - text: |
 
-      One very long line - about 120 KB of it. This is the situation jq exists to
-      fix. Start by asking how much is in there:
+      One very long line - about 120 KB of it. Pretty-printed it is no better: the
+      same data runs to some 2,500 lines. Either way it is far more than you can
+      take in by eye, which is the situation jq exists to fix. Start by asking how
+      much is in there:
 
   - command: "jq 'length' commits.json"
     result: |
@@ -187,7 +195,7 @@ body:
 
   - text: |
 
-      Two things are happening here. `|` is jq's pipe, named after the shell's and
+      Two things are happening here. `|` is jq's pipe, borrowed from the shell and
       working the same way: it feeds the output of the filter on its left into the
       input of the filter on its right. So `.[0]` selects the first commit, and
       everything after the pipe is evaluated with that commit as its input. And
@@ -329,11 +337,13 @@ body:
       that takes one array and emits each of its elements.
 
       Every value jq writes is followed by a newline. Reading is more relaxed than
-      writing: jq accepts values separated by any amount of whitespace, or by none
-      at all, which is what makes the format `cat`-friendly - join two jq outputs
-      together and the result is still something jq can read. A pretty-printed value
-      spans as many lines as it needs, so when the next program in the pipeline is
-      line-oriented, `-c` is what you want. It compacts each value onto one line:
+      writing: any amount of whitespace between two values will do, and a value that
+      closes with `}`, `]` or `"` needs no separator at all. That is what makes the
+      format `cat`-friendly:
+      join two jq outputs together and the result is still something jq can read. A
+      pretty-printed value spans as many lines as it needs, so when the next program
+      in the pipeline is line-oriented, `-c` is what you want. It compacts each value
+      onto one line:
 
   - command: "jq -c '.[] | {message: .commit.message, author: .commit.author.name}' commits.json"
     result: |
@@ -471,10 +481,10 @@ body:
 
   - text: |
 
-      Note that it sorts as a side effect: jq finds duplicates by ordering the array
-      first, and that order is what comes back. To sort on purpose there is `sort`,
-      and `first` and `last` pick the ends off what it returns - between them, the
-      stretch of time these thirty commits cover:
+      Note that the names came back sorted. That is not incidental: `unique` finds
+      duplicates by ordering the array first, and that order is what you get. To sort
+      on purpose there is `sort`, and `first` and `last` pick the ends off the sorted
+      array - between them, the stretch of time these thirty commits cover:
 
   - command: "jq 'map(.commit.author.date) | sort | [first, last]' commits.json"
     result: |
@@ -485,8 +495,8 @@ body:
 
   - text: |
 
-      `sort_by(f)` is the general form. It orders whole elements by whatever `f`
-      extracts, which is what you need as soon as the answer involves more than the
+      `sort_by(f)` is the general form: it orders whole elements by whatever `f`
+      extracts. That is what you need as soon as the answer involves more than the
       key you sorted on - the same two ends, now with their authors attached:
 
   - command: "jq 'sort_by(.commit.author.date) | [first, last] | map({author: .commit.author.name, date: .commit.author.date})' commits.json"
@@ -583,7 +593,7 @@ body:
       `select(condition)` emits its input unchanged when the condition is true, and
       nothing at all when it is not, so putting one in the middle of a pipeline
       drops the values you do not want. What it passes on is the whole value, not
-      just the part the condition looked at, which means a filter can test one field
+      just the part the condition looked at. A filter can therefore test one field
       and then go on to read another - here, finding the commits dependabot made and
       printing what they say:
 
@@ -597,9 +607,9 @@ body:
 
   - text: |
 
-      Conditions join up with `and` and `or`. Piping into the field first means the
-      path is written once and the comparisons both read `.`, which widens this to
-      catch the other bot too:
+      Conditions join up with `and` and `or`. Piping into the field first lets the
+      path be written once, with both comparisons reading `.`. That widens the test
+      to catch the other bot too:
 
   - command: "jq -c '.[] | select(.commit.author.name | . == \"dependabot[bot]\" or . == \"github-actions[bot]\") | [.commit.author.name, .commit.message]' commits.json"
     result: |
@@ -615,14 +625,28 @@ body:
       One more commit than before, and pairing each message with its author shows
       which of the two clauses caught it. Negation is the odd one out of the three:
       jq has no `!`, and `not` is a filter like any other, so it takes its argument
-      from the left - `endswith("[bot]") | not` is how you say "not a bot".
+      from the left. `select` also works on any value, not just objects, so a plain
+      string can flow straight into the test - here, the people rather than the bots
+      behind these thirty commits:
+
+  - command: "jq -r 'map(.commit.author.name) | unique[] | select(endswith(\"[bot]\") | not)' commits.json"
+    result: |
+      A4-Tacks
+      Anna Rift
+      Thomas Klausner
+      WinkleMad
+      Yu-Fu Fu
+      august
+      ded-furby
+      itchyny
+      pavel kuliaka
+      theyoucheng
 
   - text: |
 
-      `select` works on any value, not just objects, so where the test and the answer
-      are the same field the value can flow straight into it. The condition need not
-      be a comparison either - `test` matches a regular expression. Together that is
-      the subject line of every commit which fixed a published vulnerability:
+      The condition need not be a comparison either - `test` matches a regular
+      expression. This is the subject line of every commit which fixed a published
+      vulnerability:
 
   - command: "jq -r '.[] | .commit.message | select(test(\"CVE-[0-9]{4}-[0-9]+\")) | split(\"\\n\")[0]' commits.json"
     result: |
@@ -644,7 +668,7 @@ body:
 
       - - -
 
-      Everything so far has worked on arrays - `.[]` to open one up, then `map`,
+      Everything so far has started from an array - `.[]` to open one up, then `map`,
       `sort`, `select`. Objects need a conversion first: `to_entries` turns one into
       an array of key/value pairs, which is how you reach an object's keys when they
       are data rather than something you typed:
@@ -692,17 +716,16 @@ body:
 
       `with_entries(f)` is that round trip in one step - `to_entries | map(f) |
       from_entries` - running `f` over each pair, so a `select` there keeps or drops
-      whole fields. Eleven of the nineteen keys on an account object are API URLs,
-      and this throws them all out by testing each key as it goes past:
+      whole fields. An account object is mostly API URLs - twelve of its nineteen
+      keys - and this drops every one of them by testing each key as it goes past:
 
-  - command: "jq '.[0].author | with_entries(select(.key | endswith(\"_url\") | not))' commits.json"
+  - command: "jq '.[0].author | with_entries(select(.key | endswith(\"url\") | not))' commits.json"
     result: |
       {
         "login": "dependabot[bot]",
         "id": 49699333,
         "node_id": "MDM6Qm90NDk2OTkzMzM=",
         "gravatar_id": "",
-        "url": "https://api.github.com/users/dependabot%5Bbot%5D",
         "type": "Bot",
         "user_view_type": "public",
         "site_admin": false
@@ -710,8 +733,9 @@ body:
 
   - text: |
 
-      Inside `f` a pair is just an object, so `.key` and `.value` are ordinary
-      paths: `with_entries(.key |= ascii_downcase)` would lowercase every field
+      Inside `f` a pair is just an object, so `.key` and `.value` are ordinary paths.
+      `|=` updates a path in place, running a filter on whatever value it finds
+      there, so `with_entries(.key |= ascii_downcase)` would lowercase every field
       name.
 
   - text: |
@@ -756,12 +780,12 @@ body:
   - text: |
 
       The pieces combine. `map(select(...))` is the ordinary way to filter an array:
-      `map` visits every element and `select` decides whether it survives, so
-      `endswith("[bot]") | not` clears out dependabot and friends. `group_by` and
-      `sort_by` then do what they did above - remembering that jq sorts ascending, so
-      negating the key is how you ask for largest-first, and `reverse` does the same
-      job for keys that cannot be negated. `@tsv` then joins each pair into a
-      tab-separated line, giving a plain-text leaderboard of the humans:
+      `map` visits every element and `select` decides whether it survives, so the
+      `endswith("[bot]") | not` from before clears out dependabot and friends.
+      `group_by` and `sort_by` then do what they did above. jq sorts ascending, so
+      negating the key is how you ask for largest-first; `reverse` does the same job
+      for keys that cannot be negated. `@tsv` joins each pair into a tab-separated
+      line, giving a plain-text leaderboard of the humans:
 
   - command: "jq -r 'map(select(.commit.author.name | endswith(\"[bot]\") | not)) | group_by(.commit.author.name) | map({author: .[0].commit.author.name, commits: length}) | sort_by(-.commits) | .[] | [.commits, .author] | @tsv' commits.json"
     result: |
@@ -797,5 +821,5 @@ body:
       `foreach` for folding a stream down to one value; `inputs` and the rest of the
       IO builtins for reading many values instead of one; and defining your own
       functions on top of a large library of builtins. Go read
-      [the manual](../manual/) when you want it, and [download jq](../download/) if
+      [the manual](../manual/) when you need it, and [download jq](../download/) if
       you have not already.
