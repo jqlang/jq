@@ -519,12 +519,51 @@ static jv delpaths_sorted(jv object, jv paths, int start) {
   return object;
 }
 
+// Rewrite negative array indices in a single path to their non-negative
+// equivalents, relative to the (undeleted) object each index points into.
+// This lets delpaths_sorted group and delete positive and negative indices
+// that refer to the same element as if they were simultaneous, matching the
+// leaf-level behavior of jv_dels (see jqlang/jq#3538).
+static jv delpaths_normalize(jv object, jv path) {
+  jv newpath = jv_array();
+  jv node = object;
+  jv_array_foreach(path, i, key) {
+    if (jv_get_kind(node) == JV_KIND_ARRAY &&
+        jv_get_kind(key) == JV_KIND_NUMBER &&
+        !jvp_number_is_nan(key) &&
+        jv_number_value(key) < 0) {
+      double didx = jv_number_value(key) + jv_array_length(jv_copy(node));
+      // Only normalize in-range indices; out-of-range negatives are left as-is
+      // so existing error/no-op semantics are preserved.
+      if (didx >= 0) {
+        jv_free(key);
+        key = jv_number(didx);
+      }
+    }
+    newpath = jv_array_append(newpath, jv_copy(key));
+    node = jv_get(node, key);
+  }
+  jv_free(node);
+  jv_free(path);
+  return newpath;
+}
+
 jv jv_delpaths(jv object, jv paths) {
   if (jv_get_kind(paths) != JV_KIND_ARRAY) {
     jv_free(object);
     jv_free(paths);
     return jv_invalid_with_msg(jv_string("Paths must be specified as an array"));
   }
+  // Normalize negative array indices before sorting so that positive and
+  // negative indices to the same element are grouped together (jqlang/jq#3538).
+  jv normpaths = jv_array();
+  jv_array_foreach(paths, i, path) {
+    if (jv_get_kind(path) == JV_KIND_ARRAY)
+      path = delpaths_normalize(jv_copy(object), path);
+    normpaths = jv_array_append(normpaths, path);
+  }
+  jv_free(paths);
+  paths = normpaths;
   paths = jv_sort(paths, jv_copy(paths));
   jv_array_foreach(paths, i, elem) {
     if (jv_get_kind(elem) != JV_KIND_ARRAY) {
