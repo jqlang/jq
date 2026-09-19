@@ -832,8 +832,7 @@ static block bind_alternation_matchers(block matchers, block body) {
 
 block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
-  block loop = BLOCK(gen_op_simple(DUPN),
-                     source,
+  block loop = BLOCK(source,
                      bind_alternation_matchers(matcher,
                                   BLOCK(gen_op_bound(LOADVN, res_var),
                                         body,
@@ -842,8 +841,10 @@ block gen_reduce(block source, block matcher, block init, block body) {
   return BLOCK(gen_op_simple(DUP),
                init,
                res_var,
+               gen_op_simple(DUP),
                gen_op_target(FORK, loop),
                loop,
+               gen_op_simple(POP),
                gen_op_bound(LOADVN, res_var));
 }
 

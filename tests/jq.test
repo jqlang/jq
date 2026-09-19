@@ -2571,7 +2571,13 @@ try ["OK", setpath([[1]]; 1)] catch ["KO", .]
 []
 ["KO","Cannot update field at array index of array"]
 
-# regression test for #3227
+# regression test for #3227 (reduce)
+[] | reduce .[] as $x (0, 1; .)
+null
+0
+1
+
+# regression test for #3227 (foreach)
 foreach .[] as $x (0, 1; . + $x)
 [1, 2]
 1

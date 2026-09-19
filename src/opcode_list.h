@@ -1,6 +1,5 @@
 OP(LOADK, CONSTANT, 1, 1)
 OP(DUP,   NONE,     1, 2)
-OP(DUPN,  NONE,     1, 2)
 OP(DUP2,  NONE,     2, 3)
 OP(PUSHK_UNDER, CONSTANT, 1, 2)
 OP(POP,   NONE,     1, 0)

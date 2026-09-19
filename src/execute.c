@@ -428,13 +428,6 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
-    case DUPN: {
-      jv v = stack_popn(jq);
-      stack_push(jq, jv_copy(v));
-      stack_push(jq, v);
-      break;
-    }
-
     case DUP2: {
       jv keep = stack_pop(jq);
       jv v = stack_pop(jq);
