@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "August 2025" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -331,7 +331,7 @@ jq \'map([\., \. == 1]) | tojson == if have_decnum then "[[1,true],[1\.000,true]
    [1, 1\.000, 1\.0, 100e\-2]
 => true
 
-jq \'\. as $big | [$big, $big + 1] | map(\. > 10000000000000000000000000000000) | \. == if have_decnum then [true, false] else [false, false] end\'
+jq \'\. as $big | [$big, $big + 1] | map(\. > 10000000000000000000000000000000) | \. == if have_decnum then [true, true] else [false, false] end\'
    10000000000000000000000000000001
 => true
 .
@@ -2570,7 +2570,7 @@ jq \'\. == false\'
    null
 => false
 
-jq \'\. == {"b": {"d": (4 + 1e\-20), "c": 3}, "a":1}\'
+jq \'\. == {"b": {"d": (4 + 1e\-20), "c": 3}, "a":1} | \. == if have_decnum then false else true end\'
    {"a":1, "b": {"c": 3, "d": 4}}
 => true
 

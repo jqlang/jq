@@ -89,11 +89,7 @@ jv binop_plus(jv a, jv b) {
     jv_free(b);
     return a;
   } else if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    jv r = jv_number(jv_number_value(a) +
-                     jv_number_value(b));
-    jv_free(a);
-    jv_free(b);
-    return r;
+    return jv_number_add(a, b);
   } else if (jv_get_kind(a) == JV_KIND_STRING && jv_get_kind(b) == JV_KIND_STRING) {
     return jv_string_concat(a, b);
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
@@ -288,10 +284,7 @@ static jv f_endswith(jq_state *jq, jv a, jv b) {
 
 jv binop_minus(jv a, jv b) {
   if (jv_get_kind(a) == JV_KIND_NUMBER && jv_get_kind(b) == JV_KIND_NUMBER) {
-    jv r = jv_number(jv_number_value(a) - jv_number_value(b));
-    jv_free(a);
-    jv_free(b);
-    return r;
+    return jv_number_subtract(a, b);
   } else if (jv_get_kind(a) == JV_KIND_ARRAY && jv_get_kind(b) == JV_KIND_ARRAY) {
     jv out = jv_array();
     jv_array_foreach(a, i, x) {
