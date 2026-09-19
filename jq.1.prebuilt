@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "August 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -2457,10 +2457,22 @@ jq \'@base64d\'
 jq provides some basic date handling functionality, with some high\-level and low\-level builtins\. In all cases these builtins deal exclusively with time in UTC\.
 .
 .P
-The \fBfromdateiso8601\fR builtin parses datetimes in the ISO 8601 format to a number of seconds since the Unix epoch (1970\-01\-01T00:00:00Z)\. The \fBtodateiso8601\fR builtin does the inverse\.
+The \fBfromdateiso8601\fR builtin parses datetimes in the ISO 8601 format to a number of seconds since the Unix epoch (1970\-01\-01T00:00:00Z)\. The \fBtodateiso8601\fR builtin formats a number of seconds as \fB"%Y\-%m\-%dT%H:%M:%SZ"\fR\.
 .
 .P
-The \fBfromdate\fR builtin parses datetime strings\. Currently \fBfromdate\fR only supports ISO 8601 datetime strings, but in the future it will attempt to parse datetime strings in more formats\.
+\fBfromdateiso8601\fR accepts a complete date, optionally followed by a time of day, written in either the extended representation, which separates the components, or the basic representation, which does not\. The two cannot be mixed within one datetime\. The date may be a calendar date (\fB2015\-03\-05\fR, \fB20150305\fR), an ordinal date (\fB2015\-064\fR, \fB2015064\fR), or a week date (\fB2015\-W10\-4\fR, \fB2015W104\fR); all three denote the same day\. Years outside the range 0000 to 9999 are written with a sign and six digits, as in \fB+012015\-03\-05\fR\.
+.
+.P
+The time of day may omit its seconds, or its minutes and seconds, as in \fB2015\-03\-05T23:51Z\fR and \fB2015\-03\-05T23Z\fR, or be left out altogether, in which case the value is midnight UTC\. It may carry a fractional part after a \fB\.\fR or a \fB,\fR, which belongs to the lowest component present, so \fB23,5\fR is half past 23\. It may be followed by an offset from UTC written as \fBZ\fR, \fB+hh\fR, \fB+hh:mm\fR or \fB+hhmm\fR; a datetime with no offset is read as UTC\. A time of \fB24:00:00\fR denotes midnight of the following day, and a leap second is read as the second before it, since jq counts every day as 86400 seconds\.
+.
+.P
+The \fBW\fR, \fBT\fR and \fBZ\fR designators may also be written in lower case, which ISO 8601 permits where upper case is not available\. RFC 3339 additionally allows the date and the time to be separated by a space instead of a \fBT\fR "for the sake of readability", which jq accepts too\. The offset may use the other representation\'s separator style, as in \fB2015\-03\-05T23:51:47+0900\fR, although ISO 8601 does not allow the basic and extended representations to be mixed\.
+.
+.P
+A complete date is required, so \fB2015\fR and \fB2015\-03\fR are errors even though ISO 8601 defines them as dates, and \fBT23:51:47\fR is an error because a time of day on its own is not a point in time\. Dates that do not exist, such as \fB2015\-02\-30\fR or \fB2016\-W53\-1\fR, are errors too, as is \fB2015\-03\-05Z\fR, since a zone designator belongs to the time of day\.
+.
+.P
+The \fBfromdate\fR builtin is an alias for \fBfromdateiso8601\fR\.
 .
 .P
 The \fBtodate\fR builtin is an alias for \fBtodateiso8601\fR\.
@@ -2487,7 +2499,7 @@ The \fBstrptime(fmt)\fR builtin parses input strings matching the \fBfmt\fR argu
 The \fBstrftime(fmt)\fR builtin formats a time (GMT) with the given format\. The \fBstrflocaltime\fR does the same, but using the local timezone setting\.
 .
 .P
-The format strings for \fBstrptime\fR and \fBstrftime\fR are described in typical C library documentation\. The format string for ISO 8601 datetime is \fB"%Y\-%m\-%dT%H:%M:%SZ"\fR\.
+The format strings for \fBstrptime\fR and \fBstrftime\fR are described in typical C library documentation\. \fB"%Y\-%m\-%dT%H:%M:%SZ"\fR is the format that \fBtodateiso8601\fR produces; it is only one of the ISO 8601 representations that \fBfromdateiso8601\fR accepts, and \fBstrptime\fR cannot parse the others \-\- there is no portable format specifier for week dates or for fractional seconds\.
 .
 .P
 jq may not support some or all of this date functionality on some systems\. In particular, the \fB%u\fR and \fB%j\fR specifiers for \fBstrptime(fmt)\fR are not supported on macOS\.
@@ -2499,6 +2511,14 @@ jq may not support some or all of this date functionality on some systems\. In p
 jq \'fromdate\'
    "2015\-03\-05T23:51:47Z"
 => 1425599507
+
+jq \'fromdateiso8601\'
+   "2015\-03\-06T08:51:47\.25+09:00"
+=> 1425599507\.25
+
+jq \'map(fromdateiso8601)\'
+   ["20150305T235147Z","2015\-064T23:51:47Z","2015\-W10\-4T23:51:47Z"]
+=> [1425599507,1425599507,1425599507]
 
 jq \'strptime("%Y\-%m\-%dT%H:%M:%SZ")\'
    "2015\-03\-05T23:51:47Z"
