@@ -245,6 +245,17 @@ printf '["Unfinished JSON term at EOF at line 1, column 1",[0]]\n' > $d/expected
 printf '[' | $VALGRIND $Q $JQ --stream-errors -c . > $d/out 2>&1
 diff $d/out $d/expected
 
+printf '["Malformed BOM",[]]\n' > $d/expected
+printf '\357\273{}' | $VALGRIND $Q $JQ --stream-errors -c . > $d/out 2>&1
+diff $d/out $d/expected
+
+printf 'jq: parse error: Malformed BOM\n' > $d/expected
+if printf '\357\273{}' | $VALGRIND $Q $JQ -c . > $d/out 2>&1; then
+    echo 'Malformed BOM should fail without --stream-errors'
+    exit 1
+fi
+diff $d/out $d/expected
+
 
 ## XXX This test can be moved to tests/all.test _now_
 clean=false
