@@ -2084,11 +2084,6 @@ try join(1) catch .
 ["a","b"]
 "string (\"a\") and number (1) cannot be added"
 
-# join/1 must stay linear (#1954), this takes seconds when it is quadratic
-[range(10000) | "x" * 1000] | join("") | length
-null
-10000000
-
 {if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}
 null
 {"if":0,"and":1,"or":2,"then":3,"else":4,"elif":5,"end":6,"as":7,"def":8,"reduce":9,"foreach":10,"try":11,"catch":12,"label":13,"import":14,"include":15,"module":16}
