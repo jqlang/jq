@@ -956,4 +956,24 @@ if $JQ -nf "$d/nul_modulemeta.jq" >/dev/null 2>/dev/null; then
   exit 1
 fi
 
+# Regression test for #1312
+if ! $msys && ! $mingw; then
+  mkdir -p "$d/origin/bin" "$d/origin/lib/jq" "$d/origin_link"
+  # $JQ has flags appended, so copy the path setup resolved instead.
+  if cp "$JQBASEDIR/jq" "$d/origin/bin/jq" 2>/dev/null &&
+     "$d/origin/bin/jq" --version >/dev/null 2>&1 &&
+     ln -s "$d/origin/bin/jq" "$d/origin_link/myjq" 2>/dev/null; then
+    echo 'def origin_probe: "found";' > "$d/origin/lib/jq/origin_probe.jq"
+    if ! "$d/origin_link/myjq" -n 'include "origin_probe"; origin_probe' > "$d/origin_out" 2>&1; then
+      printf 'jq invoked through a symlink did not resolve $ORIGIN to the real binary directory\n' 1>&2
+      cat "$d/origin_out" 1>&2
+      exit 1
+    fi
+    if [ "$(cat "$d/origin_out")" != '"found"' ]; then
+      printf 'unexpected output from $ORIGIN module lookup: %s\n' "$(cat "$d/origin_out")" 1>&2
+      exit 1
+    fi
+  fi
+fi
+
 exit 0

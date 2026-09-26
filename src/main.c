@@ -576,7 +576,9 @@ int main(int argc, char* argv[]) {
   }
   jq_set_attr(jq, jv_string("JQ_LIBRARY_PATH"), lib_search_paths);
 
-  char *origin = strdup(argv[0]);
+  jv origin_path = jq_realpath(jv_string(argv[0]));
+  char *origin = strdup(jv_string_value(origin_path));
+  jv_free(origin_path);
   if (origin == NULL) {
     fprintf(stderr, "jq: error: out of memory\n");
     exit(1);
