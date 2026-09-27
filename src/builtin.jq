@@ -63,9 +63,11 @@ def strings: select(type == "string");
 def nulls: select(. == null);
 def values: select(. != null);
 def scalars: select(type|. != "array" and . != "object");
+# Keep the accumulator the only reference on the left of + so the string is
+# appended in place; a nested + or a // inside the reduce copies it every step.
 def join($x): reduce .[] as $i (null;
-            (if .==null then "" else .+$x end) +
-            ($i | if type=="boolean" or type=="number" then tostring else .//"" end)
+            (if .==null then "" else .+$x end) |
+            . + ($i | if type=="boolean" or type=="number" then tostring end)
         ) // "";
 def _flatten($x): reduce .[] as $i ([]; if $i | type == "array" and $x != 0 then . + ($i | _flatten($x-1)) else . + [$i] end);
 def flatten($x): if $x < 0 then error("flatten depth must not be negative") else _flatten($x) end;
