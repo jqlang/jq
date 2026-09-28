@@ -1,0 +1,4 @@
+# table with headings, rows & color_words
+@table
+{"headings":["false","bartrue","baz"],"rows":[["true","false","TRUE"],[1,null,0],["true false","FALSE TRUE","falsetrue"]],"color_words":["(no|NO|false|FALSE)","(yes|YES|true|TRUE)","null"]}
+"┌──────────┬──────────┬─────────┐\n│\u001b[1mfalse\u001b[0m     │\u001b[1mbartrue\u001b[0m   │\u001b[1mbaz\u001b[0m      │\n├──────────┼──────────┼─────────┤\n│\u001b[1;32mtrue\u001b[0m      │\u001b[1;31mfalse\u001b[0m     │\u001b[1;32mTRUE\u001b[0m     │\n│1         │\u001b[1;33mnull\u001b[0m      │0        │\n│\u001b[1;32mtrue\u001b[0m \u001b[1;31mfalse\u001b[0m│\u001b[1;31mFALSE\u001b[0m \u001b[1;32mTRUE\u001b[0m│falsetrue│\n└──────────┴──────────┴─────────┘"
