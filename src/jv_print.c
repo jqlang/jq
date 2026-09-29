@@ -118,6 +118,26 @@ static void put_indent(int n, int flags, FILE* fout, jv* strout, int T) {
   }
 }
 
+// Returns the first byte in [i, end) that jvp_dump_string cannot copy to the
+// output as is, or end.  Such bytes are the ASCII controls, '"', '\\', DEL
+// and, when ascii_only, every non-ASCII byte.
+static const char* skip_unescaped(const char* i, const char* end, int ascii_only) {
+  uint64_t highs = ascii_only ? JVP_SWAR_HIGHS : 0;
+  while (end - i >= 8) {
+    uint64_t w = jvp_swar_load(i);
+    if (jvp_swar_has_less(w, 0x20) | jvp_swar_has_byte(w, '"') |
+        jvp_swar_has_byte(w, '\\') | jvp_swar_has_byte(w, 0x7F) | (w & highs))
+      break;
+    i += 8;
+  }
+  for (; i < end; i++) {
+    unsigned char b = (unsigned char)*i;
+    if (b < 0x20 || b == '"' || b == '\\' || b == 0x7F || (ascii_only && b >= 0x80))
+      break;
+  }
+  return i;
+}
+
 static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
   assert(jv_get_kind(str) == JV_KIND_STRING);
   const char* i = jv_string_value(str);
@@ -126,7 +146,14 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
   int c = 0;
   char buf[32];
   put_char('"', F, S, T);
-  while ((i = jvp_utf8_next((cstart = i), end, &c))) {
+  while (i < end) {
+    // Write each run of bytes that need no escaping with a single call.
+    cstart = skip_unescaped(i, end, ascii_only);
+    if (cstart > i)
+      put_buf(i, cstart - i, F, S, T);
+    if (cstart == end)
+      break;
+    i = jvp_utf8_next(cstart, end, &c);
     assert(c != -1);
     int unicode_escape = 0;
     if (0x20 <= c && c <= 0x7E) {

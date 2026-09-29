@@ -21,4 +21,18 @@ for l in 1 2 3 4; do
   fi
 done
 
+# --ascii-output escapes non-ASCII characters on both sides of the 8-byte
+# words that strings are scanned in
+$VALGRIND $Q $JQ -cn '[range(18) as $i | ("é", "😀", "\u007f") as $c |
+  "abcdefghijklmnopq"[:$i] + $c + "abcdefghijklmnopq"[$i:]]' > $d/input
+$VALGRIND $Q $JQ -ac . $d/input > $d/out
+if LC_ALL=C grep -q '[^ -~]' $d/out; then
+  echo "--ascii-output printed a non-ASCII byte"
+  exit 1
+fi
+if ! $VALGRIND $Q $JQ -e --slurpfile a $d/input '. == $a[0]' $d/out > /dev/null; then
+  echo "--ascii-output changed a string"
+  exit 1
+fi
+
 exit 0
