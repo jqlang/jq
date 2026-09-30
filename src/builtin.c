@@ -1750,6 +1750,17 @@ static jv f_mktime(jq_state *jq, jv a) {
   return jv_number(t);
 }
 
+static int seconds_to_time_t(double seconds, time_t *result) {
+  int is_signed = (time_t)-1 < (time_t)0;
+  double limit = ldexp(1.0, sizeof(time_t) * CHAR_BIT - is_signed);
+  double whole_seconds = floor(seconds);
+  if (!isfinite(whole_seconds) || whole_seconds < (is_signed ? -limit : 0) ||
+      whole_seconds >= limit)
+    return 0;
+  *result = (time_t)whole_seconds;
+  return 1;
+}
+
 #ifdef HAVE_GMTIME_R
 static jv f_gmtime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_NUMBER)
@@ -1757,7 +1768,9 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
+  time_t secs;
+  if (!seconds_to_time_t(fsecs, &secs))
+    return ret_error(a, jv_string("error converting number of seconds since epoch to datetime"));
   jv_free(a);
   tmp = gmtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1771,7 +1784,9 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
+  time_t secs;
+  if (!seconds_to_time_t(fsecs, &secs))
+    return ret_error(a, jv_string("error converting number of seconds since epoch to datetime"));
   jv_free(a);
   tmp = gmtime(&secs);
   if (tmp == NULL)
@@ -1792,7 +1807,9 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
+  time_t secs;
+  if (!seconds_to_time_t(fsecs, &secs))
+    return ret_error(a, jv_string("error converting number of seconds since epoch to datetime"));
   jv_free(a);
   tmp = localtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1806,7 +1823,9 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
+  time_t secs;
+  if (!seconds_to_time_t(fsecs, &secs))
+    return ret_error(a, jv_string("error converting number of seconds since epoch to datetime"));
   jv_free(a);
   tmp = localtime(&secs);
   if (tmp == NULL)
