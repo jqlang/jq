@@ -801,6 +801,104 @@ int jvp_number_cmp(jv a, jv b) {
   }
 }
 
+#ifdef USE_DECNUM
+static jv jvp_number_to_literal(jv n) {
+  if (JVP_HAS_FLAGS(n, JVP_FLAGS_NUMBER_LITERAL))
+    return n;
+  double d = n.u.number;
+  if (isnan(d) || isinf(d))
+    return n;
+  char buf[JVP_DTOA_FMT_MAX_LEN];
+  jv lit = jv_number_with_literal(jvp_dtoa_fmt(tsd_dtoa_context_get(), buf, d));
+  if (JVP_HAS_FLAGS(lit, JVP_FLAGS_NUMBER_LITERAL)) {
+    jvp_literal_number* plit = jvp_literal_number_ptr(lit);
+    plit->num_double = d;
+    jv_free(n);
+    return lit;
+  }
+  return n;
+}
+
+static jv jvp_number_add_or_subtract(jv a, jv b, int subtract) {
+  if (jvp_number_is_literal(a) || jvp_number_is_literal(b)) {
+    jv new_a = jvp_number_to_literal(a);
+    jv new_b = jvp_number_to_literal(b);
+    if (jvp_number_is_literal(new_a) && jvp_number_is_literal(new_b)) {
+      decNumber *da = jvp_dec_number_ptr(new_a);
+      decNumber *db = jvp_dec_number_ptr(new_b);
+
+      unsigned digits = MAX(da->digits + da->exponent, db->digits + db->exponent) -
+                        MIN(da->exponent, db->exponent) + 1;
+      jvp_literal_number *nlit = jvp_literal_number_alloc(digits);
+      nlit->refcnt = JV_REFCNT_INIT;
+      nlit->num_double = NAN;
+      nlit->literal_data = NULL;
+
+      decContext *ctx = DEC_CONTEXT();
+      decContextClearStatus(ctx, DEC_Errors | DEC_Information);
+      if (subtract) {
+        decNumberSubtract(&nlit->num_decimal, da, db, ctx);
+      } else {
+        decNumberAdd(&nlit->num_decimal, da, db, ctx);
+      }
+      decNumberTrim(&nlit->num_decimal);
+
+      if (ctx->status & DEC_Errors) {
+        jv_mem_free(nlit);
+        double result = subtract
+          ? jv_number_value(new_a) - jv_number_value(new_b)
+          : jv_number_value(new_a) + jv_number_value(new_b);
+        jv_free(new_a);
+        jv_free(new_b);
+        return jv_number(result);
+      }
+
+      jv_free(new_a);
+      jv_free(new_b);
+
+      jv r = {JVP_FLAGS_NUMBER_LITERAL, 0, 0, 0, {&nlit->refcnt}};
+      return r;
+    }
+
+    double result = subtract
+      ? jv_number_value(new_a) - jv_number_value(new_b)
+      : jv_number_value(new_a) + jv_number_value(new_b);
+    jv_free(new_a);
+    jv_free(new_b);
+    return jv_number(result);
+  }
+
+  double result = subtract
+    ? jv_number_value(a) - jv_number_value(b)
+    : jv_number_value(a) + jv_number_value(b);
+  jv_free(a);
+  jv_free(b);
+  return jv_number(result);
+}
+#endif
+
+jv jv_number_add(jv a, jv b) {
+#ifdef USE_DECNUM
+  return jvp_number_add_or_subtract(a, b, 0);
+#else
+  jv r = jv_number(jv_number_value(a) + jv_number_value(b));
+  jv_free(a);
+  jv_free(b);
+  return r;
+#endif
+}
+
+jv jv_number_subtract(jv a, jv b) {
+#ifdef USE_DECNUM
+  return jvp_number_add_or_subtract(a, b, 1);
+#else
+  jv r = jv_number(jv_number_value(a) - jv_number_value(b));
+  jv_free(a);
+  jv_free(b);
+  return r;
+#endif
+}
+
 static int jvp_number_equal(jv a, jv b) {
   return jvp_number_cmp(a, b) == 0;
 }
