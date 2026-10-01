@@ -1,6 +1,8 @@
 name: Building man page, man.test, manonig.test
 on:
   push:
+    branches:
+      - master
     paths:
       - '.github/workflows/manpage.yml'
       - 'docs/**'
