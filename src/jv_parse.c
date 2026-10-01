@@ -534,6 +534,15 @@ static pfunc check_literal(struct jv_parser* p) {
   } else {
     // FIXME: better parser
     p->tokenbuf[p->tokenpos] = 0;
+    // RFC 8259: a fraction is '.' followed by one or more digits.
+    // decNumber/strtod accept "23." / "23.e1", which silently truncates
+    // to 23 / 230 instead of rejecting the token (#2414).
+    {
+      const char* dot = strchr(p->tokenbuf, '.');
+      if (dot && (dot[1] < '0' || dot[1] > '9')) {
+        return "Invalid numeric literal";
+      }
+    }
 #ifdef USE_DECNUM
     jv number = jv_number_with_literal(p->tokenbuf);
     if (jv_get_kind(number) == JV_KIND_INVALID) {
