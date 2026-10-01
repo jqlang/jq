@@ -85,24 +85,24 @@ sections:
       language is quite rich and allows for much more than just
       validation and pretty-printing.
 
-      Note: it is important to mind the shell's quoting rules.  As a
-      general rule it's best to always quote (with single-quote
-      characters on Unix shells) the jq program, as too many characters with special
-      meaning to jq are also shell meta-characters.  For example, `jq
-      "foo"` will fail on most Unix shells because that will be the same
-      as `jq foo`, which will generally fail because `foo is not
-      defined`.  When using the Windows command shell (cmd.exe) it's
-      best to use double quotes around your jq program when given on the
-      command-line (instead of the `-f program-file` option), but then
-      double-quotes in the jq program need backslash escaping. When using
-      the Powershell (`powershell.exe`) or the Powershell Core
-      (`pwsh`/`pwsh.exe`), use single-quote characters around the jq
-      program and backslash-escaped double-quotes (`\"`) inside the jq
+      Note: It is important to mind the shell's quoting rules.  As a general
+      rule, it's best to always quote the jq program, as many characters with
+      special meaning to jq are also shell meta-characters.  For example, `jq
+      "foo"` will fail on most shells, as it's equivalent to `jq foo` which will
+      generally fail because `foo is not defined`.
+      
+      Inside a Unix shell or PowerShell 7.3+, use single quotes around the jq
+      program and double quotes inside the jq program.
+      When using PowerShell before 7.3 or Windows PowerShell (`powershell.exe`),
+      use single quotes around the jq program and backslash-escaped double
+      quotes (`\"`) inside the jq program.
+      When using the Windows command interpreter (cmd.exe), use double quotes
+      around your jq program, and backslash-escaped double quotes inside the jq
       program.
 
-      * Unix shells: `jq '.["foo"]'`
-      * Powershell: `jq '.[\"foo\"]'`
-      * Windows command shell: `jq ".[\"foo\"]"`
+      * Unix shells, PowerShell 7.3+: `jq '.["foo"]'`
+      * PowerShell 7.2 and older, Windows PowerShell: `jq '.[\"foo\"]'`
+      * Windows command interpreter: `jq ".[\"foo\"]"`
 
       Note: jq allows user-defined functions, but every jq program
       must have a top-level expression.
