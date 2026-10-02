@@ -5,10 +5,12 @@
 msys=false
 mingw=false
 sunos=false
+netbsd=false
 case "$(uname -s)" in
 MSYS*)  msys=true;;
 MINGW*) mingw=true;;
 SunOS*) sunos=true;;
+NetBSD*) netbsd=true;;
 esac
 
 JQ_NO_B=$JQ
@@ -666,6 +668,10 @@ test_no_color=true
 $msys  && test_no_color=false
 $mingw && test_no_color=false
 $sunos && test_no_color=false
+# NetBSD's script(1) intermittently loses the whole session output (the
+# output file comes back empty for fast commands about half the time), so
+# the pty checks cannot run reliably there.
+$netbsd && test_no_color=false
 if $test_no_color && command -v script >/dev/null 2>&1; then
   if script -qc echo /dev/null >/dev/null 2>&1; then
     faketty() { script -qec "$*" /dev/null; }
