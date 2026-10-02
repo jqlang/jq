@@ -100,8 +100,8 @@ struct lexer_param;
 %precedence FUNCDEF
 %right '|'
 %left ','
-%right "//"
 %nonassoc '=' SETPIPE SETPLUS SETMINUS SETMULT SETDIV SETMOD SETDEFINEDOR
+%right "//"
 %left OR
 %left AND
 %nonassoc NEQ EQ '<' '>' LESSEQ GREATEREQ
