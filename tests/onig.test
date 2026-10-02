@@ -11,6 +11,23 @@
 "ab"
 [{"offset":0,"length":0,"string":"","captures":[]},{"offset":1,"length":0,"string":"","captures":[]},{"offset":2,"length":0,"string":"","captures":[]}]
 
+# captures inside zero-width lookarounds may still consume input
+[match("(?=(a))"; "g")]
+"ab"
+[{"offset":0,"length":0,"string":"","captures":[{"offset":0,"length":1,"string":"a","name":null}]}]
+
+[match("(?<=(a))"; "g")]
+"ab"
+[{"offset":1,"length":0,"string":"","captures":[{"offset":0,"length":1,"string":"a","name":null}]}]
+
+[match("(?=(é))"; "g")]
+"aé"
+[{"offset":1,"length":0,"string":"","captures":[{"offset":1,"length":1,"string":"é","name":null}]}]
+
+[match("(?=(?<letter>a)(b)?)"; "g")]
+"éa"
+[{"offset":1,"length":0,"string":"","captures":[{"offset":1,"length":1,"string":"a","name":"letter"},{"offset":-1,"string":null,"length":0,"name":null}]}]
+
 # global zero-width matches must not land inside a multibyte character
 [match(""; "g") | .offset]
 "aé€🚀b"
@@ -221,4 +238,3 @@ sub("(?<x>.)"; "\(.x)!")
 [splits("b+"; "i")]
 "abAABBabA"
 ["a","AA","a","A"]
-
