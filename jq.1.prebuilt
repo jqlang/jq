@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "May 2026" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -115,7 +115,7 @@ Output the fields of each object with the keys in sorted order\.
 \fB\-\-color\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
 .
 .IP
-By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\. When the \fBNO_COLOR\fR environment variable is not empty, jq disables colored output by default, but you can enable it by \fB\-C\fR\.
+By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\. When the \fBNO_COLOR\fR environment variable is not empty or the \fBTERM\fR environment variable is set to \fBdumb\fR, jq disables colored output by default, but you can enable it by \fB\-C\fR\.
 .
 .IP
 Colors can be configured with the \fBJQ_COLORS\fR environment variable (see below)\.

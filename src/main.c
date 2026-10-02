@@ -539,7 +539,10 @@ int main(int argc, char* argv[]) {
 #ifdef USE_ISATTY
   if (isatty(STDOUT_FILENO)) {
 #ifndef WIN32
-    dumpopts |= JV_PRINT_ISATTY | JV_PRINT_COLOR;
+    char *terminal = getenv("TERM");
+    dumpopts |= JV_PRINT_ISATTY;
+    if (terminal && strcmp(terminal, "dumb"))
+      dumpopts |= JV_PRINT_COLOR;
 #else
   /* Verify we actually have the console, as the NUL device is also regarded as
      tty.  Windows can handle color if ANSICON (or ConEmu) is installed, or
