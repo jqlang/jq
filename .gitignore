@@ -50,6 +50,7 @@ m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
 tests/*.trs
+tests/winfd.exe
 
 # Docs output
 docs/output
