@@ -1448,6 +1448,7 @@ static jv f_string_implode(jq_state *jq, jv a) {
 }
 
 static jv f_setpath(jq_state *jq, jv a, jv b, jv c) { return jv_setpath(a, b, c); }
+static jv f_setpath_coerce(jq_state *jq, jv a, jv b, jv c) { return jv_setpath_coerce(a, b, c); }
 extern jv _jq_path_append(jq_state *, jv, jv, jv);
 static jv f_getpath(jq_state *jq, jv a, jv b) {
   return _jq_path_append(jq, a, b, jv_getpath(jv_copy(a), jv_copy(b)));
@@ -2006,6 +2007,7 @@ BINOPS
   CFUNC(f_string_ltrim, "ltrim", 1),
   CFUNC(f_string_rtrim, "rtrim", 1),
   CFUNC(f_setpath, "setpath", 3),
+  CFUNC(f_setpath_coerce, "_setpath_coerce", 3),
   CFUNC(f_getpath, "getpath", 2),
   CFUNC(f_delpaths, "delpaths", 2),
   CFUNC(f_has, "has", 2),
