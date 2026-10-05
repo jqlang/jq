@@ -1137,6 +1137,35 @@ sections:
             input: '{"a":{"b":0, "c":1}}'
             output: ['[0, 1]']
 
+      - title: "`haspath(PATH)`"
+        body: |
+
+          The builtin function `haspath` returns whether `PATH` exists
+          in the input. `PATH` must be an array of strings (object keys)
+          and numbers (array indices). Existing paths whose values are
+          `null` or `false` return `true`. Missing paths, including paths
+          that cannot be traversed through a scalar or `null`, return
+          `false`. The empty path `[]` refers to the input itself and
+          always exists. Array indices are handled as in `getpath`,
+          including negative indices.
+
+          To set only existing paths, use
+          `if haspath($p) then setpath($p; $v) else error("Missing path: \($p)") end`.
+          This permits replacing an existing `null` value while failing
+          if the path is missing. With `--exit-status` (`-e`), a `false`
+          result from `haspath` produces a non-zero exit status.
+
+        examples:
+          - program: '[haspath(["attributes","type"], ["attributes","missing"])]'
+            input: '{"attributes":{"type":null}}'
+            output: ['[true,false]']
+          - program: '[haspath([0], [-1], [2], [])]'
+            input: '[null,false]'
+            output: ['[true,true,false,true]']
+          - program: '["attributes","type"] as $p | if haspath($p) then setpath($p; "production") else error("Missing path: \($p)") end'
+            input: '{"attributes":{"type":null}}'
+            output: ['{"attributes":{"type":"production"}}']
+
       - title: "`setpath(PATHS; VALUE)`"
         body: |
 

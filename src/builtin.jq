@@ -225,6 +225,25 @@ def pick(pathexps):
   | reduce path(pathexps) as $a (null;
       setpath($a; $in|getpath($a)) );
 
+def haspath($path):
+  if ($path | type) != "array" then error("Path must be specified as an array")
+  elif any($path[]; type != "string" and type != "number") then error("Path components must be strings or numbers")
+  else
+    # Check existence rather than values, since an existing value may be null.
+    def _haspath($p):
+      if $p == [] then true
+      elif type == "object" and ($p[0] | type) == "string" and has($p[0]) then
+        .[$p[0]] | _haspath($p[1:])
+      elif type == "array" and ($p[0] | type) == "number" then
+        # Match getpath's truncation and normalization of array indices.
+        ($p[0] | if . < 0 then ceil else floor end) as $i
+        | (if $i < 0 then length + $i else $i end) as $i
+        | if $i >= 0 and $i < length then .[$i] | _haspath($p[1:])
+          else false end
+      else false end;
+    _haspath($path)
+  end;
+
 # ensure the output of debug(m1,m2) is kept together:
 def debug(msgs): (msgs | debug | empty), .;
 

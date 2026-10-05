@@ -281,6 +281,18 @@ null
 {"a":{"b":0, "c":1}}
 [0, 1]
 
+[haspath(["attributes","type"], ["attributes","missing"])]
+{"attributes":{"type":null}}
+[true,false]
+
+[haspath([0], [-1], [2], [])]
+[null,false]
+[true,true,false,true]
+
+["attributes","type"] as $p | if haspath($p) then setpath($p; "production") else error("Missing path: \($p)") end
+{"attributes":{"type":null}}
+{"attributes":{"type":"production"}}
+
 setpath(["a","b"]; 1)
 null
 {"a": {"b": 1}}

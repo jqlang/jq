@@ -153,6 +153,28 @@ printf "$data" | $JQ --exit-status 'select(.i==2) | false' > /dev/null 2>&1 || r
 [ $ret -eq 1 ]
 printf "$data" | $JQ --exit-status 'select(.i==2) | true' > /dev/null 2>&1
 
+# haspath succeeds for null values and fails for missing paths with -e.
+printf '{"attributes":{"type":null}}\n' | $JQ -e 'haspath(["attributes","type"])' > $d/out
+printf 'true\n' > $d/expected
+cmp $d/out $d/expected
+ret=0
+printf '{"attributes":{}}\n' | $JQ -e 'haspath(["attributes","type"])' > $d/out || ret=$?
+[ $ret -eq 1 ]
+printf 'false\n' > $d/expected
+cmp $d/out $d/expected
+
+# Reject a configuration transform before emitting a partial result.
+printf '[{"path":["attributes","type"],"value":"production"},{"path":["attributes","missing"],"value":true}]\n' > $d/transform.json
+ret=0
+printf '{"attributes":{"type":null}}\n' | $JQ --slurpfile transforms $d/transform.json '
+  reduce $transforms[0][] as $t (.;
+    if haspath($t.path) then setpath($t.path; $t.value)
+    else error("Missing path: \($t.path)") end)
+' > $d/out 2> $d/err || ret=$?
+[ $ret -eq 5 ]
+[ ! -s $d/out ]
+grep -F 'Missing path: ["attributes","missing"]' $d/err
+
 
 # Regression test for #951
 printf '"a\n' > $d/input

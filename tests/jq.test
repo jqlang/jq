@@ -1164,6 +1164,74 @@ path(.a[path(.b)[0]])
 [1,[[],{"a":2}]]
 [[0],[1],[1,0],[1,1],[1,1,"a"]]
 
+# haspath distinguishes missing paths from existing null and false values.
+[haspath(["a"], ["a","b"], ["a","c"], ["a","d"], ["a","e"], ["a","f"], ["a","g"], ["a","missing"], ["missing","b"])]
+{"a":{"b":null,"c":false,"d":0,"e":"","f":[],"g":{}}}
+[true,true,true,true,true,true,true,false,false]
+
+map([haspath([]), haspath(["a"]), haspath(["a","b"])])
+[{"a":null},{"a":false},{"a":1},{"a":"x"},{"a":[]},{"a":{}}]
+[[true,true,false],[true,true,false],[true,true,false],[true,true,false],[true,true,false],[true,true,false]]
+
+map([haspath([]), haspath(["a"]), haspath([0])])
+[null,false,true,0,"",{},[]]
+[[true,false,false],[true,false,false],[true,false,false],[true,false,false],[true,false,false],[true,false,false],[true,false,false]]
+
+[haspath(["a",0,"b"], ["a",1], ["a",1,"b"], ["a",2], ["a",-1], ["a",-2,"b"], ["a",-3], ["a","0"], [0])]
+{"a":[{"b":null},null]}
+[true,true,false,false,true,true,false,false,false]
+
+[haspath([0], [1.9], [-0.5], [-1.9], [-2.9], [2], [-3], [1e100], [-1e100], [nan], [infinite], [-infinite])]
+[null,false]
+[true,true,true,true,true,false,false,false,false,false,false,false]
+
+[haspath(["0"], [0], ["a",0], ["a",0,0], ["a",-1,-1])]
+{"0":null,"a":[[null]]}
+[true,false,true,true,true]
+
+haspath(.path)
+{"path":["a","b"],"a":{"b":null}}
+true
+
+[haspath(empty)]
+{}
+[]
+
+[builtins | index("haspath/1") != null, haspath([])]
+null
+[true,true]
+
+[null,false,0,"a",{}][] | try haspath(.) catch .
+null
+"Path must be specified as an array"
+"Path must be specified as an array"
+"Path must be specified as an array"
+"Path must be specified as an array"
+"Path must be specified as an array"
+
+[[null],[true],[false],[[]],[{}],["missing",null]][] | try haspath(.) catch .
+{}
+"Path components must be strings or numbers"
+"Path components must be strings or numbers"
+"Path components must be strings or numbers"
+"Path components must be strings or numbers"
+"Path components must be strings or numbers"
+"Path components must be strings or numbers"
+
+# Long paths must not exhaust the call stack.
+reduce range(10000) as $_ (null; [.]) | [haspath([range(10000) | 0]), haspath([range(10001) | 0])]
+null
+[true,false]
+
+# Guard setpath while allowing existing null values.
+reduce .transforms[] as $t (.source; if haspath($t.path) then setpath($t.path; $t.value) else error("Missing path: \($t.path)") end)
+{"source":{"attributes":{"type":null},"enabled":false},"transforms":[{"path":["attributes","type"],"value":"production"},{"path":["enabled"],"value":true}]}
+{"attributes":{"type":"production"},"enabled":true}
+
+try reduce .transforms[] as $t (.source; if haspath($t.path) then setpath($t.path; $t.value) else error("Missing path: \($t.path)") end) catch .
+{"source":{"attributes":{"type":null}},"transforms":[{"path":["attributes","type"],"value":"production"},{"path":["attributes","missing"],"value":true}]}
+"Missing path: [\"attributes\",\"missing\"]"
+
 ["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])
 {"bar": 42, "foo": ["a", "b", "c", "d"]}
 "b"
