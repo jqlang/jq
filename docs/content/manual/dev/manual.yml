@@ -970,6 +970,8 @@ sections:
           is a member of the array returned by `keys`, although `has`
           will be faster.
 
+          To check a nested path, use `haspath(PATH)`.
+
         examples:
           - program: 'map(has("foo"))'
             input: '[{"foo": 42}, {}]'
@@ -1140,28 +1142,64 @@ sections:
       - title: "`haspath(PATH)`"
         body: |
 
-          The builtin function `haspath` returns whether `PATH` exists
-          in the input. `PATH` must be an array of strings (object keys)
-          and numbers (array indices). Existing paths whose values are
-          `null` or `false` return `true`. Missing paths, including paths
+          The builtin function `haspath` returns a boolean indicating
+          whether `PATH` exists in the input. `PATH` must be an array of
+          strings (object keys) and numbers (array indices). Existing paths
+          whose values are `null` or `false` return `true`. Missing paths, including paths
           that cannot be traversed through a scalar or `null`, return
           `false`. The empty path `[]` refers to the input itself and
-          always exists. Array indices are handled as in `getpath`,
-          including negative indices.
+          always exists, even for a scalar or `null` input. A key or
+          index of the wrong type for its container returns `false`.
+
+          Array indices are truncated toward zero, as in `getpath`;
+          negative indices count from the end of the array. Out-of-range
+          indices, `nan`, and infinite indices return `false`.
+
+          A non-array `PATH` raises the error "Path must be specified as
+          an array". A component other than a string or number raises
+          "Path components must be strings or numbers"; array slices
+          are not supported. If the argument produces multiple paths,
+          each is checked against the same input.
 
           To set only existing paths, use
           `if haspath($p) then setpath($p; $v) else error("Missing path: \($p)") end`.
           This permits replacing an existing `null` value while failing
-          if the path is missing. With `--exit-status` (`-e`), a `false`
-          result from `haspath` produces a non-zero exit status.
+          if the path is missing. `setpath` itself still creates missing
+          paths. `haspath` does not modify the input.
+
+          With `--exit-status` (`-e`), jq exits with status 0 if the last
+          output is `true`, or 1 if it is `false`. Without `-e`, a `false`
+          result does not cause jq to fail. For multiple paths, use a
+          guard for each update rather than relying on the last result.
+
+          For a `transform.json` file containing an array of objects such
+          as `{"path":["attributes","type"],"value":"production"}`,
+          apply the updates to `source.json` with:
+
+              jq --slurpfile transforms transform.json '
+                reduce $transforms[0][] as $t (.;
+                  if haspath($t.path) then setpath($t.path; $t.value)
+                  else error("Missing path: \($t.path)") end)
+              ' source.json
+
+          Each path is checked against the configuration after any
+          preceding updates. A missing path raises an error with a
+          non-zero exit status instead of emitting a partially updated
+          configuration for that input.
 
         examples:
           - program: '[haspath(["attributes","type"], ["attributes","missing"])]'
             input: '{"attributes":{"type":null}}'
             output: ['[true,false]']
-          - program: '[haspath([0], [-1], [2], [])]'
+          - program: '[haspath([0], [-1], [1.9], [-0.5], [2], [])]'
             input: '[null,false]'
-            output: ['[true,true,false,true]']
+            output: ['[true,true,true,true,false,true]']
+          - program: '[haspath(["attributes"], ["attributes","type"])]'
+            input: '{"attributes":null}'
+            output: ['[true,false]']
+          - program: '[(try haspath("attributes") catch .), (try haspath([null]) catch .)]'
+            input: '{}'
+            output: ['["Path must be specified as an array","Path components must be strings or numbers"]']
           - program: '["attributes","type"] as $p | if haspath($p) then setpath($p; "production") else error("Missing path: \($p)") end'
             input: '{"attributes":{"type":null}}'
             output: ['{"attributes":{"type":"production"}}']
@@ -1170,6 +1208,9 @@ sections:
         body: |
 
           The builtin function `setpath` sets the `PATHS` in `.` to `VALUE`.
+
+          Missing paths are created as needed. Use `haspath(PATH)` to
+          check for an existing path before setting its value.
 
         examples:
           - program: 'setpath(["a","b"]; 1)'

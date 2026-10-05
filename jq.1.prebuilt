@@ -963,6 +963,9 @@ The builtin function \fBhas\fR returns whether the input object has the given ke
 .P
 \fBhas($key)\fR has the same effect as checking whether \fB$key\fR is a member of the array returned by \fBkeys\fR, although \fBhas\fR will be faster\.
 .
+.P
+To check a nested path, use \fBhaspath(PATH)\fR\.
+.
 .IP "" 4
 .
 .nf
@@ -1150,8 +1153,74 @@ jq \'[getpath(["a","b"], ["a","c"])]\'
 .
 .IP "" 0
 .
+.SS "haspath(PATH)"
+The builtin function \fBhaspath\fR returns a boolean indicating whether \fBPATH\fR exists in the input\. \fBPATH\fR must be an array of strings (object keys) and numbers (array indices)\. Existing paths whose values are \fBnull\fR or \fBfalse\fR return \fBtrue\fR\. Missing paths, including paths that cannot be traversed through a scalar or \fBnull\fR, return \fBfalse\fR\. The empty path \fB[]\fR refers to the input itself and always exists, even for a scalar or \fBnull\fR input\. A key or index of the wrong type for its container returns \fBfalse\fR\.
+.
+.P
+Array indices are truncated toward zero, as in \fBgetpath\fR; negative indices count from the end of the array\. Out\-of\-range indices, \fBnan\fR, and infinite indices return \fBfalse\fR\.
+.
+.P
+A non\-array \fBPATH\fR raises the error "Path must be specified as an array"\. A component other than a string or number raises "Path components must be strings or numbers"; array slices are not supported\. If the argument produces multiple paths, each is checked against the same input\.
+.
+.P
+To set only existing paths, use \fBif haspath($p) then setpath($p; $v) else error("Missing path: \e($p)") end\fR\. This permits replacing an existing \fBnull\fR value while failing if the path is missing\. \fBsetpath\fR itself still creates missing paths\. \fBhaspath\fR does not modify the input\.
+.
+.P
+With \fB\-\-exit\-status\fR (\fB\-e\fR), jq exits with status 0 if the last output is \fBtrue\fR, or 1 if it is \fBfalse\fR\. Without \fB\-e\fR, a \fBfalse\fR result does not cause jq to fail\. For multiple paths, use a guard for each update rather than relying on the last result\.
+.
+.P
+For a \fBtransform\.json\fR file containing an array of objects such as \fB{"path":["attributes","type"],"value":"production"}\fR, apply the updates to \fBsource\.json\fR with:
+.
+.IP "" 4
+.
+.nf
+
+jq \-\-slurpfile transforms transform\.json \'
+  reduce $transforms[0][] as $t (\.;
+    if haspath($t\.path) then setpath($t\.path; $t\.value)
+    else error("Missing path: \e($t\.path)") end)
+\' source\.json
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Each path is checked against the configuration after any preceding updates\. A missing path raises an error with a non\-zero exit status instead of emitting a partially updated configuration for that input\.
+.
+.IP "" 4
+.
+.nf
+
+jq \'[haspath(["attributes","type"], ["attributes","missing"])]\'
+   {"attributes":{"type":null}}
+=> [true,false]
+
+jq \'[haspath([0], [\-1], [1\.9], [\-0\.5], [2], [])]\'
+   [null,false]
+=> [true,true,true,true,false,true]
+
+jq \'[haspath(["attributes"], ["attributes","type"])]\'
+   {"attributes":null}
+=> [true,false]
+
+jq \'[(try haspath("attributes") catch \.), (try haspath([null]) catch \.)]\'
+   {}
+=> ["Path must be specified as an array","Path components must be strings or numbers"]
+
+jq \'["attributes","type"] as $p | if haspath($p) then setpath($p; "production") else error("Missing path: \e($p)") end\'
+   {"attributes":{"type":null}}
+=> {"attributes":{"type":"production"}}
+.
+.fi
+.
+.IP "" 0
+.
 .SS "setpath(PATHS; VALUE)"
 The builtin function \fBsetpath\fR sets the \fBPATHS\fR in \fB\.\fR to \fBVALUE\fR\.
+.
+.P
+Missing paths are created as needed\. Use \fBhaspath(PATH)\fR to check for an existing path before setting its value\.
 .
 .IP "" 4
 .

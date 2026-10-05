@@ -285,9 +285,17 @@ null
 {"attributes":{"type":null}}
 [true,false]
 
-[haspath([0], [-1], [2], [])]
+[haspath([0], [-1], [1.9], [-0.5], [2], [])]
 [null,false]
-[true,true,false,true]
+[true,true,true,true,false,true]
+
+[haspath(["attributes"], ["attributes","type"])]
+{"attributes":null}
+[true,false]
+
+[(try haspath("attributes") catch .), (try haspath([null]) catch .)]
+{}
+["Path must be specified as an array","Path components must be strings or numbers"]
 
 ["attributes","type"] as $p | if haspath($p) then setpath($p; "production") else error("Missing path: \($p)") end
 {"attributes":{"type":null}}
