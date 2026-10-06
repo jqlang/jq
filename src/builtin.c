@@ -1946,7 +1946,12 @@ static jv f_now(jq_state *jq, jv a) {
 static jv f_current_filename(jq_state *jq, jv a) {
   jv_free(a);
 
-  jv r = jq_util_input_get_current_filename(jq);
+  jq_input_meta_cb filename_cb, line_cb;
+  void *data;
+  jq_get_input_meta_cb(jq, &filename_cb, &line_cb, &data);
+  jv r = filename_cb ? filename_cb(jq, data) : jq_util_input_get_current_filename(jq);
+  if (filename_cb && jv_is_valid(r) && jv_get_kind(r) != JV_KIND_STRING)
+    return ret_error(r, jv_string("input_filename callback must return a string or an invalid value"));
   if (jv_is_valid(r))
     return r;
   jv_free(r);
@@ -1954,7 +1959,17 @@ static jv f_current_filename(jq_state *jq, jv a) {
 }
 static jv f_current_line(jq_state *jq, jv a) {
   jv_free(a);
-  return jq_util_input_get_current_line(jq);
+  jq_input_meta_cb filename_cb, line_cb;
+  void *data;
+  jq_get_input_meta_cb(jq, &filename_cb, &line_cb, &data);
+  if (line_cb == NULL)
+    return jq_util_input_get_current_line(jq);
+  jv r = line_cb(jq, data);
+  if (jv_is_valid(r) && jv_get_kind(r) != JV_KIND_NUMBER)
+    return ret_error(r, jv_string("input_line_number callback must return a number or an invalid value"));
+  if (!jv_is_valid(r) && !jv_invalid_has_msg(jv_copy(r)))
+    return ret_error(r, jv_string("Unknown input line number"));
+  return r;
 }
 
 static jv f_have_decnum(jq_state *jq, jv a) {

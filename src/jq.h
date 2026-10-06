@@ -38,6 +38,38 @@ jv jq_get_error_message(jq_state *);
 typedef jv (*jq_input_cb)(jq_state *, void *);
 void jq_set_input_cb(jq_state *, jq_input_cb, void *);
 void jq_get_input_cb(jq_state *, jq_input_cb *, void **);
+
+/*
+ * Optional providers for input_filename and input_line_number. Each callback
+ * returns an owned jv: a string for filename, a number for line, or an invalid
+ * value when unavailable. Other valid types produce an error. An invalid
+ * filename becomes null; an invalid line preserves its error message, or
+ * reports "Unknown input line number" if it has none.
+ *
+ * Callbacks only observe the current input; they must not consume input or
+ * re-enter this jq_state. A host that caches a filename must return a jv_copy()
+ * of it. The host also supplies metadata for values passed to jq_start(). No
+ * metadata is automatically changed at EOF or on an input error.
+ *
+ * data is borrowed, independent of the value input callback's data, and must
+ * remain valid until the registration is replaced, cleared, or jq_teardown()
+ * is called. Registration survives jq_start(), recompilation, and changes to
+ * the value input callback. libjq does not free data.
+ *
+ * A NULL callback uses the existing jq_util input metadata for that field.
+ * Pass NULL for both callbacks and data to clear the registration. The getter
+ * borrows the registered data and requires all three output pointers.
+ *
+ * For example, with callbacks returning jv_copy(source->filename) and
+ * jv_number(source->line), register the host's current source with:
+ *   jq_set_input_meta_cb(jq, filename_cb, line_cb, &source);
+ * Before destroying source, unregister it with:
+ *   jq_set_input_meta_cb(jq, NULL, NULL, NULL);
+ */
+typedef jv (*jq_input_meta_cb)(jq_state *, void *);
+void jq_set_input_meta_cb(jq_state *, jq_input_meta_cb, jq_input_meta_cb, void *);
+void jq_get_input_meta_cb(jq_state *, jq_input_meta_cb *, jq_input_meta_cb *, void **);
+
 void jq_set_debug_cb(jq_state *, jq_msg_cb, void *);
 void jq_get_debug_cb(jq_state *, jq_msg_cb *, void **);
 void jq_set_stderr_cb(jq_state *, jq_msg_cb, void *);

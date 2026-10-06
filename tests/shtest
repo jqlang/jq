@@ -46,6 +46,19 @@ printf 'a\0b\nc\0d\ne' > $d/input
 $VALGRIND $Q $JQ -Rse '. == "a\u0000b\nc\u0000d\ne"' $d/input
 $VALGRIND $Q $JQ -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input
 
+# Input metadata without optional host callbacks keeps the CLI behavior.
+printf '1\n' > $d/first
+printf '2\n' > $d/second
+$VALGRIND $Q $JQ -ne '[input_filename, input_line_number] == [null, 0]'
+printf '1\n' | $VALGRIND $Q $JQ -e '[input_filename, input_line_number] == ["<stdin>", 1]'
+for mode in '' '-R'; do
+  $VALGRIND $Q $JQ $mode -ne --arg first "$d/first" --arg second "$d/second" \
+    '[inputs | [input_filename, input_line_number]] == [[$first, 1], [$second, 1]]' \
+    $d/first $d/second
+done
+$VALGRIND $Q $JQ -Rse --arg last "$d/second" \
+  '[., input_filename, input_line_number] == ["1\n2\n", $last, 1]' $d/first $d/second
+
 ## Test constant folding
 nref=$($VALGRIND $Q $JQ -n --debug-dump-disasm '"foo"' | wc -l)
 for exp in '1+1' '1-1' '2*3' '9/3' '9%3' '9==3' '9!=3' \
