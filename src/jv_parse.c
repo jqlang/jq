@@ -780,8 +780,12 @@ jv jv_parser_next(struct jv_parser* p) {
   if (!p->curr_buf)
     return jv_invalid(); // Need a buffer
   if (p->bom_strip_position == 0xff) {
-    if (!(p->flags & JV_PARSE_SEQ))
-      return jv_invalid_with_msg(jv_string("Malformed BOM"));
+    if (!(p->flags & JV_PARSE_SEQ)) {
+      p->curr_buf = 0;
+      p->curr_buf_pos = 0;
+      p->bom_strip_position = sizeof(UTF8_BOM);
+      return make_error(p, "Malformed BOM");
+    }
     p->st =JV_PARSER_WAITING_FOR_RS;
     parser_reset(p);
   }
