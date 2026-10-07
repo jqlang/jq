@@ -193,6 +193,9 @@ struct jq_util_input_state {
   size_t buf_valid_len;
   jv current_filename;
   size_t current_line;
+  // Set when the last read stopped short of a newline, i.e. the next value
+  // parsed out of the buffer sits on the line after current_line.
+  int mid_line;
 };
 
 static void fprinter(void *data, const char *fname) {
@@ -277,6 +280,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
     if (f != NULL) {
       jv_free(state->current_filename);
       state->current_line = 0;
+      state->mid_line = 0;
       if (!strcmp(f, "-")) {
         state->current_input = stdin;
         state->current_filename = jv_string("<stdin>");
@@ -309,8 +313,12 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
     } else {
       const char *p = memchr(state->buf, '\n', max_gets_len);
 
-      if (p != NULL)
+      if (p != NULL) {
         state->current_line++;
+        state->mid_line = 0;
+      } else {
+        state->mid_line = 1;
+      }
 
       if (p == NULL && feof(state->current_input)) {
         size_t i;
@@ -367,7 +375,7 @@ jv jq_util_input_get_position(jq_state *jq) {
   if (jv_get_kind(s->current_filename) != JV_KIND_STRING)
     return jv_string("<unknown>");
 
-  jv v = jv_string_fmt("%s:%lu", jv_string_value(s->current_filename), (unsigned long)s->current_line);
+  jv v = jv_string_fmt("%s:%lu", jv_string_value(s->current_filename), (unsigned long)(s->current_line + s->mid_line));
   return v;
 }
 
@@ -389,7 +397,7 @@ jv jq_util_input_get_current_line(jq_state* jq) {
   if (cb != jq_util_input_next_input_cb)
     return jv_invalid_with_msg(jv_string("Unknown input line number"));
   jq_util_input_state *s = (jq_util_input_state *)cb_data;
-  jv v = jv_number(s->current_line);
+  jv v = jv_number(s->current_line + s->mid_line);
   return v;
 }
 
