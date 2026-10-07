@@ -292,7 +292,8 @@ sections:
 
         Windows users using WSL, MSYS2, or Cygwin, should use this option
         when using a native jq.exe, otherwise jq will turn newlines (LFs)
-        into carriage-return-then-newline (CRLF).
+        into carriage-return-then-newline (CRLF). This is safe to use on
+        supported non-Windows environments.
 
       * `--version` / `-V`:
 
