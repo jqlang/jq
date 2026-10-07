@@ -57,6 +57,17 @@ for exp in '1+1' '1-1' '2*3' '9/3' '9%3' '9==3' '9!=3' \
   fi
 done
 
+## Test UTF-8 BOM is stripped at the start of each input file
+printf '\357\273\277[{"foo": 1}\n,{"foo": 2}\n]\n' > $d/bom1.json
+printf '\357\273\277[{"foo": 3}\n,{"foo": 4}\n]\n' > $d/bom2.json
+$VALGRIND $Q $JQ -e '.[0].foo == 1' $d/bom1.json
+$VALGRIND $Q $JQ -se '. == [[{"foo":1},{"foo":2}],[{"foo":3},{"foo":4}]]' $d/bom1.json $d/bom2.json
+$VALGRIND $Q $JQ -ne '[inputs] == [[{"foo":1},{"foo":2}],[{"foo":3},{"foo":4}]]' $d/bom1.json $d/bom2.json
+$VALGRIND $Q $JQ -ne '[inputs] == [[{"foo":1},{"foo":2}],[{"foo":3},{"foo":4}]]' $d/bom1.json - < $d/bom2.json
+$VALGRIND $Q $JQ -Rne '[inputs] == ["[{\"foo\": 1}", ",{\"foo\": 2}", "]", "[{\"foo\": 3}", ",{\"foo\": 4}", "]"]' $d/bom1.json $d/bom2.json
+$VALGRIND $Q $JQ -ne --slurpfile x $d/bom1.json '$x == [[{"foo":1},{"foo":2}]]'
+$VALGRIND $Q $JQ -ne --rawfile x $d/bom1.json '$x == "[{\"foo\": 1}\n,{\"foo\": 2}\n]\n"'
+
 ## Test JSON sequence support
 cat > $d/expected <<EOF
 jq: ignoring parse error: Truncated value at line 2, column 5
