@@ -190,8 +190,18 @@ else
 	@echo As a result, the manpage is out of date.
 endif
 
+# The committed manpage has no date to avoid merge conflicts. Stamp the date
+# of the last commit when building in a git repository, including on make
+# dist, so that release tarballs ship a dated jq.1. Respect SOURCE_DATE_EPOCH
+# so that distribution builds can pin the date.
 jq.1: jq.1.prebuilt
-	$(AM_V_GEN) cp $(srcdir)/jq.1.prebuilt $@
+	$(AM_V_GEN) date=`if test -n "$$SOURCE_DATE_EPOCH"; then \
+	    date -u -d "@$$SOURCE_DATE_EPOCH" +%F 2>/dev/null || \
+	    date -u -r "$$SOURCE_DATE_EPOCH" +%F 2>/dev/null; \
+	  elif test -e $(srcdir)/.git; then \
+	    cd $(srcdir) && git log -1 --format=%cd --date=short 2>/dev/null; \
+	  fi`; \
+	sed 's/^\.TH "JQ" "1" ""/.TH "JQ" "1" "'"$$date"'"/' $(srcdir)/jq.1.prebuilt > $@
 
 CLEANFILES += jq.1
 
