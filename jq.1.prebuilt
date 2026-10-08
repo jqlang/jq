@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "August 2026" "" ""
+.TH "JQ" "1" "" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor

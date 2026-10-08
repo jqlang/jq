@@ -42,12 +42,8 @@ jobs:
           ./configure --enable-docs
       - name: Build man page, man.test, manonig.test
         run: |
-          mv jq.1.prebuilt jq.1.old
-          rm -f tests/man.test manonig.test
+          rm -f jq.1.prebuilt tests/man.test tests/manonig.test
           make jq.1.prebuilt tests/man.test tests/manonig.test
       - name: Make sure that jq.1.prebuilt, man.test, manonig.test are up to date
         run: |
-          git diff --exit-code tests/man.test tests/manonig.test
-          # skip build date in jq.1.prebuilt
-          test -s jq.1.prebuilt
-          diff -- <(tail -n +3 jq.1.old) <(tail -n +3 jq.1.prebuilt)
+          git diff --exit-code jq.1.prebuilt tests/man.test tests/manonig.test
