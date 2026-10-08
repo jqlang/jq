@@ -135,6 +135,15 @@ bin_PROGRAMS = jq
 jq_SOURCES = src/main.c
 jq_LDADD = libjq.la -lm
 
+if WIN32
+# Embed src/jq.exe.manifest (longPathAware) into jq.exe
+src/jq-res.o: $(srcdir)/src/jq.rc $(srcdir)/src/jq.exe.manifest
+	mkdir -p src
+	$(AM_V_GEN) $(WINDRES) -I $(srcdir)/src -i $(srcdir)/src/jq.rc -o $@
+jq_LDADD += src/jq-res.o
+CLEANFILES += src/jq-res.o
+endif
+
 if ENABLE_ALL_STATIC
 jq_LDFLAGS = -all-static
 endif
@@ -232,7 +241,7 @@ DOC_FILES = docs/content docs/public docs/templates                     \
 EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         jq.1.prebuilt jq.spec src/lexer.c src/lexer.h src/parser.c      \
         src/parser.h src/version.h src/builtin.jq scripts/version       \
-        libjq.pc                                                        \
+        libjq.pc src/jq.rc src/jq.exe.manifest                          \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
         tests/modules/deep1.jq tests/modules/deep2a.jq                  \
