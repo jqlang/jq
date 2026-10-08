@@ -57,6 +57,44 @@ for exp in '1+1' '1-1' '2*3' '9/3' '9%3' '9==3' '9!=3' \
   fi
 done
 
+## Test that --run-tests reports failures (#2765)
+cat > $d/passing.test <<'EOF'
+.
+1
+1
+EOF
+$VALGRIND $Q $JQ --run-tests $d/passing.test > $d/out 2>&1
+
+cat > $d/erroneous-result.test <<'EOF'
+.
+1
+2
+EOF
+cat > $d/insufficient-results.test <<'EOF'
+empty
+null
+{"expected":true}
+EOF
+cat > $d/superfluous-result.test <<'EOF'
+., .
+1
+1
+EOF
+for test in erroneous-result insufficient-results superfluous-result; do
+  ret=0
+  # Keep memory errors distinct from the expected test failure status.
+  if [ -n "$VALGRIND" ]; then
+    $VALGRIND $Q --error-exitcode=99 $JQ --run-tests $d/$test.test > $d/out 2>&1 || ret=$?
+  else
+    $JQ --run-tests $d/$test.test > $d/out 2>&1 || ret=$?
+  fi
+  if [ "$ret" -ne 1 ]; then
+    cat $d/out
+    echo "Expected --run-tests to report $test with status 1, got $ret" >&2
+    exit 1
+  fi
+done
+
 ## Test JSON sequence support
 cat > $d/expected <<EOF
 jq: ignoring parse error: Truncated value at line 2, column 5
