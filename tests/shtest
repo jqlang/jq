@@ -943,6 +943,20 @@ $JQ -nf $d/prog.jq 2> $d/out && {
 }
 diff $d/out $d/expected
 
+# Test 3: Too many function parameters in a nested function (issue #3661)
+echo "Testing function parameter limit in a nested function..."
+cat > $d/expected <<EOF
+jq: error: function has too many parameters (max 4095)
+jq: error: too many function parameters or local function definitions (max 4095)
+jq: 2 compile errors
+EOF
+$JQ -rn '"def g(\([range(4097) | "a\(.)"] | join(";"))): .; def f: g(\([range(4097)] | join(";"))); f"' > $d/prog.jq
+$JQ -nf $d/prog.jq 2> $d/out && {
+  echo "Expected compile error for too many parameters in a nested function"
+  exit 1
+}
+diff $d/out $d/expected
+
 # CVE-2026-33948: No NUL truncation in the JSON parser
 if printf '{}\x00{}' | $JQ >/dev/null 2> /dev/null; then
   printf 'Error expected but jq exited successfully\n' 1>&2
