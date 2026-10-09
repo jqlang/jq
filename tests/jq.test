@@ -2764,6 +2764,35 @@ try setpath([range(10001) | 0]; 0) catch .
 null
 "Path too deep"
 
+# fromstream accepts streamed paths whose ancestors change type
+ [fromstream([["a"], 1], [["a",0], 2], [["a"]]), fromstream([["a",0], 2], [["a"], 1], [["a"]]), fromstream([["a"], 1], [["a","b"], 2], [["a"]]), fromstream([["a","b"], 2], [["a"], 1], [["a"]]), fromstream([[0], 1], [[0,"a"], 2], [[0]]), fromstream([["a"], 1], [["a",0], 2], [["a","b"], 3], [["a"]])]
+null
+[{"a":[2]}, {"a":1}, {"a":{"b":2}}, {"a":1}, [{"a":2}], {"a":{"b":3}}]
+
+# Scalar and empty-container ancestors can become either container type
+[fromstream([["a"],true], [["a","b"],1], [["a"]]), fromstream([["a"],true], [["a",0],1], [["a"]]), fromstream([["a"],null], [["a","b"],1], [["a"]]), fromstream([["a"],null], [["a",0],1], [["a"]]), fromstream([["a"],"s"], [["a","b"],1], [["a"]]), fromstream([["a"],"s"], [["a",0],1], [["a"]]), fromstream([["a"],{}], [["a",0],1], [["a"]]), fromstream([["a"],[]], [["a","b"],1], [["a"]]), fromstream([["a"],1], [["a","b"],2], [["a","b","c"],3], [["a"]]), fromstream([["a",0],{}], [["a",0,"b"],1], [["a"]]), fromstream([["a",0],[]], [["a",0,"b"],1], [["a"]])]
+null
+[{"a":{"b":1}}, {"a":[1]}, {"a":{"b":1}}, {"a":[1]}, {"a":{"b":1}}, {"a":[1]}, {"a":[1]}, {"a":{"b":1}}, {"a":{"b":{"c":3}}}, {"a":[{"b":1}]}, {"a":[{"b":1}]}]
+
+# Same-type duplicate container merging remains unchanged
+fromstream([["a","b"], 1], [["a","c"], 2], [["a"]])
+null
+{"a":{"b":1,"c":2}}
+
+# Empty streams and tostream/fromstream roundtrip
+[fromstream([])]
+null
+[]
+
+{"a":[1,{"b":2}]} | fromstream(tostream)
+null
+{"a":[1,{"b":2}]}
+
+# Public setpath still reports incompatible roots
+try setpath(["a",0]; 1) catch .
+1
+"Cannot index number with string (\"a\")"
+
 getpath([range(10000) | 0])
 null
 null

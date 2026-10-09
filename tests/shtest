@@ -311,6 +311,28 @@ grep "Expected string key after '{', not '\\['" $d/err > /dev/null
 echo '{"x":"y",["a","b"]}' | $JQ --stream > /dev/null 2> $d/err || true
 grep "Expected string key after ',' in object, not '\\['" $d/err > /dev/null
 
+## issue #2363: raw streamed JSON with a type-changing duplicate path
+printf '%s\n' '{"a":1}' '{"a":{"b":2}}' |
+    $JQ -cn --stream -c 'fromstream(inputs)' > $d/out
+printf '%s\n' '{"a":1}' '{"a":{"b":2}}' > $d/expected
+diff $d/out $d/expected
+
+## issue #2363: numeric and string ancestor switches in actual stream input
+printf '%s\n' '[1]' '{"0":{"x":2}}' |
+    $JQ -cn --stream -c 'fromstream(inputs)' > $d/out
+printf '%s\n' '[1]' '{"0":{"x":2}}' > $d/expected
+diff $d/out $d/expected
+
+## issue #2363: all scalar and empty-container switches, including nested changes
+printf '%s\n' '{"a":true,"a":{"b":1}}' '{"a":null,"a":[1]}' \
+    '{"a":"s","a":{"b":1}}' '{"a":{},"a":[1]}' \
+    '{"a":[],"a":{"b":1}}' '{"a":1,"a":{"b":2,"b":{"c":3}}}' |
+    $JQ -cn --stream -c 'fromstream(inputs)' > $d/out
+printf '%s\n' '{"a":{"b":1}}' '{"a":[1]}' \
+    '{"a":{"b":1}}' '{"a":[1]}' \
+    '{"a":{"b":1}}' '{"a":{"b":{"c":3}}}' > $d/expected
+diff $d/out $d/expected
+
 # debug, stderr
 $VALGRIND $Q $JQ -n '"test", {} | debug, stderr' >/dev/null
 $JQ -n -c -j '"hello\nworld", null, [false, 0], {"foo":["bar"]}, "\n" | stderr' >$d/out 2>$d/err
