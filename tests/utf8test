@@ -21,8 +21,8 @@ for l in 1 2 3 4; do
   fi
 done
 
-# --ascii-output escapes non-ASCII characters on both sides of the 8-byte
-# words that strings are scanned in
+# --ascii-output escapes non-ASCII characters on both sides of runs of
+# bytes that need no escaping
 $VALGRIND $Q $JQ -cn '[range(18) as $i | ("é", "😀", "\u007f") as $c |
   "abcdefghijklmnopq"[:$i] + $c + "abcdefghijklmnopq"[$i:]]' > $d/input
 $VALGRIND $Q $JQ -ac . $d/input > $d/out

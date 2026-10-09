@@ -107,7 +107,7 @@ null
 ["foo", 1, ["a", 1, "b", 2, {"foo":"bar"}]]
 ["foo",1,["a",1,"b",2,{"foo":"bar"}]]
 
-# Strings are scanned 8 bytes at a time; put escapes on both sides of a word
+# Put escapes on both sides of runs of bytes that need no escaping
 map(tojson)
 ["abcdefg\"", "abcdefgh\\", "abcdefghi\u0001j", "abcdefghijklmno\u007f", "abcdefgh\té", "abcdefghijklmnop\n"]
 ["\"abcdefg\\\"\"","\"abcdefgh\\\\\"","\"abcdefghi\\u0001j\"","\"abcdefghijklmno\\u007f\"","\"abcdefgh\\té\"","\"abcdefghijklmnop\\n\""]
@@ -115,7 +115,6 @@ map(tojson)
 [range(18) as $i | ("\"", "\\", "\u0001", "\u007f", "é", "😀") as $c | "abcdefghijklmnopq"[:$i] + $c + "abcdefghijklmnopq"[$i:] | (tojson | fromjson) == .] | all
 null
 true
-
 
 #
 # Dictionary construction syntax
@@ -2553,7 +2552,6 @@ try ["ok", setpath([1]; 1)] catch ["ko", .]
 try fromjson catch .
 "{'a': 123}"
 "Invalid string literal; expected \", but got ' at line 1, column 5 (while parsing '{'a': 123}')"
-
 
 # ltrimstr/1 rtrimstr/1 don't leak on invalid input #2977
 
