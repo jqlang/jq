@@ -2413,6 +2413,11 @@ true
 null
 true
 
+# Unary negation keeps the sign of zero
+[-0, -(-0), (.[] | -.)] | map(tojson)
+[0, -0]
+["-0","0","-0","0"]
+
 . |= try . catch .
 1
 1
