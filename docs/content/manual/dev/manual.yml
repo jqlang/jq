@@ -266,6 +266,20 @@ sections:
         available in the program and has a string whose content is set to the text
         in the file named `bar`.
 
+      * `--slurpfd variable-name fd`:
+
+        This option is just like `--slurpfile` except it reads from the file
+        descriptor `fd` (specified as a decimal integer). The parent process of
+        jq is expected to have opened `fd` for reading and set it up to be
+        inherited by jq.
+
+      * `--rawfd variable-name fd`:
+
+        This option is just like `--rawfile` except it reads from the file
+        descriptor `fd` (specified as a decimal integer). The parent process of
+        jq is expected to have opened `fd` for reading and set it up to be
+        inherited by jq.
+
       * `--args`:
 
         Remaining arguments are positional string arguments.  These are

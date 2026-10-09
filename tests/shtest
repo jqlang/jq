@@ -342,6 +342,35 @@ cat > $d/expected <<'EOF'
 EOF
 cmp $d/out $d/expected
 
+# --slurpfd, --rawfd
+data=$JQBASEDIR/tests/modules/data.json
+cat $data > $d/input
+if $msys || $mingw; then
+  # See winfd.c for why we need a helper binary to open the file descriptors.
+  # This program is built automatically by `make check`.
+  #
+  # There's no Valgrind on Windows, but leaving it in the command doesn't hurt.
+  ${WINFD:-$JQBASEDIR/tests/winfd.exe} -r 8 $d/input -b 9 $d/input -- \
+    $VALGRIND $JQ -n --slurpfd foo 8 --rawfd bar 9 '{$foo, $bar}' > $d/out
+else
+  $VALGRIND $JQ -n --slurpfd foo 8 --rawfd bar 9 '{$foo, $bar}' \
+    8< $d/input 9<> $d/input > $d/out
+fi
+cat > $d/expected <<'EOF'
+{
+  "foo": [
+    {
+      "this": "is a test",
+      "that": "is too"
+    }
+  ],
+  "bar": "{\n  \"this\": \"is a test\",\n  \"that\": \"is too\"\n}\n"
+}
+EOF
+cmp $d/out $d/expected
+# even if it has write access, jq isn't supposed to modify its inputs
+cmp $d/input $data
+
 # --args, --jsonargs, $ARGS.positional
 $VALGRIND $JQ -n -c --args '$ARGS.positional' foo bar baz > $d/out
 printf '["foo","bar","baz"]\n' > $d/expected

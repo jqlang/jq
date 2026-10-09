@@ -147,6 +147,14 @@ TESTS += tests/optionaltest
 endif
 
 AM_TESTS_ENVIRONMENT = JQ=$(abs_builddir)/jq
+
+# Needed by tests/shtest
+if WIN32
+check_PROGRAMS = tests/winfd
+tests_winfd_SOURCES = tests/winfd.c
+AM_TESTS_ENVIRONMENT += WINFD=$(abs_builddir)/tests/winfd$(EXEEXT)
+endif
+
 if ENABLE_VALGRIND
 AM_TESTS_ENVIRONMENT += ENABLE_VALGRIND=1
 endif
