@@ -126,7 +126,18 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
   int c = 0;
   char buf[32];
   put_char('"', F, S, T);
-  while ((i = jvp_utf8_next((cstart = i), end, &c))) {
+  while (i < end) {
+    // Write each run of bytes that need no escaping with a single call.
+    for (cstart = i; cstart < end; cstart++) {
+      unsigned char b = *cstart;
+      if (b < 0x20 || b == '"' || b == '\\' || b == 0x7F || (ascii_only && b >= 0x80))
+        break;
+    }
+    if (cstart > i)
+      put_buf(i, cstart - i, F, S, T);
+    if (cstart == end)
+      break;
+    i = jvp_utf8_next(cstart, end, &c);
     assert(c != -1);
     int unicode_escape = 0;
     if (0x20 <= c && c <= 0x7E) {

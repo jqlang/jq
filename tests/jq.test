@@ -100,6 +100,15 @@ null
 ["foo", 1, ["a", 1, "b", 2, {"foo":"bar"}]]
 ["foo",1,["a",1,"b",2,{"foo":"bar"}]]
 
+# Put escapes on both sides of runs of bytes that need no escaping
+map(tojson)
+["abcdefg\"", "abcdefgh\\", "abcdefghi\u0001j", "abcdefghijklmno\u007f", "abcdefgh\té", "abcdefghijklmnop\n"]
+["\"abcdefg\\\"\"","\"abcdefgh\\\\\"","\"abcdefghi\\u0001j\"","\"abcdefghijklmno\\u007f\"","\"abcdefgh\\té\"","\"abcdefghijklmnop\\n\""]
+
+[range(18) as $i | ("\"", "\\", "\u0001", "\u007f", "é", "😀") as $c | "abcdefghijklmnopq"[:$i] + $c + "abcdefghijklmnopq"[$i:] | (tojson | fromjson) == .] | all
+null
+true
+
 #
 # Dictionary construction syntax
 #
