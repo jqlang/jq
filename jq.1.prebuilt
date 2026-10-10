@@ -3942,6 +3942,14 @@ If the right\-hand side outputs multiple values, only the first one will be used
 .
 .nf
 
+jq \'\.foo |= \. + 1\'
+   {"foo": 41, "bar": "unchanged"}
+=> {"foo": 42, "bar": "unchanged"}
+
+jq \'\.user\.age |= \. + 1\'
+   {"user": {"name": "alice", "age": 30}, "active": true}
+=> {"user": {"name": "alice", "age": 31}, "active": true}
+
 jq \'(\.\.|select(type=="boolean")) |= if \. then 1 else 0 end\'
    [true,false,[5,true,[true,[false]],false]]
 => [1,0,[5,1,[1,[0]],0]]
