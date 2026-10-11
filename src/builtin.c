@@ -1539,7 +1539,9 @@ static int setenv(const char *var, const char *val, int ovr)
  * Our wrapper tries to use timegm() if available, or mktime() and
  * correct for its side-effects if possible.
  *
- * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
+ * Returns (time_t)-1 on failure, and normalises *tm when it succeeds.  Note
+ * that (time_t)-1 is also a valid result: it is 1969-12-31T23:59:59Z.  See
+ * tm_is_time() for how callers tell the two apart.
  */
 static time_t my_mktime(struct tm *tm) {
 #ifdef HAVE_TIMEGM
@@ -1748,6 +1750,38 @@ static int jv2tm(jv a, struct tm *tm, int localtime) {
 
 #undef TO_TM_FIELD
 
+/* Does t stand for the same broken-down time as tm?
+ *
+ * Used to tell my_mktime()'s failure return apart from the second it shares
+ * with 1969-12-31T23:59:59Z. errno cannot do it: timegm() leaves errno alone
+ * on macOS, both for that second and when it rejects a year before 1900.
+ *
+ * my_mktime() normalises *tm when it succeeds, so an unnormalised input that
+ * lands on that second still compares equal here.
+ */
+static int tm_is_time(const struct tm *tm, time_t t) {
+#if defined HAVE_GMTIME_R || defined HAVE_GMTIME
+  struct tm check;
+#ifdef HAVE_GMTIME_R
+  if (gmtime_r(&t, &check) == NULL)
+    return 0;
+#else
+  struct tm *tmp = gmtime(&t);
+  if (tmp == NULL)
+    return 0;
+  check = *tmp;
+#endif
+  return check.tm_year == tm->tm_year && check.tm_mon == tm->tm_mon &&
+         check.tm_mday == tm->tm_mday && check.tm_hour == tm->tm_hour &&
+         check.tm_min == tm->tm_min && check.tm_sec == tm->tm_sec;
+#else
+  /* No way to check; keep the old behaviour of rejecting the second. */
+  (void)tm;
+  (void)t;
+  return 0;
+#endif
+}
+
 static jv f_mktime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY)
     return ret_error(a, jv_string("mktime requires array inputs"));
@@ -1755,10 +1789,8 @@ static jv f_mktime(jq_state *jq, jv a) {
   if (!jv2tm(a, &tm, 0))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
   time_t t = my_mktime(&tm);
-  if (t == (time_t)-1)
+  if (t == (time_t)-1 && !tm_is_time(&tm, t))
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
-  if (t == (time_t)-2)
-    return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
   return jv_number(t);
 }
 
