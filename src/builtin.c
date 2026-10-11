@@ -1867,10 +1867,24 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
 #endif
 #ifdef __NetBSD__
   timezone_t tz_utc = tzalloc("UTC");
-  size_t n = strftime_z(tz_utc, buf, max_size, fmt, &tm);
-  tzfree(tz_utc);
+#endif
+  size_t n = 0;
+  for (;;) {
+#ifdef __NetBSD__
+    n = strftime_z(tz_utc, buf, max_size, fmt, &tm);
 #else
-  size_t n = strftime(buf, max_size, fmt, &tm);
+    n = strftime(buf, max_size, fmt, &tm);
+#endif
+    if (n > 0 || !fmt_not_empty)
+      break;
+    /* strftime returns 0 when the result does not fit, including the NUL. */
+    if (max_size >= (1u << 24) || max_size > SIZE_MAX / 2)
+      break;
+    max_size *= 2;
+    buf = jv_mem_realloc(buf, max_size);
+  }
+#ifdef __NetBSD__
+  tzfree(tz_utc);
 #endif
 #if defined(__APPLE__) || defined(__sun)
   if (tz) {
@@ -1921,7 +1935,17 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   int fmt_not_empty = *fmt != '\0';
   size_t max_size = strlen(fmt) + 100;
   char *buf = jv_mem_alloc(max_size);
-  size_t n = strftime(buf, max_size, fmt, &tm);
+  size_t n = 0;
+  for (;;) {
+    n = strftime(buf, max_size, fmt, &tm);
+    if (n > 0 || !fmt_not_empty)
+      break;
+    /* strftime returns 0 when the result does not fit, including the NUL. */
+    if (max_size >= (1u << 24) || max_size > SIZE_MAX / 2)
+      break;
+    max_size *= 2;
+    buf = jv_mem_realloc(buf, max_size);
+  }
   jv_free(b);
   /* POSIX doesn't provide errno values for strftime() failures; weird */
   if ((n == 0 && fmt_not_empty) || n > max_size) {

@@ -1911,6 +1911,15 @@ strftime("%Y-%m-%dT%H:%M:%SZ")
 [2024,2,15]
 "2024-03-15T00:00:00Z"
 
+# output longer than strlen(format) + 100
+strftime("%Y" * 50) | length
+0
+200
+
+strflocaltime("%Y" * 50) | length
+0
+200
+
 mktime
 [2024,8,21]
 1726876800
