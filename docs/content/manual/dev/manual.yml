@@ -3572,6 +3572,12 @@ sections:
           releases, it used to be that only the last one was used).
 
         examples:
+          - program: '.foo |= . + 1'
+            input: '{"foo": 41, "bar": "unchanged"}'
+            output: ['{"foo": 42, "bar": "unchanged"}']
+          - program: '.user.age |= . + 1'
+            input: '{"user": {"name": "alice", "age": 30}, "active": true}'
+            output: ['{"user": {"name": "alice", "age": 31}, "active": true}']
           - program: '(..|select(type=="boolean")) |= if . then 1 else 0 end'
             input: '[true,false,[5,true,[true,[false]],false]]'
             output: ['[1,0,[5,1,[1,[0]],0]]']

@@ -978,6 +978,14 @@ null
 [0,[1,{"a":1},{"b":2}]]
 true
 
+.foo |= . + 1
+{"foo": 41, "bar": "unchanged"}
+{"foo": 42, "bar": "unchanged"}
+
+.user.age |= . + 1
+{"user": {"name": "alice", "age": 30}, "active": true}
+{"user": {"name": "alice", "age": 31}, "active": true}
+
 (..|select(type=="boolean")) |= if . then 1 else 0 end
 [true,false,[5,true,[true,[false]],false]]
 [1,0,[5,1,[1,[0]],0]]
