@@ -1849,8 +1849,10 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   if (!jv2tm(a, &tm, 0))
     return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
 
+  /* Prepend a character so that strftime() returning 0 means the result
+   * did not fit, even if the format expands to nothing; it is trimmed below. */
+  b = jv_string_concat(jv_string(" "), b);
   const char *fmt = jv_string_value(b);
-  int fmt_not_empty = *fmt != '\0';
   size_t max_size = strlen(fmt) + 100;
   char *buf = jv_mem_alloc(max_size);
 #if defined(__APPLE__) || defined(__sun)
@@ -1884,12 +1886,11 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   tzset();
 #endif
   jv_free(b);
-  /* POSIX doesn't provide errno values for strftime() failures; weird */
-  if ((n == 0 && fmt_not_empty) || n > max_size) {
+  if (n == 0 || n > max_size) {
     free(buf);
-    return jv_invalid_with_msg(jv_string("strftime/1: unknown system failure"));
+    return jv_invalid_with_msg(jv_string("strftime/1: result too long"));
   }
-  jv ret = jv_string_sized(buf, n);
+  jv ret = jv_string_sized(buf + 1, n - 1);
   free(buf);
   return ret;
 }
@@ -1917,18 +1918,19 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   struct tm tm;
   if (!jv2tm(a, &tm, 1))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
+  /* Prepend a character so that strftime() returning 0 means the result
+   * did not fit, even if the format expands to nothing; it is trimmed below. */
+  b = jv_string_concat(jv_string(" "), b);
   const char *fmt = jv_string_value(b);
-  int fmt_not_empty = *fmt != '\0';
   size_t max_size = strlen(fmt) + 100;
   char *buf = jv_mem_alloc(max_size);
   size_t n = strftime(buf, max_size, fmt, &tm);
   jv_free(b);
-  /* POSIX doesn't provide errno values for strftime() failures; weird */
-  if ((n == 0 && fmt_not_empty) || n > max_size) {
+  if (n == 0 || n > max_size) {
     free(buf);
-    return jv_invalid_with_msg(jv_string("strflocaltime/1: unknown system failure"));
+    return jv_invalid_with_msg(jv_string("strflocaltime/1: result too long"));
   }
-  jv ret = jv_string_sized(buf, n);
+  jv ret = jv_string_sized(buf + 1, n - 1);
   free(buf);
   return ret;
 }

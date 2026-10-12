@@ -1945,6 +1945,23 @@ try ["OK", strflocaltime({})] catch ["KO", .]
 0
 ["KO","strflocaltime/1 requires a string format"]
 
+# the result must fit in strlen(format) + 99 bytes
+[strftime("", " %Y "), (strftime("%Y" * 49) | length)]
+0
+["", " 1970 ", 196]
+
+try strftime("%Y" * 50) catch .
+0
+"strftime/1: result too long"
+
+[strflocaltime("", " %Y "), (strflocaltime("%Y" * 49) | length)]
+[2015,2,5,23,51,47,4,63]
+["", " 2015 ", 196]
+
+try strflocaltime("%Y" * 50) catch .
+[2015,2,5,23,51,47,4,63]
+"strflocaltime/1: result too long"
+
 [strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
 "2015-03-05T23:51:47Z"
 [[2015,2,5,23,51,47,4,63],1425599507]
