@@ -33,7 +33,7 @@ block gen_op_pushk_under(jv constant);
 
 block gen_module(block metadata);
 jv block_module_meta(block b);
-block gen_import(const char* name, const char *as, int is_data);
+block gen_import(jv name, jv as, int is_data);
 block gen_import_meta(block import, block metadata);
 block gen_function(const char* name, block formals, block body);
 block gen_param_regular(const char* name);

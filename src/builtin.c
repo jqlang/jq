@@ -33,6 +33,7 @@
 #include "bytecode.h"
 #include "linker.h"
 #include "locfile.h"
+#include "iso8601.h"
 #include "jv_unicode.h"
 #include "jv_alloc.h"
 #include "jv_dtoa.h"
@@ -298,7 +299,15 @@ jv binop_minus(jv a, jv b) {
     jv_array_foreach(a, i, x) {
       int include = 1;
       jv_array_foreach(b, j, y) {
-        if (jv_equal(jv_copy(x), y)) {
+        int equal = jv_equal(jv_copy(x), y);
+        if (equal < 0) {
+          jv_free(out);
+          jv_free(x);
+          jv_free(a);
+          jv_free(b);
+          return jv_invalid_with_msg(jv_string("Equality check too deep"));
+        }
+        if (equal) {
           include = 0;
           break;
         }
@@ -382,11 +391,17 @@ jv binop_mod(jv a, jv b) {
 #undef dtoi
 
 jv binop_equal(jv a, jv b) {
-  return jv_bool(jv_equal(a, b));
+  int r = jv_equal(a, b);
+  if (r < 0)
+    return jv_invalid_with_msg(jv_string("Equality check too deep"));
+  return jv_bool(r);
 }
 
 jv binop_notequal(jv a, jv b) {
-  return jv_bool(!jv_equal(a, b));
+  int r = jv_equal(a, b);
+  if (r < 0)
+    return jv_invalid_with_msg(jv_string("Equality check too deep"));
+  return jv_bool(!r);
 }
 
 enum cmp_op {
@@ -398,6 +413,8 @@ enum cmp_op {
 
 static jv order_cmp(jv a, jv b, enum cmp_op op) {
   int r = jv_cmp(a, b);
+  if (r == INT_MIN)
+    return jv_invalid_with_msg(jv_string("Comparison too deep"));
   return jv_bool((op == CMP_OP_LESS && r < 0) ||
                  (op == CMP_OP_LESSEQ && r <= 0) ||
                  (op == CMP_OP_GREATEREQ && r >= 0) ||
@@ -543,8 +560,10 @@ static const unsigned char URI_UNRESERVED[128] = {
 
 static const unsigned char BASE64_ENCODE_TABLE[64 + 1] = CHARS_ALPHANUM "+/";
 static const unsigned char BASE64_INVALID_ENTRY = 0xFF;
-static const unsigned char BASE64_DECODE_TABLE[255] = {
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+static const unsigned char BASE64_DECODE_TABLE[256] = {
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
   62, // +
   0xFF, 0xFF, 0xFF,
   63, // /
@@ -555,7 +574,15 @@ static const unsigned char BASE64_DECODE_TABLE[255] = {
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, // A-Z
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
   26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,  // a-z
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
 
@@ -869,6 +896,12 @@ static jv f_bsearch(jq_state *jq, jv input, jv target) {
   while (start < end) {
     int mid = start + (end - start) / 2;
     int result = jv_cmp(jv_copy(target), jv_array_get(jv_copy(input), mid));
+    if (result == INT_MIN) {
+      jv_free(answer);
+      jv_free(input);
+      jv_free(target);
+      return jv_invalid_with_msg(jv_string("Comparison too deep"));
+    }
     if (result == 0) {
       answer = jv_number(mid);
       break;
@@ -1055,8 +1088,14 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
         onig_foreach_name(reg, f_match_name_iter, &captures);
         match = jv_object_set(match, jv_string("captures"), captures);
         result = jv_array_append(result, match);
-        // ensure '"qux" | match("(?=u)"; "g")' matches just once
-        start = (const UChar*)(input_string+region->end[0]+1);
+        // ensure '"qux" | match("(?=u)"; "g")' matches just once; advance the
+        // search start past the whole codepoint, not a single byte, so we don't
+        // land in the middle of a multibyte character (which would yield a
+        // spurious duplicate match at the same offset).
+        start = (const UChar*)(input_string + region->end[0] +
+            ((size_t)region->end[0] < length
+                 ? jvp_utf8_decode_length(input_string[region->end[0]])
+                 : 1));
         continue;
       }
 
@@ -1160,6 +1199,14 @@ static jv minmax_by(jv values, jv keys, int is_min) {
   for (int i=1; i<jv_array_length(jv_copy(values)); i++) {
     jv item = jv_array_get(jv_copy(keys), i);
     int cmp = jv_cmp(jv_copy(item), jv_copy(retkey));
+    if (cmp == INT_MIN) {
+      jv_free(item);
+      jv_free(values);
+      jv_free(keys);
+      jv_free(retkey);
+      jv_free(ret);
+      return jv_invalid_with_msg(jv_string("Comparison too deep"));
+    }
     if ((cmp < 0) == (is_min == 1)) {
       jv_free(retkey);
       retkey = item;
@@ -1395,6 +1442,7 @@ static jv f_string_implode(jq_state *jq, jv a) {
     if (nv < 0 || nv > 0x10FFFF || (nv >= 0xD800 && nv <= 0xDFFF))
       nv = 0xFFFD; // U+FFFD REPLACEMENT CHARACTER
     s = jv_string_append_codepoint(s, nv);
+    if (!jv_is_valid(s)) break;
   }
 
   jv_free(a);
@@ -1634,6 +1682,17 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   return r;
 }
 
+static jv f_fromdateiso8601(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_STRING)
+    return ret_error(a, jv_string("fromdateiso8601 requires string inputs"));
+  double t;
+  if (!iso8601_parse(jv_string_value(a), jv_string_length_bytes(jv_copy(a)), &t))
+    return ret_error(a, jv_string_fmt("date \"%s\" is not a valid ISO 8601 datetime",
+                                      jv_string_value(a)));
+  jv_free(a);
+  return jv_number(t);
+}
+
 static int jv2tm(jv a, struct tm *tm, int localtime) {
   memset(tm, 0, sizeof(*tm));
   static const size_t offsets[] = {
@@ -1711,7 +1770,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = gmtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1725,7 +1784,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = gmtime(&secs);
   if (tmp == NULL)
@@ -1746,7 +1805,7 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = localtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1760,7 +1819,7 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = localtime(&secs);
   if (tmp == NULL)
@@ -1807,7 +1866,13 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
    * account ... */
   tzset();
 #endif
+#ifdef __NetBSD__
+  timezone_t tz_utc = tzalloc("UTC");
+  size_t n = strftime_z(tz_utc, buf, max_size, fmt, &tm);
+  tzfree(tz_utc);
+#else
   size_t n = strftime(buf, max_size, fmt, &tm);
+#endif
 #if defined(__APPLE__) || defined(__sun)
   if (tz) {
     setenv("TZ", tz, 1);
@@ -1989,6 +2054,7 @@ BINOPS
   CFUNC(f_input, "input", 1),
   CFUNC(f_debug, "debug", 1),
   CFUNC(f_stderr, "stderr", 1),
+  CFUNC(f_fromdateiso8601, "fromdateiso8601", 1),
   CFUNC(f_strptime, "strptime", 2),
   CFUNC(f_strftime, "strftime", 2),
   CFUNC(f_strflocaltime, "strflocaltime", 2),
@@ -2065,21 +2131,19 @@ static block bind_bytecoded_builtins(block b) {
     }
   }
   {
-    // Note that we can now define `range` as a jq-coded function
     block rangevar = gen_op_var_fresh(STOREV, "rangevar");
-    block rangestart = gen_op_var_fresh(STOREV, "rangestart");
-    block range = BLOCK(gen_op_simple(DUP),
-                        gen_call("start", gen_noop()),
-                        rangestart,
-                        gen_call("end", gen_noop()),
-                        gen_op_simple(DUP),
-                        gen_op_bound(LOADV, rangestart),
-                        // Reset rangevar for every value generated by "end"
-                        rangevar,
-                        gen_op_bound(RANGE, rangevar));
-    builtins = BLOCK(builtins, gen_function("range",
-                                            BLOCK(gen_param("start"), gen_param("end")),
-                                            range));
+    builtins = BLOCK(builtins,
+        gen_function("range",
+                     BLOCK(gen_param_regular("start"),
+                           gen_param_regular("end"),
+                           gen_param_regular("step")),
+                     BLOCK(gen_op_unbound(LOADV, "step"),
+                           gen_op_simple(DUP),
+                           gen_op_unbound(LOADV, "end"),
+                           gen_op_simple(DUP),
+                           gen_op_unbound(LOADV, "start"),
+                           rangevar,
+                           gen_op_bound(RANGE, rangevar))));
   }
   return BLOCK(builtins, b);
 }

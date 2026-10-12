@@ -212,9 +212,13 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
     jv exit_code = jq_get_exit_code(jq);
     if (!jv_is_valid(exit_code))
       ret = JQ_OK;
-    else if (jv_get_kind(exit_code) == JV_KIND_NUMBER)
+    else if (jv_get_kind(exit_code) == JV_KIND_NUMBER) {
       ret = jv_number_value(exit_code);
-    else
+      // Negative values would be mistaken for JQ_OK_NULL_KIND and friends,
+      // so keep the low 8 bits, like exit(3) does on POSIX systems.
+      if (ret < 0)
+        ret &= 0xff;
+    } else
       ret = JQ_ERROR_UNKNOWN;
     jv_free(exit_code);
     jv error_message = jq_get_error_message(jq);
@@ -437,7 +441,7 @@ int main(int argc, char* argv[]) {
           errno = 0;
           long indent = strtol(argv[i+1], &end, 10);
           if (errno || indent < -1 || indent > 7 ||
-              isspace(*argv[i+1]) || end == argv[i+1] || *end) {
+              isspace((unsigned char)*argv[i+1]) || end == argv[i+1] || *end) {
             fprintf(stderr, "jq: --indent takes a number between -1 and 7\n");
             die();
           }

@@ -643,6 +643,10 @@ join(" ")
 ["a",1,2.3,true,null,false]
 "a 1 2.3 true  false"
 
+join(", ")
+{"a":1,"b":2}
+"1, 2"
+
 ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"
@@ -742,6 +746,14 @@ bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
 fromdate
 "2015-03-05T23:51:47Z"
 1425599507
+
+fromdateiso8601
+"2015-03-06T08:51:47.25+09:00"
+1425599507.25
+
+map(fromdateiso8601)
+["20150305T235147Z","2015-064T23:51:47Z","2015-W10-4T23:51:47Z"]
+[1425599507,1425599507,1425599507]
 
 strptime("%Y-%m-%dT%H:%M:%SZ")
 "2015-03-05T23:51:47Z"
@@ -965,6 +977,14 @@ null
 . as $dot|fromstream($dot|tostream)|.==$dot
 [0,[1,{"a":1},{"b":2}]]
 true
+
+.foo |= . + 1
+{"foo": 41, "bar": "unchanged"}
+{"foo": 42, "bar": "unchanged"}
+
+.user.age |= . + 1
+{"user": {"name": "alice", "age": 30}, "active": true}
+{"user": {"name": "alice", "age": 31}, "active": true}
 
 (..|select(type=="boolean")) |= if . then 1 else 0 end
 [true,false,[5,true,[true,[false]],false]]

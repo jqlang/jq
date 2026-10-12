@@ -5,10 +5,12 @@
 msys=false
 mingw=false
 sunos=false
+netbsd=false
 case "$(uname -s)" in
 MSYS*)  msys=true;;
 MINGW*) mingw=true;;
 SunOS*) sunos=true;;
+NetBSD*) netbsd=true;;
 esac
 
 JQ_NO_B=$JQ
@@ -57,6 +59,17 @@ for exp in '1+1' '1-1' '2*3' '9/3' '9%3' '9==3' '9!=3' \
   fi
 done
 
+## Test UTF-8 BOM is stripped at the start of each input file
+printf '\357\273\277[{"foo": 1}\n,{"foo": 2}\n]\n' > $d/bom1.json
+printf '\357\273\277[{"foo": 3}\n,{"foo": 4}\n]\n' > $d/bom2.json
+$VALGRIND $Q $JQ -e '.[0].foo == 1' $d/bom1.json
+$VALGRIND $Q $JQ -se '. == [[{"foo":1},{"foo":2}],[{"foo":3},{"foo":4}]]' $d/bom1.json $d/bom2.json
+$VALGRIND $Q $JQ -ne '[inputs] == [[{"foo":1},{"foo":2}],[{"foo":3},{"foo":4}]]' $d/bom1.json $d/bom2.json
+$VALGRIND $Q $JQ -ne '[inputs] == [[{"foo":1},{"foo":2}],[{"foo":3},{"foo":4}]]' $d/bom1.json - < $d/bom2.json
+$VALGRIND $Q $JQ -Rne '[inputs] == ["[{\"foo\": 1}", ",{\"foo\": 2}", "]", "[{\"foo\": 3}", ",{\"foo\": 4}", "]"]' $d/bom1.json $d/bom2.json
+$VALGRIND $Q $JQ -ne --slurpfile x $d/bom1.json '$x == [[{"foo":1},{"foo":2}]]'
+$VALGRIND $Q $JQ -ne --rawfile x $d/bom1.json '$x == "[{\"foo\": 1}\n,{\"foo\": 2}\n]\n"'
+
 ## Test JSON sequence support
 cat > $d/expected <<EOF
 jq: ignoring parse error: Truncated value at line 2, column 5
@@ -72,6 +85,14 @@ jq: ignoring parse error: Truncated value at line 2, column 25
 jq: ignoring parse error: Truncated value at line 3, column 1
 EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
+cmp $d/out $d/expected
+
+# A syntax error skips the rest of the text, up to the next RS
+cat > $d/expected <<EOF
+jq: ignoring parse error: Invalid numeric literal at line 1, column 8 (need RS to resync)
+jq: ignoring parse error: Unmatched '}' at line 2, column 5 (need RS to resync)
+EOF
+printf '\036{"a":x,"b":7}\n\036[1,}2\n\0363\n' | $VALGRIND $Q $JQ -ces --seq '. == [3]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
 
 # Note that here jq sees no inputs at all but it still succeeds because
@@ -117,6 +138,27 @@ for i in 1 2 30 31; do
 done
 printf '" ~\\u007f"\n' > $d/expected
 printf "\"$(printf '\\%03o' 32 126 127)\"" | $JQ '.' > $d/out 2>&1
+cmp $d/out $d/expected
+
+# Regression test for #3110: a raw NUL byte outside of a string must be a clean
+# parse error, not silently truncate the surrounding token. Previously
+# `printf '12\0003'` printed 12 and dropped the trailing 3.
+cat > $d/expected <<EOF
+jq: parse error: Invalid character at line 1, column 3
+EOF
+if printf '12\0003' | $JQ '.' > $d/out 2>&1; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 2
+fi
+cmp $d/out $d/expected
+# A NUL at the very start of the input is rejected too.
+cat > $d/expected <<EOF
+jq: parse error: Invalid character at line 1, column 1
+EOF
+if printf '\000' | $JQ '.' > $d/out 2>&1; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 2
+fi
 cmp $d/out $d/expected
 
 ## Test --exit-status
@@ -382,15 +424,38 @@ if ! HOME="$mods/home2" $VALGRIND $Q $JQ -n 'include "g"; empty'; then
     exit 1
 fi
 
+(
 cd "$JQBASEDIR" # so that relative library paths are guaranteed correct
 if ! $VALGRIND $Q $JQ -L ./tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
     echo "Issue #817 regression?" 1>&2
     exit 1
 fi
+)
 
+(
 cd "$JQBASEDIR"
 if ! $VALGRIND $Q $JQ -L tests/modules -ne 'import "test_bind_order" as check; check::check==true'; then
     echo "Issue #817 regression?" 1>&2
+    exit 1
+fi
+)
+
+# CVE-2026-44777: Circular imports should be detected
+if $VALGRIND $JQ -L "$mods" -ne 'import "cycle_a" as a; null' 2> $d/out; then
+    echo "Mutual import should be rejected" 1>&2
+    exit 1
+fi
+if ! grep -q "circular import" $d/out; then
+    echo "Expected circular import error" 1>&2
+    exit 1
+fi
+
+if $VALGRIND $JQ -L "$mods" -ne 'import "cycle_self" as s; null' 2> $d/out; then
+    echo "Self import should be rejected" 1>&2
+    exit 1
+fi
+if ! grep -q "circular import" $d/out; then
+    echo "Expected circular import error" 1>&2
     exit 1
 fi
 
@@ -414,6 +479,15 @@ elif [ $? -ne 11 ]; then
     echo "jq halt_error(11) had wrong error code" 1>&2
     exit 1
 fi
+for opt in '' -e; do
+    if $VALGRIND $Q $VG_EXIT0 $JQ $opt -n 'halt_error(-1)'; then
+        echo "jq $opt halt_error(-1) didn't work as expected" 1>&2
+        exit 1
+    elif [ $? -ne 255 ]; then
+        echo "jq $opt halt_error(-1) had wrong error code" 1>&2
+        exit 1
+    fi
+done
 if [ -n "$($VALGRIND $Q $JQ -n 'halt_error(1)' 2>&1)" ]; then
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
@@ -622,6 +696,10 @@ test_no_color=true
 $msys  && test_no_color=false
 $mingw && test_no_color=false
 $sunos && test_no_color=false
+# NetBSD's script(1) intermittently loses the whole session output (the
+# output file comes back empty for fast commands about half the time), so
+# the pty checks cannot run reliably there.
+$netbsd && test_no_color=false
 if $test_no_color && command -v script >/dev/null 2>&1; then
   if script -qc echo /dev/null >/dev/null 2>&1; then
     faketty() { script -qec "$*" /dev/null; }
@@ -688,6 +766,8 @@ $locales
 EOF
   if [ -z "$l" ]; then
     echo "WARNING: Not testing localization"
+  elif [ "$(LC_ALL=C date +%a%b)" = "$(LC_ALL=$l date +%a%b)" ]; then
+    echo "WARNING: Date does not produce locale-dependent output for $l, skipping localization test"
   else
     dt1=$(LC_ALL=$l date +'%a %d %b %Y at %H:%M:%S')
     dt2=$(LC_ALL=$l $JQ -nr 'now | strflocaltime("%a %d %b %Y at %H:%M:%S")')
@@ -880,6 +960,20 @@ $JQ -nf $d/prog.jq 2> $d/out && {
 }
 diff $d/out $d/expected
 
+# Test 3: Too many function parameters in a nested function (issue #3661)
+echo "Testing function parameter limit in a nested function..."
+cat > $d/expected <<EOF
+jq: error: function has too many parameters (max 4095)
+jq: error: too many function parameters or local function definitions (max 4095)
+jq: 2 compile errors
+EOF
+$JQ -rn '"def g(\([range(4097) | "a\(.)"] | join(";"))): .; def f: g(\([range(4097)] | join(";"))); f"' > $d/prog.jq
+$JQ -nf $d/prog.jq 2> $d/out && {
+  echo "Expected compile error for too many parameters in a nested function"
+  exit 1
+}
+diff $d/out $d/expected
+
 # CVE-2026-33948: No NUL truncation in the JSON parser
 if printf '{}\x00{}' | $JQ >/dev/null 2> /dev/null; then
   printf 'Error expected but jq exited successfully\n' 1>&2
@@ -922,5 +1016,21 @@ $JQ -n '1 as $X | $x' > /dev/null 2> $d/out && {
   exit 1
 }
 diff $d/out $d/expected
+# CVE-2026-43895: No NUL bytes in module/data import paths
+printf 'import "a\\u0000b" as $x; .' > "$d/nul_import.jq"
+if $JQ -nf "$d/nul_import.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for import path with NUL bytes\n' 1>&2
+  exit 1
+fi
+printf 'include "a\\u0000b"; .' > "$d/nul_include.jq"
+if $JQ -nf "$d/nul_include.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for include path with NUL bytes\n' 1>&2
+  exit 1
+fi
+printf '"a\\u0000b" | modulemeta' > "$d/nul_modulemeta.jq"
+if $JQ -nf "$d/nul_modulemeta.jq" >/dev/null 2>/dev/null; then
+  printf 'Error expected for modulemeta with NUL bytes\n' 1>&2
+  exit 1
+fi
 
 exit 0

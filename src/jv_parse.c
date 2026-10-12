@@ -37,7 +37,6 @@ struct jv_parser {
   int curr_buf_pos;
   int curr_buf_is_partial;
   int eof;
-  unsigned bom_strip_position;
 
   int flags;
 
@@ -90,7 +89,6 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->eof = 0;
   p->curr_buf = 0;
   p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
-  p->bom_strip_position = 0;
   p->last_ch_was_ws = 0;
   p->line = 1;
   p->column = 0;
@@ -563,6 +561,11 @@ typedef enum {
 
 static chclass classify(char c) {
   switch (c) {
+  case '\0':
+    // RFC 8259 forbids raw NUL in JSON text. Treating it as a literal lets it
+    // slip into the token buffer, where check_literal() reads the buffer as a
+    // NUL-terminated C string and silently truncates the token. Reject it.
+    return INVALID;
   case ' ':
   case '\t':
   case '\r':
@@ -724,8 +727,6 @@ void jv_parser_free(struct jv_parser* p) {
   jv_mem_free(p);
 }
 
-static const unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
-
 int jv_parser_remaining(struct jv_parser* p) {
   if (p->curr_buf == 0)
     return 0;
@@ -735,22 +736,6 @@ int jv_parser_remaining(struct jv_parser* p) {
 void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial) {
   assert((p->curr_buf == 0 || p->curr_buf_pos == p->curr_buf_length)
          && "previous buffer not exhausted");
-  while (length > 0 && p->bom_strip_position < sizeof(UTF8_BOM)) {
-    if ((unsigned char)*buf == UTF8_BOM[p->bom_strip_position]) {
-      // matched a BOM character
-      buf++;
-      length--;
-      p->bom_strip_position++;
-    } else {
-      if (p->bom_strip_position == 0) {
-        // no BOM in this document
-        p->bom_strip_position = sizeof(UTF8_BOM);
-      } else {
-        // malformed BOM (prefix present, rest missing)
-        p->bom_strip_position = 0xff;
-      }
-    }
-  }
   p->curr_buf = buf;
   p->curr_buf_length = length;
   p->curr_buf_pos = 0;
@@ -774,12 +759,6 @@ jv jv_parser_next(struct jv_parser* p) {
     return jv_invalid();
   if (!p->curr_buf)
     return jv_invalid(); // Need a buffer
-  if (p->bom_strip_position == 0xff) {
-    if (!(p->flags & JV_PARSE_SEQ))
-      return jv_invalid_with_msg(jv_string("Malformed BOM"));
-    p->st =JV_PARSER_WAITING_FOR_RS;
-    parser_reset(p);
-  }
   jv value = jv_invalid();
   if ((p->flags & JV_PARSE_STREAMING) && stream_check_done(p, &value))
     return value;
@@ -806,9 +785,9 @@ jv jv_parser_next(struct jv_parser* p) {
     jv_free(value);
     if (ch != '\036' && (p->flags & JV_PARSE_SEQ)) {
       // Skip to the next RS
-      p->st = JV_PARSER_WAITING_FOR_RS;
       value = make_error(p, "%s at line %d, column %d (need RS to resync)", msg, p->line, p->column);
       parser_reset(p);
+      p->st = JV_PARSER_WAITING_FOR_RS;
       return value;
     }
     value = make_error(p, "%s at line %d, column %d", msg, p->line, p->column);

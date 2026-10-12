@@ -75,7 +75,7 @@ jobs:
       SUFFIX: linux-${{ matrix.arch }}
     steps:
       - name: Clone repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: true
       - name: Install packages
@@ -136,7 +136,7 @@ jobs:
       SUFFIX: macos-${{ matrix.arch }}
     steps:
       - name: Clone repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: true
       - name: Install packages
@@ -213,7 +213,7 @@ jobs:
         run: git config --system core.autocrlf false
         shell: bash
       - name: Clone repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: true
       - uses: msys2/setup-msys2@v2
@@ -266,7 +266,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: true
       - name: Install packages
@@ -303,7 +303,7 @@ jobs:
     needs: linux
     steps:
       - name: Clone repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Download executables
         uses: actions/download-artifact@v8
         with:
@@ -380,27 +380,31 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/jq-')
     steps:
       - name: Clone repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
           pattern: jq-*
           merge-multiple: true
+      - name: Prepare release artifacts
+        run: |
+          cp jq-linux-amd64 jq-linux64
+          cp jq-macos-amd64 jq-osx-amd64
+          cp jq-windows-amd64.exe jq-win64.exe
+      - name: Generate signed attestations
+        id: attest
+        uses: actions/attest@v4
+        with:
+          subject-path: jq-*
       - name: Upload release
         env:
           TAG_NAME: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp jq-linux-amd64 jq-linux64
-          cp jq-macos-amd64 jq-osx-amd64
-          cp jq-windows-amd64.exe jq-win64.exe
+          mv "${{ steps.attest.outputs.bundle-path }}" jq-attestation.json
           sha256sum jq-* > sha256sum.txt
           gh release create "$TAG_NAME" --draft --title "jq ${TAG_NAME#jq-}" --generate-notes
           gh release upload "$TAG_NAME" --clobber jq-* sha256sum.txt
-      - name: Generate signed attestations
-        uses: actions/attest@v4
-        with:
-          subject-path: jq-*
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v7
         with:

@@ -85,7 +85,6 @@ struct lexer_param;
 %token SETDEFINEDOR "//="
 %token LESSEQ "<="
 %token GREATEREQ ">="
-%token ALTERNATION "?//"
 
 %token QQSTRING_START
 %token <literal> QQSTRING_TEXT
@@ -439,26 +438,16 @@ ImportWhat Query ';' {
 
 ImportWhat:
 "import" ImportFrom "as" BINDING {
-  jv v = block_const($2);
-  // XXX Make gen_import take only blocks and the int is_data so we
-  // don't have to free so much stuff here
-  $$ = gen_import(jv_string_value(v), jv_string_value($4), 1);
+  $$ = gen_import(block_const($2), $4, 1);
   block_free($2);
-  jv_free($4);
-  jv_free(v);
 } |
 "import" ImportFrom "as" IDENT {
-  jv v = block_const($2);
-  $$ = gen_import(jv_string_value(v), jv_string_value($4), 0);
+  $$ = gen_import(block_const($2), $4, 0);
   block_free($2);
-  jv_free($4);
-  jv_free(v);
 } |
 "include" ImportFrom {
-  jv v = block_const($2);
-  $$ = gen_import(jv_string_value(v), NULL, 0);
+  $$ = gen_import(block_const($2), jv_invalid(), 0);
   block_free($2);
-  jv_free(v);
 }
 
 ImportFrom:
@@ -756,16 +745,16 @@ Query {
 }
 
 RepPatterns:
-RepPatterns "?//" Pattern {
-  $$ = BLOCK($1, gen_destructure_alt($3));
+RepPatterns '?' "//" Pattern {
+  $$ = BLOCK($1, gen_destructure_alt($4));
 } |
 Pattern {
   $$ = gen_destructure_alt($1);
 }
 
 Patterns:
-RepPatterns "?//" Pattern {
-  $$ = BLOCK($1, $3);
+RepPatterns '?' "//" Pattern {
+  $$ = BLOCK($1, $4);
 } |
 Pattern {
   $$ = $1;
