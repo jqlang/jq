@@ -1538,8 +1538,6 @@ static int setenv(const char *var, const char *val, int ovr)
  *
  * Our wrapper tries to use timegm() if available, or mktime() and
  * correct for its side-effects if possible.
- *
- * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
  */
 static time_t my_mktime(struct tm *tm) {
 #ifdef HAVE_TIMEGM
@@ -1754,11 +1752,13 @@ static jv f_mktime(jq_state *jq, jv a) {
   struct tm tm;
   if (!jv2tm(a, &tm, 0))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
+  /* my_mktime() returns (time_t)-1 on failure, but it is also the valid result
+   * for 1969-12-31T23:59:59Z. Tell them apart by tm_wday, which my_mktime()
+   * overwrites only on success. */
+  tm.tm_wday = -1;
   time_t t = my_mktime(&tm);
-  if (t == (time_t)-1)
+  if (t == (time_t)-1 && tm.tm_wday == -1)
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
-  if (t == (time_t)-2)
-    return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
   return jv_number(t);
 }
 
