@@ -601,7 +601,73 @@ static void run_jq_pthread_tests(void) {
 #endif // HAVE_PTHREAD
 
 
+static void test_parser_string_spans(void) {
+  struct jv_parser *parser = jv_parser_new(0);
+  char first[513];
+  first[0] = '"';
+  memset(first + 1, 'a', sizeof(first) - 1);
+  jv_parser_set_buf(parser, first, sizeof(first), 1);
+  jv value = jv_parser_next(parser);
+  assert(!jv_is_valid(value));
+  assert(!jv_invalid_has_msg(jv_copy(value)));
+  assert(jv_parser_remaining(parser) == 0);
+  jv_free(value);
+
+  char second[43];
+  second[0] = '\\';
+  second[1] = '"';
+  memset(second + 2, 'b', 40);
+  second[42] = '"';
+  jv_parser_set_buf(parser, second, sizeof(second), 0);
+  value = jv_parser_next(parser);
+  assert(jv_get_kind(value) == JV_KIND_STRING);
+  assert(jv_string_length_bytes(jv_copy(value)) == 553);
+  const char *text = jv_string_value(value);
+  assert(memcmp(text, first + 1, sizeof(first) - 1) == 0);
+  assert(text[512] == '"');
+  for (int i = 513; i < 553; i++)
+    assert(text[i] == 'b');
+  jv_free(value);
+  jv_parser_free(parser);
+
+  parser = jv_parser_new(0);
+  char invalid[36];
+  invalid[0] = '"';
+  memset(invalid + 1, 'a', 32);
+  invalid[33] = '\n';
+  invalid[34] = 'b';
+  invalid[35] = '"';
+  jv_parser_set_buf(parser, invalid, sizeof(invalid), 0);
+  value = jv_parser_next(parser);
+  assert(jv_invalid_has_msg(jv_copy(value)));
+  jv error = jv_invalid_get_msg(value);
+  assert(strstr(jv_string_value(error), "line 2, column 2") != NULL);
+  jv_free(error);
+  jv_parser_free(parser);
+
+  parser = jv_parser_new(JV_PARSE_SEQ);
+  char sequence[37];
+  sequence[0] = '\036';
+  sequence[1] = '"';
+  memset(sequence + 2, 'a', 32);
+  sequence[34] = '\036';
+  sequence[35] = '1';
+  sequence[36] = '\n';
+  jv_parser_set_buf(parser, sequence, sizeof(sequence), 0);
+  value = jv_parser_next(parser);
+  assert(jv_invalid_has_msg(jv_copy(value)));
+  error = jv_invalid_get_msg(value);
+  assert(strstr(jv_string_value(error), "Truncated value") != NULL);
+  jv_free(error);
+  value = jv_parser_next(parser);
+  assert(jv_get_kind(value) == JV_KIND_NUMBER);
+  assert(jv_number_value(value) == 1);
+  jv_free(value);
+  jv_parser_free(parser);
+}
+
 static void jv_test(void) {
+  test_parser_string_spans();
   /// JSON parser regression tests
   {
     jv v = jv_parse("{\"a':\"12\"}");

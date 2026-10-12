@@ -11,6 +11,8 @@
 
 typedef const char* presult;
 
+#define STRING_SCAN_INTERVAL 16
+
 #ifndef MAX_PARSING_DEPTH
 #define MAX_PARSING_DEPTH (10000)
 #endif
@@ -51,6 +53,7 @@ struct jv_parser {
   char* tokenbuf;
   int tokenpos;
   int tokenlen;
+  int string_scan_pos; // next token position eligible for a string-run scan
 
   int line, column;
 
@@ -82,6 +85,7 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->tokenlen = 256;
   p->tokenbuf = jv_mem_alloc(p->tokenlen);
   p->tokenpos = 0;
+  p->string_scan_pos = 0;
   if ((p->flags & JV_PARSE_SEQ))
     p->st = JV_PARSER_WAITING_FOR_RS;
   else
@@ -110,6 +114,7 @@ static void parser_reset(struct jv_parser* p) {
     jv_free(p->stack[i]);
   p->stackpos = 0;
   p->tokenpos = 0;
+  p->string_scan_pos = 0;
   p->st = JV_PARSER_NORMAL;
 }
 
@@ -431,6 +436,24 @@ static pfunc tokenadd(struct jv_parser* p, char c) {
   return 0;
 }
 
+static void tokenadd_string_span(struct jv_parser* p, const char* text, int len) {
+  assert(len > 0);
+  assert(len < p->tokenlen - p->tokenpos);
+  memcpy(p->tokenbuf + p->tokenpos, text, len);
+  p->tokenpos += len;
+  p->last_ch_was_ws = 0;
+
+  // Preserve scan()'s byte-based line and column accounting.
+  const char* end = text + len;
+  const char* newline;
+  while ((newline = memchr(text, '\n', end - text))) {
+    p->line++;
+    p->column = 0;
+    text = newline + 1;
+  }
+  p->column += (int)(end - text);
+}
+
 static int unhex4(char* hex) {
   int r = 0;
   for (int i=0; i<4; i++) {
@@ -690,6 +713,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
       break;
     case QUOTE:
       p->st = JV_PARSER_STRING;
+      p->string_scan_pos = p->tokenpos + STRING_SCAN_INTERVAL;
       break;
     case STRUCTURE:
       TRY(token(p, ch));
@@ -702,11 +726,13 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
     if (ch == '"' && p->st == JV_PARSER_STRING) {
       TRY(found_string(p));
       p->st = JV_PARSER_NORMAL;
+      p->string_scan_pos = 0;
       if (check_done(p, out)) answer = OK;
     } else {
       TRY(tokenadd(p, ch));
       if (ch == '\\' && p->st == JV_PARSER_STRING) {
         p->st = JV_PARSER_STRING_ESCAPE;
+        p->string_scan_pos = p->tokenpos + STRING_SCAN_INTERVAL;
       } else {
         p->st = JV_PARSER_STRING;
       }
@@ -765,6 +791,40 @@ jv jv_parser_next(struct jv_parser* p) {
   char ch;
   presult msg = 0;
   while (!msg && p->curr_buf_pos < p->curr_buf_length) {
+    // Long string runs can be copied at once. Probe periodically to avoid
+    // repeatedly searching short runs in escape-heavy strings.
+    if (p->st == JV_PARSER_STRING && p->tokenpos >= p->string_scan_pos &&
+        p->tokenpos < p->tokenlen) {
+      int remaining = p->curr_buf_length - p->curr_buf_pos;
+      int room = p->tokenlen - p->tokenpos - 1;
+      size_t scan_len = (size_t)remaining < (size_t)room
+          ? (size_t)remaining
+          : (size_t)room;
+      if (scan_len >= STRING_SCAN_INTERVAL) {
+        const char* start = p->curr_buf + p->curr_buf_pos;
+        const char* scan_end = start + scan_len;
+        const char* span_end = scan_end;
+        const char* quote = memchr(start, '"', scan_len);
+        const char* escape = memchr(start, '\\', scan_len);
+        if (quote && quote < span_end)
+          span_end = quote;
+        if (escape && escape < span_end)
+          span_end = escape;
+        if (p->flags & JV_PARSE_SEQ) {
+          const char* rs = memchr(start, '\036', span_end - start);
+          if (rs)
+            span_end = rs;
+        }
+        int span_len = span_end - start;
+        if (span_len >= STRING_SCAN_INTERVAL) {
+          tokenadd_string_span(p, start, span_len);
+          p->curr_buf_pos += span_len;
+          if (span_end < scan_end)
+            p->string_scan_pos = p->tokenpos + STRING_SCAN_INTERVAL;
+          continue;
+        }
+      }
+    }
     ch = p->curr_buf[p->curr_buf_pos++];
     if (p->st == JV_PARSER_WAITING_FOR_RS) {
       if (ch == '\n') {
