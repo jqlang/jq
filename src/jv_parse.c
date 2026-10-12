@@ -11,7 +11,7 @@
 
 typedef const char* presult;
 
-#define STRING_SCAN_INTERVAL 16
+#define STRING_SCAN_INTERVAL 32
 
 #ifndef MAX_PARSING_DEPTH
 #define MAX_PARSING_DEPTH (10000)
@@ -803,17 +803,17 @@ jv jv_parser_next(struct jv_parser* p) {
       if (scan_len >= STRING_SCAN_INTERVAL) {
         const char* start = p->curr_buf + p->curr_buf_pos;
         const char* scan_end = start + scan_len;
-        const char* span_end = scan_end;
-        const char* quote = memchr(start, '"', scan_len);
-        const char* escape = memchr(start, '\\', scan_len);
-        if (quote && quote < span_end)
-          span_end = quote;
-        if (escape && escape < span_end)
-          span_end = escape;
+        const char* span_end = start;
+        // Stop at the first delimiter, rather than searching past an early
+        // escape or quote and repeatedly rescanning the rest of the input.
         if (p->flags & JV_PARSE_SEQ) {
-          const char* rs = memchr(start, '\036', span_end - start);
-          if (rs)
-            span_end = rs;
+          while (span_end < scan_end && *span_end != '"' &&
+                 *span_end != '\\' && *span_end != '\036')
+            span_end++;
+        } else {
+          while (span_end < scan_end && *span_end != '"' &&
+                 *span_end != '\\')
+            span_end++;
         }
         int span_len = span_end - start;
         if (span_len >= STRING_SCAN_INTERVAL) {
@@ -823,6 +823,8 @@ jv jv_parser_next(struct jv_parser* p) {
             p->string_scan_pos = p->tokenpos + STRING_SCAN_INTERVAL;
           continue;
         }
+        // The delimiter is close; don't retry the same search each byte.
+        p->string_scan_pos = p->tokenpos + STRING_SCAN_INTERVAL;
       }
     }
     ch = p->curr_buf[p->curr_buf_pos++];
