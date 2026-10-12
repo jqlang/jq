@@ -1,0 +1,97 @@
+#!/bin/sh
+
+. "${0%/*}/setup" "$@"
+
+# Test custom allocator functionality
+echo "Testing custom allocator functionality..."
+
+# Create a simple test program
+cat > "$d/test_custom_alloc.c" << 'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include "src/jv_alloc.h"
+#include "src/jv.h"
+
+static size_t alloc_count = 0;
+static size_t free_count = 0;
+
+void* test_malloc(size_t size) {
+    alloc_count++;
+    return malloc(size);
+}
+
+void test_free(void* ptr) {
+    if (ptr) free_count++;
+    free(ptr);
+}
+
+int main() {
+    // Test 1: Basic custom allocator functionality
+    jv_set_alloc_funcs(test_malloc, test_free);
+    
+    jv str = jv_string("test");
+    jv_free(str);
+    
+    if (alloc_count == 0) {
+        printf("ERROR: Custom malloc was not called\n");
+        return 1;
+    }
+    
+    if (free_count == 0) {
+        printf("ERROR: Custom free was not called\n");
+        return 1;
+    }
+    
+    // Test 2: Reset to default allocators
+    alloc_count = 0;
+    free_count = 0;
+    jv_set_alloc_funcs(NULL, NULL);
+    
+    jv str2 = jv_string("test2");
+    jv_free(str2);
+    
+    // When reset to NULL, should use default allocators (our counters should be 0)
+    if (alloc_count != 0 || free_count != 0) {
+        printf("ERROR: Default allocators not properly restored\n");
+        return 1;
+    }
+    
+    // Test 3: JSON parsing with custom allocator
+    jv_set_alloc_funcs(test_malloc, test_free);
+    alloc_count = 0;
+    free_count = 0;
+    
+    jv json = jv_parse("{\"key\": \"value\"}");
+    if (!jv_is_valid(json)) {
+        printf("ERROR: JSON parsing failed\n");
+        return 1;
+    }
+    jv_free(json);
+    
+    if (alloc_count == 0) {
+        printf("ERROR: Custom allocator not used during JSON parsing\n");
+        return 1;
+    }
+    
+    printf("All custom allocator tests passed!\n");
+    return 0;
+}
+EOF
+
+# Compile the test
+cd "$d"
+CC=${CC:-gcc}
+if ! $CC -I$JQBASEDIR -L$JQBASEDIR/.libs -L$JQBASEDIR/vendor/oniguruma/src/.libs -o test_custom_alloc test_custom_alloc.c $JQBASEDIR/.libs/libjq.a $JQBASEDIR/vendor/oniguruma/src/.libs/libonig.a -lm; then
+    echo "FAIL: Could not compile custom allocator test"
+    exit 1
+fi
+
+# Run the test
+if ! ./test_custom_alloc; then
+    echo "FAIL: Custom allocator test failed"
+    exit 1
+fi
+
+echo "PASS: Custom allocator tests completed successfully"
