@@ -311,7 +311,10 @@ static void test_jq_start_resets_state(char *prog, const char *input) {
   jv parsed_input = jv_parse(input);
   assert(jv_is_valid(parsed_input));
   jq_start(jq, parsed_input, 0);
-  assert(test_start_state(jq, prog));
+  // Don't use assert here: NDEBUG would remove this check from the test.
+  if (!test_start_state(jq, prog)) {
+    exit(EXIT_FAILURE);
+  }
   while (1) {
     jv result = jq_next(jq);
     int valid = jv_is_valid(result);
@@ -323,7 +326,9 @@ static void test_jq_start_resets_state(char *prog, const char *input) {
   jv parsed_input2 = jv_parse(input);
   assert(jv_is_valid(parsed_input2));
   jq_start(jq, parsed_input2, 0);
-  assert(test_start_state(jq, prog));
+  if (!test_start_state(jq, prog)) {
+    exit(EXIT_FAILURE);
+  }
 
   jq_teardown(&jq);
 }
