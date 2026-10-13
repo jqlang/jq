@@ -11,6 +11,19 @@
 "ab"
 [{"offset":0,"length":0,"string":"","captures":[]},{"offset":1,"length":0,"string":"","captures":[]},{"offset":2,"length":0,"string":"","captures":[]}]
 
+# global zero-width matches must not land inside a multibyte character
+[match(""; "g") | .offset]
+"aé€🚀b"
+[0,1,2,3,4,5]
+
+gsub(""; "-")
+"aé"
+"-a-é-"
+
+[splits("")]
+"aé"
+["","a","é",""]
+
 [match("a"; "gi")]
 "āáàä"
 []

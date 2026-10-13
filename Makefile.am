@@ -5,7 +5,8 @@ LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/exec_stack.h src/jq_parser.h src/jv_alloc.h src/jv_dtoa.h   \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
-        src/util.h src/jv_dtoa_tsd.h src/jv_thread.h src/jv_private.h   \
+        src/util.h src/iso8601.h                                        \
+        src/jv_dtoa_tsd.h src/jv_thread.h src/jv_private.h              \
         vendor/decNumber/decContext.h vendor/decNumber/decNumber.h      \
         vendor/decNumber/decNumberLocal.h
 
@@ -13,7 +14,7 @@ LIBJQ_SRC = src/builtin.c src/bytecode.c src/compile.c src/execute.c    \
         src/jq_test.c src/jv.c src/jv_alloc.c src/jv_aux.c              \
         src/jv_dtoa.c src/jv_file.c src/jv_parse.c src/jv_print.c       \
         src/jv_unicode.c src/linker.c src/locfile.c src/util.c          \
-        src/jv_dtoa_tsd.c                                               \
+        src/iso8601.c src/jv_dtoa_tsd.c                                 \
         vendor/decNumber/decContext.c vendor/decNumber/decNumber.c      \
         ${LIBJQ_INCS}
 
@@ -41,9 +42,14 @@ src/lexer.h: src/lexer.c
 else
 BUILT_SOURCES = src/builtin.inc src/config_opts.inc src/version.h
 .y.c:
-	$(AM_V_YACC) echo "NOT building parser.c!"
+	$(AM_V_YACC) [ "$(<D)" = "$(@D)" ] || cp $(<D)/$(@F) $@
+	$(AM_V_YACC) [ "$(<D)" = "$(@D)" ] || cp $(<D)/$(*F).h $*.h
+	$(AM_V_YACC) touch $@ $*.h
+
 .l.c:
-	$(AM_V_LEX) echo "NOT building lexer.c!"
+	$(AM_V_LEX) [ "$(<D)" = "$(@D)" ] || cp $(<D)/$(@F) $@
+	$(AM_V_LEX) [ "$(<D)" = "$(@D)" ] || cp $(<D)/$(*F).h $*.h
+	$(AM_V_LEX) touch $@ $*.h
 endif
 
 # Tell YACC (Bison) autoconf macros that you want a header file created.
@@ -184,8 +190,18 @@ else
 	@echo As a result, the manpage is out of date.
 endif
 
+# The committed manpage has no date to avoid merge conflicts. Stamp the date
+# of the last commit when building in a git repository, including on make
+# dist, so that release tarballs ship a dated jq.1. Respect SOURCE_DATE_EPOCH
+# so that distribution builds can pin the date.
 jq.1: jq.1.prebuilt
-	$(AM_V_GEN) cp $(srcdir)/jq.1.prebuilt $@
+	$(AM_V_GEN) date=`if test -n "$$SOURCE_DATE_EPOCH"; then \
+	    date -u -d "@$$SOURCE_DATE_EPOCH" +%F 2>/dev/null || \
+	    date -u -r "$$SOURCE_DATE_EPOCH" +%F 2>/dev/null; \
+	  elif test -e $(srcdir)/.git; then \
+	    cd $(srcdir) && git log -1 --format=%cd --date=short 2>/dev/null; \
+	  fi`; \
+	sed 's/^\.TH "JQ" "1" ""/.TH "JQ" "1" "'"$$date"'"/' $(srcdir)/jq.1.prebuilt > $@
 
 CLEANFILES += jq.1
 
@@ -219,6 +235,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         libjq.pc                                                        \
         tests/modules/a.jq tests/modules/b/b.jq tests/modules/c/c.jq    \
         tests/modules/c/d.jq tests/modules/data.json                    \
+        tests/modules/deep1.jq tests/modules/deep2a.jq                  \
+        tests/modules/deep2b.jq tests/modules/deep3.jq                  \
         tests/modules/home1/.jq tests/modules/home2/.jq/g.jq            \
         tests/modules/lib/jq/e/e.jq tests/modules/lib/jq/f.jq           \
         tests/modules/shadow1.jq tests/modules/shadow2.jq               \
@@ -227,6 +245,8 @@ EXTRA_DIST = $(DOC_FILES) $(man_MANS) $(TESTS) $(TEST_LOG_COMPILER)     \
         tests/modules/test_bind_order0.jq                               \
         tests/modules/test_bind_order1.jq                               \
         tests/modules/test_bind_order2.jq                               \
+        tests/modules/cycle_a.jq tests/modules/cycle_b.jq               \
+        tests/modules/cycle_self.jq                                     \
         tests/onig.supp tests/local.supp                                \
         tests/setup tests/torture/input0.json                           \
         tests/optional.test tests/man.test tests/manonig.test           \

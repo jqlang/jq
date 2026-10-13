@@ -45,6 +45,19 @@ ul {
   padding-left: 1rem;
 }
 
+details {
+  margin-bottom: 1rem;
+  padding-left: 1rem;
+
+  & summary {
+    cursor: pointer;
+  }
+
+  & ul {
+    padding-left: 0;
+  }
+}
+
 pre {
   margin: 0 .5rem 1rem;
   padding: .5rem 1rem;
@@ -52,13 +65,17 @@ pre {
   border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
 }
 
-button{
-  &[aria-expanded=false] .bi-chevron-down {
-    display: none;
+button {
+  &[aria-expanded=false] {
+    .bi-chevron-down, .hide-result-text {
+      display: none;
+    }
   }
 
-  &[aria-expanded=true] .bi-chevron-right {
-    display: none;
+  &[aria-expanded=true] {
+    .bi-chevron-right, .show-result-text {
+      display: none;
+    }
   }
 }
 

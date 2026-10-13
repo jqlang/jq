@@ -525,13 +525,17 @@ jv block_module_meta(block b) {
   return jv_null();
 }
 
-block gen_import(const char* name, const char* as, int is_data) {
+block gen_import(jv name, jv as, int is_data) {
+  assert(jv_get_kind(name) == JV_KIND_STRING);
+  assert(!jv_is_valid(as) || jv_get_kind(as) == JV_KIND_STRING);
   inst* i = inst_new(DEPS);
   jv meta = jv_object();
-  if (as != NULL)
-    meta = jv_object_set(meta, jv_string("as"), jv_string(as));
+  if (jv_is_valid(as))
+    meta = jv_object_set(meta, jv_string("as"), as);
+  else
+    jv_free(as);
   meta = jv_object_set(meta, jv_string("is_data"), is_data ? jv_true() : jv_false());
-  meta = jv_object_set(meta, jv_string("relpath"), jv_string(name));
+  meta = jv_object_set(meta, jv_string("relpath"), name);
   i->imm.constant = meta;
   return inst_block(i);
 }
@@ -828,8 +832,7 @@ static block bind_alternation_matchers(block matchers, block body) {
 
 block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
-  block loop = BLOCK(gen_op_simple(DUPN),
-                     source,
+  block loop = BLOCK(source,
                      bind_alternation_matchers(matcher,
                                   BLOCK(gen_op_bound(LOADVN, res_var),
                                         body,
@@ -838,8 +841,10 @@ block gen_reduce(block source, block matcher, block init, block body) {
   return BLOCK(gen_op_simple(DUP),
                init,
                res_var,
+               gen_op_simple(DUP),
                gen_op_target(FORK, loop),
                loop,
+               gen_op_simple(POP),
                gen_op_bound(LOADVN, res_var));
 }
 
@@ -1301,12 +1306,18 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
     bc->nsubfunctions = 0;
     bc->subfunctions = 0;
   }
+  if (errors) {
+    bc->code = 0;
+    bc->constants = jv_invalid();
+    block_free(b);
+    return errors;
+  }
   uint16_t* code = jv_mem_calloc(bc->codelen, sizeof(uint16_t));
   bc->code = code;
   pos = 0;
   jv constant_pool = jv_array();
   int maxvar = -1;
-  if (!errors) for (inst* curr = b.first; curr; curr = curr->next) {
+  for (inst* curr = b.first; curr; curr = curr->next) {
     const struct opcode_description* op = opcode_describe(curr->op);
     if (op->length == 0)
       continue;

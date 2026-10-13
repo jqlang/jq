@@ -271,9 +271,13 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
     jv exit_code = jq_get_exit_code(jq);
     if (!jv_is_valid(exit_code))
       ret = JQ_OK;
-    else if (jv_get_kind(exit_code) == JV_KIND_NUMBER)
+    else if (jv_get_kind(exit_code) == JV_KIND_NUMBER) {
       ret = jv_number_value(exit_code);
-    else
+      // Negative values would be mistaken for JQ_OK_NULL_KIND and friends,
+      // so keep the low 8 bits, like exit(3) does on POSIX systems.
+      if (ret < 0)
+        ret &= 0xff;
+    } else
       ret = JQ_ERROR_UNKNOWN;
     jv_free(exit_code);
     jv error_message = jq_get_error_message(jq);
@@ -504,7 +508,7 @@ int main(int argc, char* argv[]) {
           errno = 0;
           long indent = strtol(argv[i+1], &end, 10);
           if (errno || indent < -1 || indent > 7 ||
-              isspace(*argv[i+1]) || end == argv[i+1] || *end) {
+              isspace((unsigned char)*argv[i+1]) || end == argv[i+1] || *end) {
             fprintf(stderr, "jq: --indent takes a number between -1 and 7\n");
             die();
           }
@@ -741,6 +745,15 @@ int main(int argc, char* argv[]) {
     if (!jv_is_valid(data)) {
       data = jv_invalid_get_msg(data);
       fprintf(stderr, "jq: %s\n", jv_string_value(data));
+      free(program_origin);
+      jv_free(data);
+      ret = JQ_ERROR_SYSTEM;
+      goto out;
+    }
+    int len = jv_string_length_bytes(jv_copy(data));
+    if ((size_t)len != strlen(jv_string_value(data))) {
+      fprintf(stderr, "jq: program file contains NUL bytes\n");
+      free(program_origin);
       jv_free(data);
       ret = JQ_ERROR_SYSTEM;
       goto out;

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <assert.h>
 #include "jv.h"
 #include "jv_dtoa.h"
@@ -36,7 +37,6 @@ struct jv_parser {
   int curr_buf_pos;
   int curr_buf_is_partial;
   int eof;
-  unsigned bom_strip_position;
 
   int flags;
 
@@ -79,8 +79,9 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->last_seen = JV_LAST_NONE;
   p->output = jv_invalid();
   p->next = jv_invalid();
-  p->tokenbuf = 0;
-  p->tokenlen = p->tokenpos = 0;
+  p->tokenlen = 256;
+  p->tokenbuf = jv_mem_alloc(p->tokenlen);
+  p->tokenpos = 0;
   if ((p->flags & JV_PARSE_SEQ))
     p->st = JV_PARSER_WAITING_FOR_RS;
   else
@@ -88,7 +89,6 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->eof = 0;
   p->curr_buf = 0;
   p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
-  p->bom_strip_position = 0;
   p->last_ch_was_ws = 0;
   p->line = 1;
   p->column = 0;
@@ -418,14 +418,17 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
   return 0;
 }
 
-static void tokenadd(struct jv_parser* p, char c) {
+static pfunc tokenadd(struct jv_parser* p, char c) {
   assert(p->tokenpos <= p->tokenlen);
   if (p->tokenpos >= (p->tokenlen - 1)) {
-    p->tokenlen = p->tokenlen*2 + 256;
+    if (p->tokenlen > INT_MAX / 2)
+      return "Token too long";
+    p->tokenlen *= 2;
     p->tokenbuf = jv_mem_realloc(p->tokenbuf, p->tokenlen);
   }
   assert(p->tokenpos < p->tokenlen);
   p->tokenbuf[p->tokenpos++] = c;
+  return 0;
 }
 
 static int unhex4(char* hex) {
@@ -558,6 +561,11 @@ typedef enum {
 
 static chclass classify(char c) {
   switch (c) {
+  case '\0':
+    // RFC 8259 forbids raw NUL in JSON text. Treating it as a literal lets it
+    // slip into the token buffer, where check_literal() reads the buffer as a
+    // NUL-terminated C string and silently truncates the token. Reject it.
+    return INVALID;
   case ' ':
   case '\t':
   case '\r':
@@ -676,7 +684,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
     }
     switch (cls) {
     case LITERAL:
-      tokenadd(p, ch);
+      TRY(tokenadd(p, ch));
       break;
     case WHITESPACE:
       break;
@@ -696,7 +704,7 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
       p->st = JV_PARSER_NORMAL;
       if (check_done(p, out)) answer = OK;
     } else {
-      tokenadd(p, ch);
+      TRY(tokenadd(p, ch));
       if (ch == '\\' && p->st == JV_PARSER_STRING) {
         p->st = JV_PARSER_STRING_ESCAPE;
       } else {
@@ -719,8 +727,6 @@ void jv_parser_free(struct jv_parser* p) {
   jv_mem_free(p);
 }
 
-static const unsigned char UTF8_BOM[] = {0xEF,0xBB,0xBF};
-
 int jv_parser_remaining(struct jv_parser* p) {
   if (p->curr_buf == 0)
     return 0;
@@ -730,22 +736,6 @@ int jv_parser_remaining(struct jv_parser* p) {
 void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_partial) {
   assert((p->curr_buf == 0 || p->curr_buf_pos == p->curr_buf_length)
          && "previous buffer not exhausted");
-  while (length > 0 && p->bom_strip_position < sizeof(UTF8_BOM)) {
-    if ((unsigned char)*buf == UTF8_BOM[p->bom_strip_position]) {
-      // matched a BOM character
-      buf++;
-      length--;
-      p->bom_strip_position++;
-    } else {
-      if (p->bom_strip_position == 0) {
-        // no BOM in this document
-        p->bom_strip_position = sizeof(UTF8_BOM);
-      } else {
-        // malformed BOM (prefix present, rest missing)
-        p->bom_strip_position = 0xff;
-      }
-    }
-  }
   p->curr_buf = buf;
   p->curr_buf_length = length;
   p->curr_buf_pos = 0;
@@ -769,12 +759,6 @@ jv jv_parser_next(struct jv_parser* p) {
     return jv_invalid();
   if (!p->curr_buf)
     return jv_invalid(); // Need a buffer
-  if (p->bom_strip_position == 0xff) {
-    if (!(p->flags & JV_PARSE_SEQ))
-      return jv_invalid_with_msg(jv_string("Malformed BOM"));
-    p->st =JV_PARSER_WAITING_FOR_RS;
-    parser_reset(p);
-  }
   jv value = jv_invalid();
   if ((p->flags & JV_PARSE_STREAMING) && stream_check_done(p, &value))
     return value;
@@ -801,9 +785,9 @@ jv jv_parser_next(struct jv_parser* p) {
     jv_free(value);
     if (ch != '\036' && (p->flags & JV_PARSE_SEQ)) {
       // Skip to the next RS
-      p->st = JV_PARSER_WAITING_FOR_RS;
       value = make_error(p, "%s at line %d, column %d (need RS to resync)", msg, p->line, p->column);
       parser_reset(p);
+      p->st = JV_PARSER_WAITING_FOR_RS;
       return value;
     }
     value = make_error(p, "%s at line %d, column %d", msg, p->line, p->column);
@@ -892,8 +876,9 @@ jv jv_parse_sized_custom_flags(const char* string, int length, int flags) {
 
   if (!jv_is_valid(value) && jv_invalid_has_msg(jv_copy(value))) {
     jv msg = jv_invalid_get_msg(value);
-    value = jv_invalid_with_msg(jv_string_fmt("%s (while parsing '%s')",
+    value = jv_invalid_with_msg(jv_string_fmt("%s (while parsing '%.*s')",
                                               jv_string_value(msg),
+                                              length,
                                               string));
     jv_free(msg);
   }

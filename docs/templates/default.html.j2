@@ -18,7 +18,7 @@
         <div class="d-flex accordion-heading me-2">
           <pre class="flex-grow-1 me-0 mb-0" tabindex="0">{{ item.command }}</pre>
           <button type="button" class="btn btn-sm btn-secondary text-body-secondary bg-secondary-subtle link-body-emphasis flex-shrink-0 d-flex align-items-center border border-start-0 d-print-none"
-            data-bs-toggle="collapse" data-bs-target="#result{{ resultID }}" aria-expanded="false" aria-controls="result{{ resultID }}">Show result</button>
+            data-bs-toggle="collapse" data-bs-target="#result{{ resultID }}" aria-expanded="false" aria-controls="result{{ resultID }}"><span class="show-result-text">Show result</span><span class="hide-result-text">Hide result</span></button>
         </div>
         <pre id="result{{ resultID }}" class="accordion-body collapse p-3 border-top-0 d-print-block" tabindex="0">{{ item.result }}</pre>
       </div>

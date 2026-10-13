@@ -15,7 +15,8 @@ const char* jvp_utf8_backtrack(const char* start, const char* min, int *missing_
   }
   int length = 0;
   int seen = 1;
-  while (start >= min && (length = utf8_coding_length[(unsigned char)*start]) == UTF8_CONTINUATION_BYTE) {
+  while ((length = utf8_coding_length[(unsigned char)*start]) == UTF8_CONTINUATION_BYTE) {
+    if (start == min) break;
     start--;
     seen++;
   }
@@ -41,7 +42,7 @@ const char* jvp_utf8_next(const char* in, const char* end, int* codepoint_ret) {
   } else if (length == 0 || length == UTF8_CONTINUATION_BYTE) {
     /* Bad single byte - either an invalid byte or an out-of-place continuation byte */
     length = 1;
-  } else if (in + length > end) {
+  } else if (length > end - in) {
     /* String ends before UTF8 sequence ends */
     length = end - in;
   } else {

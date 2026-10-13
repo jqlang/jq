@@ -3,12 +3,6 @@
 #include <float.h>
 #include <string.h>
 
-#ifdef WIN32
-#include <windows.h>
-#include <io.h>
-#include <fileapi.h>
-#endif
-
 #include "jv.h"
 #include "jv_dtoa.h"
 #include "jv_dtoa_tsd.h"
@@ -99,26 +93,9 @@ static void put_buf(const char *s, int len, FILE *fout, jv *strout, int is_tty) 
   if (strout) {
     *strout = jv_string_append_buf(*strout, s, len);
   } else {
-#ifdef WIN32
-  /* See util.h */
-  if (is_tty) {
-    wchar_t *ws;
-    size_t wl;
     if (len == -1)
       len = strlen(s);
-    wl = MultiByteToWideChar(CP_UTF8, 0, s, len, NULL, 0);
-    ws = jv_mem_calloc(wl + 1, sizeof(*ws));
-    if (!ws)
-      return;
-    wl = MultiByteToWideChar(CP_UTF8, 0, s, len, ws, wl + 1);
-    ws[wl] = 0;
-    WriteConsoleW((HANDLE)_get_osfhandle(fileno(fout)), ws, wl, NULL, NULL);
-    free(ws);
-  } else
-    fwrite(s, 1, len, fout);
-#else
-  fwrite(s, 1, len, fout);
-#endif
+    priv_fwrite(s, len, fout, is_tty); /* see util.h */
   }
 }
 
@@ -149,7 +126,18 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
   int c = 0;
   char buf[32];
   put_char('"', F, S, T);
-  while ((i = jvp_utf8_next((cstart = i), end, &c))) {
+  while (i < end) {
+    // Write each run of bytes that need no escaping with a single call.
+    for (cstart = i; cstart < end; cstart++) {
+      unsigned char b = *cstart;
+      if (b < 0x20 || b == '"' || b == '\\' || b == 0x7F || (ascii_only && b >= 0x80))
+        break;
+    }
+    if (cstart > i)
+      put_buf(i, cstart - i, F, S, T);
+    if (cstart == end)
+      break;
+    i = jvp_utf8_next(cstart, end, &c);
     assert(c != -1);
     int unicode_escape = 0;
     if (0x20 <= c && c <= 0x7E) {
@@ -410,6 +398,10 @@ jv jv_dump_string(jv x, int flags) {
 
 char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize) {
   assert(bufsize > 0);
+  if (jv_get_kind(x) == JV_KIND_STRING &&
+      (size_t)jv_string_length_bytes(jv_copy(x)) > bufsize) {
+    x = jv_string_slice(x, 0, bufsize);
+  }
   x = jv_dump_string(x, 0);
   const char *str = jv_string_value(x);
   const size_t len = strlen(str);

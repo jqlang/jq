@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from datetime import date
 from io import StringIO
 from lxml import etree
 import markdown
@@ -66,8 +65,7 @@ class RoffWalker(object):
         last_tag = None
         while root is not None:
             if root.tag == 'h1':
-                self.__write_cmd('.TH "JQ" "1" "{}" "" ""'.format(
-                    date.today().strftime('%B %Y')))
+                self.__write_cmd('.TH "JQ" "1" "" "" ""')
                 self.__write_cmd('.SH "NAME"')
                 # TODO: properly parse this
                 self.__write_raw(r'\fBjq\fR \- Command\-line JSON processor' +

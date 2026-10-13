@@ -428,13 +428,6 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
-    case DUPN: {
-      jv v = stack_popn(jq);
-      stack_push(jq, jv_copy(v));
-      stack_push(jq, v);
-      break;
-    }
-
     case DUP2: {
       jv keep = stack_pop(jq);
       jv v = stack_pop(jq);
@@ -516,24 +509,29 @@ jv jq_next(jq_state *jq) {
       uint16_t v = *pc++;
       jv* var = frame_local_var(jq, v, level);
       jv max = stack_pop(jq);
+      jv step = stack_pop(jq);
       if (raising) {
         jv_free(max);
+        jv_free(step);
         goto do_backtrack;
-      } 
-      if (jv_get_kind(*var) != JV_KIND_NUMBER ||
-          jv_get_kind(max) != JV_KIND_NUMBER) {
-        set_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
+      }
+
+      if (jv_get_kind(*var) != JV_KIND_NUMBER || jv_get_kind(max) != JV_KIND_NUMBER ||
+          jv_get_kind(step) != JV_KIND_NUMBER) {
+        set_error(jq, jv_invalid_with_msg(jv_string("Range bounds and step must be numeric")));
         jv_free(max);
+        jv_free(step);
         goto do_backtrack;
-      } else if (jv_number_value(*var) >= jv_number_value(max)) {
-        /* finished iterating */
+      } else if (jv_cmp(jv_copy(*var), jv_copy(max)) * jv_cmp(jv_copy(step), jv_number(0)) >= 0) {
         jv_free(max);
+        jv_free(step);
         goto do_backtrack;
       } else {
         jv curr = *var;
-        *var = jv_number(jv_number_value(*var) + 1);
+        *var = jv_number(jv_number_value(curr) + jv_number_value(step));
 
         struct stack_pos spos = stack_get_pos(jq);
+        stack_push(jq, step);
         stack_push(jq, max);
         stack_save(jq, pc - 3, spos);
 
@@ -922,6 +920,8 @@ jv jq_next(jq_state *jq) {
       if (!jv_is_valid(top)) {
         if (jv_invalid_has_msg(jv_copy(top)))
           set_error(jq, top);
+        else
+          jv_free(top);
         goto do_backtrack;
       }
 
@@ -1020,12 +1020,19 @@ jv jq_format_error(jv msg) {
   // Invalid with msg; prefix with "jq: error: "
 
   if (jv_get_kind(msg) != JV_KIND_INVALID) {
-    if (jv_get_kind(msg) == JV_KIND_STRING)
-      return jv_string_fmt("jq: error: %s", jv_string_value(msg));
+    if (jv_get_kind(msg) == JV_KIND_STRING) {
+      jv r = jv_string_fmt("jq: error: %s", jv_string_value(msg));
+      jv_free(msg);
+      return r;
+    }
 
     msg = jv_dump_string(msg, JV_PRINT_INVALID);
-    if (jv_get_kind(msg) == JV_KIND_STRING)
-      return jv_string_fmt("jq: error: %s", jv_string_value(msg));
+    if (jv_get_kind(msg) == JV_KIND_STRING) {
+      jv r = jv_string_fmt("jq: error: %s", jv_string_value(msg));
+      jv_free(msg);
+      return r;
+    }
+    jv_free(msg);
     return jq_format_error(jv_null());  // ENOMEM
   }
 
@@ -1213,7 +1220,7 @@ args2obj(jv args)
   jv kk = jv_string("name");
   jv vk = jv_string("value");
   jv_array_foreach(args, i, v)
-    r = jv_object_set(r, jv_object_get(jv_copy(v), kk), jv_object_get(v, vk));
+    r = jv_object_set(r, jv_object_get(jv_copy(v), jv_copy(kk)), jv_object_get(v, jv_copy(vk)));
   jv_free(args);
   jv_free(kk);
   jv_free(vk);
@@ -1234,9 +1241,10 @@ int jq_compile_args(jq_state *jq, const char* str, jv args) {
   int nerrors = load_program(jq, locations, &program);
   if (nerrors == 0) {
     nerrors = builtins_bind(jq, &program);
-    if (nerrors == 0) {
+    if (nerrors == 0)
       nerrors = block_compile(program, &jq->bc, locations, args2obj(args));
-    }
+    else
+      jv_free(args);
   } else
     jv_free(args);
   if (nerrors)
