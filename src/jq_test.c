@@ -14,6 +14,7 @@ static void run_jq_start_state_tests(void);
 static void run_jq_compile_args_tests(void);
 static void run_jq_recompile_tests(void);
 static void run_jq_exhaust_and_reuse_tests(void);
+static void run_jq_input_meta_tests(void);
 #ifdef HAVE_PTHREAD
 static void run_jq_pthread_tests(void);
 #endif
@@ -54,6 +55,7 @@ int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
   run_jq_compile_args_tests();
   run_jq_recompile_tests();
   run_jq_exhaust_and_reuse_tests();
+  run_jq_input_meta_tests();
 #ifdef HAVE_PTHREAD
   run_jq_pthread_tests();
 #endif
@@ -760,4 +762,176 @@ static void jv_test(void) {
     //jv_dump(jv_copy(o2), 0); printf("\n");
     jv_free(o2);
   }
+}
+
+struct input_meta_test_data {
+  jv filename;
+  jv line;
+  int calls;
+};
+
+static jv input_meta_test_filename(jq_state *jq, void *data) {
+  return jv_copy(((struct input_meta_test_data *)data)->filename);
+}
+
+static jv input_meta_test_line(jq_state *jq, void *data) {
+  return jv_copy(((struct input_meta_test_data *)data)->line);
+}
+
+static jv input_meta_test_input(jq_state *jq, void *data) {
+  struct input_meta_test_data *source = data;
+  if (++source->calls > 2)
+    return jv_invalid();
+  jv_free(source->filename);
+  source->filename = jv_string(source->calls == 1 ? "first.log" : "second.log");
+  jv_free(source->line);
+  source->line = jv_number(source->calls * 10);
+  return jv_number(source->calls);
+}
+
+static jv input_meta_test_error(jq_state *jq, void *data) {
+  ((struct input_meta_test_data *)data)->calls++;
+  return jv_invalid_with_msg(jv_string("read failed"));
+}
+
+static void input_meta_test_check(jq_state *jq, const char *program,
+                                 const char *expected) {
+  compile_args_and_check(jq, program, jv_object(), jv_null(), jv_parse(expected));
+}
+
+static void run_jq_input_meta_tests(void) {
+  printf("Test input metadata callbacks\n");
+  jq_state *jq = jq_init();
+  assert(jq);
+  struct input_meta_test_data first = {jv_string("memory.log"), jv_number(42), 0};
+  struct input_meta_test_data second = {jv_string("other.log"), jv_number(99), 0};
+  jq_input_meta_cb filename_cb, line_cb;
+  void *data;
+  jq_get_input_meta_cb(jq, &filename_cb, &line_cb, &data);
+  assert(filename_cb == NULL && line_cb == NULL && data == NULL);
+
+  // No callbacks, and a custom value callback without metadata, keep the
+  // historical null filename and line-number error.
+  const char *query = "[input_filename, (try input_line_number catch .)]";
+  const char *unknown = "[null,\"Unknown input line number\"]";
+  input_meta_test_check(jq, query, unknown);
+  jq_set_input_cb(jq, input_meta_test_input, &first);
+  input_meta_test_check(jq,
+    "input | [input_filename, (try input_line_number catch .)]", unknown);
+  assert(first.calls == 1);
+
+  first.calls = 0;
+  jq_set_input_meta_cb(jq, input_meta_test_filename, input_meta_test_line, &first);
+  jq_get_input_meta_cb(jq, &filename_cb, &line_cb, &data);
+  assert(filename_cb == input_meta_test_filename);
+  assert(line_cb == input_meta_test_line && data == &first);
+  input_meta_test_check(jq,
+    "[inputs | [., input_filename, input_line_number, input_filename, input_line_number]]",
+    "[[1,\"first.log\",10,\"first.log\",10],"
+     "[2,\"second.log\",20,\"second.log\",20]]");
+  assert(first.calls == 3); // Two inputs and EOF; metadata never reads input.
+  input_meta_test_check(jq, query, "[\"second.log\",20]");
+  assert(first.calls == 3);
+  input_meta_test_check(jq, "[inputs]", "[]");
+  assert(first.calls == 4);
+  input_meta_test_check(jq, query, "[\"second.log\",20]");
+
+  // Each missing callback falls back independently, including for jq_util.
+  jq_set_input_meta_cb(jq, input_meta_test_filename, NULL, &first);
+  input_meta_test_check(jq, query, "[\"second.log\",\"Unknown input line number\"]");
+  jq_set_input_meta_cb(jq, NULL, input_meta_test_line, &first);
+  input_meta_test_check(jq, query, "[null,20]");
+  jq_util_input_state *util = jq_util_input_init(NULL, NULL);
+  jq_set_input_cb(jq, jq_util_input_next_input_cb, util);
+  input_meta_test_check(jq, query, "[null,20]");
+  jq_set_input_meta_cb(jq, input_meta_test_filename, NULL, &first);
+  input_meta_test_check(jq, query, "[\"second.log\",0]");
+  jq_set_input_meta_cb(jq, NULL, NULL, NULL);
+  input_meta_test_check(jq, query, "[null,0]");
+  jq_set_input_cb(jq, NULL, NULL);
+  jq_util_input_free(&util);
+
+  // Direct jq_start, replacement userdata, recompilation, and repeated starts
+  // retain the registration. The value and metadata callbacks can use
+  // different userdata, and changing the value callback does not reset it.
+  jq_set_input_meta_cb(jq, input_meta_test_filename, input_meta_test_line, &second);
+  input_meta_test_check(jq, query, "[\"other.log\",99]");
+  for (int i = 0; i < 2; i++) {
+    jq_start(jq, jv_number(i), 0);
+    assert(jv_equal(jq_next(jq), jv_parse("[\"other.log\",99]")));
+    jv end = jq_next(jq);
+    assert(!jv_is_valid(end) && !jv_invalid_has_msg(jv_copy(end)));
+    jv_free(end);
+  }
+  jq_set_input_cb(jq, input_meta_test_error, &first);
+  input_meta_test_check(jq, "try input catch .", "\"read failed\"");
+  assert(first.calls == 5 && second.calls == 0);
+  input_meta_test_check(jq, query, "[\"other.log\",99]");
+
+  // Invalid filename values become null, while line errors retain their
+  // messages; a missing line without a message gets the usual unknown error.
+  jq_set_input_meta_cb(jq, input_meta_test_filename, input_meta_test_line, &first);
+  jv_free(first.filename);
+  first.filename = jv_invalid();
+  jv_free(first.line);
+  first.line = jv_invalid();
+  input_meta_test_check(jq, query, unknown);
+  jv_free(first.filename);
+  first.filename = jv_invalid_with_msg(jv_string("filename unavailable"));
+  jv_free(first.line);
+  first.line = jv_invalid_with_msg(jv_string("line unavailable"));
+  input_meta_test_check(jq, query, "[null,\"line unavailable\"]");
+
+  // Wrong valid types are errors from the opt-in callback path only. Use
+  // allocated objects/strings as well as null to exercise returned ownership.
+  jv_free(first.filename);
+  first.filename = jv_object_set(jv_object(), jv_string("unexpected"), jv_string("value"));
+  jv_free(first.line);
+  first.line = jv_string("42");
+  const char *type_query = "[(try input_filename catch .), (try input_line_number catch .)]";
+  const char *type_errors =
+    "[\"input_filename callback must return a string or an invalid value\","
+     "\"input_line_number callback must return a number or an invalid value\"]";
+  input_meta_test_check(jq, type_query, type_errors);
+  jv_free(first.filename);
+  first.filename = jv_null();
+  jv_free(first.line);
+  first.line = jv_null();
+  input_meta_test_check(jq, type_query, type_errors);
+  jq_set_input_meta_cb(jq, NULL, NULL, NULL);
+  jq_get_input_meta_cb(jq, &filename_cb, &line_cb, &data);
+  assert(filename_cb == NULL && line_cb == NULL && data == NULL);
+  input_meta_test_check(jq, query, unknown);
+  jq_teardown(&jq);
+  jv_free(first.filename);
+  jv_free(first.line);
+
+  // Interleave two instances and keep their cached strings alive after each
+  // teardown. This catches global state and incorrect transfer of ownership.
+  for (int i = 0; i < 8; i++) {
+    jq = jq_init();
+    jq_state *other = jq_init();
+    assert(jq && other);
+    struct input_meta_test_data local = {jv_string("local.log"), jv_number(i), 0};
+    jq_set_input_meta_cb(jq, input_meta_test_filename, input_meta_test_line, &local);
+    jq_set_input_meta_cb(other, input_meta_test_filename, input_meta_test_line, &second);
+    int compiled = jq_compile(jq, "[input_filename,input_line_number], input_filename");
+    assert(compiled);
+    compiled = jq_compile(other, "[input_filename,input_line_number], input_filename");
+    assert(compiled);
+    jq_start(jq, jv_null(), 0);
+    jq_start(other, jv_null(), 0);
+    assert(jv_equal(jq_next(jq), JV_ARRAY(jv_string("local.log"), jv_number(i))));
+    assert(jv_equal(jq_next(other), jv_parse("[\"other.log\",99]")));
+    assert(jv_equal(jq_next(jq), jv_string("local.log")));
+    assert(jv_equal(jq_next(other), jv_string("other.log")));
+    jq_teardown(&jq);
+    jq_teardown(&other);
+    assert(jv_equal(jv_copy(local.filename), jv_string("local.log")));
+    assert(jv_equal(jv_copy(second.filename), jv_string("other.log")));
+    jv_free(local.filename);
+    jv_free(local.line);
+  }
+  jv_free(second.filename);
+  jv_free(second.line);
 }
