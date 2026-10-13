@@ -779,6 +779,15 @@ EOF
   fi
 fi
 
+# strflocaltime/1 allows a format that expands to an empty string
+l=fr_FR.UTF-8
+if ! $msys && ! $mingw && [ -z "$(LC_ALL=$l date +%p 2>/dev/null)" ]; then
+  if ! out=$(LC_ALL=$l $VALGRIND $Q $JQ -n '0 | strflocaltime("%p")' 2>&1) || [ "$out" != '""' ]; then
+    echo "strflocaltime(\"%p\") in $l should output an empty string but got: $out"
+    exit 1
+  fi
+fi
+
 # Test syntax error messages of multiline filter (we can't test in jq.test)
 if $VALGRIND $Q $JQ -n '[
   try if .
