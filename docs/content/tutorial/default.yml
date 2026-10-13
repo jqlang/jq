@@ -38,10 +38,11 @@ body:
           gh api 'repos/jqlang/jq/commits?until=2026-09-02' > commits.json
 
       (If you do not have `gh`, `curl -s
-      'https://api.github.com/repos/jqlang/jq/commits?until=2026-09-02'` fetches the
-      same commits. GitHub pretty-prints what it sends to `curl`, so that file
-      arrives spread over a couple of thousand lines rather than the single line
-      shown just below; every jq command here gives the same answer either way.)
+      'https://api.github.com/repos/jqlang/jq/commits?until=2026-09-02' >
+      commits.json` fetches the same commits. GitHub pretty-prints what it sends to
+      `curl`, so that file arrives spread over a couple of thousand lines rather
+      than the single line shown just below; every jq command here gives the same
+      answer either way.)
 
   - text: |
 
@@ -72,98 +73,42 @@ body:
   - text: |
 
       Thirty commits, which is what this endpoint returns when you do not ask for a
-      particular page size. `.[0]` indexes into an array, and jq pretty-prints the
-      element it picks out:
+      particular page size. `.[0]` indexes into an array, `.commit` reads a field of
+      the element it picks out, and jq pretty-prints the result:
 
-  - command: "jq '.[0]' commits.json"
+  - command: "jq '.[0].commit' commits.json"
     result: |
       {
-        "sha": "9d241e277204b83c4a7ddc7d733e5c72f99ef500",
-        "node_id": "C_kwDOAE3WVdoAKDlkMjQxZTI3NzIwNGI4M2M0YTdkZGM3ZDczM2U1YzcyZjk5ZWY1MDA",
-        "commit": {
-          "author": {
-            "name": "dependabot[bot]",
-            "email": "49699333+dependabot[bot]@users.noreply.github.com",
-            "date": "2026-09-01T06:30:46Z"
-          },
-          "committer": {
-            "name": "GitHub",
-            "email": "noreply@github.com",
-            "date": "2026-09-01T06:30:46Z"
-          },
-          "message": "build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)",
-          "tree": {
-            "sha": "a35a9454bff26f1b7a94d8401ddef014249b3e2a",
-            "url": "https://api.github.com/repos/jqlang/jq/git/trees/a35a9454bff26f1b7a94d8401ddef014249b3e2a"
-          },
-          "url": "https://api.github.com/repos/jqlang/jq/git/commits/9d241e277204b83c4a7ddc7d733e5c72f99ef500",
-          "comment_count": 0,
-          "verification": {
-            "verified": true,
-            "reason": "valid",
-            "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJqlnEWCRC1aQ7uu5UhlAAAyOQQACXr1PX49pfMGtGjm3AI44Sq\nZhyHjH7nJ+QagUVpky25lOr86cMTL12b7zQqS8mW9ESUvOB3Og7J3xdDAn8dJb9y\nFDVyKnQwxNVHboSTFzDgI4qORbnJPrT4imdHLbmAf6oodDAtoUjtx9ai/UvbXcud\nl/PKB7CvoGxPqxbjb3mjovM75dQihDcpXJvJ/AxfgJAfecU88o6Oj30XYq6lxwsc\nMMctYKZMPJhIV1IjpTFrkvuFd7ycyghDJG0bTUnruW+kz2Fl4t7OzPzl/ZwqI3pY\nFIeIR31KSz1BsHB2PdanrrN1WPjmbd/7/69/EmdQYNrzxopSfHedbiwF7VMStTyv\nF26sPNogniA2znvEJwY0fLOF6fRKdH8LR5tUVOUm4Rv7Dc7jF8wmapzV94o9+r/p\nV3t6dMwz4KQUnZUbXE+Z5q/Csoy/1nQYcpj/vvIAQOpx+SeFBPtweFeU+oN1W1dZ\nJYS6LvVTS+8xGPEFjFwbA23pCbCqRIUL4JLzRWpfyaHP6bkhRJFWO6SmgOGymWBz\nEhdiO616YxN34C7OMFET/LsPWvowIBJ3NcDGRifb7S6lUtNQ3xBb0GwMYBZcexTT\nlwv8UtiRda4qbDB5/Maejklobv0IM3OrlyyjvqtxVwCf1WSWEjaOkBHxHJE80wBy\nUycRdNdExOiumLaKrUVx\n=qDA7\n-----END PGP SIGNATURE-----\n",
-            "payload": "tree a35a9454bff26f1b7a94d8401ddef014249b3e2a\nparent 8bce8b65437bf12b9e39d7f5e85f9ef285d7e785\nauthor dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> 1788244246 +0900\ncommitter GitHub <noreply@github.com> 1788244246 +0900\n\nbuild(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)",
-            "verified_at": "2026-09-01T06:30:46Z"
-          }
-        },
-        "url": "https://api.github.com/repos/jqlang/jq/commits/9d241e277204b83c4a7ddc7d733e5c72f99ef500",
-        "html_url": "https://github.com/jqlang/jq/commit/9d241e277204b83c4a7ddc7d733e5c72f99ef500",
-        "comments_url": "https://api.github.com/repos/jqlang/jq/commits/9d241e277204b83c4a7ddc7d733e5c72f99ef500/comments",
         "author": {
-          "login": "dependabot[bot]",
-          "id": 49699333,
-          "node_id": "MDM6Qm90NDk2OTkzMzM=",
-          "avatar_url": "https://avatars.githubusercontent.com/in/29110?v=4",
-          "gravatar_id": "",
-          "url": "https://api.github.com/users/dependabot%5Bbot%5D",
-          "html_url": "https://github.com/apps/dependabot",
-          "followers_url": "https://api.github.com/users/dependabot%5Bbot%5D/followers",
-          "following_url": "https://api.github.com/users/dependabot%5Bbot%5D/following{/other_user}",
-          "gists_url": "https://api.github.com/users/dependabot%5Bbot%5D/gists{/gist_id}",
-          "starred_url": "https://api.github.com/users/dependabot%5Bbot%5D/starred{/owner}{/repo}",
-          "subscriptions_url": "https://api.github.com/users/dependabot%5Bbot%5D/subscriptions",
-          "organizations_url": "https://api.github.com/users/dependabot%5Bbot%5D/orgs",
-          "repos_url": "https://api.github.com/users/dependabot%5Bbot%5D/repos",
-          "events_url": "https://api.github.com/users/dependabot%5Bbot%5D/events{/privacy}",
-          "received_events_url": "https://api.github.com/users/dependabot%5Bbot%5D/received_events",
-          "type": "Bot",
-          "user_view_type": "public",
-          "site_admin": false
+          "name": "dependabot[bot]",
+          "email": "49699333+dependabot[bot]@users.noreply.github.com",
+          "date": "2026-09-01T06:30:46Z"
         },
         "committer": {
-          "login": "web-flow",
-          "id": 19864447,
-          "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
-          "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
-          "gravatar_id": "",
-          "url": "https://api.github.com/users/web-flow",
-          "html_url": "https://github.com/web-flow",
-          "followers_url": "https://api.github.com/users/web-flow/followers",
-          "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
-          "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
-          "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
-          "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
-          "organizations_url": "https://api.github.com/users/web-flow/orgs",
-          "repos_url": "https://api.github.com/users/web-flow/repos",
-          "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
-          "received_events_url": "https://api.github.com/users/web-flow/received_events",
-          "type": "User",
-          "user_view_type": "public",
-          "site_admin": false
+          "name": "GitHub",
+          "email": "noreply@github.com",
+          "date": "2026-09-01T06:30:46Z"
         },
-        "parents": [
-          {
-            "sha": "8bce8b65437bf12b9e39d7f5e85f9ef285d7e785",
-            "url": "https://api.github.com/repos/jqlang/jq/commits/8bce8b65437bf12b9e39d7f5e85f9ef285d7e785",
-            "html_url": "https://github.com/jqlang/jq/commit/8bce8b65437bf12b9e39d7f5e85f9ef285d7e785"
-          }
-        ]
+        "message": "build(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)",
+        "tree": {
+          "sha": "a35a9454bff26f1b7a94d8401ddef014249b3e2a",
+          "url": "https://api.github.com/repos/jqlang/jq/git/trees/a35a9454bff26f1b7a94d8401ddef014249b3e2a"
+        },
+        "url": "https://api.github.com/repos/jqlang/jq/git/commits/9d241e277204b83c4a7ddc7d733e5c72f99ef500",
+        "comment_count": 0,
+        "verification": {
+          "verified": true,
+          "reason": "valid",
+          "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJqlnEWCRC1aQ7uu5UhlAAAyOQQACXr1PX49pfMGtGjm3AI44Sq\nZhyHjH7nJ+QagUVpky25lOr86cMTL12b7zQqS8mW9ESUvOB3Og7J3xdDAn8dJb9y\nFDVyKnQwxNVHboSTFzDgI4qORbnJPrT4imdHLbmAf6oodDAtoUjtx9ai/UvbXcud\nl/PKB7CvoGxPqxbjb3mjovM75dQihDcpXJvJ/AxfgJAfecU88o6Oj30XYq6lxwsc\nMMctYKZMPJhIV1IjpTFrkvuFd7ycyghDJG0bTUnruW+kz2Fl4t7OzPzl/ZwqI3pY\nFIeIR31KSz1BsHB2PdanrrN1WPjmbd/7/69/EmdQYNrzxopSfHedbiwF7VMStTyv\nF26sPNogniA2znvEJwY0fLOF6fRKdH8LR5tUVOUm4Rv7Dc7jF8wmapzV94o9+r/p\nV3t6dMwz4KQUnZUbXE+Z5q/Csoy/1nQYcpj/vvIAQOpx+SeFBPtweFeU+oN1W1dZ\nJYS6LvVTS+8xGPEFjFwbA23pCbCqRIUL4JLzRWpfyaHP6bkhRJFWO6SmgOGymWBz\nEhdiO616YxN34C7OMFET/LsPWvowIBJ3NcDGRifb7S6lUtNQ3xBb0GwMYBZcexTT\nlwv8UtiRda4qbDB5/Maejklobv0IM3OrlyyjvqtxVwCf1WSWEjaOkBHxHJE80wBy\nUycRdNdExOiumLaKrUVx\n=qDA7\n-----END PGP SIGNATURE-----\n",
+          "payload": "tree a35a9454bff26f1b7a94d8401ddef014249b3e2a\nparent 8bce8b65437bf12b9e39d7f5e85f9ef285d7e785\nauthor dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> 1788244246 +0900\ncommitter GitHub <noreply@github.com> 1788244246 +0900\n\nbuild(deps): bump markdown from 3.10.2 to 3.10.3 in /docs (#3622)",
+          "verified_at": "2026-09-01T06:30:46Z"
+        }
       }
 
   - text: |
 
-      That is a lot of metadata for one commit. Field access uses the same `.`
-      notation, and paths chain, so the commit message is:
+      That is a lot of metadata for one commit. Paths chain as far as you need, so
+      the commit message is:
 
   - command: "jq '.[0].commit.message' commits.json"
     result: |
@@ -522,7 +467,7 @@ body:
 
       `group_by(f)` gathers the elements that agree on `f` into sub-arrays, so an
       array of thirty commits becomes an array of arrays. It orders them by `f` on
-      the way, just as `unique` does, which is where the alphabetical order below
+      the way, just as `unique` does, which is where the sorted order below
       comes from. This is the usual way to count things:
 
   - command: "jq 'group_by(.commit.author.name) | map({author: .[0].commit.author.name, commits: length})' commits.json"
@@ -645,8 +590,7 @@ body:
   - text: |
 
       The condition need not be a comparison either - `test` matches a regular
-      expression. This is the subject line of every commit which fixed a published
-      vulnerability:
+      expression. This is the subject line of every commit that mentions a CVE:
 
   - command: "jq -r '.[] | .commit.message | select(test(\"CVE-[0-9]{4}-[0-9]+\")) | split(\"\\n\")[0]' commits.json"
     result: |
@@ -669,9 +613,10 @@ body:
       - - -
 
       Everything so far has started from an array - `.[]` to open one up, then `map`,
-      `sort`, `select`. Objects need a conversion first: `to_entries` turns one into
-      an array of key/value pairs, which is how you reach an object's keys when they
-      are data rather than something you typed:
+      `sort`, `select`. `.[]` and `map` work on objects too, but they see only the
+      values. `to_entries` turns an object into an array of key/value pairs, which is
+      how you reach an object's keys when they are data rather than something you
+      typed:
 
   - command: "jq '.[0].commit.author | to_entries' commits.json"
     result: |
@@ -716,19 +661,16 @@ body:
 
       `with_entries(f)` is that round trip in one step - `to_entries | map(f) |
       from_entries` - running `f` over each pair, so a `select` there keeps or drops
-      whole fields. An account object is mostly API URLs - twelve of its nineteen
-      keys - and this drops every one of them by testing each key as it goes past:
+      whole fields. Next to `commit`, each element of the response carries three
+      links to the commit, and this keeps just those by testing each key as it goes
+      past:
 
-  - command: "jq '.[0].author | with_entries(select(.key | endswith(\"url\") | not))' commits.json"
+  - command: "jq '.[0] | with_entries(select(.key | endswith(\"url\")))' commits.json"
     result: |
       {
-        "login": "dependabot[bot]",
-        "id": 49699333,
-        "node_id": "MDM6Qm90NDk2OTkzMzM=",
-        "gravatar_id": "",
-        "type": "Bot",
-        "user_view_type": "public",
-        "site_admin": false
+        "url": "https://api.github.com/repos/jqlang/jq/commits/9d241e277204b83c4a7ddc7d733e5c72f99ef500",
+        "html_url": "https://github.com/jqlang/jq/commit/9d241e277204b83c4a7ddc7d733e5c72f99ef500",
+        "comments_url": "https://api.github.com/repos/jqlang/jq/commits/9d241e277204b83c4a7ddc7d733e5c72f99ef500/comments"
       }
 
   - text: |
@@ -818,7 +760,7 @@ body:
 
       There is plenty more: arithmetic, variables and conditionals; updating a
       document in place; `@base64`, `@uri` and the other `@` formats; `reduce` and
-      `foreach` for folding a stream down to one value; `inputs` and the rest of the
+      `foreach` for folding over a stream; `inputs` and the rest of the
       IO builtins for reading many values instead of one; and defining your own
       functions on top of a large library of builtins. Go read
       [the manual](../manual/) when you need it, and [download jq](../download/) if
