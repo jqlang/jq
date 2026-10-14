@@ -784,9 +784,10 @@ jv jv_parser_next(struct jv_parser* p) {
   } else if (msg) {
     jv_free(value);
     if (ch != '\036' && (p->flags & JV_PARSE_SEQ)) {
-      // Skip to the next RS
       value = make_error(p, "%s at line %d, column %d (need RS to resync)", msg, p->line, p->column);
       parser_reset(p);
+      // Skip to the next RS.  This must come after parser_reset(), which
+      // sets the state back to JV_PARSER_NORMAL.
       p->st = JV_PARSER_WAITING_FOR_RS;
       return value;
     }
