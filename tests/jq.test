@@ -84,6 +84,11 @@ null
 "Zm/Ds2Jhcgo="
 "foóbar\n"
 
+# Invalid UTF-8 next to ASCII runs is still replaced
+map(@base64d)
+["YWJjZGVmZ2hpav9rbG1ub3A=", "YWJjZGVmZ2hpasOpa2xtbm9w5pel", "/2FiY2RlZmdoaWo=", "YWJjZGVmZ2hpauaX", "YWJjZGVmZ2hpau2ggHh5eg=="]
+["abcdefghij�klmnop","abcdefghijéklmnop日","�abcdefghij","abcdefghij�","abcdefghij�xyz"]
+
 @uri
 "\u03bc"
 "%CE%BC"

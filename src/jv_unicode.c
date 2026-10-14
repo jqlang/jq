@@ -77,7 +77,13 @@ const char* jvp_utf8_next(const char* in, const char* end, int* codepoint_ret) {
 
 int jvp_utf8_is_valid(const char* in, const char* end) {
   int codepoint;
-  while ((in = jvp_utf8_next(in, end, &codepoint))) {
+  while (in < end) {
+    // ASCII bytes are always valid; decode only the rest.
+    if (!(*in & 0x80)) {
+      in++;
+      continue;
+    }
+    in = jvp_utf8_next(in, end, &codepoint);
     if (codepoint == -1) return 0;
   }
   return 1;
