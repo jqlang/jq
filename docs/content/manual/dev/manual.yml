@@ -3254,6 +3254,12 @@ sections:
           the recursive call outputs its last value.  In practice this
           means that the expression to the left of the recursive call
           should not produce more than one output for each input.
+          Function parameters forwarded unchanged to a tail call do not
+          retain the caller's frame. For example,
+          `def f(g): if . > 0 then . - 1 | f(g) else g end;` can count
+          down without growing the call stack. An argument expression
+          that captures the current frame, such as `f(g + $x)`, still
+          requires that frame.
 
           For example:
 
