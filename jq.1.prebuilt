@@ -3666,7 +3666,7 @@ jq \'foreach \.[] as $item (0; \. + 1; {index: \., $item})\'
 As described above, \fBrecurse\fR uses recursion, and any jq function can be recursive\. The \fBwhile\fR builtin is also implemented in terms of recursion\.
 .
 .P
-Tail calls are optimized whenever the expression to the left of the recursive call outputs its last value\. In practice this means that the expression to the left of the recursive call should not produce more than one output for each input\.
+Tail calls are optimized whenever the expression to the left of the recursive call outputs its last value\. In practice this means that the expression to the left of the recursive call should not produce more than one output for each input\. Function parameters forwarded unchanged to a tail call do not retain the caller\'s frame\. For example, \fBdef f(g): if \. > 0 then \. \- 1 | f(g) else g end;\fR can count down without growing the call stack\. An argument expression that captures the current frame, such as \fBf(g + $x)\fR, still requires that frame\.
 .
 .P
 For example:
