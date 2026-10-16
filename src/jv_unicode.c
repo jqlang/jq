@@ -27,19 +27,14 @@ const char* jvp_utf8_backtrack(const char* start, const char* min, int *missing_
   return start;
 }
 
-const char* jvp_utf8_next(const char* in, const char* end, int* codepoint_ret) {
-  assert(in <= end);
-  if (in == end) {
-    return 0;
-  }
+// The rest of jvp_utf8_next(), for a first byte that is not ASCII.
+const char* jvp_utf8_next_multibyte(const char* in, const char* end, int* codepoint_ret) {
+  assert(in < end);
   int codepoint = -1;
   unsigned char first = (unsigned char)in[0];
   int length = utf8_coding_length[first];
-  if ((first & 0x80) == 0) {
-    /* Fast-path for ASCII */
-    codepoint = first;
-    length = 1;
-  } else if (length == 0 || length == UTF8_CONTINUATION_BYTE) {
+  assert(first & 0x80);
+  if (length == 0 || length == UTF8_CONTINUATION_BYTE) {
     /* Bad single byte - either an invalid byte or an out-of-place continuation byte */
     length = 1;
   } else if (length > end - in) {
