@@ -95,6 +95,17 @@ EOF
 printf '\036{"a":x,"b":7}\n\036[1,}2\n\0363\n' | $VALGRIND $Q $JQ -ces --seq '. == [3]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
 
+# The skipped rest of a broken last text is not reported again at EOF
+cat > $d/expected <<EOF
+jq: ignoring parse error: Invalid numeric literal at line 2, column 8 (need RS to resync)
+EOF
+printf '\0361\n\036{"a":x}\n' | $VALGRIND $Q $JQ -ces --seq '. == [1]' > /dev/null 2> $d/out
+cmp $d/out $d/expected
+
+printf '\036["Invalid numeric literal at line 1, column 8 (need RS to resync)",["a"]]\n' > $d/expected
+printf '\036{"a":x}\n' | $VALGRIND $Q $JQ -c --seq --stream-errors . > $d/out 2>&1
+cmp $d/out $d/expected
+
 # Note that here jq sees no inputs at all but it still succeeds because
 # --seq ignores parse errors
 cat > $d/expected <<EOF
