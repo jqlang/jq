@@ -912,6 +912,31 @@ def fac: if . == 1 then 1 else . * (. - 1 | fac) end; [.[] | fac]
 [1,2,3,4]
 [1,2,6,24]
 
+# Forwarded parameter closures do not retain tail-call frames.
+def f(g): if . > 0 then . - 1 | f(g) else g end; 100000 | f(.)
+null
+0
+
+# Preserve generator backtracking and parameter order through forwarded calls.
+def g(a; b): a as $x | b | [$x, .]; def f(a; b): g(b; a); [f(.[]; .[] + 10)]
+[1,2]
+[[11,1],[11,2],[12,1],[12,2]]
+
+# A changed argument still closes over its defining frame.
+def f(g): if . > 0 then . as $n | . - 1 | f(g + $n) else g end; 3 | f(0)
+null
+6
+
+# Forward a closure through nested scopes, including a multi-output base case.
+def f(g): def h(x): x; if . > 0 then . - 1 | f(g) else h(g) end; [3 | f(., . + 10)]
+null
+[0,10]
+
+# Tail calls must not discard a frame captured by a newly constructed argument.
+def g(a): a; def f(a): . as $x | g(a + $x); 2 | [f(1,3)]
+null
+[3,5]
+
 # test stack overflow and reallocation
 # this test is disabled for now, it takes a realllllly long time.
 # def f: if length > 1000 then . else .+[1]|f end; f | length
