@@ -1176,6 +1176,9 @@ static uint32_t jvp_string_remaining_space(jvp_string* s) {
 }
 
 static jv jvp_string_append(jv string, const char* data, uint32_t len) {
+  /* Once the length bound below has been hit the string is invalid, and
+     callers that append in a loop would otherwise pass it back in here. */
+  if (!jv_is_valid(string)) return string;
   jvp_string* s = jvp_string_ptr(string);
   uint32_t currlen = jvp_string_length(s);
   if ((uint64_t)currlen + len >= INT_MAX - sizeof(jvp_string) / 2) {
@@ -1538,6 +1541,15 @@ jv jv_string_slice(jv j, int start, int end) {
 }
 
 jv jv_string_concat(jv a, jv b) {
+  /* Either side may already be invalid; jvp_string_ptr() asserts on those. */
+  if (!jv_is_valid(a)) {
+    jv_free(b);
+    return a;
+  }
+  if (!jv_is_valid(b)) {
+    jv_free(a);
+    return b;
+  }
   a = jvp_string_append(a, jv_string_value(b),
                         jvp_string_length(jvp_string_ptr(b)));
   jv_free(b);
