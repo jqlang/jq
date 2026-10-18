@@ -3561,6 +3561,13 @@ sections:
 
           The left-hand side can be any general path expression; see `path()`.
 
+          The right-hand side of `|=` is run with the value at the path
+          as its input, not with `.`. This is what sets it apart from
+          plain assignment (`=`) and the arithmetic update-assignment
+          operators such as `+=`, whose right-hand side is run with `.`.
+          For example, `.a |= .b` sets `.a` to the `b` field of `.a`,
+          while `.a = .b` and `.a += .b` use the `b` field of `.`.
+
           Note that the left-hand side of `|=` refers to a value in `.`.
           Thus `$var.foo |= . + 1` won't work as expected (`$var.foo` is
           not a valid or useful path expression in `.`); use `$var |
@@ -3593,7 +3600,9 @@ sections:
 
           Note that the right-hand side `b` is evaluated with the same
           input as the left-hand side, not with the value at the path
-          being updated. So `.a += .b` adds the value of `.b` to `.a`.
+          being updated. So `.a += .b` adds the value of `.b` to `.a`,
+          whereas `.a |= . + .b` would look up `.b` inside the value of
+          `.a`.
           If `b` outputs multiple values, then `a op= b` outputs one
           result for each of them.
 
