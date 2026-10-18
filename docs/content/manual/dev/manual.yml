@@ -3588,13 +3588,25 @@ sections:
         body: |
 
           jq has a few operators of the form `a op= b`, which are all
-          equivalent to `a |= . op b`. So, `+= 1` can be used to
-          increment values, being the same as `|= . + 1`.
+          equivalent to `(b as $b | a |= . op $b)`. So, `+= 1` can be
+          used to increment values, being the same as `|= . + 1`.
+
+          Note that the right-hand side `b` is evaluated with the same
+          input as the left-hand side, not with the value at the path
+          being updated. So `.a += .b` adds the value of `.b` to `.a`.
+          If `b` outputs multiple values, then `a op= b` outputs one
+          result for each of them.
 
         examples:
           - program: .foo += 1
             input: '{"foo": 42}'
             output: ['{"foo": 43}']
+          - program: '.a += .b'
+            input: '{"a": 1, "b": 2}'
+            output: ['{"a": 3, "b": 2}']
+          - program: '.a += (1,2)'
+            input: '{"a": 0}'
+            output: ['{"a": 1}', '{"a": 2}']
 
       - title: "Plain assignment: `=`"
         body: |

@@ -4044,7 +4044,10 @@ jq \'(\.\.|select(type=="boolean")) |= if \. then 1 else 0 end\'
 .IP "" 0
 .
 .SS "Arithmetic update\-assignment: +=, \-=, *=, /=, %=, //="
-jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \fBa |= \. op b\fR\. So, \fB+= 1\fR can be used to increment values, being the same as \fB|= \. + 1\fR\.
+jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \fB(b as $b | a |= \. op $b)\fR\. So, \fB+= 1\fR can be used to increment values, being the same as \fB|= \. + 1\fR\.
+.
+.P
+Note that the right\-hand side \fBb\fR is evaluated with the same input as the left\-hand side, not with the value at the path being updated\. So \fB\.a += \.b\fR adds the value of \fB\.b\fR to \fB\.a\fR\. If \fBb\fR outputs multiple values, then \fBa op= b\fR outputs one result for each of them\.
 .
 .IP "" 4
 .
@@ -4053,6 +4056,14 @@ jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \f
 jq \'\.foo += 1\'
    {"foo": 42}
 => {"foo": 43}
+
+jq \'\.a += \.b\'
+   {"a": 1, "b": 2}
+=> {"a": 3, "b": 2}
+
+jq \'\.a += (1,2)\'
+   {"a": 0}
+=> {"a": 1}, {"a": 2}
 .
 .fi
 .
