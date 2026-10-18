@@ -3451,6 +3451,23 @@ def addvalue($f): \.\.\.;
 With either definition, \fBaddvalue(\.foo)\fR will add the current input\'s \fB\.foo\fR field to each element of the array\. Do note that calling \fBaddvalue(\.[])\fR will cause the \fBmap(\. + $f)\fR part to be evaluated once per value in the value of \fB\.\fR at the call site\.
 .
 .P
+Multiple arguments are separated by semicolons, both in the definition and in the call:
+.
+.IP "" 4
+.
+.nf
+
+def f(a; b): \.\.\.;
+f(\.x; \.y)
+.
+.fi
+.
+.IP "" 0
+.
+.P
+A comma does not separate arguments\. \fBf(\.x, \.y)\fR calls a one\-argument \fBf\fR with the single filter \fB\.x, \.y\fR, which outputs \fB\.x\fR and then \fB\.y\fR (see the comma operator above)\.
+.
+.P
 Multiple definitions using the same function name are allowed\. Each re\-definition replaces the previous one for the same number of function arguments, but only for references from functions (or main program) subsequent to the re\-definition\. See also the section below on scoping\.
 .
 .IP "" 4
@@ -3464,6 +3481,14 @@ jq \'def addvalue(f): \. + [f]; map(addvalue(\.[0]))\'
 jq \'def addvalue(f): f as $x | map(\. + $x); addvalue(\.[0])\'
    [[1,2],[10,20]]
 => [[1,2,1,2], [10,20,1,2]]
+
+jq \'def f(a; b): [a, b]; f(\.x; \.y)\'
+   {"x":1,"y":2}
+=> [1,2]
+
+jq \'def f(a): [a]; f(\.x, \.y)\'
+   {"x":1,"y":2}
+=> [1,2]
 .
 .fi
 .

@@ -888,6 +888,14 @@ def addvalue(f): f as $x | map(. + $x); addvalue(.[0])
 [[1,2],[10,20]]
 [[1,2,1,2], [10,20,1,2]]
 
+def f(a; b): [a, b]; f(.x; .y)
+{"x":1,"y":2}
+[1,2]
+
+def f(a): [a]; f(.x, .y)
+{"x":1,"y":2}
+[1,2]
+
 isempty(empty)
 null
 true

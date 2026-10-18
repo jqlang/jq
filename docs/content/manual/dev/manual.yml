@@ -3072,6 +3072,16 @@ sections:
           to be evaluated once per value in the value of `.` at the call
           site.
 
+          Multiple arguments are separated by semicolons, both in the
+          definition and in the call:
+
+              def f(a; b): ...;
+              f(.x; .y)
+
+          A comma does not separate arguments.  `f(.x, .y)` calls a
+          one-argument `f` with the single filter `.x, .y`, which
+          outputs `.x` and then `.y` (see the comma operator above).
+
           Multiple definitions using the same function name are allowed.
           Each re-definition replaces the previous one for the same
           number of function arguments, but only for references from
@@ -3085,6 +3095,12 @@ sections:
           - program: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
             input: '[[1,2],[10,20]]'
             output: ['[[1,2,1,2], [10,20,1,2]]']
+          - program: 'def f(a; b): [a, b]; f(.x; .y)'
+            input: '{"x":1,"y":2}'
+            output: ['[1,2]']
+          - program: 'def f(a): [a]; f(.x, .y)'
+            input: '{"x":1,"y":2}'
+            output: ['[1,2]']
 
       - title: 'Scoping'
         body: |
