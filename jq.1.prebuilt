@@ -473,7 +473,7 @@ Note that the iterator operator is a generator of values\.
 jq \'\.[]\'
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
 => {"name":"JSON", "good":true}
-=> {"name":"XML", "good":false}
+   {"name":"XML", "good":false}
 
 jq \'\.[]\'
    []
@@ -482,13 +482,13 @@ jq \'\.[]\'
 jq \'\.foo[]\'
    {"foo":[1,2,3]}
 => 1
-=> 2
-=> 3
+   2
+   3
 
 jq \'\.[]\'
    {"a": 1, "b": 1}
 => 1
-=> 1
+   1
 .
 .fi
 .
@@ -510,18 +510,18 @@ The \fB,\fR operator is one way to construct generators\.
 jq \'\.foo, \.bar\'
    {"foo": 42, "bar": "something else", "baz": true}
 => 42
-=> "something else"
+   "something else"
 
 jq \'\.user, \.projects[]\'
    {"user":"stedolan", "projects": ["jq", "wikiflow"]}
 => "stedolan"
-=> "jq"
-=> "wikiflow"
+   "jq"
+   "wikiflow"
 
 jq \'\.[4,2]\'
    ["a","b","c","d","e"]
 => "e"
-=> "c"
+   "c"
 .
 .fi
 .
@@ -546,7 +546,7 @@ Note too that \fB\.\fR is the input value at the particular stage in a "pipeline
 jq \'\.[] | \.name\'
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
 => "JSON"
-=> "XML"
+   "XML"
 .
 .fi
 .
@@ -730,7 +730,7 @@ produces
 jq \'{user, title: \.titles[]}\'
    {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
 => {"user":"stedolan", "title": "JQ Primer"}
-=> {"user":"stedolan", "title": "More JQ"}
+   {"user":"stedolan", "title": "More JQ"}
 
 jq \'{(\.user): \.titles}\'
    {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
@@ -865,7 +865,7 @@ jq \'{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}\'
 jq \'\.[] | (1 / \.)?\'
    [1,0,\-1]
 => 1
-=> \-1
+   \-1
 .
 .fi
 .
@@ -920,10 +920,10 @@ It is an error to use \fBlength\fR on a \fBboolean\fR\.
 jq \'\.[] | length\'
    [[1,2], "string", {"a":2}, null, \-5]
 => 2
-=> 6
-=> 1
-=> 0
-=> 5
+   6
+   1
+   0
+   5
 .
 .fi
 .
@@ -1004,7 +1004,7 @@ The builtin function \fBin\fR returns whether or not the input key is in the giv
 jq \'\.[] | in({"foo": 42})\'
    ["foo", "bar"]
 => true
-=> false
+   false
 
 jq \'map(in([0,1]))\'
    [2, 0]
@@ -1280,7 +1280,7 @@ It\'s useful on occasion\. You\'ll know if you need it :)
 jq \'1, empty, 2\'
    null
 => 1
-=> 2
+   2
 
 jq \'[1,2,empty,3]\'
    null
@@ -1504,7 +1504,7 @@ The three argument form generates numbers \fBfrom\fR to \fBupto\fR with an incre
 jq \'range(2; 4)\'
    null
 => 2
-=> 3
+   3
 
 jq \'[range(2; 4)]\'
    null
@@ -1570,7 +1570,7 @@ The \fBtonumber\fR function parses its input as a number\. It will convert corre
 jq \'\.[] | tonumber\'
    [1, "1"]
 => 1
-=> 1
+   1
 .
 .fi
 .
@@ -1586,9 +1586,9 @@ The \fBtoboolean\fR function parses its input as a boolean\. It will convert cor
 jq \'\.[] | toboolean\'
    ["true", "false", true, false]
 => true
-=> false
-=> true
-=> false
+   false
+   true
+   false
 .
 .fi
 .
@@ -1604,8 +1604,8 @@ The \fBtostring\fR function prints its input as a string\. Strings are left unch
 jq \'\.[] | tostring\'
    [1, "1", [1]]
 => "1"
-=> "1"
-=> "[1]"
+   "1"
+   "[1]"
 .
 .fi
 .
@@ -1642,12 +1642,12 @@ Currently most arithmetic operations operating on infinities, NaNs, and sub\-nor
 jq \'\.[] | (infinite * \.) < 0\'
    [\-1, 1]
 => true
-=> false
+   false
 
 jq \'infinite, nan | type\'
    null
 => "number"
-=> "number"
+   "number"
 .
 .fi
 .
@@ -1946,16 +1946,16 @@ Outputs all combinations of the elements of the arrays in the input array\. If g
 jq \'combinations\'
    [[1,2], [3, 4]]
 => [1, 3]
-=> [1, 4]
-=> [2, 3]
-=> [2, 4]
+   [1, 4]
+   [2, 3]
+   [2, 4]
 
 jq \'combinations(2)\'
    [0, 1]
 => [0, 0]
-=> [0, 1]
-=> [1, 0]
-=> [1, 1]
+   [0, 1]
+   [1, 0]
+   [1, 1]
 .
 .fi
 .
@@ -2025,8 +2025,8 @@ Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"
 jq \'trim, ltrim, rtrim\'
    " abc "
 => "abc"
-=> "abc "
-=> " abc"
+   "abc "
+   " abc"
 .
 .fi
 .
@@ -2226,22 +2226,22 @@ The recursive calls in \fBrecurse\fR will not consume additional memory whenever
 jq \'recurse(\.foo[])\'
    {"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}
 => {"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}
-=> {"foo":[]}
-=> {"foo":[{"foo":[]}]}
-=> {"foo":[]}
+   {"foo":[]}
+   {"foo":[{"foo":[]}]}
+   {"foo":[]}
 
 jq \'recurse\'
    {"a":0,"b":[1]}
 => {"a":0,"b":[1]}
-=> 0
-=> [1]
-=> 1
+   0
+   [1]
+   1
 
 jq \'recurse(\. * \.; \. < 20)\'
    2
 => 2
-=> 4
-=> 16
+   4
+   16
 .
 .fi
 .
@@ -2639,9 +2639,9 @@ jq \'\. == {"b": {"d": (4 + 1e\-20), "c": 3}, "a":1}\'
 jq \'\.[] == 1\'
    [1, 1\.0, "1", "banana"]
 => true
-=> true
-=> false
-=> false
+   true
+   false
+   false
 .
 .fi
 .
@@ -2721,14 +2721,14 @@ jq \'42 and "a string"\'
 jq \'(true, false) or false\'
    null
 => true
-=> false
+   false
 
 jq \'(true, true) and (true, false)\'
    null
 => true
-=> false
-=> true
-=> false
+   false
+   true
+   false
 
 jq \'[true, false | not]\'
    null
@@ -2773,8 +2773,8 @@ jq \'(false, null, 1) // 42\'
 jq \'(false, null, 1) | \. // 42\'
    null
 => 42
-=> 42
-=> 1
+   42
+   1
 .
 .fi
 .
@@ -3005,7 +3005,7 @@ jq \'test("foo")\'
 jq \'\.[] | test("a b c # spaces are ignored"; "ix")\'
    ["xabcd", "ABC"]
 => true
-=> true
+   true
 .
 .fi
 .
@@ -3055,7 +3055,7 @@ Capturing groups that did not match anything return an offset of \-1
 jq \'match("(abc)+"; "g")\'
    "abc abc"
 => {"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}
-=> {"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
+   {"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
 
 jq \'match("foo")\'
    "foo bar foo"
@@ -3064,12 +3064,12 @@ jq \'match("foo")\'
 jq \'match(["foo", "ig"])\'
    "foo bar FOO"
 => {"offset": 0, "length": 3, "string": "foo", "captures": []}
-=> {"offset": 8, "length": 3, "string": "FOO", "captures": []}
+   {"offset": 8, "length": 3, "string": "FOO", "captures": []}
 
 jq \'match("foo (?<bar123>bar)? foo"; "ig")\'
    "foo bar foo foo  foo"
 => {"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}
-=> {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": \-1, "length": 0, "string": null, "name": "bar123"}]}
+   {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": \-1, "length": 0, "string": null, "name": "bar123"}]}
 
 jq \'[ match("\."; "g")] | length\'
    "abc"
@@ -3104,13 +3104,13 @@ Emit a stream of the non\-overlapping substrings of the input that match the reg
 jq \'scan("c")\'
    "abcdefabc"
 => "c"
-=> "c"
+   "c"
 
 jq \'scan("(a+)(b+)")\'
    "abaabbaaabbb"
 => ["a","b"]
-=> ["aa","bb"]
-=> ["aaa","bbb"]
+   ["aa","bb"]
+   ["aaa","bbb"]
 .
 .fi
 .
@@ -3144,16 +3144,16 @@ These provide the same results as their \fBsplit\fR counterparts, but as a strea
 jq \'splits(", *")\'
    "ab,cd,   ef, gh"
 => "ab"
-=> "cd"
-=> "ef"
-=> "gh"
+   "cd"
+   "ef"
+   "gh"
 
 jq \'splits(",? *"; "n")\'
    "ab,cd ef,  gh"
 => "ab"
-=> "cd"
-=> "ef"
-=> "gh"
+   "cd"
+   "ef"
+   "gh"
 .
 .fi
 .
@@ -3356,8 +3356,8 @@ jq \'\. as [$a, $b, {c: $c}] | $a + $b + $c\'
 jq \'\.[] as [$a, $b] | {a: $a, b: $b}\'
    [[0], [0, 1], [2, 1, 0]]
 => {"a":0,"b":null}
-=> {"a":0,"b":1}
-=> {"a":2,"b":1}
+   {"a":0,"b":1}
+   {"a":2,"b":1}
 .
 .fi
 .
@@ -3431,12 +3431,12 @@ Additionally, if the subsequent expression returns an error, the alternative ope
 jq \'\.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}\'
    [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
 => {"a":1,"b":2,"d":3,"e":4}
-=> {"a":1,"b":2,"d":3,"e":4}
+   {"a":1,"b":2,"d":3,"e":4}
 
 jq \'\.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}\'
    [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
 => {"a":1,"b":2,"d":3,"e":null}
-=> {"a":1,"b":2,"d":null,"e":4}
+   {"a":1,"b":2,"d":null,"e":4}
 
 jq \'\.[] as [$a] ?// [$b] | if $a != null then error("err: \e($a)") else {$a,$b} end\'
    [[3]]
@@ -3717,24 +3717,24 @@ When \fBEXTRACT\fR is omitted, the identity filter is used\. That is, it outputs
 jq \'foreach \.[] as $item (0; \. + $item)\'
    [1,2,3,4,5]
 => 1
-=> 3
-=> 6
-=> 10
-=> 15
+   3
+   6
+   10
+   15
 
 jq \'foreach \.[] as $item (0; \. + $item; [$item, \. * 2])\'
    [1,2,3,4,5]
 => [1,2]
-=> [2,6]
-=> [3,12]
-=> [4,20]
-=> [5,30]
+   [2,6]
+   [3,12]
+   [4,20]
+   [5,30]
 
 jq \'foreach \.[] as $item (0; \. + 1; {index: \., $item})\'
    ["foo", "bar", "baz"]
 => {"index":1,"item":"foo"}
-=> {"index":2,"item":"bar"}
-=> {"index":3,"item":"baz"}
+   {"index":2,"item":"bar"}
+   {"index":3,"item":"baz"}
 .
 .fi
 .
@@ -3788,9 +3788,9 @@ All jq functions can be generators just by using builtin generators\. It is also
 jq \'def range(init; upto; by): def _range: if (by > 0 and \. < upto) or (by < 0 and \. > upto) then \., ((\.+by)|_range) else empty end; if init == upto then empty elif by == 0 then init else init|_range end; range(0; 10; 3)\'
    null
 => 0
-=> 3
-=> 6
-=> 9
+   3
+   6
+   9
 
 jq \'def while(cond; update): def _while: if cond then \., (update | _while) else empty end; _while; [while(\.<100; \.*2)]\'
    1
@@ -3945,7 +3945,7 @@ Consumes a number as input and truncates the corresponding number of path elemen
 jq \'truncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]])\'
    1
 => [[0],"b"]
-=> [[0]]
+   [[0]]
 .
 .fi
 .
@@ -4108,8 +4108,8 @@ jq \'\.a |= \.b\'
 jq \'(\.a, \.b) = range(3)\'
    null
 => {"a":0,"b":0}
-=> {"a":1,"b":1}
-=> {"a":2,"b":2}
+   {"a":1,"b":1}
+   {"a":2,"b":2}
 
 jq \'(\.a, \.b) |= range(3)\'
    null
