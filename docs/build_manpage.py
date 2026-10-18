@@ -227,7 +227,8 @@ def convert_manual_to_markdown():
                     f.write("jq '{}'\n".format(example.get('program', '')))
                     f.write("   {}\n".format(example.get('input', '')))
                     output = [str(x) for x in example.get('output', [])]
-                    f.write("=> {}\n".format(', '.join(output)))
+                    for line in output or ['']:
+                        f.write("=> {}\n".format(line))
                     first = False
                 f.write("~~~~\n")
         f.write('\n')
