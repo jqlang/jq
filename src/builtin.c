@@ -1355,6 +1355,36 @@ static jv f_string_explode(jq_state *jq, jv a) {
   return jv_string_explode(a);
 }
 
+// Only the letters from..to change case. Bytes of multibyte UTF-8 sequences
+// are all >= 0x80, so they are copied unchanged.
+static void ascii_case_copy(char *dst, const char *src, int len, char from,
+                            char to) {
+  for (int i = 0; i < len; i++) {
+    char c = src[i];
+    dst[i] = (c >= from && c <= to) ? c ^ 0x20 : c; // flip case: 'A' <-> 'a'
+  }
+}
+
+static jv ascii_case(jv input, char from, char to, const char *errmsg) {
+  if (jv_get_kind(input) != JV_KIND_STRING)
+    return ret_error(input, jv_string(errmsg));
+  int len = jv_string_length_bytes(jv_copy(input));
+  char *result = jv_mem_alloc((size_t)len + 1);
+  ascii_case_copy(result, jv_string_value(input), len, from, to);
+  jv ret = jv_string_sized(result, len);
+  free(result);
+  jv_free(input);
+  return ret;
+}
+
+static jv f_ascii_downcase(jq_state *jq, jv input) {
+  return ascii_case(input, 'A', 'Z', "ascii_downcase input must be a string");
+}
+
+static jv f_ascii_upcase(jq_state *jq, jv input) {
+  return ascii_case(input, 'a', 'z', "ascii_upcase input must be a string");
+}
+
 static jv f_string_indexes(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING) {
     jv_free(b);
@@ -2015,6 +2045,8 @@ BINOPS
   CFUNC(f_string_split, "split", 2),
   CFUNC(f_string_explode, "explode", 1),
   CFUNC(f_string_implode, "implode", 1),
+  CFUNC(f_ascii_downcase, "ascii_downcase", 1),
+  CFUNC(f_ascii_upcase, "ascii_upcase", 1),
   CFUNC(f_string_indexes, "_strindices", 2),
   CFUNC(f_string_trim, "trim", 1),
   CFUNC(f_string_ltrim, "ltrim", 1),
