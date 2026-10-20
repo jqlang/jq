@@ -33,6 +33,9 @@ body:
        * jq is in the official [Arch](https://archlinux.org/packages/?q=jq) repository.
          Install using `sudo pacman -S jq`.
 
+       * jq is in [conda-forge](https://anaconda.org/conda-forge/jq).
+         Install using `conda install -c conda-forge jq`.
+
        * jq 1.8.2 binaries for
          [AMD64](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-linux-amd64)
          or
@@ -100,6 +103,9 @@ body:
        * Use [MacPorts](https://www.macports.org) to install jq with `port install jq`.
 
        * Use [Fink](https://finkproject.org) to install jq with `fink install jq`.
+
+       * Use [conda-forge](https://anaconda.org/conda-forge/jq) to install jq with
+         `conda install -c conda-forge jq`.
 
        * jq 1.8.2 binaries for
          [Apple Silicon](https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-macos-arm64)
