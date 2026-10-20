@@ -90,7 +90,7 @@ sections:
       special meaning to jq are also shell meta-characters.  For example, `jq
       "foo"` will fail on most shells, as it's equivalent to `jq foo` which will
       generally fail because `foo is not defined`.
-      
+
       Inside a Unix shell or PowerShell 7.3+, use single quotes around the jq
       program and double quotes inside the jq program.
       When using PowerShell before 7.3 or Windows PowerShell (`powershell.exe`),
