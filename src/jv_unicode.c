@@ -38,8 +38,11 @@ const char* jvp_utf8_next_multibyte(const char* in, const char* end, int* codepo
     /* Bad single byte - either an invalid byte or an out-of-place continuation byte */
     length = 1;
   } else if (length > end - in) {
-    /* String ends before UTF8 sequence ends */
-    length = end - in;
+    /* String ends before UTF8 sequence ends, so skip only its continuation bytes */
+    for (length = 1; in + length < end; length++) {
+      if (utf8_coding_length[(unsigned char)in[length]] != UTF8_CONTINUATION_BYTE)
+        break;
+    }
   } else {
     codepoint = ((unsigned)in[0]) & utf8_coding_bits[first];
     for (int i=1; i<length; i++) {
