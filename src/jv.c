@@ -758,7 +758,7 @@ jv jv_number_negate(jv n) {
   if (JVP_HAS_FLAGS(n, JVP_FLAGS_NUMBER_LITERAL)) {
     jvp_literal_number* m = jvp_literal_number_alloc(jvp_dec_number_ptr(n)->digits);
 
-    decNumberMinus(&m->num_decimal, jvp_dec_number_ptr(n), DEC_CONTEXT());
+    decNumberCopyNegate(&m->num_decimal, jvp_dec_number_ptr(n));
     jv r = {JVP_FLAGS_NUMBER_LITERAL, 0, 0, 0, {&m->refcnt}};
     return r;
   }
