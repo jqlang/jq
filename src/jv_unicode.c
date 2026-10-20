@@ -32,8 +32,8 @@ const char* jvp_utf8_next_multibyte(const char* in, const char* end, int* codepo
   assert(in < end);
   int codepoint = -1;
   unsigned char first = (unsigned char)in[0];
-  int length = utf8_coding_length[first];
   assert(first & 0x80);
+  int length = utf8_coding_length[first];
   if (length == 0 || length == UTF8_CONTINUATION_BYTE) {
     /* Bad single byte - either an invalid byte or an out-of-place continuation byte */
     length = 1;
