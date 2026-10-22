@@ -29,6 +29,8 @@ struct jq_state {
   stack_ptr curr_frame;
   stack_ptr stk_top;
   stack_ptr fork_top;
+  struct closure *tail_args;
+  unsigned tail_args_capacity;
 
   jv path;
   jv value_at_path;
@@ -128,7 +130,8 @@ static struct closure make_closure(struct jq_state* jq, uint16_t* pc) {
 }
 
 static struct frame* frame_push(struct jq_state* jq, struct closure callee,
-                                uint16_t* argdef, int nargs) {
+                                uint16_t* argdef, int nargs,
+                                const struct closure* resolved_args) {
   stack_ptr new_frame_idx = stack_push_block(&jq->stk, jq->curr_frame, frame_size(callee.bc));
   struct frame* new_frame = stack_block(&jq->stk, new_frame_idx);
   new_frame->bc = callee.bc;
@@ -136,7 +139,8 @@ static struct frame* frame_push(struct jq_state* jq, struct closure callee,
   assert(nargs == new_frame->bc->nclosures);
   union frame_entry* entries = new_frame->entries;
   for (int i=0; i<nargs; i++) {
-    entries->closure = make_closure(jq, argdef + i * 2);
+    entries->closure = resolved_args ? resolved_args[i] :
+      make_closure(jq, argdef + i * 2);
     entries++;
   }
   for (int i=0; i<callee.bc->nlocals; i++) {
@@ -961,12 +965,23 @@ jv jq_next(jq_state *jq) {
       stack_ptr retdata = jq->stk_top;
       struct frame* new_frame;
       struct closure cl = make_closure(jq, pc);
+      const struct closure *resolved_args = NULL;
       if (opcode == TAIL_CALL_JQ) {
         retaddr = frame_current(jq)->retaddr;
         retdata = frame_current(jq)->retdata;
+        // Resolve parameter closures before popping their frame. Reuse the
+        // buffer so a tail-recursive call does not allocate on every step.
+        if (nclosures > jq->tail_args_capacity) {
+          jq->tail_args = jv_mem_realloc(jq->tail_args,
+                                        sizeof(struct closure) * nclosures);
+          jq->tail_args_capacity = nclosures;
+        }
+        for (unsigned i = 0; i < nclosures; i++)
+          jq->tail_args[i] = make_closure(jq, pc + 2 + i * 2);
+        resolved_args = jq->tail_args;
         frame_pop(jq);
       }
-      new_frame = frame_push(jq, cl, pc + 2, nclosures);
+      new_frame = frame_push(jq, cl, pc + 2, nclosures, resolved_args);
       new_frame->retdata = retdata;
       new_frame->retaddr = retaddr;
       pc = new_frame->bc->code;
@@ -1057,6 +1072,8 @@ jq_state *jq_init(void) {
 
   jq->bc = 0;
   jq->next_label = 0;
+  jq->tail_args = NULL;
+  jq->tail_args_capacity = 0;
 
   stack_init(&jq->stk);
   jq->stk_top = 0;
@@ -1116,7 +1133,7 @@ void jq_start(jq_state *jq, jv input, int flags) {
   jq_reset(jq);
 
   struct closure top = {jq->bc, -1};
-  struct frame* top_frame = frame_push(jq, top, 0, 0);
+  struct frame* top_frame = frame_push(jq, top, 0, 0, NULL);
   top_frame->retdata = 0;
   top_frame->retaddr = 0;
 
@@ -1136,6 +1153,7 @@ void jq_teardown(jq_state **jq) {
   bytecode_free(old_jq->bc);
   old_jq->bc = 0;
   jv_free(old_jq->attrs);
+  jv_mem_free(old_jq->tail_args);
 
   jv_mem_free(old_jq);
 }
@@ -1170,14 +1188,15 @@ static int ret_follows(uint16_t *pc) {
  * a) the next instruction is a RET or a chain of unconditional JUMPs
  * that ends in a RET, and
  *
- * b) none of the closures -callee included- have level == 0.
+ * b) no newly created closure -callee included- closes over level == 0.
+ * References to existing parameter closures do not depend on this frame.
  */
 static uint16_t tail_call_analyze(uint16_t *pc) {
   assert(*pc == CALL_JQ);
   pc++;
   // + 1 for the callee closure
   for (uint16_t nclosures = *pc++ + 1; nclosures > 0; pc++, nclosures--) {
-    if (*pc++ == 0)
+    if (*pc++ == 0 && (*pc & ARG_NEWCLOSURE))
       return CALL_JQ;
   }
   if (ret_follows(pc))

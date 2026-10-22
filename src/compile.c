@@ -1169,8 +1169,21 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
             block_append(&callargs, b);
             break;
           case CLOSURE_CREATE:
-            block_append(&prelude, b);
-            block_append(&callargs, gen_op_bound(CLOSURE_REF, b));
+            // A lambda that only invokes a parameter is the same closure, not
+            // a new closure over this function's frame.
+            if (block_is_single(i->subfn) &&
+                i->subfn.first->op == CALL_JQ &&
+                i->subfn.first->bound_by &&
+                i->subfn.first->bound_by->op == CLOSURE_PARAM &&
+                i->subfn.first->nactuals == 0) {
+              block_append(&callargs,
+                           gen_op_bound(CLOSURE_REF,
+                                        inst_block(i->subfn.first->bound_by)));
+              inst_free(i);
+            } else {
+              block_append(&prelude, b);
+              block_append(&callargs, gen_op_bound(CLOSURE_REF, b));
+            }
             break;
           }
           actual_args++;
@@ -1336,9 +1349,12 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
       code[pos++] = curr->bound_by->imm.intval |
         (curr->bound_by->op == CLOSURE_CREATE ? ARG_NEWCLOSURE : 0);
       for (inst* arg = curr->arglist.first; arg; arg = arg->next) {
-        assert(arg->op == CLOSURE_REF && arg->bound_by->op == CLOSURE_CREATE);
+        assert(arg->op == CLOSURE_REF &&
+               (arg->bound_by->op == CLOSURE_CREATE ||
+                arg->bound_by->op == CLOSURE_PARAM));
         code[pos++] = nesting_level(bc, arg->bound_by);
-        code[pos++] = arg->bound_by->imm.intval | ARG_NEWCLOSURE;
+        code[pos++] = arg->bound_by->imm.intval |
+          (arg->bound_by->op == CLOSURE_CREATE ? ARG_NEWCLOSURE : 0);
       }
     } else if ((op->flags & OP_HAS_CONSTANT) && (op->flags & OP_HAS_VARIABLE)) {
       // STORE_GLOBAL: constant global, basically
