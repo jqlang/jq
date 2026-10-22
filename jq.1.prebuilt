@@ -4015,6 +4015,9 @@ This is the "update" operator \fB|=\fR\. It takes a filter on the right\-hand si
 The left\-hand side can be any general path expression; see \fBpath()\fR\.
 .
 .P
+The right\-hand side of \fB|=\fR is run with the value at the path as its input, not with \fB\.\fR\. This is what sets it apart from plain assignment (\fB=\fR) and the arithmetic update\-assignment operators such as \fB+=\fR, whose right\-hand side is run with \fB\.\fR\. For example, \fB\.a |= \.b\fR sets \fB\.a\fR to the \fBb\fR field of \fB\.a\fR, while \fB\.a = \.b\fR and \fB\.a += \.b\fR use the \fBb\fR field of \fB\.\fR\.
+.
+.P
 Note that the left\-hand side of \fB|=\fR refers to a value in \fB\.\fR\. Thus \fB$var\.foo |= \. + 1\fR won\'t work as expected (\fB$var\.foo\fR is not a valid or useful path expression in \fB\.\fR); use \fB$var | \.foo |= \. + 1\fR instead\.
 .
 .P
@@ -4044,7 +4047,10 @@ jq \'(\.\.|select(type=="boolean")) |= if \. then 1 else 0 end\'
 .IP "" 0
 .
 .SS "Arithmetic update\-assignment: +=, \-=, *=, /=, %=, //="
-jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \fBa |= \. op b\fR\. So, \fB+= 1\fR can be used to increment values, being the same as \fB|= \. + 1\fR\.
+jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \fB(b as $b | a |= \. op $b)\fR\. So, \fB+= 1\fR can be used to increment values, being the same as \fB|= \. + 1\fR\.
+.
+.P
+Note that the right\-hand side \fBb\fR is evaluated with the same input as the left\-hand side, not with the value at the path being updated\. So \fB\.a += \.b\fR adds the value of \fB\.b\fR to \fB\.a\fR, whereas \fB\.a |= \. + \.b\fR would look up \fB\.b\fR inside the value of \fB\.a\fR\. If \fBb\fR outputs multiple values, then \fBa op= b\fR outputs one result for each of them\.
 .
 .IP "" 4
 .
@@ -4053,6 +4059,15 @@ jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \f
 jq \'\.foo += 1\'
    {"foo": 42}
 => {"foo": 43}
+
+jq \'\.a += \.b\'
+   {"a": 1, "b": 2}
+=> {"a": 3, "b": 2}
+
+jq \'\.a += (1,2)\'
+   {"a": 0}
+=> {"a": 1}
+   {"a": 2}
 .
 .fi
 .
