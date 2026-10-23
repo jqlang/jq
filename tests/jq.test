@@ -1966,6 +1966,23 @@ try strflocaltime("%c" * 10) catch .
 [2015,2,5,23,51,47,4,63]
 "strflocaltime/1: result too long"
 
+# out-of-range / non-finite seconds must be jq errors, not process aborts (#3642)
+try gmtime catch .
+1e400
+"number of seconds since epoch is out of range"
+
+try localtime catch .
+1e20
+"number of seconds since epoch is out of range"
+
+try strftime("%Y") catch .
+1e400
+"number of seconds since epoch is out of range"
+
+try strflocaltime("%Y") catch .
+1e20
+"number of seconds since epoch is out of range"
+
 [strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
 "2015-03-05T23:51:47Z"
 [[2015,2,5,23,51,47,4,63],1425599507]
