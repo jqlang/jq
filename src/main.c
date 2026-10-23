@@ -230,7 +230,8 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
       // Halt with no output
     } else if (jv_is_valid(error_message)) {
       error_message = jv_dump_string(error_message, 0);
-      fprintf(stderr, "%s\n", jv_string_value(error_message));
+      fprintf(stderr, "%s\n", jv_is_valid(error_message) ?
+              jv_string_value(error_message) : "<value too large>");
     } // else no message on stderr; use --debug-trace to see a message
     fflush(stderr);
     jv_free(error_message);
@@ -244,7 +245,8 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
     } else {
       msg = jv_dump_string(msg, 0);
       fprintf(stderr, "jq: error (at %s) (not a string): %s\n",
-              jv_string_value(input_pos), jv_string_value(msg));
+              jv_string_value(input_pos), jv_is_valid(msg) ?
+              jv_string_value(msg) : "<value too large>");
     }
     ret = JQ_ERROR_UNKNOWN;
     jv_free(input_pos);
@@ -267,7 +269,8 @@ static void stderr_cb(void *data, jv input) {
         stderr, dumpopts & JV_PRINT_ISATTY);
   } else {
     input = jv_dump_string(input, 0);
-    fprintf(stderr, "%s", jv_string_value(input));
+    fprintf(stderr, "%s", jv_is_valid(input) ?
+            jv_string_value(input) : "<value too large>");
   }
   jv_free(input);
 }

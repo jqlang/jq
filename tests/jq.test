@@ -2815,6 +2815,11 @@ try delpaths([[range(10001) | 0]]) catch .
 null
 "Path too deep"
 
+# a too-deep comparison of two paths is an error, not an abort
+try ((reduce range(10000) as $i ([]; [.])) as $x | null | delpaths([[$x], [$x]])) catch .
+null
+"Comparison too deep"
+
 # regression test for CVE-2026-40612
 reduce range(10000) as $_ ([]; [.]) | contains([[]])
 null

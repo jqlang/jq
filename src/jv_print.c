@@ -403,6 +403,14 @@ char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize) {
     x = jv_string_slice(x, 0, bufsize);
   }
   x = jv_dump_string(x, 0);
+  /* Only strings are pre-truncated above, so dumping a large array or
+     object can exceed the string length bound and come back invalid. */
+  if (!jv_is_valid(x)) {
+    jv_free(x);
+    strncpy(outbuf, "<value too large>", bufsize);
+    outbuf[bufsize - 1] = 0;
+    return outbuf;
+  }
   const char *str = jv_string_value(x);
   const size_t len = strlen(str);
   if (len > bufsize - 1 && bufsize >= 8) {
