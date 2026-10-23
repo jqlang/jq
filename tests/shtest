@@ -570,6 +570,10 @@ if [ "$($VALGRIND $Q $JQ -n '{"a":"xyz"} | halt_error(1)' 2>&1)" != '{"a":"xyz"}
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
 fi
+if [ "$($VALGRIND $Q $JQ -n '{"a":"xyz"} | halt_error(1)' 2>&1 | wc -c)" -ne 11 ]; then
+    echo "jq halt_error(1) decorated its non-string output" 1>&2
+    exit 1
+fi
 
 # Check $JQ_COLORS
 

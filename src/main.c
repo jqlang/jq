@@ -229,8 +229,11 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
     } else if (jv_get_kind(error_message) == JV_KIND_NULL) {
       // Halt with no output
     } else if (jv_is_valid(error_message)) {
+      // The manual promises raw output with no decoration, not even a newline.
       error_message = jv_dump_string(error_message, 0);
-      fprintf(stderr, "%s\n", jv_string_value(error_message));
+      priv_fwrite(jv_string_value(error_message),
+          jv_string_length_bytes(jv_copy(error_message)),
+          stderr, dumpopts & JV_PRINT_ISATTY);
     } // else no message on stderr; use --debug-trace to see a message
     fflush(stderr);
     jv_free(error_message);
