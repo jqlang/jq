@@ -963,6 +963,24 @@ static int f_match_name_iter(const UChar* name, const UChar *name_end, int ngrou
   return 0;
 }
 
+// Return the codepoint index of byte offset pos, walking from the previous
+// position (*cur, at codepoint *cur_idx) rather than from the start of the
+// string so that global matches stay linear. Captures start before the end of
+// the match (and lookbehind captures before its start), so the cursor may need
+// to walk back.
+static unsigned long f_match_index(const char *s, int pos, int *cur,
+    unsigned long *cur_idx) {
+  while (*cur < pos) {
+    *cur += jvp_utf8_decode_length(s[*cur]);
+    (*cur_idx)++;
+  }
+  while (*cur > pos) {
+    if ((s[--*cur] & 0xC0) != 0x80)
+      (*cur_idx)--;
+  }
+  return *cur_idx;
+}
+
 static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   int test = jv_equal(testmode, jv_true());
   jv result;
@@ -1048,6 +1066,8 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
   const UChar* start = (const UChar*)jv_string_value(input);
   const unsigned long length = jv_string_length_bytes(jv_copy(input));
   const UChar* end = start + length;
+  int cur = 0;
+  unsigned long cur_idx = 0;
   region = onig_region_new();
   do {
     onigret = onig_search(reg,
@@ -1062,11 +1082,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
 
       // Zero-width match
       if (region->end[0] == region->beg[0]) {
-        unsigned long idx;
-        const char *fr = (const char*)input_string;
-        for (idx = 0; fr < input_string+region->beg[0]; idx++) {
-          fr += jvp_utf8_decode_length(*fr);
-        }
+        unsigned long idx = f_match_index(input_string, region->beg[0], &cur, &cur_idx);
         jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
         match = jv_object_set(match, jv_string("length"), jv_number(0));
         match = jv_object_set(match, jv_string("string"), jv_string(""));
@@ -1098,14 +1114,8 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
         continue;
       }
 
-      unsigned long idx;
-      unsigned long len;
-      const char *fr = (const char*)input_string;
-
-      for (idx = len = 0; fr < input_string+region->end[0]; len++) {
-        if (fr == input_string+region->beg[0]) idx = len, len=0;
-        fr += jvp_utf8_decode_length(*fr);
-      }
+      unsigned long idx = f_match_index(input_string, region->beg[0], &cur, &cur_idx);
+      unsigned long len = f_match_index(input_string, region->end[0], &cur, &cur_idx) - idx;
 
       jv match = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
 
@@ -1122,10 +1132,7 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
             cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(-1));
             cap = jv_object_set(cap, jv_string("string"), jv_null());
           } else {
-            fr = input_string;
-            for (idx = 0; fr < input_string+region->beg[i]; idx++) {
-              fr += jvp_utf8_decode_length(*fr);
-            }
+            idx = f_match_index(input_string, region->beg[i], &cur, &cur_idx);
             cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
             cap = jv_object_set(cap, jv_string("string"), jv_string(""));
           }
@@ -1134,11 +1141,8 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
           captures = jv_array_append(captures, cap);
           continue;
         }
-        fr = input_string;
-        for (idx = len = 0; fr < input_string+region->end[i]; len++) {
-          if (fr == input_string+region->beg[i]) idx = len, len=0;
-          fr += jvp_utf8_decode_length(*fr);
-        }
+        idx = f_match_index(input_string, region->beg[i], &cur, &cur_idx);
+        len = f_match_index(input_string, region->end[i], &cur, &cur_idx) - idx;
 
         blen = region->end[i]-region->beg[i];
         jv cap = jv_object_set(jv_object(), jv_string("offset"), jv_number(idx));
