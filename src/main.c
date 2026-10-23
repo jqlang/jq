@@ -228,8 +228,8 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
       if (jv_get_kind(error_message) != JV_KIND_STRING) {
         error_message = jv_dump_string(error_message, 0);
       }
-      // No prefix should be added to the output of `halt_error`, and the
-      // manual promises raw output with no decoration, not even a newline.
+      // No prefix or trailing newline should be added to the output of
+      // `halt_error`.
       priv_fwrite(jv_string_value(error_message), jv_string_length_bytes(jv_copy(error_message)),
           stderr, dumpopts & JV_PRINT_ISATTY);
     } // else no message on stderr; use --debug-trace to see a message
