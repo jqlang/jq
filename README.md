@@ -52,11 +52,13 @@ make clean                     # if upgrading from a version previously built fr
 make -j8
 make check
 sudo make install
+sudo ldconfig                  # on Linux, if jq cannot find libjq.so
 ```
 
 Build a statically linked version:
 
 ```console
+make clean
 make LDFLAGS=-all-static
 ```
 
