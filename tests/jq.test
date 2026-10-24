@@ -1888,6 +1888,24 @@ ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"
 
+# Only A-Z and a-z change; the neighbouring bytes @ [ ` { and non-ASCII do not
+[ascii_downcase, ascii_upcase]
+"@AZ[`az{ ÀÉé ǅ 日本 😀 0123456789 THE QUICK brown fox JUMPS over"
+["@az[`az{ ÀÉé ǅ 日本 😀 0123456789 the quick brown fox jumps over","@AZ[`AZ{ ÀÉé ǅ 日本 😀 0123456789 THE QUICK BROWN FOX JUMPS OVER"]
+
+[ascii_downcase, ascii_upcase]
+""
+["",""]
+
+# An embedded NUL does not end the string
+[ascii_downcase, ascii_upcase]
+"A\u0000z"
+["a\u0000z","A\u0000Z"]
+
+[.[] | try ascii_downcase catch ., try ascii_upcase catch .]
+[null, ["A"]]
+["ascii_downcase input must be a string","ascii_upcase input must be a string","ascii_downcase input must be a string","ascii_upcase input must be a string"]
+
 bsearch(0,1,2,3,4)
 [1,2,3]
 -1
