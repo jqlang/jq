@@ -222,15 +222,16 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
       ret = JQ_ERROR_UNKNOWN;
     jv_free(exit_code);
     jv error_message = jq_get_error_message(jq);
-    if (jv_get_kind(error_message) == JV_KIND_STRING) {
-      // No prefix should be added to the output of `halt_error`.
-      priv_fwrite(jv_string_value(error_message), jv_string_length_bytes(jv_copy(error_message)),
-          stderr, dumpopts & JV_PRINT_ISATTY);
-    } else if (jv_get_kind(error_message) == JV_KIND_NULL) {
+    if (jv_get_kind(error_message) == JV_KIND_NULL) {
       // Halt with no output
     } else if (jv_is_valid(error_message)) {
-      error_message = jv_dump_string(error_message, 0);
-      fprintf(stderr, "%s\n", jv_string_value(error_message));
+      if (jv_get_kind(error_message) != JV_KIND_STRING) {
+        error_message = jv_dump_string(error_message, 0);
+      }
+      // No prefix or trailing newline should be added to the output of
+      // `halt_error`.
+      priv_fwrite(jv_string_value(error_message), jv_string_length_bytes(jv_copy(error_message)),
+          stderr, dumpopts & JV_PRINT_ISATTY);
     } // else no message on stderr; use --debug-trace to see a message
     fflush(stderr);
     jv_free(error_message);
