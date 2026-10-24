@@ -621,7 +621,7 @@ static int stream_check_done(struct jv_parser* p, jv* out) {
 }
 
 static int seq_check_truncation(struct jv_parser* p) {
-  return (!p->last_ch_was_ws && (p->stackpos > 0 || p->tokenpos > 0 || jv_get_kind(p->next) == JV_KIND_NUMBER));
+  return (p->stackpos > 0 || (!p->last_ch_was_ws && (p->tokenpos > 0 || jv_get_kind(p->next) == JV_KIND_NUMBER)));
 }
 
 static int stream_seq_check_truncation(struct jv_parser* p) {
@@ -657,6 +657,8 @@ static pfunc scan(struct jv_parser* p, char ch, jv* out) {
   }
   if ((p->flags & JV_PARSE_SEQ)
       && ch == '\036' /* ASCII RS; see draft-ietf-json-sequence-07 */) {
+    if (p->st != JV_PARSER_NORMAL) // RS inside a string
+      return "Truncated value";
     if (check_truncation(p)) {
       if (check_literal(p) == 0 && is_top_num(p))
         return "Potentially truncated top-level numeric value";
