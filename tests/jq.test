@@ -1970,6 +1970,15 @@ try strflocaltime("%c" * 10) catch .
 "2015-03-05T23:51:47Z"
 [[2015,2,5,23,51,47,4,63],1425599507]
 
+# a format without a day of the month gives the first of the month
+[("2024-06" | strptime("%Y-%m")), ("2024" | strptime("%Y")) | ., todate]
+null
+[[2024,5,1,0,0,0,6,152],"2024-06-01T00:00:00Z",[2024,0,1,0,0,0,1,0],"2024-01-01T00:00:00Z"]
+
+"10:15" | strptime("%H:%M")
+null
+[1900,0,1,10,15,0,1,0]
+
 # Check day-of-week and day of year computations
 # (should trip an assert if this fails)
 last(range(365 * 67)|("1970-03-01T01:02:03Z"|strptime("%Y-%m-%dT%H:%M:%SZ")|mktime) + (86400 * .)|strftime("%Y-%m-%dT%H:%M:%SZ")|strptime("%Y-%m-%dT%H:%M:%SZ"))
