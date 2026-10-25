@@ -1608,16 +1608,15 @@ static void set_tm_wday(struct tm *tm) {
    * https://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week#Gauss.27s_algorithm
    * https://cs.uwaterloo.ca/~alopez-o/math-faq/node73.html
    *
-   * Tested with dates from 1900-01-01 through 2100-01-01.  This
-   * algorithm produces the wrong day-of-the-week number for dates in
-   * the range 1900-01-01..1900-02-28, and for 2100-01-01..2100-02-28.
-   * Since this is only needed on OS X and *BSD, we might just document
-   * this.
+   * Tested against gmtime() for every date from 1600-01-01 through
+   * 2400-12-31.
    */
   int century = (1900 + tm->tm_year) / 100;
   int year = (1900 + tm->tm_year) % 100;
-  if (tm->tm_mon < 2)
-    year--;
+  if (tm->tm_mon < 2 && --year < 0) {
+    year += 100;
+    century--;
+  }
   /*
    * The month value in the wday computation below is shifted so that
    * March is 1, April is 2, .., January is 11, and February is 12.
@@ -1630,7 +1629,10 @@ static void set_tm_wday(struct tm *tm) {
   if (wday < 0)
     wday += 7;
 #if 0
-  /* See commentary above */
+  /*
+   * Off: the bundled strptime() can leave a wrong weekday here, and %a
+   * or %u can name one that does not match the date.
+   */
   assert(wday == tm->tm_wday || tm->tm_wday == 8);
 #endif
   tm->tm_wday = wday;
@@ -1666,6 +1668,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
 
   struct tm tm;
   memset(&tm, 0, sizeof(tm));
+  tm.tm_mday = 1; // a format without a day of the month means the 1st
   tm.tm_wday = 8; // sentinel
   tm.tm_yday = 367; // sentinel
 
@@ -1698,6 +1701,8 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   set_tm_yday(&tm);
 #elif defined(WIN32) || !defined(HAVE_STRPTIME)
   set_tm_wday(&tm);
+  if (tm.tm_yday == 367)
+    set_tm_yday(&tm);
 #else
   if (tm.tm_wday == 8 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)
     set_tm_wday(&tm);
