@@ -1783,6 +1783,30 @@ static int jv2tm(jv a, struct tm *tm, int localtime) {
 
 #undef TO_TM_FIELD
 
+/* Convert a JSON number of seconds-since-epoch to time_t without
+ * invoking undefined behaviour on non-finite or out-of-range values.
+ * Returns 0 (and leaves *out unchanged) when the value cannot be
+ * represented; callers should surface a jv_invalid error. */
+static int fsecs_to_time_t(double fsecs, time_t *out) {
+  double floored;
+  double tmin;
+  double tmax;
+  int bits;
+
+  if (!isfinite(fsecs))
+    return 0;
+  floored = floor(fsecs);
+  /* Signed time_t on every platform jq supports. Bound in double space
+   * before casting so UBSan float-cast-overflow does not abort. */
+  bits = (int)sizeof(time_t) * CHAR_BIT;
+  tmin = -ldexp(1.0, bits - 1);
+  tmax = ldexp(1.0, bits - 1) - 1.0;
+  if (floored < tmin || floored > tmax)
+    return 0;
+  *out = (time_t)floored;
+  return 1;
+}
+
 static jv f_mktime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_ARRAY)
     return ret_error(a, jv_string("mktime requires array inputs"));
@@ -1804,7 +1828,11 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
+  time_t secs;
+  if (!fsecs_to_time_t(fsecs, &secs)) {
+    jv_free(a);
+    return jv_invalid_with_msg(jv_string("number of seconds since epoch is out of range"));
+  }
   jv_free(a);
   tmp = gmtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1818,7 +1846,11 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
+  time_t secs;
+  if (!fsecs_to_time_t(fsecs, &secs)) {
+    jv_free(a);
+    return jv_invalid_with_msg(jv_string("number of seconds since epoch is out of range"));
+  }
   jv_free(a);
   tmp = gmtime(&secs);
   if (tmp == NULL)
@@ -1839,7 +1871,11 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
+  time_t secs;
+  if (!fsecs_to_time_t(fsecs, &secs)) {
+    jv_free(a);
+    return jv_invalid_with_msg(jv_string("number of seconds since epoch is out of range"));
+  }
   jv_free(a);
   tmp = localtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1853,7 +1889,11 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
+  time_t secs;
+  if (!fsecs_to_time_t(fsecs, &secs)) {
+    jv_free(a);
+    return jv_invalid_with_msg(jv_string("number of seconds since epoch is out of range"));
+  }
   jv_free(a);
   tmp = localtime(&secs);
   if (tmp == NULL)
