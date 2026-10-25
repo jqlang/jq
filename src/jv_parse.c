@@ -791,9 +791,22 @@ jv jv_parser_next(struct jv_parser* p) {
   char ch;
   presult msg = 0;
   while (!msg && p->curr_buf_pos < p->curr_buf_length) {
+    ch = p->curr_buf[p->curr_buf_pos++];
+    if (p->st == JV_PARSER_WAITING_FOR_RS) {
+      if (ch == '\n') {
+        p->line++;
+        p->column = 0;
+      } else {
+        p->column++;
+      }
+      if (ch == '\036')
+        p->st = JV_PARSER_NORMAL;
+      continue; // need to resync, wait for RS
+    }
+    msg = scan(p, ch, &value);
     // Long string runs can be copied at once. Probe periodically to avoid
     // repeatedly searching short runs in escape-heavy strings.
-    if (p->st == JV_PARSER_STRING && p->tokenpos >= p->string_scan_pos &&
+    if (!msg && p->st == JV_PARSER_STRING && p->tokenpos >= p->string_scan_pos &&
         p->tokenpos < p->tokenlen) {
       int remaining = p->curr_buf_length - p->curr_buf_pos;
       int room = p->tokenlen - p->tokenpos - 1;
@@ -821,25 +834,12 @@ jv jv_parser_next(struct jv_parser* p) {
           p->curr_buf_pos += span_len;
           if (span_end < scan_end)
             p->string_scan_pos = p->tokenpos + STRING_SCAN_INTERVAL;
-          continue;
+        } else {
+          // The delimiter is close; don't retry the same search each byte.
+          p->string_scan_pos = p->tokenpos + STRING_SCAN_INTERVAL;
         }
-        // The delimiter is close; don't retry the same search each byte.
-        p->string_scan_pos = p->tokenpos + STRING_SCAN_INTERVAL;
       }
     }
-    ch = p->curr_buf[p->curr_buf_pos++];
-    if (p->st == JV_PARSER_WAITING_FOR_RS) {
-      if (ch == '\n') {
-        p->line++;
-        p->column = 0;
-      } else {
-        p->column++;
-      }
-      if (ch == '\036')
-        p->st = JV_PARSER_NORMAL;
-      continue; // need to resync, wait for RS
-    }
-    msg = scan(p, ch, &value);
   }
   if (msg == OK) {
     return value;
