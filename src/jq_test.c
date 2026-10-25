@@ -601,7 +601,155 @@ static void run_jq_pthread_tests(void) {
 #endif // HAVE_PTHREAD
 
 
+static void test_parser_string_spans(void) {
+  struct jv_parser *parser = jv_parser_new(0);
+  char first[513];
+  first[0] = '"';
+  memset(first + 1, 'a', sizeof(first) - 1);
+  jv_parser_set_buf(parser, first, sizeof(first), 1);
+  jv value = jv_parser_next(parser);
+  assert(!jv_is_valid(value));
+  assert(!jv_invalid_has_msg(jv_copy(value)));
+  assert(jv_parser_remaining(parser) == 0);
+  jv_free(value);
+
+  char second[43];
+  second[0] = '\\';
+  second[1] = '"';
+  memset(second + 2, 'b', 40);
+  second[42] = '"';
+  jv_parser_set_buf(parser, second, sizeof(second), 0);
+  value = jv_parser_next(parser);
+  assert(jv_get_kind(value) == JV_KIND_STRING);
+  assert(jv_string_length_bytes(jv_copy(value)) == 553);
+  const char *text = jv_string_value(value);
+  assert(memcmp(text, first + 1, sizeof(first) - 1) == 0);
+  assert(text[512] == '"');
+  for (int i = 513; i < 553; i++)
+    assert(text[i] == 'b');
+  jv_free(value);
+  jv_parser_free(parser);
+
+  // A large token leaves a large token buffer for subsequent short strings.
+  parser = jv_parser_new(0);
+  const int run_lengths[] = {15, 16, 17, 24, 31, 32, 33, 63, 64};
+  char runs[512 + 3 +
+            (sizeof(run_lengths) / sizeof(run_lengths[0])) * (64 + 3)];
+  char *end = runs;
+  *end++ = '"';
+  memset(end, 'a', 512);
+  end += 512;
+  *end++ = '"';
+  *end++ = '\n';
+  for (int i = 0; i < (int)(sizeof(run_lengths) / sizeof(run_lengths[0])); i++) {
+    *end++ = '"';
+    memset(end, 'b', run_lengths[i]);
+    end += run_lengths[i];
+    *end++ = '"';
+    *end++ = '\n';
+  }
+  jv_parser_set_buf(parser, runs, end - runs, 0);
+  value = jv_parser_next(parser);
+  assert(jv_get_kind(value) == JV_KIND_STRING);
+  assert(jv_string_length_bytes(jv_copy(value)) == 512);
+  jv_free(value);
+  for (int i = 0; i < (int)(sizeof(run_lengths) / sizeof(run_lengths[0])); i++) {
+    value = jv_parser_next(parser);
+    assert(jv_get_kind(value) == JV_KIND_STRING);
+    assert(jv_string_length_bytes(jv_copy(value)) == run_lengths[i]);
+    text = jv_string_value(value);
+    for (int j = 0; j < run_lengths[i]; j++)
+      assert(text[j] == 'b');
+    jv_free(value);
+  }
+  value = jv_parser_next(parser);
+  assert(!jv_is_valid(value));
+  assert(!jv_invalid_has_msg(jv_copy(value)));
+  jv_free(value);
+  jv_parser_free(parser);
+
+  // Escapes after both short and long ordinary runs.
+  const int escape_runs[] = {24, 64};
+  for (int r = 0; r < (int)(sizeof(escape_runs) / sizeof(escape_runs[0])); r++) {
+    int run = escape_runs[r];
+    char escapes[2 + 20 * (64 + 2)];
+    end = escapes;
+    *end++ = '"';
+    for (int i = 0; i < 20; i++) {
+      memset(end, 'a', run);
+      end += run;
+      *end++ = '\\';
+      *end++ = 'n';
+    }
+    *end++ = '"';
+    parser = jv_parser_new(0);
+    jv_parser_set_buf(parser, escapes, end - escapes, 0);
+    value = jv_parser_next(parser);
+    assert(jv_get_kind(value) == JV_KIND_STRING);
+    assert(jv_string_length_bytes(jv_copy(value)) == 20 * (run + 1));
+    text = jv_string_value(value);
+    for (int i = 0; i < 20; i++) {
+      assert(memcmp(text + i * (run + 1), escapes + 1 + i * (run + 2), run) == 0);
+      assert(text[i * (run + 1) + run] == '\n');
+    }
+    jv_free(value);
+    jv_parser_free(parser);
+  }
+
+  parser = jv_parser_new(0);
+  char invalid[36];
+  invalid[0] = '"';
+  memset(invalid + 1, 'a', 32);
+  invalid[33] = '\n';
+  invalid[34] = 'b';
+  invalid[35] = '"';
+  jv_parser_set_buf(parser, invalid, sizeof(invalid), 0);
+  value = jv_parser_next(parser);
+  assert(jv_invalid_has_msg(jv_copy(value)));
+  jv error = jv_invalid_get_msg(value);
+  assert(strstr(jv_string_value(error), "line 2, column 2") != NULL);
+  jv_free(error);
+  jv_parser_free(parser);
+
+  // A raw newline in a copied span must still advance the error location.
+  parser = jv_parser_new(0);
+  char invalid_span[83];
+  invalid_span[0] = '"';
+  memset(invalid_span + 1, 'a', 48);
+  invalid_span[49] = '\n';
+  memset(invalid_span + 50, 'b', 32);
+  invalid_span[82] = '"';
+  jv_parser_set_buf(parser, invalid_span, sizeof(invalid_span), 0);
+  value = jv_parser_next(parser);
+  assert(jv_invalid_has_msg(jv_copy(value)));
+  error = jv_invalid_get_msg(value);
+  assert(strstr(jv_string_value(error), "line 2, column 33") != NULL);
+  jv_free(error);
+  jv_parser_free(parser);
+
+  parser = jv_parser_new(JV_PARSE_SEQ);
+  char sequence[69];
+  sequence[0] = '\036';
+  sequence[1] = '"';
+  memset(sequence + 2, 'a', 64);
+  sequence[66] = '\036';
+  sequence[67] = '1';
+  sequence[68] = '\n';
+  jv_parser_set_buf(parser, sequence, sizeof(sequence), 0);
+  value = jv_parser_next(parser);
+  assert(jv_invalid_has_msg(jv_copy(value)));
+  error = jv_invalid_get_msg(value);
+  assert(strstr(jv_string_value(error), "Truncated value") != NULL);
+  jv_free(error);
+  value = jv_parser_next(parser);
+  assert(jv_get_kind(value) == JV_KIND_NUMBER);
+  assert(jv_number_value(value) == 1);
+  jv_free(value);
+  jv_parser_free(parser);
+}
+
 static void jv_test(void) {
+  test_parser_string_spans();
   /// JSON parser regression tests
   {
     jv v = jv_parse("{\"a':\"12\"}");
