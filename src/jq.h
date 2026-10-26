@@ -34,6 +34,11 @@ void jq_halt(jq_state *, jv, jv);
 int jq_halted(jq_state *);
 jv jq_get_exit_code(jq_state *);
 jv jq_get_error_message(jq_state *);
+// Where in the program the error last returned by jq_next() was raised,
+// as {"file", "line", "column", "length", "text"}, or an invalid value.
+// "line" and "column" count from 1; "column" and "length" count bytes of
+// "text", the source line.
+jv jq_get_error_location(jq_state *);
 
 typedef jv (*jq_input_cb)(jq_state *, void *);
 void jq_set_input_cb(jq_state *, jq_input_cb, void *);

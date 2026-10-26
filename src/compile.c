@@ -1216,6 +1216,32 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
   return errors;
 }
 
+static int is_user_locfile(struct locfile* lf) {
+  return lf && strcmp(jv_string_value(lf->fname), "<builtin>") != 0;
+}
+
+// Appends the location of `curr`, compiled at `pos`, to bc's location
+// table unless it is the same as the previous entry.  Returns 1 if the
+// instruction has a location in user code.
+static int add_location(struct bytecode* bc, int pos, inst* curr) {
+  struct locfile* lf = is_user_locfile(curr->locfile) ? curr->locfile : NULL;
+  location source = lf ? curr->source : UNKNOWN_LOCATION;
+  if (bc->nlocations > 0) {
+    struct bytecode_location* prev = &bc->locations[bc->nlocations - 1];
+    if (prev->locfile == lf && prev->source.start == source.start &&
+        prev->source.end == source.end)
+      return lf != NULL;
+  }
+  // The table grows by powers of two
+  if ((bc->nlocations & (bc->nlocations - 1)) == 0) {
+    bc->locations = jv_mem_realloc(bc->locations,
+        sizeof(struct bytecode_location) * (bc->nlocations ? bc->nlocations * 2 : 1));
+  }
+  bc->locations[bc->nlocations++] = (struct bytecode_location){
+    .pc = pos, .source = source, .locfile = lf ? locfile_retain(lf) : NULL};
+  return lf != NULL;
+}
+
 static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv *env) {
   int errors = 0;
   int pos = 0;
@@ -1281,6 +1307,8 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
         subfn->globals = bc->globals;
         subfn->parent = bc;
         subfn->nclosures = 0;
+        subfn->locations = NULL;
+        subfn->nlocations = 0;
         subfn->debuginfo = jv_object_set(jv_object(), jv_string("name"), jv_string(curr->symbol));
         jv params = jv_array();
         for (inst* param = curr->arglist.first; param; param = param->next) {
@@ -1317,10 +1345,12 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   pos = 0;
   jv constant_pool = jv_array();
   int maxvar = -1;
+  int nuser_locations = 0;
   for (inst* curr = b.first; curr; curr = curr->next) {
     const struct opcode_description* op = opcode_describe(curr->op);
     if (op->length == 0)
       continue;
+    nuser_locations += add_location(bc, pos, curr);
     code[pos++] = curr->op;
     assert(curr->op != CLOSURE_REF && curr->op != CLOSURE_PARAM);
     if (curr->op == CALL_BUILTIN) {
@@ -1367,6 +1397,18 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   }
   bc->constants = constant_pool;
   bc->nlocals = maxvar + 2; // FIXME: frames of size zero?
+  if (nuser_locations == 0) {
+    // Only generated code or builtins: drop the table so that the
+    // runtime treats this function as not user code.
+    for (int i = 0; i < bc->nlocations; i++)
+      assert(!bc->locations[i].locfile);
+    jv_mem_free(bc->locations);
+    bc->locations = NULL;
+    bc->nlocations = 0;
+  } else {
+    bc->locations = jv_mem_realloc(bc->locations,
+        sizeof(struct bytecode_location) * bc->nlocations);
+  }
   block_free(b);
   return errors;
 }
@@ -1375,6 +1417,8 @@ int block_compile(block b, struct bytecode** out, struct locfile* lf, jv args) {
   struct bytecode* bc = jv_mem_alloc(sizeof(struct bytecode));
   bc->parent = 0;
   bc->nclosures = 0;
+  bc->locations = NULL;
+  bc->nlocations = 0;
   bc->globals = jv_mem_alloc(sizeof(struct symbol_table));
   int ncfunc = count_cfunctions(b);
   bc->globals->ncfunctions = 0;
