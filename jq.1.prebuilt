@@ -1,5 +1,5 @@
 .
-.TH "JQ" "1" "May 2025" "" ""
+.TH "JQ" "1" "" "" ""
 .
 .SH "NAME"
 \fBjq\fR \- Command\-line JSON processor
@@ -38,16 +38,19 @@ jq filters run on a stream of JSON data\. The input to jq is parsed as a sequenc
 The simplest and most common filter (or jq program) is \fB\.\fR, which is the identity operator, copying the inputs of the jq processor to the output stream\. Because the default behavior of the jq processor is to read JSON texts from the input stream, and to pretty\-print outputs, the \fB\.\fR program\'s main use is to validate and pretty\-print the inputs\. The jq programming language is quite rich and allows for much more than just validation and pretty\-printing\.
 .
 .P
-Note: it is important to mind the shell\'s quoting rules\. As a general rule it\'s best to always quote (with single\-quote characters on Unix shells) the jq program, as too many characters with special meaning to jq are also shell meta\-characters\. For example, \fBjq "foo"\fR will fail on most Unix shells because that will be the same as \fBjq foo\fR, which will generally fail because \fBfoo is not defined\fR\. When using the Windows command shell (cmd\.exe) it\'s best to use double quotes around your jq program when given on the command\-line (instead of the \fB\-f program\-file\fR option), but then double\-quotes in the jq program need backslash escaping\. When using the Powershell (\fBpowershell\.exe\fR) or the Powershell Core (\fBpwsh\fR/\fBpwsh\.exe\fR), use single\-quote characters around the jq program and backslash\-escaped double\-quotes (\fB\e"\fR) inside the jq program\.
+Note: It is important to mind the shell\'s quoting rules\. As a general rule, it\'s best to always quote the jq program, as many characters with special meaning to jq are also shell meta\-characters\. For example, \fBjq "foo"\fR will fail on most shells, as it\'s equivalent to \fBjq foo\fR which will generally fail because \fBfoo is not defined\fR\.
+.
+.P
+Inside a Unix shell or PowerShell 7\.3+, use single quotes around the jq program and double quotes inside the jq program\. When using PowerShell before 7\.3 or Windows PowerShell (\fBpowershell\.exe\fR), use single quotes around the jq program and backslash\-escaped double quotes (\fB\e"\fR) inside the jq program\. When using the Windows command interpreter (cmd\.exe), use double quotes around your jq program, and backslash\-escaped double quotes inside the jq program\.
 .
 .IP "\(bu" 4
-Unix shells: \fBjq \'\.["foo"]\'\fR
+Unix shells, PowerShell 7\.3+: \fBjq \'\.["foo"]\'\fR
 .
 .IP "\(bu" 4
-Powershell: \fBjq \'\.[\e"foo\e"]\'\fR
+PowerShell 7\.2 and older, Windows PowerShell: \fBjq \'\.[\e"foo\e"]\'\fR
 .
 .IP "\(bu" 4
-Windows command shell: \fBjq "\.[\e"foo\e"]"\fR
+Windows command interpreter: \fBjq "\.[\e"foo\e"]"\fR
 .
 .IP "" 0
 .
@@ -115,7 +118,7 @@ Output the fields of each object with the keys in sorted order\.
 \fB\-\-color\-output\fR / \fB\-C\fR and \fB\-\-monochrome\-output\fR / \fB\-M\fR:
 .
 .IP
-By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\. When the \fBNO_COLOR\fR environment variable is not empty, jq disables colored output by default, but you can enable it by \fB\-C\fR\.
+By default, jq outputs colored JSON if writing to a terminal\. You can force it to produce color even if writing to a pipe or a file using \fB\-C\fR, and disable color with \fB\-M\fR\. When the \fBNO_COLOR\fR environment variable is not empty, or the \fBTERM\fR environment variable is unset, empty, or set to \fBdumb\fR, jq disables colored output by default, but you can enable it by \fB\-C\fR\.
 .
 .IP
 Colors can be configured with the \fBJQ_COLORS\fR environment variable (see below)\.
@@ -472,7 +475,8 @@ Note that the iterator operator is a generator of values\.
 
 jq \'\.[]\'
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
-=> {"name":"JSON", "good":true}, {"name":"XML", "good":false}
+=> {"name":"JSON", "good":true}
+   {"name":"XML", "good":false}
 
 jq \'\.[]\'
    []
@@ -480,11 +484,14 @@ jq \'\.[]\'
 
 jq \'\.foo[]\'
    {"foo":[1,2,3]}
-=> 1, 2, 3
+=> 1
+   2
+   3
 
 jq \'\.[]\'
    {"a": 1, "b": 1}
-=> 1, 1
+=> 1
+   1
 .
 .fi
 .
@@ -505,15 +512,19 @@ The \fB,\fR operator is one way to construct generators\.
 
 jq \'\.foo, \.bar\'
    {"foo": 42, "bar": "something else", "baz": true}
-=> 42, "something else"
+=> 42
+   "something else"
 
 jq \'\.user, \.projects[]\'
    {"user":"stedolan", "projects": ["jq", "wikiflow"]}
-=> "stedolan", "jq", "wikiflow"
+=> "stedolan"
+   "jq"
+   "wikiflow"
 
 jq \'\.[4,2]\'
    ["a","b","c","d","e"]
-=> "e", "c"
+=> "e"
+   "c"
 .
 .fi
 .
@@ -537,7 +548,8 @@ Note too that \fB\.\fR is the input value at the particular stage in a "pipeline
 
 jq \'\.[] | \.name\'
    [{"name":"JSON", "good":true}, {"name":"XML", "good":false}]
-=> "JSON", "XML"
+=> "JSON"
+   "XML"
 .
 .fi
 .
@@ -720,7 +732,8 @@ produces
 
 jq \'{user, title: \.titles[]}\'
    {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
-=> {"user":"stedolan", "title": "JQ Primer"}, {"user":"stedolan", "title": "More JQ"}
+=> {"user":"stedolan", "title": "JQ Primer"}
+   {"user":"stedolan", "title": "More JQ"}
 
 jq \'{(\.user): \.titles}\'
    {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
@@ -854,7 +867,8 @@ jq \'{"k": {"a": 1, "b": 2}} * {"k": {"a": 0,"c": 3}}\'
 
 jq \'\.[] | (1 / \.)?\'
    [1,0,\-1]
-=> 1, \-1
+=> 1
+   \-1
 .
 .fi
 .
@@ -867,7 +881,7 @@ The builtin function \fBabs\fR is defined naively as: \fBif \. < 0 then \- \. el
 For numeric input, this is the absolute value\. See the section on the identity filter for the implications of this definition for numeric input\.
 .
 .P
-To compute the absolute value of a number as a floating point number, you may wish use \fBfabs\fR\.
+To compute the absolute value of a number as a floating point number, you may wish to use \fBfabs\fR\.
 .
 .IP "" 4
 .
@@ -908,7 +922,11 @@ It is an error to use \fBlength\fR on a \fBboolean\fR\.
 
 jq \'\.[] | length\'
    [[1,2], "string", {"a":2}, null, \-5]
-=> 2, 6, 1, 0, 5
+=> 2
+   6
+   1
+   0
+   5
 .
 .fi
 .
@@ -988,7 +1006,8 @@ The builtin function \fBin\fR returns whether or not the input key is in the giv
 
 jq \'\.[] | in({"foo": 42})\'
    ["foo", "bar"]
-=> true, false
+=> true
+   false
 
 jq \'map(in([0,1]))\'
    [2, 0]
@@ -1263,7 +1282,8 @@ It\'s useful on occasion\. You\'ll know if you need it :)
 
 jq \'1, empty, 2\'
    null
-=> 1, 2
+=> 1
+   2
 
 jq \'[1,2,empty,3]\'
    null
@@ -1486,7 +1506,8 @@ The three argument form generates numbers \fBfrom\fR to \fBupto\fR with an incre
 
 jq \'range(2; 4)\'
    null
-=> 2, 3
+=> 2
+   3
 
 jq \'[range(2; 4)]\'
    null
@@ -1551,7 +1572,8 @@ The \fBtonumber\fR function parses its input as a number\. It will convert corre
 
 jq \'\.[] | tonumber\'
    [1, "1"]
-=> 1, 1
+=> 1
+   1
 .
 .fi
 .
@@ -1566,7 +1588,10 @@ The \fBtoboolean\fR function parses its input as a boolean\. It will convert cor
 
 jq \'\.[] | toboolean\'
    ["true", "false", true, false]
-=> true, false, true, false
+=> true
+   false
+   true
+   false
 .
 .fi
 .
@@ -1581,7 +1606,9 @@ The \fBtostring\fR function prints its input as a string\. Strings are left unch
 
 jq \'\.[] | tostring\'
    [1, "1", [1]]
-=> "1", "1", "[1]"
+=> "1"
+   "1"
+   "[1]"
 .
 .fi
 .
@@ -1617,11 +1644,13 @@ Currently most arithmetic operations operating on infinities, NaNs, and sub\-nor
 
 jq \'\.[] | (infinite * \.) < 0\'
    [\-1, 1]
-=> true, false
+=> true
+   false
 
 jq \'infinite, nan | type\'
    null
-=> "number", "number"
+=> "number"
+   "number"
 .
 .fi
 .
@@ -1919,11 +1948,17 @@ Outputs all combinations of the elements of the arrays in the input array\. If g
 
 jq \'combinations\'
    [[1,2], [3, 4]]
-=> [1, 3], [1, 4], [2, 3], [2, 4]
+=> [1, 3]
+   [1, 4]
+   [2, 3]
+   [2, 4]
 
 jq \'combinations(2)\'
    [0, 1]
-=> [0, 0], [0, 1], [1, 0], [1, 1]
+=> [0, 0]
+   [0, 1]
+   [1, 0]
+   [1, 1]
 .
 .fi
 .
@@ -1984,7 +2019,7 @@ jq \'[\.[]|trimstr("foo")]\'
 \fBrtrim\fR trims only trailing (right side) whitespace\.
 .
 .P
-Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"\fR and also all characters in the Unicode character database with the whitespace property\. Note that what considers whitespace might change in the future\.
+Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"\fR and also all characters in the Unicode character database with the whitespace property\. Note that what is considered whitespace might change in the future\.
 .
 .IP "" 4
 .
@@ -1992,7 +2027,9 @@ Whitespace characters are the usual \fB" "\fR, \fB"\en"\fR \fB"\et"\fR, \fB"\er"
 
 jq \'trim, ltrim, rtrim\'
    " abc "
-=> "abc", "abc ", " abc"
+=> "abc"
+   "abc "
+   " abc"
 .
 .fi
 .
@@ -2191,15 +2228,23 @@ The recursive calls in \fBrecurse\fR will not consume additional memory whenever
 
 jq \'recurse(\.foo[])\'
    {"foo":[{"foo": []}, {"foo":[{"foo":[]}]}]}
-=> {"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}, {"foo":[]}, {"foo":[{"foo":[]}]}, {"foo":[]}
+=> {"foo":[{"foo":[]},{"foo":[{"foo":[]}]}]}
+   {"foo":[]}
+   {"foo":[{"foo":[]}]}
+   {"foo":[]}
 
 jq \'recurse\'
    {"a":0,"b":[1]}
-=> {"a":0,"b":[1]}, 0, [1], 1
+=> {"a":0,"b":[1]}
+   0
+   [1]
+   1
 
 jq \'recurse(\. * \.; \. < 20)\'
    2
-=> 2, 4, 16
+=> 2
+   4
+   16
 .
 .fi
 .
@@ -2457,10 +2502,22 @@ jq \'@base64d\'
 jq provides some basic date handling functionality, with some high\-level and low\-level builtins\. In all cases these builtins deal exclusively with time in UTC\.
 .
 .P
-The \fBfromdateiso8601\fR builtin parses datetimes in the ISO 8601 format to a number of seconds since the Unix epoch (1970\-01\-01T00:00:00Z)\. The \fBtodateiso8601\fR builtin does the inverse\.
+The \fBfromdateiso8601\fR builtin parses datetimes in the ISO 8601 format to a number of seconds since the Unix epoch (1970\-01\-01T00:00:00Z)\. The \fBtodateiso8601\fR builtin formats a number of seconds as \fB"%Y\-%m\-%dT%H:%M:%SZ"\fR\.
 .
 .P
-The \fBfromdate\fR builtin parses datetime strings\. Currently \fBfromdate\fR only supports ISO 8601 datetime strings, but in the future it will attempt to parse datetime strings in more formats\.
+\fBfromdateiso8601\fR accepts a complete date, optionally followed by a time of day, written in either the extended representation, which separates the components, or the basic representation, which does not\. The two cannot be mixed within one datetime\. The date may be a calendar date (\fB2015\-03\-05\fR, \fB20150305\fR), an ordinal date (\fB2015\-064\fR, \fB2015064\fR), or a week date (\fB2015\-W10\-4\fR, \fB2015W104\fR); all three denote the same day\. Years outside the range 0000 to 9999 are written with a sign and six digits, as in \fB+012015\-03\-05\fR\.
+.
+.P
+The time of day may omit its seconds, or its minutes and seconds, as in \fB2015\-03\-05T23:51Z\fR and \fB2015\-03\-05T23Z\fR, or be left out altogether, in which case the value is midnight UTC\. It may carry a fractional part after a \fB\.\fR or a \fB,\fR, which belongs to the lowest component present, so \fB23,5\fR is half past 23\. It may be followed by an offset from UTC written as \fBZ\fR, \fB+hh\fR, \fB+hh:mm\fR or \fB+hhmm\fR; a datetime with no offset is read as UTC\. A time of \fB24:00:00\fR denotes midnight of the following day, and a leap second is read as the second before it, since jq counts every day as 86400 seconds\.
+.
+.P
+The \fBW\fR, \fBT\fR and \fBZ\fR designators may also be written in lower case, which ISO 8601 permits where upper case is not available\. RFC 3339 additionally allows the date and the time to be separated by a space instead of a \fBT\fR "for the sake of readability", which jq accepts too\. The offset may use the other representation\'s separator style, as in \fB2015\-03\-05T23:51:47+0900\fR, although ISO 8601 does not allow the basic and extended representations to be mixed\.
+.
+.P
+A complete date is required, so \fB2015\fR and \fB2015\-03\fR are errors even though ISO 8601 defines them as dates, and \fBT23:51:47\fR is an error because a time of day on its own is not a point in time\. Dates that do not exist, such as \fB2015\-02\-30\fR or \fB2016\-W53\-1\fR, are errors too, as is \fB2015\-03\-05Z\fR, since a zone designator belongs to the time of day\.
+.
+.P
+The \fBfromdate\fR builtin is an alias for \fBfromdateiso8601\fR\.
 .
 .P
 The \fBtodate\fR builtin is an alias for \fBtodateiso8601\fR\.
@@ -2487,7 +2544,7 @@ The \fBstrptime(fmt)\fR builtin parses input strings matching the \fBfmt\fR argu
 The \fBstrftime(fmt)\fR builtin formats a time (GMT) with the given format\. The \fBstrflocaltime\fR does the same, but using the local timezone setting\.
 .
 .P
-The format strings for \fBstrptime\fR and \fBstrftime\fR are described in typical C library documentation\. The format string for ISO 8601 datetime is \fB"%Y\-%m\-%dT%H:%M:%SZ"\fR\.
+The format strings for \fBstrptime\fR and \fBstrftime\fR are described in typical C library documentation\. \fB"%Y\-%m\-%dT%H:%M:%SZ"\fR is the format that \fBtodateiso8601\fR produces; it is only one of the ISO 8601 representations that \fBfromdateiso8601\fR accepts, and \fBstrptime\fR cannot parse the others \-\- there is no portable format specifier for week dates or for fractional seconds\.
 .
 .P
 jq may not support some or all of this date functionality on some systems\. In particular, the \fB%u\fR and \fB%j\fR specifiers for \fBstrptime(fmt)\fR are not supported on macOS\.
@@ -2499,6 +2556,14 @@ jq may not support some or all of this date functionality on some systems\. In p
 jq \'fromdate\'
    "2015\-03\-05T23:51:47Z"
 => 1425599507
+
+jq \'fromdateiso8601\'
+   "2015\-03\-06T08:51:47\.25+09:00"
+=> 1425599507\.25
+
+jq \'map(fromdateiso8601)\'
+   ["20150305T235147Z","2015\-064T23:51:47Z","2015\-W10\-4T23:51:47Z"]
+=> [1425599507,1425599507,1425599507]
 
 jq \'strptime("%Y\-%m\-%dT%H:%M:%SZ")\'
    "2015\-03\-05T23:51:47Z"
@@ -2576,7 +2641,10 @@ jq \'\. == {"b": {"d": (4 + 1e\-20), "c": 3}, "a":1}\'
 
 jq \'\.[] == 1\'
    [1, 1\.0, "1", "banana"]
-=> true, true, false, false
+=> true
+   true
+   false
+   false
 .
 .fi
 .
@@ -2655,11 +2723,15 @@ jq \'42 and "a string"\'
 
 jq \'(true, false) or false\'
    null
-=> true, false
+=> true
+   false
 
 jq \'(true, true) and (true, false)\'
    null
-=> true, false, true, false
+=> true
+   false
+   true
+   false
 
 jq \'[true, false | not]\'
    null
@@ -2703,7 +2775,9 @@ jq \'(false, null, 1) // 42\'
 
 jq \'(false, null, 1) | \. // 42\'
    null
-=> 42, 42, 1
+=> 42
+   42
+   1
 .
 .fi
 .
@@ -2933,7 +3007,8 @@ jq \'test("foo")\'
 
 jq \'\.[] | test("a b c # spaces are ignored"; "ix")\'
    ["xabcd", "ABC"]
-=> true, true
+=> true
+   true
 .
 .fi
 .
@@ -2982,7 +3057,8 @@ Capturing groups that did not match anything return an offset of \-1
 
 jq \'match("(abc)+"; "g")\'
    "abc abc"
-=> {"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}, {"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
+=> {"offset": 0, "length": 3, "string": "abc", "captures": [{"offset": 0, "length": 3, "string": "abc", "name": null}]}
+   {"offset": 4, "length": 3, "string": "abc", "captures": [{"offset": 4, "length": 3, "string": "abc", "name": null}]}
 
 jq \'match("foo")\'
    "foo bar foo"
@@ -2990,11 +3066,13 @@ jq \'match("foo")\'
 
 jq \'match(["foo", "ig"])\'
    "foo bar FOO"
-=> {"offset": 0, "length": 3, "string": "foo", "captures": []}, {"offset": 8, "length": 3, "string": "FOO", "captures": []}
+=> {"offset": 0, "length": 3, "string": "foo", "captures": []}
+   {"offset": 8, "length": 3, "string": "FOO", "captures": []}
 
 jq \'match("foo (?<bar123>bar)? foo"; "ig")\'
    "foo bar foo foo  foo"
-=> {"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}, {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": \-1, "length": 0, "string": null, "name": "bar123"}]}
+=> {"offset": 0, "length": 11, "string": "foo bar foo", "captures": [{"offset": 4, "length": 3, "string": "bar", "name": "bar123"}]}
+   {"offset": 12, "length": 8, "string": "foo  foo", "captures": [{"offset": \-1, "length": 0, "string": null, "name": "bar123"}]}
 
 jq \'[ match("\."; "g")] | length\'
    "abc"
@@ -3028,11 +3106,14 @@ Emit a stream of the non\-overlapping substrings of the input that match the reg
 
 jq \'scan("c")\'
    "abcdefabc"
-=> "c", "c"
+=> "c"
+   "c"
 
 jq \'scan("(a+)(b+)")\'
    "abaabbaaabbb"
-=> ["a","b"], ["aa","bb"], ["aaa","bbb"]
+=> ["a","b"]
+   ["aa","bb"]
+   ["aaa","bbb"]
 .
 .fi
 .
@@ -3065,11 +3146,17 @@ These provide the same results as their \fBsplit\fR counterparts, but as a strea
 
 jq \'splits(", *")\'
    "ab,cd,   ef, gh"
-=> "ab", "cd", "ef", "gh"
+=> "ab"
+   "cd"
+   "ef"
+   "gh"
 
 jq \'splits(",? *"; "n")\'
    "ab,cd ef,  gh"
-=> "ab", "cd", "ef", "gh"
+=> "ab"
+   "cd"
+   "ef"
+   "gh"
 .
 .fi
 .
@@ -3120,7 +3207,7 @@ Variables are an absolute necessity in most programming languages, but they\'re 
 In most languages, variables are the only means of passing around data\. If you calculate a value, and you want to use it more than once, you\'ll need to store it in a variable\. To pass a value to another part of the program, you\'ll need that part of the program to define a variable (as a function parameter, object member, or whatever) in which to place the data\.
 .
 .P
-It is also possible to define functions in jq, although this is is a feature whose biggest use is defining jq\'s standard library (many jq functions such as \fBmap\fR and \fBselect\fR are in fact written in jq)\.
+It is also possible to define functions in jq, although this is a feature whose biggest use is defining jq\'s standard library (many jq functions such as \fBmap\fR and \fBselect\fR are in fact written in jq)\.
 .
 .P
 jq has reduction operators, which are very powerful but a bit tricky\. Again, these are mostly used internally, to define some useful bits of jq\'s standard library\.
@@ -3219,7 +3306,7 @@ Multiple variables may be declared using a single \fBas\fR expression by providi
 .IP "" 0
 .
 .P
-The variable declarations in array patterns (e\.g\., \fB\. as [$first, $second]\fR) bind to the elements of the array in from the element at index zero on up, in order\. When there is no value at the index for an array pattern element, \fBnull\fR is bound to that variable\.
+The variable declarations in array patterns (e\.g\., \fB\. as [$first, $second]\fR) bind to the elements of the array from the element at index zero on up, in order\. When there is no value at the index for an array pattern element, \fBnull\fR is bound to that variable\.
 .
 .P
 Variables are scoped over the rest of the expression that defines them, so
@@ -3271,7 +3358,9 @@ jq \'\. as [$a, $b, {c: $c}] | $a + $b + $c\'
 
 jq \'\.[] as [$a, $b] | {a: $a, b: $b}\'
    [[0], [0, 1], [2, 1, 0]]
-=> {"a":0,"b":null}, {"a":0,"b":1}, {"a":2,"b":1}
+=> {"a":0,"b":null}
+   {"a":0,"b":1}
+   {"a":2,"b":1}
 .
 .fi
 .
@@ -3344,11 +3433,13 @@ Additionally, if the subsequent expression returns an error, the alternative ope
 
 jq \'\.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}\'
    [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
-=> {"a":1,"b":2,"d":3,"e":4}, {"a":1,"b":2,"d":3,"e":4}
+=> {"a":1,"b":2,"d":3,"e":4}
+   {"a":1,"b":2,"d":3,"e":4}
 
 jq \'\.[] as {$a, $b, c: {$d}} ?// {$a, $b, c: [{$e}]} | {$a, $b, $d, $e}\'
    [{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]
-=> {"a":1,"b":2,"d":3,"e":null}, {"a":1,"b":2,"d":null,"e":4}
+=> {"a":1,"b":2,"d":3,"e":null}
+   {"a":1,"b":2,"d":null,"e":4}
 
 jq \'\.[] as [$a] ?// [$b] | if $a != null then error("err: \e($a)") else {$a,$b} end\'
    [[3]]
@@ -3431,6 +3522,23 @@ def addvalue($f): \.\.\.;
 With either definition, \fBaddvalue(\.foo)\fR will add the current input\'s \fB\.foo\fR field to each element of the array\. Do note that calling \fBaddvalue(\.[])\fR will cause the \fBmap(\. + $f)\fR part to be evaluated once per value in the value of \fB\.\fR at the call site\.
 .
 .P
+Multiple arguments are separated by semicolons, both in the definition and in the call:
+.
+.IP "" 4
+.
+.nf
+
+def f(a; b): \.\.\.;
+f(\.x; \.y)
+.
+.fi
+.
+.IP "" 0
+.
+.P
+A comma does not separate arguments\. \fBf(\.x, \.y)\fR calls a one\-argument \fBf\fR with the single filter \fB\.x, \.y\fR, which outputs \fB\.x\fR and then \fB\.y\fR (see the comma operator above)\.
+.
+.P
 Multiple definitions using the same function name are allowed\. Each re\-definition replaces the previous one for the same number of function arguments, but only for references from functions (or main program) subsequent to the re\-definition\. See also the section below on scoping\.
 .
 .IP "" 4
@@ -3444,6 +3552,14 @@ jq \'def addvalue(f): \. + [f]; map(addvalue(\.[0]))\'
 jq \'def addvalue(f): f as $x | map(\. + $x); addvalue(\.[0])\'
    [[1,2],[10,20]]
 => [[1,2,1,2], [10,20,1,2]]
+
+jq \'def f(a; b): [a, b]; f(\.x; \.y)\'
+   {"x":1,"y":2}
+=> [1,2]
+
+jq \'def f(a): [a]; f(\.x, \.y)\'
+   {"x":1,"y":2}
+=> [1,2]
 .
 .fi
 .
@@ -3628,15 +3744,25 @@ When \fBEXTRACT\fR is omitted, the identity filter is used\. That is, it outputs
 
 jq \'foreach \.[] as $item (0; \. + $item)\'
    [1,2,3,4,5]
-=> 1, 3, 6, 10, 15
+=> 1
+   3
+   6
+   10
+   15
 
 jq \'foreach \.[] as $item (0; \. + $item; [$item, \. * 2])\'
    [1,2,3,4,5]
-=> [1,2], [2,6], [3,12], [4,20], [5,30]
+=> [1,2]
+   [2,6]
+   [3,12]
+   [4,20]
+   [5,30]
 
 jq \'foreach \.[] as $item (0; \. + 1; {index: \., $item})\'
    ["foo", "bar", "baz"]
-=> {"index":1,"item":"foo"}, {"index":2,"item":"bar"}, {"index":3,"item":"baz"}
+=> {"index":1,"item":"foo"}
+   {"index":2,"item":"bar"}
+   {"index":3,"item":"baz"}
 .
 .fi
 .
@@ -3689,7 +3815,10 @@ All jq functions can be generators just by using builtin generators\. It is also
 
 jq \'def range(init; upto; by): def _range: if (by > 0 and \. < upto) or (by < 0 and \. > upto) then \., ((\.+by)|_range) else empty end; if init == upto then empty elif by == 0 then init else init|_range end; range(0; 10; 3)\'
    null
-=> 0, 3, 6, 9
+=> 0
+   3
+   6
+   9
 
 jq \'def while(cond; update): def _while: if cond then \., (update | _while) else empty end; _while; [while(\.<100; \.*2)]\'
    1
@@ -3843,7 +3972,8 @@ Consumes a number as input and truncates the corresponding number of path elemen
 
 jq \'truncate_stream([[0],"a"],[[1,0],"b"],[[1,0]],[[1]])\'
    1
-=> [[0],"b"], [[0]]
+=> [[0],"b"]
+   [[0]]
 .
 .fi
 .
@@ -3910,6 +4040,9 @@ This is the "update" operator \fB|=\fR\. It takes a filter on the right\-hand si
 The left\-hand side can be any general path expression; see \fBpath()\fR\.
 .
 .P
+The right\-hand side of \fB|=\fR is run with the value at the path as its input, not with \fB\.\fR\. This is what sets it apart from plain assignment (\fB=\fR) and the arithmetic update\-assignment operators such as \fB+=\fR, whose right\-hand side is run with \fB\.\fR\. For example, \fB\.a |= \.b\fR sets \fB\.a\fR to the \fBb\fR field of \fB\.a\fR, while \fB\.a = \.b\fR and \fB\.a += \.b\fR use the \fBb\fR field of \fB\.\fR\.
+.
+.P
 Note that the left\-hand side of \fB|=\fR refers to a value in \fB\.\fR\. Thus \fB$var\.foo |= \. + 1\fR won\'t work as expected (\fB$var\.foo\fR is not a valid or useful path expression in \fB\.\fR); use \fB$var | \.foo |= \. + 1\fR instead\.
 .
 .P
@@ -3922,6 +4055,14 @@ If the right\-hand side outputs multiple values, only the first one will be used
 .
 .nf
 
+jq \'\.foo |= \. + 1\'
+   {"foo": 41, "bar": "unchanged"}
+=> {"foo": 42, "bar": "unchanged"}
+
+jq \'\.user\.age |= \. + 1\'
+   {"user": {"name": "alice", "age": 30}, "active": true}
+=> {"user": {"name": "alice", "age": 31}, "active": true}
+
 jq \'(\.\.|select(type=="boolean")) |= if \. then 1 else 0 end\'
    [true,false,[5,true,[true,[false]],false]]
 => [1,0,[5,1,[1,[0]],0]]
@@ -3931,7 +4072,10 @@ jq \'(\.\.|select(type=="boolean")) |= if \. then 1 else 0 end\'
 .IP "" 0
 .
 .SS "Arithmetic update\-assignment: +=, \-=, *=, /=, %=, //="
-jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \fBa |= \. op b\fR\. So, \fB+= 1\fR can be used to increment values, being the same as \fB|= \. + 1\fR\.
+jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \fB(b as $b | a |= \. op $b)\fR\. So, \fB+= 1\fR can be used to increment values, being the same as \fB|= \. + 1\fR\.
+.
+.P
+Note that the right\-hand side \fBb\fR is evaluated with the same input as the left\-hand side, not with the value at the path being updated\. So \fB\.a += \.b\fR adds the value of \fB\.b\fR to \fB\.a\fR, whereas \fB\.a |= \. + \.b\fR would look up \fB\.b\fR inside the value of \fB\.a\fR\. If \fBb\fR outputs multiple values, then \fBa op= b\fR outputs one result for each of them\.
 .
 .IP "" 4
 .
@@ -3940,6 +4084,15 @@ jq has a few operators of the form \fBa op= b\fR, which are all equivalent to \f
 jq \'\.foo += 1\'
    {"foo": 42}
 => {"foo": 43}
+
+jq \'\.a += \.b\'
+   {"a": 1, "b": 2}
+=> {"a": 3, "b": 2}
+
+jq \'\.a += (1,2)\'
+   {"a": 0}
+=> {"a": 1}
+   {"a": 2}
 .
 .fi
 .
@@ -3997,7 +4150,9 @@ jq \'\.a |= \.b\'
 
 jq \'(\.a, \.b) = range(3)\'
    null
-=> {"a":0,"b":0}, {"a":1,"b":1}, {"a":2,"b":2}
+=> {"a":0,"b":0}
+   {"a":1,"b":1}
+   {"a":2,"b":2}
 
 jq \'(\.a, \.b) |= range(3)\'
    null

@@ -32,6 +32,7 @@
 #include "bytecode.h"
 #include "linker.h"
 #include "locfile.h"
+#include "iso8601.h"
 #include "jv_unicode.h"
 #include "jv_alloc.h"
 #include "jv_dtoa.h"
@@ -1354,6 +1355,36 @@ static jv f_string_explode(jq_state *jq, jv a) {
   return jv_string_explode(a);
 }
 
+// Only the letters from..to change case. Bytes of multibyte UTF-8 sequences
+// are all >= 0x80, so they are copied unchanged.
+static void ascii_case_copy(char *dst, const char *src, int len, char from,
+                            char to) {
+  for (int i = 0; i < len; i++) {
+    char c = src[i];
+    dst[i] = (c >= from && c <= to) ? c ^ 0x20 : c; // flip case: 'A' <-> 'a'
+  }
+}
+
+static jv ascii_case(jv input, char from, char to, const char *errmsg) {
+  if (jv_get_kind(input) != JV_KIND_STRING)
+    return ret_error(input, jv_string(errmsg));
+  int len = jv_string_length_bytes(jv_copy(input));
+  char *result = jv_mem_alloc((size_t)len + 1);
+  ascii_case_copy(result, jv_string_value(input), len, from, to);
+  jv ret = jv_string_sized(result, len);
+  free(result);
+  jv_free(input);
+  return ret;
+}
+
+static jv f_ascii_downcase(jq_state *jq, jv input) {
+  return ascii_case(input, 'A', 'Z', "ascii_downcase input must be a string");
+}
+
+static jv f_ascii_upcase(jq_state *jq, jv input) {
+  return ascii_case(input, 'a', 'z', "ascii_upcase input must be a string");
+}
+
 static jv f_string_indexes(jq_state *jq, jv a, jv b) {
   if (jv_get_kind(a) != JV_KIND_STRING) {
     jv_free(b);
@@ -1577,16 +1608,15 @@ static void set_tm_wday(struct tm *tm) {
    * https://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week#Gauss.27s_algorithm
    * https://cs.uwaterloo.ca/~alopez-o/math-faq/node73.html
    *
-   * Tested with dates from 1900-01-01 through 2100-01-01.  This
-   * algorithm produces the wrong day-of-the-week number for dates in
-   * the range 1900-01-01..1900-02-28, and for 2100-01-01..2100-02-28.
-   * Since this is only needed on OS X and *BSD, we might just document
-   * this.
+   * Tested against gmtime() for every date from 1600-01-01 through
+   * 2400-12-31.
    */
   int century = (1900 + tm->tm_year) / 100;
   int year = (1900 + tm->tm_year) % 100;
-  if (tm->tm_mon < 2)
-    year--;
+  if (tm->tm_mon < 2 && --year < 0) {
+    year += 100;
+    century--;
+  }
   /*
    * The month value in the wday computation below is shifted so that
    * March is 1, April is 2, .., January is 11, and February is 12.
@@ -1599,7 +1629,10 @@ static void set_tm_wday(struct tm *tm) {
   if (wday < 0)
     wday += 7;
 #if 0
-  /* See commentary above */
+  /*
+   * Off: the bundled strptime() can leave a wrong weekday here, and %a
+   * or %u can name one that does not match the date.
+   */
   assert(wday == tm->tm_wday || tm->tm_wday == 8);
 #endif
   tm->tm_wday = wday;
@@ -1635,6 +1668,7 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
 
   struct tm tm;
   memset(&tm, 0, sizeof(tm));
+  tm.tm_mday = 1; // a format without a day of the month means the 1st
   tm.tm_wday = 8; // sentinel
   tm.tm_yday = 367; // sentinel
 
@@ -1667,6 +1701,8 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
   set_tm_yday(&tm);
 #elif defined(WIN32) || !defined(HAVE_STRPTIME)
   set_tm_wday(&tm);
+  if (tm.tm_yday == 367)
+    set_tm_yday(&tm);
 #else
   if (tm.tm_wday == 8 && tm.tm_mday != 0 && tm.tm_mon >= 0 && tm.tm_mon <= 11)
     set_tm_wday(&tm);
@@ -1678,6 +1714,17 @@ static jv f_strptime(jq_state *jq, jv a, jv b) {
     r = jv_array_append(r, jv_string(end));
   jv_free(a); // must come after `*end` because `end` is a pointer into `a`'s string
   return r;
+}
+
+static jv f_fromdateiso8601(jq_state *jq, jv a) {
+  if (jv_get_kind(a) != JV_KIND_STRING)
+    return ret_error(a, jv_string("fromdateiso8601 requires string inputs"));
+  double t;
+  if (!iso8601_parse(jv_string_value(a), jv_string_length_bytes(jv_copy(a)), &t))
+    return ret_error(a, jv_string_fmt("date \"%s\" is not a valid ISO 8601 datetime",
+                                      jv_string_value(a)));
+  jv_free(a);
+  return jv_number(t);
 }
 
 static int jv2tm(jv a, struct tm *tm, int localtime) {
@@ -1757,7 +1804,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = gmtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1771,7 +1818,7 @@ static jv f_gmtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = gmtime(&secs);
   if (tmp == NULL)
@@ -1792,7 +1839,7 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = localtime_r(&secs, &tm);
   if (tmp == NULL)
@@ -1806,7 +1853,7 @@ static jv f_localtime(jq_state *jq, jv a) {
   struct tm tm, *tmp;
   memset(&tm, 0, sizeof(tm));
   double fsecs = jv_number_value(a);
-  time_t secs = fsecs;
+  time_t secs = floor(fsecs);
   jv_free(a);
   tmp = localtime(&secs);
   if (tmp == NULL)
@@ -1837,8 +1884,10 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   if (!jv2tm(a, &tm, 0))
     return ret_error(b, jv_string("strftime/1 requires parsed datetime inputs"));
 
+  /* Prepend a character so that strftime() returning 0 means the result
+   * did not fit, even if the format expands to nothing; it is trimmed below. */
+  b = jv_string_concat(jv_string(" "), b);
   const char *fmt = jv_string_value(b);
-  int fmt_not_empty = *fmt != '\0';
   size_t max_size = strlen(fmt) + 100;
   char *buf = jv_mem_alloc(max_size);
 #if defined(__APPLE__) || defined(__sun)
@@ -1853,7 +1902,13 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
    * account ... */
   tzset();
 #endif
+#ifdef __NetBSD__
+  timezone_t tz_utc = tzalloc("UTC");
+  size_t n = strftime_z(tz_utc, buf, max_size, fmt, &tm);
+  tzfree(tz_utc);
+#else
   size_t n = strftime(buf, max_size, fmt, &tm);
+#endif
 #if defined(__APPLE__) || defined(__sun)
   if (tz) {
     setenv("TZ", tz, 1);
@@ -1866,12 +1921,11 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
   tzset();
 #endif
   jv_free(b);
-  /* POSIX doesn't provide errno values for strftime() failures; weird */
-  if ((n == 0 && fmt_not_empty) || n > max_size) {
+  if (n == 0 || n > max_size) {
     free(buf);
-    return jv_invalid_with_msg(jv_string("strftime/1: unknown system failure"));
+    return jv_invalid_with_msg(jv_string("strftime/1: result too long"));
   }
-  jv ret = jv_string_sized(buf, n);
+  jv ret = jv_string_sized(buf + 1, n - 1);
   free(buf);
   return ret;
 }
@@ -1899,18 +1953,19 @@ static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
   struct tm tm;
   if (!jv2tm(a, &tm, 1))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
+  /* Prepend a character so that strftime() returning 0 means the result
+   * did not fit, even if the format expands to nothing; it is trimmed below. */
+  b = jv_string_concat(jv_string(" "), b);
   const char *fmt = jv_string_value(b);
-  int fmt_not_empty = *fmt != '\0';
   size_t max_size = strlen(fmt) + 100;
   char *buf = jv_mem_alloc(max_size);
   size_t n = strftime(buf, max_size, fmt, &tm);
   jv_free(b);
-  /* POSIX doesn't provide errno values for strftime() failures; weird */
-  if ((n == 0 && fmt_not_empty) || n > max_size) {
+  if (n == 0 || n > max_size) {
     free(buf);
-    return jv_invalid_with_msg(jv_string("strflocaltime/1: unknown system failure"));
+    return jv_invalid_with_msg(jv_string("strflocaltime/1: result too long"));
   }
-  jv ret = jv_string_sized(buf, n);
+  jv ret = jv_string_sized(buf + 1, n - 1);
   free(buf);
   return ret;
 }
@@ -1995,6 +2050,8 @@ BINOPS
   CFUNC(f_string_split, "split", 2),
   CFUNC(f_string_explode, "explode", 1),
   CFUNC(f_string_implode, "implode", 1),
+  CFUNC(f_ascii_downcase, "ascii_downcase", 1),
+  CFUNC(f_ascii_upcase, "ascii_upcase", 1),
   CFUNC(f_string_indexes, "_strindices", 2),
   CFUNC(f_string_trim, "trim", 1),
   CFUNC(f_string_ltrim, "ltrim", 1),
@@ -2035,6 +2092,7 @@ BINOPS
   CFUNC(f_input, "input", 1),
   CFUNC(f_debug, "debug", 1),
   CFUNC(f_stderr, "stderr", 1),
+  CFUNC(f_fromdateiso8601, "fromdateiso8601", 1),
   CFUNC(f_strptime, "strptime", 2),
   CFUNC(f_strftime, "strftime", 2),
   CFUNC(f_strflocaltime, "strflocaltime", 2),
@@ -2111,21 +2169,19 @@ static block bind_bytecoded_builtins(block b) {
     }
   }
   {
-    // Note that we can now define `range` as a jq-coded function
     block rangevar = gen_op_var_fresh(STOREV, "rangevar");
-    block rangestart = gen_op_var_fresh(STOREV, "rangestart");
-    block range = BLOCK(gen_op_simple(DUP),
-                        gen_call("start", gen_noop()),
-                        rangestart,
-                        gen_call("end", gen_noop()),
-                        gen_op_simple(DUP),
-                        gen_op_bound(LOADV, rangestart),
-                        // Reset rangevar for every value generated by "end"
-                        rangevar,
-                        gen_op_bound(RANGE, rangevar));
-    builtins = BLOCK(builtins, gen_function("range",
-                                            BLOCK(gen_param("start"), gen_param("end")),
-                                            range));
+    builtins = BLOCK(builtins,
+        gen_function("range",
+                     BLOCK(gen_param_regular("start"),
+                           gen_param_regular("end"),
+                           gen_param_regular("step")),
+                     BLOCK(gen_op_unbound(LOADV, "step"),
+                           gen_op_simple(DUP),
+                           gen_op_unbound(LOADV, "end"),
+                           gen_op_simple(DUP),
+                           gen_op_unbound(LOADV, "start"),
+                           rangevar,
+                           gen_op_bound(RANGE, rangevar))));
   }
   return BLOCK(builtins, b);
 }

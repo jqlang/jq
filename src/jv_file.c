@@ -43,6 +43,7 @@ jv jv_load_file(const char* filename, int raw) {
   // buffer, we need to be able to read the remainder of a sequence and add that
   // before appending.
   char buf[4096 + 4];
+  int at_file_start = 1;
   while (!feof(file) && !ferror(file)) {
     size_t n = fread(buf, 1, sizeof(buf) - 4, file);
     if (n == 0)
@@ -55,12 +56,22 @@ jv jv_load_file(const char* filename, int raw) {
       n += fread(end, 1, len, file);
     }
 
+    char *p = buf;
+    if (at_file_start) {
+      // Strip UTF-8 BOM at the start of the file
+      if (n >= 3 && !memcmp(buf, "\xEF\xBB\xBF", 3)) {
+        p += 3;
+        n -= 3;
+      }
+      at_file_start = 0;
+    }
+
     if (raw) {
-      data = jv_string_append_buf(data, buf, n);
+      data = jv_string_append_buf(data, p, n);
       if (!jv_is_valid(data))
         break;
     } else {
-      jv_parser_set_buf(parser, buf, n, !feof(file));
+      jv_parser_set_buf(parser, p, n, !feof(file));
       jv value;
       while (jv_is_valid((value = jv_parser_next(parser))))
         data = jv_array_append(data, value);

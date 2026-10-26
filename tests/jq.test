@@ -42,13 +42,6 @@ null
 {"x":-1}
 {"x":1}
 
-# The input line starts with a 0xFEFF (byte order mark) codepoint
-# No, there is no reason to have a byte order mark in UTF8 text.
-# But apparently people do, so jq shouldn't break on it.
-.
-﻿"byte order mark"
-"byte order mark"
-
 # We test escapes by matching them against Unicode codepoints
 # FIXME: more tests needed for weird unicode stuff (e.g. utf16 pairs)
 "Aa\r\n\t\b\f\u03bc"
@@ -91,6 +84,11 @@ null
 "Zm/Ds2Jhcgo="
 "foóbar\n"
 
+# Invalid UTF-8 next to ASCII runs is still replaced
+map(@base64d)
+["YWJjZGVmZ2hpav9rbG1ub3A=", "YWJjZGVmZ2hpasOpa2xtbm9w5pel", "/2FiY2RlZmdoaWo=", "YWJjZGVmZ2hpauaX", "YWJjZGVmZ2hpau2ggHh5eg=="]
+["abcdefghij�klmnop","abcdefghijéklmnop日","�abcdefghij","abcdefghij�","abcdefghij�xyz"]
+
 @uri
 "\u03bc"
 "%CE%BC"
@@ -106,6 +104,15 @@ null
 [.[]|tojson|fromjson]
 ["foo", 1, ["a", 1, "b", 2, {"foo":"bar"}]]
 ["foo",1,["a",1,"b",2,{"foo":"bar"}]]
+
+# Put escapes on both sides of runs of bytes that need no escaping
+map(tojson)
+["abcdefg\"", "abcdefgh\\", "abcdefghi\u0001j", "abcdefghijklmno\u007f", "abcdefgh\té", "abcdefghijklmnop\n"]
+["\"abcdefg\\\"\"","\"abcdefgh\\\\\"","\"abcdefghi\\u0001j\"","\"abcdefghijklmno\\u007f\"","\"abcdefgh\\té\"","\"abcdefghijklmnop\\n\""]
+
+[range(18) as $i | ("\"", "\\", "\u0001", "\u007f", "é", "😀") as $c | "abcdefghijklmnopq"[:$i] + $c + "abcdefghijklmnopq"[$i:] | (tojson | fromjson) == .] | all
+null
+true
 
 #
 # Dictionary construction syntax
@@ -304,9 +311,29 @@ null
 null
 [0,-1,-2,-3,-4]
 
+[range(0;-10;-3)]
+null
+[0,-3,-6,-9]
+
+[range(0;10;0)]
+null
+[]
+
 [range(0,1;4,5;1,2)]
 null
 [0,1,2,3,0,2, 0,1,2,3,4,0,2,4, 1,2,3,1,3, 1,2,3,4,1,3]
+
+try range(.) catch .
+null
+"Range bounds and step must be numeric"
+
+try range(0;"") catch .
+null
+"Range bounds and step must be numeric"
+
+try range(0;1;[]) catch .
+null
+"Range bounds and step must be numeric"
 
 [while(.<100; .*2)]
 1
@@ -1478,6 +1505,11 @@ try error(0) // 1
 null
 1
 
+# Lex token test #3589, like error(0)? // 1
+error(0) ?// 1
+null
+1
+
 1, try error(2), 3
 null
 1
@@ -1747,6 +1779,38 @@ has(nan)
 [0,1,2]
 false
 
+has(infinite)
+[0,1,2]
+false
+
+has(-infinite)
+[0,1,2]
+false
+
+del(.[infinite])
+[1,2,3]
+[1,2,3]
+
+del(.[-infinite])
+[1,2,3]
+[1,2,3]
+
+has(1e10)
+[0,1,2]
+false
+
+has(-1e10)
+[0,1,2]
+false
+
+del(.[1e10])
+[1,2,3]
+[1,2,3]
+
+del(.[-1e10])
+[1,2,3]
+[1,2,3]
+
 keys
 [42,3,35]
 [0,1,2]
@@ -1837,6 +1901,24 @@ ascii_upcase
 "useful but not for é"
 "USEFUL BUT NOT FOR é"
 
+# Only A-Z and a-z change; the neighbouring bytes @ [ ` { and non-ASCII do not
+[ascii_downcase, ascii_upcase]
+"@AZ[`az{ ÀÉé ǅ 日本 😀 0123456789 THE QUICK brown fox JUMPS over"
+["@az[`az{ ÀÉé ǅ 日本 😀 0123456789 the quick brown fox jumps over","@AZ[`AZ{ ÀÉé ǅ 日本 😀 0123456789 THE QUICK BROWN FOX JUMPS OVER"]
+
+[ascii_downcase, ascii_upcase]
+""
+["",""]
+
+# An embedded NUL does not end the string
+[ascii_downcase, ascii_upcase]
+"A\u0000z"
+["a\u0000z","A\u0000Z"]
+
+[.[] | try ascii_downcase catch ., try ascii_upcase catch .]
+[null, ["A"]]
+["ascii_downcase input must be a string","ascii_upcase input must be a string","ascii_downcase input must be a string","ascii_upcase input must be a string"]
+
 bsearch(0,1,2,3,4)
 [1,2,3]
 -1
@@ -1899,15 +1981,145 @@ try ["OK", strflocaltime({})] catch ["KO", .]
 0
 ["KO","strflocaltime/1 requires a string format"]
 
+[strftime("", " %Y ")]
+0
+["", " 1970 "]
+
+try strftime("%c" * 10) catch .
+0
+"strftime/1: result too long"
+
+[strflocaltime("", " %Y ")]
+[2015,2,5,23,51,47,4,63]
+["", " 2015 "]
+
+try strflocaltime("%c" * 10) catch .
+[2015,2,5,23,51,47,4,63]
+"strflocaltime/1: result too long"
+
 [strptime("%Y-%m-%dT%H:%M:%SZ")|(.,mktime)]
 "2015-03-05T23:51:47Z"
 [[2015,2,5,23,51,47,4,63],1425599507]
+
+# a format without a day of the month gives the first of the month
+[("2024-06" | strptime("%Y-%m")), ("2024" | strptime("%Y")) | ., todate]
+null
+[[2024,5,1,0,0,0,6,152],"2024-06-01T00:00:00Z",[2024,0,1,0,0,0,1,0],"2024-01-01T00:00:00Z"]
+
+"10:15" | strptime("%H:%M")
+null
+[1900,0,1,10,15,0,1,0]
 
 # Check day-of-week and day of year computations
 # (should trip an assert if this fails)
 last(range(365 * 67)|("1970-03-01T01:02:03Z"|strptime("%Y-%m-%dT%H:%M:%SZ")|mktime) + (86400 * .)|strftime("%Y-%m-%dT%H:%M:%SZ")|strptime("%Y-%m-%dT%H:%M:%SZ"))
 null
 [2037,1,11,1,2,3,3,41]
+
+# fromdateiso8601 accepts the calendar, ordinal and week date forms,
+# in both the extended and the basic representation
+[("2015-03-05T23:51:47Z", "20150305T235147Z", "2015-064T23:51:47Z", "2015064T235147Z", "2015-W10-4T23:51:47Z", "2015W104T235147Z") | fromdateiso8601]
+null
+[1425599507,1425599507,1425599507,1425599507,1425599507,1425599507]
+
+# fractional seconds, with either decimal sign
+[("2015-03-05T23:51:47.25Z", "2015-03-05T23:51:47,25Z", "20150305T235147.25Z") | fromdateiso8601]
+null
+[1425599507.25,1425599507.25,1425599507.25]
+
+# UTC offsets; an absent offset means UTC
+[("2015-03-06T08:51:47+09:00", "2015-03-06T08:51:47+0900", "2015-03-06T08:51:47+09", "2015-03-05T18:21:47-05:30", "2015-03-05T23:51:47z", "2015-03-05T23:51:47") | fromdateiso8601]
+null
+[1425599507,1425599507,1425599507,1425599507,1425599507,1425599507]
+
+# the date and the time may be separated by "T", "t" or a space
+[("2015-03-05t23:51:47Z", "2015-03-05 23:51:47Z") | fromdateiso8601]
+null
+[1425599507,1425599507]
+
+# the W, T and Z designators may be written in lower case
+[("2015-w10-4t23:51:47z", "2015w104t235147z", "2015-03-05t23:51:47z") | fromdateiso8601]
+null
+[1425599507,1425599507,1425599507]
+
+# expanded years carry a sign and exactly six digits
+[("+012015-03-05T23:51:47Z", "-000001-01-01T00:00:00Z", "+0020150305T235147Z", "+2025-03-05", "+02025-03-05", "+0002025-03-05") | try fromdateiso8601 catch "ERR"]
+null
+[316995119507,-62198755200,1425599507,"ERR","ERR","ERR"]
+
+# "24:00:00" is midnight of the following day, at any precision
+[("2015-03-05T24:00:00Z", "2015-03-05T24:00Z", "2015-03-05T24Z") | fromdateiso8601 | todate]
+null
+["2015-03-06T00:00:00Z","2015-03-06T00:00:00Z","2015-03-06T00:00:00Z"]
+
+# leap seconds are dropped rather than rejected
+"2015-06-30T23:59:60Z" | fromdateiso8601 | todate
+null
+"2015-06-30T23:59:59Z"
+
+# 2015 starts on a Thursday, so it has 53 ISO weeks
+"2015-W53-1T00:00:00Z" | fromdateiso8601 | todate
+null
+"2015-12-28T00:00:00Z"
+
+# 2016 is a leap year starting on a Friday: 366 days, but only 52 ISO weeks
+[("2016-366T00:00:00Z", "2016-W52-7T00:00:00Z") | fromdateiso8601 | todate]
+null
+["2016-12-31T00:00:00Z","2017-01-01T00:00:00Z"]
+
+# fromdateiso8601 is not limited by the range of a 32-bit time_t (#3276)
+fromdate
+"2038-01-19T03:14:08Z"
+2147483648
+
+# the time may drop its seconds, or its minutes and seconds
+[("2015-03-05T23:51Z", "2015-03-05T23Z", "20150305T2351Z", "20150305T23Z") | fromdateiso8601]
+null
+[1425599460,1425596400,1425599460,1425596400]
+
+# a decimal fraction belongs to the lowest component present
+[("2015-03-05T23:51:47,5Z", "2015-03-05T23:51,5Z", "2015-03-05T23,5Z") | fromdateiso8601]
+null
+[1425599507.5,1425599490,1425598200]
+
+# a date on its own is midnight UTC
+[("2015-03-05", "20150305", "2015-064", "2015064", "2015-W10-4", "2015W104") | fromdateiso8601]
+null
+[1425513600,1425513600,1425513600,1425513600,1425513600,1425513600]
+
+# the zone designator belongs to the time, so a bare date cannot carry one
+[("2015-03-05Z", "2015-03-05+09:00", "2015-03-05T") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR","ERR"]
+
+# the date must be complete, and a time must not be empty
+[("2015", "2015-03", "2015-W10", "2015-03T00:00:00Z", "T23:51:47Z", "T23:51:47", "23:51:47", "") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR"]
+
+# the date and the time must agree on whether separators are used,
+# and "YYYYMM" is ambiguous with "YYMMDD"
+[("2015-03-05T235147Z", "20150305T23:51:47Z", "201503T00:00:00Z", "2015-03-05T2351Z", "20150305T23:51Z", "20150305T23205Z") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR","ERR","ERR","ERR","ERR"]
+
+# out-of-range components are rejected
+[("2015-02-30T00:00:00Z", "2015-13-01T00:00:00Z", "2015-00-01T00:00:00Z", "2015-366T00:00:00Z", "2016-W53-1T00:00:00Z", "2015-W10-8T00:00:00Z", "2015-W00-1T00:00:00Z", "2015-03-05T25:00:00Z", "2015-03-05T24:00:01Z", "2015-03-05T24:01Z", "2015-03-05T23:60:00Z", "2015-03-05T23:51:47+24:00", "2015-03-05T23:51:47+09:") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR","ERR"]
+
+# the input must be exactly a datetime: no surrounding whitespace
+[(" 2015-03-05T23:51:47Z", "2015-03-05T23:51:47Z ") | try fromdateiso8601 catch "ERR"]
+null
+["ERR","ERR"]
+
+try fromdateiso8601 catch .
+123
+"fromdateiso8601 requires string inputs"
+
+try fromdateiso8601 catch .
+"not a date"
+"date \"not a date\" is not a valid ISO 8601 datetime"
 
 # module system
 import "a" as foo; import "b" as bar; def fooa: foo::a; [fooa, bar::a, bar::b, foo::a]
@@ -1942,6 +2154,23 @@ null
 import "shadow1" as f; import "shadow2" as f; import "shadow1" as e; [e::e, f::e]
 null
 [2,3]
+
+# A module reached only through another module must be linked before its
+# importers, or dead-code elimination drops the definitions that only the
+# importer's body references (#3597)
+include "deep1"; f
+null
+[1,[21,3],[22,3,1]]
+
+# ... including when the shared dependency is pulled in first by an importer
+# whose own definitions end up unused, in either import order
+import "deep2a" as a; import "deep2b" as b; b::f
+null
+[22,3,1]
+
+import "deep2b" as b; import "deep2a" as a; b::f
+null
+[22,3,1]
 
 %%FAIL
 module (.+1); 0
@@ -2051,6 +2280,14 @@ try join(",") catch .
 try join(",") catch .
 ["1","2",[3,4,5]]
 "string (\"1,2,\") and array ([3,4,5]) cannot be added"
+
+join("-")
+{"a":"x","b":1,"c":null,"d":false}
+"x-1--false"
+
+try join(1) catch .
+["a","b"]
+"string (\"a\") and number (1) cannot be added"
 
 {if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}
 null
@@ -2245,6 +2482,11 @@ true
 [1E+1000,-1E+1000 | tojson] == if have_decnum then ["1E+1000","-1E+1000"] else ["1.7976931348623157e+308","-1.7976931348623157e+308"] end
 null
 true
+
+# Unary negation keeps the sign of zero
+[-0, -(-0), (.[] | -.)] | map(tojson)
+[0, -0]
+["-0","0","-0","0"]
 
 . |= try . catch .
 1
@@ -2547,7 +2789,13 @@ try ["OK", setpath([[1]]; 1)] catch ["KO", .]
 []
 ["KO","Cannot update field at array index of array"]
 
-# regression test for #3227
+# regression test for #3227 (reduce)
+[] | reduce .[] as $x (0, 1; .)
+null
+0
+1
+
+# regression test for #3227 (foreach)
 foreach .[] as $x (0, 1; . + $x)
 [1, 2]
 1

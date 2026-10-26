@@ -212,21 +212,26 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
     jv exit_code = jq_get_exit_code(jq);
     if (!jv_is_valid(exit_code))
       ret = JQ_OK;
-    else if (jv_get_kind(exit_code) == JV_KIND_NUMBER)
+    else if (jv_get_kind(exit_code) == JV_KIND_NUMBER) {
       ret = jv_number_value(exit_code);
-    else
+      // Negative values would be mistaken for JQ_OK_NULL_KIND and friends,
+      // so keep the low 8 bits, like exit(3) does on POSIX systems.
+      if (ret < 0)
+        ret &= 0xff;
+    } else
       ret = JQ_ERROR_UNKNOWN;
     jv_free(exit_code);
     jv error_message = jq_get_error_message(jq);
-    if (jv_get_kind(error_message) == JV_KIND_STRING) {
-      // No prefix should be added to the output of `halt_error`.
-      priv_fwrite(jv_string_value(error_message), jv_string_length_bytes(jv_copy(error_message)),
-          stderr, dumpopts & JV_PRINT_ISATTY);
-    } else if (jv_get_kind(error_message) == JV_KIND_NULL) {
+    if (jv_get_kind(error_message) == JV_KIND_NULL) {
       // Halt with no output
     } else if (jv_is_valid(error_message)) {
-      error_message = jv_dump_string(error_message, 0);
-      fprintf(stderr, "%s\n", jv_string_value(error_message));
+      if (jv_get_kind(error_message) != JV_KIND_STRING) {
+        error_message = jv_dump_string(error_message, 0);
+      }
+      // No prefix or trailing newline should be added to the output of
+      // `halt_error`.
+      priv_fwrite(jv_string_value(error_message), jv_string_length_bytes(jv_copy(error_message)),
+          stderr, dumpopts & JV_PRINT_ISATTY);
     } // else no message on stderr; use --debug-trace to see a message
     fflush(stderr);
     jv_free(error_message);
@@ -539,7 +544,10 @@ int main(int argc, char* argv[]) {
 #ifdef USE_ISATTY
   if (isatty(STDOUT_FILENO)) {
 #ifndef WIN32
-    dumpopts |= JV_PRINT_ISATTY | JV_PRINT_COLOR;
+    dumpopts |= JV_PRINT_ISATTY;
+    char *term = getenv("TERM");
+    if (term != NULL && term[0] != '\0' && strcmp(term, "dumb"))
+      dumpopts |= JV_PRINT_COLOR;
 #else
   /* Verify we actually have the console, as the NUL device is also regarded as
      tty.  Windows can handle color if ANSICON (or ConEmu) is installed, or

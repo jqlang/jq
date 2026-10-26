@@ -832,8 +832,7 @@ static block bind_alternation_matchers(block matchers, block body) {
 
 block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
-  block loop = BLOCK(gen_op_simple(DUPN),
-                     source,
+  block loop = BLOCK(source,
                      bind_alternation_matchers(matcher,
                                   BLOCK(gen_op_bound(LOADVN, res_var),
                                         body,
@@ -842,8 +841,10 @@ block gen_reduce(block source, block matcher, block init, block body) {
   return BLOCK(gen_op_simple(DUP),
                init,
                res_var,
+               gen_op_simple(DUP),
                gen_op_target(FORK, loop),
                loop,
+               gen_op_simple(POP),
                gen_op_bound(LOADVN, res_var));
 }
 
@@ -1312,12 +1313,18 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
     bc->nsubfunctions = 0;
     bc->subfunctions = 0;
   }
+  if (errors) {
+    bc->code = 0;
+    bc->constants = jv_invalid();
+    block_free(b);
+    return errors;
+  }
   uint16_t* code = jv_mem_calloc(bc->codelen, sizeof(uint16_t));
   bc->code = code;
   pos = 0;
   jv constant_pool = jv_array();
   int maxvar = -1;
-  if (!errors) for (inst* curr = b.first; curr; curr = curr->next) {
+  for (inst* curr = b.first; curr; curr = curr->next) {
     const struct opcode_description* op = opcode_describe(curr->op);
     if (op->length == 0)
       continue;

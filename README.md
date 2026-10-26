@@ -12,6 +12,8 @@
 ### Prebuilt Binaries
 
 Download the latest releases from the [GitHub release page](https://github.com/jqlang/jq/releases).
+The platform-specific assets are standalone executables, not archives. On macOS and Linux,
+rename the downloaded file to `jq` and make it executable with `chmod +x jq`.
 
 ### Docker Image
 
@@ -50,11 +52,13 @@ make clean                     # if upgrading from a version previously built fr
 make -j8
 make check
 sudo make install
+sudo ldconfig                  # on Linux, if jq cannot find libjq.so
 ```
 
 Build a statically linked version:
 
 ```console
+make clean
 make LDFLAGS=-all-static
 ```
 

@@ -39,10 +39,10 @@ def recurse(f; cond): def r: ., (f | select(cond) | r); r;
 def recurse: recurse(.[]?);
 
 def to_entries: [keys_unsorted[] as $k | {key: $k, value: .[$k]}];
-def from_entries: map({ (.key // .Key // .name // .Name):
-  if has("value") then .value else .Value end }) | add // {};
+def from_entries: add(.[] | { (.key // .Key // .name // .Name):
+  if has("value") then .value else .Value end }) // {};
 def with_entries(f): to_entries | map(f) | from_entries;
-def reverse: [.[length - 1 - range(0;length)]];
+def reverse: [.[range(length-1;-1;-1)]];
 def indices($i): if type == "array" and ($i|type) == "array" then .[$i]
   elif type == "array" then .[[$i]]
   elif type == "string" and ($i|type) == "string" then _strindices($i)
@@ -63,15 +63,17 @@ def strings: select(type == "string");
 def nulls: select(. == null);
 def values: select(. != null);
 def scalars: select(type|. != "array" and . != "object");
+# Keep the accumulator the only reference on the left of + so the string is
+# appended in place; a nested + or a // inside the reduce copies it every step.
 def join($x): reduce .[] as $i (null;
-            (if .==null then "" else .+$x end) +
-            ($i | if type=="boolean" or type=="number" then tostring else .//"" end)
+            (if .==null then "" else .+$x end) |
+            . + ($i | if type=="boolean" or type=="number" then tostring end)
         ) // "";
 def _flatten($x): reduce .[] as $i ([]; if $i | type == "array" and $x != 0 then . + ($i | _flatten($x-1)) else . + [$i] end);
 def flatten($x): if $x < 0 then error("flatten depth must not be negative") else _flatten($x) end;
 def flatten: _flatten(-1);
+def range($x;$y): range($x;$y;1);
 def range($x): range(0;$x);
-def fromdateiso8601: strptime("%Y-%m-%dT%H:%M:%SZ")|mktime;
 def todateiso8601: strftime("%Y-%m-%dT%H:%M:%SZ");
 def fromdate: fromdateiso8601;
 def todate: todateiso8601;
@@ -148,11 +150,6 @@ def skip($n; expr):
   if $n > 0 then foreach expr as $item ($n; . - 1; if . < 0 then $item else empty end)
   elif $n == 0 then expr
   else error("skip doesn't support negative count") end;
-# range/3, with a `by` expression argument
-def range($init; $upto; $by):
-    if $by > 0 then $init|while(. < $upto; . + $by)
-  elif $by < 0 then $init|while(. > $upto; . + $by)
-  else empty end;
 def first(g): label $out | g | ., break $out;
 def isempty(g): first((g|false), true);
 def all(generator; condition): isempty(generator|condition and empty);
@@ -187,12 +184,6 @@ def repeat(exp):
          exp, _repeat;
      _repeat;
 def inputs: try repeat(input) catch if .=="break" then empty else error end;
-# like ruby's downcase - only characters A to Z are affected
-def ascii_downcase:
-  explode | map( if 65 <= . and . <= 90 then . + 32  else . end) | implode;
-# like ruby's upcase - only characters a to z are affected
-def ascii_upcase:
-  explode | map( if 97 <= . and . <= 122 then . - 32  else . end) | implode;
 
 # Streaming utilities
 def truncate_stream(stream):

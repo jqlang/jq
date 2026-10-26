@@ -85,24 +85,24 @@ sections:
       language is quite rich and allows for much more than just
       validation and pretty-printing.
 
-      Note: it is important to mind the shell's quoting rules.  As a
-      general rule it's best to always quote (with single-quote
-      characters on Unix shells) the jq program, as too many characters with special
-      meaning to jq are also shell meta-characters.  For example, `jq
-      "foo"` will fail on most Unix shells because that will be the same
-      as `jq foo`, which will generally fail because `foo is not
-      defined`.  When using the Windows command shell (cmd.exe) it's
-      best to use double quotes around your jq program when given on the
-      command-line (instead of the `-f program-file` option), but then
-      double-quotes in the jq program need backslash escaping. When using
-      the Powershell (`powershell.exe`) or the Powershell Core
-      (`pwsh`/`pwsh.exe`), use single-quote characters around the jq
-      program and backslash-escaped double-quotes (`\"`) inside the jq
+      Note: It is important to mind the shell's quoting rules.  As a general
+      rule, it's best to always quote the jq program, as many characters with
+      special meaning to jq are also shell meta-characters.  For example, `jq
+      "foo"` will fail on most shells, as it's equivalent to `jq foo` which will
+      generally fail because `foo is not defined`.
+
+      Inside a Unix shell or PowerShell 7.3+, use single quotes around the jq
+      program and double quotes inside the jq program.
+      When using PowerShell before 7.3 or Windows PowerShell (`powershell.exe`),
+      use single quotes around the jq program and backslash-escaped double
+      quotes (`\"`) inside the jq program.
+      When using the Windows command interpreter (cmd.exe), use double quotes
+      around your jq program, and backslash-escaped double quotes inside the jq
       program.
 
-      * Unix shells: `jq '.["foo"]'`
-      * Powershell: `jq '.[\"foo\"]'`
-      * Windows command shell: `jq ".[\"foo\"]"`
+      * Unix shells, PowerShell 7.3+: `jq '.["foo"]'`
+      * PowerShell 7.2 and older, Windows PowerShell: `jq '.[\"foo\"]'`
+      * Windows command interpreter: `jq ".[\"foo\"]"`
 
       Note: jq allows user-defined functions, but every jq program
       must have a top-level expression.
@@ -169,8 +169,10 @@ sections:
         By default, jq outputs colored JSON if writing to a
         terminal. You can force it to produce color even if writing to
         a pipe or a file using `-C`, and disable color with `-M`.
-        When the `NO_COLOR` environment variable is not empty, jq disables
-        colored output by default, but you can enable it by `-C`.
+        When the `NO_COLOR` environment variable is not empty,
+        or the `TERM` environment variable is unset, empty, or set to
+        `dumb`, jq disables colored output by default, but you can
+        enable it by `-C`.
 
         Colors can be configured with the `JQ_COLORS` environment
         variable (see below).
@@ -888,7 +890,7 @@ sections:
           section on the identity filter for the implications of this
           definition for numeric input.
 
-          To compute the absolute value of a number as a floating point number, you may wish use `fabs`.
+          To compute the absolute value of a number as a floating point number, you may wish to use `fabs`.
 
         examples:
           - program: 'map(abs)'
@@ -1820,7 +1822,7 @@ sections:
 
           Whitespace characters are the usual `" "`, `"\n"` `"\t"`, `"\r"`
           and also all characters in the Unicode character database with the
-          whitespace property. Note that what considers whitespace might
+          whitespace property. Note that what is considered whitespace might
           change in the future.
 
         examples:
@@ -2250,13 +2252,45 @@ sections:
 
           The `fromdateiso8601` builtin parses datetimes in the ISO 8601
           format to a number of seconds since the Unix epoch
-          (1970-01-01T00:00:00Z).  The `todateiso8601` builtin does the
-          inverse.
+          (1970-01-01T00:00:00Z).  The `todateiso8601` builtin formats a
+          number of seconds as `"%Y-%m-%dT%H:%M:%SZ"`.
 
-          The `fromdate` builtin parses datetime strings.  Currently
-          `fromdate` only supports ISO 8601 datetime strings, but in the
-          future it will attempt to parse datetime strings in more
-          formats.
+          `fromdateiso8601` accepts a complete date, optionally followed by
+          a time of day, written in either the extended representation, which
+          separates the components, or the basic representation, which does
+          not.  The two cannot be mixed within one datetime.  The date may be
+          a calendar date (`2015-03-05`, `20150305`), an ordinal date
+          (`2015-064`, `2015064`), or a week date (`2015-W10-4`, `2015W104`);
+          all three denote the same day.  Years outside the range 0000 to 9999
+          are written with a sign and six digits, as in `+012015-03-05`.
+
+          The time of day may omit its seconds, or its minutes and seconds,
+          as in `2015-03-05T23:51Z` and `2015-03-05T23Z`, or be left out
+          altogether, in which case the value is midnight UTC.  It may carry a
+          fractional part after a `.` or a `,`, which belongs to the lowest
+          component present, so `23,5` is half past 23.  It may be followed
+          by an offset from UTC written as `Z`, `+hh`, `+hh:mm` or `+hhmm`;
+          a datetime with no offset is read as UTC.  A time of `24:00:00`
+          denotes midnight of the following day, and a leap second is read as
+          the second before it, since jq counts every day as 86400 seconds.
+
+          The `W`, `T` and `Z` designators may also be written in lower
+          case, which ISO 8601 permits where upper case is not available.
+          RFC 3339 additionally allows the date and the time to be separated
+          by a space instead of a `T` "for the sake of readability", which jq
+          accepts too.  The offset may use the other representation's
+          separator style, as in `2015-03-05T23:51:47+0900`, although
+          ISO 8601 does not allow the basic and extended representations
+          to be mixed.
+
+          A complete date is required, so `2015` and `2015-03` are errors
+          even though ISO 8601 defines them as dates, and `T23:51:47` is an
+          error because a time of day on its own is not a point in time.
+          Dates that do not exist, such as `2015-02-30` or `2016-W53-1`, are
+          errors too, as is `2015-03-05Z`, since a zone designator belongs to
+          the time of day.
+
+          The `fromdate` builtin is an alias for `fromdateiso8601`.
 
           The `todate` builtin is an alias for `todateiso8601`.
 
@@ -2296,8 +2330,11 @@ sections:
           the local timezone setting.
 
           The format strings for `strptime` and `strftime` are described
-          in typical C library documentation.  The format string for ISO
-          8601 datetime is `"%Y-%m-%dT%H:%M:%SZ"`.
+          in typical C library documentation.  `"%Y-%m-%dT%H:%M:%SZ"` is
+          the format that `todateiso8601` produces; it is only one of the
+          ISO 8601 representations that `fromdateiso8601` accepts, and
+          `strptime` cannot parse the others -- there is no portable format
+          specifier for week dates or for fractional seconds.
 
           jq may not support some or all of this date functionality on
           some systems. In particular, the `%u` and `%j` specifiers for
@@ -2307,6 +2344,14 @@ sections:
           - program: 'fromdate'
             input: '"2015-03-05T23:51:47Z"'
             output: ['1425599507']
+
+          - program: 'fromdateiso8601'
+            input: '"2015-03-06T08:51:47.25+09:00"'
+            output: ['1425599507.25']
+
+          - program: 'map(fromdateiso8601)'
+            input: '["20150305T235147Z","2015-064T23:51:47Z","2015-W10-4T23:51:47Z"]'
+            output: ['[1425599507,1425599507,1425599507]']
 
           - program: 'strptime("%Y-%m-%dT%H:%M:%SZ")'
             input: '"2015-03-05T23:51:47Z"'
@@ -2819,7 +2864,7 @@ sections:
       which to place the data.
 
       It is also possible to define functions in jq, although this is
-      is a feature whose biggest use is defining jq's standard library
+      a feature whose biggest use is defining jq's standard library
       (many jq functions such as `map` and `select` are in fact written
       in jq).
 
@@ -2901,7 +2946,7 @@ sections:
               . as {realnames: $names, posts: [$first, $second]} | ...
 
           The variable declarations in array patterns (e.g., `. as
-          [$first, $second]`) bind to the elements of the array in from
+          [$first, $second]`) bind to the elements of the array from
           the element at index zero on up, in order.  When there is no
           value at the index for an array pattern element, `null` is
           bound to that variable.
@@ -3027,6 +3072,16 @@ sections:
           to be evaluated once per value in the value of `.` at the call
           site.
 
+          Multiple arguments are separated by semicolons, both in the
+          definition and in the call:
+
+              def f(a; b): ...;
+              f(.x; .y)
+
+          A comma does not separate arguments.  `f(.x, .y)` calls a
+          one-argument `f` with the single filter `.x, .y`, which
+          outputs `.x` and then `.y` (see the comma operator above).
+
           Multiple definitions using the same function name are allowed.
           Each re-definition replaces the previous one for the same
           number of function arguments, but only for references from
@@ -3040,6 +3095,12 @@ sections:
           - program: 'def addvalue(f): f as $x | map(. + $x); addvalue(.[0])'
             input: '[[1,2],[10,20]]'
             output: ['[[1,2,1,2], [10,20,1,2]]']
+          - program: 'def f(a; b): [a, b]; f(.x; .y)'
+            input: '{"x":1,"y":2}'
+            output: ['[1,2]']
+          - program: 'def f(a): [a]; f(.x, .y)'
+            input: '{"x":1,"y":2}'
+            output: ['[1,2]']
 
       - title: 'Scoping'
         body: |
@@ -3516,6 +3577,13 @@ sections:
 
           The left-hand side can be any general path expression; see `path()`.
 
+          The right-hand side of `|=` is run with the value at the path
+          as its input, not with `.`. This is what sets it apart from
+          plain assignment (`=`) and the arithmetic update-assignment
+          operators such as `+=`, whose right-hand side is run with `.`.
+          For example, `.a |= .b` sets `.a` to the `b` field of `.a`,
+          while `.a = .b` and `.a += .b` use the `b` field of `.`.
+
           Note that the left-hand side of `|=` refers to a value in `.`.
           Thus `$var.foo |= . + 1` won't work as expected (`$var.foo` is
           not a valid or useful path expression in `.`); use `$var |
@@ -3529,6 +3597,12 @@ sections:
           releases, it used to be that only the last one was used).
 
         examples:
+          - program: '.foo |= . + 1'
+            input: '{"foo": 41, "bar": "unchanged"}'
+            output: ['{"foo": 42, "bar": "unchanged"}']
+          - program: '.user.age |= . + 1'
+            input: '{"user": {"name": "alice", "age": 30}, "active": true}'
+            output: ['{"user": {"name": "alice", "age": 31}, "active": true}']
           - program: '(..|select(type=="boolean")) |= if . then 1 else 0 end'
             input: '[true,false,[5,true,[true,[false]],false]]'
             output: ['[1,0,[5,1,[1,[0]],0]]']
@@ -3537,13 +3611,27 @@ sections:
         body: |
 
           jq has a few operators of the form `a op= b`, which are all
-          equivalent to `a |= . op b`. So, `+= 1` can be used to
-          increment values, being the same as `|= . + 1`.
+          equivalent to `(b as $b | a |= . op $b)`. So, `+= 1` can be
+          used to increment values, being the same as `|= . + 1`.
+
+          Note that the right-hand side `b` is evaluated with the same
+          input as the left-hand side, not with the value at the path
+          being updated. So `.a += .b` adds the value of `.b` to `.a`,
+          whereas `.a |= . + .b` would look up `.b` inside the value of
+          `.a`.
+          If `b` outputs multiple values, then `a op= b` outputs one
+          result for each of them.
 
         examples:
           - program: .foo += 1
             input: '{"foo": 42}'
             output: ['{"foo": 43}']
+          - program: '.a += .b'
+            input: '{"a": 1, "b": 2}'
+            output: ['{"a": 3, "b": 2}']
+          - program: '.a += (1,2)'
+            input: '{"a": 0}'
+            output: ['{"a": 1}', '{"a": 2}']
 
       - title: "Plain assignment: `=`"
         body: |

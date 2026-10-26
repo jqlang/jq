@@ -1,12 +1,15 @@
 # See tests/jq.test and the jq manual for more information.
 
-# Regression test for #3276 (fails on mingw/WIN32)
-fromdate
-"2038-01-19T03:14:08Z"
-2147483648
-
 # %e is not available on mingw/WIN32
 strftime("%A, %B %e, %Y")
 1435677542.822351
 "Tuesday, June 30, 2015"
 
+# Timestamps before the epoch are not supported on mingw/WIN32
+gmtime
+-1.25
+[1969,11,31,23,59,58.75,3,364]
+
+map(gmtime) | . == sort
+[-1.5,-1,-0.5,0,0.5,1,1.5]
+true

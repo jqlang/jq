@@ -2,11 +2,13 @@
 #define UTIL_H
 
 #ifdef WIN32
-/* For WriteFile() below */
+/* For WriteConsoleW() below */
 #include <windows.h>
 #include <io.h>
+#include <limits.h>
 #include <processenv.h>
 #include <shellapi.h>
+#include <stdlib.h>
 #include <wchar.h>
 #include <wtypes.h>
 #endif
@@ -18,27 +20,47 @@ jv get_home(void);
 jv jq_realpath(jv);
 
 /*
- * The Windows CRT and console are something else.  In order for the
- * console to get UTF-8 written to it correctly we have to bypass stdio
- * completely.  No amount of fflush()ing helps.  If the first byte of a
- * buffer being written with fwrite() is non-ASCII UTF-8 then the
- * console misinterprets the byte sequence.  But one must not
- * WriteFile() if stdout is a file!1!!
+ * The Windows console does not do UTF-8.  Bytes written to it, with
+ * fwrite() or with WriteFile() alike, are decoded with the console's
+ * output code page, so anything but ASCII comes out as mojibake unless
+ * the user happened to run `chcp 65001` first.  The wide character
+ * console API is code page independent, so convert to UTF-16 and use
+ * WriteConsoleW() instead.  We must not call SetConsoleOutputCP(): the
+ * code page belongs to the console rather than to us, so changing it
+ * also changes the shell we were started from (see #1121 and #1184).
  *
- * We carry knowledge of whether the FILE * is a tty everywhere we
- * output to it just so we can write with WriteFile() if stdout is a
- * console on WIN32.
+ * Only a console needs this; a file or a pipe wants the UTF-8 bytes.
+ * The is_tty flag alone cannot tell the two apart, as it is computed
+ * once, from stdout, and passed along even for writes to stderr, so
+ * ask the handle we are about to write to.
  */
 
 static void priv_fwrite(const char *s, size_t len, FILE *fout, int is_tty) {
 #ifdef WIN32
-  if (is_tty)
-    WriteFile((HANDLE)_get_osfhandle(fileno(fout)), s, len, NULL, NULL);
-  else
-    fwrite(s, 1, len, fout);
-#else
-  fwrite(s, 1, len, fout);
+  if (is_tty && len > 0 && len <= INT_MAX / sizeof(wchar_t)) {
+    HANDLE h = (HANDLE)_get_osfhandle(fileno(fout));
+    DWORD mode;
+    if (GetConsoleMode(h, &mode)) {
+      int wlen = MultiByteToWideChar(CP_UTF8, 0, s, (int)len, NULL, 0);
+      wchar_t *ws = wlen > 0 ? malloc(wlen * sizeof(*ws)) : NULL;
+      if (ws != NULL) {
+        wlen = MultiByteToWideChar(CP_UTF8, 0, s, (int)len, ws, wlen);
+        fflush(fout); /* keep our order with stdio writes to this stream */
+        for (int done = 0; done < wlen;) {
+          DWORD written;
+          /* WriteConsoleW() may write fewer characters than asked for. */
+          if (!WriteConsoleW(h, ws + done, wlen - done, &written, NULL) ||
+              written == 0)
+            break;
+          done += written;
+        }
+        free(ws);
+        return;
+      }
+    }
+  }
 #endif
+  fwrite(s, 1, len, fout);
 }
 
 const void *_jq_memmem(const void *haystack, size_t haystacklen,

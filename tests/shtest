@@ -5,10 +5,12 @@
 msys=false
 mingw=false
 sunos=false
+netbsd=false
 case "$(uname -s)" in
 MSYS*)  msys=true;;
 MINGW*) mingw=true;;
 SunOS*) sunos=true;;
+NetBSD*) netbsd=true;;
 esac
 
 JQ_NO_B=$JQ
@@ -57,6 +59,79 @@ for exp in '1+1' '1-1' '2*3' '9/3' '9%3' '9==3' '9!=3' \
   fi
 done
 
+## Test UTF-8 BOM is stripped at the start of each input file
+printf '\357\273\277[{"foo": 1}\n,{"foo": 2}\n]\n' > $d/bom1.json
+printf '\357\273\277[{"foo": 3}\n,{"foo": 4}\n]\n' > $d/bom2.json
+$VALGRIND $Q $JQ -e '.[0].foo == 1' $d/bom1.json
+$VALGRIND $Q $JQ -se '. == [[{"foo":1},{"foo":2}],[{"foo":3},{"foo":4}]]' $d/bom1.json $d/bom2.json
+$VALGRIND $Q $JQ -ne '[inputs] == [[{"foo":1},{"foo":2}],[{"foo":3},{"foo":4}]]' $d/bom1.json $d/bom2.json
+$VALGRIND $Q $JQ -ne '[inputs] == [[{"foo":1},{"foo":2}],[{"foo":3},{"foo":4}]]' $d/bom1.json - < $d/bom2.json
+$VALGRIND $Q $JQ -Rne '[inputs] == ["[{\"foo\": 1}", ",{\"foo\": 2}", "]", "[{\"foo\": 3}", ",{\"foo\": 4}", "]"]' $d/bom1.json $d/bom2.json
+$VALGRIND $Q $JQ -ne --slurpfile x $d/bom1.json '$x == [[{"foo":1},{"foo":2}]]'
+$VALGRIND $Q $JQ -ne --rawfile x $d/bom1.json '$x == "[{\"foo\": 1}\n,{\"foo\": 2}\n]\n"'
+
+## Test that --run-tests reports failures (#2765)
+cat > $d/passing.test <<'EOF'
+.
+1
+1
+EOF
+cat > $d/passing.expected <<'EOF'
+Test #1: '.' at line number 1
+1 of 1 tests passed (0 malformed, 0 skipped)
+EOF
+$VALGRIND $Q $JQ --run-tests $d/passing.test > $d/out 2>&1
+head -n 2 $d/out | cmp $d/passing.expected -
+
+cat > $d/erroneous-result.test <<'EOF'
+.
+1
+2
+EOF
+cat > $d/erroneous-result.expected <<'EOF'
+Test #1: '.' at line number 1
+*** Expected 2, but got 1 for test at line number 3: .
+0 of 1 tests passed (0 malformed, 0 skipped)
+EOF
+
+cat > $d/insufficient-results.test <<'EOF'
+empty
+null
+{"expected":true}
+EOF
+cat > $d/insufficient-results.expected <<'EOF'
+Test #1: 'empty' at line number 1
+*** Insufficient results for test at line number 3: empty
+0 of 1 tests passed (0 malformed, 0 skipped)
+EOF
+
+cat > $d/superfluous-result.test <<'EOF'
+., .
+1
+1
+EOF
+cat > $d/superfluous-result.expected <<'EOF'
+Test #1: '., .' at line number 1
+*** Superfluous result: 1 for test at line number 3, ., .
+0 of 1 tests passed (1 malformed, 0 skipped)
+EOF
+
+for test in erroneous-result insufficient-results superfluous-result; do
+  ret=0
+  # Keep memory errors distinct from the expected test failure status.
+  if [ -n "$VALGRIND" ]; then
+    $VALGRIND $Q --error-exitcode=99 $JQ --run-tests $d/$test.test > $d/out 2>&1 || ret=$?
+  else
+    $JQ --run-tests $d/$test.test > $d/out 2>&1 || ret=$?
+  fi
+  if [ "$ret" -ne 1 ]; then
+    cat $d/out
+    echo "Expected --run-tests to report $test with status 1, got $ret" >&2
+    exit 1
+  fi
+  cmp $d/out $d/$test.expected
+done
+
 ## Test JSON sequence support
 cat > $d/expected <<EOF
 jq: ignoring parse error: Truncated value at line 2, column 5
@@ -72,6 +147,14 @@ jq: ignoring parse error: Truncated value at line 2, column 25
 jq: ignoring parse error: Truncated value at line 3, column 1
 EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
+cmp $d/out $d/expected
+
+# A syntax error skips the rest of the text, up to the next RS
+cat > $d/expected <<EOF
+jq: ignoring parse error: Invalid numeric literal at line 1, column 8 (need RS to resync)
+jq: ignoring parse error: Unmatched '}' at line 2, column 5 (need RS to resync)
+EOF
+printf '\036{"a":x,"b":7}\n\036[1,}2\n\0363\n' | $VALGRIND $Q $JQ -ces --seq '. == [3]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
 
 # Note that here jq sees no inputs at all but it still succeeds because
@@ -117,6 +200,27 @@ for i in 1 2 30 31; do
 done
 printf '" ~\\u007f"\n' > $d/expected
 printf "\"$(printf '\\%03o' 32 126 127)\"" | $JQ '.' > $d/out 2>&1
+cmp $d/out $d/expected
+
+# Regression test for #3110: a raw NUL byte outside of a string must be a clean
+# parse error, not silently truncate the surrounding token. Previously
+# `printf '12\0003'` printed 12 and dropped the trailing 3.
+cat > $d/expected <<EOF
+jq: parse error: Invalid character at line 1, column 3
+EOF
+if printf '12\0003' | $JQ '.' > $d/out 2>&1; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 2
+fi
+cmp $d/out $d/expected
+# A NUL at the very start of the input is rejected too.
+cat > $d/expected <<EOF
+jq: parse error: Invalid character at line 1, column 1
+EOF
+if printf '\000' | $JQ '.' > $d/out 2>&1; then
+  printf 'Error expected but jq exited successfully\n' 1>&2
+  exit 2
+fi
 cmp $d/out $d/expected
 
 ## Test --exit-status
@@ -437,6 +541,15 @@ elif [ $? -ne 11 ]; then
     echo "jq halt_error(11) had wrong error code" 1>&2
     exit 1
 fi
+for opt in '' -e; do
+    if $VALGRIND $Q $VG_EXIT0 $JQ $opt -n 'halt_error(-1)'; then
+        echo "jq $opt halt_error(-1) didn't work as expected" 1>&2
+        exit 1
+    elif [ $? -ne 255 ]; then
+        echo "jq $opt halt_error(-1) had wrong error code" 1>&2
+        exit 1
+    fi
+done
 if [ -n "$($VALGRIND $Q $JQ -n 'halt_error(1)' 2>&1)" ]; then
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
@@ -453,7 +566,7 @@ if [ "$($VALGRIND $Q $JQ -n '"x\u0000y\u0000z" | halt_error(1)' 2>&1 | tr '\0' '
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
 fi
-if [ "$($VALGRIND $Q $JQ -n '{"a":"xyz"} | halt_error(1)' 2>&1)" != '{"a":"xyz"}' ]; then
+if [ "$($VALGRIND $Q $JQ -n '{"a":"xyz"} | halt_error(1)' 2>&1 || echo "z")" != '{"a":"xyz"}z' ]; then
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
 fi
@@ -640,11 +753,15 @@ for colors in '/' '[30' '30m' '30:31m:32' '30:*:31' 'invalid'; do
 done
 unset JQ_COLORS
 
-# Check $NO_COLOR
+# Check $NO_COLOR and $TERM
 test_no_color=true
 $msys  && test_no_color=false
 $mingw && test_no_color=false
 $sunos && test_no_color=false
+# NetBSD's script(1) intermittently loses the whole session output (the
+# output file comes back empty for fast commands about half the time), so
+# the pty checks cannot run reliably there.
+$netbsd && test_no_color=false
 if $test_no_color && command -v script >/dev/null 2>&1; then
   if script -qc echo /dev/null >/dev/null 2>&1; then
     faketty() { script -qec "$*" /dev/null; }
@@ -653,22 +770,52 @@ if $test_no_color && command -v script >/dev/null 2>&1; then
       sed 's/^\x5E\x44\x08\x08//'; }
   fi
 
-  faketty $JQ_NO_B -n . > $d/color
+  faketty env TERM=xterm-256color $JQ_NO_B -n . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  faketty env NO_COLOR= $JQ_NO_B -n . > $d/color
+  faketty env TERM=xterm-256color NO_COLOR= $JQ_NO_B -n . > $d/color
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  faketty env NO_COLOR=1 $JQ_NO_B -n . > $d/color
+  faketty env TERM=xterm-256color NO_COLOR=1 $JQ_NO_B -n . > $d/color
   printf 'null\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
   cmp $d/color $d/expect
-  faketty env NO_COLOR=1 $JQ_NO_B -Cn . > $d/color
+  faketty env TERM=xterm-256color NO_COLOR=1 $JQ_NO_B -Cn . > $d/color
+  printf '\033[0;90mnull\033[0m\r\n' > $d/expect
+  od -tc $d/expect
+  od -tc $d/color
+  cmp $d/color $d/expect
+  faketty env TERM=dumb $JQ_NO_B -n . > $d/color
+  printf 'null\r\n' > $d/expect
+  od -tc $d/expect
+  od -tc $d/color
+  cmp $d/color $d/expect
+  faketty env TERM=dumb $JQ_NO_B -Cn . > $d/color
+  printf '\033[0;90mnull\033[0m\r\n' > $d/expect
+  od -tc $d/expect
+  od -tc $d/color
+  cmp $d/color $d/expect
+  faketty env TERM= $JQ_NO_B -n . > $d/color
+  printf 'null\r\n' > $d/expect
+  od -tc $d/expect
+  od -tc $d/color
+  cmp $d/color $d/expect
+  faketty env TERM= $JQ_NO_B -Cn . > $d/color
+  printf '\033[0;90mnull\033[0m\r\n' > $d/expect
+  od -tc $d/expect
+  od -tc $d/color
+  cmp $d/color $d/expect
+  (unset TERM; faketty $JQ_NO_B -n . > $d/color)
+  printf 'null\r\n' > $d/expect
+  od -tc $d/expect
+  od -tc $d/color
+  cmp $d/color $d/expect
+  (unset TERM; faketty $JQ_NO_B -Cn . > $d/color)
   printf '\033[0;90mnull\033[0m\r\n' > $d/expect
   od -tc $d/expect
   od -tc $d/color
@@ -721,6 +868,15 @@ EOF
       echo "jq does not honor LC_ALL environment variable ($dt1, $dt2, $dt3)"
       exit 1
     fi
+  fi
+fi
+
+# strflocaltime/1 allows a format that expands to an empty string
+l=fr_FR.UTF-8
+if ! $msys && ! $mingw && [ -z "$(LC_ALL=$l date +%p 2>/dev/null)" ]; then
+  if ! out=$(LC_ALL=$l $VALGRIND $Q $JQ -n '0 | strflocaltime("%p")' 2>&1) || [ "$out" != '""' ]; then
+    echo "strflocaltime(\"%p\") in $l should output an empty string but got: $out"
+    exit 1
   fi
 fi
 
@@ -901,6 +1057,20 @@ EOF
 $JQ -rn '"\([range(4097) | "def f\(.): \(.)"] | join("; ")); \([range(4097) | "f\(.)"] | join(" + "))"' > $d/prog.jq
 $JQ -nf $d/prog.jq 2> $d/out && {
   echo "Expected compile error for too many local functions"
+  exit 1
+}
+diff $d/out $d/expected
+
+# Test 3: Too many function parameters in a nested function (issue #3661)
+echo "Testing function parameter limit in a nested function..."
+cat > $d/expected <<EOF
+jq: error: function has too many parameters (max 4095)
+jq: error: too many function parameters or local function definitions (max 4095)
+jq: 2 compile errors
+EOF
+$JQ -rn '"def g(\([range(4097) | "a\(.)"] | join(";"))): .; def f: g(\([range(4097)] | join(";"))); f"' > $d/prog.jq
+$JQ -nf $d/prog.jq 2> $d/out && {
+  echo "Expected compile error for too many parameters in a nested function"
   exit 1
 }
 diff $d/out $d/expected

@@ -758,7 +758,7 @@ jv jv_number_negate(jv n) {
   if (JVP_HAS_FLAGS(n, JVP_FLAGS_NUMBER_LITERAL)) {
     jvp_literal_number* m = jvp_literal_number_alloc(jvp_dec_number_ptr(n)->digits);
 
-    decNumberMinus(&m->num_decimal, jvp_dec_number_ptr(n), DEC_CONTEXT());
+    decNumberCopyNegate(&m->num_decimal, jvp_dec_number_ptr(n));
     jv r = {JVP_FLAGS_NUMBER_LITERAL, 0, 0, 0, {&m->refcnt}};
     return r;
   }
@@ -1210,12 +1210,18 @@ static pthread_once_t hash_seed_once = PTHREAD_ONCE_INIT;
 
 static void jvp_hash_seed_init(void) {
   uint32_t seed;
-#if defined(HAVE_ARC4RANDOM)
-  seed = arc4random();
-#elif defined(HAVE_GETENTROPY)
-  if (getentropy(&seed, sizeof(seed)) != 0)
-    seed = (uint32_t)getpid() ^ (uint32_t)time(NULL);
-#else
+  /* Prefer getentropy() over arc4random(): glibc's arc4random() aborts the
+   * process when the kernel lacks getrandom(2) (#3584), while getentropy()
+   * merely fails, letting us fall back to /dev/urandom. */
+#if defined(HAVE_GETENTROPY)
+  if (getentropy(&seed, sizeof(seed)) == 0) {
+    hash_seed = seed;
+    return;
+  }
+#elif defined(HAVE_ARC4RANDOM)
+  hash_seed = arc4random();
+  return;
+#endif
   int fd = open("/dev/urandom", O_RDONLY);
   if (fd >= 0) {
     if (read(fd, &seed, sizeof(seed)) != 4)
@@ -1224,7 +1230,6 @@ static void jvp_hash_seed_init(void) {
   } else {
     seed = (uint32_t)getpid() ^ (uint32_t)time(NULL);
   }
-#endif
   hash_seed = seed;
 }
 

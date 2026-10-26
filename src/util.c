@@ -193,6 +193,7 @@ struct jq_util_input_state {
   size_t buf_valid_len;
   jv current_filename;
   size_t current_line;
+  int at_file_start;
 };
 
 static void fprinter(void *data, const char *fname) {
@@ -277,6 +278,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
     if (f != NULL) {
       jv_free(state->current_filename);
       state->current_line = 0;
+      state->at_file_start = 1;
       if (!strcmp(f, "-")) {
         state->current_input = stdin;
         state->current_filename = jv_string("<stdin>");
@@ -342,6 +344,14 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
       } else {
         state->buf_valid_len = (p - state->buf) + 1;
       }
+    }
+    if (state->at_file_start) {
+      // Strip UTF-8 BOM at the start of each file
+      if (state->buf_valid_len >= 3 && !memcmp(state->buf, "\xEF\xBB\xBF", 3)) {
+        state->buf_valid_len -= 3;
+        memmove(state->buf, state->buf + 3, state->buf_valid_len);
+      }
+      state->at_file_start = 0;
     }
   }
   return state->curr_file == state->nfiles && !state->current_input;

@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
-from datetime import date
 from io import StringIO
 from lxml import etree
 import markdown
 from markdown.extensions import Extension
 import re
-import os
 import sys
-from time import time
 import yaml
 
 
@@ -68,9 +65,7 @@ class RoffWalker(object):
         last_tag = None
         while root is not None:
             if root.tag == 'h1':
-                epoch = int(os.environ.get('SOURCE_DATE_EPOCH', time()))
-                self.__write_cmd('.TH "JQ" "1" "{}" "" ""'.format(
-                    date.fromtimestamp(epoch).strftime('%B %Y')))
+                self.__write_cmd('.TH "JQ" "1" "" "" ""')
                 self.__write_cmd('.SH "NAME"')
                 # TODO: properly parse this
                 self.__write_raw(r'\fBjq\fR \- Command\-line JSON processor' +
@@ -232,7 +227,7 @@ def convert_manual_to_markdown():
                     f.write("jq '{}'\n".format(example.get('program', '')))
                     f.write("   {}\n".format(example.get('input', '')))
                     output = [str(x) for x in example.get('output', [])]
-                    f.write("=> {}\n".format(', '.join(output)))
+                    f.write("=> {}\n".format('\n   '.join(output)))
                     first = False
                 f.write("~~~~\n")
         f.write('\n')

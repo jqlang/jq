@@ -428,13 +428,6 @@ jv jq_next(jq_state *jq) {
       break;
     }
 
-    case DUPN: {
-      jv v = stack_popn(jq);
-      stack_push(jq, jv_copy(v));
-      stack_push(jq, v);
-      break;
-    }
-
     case DUP2: {
       jv keep = stack_pop(jq);
       jv v = stack_pop(jq);
@@ -516,24 +509,29 @@ jv jq_next(jq_state *jq) {
       uint16_t v = *pc++;
       jv* var = frame_local_var(jq, v, level);
       jv max = stack_pop(jq);
+      jv step = stack_pop(jq);
       if (raising) {
         jv_free(max);
+        jv_free(step);
         goto do_backtrack;
-      } 
-      if (jv_get_kind(*var) != JV_KIND_NUMBER ||
-          jv_get_kind(max) != JV_KIND_NUMBER) {
-        set_error(jq, jv_invalid_with_msg(jv_string_fmt("Range bounds must be numeric")));
+      }
+
+      if (jv_get_kind(*var) != JV_KIND_NUMBER || jv_get_kind(max) != JV_KIND_NUMBER ||
+          jv_get_kind(step) != JV_KIND_NUMBER) {
+        set_error(jq, jv_invalid_with_msg(jv_string("Range bounds and step must be numeric")));
         jv_free(max);
+        jv_free(step);
         goto do_backtrack;
-      } else if (jv_number_value(*var) >= jv_number_value(max)) {
-        /* finished iterating */
+      } else if (jv_cmp(jv_copy(*var), jv_copy(max)) * jv_cmp(jv_copy(step), jv_number(0)) >= 0) {
         jv_free(max);
+        jv_free(step);
         goto do_backtrack;
       } else {
         jv curr = *var;
-        *var = jv_number(jv_number_value(*var) + 1);
+        *var = jv_number(jv_number_value(curr) + jv_number_value(step));
 
         struct stack_pos spos = stack_get_pos(jq);
+        stack_push(jq, step);
         stack_push(jq, max);
         stack_save(jq, pc - 3, spos);
 
