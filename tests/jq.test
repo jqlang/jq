@@ -126,7 +126,7 @@ true
 [1]
 ["[\n 1\n]","[\n  1\n]"]
 
-[null,true,"2",[],{},-2,8,1.5,infinite,-infinite,nan | . as $n | try (null | tojson($n)) catch .] | all(. == "tojson() indentation must be an integer between -1 and 7")
+[null,true,"2",[],{},-2,8,1.5,1e-20,-1e-20,infinite,-infinite,nan | . as $n | try (null | tojson($n)) catch .] | all(. == "tojson() indentation must be an integer between -1 and 7")
 null
 true
 
