@@ -521,6 +521,26 @@ if ! grep -q "circular import" $d/out; then
     exit 1
 fi
 
+# $ORIGIN is the directory of the executable without resolving symlinks (#1312)
+# Skip when $JQ is a libtool wrapper script, which runs another executable.
+if ! $msys && ! $mingw && [ "$(head -c 2 "$JQ_NO_B")" != "#!" ]; then
+  mkdir -p $d/origin/bin $d/origin/lib/jq
+  ln -s "$(cd "$(dirname "$JQ_NO_B")" && pwd)/$(basename "$JQ_NO_B")" $d/origin/bin/jq
+  echo 'def origin: "lib/jq";' > $d/origin/lib/jq/origin.jq
+  for jq in $d/origin/bin/jq jq; do
+    if ! (PATH=$d/origin/bin:$PATH; $jq -n 'include "origin"; origin' > $d/out) ||
+       ! printf '"lib/jq"\n' | cmp - $d/out; then
+      echo "\$ORIGIN should be the directory of the symlink invoked as $jq" 1>&2
+      exit 1
+    fi
+  done
+  if ! (PATH=$d/origin/bin:$PATH; jq -n 'get_jq_origin') > $d/out ||
+     ! printf '"%s"\n' "$d/origin/bin" | cmp - $d/out; then
+    echo "get_jq_origin should be the directory of the symlink" 1>&2
+    exit 1
+  fi
+fi
+
 ## Halt
 
 if ! $VALGRIND $Q $JQ -n halt; then

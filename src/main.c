@@ -8,7 +8,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
+#ifdef HAVE_GETAUXVAL
+#include <sys/auxv.h>
+#endif
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 
 #ifdef WIN32
 #include <windows.h>
@@ -36,6 +43,7 @@ extern void jv_tsd_dtoa_ctx_init();
 
 #include "jv.h"
 #include "jq.h"
+#include "jv_alloc.h"
 #include "util.h"
 #include "src/version.h"
 #include "src/config_opts.inc"
@@ -120,6 +128,61 @@ static void die(void) {
   fprintf(stderr, "Use jq --help for help with command-line options,\n");
   fprintf(stderr, "or see the jq manpage, or online docs at https://jqlang.org\n");
   exit(2);
+}
+
+// Returns the path of the jq executable to compute $ORIGIN. Symbolic links
+// are not resolved, so $ORIGIN is the directory of the invoked path.
+static char *get_executable_path(const char* argv0) {
+#if defined(HAVE_GETAUXVAL) && defined(AT_EXECFN)
+  // the path passed to execve(2), unlike /proc/self/exe
+  const char *path = (const char *)getauxval(AT_EXECFN);
+  if (path != NULL && *path != '\0')
+    return jv_mem_strdup(path);
+#elif defined(__APPLE__)
+  uint32_t size = 0;
+  _NSGetExecutablePath(NULL, &size);
+  char *path = jv_mem_alloc(size);
+  if (_NSGetExecutablePath(path, &size) == 0)
+    return path;
+  jv_mem_free(path);
+#elif defined(WIN32)
+  for (DWORD size = MAX_PATH; size <= 32768; size *= 2) {
+    wchar_t *wpath = jv_mem_alloc(size * sizeof(wchar_t));
+    DWORD len = GetModuleFileNameW(NULL, wpath, size);
+    if (len > 0 && len < size) {
+      int n = WideCharToMultiByte(CP_UTF8, 0, wpath, -1, NULL, 0, NULL, NULL);
+      char *path = jv_mem_alloc(n);
+      WideCharToMultiByte(CP_UTF8, 0, wpath, -1, path, n, NULL, NULL);
+      jv_mem_free(wpath);
+      return path;
+    }
+    jv_mem_free(wpath);
+    if (len == 0) break;
+  }
+#endif
+#ifndef WIN32
+  // search $PATH as the shell does when argv[0] does not contain a slash
+  const char *env = getenv("PATH");
+  if (env != NULL && *argv0 != '\0' && strchr(argv0, '/') == NULL) {
+    for (const char *p = env;;) {
+      const char *q = strchr(p, ':');
+      size_t len = q != NULL ? (size_t)(q - p) : strlen(p);
+      const char *dir = len > 0 ? p : ".";  // empty entry is the current directory
+      if (len == 0) len = 1;
+      size_t size = len + strlen(argv0) + 2;
+      char *path = jv_mem_alloc(size);
+      snprintf(path, size, "%.*s/%s", (int)len, dir, argv0);
+      struct stat st;
+      if (stat(path, &st) == 0 && S_ISREG(st.st_mode) &&
+          access(path, X_OK) == 0)
+        return path;
+      jv_mem_free(path);
+      if (q == NULL) break;
+      p = q + 1;
+    }
+  }
+#endif
+  return jv_mem_strdup(argv0);
 }
 
 static int isoptish(const char* text) {
@@ -584,13 +647,9 @@ int main(int argc, char* argv[]) {
   }
   jq_set_attr(jq, jv_string("JQ_LIBRARY_PATH"), lib_search_paths);
 
-  char *origin = strdup(argv[0]);
-  if (origin == NULL) {
-    fprintf(stderr, "jq: error: out of memory\n");
-    exit(1);
-  }
+  char *origin = get_executable_path(argv[0]);
   jq_set_attr(jq, jv_string("JQ_ORIGIN"), jv_string(dirname(origin)));
-  free(origin);
+  jv_mem_free(origin);
 
   if (strchr(JQ_VERSION, '-') == NULL)
     jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string(JQ_VERSION));
