@@ -335,6 +335,22 @@ static void set_error(jq_state *jq, jv value) {
   jq->error = value;
 }
 
+// Whether the error is raised by `break $label`, possibly wrapped by
+// TRY_END on the way back. GENLABEL creates the label as {"__jq": <number>}.
+static int is_break_error(jv error) {
+  jv msg = jv_invalid_get_msg(error);
+  while (jv_get_kind(msg) == JV_KIND_INVALID && jv_invalid_has_msg(jv_copy(msg)))
+    msg = jv_invalid_get_msg(msg);
+  if (jv_get_kind(msg) != JV_KIND_OBJECT || jv_object_length(jv_copy(msg)) != 1) {
+    jv_free(msg);
+    return 0;
+  }
+  jv label = jv_object_get(msg, jv_string("__jq"));
+  int ret = jv_get_kind(label) == JV_KIND_NUMBER;
+  jv_free(label);
+  return ret;
+}
+
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
 jv jq_next(jq_state *jq) {
@@ -880,15 +896,11 @@ jv jq_next(jq_state *jq) {
         jv_free(stack_pop(jq));
         goto do_backtrack;
       }
-      // `try EXP ...` exception caught in EXP
-      // DESTRUCTURE_ALT doesn't want the error message on the stack,
-      // as we would just want to throw it away anyway.
-      if (opcode != ON_BACKTRACK(DESTRUCTURE_ALT)) {
-        jv_free(stack_pop(jq)); // free the input
-        stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
-      } else {
-        jv_free(jq->error);
-      }
+      // Propagate break's control-flow error to its label.
+      if (is_break_error(jv_copy(jq->error)))
+        goto do_backtrack;
+
+      jv_free(jq->error);
       jq->error = jv_null();
       uint16_t offset = *pc++;
       pc += offset;
