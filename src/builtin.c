@@ -453,8 +453,8 @@ static jv f_dump(jq_state *jq, jv input) {
 
 static jv f_dump_indent(jq_state *jq, jv input, jv indent) {
   if (jv_get_kind(indent) != JV_KIND_NUMBER ||
-      !jv_is_integer(indent) ||
-      jv_number_value(indent) < -1 || jv_number_value(indent) > 7) {
+      jv_number_value(indent) < -1 || jv_number_value(indent) > 7 ||
+      jv_number_value(indent) != floor(jv_number_value(indent))) {
     jv_free(input);
     jv_free(indent);
     return jv_invalid_with_msg(jv_string("tojson() indentation must be an integer between -1 and 7"));
