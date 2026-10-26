@@ -870,7 +870,10 @@ static jv* jvp_array_write(jv* a, int i) {
   int pos = i + jvp_array_offset(*a);
   if (pos < array->alloc_length && jvp_refcnt_unshared(a->u.ptr)) {
     // use existing array space
-    for (int j = array->length; j <= pos; j++) {
+    int logical_end = jvp_array_offset(*a) + jvp_array_length(*a);
+    for (int j = logical_end; j <= pos; j++) {
+      if (j < array->length)
+        jv_free(array->elements[j]);
       array->elements[j] = JV_NULL;
     }
     array->length = imax(pos + 1, array->length);
