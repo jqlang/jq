@@ -185,6 +185,11 @@ def repeat(exp):
      _repeat;
 def inputs: try repeat(input) catch if .=="break" then empty else error end;
 
+def lpad(len;fill):
+  tostring | ($len - length) as $l | ($fill * $l)[:$l] + .;
+def rpad(len;fill):
+  tostring | ($len - length) as $l | . + ($fill * $l)[:$l];
+
 # Streaming utilities
 def truncate_stream(stream):
   . as $n | null | stream | . as $input | if (.[0]|length) > $n then setpath([0];$input[0][$n:]) else empty end;
