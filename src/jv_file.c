@@ -46,12 +46,10 @@ jv jv_load_file(const char* filename, int raw) {
   int at_file_start = 1;
   while (!feof(file) && !ferror(file)) {
     size_t n = fread(buf, 1, sizeof(buf) - 4, file);
-    if (n == 0)
-      continue;
 
     char *end = buf + n;
     int len = 0;
-    if (jvp_utf8_backtrack(end - 1, buf, &len) && len > 0 &&
+    if (n > 0 && jvp_utf8_backtrack(end - 1, buf, &len) && len > 0 &&
         !feof(file) && !ferror(file)) {
       n += fread(end, 1, len, file);
     }
