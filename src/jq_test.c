@@ -16,6 +16,7 @@ static void run_jq_recompile_tests(void);
 static void run_jq_exhaust_and_reuse_tests(void);
 #ifdef HAVE_PTHREAD
 static void run_jq_pthread_tests(void);
+static void run_jq_interrupt_tests(void);
 #endif
 
 int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
@@ -56,6 +57,7 @@ int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
   run_jq_exhaust_and_reuse_tests();
 #ifdef HAVE_PTHREAD
   run_jq_pthread_tests();
+  run_jq_interrupt_tests();
 #endif
   return 0;
 }
@@ -597,6 +599,41 @@ static void run_jq_pthread_tests(void) {
     for(a = 0; a < NUMBER_OF_THREADS; ++a) {
         assert(data[a].result == 0);
     }
+}
+
+static void *test_interrupt_run(void *ptr) {
+    jq_interrupt(ptr);
+    return NULL;
+}
+
+// until(.; .) never ends on false and outputs true at once.  An interrupt
+// from another thread halts the endless run with no output and no error, and
+// the next jq_start() runs clear of it.
+static void run_jq_interrupt_tests(void) {
+    printf("Test jq_interrupt from another thread\n");
+    jq_state *jq = jq_init();
+    assert(jq);
+    int compiled = jq_compile(jq, "until(.; .)");
+    assert(compiled);
+
+    jq_start(jq, jv_false(), 0);
+    pthread_t thread;
+    int createerror = pthread_create(&thread, NULL, test_interrupt_run, jq);
+    assert(createerror == 0);
+    jv result = jq_next(jq);
+    assert(!jv_is_valid(result));
+    assert(!jv_invalid_has_msg(jv_copy(result)));
+    assert(jq_halted(jq));
+    jv_free(result);
+    pthread_join(thread, NULL);
+
+    jq_start(jq, jv_true(), 0);
+    assert(!jq_halted(jq));
+    result = jq_next(jq);
+    assert(jv_get_kind(result) == JV_KIND_TRUE);
+    jv_free(result);
+
+    jq_teardown(&jq);
 }
 #endif // HAVE_PTHREAD
 
