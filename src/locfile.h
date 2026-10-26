@@ -25,5 +25,6 @@ struct locfile* locfile_retain(struct locfile *);
 int locfile_get_line(struct locfile *, int);
 void locfile_free(struct locfile *);
 void locfile_locate(struct locfile *, location, const char *, ...);
+jv locfile_describe(struct locfile *, location);
 
 #endif

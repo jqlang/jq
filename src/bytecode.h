@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "jq.h"
+#include "locfile.h"
 
 typedef enum {
 #define OP(name, imm, in, out) name,
@@ -69,6 +70,15 @@ struct symbol_table {
 
 #define ARG_NEWCLOSURE 0x1000
 
+// Source location of the instructions from `pc` up to the next entry.
+// `locfile` is NULL for instructions with no location in user code:
+// generated code and jq's own builtins.
+struct bytecode_location {
+  int pc;
+  location source;
+  struct locfile* locfile;
+};
+
 struct bytecode {
   uint16_t* code;
   int codelen;
@@ -85,6 +95,10 @@ struct bytecode {
   struct bytecode* parent;
 
   jv debuginfo;
+
+  // Sorted by pc.  Empty if no instruction comes from user code.
+  struct bytecode_location* locations;
+  int nlocations;
 };
 
 void dump_disassembly(int, struct bytecode* code);
@@ -92,5 +106,6 @@ void dump_operation(struct bytecode* bc, uint16_t* op);
 
 int bytecode_operation_length(uint16_t* codeptr);
 void bytecode_free(struct bytecode* bc);
+const struct bytecode_location* bytecode_find_location(struct bytecode* bc, uint16_t* pc);
 
 #endif
