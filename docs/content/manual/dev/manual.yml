@@ -2136,6 +2136,13 @@ sections:
           builtin differs from `tostring` in that `tostring` returns strings
           unmodified, while `tojson` encodes strings as JSON strings.
 
+          `tojson(indent)` pretty-prints using an integer indentation width
+          from 0 through 7, or -1 for tabs, matching `--indent`. Zero preserves
+          line breaks without indentation spaces. The result has no trailing
+          newline. Other arguments are errors. Without an argument, `tojson`
+          continues to produce compact JSON. Output options such as `--ascii-output`
+          and `--sort-keys` do not change the JSON encoded inside the string.
+
         examples:
           - program: '[.[]|tostring]'
             input: '[1, "foo", ["foo"]]'
@@ -2146,6 +2153,9 @@ sections:
           - program: '[.[]|tojson|fromjson]'
             input: '[1, "foo", ["foo"]]'
             output: ['[1,"foo",["foo"]]']
+          - program: 'tojson(2)'
+            input: '{"a": [1, 2]}'
+            output: ['"{\n  \"a\": [\n    1,\n    2\n  ]\n}"']
 
       - title: "Format strings and escaping"
         body: |
