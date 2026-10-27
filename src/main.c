@@ -305,6 +305,7 @@ int main(int argc, char* argv[]) {
   int parser_flags = 0;
   int nfiles = 0;
   FILE *ofile = stdout;
+  char *ofile_name = NULL;
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
   int options = 0;
@@ -421,16 +422,7 @@ int main(int argc, char* argv[]) {
             fprintf(stderr, "jq: --output-file takes one parameter (e.g. --output-file filename)\n");
             die();
           }
-          if (ofile != stdout)
-            fclose(ofile);
-          ofile = fopen(argv[i+1], "w");
-          if (!ofile) {
-            fprintf(stderr, "jq: Could not open --output-file %s: %s\n", argv[i+1], strerror(errno));
-            die();
-          }
-#ifdef WIN32
-          _setmode(fileno(ofile), options & BINARY_OUTPUT ? _O_BINARY : _O_TEXT | _O_U8TEXT);
-#endif
+          ofile_name = argv[i+1];
           i++;
         } else if (isoption(&text, 'L', "library-path", is_short)) {
           if (jv_get_kind(lib_search_paths) == JV_KIND_NULL)
@@ -448,10 +440,6 @@ int main(int argc, char* argv[]) {
         } else if (isoption(&text, 'b', "binary", is_short)) {
 #ifdef WIN32
           options |= BINARY_OUTPUT;
-          if (ofile != stdout) {
-            fflush(ofile);
-            _setmode(fileno(ofile), _O_BINARY);
-          }
           fflush(stdout);
           fflush(stderr);
           _setmode(fileno(stdin), _O_BINARY);
@@ -570,7 +558,7 @@ int main(int argc, char* argv[]) {
   }
 
 #ifdef USE_ISATTY
-  if (ofile == stdout && isatty(STDOUT_FILENO)) {
+  if (ofile_name && isatty(STDOUT_FILENO)) {
 #ifndef WIN32
     dumpopts |= JV_PRINT_ISATTY;
     char *term = getenv("TERM");
@@ -626,11 +614,22 @@ int main(int argc, char* argv[]) {
     jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string_fmt("%.*s-master", (int)(strchr(JQ_VERSION, '-') - JQ_VERSION), JQ_VERSION));
 
 #ifdef USE_ISATTY
-  if (!program && !(options & FROM_FILE) && (ofile != stdout || !isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
+  if (!program && !(options & FROM_FILE) && (ofile_name || !isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
     program = ".";
 #endif
 
   if (!program) usage(2, 1);
+
+  if (ofile_name) {
+    ofile = fopen(ofile_name, "w");
+    if (!ofile) {
+      fprintf(stderr, "jq: Could not open --output-file %s: %s\n", ofile_name, strerror(errno));
+      die();
+    }
+#ifdef WIN32
+    _setmode(fileno(ofile), options & BINARY_OUTPUT ? _O_BINARY : _O_TEXT | _O_U8TEXT);
+#endif
+  }
 
   if (options & FROM_FILE) {
     char *program_origin = strdup(program);
