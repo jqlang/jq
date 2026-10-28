@@ -1,13 +1,16 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <libgen.h>
+#include <signal.h>
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
 #endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #ifdef WIN32
@@ -92,6 +95,7 @@ static void usage(int code, int keep_it_short) {
       "                            an array;\n"
       "      --seq                 parse input/output as application/json-seq;\n"
       "  -f, --from-file           load the filter from a file;\n"
+      "  -o, --output-file file    output to file instead of stdout;\n"
       "  -L, --library-path dir    search modules from the directory;\n"
       "      --arg name value      set $name to the string value;\n"
       "      --argjson name value  set $name to the JSON value;\n"
@@ -143,22 +147,24 @@ static int isoption(const char** text, char shortopt, const char* longopt, int i
 }
 
 enum {
-  SLURP                 = 1,
-  RAW_INPUT             = 2,
-  PROVIDE_NULL          = 4,
-  RAW_OUTPUT            = 8,
-  RAW_OUTPUT0           = 16,
-  ASCII_OUTPUT          = 32,
-  COLOR_OUTPUT          = 64,
-  NO_COLOR_OUTPUT       = 128,
-  SORTED_OUTPUT         = 256,
-  FROM_FILE             = 512,
-  RAW_NO_LF             = 1024,
-  UNBUFFERED_OUTPUT     = 2048,
-  EXIT_STATUS           = 4096,
-  SEQ                   = 16384,
-  /* debugging only */
-  DUMP_DISASM           = 32768,
+  SLURP                 = 1 << 0,
+  RAW_INPUT             = 1 << 1,
+  PROVIDE_NULL          = 1 << 2,
+  RAW_OUTPUT            = 1 << 3,
+  RAW_OUTPUT0           = 1 << 4,
+  ASCII_OUTPUT          = 1 << 5,
+  COLOR_OUTPUT          = 1 << 6,
+  NO_COLOR_OUTPUT       = 1 << 7,
+  SORTED_OUTPUT         = 1 << 8,
+  FROM_FILE             = 1 << 9,
+  RAW_NO_LF             = 1 << 10,
+  UNBUFFERED_OUTPUT     = 1 << 11,
+  EXIT_STATUS           = 1 << 12,
+  SEQ                   = 1 << 13,
+  DUMP_DISASM           = 1 << 14, /* debugging only */
+#ifdef WIN32
+  BINARY_OUTPUT         = 1 << 15,
+#endif
 };
 
 enum {
@@ -172,14 +178,14 @@ enum {
 #define jq_exit_with_status(r)  exit(abs(r))
 #define jq_exit(r)              exit( r > 0 ? r : 0 )
 
-static int process(jq_state *jq, jv value, int flags, int dumpopts, int options) {
+static int process(jq_state *jq, jv value, FILE *ofile, int flags, int dumpopts, int options) {
   int ret = JQ_OK_NO_OUTPUT; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
   jv result;
   while (jv_is_valid(result = jq_next(jq))) {
     if ((options & RAW_OUTPUT) && jv_get_kind(result) == JV_KIND_STRING) {
       if (options & ASCII_OUTPUT) {
-        jv_dumpf(jv_copy(result), stdout, JV_PRINT_ASCII);
+        jv_dumpf(jv_copy(result), ofile, JV_PRINT_ASCII);
       } else if ((options & RAW_OUTPUT0) && strlen(jv_string_value(result)) != (unsigned long)jv_string_length_bytes(jv_copy(result))) {
         jv_free(result);
         result = jv_invalid_with_msg(jv_string(
@@ -187,7 +193,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
         break;
       } else {
         priv_fwrite(jv_string_value(result), jv_string_length_bytes(jv_copy(result)),
-            stdout, dumpopts & JV_PRINT_ISATTY);
+            ofile, dumpopts & JV_PRINT_ISATTY);
       }
       ret = JQ_OK;
       jv_free(result);
@@ -197,15 +203,15 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
       else
         ret = JQ_OK;
       if (options & SEQ)
-        priv_fwrite("\036", 1, stdout, dumpopts & JV_PRINT_ISATTY);
-      jv_dump(result, dumpopts);
+        priv_fwrite("\036", 1, ofile, dumpopts & JV_PRINT_ISATTY);
+      jv_dumpf(result, ofile, dumpopts);
     }
     if (!(options & RAW_NO_LF))
-      priv_fwrite("\n", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+      priv_fwrite("\n", 1, ofile, dumpopts & JV_PRINT_ISATTY);
     if (options & RAW_OUTPUT0)
-      priv_fwrite("\0", 1, stdout, dumpopts & JV_PRINT_ISATTY);
+      priv_fwrite("\0", 1, ofile, dumpopts & JV_PRINT_ISATTY);
     if (options & UNBUFFERED_OUTPUT)
-      fflush(stdout);
+      fflush(ofile);
   }
   if (jq_halted(jq)) {
     // jq program invoked `halt` or `halt_error`
@@ -273,6 +279,84 @@ static void stderr_cb(void *data, jv input) {
   jv_free(input);
 }
 
+static char * volatile ofile_tmp_to_clean = NULL;
+
+static void cleanup_tmp(void) {
+  if (ofile_tmp_to_clean) {
+    unlink(ofile_tmp_to_clean);
+    ofile_tmp_to_clean = NULL;
+  }
+}
+
+static void cleanup_tmp_signal(int sig) {
+  if (ofile_tmp_to_clean)
+    unlink(ofile_tmp_to_clean);
+  signal(sig, SIG_DFL);
+  raise(sig);
+}
+
+/*
+ * Create a temp file suitable for rename-into-place over dest.
+ * Tries a predictable name first (.jq-<basename>.tmp), falling back
+ * to mkstemp(.jq-XXXXXX) if the predictable name already exists.
+ * Returns fd on success (and sets *tmp_path to a malloc'd string),
+ * or -1 on failure (with errno set, *tmp_path unchanged).
+ */
+static int open_temp_for_rename(const char *dest, char **tmp_path) {
+  char *dtmp = strdup(dest);
+  char *btmp = strdup(dest);
+  if (!dtmp || !btmp) {
+    free(dtmp);
+    free(btmp);
+    return -1;
+  }
+  const char *dir = dirname(dtmp);
+  const char *base = basename(btmp);
+  int pred_len = snprintf(NULL, 0, "%s/.jq-%s.tmp", dir, base) + 1;
+  int mks_len = snprintf(NULL, 0, "%s/.jq-XXXXXX", dir) + 1;
+  size_t len = pred_len > mks_len ? pred_len : mks_len;
+  char *tmp = malloc(len);
+  if (!tmp) {
+    free(dtmp);
+    free(btmp);
+    return -1;
+  }
+  snprintf(tmp, len, "%s/.jq-%s.tmp", dir, base);
+  int fd = open(tmp, O_CREAT | O_WRONLY | O_EXCL, 0666);
+  if (fd == -1 && errno == EEXIST) {
+    snprintf(tmp, len, "%s/.jq-XXXXXX", dir);
+    fd = mkstemp(tmp);
+  }
+  free(dtmp);
+  free(btmp);
+  if (fd == -1) {
+    int e = errno;
+    free(tmp);
+    errno = e;
+    return -1;
+  }
+  *tmp_path = tmp;
+  return fd;
+}
+
+static void install_cleanup_handlers(void) {
+  atexit(cleanup_tmp);
+#ifndef WIN32
+  static const int sigs[] = { SIGABRT, SIGHUP, SIGINT, SIGPIPE, SIGQUIT, SIGTERM };
+  struct sigaction sa, old;
+  for (size_t i = 0; i < sizeof(sigs)/sizeof(sigs[0]); i++) {
+    sigaction(sigs[i], NULL, &old);
+    if (old.sa_handler != SIG_IGN) {
+      memset(&sa, 0, sizeof(sa));
+      sa.sa_handler = cleanup_tmp_signal;
+      sigemptyset(&sa.sa_mask);
+      sa.sa_flags = 0;
+      sigaction(sigs[i], &sa, NULL);
+    }
+  }
+#endif
+}
+
 #ifdef WIN32
 int umain(int argc, char* argv[]);
 
@@ -299,6 +383,9 @@ int main(int argc, char* argv[]) {
   int compiled = 0;
   int parser_flags = 0;
   int nfiles = 0;
+  FILE *ofile = stdout;
+  char *ofile_name = NULL;
+  char *ofile_tmp = NULL;
   int last_result = -1; /* -1 = no result, 0=null or false, 1=true */
   int badwrite;
   int options = 0;
@@ -312,13 +399,6 @@ int main(int argc, char* argv[]) {
   // from stack-overflows
   // https://github.com/jqlang/jq/security/advisories/GHSA-f946-j5j2-4w5m
   onig_set_parse_depth_limit(1024);
-#endif
-
-#ifdef __OpenBSD__
-  if (pledge("stdio rpath", NULL) == -1) {
-    perror("pledge");
-    exit(JQ_ERROR_SYSTEM);
-  }
 #endif
 
 #ifdef WIN32
@@ -409,6 +489,14 @@ int main(int argc, char* argv[]) {
           options |= PROVIDE_NULL;
         } else if (isoption(&text, 'f', "from-file", is_short)) {
           options |= FROM_FILE;
+        } else if (isoption(&text, 'o', "output-file", is_short)) {
+          options |= NO_COLOR_OUTPUT;
+          if (i >= argc - 1) {
+            fprintf(stderr, "jq: --output-file takes one parameter (e.g. --output-file filename)\n");
+            die();
+          }
+          ofile_name = argv[i+1];
+          i++;
         } else if (isoption(&text, 'L', "library-path", is_short)) {
           if (jv_get_kind(lib_search_paths) == JV_KIND_NULL)
             lib_search_paths = jv_array();
@@ -424,9 +512,10 @@ int main(int argc, char* argv[]) {
           }
         } else if (isoption(&text, 'b', "binary", is_short)) {
 #ifdef WIN32
+          options |= BINARY_OUTPUT;
           fflush(stdout);
           fflush(stderr);
-          _setmode(fileno(stdin),  _O_BINARY);
+          _setmode(fileno(stdin), _O_BINARY);
           _setmode(fileno(stdout), _O_BINARY);
           _setmode(fileno(stderr), _O_BINARY);
 #endif
@@ -541,8 +630,15 @@ int main(int argc, char* argv[]) {
     }
   }
 
+#ifdef __OpenBSD__
+  if (pledge(ofile_name ? "stdio rpath cpath" : "stdio rpath", NULL) == -1) {
+    perror("pledge");
+    exit(JQ_ERROR_SYSTEM);
+  }
+#endif
+
 #ifdef USE_ISATTY
-  if (isatty(STDOUT_FILENO)) {
+  if (!ofile_name && isatty(STDOUT_FILENO)) {
 #ifndef WIN32
     dumpopts |= JV_PRINT_ISATTY;
     char *term = getenv("TERM");
@@ -598,11 +694,31 @@ int main(int argc, char* argv[]) {
     jq_set_attr(jq, jv_string("VERSION_DIR"), jv_string_fmt("%.*s-master", (int)(strchr(JQ_VERSION, '-') - JQ_VERSION), JQ_VERSION));
 
 #ifdef USE_ISATTY
-  if (!program && !(options & FROM_FILE) && (!isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
+  if (!program && !(options & FROM_FILE) && (ofile_name || !isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)))
     program = ".";
 #endif
 
   if (!program) usage(2, 1);
+
+  if (ofile_name) {
+    int fd = open_temp_for_rename(ofile_name, &ofile_tmp);
+    if (fd == -1) {
+      fprintf(stderr, "jq: Could not create temp file for --output-file %s: %s\n", ofile_name, strerror(errno));
+      die();
+    }
+    ofile = fdopen(fd, "w");
+    if (!ofile) {
+      fprintf(stderr, "jq: Could not open --output-file %s: %s\n", ofile_name, strerror(errno));
+      close(fd);
+      unlink(ofile_tmp);
+      die();
+    }
+    ofile_tmp_to_clean = ofile_tmp;
+    install_cleanup_handlers();
+#ifdef WIN32
+    _setmode(fileno(ofile), options & BINARY_OUTPUT ? _O_BINARY : _O_TEXT | _O_U8TEXT);
+#endif
+  }
 
   if (options & FROM_FILE) {
     char *program_origin = strdup(program);
@@ -681,13 +797,13 @@ int main(int argc, char* argv[]) {
     jq_util_input_add_input(input_state, "-");
 
   if (options & PROVIDE_NULL) {
-    ret = process(jq, jv_null(), jq_flags, dumpopts, options);
+    ret = process(jq, jv_null(), ofile, jq_flags, dumpopts, options);
   } else {
     jv value;
     while (jq_util_input_errors(input_state) == 0 &&
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
-        ret = process(jq, value, jq_flags, dumpopts, options);
+        ret = process(jq, value, ofile, jq_flags, dumpopts, options);
         if (ret <= 0 && ret != JQ_OK_NO_OUTPUT)
           last_result = (ret != JQ_OK_NULL_KIND);
         if (jq_halted(jq))
@@ -713,15 +829,36 @@ int main(int argc, char* argv[]) {
     ret = JQ_ERROR_SYSTEM;
 
 out:
+  // Close input files before renaming output (needed on Windows where
+  // rename() fails if the destination is open).
+  jq_util_input_free(&input_state);
+
   badwrite = ferror(stdout);
-  if (fclose(stdout)!=0 || badwrite) {
-    fprintf(stderr,"jq: error: writing output failed: %s\n", strerror(errno));
+  if (fclose(stdout) != 0 || badwrite) {
+    fprintf(stderr, "jq: error: writing output failed: %s\n", strerror(errno));
     ret = JQ_ERROR_SYSTEM;
+  }
+  if (ofile_name) {
+    badwrite = ferror(ofile);
+    if (fclose(ofile) != 0 || badwrite) {
+      fprintf(stderr, "jq: error: writing output failed: %s\n", strerror(errno));
+      ret = JQ_ERROR_SYSTEM;
+    } else if (
+#ifdef WIN32
+        // Windows rename() won't replace an existing file
+        unlink(ofile_name) != 0 && errno != ENOENT ? 1 :
+#endif
+        rename(ofile_tmp, ofile_name) != 0) {
+      fprintf(stderr, "jq: error: could not rename %s to %s: %s\n", ofile_tmp, ofile_name, strerror(errno));
+      ret = JQ_ERROR_SYSTEM;
+    }
+    ofile_tmp_to_clean = NULL;
+    unlink(ofile_tmp);
+    free(ofile_tmp);
   }
 
   jv_free(ARGS);
   jv_free(program_arguments);
-  jq_util_input_free(&input_state);
   jq_teardown(&jq);
 
   if (options & EXIT_STATUS) {

@@ -172,6 +172,15 @@ Use the \fBapplication/json\-seq\fR MIME type scheme for separating JSON texts i
 Read the filter from a file rather than from a command line, like awk\'s \-f option\. This changes the filter argument to be interpreted as a filename, instead of the source of a program\.
 .
 .TP
+\fB\-o\fR / \fB\-\-output\-file filename\fR:
+.
+.IP
+Write output values to the named file instead of standard out\. The output is first written to a temporary file in the same directory, then renamed into place on success\. This makes it safe to use an input file as the output file (e\.g\., \fBjq \'\.x += 1\' f\.json \-o f\.json\fR)\.
+.
+.IP
+The outputs from \fB\-\-debug\-dump\-disasm\fR and \fB\-\-debug\-trace\fR are still written to standard out, so this option can be used to separate them\.
+.
+.TP
 \fB\-L directory\fR / \fB\-\-library\-path directory\fR:
 .
 .IP
