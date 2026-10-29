@@ -1569,20 +1569,23 @@ static int setenv(const char *var, const char *val, int ovr)
  * Our wrapper tries to use timegm() if available, or mktime() and
  * correct for its side-effects if possible.
  *
- * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
+ * Returns (time_t)-1 on failure, which is also the valid result for
+ * 1969-12-31T23:59:59Z. Tell them apart by tm_wday, which is set to -1 here
+ * and overwritten by the conversion only on success.
  */
 static time_t my_mktime(struct tm *tm) {
+  tm->tm_wday = -1;
 #ifdef HAVE_TIMEGM
   return timegm(tm);
 #elif HAVE_TM_TM_GMT_OFF
 
   time_t t = mktime(tm);
-  if (t == (time_t)-1)
+  if (t == (time_t)-1 && tm->tm_wday == -1)
     return t;
   return t + tm->tm_gmtoff;
 #elif HAVE_TM___TM_GMT_OFF
   time_t t = mktime(tm);
-  if (t == (time_t)-1)
+  if (t == (time_t)-1 && tm->tm_wday == -1)
     return t;
   return t + tm->__tm_gmtoff;
 #elif WIN32
@@ -1790,10 +1793,8 @@ static jv f_mktime(jq_state *jq, jv a) {
   if (!jv2tm(a, &tm, 0))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
   time_t t = my_mktime(&tm);
-  if (t == (time_t)-1)
+  if (t == (time_t)-1 && tm.tm_wday == -1)
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
-  if (t == (time_t)-2)
-    return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
   return jv_number(t);
 }
 
