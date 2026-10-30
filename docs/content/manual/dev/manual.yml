@@ -2648,12 +2648,15 @@ sections:
     body: |
 
       jq uses the
-      [Oniguruma regular expression library](https://github.com/kkos/oniguruma/blob/master/doc/RE),
-      as do PHP, TextMate, Sublime Text, etc, so the
-      description here will focus on jq specifics.
+      [PCRE2 library](https://pcre2project.github.io/pcre2/) (Perl-Compatible Regular Expressions),
+      so REGEX uses PCRE2 syntax. The description here focuses on jq specifics.
 
-      Oniguruma supports several flavors of regular expression, so it is important to know
-      that jq uses the ["Perl NG" (Perl with named groups)](https://github.com/kkos/oniguruma/blob/master/doc/SYNTAX.md) flavor.
+      When migrating from jq 1.8, patterns that use Oniguruma-specific syntax
+      may need to be rewritten. The `l` (longest match) flag is no longer
+      supported. An empty pattern now matches at UTF-8 codepoint boundaries,
+      rather than at every byte: `["🚀" | match(""; "g")] | length` returns `2`.
+      The rocket character occupies four UTF-8 bytes but is one codepoint.
+      An empty pattern matches once before it and once after it, producing two matches.
 
       The jq regex filters are defined so that they can be used using
       one of these patterns:
@@ -2673,20 +2676,24 @@ sections:
       to form a regular expression must be escaped. For example, the regular expression
       `\s` signifying a whitespace character would be written as `"\\s"`.
 
-      FLAGS is a string consisting of one of more of the supported flags:
+      FLAGS is a string consisting of one or more of the supported flags:
 
       * `g` - Global search (find all matches, not just the first)
       * `i` - Case insensitive search
       * `m` - Multi line mode (`.` will match newlines)
       * `n` - Ignore empty matches
-      * `p` - Both s and m modes are enabled
-      * `s` - Single line mode (`^` -> `\A`, `$` -> `\Z`)
-      * `l` - Find longest possible matches
+      * `p` - Both `s` and `m` modes are enabled
+      * `s` - Single line mode (`^` -> `\A`, `$` -> `\Z`), already the default
       * `x` - Extended regex format (ignore whitespace and comments)
 
       To match a whitespace with the `x` flag, use `\s`, e.g.
 
           jq -n '"a b" | test("a\\sb"; "x")'
+
+      The jq flags above are distinct from PCRE2's inline options: `"m"`
+      makes `.` match newlines, like `(?s)` within REGEX. The inline option
+      `(?m)` instead makes `^` and `$` match at line boundaries. The `"s"`
+      flag does not restrict unanchored matches to the first line.
 
       Note that certain flags may also be specified within REGEX, e.g.
 
@@ -2704,6 +2711,12 @@ sections:
         examples:
           - program: 'test("foo")'
             input: '"foo"'
+            output: ['true']
+          - program: 'test("a.b"; "m")'
+            input: '"a\nb"'
+            output: ['true']
+          - program: 'test("b"; "s")'
+            input: '"a\nb"'
             output: ['true']
           - program: '.[] | test("a b c # spaces are ignored"; "ix")'
             input: '["xabcd", "ABC"]'

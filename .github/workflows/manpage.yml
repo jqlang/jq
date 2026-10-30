@@ -1,4 +1,4 @@
-name: Building man page, man.test, manonig.test
+name: Building man page, man.test, manpcre2.test
 on:
   push:
     branches:
@@ -7,14 +7,14 @@ on:
       - '.github/workflows/manpage.yml'
       - 'docs/**'
       - 'tests/man.test'
-      - 'tests/manonig.test'
+      - 'tests/manpcre2.test'
       - 'jq.1.prebuilt'
   pull_request:
     paths:
       - '.github/workflows/manpage.yml'
       - 'docs/**'
       - 'tests/man.test'
-      - 'tests/manonig.test'
+      - 'tests/manpcre2.test'
       - 'jq.1.prebuilt'
 
 jobs:
@@ -40,10 +40,10 @@ jobs:
         run: |
           autoreconf -i
           ./configure --enable-docs
-      - name: Build man page, man.test, manonig.test
+      - name: Build man page, man.test, manpcre2.test
         run: |
-          rm -f jq.1.prebuilt tests/man.test tests/manonig.test
-          make jq.1.prebuilt tests/man.test tests/manonig.test
-      - name: Make sure that jq.1.prebuilt, man.test, manonig.test are up to date
+          rm -f jq.1.prebuilt tests/man.test tests/manpcre2.test
+          make jq.1.prebuilt tests/man.test tests/manpcre2.test
+      - name: Make sure that jq.1.prebuilt, man.test, manpcre2.test are up to date
         run: |
-          git diff --exit-code jq.1.prebuilt tests/man.test tests/manonig.test
+          git diff --exit-code jq.1.prebuilt tests/man.test tests/manpcre2.test

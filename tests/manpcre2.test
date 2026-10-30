@@ -10,6 +10,14 @@ test("foo")
 "foo"
 true
 
+test("a.b"; "m")
+"a\nb"
+true
+
+test("b"; "s")
+"a\nb"
+true
+
 .[] | test("a b c # spaces are ignored"; "ix")
 ["xabcd", "ABC"]
 true

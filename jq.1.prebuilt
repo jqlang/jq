@@ -2896,12 +2896,11 @@ jq \'[\.[] | tonumber?]\'
 .IP "" 0
 .
 .SH "REGULAR EXPRESSIONS"
-jq uses the Oniguruma regular expression library, as do PHP, TextMate, Sublime Text, etc, so the description here will focus on jq specifics\.
+jq uses the PCRE2 library (Perl\-Compatible Regular Expressions), so REGEX uses PCRE2 syntax\. The description here focuses on jq specifics\.
 
 .
 .P
-Oniguruma supports several flavors of regular expression, so it is important to know that jq uses the "Perl NG" (Perl with named groups) flavor\.
-
+When migrating from jq 1\.8, patterns that use Oniguruma\-specific syntax may need to be rewritten\. The \fBl\fR (longest match) flag is no longer supported\. An empty pattern now matches at UTF\-8 codepoint boundaries, rather than at every byte: \fB["🚀" | match(""; "g")] | length\fR returns \fB2\fR\. The rocket character occupies four UTF\-8 bytes but is one codepoint\. An empty pattern matches once before it and once after it, producing two matches\.
 .
 .P
 The jq regex filters are defined so that they can be used using one of these patterns:
@@ -2937,7 +2936,7 @@ FILTER is one of \fBtest\fR, \fBmatch\fR, or \fBcapture\fR, as described below\.
 Since REGEX must evaluate to a JSON string, some characters that are needed to form a regular expression must be escaped\. For example, the regular expression \fB\es\fR signifying a whitespace character would be written as \fB"\e\es"\fR\.
 .
 .P
-FLAGS is a string consisting of one of more of the supported flags:
+FLAGS is a string consisting of one or more of the supported flags:
 .
 .IP "\(bu" 4
 \fBg\fR \- Global search (find all matches, not just the first)
@@ -2952,13 +2951,10 @@ FLAGS is a string consisting of one of more of the supported flags:
 \fBn\fR \- Ignore empty matches
 .
 .IP "\(bu" 4
-\fBp\fR \- Both s and m modes are enabled
+\fBp\fR \- Both \fBs\fR and \fBm\fR modes are enabled
 .
 .IP "\(bu" 4
-\fBs\fR \- Single line mode (\fB^\fR \-> \fB\eA\fR, \fB$\fR \-> \fB\eZ\fR)
-.
-.IP "\(bu" 4
-\fBl\fR \- Find longest possible matches
+\fBs\fR \- Single line mode (\fB^\fR \-> \fB\eA\fR, \fB$\fR \-> \fB\eZ\fR), already the default
 .
 .IP "\(bu" 4
 \fBx\fR \- Extended regex format (ignore whitespace and comments)
@@ -2977,6 +2973,9 @@ jq \-n \'"a b" | test("a\e\esb"; "x")\'
 .fi
 .
 .IP "" 0
+.
+.P
+The jq flags above are distinct from PCRE2\'s inline options: \fB"m"\fR makes \fB\.\fR match newlines, like \fB(?s)\fR within REGEX\. The inline option \fB(?m)\fR instead makes \fB^\fR and \fB$\fR match at line boundaries\. The \fB"s"\fR flag does not restrict unanchored matches to the first line\.
 .
 .P
 Note that certain flags may also be specified within REGEX, e\.g\.
@@ -3003,6 +3002,14 @@ Like \fBmatch\fR, but does not return match objects, only \fBtrue\fR or \fBfalse
 
 jq \'test("foo")\'
    "foo"
+=> true
+
+jq \'test("a\.b"; "m")\'
+   "a\enb"
+=> true
+
+jq \'test("b"; "s")\'
+   "a\enb"
 => true
 
 jq \'\.[] | test("a b c # spaces are ignored"; "ix")\'
