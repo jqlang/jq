@@ -997,6 +997,24 @@ printf '[\n      {\n            "a": 1\n      }\n]\n' > $d/expected
 $JQ --indent 6 -n "[{a:1}]" > $d/out
 cmp $d/out $d/expected
 
+# Indentation deeper than the chunks put_indent() writes at once
+{
+  for i in 0 1 2 3 4 5; do printf '%*s[\n' $((i * 7)) ''; done
+  printf '%*s1\n' 42 ''
+  for i in 5 4 3 2 1 0; do printf '%*s]\n' $((i * 7)) ''; done
+} > $d/expected
+$JQ --indent 7 -n "[[[[[[1]]]]]]" > $d/out
+cmp $d/out $d/expected
+
+tabs() { i=0; while [ $i -lt $1 ]; do printf '\t'; i=$((i + 1)); done; }
+{
+  for n in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17; do tabs $n; printf '[\n'; done
+  tabs 18; printf '1\n'
+  for n in 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0; do tabs $n; printf ']\n'; done
+} > $d/expected
+$JQ --tab -n "[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]" > $d/out
+cmp $d/out $d/expected
+
 if ! $msys && ! $mingw; then
   # Test handling of timezones -- #2429, #2475
   if ! r=$(TZ=Asia/Tokyo $JQ -rn '1731627341 | strflocaltime("%F %T %z %Z")') \
