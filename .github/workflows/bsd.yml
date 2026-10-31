@@ -59,11 +59,9 @@ jobs:
           usesh: true
           cache-after-prepare: true
           prepare: |
-            # The image's default PKG_PATH falls back to a 9.0 package set;
-            # point it at the running release instead.
-            PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/$(uname -m)/$(uname -r)/All/"
-            export PKG_PATH
-            pkg_add autoconf automake libtool gmake git
+            # -uu also updates installed dependencies that are too old, such
+            # as the image's pcre2 when git needs a newer build.
+            pkg_add -uu autoconf automake libtool gmake git
           run: |
             set -e
             # The VM runs as root over a checkout owned by another uid, so git
