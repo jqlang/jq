@@ -832,7 +832,13 @@ static block bind_alternation_matchers(block matchers, block body) {
 
 block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
-  block loop = BLOCK(source,
+  // Keep the input in a variable rather than in a stack slot saved by the
+  // FORK, so that it is not referenced while `body` updates the accumulator,
+  // and leave the slot below `init` intact for `init` to backtrack (#3227).
+  block input_var = gen_op_var_fresh(STOREV, "reduce_input");
+  block loop = BLOCK(gen_op_bound(LOADVN, input_var),
+                     gen_op_simple(DUP),
+                     source,
                      bind_alternation_matchers(matcher,
                                   BLOCK(gen_op_bound(LOADVN, res_var),
                                         body,
@@ -842,9 +848,9 @@ block gen_reduce(block source, block matcher, block init, block body) {
                init,
                res_var,
                gen_op_simple(DUP),
+               input_var,
                gen_op_target(FORK, loop),
                loop,
-               gen_op_simple(POP),
                gen_op_bound(LOADVN, res_var));
 }
 
