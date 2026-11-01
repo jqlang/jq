@@ -2017,6 +2017,8 @@ jv jv_copy(jv j) {
  * deeply nested values.
  */
 void jv_free(jv j) {
+  if (!JVP_IS_ALLOCATED(j))
+    return;
   jv* pending = NULL;
   size_t len = 0, cap = 0;
   while (1) {
@@ -2070,7 +2072,8 @@ void jv_free(jv j) {
     if (len == 0) break;
     j = pending[--len];
   }
-  jv_mem_free(pending);
+  if (pending)
+    jv_mem_free(pending);
 }
 
 int jv_get_refcnt(jv j) {
