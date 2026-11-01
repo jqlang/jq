@@ -454,6 +454,19 @@ static jv f_dump(jq_state *jq, jv input) {
   return jv_dump_string(input, 0);
 }
 
+static jv f_dump_indent(jq_state *jq, jv input, jv indent) {
+  if (jv_get_kind(indent) != JV_KIND_NUMBER ||
+      jv_number_value(indent) < -1 || jv_number_value(indent) > 7 ||
+      jv_number_value(indent) != floor(jv_number_value(indent))) {
+    jv_free(input);
+    jv_free(indent);
+    return jv_invalid_with_msg(jv_string("tojson() indentation must be an integer between -1 and 7"));
+  }
+  int width = (int)jv_number_value(indent);
+  jv_free(indent);
+  return jv_dump_string(input, JV_PRINT_INDENT_FLAGS(width));
+}
+
 static jv f_json_parse(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_STRING)
     return type_error(input, "only strings can be parsed");
@@ -2042,6 +2055,7 @@ static const struct cfunction function_list[] = {
 BINOPS
 #undef BINOP
   CFUNC(f_dump, "tojson", 1),
+  CFUNC(f_dump_indent, "tojson", 2),
   CFUNC(f_json_parse, "fromjson", 1),
   CFUNC(f_tonumber, "tonumber", 1),
   CFUNC(f_toboolean, "toboolean", 1),

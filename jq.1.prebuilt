@@ -2362,6 +2362,9 @@ jq \'"The input was \e(\.), which is one less than \e(\.+1)"\'
 .SS "Convert to/from JSON"
 The \fBtojson\fR and \fBfromjson\fR builtins dump values as JSON texts or parse JSON texts into values, respectively\. The \fBtojson\fR builtin differs from \fBtostring\fR in that \fBtostring\fR returns strings unmodified, while \fBtojson\fR encodes strings as JSON strings\.
 .
+.P
+\fBtojson(indent)\fR pretty\-prints using an integer indentation width from 0 through 7, or \-1 for tabs, matching \fB\-\-indent\fR\. Zero preserves line breaks without indentation spaces\. The result has no trailing newline\. Other arguments are errors\. Without an argument, \fBtojson\fR continues to produce compact JSON\. Output options such as \fB\-\-ascii\-output\fR and \fB\-\-sort\-keys\fR do not change the JSON encoded inside the string\.
+.
 .IP "" 4
 .
 .nf
@@ -2377,6 +2380,10 @@ jq \'[\.[]|tojson]\'
 jq \'[\.[]|tojson|fromjson]\'
    [1, "foo", ["foo"]]
 => [1,"foo",["foo"]]
+
+jq \'tojson(2)\'
+   {"a": [1, 2]}
+=> "{\en  \e"a\e": [\en    1,\en    2\en  ]\en}"
 .
 .fi
 .

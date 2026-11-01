@@ -110,6 +110,31 @@ map(@base64d)
 ["foo", 1, ["a", 1, "b", 2, {"foo":"bar"}]]
 ["foo",1,["a",1,"b",2,{"foo":"bar"}]]
 
+# Pretty-printing tojson uses the same indentation widths as the CLI.
+tojson(2)
+{"a":[1,{"b":true}]}
+"{\n  \"a\": [\n    1,\n    {\n      \"b\": true\n    }\n  ]\n}"
+
+[tojson(0), tojson(-1), tojson]
+[1,2]
+["[\n1,\n2\n]","[\n\t1,\n\t2\n]","[1,2]"]
+
+[range(0;8) as $n | [1] | tojson($n) == ("[\n" + (" " * $n) + "1\n]")] | all
+null
+true
+
+[.[] as $value | range(-1;8) as $n | $value | (tojson($n) | fromjson) == $value] | all
+[null,true,42,"é\n\"\\😀",[],{},[1,{"x":[]}]]
+true
+
+[tojson(1,2)]
+[1]
+["[\n 1\n]","[\n  1\n]"]
+
+[null,true,"2",[],{},-2,8,1.5,1e-20,-1e-20,infinite,-infinite,nan | . as $n | try (null | tojson($n)) catch .] | all(. == "tojson() indentation must be an integer between -1 and 7")
+null
+true
+
 # Put escapes on both sides of runs of bytes that need no escaping
 map(tojson)
 ["abcdefg\"", "abcdefgh\\", "abcdefghi\u0001j", "abcdefghijklmno\u007f", "abcdefgh\té", "abcdefghijklmnop\n"]
