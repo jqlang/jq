@@ -89,6 +89,11 @@ capture("(?<a>[a-z]+)-(?<n>[0-9]+)")
 "xyzzy-14"
 {"a":"xyzzy","n":"14"}
 
+# duplicate group names retain matched strings, including empty strings
+"(?<x>^$)|(?<x>a)|(?<x>b)|c" as $re | map([capture($re), sub($re; "<\(.x)>"), gsub($re; "<\(.x)>")])
+["a","b","","c","ab"]
+[[{"x":"a"},"<a>","<a>"],[{"x":"b"},"<b>","<b>"],[{"x":""},"<>","<>"],[{"x":null},"<null>","<null>"],[{"x":"a"},"<a>b","<a><b>"]]
+
 
 # jq-coded utilities built on match:
 #

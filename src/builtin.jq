@@ -90,7 +90,7 @@ def test($val): ($val|type) as $vt | if $vt == "string" then test($val; null)
    elif $vt == "array" and ($val | length) > 1 then test($val[0]; $val[1])
    elif $vt == "array" and ($val | length) > 0 then test($val[0]; null)
    else error( $vt + " not a string or array") end;
-def capture(re; mods): match(re; mods) | reduce ( .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair ({}; . + $pair);
+def capture(re; mods): match(re; mods) | reduce ( .captures | .[] | select(.name != null) ) as {$name, $string} ({}; .[$name] = ($string // .[$name]));
 def capture($val): ($val|type) as $vt | if $vt == "string" then capture($val; null)
    elif $vt == "array" and ($val | length) > 1 then capture($val[0]; $val[1])
    elif $vt == "array" and ($val | length) > 0 then capture($val[0]; null)
@@ -120,8 +120,8 @@ def sub($re; s; $flags):
         ({result: [], previous: 0};
             $in[ .previous: ($edit | .offset) ] as $gap
             # create the "capture" objects (one per item in s)
-            | [reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
-                 ({}; . + $pair) | s ] as $inserts
+            | [reduce ( $edit | .captures | .[] | select(.name != null) ) as {$name, $string}
+                 ({}; .[$name] = ($string // .[$name])) | s ] as $inserts
             | reduce range(0; $inserts|length) as $ix (.; .result[$ix] += $gap + $inserts[$ix])
             | .previous = ($edit | .offset + .length ) )
           | .result[] + $in[.previous:] )
