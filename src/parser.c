@@ -2621,7 +2621,7 @@ yyreduce:
   case 17: /* Expr: Expr '=' Expr  */
 #line 351 "src/parser.y"
               {
-  (yyval.blk) = gen_call("_assign", BLOCK(gen_lambda((yyvsp[-2].blk)), gen_lambda((yyvsp[0].blk))));
+  (yyval.blk) = gen_location((yyloc), locations, gen_call("_assign", BLOCK(gen_lambda((yyvsp[-2].blk)), gen_lambda((yyvsp[0].blk)))));
 }
 #line 2627 "src/parser.c"
     break;
@@ -2645,7 +2645,7 @@ yyreduce:
   case 20: /* Expr: Expr "//=" Expr  */
 #line 360 "src/parser.y"
                 {
-  (yyval.blk) = gen_definedor_assign((yyvsp[-2].blk), (yyvsp[0].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_definedor_assign((yyvsp[-2].blk), (yyvsp[0].blk)));
 }
 #line 2651 "src/parser.c"
     break;
@@ -2653,7 +2653,7 @@ yyreduce:
   case 21: /* Expr: Expr "|=" Expr  */
 #line 363 "src/parser.y"
                {
-  (yyval.blk) = gen_call("_modify", BLOCK(gen_lambda((yyvsp[-2].blk)), gen_lambda((yyvsp[0].blk))));
+  (yyval.blk) = gen_location((yyloc), locations, gen_call("_modify", BLOCK(gen_lambda((yyvsp[-2].blk)), gen_lambda((yyvsp[0].blk)))));
 }
 #line 2659 "src/parser.c"
     break;
@@ -2661,7 +2661,7 @@ yyreduce:
   case 22: /* Expr: Expr '+' Expr  */
 #line 366 "src/parser.y"
               {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '+');
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '+'));
 }
 #line 2667 "src/parser.c"
     break;
@@ -2669,7 +2669,7 @@ yyreduce:
   case 23: /* Expr: Expr "+=" Expr  */
 #line 369 "src/parser.y"
                {
-  (yyval.blk) = gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '+');
+  (yyval.blk) = gen_location((yyloc), locations, gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '+'));
 }
 #line 2675 "src/parser.c"
     break;
@@ -2677,7 +2677,7 @@ yyreduce:
   case 24: /* Expr: Expr '-' Expr  */
 #line 372 "src/parser.y"
               {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '-');
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '-'));
 }
 #line 2683 "src/parser.c"
     break;
@@ -2685,7 +2685,7 @@ yyreduce:
   case 25: /* Expr: Expr "-=" Expr  */
 #line 375 "src/parser.y"
                {
-  (yyval.blk) = gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '-');
+  (yyval.blk) = gen_location((yyloc), locations, gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '-'));
 }
 #line 2691 "src/parser.c"
     break;
@@ -2693,7 +2693,7 @@ yyreduce:
   case 26: /* Expr: Expr '*' Expr  */
 #line 378 "src/parser.y"
               {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '*');
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '*'));
 }
 #line 2699 "src/parser.c"
     break;
@@ -2701,7 +2701,7 @@ yyreduce:
   case 27: /* Expr: Expr "*=" Expr  */
 #line 381 "src/parser.y"
                {
-  (yyval.blk) = gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '*');
+  (yyval.blk) = gen_location((yyloc), locations, gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '*'));
 }
 #line 2707 "src/parser.c"
     break;
@@ -2709,7 +2709,7 @@ yyreduce:
   case 28: /* Expr: Expr '/' Expr  */
 #line 384 "src/parser.y"
               {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '/');
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '/'));
 }
 #line 2715 "src/parser.c"
     break;
@@ -2717,7 +2717,7 @@ yyreduce:
   case 29: /* Expr: Expr '%' Expr  */
 #line 387 "src/parser.y"
               {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '%');
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '%'));
 }
 #line 2723 "src/parser.c"
     break;
@@ -2725,7 +2725,7 @@ yyreduce:
   case 30: /* Expr: Expr "/=" Expr  */
 #line 390 "src/parser.y"
                {
-  (yyval.blk) = gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '/');
+  (yyval.blk) = gen_location((yyloc), locations, gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '/'));
 }
 #line 2731 "src/parser.c"
     break;
@@ -2733,7 +2733,7 @@ yyreduce:
   case 31: /* Expr: Expr "%=" Expr  */
 #line 393 "src/parser.y"
                  {
-  (yyval.blk) = gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '%');
+  (yyval.blk) = gen_location((yyloc), locations, gen_update((yyvsp[-2].blk), (yyvsp[0].blk), '%'));
 }
 #line 2739 "src/parser.c"
     break;
@@ -2741,7 +2741,7 @@ yyreduce:
   case 32: /* Expr: Expr "==" Expr  */
 #line 396 "src/parser.y"
                {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), EQ);
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), EQ));
 }
 #line 2747 "src/parser.c"
     break;
@@ -2749,7 +2749,7 @@ yyreduce:
   case 33: /* Expr: Expr "!=" Expr  */
 #line 399 "src/parser.y"
                {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), NEQ);
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), NEQ));
 }
 #line 2755 "src/parser.c"
     break;
@@ -2757,7 +2757,7 @@ yyreduce:
   case 34: /* Expr: Expr '<' Expr  */
 #line 402 "src/parser.y"
               {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '<');
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '<'));
 }
 #line 2763 "src/parser.c"
     break;
@@ -2765,7 +2765,7 @@ yyreduce:
   case 35: /* Expr: Expr '>' Expr  */
 #line 405 "src/parser.y"
               {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '>');
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), '>'));
 }
 #line 2771 "src/parser.c"
     break;
@@ -2773,7 +2773,7 @@ yyreduce:
   case 36: /* Expr: Expr "<=" Expr  */
 #line 408 "src/parser.y"
                {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), LESSEQ);
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), LESSEQ));
 }
 #line 2779 "src/parser.c"
     break;
@@ -2781,7 +2781,7 @@ yyreduce:
   case 37: /* Expr: Expr ">=" Expr  */
 #line 411 "src/parser.y"
                {
-  (yyval.blk) = gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), GREATEREQ);
+  (yyval.blk) = gen_location((yyloc), locations, gen_binop((yyvsp[-2].blk), (yyvsp[0].blk), GREATEREQ));
 }
 #line 2787 "src/parser.c"
     break;
@@ -3029,7 +3029,7 @@ yyreduce:
   case 64: /* Term: Term FIELD '?'  */
 #line 553 "src/parser.y"
                {
-  (yyval.blk) = gen_index_opt((yyvsp[-2].blk), gen_const((yyvsp[-1].literal)));
+  (yyval.blk) = gen_location((yylsp[-1]), locations, gen_index_opt((yyvsp[-2].blk), gen_const((yyvsp[-1].literal))));
 }
 #line 3035 "src/parser.c"
     break;
@@ -3037,7 +3037,7 @@ yyreduce:
   case 65: /* Term: FIELD '?'  */
 #line 556 "src/parser.y"
           {
-  (yyval.blk) = gen_index_opt(gen_noop(), gen_const((yyvsp[-1].literal)));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index_opt(gen_noop(), gen_const((yyvsp[-1].literal))));
 }
 #line 3043 "src/parser.c"
     break;
@@ -3045,7 +3045,7 @@ yyreduce:
   case 66: /* Term: Term '.' String '?'  */
 #line 559 "src/parser.y"
                     {
-  (yyval.blk) = gen_index_opt((yyvsp[-3].blk), (yyvsp[-1].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index_opt((yyvsp[-3].blk), (yyvsp[-1].blk)));
 }
 #line 3051 "src/parser.c"
     break;
@@ -3053,7 +3053,7 @@ yyreduce:
   case 67: /* Term: '.' String '?'  */
 #line 562 "src/parser.y"
                {
-  (yyval.blk) = gen_index_opt(gen_noop(), (yyvsp[-1].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index_opt(gen_noop(), (yyvsp[-1].blk)));
 }
 #line 3059 "src/parser.c"
     break;
@@ -3061,7 +3061,7 @@ yyreduce:
   case 68: /* Term: Term FIELD  */
 #line 565 "src/parser.y"
                         {
-  (yyval.blk) = gen_index((yyvsp[-1].blk), gen_const((yyvsp[0].literal)));
+  (yyval.blk) = gen_location((yylsp[0]), locations, gen_index((yyvsp[-1].blk), gen_const((yyvsp[0].literal))));
 }
 #line 3067 "src/parser.c"
     break;
@@ -3069,7 +3069,7 @@ yyreduce:
   case 69: /* Term: FIELD  */
 #line 568 "src/parser.y"
                    {
-  (yyval.blk) = gen_index(gen_noop(), gen_const((yyvsp[0].literal)));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index(gen_noop(), gen_const((yyvsp[0].literal))));
 }
 #line 3075 "src/parser.c"
     break;
@@ -3077,7 +3077,7 @@ yyreduce:
   case 70: /* Term: Term '.' String  */
 #line 571 "src/parser.y"
                              {
-  (yyval.blk) = gen_index((yyvsp[-2].blk), (yyvsp[0].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index((yyvsp[-2].blk), (yyvsp[0].blk)));
 }
 #line 3083 "src/parser.c"
     break;
@@ -3085,7 +3085,7 @@ yyreduce:
   case 71: /* Term: '.' String  */
 #line 574 "src/parser.y"
                         {
-  (yyval.blk) = gen_index(gen_noop(), (yyvsp[0].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index(gen_noop(), (yyvsp[0].blk)));
 }
 #line 3091 "src/parser.c"
     break;
@@ -3112,7 +3112,7 @@ yyreduce:
   case 74: /* Term: Term '[' Query ']' '?'  */
 #line 587 "src/parser.y"
                        {
-  (yyval.blk) = gen_index_opt((yyvsp[-4].blk), (yyvsp[-2].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index_opt((yyvsp[-4].blk), (yyvsp[-2].blk)));
 }
 #line 3118 "src/parser.c"
     break;
@@ -3120,7 +3120,7 @@ yyreduce:
   case 75: /* Term: Term '[' Query ']'  */
 #line 590 "src/parser.y"
                                 {
-  (yyval.blk) = gen_index((yyvsp[-3].blk), (yyvsp[-1].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index((yyvsp[-3].blk), (yyvsp[-1].blk)));
 }
 #line 3126 "src/parser.c"
     break;
@@ -3128,7 +3128,7 @@ yyreduce:
   case 76: /* Term: Term '.' '[' Query ']' '?'  */
 #line 593 "src/parser.y"
                            {
-  (yyval.blk) = gen_index_opt((yyvsp[-5].blk), (yyvsp[-2].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index_opt((yyvsp[-5].blk), (yyvsp[-2].blk)));
 }
 #line 3134 "src/parser.c"
     break;
@@ -3136,7 +3136,7 @@ yyreduce:
   case 77: /* Term: Term '.' '[' Query ']'  */
 #line 596 "src/parser.y"
                                     {
-  (yyval.blk) = gen_index((yyvsp[-4].blk), (yyvsp[-1].blk));
+  (yyval.blk) = gen_location((yyloc), locations, gen_index((yyvsp[-4].blk), (yyvsp[-1].blk)));
 }
 #line 3142 "src/parser.c"
     break;
@@ -3144,7 +3144,7 @@ yyreduce:
   case 78: /* Term: Term '[' ']' '?'  */
 #line 599 "src/parser.y"
                  {
-  (yyval.blk) = block_join((yyvsp[-3].blk), gen_op_simple(EACH_OPT));
+  (yyval.blk) = gen_location((yyloc), locations, block_join((yyvsp[-3].blk), gen_op_simple(EACH_OPT)));
 }
 #line 3150 "src/parser.c"
     break;
@@ -3152,7 +3152,7 @@ yyreduce:
   case 79: /* Term: Term '[' ']'  */
 #line 602 "src/parser.y"
                           {
-  (yyval.blk) = block_join((yyvsp[-2].blk), gen_op_simple(EACH));
+  (yyval.blk) = gen_location((yyloc), locations, block_join((yyvsp[-2].blk), gen_op_simple(EACH)));
 }
 #line 3158 "src/parser.c"
     break;
@@ -3160,7 +3160,7 @@ yyreduce:
   case 80: /* Term: Term '.' '[' ']' '?'  */
 #line 605 "src/parser.y"
                      {
-  (yyval.blk) = block_join((yyvsp[-4].blk), gen_op_simple(EACH_OPT));
+  (yyval.blk) = gen_location((yyloc), locations, block_join((yyvsp[-4].blk), gen_op_simple(EACH_OPT)));
 }
 #line 3166 "src/parser.c"
     break;
@@ -3168,7 +3168,7 @@ yyreduce:
   case 81: /* Term: Term '.' '[' ']'  */
 #line 608 "src/parser.y"
                               {
-  (yyval.blk) = block_join((yyvsp[-3].blk), gen_op_simple(EACH));
+  (yyval.blk) = gen_location((yyloc), locations, block_join((yyvsp[-3].blk), gen_op_simple(EACH)));
 }
 #line 3174 "src/parser.c"
     break;
@@ -3176,7 +3176,7 @@ yyreduce:
   case 82: /* Term: Term '[' Query ':' Query ']' '?'  */
 #line 611 "src/parser.y"
                                  {
-  (yyval.blk) = gen_slice_index((yyvsp[-6].blk), (yyvsp[-4].blk), (yyvsp[-2].blk), INDEX_OPT);
+  (yyval.blk) = gen_location((yyloc), locations, gen_slice_index((yyvsp[-6].blk), (yyvsp[-4].blk), (yyvsp[-2].blk), INDEX_OPT));
 }
 #line 3182 "src/parser.c"
     break;
@@ -3184,7 +3184,7 @@ yyreduce:
   case 83: /* Term: Term '[' Query ':' ']' '?'  */
 #line 614 "src/parser.y"
                            {
-  (yyval.blk) = gen_slice_index((yyvsp[-5].blk), (yyvsp[-3].blk), gen_const(jv_null()), INDEX_OPT);
+  (yyval.blk) = gen_location((yyloc), locations, gen_slice_index((yyvsp[-5].blk), (yyvsp[-3].blk), gen_const(jv_null()), INDEX_OPT));
 }
 #line 3190 "src/parser.c"
     break;
@@ -3192,7 +3192,7 @@ yyreduce:
   case 84: /* Term: Term '[' ':' Query ']' '?'  */
 #line 617 "src/parser.y"
                            {
-  (yyval.blk) = gen_slice_index((yyvsp[-5].blk), gen_const(jv_null()), (yyvsp[-2].blk), INDEX_OPT);
+  (yyval.blk) = gen_location((yyloc), locations, gen_slice_index((yyvsp[-5].blk), gen_const(jv_null()), (yyvsp[-2].blk), INDEX_OPT));
 }
 #line 3198 "src/parser.c"
     break;
@@ -3200,7 +3200,7 @@ yyreduce:
   case 85: /* Term: Term '[' Query ':' Query ']'  */
 #line 620 "src/parser.y"
                                           {
-  (yyval.blk) = gen_slice_index((yyvsp[-5].blk), (yyvsp[-3].blk), (yyvsp[-1].blk), INDEX);
+  (yyval.blk) = gen_location((yyloc), locations, gen_slice_index((yyvsp[-5].blk), (yyvsp[-3].blk), (yyvsp[-1].blk), INDEX));
 }
 #line 3206 "src/parser.c"
     break;
@@ -3208,7 +3208,7 @@ yyreduce:
   case 86: /* Term: Term '[' Query ':' ']'  */
 #line 623 "src/parser.y"
                                     {
-  (yyval.blk) = gen_slice_index((yyvsp[-4].blk), (yyvsp[-2].blk), gen_const(jv_null()), INDEX);
+  (yyval.blk) = gen_location((yyloc), locations, gen_slice_index((yyvsp[-4].blk), (yyvsp[-2].blk), gen_const(jv_null()), INDEX));
 }
 #line 3214 "src/parser.c"
     break;
@@ -3216,7 +3216,7 @@ yyreduce:
   case 87: /* Term: Term '[' ':' Query ']'  */
 #line 626 "src/parser.y"
                                     {
-  (yyval.blk) = gen_slice_index((yyvsp[-4].blk), gen_const(jv_null()), (yyvsp[-1].blk), INDEX);
+  (yyval.blk) = gen_location((yyloc), locations, gen_slice_index((yyvsp[-4].blk), gen_const(jv_null()), (yyvsp[-1].blk), INDEX));
 }
 #line 3222 "src/parser.c"
     break;
@@ -3248,7 +3248,7 @@ yyreduce:
   case 91: /* Term: FORMAT  */
 #line 638 "src/parser.y"
        {
-  (yyval.blk) = gen_format(gen_noop(), (yyvsp[0].literal));
+  (yyval.blk) = gen_location((yyloc), locations, gen_format(gen_noop(), (yyvsp[0].literal)));
 }
 #line 3254 "src/parser.c"
     break;
@@ -3256,7 +3256,7 @@ yyreduce:
   case 92: /* Term: '-' Term  */
 #line 641 "src/parser.y"
          {
-  (yyval.blk) = BLOCK((yyvsp[0].blk), gen_call("_negate", gen_noop()));
+  (yyval.blk) = gen_location((yyloc), locations, BLOCK((yyvsp[0].blk), gen_call("_negate", gen_noop())));
 }
 #line 3262 "src/parser.c"
     break;
@@ -3467,7 +3467,7 @@ yyreduce:
   case 117: /* RepPatterns: RepPatterns '?' "//" Pattern  */
 #line 748 "src/parser.y"
                              {
-  (yyval.blk) = BLOCK((yyvsp[-3].blk), gen_destructure_alt((yyvsp[0].blk)));
+  (yyval.blk) = BLOCK((yyvsp[-3].blk), gen_destructure_alt(gen_location((yylsp[0]), locations, (yyvsp[0].blk))));
 }
 #line 3473 "src/parser.c"
     break;
@@ -3475,15 +3475,15 @@ yyreduce:
   case 118: /* RepPatterns: Pattern  */
 #line 751 "src/parser.y"
         {
-  (yyval.blk) = gen_destructure_alt((yyvsp[0].blk));
+  (yyval.blk) = gen_destructure_alt(gen_location((yylsp[0]), locations, (yyvsp[0].blk)));
 }
 #line 3481 "src/parser.c"
     break;
 
   case 119: /* Patterns: RepPatterns '?' "//" Pattern  */
 #line 756 "src/parser.y"
-                              {
-  (yyval.blk) = BLOCK((yyvsp[-3].blk), (yyvsp[0].blk));
+                             {
+  (yyval.blk) = BLOCK((yyvsp[-3].blk), gen_location((yylsp[0]), locations, (yyvsp[0].blk)));
 }
 #line 3489 "src/parser.c"
     break;
@@ -3491,7 +3491,7 @@ yyreduce:
   case 120: /* Patterns: Pattern  */
 #line 759 "src/parser.y"
         {
-  (yyval.blk) = (yyvsp[0].blk);
+  (yyval.blk) = gen_location((yylsp[0]), locations, (yyvsp[0].blk));
 }
 #line 3497 "src/parser.c"
     break;
@@ -3770,7 +3770,7 @@ yyreduce:
   case 154: /* DictPairs: DictPair  */
 #line 881 "src/parser.y"
          {
-  (yyval.blk) = (yyvsp[0].blk);
+  (yyval.blk) = gen_location((yylsp[0]), locations, (yyvsp[0].blk));
 }
 #line 3776 "src/parser.c"
     break;
@@ -3778,7 +3778,7 @@ yyreduce:
   case 155: /* DictPairs: DictPair ',' DictPairs  */
 #line 884 "src/parser.y"
                        {
-  (yyval.blk) = block_join((yyvsp[-2].blk), (yyvsp[0].blk));
+  (yyval.blk) = block_join(gen_location((yylsp[-2]), locations, (yyvsp[-2].blk)), (yyvsp[0].blk));
 }
 #line 3784 "src/parser.c"
     break;

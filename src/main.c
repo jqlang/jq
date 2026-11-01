@@ -172,6 +172,48 @@ enum {
 #define jq_exit_with_status(r)  exit(abs(r))
 #define jq_exit(r)              exit( r > 0 ? r : 0 )
 
+// Longest part of a source line printed with a runtime error
+#define ERROR_CONTEXT_WIDTH 100
+
+// Prints where a runtime error was raised, in the same layout as
+// compile errors.  Long lines are cut down to the part around the
+// error, as they are printed again for every input that fails.
+static void print_error_location(jv loc) {
+  if (!jv_is_valid(loc)) {
+    jv_free(loc);
+    return;
+  }
+  jv file = jv_object_get(jv_copy(loc), jv_string("file"));
+  jv text = jv_object_get(jv_copy(loc), jv_string("text"));
+  int line = jv_number_value(jv_object_get(jv_copy(loc), jv_string("line")));
+  int column = jv_number_value(jv_object_get(jv_copy(loc), jv_string("column")));
+  int length = jv_number_value(jv_object_get(loc, jv_string("length")));
+  const char* s = jv_string_value(text);
+  int len = jv_string_length_bytes(jv_copy(text));
+  int offset = column - 1;
+  int start = 0, end = len;
+  if (len > ERROR_CONTEXT_WIDTH) {
+    start = MAX(0, MIN(offset - ERROR_CONTEXT_WIDTH / 2, len - ERROR_CONTEXT_WIDTH));
+    end = start + ERROR_CONTEXT_WIDTH;
+    // Don't cut UTF-8 sequences
+    while (start > 0 && (s[start] & 0xC0) == 0x80)
+      start--;
+    while (end < len && (s[end] & 0xC0) == 0x80)
+      end++;
+  }
+  const char* before = start > 0 ? "..." : "";
+  const char* after = end < len ? "..." : "";
+  fprintf(stderr, "    at %s, line %d, column %d:\n    %s%.*s%s\n    %*s",
+          jv_string_value(file), line, column,
+          before, end - start, s + start, after,
+          (int)strlen(before) + offset - start, "");
+  for (int i = 0; i < MIN(length, end - offset); i++)
+    fputc('^', stderr);
+  fputc('\n', stderr);
+  jv_free(file);
+  jv_free(text);
+}
+
 static int process(jq_state *jq, jv value, int flags, int dumpopts, int options) {
   int ret = JQ_OK_NO_OUTPUT; // No valid results && -e -> exit(4)
   jq_start(jq, value, flags);
@@ -247,6 +289,7 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
       fprintf(stderr, "jq: error (at %s) (not a string): %s\n",
               jv_string_value(input_pos), jv_string_value(msg));
     }
+    print_error_location(jq_get_error_location(jq));
     ret = JQ_ERROR_UNKNOWN;
     jv_free(input_pos);
     jv_free(msg);

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -157,5 +158,28 @@ void bytecode_free(struct bytecode* bc) {
     symbol_table_free(bc->globals);
   jv_mem_free(bc->subfunctions);
   jv_free(bc->debuginfo);
+  for (int i=0; i<bc->nlocations; i++) {
+    if (bc->locations[i].locfile)
+      locfile_free(bc->locations[i].locfile);
+  }
+  jv_mem_free(bc->locations);
   jv_mem_free(bc);
+}
+
+// Returns the user code location of the instruction at pc, or NULL.
+const struct bytecode_location* bytecode_find_location(struct bytecode* bc, uint16_t* pc) {
+  assert(pc >= bc->code && pc < bc->code + bc->codelen);
+  int target = pc - bc->code;
+  int lo = 0, hi = bc->nlocations;
+  // Find the last entry with entry.pc <= target
+  while (lo < hi) {
+    int mid = lo + (hi - lo) / 2;
+    if (bc->locations[mid].pc <= target)
+      lo = mid + 1;
+    else
+      hi = mid;
+  }
+  if (lo == 0 || !bc->locations[lo - 1].locfile)
+    return NULL;
+  return &bc->locations[lo - 1];
 }
