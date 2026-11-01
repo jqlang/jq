@@ -63,6 +63,7 @@ struct jv_parser {
     JV_PARSER_WAITING_FOR_RS // parse error, waiting for RS
   } st;
   unsigned int last_ch_was_ws:1;
+  unsigned int skipping_error:1; // skipping the rest of a reported error
 };
 
 
@@ -90,6 +91,7 @@ static void parser_init(struct jv_parser* p, int flags) {
   p->curr_buf = 0;
   p->curr_buf_length = p->curr_buf_pos = p->curr_buf_is_partial = 0;
   p->last_ch_was_ws = 0;
+  p->skipping_error = 0;
   p->line = 1;
   p->column = 0;
   jvp_dtoa_context_init(&p->dtoa);
@@ -773,8 +775,10 @@ jv jv_parser_next(struct jv_parser* p) {
       } else {
         p->column++;
       }
-      if (ch == '\036')
+      if (ch == '\036') {
         p->st = JV_PARSER_NORMAL;
+        p->skipping_error = 0;
+      }
       continue; // need to resync, wait for RS
     }
     msg = scan(p, ch, &value);
@@ -789,6 +793,7 @@ jv jv_parser_next(struct jv_parser* p) {
       // Skip to the next RS.  This must come after parser_reset(), which
       // sets the state back to JV_PARSER_NORMAL.
       p->st = JV_PARSER_WAITING_FOR_RS;
+      p->skipping_error = 1;
       return value;
     }
     value = make_error(p, "%s at line %d, column %d", msg, p->line, p->column);
@@ -809,8 +814,11 @@ jv jv_parser_next(struct jv_parser* p) {
     p->eof = 1;
     assert(p->curr_buf_pos == p->curr_buf_length);
     jv_free(value);
-    if (p->st == JV_PARSER_WAITING_FOR_RS)
+    if (p->st == JV_PARSER_WAITING_FOR_RS) {
+      if (p->skipping_error)
+        return jv_invalid();
       return make_error(p, "Unfinished abandoned text at EOF at line %d, column %d", p->line, p->column);
+    }
     if (p->st != JV_PARSER_NORMAL) {
       value = make_error(p, "Unfinished string at EOF at line %d, column %d", p->line, p->column);
       parser_reset(p);
