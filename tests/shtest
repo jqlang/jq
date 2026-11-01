@@ -70,6 +70,10 @@ $VALGRIND $Q $JQ -Rne '[inputs] == ["[{\"foo\": 1}", ",{\"foo\": 2}", "]", "[{\"
 $VALGRIND $Q $JQ -ne --slurpfile x $d/bom1.json '$x == [[{"foo":1},{"foo":2}]]'
 $VALGRIND $Q $JQ -ne --rawfile x $d/bom1.json '$x == "[{\"foo\": 1}\n,{\"foo\": 2}\n]\n"'
 
+## Test non-ASCII environment variables (Windows has them in UTF-16)
+JQ_ENV_TEST=$(printf '\303\251\346\227\245') \
+  $VALGRIND $Q $JQ -ne '$ENV.JQ_ENV_TEST == "é日" and env.JQ_ENV_TEST == "é日"'
+
 ## Test that --run-tests reports failures (#2765)
 cat > $d/passing.test <<'EOF'
 .

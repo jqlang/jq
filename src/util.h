@@ -16,6 +16,7 @@
 #include "jv.h"
 
 jv expand_path(jv);
+jv get_env(void);
 jv get_home(void);
 jv jq_realpath(jv);
 

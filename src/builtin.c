@@ -1294,24 +1294,9 @@ static jv f_error(jq_state *jq, jv input) {
   return jv_invalid_with_msg(input);
 }
 
-// FIXME Should autoconf check for this!
-#ifndef WIN32
-extern char **environ;
-#endif
-
 static jv f_env(jq_state *jq, jv input) {
   jv_free(input);
-  jv env = jv_object();
-  const char *var, *val;
-  for (char **e = environ; *e != NULL; e++) {
-    var = e[0];
-    val = strchr(e[0], '=');
-    if (val == NULL)
-      env = jv_object_set(env, jv_string(var), jv_null());
-    else if (val - var < INT_MAX)
-      env = jv_object_set(env, jv_string_sized(var, val - var), jv_string(val + 1));
-  }
-  return env;
+  return get_env();
 }
 
 static jv f_halt(jq_state *jq, jv input) {
