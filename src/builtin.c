@@ -106,6 +106,13 @@ jv binop_plus(jv a, jv b) {
   }
 }
 
+// drem is an obsolete alias of remainder, and is missing from the static
+// libm of some platforms (e.g. i386 glibc 2.43), so use remainder instead
+#ifdef HAVE_REMAINDER
+#define HAVE_DREM 1
+#define drem remainder
+#endif
+
 #ifdef __APPLE__
 // macOS has a bunch of libm deprecation warnings, so let's clean those up
 #ifdef HAVE_TGAMMA
@@ -115,10 +122,6 @@ jv binop_plus(jv a, jv b) {
 #ifdef HAVE___EXP10
 #define HAVE_EXP10
 #define exp10 __exp10
-#endif
-#ifdef HAVE_REMAINDER
-#define HAVE_DREM
-#define drem remainder
 #endif
 
 // We replace significand with our own, since there's not a rename-replacement
@@ -236,9 +239,9 @@ static jv f_ ## name(jq_state *jq, jv input) { \
 #undef LIBM_DD
 #undef LIBM_DA
 
+#undef drem
 #ifdef __APPLE__
 #undef gamma
-#undef drem
 #undef significand
 #undef exp10
 #endif
