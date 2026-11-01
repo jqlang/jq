@@ -127,10 +127,10 @@ jobs:
           - arm64
         include:
           - arch: amd64
-            target: x86_64-apple-darwin
+            target: x86_64-apple-macos14
           - arch: arm64
-            target: arm64-apple-darwin
-    runs-on: macos-14
+            target: arm64-apple-macos14
+    runs-on: macos-15
     env:
       LDFLAGS: -dead_strip
       SUFFIX: macos-${{ matrix.arch }}
@@ -146,12 +146,12 @@ jobs:
           brew install autoconf automake libtool
       - name: Set CC
         run: |
-          echo "CC=clang -target ${{ matrix.target }}$(uname -r)" >> "$GITHUB_ENV"
+          echo "CC=clang -target ${{ matrix.target }}" >> "$GITHUB_ENV"
       - name: Build
         run: |
           autoreconf -i
           ./configure \
-            --host="${{ matrix.target }}$(uname -r)" \
+            --host="${{ matrix.target }}" \
             --disable-docs \
             --with-oniguruma=builtin \
             --disable-shared \
