@@ -37,6 +37,8 @@ jobs:
             CC: aarch64-linux-gnu
           - arch: armel
             CC: arm-linux-gnueabi
+            # Ubuntu 26.04 has no crossbuild-essential-armel
+            packages: gcc-arm-linux-gnueabi libc6-dev-armel-cross
           - arch: armhf
             CC: arm-linux-gnueabihf
           - arch: i386
@@ -65,7 +67,8 @@ jobs:
             CC: riscv64-linux-gnu
           - arch: s390x
             CC: s390x-linux-gnu
-    runs-on: ${{ matrix.arch == 'i386' && 'ubuntu-22.04' || 'ubuntu-24.04' }}
+    # Ubuntu 26.04 no longer ships the MIPS cross toolchains.
+    runs-on: ${{ startsWith(matrix.arch, 'mips') && 'ubuntu-24.04' || 'ubuntu-26.04' }}
     env:
       AR: ${{ matrix.CC }}-ar
       CHOST: ${{ matrix.CC }}
@@ -81,7 +84,8 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y automake autoconf libtool crossbuild-essential-${{ matrix.arch }}
+          sudo apt-get install -y automake autoconf libtool \
+            ${{ matrix.packages || format('crossbuild-essential-{0}', matrix.arch) }}
       - name: Build
         run: |
           autoreconf -i
