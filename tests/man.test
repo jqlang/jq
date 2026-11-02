@@ -727,6 +727,10 @@ bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
 [1, "foo", ["foo"]]
 [1,"foo",["foo"]]
 
+tojson(2)
+{"a": [1, 2]}
+"{\n  \"a\": [\n    1,\n    2\n  ]\n}"
+
 @html
 "This works if x < y"
 "This works if x &lt; y"

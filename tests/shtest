@@ -1105,4 +1105,15 @@ if $JQ -nf "$d/nul_modulemeta.jq" >/dev/null 2>/dev/null; then
   exit 1
 fi
 
+# The inner JSON string follows the requested indentation, not CLI formatting.
+printf '%s\n' '{"z":["é",1],"a":true}' > "$d/tojson-input"
+for width in -1 0 1 2 3 4 5 6 7; do
+  $JQ --indent "$width" . "$d/tojson-input" > "$d/tojson-expected"
+  $JQ -r --argjson width "$width" 'tojson($width)' "$d/tojson-input" > "$d/tojson-actual"
+  cmp "$d/tojson-expected" "$d/tojson-actual"
+  $JQ -c --tab -S -a --argjson width "$width" 'tojson($width)' "$d/tojson-input" |
+    $JQ -r . > "$d/tojson-actual"
+  cmp "$d/tojson-expected" "$d/tojson-actual"
+done
+
 exit 0
