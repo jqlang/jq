@@ -208,7 +208,6 @@ enum {
 // the decimal precision of binary double
 #define DEC_NUMBER_DOUBLE_PRECISION   (17)
 #define DEC_NUMBER_STRING_GUARD       (14)
-#define DEC_NUMBER_DOUBLE_EXTRA_UNITS ((DEC_NUMBER_DOUBLE_PRECISION - DECNUMDIGITS + DECDPUN - 1)/DECDPUN)
 
 #include "jv_thread.h"
 #ifdef WIN32
@@ -533,11 +532,6 @@ typedef struct {
   decNumber num_decimal; // must be the last field in the structure for memory management
 } jvp_literal_number;
 
-typedef struct {
-  decNumber number;
-  decNumberUnit units[DEC_NUMBER_DOUBLE_EXTRA_UNITS];
-} decNumberDoublePrecision;
-
 
 static inline int jvp_number_is_literal(jv n) {
   assert(JVP_HAS_KIND(n, JV_KIND_NUMBER));
@@ -599,24 +593,20 @@ static jv jvp_literal_number_new(const char * literal) {
 
 static double jvp_literal_number_to_double(jv j) {
   assert(JVP_HAS_FLAGS(j, JVP_FLAGS_NUMBER_LITERAL));
-  decContext dblCtx;
-
-  // init as decimal64 but change digits to allow conversion to binary64 (double)
-  decContextDefault(&dblCtx, DEC_INIT_DECIMAL64);
-  dblCtx.digits = DEC_NUMBER_DOUBLE_PRECISION;
-
   decNumber *p_dec_number = jvp_dec_number_ptr(j);
-  decNumberDoublePrecision dec_double;
-  char literal[DEC_NUMBER_DOUBLE_PRECISION + DEC_NUMBER_STRING_GUARD + 1];
+  char buf[DEC_NUMBER_DOUBLE_PRECISION + DEC_NUMBER_STRING_GUARD + 1];
+  size_t len = (size_t)p_dec_number->digits + DEC_NUMBER_STRING_GUARD + 1;
+  char *literal = len <= sizeof(buf) ? buf : jv_mem_alloc(len);
 
-  // reduce the number to the shortest possible form
-  // that fits into the 64 bit floating point representation
-  decNumberReduce(&dec_double.number, p_dec_number, &dblCtx);
-
-  decNumberToString(&dec_double.number, literal);
+  // Pass every digit to strtod: rounding to 17 significant digits first
+  // can land on a halfway point between two doubles and round the wrong way.
+  decNumberToString(p_dec_number, literal);
 
   char *end;
-  return jvp_strtod(tsd_dtoa_context_get(), literal, &end);
+  double d = jvp_strtod(tsd_dtoa_context_get(), literal, &end);
+  if (literal != buf)
+    jv_mem_free(literal);
+  return d;
 }
 
 static const char* jvp_literal_number_literal(jv n) {
