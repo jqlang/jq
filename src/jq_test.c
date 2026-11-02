@@ -610,6 +610,19 @@ static void jv_test(void) {
     assert(strcmp(jv_string_value(v), "Expected separator between values at line 1, column 9 (while parsing '{\"a':\"12\"}')") == 0);
     jv_free(v);
   }
+  {
+    const char* invalid_numbers[] = {"23.", "23.e1", "0.", "-1."};
+    for (size_t i = 0; i < sizeof(invalid_numbers) / sizeof(invalid_numbers[0]); i++) {
+      jv v = jv_parse(invalid_numbers[i]);
+      assert(jv_get_kind(v) == JV_KIND_INVALID);
+      v = jv_invalid_get_msg(v);
+      assert(strstr(jv_string_value(v), "Invalid numeric literal") != NULL);
+      jv_free(v);
+    }
+    jv ok = jv_parse("23.0");
+    assert(jv_get_kind(ok) == JV_KIND_NUMBER);
+    jv_free(ok);
+  }
   /// Arrays and numbers
   {
     jv a = jv_array();
