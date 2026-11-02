@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdatomic.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -38,6 +39,8 @@ struct jq_state {
   unsigned next_label;
 
   int halted;
+  // Set by jq_interrupt(), possibly from another thread; jq_next() halts on it.
+  atomic_int interrupted;
   jv exit_code;
   jv error_message;
 
@@ -311,6 +314,7 @@ static void jq_reset(jq_state *jq) {
   jq->error = jv_null();
 
   jq->halted = 0;
+  atomic_store_explicit(&jq->interrupted, 0, memory_order_relaxed);
   jv_free(jq->exit_code);
   jq->exit_code = jv_invalid();
   jv_free(jq->error_message);
@@ -353,6 +357,10 @@ jv jq_next(jq_state *jq) {
       if (jq->debug_trace_enabled)
         printf("\t<halted>\n");
       return jv_invalid();
+    }
+    if (atomic_load_explicit(&jq->interrupted, memory_order_relaxed)) {
+      jq_halt(jq, jv_invalid(), jv_invalid());
+      continue;
     }
     uint16_t opcode = *pc;
     raising = 0;
@@ -1065,6 +1073,7 @@ jq_state *jq_init(void) {
   jq->error = jv_null();
 
   jq->halted = 0;
+  atomic_init(&jq->interrupted, 0);
   jq->exit_code = jv_invalid();
   jq->error_message = jv_invalid();
 
@@ -1327,6 +1336,16 @@ jq_halt(jq_state *jq, jv exit_code, jv error_message)
   jq->halted = 1;
   jq->exit_code = exit_code;
   jq->error_message = error_message;
+}
+
+// Safe to call from any thread, including while another thread is in
+// jq_next(): the run halts at its next instruction, as
+// jq_halt(jq, jv_invalid(), jv_invalid()) would there.  jq_start() clears
+// a pending interrupt.
+void
+jq_interrupt(jq_state *jq)
+{
+  atomic_store_explicit(&jq->interrupted, 1, memory_order_relaxed);
 }
 
 int

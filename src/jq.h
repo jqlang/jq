@@ -31,6 +31,9 @@ jv jq_next(jq_state *);
 void jq_teardown(jq_state **);
 
 void jq_halt(jq_state *, jv, jv);
+// Halts a run from any thread, as jq_halt(jq, jv_invalid(), jv_invalid())
+// would at its next instruction; jq_start() clears a pending interrupt.
+void jq_interrupt(jq_state *);
 int jq_halted(jq_state *);
 jv jq_get_exit_code(jq_state *);
 jv jq_get_error_message(jq_state *);
