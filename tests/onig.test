@@ -7,6 +7,18 @@
 "abc"
 []
 
+[match("(?=(b))"; "g")]
+"abc"
+[{"offset":1,"length":0,"string":"","captures":[{"offset":1,"length":1,"string":"b","name":null}]}]
+
+[match("(?<=(é))(?=(🚀x))"; "g") | .offset, (.captures[] | .offset, .length, .string)]
+"aé🚀x"
+[2,1,1,"é",2,2,"🚀x"]
+
+[scan("(?=(b))")]
+"abc"
+[["b"]]
+
 [match(""; "g")]
 "ab"
 [{"offset":0,"length":0,"string":"","captures":[]},{"offset":1,"length":0,"string":"","captures":[]},{"offset":2,"length":0,"string":"","captures":[]}]

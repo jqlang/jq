@@ -1079,11 +1079,23 @@ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
           if (region->beg[i] == -1) {
             cap = jv_object_set(cap, jv_string("offset"), jv_number(-1));
             cap = jv_object_set(cap, jv_string("string"), jv_null());
+            cap = jv_object_set(cap, jv_string("length"), jv_number(0));
           } else {
-            cap = jv_object_set(cap, jv_string("offset"), jv_number(idx));
-            cap = jv_object_set(cap, jv_string("string"), jv_string(""));
+            // A capture in a lookaround can be anywhere and need not be empty.
+            unsigned long cap_idx = 0, cap_len = 0;
+            fr = input_string;
+            for (; fr < input_string+region->beg[i]; cap_idx++) {
+              fr += jvp_utf8_decode_length(*fr);
+            }
+            for (; fr < input_string+region->end[i]; cap_len++) {
+              fr += jvp_utf8_decode_length(*fr);
+            }
+            cap = jv_object_set(cap, jv_string("offset"), jv_number(cap_idx));
+            cap = jv_object_set(cap, jv_string("string"),
+                jv_string_sized(input_string+region->beg[i],
+                                region->end[i]-region->beg[i]));
+            cap = jv_object_set(cap, jv_string("length"), jv_number(cap_len));
           }
-          cap = jv_object_set(cap, jv_string("length"), jv_number(0));
           cap = jv_object_set(cap, jv_string("name"), jv_null());
           captures = jv_array_append(captures, cap);
         }
