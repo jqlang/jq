@@ -180,6 +180,9 @@ cmp $d/out $d/expected
 
 cat > $d/expected <<EOF
 jq: error (at <stdin>:1): Unfinished abandoned text at EOF at line 2, column 0
+    at <top-level>, line 1, column 2:
+    [inputs] == []
+     ^^^^^^
 EOF
 if printf '1\n' | $JQ -cen --seq '[inputs] == []' >/dev/null 2> $d/out; then
   printf 'Error expected but jq exited successfully\n' 1>&2
@@ -1104,5 +1107,229 @@ if $JQ -nf "$d/nul_modulemeta.jq" >/dev/null 2>/dev/null; then
   printf 'Error expected for modulemeta with NUL bytes\n' 1>&2
   exit 1
 fi
+
+## Uncaught runtime errors report where in the program they were raised
+
+# Error in the main program
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot index number with string ("b")
+    at <top-level>, line 1, column 13:
+    {"a":1} | .a.b
+                ^^
+EOF
+if $JQ -n '{"a":1} | .a.b' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Error inside a builtin defined in jq: reported at the call
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot iterate over null (null)
+    at <top-level>, line 1, column 11:
+    {} | .a | join(",")
+              ^^^^
+EOF
+if $JQ -n '{} | .a | join(",")' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Error in a closure passed to a builtin: reported inside the closure
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot iterate over null (null)
+    at <top-level>, line 1, column 20:
+    [{"t":null}] | map(.t[])
+                       ^^^^
+EOF
+if $JQ -n '[{"t":null}] | map(.t[])' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Error in an arithmetic operator
+cat > $d/expected <<EOF
+jq: error (at <unknown>): string ("a") and number (1) cannot be added
+    at <top-level>, line 1, column 7:
+    "a" | . + 1
+          ^^^^^
+EOF
+if $JQ -n '"a" | . + 1' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Error in a user-defined function, in a program file
+printf 'def f:\n  .x;\n[1] | f\n' > $d/prog.jq
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot index array with string ("x")
+    at <top-level>, line 2, column 3:
+      .x;
+      ^^
+EOF
+if $JQ -nf $d/prog.jq > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Error in a module function: reported in the module file
+mkdir -p $d/errmod
+printf 'def f: .x;\n' > $d/errmod/m.jq
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot index array with string ("x")
+    at errmod/m.jq, line 1, column 8:
+    def f: .x;
+           ^^
+EOF
+if $JQ -n -L $d/errmod 'import "m" as m; [1] | m::f' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+# Drop the directory, which is spelled differently on Windows
+sed 's|at .*errmod[/\\]m\.jq,|at errmod/m.jq,|' $d/out | cmp - $d/expected
+
+# A caught error does not leak its location into a later error
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot index object with number (0)
+    at <top-level>, line 1, column 32:
+    (try (1|.[0]) catch null), ({}|.[0])
+                                   ^^^^
+EOF
+if $JQ -n '(try (1|.[0]) catch null), ({}|.[0])' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Errors with a non-string message get a location too
+cat > $d/expected <<EOF
+jq: error (at <unknown>) (not a string): {"a":1}
+    at <top-level>, line 1, column 1:
+    error({a:1})
+    ^^^^^
+EOF
+if $JQ -n 'error({a:1})' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Errors re-raised by label (first, limit, ...) and by `catch error` keep
+# their location
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot index number with string ("a")
+    at <top-level>, line 1, column 21:
+    [1,2] | first(.[] | .a)
+                        ^^
+EOF
+if $JQ -n '[1,2] | first(.[] | .a)' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot index number with string ("a")
+    at <top-level>, line 1, column 8:
+    try (1|.a) catch error
+           ^^
+EOF
+if $JQ -n 'try (1|.a) catch error' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# A tail call from user code to a builtin is reported at that call
+cat > $d/expected <<EOF
+jq: error (at <unknown>): null (null) has no keys
+    at <top-level>, line 1, column 13:
+    def f: .a | to_entries; {} | f
+                ^^^^^^^^^^
+EOF
+if $JQ -n 'def f: .a | to_entries; {} | f' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Destructuring
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot index number with number (0)
+    at <top-level>, line 1, column 10:
+    1 | . as [\$a] | \$a
+             ^^^^
+EOF
+if $JQ -n '1 | . as [$a] | $a' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Raising the message of an earlier caught error outside the handler
+# is a new error, at its own location
+cat > $d/expected <<EOF
+jq: error (at <unknown>): m
+    at <top-level>, line 1, column 49:
+    "m" as \$m | (try error(\$m) catch empty), ([1] | error(\$m))
+                                                    ^^^^^
+jq: error (at <unknown>) (not a string): null
+    at <top-level>, line 1, column 38:
+    (try error(null) catch empty), ({} | error(null))
+                                         ^^^^^
+jq: error (at <unknown>): x
+    at <top-level>, line 1, column 39:
+    def f(m): (try error(m) catch empty), error(m); f("x")
+                                          ^^^^^
+EOF
+: > $d/out
+for p in '"m" as $m | (try error($m) catch empty), ([1] | error($m))' \
+         '(try error(null) catch empty), ({} | error(null))' \
+         'def f(m): (try error(m) catch empty), error(m); f("x")'; do
+  if $JQ -n "$p" > /dev/null 2>> $d/out; then
+    echo "Expected a runtime error"
+    exit 1
+  fi
+done
+cmp $d/out $d/expected
+
+# A handler re-raising through a function of its own keeps the location
+cat > $d/expected <<EOF
+jq: error (at <unknown>): Cannot index number with string ("b")
+    at <top-level>, line 1, column 32:
+    def re: error; {"a":1} | try .a.b catch re
+                                   ^^
+EOF
+if $JQ -n 'def re: error; {"a":1} | try .a.b catch re' > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# Long lines are cut down to the part around the error
+printf '.%s | .a.b | "%s"\n' "$(printf ' | .%.0s' $(seq 60))" "$(printf 'x%.0s' $(seq 100))" > $d/long.jq
+cat > $d/expected <<EOF
+jq: error (at <stdin>:1): Cannot index number with string ("b")
+    at <top-level>, line 1, column 247:
+    .... | . | . | . | . | . | . | . | . | . | . | . | .a.b | "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...
+                                                         ^^
+EOF
+if echo '{"a":1}' | $JQ -f $d/long.jq > /dev/null 2> $d/out; then
+  echo "Expected a runtime error"
+  exit 1
+fi
+cmp $d/out $d/expected
+
+# halt_error output is unchanged
+printf 'bye\n' > $d/expected
+if $JQ -n '"bye\n" | halt_error' > /dev/null 2> $d/out; then
+  echo "Expected halt_error to exit non-zero"
+  exit 1
+fi
+cmp $d/out $d/expected
 
 exit 0

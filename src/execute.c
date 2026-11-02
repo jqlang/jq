@@ -24,6 +24,19 @@ struct jq_state {
   jq_msg_cb err_cb;
   void *err_cb_data;
   jv error;
+  // Where in user code `error` was raised, or NULL if unknown
+  struct bytecode* error_bc;
+  uint16_t* error_pc;
+  // The error last caught by try and where its handler's code is, so
+  // that the handler re-raising the message (`catch error`, `label`)
+  // keeps the original location
+  jv caught_message;
+  struct bytecode* caught_bc;
+  uint16_t* caught_pc;
+  stack_ptr handler_frame;
+  struct bytecode* handler_bc;
+  uint16_t* handler_start;
+  uint16_t* handler_end;
 
   struct stack stk;
   stack_ptr curr_frame;
@@ -309,6 +322,16 @@ static void jq_reset(jq_state *jq) {
   stack_reset(&jq->stk);
   jv_free(jq->error);
   jq->error = jv_null();
+  jq->error_bc = NULL;
+  jq->error_pc = NULL;
+  jv_free(jq->caught_message);
+  jq->caught_message = jv_invalid();
+  jq->caught_bc = NULL;
+  jq->caught_pc = NULL;
+  jq->handler_frame = 0;
+  jq->handler_bc = NULL;
+  jq->handler_start = NULL;
+  jq->handler_end = NULL;
 
   jq->halted = 0;
   jv_free(jq->exit_code);
@@ -335,6 +358,58 @@ static void set_error(jq_state *jq, jv value) {
   jq->error = value;
 }
 
+// Whether the instruction at `pc`, or a call it is nested in, is in
+// the handler of the try that caught the last error.
+static int in_catch_handler(jq_state *jq, uint16_t* pc) {
+  // Callers' frames were pushed earlier, so they sit at higher
+  // positions: stop once past the frame that ran the handler.
+  for (stack_ptr fr = jq->curr_frame; fr && fr <= jq->handler_frame;
+       fr = *stack_block_next(&jq->stk, fr)) {
+    struct frame* fp = stack_block(&jq->stk, fr);
+    if (fr == jq->handler_frame)
+      return fp->bc == jq->handler_bc &&
+             pc >= jq->handler_start && pc < jq->handler_end;
+    if (!fp->retaddr)
+      return 0;
+    pc = fp->retaddr - 1; // inside the caller's CALL_JQ
+  }
+  return 0;
+}
+
+// Like set_error(), for an error raised by the instruction at `pc`
+// (not one being passed on by TRY_BEGIN/TRY_END).  Records the
+// innermost frame running user code: errors raised inside jq-defined
+// builtins are reported at the call in user code.
+static void raise_error(jq_state *jq, uint16_t* pc, jv value) {
+  set_error(jq, value);
+  if (jq->handler_frame && in_catch_handler(jq, pc) &&
+      jv_identical(jv_invalid_get_msg(jv_copy(jq->error)), jv_copy(jq->caught_message))) {
+    // A catch handler raising the error it caught
+    jq->error_bc = jq->caught_bc;
+    jq->error_pc = jq->caught_pc;
+    return;
+  }
+  jq->error_bc = NULL;
+  jq->error_pc = NULL;
+  for (stack_ptr fr = jq->curr_frame; fr; fr = *stack_block_next(&jq->stk, fr)) {
+    struct frame* fp = stack_block(&jq->stk, fr);
+    if (fp->bc->nlocations > 0) {
+      jq->error_bc = fp->bc;
+      jq->error_pc = pc;
+      return;
+    }
+    if (!fp->retaddr)
+      return;
+    pc = fp->retaddr - 1; // inside the caller's CALL_JQ
+  }
+}
+
+static void clear_error(jq_state *jq) {
+  jq->error = jv_null();
+  jq->error_bc = NULL;
+  jq->error_pc = NULL;
+}
+
 #define ON_BACKTRACK(op) ((op)+NUM_OPCODES)
 
 jv jq_next(jq_state *jq) {
@@ -348,12 +423,15 @@ jv jq_next(jq_state *jq) {
 
   jq->initial_execution = 0;
   assert(jv_get_kind(jq->error) == JV_KIND_NULL);
+  jq->error_bc = NULL;
+  jq->error_pc = NULL;
   while (1) {
     if (jq->halted) {
       if (jq->debug_trace_enabled)
         printf("\t<halted>\n");
       return jv_invalid();
     }
+    uint16_t* insn = pc;
     uint16_t opcode = *pc;
     raising = 0;
 
@@ -404,7 +482,7 @@ jv jq_next(jq_state *jq) {
 
     case ERRORK: {
       jv v = jv_array_get(jv_copy(frame_current(jq)->bc->constants), *pc++);
-      set_error(jq, jv_invalid_with_msg(v));
+      raise_error(jq, insn, jv_invalid_with_msg(v));
       goto do_backtrack;
     }
 
@@ -490,7 +568,7 @@ jv jq_next(jq_state *jq) {
         stack_push(jq, stktop);
       } else {
         char errbuf[30];
-        set_error(jq, jv_invalid_with_msg(jv_string_fmt(
+        raise_error(jq, insn, jv_invalid_with_msg(jv_string_fmt(
                 "Cannot use %s (%s) as object key",
                 jv_kind_name(jv_get_kind(k)),
                 jv_dump_string_trunc(jv_copy(k), errbuf, sizeof(errbuf)))));
@@ -518,7 +596,7 @@ jv jq_next(jq_state *jq) {
 
       if (jv_get_kind(*var) != JV_KIND_NUMBER || jv_get_kind(max) != JV_KIND_NUMBER ||
           jv_get_kind(step) != JV_KIND_NUMBER) {
-        set_error(jq, jv_invalid_with_msg(jv_string("Range bounds and step must be numeric")));
+        raise_error(jq, insn, jv_invalid_with_msg(jv_string("Range bounds and step must be numeric")));
         jv_free(max);
         jv_free(step);
         goto do_backtrack;
@@ -646,7 +724,7 @@ jv jq_next(jq_state *jq) {
         jv msg = jv_string_fmt(
             "Invalid path expression with result %s",
             jv_dump_string_trunc(v, errbuf, sizeof(errbuf)));
-        set_error(jq, jv_invalid_with_msg(msg));
+        raise_error(jq, insn, jv_invalid_with_msg(msg));
         goto do_backtrack;
       }
       jv_free(v); // discard value, only keep path
@@ -687,7 +765,7 @@ jv jq_next(jq_state *jq) {
             "Invalid path expression near attempt to access element %s of %s",
             jv_dump_string_trunc(k, keybuf, sizeof(keybuf)),
             jv_dump_string_trunc(t, objbuf, sizeof(objbuf)));
-        set_error(jq, jv_invalid_with_msg(msg));
+        raise_error(jq, insn, jv_invalid_with_msg(msg));
         goto do_backtrack;
       }
       jv v = jv_get(t, jv_copy(k));
@@ -697,7 +775,7 @@ jv jq_next(jq_state *jq) {
       } else {
         jv_free(k);
         if (opcode == INDEX)
-          set_error(jq, v);
+          raise_error(jq, insn, v);
         else
           jv_free(v);
         goto do_backtrack;
@@ -732,7 +810,7 @@ jv jq_next(jq_state *jq) {
         jv msg = jv_string_fmt(
             "Invalid path expression near attempt to iterate through %s",
             jv_dump_string_trunc(container, errbuf, sizeof(errbuf)));
-        set_error(jq, jv_invalid_with_msg(msg));
+        raise_error(jq, insn, jv_invalid_with_msg(msg));
         goto do_backtrack;
       }
       stack_push(jq, container);
@@ -768,7 +846,7 @@ jv jq_next(jq_state *jq) {
         assert(opcode == EACH || opcode == EACH_OPT);
         if (opcode == EACH) {
           char errbuf[30];
-          set_error(jq, jv_invalid_with_msg(jv_string_fmt(
+          raise_error(jq, insn, jv_invalid_with_msg(jv_string_fmt(
                   "Cannot iterate over %s (%s)",
                   jv_kind_name(jv_get_kind(container)),
                   jv_dump_string_trunc(jv_copy(container), errbuf, sizeof(errbuf)))));
@@ -856,8 +934,19 @@ jv jq_next(jq_state *jq) {
        */
       uint16_t offset = *pc++;
       jv_free(stack_pop(jq)); // free the input
-      stack_push(jq, jv_invalid_get_msg(jq->error));  // push the error's message
-      jq->error = jv_null();
+      jv msg = jv_invalid_get_msg(jq->error);
+      jv_free(jq->caught_message);
+      jq->caught_message = jv_copy(msg);
+      jq->caught_bc = jq->error_bc;
+      jq->caught_pc = jq->error_pc;
+      // The handler ends where the JUMP just before it goes (see gen_try())
+      jq->handler_frame = jq->curr_frame;
+      jq->handler_bc = frame_current(jq)->bc;
+      jq->handler_start = pc + offset;
+      assert(jq->handler_start[-2] == JUMP);
+      jq->handler_end = jq->handler_start + jq->handler_start[-1];
+      stack_push(jq, msg);  // push the error's message
+      clear_error(jq);
       pc += offset;
       break;
     }
@@ -889,7 +978,7 @@ jv jq_next(jq_state *jq) {
       } else {
         jv_free(jq->error);
       }
-      jq->error = jv_null();
+      clear_error(jq);
       uint16_t offset = *pc++;
       pc += offset;
       break;
@@ -919,7 +1008,7 @@ jv jq_next(jq_state *jq) {
 
       if (!jv_is_valid(top)) {
         if (jv_invalid_has_msg(jv_copy(top)))
-          set_error(jq, top);
+          raise_error(jq, insn, top);
         else
           jv_free(top);
         goto do_backtrack;
@@ -1063,6 +1152,15 @@ jq_state *jq_init(void) {
   jq->fork_top = 0;
   jq->curr_frame = 0;
   jq->error = jv_null();
+  jq->error_bc = NULL;
+  jq->error_pc = NULL;
+  jq->caught_message = jv_invalid();
+  jq->caught_bc = NULL;
+  jq->caught_pc = NULL;
+  jq->handler_frame = 0;
+  jq->handler_bc = NULL;
+  jq->handler_start = NULL;
+  jq->handler_end = NULL;
 
   jq->halted = 0;
   jq->exit_code = jv_invalid();
@@ -1140,6 +1238,23 @@ void jq_teardown(jq_state **jq) {
   jv_mem_free(old_jq);
 }
 
+// Returns the function a CALL_JQ in `bc` calls, given its callee
+// closure operands, or NULL if the callee is a closure parameter.
+static struct bytecode *callee_bytecode(struct bytecode *bc, uint16_t *closure) {
+  uint16_t level = closure[0];
+  uint16_t idx = closure[1];
+  if (!(idx & ARG_NEWCLOSURE))
+    return NULL;
+  for (; level > 0; level--)
+    bc = bc->parent;
+  return bc->subfunctions[idx & ~ARG_NEWCLOSURE];
+}
+
+// Unknown callees (closure parameters) count as user code.
+static int is_user_code(struct bytecode *bc) {
+  return !bc || bc->nlocations > 0;
+}
+
 static int ret_follows(uint16_t *pc) {
   if (*pc == RET)
     return 1;
@@ -1172,9 +1287,14 @@ static int ret_follows(uint16_t *pc) {
  *
  * b) none of the closures -callee included- have level == 0.
  */
-static uint16_t tail_call_analyze(uint16_t *pc) {
+static uint16_t tail_call_analyze(struct bytecode *bc, uint16_t *pc) {
   assert(*pc == CALL_JQ);
   pc++;
+  if (bc->nlocations > 0 && !is_user_code(callee_bytecode(bc, pc + 1))) {
+    // Keep this frame so that errors in the callee can be reported at
+    // the call in user code.
+    return CALL_JQ;
+  }
   // + 1 for the callee closure
   for (uint16_t nclosures = *pc++ + 1; nclosures > 0; pc++, nclosures--) {
     if (*pc++ == 0)
@@ -1191,7 +1311,7 @@ static struct bytecode *optimize_code(struct bytecode *bc) {
   while (pc < bc->code + bc->codelen) {
     switch (*pc) {
     case CALL_JQ:
-      *pc = tail_call_analyze(pc);
+      *pc = tail_call_analyze(bc, pc);
       break;
 
     // Other bytecode optimizations here.  A peephole optimizer would
@@ -1338,6 +1458,16 @@ jq_halted(jq_state *jq)
 jv jq_get_exit_code(jq_state *jq)
 {
   return jv_copy(jq->exit_code);
+}
+
+jv jq_get_error_location(jq_state *jq)
+{
+  if (!jq->error_bc)
+    return jv_invalid();
+  const struct bytecode_location* loc = bytecode_find_location(jq->error_bc, jq->error_pc);
+  if (!loc)
+    return jv_invalid();
+  return locfile_describe(loc->locfile, loc->source);
 }
 
 jv jq_get_error_message(jq_state *jq)

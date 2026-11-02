@@ -349,7 +349,7 @@ Expr "//" Expr {
   $$ = gen_definedor($1, $3);
 } |
 Expr '=' Expr {
-  $$ = gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3)));
+  $$ = gen_location(@$, locations, gen_call("_assign", BLOCK(gen_lambda($1), gen_lambda($3))));
 } |
 Expr "or" Expr {
   $$ = gen_or($1, $3);
@@ -358,58 +358,58 @@ Expr "and" Expr {
   $$ = gen_and($1, $3);
 } |
 Expr "//=" Expr {
-  $$ = gen_definedor_assign($1, $3);
+  $$ = gen_location(@$, locations, gen_definedor_assign($1, $3));
 } |
 Expr "|=" Expr {
-  $$ = gen_call("_modify", BLOCK(gen_lambda($1), gen_lambda($3)));
+  $$ = gen_location(@$, locations, gen_call("_modify", BLOCK(gen_lambda($1), gen_lambda($3))));
 } |
 Expr '+' Expr {
-  $$ = gen_binop($1, $3, '+');
+  $$ = gen_location(@$, locations, gen_binop($1, $3, '+'));
 } |
 Expr "+=" Expr {
-  $$ = gen_update($1, $3, '+');
+  $$ = gen_location(@$, locations, gen_update($1, $3, '+'));
 } |
 Expr '-' Expr {
-  $$ = gen_binop($1, $3, '-');
+  $$ = gen_location(@$, locations, gen_binop($1, $3, '-'));
 } |
 Expr "-=" Expr {
-  $$ = gen_update($1, $3, '-');
+  $$ = gen_location(@$, locations, gen_update($1, $3, '-'));
 } |
 Expr '*' Expr {
-  $$ = gen_binop($1, $3, '*');
+  $$ = gen_location(@$, locations, gen_binop($1, $3, '*'));
 } |
 Expr "*=" Expr {
-  $$ = gen_update($1, $3, '*');
+  $$ = gen_location(@$, locations, gen_update($1, $3, '*'));
 } |
 Expr '/' Expr {
-  $$ = gen_binop($1, $3, '/');
+  $$ = gen_location(@$, locations, gen_binop($1, $3, '/'));
 } |
 Expr '%' Expr {
-  $$ = gen_binop($1, $3, '%');
+  $$ = gen_location(@$, locations, gen_binop($1, $3, '%'));
 } |
 Expr "/=" Expr {
-  $$ = gen_update($1, $3, '/');
+  $$ = gen_location(@$, locations, gen_update($1, $3, '/'));
 } |
 Expr SETMOD Expr {
-  $$ = gen_update($1, $3, '%');
+  $$ = gen_location(@$, locations, gen_update($1, $3, '%'));
 } |
 Expr "==" Expr {
-  $$ = gen_binop($1, $3, EQ);
+  $$ = gen_location(@$, locations, gen_binop($1, $3, EQ));
 } |
 Expr "!=" Expr {
-  $$ = gen_binop($1, $3, NEQ);
+  $$ = gen_location(@$, locations, gen_binop($1, $3, NEQ));
 } |
 Expr '<' Expr {
-  $$ = gen_binop($1, $3, '<');
+  $$ = gen_location(@$, locations, gen_binop($1, $3, '<'));
 } |
 Expr '>' Expr {
-  $$ = gen_binop($1, $3, '>');
+  $$ = gen_location(@$, locations, gen_binop($1, $3, '>'));
 } |
 Expr "<=" Expr {
-  $$ = gen_binop($1, $3, LESSEQ);
+  $$ = gen_location(@$, locations, gen_binop($1, $3, LESSEQ));
 } |
 Expr ">=" Expr {
-  $$ = gen_binop($1, $3, GREATEREQ);
+  $$ = gen_location(@$, locations, gen_binop($1, $3, GREATEREQ));
 } |
 Term %prec NONOPT {
   $$ = $1;
@@ -551,28 +551,28 @@ BREAK error {
   $$ = gen_noop();
 } |
 Term FIELD '?' {
-  $$ = gen_index_opt($1, gen_const($2));
+  $$ = gen_location(@2, locations, gen_index_opt($1, gen_const($2)));
 } |
 FIELD '?' {
-  $$ = gen_index_opt(gen_noop(), gen_const($1));
+  $$ = gen_location(@$, locations, gen_index_opt(gen_noop(), gen_const($1)));
 } |
 Term '.' String '?' {
-  $$ = gen_index_opt($1, $3);
+  $$ = gen_location(@$, locations, gen_index_opt($1, $3));
 } |
 '.' String '?' {
-  $$ = gen_index_opt(gen_noop(), $2);
+  $$ = gen_location(@$, locations, gen_index_opt(gen_noop(), $2));
 } |
 Term FIELD %prec NONOPT {
-  $$ = gen_index($1, gen_const($2));
+  $$ = gen_location(@2, locations, gen_index($1, gen_const($2)));
 } |
 FIELD %prec NONOPT {
-  $$ = gen_index(gen_noop(), gen_const($1));
+  $$ = gen_location(@$, locations, gen_index(gen_noop(), gen_const($1)));
 } |
 Term '.' String %prec NONOPT {
-  $$ = gen_index($1, $3);
+  $$ = gen_location(@$, locations, gen_index($1, $3));
 } |
 '.' String %prec NONOPT {
-  $$ = gen_index(gen_noop(), $2);
+  $$ = gen_location(@$, locations, gen_index(gen_noop(), $2));
 } |
 '.' error {
   FAIL(@$, "try .[\"field\"] instead of .field for unusually named fields");
@@ -585,46 +585,46 @@ Term '.' String %prec NONOPT {
 } |
 /* FIXME: string literals */
 Term '[' Query ']' '?' {
-  $$ = gen_index_opt($1, $3);
+  $$ = gen_location(@$, locations, gen_index_opt($1, $3));
 } |
 Term '[' Query ']' %prec NONOPT {
-  $$ = gen_index($1, $3);
+  $$ = gen_location(@$, locations, gen_index($1, $3));
 } |
 Term '.' '[' Query ']' '?' {
-  $$ = gen_index_opt($1, $4);
+  $$ = gen_location(@$, locations, gen_index_opt($1, $4));
 } |
 Term '.' '[' Query ']' %prec NONOPT {
-  $$ = gen_index($1, $4);
+  $$ = gen_location(@$, locations, gen_index($1, $4));
 } |
 Term '[' ']' '?' {
-  $$ = block_join($1, gen_op_simple(EACH_OPT));
+  $$ = gen_location(@$, locations, block_join($1, gen_op_simple(EACH_OPT)));
 } |
 Term '[' ']' %prec NONOPT {
-  $$ = block_join($1, gen_op_simple(EACH));
+  $$ = gen_location(@$, locations, block_join($1, gen_op_simple(EACH)));
 } |
 Term '.' '[' ']' '?' {
-  $$ = block_join($1, gen_op_simple(EACH_OPT));
+  $$ = gen_location(@$, locations, block_join($1, gen_op_simple(EACH_OPT)));
 } |
 Term '.' '[' ']' %prec NONOPT {
-  $$ = block_join($1, gen_op_simple(EACH));
+  $$ = gen_location(@$, locations, block_join($1, gen_op_simple(EACH)));
 } |
 Term '[' Query ':' Query ']' '?' {
-  $$ = gen_slice_index($1, $3, $5, INDEX_OPT);
+  $$ = gen_location(@$, locations, gen_slice_index($1, $3, $5, INDEX_OPT));
 } |
 Term '[' Query ':' ']' '?' {
-  $$ = gen_slice_index($1, $3, gen_const(jv_null()), INDEX_OPT);
+  $$ = gen_location(@$, locations, gen_slice_index($1, $3, gen_const(jv_null()), INDEX_OPT));
 } |
 Term '[' ':' Query ']' '?' {
-  $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX_OPT);
+  $$ = gen_location(@$, locations, gen_slice_index($1, gen_const(jv_null()), $4, INDEX_OPT));
 } |
 Term '[' Query ':' Query ']' %prec NONOPT {
-  $$ = gen_slice_index($1, $3, $5, INDEX);
+  $$ = gen_location(@$, locations, gen_slice_index($1, $3, $5, INDEX));
 } |
 Term '[' Query ':' ']' %prec NONOPT {
-  $$ = gen_slice_index($1, $3, gen_const(jv_null()), INDEX);
+  $$ = gen_location(@$, locations, gen_slice_index($1, $3, gen_const(jv_null()), INDEX));
 } |
 Term '[' ':' Query ']' %prec NONOPT {
-  $$ = gen_slice_index($1, gen_const(jv_null()), $4, INDEX);
+  $$ = gen_location(@$, locations, gen_slice_index($1, gen_const(jv_null()), $4, INDEX));
 } |
 Term '?' {
   $$ = gen_try($1, gen_op_simple(BACKTRACK));
@@ -636,10 +636,10 @@ String {
   $$ = $1;
 } |
 FORMAT {
-  $$ = gen_format(gen_noop(), $1);
+  $$ = gen_location(@$, locations, gen_format(gen_noop(), $1));
 } |
 '-' Term {
-  $$ = BLOCK($2, gen_call("_negate", gen_noop()));
+  $$ = gen_location(@$, locations, BLOCK($2, gen_call("_negate", gen_noop())));
 } |
 '(' Query ')' {
   $$ = $2;
@@ -746,18 +746,18 @@ Query {
 
 RepPatterns:
 RepPatterns '?' "//" Pattern {
-  $$ = BLOCK($1, gen_destructure_alt($4));
+  $$ = BLOCK($1, gen_destructure_alt(gen_location(@4, locations, $4)));
 } |
 Pattern {
-  $$ = gen_destructure_alt($1);
+  $$ = gen_destructure_alt(gen_location(@1, locations, $1));
 }
 
 Patterns:
 RepPatterns '?' "//" Pattern {
-  $$ = BLOCK($1, $4);
+  $$ = BLOCK($1, gen_location(@4, locations, $4));
 } |
 Pattern {
-  $$ = $1;
+  $$ = gen_location(@1, locations, $1);
 }
 
 Pattern:
@@ -879,10 +879,10 @@ DictPairs:
   $$ = gen_noop();
 } |
 DictPair {
-  $$ = $1;
+  $$ = gen_location(@1, locations, $1);
 } |
 DictPair ',' DictPairs {
-  $$ = block_join($1, $3);
+  $$ = block_join(gen_location(@1, locations, $1), $3);
 }
 
 DictPair:

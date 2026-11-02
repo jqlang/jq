@@ -90,3 +90,19 @@ void locfile_locate(struct locfile* l, location loc, const char* fmt, ...) {
   jq_report_error(l->jq, m2);
   return;
 }
+
+// Describes `loc` as {"file", "line", "column", "length", "text"}.  Line
+// and column count from 1; `length` is the number of bytes marked on the
+// first line of `loc`, and `text` is the source of that line.
+jv locfile_describe(struct locfile* l, location loc) {
+  assert(loc.start != -1);
+  int startline = locfile_get_line(l, loc.start);
+  int offset = l->linemap[startline];
+  int end = MIN(loc.end, MAX(l->linemap[startline+1] - 1, loc.start + 1));
+  return JV_OBJECT(jv_string("file"), jv_copy(l->fname),
+                   jv_string("line"), jv_number(startline + 1),
+                   jv_string("column"), jv_number(loc.start - offset + 1),
+                   jv_string("length"), jv_number(end - loc.start),
+                   jv_string("text"), jv_string_sized(l->data + offset,
+                                                      locfile_line_length(l, startline)));
+}

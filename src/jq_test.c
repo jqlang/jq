@@ -14,6 +14,7 @@ static void run_jq_start_state_tests(void);
 static void run_jq_compile_args_tests(void);
 static void run_jq_recompile_tests(void);
 static void run_jq_exhaust_and_reuse_tests(void);
+static void run_jq_error_location_tests(void);
 #ifdef HAVE_PTHREAD
 static void run_jq_pthread_tests(void);
 #endif
@@ -54,6 +55,7 @@ int jq_testsuite(jv libdirs, int verbose, int argc, char* argv[]) {
   run_jq_compile_args_tests();
   run_jq_recompile_tests();
   run_jq_exhaust_and_reuse_tests();
+  run_jq_error_location_tests();
 #ifdef HAVE_PTHREAD
   run_jq_pthread_tests();
 #endif
@@ -294,6 +296,13 @@ static int test_start_state(jq_state *jq, char *prog) {
     printf("*** Expected jq to not be halted after jq_start: %s\n", prog);
     pass = 0;
   }
+
+  jv location = jq_get_error_location(jq);
+  if (jv_is_valid(location)) {
+    printf("*** Expected error location to be invalid after jq_start: %s\n", prog);
+    pass = 0;
+  }
+  jv_free(location);
 
   return pass;
 }
@@ -541,6 +550,47 @@ static int test_pthread_jq_parse(jq_state *jq, struct jv_parser *parser)
     }
     jv_free(value);
     return rv;
+}
+
+static void run_jq_error_location_tests(void) {
+  printf("Testing jq_get_error_location\n");
+  jq_state *jq = jq_init();
+  assert(jq);
+  int r = jq_compile(jq, "if . == 0 then 1 else .x end");
+  assert(r);
+
+  // No error: no location
+  jq_start(jq, jv_number(0), 0);
+  jv v = jq_next(jq);
+  assert(jv_get_kind(v) == JV_KIND_NUMBER);
+  jv_free(v);
+  v = jq_next(jq);
+  assert(!jv_is_valid(v) && !jv_invalid_has_msg(jv_copy(v)));
+  jv_free(v);
+  jv where = jq_get_error_location(jq);
+  assert(!jv_is_valid(where));
+  jv_free(where);
+
+  // Uncaught error: location of .x
+  jq_start(jq, jv_number(1), 0);
+  v = jq_next(jq);
+  assert(jv_invalid_has_msg(jv_copy(v)));
+  jv_free(v);
+  where = jq_get_error_location(jq);
+  assert(jv_equal(where,
+                  JV_OBJECT(jv_string("file"), jv_string("<top-level>"),
+                            jv_string("line"), jv_number(1),
+                            jv_string("column"), jv_number(23),
+                            jv_string("length"), jv_number(2),
+                            jv_string("text"), jv_string("if . == 0 then 1 else .x end"))));
+
+  // jq_start clears it
+  jq_start(jq, jv_number(0), 0);
+  where = jq_get_error_location(jq);
+  assert(!jv_is_valid(where));
+  jv_free(where);
+
+  jq_teardown(&jq);
 }
 
 static void *test_pthread_run(void *ptr) {
