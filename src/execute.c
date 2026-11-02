@@ -44,6 +44,9 @@ struct jq_state {
   jv attrs;
   jq_input_cb input_cb;
   void *input_cb_data;
+  jq_input_meta_cb input_filename_cb;
+  jq_input_meta_cb input_line_cb;
+  void *input_meta_cb_data;
   jq_msg_cb debug_cb;
   void *debug_cb_data;
   jq_msg_cb stderr_cb;
@@ -1070,6 +1073,9 @@ jq_state *jq_init(void) {
 
   jq->input_cb = NULL;
   jq->input_cb_data = NULL;
+  jq->input_filename_cb = NULL;
+  jq->input_line_cb = NULL;
+  jq->input_meta_cb_data = NULL;
 
   jq->debug_cb = NULL;
   jq->debug_cb_data = NULL;
@@ -1298,6 +1304,20 @@ void jq_set_input_cb(jq_state *jq, jq_input_cb cb, void *data) {
 void jq_get_input_cb(jq_state *jq, jq_input_cb *cb, void **data) {
   *cb = jq->input_cb;
   *data = jq->input_cb_data;
+}
+
+void jq_set_input_meta_cb(jq_state *jq, jq_input_meta_cb filename_cb,
+                          jq_input_meta_cb line_cb, void *data) {
+  jq->input_filename_cb = filename_cb;
+  jq->input_line_cb = line_cb;
+  jq->input_meta_cb_data = data;
+}
+
+void jq_get_input_meta_cb(jq_state *jq, jq_input_meta_cb *filename_cb,
+                          jq_input_meta_cb *line_cb, void **data) {
+  *filename_cb = jq->input_filename_cb;
+  *line_cb = jq->input_line_cb;
+  *data = jq->input_meta_cb_data;
 }
 
 void jq_set_debug_cb(jq_state *jq, jq_msg_cb cb, void *data) {
