@@ -149,6 +149,26 @@ EOF
 printf '1\0362 3\n[0,1\036[4,5]true"ab"{"c":4\036{}{"d":5,"e":6"false\n\036null'|$VALGRIND $Q $JQ -ces --seq '. == [2,3,[4,5],true,"ab",{},null]' > /dev/null 2> $d/out
 cmp $d/out $d/expected
 
+# An RS after whitespace in an array or object, or inside a string, also
+# truncates the text (#1775)
+cat > $d/expected <<EOF
+jq: ignoring parse error: Truncated value at line 1, column 9
+jq: ignoring parse error: Truncated value at line 1, column 16
+jq: ignoring parse error: Truncated value at line 1, column 18
+jq: ignoring parse error: Truncated value at line 1, column 22
+EOF
+printf '\0361 \036[1, \036{"a": \036"\036"12\036"ok"\n' | $VALGRIND $Q $JQ -ces --seq '. == [1,"ok"]' > /dev/null 2> $d/out
+cmp $d/out $d/expected
+
+cat > $d/expected <<EOF
+jq: ignoring parse error: Truncated value at line 1, column 3
+jq: ignoring parse error: Truncated value at line 1, column 7
+jq: ignoring parse error: Truncated value at line 1, column 11
+jq: ignoring parse error: Truncated value at line 1, column 15
+EOF
+printf '\036"\036"12\036"ab\036"a\\\036"ok"\n' | $VALGRIND $Q $JQ -ces --seq --stream '. == [[[],"ok"]]' > /dev/null 2> $d/out
+cmp $d/out $d/expected
+
 # A syntax error skips the rest of the text, up to the next RS
 cat > $d/expected <<EOF
 jq: ignoring parse error: Invalid numeric literal at line 1, column 8 (need RS to resync)
