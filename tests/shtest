@@ -412,6 +412,19 @@ cat > $d/expected <<'EOF'
 EOF
 cmp $d/out $d/expected
 
+# --slurpfile must finalize the parser when EOF follows a full read buffer.
+for size in 4095 4096 4097 8192; do
+  for value in 1 true false null; do
+    printf '%*s%s' "$((size - ${#value}))" '' "$value" > $d/boundary.json
+    $VALGRIND $Q $JQ -ne --slurpfile x $d/boundary.json --argjson expected "$value" '$x == [$expected]'
+  done
+  for value in '[' '{"x":' '"abc' '1e'; do
+    printf '%*s%s' "$((size - ${#value}))" '' "$value" > $d/boundary.json
+    $VALGRIND $Q $JQ -n --slurpfile x $d/boundary.json '$x' > $d/out 2> $d/err && ret=0 || ret=$?
+    [ "$ret" -eq 2 ]
+  done
+done
+
 # --args, --jsonargs, $ARGS.positional
 $VALGRIND $JQ -n -c --args '$ARGS.positional' foo bar baz > $d/out
 printf '["foo","bar","baz"]\n' > $d/expected
