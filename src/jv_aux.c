@@ -391,7 +391,7 @@ static jv jv_dels(jv t, jv keys) {
 #define MAX_PATH_DEPTH (10000)
 #endif
 
-jv jv_setpath(jv root, jv path, jv value) {
+static jv jv_setpath_impl(jv root, jv path, jv value, int coerce) {
   if (jv_get_kind(path) != JV_KIND_ARRAY) {
     jv_free(value);
     jv_free(root);
@@ -425,7 +425,18 @@ jv jv_setpath(jv root, jv path, jv value) {
   if (jv_get_kind(pathcurr) == JV_KIND_OBJECT) {
     // Assignment to slice -- dunno yet how to avoid the extra copy
     return jv_set(root, pathcurr,
-                  jv_setpath(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest, value));
+                  jv_setpath_impl(jv_get(jv_copy(root), jv_copy(pathcurr)), pathrest, value, coerce));
+  }
+
+  if (coerce && (jv_get_kind(pathcurr) == JV_KIND_STRING ||
+                 jv_get_kind(pathcurr) == JV_KIND_NUMBER) &&
+      jv_get_kind(root) != JV_KIND_NULL &&
+      ((jv_get_kind(pathcurr) == JV_KIND_STRING && jv_get_kind(root) != JV_KIND_OBJECT) ||
+       (jv_get_kind(pathcurr) == JV_KIND_NUMBER && jv_get_kind(root) != JV_KIND_ARRAY))) {
+    /* jv_setpath's public contract reports this mismatch.  fromstream needs
+     * to accept a later event that changes an ancestor's type instead. */
+    jv_free(root);
+    root = jv_null();
   }
 
   jv subroot = jv_get(jv_copy(root), jv_copy(pathcurr));
@@ -447,7 +458,15 @@ jv jv_setpath(jv root, jv path, jv value) {
     jv_free(value);
     return root;
   }
-  return jv_set(root, pathcurr, jv_setpath(subroot, pathrest, value));
+  return jv_set(root, pathcurr, jv_setpath_impl(subroot, pathrest, value, coerce));
+}
+
+jv jv_setpath(jv root, jv path, jv value) {
+  return jv_setpath_impl(root, path, value, 0);
+}
+
+jv jv_setpath_coerce(jv root, jv path, jv value) {
+  return jv_setpath_impl(root, path, value, 1);
 }
 
 jv jv_getpath(jv root, jv path) {
