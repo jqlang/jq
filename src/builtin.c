@@ -16,6 +16,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
 #include <math.h>
 #ifdef HAVE_LIBONIG
@@ -1571,8 +1572,6 @@ static int setenv(const char *var, const char *val, int ovr)
  *
  * Our wrapper tries to use timegm() if available, or mktime() and
  * correct for its side-effects if possible.
- *
- * Returns (time_t)-2 if mktime()'s side-effects cannot be corrected.
  */
 static time_t my_mktime(struct tm *tm) {
 #ifdef HAVE_TIMEGM
@@ -1792,11 +1791,19 @@ static jv f_mktime(jq_state *jq, jv a) {
   struct tm tm;
   if (!jv2tm(a, &tm, 0))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
+  errno = 0;
   time_t t = my_mktime(&tm);
+#ifdef WIN32
+  // _mkgmtime() does not set errno and does not support timestamps before
+  // the epoch, so -1 can only be an error there.
   if (t == (time_t)-1)
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
-  if (t == (time_t)-2)
-    return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
+#else
+  // -1 is both the error return value and a valid timestamp
+  // (1969-12-31T23:59:59Z); POSIX sets errno to EOVERFLOW on failure.
+  if (t == (time_t)-1 && errno == EOVERFLOW)
+    return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
+#endif
   return jv_number(t);
 }
 

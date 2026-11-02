@@ -13,3 +13,12 @@ gmtime
 map(gmtime) | . == sort
 [-1.5,-1,-0.5,0,0.5,1,1.5]
 true
+
+# mktime must not confuse valid negative timestamps with error sentinels
+mktime
+[1969,11,31,23,59,59,0,0]
+-1
+
+mktime
+[1969,11,31,23,59,58,0,0]
+-2
