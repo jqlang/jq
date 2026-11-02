@@ -1792,11 +1792,11 @@ static jv f_mktime(jq_state *jq, jv a) {
   struct tm tm;
   if (!jv2tm(a, &tm, 0))
     return jv_invalid_with_msg(jv_string("mktime requires parsed datetime inputs"));
+  // -1 is also a valid time, tm_wday is only updated on success.
+  tm.tm_wday = -1;
   time_t t = my_mktime(&tm);
-  if (t == (time_t)-1)
+  if (t == (time_t)-1 && tm.tm_wday == -1)
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
-  if (t == (time_t)-2)
-    return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
   return jv_number(t);
 }
 

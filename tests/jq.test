@@ -1960,6 +1960,10 @@ try strflocaltime("%Y-%m-%dT%H:%M:%SZ") catch .
 ["a",1,2,3,4,5,6,7]
 "strflocaltime/1 requires parsed datetime inputs"
 
+[-2, -1, 0] | map(gmtime | mktime)
+null
+[-2, -1, 0]
+
 try mktime catch .
 ["a",1,2,3,4,5,6,7]
 "mktime requires parsed datetime inputs"
