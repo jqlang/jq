@@ -108,13 +108,21 @@ static void put_str(const char* s, FILE* fout, jv* strout, int T) {
 }
 
 static void put_indent(int n, int flags, FILE* fout, jv* strout, int T) {
+  static const char tabs[] = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
+  static const char spaces[] = "                                ";
+  const char *fill = spaces;
+  int fill_len = sizeof(spaces) - 1;
   if (flags & JV_PRINT_TAB) {
-    while (n--)
-      put_char('\t', fout, strout, T);
+    fill = tabs;
+    fill_len = sizeof(tabs) - 1;
   } else {
     n *= ((flags & (JV_PRINT_SPACE0 | JV_PRINT_SPACE1 | JV_PRINT_SPACE2)) >> 8);
-    while (n--)
-      put_char(' ', fout, strout, T);
+  }
+  // Write the indentation in chunks rather than one character at a time.
+  while (n > 0) {
+    int len = n < fill_len ? n : fill_len;
+    put_buf(fill, len, fout, strout, T);
+    n -= len;
   }
 }
 
