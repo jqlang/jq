@@ -99,6 +99,63 @@ jv expand_path(jv path) {
   return ret;
 }
 
+#ifdef WIN32
+/*
+ * The C library hands out the environment, through environ and getenv()
+ * alike, in the ANSI code page, so anything outside of it comes out mangled.
+ * Read the wide character environment instead and convert it to UTF-8, as
+ * wmain() does with the arguments.
+ */
+static jv utf16_to_jv_string(const wchar_t *ws) {
+  int len = WideCharToMultiByte(CP_UTF8, 0, ws, -1, NULL, 0, NULL, NULL);
+  if (len <= 0)
+    return jv_string("");
+  char *s = jv_mem_alloc(len);
+  WideCharToMultiByte(CP_UTF8, 0, ws, -1, s, len, NULL, NULL);
+  jv ret = jv_string_sized(s, len - 1);
+  jv_mem_free(s);
+  return ret;
+}
+#else
+// FIXME Should autoconf check for this!
+extern char **environ;
+#endif
+
+static jv env_set(jv env, const char *var) {
+  const char *val = strchr(var, '=');
+  if (val == NULL)
+    env = jv_object_set(env, jv_string(var), jv_null());
+  else if (val - var < INT_MAX)
+    env = jv_object_set(env, jv_string_sized(var, val - var), jv_string(val + 1));
+  return env;
+}
+
+/* The environment as an object, for `env` and `$ENV` */
+jv get_env(void) {
+  jv env = jv_object();
+#ifdef WIN32
+  wchar_t *block = GetEnvironmentStringsW();
+  if (block == NULL)
+    return env;
+  for (const wchar_t *e = block; *e != L'\0'; e += wcslen(e) + 1) {
+    /* Skip the hidden per-drive working directories ("=C:=C:\foo"), which
+     * environ leaves out as well. */
+    if (*e == L'=')
+      continue;
+    jv var = utf16_to_jv_string(e);
+    env = env_set(env, jv_string_value(var));
+    jv_free(var);
+  }
+  FreeEnvironmentStringsW(block);
+#else
+  if (environ == NULL)
+    return env;
+  for (char **e = environ; *e != NULL; e++)
+    env = env_set(env, *e);
+#endif
+  return env;
+}
+
 jv get_home(void) {
   jv ret;
   char *home = getenv("HOME");
