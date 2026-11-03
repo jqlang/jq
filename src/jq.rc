@@ -1,0 +1,9 @@
+/* Windows resources for jq.exe.
+ *
+ * The language must be non-zero: GCC on MinGW also links a default
+ * manifest with language 0, and ld only drops that one in favour of a
+ * manifest with a non-zero language. */
+LANGUAGE 0x09, 0x01 /* LANG_ENGLISH, SUBLANG_ENGLISH_US */
+
+/* CREATE_PROCESS_MANIFEST_RESOURCE_ID, RT_MANIFEST */
+1 24 "jq.exe.manifest"

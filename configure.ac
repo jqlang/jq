@@ -50,6 +50,11 @@ AC_CHECK_FUNCS(memmem)
 AC_CHECK_HEADER("sys/cygwin.h", [have_cygwin=1;])
 AC_CHECK_HEADER("shlwapi.h",[have_shlwapi=1;])
 AM_CONDITIONAL([WIN32], [test "x$have_shlwapi" = x1 && test ! "x$have_cygwin" = x1])
+AS_IF([test "x$have_shlwapi" = x1 && test ! "x$have_cygwin" = x1], [
+  AC_CHECK_TOOL([WINDRES], [windres])
+  AS_IF([test -z "$WINDRES"],
+    [AC_MSG_ERROR([windres is required to embed the jq.exe manifest])])
+])
 
 dnl Running tests with Valgrind is slow. It is faster to iterate on
 dnl code without Valgrind until tests pass, then enable Valgrind and

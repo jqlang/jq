@@ -249,6 +249,11 @@ jobs:
         run: |
           make check VERBOSE=yes
           git diff --exit-code
+      - name: Test long Windows paths
+        shell: pwsh
+        run: |
+          Set-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name LongPathsEnabled -Value 1
+          ./tests/long-paths.ps1 -Jq ./jq.exe
       - name: Upload Test Logs
         if: ${{ failure() }}
         uses: actions/upload-artifact@v7
