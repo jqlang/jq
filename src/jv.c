@@ -1066,9 +1066,10 @@ jv jv_array_indexes(jv a, jv b) {
         jv_free(b);
         return jv_invalid_with_msg(jv_string("Equality check too deep"));
       }
-      if (!equal)
+      if (!equal) {
         idx = -1;
-      else if (bi == 0 && idx == -1)
+        break;
+      } else if (bi == 0 && idx == -1)
         idx = ai;
     }
     if (idx > -1)
