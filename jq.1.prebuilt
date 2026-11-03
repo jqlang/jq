@@ -1211,6 +1211,9 @@ jq \'delpaths([["a","b"]])\'
 These functions convert between an object and an array of key\-value pairs\. If \fBto_entries\fR is passed an object, then for each \fBk: v\fR entry in the input, the output array includes \fB{"key": k, "value": v}\fR\.
 .
 .P
+If \fBto_entries\fR is passed an array, it works like \fBenumerate\fR in other languages: each element is converted to an object with its index as \fBkey\fR and its value as \fBvalue\fR\.
+.
+.P
 \fBfrom_entries\fR does the opposite conversion, and \fBwith_entries(f)\fR is a shorthand for \fBto_entries | map(f) | from_entries\fR, useful for doing some operation to all keys and values of an object\. \fBfrom_entries\fR accepts \fB"key"\fR, \fB"Key"\fR, \fB"name"\fR, \fB"Name"\fR, \fB"value"\fR, and \fB"Value"\fR as keys\.
 .
 .IP "" 4
@@ -1220,6 +1223,10 @@ These functions convert between an object and an array of key\-value pairs\. If 
 jq \'to_entries\'
    {"a": 1, "b": 2}
 => [{"key":"a", "value":1}, {"key":"b", "value":2}]
+
+jq \'to_entries\'
+   ["a", "b", "c"]
+=> [{"key":0,"value":"a"}, {"key":1,"value":"b"}, {"key":2,"value":"c"}]
 
 jq \'from_entries\'
    [{"key":"a", "value":1}, {"key":"b", "value":2}]

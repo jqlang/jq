@@ -1175,6 +1175,10 @@ sections:
           for each `k: v` entry in the input, the output array
           includes `{"key": k, "value": v}`.
 
+          If `to_entries` is passed an array, it works like
+          `enumerate` in other languages: each element is converted
+          to an object with its index as `key` and its value as `value`.
+
           `from_entries` does the opposite conversion, and `with_entries(f)`
           is a shorthand for `to_entries | map(f) | from_entries`, useful for
           doing some operation to all keys and values of an object.
@@ -1185,6 +1189,9 @@ sections:
           - program: 'to_entries'
             input: '{"a": 1, "b": 2}'
             output: ['[{"key":"a", "value":1}, {"key":"b", "value":2}]']
+          - program: 'to_entries'
+            input: '["a", "b", "c"]'
+            output: ['[{"key":0,"value":"a"}, {"key":1,"value":"b"}, {"key":2,"value":"c"}]']
           - program: 'from_entries'
             input: '[{"key":"a", "value":1}, {"key":"b", "value":2}]'
             output: ['{"a": 1, "b": 2}']

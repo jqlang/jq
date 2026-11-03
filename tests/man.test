@@ -301,6 +301,10 @@ to_entries
 {"a": 1, "b": 2}
 [{"key":"a", "value":1}, {"key":"b", "value":2}]
 
+to_entries
+["a", "b", "c"]
+[{"key":0,"value":"a"}, {"key":1,"value":"b"}, {"key":2,"value":"c"}]
+
 from_entries
 [{"key":"a", "value":1}, {"key":"b", "value":2}]
 {"a": 1, "b": 2}
