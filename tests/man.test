@@ -743,6 +743,14 @@ bsearch(4) as $ix | if $ix < 0 then .[-(1+$ix)] = 4 else . end
 "VGhpcyBpcyBhIG1lc3NhZ2U="
 "This is a message"
 
+gmtime
+0
+[1970,0,1,0,0,0,4,0]
+
+gmtime
+259200
+[1970,0,4,0,0,0,0,3]
+
 fromdate
 "2015-03-05T23:51:47Z"
 1425599507
