@@ -1339,9 +1339,12 @@ int jv_string_length_bytes(jv j) {
 int jv_string_length_codepoints(jv j) {
   assert(JVP_HAS_KIND(j, JV_KIND_STRING));
   const char* i = jv_string_value(j);
-  const char* end = i + jv_string_length_bytes(jv_copy(j));
-  int c = 0, len = 0;
-  while ((i = jvp_utf8_next(i, end, &c))) len++;
+  const unsigned char* end = (const unsigned char*)i + jv_string_length_bytes(jv_copy(j));
+  /* Strings are always valid UTF-8, so every code point starts with exactly
+   * one byte that is not a continuation byte (10xxxxxx). */
+  int len = 0;
+  for (const unsigned char* p = (const unsigned char*)i; p < end; p++)
+    len += (*p & 0xC0) != 0x80;
   jv_free(j);
   return len;
 }
@@ -1442,12 +1445,36 @@ jv jv_string_explode(jv j) {
   const char* i = jv_string_value(j);
   int len = jv_string_length_bytes(jv_copy(j));
   const char* end = i + len;
-  jv a = jv_array_sized(len);
-  int c;
-  while ((i = jvp_utf8_next(i, end, &c))) {
-    a = jv_array_append(a, jv_number(c));
-    if (!jv_is_valid(a)) break;
+  /* Strings are valid UTF-8: every code point starts with a byte that is
+   * not a continuation byte, so counting those gives the number of elements. */
+  int count = 0;
+  for (const char* p = i; p < end; p++)
+    count += (*(const unsigned char*)p & 0xC0) != 0x80;
+  if (count > (INT_MAX >> 2)) {
+    /* too large for an array: let jv_array_set() report it */
+    jv a = jv_array_sized(len);
+    int c = 0;
+    int n = 0;
+    while ((i = jvp_utf8_next(i, end, &c))) {
+      a = jv_array_set(a, n++, jv_number(c));
+      if (!jv_is_valid(a)) break;
+    }
+    jv_free(j);
+    return a;
   }
+  jv a = jv_array_sized(count);
+  jvp_array* arr = jvp_array_ptr(a);
+  for (int n = 0; n < count; n++) {
+    int c;
+    if ((unsigned char)*i < 0x80) {
+      c = (unsigned char)*i++;
+    } else {
+      i = jvp_utf8_next(i, end, &c);
+    }
+    arr->elements[n] = jv_number(c);
+  }
+  arr->length = count;
+  a.size = count;
   jv_free(j);
   return a;
 }

@@ -119,6 +119,11 @@ map(tojson)
 null
 true
 
+# length, utf8bytelength and explode on multi-byte text
+["aé中😀" | length, utf8bytelength, explode, (explode | implode)]
+null
+[4,10,[97,233,20013,128512],"aé中😀"]
+
 #
 # Dictionary construction syntax
 #
