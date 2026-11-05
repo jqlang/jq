@@ -601,21 +601,34 @@ static jv escape_string(jv input, const char* escapings) {
     p++;
   }
 
-  jv ret = jv_string("");
-  const char* i = jv_string_value(input);
-  const char* end = i + jv_string_length_bytes(jv_copy(input));
-  const char* cstart;
-  int c = 0;
-  while ((i = jvp_utf8_next((cstart = i), end, &c))) {
+  /* Only ASCII bytes are ever escaped, and in valid UTF-8 they never occur
+   * inside a multi-byte sequence, so this can work byte by byte. */
+  const unsigned char* s = (const unsigned char*)jv_string_value(input);
+  size_t len = jv_string_length_bytes(jv_copy(input));
+  size_t outlen = 0;
+  for (size_t k = 0; k < len; k++) {
+    unsigned char c = s[k];
+    outlen += (c < 128 && lookup[c]) ? strlen(lookup[c]) : 1;
+  }
+  if (outlen == len) {
+    return input;
+  }
+  char* buf = jv_mem_alloc(outlen);
+  char* o = buf;
+  for (size_t k = 0; k < len; k++) {
+    unsigned char c = s[k];
     if (c < 128 && lookup[c]) {
-      ret = jv_string_append_str(ret, lookup[c]);
+      size_t l = strlen(lookup[c]);
+      memcpy(o, lookup[c], l);
+      o += l;
     } else {
-      ret = jv_string_append_buf(ret, cstart, i - cstart);
+      *o++ = (char)c;
     }
   }
+  jv ret = jv_string_sized(buf, outlen);
+  jv_mem_free(buf);
   jv_free(input);
   return ret;
-
 }
 
 static jv f_format(jq_state *jq, jv input, jv fmt) {
