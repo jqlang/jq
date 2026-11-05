@@ -119,6 +119,15 @@ map(tojson)
 null
 true
 
+# @html on text with and without characters to escape, around the word size
+[range(10) as $i | ("&", "<", ">", "'", "\"", "é", "😀") as $c | "abcdefghij"[:$i] + $c + "abcdefghij"[$i:] | @html | explode | length] | add
+null
+970
+
+"a<b&c>\"d\u0027é😀" | @html
+null
+"a&lt;b&amp;c&gt;&quot;d&apos;é😀"
+
 #
 # Dictionary construction syntax
 #
