@@ -119,6 +119,17 @@ map(tojson)
 null
 true
 
+# Strings with escapes after runs of unescaped bytes of every length around the word size
+[range(18) as $i | ("\\\"", "\\\\", "\\n", "\\u00e9", "\\ud83d\\ude00", "é", "😀") as $c | "\"" + "abcdefghijklmnopq"[:$i] + $c + "abcdefghijklmnopq"[$i:] + "\"" | fromjson | length] | unique
+null
+[18]
+
+# Errors in string literals keep their message and position
+.[] | try fromjson catch .
+["\"abcdefghi\u0001j\"", "[1,\n  \"abcdefghijklmnop\\x\"]"]
+"Invalid string: control characters from U+0000 through U+001F must be escaped at line 1, column 13 (while parsing '\"abcdefghi\u0001j\"')"
+"Invalid escape at line 2, column 22 (while parsing '[1,\n  \"abcdefghijklmnop\\x\"]')"
+
 #
 # Dictionary construction syntax
 #
