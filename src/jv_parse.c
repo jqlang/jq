@@ -3,6 +3,7 @@
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
+#include <stdint.h>
 #include "jv.h"
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
@@ -446,12 +447,39 @@ static int unhex4(char* hex) {
   return r;
 }
 
+/* True if some byte of x is below 0x20 or equal to `special`.  This is exact
+ * for "some byte", so a word reported clean has no such byte. */
+static int word_has_ctl_or(uint64_t x, unsigned char special) {
+  const uint64_t ones = UINT64_C(0x0101010101010101);
+  const uint64_t highs = UINT64_C(0x8080808080808080);
+  uint64_t q = x ^ (ones * special);
+  uint64_t t = ((x - ones * 0x20) & ~x) | ((q - ones) & ~q);
+  return (t & highs) != 0;
+}
+
 static pfunc found_string(struct jv_parser* p) {
   char* in = p->tokenbuf;
   char* out = p->tokenbuf;
   char* end = p->tokenbuf + p->tokenpos;
 
   while (in < end) {
+    /* Ordinary bytes are copied as a run: they need no processing, and
+     * out <= in, so the run can be moved in place. */
+    char* run = in;
+    while (end - in >= 8) {
+      uint64_t word;
+      memcpy(&word, in, 8);
+      if (word_has_ctl_or(word, '\\'))
+        break;
+      in += 8;
+    }
+    while (in < end && (unsigned char)*in >= 0x20 && *in != '\\')
+      in++;
+    if (in != run)
+      memmove(out, run, (size_t)(in - run));
+    out += in - run;
+    if (in == end)
+      break;
     char c = *in++;
     if (c == '\\') {
       if (in >= end)
@@ -754,6 +782,127 @@ static jv make_error(struct jv_parser* p, const char *fmt, ...) {
   return jv_invalid_with_msg(e);
 }
 
+/*
+ * Fast paths for the two most common runs of input: bytes inside a string
+ * that need no special handling, and whitespace between tokens.  They do
+ * exactly what scan() would do for each byte of the run (line and column
+ * tracking included), but without going through scan() byte by byte.  Each
+ * returns the number of bytes it consumed, or 0 when the slow path must
+ * handle the next byte.
+ */
+/* Makes room for n more bytes in the token buffer, as tokenadd() would one
+ * byte at a time.  Returns 0 if that is not possible (tokenadd() then reports
+ * the error). */
+static int token_reserve(struct jv_parser* p, size_t n) {
+  while ((size_t)p->tokenpos + n >= (size_t)p->tokenlen - 1) {
+    if (p->tokenlen > INT_MAX / 2)
+      return 0;
+    p->tokenlen *= 2;
+    p->tokenbuf = jv_mem_realloc(p->tokenbuf, p->tokenlen);
+  }
+  return 1;
+}
+
+static size_t string_plain_run(struct jv_parser* p) {
+  const unsigned char* s = (const unsigned char*)p->curr_buf + p->curr_buf_pos;
+  size_t avail = (size_t)(p->curr_buf_length - p->curr_buf_pos);
+  size_t n = 0;
+  for (;;) {
+    /* Short runs are common in escape-heavy text, so look at up to eight
+     * bytes one at a time first, and only then at whole words. */
+    size_t lim = avail - n >= 8 ? n + 8 : avail;
+    while (n < lim && s[n] >= 0x20 && s[n] != '"' && s[n] != '\\')
+      n++;
+    if (n < lim || n == avail)
+      break;
+    while (avail - n >= 8) {
+      uint64_t word;
+      memcpy(&word, s + n, 8);
+      if (word_has_ctl_or(word, '"') || word_has_ctl_or(word, '\\'))
+        break;
+      n += 8;
+    }
+  }
+  if (n == 0 || !token_reserve(p, n))
+    return 0;
+  memcpy(p->tokenbuf + p->tokenpos, s, n);
+  p->tokenpos += (int)n;
+  p->curr_buf_pos += (int)n;
+  p->column += (int)n;
+  p->last_ch_was_ws = 0;
+  return n;
+}
+
+/* A backslash and the byte after it, both in the current buffer.  scan()
+ * would take these two bytes in two steps, and leave the state at
+ * JV_PARSER_STRING again, so they are copied as they are. */
+static int string_escape_pair(struct jv_parser* p) {
+  const unsigned char* s = (const unsigned char*)p->curr_buf + p->curr_buf_pos;
+  if (p->curr_buf_length - p->curr_buf_pos < 2 || s[0] != '\\' || s[1] < 0x20)
+    return 0;
+  if (!token_reserve(p, 2))
+    return 0;
+  p->tokenbuf[p->tokenpos++] = '\\';
+  p->tokenbuf[p->tokenpos++] = (char)s[1];
+  p->curr_buf_pos += 2;
+  p->column += 2;
+  p->last_ch_was_ws = 0;
+  return 1;
+}
+
+/* Bytes that scan() classifies as LITERAL (see classify()), excluding the
+ * control characters, which have their own handling. */
+static size_t literal_run(struct jv_parser* p) {
+  const unsigned char* s = (const unsigned char*)p->curr_buf + p->curr_buf_pos;
+  size_t avail = (size_t)(p->curr_buf_length - p->curr_buf_pos);
+  size_t n = 0;
+  while (n < avail) {
+    unsigned char c = s[n];
+    if (c <= 0x20 || c == '"' || c == ',' || c == ':' || c == '[' || c == ']' ||
+        c == '{' || c == '}')
+      break;
+    n++;
+  }
+  if (n == 0 || !token_reserve(p, n))
+    return 0;
+  memcpy(p->tokenbuf + p->tokenpos, s, n);
+  p->tokenpos += (int)n;
+  p->curr_buf_pos += (int)n;
+  p->column += (int)n;
+  p->last_ch_was_ws = 0;
+  return n;
+}
+
+static size_t whitespace_run(struct jv_parser* p) {
+  const unsigned char* s = (const unsigned char*)p->curr_buf + p->curr_buf_pos;
+  size_t avail = (size_t)(p->curr_buf_length - p->curr_buf_pos);
+  size_t n = 0;
+  /* indentation: eight spaces at a time (a space only moves the column) */
+  while (avail - n >= 8) {
+    uint64_t word;
+    memcpy(&word, s + n, 8);
+    if (word != UINT64_C(0x2020202020202020))
+      break;
+    p->column += 8;
+    n += 8;
+  }
+  for (; n < avail; n++) {
+    unsigned char c = s[n];
+    if (c == '\n') {
+      p->line++;
+      p->column = 0;
+    } else if (c == ' ' || c == '\t' || c == '\r') {
+      p->column++;
+    } else {
+      break;
+    }
+  }
+  p->curr_buf_pos += (int)n;
+  if (n > 0)
+    p->last_ch_was_ws = 1;
+  return n;
+}
+
 jv jv_parser_next(struct jv_parser* p) {
   if (p->eof)
     return jv_invalid();
@@ -765,6 +914,19 @@ jv jv_parser_next(struct jv_parser* p) {
   char ch;
   presult msg = 0;
   while (!msg && p->curr_buf_pos < p->curr_buf_length) {
+    if (p->st == JV_PARSER_STRING) {
+      if (string_plain_run(p) || string_escape_pair(p))
+        continue;
+    } else if (p->st == JV_PARSER_NORMAL && !(p->flags & JV_PARSE_STREAMING) &&
+               !(p->stackpos == 0 && jv_is_valid(p->next))) {
+      /* Inside a value (not at a point where a finished value is handed out),
+       * whitespace between tokens and runs of literal bytes need no handling
+       * beyond what they do here. */
+      if (p->tokenpos == 0 && whitespace_run(p))
+        continue;
+      if (literal_run(p))
+        continue;
+    }
     ch = p->curr_buf[p->curr_buf_pos++];
     if (p->st == JV_PARSER_WAITING_FOR_RS) {
       if (ch == '\n') {
