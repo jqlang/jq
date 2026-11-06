@@ -35,4 +35,18 @@ if ! $VALGRIND $Q $JQ -e --slurpfile a $d/input '. == $a[0]' $d/out > /dev/null;
   exit 1
 fi
 
+# Output written to a file equals the string built by tojson, across the size of the output buffer
+$VALGRIND $Q $JQ -nc '[range(4090; 4100) as $n | "a\"é\u0001" * $n]' > $d/out1
+$VALGRIND $Q $JQ -nr '[range(4090; 4100) as $n | "a\"é\u0001" * $n] | tojson' > $d/out2
+if ! cmp -s $d/out1 $d/out2; then
+  echo "tojson differs from printed output"
+  exit 1
+fi
+$VALGRIND $Q $JQ -nac '[range(4090; 4100) as $n | "a\"é😀" * $n]' > $d/out1
+$VALGRIND $Q $JQ -nr '[range(4090; 4100) as $n | "a\"é😀" * $n] | tojson | split("é") | join("\\u00e9") | split("😀") | join("\\ud83d\\ude00")' > $d/out2
+if ! cmp -s $d/out1 $d/out2; then
+  echo "--ascii-output differs from tojson"
+  exit 1
+fi
+
 exit 0
