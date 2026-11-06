@@ -43,7 +43,7 @@ if ! cmp -s $d/out1 $d/out2; then
   exit 1
 fi
 $VALGRIND $Q $JQ -nac '[range(4090; 4100) as $n | "a\"é😀" * $n]' > $d/out1
-$VALGRIND $Q $JQ -nr '[range(4090; 4100) as $n | "a\"é😀" * $n] | tojson | gsub("é"; "\\u00e9") | gsub("😀"; "\\ud83d\\ude00")' > $d/out2
+$VALGRIND $Q $JQ -nr '[range(4090; 4100) as $n | "a\"é😀" * $n] | tojson | split("é") | join("\\u00e9") | split("😀") | join("\\ud83d\\ude00")' > $d/out2
 if ! cmp -s $d/out1 $d/out2; then
   echo "--ascii-output differs from tojson"
   exit 1
