@@ -540,6 +540,29 @@ static jv f_tostring(jq_state *jq, jv input) {
   }
 }
 
+// Array case of join/1; mirrors the jq definition, including its errors.
+static jv f_join_array(jq_state *jq, jv input, jv sep) {
+  if (jv_get_kind(input) != JV_KIND_ARRAY)
+    return ret_error2(input, sep, jv_string("_join_array input must be an array"));
+  jv acc = jv_string("");
+  int n = jv_array_length(jv_copy(input));
+  for (int i = 0; i < n; i++) {
+    if (i > 0) {
+      acc = binop_plus(acc, jv_copy(sep));
+      if (!jv_is_valid(acc)) break;
+    }
+    jv x = jv_array_get(jv_copy(input), i);
+    jv_kind k = jv_get_kind(x);
+    if (k == JV_KIND_TRUE || k == JV_KIND_FALSE || k == JV_KIND_NUMBER)
+      x = f_tostring(jq, x);
+    acc = binop_plus(acc, x);
+    if (!jv_is_valid(acc)) break;
+  }
+  jv_free(input);
+  jv_free(sep);
+  return acc;
+}
+
 static jv f_utf8bytelength(jq_state *jq, jv input) {
   if (jv_get_kind(input) != JV_KIND_STRING)
     return type_error(input, "only strings have UTF-8 byte length");
@@ -2047,6 +2070,7 @@ BINOPS
   CFUNC(f_tonumber, "tonumber", 1),
   CFUNC(f_toboolean, "toboolean", 1),
   CFUNC(f_tostring, "tostring", 1),
+  CFUNC(f_join_array, "_join_array", 2),
   CFUNC(f_keys, "keys", 1),
   CFUNC(f_keys_unsorted, "keys_unsorted", 1),
   CFUNC(f_startswith, "startswith", 2),
