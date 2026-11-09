@@ -48,6 +48,9 @@ printf 'a\0b\nc\0d\ne' > $d/input
 $VALGRIND $Q $JQ -Rse '. == "a\u0000b\nc\u0000d\ne"' $d/input
 $VALGRIND $Q $JQ -Rne '[inputs] == ["a\u0000b", "c\u0000d", "e"]' $d/input
 
+{ head -c 4091 /dev/zero | tr '\0' x; printf '\303\251\na\0b\nc'; } > $d/input
+$VALGRIND $Q $JQ -Rne '[inputs | length] == [4092, 3, 1]' $d/input
+
 ## Test constant folding
 nref=$($VALGRIND $Q $JQ -n --debug-dump-disasm '"foo"' | wc -l)
 for exp in '1+1' '1-1' '2*3' '9/3' '9%3' '9==3' '9!=3' \
