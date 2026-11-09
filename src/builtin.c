@@ -595,7 +595,10 @@ static jv escape_string(jv input, const char* escapings) {
   const char* p = escapings;
   lookup[0] = "\\0";
   while (*p) {
-    lookup[(int)*p] = p+1;
+    unsigned char key = (unsigned char)*p;
+    if (key < 128) {
+      lookup[key] = p+1;
+    }
     p++;
     p += strlen(p);
     p++;
