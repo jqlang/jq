@@ -78,6 +78,7 @@ block block_drop_unreferenced(block body);
 
 jv block_take_imports(block* body);
 jv block_list_funcs(block body, int omit_underscores);
+jv block_unbound_funcs(block body, jv refs);
 
 int block_compile(block, struct bytecode**, struct locfile*, jv);
 

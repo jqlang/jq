@@ -521,6 +521,15 @@ if ! grep -q "circular import" $d/out; then
     exit 1
 fi
 
+# Rough check that src/builtin.jq toplevel defs are exactly the lines starting
+# with "def ", as required by builtins_bind()'s sloppy parsing.
+if ! $VALGRIND $JQ -RenL "$JQBASEDIR/src" -e '
+	[inputs|select(.[:4]=="def ")[4:]/":"|.[0]/"("|.[0]]
+	 == ["builtin"|modulemeta.defs[]/"/"|.[0]]' "$JQBASEDIR/src/builtin.jq" >/dev/null; then
+  printf 'Each top-level def in src/builtin.jq must start a line with "def "\n' 1>&2
+  exit 1
+fi
+
 ## Halt
 
 if ! $VALGRIND $Q $JQ -n halt; then

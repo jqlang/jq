@@ -1,3 +1,4 @@
+# n.b. This file's definitions are formatting-sensitive, see builtins_bind() in builtin.c.
 def halt_error: halt_error(5);
 def error(msg): msg|error;
 def map(f): [.[] | f];
