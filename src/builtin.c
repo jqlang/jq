@@ -2202,14 +2202,52 @@ static block gen_builtin_list(block builtins) {
 }
 
 int builtins_bind(jq_state *jq, block* bb) {
-  block builtins;
-  struct locfile* src = locfile_init(jq, "<builtin>", jq_builtins, sizeof(jq_builtins)-1);
-  int nerrors = jq_parse_library(src, &builtins);
-  assert(!nerrors);
-  locfile_free(src);
+  /* Avoid parsing all of builtin.jq on each start by selectively slicing out
+   * defs that the program can reach. Somehow this runs circles around actually
+   * parsing. This trick requires that builtin.jq maintain a special textual
+   * structure where (a) toplevel defs start with "def " at the beginning of
+   * the line and (b) nested defs don't.
+   * We work from the bottom of the builtins so that one pass catches indirect
+   * references via later builtins. builtins/0 pulls in every other def; we
+   * could avoid that, but this seemed easier. */
+  jv refs = block_unbound_funcs(*bb, jv_object());
+  int need_all = jv_object_has(jv_copy(refs), jv_string("builtins"));
+  int nerrors = 0;
+
+  block builtins = gen_noop();
+  const char *def_end = jq_builtins + sizeof(jq_builtins)-1;
+  while (def_end > jq_builtins) {
+    const char *def_start = def_end-1;
+    while (def_start > jq_builtins && strncmp(def_start-1, "\ndef ", 5))
+      def_start--;
+    if (strncmp(def_start, "def ", 4))
+      break;
+
+    const char *name = def_start+4;
+    size_t len = 0;
+    // XXX sloppy constraint on builtin.jq def formatting
+    while (name[len] != '(' && name[len] != ':')
+      len++;
+
+    if (need_all || jv_object_has(jv_copy(refs), jv_string_sized(name, len))) {
+      block b;
+      struct locfile* src = locfile_init(jq, "<builtin>", def_start, def_end - def_start);
+      nerrors += jq_parse_library(src, &b);
+      assert(block_is_single(b)); // exactly one top-level def
+      locfile_free(src);
+      refs = block_unbound_funcs(b, refs);
+      builtins = BLOCK(b, builtins);
+    }
+
+    def_end = def_start;
+  }
 
   builtins = bind_bytecoded_builtins(builtins);
-  builtins = gen_cbinding(function_list, sizeof(function_list)/sizeof(function_list[0]), builtins);
+  for (size_t i = 0; i < sizeof(function_list)/sizeof(function_list[0]); i++) {
+    if (need_all || jv_object_has(jv_copy(refs), jv_string(function_list[i].name)))
+      builtins = gen_cbinding(&function_list[i], 1, builtins);
+  }
+  jv_free(refs);
   builtins = gen_builtin_list(builtins);
 
   *bb = block_bind_referenced(builtins, *bb, OP_IS_CALL_PSEUDO);

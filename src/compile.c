@@ -497,6 +497,17 @@ jv block_take_imports(block* body) {
   return imports;
 }
 
+// Collect unbound function names (for builtin lazy parsing)
+jv block_unbound_funcs(block body, jv refs) {
+  for (inst *i = body.first; i != NULL; i = i->next) {
+    if (i->symbol != NULL && i->bound_by == NULL && (opcode_describe(i->op)->flags & OP_IS_CALL_PSEUDO))
+      refs = jv_object_set(refs, jv_string(i->symbol), jv_true());
+    refs = block_unbound_funcs(i->subfn, refs);
+    refs = block_unbound_funcs(i->arglist, refs);
+  }
+  return refs;
+}
+
 jv block_list_funcs(block body, int omit_underscores) {
   jv funcs = jv_object(); // Use the keys for set semantics.
   for (inst *pos = body.first; pos != NULL; pos = pos->next) {
