@@ -191,6 +191,7 @@ struct jq_util_input_state {
   jv slurped;
   char buf[4096];
   size_t buf_valid_len;
+  size_t buf_dirty_len;
   jv current_filename;
   size_t current_line;
   int at_file_start;
@@ -211,6 +212,7 @@ jq_util_input_state *jq_util_input_init(jq_util_msg_cb err_cb, void *err_cb_data
   new_state->err_cb_data = err_cb_data;
   new_state->slurped = jv_invalid();
   new_state->current_filename = jv_invalid();
+  new_state->buf_dirty_len = sizeof(new_state->buf);
 
   return new_state;
 }
@@ -297,7 +299,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
   state->buf_valid_len = 0;
   if (state->current_input) {
     char *res;
-    memset(state->buf, 0xff, sizeof(state->buf));
+    memset(state->buf, 0xff, state->buf_dirty_len);
 
     const int max_utf8_len = 4;
     const int max_gets_len = sizeof(state->buf) - max_utf8_len;
@@ -305,6 +307,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
            ferror(state->current_input) && errno == EINTR)
       clearerr(state->current_input);
     if (res == NULL) {
+      state->buf_dirty_len = sizeof(state->buf);
       state->buf[0] = 0;
       if (ferror(state->current_input))
         state->failures++;
@@ -344,6 +347,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
       } else {
         state->buf_valid_len = (p - state->buf) + 1;
       }
+      state->buf_dirty_len = state->buf_valid_len + 1;
     }
     if (state->at_file_start) {
       // Strip UTF-8 BOM at the start of each file
