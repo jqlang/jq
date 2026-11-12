@@ -595,7 +595,13 @@ static jv escape_string(jv input, const char* escapings) {
   const char* p = escapings;
   lookup[0] = "\\0";
   while (*p) {
-    lookup[(int)*p] = p+1;
+    unsigned int uc = (unsigned char)*p;
+    /* *p is a plain char and is signed on the platforms jq targets, so
+       a byte >= 0x80 must not be cast directly to int (it would
+       sign-extend and write before the start of lookup). Non-ASCII
+       entries are ignored; lookups only consult codes < 128. */
+    if (uc < 128)
+      lookup[uc] = p+1;
     p++;
     p += strlen(p);
     p++;
