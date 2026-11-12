@@ -1105,4 +1105,10 @@ if $JQ -nf "$d/nul_modulemeta.jq" >/dev/null 2>/dev/null; then
   exit 1
 fi
 
+## min(g)/max(g) must consume inputs in a single pass
+printf '4 9 2 7\n' | $VALGRIND $Q $JQ -ne '[max(inputs), input_line_number] == [9, 1]' > /dev/null
+printf '4 9 2 7\n' | $VALGRIND $Q $JQ -ne '[min(inputs)] == [2]' > /dev/null
+printf '\n' | $VALGRIND $Q $JQ -ne '[max(inputs)] == []' > /dev/null
+printf '4 9 2 7\n' | $VALGRIND $Q $JQ -ne 'max(input, input, input) == 9 and ([inputs] == [7])' > /dev/null
+
 exit 0

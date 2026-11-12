@@ -1726,8 +1726,11 @@ jq \'group_by(\.foo)\'
 .
 .IP "" 0
 .
-.SS "min, max, min_by(path_exp), max_by(path_exp)"
+.SS "min, max, min(f), max(f), min_by(path_exp), max_by(path_exp)"
 Find the minimum or maximum element of the input array\.
+.
+.P
+The \fBmin(f)\fR and \fBmax(f)\fR functions find the minimum or maximum of the outputs of the generator \fBf\fR, without collecting them into an array\. They produce no output if \fBf\fR produces none\.
 .
 .P
 The \fBmin_by(path_exp)\fR and \fBmax_by(path_exp)\fR functions allow you to specify a particular field or property to examine, e\.g\. \fBmin_by(\.foo)\fR finds the object with the smallest \fBfoo\fR field\.
@@ -1739,6 +1742,10 @@ The \fBmin_by(path_exp)\fR and \fBmax_by(path_exp)\fR functions allow you to spe
 jq \'min\'
    [5,4,2,7]
 => 2
+
+jq \'[min(\.[]), max(\.[]), max(empty)]\'
+   [5,4,2,7]
+=> [2,7]
 
 jq \'max_by(\.foo)\'
    [{"foo":1, "bar":14}, {"foo":2, "bar":3}]

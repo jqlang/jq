@@ -2145,6 +2145,41 @@ static block gen_last_1(void) {
                      gen_op_bound(LOADVN, last_var)));
 }
 
+// gen_minmax_1 generates bytecoded builtins for min(g) and max(g).
+// The cmp_op is "_less" for min(g) and "_greatereq" for max(g), so that ties
+// resolve like min/0 and max/0: min keeps the first, max keeps the last.
+// Like last(g), this yields no output if g yields no output, without boxing.
+static block gen_minmax_1(const char *cmp_op) {
+  block ret_var = gen_op_var_fresh(STOREV, "ret");
+  block is_empty_var = gen_op_var_fresh(STOREV, "is_empty");
+  block init = BLOCK(gen_op_simple(DUP),
+                     gen_const(jv_null()),
+                     ret_var,
+                     gen_op_simple(DUP),
+                     gen_const(jv_true()),
+                     is_empty_var);
+  block call_arg = BLOCK(
+      gen_call("arg", gen_noop()),
+      gen_cond(
+        gen_or(gen_op_bound(LOADV, is_empty_var),
+               gen_call(cmp_op, BLOCK(gen_lambda(gen_noop()),
+                                      gen_lambda(gen_op_bound(LOADV, ret_var))))),
+        BLOCK(gen_op_simple(DUP),
+              gen_op_bound(STOREV, ret_var)),
+        gen_noop()),
+      gen_const(jv_false()),
+      gen_op_bound(STOREV, is_empty_var),
+      gen_op_simple(BACKTRACK));
+  block if_empty = gen_op_simple(BACKTRACK);
+  return BLOCK(init,
+               gen_op_target(FORK, call_arg),
+               call_arg,
+               BLOCK(gen_op_bound(LOADVN, is_empty_var),
+                     gen_op_target(JUMP_F, if_empty),
+                     if_empty,
+                     gen_op_bound(LOADVN, ret_var)));
+}
+
 struct bytecoded_builtin { const char* name; block code; };
 static block bind_bytecoded_builtins(block b) {
   block builtins = gen_noop();
@@ -2165,6 +2200,8 @@ static block bind_bytecoded_builtins(block b) {
                      gen_call("arg", gen_noop()),
                      gen_op_simple(PATH_END))},
       {"last", gen_last_1()},
+      {"min", gen_minmax_1("_less")},
+      {"max", gen_minmax_1("_greatereq")},
     };
     for (unsigned i=0; i<sizeof(builtin_def_1arg)/sizeof(builtin_def_1arg[0]); i++) {
       builtins = BLOCK(builtins, gen_function(builtin_def_1arg[i].name,
