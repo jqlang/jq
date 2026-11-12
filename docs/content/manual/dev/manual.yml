@@ -1595,10 +1595,14 @@ sections:
             input: '[{"foo":1, "bar":10}, {"foo":3, "bar":100}, {"foo":1, "bar":1}]'
             output: ['[[{"foo":1, "bar":10}, {"foo":1, "bar":1}], [{"foo":3, "bar":100}]]']
 
-      - title: "`min`, `max`, `min_by(path_exp)`, `max_by(path_exp)`"
+      - title: "`min`, `max`, `min(f)`, `max(f)`, `min_by(path_exp)`, `max_by(path_exp)`"
         body: |
 
           Find the minimum or maximum element of the input array.
+
+          The `min(f)` and `max(f)` functions find the minimum or maximum
+          of the outputs of the generator `f`, without collecting them into
+          an array. They produce no output if `f` produces none.
 
           The `min_by(path_exp)` and `max_by(path_exp)` functions allow
           you to specify a particular field or property to examine, e.g.
@@ -1608,6 +1612,9 @@ sections:
           - program: 'min'
             input: '[5,4,2,7]'
             output: ['2']
+          - program: '[min(.[]), max(.[]), max(empty)]'
+            input: '[5,4,2,7]'
+            output: ['[2,7]']
           - program: 'max_by(.foo)'
             input: '[{"foo":1, "bar":14}, {"foo":2, "bar":3}]'
             output: ['{"foo":2, "bar":3}']

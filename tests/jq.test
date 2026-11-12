@@ -2894,3 +2894,56 @@ null
 try ((reduce range(10001) as $_ ({}; {a: .})) as $x | [$x, $x] | unique) catch .
 null
 "Comparison too deep"
+
+# min(g) and max(g) stream extrema
+[min(.[]), max(.[])]
+[5,4,2,7]
+[2,7]
+
+[min(empty), max(empty)]
+null
+[]
+
+[min(1,null,"a",[1],{}), max(1,null,"a",[1],{})]
+null
+[null,{}]
+
+try max(1,error("x")) catch .
+null
+"x"
+
+# min(g)/max(g) tie-breaking matches min/0 and max/0: min keeps the first
+# of equal values, max keeps the last
+. as $a | [(min($a[])|tojson), (min|tojson), (max($a[])|tojson), (max|tojson)]
+[{"b":1,"a":2},{"a":2,"b":1}]
+["{\"b\":1,\"a\":2}","{\"b\":1,\"a\":2}","{\"a\":2,\"b\":1}","{\"a\":2,\"b\":1}"]
+
+. as $a | [(min($a[])|tojson), (max($a[])|tojson)]
+[-0,0]
+["-0","0"]
+
+# nothing emitted when the generator is empty, first items null/false
+[max(false,null), min(false,null), max(null,false), min(empty)]
+null
+[false,null,false]
+
+# nested and repeated use, errors before and after values
+[max(min(3,1,2), max(5,4)), min(max(empty), 7)]
+null
+[5,7]
+
+([max(nan,1), min(nan,1)]|tojson) == ([([nan,1]|max), ([nan,1]|min)]|tojson)
+null
+true
+
+try max(error("x"), 1) catch .
+null
+"x"
+
+[label $out | max(1, 3, (2|., break $out))]
+null
+[]
+
+[limit(2; max(1,2,3), min(4,5))]
+null
+[3,4]
