@@ -2012,65 +2012,89 @@ jv jv_copy(jv j) {
 }
 
 /*
+ * Release a child of a container that is being freed. Values that own no
+ * memory are skipped, strings and numbers are freed in place, and only
+ * containers whose last reference is dropped are queued, so that flat values
+ * never touch the heap-allocated buffer.
+ */
+static void jvp_free_child(jv j, jv** pending, size_t* len, size_t* cap) {
+  if (!JVP_IS_ALLOCATED(j))
+    return;
+  switch (JVP_KIND(j)) {
+    case JV_KIND_STRING:
+      jvp_string_free(j);
+      return;
+    case JV_KIND_NUMBER:
+      jvp_number_free(j);
+      return;
+    default:
+      break;
+  }
+  if (!jvp_refcnt_dec(j.u.ptr))
+    return;
+  if (*len == *cap) {
+    *cap = *cap ? *cap * 2 : 16;
+    *pending = jv_mem_realloc(*pending, *cap * sizeof(jv));
+  }
+  (*pending)[(*len)++] = j;
+}
+
+/*
  * Free children iteratively via a heap-allocated buffer to avoid
  * recursion through jv_free, which would cause stack overflow on
  * deeply nested values.
  */
 void jv_free(jv j) {
+  if (!JVP_IS_ALLOCATED(j))
+    return;
+  switch (JVP_KIND(j)) {
+    case JV_KIND_STRING:
+      jvp_string_free(j);
+      return;
+    case JV_KIND_NUMBER:
+      jvp_number_free(j);
+      return;
+    default:
+      break;
+  }
+  if (!jvp_refcnt_dec(j.u.ptr))
+    return;
   jv* pending = NULL;
   size_t len = 0, cap = 0;
   while (1) {
+    /* j is a container whose reference count has dropped to zero */
     switch (JVP_KIND(j)) {
-      case JV_KIND_ARRAY:
-        if (jvp_refcnt_dec(j.u.ptr)) {
-          jvp_array* arr = jvp_array_ptr(j);
-          if (len + arr->length > cap) {
-            cap = (len + arr->length) * 2;
-            pending = jv_mem_realloc(pending, cap * sizeof(jv));
-          }
-          for (int i = 0; i < arr->length; i++)
-            pending[len++] = arr->elements[i];
-          jv_mem_free(arr);
-        }
+      case JV_KIND_ARRAY: {
+        jvp_array* arr = jvp_array_ptr(j);
+        for (int i = 0; i < arr->length; i++)
+          jvp_free_child(arr->elements[i], &pending, &len, &cap);
+        jv_mem_free(arr);
         break;
-      case JV_KIND_OBJECT:
-        if (jvp_refcnt_dec(j.u.ptr)) {
-          int sz = jvp_object_size(j);
-          if (len + sz > cap) {
-            cap = (len + sz) * 2;
-            pending = jv_mem_realloc(pending, cap * sizeof(jv));
+      }
+      case JV_KIND_OBJECT: {
+        int sz = jvp_object_size(j);
+        for (int i = 0; i < sz; i++) {
+          struct object_slot* slot = jvp_object_get_slot(j, i);
+          if (jv_get_kind(slot->string) != JV_KIND_NULL) {
+            jvp_string_free(slot->string);
+            jvp_free_child(slot->value, &pending, &len, &cap);
           }
-          for (int i = 0; i < sz; i++) {
-            struct object_slot* slot = jvp_object_get_slot(j, i);
-            if (jv_get_kind(slot->string) != JV_KIND_NULL) {
-              jvp_string_free(slot->string);
-              pending[len++] = slot->value;
-            }
-          }
-          jv_mem_free(jvp_object_ptr(j));
         }
+        jv_mem_free(jvp_object_ptr(j));
         break;
+      }
       case JV_KIND_INVALID:
-        if (JVP_HAS_FLAGS(j, JVP_FLAGS_INVALID_MSG) && jvp_refcnt_dec(j.u.ptr)) {
-          if (len + 1 > cap) {
-            cap = (len + 1) * 2;
-            pending = jv_mem_realloc(pending, cap * sizeof(jv));
-          }
-          pending[len++] = ((jvp_invalid*)j.u.ptr)->errmsg;
-          jv_mem_free(j.u.ptr);
-        }
+        jvp_free_child(((jvp_invalid*)j.u.ptr)->errmsg, &pending, &len, &cap);
+        jv_mem_free(j.u.ptr);
         break;
-      case JV_KIND_STRING:
-        jvp_string_free(j);
-        break;
-      case JV_KIND_NUMBER:
-        jvp_number_free(j);
-        break;
+      default:
+        assert(0);
     }
     if (len == 0) break;
     j = pending[--len];
   }
-  jv_mem_free(pending);
+  if (pending)
+    jv_mem_free(pending);
 }
 
 int jv_get_refcnt(jv j) {
