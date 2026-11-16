@@ -45,3 +45,31 @@
 . | try @base64d catch .
 "QUJDa"
 "string (\"QUJDa\") trailing base64 byte found"
+
+# padding is only allowed at the end of the input (#3730)
+. | try @base64d catch .
+"YWJjZA==ZWZn"
+"string (\"YWJjZA==ZWZn\") is not valid base64 data"
+
+. | try @base64d catch .
+"YW=Jj"
+"string (\"YW=Jj\") is not valid base64 data"
+
+. | try @base64d catch .
+"=YWJj"
+"string (\"=YWJj\") is not valid base64 data"
+
+. | try @base64d catch .
+"bW9ua2V5Cg== ZmlzaAo="
+"string (\"bW9ua2V5Cg== ZmlzaAo=\") is not valid base64 data"
+
+# @base64 string interpolation encodes each value separately
+@base64 "\("a")\("bc")" | ., try @base64d catch .
+null
+"YQ==YmM="
+"string (\"YQ==YmM=\") is not valid base64 data"
+
+# padded and unpadded input is still accepted
+map(@base64d)
+["YWJjZA==", "YWJjZA", "YWJjZGU=", "YWJjZGU", "YWJjZGVm", "YQ==", "=="]
+["abcd","abcd","abcde","abcde","abcdef","a",""]
