@@ -809,7 +809,8 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     uint32_t ri = 0;
     int input_bytes_read=0;
     uint32_t code = 0;
-    for (int i=0; i<len && data[i] != '='; i++) {
+    int i;
+    for (i=0; i<len && data[i] != '='; i++) {
       if (BASE64_DECODE_TABLE[data[i]] == BASE64_INVALID_ENTRY) {
         free(result);
         return type_error(input, "is not valid base64 data");
@@ -825,6 +826,13 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
         result[ri++] = code & 0xFF;
         input_bytes_read = 0;
         code = 0;
+      }
+    }
+    // Only padding may follow the first '='
+    for (; i<len; i++) {
+      if (data[i] != '=') {
+        free(result);
+        return type_error(input, "is not valid base64 data");
       }
     }
     if (input_bytes_read == 3) {
