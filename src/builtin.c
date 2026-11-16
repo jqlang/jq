@@ -1,6 +1,3 @@
-#if __SIZEOF_POINTER__==4 && !defined(__ILP32__)
-# define _TIME_BITS 64
-#endif
 #ifndef __sun__
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED 1
@@ -10,6 +7,21 @@
 #endif
 #ifdef __OpenBSD__
 # define _BSD_SOURCE
+#endif
+/* On 32-bit ABIs, request 64-bit time_t.  glibc's features-time64.h
+   requires _FILE_OFFSET_BITS=64 whenever _TIME_BITS=64 is set, so define
+   both here (only if not already defined externally) to make this
+   translation unit self-contained on both x32 (ILP32 on x86-64, where
+   time_t is already 64-bit) and true 32-bit ABIs such as i386/arm32.
+   Keep these after the feature-test macros above so glibc still enables
+   the default POSIX extensions (e.g. setenv) for this TU. */
+#if __SIZEOF_POINTER__==4
+# ifndef _FILE_OFFSET_BITS
+#  define _FILE_OFFSET_BITS 64
+# endif
+# if !defined(_TIME_BITS) && _FILE_OFFSET_BITS == 64
+#  define _TIME_BITS 64
+# endif
 #endif
 #include <sys/time.h>
 #include <stdlib.h>
