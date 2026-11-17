@@ -70,14 +70,16 @@ jq bundles [yyjson](https://github.com/ibireme/yyjson) in `vendor/yyjson/` and
 uses it as a fast path for parsing JSON. There is nothing to enable: it is
 compiled in by the normal build above and is always on. It is used for:
 
-- regular files given as arguments, or stdin redirected from a file
-  (`jq . file.json`, `jq . < file.json`)
+- files given as arguments, and stdin, whether a regular file or a pipe
+  (`jq . file.json`, `jq . < file.json`, `curl ... | jq .`)
 - `fromjson` and `--argjson`/`--jsonargs` text
 
-It is not used for pipes or terminals (`curl ... | jq`), `--stream`, `--seq`,
-or `--raw-input`; those use jq's original parser. If yyjson rejects any input
-(NaN, invalid UTF-8, very deep nesting, syntax errors), jq re-parses it with
-the original parser, so results and error messages are the same as before.
+Input is read completely before parsing, so a pipe that never closes
+(`tail -f log | jq .`) produces no output until it ends. Not covered:
+`--raw-input` (not JSON), `--stream` and `--seq`; those use jq's original
+parser. If yyjson rejects any input (NaN, invalid UTF-8, very deep nesting,
+syntax errors), jq replays it through the original parser, so results and
+error messages are the same as before.
 
 To try it, run jq on a large file and compare against a jq without it:
 

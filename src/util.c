@@ -208,6 +208,8 @@ struct jq_util_input_state {
   size_t fast_lines_to; // bytes whose newlines are already in current_line
   size_t fast_emitted;  // values of the loaded file already handed out
   size_t fast_skip;     // values jv_parser must discard after a fallback
+  int fast_seekable;    // loaded file can be rewound (else replayed from memory)
+  char *fast_mem;       // input buffer backing an fmemopen() replay
   off_t fast_stdin_off; // where stdin was before being slurped, for re-reading
 };
 
@@ -265,6 +267,7 @@ void jq_util_input_free(jq_util_input_state **state) {
   if (old_state->parser != NULL)
     jv_parser_free(old_state->parser);
   fast_release(old_state);
+  free(old_state->fast_mem);
   for (int i = 0; i < old_state->nfiles; i++)
     free(old_state->files[i]);
   free(old_state->files);
@@ -409,37 +412,44 @@ static int fast_load_next(jq_util_input_state *state) {
       }
     }
     struct stat st;
-    if (fstat(fileno(fp), &st) != 0 || !S_ISREG(st.st_mode) || st.st_size < 0 ||
-        (uint64_t)st.st_size >= (uint64_t)INT32_MAX) {
-      // Pipes, ttys, huge files: stream them through jv_parser instead.
+    int regular = fstat(fileno(fp), &st) == 0 && S_ISREG(st.st_mode);
+#ifdef WIN32
+    if (!regular) {
+      // No fmemopen() here, so a rejected pipe could not be replayed.
       state->curr_file--;
       if (fp != stdin) fclose(fp);
       state->fast_enabled = 0;
       return 0;
     }
-    off_t start_off = ftello(fp);
-    size_t cap = (size_t)st.st_size, len = 0;
+#endif
+    // Read everything: regular files, pipes, ttys (until EOF) alike.
+    off_t start_off = regular ? ftello(fp) : 0;
+    size_t cap = regular ? (size_t)st.st_size + 1 : 65536, len = 0;
     char *buf = jv_mem_alloc(cap + FAST_PADDING + 1);
-    size_t n;
     for (;;) {
-      n = fread(buf + len, 1, cap - len, fp);
+      if (len == cap) {
+        cap *= 2;
+        buf = jv_mem_realloc(buf, cap + FAST_PADDING + 1);
+      }
+      size_t n = fread(buf + len, 1, cap - len, fp);
       len += n;
-      if (len == cap || n == 0) break;
+      if (n == 0) break;
     }
     int bad = ferror(fp);
-    if (!bad && len == cap) {
-      // The file might have grown; if there is more data, don't guess.
-      char extra;
-      if (fread(&extra, 1, 1, fp) == 1) bad = 1;
-    }
     int is_stdin = fp == stdin;
     if (is_stdin) clearerr(stdin); else fclose(fp);
-    if (bad) {
+    if (bad && regular) {
       // Let the chunked reader redo this file and report errors its way.
       jv_mem_free(buf);
       state->curr_file--;
       state->fast_enabled = 0;
       return 0;
+    }
+    if (bad) {
+      // Can't re-read a pipe; report as the chunked reader would and
+      // carry on with what arrived.
+      fprintf(stderr, "jq: error: %s\n", strerror(errno));
+      state->failures++;
     }
     size_t skip = 0;
     if (len >= 3 && !memcmp(buf, "\xEF\xBB\xBF", 3)) skip = 3;
@@ -448,6 +458,7 @@ static int fast_load_next(jq_util_input_state *state) {
     state->fast_orig = buf;
     state->fast_work = jv_mem_alloc(len + FAST_PADDING + 1);
     memcpy(state->fast_work, buf, len + FAST_PADDING + 1);
+    state->fast_seekable = regular;
     state->fast_stdin_off = is_stdin ? start_off : 0;
     state->fast_len = len;
     state->fast_pos = skip;
@@ -604,16 +615,26 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
           if (r == 0)
             continue; // file exhausted; load the next one
           if (r == -1) {
-            // yyjson can't take the rest of this file.  Re-read the whole file
-            // with the regular chunked jv_parser, discarding the values that
-            // were already returned, so that error messages, line/column
+            // yyjson can't take the rest of this file.  Replay the whole file
+            // through the regular chunked jv_parser, discarding the values
+            // that were already returned, so that error messages, line/column
             // numbers and input_line_number are exactly jv_parser's.
-            // A regular file can be rewound, so this is always possible.
-            if (state->fast_stdin_off >= 0 && !strcmp(state->files[state->curr_file - 1], "-"))
-              fseeko(stdin, state->fast_stdin_off, SEEK_SET);
-            state->curr_file--;
+            // Regular files are rewound; pipes are replayed from memory.
             state->fast_skip = state->fast_emitted;
             state->fast_enabled = 0;
+            if (state->fast_seekable) {
+              if (state->fast_stdin_off >= 0 && !strcmp(state->files[state->curr_file - 1], "-"))
+                fseeko(stdin, state->fast_stdin_off, SEEK_SET);
+              state->curr_file--;
+            } else {
+#ifndef WIN32
+              state->fast_mem = state->fast_orig;
+              state->fast_orig = NULL;
+              state->current_input = fmemopen(state->fast_mem, state->fast_len, "r");
+              state->current_line = 0;
+              state->at_file_start = 1;
+#endif
+            }
             fast_release(state);
             continue;
           } else {
