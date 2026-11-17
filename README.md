@@ -64,6 +64,28 @@ make LDFLAGS=-all-static
 
 If you're not using the latest git version but instead building a released tarball (available on the release page), skip the `autoreconf` step, and flex or bison won't be needed.
 
+##### Faster JSON parsing with yyjson
+
+jq bundles [yyjson](https://github.com/ibireme/yyjson) in `vendor/yyjson/` and
+uses it as a fast path for parsing JSON. There is nothing to enable: it is
+compiled in by the normal build above and is always on. It is used for:
+
+- regular files given as arguments, or stdin redirected from a file
+  (`jq . file.json`, `jq . < file.json`)
+- `fromjson` and `--argjson`/`--jsonargs` text
+
+It is not used for pipes or terminals (`curl ... | jq`), `--stream`, `--seq`,
+or `--raw-input`; those use jq's original parser. If yyjson rejects any input
+(NaN, invalid UTF-8, very deep nesting, syntax errors), jq re-parses it with
+the original parser, so results and error messages are the same as before.
+
+To try it, run jq on a large file and compare against a jq without it:
+
+```console
+time ./jq -c . big.json > /dev/null
+time /usr/bin/jq -c . big.json > /dev/null
+```
+
 ##### Cross-Compilation
 
 For details on cross-compilation, check out the [GitHub Actions file](.github/workflows/ci.yml) and the [cross-compilation wiki page](https://github.com/jqlang/jq/wiki/Cross-compilation).
