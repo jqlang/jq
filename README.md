@@ -44,6 +44,16 @@ docker run --rm -i -v "$PWD:$PWD" -w "$PWD" ghcr.io/jqlang/jq:latest '.version' 
 
 #### Instructions
 
+The quick way, from a git checkout (fetches submodules, builds, tests and
+installs; sudo is used only for the install step):
+
+```console
+./install.sh                  # or: ./install.sh --prefix ~/.local --no-check
+```
+
+By default `jq` is linked statically against its own `libjq`, so an installed
+`jq` never picks up a different `libjq.so` from the system. The manual steps:
+
 ```console
 git submodule update --init    # if building from git to get oniguruma, yyjson and stb_sprintf
 autoreconf -i                  # if building from git

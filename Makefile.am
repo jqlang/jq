@@ -137,8 +137,12 @@ bin_PROGRAMS = jq
 jq_SOURCES = src/main.c
 jq_LDADD = libjq.la -lm
 
+# Link libjq into the jq executable by default.  Otherwise an installed jq
+# can pick up a different (e.g. distribution-provided) libjq.so at run time.
 if ENABLE_ALL_STATIC
 jq_LDFLAGS = -all-static
+else
+jq_LDFLAGS = -static-libtool-libs
 endif
 
 ### Tests (make check)
