@@ -1758,9 +1758,12 @@ static int jv2tm(jv a, struct tm *tm, int localtime) {
     double d = jv_number_value(n);
     if (i == 0) /* year */
       d -= 1900;
-    *(int *)((void *)tm + offsets[i]) = d < INT_MIN ? INT_MIN :
-                                        d > INT_MAX ? INT_MAX : (int)d;
     jv_free(n);
+    if (d < INT_MIN || d > INT_MAX) {
+      jv_free(a);
+      return 0;
+    }
+    *(int *)((void *)tm + offsets[i]) = (int)d;
   }
 
   if (localtime) {

@@ -1964,6 +1964,19 @@ try mktime catch .
 ["a",1,2,3,4,5,6,7]
 "mktime requires parsed datetime inputs"
 
+# a field that does not fit in an int is an error, not clamped (#3731)
+[.[] | try mktime catch .]
+[[2015,0,1,0,0,3e9,3,0],[2015,0,1,0,0,-3e9,3,0],[1e10,0,1,0,0,0,0,0],[2015,0,1,0,0,86400,3,0]]
+["mktime requires parsed datetime inputs","mktime requires parsed datetime inputs","mktime requires parsed datetime inputs",1420156800]
+
+try todate catch .
+[2015,0,1,0,0,3e9,3,0]
+"strftime/1 requires parsed datetime inputs"
+
+try strflocaltime("%Y") catch .
+[1e10,0,1,0,0,0,0,0]
+"strflocaltime/1 requires parsed datetime inputs"
+
 # oss-fuzz #67403: non-string argument with number input fails assert
 try ["OK", strftime([])] catch ["KO", .]
 0
