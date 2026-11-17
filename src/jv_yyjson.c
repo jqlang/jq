@@ -4,7 +4,7 @@
 
 #include "jv_yyjson.h"
 #include "jv_alloc.h"
-#include "yyjson/yyjson.h"
+#include "yyjson/src/yyjson.h"
 
 /* Deeper documents are left to jv_parser, which enforces jq's depth limit. */
 #define FAST_MAX_DEPTH 256
