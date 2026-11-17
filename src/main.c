@@ -665,8 +665,11 @@ int main(int argc, char* argv[]) {
 
   if ((options & RAW_INPUT))
     jq_util_input_set_parser(input_state, NULL, (options & SLURP) ? 1 : 0);
-  else
+  else {
     jq_util_input_set_parser(input_state, jv_parser_new(parser_flags), (options & SLURP) ? 1 : 0);
+    if (parser_flags == 0)
+      jq_util_input_enable_fast_parse(input_state);
+  }
 
   // Let jq program read from inputs
   jq_set_input_cb(jq, jq_util_input_next_input_cb, input_state);

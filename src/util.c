@@ -66,6 +66,7 @@ void *alloca (size_t);
 #include "jq.h"
 #include "jv_alloc.h"
 #include "jv_unicode.h"
+#include "jv_yyjson.h"
 
 #ifdef WIN32
 FILE *fopen(const char *fname, const char *mode) {
@@ -194,7 +195,23 @@ struct jq_util_input_state {
   jv current_filename;
   size_t current_line;
   int at_file_start;
+
+  // yyjson fast path: whole regular files are read into memory and parsed
+  // without going through jv_parser.  Disabled for good on the first thing it
+  // cannot handle (non-regular input, or a value yyjson rejects), after which
+  // the regular chunked jv_parser path takes over.
+  int fast_enabled;
+  char *fast_orig;      // pristine file contents
+  char *fast_work;      // scratch copy (yyjson parses in situ), padded
+  size_t fast_len;
+  size_t fast_pos;      // start of the unparsed remainder
+  size_t fast_lines_to; // bytes whose newlines are already in current_line
+  size_t fast_emitted;  // values of the loaded file already handed out
+  size_t fast_skip;     // values jv_parser must discard after a fallback
+  off_t fast_stdin_off; // where stdin was before being slurped, for re-reading
 };
+
+#define FAST_PADDING 4
 
 static void fprinter(void *data, const char *fname) {
   fprintf((FILE *)data, "jq: error: Could not open file %s: %s\n", fname, strerror(errno));
@@ -227,6 +244,18 @@ void jq_util_input_set_parser(jq_util_input_state *state, jv_parser *parser, int
     state->slurped = jv_invalid();
 }
 
+void jq_util_input_enable_fast_parse(jq_util_input_state *state) {
+  state->fast_enabled = 1;
+}
+
+static void fast_release(jq_util_input_state *state) {
+  free(state->fast_orig);
+  free(state->fast_work);
+  state->fast_orig = state->fast_work = NULL;
+  state->fast_len = state->fast_pos = state->fast_lines_to = 0;
+  state->fast_emitted = 0;
+}
+
 void jq_util_input_free(jq_util_input_state **state) {
   jq_util_input_state *old_state = *state;
   *state = NULL;
@@ -235,6 +264,7 @@ void jq_util_input_free(jq_util_input_state **state) {
 
   if (old_state->parser != NULL)
     jv_parser_free(old_state->parser);
+  fast_release(old_state);
   for (int i = 0; i < old_state->nfiles; i++)
     free(old_state->files[i]);
   free(old_state->files);
@@ -357,6 +387,130 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
   return state->curr_file == state->nfiles && !state->current_input;
 }
 
+
+// Try to load the next input file wholly into memory for the fast path.
+// Returns 1 if a file is loaded (fast_orig/fast_work/fast_len/fast_pos set).
+// Returns 0 if there is nothing to load; in that case fast_enabled is cleared
+// if the regular chunked reader has to take over.
+static int fast_load_next(jq_util_input_state *state) {
+  while (state->curr_file < state->nfiles) {
+    const char *f = state->files[state->curr_file++];
+    FILE *fp;
+    if (!strcmp(f, "-")) {
+      fp = stdin;
+    } else {
+      fp = fopen(f, "r");
+      if (!fp) {
+        jv_free(state->current_filename);
+        state->current_filename = jv_string(f);
+        state->err_cb(state->err_cb_data, f);
+        state->failures++;
+        continue;
+      }
+    }
+    struct stat st;
+    if (fstat(fileno(fp), &st) != 0 || !S_ISREG(st.st_mode) || st.st_size < 0 ||
+        (uint64_t)st.st_size >= (uint64_t)INT32_MAX) {
+      // Pipes, ttys, huge files: stream them through jv_parser instead.
+      state->curr_file--;
+      if (fp != stdin) fclose(fp);
+      state->fast_enabled = 0;
+      return 0;
+    }
+    off_t start_off = ftello(fp);
+    size_t cap = (size_t)st.st_size, len = 0;
+    char *buf = jv_mem_alloc(cap + FAST_PADDING + 1);
+    size_t n;
+    for (;;) {
+      n = fread(buf + len, 1, cap - len, fp);
+      len += n;
+      if (len == cap || n == 0) break;
+    }
+    int bad = ferror(fp);
+    if (!bad && len == cap) {
+      // The file might have grown; if there is more data, don't guess.
+      char extra;
+      if (fread(&extra, 1, 1, fp) == 1) bad = 1;
+    }
+    int is_stdin = fp == stdin;
+    if (is_stdin) clearerr(stdin); else fclose(fp);
+    if (bad) {
+      // Let the chunked reader redo this file and report errors its way.
+      jv_mem_free(buf);
+      state->curr_file--;
+      state->fast_enabled = 0;
+      return 0;
+    }
+    size_t skip = 0;
+    if (len >= 3 && !memcmp(buf, "\xEF\xBB\xBF", 3)) skip = 3;
+    memset(buf + len, 0, FAST_PADDING + 1);
+    fast_release(state);
+    state->fast_orig = buf;
+    state->fast_work = jv_mem_alloc(len + FAST_PADDING + 1);
+    memcpy(state->fast_work, buf, len + FAST_PADDING + 1);
+    state->fast_stdin_off = is_stdin ? start_off : 0;
+    state->fast_len = len;
+    state->fast_pos = skip;
+    state->fast_lines_to = skip;
+    jv_free(state->current_filename);
+    state->current_filename = jv_string(is_stdin ? "<stdin>" : f);
+    state->current_line = 0;
+    state->at_file_start = 0;
+    return 1;
+  }
+  return 0;
+}
+
+static int is_json_ws(char c) {
+  return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
+// Parse the next value of the loaded file.  Returns 1 and sets *value on
+// success, 0 when the file is exhausted (fast_pos == fast_len), -1 when
+// yyjson can't take the rest and the jv_parser must be used.
+static int fast_next_value(jq_util_input_state *state, jv *value) {
+  const char *orig = state->fast_orig;
+  size_t len = state->fast_len, pos = state->fast_pos;
+  while (pos < len && is_json_ws(orig[pos])) pos++;
+  if (pos >= len) {
+    state->fast_pos = len;
+    return 0;
+  }
+  size_t used;
+  int ok = jv_yyjson_parse_next(state->fast_work + pos, len - pos, &used, value);
+  if (ok) {
+    size_t end = pos + used;
+    // yyjson may have written a NUL just past a raw number; restore it.
+    state->fast_work[end] = orig[end];
+    // A scalar must be delimited the way jq's tokenizer expects.
+    char c = orig[pos];
+    if (c != '{' && c != '[' && c != '"' && end < len) {
+      char d = orig[end];
+      if (!(is_json_ws(d) || d == '{' || d == '[' || d == '"' || d == ']' ||
+            d == '}' || d == ',' || d == ':'))
+        ok = 0;
+    }
+    if (ok) {
+      state->fast_pos = end;
+      state->fast_emitted++;
+      // jq reads whole lines, so count through the end of the value's line.
+      const char *nl = memchr(orig + end, '\n', len - end);
+      size_t line_end = nl ? (size_t)(nl - orig) + 1 : len;
+      if (line_end > state->fast_lines_to) {
+        for (const char *q = orig + state->fast_lines_to, *e = orig + line_end;
+             (q = memchr(q, '\n', e - q)) != NULL; q++)
+          state->current_line++;
+        state->fast_lines_to = line_end;
+      }
+      return 1;
+    }
+    jv_free(*value);
+  }
+  // Hand the remainder (from the start of this value) to jv_parser.
+  state->fast_pos = pos;
+  return -1;
+}
+
 jv jq_util_input_next_input_cb(jq_state *jq, void *data) {
   return jq_util_input_next_input((jq_util_input_state *)data);
 }
@@ -431,11 +585,53 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
         state->buf_valid_len = 0;
       }
     } else {
+      if (state->fast_enabled && jv_parser_remaining(state->parser) == 0) {
+        if (state->fast_pos >= state->fast_len && !fast_load_next(state)) {
+          if (state->fast_enabled)
+            break; // every file has been consumed
+          // otherwise fast_load_next() handed over to the chunked reader
+        }
+        if (state->fast_enabled) {
+          int r = fast_next_value(state, &value);
+          if (r == 1) {
+            if (jv_is_valid(state->slurped)) {
+              state->slurped = jv_array_append(state->slurped, value);
+              value = jv_invalid();
+            } else {
+              return value;
+            }
+          }
+          if (r == 0)
+            continue; // file exhausted; load the next one
+          if (r == -1) {
+            // yyjson can't take the rest of this file.  Re-read the whole file
+            // with the regular chunked jv_parser, discarding the values that
+            // were already returned, so that error messages, line/column
+            // numbers and input_line_number are exactly jv_parser's.
+            // A regular file can be rewound, so this is always possible.
+            if (state->fast_stdin_off >= 0 && !strcmp(state->files[state->curr_file - 1], "-"))
+              fseeko(stdin, state->fast_stdin_off, SEEK_SET);
+            state->curr_file--;
+            state->fast_skip = state->fast_emitted;
+            state->fast_enabled = 0;
+            fast_release(state);
+            continue;
+          } else {
+            continue;
+          }
+        }
+      }
       if (jv_parser_remaining(state->parser) == 0) {
         is_last = jq_util_input_read_more(state);
         jv_parser_set_buf(state->parser, state->buf, state->buf_valid_len, !is_last);
       }
       value = jv_parser_next(state->parser);
+      while (state->fast_skip > 0 && jv_is_valid(value)) {
+        // already returned by the fast path before it fell back
+        state->fast_skip--;
+        jv_free(value);
+        value = jv_parser_next(state->parser);
+      }
       if (jv_is_valid(state->slurped)) {
         if (jv_is_valid(value)) {
           state->slurped = jv_array_append(state->slurped, value);

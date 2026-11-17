@@ -62,6 +62,7 @@ typedef void (*jq_util_msg_cb)(void *, const char *);
 
 jq_util_input_state *jq_util_input_init(jq_util_msg_cb, void *);
 void jq_util_input_set_parser(jq_util_input_state *, jv_parser *, int);
+void jq_util_input_enable_fast_parse(jq_util_input_state *);
 void jq_util_input_free(jq_util_input_state **);
 void jq_util_input_add_input(jq_util_input_state *, const char *);
 int jq_util_input_errors(jq_util_input_state *);

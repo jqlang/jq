@@ -6,6 +6,7 @@
 #include "jv.h"
 #include "jv_dtoa.h"
 #include "jv_unicode.h"
+#include "jv_yyjson.h"
 #include "jv_alloc.h"
 #include "jv_dtoa.h"
 
@@ -847,6 +848,13 @@ jv jv_parser_next(struct jv_parser* p) {
 }
 
 jv jv_parse_sized_custom_flags(const char* string, int length, int flags) {
+  if (flags == 0 && length >= 0) {
+    // Fast path; anything it does not accept is re-parsed below so that
+    // error messages and edge cases stay exactly as before.
+    jv fast;
+    if (jv_yyjson_parse_all(string, (size_t)length, &fast))
+      return fast;
+  }
   struct jv_parser parser;
   parser_init(&parser, flags);
   jv_parser_set_buf(&parser, string, length, 0);
