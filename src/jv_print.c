@@ -11,6 +11,17 @@
 #include "jv_private.h"
 #include "util.h"
 
+#define STB_SPRINTF_IMPLEMENTATION
+#define STB_SPRINTF_NOUNALIGNED
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
+#include "stb_sprintf/stb_sprintf.h"
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 #ifndef MAX_PRINT_DEPTH
 #define MAX_PRINT_DEPTH (10000)
 #endif
@@ -100,6 +111,12 @@ static void put_buf(const char *s, int len, FILE *fout, jv *strout, int is_tty) 
 }
 
 static void put_char(char c, FILE* fout, jv* strout, int T) {
+#if defined(__GLIBC__) && !defined(WIN32)
+  if (!strout) {
+    putc_unlocked(c, fout);
+    return;
+  }
+#endif
   put_buf(&c, 1, fout, strout, T);
 }
 
@@ -182,10 +199,10 @@ static void jvp_dump_string(jv str, int ascii_only, FILE* F, jv* S, int T) {
     }
     if (unicode_escape) {
       if (c <= 0xffff) {
-        snprintf(buf, sizeof(buf), "\\u%04x", c);
+        stbsp_snprintf(buf, sizeof(buf), "\\u%04x", c);
       } else {
         c -= 0x10000;
-        snprintf(buf, sizeof(buf), "\\u%04x\\u%04x",
+        stbsp_snprintf(buf, sizeof(buf), "\\u%04x\\u%04x",
                 0xD800 | ((c & 0xffc00) >> 10),
                 0xDC00 | (c & 0x003ff));
       }

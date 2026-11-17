@@ -60,7 +60,11 @@ static void priv_fwrite(const char *s, size_t len, FILE *fout, int is_tty) {
     }
   }
 #endif
+#ifdef __GLIBC__
+  fwrite_unlocked(s, 1, len, fout); /* jq is single-threaded */
+#else
   fwrite(s, 1, len, fout);
+#endif
 }
 
 const void *_jq_memmem(const void *haystack, size_t haystacklen,

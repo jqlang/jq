@@ -45,7 +45,7 @@ docker run --rm -i -v "$PWD:$PWD" -w "$PWD" ghcr.io/jqlang/jq:latest '.version' 
 #### Instructions
 
 ```console
-git submodule update --init    # if building from git to get oniguruma
+git submodule update --init    # if building from git to get oniguruma, yyjson and stb_sprintf
 autoreconf -i                  # if building from git
 ./configure --with-oniguruma=builtin
 make clean                     # if upgrading from a version previously built from source
@@ -66,8 +66,8 @@ If you're not using the latest git version but instead building a released tarba
 
 ##### Faster JSON parsing with yyjson
 
-jq bundles [yyjson](https://github.com/ibireme/yyjson) in `vendor/yyjson/` and
-uses it as a fast path for parsing JSON. There is nothing to enable: it is
+jq includes [yyjson](https://github.com/ibireme/yyjson) as a git submodule in
+`vendor/yyjson/` (run `git submodule update --init` after cloning) and uses it as a fast path for parsing JSON. There is nothing to enable: it is
 compiled in by the normal build above and is always on. It is used for:
 
 - files given as arguments, and stdin, whether a regular file or a pipe
@@ -80,6 +80,10 @@ Input is read completely before parsing, so a pipe that never closes
 parser. If yyjson rejects any input (NaN, invalid UTF-8, very deep nesting,
 syntax errors), jq replays it through the original parser, so results and
 error messages are the same as before.
+
+Output is also written with unlocked stdio calls on glibc, and the `\uXXXX`
+escapes use [stb_sprintf](https://github.com/nothings/stb_sprintf)
+(submodule in `vendor/stb_sprintf/`).
 
 To try it, run jq on a large file and compare against a jq without it:
 

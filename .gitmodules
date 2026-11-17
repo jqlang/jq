@@ -1,3 +1,9 @@
 [submodule "vendor/oniguruma"]
 	path = vendor/oniguruma
 	url = https://github.com/kkos/oniguruma.git
+[submodule "vendor/yyjson"]
+	path = vendor/yyjson
+	url = https://github.com/ibireme/yyjson
+[submodule "vendor/stb_sprintf"]
+	path = vendor/stb_sprintf
+	url = https://github.com/nothings/stb_sprintf

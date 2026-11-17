@@ -6,7 +6,7 @@ LIBJQ_INCS = src/builtin.h src/bytecode.h src/compile.h                 \
         src/jv_unicode.h src/jv_utf8_tables.h src/lexer.l src/libm.h    \
         src/linker.h src/locfile.h src/opcode_list.h src/parser.y       \
         src/util.h src/iso8601.h src/jv_yyjson.h                        \
-        vendor/yyjson/yyjson.h                                        \
+        vendor/yyjson/yyjson.h vendor/stb_sprintf/stb_sprintf.h                                        \
         src/jv_dtoa_tsd.h src/jv_thread.h src/jv_private.h              \
         vendor/decNumber/decContext.h vendor/decNumber/decNumber.h      \
         vendor/decNumber/decNumberLocal.h
