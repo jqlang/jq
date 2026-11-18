@@ -14,6 +14,9 @@
  */
 
 /* Parse exactly one complete JSON text spanning all of [s, s+len). */
+/* 0 if the environment variable JQ_NO_YYJSON is set (non-empty, not "0"). */
+int jv_yyjson_enabled(void);
+
 int jv_yyjson_parse_all(const char *s, size_t len, jv *out);
 
 /*

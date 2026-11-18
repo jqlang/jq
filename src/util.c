@@ -35,6 +35,9 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
+#ifndef WIN32
+# include <sys/mman.h>
+#endif
 #include <stdlib.h>
 #include <stddef.h>
 #ifdef HAVE_ALLOCA_H
@@ -201,7 +204,8 @@ struct jq_util_input_state {
   // cannot handle (non-regular input, or a value yyjson rejects), after which
   // the regular chunked jv_parser path takes over.
   int fast_enabled;
-  char *fast_orig;      // pristine file contents
+  char *fast_orig;      // pristine file contents (mmap()ed for regular files)
+  int fast_mapped;      // fast_orig is a mapping of fast_len bytes, not malloc()ed
   char *fast_work;      // scratch copy (yyjson parses in situ), padded
   size_t fast_len;
   size_t fast_pos;      // start of the unparsed remainder
@@ -247,11 +251,17 @@ void jq_util_input_set_parser(jq_util_input_state *state, jv_parser *parser, int
 }
 
 void jq_util_input_enable_fast_parse(jq_util_input_state *state) {
-  state->fast_enabled = 1;
+  state->fast_enabled = jv_yyjson_enabled();
 }
 
 static void fast_release(jq_util_input_state *state) {
-  free(state->fast_orig);
+#ifndef WIN32
+  if (state->fast_mapped && state->fast_orig)
+    munmap(state->fast_orig, state->fast_len);
+  else
+#endif
+    free(state->fast_orig);
+  state->fast_mapped = 0;
   free(state->fast_work);
   state->fast_orig = state->fast_work = NULL;
   state->fast_len = state->fast_pos = state->fast_lines_to = 0;
@@ -422,42 +432,73 @@ static int fast_load_next(jq_util_input_state *state) {
       return 0;
     }
 #endif
-    // Read everything: regular files, pipes, ttys (until EOF) alike.
     off_t start_off = regular ? ftello(fp) : 0;
-    size_t cap = regular ? (size_t)st.st_size + 1 : 65536, len = 0;
-    char *buf = jv_mem_alloc(cap + FAST_PADDING + 1);
-    for (;;) {
-      if (len == cap) {
-        cap *= 2;
-        buf = jv_mem_realloc(buf, cap + FAST_PADDING + 1);
-      }
-      size_t n = fread(buf + len, 1, cap - len, fp);
-      len += n;
-      if (n == 0) break;
-    }
-    int bad = ferror(fp);
     int is_stdin = fp == stdin;
-    if (is_stdin) clearerr(stdin); else fclose(fp);
-    if (bad && regular) {
-      // Let the chunked reader redo this file and report errors its way.
-      jv_mem_free(buf);
-      state->curr_file--;
-      state->fast_enabled = 0;
-      return 0;
+    char *map = NULL;
+    size_t len = 0;
+    char *buf = NULL;     // becomes fast_orig
+    char *work = NULL;    // becomes fast_work
+    int bad = 0;
+#ifndef WIN32
+    // Regular file read from its start: map it instead of copying it, so only
+    // one private (writable) copy of the data is needed for yyjson's in-situ
+    // parsing.
+    if (regular && start_off == 0 && st.st_size > 0) {
+      int flags = MAP_PRIVATE;
+# ifdef MAP_POPULATE
+      flags |= MAP_POPULATE;
+# endif
+      void *m = mmap(NULL, (size_t)st.st_size, PROT_READ, flags, fileno(fp), 0);
+      if (m != MAP_FAILED) {
+        map = m;
+        len = (size_t)st.st_size;
+        work = jv_mem_alloc(len + FAST_PADDING + 1);
+        memcpy(work, map, len);
+        buf = map;
+        if (is_stdin) fseeko(stdin, 0, SEEK_END); else fclose(fp);
+      }
     }
-    if (bad) {
-      // Can't re-read a pipe; report as the chunked reader would and
-      // carry on with what arrived.
-      fprintf(stderr, "jq: error: %s\n", strerror(errno));
-      state->failures++;
+#endif
+    if (!map) {
+      // Read everything: regular files, pipes, ttys (until EOF) alike.
+      size_t cap = regular ? (size_t)st.st_size + 1 : 65536;
+      buf = jv_mem_alloc(cap + FAST_PADDING + 1);
+      for (;;) {
+        if (len == cap) {
+          cap *= 2;
+          buf = jv_mem_realloc(buf, cap + FAST_PADDING + 1);
+        }
+        size_t n = fread(buf + len, 1, cap - len, fp);
+        len += n;
+        if (n == 0) break;
+      }
+      bad = ferror(fp);
+      if (is_stdin) clearerr(stdin); else fclose(fp);
+      if (bad && regular) {
+        // Let the chunked reader redo this file and report errors its way.
+        jv_mem_free(buf);
+        state->curr_file--;
+        state->fast_enabled = 0;
+        return 0;
+      }
+      if (bad) {
+        // Can't re-read a pipe; report as the chunked reader would and
+        // carry on with what arrived.
+        fprintf(stderr, "jq: error: %s\n", strerror(errno));
+        state->failures++;
+      }
+      memset(buf + len, 0, FAST_PADDING + 1);
+      work = jv_mem_alloc(len + FAST_PADDING + 1);
+      memcpy(work, buf, len + FAST_PADDING + 1);
+    } else {
+      memset(work + len, 0, FAST_PADDING + 1);
     }
     size_t skip = 0;
     if (len >= 3 && !memcmp(buf, "\xEF\xBB\xBF", 3)) skip = 3;
-    memset(buf + len, 0, FAST_PADDING + 1);
     fast_release(state);
     state->fast_orig = buf;
-    state->fast_work = jv_mem_alloc(len + FAST_PADDING + 1);
-    memcpy(state->fast_work, buf, len + FAST_PADDING + 1);
+    state->fast_mapped = map != NULL;
+    state->fast_work = work;
     state->fast_seekable = regular;
     state->fast_stdin_off = is_stdin ? start_off : 0;
     state->fast_len = len;

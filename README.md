@@ -20,29 +20,42 @@ Build and install with `./install.sh`.
 
 ### Benchmarks
 
-Compared with the distribution's jq 1.8.1, same machine, output verified
-identical (md5 of the result). Times are wall-clock; single runs unless noted.
-Your numbers will vary with hardware and data.
+Compared with the distribution's jq 1.8.1 on the same machine. Output was
+verified identical (md5 of the result). Times are wall-clock; the first two
+rows are the mean of two runs. Your numbers will vary with hardware, data and
+whatever else is using the machine.
 
 | Input | Command | jq 1.8.1 | this fork |
 |---|---|---|---|
-| 1.34 GB `compile_commands.json` (mostly strings) | `jq -c . file` | 19.0 s | 6.4 s |
-| same, 3 runs before the print changes | `jq -c . file` | 18.5 - 19.3 s | 6.9 - 7.2 s |
-| same, from a pipe | `cat file \| jq -c .` | 18.7 s | 6.9 s |
-| same, parse only | `jq length file` | 10.1 s | 4.6 s |
-| 56 MB generated array of objects | `jq -c . file` | 1.55 s | 1.15 s |
+| 1.35 GB `compile_commands.json` (mostly strings) | `jq -c . file` | 11.1 s | 5.2 s |
+| same, from a pipe | `cat file \| jq -c .` | 11.4 s | 5.4 s |
+| same, parse only | `jq length file` | 9.6 s | 3.7 s |
+| same, with a filter | `jq '[.[]\|select(.file\|endswith(".cpp"))]\|length' file` | 9.4 s | 3.8 s |
+| 56 MB generated array of objects | `jq -c . file` | 1.55 s | 0.92 s |
 
-Gains are larger for string-heavy files; files full of non-integer numbers
-gain less because those still go through jq's decNumber literal handling.
-Input is read fully before parsing, so a pipe that never closes
-(`tail -f | jq .`) prints nothing until it ends.
+What contributes: yyjson parsing, memory-mapping the input file (one working
+copy instead of two), sharing repeated object keys, not freeing the last parsed
+input at exit, plain-double numbers where that is lossless, a 256 KiB stdout
+buffer, unlocked stdio writes, and `-O3 -flto` (about 5%). Gains are larger for
+string-heavy files.
+
+Trade-offs:
+
+- **Memory.** The 1.35 GB file peaks at about 5.9 GB resident (stock jq: 2.8 GB)
+  because the file, yyjson's tree and jq's values coexist. If you are short on
+  memory, run with `JQ_NO_YYJSON=1` to use the original streaming parser.
+- Input is read fully before parsing, so a pipe that never closes
+  (`tail -f | jq .`) prints nothing until it ends.
 
 To reproduce:
 
 ```console
-time jq -c . big.json | md5sum          # this fork
+time jq -c . big.json | md5sum           # this fork
 time /usr/bin/jq -c . big.json | md5sum  # stock jq, outputs should match
+JQ_NO_YYJSON=1 jq -c . big.json          # this fork with the fast path off
 ```
+
+New to jq? See [jQ_ELI5.md](jQ_ELI5.md) for a list of examples.
 
 ## Documentation
 
@@ -120,7 +133,7 @@ If you're not using the latest git version but instead building a released tarba
 
 jq includes [yyjson](https://github.com/ibireme/yyjson) as a git submodule in
 `vendor/yyjson/` (run `git submodule update --init` after cloning) and uses it as a fast path for parsing JSON. There is nothing to enable: it is
-compiled in by the normal build above and is always on. It is used for:
+compiled in by the normal build above and is on by default (set `JQ_NO_YYJSON=1` to turn it off at run time). It is used for:
 
 - files given as arguments, and stdin, whether a regular file or a pipe
   (`jq . file.json`, `jq . < file.json`, `curl ... | jq .`)

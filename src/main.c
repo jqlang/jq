@@ -602,6 +602,12 @@ int main(int argc, char* argv[]) {
     program = ".";
 #endif
 
+#ifndef WIN32
+  // Fewer, larger write() calls when output goes to a file or pipe.
+  if (!(options & UNBUFFERED_OUTPUT) && !(dumpopts & JV_PRINT_ISATTY))
+    setvbuf(stdout, NULL, _IOFBF, 1 << 18);
+#endif
+
   if (!program) usage(2, 1);
 
   if (options & FROM_FILE) {
@@ -687,9 +693,20 @@ int main(int argc, char* argv[]) {
     ret = process(jq, jv_null(), jq_flags, dumpopts, options);
   } else {
     jv value;
+#if !defined(__SANITIZE_ADDRESS__)
+    // Keep a reference to the most recent input so that freeing a huge parsed
+    // tree happens only when the next input replaces it, never at exit (the
+    // process is about to end and the OS reclaims the memory).  Skipped under
+    // AddressSanitizer so leak checking stays meaningful.
+    jv last_input = jv_invalid();
+#endif
     while (jq_util_input_errors(input_state) == 0 &&
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
+#if !defined(__SANITIZE_ADDRESS__)
+        jv_free(last_input);
+        last_input = jv_copy(value);
+#endif
         ret = process(jq, value, jq_flags, dumpopts, options);
         if (ret <= 0 && ret != JQ_OK_NO_OUTPUT)
           last_result = (ret != JQ_OK_NULL_KIND);

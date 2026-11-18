@@ -37,7 +37,10 @@ rm -rf autom4te.cache
 autoreconf -fi
 
 echo "==> Configuring (prefix=$prefix)"
-./configure --with-oniguruma=builtin --prefix="$prefix"
+# -O3 + LTO measured ~5% faster than -O2.  Override with CFLAGS/LDFLAGS in the
+# environment (e.g. CFLAGS="-O3 -march=native" for a machine-specific build).
+./configure --with-oniguruma=builtin --prefix="$prefix" \
+  CFLAGS="${CFLAGS:--O3 -flto}" LDFLAGS="${LDFLAGS:--flto}"
 
 echo "==> Building"
 make clean >/dev/null 2>&1 || true
