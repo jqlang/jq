@@ -74,6 +74,10 @@ For details on cross-compilation, check out the [GitHub Actions file](.github/wo
 - Chat & Community: [Join us on Discord](https://discord.gg/yg6yjNmgAC)
 - Wiki & Advanced Topics: [Explore the Wiki](https://github.com/jqlang/jq/wiki)
 
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to get started, or browse the [wiki](https://github.com/jqlang/jq/wiki) for project internals and advanced topics.
+
 ## License
 
 `jq` is released under the [MIT License](COPYING). `jq`'s documentation is
