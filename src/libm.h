@@ -144,10 +144,10 @@ LIBM_DD(y1)
 LIBM_DD_NO(y1)
 #endif
 #ifdef HAVE_JN
-LIBM_DDD(jn)
+LIBM_DDD_I1(jn)
 #endif
 #ifdef HAVE_YN
-LIBM_DDD(yn)
+LIBM_DDD_I1(yn)
 #endif
 #ifdef HAVE_CEIL
 LIBM_DD(ceil)
@@ -265,9 +265,9 @@ LIBM_DDD(scalb)
 LIBM_DDD_NO(scalb)
 #endif
 #ifdef HAVE_SCALBLN
-LIBM_DDD(scalbln)
+LIBM_DDD_L2(scalbln)
 #else
-LIBM_DDD_NO(scalbln)
+LIBM_DDD_L2_NO(scalbln)
 #endif
 #if defined(HAVE_SIGNIFICAND) && !defined(WIN32)
 LIBM_DD(significand)
@@ -280,9 +280,9 @@ LIBM_DD(trunc)
 LIBM_DD_NO(trunc)
 #endif
 #ifdef HAVE_LDEXP
-LIBM_DDD(ldexp)
+LIBM_DDD_I2(ldexp)
 #else
-LIBM_DDD_NO(ldexp)
+LIBM_DDD_I2_NO(ldexp)
 #endif
 #ifdef HAVE_MODF
 LIBM_DA(modf, double)

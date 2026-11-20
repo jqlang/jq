@@ -229,6 +229,95 @@ static jv f_ ## name(jq_state *jq, jv input) { \
   return ret_error(input, error); \
 }
 
+/* Clamp jq number to [INT_MIN, INT_MAX] without invoking UB (see #3740). */
+static int jq_num_to_int(double d) {
+  if (d <= (double)INT_MIN)
+    return INT_MIN;
+  if (d > (double)INT_MAX)
+    return INT_MAX;
+  return (int)d;
+}
+
+static long jq_num_to_long(double d) {
+  if (d <= (double)LONG_MIN)
+    return LONG_MIN;
+  if (d >= (double)LONG_MAX)
+    return LONG_MAX;
+  return (long)d;
+}
+
+#define LIBM_DDD_I2(name) \
+static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
+  jv_free(input); \
+  if (jv_get_kind(a) != JV_KIND_NUMBER) { \
+    jv_free(b); \
+    return type_error(a, "number required"); \
+  } \
+  if (jv_get_kind(b) != JV_KIND_NUMBER) { \
+    jv_free(a); \
+    return type_error(b, "number required"); \
+  } \
+  double xa = jv_number_value(a); \
+  double xb = jv_number_value(b); \
+  jv ret; \
+  if (isnan(xb)) \
+    ret = jv_number(NAN); \
+  else \
+    ret = jv_number(name(xa, jq_num_to_int(xb))); \
+  jv_free(a); \
+  jv_free(b); \
+  return ret; \
+}
+#define LIBM_DDD_I2_NO(name) LIBM_DDD_NO(name)
+
+#define LIBM_DDD_L2(name) \
+static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
+  jv_free(input); \
+  if (jv_get_kind(a) != JV_KIND_NUMBER) { \
+    jv_free(b); \
+    return type_error(a, "number required"); \
+  } \
+  if (jv_get_kind(b) != JV_KIND_NUMBER) { \
+    jv_free(a); \
+    return type_error(b, "number required"); \
+  } \
+  double xa = jv_number_value(a); \
+  double xb = jv_number_value(b); \
+  jv ret; \
+  if (isnan(xb)) \
+    ret = jv_number(NAN); \
+  else \
+    ret = jv_number(name(xa, jq_num_to_long(xb))); \
+  jv_free(a); \
+  jv_free(b); \
+  return ret; \
+}
+#define LIBM_DDD_L2_NO(name) LIBM_DDD_NO(name)
+
+#define LIBM_DDD_I1(name) \
+static jv f_ ## name(jq_state *jq, jv input, jv a, jv b) { \
+  jv_free(input); \
+  if (jv_get_kind(a) != JV_KIND_NUMBER) { \
+    jv_free(b); \
+    return type_error(a, "number required"); \
+  } \
+  if (jv_get_kind(b) != JV_KIND_NUMBER) { \
+    jv_free(a); \
+    return type_error(b, "number required"); \
+  } \
+  double xa = jv_number_value(a); \
+  double xb = jv_number_value(b); \
+  jv ret; \
+  if (isnan(xa)) \
+    ret = jv_number(NAN); \
+  else \
+    ret = jv_number(name(jq_num_to_int(xa), xb)); \
+  jv_free(a); \
+  jv_free(b); \
+  return ret; \
+}
+#define LIBM_DDD_I1_NO(name) LIBM_DDD_NO(name)
+
 #include "libm.h"
 #undef LIBM_DDDD_NO
 #undef LIBM_DDD_NO
@@ -238,6 +327,12 @@ static jv f_ ## name(jq_state *jq, jv input) { \
 #undef LIBM_DDD
 #undef LIBM_DD
 #undef LIBM_DA
+#undef LIBM_DDD_I2_NO
+#undef LIBM_DDD_L2_NO
+#undef LIBM_DDD_I1_NO
+#undef LIBM_DDD_I2
+#undef LIBM_DDD_L2
+#undef LIBM_DDD_I1
 
 #undef drem
 #ifdef __APPLE__
@@ -2036,6 +2131,18 @@ static jv f_have_decnum(jq_state *jq, jv a) {
   CFUNC(f_ ## name, #name, 4),
 #define LIBM_DDDD_NO(name) LIBM_DDDD(name)
 
+#define LIBM_DDD_I2(name) \
+  CFUNC(f_ ## name, #name, 3),
+#define LIBM_DDD_I2_NO(name) LIBM_DDD_NO(name)
+
+#define LIBM_DDD_L2(name) \
+  CFUNC(f_ ## name, #name, 3),
+#define LIBM_DDD_L2_NO(name) LIBM_DDD_NO(name)
+
+#define LIBM_DDD_I1(name) \
+  CFUNC(f_ ## name, #name, 3),
+#define LIBM_DDD_I1_NO(name) LIBM_DDD_NO(name)
+
 static const struct cfunction function_list[] = {
 #include "libm.h"
   CFUNC(f_negate, "_negate", 1),
@@ -2117,6 +2224,12 @@ BINOPS
 #undef LIBM_DDD
 #undef LIBM_DD
 #undef LIBM_DA
+#undef LIBM_DDD_I2_NO
+#undef LIBM_DDD_L2_NO
+#undef LIBM_DDD_I1_NO
+#undef LIBM_DDD_I2
+#undef LIBM_DDD_L2
+#undef LIBM_DDD_I1
 
 // This is a hack to make last(g) yield no output values,
 // if g yields no output values, without using boxing.
