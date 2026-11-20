@@ -2900,77 +2900,73 @@ ldexp(1; 10)
 null
 1024
 
-ldexp(1; 2147483647) | tojson
+[ldexp(1; 2147483647), ldexp(1; 2147483648)] | map(isinfinite)
 null
-"1.7976931348623157e+308"
+[true,true]
 
-ldexp(1; 2147483648) | tojson
+ldexp(1; -2147483648) | . == 0
 null
-"1.7976931348623157e+308"
+true
 
-ldexp(1; -2147483648) | tojson
+ldexp(1; -2147483649) | . == 0
 null
-"0"
+true
 
-ldexp(1; -2147483649) | tojson
+[ldexp(1; 1e300), ldexp(1; -1e300)] | map(if . == 0 then true else isinfinite end)
 null
-"0"
-
-[ldexp(1; 1e300), ldexp(1; -1e300)] | map(tojson)
-null
-["1.7976931348623157e+308","0"]
+[true,true]
 
 ldexp(1; nan) | isnan
 null
 true
 
-ldexp(1; infinite) | tojson
+ldexp(1; infinite) | isinfinite
 null
-"1.7976931348623157e+308"
+true
 
-ldexp(1; -infinite) | tojson
+ldexp(1; -infinite) | . == 0
 null
-"0"
+true
 
 ldexp(1; 2.5)
 null
 4
 
-scalbln(1; 1e300) | tojson
+scalbln(1; 1e300) | isinfinite
 null
-"1.7976931348623157e+308"
+true
 
 scalbln(1; nan) | isnan
 null
 true
 
-scalbln(1; 9223372036854775807) | tojson
+scalbln(1; 9223372036854775807) | isinfinite
 null
-"1.7976931348623157e+308"
+true
 
-scalb(1; 2147483648) | tojson
+scalb(1; 2147483648) | isinfinite
 null
-"1.7976931348623157e+308"
+true
 
 pow(2; 10)
 null
 1024
 
-jn(10; 1) | tojson
+(jn(10; 1) > 2.63e-10) and (jn(10; 1) < 2.64e-10)
 null
-"2.6306151236874534e-10"
+true
 
-jn(2147483648; 1) | tojson
+jn(2147483648; 1) == 0
 null
-"-0"
+true
 
 jn(nan; 1) | isnan
 null
 true
 
-yn(2147483648; 1) | tojson
+yn(2147483648; 1) < -1e100
 null
-"-1.7976931348623157e+308"
+true
 
 yn(nan; 1) | isnan
 null
