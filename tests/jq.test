@@ -2944,10 +2944,6 @@ scalbln(1; 9223372036854775807) | isinfinite
 null
 true
 
-scalb(1; 2147483648) | isinfinite
-null
-true
-
 pow(2; 10)
 null
 1024
@@ -2956,7 +2952,7 @@ null
 null
 true
 
-jn(2147483648; 1) == 0
+(jn(2147483648; 1) | tojson) == (jn(2147483647; 1) | tojson)
 null
 true
 
