@@ -2,6 +2,8 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
+#include <limits.h>
+#include <math.h>
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
 #endif
@@ -213,11 +215,21 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
     if (!jv_is_valid(exit_code))
       ret = JQ_OK;
     else if (jv_get_kind(exit_code) == JV_KIND_NUMBER) {
-      ret = jv_number_value(exit_code);
-      // Negative values would be mistaken for JQ_OK_NULL_KIND and friends,
-      // so keep the low 8 bits, like exit(3) does on POSIX systems.
-      if (ret < 0)
-        ret &= 0xff;
+      double code = jv_number_value(exit_code);
+      // Casting NaN or a number outside the range of int to int is undefined
+      // behavior (C99 6.3.1.4). On x86_64 the result used to alias JQ_OK, so
+      // `halt_error(nan)` exited 0 with the error text on stderr. There is no
+      // status that such a value could sensibly mean, so report it as an
+      // unknown error instead of guessing.
+      if (!isfinite(code) || code < INT_MIN || code > INT_MAX)
+        ret = JQ_ERROR_UNKNOWN;
+      else {
+        ret = code;
+        // Negative values would be mistaken for JQ_OK_NULL_KIND and friends,
+        // so keep the low 8 bits, like exit(3) does on POSIX systems.
+        if (ret < 0)
+          ret &= 0xff;
+      }
     } else
       ret = JQ_ERROR_UNKNOWN;
     jv_free(exit_code);

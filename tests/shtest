@@ -550,6 +550,19 @@ for opt in '' -e; do
         exit 1
     fi
 done
+for code in nan infinite -infinite 1e20 -1e20; do
+    if $VALGRIND $Q $VG_EXIT0 $JQ -n "\"fatal\n\" | halt_error($code)" 2>/dev/null; then
+        echo "jq halt_error($code) didn't work as expected" 1>&2
+        exit 1
+    elif [ $? -ne 5 ]; then
+        echo "jq halt_error($code) had wrong error code" 1>&2
+        exit 1
+    fi
+done
+if [ -z "$($VALGRIND $Q $JQ -n "\"fatal\" | halt_error(nan)" 2>&1)" ]; then
+    echo "jq halt_error(nan) had unexpected output" 1>&2
+    exit 1
+fi
 if [ -n "$($VALGRIND $Q $JQ -n 'halt_error(1)' 2>&1)" ]; then
     echo "jq halt_error(1) had unexpected output" 1>&2
     exit 1
