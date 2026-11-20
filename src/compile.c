@@ -775,9 +775,19 @@ static void block_get_unbound_vars(block b, jv *vars) {
 
 /* Build wrappers around destructuring matchers so that we can chain them
  * when we have errors.  The approach is as follows:
- * DESTRUCTURE_ALT NEXT_MATCHER (unless last matcher)
+ * DESTRUCTURE_ALT NEXT_MATCHER (for each matcher but the last)
  * existing_matcher_block
  * JUMP BODY
+ * ...
+ * NEXT_MATCHER: DESTRUCTURE_ALT_LAST
+ * last_matcher_block
+ * BODY: body
+ * TRY_END
+ *
+ * As in gen_try(), TRY_END wraps errors raised after the body, so that
+ * DESTRUCTURE_ALT does not try the next matcher for them but unwraps and
+ * re-raises them.  DESTRUCTURE_ALT_LAST does the unwrapping for the last
+ * matcher.
  */
 static block bind_alternation_matchers(block matchers, block body) {
   block preamble = {0};
@@ -827,7 +837,9 @@ static block bind_alternation_matchers(block matchers, block body) {
   // We're done with these insts now.
   block_free(altmatchers);
 
-  return bind_matcher(preamble, BLOCK(mb, final_matcher, body));
+  return bind_matcher(preamble, BLOCK(mb, gen_op_simple(DESTRUCTURE_ALT_LAST),
+                                      final_matcher, body,
+                                      gen_op_simple(TRY_END)));
 }
 
 block gen_reduce(block source, block matcher, block init, block body) {
