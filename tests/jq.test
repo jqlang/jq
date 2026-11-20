@@ -2894,3 +2894,76 @@ null
 try ((reduce range(10001) as $_ ({}; {a: .})) as $x | [$x, $x] | unique) catch .
 null
 "Comparison too deep"
+
+# #3740 libm functions with integer exponent/order parameters
+ldexp(1; 10)
+null
+1024
+
+[ldexp(1; 2147483647), ldexp(1; 2147483648)] | map(isinfinite)
+null
+[true,true]
+
+ldexp(1; -2147483648) | . == 0
+null
+true
+
+ldexp(1; -2147483649) | . == 0
+null
+true
+
+[ldexp(1; 1e300), ldexp(1; -1e300)] | map(if . == 0 then true else isinfinite end)
+null
+[true,true]
+
+ldexp(1; nan) | isnan
+null
+true
+
+ldexp(1; infinite) | isinfinite
+null
+true
+
+ldexp(1; -infinite) | . == 0
+null
+true
+
+ldexp(1; 2.5)
+null
+4
+
+scalbln(1; 1e300) | isinfinite
+null
+true
+
+scalbln(1; nan) | isnan
+null
+true
+
+scalbln(1; 9223372036854775807) | isinfinite
+null
+true
+
+pow(2; 10)
+null
+1024
+
+(jn(10; 1) > 2.63e-10) and (jn(10; 1) < 2.64e-10)
+null
+true
+
+(jn(2147483648; 1) | tojson) == (jn(2147483647; 1) | tojson)
+null
+true
+
+jn(nan; 1) | isnan
+null
+true
+
+yn(2147483648; 1) < -1e100
+null
+true
+
+yn(nan; 1) | isnan
+null
+true
