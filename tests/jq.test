@@ -1074,6 +1074,43 @@ null
 [5]
 6
 
+# Errors raised after the body of ?// must not make it try the next alternative
+try reduce ([1] as [$a] ?// $a | $a) as $x ({}; . + $x) catch .
+null
+"object ({}) and number (1) cannot be added"
+
+try ([foreach ([1] as [$a] ?// $a | $a) as $x ({}; . + $x)]) catch .
+null
+"object ({}) and number (1) cannot be added"
+
+try ((. as [$a] ?// $a | $a) | error) catch .
+[1]
+1
+
+try ((. as [$a] ?// [$b] ?// $c | [$a, $b, $c]) | error) catch .
+[1]
+[1,null,null]
+
+try ((. as [$a] ?// $a | $a) | error) catch .
+1
+1
+
+[. as [$a] ?// $a | $a] | try (.[] | error) catch .
+[[1]]
+[1]
+
+try (. as [$a] ?// $a | (. as [$b] ?// $b | $b) | error) catch .
+[2]
+2
+
+label $out | (. as [$a] ?// $a | $a) | ., break $out
+[1]
+1
+
+.a |= (. as [$x] ?// $x | $x)
+{"a":[1]}
+{"a":1}
+
 . as $dot|any($dot[];not)
 [1,2,3,4,true,false,1,2,3,4,5]
 true

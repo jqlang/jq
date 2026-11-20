@@ -880,6 +880,16 @@ jv jq_next(jq_state *jq) {
         jv_free(stack_pop(jq));
         goto do_backtrack;
       }
+      // The error was raised after the body and wrapped by TRY_END (see
+      // bind_alternation_matchers()), so unwrap and re-raise it instead of
+      // trying the next matcher.
+      jv e = jv_invalid_get_msg(jv_copy(jq->error));
+      if (!jv_is_valid(e) && jv_invalid_has_msg(jv_copy(e))) {
+        set_error(jq, e);
+        jv_free(stack_pop(jq));
+        goto do_backtrack;
+      }
+      jv_free(e);
       // `try EXP ...` exception caught in EXP
       // DESTRUCTURE_ALT doesn't want the error message on the stack,
       // as we would just want to throw it away anyway.
@@ -894,6 +904,21 @@ jv jq_next(jq_state *jq) {
       pc += offset;
       break;
     }
+    case DESTRUCTURE_ALT_LAST:
+      stack_save(jq, pc - 1, stack_get_pos(jq));
+      break;
+
+    case ON_BACKTRACK(DESTRUCTURE_ALT_LAST):
+      if (raising) {
+        // Unwrap an error raised after the body (see ON_BACKTRACK(DESTRUCTURE_ALT))
+        jv e = jv_invalid_get_msg(jv_copy(jq->error));
+        if (!jv_is_valid(e) && jv_invalid_has_msg(jv_copy(e)))
+          set_error(jq, e);
+        else
+          jv_free(e);
+      }
+      goto do_backtrack;
+
     case ON_BACKTRACK(FORK): {
       if (raising) goto do_backtrack;
       uint16_t offset = *pc++;
