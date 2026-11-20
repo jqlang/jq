@@ -205,6 +205,30 @@ sub("(?<x>.)"; "\(.x)!")
 "aB"
 ["AB","ab","cc"]
 
+# No match preserves the input without evaluating the replacement.
+[sub("[0-9]"; error("not called"))]
+"abc"
+["abc"]
+
+# A matched replacement can emit no values, unlike an empty string.
+[(sub("[0-9]"; empty)), (sub("[0-9]"; ""))]
+"a1b2"
+["ab2"]
+
+[gsub("[0-9]"; empty)]
+"a1b2"
+[]
+
+# A match with no replacement result cancels the output at any position.
+[range(1; 4) as $n | [gsub("(?<d>[0-9])"; if (.d | tonumber) == $n then empty else "X" end)]]
+"a1b2c3d"
+[[],[],[]]
+
+# Preserve established positional multiplexing for regular-length streams.
+[gsub("[0-9]"; ("A", "B"))]
+"a1b2c"
+["aAbAc","aBbBc"]
+
 # splits
 [splits("")]
 "ab"

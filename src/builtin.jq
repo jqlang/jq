@@ -116,16 +116,21 @@ def split($re; $flags): [ splits($re; $flags) ];
 # in mind that s could be a stream
 def sub($re; s; $flags):
    . as $in
-   | (reduce match($re; $flags) as $edit
-        ({result: [], previous: 0};
+   | reduce match($re; $flags) as $edit
+        ({result: [], previous: 0, matched: false, empty_replacement: false};
             $in[ .previous: ($edit | .offset) ] as $gap
             # create the "capture" objects (one per item in s)
             | [reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
                  ({}; . + $pair) | s ] as $inserts
+            | .matched = true
+            # A later match must not revive output suppressed by empty.
+            | .empty_replacement = (.empty_replacement or ($inserts | length == 0))
             | reduce range(0; $inserts|length) as $ix (.; .result[$ix] += $gap + $inserts[$ix])
             | .previous = ($edit | .offset + .length ) )
-          | .result[] + $in[.previous:] )
-      // $in;
+   | if .empty_replacement then empty
+     elif .matched then .result[] + $in[.previous:]
+     else $in
+     end;
 
 def sub($re; s): sub($re; s; "");
 
