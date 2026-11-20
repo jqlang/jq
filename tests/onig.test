@@ -222,3 +222,21 @@ sub("(?<x>.)"; "\(.x)!")
 "abAABBabA"
 ["a","AA","a","A"]
 
+# A replacement filter that emits no values must not fall back to the input.
+[sub("[0-9]"; empty)]
+"a1b2"
+[]
+
+[gsub("(?<d>[0-9])"; if .d == "1" then "X" else empty end)]
+"12"
+[]
+
+# Preserve the unmatched prefix when a later match adds another output branch.
+[gsub("(?<d>[0-9])"; if .d == "1" then ("A", "B") else ("X", "Y", "Z") end)]
+"12"
+["AX", "BY", "1Z"]
+
+[gsub("(?<d>[0-9])"; if .d == "1" then ("A", "B", "C") else "X" end)]
+"12"
+["AX", "B2", "C2"]
+
