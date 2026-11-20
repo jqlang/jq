@@ -1268,7 +1268,14 @@ sections:
           have double quotes) with no decoration, not even a newline.
 
           The given `exit_code` (defaulting to `5`) will be jq's exit
-          status.
+          status. A non-negative code is passed to `exit`, so only its
+          low 8 bits survive: `halt_error(256)` exits with `0`. A
+          negative code keeps its low 8 bits as well, so
+          `halt_error(-1)` exits with `255`.
+
+          `nan`, the infinities and numbers outside the range of a C
+          `int` do not identify a status. jq exits with `5` for them
+          instead of casting, which is undefined behavior.
 
           For example, `"Error: something went wrong\n"|halt_error(1)`.
 
