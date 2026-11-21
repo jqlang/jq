@@ -422,6 +422,18 @@ try skip(-1; error) catch .
 null
 "skip doesn't support negative count"
 
+try (. as $value | -1 | [truncate_stream($value | tostream)]) catch .
+[[1,2],[3]]
+"truncate_stream depth must not be negative"
+
+try (-0.5 | truncate_stream(error("stream evaluated"))) catch .
+null
+"truncate_stream depth must not be negative"
+
+. as $value | [0, 1 | [truncate_stream($value | tostream)]]
+[[1,2],[3]]
+[[[[0,0],1],[[0,1],2],[[0,1]],[[1,0],3],[[1,0]],[[1]]],[[[0],1],[[1],2],[[1]],[[0],3],[[0]]]]
+
 nth(1; 0,1,error("foo"))
 null
 1
