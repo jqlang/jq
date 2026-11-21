@@ -684,10 +684,13 @@ int main(int argc, char* argv[]) {
     ret = process(jq, jv_null(), jq_flags, dumpopts, options);
   } else {
     jv value;
+    int first_err = 0;
     while (jq_util_input_errors(input_state) == 0 &&
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
         ret = process(jq, value, jq_flags, dumpopts, options);
+        if (ret > 0 && first_err == 0)
+          first_err = ret;
         if (ret <= 0 && ret != JQ_OK_NO_OUTPUT)
           last_result = (ret != JQ_OK_NULL_KIND);
         if (jq_halted(jq))
@@ -707,6 +710,10 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "jq: ignoring parse error: %s\n", jv_string_value(msg));
       jv_free(msg);
     }
+    // A later successful input must not hide an earlier error, unless jq
+    // halted (halt/halt_error is an explicit exit status).
+    if (first_err > 0 && ret <= 0 && !jq_halted(jq))
+      ret = first_err;
   }
 
   if (jq_util_input_errors(input_state) != 0)
