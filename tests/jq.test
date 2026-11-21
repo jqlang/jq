@@ -1881,6 +1881,10 @@ try flatten(-1) catch .
 [0, [1], [[2]], [[[3]]]]
 "flatten depth must not be negative"
 
+try truncate_stream(error("stream evaluated")) catch .
+-1
+"truncate_stream depth must not be negative"
+
 transpose
 [[1], [2,3]]
 [[1,2],[null,3]]
