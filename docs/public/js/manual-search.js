@@ -1,6 +1,24 @@
 (() => {
   const searchInput = document.querySelector('input#searchbox');
   const sectionIDs = JSON.parse(document.querySelector('#section-ids').innerText);
+  // List entries such as the SQL-style operators have a code signature followed by a colon.
+  for (const item of document.querySelectorAll('main section[id] li')) {
+    const label = item.textContent.trim();
+    if (!label.endsWith(':')) continue;
+    const signature = label.slice(0, -1);
+    // Older manuals render function signatures as plain text.
+    if (item.firstElementChild?.tagName === 'CODE') {
+      if (item.firstElementChild.textContent !== signature) continue;
+    } else if (item.children.length || !/^[A-Z]+\([^()]*\)$/.test(signature)) continue;
+    if (Object.hasOwn(sectionIDs, signature)) continue;
+    const section = item.closest('section[id]');
+    const slug = signature.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (!slug) continue;
+    const id = section.id + '-' + slug;
+    if (document.getElementById(id)) continue;
+    item.id = id;
+    sectionIDs[signature] = id;
+  }
   const sanitize = (string) => string.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   new autoComplete({
     selector: `#${searchInput.id}`,
