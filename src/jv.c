@@ -210,6 +210,9 @@ enum {
 #define DEC_NUMBER_STRING_GUARD       (14)
 #define DEC_NUMBER_DOUBLE_EXTRA_UNITS ((DEC_NUMBER_DOUBLE_PRECISION - DECNUMDIGITS + DECDPUN - 1)/DECDPUN)
 
+// A binary64 significand times 5^1074 has at most 767 decimal digits.
+#define DEC_NUMBER_BINARY64_DIGITS 767
+
 #include "jv_thread.h"
 #ifdef WIN32
 #ifndef __MINGW32__
@@ -619,6 +622,23 @@ static double jvp_literal_number_to_double(jv j) {
   return jvp_strtod(tsd_dtoa_context_get(), literal, &end);
 }
 
+static void jvp_double_to_dec_number(decNumber *number, double value) {
+  if (isinf(value)) {
+    decNumberFromString(number, signbit(value) ? "-Infinity" : "Infinity", DEC_CONTEXT());
+    return;
+  }
+
+  struct dtoa_context *ctx = tsd_dtoa_context_get();
+  int decimal_point, negative;
+  char *end;
+  char *digits = jvp_dtoa(ctx, value, 2, DEC_NUMBER_BINARY64_DIGITS, &decimal_point, &negative, &end);
+  int exponent = decimal_point - (int)(end - digits);
+  char literal[DEC_NUMBER_BINARY64_DIGITS + DEC_NUMBER_STRING_GUARD + 1];
+  snprintf(literal, sizeof(literal), "%s%se%d", negative ? "-" : "", digits, exponent);
+  jvp_freedtoa(ctx, digits);
+  decNumberFromString(number, literal, DEC_CONTEXT());
+}
+
 static const char* jvp_literal_number_literal(jv n) {
   assert(JVP_HAS_FLAGS(n, JVP_FLAGS_NUMBER_LITERAL));
   decNumber *pdec = jvp_dec_number_ptr(n);
@@ -771,15 +791,27 @@ int jvp_number_cmp(jv a, jv b) {
   assert(JVP_HAS_KIND(b, JV_KIND_NUMBER));
 
 #ifdef USE_DECNUM
-  if (JVP_HAS_FLAGS(a, JVP_FLAGS_NUMBER_LITERAL) && JVP_HAS_FLAGS(b, JVP_FLAGS_NUMBER_LITERAL)) {
+  int a_literal = jvp_number_is_literal(a);
+  int b_literal = jvp_number_is_literal(b);
+  if (a_literal || b_literal) {
+    struct {
+      decNumber number;
+      decNumberUnit units[(DEC_NUMBER_BINARY64_DIGITS - DECNUMDIGITS + DECDPUN - 1)/DECDPUN];
+    } native;
     struct {
       decNumber number;
       decNumberUnit units[1];
     } res;
 
+    if (a_literal != b_literal) {
+      double value = a_literal ? b.u.number : a.u.number;
+      if (isnan(value))
+        return 1;
+      jvp_double_to_dec_number(&native.number, value);
+    }
     decNumberCompare(&res.number,
-                     jvp_dec_number_ptr(a),
-                     jvp_dec_number_ptr(b),
+                     a_literal ? jvp_dec_number_ptr(a) : &native.number,
+                     b_literal ? jvp_dec_number_ptr(b) : &native.number,
                      DEC_CONTEXT()
                      );
     if (decNumberIsZero(&res.number)) {
