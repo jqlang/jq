@@ -6,6 +6,7 @@
 
 - **Official Documentation**: [jqlang.org](https://jqlang.org)
 - **Try jq Online**: [play.jqlang.org](https://play.jqlang.org)
+- [Embed jq in a C program](docs/libjq.md)
 
 ## Installation
 
