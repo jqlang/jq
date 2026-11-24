@@ -13,3 +13,28 @@ gmtime
 map(gmtime) | . == sort
 [-1.5,-1,-0.5,0,0.5,1,1.5]
 true
+
+# Dates before 1900 convert in both directions (macOS timegm() rejects them)
+[-2208988801, -3772569600, -62135596800 | gmtime | mktime]
+null
+[-2208988801,-3772569600,-62135596800]
+
+[[1850,0,1,0,0,0,0,0], [1899,11,31,23,59,59,0,0], [1,0,1,0,0,0,0,0] | mktime]
+null
+[-3786825600,-2208988801,-62135596800]
+
+# Fields out of range are normalised before 1900 as well
+[1850,0,32,0,0,0,0,0] | mktime, strftime("%Y-%m-%d %A %j")
+null
+-3784147200
+"1850-02-01 Friday 032"
+
+[1850,12,1,0,0,0,0,0] | strftime("%Y-%m-%d")
+null
+"1851-01-01"
+
+# Negative months borrow from the previous year
+[1850,-11,1,0,0,0,0,0] | mktime, strftime("%Y-%m-%d %A %j")
+null
+-3815683200
+"1849-02-01 Thursday 032"
