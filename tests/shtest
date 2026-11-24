@@ -70,6 +70,32 @@ $VALGRIND $Q $JQ -Rne '[inputs] == ["[{\"foo\": 1}", ",{\"foo\": 2}", "]", "[{\"
 $VALGRIND $Q $JQ -ne --slurpfile x $d/bom1.json '$x == [[{"foo":1},{"foo":2}]]'
 $VALGRIND $Q $JQ -ne --rawfile x $d/bom1.json '$x == "[{\"foo\": 1}\n,{\"foo\": 2}\n]\n"'
 
+# Each JSON input file ends its last value, even without a newline (#3758).
+printf '1' > $d/one.json
+printf '2' > $d/two.json
+: > $d/empty.json
+printf '1\n2\n' > $d/expected
+$VALGRIND $Q $JQ -c . $d/one.json $d/empty.json $d/two.json > $d/out
+cmp $d/out $d/expected
+$VALGRIND $Q $JQ -cse '. == [1,2]' $d/one.json $d/two.json
+$VALGRIND $Q $JQ -nce --arg one "$d/one.json" --arg two "$d/two.json" \
+  '[inputs | [input_filename, .]] == [[$one, 1], [$two, 2]]' $d/one.json $d/two.json
+$VALGRIND $Q $JQ -c . $d/one.json - < $d/two.json > $d/out
+cmp $d/out $d/expected
+$VALGRIND $Q $JQ -Rse '. == "12"' $d/one.json $d/two.json
+
+# A read that fills the input buffer may not discover EOF until the next read.
+printf '%4090s1' '' > $d/one.json
+$VALGRIND $Q $JQ -c . $d/one.json $d/two.json > $d/out
+cmp $d/out $d/expected
+
+# Draining a file also emits any pending --stream events under its filename.
+printf '[1]' > $d/one.json
+printf '[2]' > $d/two.json
+$VALGRIND $Q $JQ -nce --stream --arg one "$d/one.json" --arg two "$d/two.json" \
+  '[inputs | [input_filename, .]] == [[$one, [[0], 1]], [$one, [[0]]], [$two, [[0], 2]], [$two, [[0]]]]' \
+  $d/one.json $d/two.json
+
 ## Test that --run-tests reports failures (#2765)
 cat > $d/passing.test <<'EOF'
 .
