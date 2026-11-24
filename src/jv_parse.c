@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "jv.h"
 #include "jv_dtoa.h"
+#include "jv_private.h"
 #include "jv_unicode.h"
 #include "jv_alloc.h"
 #include "jv_dtoa.h"
@@ -740,6 +741,21 @@ void jv_parser_set_buf(struct jv_parser* p, const char* buf, int length, int is_
   p->curr_buf_length = length;
   p->curr_buf_pos = 0;
   p->curr_buf_is_partial = is_partial;
+}
+
+int jvp_parser_is_seq(const jv_parser *p) {
+  return p->flags & JV_PARSE_SEQ;
+}
+
+// Keep the parser's flags and allocations when starting another input file.
+void jvp_parser_reset_input(jv_parser *p) {
+  parser_reset(p);
+  p->eof = 0;
+  p->last_ch_was_ws = 0;
+  p->line = 1;
+  p->column = 0;
+  if (jvp_parser_is_seq(p))
+    p->st = JV_PARSER_WAITING_FOR_RS;
 }
 
 static jv make_error(struct jv_parser*, const char *, ...) JV_PRINTF_LIKE(2, 3);
