@@ -1559,6 +1559,55 @@ static int setenv(const char *var, const char *val, int ovr)
 }
 #endif
 
+#ifdef HAVE_TIMEGM
+/*
+ * Some timegm() implementations, notably the one in macOS, reject every
+ * date before 1900-01-01T00:00:00Z. Compute the timestamp ourselves when
+ * that happens, and normalise the fields with gmtime_r(), which does handle
+ * those dates.
+ */
+#ifdef HAVE_GMTIME_R
+static int timegm_fallback(struct tm *tm, time_t *t) {
+  int64_t year = tm->tm_year + 1900LL;
+  int64_t mon = tm->tm_mon;
+  year += mon / 12;
+  mon %= 12;
+  if (mon < 0) {
+    mon += 12;
+    year--;
+  }
+  int64_t days = days_from_civil(year, (int)mon + 1, 1) + tm->tm_mday - 1;
+  int64_t secs = days * 86400 + tm->tm_hour * 3600LL + tm->tm_min * 60LL + tm->tm_sec;
+  time_t result = (time_t)secs;
+  struct tm out;
+  if ((int64_t)result != secs || gmtime_r(&result, &out) == NULL)
+    return 0;
+  *tm = out;
+  *t = result;
+  return 1;
+}
+#endif
+
+/*
+ * Normalises tm and stores the timestamp in t. Returns 0 and leaves tm
+ * unchanged on failure, as (time_t)-1 is also a valid timestamp.
+ */
+static int my_timegm(struct tm *tm, time_t *t) {
+  struct tm copy = *tm;
+  copy.tm_wday = -1;
+  *t = timegm(&copy);
+  if (*t == (time_t)-1 && copy.tm_wday == -1) {
+#ifdef HAVE_GMTIME_R
+    return timegm_fallback(tm, t);
+#else
+    return 0;
+#endif
+  }
+  *tm = copy;
+  return 1;
+}
+#endif
+
 /*
  * mktime() has side-effects and anyways, returns time in the local
  * timezone, not UTC.  We want timegm(), which isn't standard.
@@ -1579,7 +1628,9 @@ static int setenv(const char *var, const char *val, int ovr)
 static time_t my_mktime(struct tm *tm) {
   tm->tm_wday = -1;
 #ifdef HAVE_TIMEGM
-  return timegm(tm);
+  time_t t;
+  my_timegm(tm, &t);
+  return t;
 #elif HAVE_TM_TM_GMT_OFF
 
   time_t t = mktime(tm);
@@ -1768,7 +1819,8 @@ static int jv2tm(jv a, struct tm *tm, int localtime) {
     mktime(tm);
   } else {
 #ifdef HAVE_TIMEGM
-    timegm(tm);
+    time_t t;
+    my_timegm(tm, &t);
 #elif HAVE_TM_TM_GMT_OFF
     // tm->tm_gmtoff = 0;
     tm->tm_zone = "GMT";

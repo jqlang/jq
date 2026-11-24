@@ -45,7 +45,7 @@
  * days_from_civil().  Requires 1 <= m <= 12 and 1 <= d <= days_in_month(y, m);
  * the callers check both.
  */
-static int64_t days_from_civil(int64_t y, int m, int d) {
+int64_t days_from_civil(int64_t y, int m, int d) {
   y -= m <= 2;
   int64_t era = (y >= 0 ? y : y - 399) / 400;
   int64_t yoe = y - era * 400;                                  /* [0, 399] */
