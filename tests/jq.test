@@ -2457,6 +2457,16 @@ true
 {"x":13911860366432393}
 true
 
+# A gap wider than the decNumber context falls back to double arithmetic
+# instead of returning an inexact rounded literal
+(1e148000000 + 1) - 1e148000000 | isnan
+null
+true
+
+.a + .b - .a | isnan
+{"a":1e999999999,"b":1}
+true
+
 # Unary negation preserves numerical precision
 -. | tojson == if have_decnum then "-13911860366432393" else "-13911860366432392" end
 13911860366432393

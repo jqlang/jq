@@ -829,12 +829,26 @@ static jv jvp_number_add_or_subtract(jv a, jv b, int subtract) {
 
       unsigned digits = MAX(da->digits + da->exponent, db->digits + db->exponent) -
                         MIN(da->exponent, db->exponent) + 1;
+      decContext *ctx = DEC_CONTEXT();
+      /* The exact result would need more digits than the decNumber context
+       * allows. decNumber would round the coefficient and only set the
+       * informational Inexact/Rounded status, silently returning an inexact
+       * value (e.g. (1e148000000 + 1) - 1e148000000 => 0). Fall back to
+       * double arithmetic instead, which is what jq does for numbers beyond
+       * double range; this also avoids materializing the gap digits. */
+      if (digits > (unsigned)ctx->digits) {
+        double result = subtract
+          ? jv_number_value(new_a) - jv_number_value(new_b)
+          : jv_number_value(new_a) + jv_number_value(new_b);
+        jv_free(new_a);
+        jv_free(new_b);
+        return jv_number(result);
+      }
       jvp_literal_number *nlit = jvp_literal_number_alloc(digits);
       nlit->refcnt = JV_REFCNT_INIT;
       nlit->num_double = NAN;
       nlit->literal_data = NULL;
 
-      decContext *ctx = DEC_CONTEXT();
       decContextClearStatus(ctx, DEC_Errors | DEC_Information);
       if (subtract) {
         decNumberSubtract(&nlit->num_decimal, da, db, ctx);
@@ -843,7 +857,7 @@ static jv jvp_number_add_or_subtract(jv a, jv b, int subtract) {
       }
       decNumberTrim(&nlit->num_decimal);
 
-      if (ctx->status & DEC_Errors) {
+      if (ctx->status & (DEC_Errors | DEC_Inexact | DEC_Rounded)) {
         jv_mem_free(nlit);
         double result = subtract
           ? jv_number_value(new_a) - jv_number_value(new_b)
