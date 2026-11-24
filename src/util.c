@@ -65,6 +65,7 @@ void *alloca (size_t);
 #include "util.h"
 #include "jq.h"
 #include "jv_alloc.h"
+#include "jv_private.h"
 #include "jv_unicode.h"
 
 #ifdef WIN32
@@ -194,6 +195,7 @@ struct jq_util_input_state {
   jv current_filename;
   size_t current_line;
   int at_file_start;
+  int parser_at_file_end;
 };
 
 static void fprinter(void *data, const char *fname) {
@@ -258,22 +260,26 @@ static const char *next_file(jq_util_input_state *state) {
   return NULL;
 }
 
+static void jq_util_input_close_file(jq_util_input_state *state) {
+  if (!state->current_input)
+    return;
+  if (ferror(state->current_input)) {
+    // System-level input error on the stream. It will be closed (below).
+    // TODO: report it. Can't use 'state->err_cb()' as it is hard-coded for
+    //       'open' related problems.
+    fprintf(stderr,"jq: error: %s\n", strerror(errno));
+  }
+  if (state->current_input == stdin) {
+    clearerr(stdin); // perhaps we can read again; anyways, we don't fclose(stdin)
+  } else {
+    fclose(state->current_input);
+  }
+  state->current_input = NULL;
+}
+
 static int jq_util_input_read_more(jq_util_input_state *state) {
   if (!state->current_input || feof(state->current_input) || ferror(state->current_input)) {
-    if (state->current_input && ferror(state->current_input)) {
-      // System-level input error on the stream. It will be closed (below).
-      // TODO: report it. Can't use 'state->err_cb()' as it is hard-coded for
-      //       'open' related problems.
-      fprintf(stderr,"jq: error: %s\n", strerror(errno));
-    }
-    if (state->current_input) {
-      if (state->current_input == stdin) {
-        clearerr(stdin); // perhaps we can read again; anyways, we don't fclose(stdin)
-      } else {
-        fclose(state->current_input);
-      }
-      state->current_input = NULL;
-    }
+    jq_util_input_close_file(state);
     const char *f = next_file(state);
     if (f != NULL) {
       jv_free(state->current_filename);
@@ -431,19 +437,32 @@ jv jq_util_input_next_input(jq_util_input_state *state) {
         state->buf_valid_len = 0;
       }
     } else {
-      if (jv_parser_remaining(state->parser) == 0) {
-        is_last = jq_util_input_read_more(state);
-        jv_parser_set_buf(state->parser, state->buf, state->buf_valid_len, !is_last);
+      if (!state->parser_at_file_end && jv_parser_remaining(state->parser) == 0) {
+        int at_input_end = jq_util_input_read_more(state);
+        int at_file_end = state->current_input && feof(state->current_input);
+        // Keep --seq resynchronization across the whole input stream.
+        state->parser_at_file_end = at_input_end || (at_file_end && !jvp_parser_is_seq(state->parser));
+        jv_parser_set_buf(state->parser, state->buf, state->buf_valid_len, !state->parser_at_file_end);
+        if (at_file_end && state->parser_at_file_end)
+          jq_util_input_close_file(state);
       }
       value = jv_parser_next(state->parser);
-      if (jv_is_valid(state->slurped)) {
-        if (jv_is_valid(value)) {
+      if (jv_is_valid(value)) {
+        if (jv_is_valid(state->slurped)) {
           state->slurped = jv_array_append(state->slurped, value);
           value = jv_invalid();
-        } else if (jv_invalid_has_msg(jv_copy(value)))
-          return value; // Not slurped parsed input
-      } else if (jv_is_valid(value) || jv_invalid_has_msg(jv_copy(value))) {
+        } else {
+          return value;
+        }
+      } else if (jv_invalid_has_msg(jv_copy(value))) {
         return value;
+      } else if (state->parser_at_file_end) {
+        // Drain the parser before the next file changes input_filename.
+        is_last = state->curr_file == state->nfiles;
+        if (!is_last) {
+          jvp_parser_reset_input(state->parser);
+          state->parser_at_file_end = 0;
+        }
       }
     }
   } while (!is_last);
