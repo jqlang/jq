@@ -1018,6 +1018,14 @@ if ! $msys && ! $mingw; then
     exit 1
   fi
 
+  # The repeated local hour has a different offset on either side of DST.
+  if ! r=$(TZ=America/New_York $JQ -rn '1699162200,1699165800 | strflocaltime("%F %T %z %Z")') \
+    || [ "$r" != "2023-11-05 01:30:00 -0400 EDT
+2023-11-05 01:30:00 -0500 EST" ]; then
+    echo "Incorrectly formatted repeated local time: $r"
+    exit 1
+  fi
+
   if ! r=$(TZ=Europe/Paris $JQ -rn '1731627341 | strftime("%F %T %z %Z")') \
     || ( [ "$r" != "2024-11-14 23:35:41 +0000 UTC" ] \
       && [ "$r" != "2024-11-14 23:35:41 +0000 GMT" ] ); then

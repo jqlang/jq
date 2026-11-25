@@ -1836,33 +1836,42 @@ static jv f_gmtime(jq_state *jq, jv a) {
 }
 #endif
 
+#if defined(HAVE_LOCALTIME_R) || defined(HAVE_LOCALTIME) || defined(HAVE_STRFTIME)
+static const char *localtime_to_tm(double fsecs, struct tm *tm) {
+#if defined(HAVE_LOCALTIME_R) || defined(HAVE_LOCALTIME)
+  time_t secs = floor(fsecs);
 #ifdef HAVE_LOCALTIME_R
-static jv f_localtime(jq_state *jq, jv a) {
-  if (jv_get_kind(a) != JV_KIND_NUMBER)
-    return ret_error(a, jv_string("localtime() requires numeric inputs"));
-  struct tm tm, *tmp;
-  memset(&tm, 0, sizeof(tm));
-  double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
-  jv_free(a);
-  tmp = localtime_r(&secs, &tm);
+  memset(tm, 0, sizeof(*tm));
+  struct tm *tmp = localtime_r(&secs, tm);
+#else
+  struct tm *tmp = localtime(&secs);
+  if (tmp != NULL)
+    *tm = *tmp;
+#endif
   if (tmp == NULL)
-    return jv_invalid_with_msg(jv_string("error converting number of seconds since epoch to datetime"));
-  return tm2jv(tmp, fsecs);
+    return "error converting number of seconds since epoch to datetime";
+  return NULL;
+#else
+  return "localtime not implemented on this platform";
+#endif
 }
-#elif defined HAVE_GMTIME
+#endif
+
+#if defined(HAVE_LOCALTIME_R) || defined(HAVE_LOCALTIME)
 static jv f_localtime(jq_state *jq, jv a) {
   if (jv_get_kind(a) != JV_KIND_NUMBER)
+#ifdef HAVE_LOCALTIME_R
+    return ret_error(a, jv_string("localtime() requires numeric inputs"));
+#else
     return ret_error(a, jv_string("localtime requires numeric inputs"));
-  struct tm tm, *tmp;
-  memset(&tm, 0, sizeof(tm));
+#endif
+  struct tm tm;
   double fsecs = jv_number_value(a);
-  time_t secs = floor(fsecs);
   jv_free(a);
-  tmp = localtime(&secs);
-  if (tmp == NULL)
-    return jv_invalid_with_msg(jv_string("error converting number of seconds since epoch to datetime"));
-  return tm2jv(tmp, fsecs);
+  const char *err = localtime_to_tm(fsecs, &tm);
+  if (err != NULL)
+    return jv_invalid_with_msg(jv_string(err));
+  return tm2jv(&tm, fsecs);
 }
 #else
 static jv f_localtime(jq_state *jq, jv a) {
@@ -1943,19 +1952,21 @@ static jv f_strftime(jq_state *jq, jv a, jv b) {
 
 #ifdef HAVE_STRFTIME
 static jv f_strflocaltime(jq_state *jq, jv a, jv b) {
-  if (jv_get_kind(a) == JV_KIND_NUMBER) {
-    a = f_localtime(jq, a);
-    if (!jv_is_valid(a)) {
-      jv_free(b);
-      return a;
-    }
+  struct tm tm;
+  int numeric = jv_get_kind(a) == JV_KIND_NUMBER;
+  if (numeric) {
+    // Keep the offset and DST flag for timestamps in the repeated local hour.
+    const char *err = localtime_to_tm(jv_number_value(a), &tm);
+    if (err != NULL)
+      return ret_error2(a, b, jv_string(err));
   } else if (jv_get_kind(a) != JV_KIND_ARRAY) {
     return ret_error2(a, b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   }
   if (jv_get_kind(b) != JV_KIND_STRING)
     return ret_error2(a, b, jv_string("strflocaltime/1 requires a string format"));
-  struct tm tm;
-  if (!jv2tm(a, &tm, 1))
+  if (numeric)
+    jv_free(a);
+  else if (!jv2tm(a, &tm, 1))
     return ret_error(b, jv_string("strflocaltime/1 requires parsed datetime inputs"));
   /* Prepend a character so that strftime() returning 0 means the result
    * did not fit, even if the format expands to nothing; it is trimmed below. */
