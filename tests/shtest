@@ -70,6 +70,14 @@ $VALGRIND $Q $JQ -Rne '[inputs] == ["[{\"foo\": 1}", ",{\"foo\": 2}", "]", "[{\"
 $VALGRIND $Q $JQ -ne --slurpfile x $d/bom1.json '$x == [[{"foo":1},{"foo":2}]]'
 $VALGRIND $Q $JQ -ne --rawfile x $d/bom1.json '$x == "[{\"foo\": 1}\n,{\"foo\": 2}\n]\n"'
 
+## Test that a file without a trailing newline is not fused with the next one (#3758)
+printf '1' > $d/noeol1.json
+printf '2' > $d/noeol2.json
+$VALGRIND $Q $JQ -ne '[inputs] == [1,2]' $d/noeol1.json $d/noeol2.json
+$VALGRIND $Q $JQ -ce -s '. == [1,2]' $d/noeol1.json $d/noeol2.json
+printf '1e' > $d/noeol3.json
+$VALGRIND $Q $JQ -ne '[inputs]' $d/noeol3.json $d/noeol2.json && exit 1
+
 ## Test that --run-tests reports failures (#2765)
 cat > $d/passing.test <<'EOF'
 .

@@ -194,6 +194,9 @@ struct jq_util_input_state {
   jv current_filename;
   size_t current_line;
   int at_file_start;
+  // Set when a file ended in the middle of a line: a separator has to be
+  // delivered before the next file's bytes reach the parser.
+  int add_separator;
 };
 
 static void fprinter(void *data, const char *fname) {
@@ -259,6 +262,15 @@ static const char *next_file(jq_util_input_state *state) {
 }
 
 static int jq_util_input_read_more(jq_util_input_state *state) {
+  if (state->add_separator) {
+    // The previous file did not end with a newline. Deliver the separator
+    // before reading the next file, so that a token cannot run into the first
+    // token of that file (two files holding `1` and `2` parsed as `12`).
+    state->add_separator = 0;
+    state->buf[0] = '\n';
+    state->buf_valid_len = 1;
+    return 0;
+  }
   if (!state->current_input || feof(state->current_input) || ferror(state->current_input)) {
     if (state->current_input && ferror(state->current_input)) {
       // System-level input error on the stream. It will be closed (below).
@@ -271,8 +283,22 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
         clearerr(stdin); // perhaps we can read again; anyways, we don't fclose(stdin)
       } else {
         fclose(state->current_input);
+        // JSON input only: a file that ends in the middle of a line leaves the
+        // last token unfinished, so it needs a boundary before the next file.
+        if (state->parser != NULL &&
+            state->curr_file < state->nfiles &&
+            state->buf_valid_len > 0 &&
+            state->buf[state->buf_valid_len - 1] != '\n') {
+          state->add_separator = 1;
+        }
       }
       state->current_input = NULL;
+    }
+    if (state->add_separator) {
+      // Do not hand the previous chunk to the parser a second time.
+      state->buf[0] = 0;
+      state->buf_valid_len = 0;
+      return 0;
     }
     const char *f = next_file(state);
     if (f != NULL) {
