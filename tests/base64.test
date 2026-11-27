@@ -45,3 +45,18 @@
 . | try @base64d catch .
 "QUJDa"
 "string (\"QUJDa\") trailing base64 byte found"
+
+# data after the padding is an error, not silently dropped (#3730)
+. | try @base64d catch .
+"aGk=ZWxsbw=="
+"string (\"aGk=ZWxsbw==\") has data after base64 padding"
+
+# whitespace after the padding is still accepted
+@base64d
+"aGk=\n"
+"hi"
+
+# only padding is accepted after the first '='
+@base64d
+"aGk=="
+"hi"
