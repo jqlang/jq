@@ -809,7 +809,8 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     uint32_t ri = 0;
     int input_bytes_read=0;
     uint32_t code = 0;
-    for (int i=0; i<len && data[i] != '='; i++) {
+    int i = 0;
+    for (; i<len && data[i] != '='; i++) {
       if (BASE64_DECODE_TABLE[data[i]] == BASE64_INVALID_ENTRY) {
         free(result);
         return type_error(input, "is not valid base64 data");
@@ -835,6 +836,16 @@ static jv f_format(jq_state *jq, jv input, jv fmt) {
     } else if (input_bytes_read == 1) {
       free(result);
       return type_error(input, "trailing base64 byte found");
+    }
+
+    // The payload ends at the first '='. Everything after it that is not more
+    // padding or whitespace used to be dropped silently, so `"aGk=ZWxsbw=="`
+    // decoded to just "hi" instead of failing.
+    for (; i < len; i++) {
+      if (data[i] != '=' && !isspace(data[i])) {
+        free(result);
+        return type_error(input, "has data after base64 padding");
+      }
     }
 
     jv line = jv_string_sized(result, ri);
