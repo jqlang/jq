@@ -680,6 +680,7 @@ int main(int argc, char* argv[]) {
   if (nfiles == 0)
     jq_util_input_add_input(input_state, "-");
 
+  int err_ret = JQ_OK;
   if (options & PROVIDE_NULL) {
     ret = process(jq, jv_null(), jq_flags, dumpopts, options);
   } else {
@@ -688,6 +689,8 @@ int main(int argc, char* argv[]) {
            (jv_is_valid((value = jq_util_input_next_input(input_state))) || jv_invalid_has_msg(jv_copy(value)))) {
       if (jv_is_valid(value)) {
         ret = process(jq, value, jq_flags, dumpopts, options);
+        if (ret > 0)
+          err_ret = ret;
         if (ret <= 0 && ret != JQ_OK_NO_OUTPUT)
           last_result = (ret != JQ_OK_NULL_KIND);
         if (jq_halted(jq))
@@ -711,6 +714,8 @@ int main(int argc, char* argv[]) {
 
   if (jq_util_input_errors(input_state) != 0)
     ret = JQ_ERROR_SYSTEM;
+  else if (!(options & PROVIDE_NULL) && err_ret > 0)
+    ret = err_ret;
 
 out:
   badwrite = ferror(stdout);

@@ -288,6 +288,24 @@ else
   cmp $d/out $d/expected
 fi
 
+# Regression test for #3745: an error from an earlier input must not be
+# cleared by successfully processing a later input.
+if printf '0\n2\n' | $Q $JQ -c '1 / .' > $d/out 2>&1; then
+  echo "Runtime error on an earlier input should affect the exit status" 1>&2
+  exit 1
+elif [ $? -ne 5 ]; then
+  echo "Runtime error on an earlier input had the wrong exit code" 1>&2
+  exit 1
+fi
+
+if printf '"a\\u0000b"\n"ok"\n' | $Q $JQ --raw-output0 '.' > $d/out 2>&1; then
+  echo "NUL error on an earlier input should affect the exit status" 1>&2
+  exit 1
+elif [ $? -ne 5 ]; then
+  echo "NUL error on an earlier input had the wrong exit code" 1>&2
+  exit 1
+fi
+
 # Regression tests for #3194
 echo 42 > $d/expected
 $JQ -nn 42 > $d/out 2>&1
