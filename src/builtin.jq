@@ -117,15 +117,32 @@ def split($re; $flags): [ splits($re; $flags) ];
 def sub($re; s; $flags):
    . as $in
    | (reduce match($re; $flags) as $edit
-        ({result: [], previous: 0};
+        ({result: [], previous: 0, matched: false};
             $in[ .previous: ($edit | .offset) ] as $gap
             # create the "capture" objects (one per item in s)
             | [reduce ( $edit | .captures | .[] | select(.name != null) | { (.name) : .string } ) as $pair
                  ({}; . + $pair) | s ] as $inserts
-            | reduce range(0; $inserts|length) as $ix (.; .result[$ix] += $gap + $inserts[$ix])
-            | .previous = ($edit | .offset + .length ) )
-          | .result[] + $in[.previous:] )
-      // $in;
+            # An empty replacement stream removes every output branch.
+            | if ($inserts | length) == 0 then .result = []
+              elif .matched and (.result | length) == 0 then .
+              else
+                .result as $results
+                # Keep branches aligned when s emits different counts per match.
+                | [range(0; [($results | length), ($inserts | length)] | max) as $ix
+                   | (if $ix < ($results | length)
+                      then $results[$ix]
+                      else $in[0:.previous]
+                      end)
+                     + $gap
+                     + (if $ix < ($inserts | length)
+                        then $inserts[$ix]
+                        else $edit.string
+                        end)] as $updated
+                | .result = $updated
+              end
+            | .previous = ($edit | .offset + .length )
+            | .matched = true )
+          | if .matched then .result[] + $in[.previous:] else $in end );
 
 def sub($re; s): sub($re; s; "");
 
